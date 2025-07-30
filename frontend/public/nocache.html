@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>缓存清理页面</title>
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+</head>
+<body>
+    <h1 style="text-align: center; color: #2563eb;">正在清理缓存...</h1>
+    <p style="text-align: center;">请稍候，正在清理浏览器缓存并跳转到主页面</p>
+    <div style="text-align: center; margin-top: 20px;">
+        <button onclick="clearAndRedirect()" style="padding: 10px 20px; background: #2563eb; color: white; border: none; border-radius: 5px; cursor: pointer;">手动跳转</button>
+    </div>
+    <script>
+        function clearAndRedirect() {
+            // 清理所有缓存
+            localStorage.clear();
+            sessionStorage.clear();
+            
+            // 清理所有cookie
+            document.cookie.split(";").forEach(function(c) { 
+                document.cookie = c.replace(/^ +/, "").replace(/=.*/, "=;expires=" + new Date().toUTCString() + ";path=/"); 
+            });
+            
+            console.log('✅ 所有缓存已清理');
+            
+            // 添加时间戳强制刷新
+            const timestamp = new Date().getTime();
+            window.location.href = '/?v=' + timestamp;
+        }
+        
+        // 自动执行
+        setTimeout(clearAndRedirect, 1500);
+    </script>
+</body>
+</html>
