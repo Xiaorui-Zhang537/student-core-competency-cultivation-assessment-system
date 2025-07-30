@@ -1,0 +1,265 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.noncore.assessment.mapper.CourseMapper">
+
+    <!-- 课程结果映射 -->
+    <resultMap id="CourseResultMap" type="com.noncore.assessment.entity.Course">
+        <id column="id" property="id"/>
+        <result column="title" property="title"/>
+        <result column="description" property="description"/>
+        <result column="cover_image" property="coverImage"/>
+        <result column="teacher_id" property="teacherId"/>
+        <result column="teacher_name" property="teacherName"/>
+        <result column="category" property="category"/>
+        <result column="difficulty" property="difficulty"/>
+        <result column="duration" property="duration"/>
+        <result column="max_students" property="maxStudents"/>
+        <result column="price" property="price"/>
+        <result column="status" property="status"/>
+        <result column="start_date" property="startDate"/>
+        <result column="end_date" property="endDate"/>
+        <result column="tags" property="tags"/>
+        <result column="objectives" property="objectives"/>
+        <result column="requirements" property="requirements"/>
+        <result column="created_at" property="createdAt"/>
+        <result column="updated_at" property="updatedAt"/>
+        <result column="deleted" property="deleted"/>
+    </resultMap>
+
+    <!-- 基础查询字段 -->
+    <sql id="Base_Column_List">
+        c.id, c.title, c.description, c.cover_image, c.teacher_id, c.category, c.difficulty,
+        c.duration, c.max_students, c.price, c.status, c.start_date, c.end_date, c.tags, c.objectives,
+        c.requirements, c.enrollment_count, c.rating, c.review_count, c.created_at, c.updated_at, c.deleted
+    </sql>
+
+    <!-- 带教师信息的查询字段 -->
+    <sql id="Course_With_Teacher_Column_List">
+        c.id, c.title, c.description, c.cover_image, c.teacher_id, c.category, c.difficulty,
+        c.duration, c.max_students, c.price, c.status, c.start_date, c.end_date, c.tags, c.objectives,
+        c.requirements, c.enrollment_count, c.rating, c.review_count, c.created_at, c.updated_at, c.deleted,
+        u.display_name as teacher_name
+    </sql>
+
+    <!-- 插入课程 -->
+    <insert id="insertCourse" parameterType="com.noncore.assessment.entity.Course" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO courses (
+            title, description, cover_image, teacher_id, category, difficulty, duration,
+            max_students, price, status, start_date, end_date, tags, objectives, requirements,
+            created_at, updated_at, deleted
+        ) VALUES (
+            #{title}, #{description}, #{coverImage}, #{teacherId}, #{category}, #{difficulty}, #{duration},
+            #{maxStudents}, #{price}, #{status}, #{startDate}, #{endDate}, #{tags}, #{objectives}, #{requirements},
+            #{createdAt}, #{updatedAt}, #{deleted}
+        )
+    </insert>
+
+    <!-- 根据ID查询课程 -->
+    <select id="selectCourseById" parameterType="long" resultMap="CourseResultMap">
+        SELECT <include refid="Course_With_Teacher_Column_List"/>
+        FROM courses c
+        LEFT JOIN users u ON c.teacher_id = u.id
+        WHERE c.id = #{id} AND c.deleted = false
+    </select>
+
+    <!-- 更新课程信息 -->
+    <update id="updateCourse" parameterType="com.noncore.assessment.entity.Course">
+        UPDATE courses SET
+            title = #{title},
+            description = #{description},
+            cover_image = #{coverImage},
+            category = #{category},
+            difficulty = #{difficulty},
+            duration = #{duration},
+            max_students = #{maxStudents},
+            price = #{price},
+            status = #{status},
+            start_date = #{startDate},
+            end_date = #{endDate},
+            tags = #{tags},
+            objectives = #{objectives},
+            requirements = #{requirements},
+            updated_at = #{updatedAt}
+        WHERE id = #{id} AND deleted = false
+    </update>
+
+    <!-- 软删除课程 -->
+    <update id="deleteCourse" parameterType="long">
+        UPDATE courses SET 
+            deleted = true,
+            updated_at = NOW()
+        WHERE id = #{id}
+    </update>
+
+    <!-- 分页查询课程列表 -->
+    <select id="selectCoursesWithPagination" resultMap="CourseResultMap">
+        SELECT <include refid="Course_With_Teacher_Column_List"/>
+        FROM courses c
+        LEFT JOIN users u ON c.teacher_id = u.id
+        WHERE c.deleted = false
+        <if test="keyword != null and keyword != ''">
+            AND (c.title LIKE CONCAT('%', #{keyword}, '%') 
+                 OR c.description LIKE CONCAT('%', #{keyword}, '%')
+                 OR u.display_name LIKE CONCAT('%', #{keyword}, '%'))
+        </if>
+        <if test="category != null and category != ''">
+            AND c.category = #{category}
+        </if>
+        <if test="difficulty != null and difficulty != ''">
+            AND c.difficulty = #{difficulty}
+        </if>
+        <if test="status != null and status != ''">
+            AND c.status = #{status}
+        </if>
+        <if test="teacherId != null">
+            AND c.teacher_id = #{teacherId}
+        </if>
+        ORDER BY c.created_at DESC
+    </select>
+
+    <!-- 根据教师ID查询课程 -->
+    <select id="selectCoursesByTeacherId" parameterType="long" resultMap="CourseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM courses c
+        WHERE c.teacher_id = #{teacherId} AND c.deleted = false
+        ORDER BY c.created_at DESC
+    </select>
+
+    <!-- 根据学生ID查询已选课程 -->
+    <select id="selectCoursesByStudentId" parameterType="long" resultMap="CourseResultMap">
+        SELECT <include refid="Course_With_Teacher_Column_List"/>
+        FROM courses c
+        LEFT JOIN users u ON c.teacher_id = u.id
+        INNER JOIN enrollments e ON c.id = e.course_id
+        WHERE e.student_id = #{studentId} AND c.deleted = false AND e.status = 'enrolled'
+        ORDER BY e.enrolled_at DESC
+    </select>
+
+    <!-- 查询热门课程 -->
+    <select id="selectPopularCourses" parameterType="int" resultMap="CourseResultMap">
+        SELECT <include refid="Course_With_Teacher_Column_List"/>
+        FROM courses c
+        LEFT JOIN users u ON c.teacher_id = u.id
+        WHERE c.deleted = false AND c.status = 'published'
+        ORDER BY c.created_at DESC, c.price DESC
+        LIMIT #{limit}
+    </select>
+
+    <!-- 查询推荐课程 -->
+    <select id="selectRecommendedCourses" parameterType="int" resultMap="CourseResultMap">
+        SELECT <include refid="Course_With_Teacher_Column_List"/>
+        FROM courses c
+        LEFT JOIN users u ON c.teacher_id = u.id
+        WHERE c.deleted = false AND c.status = 'published' AND c.price >= 0
+        ORDER BY c.price ASC, c.created_at DESC
+        LIMIT #{limit}
+    </select>
+
+    <!-- 根据分类查询课程 -->
+    <select id="selectCoursesByCategory" parameterType="string" resultMap="CourseResultMap">
+        SELECT <include refid="Course_With_Teacher_Column_List"/>
+        FROM courses c
+        LEFT JOIN users u ON c.teacher_id = u.id
+        WHERE c.category = #{category} AND c.deleted = false AND c.status = 'published'
+        ORDER BY c.created_at DESC
+    </select>
+
+    <!-- 更新课程报名人数 -->
+    <update id="updateEnrollmentCount">
+        UPDATE courses SET 
+            updated_at = NOW()
+        WHERE id = #{courseId} AND deleted = false
+    </update>
+
+    <!-- 更新课程评分和评价数量 -->
+    <update id="updateCourseRating">
+        UPDATE courses SET 
+            updated_at = NOW()
+        WHERE id = #{courseId} AND deleted = false
+    </update>
+
+    <!-- 统计课程数量 -->
+    <select id="countCourses" resultType="int">
+        SELECT COUNT(1) FROM courses 
+        WHERE deleted = false
+        <if test="teacherId != null">
+            AND teacher_id = #{teacherId}
+        </if>
+        <if test="status != null and status != ''">
+            AND status = #{status}
+        </if>
+    </select>
+
+    <!-- 检查课程是否存在 -->
+    <select id="checkCourseExists" parameterType="long" resultType="int">
+        SELECT COUNT(1) FROM courses 
+        WHERE id = #{id} AND deleted = false
+    </select>
+
+    <!-- 根据标题查找课程 -->
+    <select id="selectCoursesByTitle" resultMap="CourseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM courses c
+        WHERE c.title = #{title} AND c.deleted = false
+        <if test="excludeId != null">
+            AND c.id != #{excludeId}
+        </if>
+    </select>
+
+    <!-- 批量更新课程状态 -->
+    <update id="batchUpdateCourseStatus">
+        UPDATE courses SET 
+            status = #{status},
+            updated_at = NOW()
+        WHERE deleted = false AND id IN
+        <foreach collection="courseIds" item="id" open="(" close=")" separator=",">
+            #{id}
+        </foreach>
+    </update>
+
+    <!-- 查询即将开始的课程 -->
+    <select id="selectUpcomingCourses" parameterType="int" resultMap="CourseResultMap">
+        SELECT <include refid="Course_With_Teacher_Column_List"/>
+        FROM courses c
+        LEFT JOIN users u ON c.teacher_id = u.id
+        WHERE c.deleted = false AND c.status = 'published' 
+              AND c.start_date BETWEEN CURDATE() AND DATE_ADD(CURDATE(), INTERVAL #{days} DAY)
+        ORDER BY c.start_date ASC
+    </select>
+
+    <!-- 查询即将结束的课程 -->
+    <select id="selectEndingCourses" parameterType="int" resultMap="CourseResultMap">
+        SELECT <include refid="Course_With_Teacher_Column_List"/>
+        FROM courses c
+        LEFT JOIN users u ON c.teacher_id = u.id
+        WHERE c.deleted = false AND c.status = 'published' 
+              AND c.end_date BETWEEN CURDATE() AND DATE_ADD(CURDATE(), INTERVAL #{days} DAY)
+        ORDER BY c.end_date ASC
+    </select>
+
+    <!-- 根据关键词搜索课程 -->
+    <select id="searchCourses" parameterType="string" resultMap="CourseResultMap">
+        SELECT <include refid="Course_With_Teacher_Column_List"/>
+        FROM courses c
+        LEFT JOIN users u ON c.teacher_id = u.id
+        WHERE c.deleted = false AND c.status = 'published'
+              AND (c.title LIKE CONCAT('%', #{keyword}, '%') 
+                   OR c.description LIKE CONCAT('%', #{keyword}, '%')
+                   OR c.category LIKE CONCAT('%', #{keyword}, '%'))
+        ORDER BY c.created_at DESC, c.price ASC
+    </select>
+
+    <!-- 获取课程统计信息 -->
+    <select id="getCourseStatistics" resultType="map">
+        SELECT 
+            status,
+            COUNT(*) as count,
+            AVG(price) as avg_price
+        FROM courses 
+        WHERE deleted = false
+        <if test="teacherId != null">
+            AND teacher_id = #{teacherId}
+        </if>
+        GROUP BY status
+    </select>
+</mapper> 

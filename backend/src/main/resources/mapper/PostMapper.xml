@@ -1,0 +1,290 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.noncore.assessment.mapper.PostMapper">
+
+    <!-- 帖子字段映射 -->
+    <resultMap id="BaseResultMap" type="com.noncore.assessment.entity.Post">
+        <id column="id" property="id" jdbcType="BIGINT"/>
+        <result column="title" property="title" jdbcType="VARCHAR"/>
+        <result column="content" property="content" jdbcType="LONGVARCHAR"/>
+        <result column="category" property="category" jdbcType="VARCHAR"/>
+        <result column="author_id" property="authorId" jdbcType="BIGINT"/>
+        <result column="pinned" property="pinned" jdbcType="BOOLEAN"/>
+        <result column="anonymous" property="anonymous" jdbcType="BOOLEAN"/>
+        <result column="allow_comments" property="allowComments" jdbcType="BOOLEAN"/>
+        <result column="views" property="views" jdbcType="INTEGER"/>
+        <result column="likes_count" property="likesCount" jdbcType="INTEGER"/>
+        <result column="comments_count" property="commentsCount" jdbcType="INTEGER"/>
+        <result column="status" property="status" jdbcType="VARCHAR"/>
+        <result column="created_at" property="createdAt" jdbcType="TIMESTAMP"/>
+        <result column="updated_at" property="updatedAt" jdbcType="TIMESTAMP"/>
+        <result column="deleted" property="deleted" jdbcType="BOOLEAN"/>
+    </resultMap>
+
+    <!-- 帖子详情字段映射（包含作者信息） -->
+    <resultMap id="DetailResultMap" type="com.noncore.assessment.entity.Post" extends="BaseResultMap">
+        <association property="author" javaType="com.noncore.assessment.entity.User">
+            <id column="author_id" property="id"/>
+            <result column="author_username" property="username"/>
+            <result column="author_display_name" property="displayName"/>
+            <result column="author_avatar" property="avatar"/>
+        </association>
+    </resultMap>
+
+    <!-- 基础字段列表 -->
+    <sql id="Base_Column_List">
+        p.id, p.title, p.content, p.category, p.author_id, p.pinned, p.anonymous, p.allow_comments,
+        p.views, p.likes_count, p.comments_count, p.status, p.created_at, p.updated_at, p.deleted
+    </sql>
+
+    <!-- 详情字段列表（包含作者信息） -->
+    <sql id="Detail_Column_List">
+        <include refid="Base_Column_List"/>,
+        u.username as author_username, u.display_name as author_display_name, u.avatar as author_avatar
+    </sql>
+
+    <!-- 查询条件 -->
+    <sql id="Where_Clause">
+        <where>
+            p.deleted = false
+            <if test="id != null">
+                AND p.id = #{id}
+            </if>
+            <if test="category != null and category != ''">
+                AND p.category = #{category}
+            </if>
+            <if test="authorId != null">
+                AND p.author_id = #{authorId}
+            </if>
+            <if test="status != null and status != ''">
+                AND p.status = #{status}
+            </if>
+            <if test="pinned != null">
+                AND p.pinned = #{pinned}
+            </if>
+            <if test="keyword != null and keyword != ''">
+                AND (p.title LIKE CONCAT('%', #{keyword}, '%') OR p.content LIKE CONCAT('%', #{keyword}, '%'))
+            </if>
+            <if test="startDate != null">
+                AND p.created_at &gt;= #{startDate}
+            </if>
+            <if test="endDate != null">
+                AND p.created_at &lt;= #{endDate}
+            </if>
+        </where>
+    </sql>
+
+    <!-- 排序条件 -->
+    <sql id="Order_By_Clause">
+        ORDER BY 
+        <choose>
+            <when test="orderBy == 'views'">p.views DESC</when>
+            <when test="orderBy == 'likes'">p.likes_count DESC</when>
+            <when test="orderBy == 'comments'">p.comments_count DESC</when>
+            <when test="orderBy == 'hot'">
+                (p.likes_count * 0.4 + p.comments_count * 0.3 + p.views * 0.3) DESC
+            </when>
+            <otherwise>p.pinned DESC, p.created_at DESC</otherwise>
+        </choose>
+    </sql>
+
+    <!-- 插入帖子 -->
+    <insert id="insert" parameterType="com.noncore.assessment.entity.Post" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO posts (
+            title, content, category, author_id, pinned, anonymous, allow_comments,
+            views, likes_count, comments_count, status, deleted
+        ) VALUES (
+            #{title}, #{content}, #{category}, #{authorId}, #{pinned}, #{anonymous}, #{allowComments},
+            #{views}, #{likesCount}, #{commentsCount}, #{status}, #{deleted}
+        )
+    </insert>
+
+    <!-- 根据ID查询帖子 -->
+    <select id="selectById" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM posts p
+        WHERE p.id = #{id} AND p.deleted = false
+    </select>
+
+    <!-- 根据ID查询帖子详情 -->
+    <select id="selectDetailById" resultMap="DetailResultMap">
+        SELECT <include refid="Detail_Column_List"/>
+        FROM posts p
+        LEFT JOIN users u ON p.author_id = u.id
+        WHERE p.id = #{id} AND p.deleted = false
+    </select>
+
+    <!-- 更新帖子 -->
+    <update id="updateById" parameterType="com.noncore.assessment.entity.Post">
+        UPDATE posts
+        <set>
+            <if test="title != null">title = #{title},</if>
+            <if test="content != null">content = #{content},</if>
+            <if test="category != null">category = #{category},</if>
+            <if test="pinned != null">pinned = #{pinned},</if>
+            <if test="anonymous != null">anonymous = #{anonymous},</if>
+            <if test="allowComments != null">allow_comments = #{allowComments},</if>
+            <if test="status != null">status = #{status},</if>
+            updated_at = CURRENT_TIMESTAMP
+        </set>
+        WHERE id = #{id}
+    </update>
+
+    <!-- 删除帖子 -->
+    <delete id="deleteById">
+        DELETE FROM posts WHERE id = #{id}
+    </delete>
+
+    <!-- 软删除帖子 -->
+    <update id="softDeleteById">
+        UPDATE posts SET deleted = true, updated_at = CURRENT_TIMESTAMP WHERE id = #{id}
+    </update>
+
+    <!-- 查询帖子列表 -->
+    <select id="selectList" parameterType="map" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM posts p
+        <include refid="Where_Clause"/>
+        <include refid="Order_By_Clause"/>
+    </select>
+
+    <!-- 查询帖子详情列表 -->
+    <select id="selectDetailList" parameterType="map" resultMap="DetailResultMap">
+        SELECT <include refid="Detail_Column_List"/>
+        FROM posts p
+        LEFT JOIN users u ON p.author_id = u.id
+        <include refid="Where_Clause"/>
+        <include refid="Order_By_Clause"/>
+    </select>
+
+    <!-- 查询帖子总数 -->
+    <select id="countList" parameterType="map" resultType="long">
+        SELECT COUNT(*)
+        FROM posts p
+        <include refid="Where_Clause"/>
+    </select>
+
+    <!-- 增加浏览量 -->
+    <update id="incrementViews">
+        UPDATE posts SET views = views + 1, updated_at = CURRENT_TIMESTAMP WHERE id = #{id}
+    </update>
+
+    <!-- 增加点赞数 -->
+    <update id="incrementLikes">
+        UPDATE posts SET likes_count = likes_count + 1, updated_at = CURRENT_TIMESTAMP WHERE id = #{id}
+    </update>
+
+    <!-- 减少点赞数 -->
+    <update id="decrementLikes">
+        UPDATE posts SET likes_count = GREATEST(0, likes_count - 1), updated_at = CURRENT_TIMESTAMP WHERE id = #{id}
+    </update>
+
+    <!-- 增加评论数 -->
+    <update id="incrementComments">
+        UPDATE posts SET comments_count = comments_count + 1, updated_at = CURRENT_TIMESTAMP WHERE id = #{id}
+    </update>
+
+    <!-- 减少评论数 -->
+    <update id="decrementComments">
+        UPDATE posts SET comments_count = GREATEST(0, comments_count - 1), updated_at = CURRENT_TIMESTAMP WHERE id = #{id}
+    </update>
+
+    <!-- 查询用户的帖子列表 -->
+    <select id="selectByUserId" resultMap="DetailResultMap">
+        SELECT <include refid="Detail_Column_List"/>
+        FROM posts p
+        LEFT JOIN users u ON p.author_id = u.id
+        WHERE p.author_id = #{userId} AND p.deleted = false
+        <if test="params.status != null and params.status != ''">
+            AND p.status = #{params.status}
+        </if>
+        <if test="params.category != null and params.category != ''">
+            AND p.category = #{params.category}
+        </if>
+        ORDER BY p.created_at DESC
+    </select>
+
+    <!-- 查询用户的帖子总数 -->
+    <select id="countByUserId" resultType="long">
+        SELECT COUNT(*)
+        FROM posts p
+        WHERE p.author_id = #{userId} AND p.deleted = false
+        <if test="params.status != null and params.status != ''">
+            AND p.status = #{params.status}
+        </if>
+        <if test="params.category != null and params.category != ''">
+            AND p.category = #{params.category}
+        </if>
+    </select>
+
+    <!-- 查询热门帖子 -->
+    <select id="selectHotPosts" resultMap="DetailResultMap">
+        SELECT <include refid="Detail_Column_List"/>
+        FROM posts p
+        LEFT JOIN users u ON p.author_id = u.id
+        WHERE p.status = 'published' AND p.deleted = false
+        ORDER BY (p.likes_count * 0.4 + p.comments_count * 0.3 + p.views * 0.3) DESC
+        LIMIT #{limit}
+    </select>
+
+    <!-- 查询推荐帖子 -->
+    <select id="selectRecommendPosts" resultMap="DetailResultMap">
+        SELECT <include refid="Detail_Column_List"/>
+        FROM posts p
+        LEFT JOIN users u ON p.author_id = u.id
+        WHERE p.status = 'published' AND p.deleted = false
+        AND p.created_at >= DATE_SUB(NOW(), INTERVAL 7 DAY)
+        ORDER BY (p.likes_count + p.comments_count + p.views * 0.1) DESC
+        LIMIT #{limit}
+    </select>
+
+    <!-- 根据标签查询帖子 -->
+    <select id="selectByTagId" resultMap="DetailResultMap">
+        SELECT <include refid="Detail_Column_List"/>
+        FROM posts p
+        LEFT JOIN users u ON p.author_id = u.id
+        INNER JOIN post_tags pt ON p.id = pt.post_id
+        WHERE pt.tag_id = #{tagId} AND p.status = 'published' AND p.deleted = false
+        ORDER BY p.created_at DESC
+    </select>
+
+    <!-- 查询分类统计 -->
+    <select id="selectCategoryStats" resultType="map">
+        SELECT 
+            category,
+            COUNT(*) as count,
+            SUM(views) as total_views,
+            SUM(likes_count) as total_likes,
+            SUM(comments_count) as total_comments
+        FROM posts
+        WHERE status = 'published' AND deleted = false
+        GROUP BY category
+    </select>
+
+    <!-- 查询社区统计信息 -->
+    <select id="selectCommunityStats" resultType="map">
+        SELECT
+            (SELECT COUNT(*) FROM posts WHERE status = 'published' AND deleted = false) as total_posts,
+            (SELECT COUNT(DISTINCT author_id) FROM posts WHERE status = 'published' AND deleted = false) as active_members,
+            (SELECT COUNT(*) FROM posts WHERE status = 'published' AND deleted = false AND DATE(created_at) = CURDATE()) as today_posts,
+            (SELECT SUM(views) FROM posts WHERE status = 'published' AND deleted = false) as total_views
+    </select>
+
+    <!-- 查询活跃用户 -->
+    <select id="selectActiveUsers" resultType="map">
+        SELECT 
+            u.id,
+            u.display_name as name,
+            u.avatar,
+            COUNT(p.id) as post_count,
+            SUM(p.likes_count) as total_likes
+        FROM users u
+        INNER JOIN posts p ON u.id = p.author_id
+        WHERE p.status = 'published' AND p.deleted = false
+        AND p.created_at >= DATE_SUB(NOW(), INTERVAL 30 DAY)
+        GROUP BY u.id, u.display_name, u.avatar
+        ORDER BY post_count DESC, total_likes DESC
+        LIMIT #{limit}
+    </select>
+
+</mapper> 

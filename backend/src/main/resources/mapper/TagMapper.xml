@@ -1,0 +1,134 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.noncore.assessment.mapper.TagMapper">
+
+    <!-- 标签字段映射 -->
+    <resultMap id="BaseResultMap" type="com.noncore.assessment.entity.Tag">
+        <id column="id" property="id" jdbcType="BIGINT"/>
+        <result column="name" property="name" jdbcType="VARCHAR"/>
+        <result column="description" property="description" jdbcType="VARCHAR"/>
+        <result column="color" property="color" jdbcType="VARCHAR"/>
+        <result column="posts_count" property="postsCount" jdbcType="INTEGER"/>
+        <result column="created_at" property="createdAt" jdbcType="TIMESTAMP"/>
+    </resultMap>
+
+    <!-- 基础字段列表 -->
+    <sql id="Base_Column_List">
+        id, name, description, color, posts_count, created_at
+    </sql>
+
+    <!-- 查询条件 -->
+    <sql id="Where_Clause">
+        <where>
+            <if test="id != null">
+                AND id = #{id}
+            </if>
+            <if test="name != null and name != ''">
+                AND name = #{name}
+            </if>
+            <if test="keyword != null and keyword != ''">
+                AND (name LIKE CONCAT('%', #{keyword}, '%') OR description LIKE CONCAT('%', #{keyword}, '%'))
+            </if>
+        </where>
+    </sql>
+
+    <!-- 插入标签 -->
+    <insert id="insert" parameterType="com.noncore.assessment.entity.Tag" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO tags (name, description, color, posts_count)
+        VALUES (#{name}, #{description}, #{color}, #{postsCount})
+    </insert>
+
+    <!-- 根据ID查询标签 -->
+    <select id="selectById" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM tags
+        WHERE id = #{id}
+    </select>
+
+    <!-- 根据名称查询标签 -->
+    <select id="selectByName" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM tags
+        WHERE name = #{name}
+    </select>
+
+    <!-- 更新标签 -->
+    <update id="updateById" parameterType="com.noncore.assessment.entity.Tag">
+        UPDATE tags
+        <set>
+            <if test="name != null">name = #{name},</if>
+            <if test="description != null">description = #{description},</if>
+            <if test="color != null">color = #{color},</if>
+            <if test="postsCount != null">posts_count = #{postsCount},</if>
+        </set>
+        WHERE id = #{id}
+    </update>
+
+    <!-- 删除标签 -->
+    <delete id="deleteById">
+        DELETE FROM tags WHERE id = #{id}
+    </delete>
+
+    <!-- 查询标签列表 -->
+    <select id="selectList" parameterType="map" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM tags
+        <include refid="Where_Clause"/>
+        ORDER BY posts_count DESC, created_at DESC
+    </select>
+
+    <!-- 查询标签总数 -->
+    <select id="countList" parameterType="map" resultType="long">
+        SELECT COUNT(*)
+        FROM tags
+        <include refid="Where_Clause"/>
+    </select>
+
+    <!-- 增加标签帖子数 -->
+    <update id="incrementPostsCount">
+        UPDATE tags SET posts_count = posts_count + 1 WHERE id = #{id}
+    </update>
+
+    <!-- 减少标签帖子数 -->
+    <update id="decrementPostsCount">
+        UPDATE tags SET posts_count = GREATEST(0, posts_count - 1) WHERE id = #{id}
+    </update>
+
+    <!-- 查询热门标签 -->
+    <select id="selectHotTags" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM tags
+        WHERE posts_count > 0
+        ORDER BY posts_count DESC
+        LIMIT #{limit}
+    </select>
+
+    <!-- 根据帖子ID查询标签列表 -->
+    <select id="selectByPostId" resultMap="BaseResultMap">
+        SELECT t.id, t.name, t.description, t.color, t.posts_count, t.created_at
+        FROM tags t
+        INNER JOIN post_tags pt ON t.id = pt.tag_id
+        WHERE pt.post_id = #{postId}
+        ORDER BY t.name
+    </select>
+
+    <!-- 批量查询标签 -->
+    <select id="selectByNames" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM tags
+        WHERE name IN
+        <foreach collection="names" item="name" open="(" separator="," close=")">
+            #{name}
+        </foreach>
+    </select>
+
+    <!-- 搜索标签 -->
+    <select id="searchTags" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM tags
+        WHERE name LIKE CONCAT('%', #{keyword}, '%')
+        ORDER BY posts_count DESC, name
+        LIMIT #{limit}
+    </select>
+
+</mapper> 

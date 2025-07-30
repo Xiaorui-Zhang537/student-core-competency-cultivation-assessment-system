@@ -1,0 +1,223 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.noncore.assessment.mapper.AssignmentMapper">
+
+    <!-- 作业结果映射 -->
+    <resultMap id="AssignmentResultMap" type="com.noncore.assessment.entity.Assignment">
+        <id column="id" property="id"/>
+        <result column="course_id" property="courseId"/>
+        <result column="teacher_id" property="teacherId"/>
+        <result column="title" property="title"/>
+        <result column="description" property="description"/>
+        <result column="requirements" property="requirements"/>
+        <result column="max_score" property="maxScore"/>
+        <result column="due_date" property="dueDate"/>
+        <result column="allow_late" property="allowLate"/>
+        <result column="max_attempts" property="maxAttempts"/>
+        <result column="file_types" property="fileTypes"/>
+        <result column="status" property="status"/>
+        <result column="submission_count" property="submissionCount"/>
+        <result column="created_at" property="createdAt"/>
+        <result column="updated_at" property="updatedAt"/>
+        <result column="deleted" property="deleted"/>
+        <result column="course_name" property="courseName"/>
+        <result column="teacher_name" property="teacherName"/>
+    </resultMap>
+
+    <!-- 基础查询字段 -->
+    <sql id="assignmentColumns">
+        a.id, a.course_id, a.teacher_id, a.title, a.description, a.requirements,
+        a.max_score, a.due_date, a.allow_late, a.max_attempts, a.file_types,
+        a.status, a.submission_count, a.created_at, a.updated_at, a.deleted
+    </sql>
+
+    <!-- 带课程和教师信息的查询字段 -->
+    <sql id="assignmentWithDetailsColumns">
+        <include refid="assignmentColumns"/>,
+        c.title as course_name,
+        u.display_name as teacher_name
+    </sql>
+
+    <!-- 插入作业 -->
+    <insert id="insertAssignment" parameterType="com.noncore.assessment.entity.Assignment" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO assignments (
+            course_id, teacher_id, title, description, requirements, max_score,
+            due_date, allow_late, max_attempts, file_types, status, submission_count,
+            created_at, updated_at, deleted
+        ) VALUES (
+            #{courseId}, #{teacherId}, #{title}, #{description}, #{requirements}, #{maxScore},
+            #{dueDate}, #{allowLate}, #{maxAttempts}, #{fileTypes}, #{status}, #{submissionCount},
+            #{createdAt}, #{updatedAt}, #{deleted}
+        )
+    </insert>
+
+    <!-- 根据ID查询作业 -->
+    <select id="selectAssignmentById" parameterType="long" resultMap="AssignmentResultMap">
+        SELECT <include refid="assignmentWithDetailsColumns"/>
+        FROM assignments a
+        LEFT JOIN courses c ON a.course_id = c.id
+        LEFT JOIN users u ON a.teacher_id = u.id
+        WHERE a.id = #{id} AND a.deleted = false
+    </select>
+
+    <!-- 更新作业信息 -->
+    <update id="updateAssignment" parameterType="com.noncore.assessment.entity.Assignment">
+        UPDATE assignments SET
+            title = #{title},
+            description = #{description},
+            requirements = #{requirements},
+            max_score = #{maxScore},
+            due_date = #{dueDate},
+            allow_late = #{allowLate},
+            max_attempts = #{maxAttempts},
+            file_types = #{fileTypes},
+            status = #{status},
+            updated_at = #{updatedAt}
+        WHERE id = #{id} AND deleted = false
+    </update>
+
+    <!-- 软删除作业 -->
+    <update id="deleteAssignment" parameterType="long">
+        UPDATE assignments SET 
+            deleted = true,
+            updated_at = NOW()
+        WHERE id = #{id}
+    </update>
+
+    <!-- 根据课程ID查询作业 -->
+    <select id="selectAssignmentsByCourseId" parameterType="long" resultMap="AssignmentResultMap">
+        SELECT <include refid="assignmentWithDetailsColumns"/>
+        FROM assignments a
+        LEFT JOIN courses c ON a.course_id = c.id
+        LEFT JOIN users u ON a.teacher_id = u.id
+        WHERE a.course_id = #{courseId} AND a.deleted = false
+        ORDER BY a.created_at DESC
+    </select>
+
+    <!-- 根据教师ID查询作业 -->
+    <select id="selectAssignmentsByTeacherId" parameterType="long" resultMap="AssignmentResultMap">
+        SELECT <include refid="assignmentWithDetailsColumns"/>
+        FROM assignments a
+        LEFT JOIN courses c ON a.course_id = c.id
+        LEFT JOIN users u ON a.teacher_id = u.id
+        WHERE a.teacher_id = #{teacherId} AND a.deleted = false
+        ORDER BY a.created_at DESC
+    </select>
+
+    <!-- 分页查询作业列表 -->
+    <select id="selectAssignmentsWithPagination" resultMap="AssignmentResultMap">
+        SELECT <include refid="assignmentWithDetailsColumns"/>
+        FROM assignments a
+        LEFT JOIN courses c ON a.course_id = c.id
+        LEFT JOIN users u ON a.teacher_id = u.id
+        WHERE a.deleted = false
+        <if test="courseId != null">
+            AND a.course_id = #{courseId}
+        </if>
+        <if test="teacherId != null">
+            AND a.teacher_id = #{teacherId}
+        </if>
+        <if test="status != null and status != ''">
+            AND a.status = #{status}
+        </if>
+        <if test="keyword != null and keyword != ''">
+            AND (a.title LIKE CONCAT('%', #{keyword}, '%') 
+                 OR a.description LIKE CONCAT('%', #{keyword}, '%'))
+        </if>
+        ORDER BY a.created_at DESC
+    </select>
+
+    <!-- 更新作业提交数量 -->
+    <update id="updateSubmissionCount">
+        UPDATE assignments SET 
+            submission_count = submission_count + #{increment},
+            updated_at = NOW()
+        WHERE id = #{assignmentId} AND deleted = false
+    </update>
+
+    <!-- 根据状态查询作业 -->
+    <select id="selectAssignmentsByStatus" parameterType="string" resultMap="AssignmentResultMap">
+        SELECT <include refid="assignmentWithDetailsColumns"/>
+        FROM assignments a
+        LEFT JOIN courses c ON a.course_id = c.id
+        LEFT JOIN users u ON a.teacher_id = u.id
+        WHERE a.status = #{status} AND a.deleted = false
+        ORDER BY a.created_at DESC
+    </select>
+
+    <!-- 统计作业数量 -->
+    <select id="countAssignments" resultType="int">
+        SELECT COUNT(1) FROM assignments a
+        WHERE a.deleted = false
+        <if test="courseId != null">
+            AND a.course_id = #{courseId}
+        </if>
+        <if test="teacherId != null">
+            AND a.teacher_id = #{teacherId}
+        </if>
+        <if test="status != null and status != ''">
+            AND a.status = #{status}
+        </if>
+    </select>
+
+    <!-- 检查作业是否存在 -->
+    <select id="checkAssignmentExists" parameterType="long" resultType="int">
+        SELECT COUNT(1) FROM assignments 
+        WHERE id = #{id} AND deleted = false
+    </select>
+
+    <!-- 批量更新作业状态 -->
+    <update id="batchUpdateAssignmentStatus">
+        UPDATE assignments SET 
+            status = #{status},
+            updated_at = NOW()
+        WHERE deleted = false AND id IN
+        <foreach collection="assignmentIds" item="id" open="(" close=")" separator=",">
+            #{id}
+        </foreach>
+    </update>
+
+    <!-- 查询即将到期的作业 -->
+    <select id="selectDueAssignments" parameterType="int" resultMap="AssignmentResultMap">
+        SELECT <include refid="assignmentWithDetailsColumns"/>
+        FROM assignments a
+        LEFT JOIN courses c ON a.course_id = c.id
+        LEFT JOIN users u ON a.teacher_id = u.id
+        WHERE a.deleted = false AND a.status = 'published' 
+              AND a.due_date BETWEEN NOW() AND DATE_ADD(NOW(), INTERVAL #{days} DAY)
+        ORDER BY a.due_date ASC
+    </select>
+
+    <!-- 根据课程和学生查询作业（学生视角） -->
+    <select id="selectAssignmentsForStudent" resultMap="AssignmentResultMap">
+        SELECT <include refid="assignmentWithDetailsColumns"/>
+        FROM assignments a
+        LEFT JOIN courses c ON a.course_id = c.id
+        LEFT JOIN users u ON a.teacher_id = u.id
+        INNER JOIN enrollments e ON a.course_id = e.course_id
+        WHERE a.deleted = false AND a.status = 'published'
+              AND e.student_id = #{studentId}
+        <if test="courseId != null">
+            AND a.course_id = #{courseId}
+        </if>
+        ORDER BY a.due_date ASC, a.created_at DESC
+    </select>
+
+    <!-- 获取作业统计信息 -->
+    <select id="getAssignmentStatistics" resultType="map">
+        SELECT 
+            status,
+            COUNT(*) as count,
+            AVG(submission_count) as avg_submissions,
+            SUM(submission_count) as total_submissions
+        FROM assignments 
+        WHERE deleted = false
+        <if test="teacherId != null">
+            AND teacher_id = #{teacherId}
+        </if>
+        <if test="courseId != null">
+            AND course_id = #{courseId}
+        </if>
+        GROUP BY status
+    </select>
+</mapper> 

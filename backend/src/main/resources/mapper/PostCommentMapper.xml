@@ -1,0 +1,221 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.noncore.assessment.mapper.PostCommentMapper">
+
+    <!-- 评论字段映射 -->
+    <resultMap id="BaseResultMap" type="com.noncore.assessment.entity.PostComment">
+        <id column="id" property="id" jdbcType="BIGINT"/>
+        <result column="post_id" property="postId" jdbcType="BIGINT"/>
+        <result column="author_id" property="authorId" jdbcType="BIGINT"/>
+        <result column="parent_id" property="parentId" jdbcType="BIGINT"/>
+        <result column="content" property="content" jdbcType="LONGVARCHAR"/>
+        <result column="likes_count" property="likesCount" jdbcType="INTEGER"/>
+        <result column="status" property="status" jdbcType="VARCHAR"/>
+        <result column="created_at" property="createdAt" jdbcType="TIMESTAMP"/>
+        <result column="updated_at" property="updatedAt" jdbcType="TIMESTAMP"/>
+        <result column="deleted" property="deleted" jdbcType="BOOLEAN"/>
+    </resultMap>
+
+    <!-- 评论详情字段映射（包含作者信息） -->
+    <resultMap id="DetailResultMap" type="com.noncore.assessment.entity.PostComment" extends="BaseResultMap">
+        <association property="author" javaType="com.noncore.assessment.entity.User">
+            <id column="author_id" property="id"/>
+            <result column="author_username" property="username"/>
+            <result column="author_display_name" property="displayName"/>
+            <result column="author_avatar" property="avatar"/>
+        </association>
+    </resultMap>
+
+    <!-- 基础字段列表 -->
+    <sql id="Base_Column_List">
+        c.id, c.post_id, c.author_id, c.parent_id, c.content, c.likes_count, c.status, c.created_at, c.updated_at, c.deleted
+    </sql>
+
+    <!-- 详情字段列表（包含作者信息） -->
+    <sql id="Detail_Column_List">
+        <include refid="Base_Column_List"/>,
+        u.username as author_username, u.display_name as author_display_name, u.avatar as author_avatar
+    </sql>
+
+    <!-- 查询条件 -->
+    <sql id="Where_Clause">
+        <where>
+            c.deleted = false
+            <if test="id != null">
+                AND c.id = #{id}
+            </if>
+            <if test="postId != null">
+                AND c.post_id = #{postId}
+            </if>
+            <if test="authorId != null">
+                AND c.author_id = #{authorId}
+            </if>
+            <if test="parentId != null">
+                AND c.parent_id = #{parentId}
+            </if>
+            <if test="status != null and status != ''">
+                AND c.status = #{status}
+            </if>
+        </where>
+    </sql>
+
+    <!-- 插入评论 -->
+    <insert id="insert" parameterType="com.noncore.assessment.entity.PostComment" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO post_comments (
+            post_id, author_id, parent_id, content, likes_count, status, deleted
+        ) VALUES (
+            #{postId}, #{authorId}, #{parentId}, #{content}, #{likesCount}, #{status}, #{deleted}
+        )
+    </insert>
+
+    <!-- 根据ID查询评论 -->
+    <select id="selectById" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM post_comments c
+        WHERE c.id = #{id} AND c.deleted = false
+    </select>
+
+    <!-- 根据ID查询评论详情 -->
+    <select id="selectDetailById" resultMap="DetailResultMap">
+        SELECT <include refid="Detail_Column_List"/>
+        FROM post_comments c
+        LEFT JOIN users u ON c.author_id = u.id
+        WHERE c.id = #{id} AND c.deleted = false
+    </select>
+
+    <!-- 更新评论 -->
+    <update id="updateById" parameterType="com.noncore.assessment.entity.PostComment">
+        UPDATE post_comments
+        <set>
+            <if test="content != null">content = #{content},</if>
+            <if test="status != null">status = #{status},</if>
+            updated_at = CURRENT_TIMESTAMP
+        </set>
+        WHERE id = #{id}
+    </update>
+
+    <!-- 删除评论 -->
+    <delete id="deleteById">
+        DELETE FROM post_comments WHERE id = #{id}
+    </delete>
+
+    <!-- 软删除评论 -->
+    <update id="softDeleteById">
+        UPDATE post_comments SET deleted = true, updated_at = CURRENT_TIMESTAMP WHERE id = #{id}
+    </update>
+
+    <!-- 查询评论列表 -->
+    <select id="selectList" parameterType="map" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM post_comments c
+        <include refid="Where_Clause"/>
+        ORDER BY c.created_at ASC
+    </select>
+
+    <!-- 查询评论详情列表 -->
+    <select id="selectDetailList" parameterType="map" resultMap="DetailResultMap">
+        SELECT <include refid="Detail_Column_List"/>
+        FROM post_comments c
+        LEFT JOIN users u ON c.author_id = u.id
+        <include refid="Where_Clause"/>
+        ORDER BY c.created_at ASC
+    </select>
+
+    <!-- 查询评论总数 -->
+    <select id="countList" parameterType="map" resultType="long">
+        SELECT COUNT(*)
+        FROM post_comments c
+        <include refid="Where_Clause"/>
+    </select>
+
+    <!-- 根据帖子ID查询评论列表 -->
+    <select id="selectByPostId" resultMap="DetailResultMap">
+        SELECT <include refid="Detail_Column_List"/>
+        FROM post_comments c
+        LEFT JOIN users u ON c.author_id = u.id
+        WHERE c.post_id = #{postId} AND c.deleted = false AND c.status = 'published'
+        <if test="params.parentId != null">
+            AND c.parent_id = #{params.parentId}
+        </if>
+        ORDER BY c.created_at ASC
+    </select>
+
+    <!-- 根据帖子ID查询评论总数 -->
+    <select id="countByPostId" resultType="long">
+        SELECT COUNT(*)
+        FROM post_comments c
+        WHERE c.post_id = #{postId} AND c.deleted = false AND c.status = 'published'
+        <if test="params.parentId != null">
+            AND c.parent_id = #{params.parentId}
+        </if>
+    </select>
+
+    <!-- 根据用户ID查询评论列表 -->
+    <select id="selectByUserId" resultMap="DetailResultMap">
+        SELECT <include refid="Detail_Column_List"/>
+        FROM post_comments c
+        LEFT JOIN users u ON c.author_id = u.id
+        WHERE c.author_id = #{userId} AND c.deleted = false
+        <if test="params.status != null and params.status != ''">
+            AND c.status = #{params.status}
+        </if>
+        ORDER BY c.created_at DESC
+    </select>
+
+    <!-- 根据用户ID查询评论总数 -->
+    <select id="countByUserId" resultType="long">
+        SELECT COUNT(*)
+        FROM post_comments c
+        WHERE c.author_id = #{userId} AND c.deleted = false
+        <if test="params.status != null and params.status != ''">
+            AND c.status = #{params.status}
+        </if>
+    </select>
+
+    <!-- 查询帖子的最新评论 -->
+    <select id="selectRecentByPostId" resultMap="DetailResultMap">
+        SELECT <include refid="Detail_Column_List"/>
+        FROM post_comments c
+        LEFT JOIN users u ON c.author_id = u.id
+        WHERE c.post_id = #{postId} AND c.deleted = false AND c.status = 'published'
+        ORDER BY c.created_at DESC
+        LIMIT #{limit}
+    </select>
+
+    <!-- 查询帖子的最后一条评论 -->
+    <select id="selectLastByPostId" resultMap="DetailResultMap">
+        SELECT <include refid="Detail_Column_List"/>
+        FROM post_comments c
+        LEFT JOIN users u ON c.author_id = u.id
+        WHERE c.post_id = #{postId} AND c.deleted = false AND c.status = 'published'
+        ORDER BY c.created_at DESC
+        LIMIT 1
+    </select>
+
+    <!-- 增加评论点赞数 -->
+    <update id="incrementLikes">
+        UPDATE post_comments SET likes_count = likes_count + 1, updated_at = CURRENT_TIMESTAMP WHERE id = #{id}
+    </update>
+
+    <!-- 减少评论点赞数 -->
+    <update id="decrementLikes">
+        UPDATE post_comments SET likes_count = GREATEST(0, likes_count - 1), updated_at = CURRENT_TIMESTAMP WHERE id = #{id}
+    </update>
+
+    <!-- 查询子评论列表 -->
+    <select id="selectReplies" resultMap="DetailResultMap">
+        SELECT <include refid="Detail_Column_List"/>
+        FROM post_comments c
+        LEFT JOIN users u ON c.author_id = u.id
+        WHERE c.parent_id = #{parentId} AND c.deleted = false AND c.status = 'published'
+        ORDER BY c.created_at ASC
+    </select>
+
+    <!-- 查询子评论总数 -->
+    <select id="countReplies" resultType="long">
+        SELECT COUNT(*)
+        FROM post_comments c
+        WHERE c.parent_id = #{parentId} AND c.deleted = false AND c.status = 'published'
+    </select>
+
+</mapper> 

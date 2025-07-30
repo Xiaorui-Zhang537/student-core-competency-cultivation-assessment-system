@@ -1,0 +1,118 @@
+package com.noncore.assessment.mapper;
+
+import com.noncore.assessment.entity.AbilityReport;
+import org.apache.ibatis.annotations.Mapper;
+import org.apache.ibatis.annotations.Param;
+
+import java.time.LocalDate;
+import java.util.List;
+
+/**
+ * 能力报告Mapper接口
+ *
+ * @author System
+ * @version 1.0.0
+ * @since 2024-12-28
+ */
+@Mapper
+public interface AbilityReportMapper {
+
+    /**
+     * 插入能力报告
+     */
+    int insertReport(AbilityReport report);
+
+    /**
+     * 根据ID查询能力报告
+     */
+    AbilityReport selectReportById(Long id);
+
+    /**
+     * 更新能力报告
+     */
+    int updateReport(AbilityReport report);
+
+    /**
+     * 删除能力报告
+     */
+    int deleteReport(Long id);
+
+    /**
+     * 根据学生ID查询报告
+     */
+    List<AbilityReport> selectReportsByStudentId(@Param("studentId") Long studentId);
+
+    /**
+     * 分页查询能力报告
+     */
+    List<AbilityReport> selectReportsWithPagination(@Param("studentId") Long studentId,
+                                                    @Param("reportType") String reportType,
+                                                    @Param("isPublished") Boolean isPublished,
+                                                    @Param("offset") int offset,
+                                                    @Param("size") Integer size);
+
+    /**
+     * 统计能力报告数量
+     */
+    Integer countReports(@Param("studentId") Long studentId,
+                        @Param("reportType") String reportType,
+                        @Param("isPublished") Boolean isPublished);
+
+    /**
+     * 获取学生最新的报告
+     */
+    AbilityReport selectLatestReportByStudent(@Param("studentId") Long studentId);
+
+    /**
+     * 根据报告类型和时间范围查询报告
+     */
+    List<AbilityReport> selectReportsByTypeAndPeriod(@Param("studentId") Long studentId,
+                                                     @Param("reportType") String reportType,
+                                                     @Param("periodStart") LocalDate periodStart,
+                                                     @Param("periodEnd") LocalDate periodEnd);
+
+    /**
+     * 检查报告是否存在
+     */
+    boolean existsByStudentAndPeriod(@Param("studentId") Long studentId,
+                                    @Param("reportType") String reportType,
+                                    @Param("periodStart") LocalDate periodStart,
+                                    @Param("periodEnd") LocalDate periodEnd);
+
+    /**
+     * 发布报告
+     */
+    int publishReport(@Param("id") Long id);
+
+    /**
+     * 取消发布报告
+     */
+    int unpublishReport(@Param("id") Long id);
+
+    /**
+     * 批量删除旧报告
+     */
+    int deleteOldReports(@Param("beforeDate") LocalDate beforeDate);
+
+    /**
+     * 获取报告统计信息
+     */
+    java.util.Map<String, Object> getReportStats(@Param("studentId") Long studentId);
+
+    /**
+     * 根据类型统计报告数量
+     */
+    List<java.util.Map<String, Object>> countReportsByType(@Param("studentId") Long studentId);
+
+    /**
+     * 获取最高分报告
+     */
+    List<AbilityReport> selectTopScoreReports(@Param("studentId") Long studentId,
+                                             @Param("limit") Integer limit);
+
+    /**
+     * 查询需要生成的报告（系统自动生成）
+     */
+    List<Long> selectStudentsForReportGeneration(@Param("reportType") String reportType,
+                                                @Param("lastGeneratedBefore") LocalDate lastGeneratedBefore);
+} 

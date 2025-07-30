@@ -1,0 +1,30 @@
+{
+  "name": "student-non-core-competence-assessment-system",
+  "version": "1.0.0",
+  "description": "基于AI的学生非核心能力发展评估与学习平台",
+  "private": true,
+  "scripts": {
+    "dev": "cd frontend && npm run dev",
+    "build": "cd frontend && npm run build",
+    "preview": "cd frontend && npm run preview",
+    "lint": "cd frontend && npm run lint",
+    "format": "cd frontend && npm run format",
+    "type-check": "cd frontend && npm run type-check",
+    "install:frontend": "cd frontend && npm install",
+    "install:backend": "cd backend && npm install",
+    "install:all": "npm run install:frontend && npm run install:backend"
+  },
+  "keywords": [
+    "education",
+    "assessment", 
+    "ai",
+    "vue3",
+    "typescript"
+  ],
+  "author": "Your Name",
+  "license": "MIT",
+  "workspaces": [
+    "frontend",
+    "backend"
+  ]
+} 

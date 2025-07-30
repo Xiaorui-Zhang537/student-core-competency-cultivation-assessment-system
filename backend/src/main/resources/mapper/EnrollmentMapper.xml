@@ -1,0 +1,229 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.noncore.assessment.mapper.EnrollmentMapper">
+
+    <!-- 选课记录结果映射 -->
+    <resultMap id="EnrollmentResultMap" type="com.noncore.assessment.entity.Enrollment">
+        <id column="id" property="id"/>
+        <result column="student_id" property="studentId"/>
+        <result column="course_id" property="courseId"/>
+        <result column="status" property="status"/>
+        <result column="progress" property="progress"/>
+        <result column="grade" property="grade"/>
+        <result column="enrolled_at" property="enrolledAt"/>
+        <result column="completed_at" property="completedAt"/>
+        <result column="last_access_at" property="lastAccessAt"/>
+        <result column="notes" property="notes"/>
+        <result column="created_at" property="createdAt"/>
+        <result column="updated_at" property="updatedAt"/>
+        <result column="student_name" property="studentName"/>
+        <result column="course_name" property="courseName"/>
+        <result column="teacher_name" property="teacherName"/>
+    </resultMap>
+
+    <!-- 插入选课记录 -->
+    <insert id="insertEnrollment">
+        INSERT INTO enrollments (
+            student_id, course_id, status, enrolled_at, progress, 
+            last_access_at, created_at, updated_at
+        ) VALUES (
+            #{studentId}, #{courseId}, #{status}, #{enrolledAt}, 0.0,
+            NOW(), NOW(), NOW()
+        )
+    </insert>
+
+    <!-- 删除选课记录 -->
+    <delete id="deleteEnrollment">
+        DELETE FROM enrollments 
+        WHERE student_id = #{studentId} AND course_id = #{courseId}
+    </delete>
+
+    <!-- 更新选课记录 -->
+    <update id="updateEnrollment" parameterType="com.noncore.assessment.entity.Enrollment">
+        UPDATE enrollments SET
+            status = #{status},
+            progress = #{progress},
+            grade = #{grade},
+            completed_at = #{completedAt},
+            last_access_at = #{lastAccessAt},
+            notes = #{notes},
+            updated_at = NOW()
+        WHERE id = #{id}
+    </update>
+
+    <!-- 根据ID查询选课记录 -->
+    <select id="selectEnrollmentById" parameterType="long" resultMap="EnrollmentResultMap">
+        SELECT e.*, 
+               u.display_name as student_name,
+               c.title as course_name,
+               t.display_name as teacher_name
+        FROM enrollments e
+        LEFT JOIN users u ON e.student_id = u.id
+        LEFT JOIN courses c ON e.course_id = c.id
+        LEFT JOIN users t ON c.teacher_id = t.id
+        WHERE e.id = #{id}
+    </select>
+
+    <!-- 根据学生和课程查询选课记录 -->
+    <select id="selectEnrollmentByStudentAndCourse" resultMap="EnrollmentResultMap">
+        SELECT e.*, 
+               u.display_name as student_name,
+               c.title as course_name,
+               t.display_name as teacher_name
+        FROM enrollments e
+        LEFT JOIN users u ON e.student_id = u.id
+        LEFT JOIN courses c ON e.course_id = c.id
+        LEFT JOIN users t ON c.teacher_id = t.id
+        WHERE e.student_id = #{studentId} AND e.course_id = #{courseId}
+    </select>
+
+    <!-- 检查选课记录是否存在 -->
+    <select id="checkEnrollmentExists" resultType="int">
+        SELECT COUNT(1) FROM enrollments 
+        WHERE student_id = #{studentId} AND course_id = #{courseId}
+    </select>
+
+    <!-- 根据学生ID查询选课记录 -->
+    <select id="selectEnrollmentsByStudentId" resultMap="EnrollmentResultMap">
+        SELECT e.*, 
+               c.title as course_name,
+               t.display_name as teacher_name
+        FROM enrollments e
+        LEFT JOIN courses c ON e.course_id = c.id
+        LEFT JOIN users t ON c.teacher_id = t.id
+        WHERE e.student_id = #{studentId}
+        ORDER BY e.enrolled_at DESC
+    </select>
+
+    <!-- 根据课程ID查询选课记录 -->
+    <select id="selectEnrollmentsByCourseId" resultMap="EnrollmentResultMap">
+        SELECT e.*, 
+               u.display_name as student_name
+        FROM enrollments e
+        LEFT JOIN users u ON e.student_id = u.id
+        WHERE e.course_id = #{courseId}
+        ORDER BY e.enrolled_at DESC
+    </select>
+
+    <!-- 根据状态查询选课记录 -->
+    <select id="selectEnrollmentsByStatus" resultMap="EnrollmentResultMap">
+        SELECT e.*, 
+               u.display_name as student_name,
+               c.title as course_name,
+               t.display_name as teacher_name
+        FROM enrollments e
+        LEFT JOIN users u ON e.student_id = u.id
+        LEFT JOIN courses c ON e.course_id = c.id
+        LEFT JOIN users t ON c.teacher_id = t.id
+        WHERE e.status = #{status}
+        ORDER BY e.enrolled_at DESC
+    </select>
+
+    <!-- 更新学习进度 -->
+    <update id="updateProgress">
+        UPDATE enrollments SET 
+            progress = #{progress},
+            last_access_at = NOW(),
+            updated_at = NOW()
+        WHERE student_id = #{studentId} AND course_id = #{courseId}
+    </update>
+
+    <!-- 更新最后访问时间 -->
+    <update id="updateLastAccessTime">
+        UPDATE enrollments SET 
+            last_access_at = NOW(),
+            updated_at = NOW()
+        WHERE student_id = #{studentId} AND course_id = #{courseId}
+    </update>
+
+    <!-- 完成课程学习 -->
+    <update id="completeCourse">
+        UPDATE enrollments SET 
+            status = CASE 
+                WHEN #{grade} >= 60 THEN 'completed'
+                ELSE 'failed'
+            END,
+            grade = #{grade},
+            progress = 100.0,
+            completed_at = NOW(),
+            updated_at = NOW()
+        WHERE student_id = #{studentId} AND course_id = #{courseId}
+    </update>
+
+    <!-- 批量更新选课状态 -->
+    <update id="batchUpdateStatus">
+        UPDATE enrollments SET 
+            status = #{status},
+            updated_at = NOW()
+        WHERE id IN
+        <foreach collection="enrollmentIds" item="id" open="(" close=")" separator=",">
+            #{id}
+        </foreach>
+    </update>
+
+    <!-- 统计选课数量 -->
+    <select id="countEnrollments" resultType="int">
+        SELECT COUNT(1) FROM enrollments e
+        WHERE 1=1
+        <if test="studentId != null">
+            AND e.student_id = #{studentId}
+        </if>
+        <if test="courseId != null">
+            AND e.course_id = #{courseId}
+        </if>
+        <if test="status != null and status != ''">
+            AND e.status = #{status}
+        </if>
+    </select>
+
+    <!-- 获取学生学习统计 -->
+    <select id="getStudentLearningStats" resultType="map">
+        SELECT 
+            status,
+            COUNT(*) as count,
+            AVG(progress) as avg_progress,
+            AVG(grade) as avg_grade
+        FROM enrollments 
+        WHERE student_id = #{studentId}
+        GROUP BY status
+    </select>
+
+    <!-- 获取课程选课统计 -->
+    <select id="getCourseEnrollmentStats" resultType="map">
+        SELECT 
+            status,
+            COUNT(*) as count,
+            AVG(progress) as avg_progress,
+            AVG(grade) as avg_grade
+        FROM enrollments 
+        WHERE course_id = #{courseId}
+        GROUP BY status
+    </select>
+
+    <!-- 分页查询选课记录 -->
+    <select id="selectEnrollmentsWithPagination" resultMap="EnrollmentResultMap">
+        SELECT e.*, 
+               u.display_name as student_name,
+               c.title as course_name,
+               t.display_name as teacher_name
+        FROM enrollments e
+        LEFT JOIN users u ON e.student_id = u.id
+        LEFT JOIN courses c ON e.course_id = c.id
+        LEFT JOIN users t ON c.teacher_id = t.id
+        WHERE 1=1
+        <if test="studentId != null">
+            AND e.student_id = #{studentId}
+        </if>
+        <if test="courseId != null">
+            AND e.course_id = #{courseId}
+        </if>
+        <if test="status != null and status != ''">
+            AND e.status = #{status}
+        </if>
+        <if test="keyword != null and keyword != ''">
+            AND (u.display_name LIKE CONCAT('%', #{keyword}, '%') 
+                 OR c.title LIKE CONCAT('%', #{keyword}, '%'))
+        </if>
+        ORDER BY e.enrolled_at DESC
+    </select>
+</mapper> 

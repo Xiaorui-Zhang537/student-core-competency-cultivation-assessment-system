@@ -1,0 +1,8 @@
+.DS_Store
+.cursor/
+.idea/
+.tasks/
+.vscode/
+*.log
+node_modules/
+# 添加其他需要忽略的文件

@@ -1,0 +1,235 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.noncore.assessment.mapper.GradeMapper">
+
+    <resultMap id="GradeResultMap" type="com.noncore.assessment.entity.Grade">
+        <id column="id" property="id" jdbcType="BIGINT"/>
+        <result column="submission_id" property="submissionId" jdbcType="BIGINT"/>
+        <result column="student_id" property="studentId" jdbcType="BIGINT"/>
+        <result column="assignment_id" property="assignmentId" jdbcType="BIGINT"/>
+        <result column="grader_id" property="graderId" jdbcType="BIGINT"/>
+        <result column="score" property="score" jdbcType="DECIMAL"/>
+        <result column="max_score" property="maxScore" jdbcType="DECIMAL"/>
+        <result column="feedback" property="feedback" jdbcType="CLOB"/>
+        <result column="rubric" property="rubric" jdbcType="CLOB"/>
+        <result column="ai_analysis" property="aiAnalysis" jdbcType="CLOB"/>
+        <result column="status" property="status" jdbcType="VARCHAR"/>
+        <result column="graded_at" property="gradedAt" jdbcType="TIMESTAMP"/>
+        <result column="created_at" property="createdAt" jdbcType="TIMESTAMP"/>
+        <result column="updated_at" property="updatedAt" jdbcType="TIMESTAMP"/>
+        <result column="deleted" property="deleted" jdbcType="BOOLEAN"/>
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        id, submission_id, student_id, assignment_id, grader_id, score, max_score, feedback, 
+        rubric, ai_analysis, status, graded_at, created_at, updated_at, deleted
+    </sql>
+
+    <!-- 插入成绩 -->
+    <insert id="insertGrade" parameterType="com.noncore.assessment.entity.Grade" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO grades (
+            submission_id, student_id, assignment_id, grader_id, score, max_score, feedback, 
+            rubric, ai_analysis, status, graded_at, created_at, updated_at, deleted
+        ) VALUES (
+            #{submissionId}, #{studentId}, #{assignmentId}, #{graderId}, #{score}, #{maxScore}, #{feedback}, 
+            #{rubric}, #{aiAnalysis}, #{status}, #{gradedAt}, #{createdAt}, #{updatedAt}, #{deleted}
+        )
+    </insert>
+
+    <!-- 根据ID查询成绩 -->
+    <select id="selectGradeById" parameterType="java.lang.Long" resultMap="GradeResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM grades
+        WHERE id = #{id} AND deleted = false
+    </select>
+
+    <!-- 根据学生ID查询成绩列表 -->
+    <select id="selectByStudentId" parameterType="java.lang.Long" resultMap="GradeResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM grades
+        WHERE student_id = #{studentId} AND deleted = false
+        ORDER BY created_at DESC
+    </select>
+
+    <!-- 根据作业ID查询成绩列表 -->
+    <select id="selectByAssignmentId" parameterType="java.lang.Long" resultMap="GradeResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM grades
+        WHERE assignment_id = #{assignmentId} AND deleted = false
+        ORDER BY created_at DESC
+    </select>
+
+    <!-- 更新成绩 -->
+    <update id="updateGrade" parameterType="com.noncore.assessment.entity.Grade">
+        UPDATE grades SET
+            score = #{score},
+            max_score = #{maxScore},
+            feedback = #{feedback},
+            rubric = #{rubric},
+            ai_analysis = #{aiAnalysis},
+            status = #{status},
+            graded_at = #{gradedAt},
+            updated_at = #{updatedAt}
+        WHERE id = #{id} AND deleted = false
+    </update>
+
+    <!-- 删除成绩（软删除） -->
+    <update id="deleteGrade" parameterType="java.lang.Long">
+        UPDATE grades SET deleted = true, updated_at = NOW()
+        WHERE id = #{id}
+    </update>
+
+    <!-- 根据学生和作业查询成绩 -->
+    <select id="selectByStudentAndAssignment" resultMap="GradeResultMap">
+        SELECT 
+        <include refid="Base_Column_List"/>
+        FROM grades
+        WHERE student_id = #{studentId}
+        AND assignment_id = #{assignmentId}
+        AND deleted = 0
+    </select>
+
+    <!-- 根据学生和课程查询成绩 -->
+    <select id="selectByStudentAndCourse" resultMap="GradeResultMap">
+        SELECT 
+        <include refid="Base_Column_List"/>
+        FROM grades g
+        INNER JOIN assignments a ON g.assignment_id = a.id
+        WHERE g.student_id = #{studentId}
+        AND a.course_id = #{courseId}
+        AND g.deleted = 0
+    </select>
+
+    <!-- 根据课程查询成绩 -->
+    <select id="selectByCourseId" resultMap="GradeResultMap">
+        SELECT 
+        <include refid="Base_Column_List"/>
+        FROM grades g
+        INNER JOIN assignments a ON g.assignment_id = a.id
+        WHERE a.course_id = #{courseId}
+        AND g.deleted = 0
+    </select>
+
+    <!-- 分页查询学生成绩 -->
+    <select id="selectByStudentIdWithPagination" resultMap="GradeResultMap">
+        SELECT 
+        <include refid="Base_Column_List"/>
+        FROM grades
+        WHERE student_id = #{studentId}
+        AND deleted = 0
+        ORDER BY created_at DESC
+        LIMIT #{size} OFFSET #{offset}
+    </select>
+
+    <!-- 分页查询作业成绩 -->
+    <select id="selectByAssignmentIdWithPagination" resultMap="GradeResultMap">
+        SELECT 
+        <include refid="Base_Column_List"/>
+        FROM grades
+        WHERE assignment_id = #{assignmentId}
+        AND deleted = 0
+        ORDER BY score DESC
+        LIMIT #{size} OFFSET #{offset}
+    </select>
+
+    <!-- 统计学生成绩数量 -->
+    <select id="countByStudentId" resultType="java.lang.Integer">
+        SELECT COUNT(*)
+        FROM grades
+        WHERE student_id = #{studentId}
+        AND deleted = 0
+    </select>
+
+    <!-- 统计作业成绩数量 -->
+    <select id="countByAssignmentId" resultType="java.lang.Integer">
+        SELECT COUNT(*)
+        FROM grades
+        WHERE assignment_id = #{assignmentId}
+        AND deleted = 0
+    </select>
+
+    <!-- 获取待评分成绩 -->
+    <select id="selectPendingGrades" resultMap="GradeResultMap">
+        SELECT 
+        <include refid="Base_Column_List"/>
+        FROM grades g
+        INNER JOIN assignments a ON g.assignment_id = a.id
+        WHERE a.teacher_id = #{teacherId}
+        AND g.status = 'draft'
+        AND g.deleted = 0
+        ORDER BY g.created_at ASC
+    </select>
+
+    <!-- 计算学生平均分 -->
+    <select id="calculateAverageScore" resultType="java.math.BigDecimal">
+        SELECT COALESCE(AVG(score), 0) as average_score
+        FROM grades
+        WHERE student_id = #{studentId}
+        AND status = 'published'
+        AND deleted = 0
+    </select>
+
+    <!-- 计算学生课程平均分 -->
+    <select id="calculateCourseAverageScore" resultType="java.math.BigDecimal">
+        SELECT COALESCE(AVG(g.score), 0) as average_score
+        FROM grades g
+        INNER JOIN assignments a ON g.assignment_id = a.id
+        WHERE g.student_id = #{studentId}
+        AND a.course_id = #{courseId}
+        AND g.status = 'published'
+        AND g.deleted = 0
+    </select>
+
+    <!-- 计算作业平均分 -->
+    <select id="calculateAssignmentAverageScore" resultType="java.math.BigDecimal">
+        SELECT COALESCE(AVG(score), 0) as average_score
+        FROM grades
+        WHERE assignment_id = #{assignmentId}
+        AND status = 'published'
+        AND deleted = 0
+    </select>
+
+    <!-- 获取成绩分布 -->
+    <select id="getGradeDistribution" resultType="java.util.Map">
+        SELECT 
+            CASE 
+                WHEN score >= 90 THEN 'A'
+                WHEN score >= 80 THEN 'B'
+                WHEN score >= 70 THEN 'C'
+                WHEN score >= 60 THEN 'D'
+                ELSE 'F'
+            END as grade_level,
+            COUNT(*) as count,
+            ROUND(COUNT(*) * 100.0 / (SELECT COUNT(*) FROM grades WHERE assignment_id = #{assignmentId} AND deleted = 0), 2) as percentage
+        FROM grades
+        WHERE assignment_id = #{assignmentId}
+        AND status = 'published'
+        AND deleted = 0
+        GROUP BY 
+            CASE 
+                WHEN score >= 90 THEN 'A'
+                WHEN score >= 80 THEN 'B'
+                WHEN score >= 70 THEN 'C'
+                WHEN score >= 60 THEN 'D'
+                ELSE 'F'
+            END
+        ORDER BY grade_level
+    </select>
+
+    <!-- 获取课程成绩统计 -->
+    <select id="getCourseGradeStats" resultType="java.util.Map">
+        SELECT 
+            COUNT(*) as totalGrades,
+            COALESCE(AVG(g.score), 0) as averageScore,
+            COALESCE(MAX(g.score), 0) as highestScore,
+            COALESCE(MIN(g.score), 0) as lowestScore,
+            COUNT(DISTINCT g.student_id) as totalStudents,
+            COUNT(DISTINCT g.assignment_id) as totalAssignments
+        FROM grades g
+        INNER JOIN assignments a ON g.assignment_id = a.id
+        WHERE a.course_id = #{courseId}
+        AND g.status = 'published'
+        AND g.deleted = 0
+    </select>
+
+</mapper>

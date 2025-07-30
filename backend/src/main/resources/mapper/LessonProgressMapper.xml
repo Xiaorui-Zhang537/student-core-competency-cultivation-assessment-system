@@ -1,0 +1,306 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.noncore.assessment.mapper.LessonProgressMapper">
+
+    <resultMap id="LessonProgressResultMap" type="com.noncore.assessment.entity.LessonProgress">
+        <id column="id" property="id" jdbcType="BIGINT"/>
+        <result column="student_id" property="studentId" jdbcType="BIGINT"/>
+        <result column="lesson_id" property="lessonId" jdbcType="BIGINT"/>
+        <result column="course_id" property="courseId" jdbcType="BIGINT"/>
+        <result column="progress_percent" property="progressPercent" jdbcType="DECIMAL"/>
+        <result column="watch_time" property="watchTime" jdbcType="INTEGER"/>
+        <result column="total_time" property="totalTime" jdbcType="INTEGER"/>
+        <result column="status" property="status" jdbcType="VARCHAR"/>
+        <result column="last_position" property="lastPosition" jdbcType="INTEGER"/>
+        <result column="is_completed" property="isCompleted" jdbcType="BOOLEAN"/>
+        <result column="completed_at" property="completedAt" jdbcType="TIMESTAMP"/>
+        <result column="created_at" property="createdAt" jdbcType="TIMESTAMP"/>
+        <result column="updated_at" property="updatedAt" jdbcType="TIMESTAMP"/>
+        <result column="deleted" property="deleted" jdbcType="BOOLEAN"/>
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        id, student_id, lesson_id, course_id, progress_percent, watch_time, total_time, 
+        status, last_position, is_completed, completed_at, created_at, updated_at, deleted
+    </sql>
+
+    <!-- 插入学习进度 -->
+    <insert id="insertLessonProgress" parameterType="com.noncore.assessment.entity.LessonProgress" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO lesson_progress (
+            student_id, lesson_id, course_id, progress_percent, watch_time, total_time, 
+            status, last_position, is_completed, completed_at, created_at, updated_at, deleted
+        ) VALUES (
+            #{studentId}, #{lessonId}, #{courseId}, #{progressPercent}, #{watchTime}, #{totalTime}, 
+            #{status}, #{lastPosition}, #{isCompleted}, #{completedAt}, #{createdAt}, #{updatedAt}, #{deleted}
+        )
+    </insert>
+
+    <!-- 根据ID查询学习进度 -->
+    <select id="selectLessonProgressById" parameterType="java.lang.Long" resultMap="LessonProgressResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM lesson_progress
+        WHERE id = #{id} AND deleted = false
+    </select>
+
+    <!-- 根据学生ID和课时ID查询学习进度 -->
+    <select id="selectByStudentAndLesson" resultMap="LessonProgressResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM lesson_progress
+        WHERE student_id = #{studentId} AND lesson_id = #{lessonId} AND deleted = false
+    </select>
+
+    <!-- 根据学生ID查询学习进度列表 -->
+    <select id="selectByStudentId" parameterType="java.lang.Long" resultMap="LessonProgressResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM lesson_progress
+        WHERE student_id = #{studentId} AND deleted = false
+        ORDER BY updated_at DESC
+    </select>
+
+    <!-- 根据课程ID查询学习进度列表 -->
+    <select id="selectByCourseId" parameterType="java.lang.Long" resultMap="LessonProgressResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM lesson_progress
+        WHERE course_id = #{courseId} AND deleted = false
+        ORDER BY updated_at DESC
+    </select>
+
+    <!-- 更新学习进度 -->
+    <update id="updateLessonProgress" parameterType="com.noncore.assessment.entity.LessonProgress">
+        UPDATE lesson_progress SET
+            progress_percent = #{progressPercent},
+            watch_time = #{watchTime},
+            total_time = #{totalTime},
+            status = #{status},
+            last_position = #{lastPosition},
+            is_completed = #{isCompleted},
+            completed_at = #{completedAt},
+            updated_at = #{updatedAt}
+        WHERE id = #{id} AND deleted = false
+    </update>
+
+    <!-- 删除学习进度（软删除） -->
+    <update id="deleteLessonProgress" parameterType="java.lang.Long">
+        UPDATE lesson_progress SET deleted = true, updated_at = NOW()
+        WHERE id = #{id}
+    </update>
+
+    <!-- 统计学生课程完成进度 -->
+    <select id="getCourseProgressByStudent" resultType="java.util.Map">
+        SELECT 
+            COUNT(*) as totalLessons,
+            COUNT(CASE WHEN is_completed = true THEN 1 END) as completedLessons,
+            AVG(progress_percent) as averageProgress
+        FROM lesson_progress
+        WHERE student_id = #{studentId} AND course_id = #{courseId} AND deleted = false
+    </select>
+
+    <!-- 获取课程整体学习统计 -->
+    <select id="getCourseStats" parameterType="java.lang.Long" resultType="java.util.Map">
+        SELECT 
+            COUNT(DISTINCT student_id) as totalStudents,
+            AVG(progress_percent) as averageProgress,
+            COUNT(CASE WHEN is_completed = true THEN 1 END) as totalCompletions
+        FROM lesson_progress
+        WHERE course_id = #{courseId} AND deleted = false
+    </select>
+
+    <!-- 获取学生最近学习的课时 -->
+    <select id="getRecentProgressByStudent" parameterType="java.lang.Long" resultMap="LessonProgressResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM lesson_progress
+        WHERE student_id = #{studentId} AND deleted = false
+        ORDER BY updated_at DESC
+        LIMIT 10
+    </select>
+
+    <!-- 批量更新或插入学习进度 -->
+    <insert id="upsertLessonProgress" parameterType="com.noncore.assessment.entity.LessonProgress">
+        INSERT INTO lesson_progress (
+            student_id, lesson_id, course_id, progress_percent, watch_time, total_time, 
+            status, last_position, is_completed, completed_at, created_at, updated_at, deleted
+        ) VALUES (
+            #{studentId}, #{lessonId}, #{courseId}, #{progressPercent}, #{watchTime}, #{totalTime}, 
+            #{status}, #{lastPosition}, #{isCompleted}, #{completedAt}, #{createdAt}, #{updatedAt}, #{deleted}
+        )
+        ON DUPLICATE KEY UPDATE
+            progress_percent = VALUES(progress_percent),
+            watch_time = VALUES(watch_time),
+            total_time = VALUES(total_time),
+            status = VALUES(status),
+            last_position = VALUES(last_position),
+            is_completed = VALUES(is_completed),
+            completed_at = VALUES(completed_at),
+            updated_at = VALUES(updated_at)
+    </insert>
+
+    <!-- 根据学生和课程查询进度 -->
+    <select id="selectByStudentAndCourse" resultMap="LessonProgressResultMap">
+        SELECT 
+        <include refid="Base_Column_List"/>
+        FROM lesson_progress lp
+        INNER JOIN lessons l ON lp.lesson_id = l.id
+        WHERE lp.student_id = #{studentId}
+        AND l.course_id = #{courseId}
+        AND lp.deleted = 0
+        ORDER BY l.sort_order
+    </select>
+
+    <!-- 根据学生和章节查询进度（详细版本） -->
+    <select id="selectProgressByStudentAndLesson" resultMap="LessonProgressResultMap">
+        SELECT 
+        <include refid="Base_Column_List"/>
+        FROM lesson_progress
+        WHERE student_id = #{studentId}
+        AND lesson_id = #{lessonId}
+        AND deleted = 0
+    </select>
+
+    <!-- 计算学生总学习时长 -->
+    <select id="calculateTotalStudyTime" resultType="java.lang.Integer">
+        SELECT COALESCE(SUM(study_time), 0) as total_time
+        FROM lesson_progress lp
+        <if test="courseId != null">
+        INNER JOIN lessons l ON lp.lesson_id = l.id
+        WHERE lp.student_id = #{studentId}
+        AND l.course_id = #{courseId}
+        AND lp.deleted = 0
+        </if>
+        <if test="courseId == null">
+        WHERE lp.student_id = #{studentId}
+        AND lp.deleted = 0
+        </if>
+    </select>
+
+    <!-- 计算学生整体进度 -->
+    <select id="calculateOverallProgress" resultType="java.math.BigDecimal">
+        SELECT COALESCE(AVG(progress), 0) as overall_progress
+        FROM lesson_progress
+        WHERE student_id = #{studentId}
+        AND deleted = 0
+    </select>
+
+    <!-- 获取学生学习统计 -->
+    <select id="getStudentStudyStats" resultType="java.util.Map">
+        SELECT 
+            COUNT(*) as totalLessons,
+            SUM(CASE WHEN completed = 1 THEN 1 ELSE 0 END) as completedLessons,
+            COALESCE(AVG(progress), 0) as averageProgress,
+            COALESCE(SUM(study_time), 0) as totalStudyTime
+        FROM lesson_progress
+        WHERE student_id = #{studentId}
+        AND deleted = 0
+    </select>
+
+    <!-- 计算课程完成率 -->
+    <select id="calculateCourseCompletionRate" resultType="java.math.BigDecimal">
+        SELECT 
+            CASE 
+                WHEN COUNT(l.id) = 0 THEN 0
+                ELSE (COUNT(lp.id) * 100.0 / COUNT(l.id))
+            END as completion_rate
+        FROM lessons l
+        LEFT JOIN lesson_progress lp ON l.id = lp.lesson_id 
+            AND lp.student_id = #{studentId} 
+            AND lp.completed = 1 
+            AND lp.deleted = 0
+        WHERE l.course_id = #{courseId}
+        AND l.deleted = 0
+    </select>
+
+    <!-- 获取最近学习的章节 -->
+    <select id="selectRecentStudiedLessons" resultType="java.util.Map">
+        SELECT 
+            l.id as lessonId,
+            l.title as lessonTitle,
+            l.course_id as courseId,
+            c.title as courseTitle,
+            lp.progress,
+            lp.last_studied_at as lastStudiedAt
+        FROM lesson_progress lp
+        INNER JOIN lessons l ON lp.lesson_id = l.id
+        INNER JOIN courses c ON l.course_id = c.id
+        WHERE lp.student_id = #{studentId}
+        AND lp.deleted = 0
+        ORDER BY lp.last_studied_at DESC
+        LIMIT #{limit}
+    </select>
+
+    <!-- 获取学习热力图数据 -->
+    <select id="getStudyHeatmapData" resultType="java.util.Map">
+        SELECT 
+            DATE(last_studied_at) as date,
+            SUM(study_time) as studyTime,
+            COUNT(DISTINCT lesson_id) as completedLessons
+        FROM lesson_progress
+        WHERE student_id = #{studentId}
+        AND last_studied_at >= DATE_SUB(NOW(), INTERVAL #{days} DAY)
+        AND deleted = 0
+        GROUP BY DATE(last_studied_at)
+        ORDER BY date
+    </select>
+
+    <!-- 重置课程进度 -->
+    <update id="resetCourseProgress">
+        UPDATE lesson_progress lp
+        INNER JOIN lessons l ON lp.lesson_id = l.id
+        SET 
+            lp.progress = 0,
+            lp.completed = 0,
+            lp.completed_at = NULL,
+            lp.study_time = 0,
+            lp.last_position = 0,
+            lp.updated_at = NOW()
+        WHERE lp.student_id = #{studentId}
+        AND l.course_id = #{courseId}
+    </update>
+
+    <!-- 更新进度 -->
+    <update id="updateProgress">
+        UPDATE lesson_progress
+        SET 
+            progress = #{progress},
+            last_position = #{lastPosition},
+            last_studied_at = NOW(),
+            updated_at = NOW()
+        WHERE student_id = #{studentId}
+        AND lesson_id = #{lessonId}
+    </update>
+
+    <!-- 标记章节完成 -->
+    <update id="markLessonCompleted">
+        UPDATE lesson_progress
+        SET 
+            completed = 1,
+            progress = 100,
+            completed_at = NOW(),
+            updated_at = NOW()
+        WHERE student_id = #{studentId}
+        AND lesson_id = #{lessonId}
+    </update>
+
+    <!-- 更新评分 -->
+    <update id="updateRating">
+        UPDATE lesson_progress
+        SET 
+            rating = #{rating},
+            updated_at = NOW()
+        WHERE student_id = #{studentId}
+        AND lesson_id = #{lessonId}
+    </update>
+
+    <!-- 根据学生、课程和章节查询进度 -->
+    <select id="selectByStudentCourseLesson" resultMap="LessonProgressResultMap">
+        SELECT 
+        <include refid="Base_Column_List"/>
+        FROM lesson_progress lp
+        INNER JOIN lessons l ON lp.lesson_id = l.id
+        WHERE lp.student_id = #{studentId}
+        <if test="courseId != null">
+        AND l.course_id = #{courseId}
+        </if>
+        AND lp.lesson_id = #{lessonId}
+        AND lp.deleted = 0
+    </select>
+
+</mapper> 
