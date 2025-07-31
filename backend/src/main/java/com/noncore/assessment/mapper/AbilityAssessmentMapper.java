@@ -86,12 +86,6 @@ public interface AbilityAssessmentMapper {
                                                    @Param("studentId") Long studentId);
 
     /**
-     * 根据关联对象查询评估记录
-     */
-    List<AbilityAssessment> selectByRelatedObject(@Param("relatedType") String relatedType,
-                                                  @Param("relatedId") Long relatedId);
-
-    /**
      * 分页查询评估记录（支持多条件）
      */
     List<AbilityAssessment> selectAssessmentsWithPagination(@Param("studentId") Long studentId,
@@ -165,4 +159,4 @@ public interface AbilityAssessmentMapper {
      * 删除旧的评估记录
      */
     int deleteOldAssessments(@Param("beforeDate") LocalDateTime beforeDate);
-} 
+}

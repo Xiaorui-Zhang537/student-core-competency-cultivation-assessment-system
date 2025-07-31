@@ -9,100 +9,131 @@
         <result column="dimension_id" property="dimensionId"/>
         <result column="title" property="title"/>
         <result column="description" property="description"/>
-        <result column="status" property="status"/>
         <result column="target_score" property="targetScore"/>
-        <result column="deadline" property="deadline"/>
-        <result column="completed_at" property="completedAt"/>
+        <result column="current_score" property="currentScore"/>
+        <result column="target_date" property="targetDate"/>
+        <result column="priority" property="priority"/>
+        <result column="status" property="status"/>
+        <result column="achieved_at" property="achievedAt"/>
         <result column="created_at" property="createdAt"/>
         <result column="updated_at" property="updatedAt"/>
-        <result column="deleted" property="deleted"/>
+        <!-- 冗余字段，如有可加 -->
+        <result column="dimension_name" property="dimensionName"/>
+        <result column="student_name" property="studentName"/>
     </resultMap>
 
-    <resultMap id="AbilityGoalDetailResultMap" type="com.noncore.assessment.entity.AbilityGoal" extends="AbilityGoalResultMap">
-        <association property="dimension" javaType="com.noncore.assessment.entity.AbilityDimension">
-            <id column="dimension_id" property="id"/>
-            <result column="dimension_name" property="name"/>
-        </association>
-        <association property="student" javaType="com.noncore.assessment.entity.User">
-            <id column="student_id" property="id"/>
-            <result column="student_name" property="displayName"/>
-        </association>
-    </resultMap>
-
-    <!-- 基础查询字段 -->
+    <!-- 基础字段 -->
     <sql id="abilityGoalColumns">
-        g.id, g.student_id, g.dimension_id, g.title, g.description, g.status,
-        g.target_score, g.deadline, g.completed_at, g.created_at, g.updated_at, g.deleted
+        g.id, g.student_id, g.dimension_id, g.title, g.description,
+        g.target_score, g.current_score, g.target_date, g.priority,
+        g.status, g.achieved_at, g.created_at, g.updated_at
     </sql>
-
     <sql id="abilityGoalDetailColumns">
         <include refid="abilityGoalColumns"/>,
-        d.name as dimension_name,
-        u.display_name as student_name
+        d.name AS dimension_name,
+        u.display_name AS student_name
     </sql>
 
     <!-- 插入能力目标 -->
     <insert id="insertGoal" parameterType="com.noncore.assessment.entity.AbilityGoal" useGeneratedKeys="true" keyProperty="id">
         INSERT INTO ability_goals (
-            student_id, dimension_id, title, description, status,
-            target_score, deadline, created_at, updated_at, deleted
+            student_id, dimension_id, title, description,
+            target_score, current_score, target_date, priority,
+            status, achieved_at, created_at, updated_at
         ) VALUES (
-            #{studentId}, #{dimensionId}, #{title}, #{description}, #{status},
-            #{targetScore}, #{deadline}, NOW(), NOW(), false
-        )
+                     #{studentId}, #{dimensionId}, #{title}, #{description},
+                     #{targetScore}, #{currentScore}, #{targetDate}, #{priority},
+                     #{status}, #{achievedAt}, NOW(), NOW()
+                 )
     </insert>
+
+    <!-- 根据ID查询能力目标 -->
+    <select id="selectGoalById" resultMap="AbilityGoalResultMap">
+        SELECT <include refid="abilityGoalColumns"/>
+        FROM ability_goals g
+        WHERE g.id = #{id}
+    </select>
 
     <!-- 更新能力目标 -->
     <update id="updateGoal" parameterType="com.noncore.assessment.entity.AbilityGoal">
         UPDATE ability_goals
         <set>
+            <if test="studentId != null">student_id = #{studentId},</if>
             <if test="dimensionId != null">dimension_id = #{dimensionId},</if>
             <if test="title != null">title = #{title},</if>
             <if test="description != null">description = #{description},</if>
-            <if test="status != null">status = #{status},</if>
             <if test="targetScore != null">target_score = #{targetScore},</if>
-            <if test="deadline != null">deadline = #{deadline},</if>
-            <if test="completedAt != null">completed_at = #{completedAt},</if>
+            <if test="currentScore != null">current_score = #{currentScore},</if>
+            <if test="targetDate != null">target_date = #{targetDate},</if>
+            <if test="priority != null">priority = #{priority},</if>
+            <if test="status != null">status = #{status},</if>
+            <if test="achievedAt != null">achieved_at = #{achievedAt},</if>
             updated_at = NOW()
         </set>
-        WHERE id = #{id} AND g.deleted = false
-    </update>
-
-    <!-- 软删除能力目标 -->
-    <update id="deleteGoal" parameterType="long">
-        UPDATE ability_goals
-        SET deleted = true, updated_at = NOW()
         WHERE id = #{id}
     </update>
 
+    <!-- 删除能力目标 -->
+    <delete id="deleteGoal" parameterType="long">
+        DELETE FROM ability_goals WHERE id = #{id}
+    </delete>
+
     <!-- 根据学生ID查询所有目标 -->
-    <select id="selectGoalsByStudentId" parameterType="long" resultMap="AbilityGoalDetailResultMap">
-        SELECT <include refid="abilityGoalDetailColumns"/>
+    <select id="selectGoalsByStudentId" resultMap="AbilityGoalResultMap">
+        SELECT <include refid="abilityGoalColumns"/>
         FROM ability_goals g
-        LEFT JOIN ability_dimensions d ON g.dimension_id = d.id
-        LEFT JOIN users u ON g.student_id = u.id
-        WHERE g.student_id = #{studentId} AND g.deleted = false
+        WHERE g.student_id = #{studentId}
         ORDER BY g.created_at DESC
     </select>
 
-    <!-- 根据学生ID查询活跃目标 -->
-    <select id="selectActiveGoalsByStudent" parameterType="long" resultMap="AbilityGoalDetailResultMap">
-        SELECT <include refid="abilityGoalDetailColumns"/>
+    <!-- 根据学生ID查询活跃目标（active/paused 等状态） -->
+    <select id="selectActiveGoalsByStudent" resultMap="AbilityGoalResultMap">
+        SELECT <include refid="abilityGoalColumns"/>
         FROM ability_goals g
-        LEFT JOIN ability_dimensions d ON g.dimension_id = d.id
-        LEFT JOIN users u ON g.student_id = u.id
-        WHERE g.student_id = #{studentId} AND g.status != 'ACHIEVED' AND g.deleted = false
-        ORDER BY g.deadline ASC
+        WHERE g.student_id = #{studentId} AND g.status = 'active'
+        ORDER BY g.target_date
     </select>
 
     <!-- 根据学生ID和维度ID查询活跃目标 -->
-    <select id="selectActiveGoalsByStudentAndDimension" resultMap="AbilityGoalDetailResultMap">
-        SELECT <include refid="abilityGoalDetailColumns"/>
+    <select id="selectActiveGoalsByStudentAndDimension" resultMap="AbilityGoalResultMap">
+        SELECT <include refid="abilityGoalColumns"/>
         FROM ability_goals g
-        LEFT JOIN ability_dimensions d ON g.dimension_id = d.id
-        LEFT JOIN users u ON g.student_id = u.id
-        WHERE g.student_id = #{studentId} AND g.dimension_id = #{dimensionId} AND g.status != 'ACHIEVED' AND g.deleted = false
-        ORDER BY g.deadline ASC
+        WHERE g.student_id = #{studentId}
+        AND g.dimension_id = #{dimensionId}
+        AND g.status = 'active'
+        ORDER BY g.target_date
+    </select>
+
+    <!-- 分页查询能力目标 -->
+    <select id="selectGoalsWithPagination" resultMap="AbilityGoalResultMap">
+        SELECT <include refid="abilityGoalColumns"/>
+        FROM ability_goals g
+        <where>
+            <if test="studentId != null">AND g.student_id = #{studentId}</if>
+            <if test="dimensionId != null">AND g.dimension_id = #{dimensionId}</if>
+            <if test="status != null and status != ''">AND g.status = #{status}</if>
+        </where>
+        ORDER BY g.created_at DESC
+        LIMIT #{offset}, #{size}
+    </select>
+
+    <!-- 统计能力目标数量 -->
+    <select id="countGoals" resultType="int">
+        SELECT COUNT(1)
+        FROM ability_goals g
+        <where>
+            <if test="studentId != null">AND g.student_id = #{studentId}</if>
+            <if test="dimensionId != null">AND g.dimension_id = #{dimensionId}</if>
+            <if test="status != null and status != ''">AND g.status = #{status}</if>
+        </where>
+    </select>
+
+    <!-- 根据维度ID查询目标 -->
+    <select id="selectGoalsByDimensionId" resultMap="AbilityGoalResultMap">
+        SELECT <include refid="abilityGoalColumns"/>
+        FROM ability_goals g
+        WHERE g.dimension_id = #{dimensionId}
+        ORDER BY g.created_at DESC
     </select>
 
     <!-- 批量更新目标状态 -->
@@ -116,23 +147,30 @@
     </update>
 
     <!-- 获取即将到期的目标 -->
-    <select id="selectUpcomingDeadlineGoals" resultMap="AbilityGoalDetailResultMap">
-        SELECT <include refid="abilityGoalDetailColumns"/>
+    <select id="selectUpcomingDeadlineGoals" resultMap="AbilityGoalResultMap">
+        SELECT <include refid="abilityGoalColumns"/>
         FROM ability_goals g
-        LEFT JOIN ability_dimensions d ON g.dimension_id = d.id
-        LEFT JOIN users u ON g.student_id = u.id
         WHERE g.student_id = #{studentId}
-          AND g.status != 'ACHIEVED'
-          AND g.deleted = false
-          AND g.deadline BETWEEN NOW() AND DATE_ADD(NOW(), INTERVAL #{days} DAY)
-        ORDER BY g.deadline ASC
+        AND g.status = 'active'
+        AND g.target_date BETWEEN CURDATE() AND DATE_ADD(CURDATE(), INTERVAL #{days} DAY)
+        ORDER BY g.target_date
     </select>
 
     <!-- 获取已达成的目标数量 -->
-    <select id="countAchievedGoals" parameterType="long" resultType="integer">
+    <select id="countAchievedGoals" resultType="int">
         SELECT COUNT(1)
         FROM ability_goals g
-        WHERE g.student_id = #{studentId} AND g.status = 'ACHIEVED' AND g.deleted = false
+        WHERE g.student_id = #{studentId}
+          AND g.status = 'achieved'
     </select>
 
-</mapper> 
+    <!-- 获取学生目标统计 -->
+    <select id="getStudentGoalStats" resultType="map">
+        SELECT COUNT(*)                           AS totalGoals,
+               SUM(IF(status = 'achieved', 1, 0)) AS achievedGoals,
+               SUM(IF(status = 'active', 1, 0))   AS activeGoals
+        FROM ability_goals
+        WHERE student_id = #{studentId}
+    </select>
+
+</mapper>

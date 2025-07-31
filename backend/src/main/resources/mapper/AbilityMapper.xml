@@ -8,72 +8,91 @@
         <result column="description" property="description"/>
         <result column="category" property="category"/>
         <result column="level" property="level"/>
-        <result column="dimension_id" property="dimensionId"/>
+        <result column="weight" property="weight"/>
+        <result column="parent_id" property="parentId"/>
+        <result column="sort_order" property="sortOrder"/>
+        <result column="is_active" property="isActive"/>
         <result column="created_at" property="createdAt"/>
         <result column="updated_at" property="updatedAt"/>
         <result column="deleted" property="deleted"/>
     </resultMap>
 
     <sql id="abilityColumns">
-        id, name, description, category, level, dimension_id, created_at, updated_at, deleted
+        id, name, description, category, level, weight, parent_id, sort_order, is_active, created_at, updated_at, deleted
     </sql>
 
-    <insert id="insertAbility" parameterType="com.noncore.assessment.entity.Ability">
-        INSERT INTO abilities (id, name, description, category, level, dimension_id, created_at, updated_at, deleted)
-        VALUES (#{id}, #{name}, #{description}, #{category}, #{level}, #{dimensionId}, #{createdAt}, #{updatedAt}, #{deleted})
+    <!-- 插入能力项 -->
+    <insert id="insertAbility" parameterType="com.noncore.assessment.entity.Ability" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO abilities
+        (name, description, category, level, weight, parent_id, sort_order, is_active, created_at, updated_at, deleted)
+        VALUES
+            (#{name}, #{description}, #{category}, #{level}, #{weight}, #{parentId}, #{sortOrder}, #{isActive}, NOW(), NOW(), #{deleted})
     </insert>
 
+    <!-- 更新能力项 -->
     <update id="updateAbility" parameterType="com.noncore.assessment.entity.Ability">
         UPDATE abilities
-        SET
-            name = #{name},
-            description = #{description},
-            category = #{category},
-            level = #{level},
-            dimension_id = #{dimensionId},
-            updated_at = #{updatedAt}
+        <set>
+            <if test="name != null">name = #{name},</if>
+            <if test="description != null">description = #{description},</if>
+            <if test="category != null">category = #{category},</if>
+            <if test="level != null">level = #{level},</if>
+            <if test="weight != null">weight = #{weight},</if>
+            <if test="parentId != null">parent_id = #{parentId},</if>
+            <if test="sortOrder != null">sort_order = #{sortOrder},</if>
+            <if test="isActive != null">is_active = #{isActive},</if>
+            updated_at = NOW()
+        </set>
         WHERE id = #{id} AND deleted = false
     </update>
 
+    <!-- 软删除能力项 -->
     <update id="deleteAbilityById">
         UPDATE abilities
         SET deleted = true, updated_at = NOW()
         WHERE id = #{abilityId}
     </update>
 
+    <!-- 根据ID查询能力项 -->
     <select id="selectAbilityById" resultMap="AbilityResultMap">
         SELECT <include refid="abilityColumns"/>
         FROM abilities
         WHERE id = #{abilityId} AND deleted = false
     </select>
 
+    <!-- 查询所有能力项 -->
     <select id="selectAllAbilities" resultMap="AbilityResultMap">
         SELECT <include refid="abilityColumns"/>
         FROM abilities
         WHERE deleted = false
-        ORDER BY created_at DESC
+        ORDER BY sort_order, created_at DESC
     </select>
 
+    <!-- 根据父能力ID查询能力项 -->
     <select id="selectAbilitiesByDimensionId" resultMap="AbilityResultMap">
         SELECT <include refid="abilityColumns"/>
         FROM abilities
-        WHERE dimension_id = #{dimensionId} AND deleted = false
-        ORDER BY name
+        WHERE parent_id = #{dimensionId} AND deleted = false
+        ORDER BY sort_order, name
     </select>
 
+    <!-- 批量插入能力项 -->
     <insert id="batchInsertAbilities" parameterType="java.util.List">
-        INSERT INTO abilities (id, name, description, category, level, dimension_id, created_at, updated_at, deleted)
+        INSERT INTO abilities
+        (name, description, category, level, weight, parent_id, sort_order, is_active, created_at, updated_at, deleted)
         VALUES
         <foreach collection="abilityList" item="ability" separator=",">
-            (#{ability.id}, #{ability.name}, #{ability.description}, #{ability.category}, #{ability.level}, #{ability.dimensionId}, #{ability.createdAt}, #{ability.updatedAt}, #{ability.deleted})
+            (#{ability.name}, #{ability.description}, #{ability.category}, #{ability.level}, #{ability.weight},
+            #{ability.parentId}, #{ability.sortOrder}, #{ability.isActive}, NOW(), NOW(), #{ability.deleted})
         </foreach>
     </insert>
 
+    <!-- 名称模糊查询 -->
     <select id="searchAbilitiesByName" resultMap="AbilityResultMap">
         SELECT <include refid="abilityColumns"/>
         FROM abilities
         WHERE name LIKE CONCAT('%', #{name}, '%') AND deleted = false
-        ORDER BY name
+        ORDER BY sort_order, name
     </select>
 
-</mapper> 
+</mapper>

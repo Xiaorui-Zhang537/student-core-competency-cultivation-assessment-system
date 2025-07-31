@@ -20,6 +20,7 @@
         <result column="created_at" property="createdAt"/>
         <result column="updated_at" property="updatedAt"/>
         <result column="deleted" property="deleted"/>
+        <!-- 冗余字段 -->
         <result column="course_name" property="courseName"/>
         <result column="teacher_name" property="teacherName"/>
     </resultMap>
@@ -45,10 +46,10 @@
             due_date, allow_late, max_attempts, file_types, status, submission_count,
             created_at, updated_at, deleted
         ) VALUES (
-            #{courseId}, #{teacherId}, #{title}, #{description}, #{requirements}, #{maxScore},
-            #{dueDate}, #{allowLate}, #{maxAttempts}, #{fileTypes}, #{status}, #{submissionCount},
-            #{createdAt}, #{updatedAt}, #{deleted}
-        )
+                     #{courseId}, #{teacherId}, #{title}, #{description}, #{requirements}, #{maxScore},
+                     #{dueDate}, #{allowLate}, #{maxAttempts}, #{fileTypes}, #{status}, #{submissionCount},
+                     NOW(), NOW(), #{deleted}
+                 )
     </insert>
 
     <!-- 根据ID查询作业 -->
@@ -62,25 +63,27 @@
 
     <!-- 更新作业信息 -->
     <update id="updateAssignment" parameterType="com.noncore.assessment.entity.Assignment">
-        UPDATE assignments SET
-            title = #{title},
-            description = #{description},
-            requirements = #{requirements},
-            max_score = #{maxScore},
-            due_date = #{dueDate},
-            allow_late = #{allowLate},
-            max_attempts = #{maxAttempts},
-            file_types = #{fileTypes},
-            status = #{status},
-            updated_at = #{updatedAt}
+        UPDATE assignments
+        <set>
+            <if test="title != null">title = #{title},</if>
+            <if test="description != null">description = #{description},</if>
+            <if test="requirements != null">requirements = #{requirements},</if>
+            <if test="maxScore != null">max_score = #{maxScore},</if>
+            <if test="dueDate != null">due_date = #{dueDate},</if>
+            <if test="allowLate != null">allow_late = #{allowLate},</if>
+            <if test="maxAttempts != null">max_attempts = #{maxAttempts},</if>
+            <if test="fileTypes != null">file_types = #{fileTypes},</if>
+            <if test="status != null">status = #{status},</if>
+            updated_at = NOW()
+        </set>
         WHERE id = #{id} AND deleted = false
     </update>
 
     <!-- 软删除作业 -->
     <update id="deleteAssignment" parameterType="long">
-        UPDATE assignments SET 
-            deleted = true,
-            updated_at = NOW()
+        UPDATE assignments SET
+                               deleted = true,
+                               updated_at = NOW()
         WHERE id = #{id}
     </update>
 
@@ -121,17 +124,17 @@
             AND a.status = #{status}
         </if>
         <if test="keyword != null and keyword != ''">
-            AND (a.title LIKE CONCAT('%', #{keyword}, '%') 
-                 OR a.description LIKE CONCAT('%', #{keyword}, '%'))
+            AND (a.title LIKE CONCAT('%', #{keyword}, '%')
+            OR a.description LIKE CONCAT('%', #{keyword}, '%'))
         </if>
         ORDER BY a.created_at DESC
     </select>
 
     <!-- 更新作业提交数量 -->
     <update id="updateSubmissionCount">
-        UPDATE assignments SET 
-            submission_count = submission_count + #{increment},
-            updated_at = NOW()
+        UPDATE assignments SET
+                               submission_count = submission_count + #{increment},
+                               updated_at = NOW()
         WHERE id = #{assignmentId} AND deleted = false
     </update>
 
@@ -162,15 +165,15 @@
 
     <!-- 检查作业是否存在 -->
     <select id="checkAssignmentExists" parameterType="long" resultType="int">
-        SELECT COUNT(1) FROM assignments 
+        SELECT COUNT(1) FROM assignments
         WHERE id = #{id} AND deleted = false
     </select>
 
     <!-- 批量更新作业状态 -->
     <update id="batchUpdateAssignmentStatus">
-        UPDATE assignments SET 
-            status = #{status},
-            updated_at = NOW()
+        UPDATE assignments SET
+        status = #{status},
+        updated_at = NOW()
         WHERE deleted = false AND id IN
         <foreach collection="assignmentIds" item="id" open="(" close=")" separator=",">
             #{id}
@@ -183,9 +186,9 @@
         FROM assignments a
         LEFT JOIN courses c ON a.course_id = c.id
         LEFT JOIN users u ON a.teacher_id = u.id
-        WHERE a.deleted = false AND a.status = 'published' 
-              AND a.due_date BETWEEN NOW() AND DATE_ADD(NOW(), INTERVAL #{days} DAY)
-        ORDER BY a.due_date ASC
+        WHERE a.deleted = false AND a.status = 'published'
+        AND a.due_date BETWEEN NOW() AND DATE_ADD(NOW(), INTERVAL #{days} DAY)
+        ORDER BY a.due_date
     </select>
 
     <!-- 根据课程和学生查询作业（学生视角） -->
@@ -196,21 +199,21 @@
         LEFT JOIN users u ON a.teacher_id = u.id
         INNER JOIN enrollments e ON a.course_id = e.course_id
         WHERE a.deleted = false AND a.status = 'published'
-              AND e.student_id = #{studentId}
+        AND e.student_id = #{studentId}
         <if test="courseId != null">
             AND a.course_id = #{courseId}
         </if>
-        ORDER BY a.due_date ASC, a.created_at DESC
+        ORDER BY a.due_date , a.created_at DESC
     </select>
 
     <!-- 获取作业统计信息 -->
     <select id="getAssignmentStatistics" resultType="map">
-        SELECT 
-            status,
-            COUNT(*) as count,
-            AVG(submission_count) as avg_submissions,
-            SUM(submission_count) as total_submissions
-        FROM assignments 
+        SELECT
+        status,
+        COUNT(*) as count,
+        AVG(submission_count) as avg_submissions,
+        SUM(submission_count) as total_submissions
+        FROM assignments
         WHERE deleted = false
         <if test="teacherId != null">
             AND teacher_id = #{teacherId}
@@ -225,8 +228,8 @@
     <select id="countPendingAssignments" resultType="long">
         SELECT COUNT(a.id)
         FROM assignments a
-        JOIN enrollments e ON a.course_id = e.course_id
-        LEFT JOIN submissions s ON a.id = s.assignment_id AND s.student_id = e.student_id
+                 JOIN enrollments e ON a.course_id = e.course_id
+                 LEFT JOIN submissions s ON a.id = s.assignment_id AND s.student_id = e.student_id
         WHERE e.student_id = #{studentId}
           AND a.deleted = false
           AND a.due_date > NOW()
@@ -235,19 +238,18 @@
 
     <!-- 获取待处理作业列表 (DTO) -->
     <select id="findPendingAssignments" resultType="com.noncore.assessment.dto.response.StudentDashboardResponse$PendingAssignmentDto">
-        SELECT
-            a.id,
-            a.title,
-            c.title AS courseTitle,
-            a.due_date AS dueDate
+        SELECT a.id,
+               a.title,
+               c.title    AS courseTitle,
+               a.due_date AS dueDate
         FROM assignments a
-        JOIN courses c ON a.course_id = c.id
-        JOIN enrollments e ON a.course_id = e.course_id
-        LEFT JOIN submissions s ON a.id = s.assignment_id AND s.student_id = e.student_id
+                 JOIN courses c ON a.course_id = c.id
+                 JOIN enrollments e ON a.course_id = e.course_id
+                 LEFT JOIN submissions s ON a.id = s.assignment_id AND s.student_id = e.student_id
         WHERE e.student_id = #{studentId}
           AND a.deleted = false
           AND (s.id IS NULL OR s.status != 'submitted')
-        ORDER BY a.due_date ASC
+        ORDER BY a.due_date
         LIMIT #{limit}
     </select>
 
@@ -255,7 +257,7 @@
     <select id="findAssignmentsByStudentId" resultMap="AssignmentResultMap">
         SELECT a.*
         FROM assignments a
-        JOIN enrollments e ON a.course_id = e.course_id
+                 JOIN enrollments e ON a.course_id = e.course_id
         WHERE e.student_id = #{studentId} AND a.deleted = false
         ORDER BY a.created_at DESC
     </select>
@@ -272,15 +274,15 @@
     <!-- 获取待处理作业列表 (返回实体) -->
     <select id="findPendingAssignmentsForStudent" resultMap="AssignmentResultMap">
         SELECT
-            <include refid="assignmentColumns"/>
+        <include refid="assignmentColumns"/>
         FROM assignments a
         JOIN enrollments e ON a.course_id = e.course_id
         LEFT JOIN submissions s ON a.id = s.assignment_id AND s.student_id = e.student_id
         WHERE e.student_id = #{studentId}
-          AND a.deleted = false
-          AND a.status = 'published'
-          AND (s.id IS NULL OR s.status != 'submitted')
-        ORDER BY a.due_date ASC
+        AND a.deleted = false
+        AND a.status = 'published'
+        AND (s.id IS NULL OR s.status != 'submitted')
+        ORDER BY a.due_date
     </select>
 
-</mapper> 
+</mapper>

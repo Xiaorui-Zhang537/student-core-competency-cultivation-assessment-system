@@ -7,33 +7,35 @@
         <id column="id" property="id"/>
         <result column="student_id" property="studentId"/>
         <result column="dimension_id" property="dimensionId"/>
+        <result column="ability_id" property="abilityId"/>
+        <result column="max_score" property="maxScore"/>
+        <result column="ability_level" property="abilityLevel"/>
         <result column="assessment_type" property="assessmentType"/>
         <result column="status" property="status"/>
         <result column="score" property="score"/>
         <result column="confidence" property="confidence"/>
-        <result column="assessment_date" property="assessmentDate"/>
+        <result column="improvement" property="improvement"/>
+        <result column="assessed_at" property="assessedAt"/>
         <result column="assessor_id" property="assessorId"/>
-        <result column="related_type" property="relatedType"/>
         <result column="related_id" property="relatedId"/>
         <result column="evidence" property="evidence"/>
-        <result column="remarks" property="remarks"/>
         <result column="created_at" property="createdAt"/>
         <result column="updated_at" property="updatedAt"/>
         <result column="deleted" property="deleted"/>
     </resultMap>
 
     <!-- 详细结果映射，包含维度名称 -->
-    <resultMap id="AbilityAssessmentDetailResultMap" type="com.noncore.assessment.entity.AbilityAssessment" extends="AbilityAssessmentResultMap">
-        <association property="dimension" javaType="com.noncore.assessment.entity.AbilityDimension">
-            <id column="dimension_id" property="id"/>
-            <result column="dimension_name" property="name"/>
-        </association>
+    <resultMap id="AbilityAssessmentDetailResultMap"
+               type="com.noncore.assessment.entity.AbilityAssessment"
+               extends="AbilityAssessmentResultMap">
+        <result column="dimension_name" property="dimensionName"/>
     </resultMap>
 
     <!-- 基础查询字段 -->
     <sql id="abilityAssessmentColumns">
-        a.id, a.student_id, a.dimension_id, a.assessment_type, a.status, a.score, a.confidence,
-        a.assessment_date, a.assessor_id, a.related_type, a.related_id, a.evidence, a.remarks,
+        a.id, a.student_id, a.dimension_id, a.ability_id, a.assessment_type, a.status,
+        a.score, a.max_score, a.ability_level, a.confidence, a.improvement,
+        a.assessed_at, a.assessor_id, a.related_id, a.evidence,
         a.created_at, a.updated_at, a.deleted
     </sql>
 
@@ -45,13 +47,13 @@
     <!-- 插入评估记录 -->
     <insert id="insertAssessment" parameterType="com.noncore.assessment.entity.AbilityAssessment" useGeneratedKeys="true" keyProperty="id">
         INSERT INTO ability_assessments (
-            student_id, dimension_id, assessment_type, status, score, confidence,
-            assessment_date, assessor_id, related_type, related_id, evidence, remarks,
-            created_at, updated_at, deleted
+            student_id, dimension_id, ability_id, assessment_type, status, score,
+            max_score, ability_level, confidence, assessed_at, assessor_id,
+            related_id, evidence, improvement, created_at, updated_at, deleted
         ) VALUES (
-            #{studentId}, #{dimensionId}, #{assessmentType}, #{status}, #{score}, #{confidence},
-            #{assessmentDate}, #{assessorId}, #{relatedType}, #{relatedId}, #{evidence}, #{remarks},
-            NOW(), NOW(), false
+            #{studentId}, #{dimensionId}, #{abilityId}, #{assessmentType}, #{status}, #{score},
+            #{maxScore}, #{abilityLevel}, #{confidence}, #{assessedAt}, #{assessorId},
+            #{relatedId}, #{evidence}, #{improvement}, NOW(), NOW(), false
         )
     </insert>
 
@@ -61,7 +63,7 @@
         FROM ability_assessments a
         LEFT JOIN ability_dimensions d ON a.dimension_id = d.id
         WHERE a.student_id = #{studentId} AND a.deleted = false
-        ORDER BY a.assessment_date DESC
+        ORDER BY a.assessed_at DESC
         LIMIT #{offset}, #{size}
     </select>
 
@@ -78,8 +80,8 @@
         FROM ability_assessments a
         LEFT JOIN ability_dimensions d ON a.dimension_id = d.id
         WHERE a.student_id = #{studentId} AND a.deleted = false
-          AND a.assessment_date BETWEEN #{startTime} AND #{endTime}
-        ORDER BY a.assessment_date DESC
+          AND a.assessed_at BETWEEN #{startTime} AND #{endTime}
+        ORDER BY a.assessed_at DESC
     </select>
 
     <!-- 获取最近的评估记录 -->
@@ -88,14 +90,14 @@
         FROM ability_assessments a
         LEFT JOIN ability_dimensions d ON a.dimension_id = d.id
         WHERE a.student_id = #{studentId} AND a.deleted = false
-        ORDER BY a.assessment_date DESC
+        ORDER BY a.assessed_at DESC
         LIMIT #{limit}
     </select>
 
     <!-- 获取评估趋势数据 -->
     <select id="getAssessmentTrends" resultType="map">
         SELECT
-            DATE_FORMAT(a.assessment_date, '%Y-%m') AS month,
+            DATE_FORMAT(a.assessed_at, '%Y-%m') AS month,
             AVG(a.score) AS averageScore
         FROM ability_assessments a
         WHERE a.student_id = #{studentId} AND a.deleted = false
@@ -103,24 +105,25 @@
             AND a.dimension_id = #{dimensionId}
         </if>
         <if test="months != null">
-            AND a.assessment_date >= DATE_SUB(NOW(), INTERVAL #{months} MONTH)
+            AND a.assessed_at >= DATE_SUB(NOW(), INTERVAL #{months} MONTH)
         </if>
         GROUP BY month
-        ORDER BY month ASC
+        ORDER BY month
     </select>
 
     <!-- 批量插入评估记录 -->
     <insert id="batchInsertAssessments">
         INSERT INTO ability_assessments (
-            student_id, dimension_id, assessment_type, status, score, confidence,
-            assessment_date, assessor_id, related_type, related_id, evidence, remarks,
-            created_at, updated_at, deleted
+            student_id, dimension_id, ability_id, assessment_type, status, score,
+            max_score, ability_level, confidence, assessed_at, assessor_id,
+            related_id, evidence, improvement, created_at, updated_at, deleted
         ) VALUES
         <foreach collection="assessments" item="item" separator=",">
             (
-            #{item.studentId}, #{item.dimensionId}, #{item.assessmentType}, #{item.status}, #{item.score}, #{item.confidence},
-            #{item.assessmentDate}, #{item.assessorId}, #{item.relatedType}, #{item.relatedId}, #{item.evidence}, #{item.remarks},
-            NOW(), NOW(), false
+                #{item.studentId}, #{item.dimensionId}, #{item.abilityId}, #{item.assessmentType}, #{item.status},
+                #{item.score}, #{item.maxScore}, #{item.abilityLevel}, #{item.confidence}, #{item.assessedAt},
+                #{item.assessorId}, #{item.relatedId}, #{item.evidence}, #{item.improvement},
+                NOW(), NOW(), false
             )
         </foreach>
     </insert>
@@ -176,7 +179,95 @@
     <!-- 删除旧的评估记录 -->
     <delete id="deleteOldAssessments">
         DELETE FROM ability_assessments
-        WHERE assessment_date &lt; #{beforeDate}
+        WHERE assessed_at &lt; #{beforeDate}
     </delete>
 
-</mapper> 
+    <select id="selectAssessmentById" resultMap="AbilityAssessmentResultMap">
+        SELECT *
+        FROM ability_assessments
+        WHERE id = #{id} AND deleted = false
+    </select>
+
+    <update id="updateAssessment" parameterType="com.noncore.assessment.entity.AbilityAssessment">
+        UPDATE ability_assessments
+        SET
+            student_id = #{studentId},
+            dimension_id = #{dimensionId},
+            ability_id = #{abilityId},
+            assessment_type = #{assessmentType},
+            status = #{status},
+            score = #{score},
+            max_score = #{maxScore},
+            ability_level = #{abilityLevel},
+            confidence = #{confidence},
+            assessed_at = #{assessedAt},
+            assessor_id = #{assessorId},
+            related_id = #{relatedId},
+            evidence = #{evidence},
+            improvement = #{improvement},
+            created_at = #{createdAt},
+            updated_at = NOW(),
+            deleted = #{deleted}
+        WHERE id = #{id}
+    </update>
+
+    <delete id="deleteAssessment" parameterType="long">
+        DELETE FROM ability_assessments
+        WHERE id = #{id}
+    </delete>
+
+    <select id="selectByStudentId" resultMap="AbilityAssessmentResultMap">
+        SELECT *
+        FROM ability_assessments
+        WHERE student_id = #{studentId} AND deleted = false
+    </select>
+
+    <select id="selectByDimensionId" resultMap="AbilityAssessmentResultMap">
+        SELECT *
+        FROM ability_assessments
+        WHERE dimension_id = #{dimensionId} AND deleted = false
+    </select>
+
+    <select id="selectByStudentAndDimension" resultMap="AbilityAssessmentResultMap">
+        SELECT *
+        FROM ability_assessments
+        WHERE student_id = #{studentId} AND dimension_id = #{dimensionId} AND deleted = false
+    </select>
+
+    <select id="selectByAssessmentType" resultMap="AbilityAssessmentResultMap">
+        SELECT *
+        FROM ability_assessments
+        WHERE assessment_type = #{assessmentType} AND deleted = false
+    </select>
+
+    <select id="selectAssessmentsWithPagination" resultMap="AbilityAssessmentResultMap">
+        SELECT *
+        FROM ability_assessments
+        WHERE deleted = false
+        ORDER BY created_at DESC
+        LIMIT #{offset}, #{size}
+    </select>
+
+    <select id="countAssessments" resultType="integer">
+        SELECT COUNT(1)
+        FROM ability_assessments
+        WHERE deleted = false
+    </select>
+
+    <select id="getStudentAssessmentStats" resultType="map">
+        SELECT student_id, COUNT(*) AS count, AVG(score) AS avgScore
+        FROM ability_assessments
+        WHERE deleted = false
+          AND student_id = #{studentId}
+        GROUP BY student_id
+    </select>
+
+    <select id="getDimensionAssessmentStats" resultType="map">
+        SELECT dimension_id, COUNT(*) AS count, AVG(score) AS avgScore
+        FROM ability_assessments
+        WHERE deleted = false
+          AND dimension_id = #{dimensionId}
+        GROUP BY dimension_id
+    </select>
+
+</mapper>

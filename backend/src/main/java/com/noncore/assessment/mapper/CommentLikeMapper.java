@@ -1,6 +1,5 @@
 package com.noncore.assessment.mapper;
 
-import com.noncore.assessment.entity.PostLike;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 

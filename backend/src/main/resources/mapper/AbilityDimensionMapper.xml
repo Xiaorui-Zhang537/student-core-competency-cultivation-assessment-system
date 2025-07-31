@@ -23,21 +23,87 @@
         id, name, description, category, weight, max_score, icon, color, sort_order, is_active, created_at, updated_at
     </sql>
 
+    <!-- 查询所有激活维度 -->
     <select id="selectActiveDimensions" resultMap="AbilityDimensionResultMap">
         SELECT
         <include refid="Base_Column_List"/>
-        FROM ability_dimension
-        WHERE is_active = true
-        ORDER BY sort_order ASC
+        FROM ability_dimensions
+        WHERE is_active = 1
+        ORDER BY sort_order
     </select>
 
+    <!-- 根据ID查询维度 -->
     <select id="selectDimensionById" resultMap="AbilityDimensionResultMap">
         SELECT
         <include refid="Base_Column_List"/>
-        FROM ability_dimension
+        FROM ability_dimensions
         WHERE id = #{dimensionId}
     </select>
 
-    <!-- 其他的CRUD操作 -->
+    <!-- 查询全部维度 -->
+    <select id="selectAllDimensions" resultMap="AbilityDimensionResultMap">
+        SELECT
+        <include refid="Base_Column_List"/>
+        FROM ability_dimensions
+        ORDER BY sort_order
+    </select>
 
-</mapper> 
+    <!-- 插入新维度 -->
+    <insert id="insertDimension" useGeneratedKeys="true" keyProperty="id" parameterType="com.noncore.assessment.entity.AbilityDimension">
+        INSERT INTO ability_dimensions
+        (name, description, category, weight, max_score, icon, color, sort_order, is_active, created_at, updated_at)
+        VALUES
+            (#{name}, #{description}, #{category}, #{weight}, #{maxScore}, #{icon}, #{color}, #{sortOrder}, #{isActive}, NOW(), NOW())
+    </insert>
+
+    <!-- 更新维度 -->
+    <update id="updateDimension" parameterType="com.noncore.assessment.entity.AbilityDimension">
+        UPDATE ability_dimensions
+        SET
+            name = #{name},
+            description = #{description},
+            category = #{category},
+            weight = #{weight},
+            max_score = #{maxScore},
+            icon = #{icon},
+            color = #{color},
+            sort_order = #{sortOrder},
+            is_active = #{isActive},
+            updated_at = NOW()
+        WHERE id = #{id}
+    </update>
+
+    <!-- 删除维度 -->
+    <delete id="deleteDimension" parameterType="long">
+        DELETE FROM ability_dimensions WHERE id = #{id}
+    </delete>
+
+    <!-- 按分类查询 -->
+    <select id="selectDimensionsByCategory" resultMap="AbilityDimensionResultMap">
+        SELECT
+        <include refid="Base_Column_List"/>
+        FROM ability_dimensions
+        WHERE category = #{category}
+        ORDER BY sort_order
+    </select>
+
+    <!-- 按关键字模糊查找 -->
+    <select id="searchDimensions" resultMap="AbilityDimensionResultMap">
+        SELECT
+        <include refid="Base_Column_List"/>
+        FROM ability_dimensions
+        WHERE name LIKE CONCAT('%', #{keyword}, '%') OR description LIKE CONCAT('%', #{keyword}, '%')
+        ORDER BY sort_order
+    </select>
+
+    <!-- 批量激活/停用 -->
+    <update id="batchUpdateActiveStatus">
+        UPDATE ability_dimensions
+        SET is_active = #{isActive}, updated_at = NOW()
+        WHERE id IN
+        <foreach collection="ids" item="id" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </update>
+
+</mapper>

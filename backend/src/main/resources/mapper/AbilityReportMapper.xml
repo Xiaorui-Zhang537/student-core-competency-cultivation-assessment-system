@@ -8,82 +8,104 @@
         <result column="student_id" property="studentId"/>
         <result column="report_type" property="reportType"/>
         <result column="title" property="title"/>
-        <result column="summary" property="summary"/>
-        <result column="content" property="content"/>
         <result column="overall_score" property="overallScore"/>
+        <result column="report_period_start" property="reportPeriodStart"/>
+        <result column="report_period_end" property="reportPeriodEnd"/>
         <result column="dimension_scores" property="dimensionScores"/>
         <result column="trends_analysis" property="trendsAnalysis"/>
         <result column="achievements" property="achievements"/>
         <result column="improvement_areas" property="improvementAreas"/>
         <result column="recommendations" property="recommendations"/>
-        <result column="period_start" property="reportPeriodStart"/>
-        <result column="period_end" property="reportPeriodEnd"/>
-        <result column="generated_at" property="generatedAt"/>
-        <result column="published_at" property="publishedAt"/>
+        <result column="generated_by" property="generatedBy"/>
         <result column="is_published" property="isPublished"/>
-        <result column="version" property="version"/>
         <result column="created_at" property="createdAt"/>
-        <result column="updated_at" property="updatedAt"/>
-        <result column="deleted" property="deleted"/>
+        <result column="published_at" property="publishedAt"/>
+        <!-- 冗余字段 -->
+        <result column="student_name" property="studentName"/>
+        <result column="student_number" property="studentNumber"/>
     </resultMap>
 
-    <resultMap id="AbilityReportDetailResultMap" type="com.noncore.assessment.entity.AbilityReport" extends="AbilityReportResultMap">
-        <association property="student" javaType="com.noncore.assessment.entity.User">
-            <id column="student_id" property="id"/>
-            <result column="student_name" property="displayName"/>
-            <result column="student_number" property="studentNumber"/>
-        </association>
-    </resultMap>
-
-    <!-- 基础查询字段 -->
     <sql id="abilityReportColumns">
-        r.id, r.student_id, r.report_type, r.title, r.summary, r.content,
-        r.overall_score, r.dimension_scores, r.trends_analysis, r.achievements,
-        r.improvement_areas, r.recommendations, r.period_start, r.period_end,
-        r.generated_at, r.published_at, r.is_published, r.version, r.created_at, r.updated_at, r.deleted
+        r.id, r.student_id, r.report_type, r.title, r.overall_score,
+        r.report_period_start, r.report_period_end, r.dimension_scores, r.trends_analysis,
+        r.achievements, r.improvement_areas, r.recommendations,
+        r.generated_by, r.is_published, r.created_at, r.published_at
     </sql>
-
     <sql id="abilityReportDetailColumns">
         <include refid="abilityReportColumns"/>,
-        u.display_name as student_name,
-        u.student_number as student_number
+        u.display_name AS student_name,
+        u.student_number AS student_number
     </sql>
 
     <!-- 插入能力报告 -->
     <insert id="insertReport" parameterType="com.noncore.assessment.entity.AbilityReport" useGeneratedKeys="true" keyProperty="id">
         INSERT INTO ability_reports (
-            student_id, report_type, title, summary, content, overall_score, dimension_scores,
-            trends_analysis, achievements, improvement_areas, recommendations,
-            period_start, period_end, generated_at, published_at, is_published, version,
-            created_at, updated_at, deleted
+            student_id, report_type, title, overall_score,
+            report_period_start, report_period_end, dimension_scores, trends_analysis,
+            achievements, improvement_areas, recommendations,
+            generated_by, is_published, created_at, published_at
         ) VALUES (
-            #{studentId}, #{reportType}, #{title}, #{summary}, #{content}, #{overallScore}, #{dimensionScores},
-            #{trendsAnalysis}, #{achievements}, #{improvementAreas}, #{recommendations},
-            #{reportPeriodStart}, #{reportPeriodEnd}, #{generatedAt}, #{publishedAt}, #{isPublished}, 1,
-            NOW(), NOW(), false
-        )
+                     #{studentId}, #{reportType}, #{title}, #{overallScore},
+                     #{reportPeriodStart}, #{reportPeriodEnd}, #{dimensionScores}, #{trendsAnalysis},
+                     #{achievements}, #{improvementAreas}, #{recommendations},
+                     #{generatedBy}, #{isPublished}, NOW(), #{publishedAt}
+                 )
     </insert>
 
     <!-- 根据ID查询能力报告 -->
-    <select id="selectReportById" parameterType="long" resultMap="AbilityReportDetailResultMap">
+    <select id="selectReportById" parameterType="long" resultMap="AbilityReportResultMap">
         SELECT <include refid="abilityReportDetailColumns"/>
         FROM ability_reports r
         LEFT JOIN users u ON r.student_id = u.id
-        WHERE r.id = #{id} AND r.deleted = false
+        WHERE r.id = #{id}
+    </select>
+
+    <!-- 更新能力报告 -->
+    <update id="updateReport" parameterType="com.noncore.assessment.entity.AbilityReport">
+        UPDATE ability_reports
+        <set>
+            <if test="studentId != null">student_id = #{studentId},</if>
+            <if test="reportType != null">report_type = #{reportType},</if>
+            <if test="title != null">title = #{title},</if>
+            <if test="overallScore != null">overall_score = #{overallScore},</if>
+            <if test="reportPeriodStart != null">report_period_start = #{reportPeriodStart},</if>
+            <if test="reportPeriodEnd != null">report_period_end = #{reportPeriodEnd},</if>
+            <if test="dimensionScores != null">dimension_scores = #{dimensionScores},</if>
+            <if test="trendsAnalysis != null">trends_analysis = #{trendsAnalysis},</if>
+            <if test="achievements != null">achievements = #{achievements},</if>
+            <if test="improvementAreas != null">improvement_areas = #{improvementAreas},</if>
+            <if test="recommendations != null">recommendations = #{recommendations},</if>
+            <if test="generatedBy != null">generated_by = #{generatedBy},</if>
+            <if test="isPublished != null">is_published = #{isPublished},</if>
+            <if test="publishedAt != null">published_at = #{publishedAt},</if>
+            updated_at = NOW()
+        </set>
+        WHERE id = #{id}
+    </update>
+
+    <!-- 删除能力报告 -->
+    <delete id="deleteReport" parameterType="long">
+        DELETE FROM ability_reports WHERE id = #{id}
+    </delete>
+
+    <!-- 根据学生ID查询报告 -->
+    <select id="selectReportsByStudentId" resultMap="AbilityReportResultMap">
+        SELECT <include refid="abilityReportColumns"/>
+        FROM ability_reports r
+        WHERE r.student_id = #{studentId}
+        ORDER BY r.report_period_end DESC
     </select>
 
     <!-- 分页查询能力报告 -->
-    <select id="selectReportsWithPagination" resultMap="AbilityReportDetailResultMap">
-        SELECT <include refid="abilityReportDetailColumns"/>
+    <select id="selectReportsWithPagination" resultMap="AbilityReportResultMap">
+        SELECT <include refid="abilityReportColumns"/>
         FROM ability_reports r
-        LEFT JOIN users u ON r.student_id = u.id
         <where>
-            r.deleted = false
-            <if test="studentId != null">AND r.student_id = #{studentId}</if>
+            <if test="studentId != null">r.student_id = #{studentId}</if>
             <if test="reportType != null and reportType != ''">AND r.report_type = #{reportType}</if>
             <if test="isPublished != null">AND r.is_published = #{isPublished}</if>
         </where>
-        ORDER BY r.generated_at DESC
+        ORDER BY r.report_period_end DESC
         LIMIT #{offset}, #{size}
     </select>
 
@@ -92,21 +114,40 @@
         SELECT COUNT(1)
         FROM ability_reports r
         <where>
-            r.deleted = false
-            <if test="studentId != null">AND r.student_id = #{studentId}</if>
+            <if test="studentId != null">r.student_id = #{studentId}</if>
             <if test="reportType != null and reportType != ''">AND r.report_type = #{reportType}</if>
             <if test="isPublished != null">AND r.is_published = #{isPublished}</if>
         </where>
     </select>
 
     <!-- 获取学生最新的报告 -->
-    <select id="selectLatestReportByStudent" parameterType="long" resultMap="AbilityReportDetailResultMap">
-        SELECT <include refid="abilityReportDetailColumns"/>
+    <select id="selectLatestReportByStudent" resultMap="AbilityReportResultMap">
+        SELECT <include refid="abilityReportColumns"/>
         FROM ability_reports r
-        LEFT JOIN users u ON r.student_id = u.id
-        WHERE r.student_id = #{studentId} AND r.deleted = false
-        ORDER BY r.generated_at DESC
+        WHERE r.student_id = #{studentId}
+        ORDER BY r.report_period_end DESC
         LIMIT 1
+    </select>
+
+    <!-- 根据类型和时间范围查报告 -->
+    <select id="selectReportsByTypeAndPeriod" resultMap="AbilityReportResultMap">
+        SELECT <include refid="abilityReportColumns"/>
+        FROM ability_reports r
+        WHERE r.student_id = #{studentId}
+        AND r.report_type = #{reportType}
+        AND r.report_period_start >= #{periodStart}
+        AND r.report_period_end <= #{periodEnd}
+        ORDER BY r.report_period_end DESC
+    </select>
+
+    <!-- 检查报告是否存在 -->
+    <select id="existsByStudentAndPeriod" resultType="boolean">
+        SELECT COUNT(1) > 0
+        FROM ability_reports r
+        WHERE r.student_id = #{studentId}
+          AND r.report_type = #{reportType}
+          AND r.report_period_start = #{periodStart}
+          AND r.report_period_end = #{periodEnd}
     </select>
 
     <!-- 发布报告 -->
@@ -115,5 +156,54 @@
         SET is_published = true, published_at = NOW(), updated_at = NOW()
         WHERE id = #{id}
     </update>
+
+    <!-- 取消发布报告 -->
+    <update id="unpublishReport" parameterType="long">
+        UPDATE ability_reports
+        SET is_published = false, published_at = NULL, updated_at = NOW()
+        WHERE id = #{id}
+    </update>
+
+    <!-- 批量删除旧报告 -->
+    <delete id="deleteOldReports" parameterType="java.time.LocalDate">
+        DELETE FROM ability_reports
+        WHERE report_period_end &lt; #{beforeDate}
+    </delete>
+
+    <!-- 获取报告统计信息 -->
+    <select id="getReportStats" resultType="map">
+        SELECT COUNT(*)                        AS totalReports,
+               SUM(IF(is_published = 1, 1, 0)) AS publishedReports,
+               MAX(overall_score)              AS topScore,
+               MIN(overall_score)              AS minScore,
+               AVG(overall_score)              AS avgScore
+        FROM ability_reports
+        WHERE student_id = #{studentId}
+    </select>
+
+    <!-- 按类型统计报告数量 -->
+    <select id="countReportsByType" resultType="map">
+        SELECT report_type, COUNT(*) AS count
+        FROM ability_reports
+        WHERE student_id = #{studentId}
+        GROUP BY report_type
+    </select>
+
+    <!-- 获取最高分报告 -->
+    <select id="selectTopScoreReports" resultMap="AbilityReportResultMap">
+        SELECT <include refid="abilityReportColumns"/>
+        FROM ability_reports r
+        WHERE r.student_id = #{studentId}
+        ORDER BY r.overall_score DESC
+        LIMIT #{limit}
+    </select>
+
+    <!-- 查询需要生成的报告 -->
+    <select id="selectStudentsForReportGeneration" resultType="long">
+        SELECT DISTINCT student_id
+        FROM ability_reports
+        WHERE report_type = #{reportType}
+          AND (created_at &lt; #{lastGeneratedBefore} OR created_at IS NULL)
+    </select>
 
 </mapper>
