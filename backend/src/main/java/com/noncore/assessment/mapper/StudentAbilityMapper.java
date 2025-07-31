@@ -118,4 +118,6 @@ public interface StudentAbilityMapper {
      */
     boolean existsByStudentAndDimension(@Param("studentId") Long studentId,
                                        @Param("dimensionId") Long dimensionId);
+
+    BigDecimal selectOverallScoreByStudentId(@Param("studentId") Long studentId);
 } 

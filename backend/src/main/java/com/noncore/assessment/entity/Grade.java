@@ -2,6 +2,10 @@ package com.noncore.assessment.entity;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 import io.swagger.v3.oas.annotations.media.Schema;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -16,6 +20,10 @@ import java.time.LocalDateTime;
  * @since 2024-12-28
  */
 @Schema(description = "成绩实体")
+@Data
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class Grade {
 
     @Schema(description = "成绩ID", example = "1")
@@ -49,40 +57,23 @@ public class Grade {
     private String feedback;
 
     @Schema(description = "成绩状态", example = "published", allowableValues = {"draft", "published", "returned"})
-    private String status;
+    @Builder.Default
+    private String status = "draft";
 
     @Schema(description = "创建时间", example = "2024-12-28 10:30:00")
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
-    private LocalDateTime createdAt;
+    @Builder.Default
+    private LocalDateTime createdAt = LocalDateTime.now();
 
     @Schema(description = "更新时间", example = "2024-12-28 10:30:00")
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
-    private LocalDateTime updatedAt;
+    @Builder.Default
+    private LocalDateTime updatedAt = LocalDateTime.now();
 
     @Schema(description = "是否删除", example = "false")
-    private Boolean deleted;
-
-    /**
-     * 默认构造方法
-     */
-    public Grade() {
-        this.status = "draft";
-        this.deleted = false;
-        this.createdAt = LocalDateTime.now();
-        this.updatedAt = LocalDateTime.now();
-    }
-
-    /**
-     * 构造方法
-     */
-    public Grade(Long studentId, Long assignmentId, BigDecimal score, BigDecimal maxScore) {
-        this();
-        this.studentId = studentId;
-        this.assignmentId = assignmentId;
-        this.score = score;
-        this.maxScore = maxScore;
-    }
-
+    @Builder.Default
+    private Boolean deleted = false;
+    
     /**
      * 计算百分比得分
      */
@@ -122,7 +113,6 @@ public class Grade {
      */
     public void publish() {
         this.status = "published";
-        // this.gradedAt = LocalDateTime.now(); // This line was removed from the new_code, so it's removed here.
         updateTimestamp();
     }
 
@@ -140,136 +130,4 @@ public class Grade {
         return calculatePercentage().compareTo(new BigDecimal("60")) >= 0;
     }
 
-    // Getter和Setter方法
-    public Long getId() {
-        return id;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
-    }
-
-    public Long getStudentId() {
-        return studentId;
-    }
-
-    public void setStudentId(Long studentId) {
-        this.studentId = studentId;
-    }
-
-    public Long getAssignmentId() {
-        return assignmentId;
-    }
-
-    public void setAssignmentId(Long assignmentId) {
-        this.assignmentId = assignmentId;
-    }
-
-    public Long getSubmissionId() {
-        return submissionId;
-    }
-
-    public void setSubmissionId(Long submissionId) {
-        this.submissionId = submissionId;
-    }
-
-    public Long getGraderId() {
-        return graderId;
-    }
-
-    public void setGraderId(Long graderId) {
-        this.graderId = graderId;
-    }
-
-    public BigDecimal getScore() {
-        return score;
-    }
-
-    public void setScore(BigDecimal score) {
-        this.score = score;
-    }
-
-    public BigDecimal getMaxScore() {
-        return maxScore;
-    }
-
-    public void setMaxScore(BigDecimal maxScore) {
-        this.maxScore = maxScore;
-    }
-
-    public BigDecimal getPercentage() {
-        return percentage;
-    }
-
-    public void setPercentage(BigDecimal percentage) {
-        this.percentage = percentage;
-    }
-
-    public String getGradeLevel() {
-        return gradeLevel;
-    }
-
-    public void setGradeLevel(String gradeLevel) {
-        this.gradeLevel = gradeLevel;
-    }
-
-    public String getFeedback() {
-        return feedback;
-    }
-
-    public void setFeedback(String feedback) {
-        this.feedback = feedback;
-    }
-
-    public String getStatus() {
-        return status;
-    }
-
-    public void setStatus(String status) {
-        this.status = status;
-    }
-
-    public LocalDateTime getCreatedAt() {
-        return createdAt;
-    }
-
-    public void setCreatedAt(LocalDateTime createdAt) {
-        this.createdAt = createdAt;
-    }
-
-    public LocalDateTime getUpdatedAt() {
-        return updatedAt;
-    }
-
-    public void setUpdatedAt(LocalDateTime updatedAt) {
-        this.updatedAt = updatedAt;
-    }
-
-    public Boolean getDeleted() {
-        return deleted;
-    }
-
-    public void setDeleted(Boolean deleted) {
-        this.deleted = deleted;
-    }
-
-    @Override
-    public String toString() {
-        return "Grade{" +
-                "id=" + id +
-                ", studentId=" + studentId +
-                ", assignmentId=" + assignmentId +
-                ", submissionId=" + submissionId +
-                ", graderId=" + graderId +
-                ", score=" + score +
-                ", maxScore=" + maxScore +
-                ", percentage=" + percentage +
-                ", gradeLevel='" + gradeLevel + '\'' +
-                ", feedback='" + feedback + '\'' +
-                ", status='" + status + '\'' +
-                ", deleted=" + deleted +
-                ", createdAt=" + createdAt +
-                ", updatedAt=" + updatedAt +
-                '}';
-    }
 } 

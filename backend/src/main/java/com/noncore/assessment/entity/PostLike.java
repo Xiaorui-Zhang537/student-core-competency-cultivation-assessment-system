@@ -1,6 +1,10 @@
 package com.noncore.assessment.entity;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
 
@@ -9,7 +13,16 @@ import java.time.LocalDateTime;
  *
  * @author Assessment System
  */
+@Data
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class PostLike {
+    public PostLike(Long postId, Long userId) {
+        this.postId = postId;
+        this.userId = userId;
+        this.createdAt = LocalDateTime.now();
+    }
     /**
      * 点赞ID
      */
@@ -30,55 +43,4 @@ public class PostLike {
      */
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private LocalDateTime createdAt;
-
-    // 构造函数
-    public PostLike() {}
-
-    public PostLike(Long postId, Long userId) {
-        this.postId = postId;
-        this.userId = userId;
-    }
-
-    // Getter和Setter方法
-    public Long getId() {
-        return id;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
-    }
-
-    public Long getPostId() {
-        return postId;
-    }
-
-    public void setPostId(Long postId) {
-        this.postId = postId;
-    }
-
-    public Long getUserId() {
-        return userId;
-    }
-
-    public void setUserId(Long userId) {
-        this.userId = userId;
-    }
-
-    public LocalDateTime getCreatedAt() {
-        return createdAt;
-    }
-
-    public void setCreatedAt(LocalDateTime createdAt) {
-        this.createdAt = createdAt;
-    }
-
-    @Override
-    public String toString() {
-        return "PostLike{" +
-                "id=" + id +
-                ", postId=" + postId +
-                ", userId=" + userId +
-                ", createdAt=" + createdAt +
-                '}';
-    }
 } 

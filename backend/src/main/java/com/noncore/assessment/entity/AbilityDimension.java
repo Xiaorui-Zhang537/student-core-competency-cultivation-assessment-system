@@ -2,6 +2,10 @@ package com.noncore.assessment.entity;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 import io.swagger.v3.oas.annotations.media.Schema;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -15,6 +19,10 @@ import java.time.LocalDateTime;
  * @since 2024-12-28
  */
 @Schema(description = "能力维度实体")
+@Data
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class AbilityDimension {
 
     @Schema(description = "维度ID", example = "1")
@@ -30,166 +38,42 @@ public class AbilityDimension {
     private String category;
 
     @Schema(description = "权重系数", example = "1.00")
-    private BigDecimal weight;
+    @Builder.Default
+    private BigDecimal weight = new BigDecimal("1.00");
 
     @Schema(description = "最高分数", example = "100")
-    private Integer maxScore;
+    @Builder.Default
+    private Integer maxScore = 100;
 
     @Schema(description = "图标标识", example = "code")
     private String icon;
 
     @Schema(description = "显示颜色", example = "#10B981")
-    private String color;
+    @Builder.Default
+    private String color = "#3B82F6";
 
     @Schema(description = "排序顺序", example = "1")
-    private Integer sortOrder;
+    @Builder.Default
+    private Integer sortOrder = 0;
 
     @Schema(description = "是否激活", example = "true")
-    private Boolean isActive;
+    @Builder.Default
+    private Boolean isActive = true;
 
     @Schema(description = "创建时间", example = "2024-12-28 10:30:00")
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
-    private LocalDateTime createdAt;
+    @Builder.Default
+    private LocalDateTime createdAt = LocalDateTime.now();
 
     @Schema(description = "更新时间", example = "2024-12-28 10:30:00")
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
-    private LocalDateTime updatedAt;
-
-    /**
-     * 默认构造方法
-     */
-    public AbilityDimension() {
-        this.weight = new BigDecimal("1.00");
-        this.maxScore = 100;
-        this.color = "#3B82F6";
-        this.sortOrder = 0;
-        this.isActive = true;
-        this.createdAt = LocalDateTime.now();
-        this.updatedAt = LocalDateTime.now();
-    }
-
-    /**
-     * 构造方法
-     */
-    public AbilityDimension(String name, String description, String category) {
-        this();
-        this.name = name;
-        this.description = description;
-        this.category = category;
-    }
+    @Builder.Default
+    private LocalDateTime updatedAt = LocalDateTime.now();
 
     /**
      * 更新时间戳
      */
     public void updateTimestamp() {
         this.updatedAt = LocalDateTime.now();
-    }
-
-    // Getter和Setter方法
-    public Long getId() {
-        return id;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
-    }
-
-    public String getDescription() {
-        return description;
-    }
-
-    public void setDescription(String description) {
-        this.description = description;
-    }
-
-    public String getCategory() {
-        return category;
-    }
-
-    public void setCategory(String category) {
-        this.category = category;
-    }
-
-    public BigDecimal getWeight() {
-        return weight;
-    }
-
-    public void setWeight(BigDecimal weight) {
-        this.weight = weight;
-    }
-
-    public Integer getMaxScore() {
-        return maxScore;
-    }
-
-    public void setMaxScore(Integer maxScore) {
-        this.maxScore = maxScore;
-    }
-
-    public String getIcon() {
-        return icon;
-    }
-
-    public void setIcon(String icon) {
-        this.icon = icon;
-    }
-
-    public String getColor() {
-        return color;
-    }
-
-    public void setColor(String color) {
-        this.color = color;
-    }
-
-    public Integer getSortOrder() {
-        return sortOrder;
-    }
-
-    public void setSortOrder(Integer sortOrder) {
-        this.sortOrder = sortOrder;
-    }
-
-    public Boolean getIsActive() {
-        return isActive;
-    }
-
-    public void setIsActive(Boolean isActive) {
-        this.isActive = isActive;
-    }
-
-    public LocalDateTime getCreatedAt() {
-        return createdAt;
-    }
-
-    public void setCreatedAt(LocalDateTime createdAt) {
-        this.createdAt = createdAt;
-    }
-
-    public LocalDateTime getUpdatedAt() {
-        return updatedAt;
-    }
-
-    public void setUpdatedAt(LocalDateTime updatedAt) {
-        this.updatedAt = updatedAt;
-    }
-
-    @Override
-    public String toString() {
-        return "AbilityDimension{" +
-                "id=" + id +
-                ", name='" + name + '\'' +
-                ", category='" + category + '\'' +
-                ", weight=" + weight +
-                ", isActive=" + isActive +
-                '}';
     }
 } 

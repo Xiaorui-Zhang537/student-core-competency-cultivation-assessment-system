@@ -2,6 +2,10 @@ package com.noncore.assessment.entity;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 import io.swagger.v3.oas.annotations.media.Schema;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -15,7 +19,22 @@ import java.time.LocalDateTime;
  * @since 2024-12-28
  */
 @Schema(description = "学生能力记录实体")
+@Data
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class StudentAbility {
+
+    public StudentAbility(Long studentId, Long dimensionId) {
+        this.studentId = studentId;
+        this.dimensionId = dimensionId;
+        this.currentScore = BigDecimal.ZERO;
+        this.level = "beginner";
+        this.assessmentCount = 0;
+        this.trend = "stable";
+        this.createdAt = LocalDateTime.now();
+        this.updatedAt = LocalDateTime.now();
+    }
 
     @Schema(description = "记录ID", example = "1")
     private Long id;
@@ -27,28 +46,34 @@ public class StudentAbility {
     private Long dimensionId;
 
     @Schema(description = "当前得分", example = "85.50")
-    private BigDecimal currentScore;
+    @Builder.Default
+    private BigDecimal currentScore = BigDecimal.ZERO;
 
     @Schema(description = "能力等级", example = "intermediate", allowableValues = {"beginner", "intermediate", "advanced", "expert"})
-    private String level;
+    @Builder.Default
+    private String level = "beginner";
 
     @Schema(description = "最后评估时间", example = "2024-12-28 15:30:00")
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private LocalDateTime lastAssessmentAt;
 
     @Schema(description = "评估次数", example = "5")
-    private Integer assessmentCount;
+    @Builder.Default
+    private Integer assessmentCount = 0;
 
     @Schema(description = "发展趋势", example = "rising", allowableValues = {"rising", "stable", "declining"})
-    private String trend;
+    @Builder.Default
+    private String trend = "stable";
 
     @Schema(description = "创建时间", example = "2024-12-28 10:30:00")
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
-    private LocalDateTime createdAt;
+    @Builder.Default
+    private LocalDateTime createdAt = LocalDateTime.now();
 
     @Schema(description = "更新时间", example = "2024-12-28 10:30:00")
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
-    private LocalDateTime updatedAt;
+    @Builder.Default
+    private LocalDateTime updatedAt = LocalDateTime.now();
 
     // 冗余字段，用于显示
     @Schema(description = "维度名称", example = "编程能力")
@@ -59,28 +84,7 @@ public class StudentAbility {
 
     @Schema(description = "学生姓名", example = "张三")
     private String studentName;
-
-    /**
-     * 默认构造方法
-     */
-    public StudentAbility() {
-        this.currentScore = BigDecimal.ZERO;
-        this.level = "beginner";
-        this.assessmentCount = 0;
-        this.trend = "stable";
-        this.createdAt = LocalDateTime.now();
-        this.updatedAt = LocalDateTime.now();
-    }
-
-    /**
-     * 构造方法
-     */
-    public StudentAbility(Long studentId, Long dimensionId) {
-        this();
-        this.studentId = studentId;
-        this.dimensionId = dimensionId;
-    }
-
+    
     /**
      * 更新能力等级
      */
@@ -129,122 +133,5 @@ public class StudentAbility {
      */
     public void updateTimestamp() {
         this.updatedAt = LocalDateTime.now();
-    }
-
-    // Getter和Setter方法
-    public Long getId() {
-        return id;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
-    }
-
-    public Long getStudentId() {
-        return studentId;
-    }
-
-    public void setStudentId(Long studentId) {
-        this.studentId = studentId;
-    }
-
-    public Long getDimensionId() {
-        return dimensionId;
-    }
-
-    public void setDimensionId(Long dimensionId) {
-        this.dimensionId = dimensionId;
-    }
-
-    public BigDecimal getCurrentScore() {
-        return currentScore;
-    }
-
-    public void setCurrentScore(BigDecimal currentScore) {
-        this.currentScore = currentScore;
-    }
-
-    public String getLevel() {
-        return level;
-    }
-
-    public void setLevel(String level) {
-        this.level = level;
-    }
-
-    public LocalDateTime getLastAssessmentAt() {
-        return lastAssessmentAt;
-    }
-
-    public void setLastAssessmentAt(LocalDateTime lastAssessmentAt) {
-        this.lastAssessmentAt = lastAssessmentAt;
-    }
-
-    public Integer getAssessmentCount() {
-        return assessmentCount;
-    }
-
-    public void setAssessmentCount(Integer assessmentCount) {
-        this.assessmentCount = assessmentCount;
-    }
-
-    public String getTrend() {
-        return trend;
-    }
-
-    public void setTrend(String trend) {
-        this.trend = trend;
-    }
-
-    public LocalDateTime getCreatedAt() {
-        return createdAt;
-    }
-
-    public void setCreatedAt(LocalDateTime createdAt) {
-        this.createdAt = createdAt;
-    }
-
-    public LocalDateTime getUpdatedAt() {
-        return updatedAt;
-    }
-
-    public void setUpdatedAt(LocalDateTime updatedAt) {
-        this.updatedAt = updatedAt;
-    }
-
-    public String getDimensionName() {
-        return dimensionName;
-    }
-
-    public void setDimensionName(String dimensionName) {
-        this.dimensionName = dimensionName;
-    }
-
-    public String getDimensionCategory() {
-        return dimensionCategory;
-    }
-
-    public void setDimensionCategory(String dimensionCategory) {
-        this.dimensionCategory = dimensionCategory;
-    }
-
-    public String getStudentName() {
-        return studentName;
-    }
-
-    public void setStudentName(String studentName) {
-        this.studentName = studentName;
-    }
-
-    @Override
-    public String toString() {
-        return "StudentAbility{" +
-                "id=" + id +
-                ", studentId=" + studentId +
-                ", dimensionId=" + dimensionId +
-                ", currentScore=" + currentScore +
-                ", level='" + level + '\'' +
-                ", trend='" + trend + '\'' +
-                '}';
     }
 } 

@@ -117,7 +117,7 @@
     </select>
 
     <!-- 统计学生提交数量 -->
-    <select id="countByStudentId" resultType="java.lang.Integer">
+    <select id="countByStudentId" resultType="long">
         SELECT COUNT(*) FROM submissions WHERE student_id = #{studentId}
     </select>
 
@@ -145,7 +145,7 @@
     </select>
 
     <!-- 统计作业提交数量 -->
-    <select id="countByAssignmentId" resultType="java.lang.Integer">
+    <select id="countByAssignmentId" resultType="long">
         SELECT COUNT(*) FROM submissions WHERE assignment_id = #{assignmentId}
     </select>
 
@@ -174,7 +174,7 @@
     </select>
 
     <!-- 统计学生成绩数量 -->
-    <select id="countStudentGrades" resultType="java.lang.Integer">
+    <select id="countStudentGrades" resultType="long">
         SELECT COUNT(*) FROM submissions s
         LEFT JOIN grades g ON g.student_id = s.student_id AND g.assignment_id = s.assignment_id
         WHERE s.student_id = #{studentId}
@@ -230,10 +230,38 @@
     </select>
 
     <!-- 检查学生是否已提交 -->
-    <select id="countByAssignmentAndStudent" resultType="java.lang.Integer">
+    <select id="countByAssignmentAndStudent" resultType="long">
         SELECT COUNT(*) 
         FROM submissions 
         WHERE assignment_id = #{assignmentId} AND student_id = #{studentId}
+    </select>
+
+    <!-- 统计教师的待批改作业数 -->
+    <select id="countPendingByTeacher" resultType="long">
+        SELECT COUNT(s.id)
+        FROM submissions s
+        JOIN assignments a ON s.assignment_id = a.id
+        WHERE a.teacher_id = #{teacherId}
+          AND s.status = 'submitted'
+          AND s.deleted = false
+    </select>
+
+    <!-- 获取教师的待批改作业列表 -->
+    <select id="findPendingByTeacher" resultType="com.noncore.assessment.dto.response.TeacherDashboardResponse$PendingGradingDto">
+        SELECT
+            s.id AS submissionId,
+            a.title AS assignmentTitle,
+            u.display_name AS studentName,
+            c.title AS courseTitle,
+            s.submitted_at AS submittedAt,
+            a.due_date AS dueDate
+        FROM submissions s
+        JOIN assignments a ON s.assignment_id = a.id
+        JOIN users u ON s.student_id = u.id
+        JOIN courses c ON a.course_id = c.id
+        WHERE a.teacher_id = #{teacherId} AND s.status = 'submitted' AND s.deleted = false
+        ORDER BY s.submitted_at ASC
+        LIMIT #{limit}
     </select>
 
 </mapper> 

@@ -35,47 +35,17 @@ public class SecurityConfig {
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
     private final JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint;
     private final JwtAccessDeniedHandler jwtAccessDeniedHandler;
+    private final SecurityProperties securityProperties;
 
     public SecurityConfig(JwtAuthenticationFilter jwtAuthenticationFilter,
                           JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint,
-                          JwtAccessDeniedHandler jwtAccessDeniedHandler) {
+                          JwtAccessDeniedHandler jwtAccessDeniedHandler,
+                          SecurityProperties securityProperties) {
         this.jwtAuthenticationFilter = jwtAuthenticationFilter;
         this.jwtAuthenticationEntryPoint = jwtAuthenticationEntryPoint;
         this.jwtAccessDeniedHandler = jwtAccessDeniedHandler;
+        this.securityProperties = securityProperties;
     }
-
-    /**
-     * 公开访问的路径数组
-     */
-    private static final String[] PUBLIC_PATHS = {
-        // 认证相关接口
-        "/api/auth/login",
-        "/api/auth/register",
-        "/api/auth/forgot-password",
-        "/api/auth/reset-password",
-        "/api/auth/verify-email",
-        "/api/auth/check-username",
-        "/api/auth/check-email",
-        
-        // API文档相关
-        "/api/swagger-ui/**",
-        "/api/swagger-ui.html",
-        "/api/v3/api-docs/**",
-        "/api/swagger-resources/**",
-        "/api/webjars/**",
-        
-        // 健康检查和监控
-        "/api/actuator/health",
-        "/api/actuator/info",
-        
-        // 静态资源
-        "/static/**",
-        "/public/**",
-        "/favicon.ico",
-        
-        // 文件下载（公开文件）
-        "/api/files/download/public/**"
-    };
 
     /**
      * 配置HTTP安全
@@ -100,19 +70,7 @@ public class SecurityConfig {
             // 配置路径访问权限
             .authorizeHttpRequests(authz -> authz
                 // 公开路径，允许所有用户访问
-                .requestMatchers(PUBLIC_PATHS).permitAll()
-                
-                // 管理员专用接口
-                .requestMatchers("/api/admin/**").hasRole("ADMIN")
-                
-                // 教师相关接口
-                .requestMatchers("/api/teacher/**").hasAnyRole("TEACHER", "ADMIN")
-                
-                // 学生相关接口
-                .requestMatchers("/api/student/**").hasAnyRole("STUDENT", "ADMIN")
-                
-                // 文件上传需要认证
-                .requestMatchers("/api/files/upload/**").authenticated()
+                .requestMatchers(securityProperties.getJwt().getPublicUrls().toArray(new String[0])).permitAll()
                 
                 // 其他所有请求都需要认证
                 .anyRequest().authenticated()
@@ -141,47 +99,13 @@ public class SecurityConfig {
     }
 
     /**
-     * 检查给定路径是否为公开路径
-     *
-     * @param requestPath 请求路径
-     * @return true如果是公开路径，false如果需要认证
-     */
-    public static boolean isPublicPath(String requestPath) {
-        if (requestPath == null) {
-            return false;
-        }
-        
-        for (String publicPath : PUBLIC_PATHS) {
-            // 处理通配符匹配
-            if (publicPath.endsWith("/**")) {
-                String prefix = publicPath.substring(0, publicPath.length() - 3);
-                if (requestPath.startsWith(prefix)) {
-                    return true;
-                }
-            } else if (publicPath.equals(requestPath)) {
-                return true;
-            }
-        }
-        
-        return false;
-    }
-
-    /**
      * CORS配置
      */
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
         
-        // 允许的前端域名
-        configuration.setAllowedOriginPatterns(Arrays.asList(
-            "http://localhost:3000",
-            "http://localhost:5173", 
-            "http://localhost:8080",
-            "http://127.0.0.1:3000",
-            "http://127.0.0.1:5173",
-            "http://127.0.0.1:8080"
-        ));
+        configuration.setAllowedOriginPatterns(securityProperties.getCors().getAllowedOrigins());
         
         // 允许的HTTP方法
         configuration.setAllowedMethods(Arrays.asList(

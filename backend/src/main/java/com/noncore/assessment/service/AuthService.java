@@ -3,7 +3,6 @@ package com.noncore.assessment.service;
 import com.noncore.assessment.dto.request.LoginRequest;
 import com.noncore.assessment.dto.request.RegisterRequest;
 import com.noncore.assessment.dto.response.AuthResponse;
-import com.noncore.assessment.entity.User;
 
 /**
  * 认证服务接口
@@ -47,79 +46,10 @@ public interface AuthService {
     void logout(String token);
 
     /**
-     * 获取当前用户信息
+     * 检查令牌是否在黑名单中
      *
-     * @param username 用户名
-     * @return 用户信息
+     * @param token 访问令牌
+     * @return 是否在黑名单中
      */
-    User getCurrentUser(String username);
-
-    /**
-     * 获取用户资料
-     *
-     * @param username 用户名
-     * @return 用户资料
-     */
-    User getUserProfile(String username);
-
-    /**
-     * 更新用户资料
-     *
-     * @param user 用户信息
-     */
-    void updateUserProfile(User user);
-
-    /**
-     * 修改密码
-     *
-     * @param username 用户名
-     * @param currentPassword 当前密码
-     * @param newPassword 新密码
-     */
-    void changePassword(String username, String currentPassword, String newPassword);
-
-    /**
-     * 发送忘记密码邮件
-     *
-     * @param email 邮箱地址
-     */
-    void forgotPassword(String email);
-
-    /**
-     * 重置密码
-     *
-     * @param token 重置令牌
-     * @param newPassword 新密码
-     */
-    void resetPassword(String token, String newPassword);
-
-    /**
-     * 验证邮箱
-     *
-     * @param token 验证令牌
-     */
-    void verifyEmail(String token);
-
-    /**
-     * 重新发送验证邮件
-     *
-     * @param username 用户名
-     */
-    void resendVerification(String username);
-
-    /**
-     * 检查用户名是否存在
-     *
-     * @param username 用户名
-     * @return 是否存在
-     */
-    boolean isUsernameExists(String username);
-
-    /**
-     * 检查邮箱是否存在
-     *
-     * @param email 邮箱
-     * @return 是否存在
-     */
-    boolean isEmailExists(String email);
+    boolean isTokenBlacklisted(String token);
 } 

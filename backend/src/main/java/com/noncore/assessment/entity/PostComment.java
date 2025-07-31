@@ -1,6 +1,10 @@
 package com.noncore.assessment.entity;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -10,6 +14,10 @@ import java.util.List;
  *
  * @author Assessment System
  */
+@Data
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class PostComment {
     /**
      * 评论ID
@@ -39,12 +47,14 @@ public class PostComment {
     /**
      * 点赞数
      */
-    private Integer likesCount;
+    @Builder.Default
+    private Integer likesCount = 0;
 
     /**
      * 状态：published,deleted
      */
-    private String status;
+    @Builder.Default
+    private String status = "published";
 
     /**
      * 创建时间
@@ -61,7 +71,8 @@ public class PostComment {
     /**
      * 是否删除
      */
-    private Boolean deleted;
+    @Builder.Default
+    private Boolean deleted = false;
 
     // 额外字段，用于关联查询
     /**
@@ -83,142 +94,7 @@ public class PostComment {
      * 当前用户是否已点赞
      */
     private Boolean liked;
-
-    // 构造函数
-    public PostComment() {}
-
-    public PostComment(Long postId, Long authorId, String content) {
-        this.postId = postId;
-        this.authorId = authorId;
-        this.content = content;
-        this.likesCount = 0;
-        this.status = "published";
-        this.deleted = false;
-    }
-
-    public PostComment(Long postId, Long authorId, Long parentId, String content) {
-        this.postId = postId;
-        this.authorId = authorId;
-        this.parentId = parentId;
-        this.content = content;
-        this.likesCount = 0;
-        this.status = "published";
-        this.deleted = false;
-    }
-
-    // Getter和Setter方法
-    public Long getId() {
-        return id;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
-    }
-
-    public Long getPostId() {
-        return postId;
-    }
-
-    public void setPostId(Long postId) {
-        this.postId = postId;
-    }
-
-    public Long getAuthorId() {
-        return authorId;
-    }
-
-    public void setAuthorId(Long authorId) {
-        this.authorId = authorId;
-    }
-
-    public Long getParentId() {
-        return parentId;
-    }
-
-    public void setParentId(Long parentId) {
-        this.parentId = parentId;
-    }
-
-    public String getContent() {
-        return content;
-    }
-
-    public void setContent(String content) {
-        this.content = content;
-    }
-
-    public Integer getLikesCount() {
-        return likesCount;
-    }
-
-    public void setLikesCount(Integer likesCount) {
-        this.likesCount = likesCount;
-    }
-
-    public String getStatus() {
-        return status;
-    }
-
-    public void setStatus(String status) {
-        this.status = status;
-    }
-
-    public LocalDateTime getCreatedAt() {
-        return createdAt;
-    }
-
-    public void setCreatedAt(LocalDateTime createdAt) {
-        this.createdAt = createdAt;
-    }
-
-    public LocalDateTime getUpdatedAt() {
-        return updatedAt;
-    }
-
-    public void setUpdatedAt(LocalDateTime updatedAt) {
-        this.updatedAt = updatedAt;
-    }
-
-    public Boolean getDeleted() {
-        return deleted;
-    }
-
-    public void setDeleted(Boolean deleted) {
-        this.deleted = deleted;
-    }
-
-    public User getAuthor() {
-        return author;
-    }
-
-    public void setAuthor(User author) {
-        this.author = author;
-    }
-
-    public PostComment getParentComment() {
-        return parentComment;
-    }
-
-    public void setParentComment(PostComment parentComment) {
-        this.parentComment = parentComment;
-    }
-
-    public List<PostComment> getReplies() {
-        return replies;
-    }
-
-    public void setReplies(List<PostComment> replies) {
-        this.replies = replies;
-    }
-
-    public Boolean getLiked() {
-        return liked;
-    }
-
-    public void setLiked(Boolean liked) {
-        this.liked = liked;
-    }
-
+    
     /**
      * 增加点赞数
      */
@@ -252,19 +128,5 @@ public class PostComment {
      */
     public boolean isViewable() {
         return isPublished() && !Boolean.TRUE.equals(this.deleted);
-    }
-
-    @Override
-    public String toString() {
-        return "PostComment{" +
-                "id=" + id +
-                ", postId=" + postId +
-                ", authorId=" + authorId +
-                ", parentId=" + parentId +
-                ", content='" + content + '\'' +
-                ", likesCount=" + likesCount +
-                ", status='" + status + '\'' +
-                ", deleted=" + deleted +
-                '}';
     }
 } 

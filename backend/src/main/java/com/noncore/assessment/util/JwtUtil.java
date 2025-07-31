@@ -178,7 +178,10 @@ public class JwtUtil {
                     .build()
                     .parseSignedClaims(token)
                     .getPayload();
-        } catch (JwtException e) {
+        } catch (ExpiredJwtException e) {
+            logger.warn("解析JWT令牌失败: 令牌已过期 - {}", e.getMessage());
+            throw new BusinessException(ErrorCode.TOKEN_INVALID, "令牌已过期");
+        } catch (JwtException | IllegalArgumentException e) {
             logger.error("解析JWT令牌失败: {}", e.getMessage());
             throw new BusinessException(ErrorCode.TOKEN_INVALID, "无效的JWT令牌");
         }
@@ -190,13 +193,9 @@ public class JwtUtil {
      * @param token JWT令牌
      * @return 是否过期
      */
-    public Boolean isTokenExpired(String token) {
-        try {
-            final Date expiration = getExpirationDateFromToken(token);
-            return expiration.before(new Date());
-        } catch (Exception e) {
-            return true;
-        }
+    public boolean isTokenExpired(String token) {
+        final Date expiration = getExpirationDateFromToken(token);
+        return expiration.before(new Date());
     }
 
     /**
@@ -206,14 +205,9 @@ public class JwtUtil {
      * @param username 用户名
      * @return 是否有效
      */
-    public Boolean validateToken(String token, String username) {
-        try {
-            final String tokenUsername = getUsernameFromToken(token);
-            return (username.equals(tokenUsername) && !isTokenExpired(token));
-        } catch (Exception e) {
-            logger.error("验证JWT令牌失败: {}", e.getMessage());
-            return false;
-        }
+    public boolean validateToken(String token, String username) {
+        final String tokenUsername = getUsernameFromToken(token);
+        return (username.equals(tokenUsername) && !isTokenExpired(token));
     }
 
     /**
@@ -222,13 +216,8 @@ public class JwtUtil {
      * @param token JWT令牌
      * @return 是否有效
      */
-    public Boolean validateToken(String token) {
-        try {
-            return !isTokenExpired(token);
-        } catch (Exception e) {
-            logger.error("验证JWT令牌失败: {}", e.getMessage());
-            return false;
-        }
+    public boolean validateToken(String token) {
+        return !isTokenExpired(token);
     }
 
     /**
@@ -237,13 +226,9 @@ public class JwtUtil {
      * @param token JWT令牌
      * @return 是否为访问令牌
      */
-    public Boolean isAccessToken(String token) {
-        try {
-            String tokenType = getTokenTypeFromToken(token);
-            return "access".equals(tokenType);
-        } catch (Exception e) {
-            return false;
-        }
+    public boolean isAccessToken(String token) {
+        String tokenType = getTokenTypeFromToken(token);
+        return "access".equals(tokenType);
     }
 
     /**
@@ -252,13 +237,9 @@ public class JwtUtil {
      * @param token JWT令牌
      * @return 是否为刷新令牌
      */
-    public Boolean isRefreshToken(String token) {
-        try {
-            String tokenType = getTokenTypeFromToken(token);
-            return "refresh".equals(tokenType);
-        } catch (Exception e) {
-            return false;
-        }
+    public boolean isRefreshToken(String token) {
+        String tokenType = getTokenTypeFromToken(token);
+        return "refresh".equals(tokenType);
     }
 
     /**
@@ -268,13 +249,9 @@ public class JwtUtil {
      * @return 剩余有效时间（秒）
      */
     public Long getTokenRemainingTime(String token) {
-        try {
-            Date expiration = getExpirationDateFromToken(token);
-            long remaining = expiration.getTime() - System.currentTimeMillis();
-            return Math.max(0, remaining / 1000);
-        } catch (Exception e) {
-            return 0L;
-        }
+        Date expiration = getExpirationDateFromToken(token);
+        long remaining = expiration.getTime() - System.currentTimeMillis();
+        return Math.max(0, remaining / 1000);
     }
 
     /**

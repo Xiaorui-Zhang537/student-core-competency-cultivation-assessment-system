@@ -3,6 +3,8 @@ package com.noncore.assessment.service.impl;
 import com.github.pagehelper.PageHelper;
 import com.github.pagehelper.PageInfo;
 import com.noncore.assessment.entity.*;
+import com.noncore.assessment.exception.BusinessException;
+import com.noncore.assessment.exception.ErrorCode;
 import com.noncore.assessment.mapper.*;
 import com.noncore.assessment.service.CommunityService;
 import com.noncore.assessment.util.PageResult;
@@ -24,12 +26,19 @@ public class CommunityServiceImpl implements CommunityService {
     private final PostCommentMapper postCommentMapper;
     private final PostLikeMapper postLikeMapper;
     private final TagMapper tagMapper;
+    private final CommentLikeMapper commentLikeMapper;
+    private final PostTagMapper postTagMapper;
 
-    public CommunityServiceImpl(PostMapper postMapper, PostCommentMapper postCommentMapper, PostLikeMapper postLikeMapper, TagMapper tagMapper) {
+
+    public CommunityServiceImpl(PostMapper postMapper, PostCommentMapper postCommentMapper,
+                                PostLikeMapper postLikeMapper, TagMapper tagMapper,
+                                CommentLikeMapper commentLikeMapper, PostTagMapper postTagMapper) {
         this.postMapper = postMapper;
         this.postCommentMapper = postCommentMapper;
         this.postLikeMapper = postLikeMapper;
         this.tagMapper = tagMapper;
+        this.commentLikeMapper = commentLikeMapper;
+        this.postTagMapper = postTagMapper;
     }
 
     @Override
@@ -96,9 +105,14 @@ public class CommunityServiceImpl implements CommunityService {
     @Transactional
     public void deletePost(Long id, Long userId) {
         Post post = postMapper.selectById(id);
-        if (post != null && post.getAuthorId().equals(userId)) {
-            postMapper.softDeleteById(id);
+        if (post == null) {
+            // Post not found, can be considered as a successful deletion.
+            return;
         }
+        if (!post.getAuthorId().equals(userId)) {
+            throw new BusinessException(ErrorCode.UNAUTHORIZED_OPERATION, "用户无权删除此帖子");
+        }
+        postMapper.softDeleteById(id);
     }
 
     @Override
@@ -180,9 +194,19 @@ public class CommunityServiceImpl implements CommunityService {
     }
 
     @Override
+    @Transactional
     public boolean likeComment(Long commentId, Long userId) {
-        // 这里需要创建CommentLikeMapper，暂时返回false
-        return false;
+        if (commentLikeMapper.selectByCommentIdAndUserId(commentId, userId) != null) {
+            // 取消点赞
+            commentLikeMapper.delete(commentId, userId);
+            postCommentMapper.decrementLikes(commentId);
+            return false;
+        } else {
+            // 点赞
+            commentLikeMapper.insert(commentId, userId);
+            postCommentMapper.incrementLikes(commentId);
+            return true;
+        }
     }
 
     @Override
@@ -248,15 +272,41 @@ public class CommunityServiceImpl implements CommunityService {
      * 处理帖子标签
      */
     private void handlePostTags(Long postId, List<String> tagNames) {
-        // 这里简化实现，实际应该先删除原有关联，再重新建立
+        // 1. 删除旧的标签关联
+        postTagMapper.deleteByPostId(postId);
+
+        if (tagNames == null || tagNames.isEmpty()) {
+            return;
+        }
+
+        // 2. 找出已存在的标签和需要创建的新标签
+        List<Tag> existingTags = tagMapper.selectByNames(tagNames);
+        Map<String, Long> existingTagMap = existingTags.stream()
+                .collect(Collectors.toMap(Tag::getName, Tag::getId));
+
+        List<Tag> newTagsToCreate = new ArrayList<>();
         for (String tagName : tagNames) {
-            Tag tag = tagMapper.selectByName(tagName);
-            if (tag == null) {
-                // 创建新标签
-                tag = new Tag(tagName);
-                tagMapper.insert(tag);
+            if (!existingTagMap.containsKey(tagName)) {
+                newTagsToCreate.add(new Tag(tagName));
             }
-            // 创建帖子标签关联（需要PostTagMapper，这里暂时省略）
+        }
+
+        // 3. 批量创建新标签
+        if (!newTagsToCreate.isEmpty()) {
+            tagMapper.batchInsert(newTagsToCreate);
+            // 将新创建的标签加入到map中
+            for (Tag newTag : newTagsToCreate) {
+                existingTagMap.put(newTag.getName(), newTag.getId());
+            }
+        }
+
+        // 4. 批量创建帖子和标签的关联
+        List<PostTag> postTagsToInsert = tagNames.stream()
+                .map(tagName -> new PostTag(postId, existingTagMap.get(tagName)))
+                .collect(Collectors.toList());
+
+        if (!postTagsToInsert.isEmpty()) {
+            postTagMapper.batchInsert(postTagsToInsert);
         }
     }
 } 

@@ -38,6 +38,14 @@
         VALUES (#{name}, #{description}, #{color}, #{postsCount})
     </insert>
 
+    <insert id="batchInsert" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO tags (name)
+        VALUES
+        <foreach collection="tags" item="tag" separator=",">
+            (#{tag.name})
+        </foreach>
+    </insert>
+
     <!-- 根据ID查询标签 -->
     <select id="selectById" resultMap="BaseResultMap">
         SELECT <include refid="Base_Column_List"/>
@@ -67,6 +75,10 @@
     <!-- 删除标签 -->
     <delete id="deleteById">
         DELETE FROM tags WHERE id = #{id}
+    </delete>
+
+    <delete id="deleteTagsByPostId">
+        DELETE FROM post_tags WHERE post_id = #{postId}
     </delete>
 
     <!-- 查询标签列表 -->
@@ -112,9 +124,8 @@
         ORDER BY t.name
     </select>
 
-    <!-- 批量查询标签 -->
     <select id="selectByNames" resultMap="BaseResultMap">
-        SELECT <include refid="Base_Column_List"/>
+        SELECT <include refid="Base_Column_List" />
         FROM tags
         WHERE name IN
         <foreach collection="names" item="name" open="(" separator="," close=")">

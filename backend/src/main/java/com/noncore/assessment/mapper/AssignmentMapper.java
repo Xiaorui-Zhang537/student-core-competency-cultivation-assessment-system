@@ -5,6 +5,8 @@ import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
 import java.util.List;
+import java.util.Map;
+import com.noncore.assessment.dto.response.StudentDashboardResponse;
 
 /**
  * 作业数据访问接口
@@ -104,7 +106,7 @@ public interface AssignmentMapper {
      * @param status 作业状态（可选）
      * @return 作业数量
      */
-    int countAssignments(@Param("courseId") Long courseId, 
+    long countAssignments(@Param("courseId") Long courseId, 
                         @Param("teacherId") Long teacherId, 
                         @Param("status") String status);
 
@@ -150,4 +152,20 @@ public interface AssignmentMapper {
      * @return 统计结果
      */
     List<java.util.Map<String, Object>> getAssignmentStatistics(@Param("teacherId") Long teacherId, @Param("courseId") Long courseId);
+
+    long countPendingAssignments(@Param("studentId") Long studentId);
+
+    List<StudentDashboardResponse.PendingAssignmentDto> findPendingAssignments(@Param("studentId") Long studentId, @Param("limit") int limit);
+
+    List<Assignment> findAssignmentsByStudentId(@Param("studentId") Long studentId);
+
+    /**
+     * 根据学生ID查询待处理的作业列表 (返回实体)
+     *
+     * @param studentId 学生ID
+     * @return 待处理的作业列表
+     */
+    List<Assignment> findPendingAssignmentsForStudent(@Param("studentId") Long studentId);
+
+    long countMonthlyByTeacher(@Param("teacherId") Long teacherId);
 } 

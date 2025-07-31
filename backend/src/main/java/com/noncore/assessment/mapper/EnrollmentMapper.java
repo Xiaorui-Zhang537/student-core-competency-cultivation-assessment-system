@@ -149,10 +149,12 @@ public interface EnrollmentMapper {
      * @param status 选课状态（可选）
      * @return 选课数量
      */
-    int countEnrollments(@Param("studentId") Long studentId, 
+    long countEnrollments(@Param("studentId") Long studentId, 
                         @Param("courseId") Long courseId, 
                         @Param("status") String status);
 
+    long countByCourseId(@Param("courseId") Long courseId);
+    
     /**
      * 获取学生的学习统计
      *
@@ -201,11 +203,11 @@ public interface EnrollmentMapper {
                                                     @Param("status") String status,
                                                     @Param("keyword") String keyword);
 
-    /**
-     * 统计某课程的选课人数
-     *
-     * @param courseId 课程ID
-     * @return 选课人数
-     */
-    int countByCourseId(@Param("courseId") Long courseId);
+    long countStudentsByTeacher(@Param("teacherId") Long teacherId);
+
+    long countWeeklyActiveStudentsByTeacher(@Param("teacherId") Long teacherId);
+    
+    List<Long> selectEnrolledStudentIds(@Param("courseId") Long courseId, @Param("studentIds") List<Long> studentIds);
+
+    void batchInsertEnrollments(@Param("enrollments") List<Enrollment> enrollments);
 } 

@@ -303,4 +303,35 @@
         AND lp.deleted = 0
     </select>
 
+    <!-- 计算学生最近一周学习时长 -->
+    <select id="calculateWeeklyStudyTime" resultType="long">
+        SELECT COALESCE(SUM(watch_time), 0)
+        FROM lesson_progress
+        WHERE student_id = #{studentId}
+          AND updated_at >= DATE_SUB(NOW(), INTERVAL 7 DAY)
+          AND deleted = false
+    </select>
+
+    <!-- 计算教师所有课程的平均评分 -->
+    <select id="getAverageRatingByTeacher" resultType="double">
+        SELECT COALESCE(AVG(lp.rating), 0.0)
+        FROM lesson_progress lp
+        JOIN lessons l ON lp.lesson_id = l.id
+        JOIN courses c ON l.course_id = c.id
+        WHERE c.teacher_id = #{teacherId} AND lp.rating IS NOT NULL AND lp.deleted = false
+    </select>
+
+    <!-- 计算教师所有学生的平均课程完成率 -->
+    <select id="getAverageCompletionRateByTeacher" resultType="double">
+        SELECT COALESCE(AVG(main.completion_rate), 0.0)
+        FROM (
+            SELECT AVG(lp.progress) as completion_rate
+            FROM lesson_progress lp
+            JOIN lessons l ON lp.lesson_id = l.id
+            JOIN courses c ON l.course_id = c.id
+            WHERE c.teacher_id = #{teacherId} AND lp.deleted = false
+            GROUP BY lp.student_id, l.course_id
+        ) main
+    </select>
+
 </mapper> 

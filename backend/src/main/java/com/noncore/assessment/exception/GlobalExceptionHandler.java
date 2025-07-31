@@ -37,6 +37,16 @@ public class GlobalExceptionHandler {
     private static final Logger logger = LoggerFactory.getLogger(GlobalExceptionHandler.class);
 
     /**
+     * 处理自定义业务异常
+     */
+    @ExceptionHandler(BusinessException.class)
+    public ResponseEntity<ApiResponse<Object>> handleBusinessException(BusinessException e, HttpServletRequest request) {
+        logger.warn("业务异常: {} - {} - {}", request.getRequestURI(), e.getCode(), e.getMessage());
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(ApiResponse.error(e.getCode(), e.getMessage()));
+    }
+
+    /**
      * 处理业务异常
      */
     @ExceptionHandler(RuntimeException.class)
@@ -196,15 +206,5 @@ public class GlobalExceptionHandler {
         logger.error("未知异常: {} - {}", request.getRequestURI(), e.getMessage(), e);
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                 .body(ApiResponse.error(500, "系统发生未知错误，请联系管理员"));
-    }
-
-    /**
-     * 处理自定义业务异常
-     */
-    @ExceptionHandler(BusinessException.class)
-    public ResponseEntity<ApiResponse<Object>> handleBusinessException(BusinessException e, HttpServletRequest request) {
-        logger.warn("业务异常: {} - {}", request.getRequestURI(), e.getMessage());
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                .body(ApiResponse.error(e.getCode(), e.getMessage()));
     }
 } 

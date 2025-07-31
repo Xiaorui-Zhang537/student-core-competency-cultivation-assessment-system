@@ -7,7 +7,6 @@ import com.noncore.assessment.exception.ErrorCode;
 import com.noncore.assessment.mapper.AssignmentMapper;
 import com.noncore.assessment.mapper.GradeMapper;
 import com.noncore.assessment.service.GradeService;
-import com.noncore.assessment.service.NotificationService;
 import com.noncore.assessment.util.PageResult;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -21,6 +20,9 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 import static com.noncore.assessment.entity.Grade.getString;
+import com.noncore.assessment.dto.response.GradeStatsResponse;
+import com.github.pagehelper.PageHelper;
+import com.github.pagehelper.PageInfo;
 
 /**
  * 成绩管理服务实现类
@@ -37,44 +39,36 @@ public class GradeServiceImpl implements GradeService {
 
     private final GradeMapper gradeMapper;
     private final AssignmentMapper assignmentMapper;
-    private final NotificationService notificationService;
 
-    public GradeServiceImpl(GradeMapper gradeMapper, AssignmentMapper assignmentMapper, NotificationService notificationService) {
+    public GradeServiceImpl(GradeMapper gradeMapper, AssignmentMapper assignmentMapper) {
         this.gradeMapper = gradeMapper;
         this.assignmentMapper = assignmentMapper;
-        this.notificationService = notificationService;
     }
 
     @Override
     public Grade createGrade(Grade grade) {
-        try {
-            logger.info("创建成绩记录，学生ID: {}, 作业ID: {}, 分数: {}", 
-                       grade.getStudentId(), grade.getAssignmentId(), grade.getScore());
-            
-            // 设置创建时间和默认值
-            grade.setCreatedAt(LocalDateTime.now());
-            grade.setUpdatedAt(LocalDateTime.now());
-            grade.setDeleted(false);
-            
-            // 设置默认状态
-            if (grade.getStatus() == null) {
-                grade.setStatus("draft");
-            }
-            
-            // 计算百分比和等级
-            calculateGradeMetrics(grade);
-            
-            int result = gradeMapper.insertGrade(grade);
-            if (result > 0) {
-                logger.info("成绩记录创建成功，ID: {}", grade.getId());
-                return grade;
-            } else {
-                throw new BusinessException(ErrorCode.OPERATION_FAILED, "创建成绩记录失败");
-            }
-            
-        } catch (Exception e) {
-            logger.error("创建成绩记录失败", e);
-            throw new BusinessException(ErrorCode.OPERATION_FAILED, "创建成绩记录失败: " + e.getMessage());
+        logger.info("创建成绩记录，学生ID: {}, 作业ID: {}, 分数: {}",
+                    grade.getStudentId(), grade.getAssignmentId(), grade.getScore());
+        
+        // 设置创建时间和默认值
+        grade.setCreatedAt(LocalDateTime.now());
+        grade.setUpdatedAt(LocalDateTime.now());
+        grade.setDeleted(false);
+        
+        // 设置默认状态
+        if (grade.getStatus() == null) {
+            grade.setStatus("draft");
+        }
+        
+        // 计算百分比和等级
+        calculateGradeMetrics(grade);
+        
+        int result = gradeMapper.insertGrade(grade);
+        if (result > 0) {
+            logger.info("成绩记录创建成功，ID: {}", grade.getId());
+            return grade;
+        } else {
+            throw new BusinessException(ErrorCode.OPERATION_FAILED, "创建成绩记录失败");
         }
     }
 
@@ -92,58 +86,46 @@ public class GradeServiceImpl implements GradeService {
 
     @Override
     public Grade updateGrade(Long gradeId, Grade grade) {
-        try {
-            logger.info("更新成绩记录，ID: {}", gradeId);
-            
-            // 检查成绩是否存在
-            Grade existingGrade = gradeMapper.selectGradeById(gradeId);
-            if (existingGrade == null) {
-                throw new BusinessException(ErrorCode.GRADE_NOT_FOUND);
-            }
-            
-            // 更新字段
-            grade.setId(gradeId);
-            grade.setUpdatedAt(LocalDateTime.now());
-            
-            // 重新计算百分比和等级
-            calculateGradeMetrics(grade);
-            
-            int result = gradeMapper.updateGrade(grade);
-            if (result > 0) {
-                logger.info("成绩记录更新成功，ID: {}", gradeId);
-                return gradeMapper.selectGradeById(gradeId);
-            } else {
-                throw new BusinessException(ErrorCode.OPERATION_FAILED, "更新成绩记录失败");
-            }
-            
-        } catch (Exception e) {
-            logger.error("更新成绩记录失败", e);
-            throw new BusinessException(ErrorCode.OPERATION_FAILED, "更新成绩记录失败: " + e.getMessage());
+        logger.info("更新成绩记录，ID: {}", gradeId);
+        
+        // 检查成绩是否存在
+        Grade existingGrade = gradeMapper.selectGradeById(gradeId);
+        if (existingGrade == null) {
+            throw new BusinessException(ErrorCode.GRADE_NOT_FOUND);
+        }
+        
+        // 更新字段
+        grade.setId(gradeId);
+        grade.setUpdatedAt(LocalDateTime.now());
+        
+        // 重新计算百分比和等级
+        calculateGradeMetrics(grade);
+        
+        int result = gradeMapper.updateGrade(grade);
+        if (result > 0) {
+            logger.info("成绩记录更新成功，ID: {}", gradeId);
+            return gradeMapper.selectGradeById(gradeId);
+        } else {
+            throw new BusinessException(ErrorCode.OPERATION_FAILED, "更新成绩记录失败");
         }
     }
 
     @Override
     public void deleteGrade(Long gradeId) {
-        try {
-            logger.info("删除成绩记录，ID: {}", gradeId);
-            
-            // 检查成绩是否存在
-            Grade grade = gradeMapper.selectGradeById(gradeId);
-            if (grade == null) {
-                throw new BusinessException(ErrorCode.GRADE_NOT_FOUND);
-            }
-            
-            // 软删除
-            int result = gradeMapper.deleteGrade(gradeId);
-            if (result > 0) {
-                logger.info("成绩记录删除成功，ID: {}", gradeId);
-            } else {
-                throw new BusinessException(ErrorCode.OPERATION_FAILED, "删除成绩记录失败");
-            }
-            
-        } catch (Exception e) {
-            logger.error("删除成绩记录失败", e);
-            throw new BusinessException(ErrorCode.OPERATION_FAILED, "删除成绩记录失败: " + e.getMessage());
+        logger.info("删除成绩记录，ID: {}", gradeId);
+        
+        // 检查成绩是否存在
+        Grade grade = gradeMapper.selectGradeById(gradeId);
+        if (grade == null) {
+            throw new BusinessException(ErrorCode.GRADE_NOT_FOUND);
+        }
+        
+        // 软删除
+        int result = gradeMapper.deleteGrade(gradeId);
+        if (result > 0) {
+            logger.info("成绩记录删除成功，ID: {}", gradeId);
+        } else {
+            throw new BusinessException(ErrorCode.OPERATION_FAILED, "删除成绩记录失败");
         }
     }
 
@@ -156,12 +138,10 @@ public class GradeServiceImpl implements GradeService {
     @Override
     public PageResult<Grade> getStudentGradesWithPagination(Long studentId, Integer page, Integer size) {
         logger.info("分页获取学生成绩，学生ID: {}, 页码: {}, 每页大小: {}", studentId, page, size);
-        
-        int offset = (page - 1) * size;
-        List<Grade> grades = gradeMapper.selectByStudentIdWithPagination(studentId, offset, size);
-        Integer total = gradeMapper.countByStudentId(studentId);
-        
-        return PageResult.of(grades, page, size, total.longValue(), (total + size - 1) / size);
+        PageHelper.startPage(page, size);
+        List<Grade> grades = gradeMapper.selectByStudentId(studentId);
+        PageInfo<Grade> pageInfo = new PageInfo<>(grades);
+        return PageResult.of(pageInfo.getList(), page, size, pageInfo.getTotal(), pageInfo.getPages());
     }
 
     @Override
@@ -173,12 +153,10 @@ public class GradeServiceImpl implements GradeService {
     @Override
     public PageResult<Grade> getAssignmentGradesWithPagination(Long assignmentId, Integer page, Integer size) {
         logger.info("分页获取作业成绩，作业ID: {}, 页码: {}, 每页大小: {}", assignmentId, page, size);
-        
-        int offset = (page - 1) * size;
-        List<Grade> grades = gradeMapper.selectByAssignmentIdWithPagination(assignmentId, offset, size);
-        Integer total = gradeMapper.countByAssignmentId(assignmentId);
-        
-        return PageResult.of(grades, page, size, total.longValue(), (total + size - 1) / size);
+        PageHelper.startPage(page, size);
+        List<Grade> grades = gradeMapper.selectByAssignmentId(assignmentId);
+        PageInfo<Grade> pageInfo = new PageInfo<>(grades);
+        return PageResult.of(pageInfo.getList(), page, size, pageInfo.getTotal(), pageInfo.getPages());
     }
 
     @Override
@@ -248,9 +226,21 @@ public class GradeServiceImpl implements GradeService {
     }
 
     @Override
-    public Map<String, Object> getCourseGradeStatistics(Long courseId) {
+    public GradeStatsResponse getCourseGradeStatistics(Long courseId) {
         logger.info("获取课程成绩统计，课程ID: {}", courseId);
-        return gradeMapper.getCourseGradeStats(courseId);
+
+        Map<String, Object> stats = gradeMapper.getCourseGradeStats(courseId);
+        if (stats == null || stats.isEmpty()) {
+            return new GradeStatsResponse();
+        }
+
+        return GradeStatsResponse.builder()
+                .averageScore((BigDecimal) stats.get("averageScore"))
+                .maxScore((BigDecimal) stats.get("maxScore"))
+                .minScore((BigDecimal) stats.get("minScore"))
+                .submissionCount(((Number) stats.get("submissionCount")).intValue())
+                .gradeDistribution(safeCastGradeDistribution(stats.get("gradeDistribution")))
+                .build();
     }
 
     @Override
@@ -272,25 +262,34 @@ public class GradeServiceImpl implements GradeService {
         
         // 计算统计数据
         BigDecimal totalScore = BigDecimal.ZERO;
-        BigDecimal highestScore = grades.get(0).getScore();
-        BigDecimal lowestScore = grades.get(0).getScore();
-        
+        BigDecimal highestScore = null;
+        BigDecimal lowestScore = null;
+        int gradedCount = 0;
+
         for (Grade grade : grades) {
             if (grade.getScore() != null) {
-                totalScore = totalScore.add(grade.getScore());
-                if (grade.getScore().compareTo(highestScore) > 0) {
-                    highestScore = grade.getScore();
+                BigDecimal currentScore = grade.getScore();
+                totalScore = totalScore.add(currentScore);
+                gradedCount++;
+
+                if (highestScore == null || currentScore.compareTo(highestScore) > 0) {
+                    highestScore = currentScore;
                 }
-                if (grade.getScore().compareTo(lowestScore) < 0) {
-                    lowestScore = grade.getScore();
+                if (lowestScore == null || currentScore.compareTo(lowestScore) < 0) {
+                    lowestScore = currentScore;
                 }
             }
         }
-        
+
         stats.put("totalGrades", grades.size());
-        stats.put("averageScore", totalScore.divide(new BigDecimal(grades.size()), 2, RoundingMode.HALF_UP));
-        stats.put("highestScore", highestScore);
-        stats.put("lowestScore", lowestScore);
+        stats.put("gradedCount", gradedCount);
+        if (gradedCount > 0) {
+            stats.put("averageScore", totalScore.divide(new BigDecimal(gradedCount), 2, RoundingMode.HALF_UP));
+        } else {
+            stats.put("averageScore", BigDecimal.ZERO);
+        }
+        stats.put("highestScore", highestScore != null ? highestScore : BigDecimal.ZERO);
+        stats.put("lowestScore", lowestScore != null ? lowestScore : BigDecimal.ZERO);
         
         return stats;
     }
@@ -298,37 +297,33 @@ public class GradeServiceImpl implements GradeService {
     @Override
     public PageResult<Map<String, Object>> getPendingGrades(Long teacherId, Integer page, Integer size) {
         logger.info("获取教师待评分作业，教师ID: {}, 页码: {}, 每页大小: {}", teacherId, page, size);
-        
-        int offset = (page - 1) * size;
-        List<Grade> pendingGrades = gradeMapper.selectPendingGrades(teacherId);
-        
+
+        PageHelper.startPage(page, size);
+        List<Grade> pendingGrades = gradeMapper.selectPendingGradesWithPagination(teacherId);
+        PageInfo<Grade> pageInfo = new PageInfo<>(pendingGrades);
+
         // 转换为包含详细信息的Map
-        List<Map<String, Object>> result = pendingGrades.stream()
-            .skip(offset)
-            .limit(size)
-            .map(this::convertGradeToDetailMap)
-            .collect(Collectors.toList());
-        
-        int total = pendingGrades.size();
-        return PageResult.of(result, page, size, (long) total, (total + size - 1) / size);
+        List<Map<String, Object>> result = pageInfo.getList().stream()
+                .map(this::convertGradeToDetailMap)
+                .collect(Collectors.toList());
+
+        return PageResult.of(result, page, size, pageInfo.getTotal(), pageInfo.getPages());
     }
 
     @Override
     public boolean publishGrade(Long gradeId) {
-        try {
-            logger.info("发布成绩，ID: {}", gradeId);
-            
-            Grade grade = new Grade();
-            grade.setId(gradeId);
-            grade.setStatus("published");
-            grade.setUpdatedAt(LocalDateTime.now());
-            
-            int result = gradeMapper.updateGrade(grade);
-            return result > 0;
-        } catch (Exception e) {
-            logger.error("发布成绩失败", e);
-            return false;
+        logger.info("发布成绩，ID: {}", gradeId);
+        
+        Grade grade = new Grade();
+        grade.setId(gradeId);
+        grade.setStatus("published");
+        grade.setUpdatedAt(LocalDateTime.now());
+        
+        int result = gradeMapper.updateGrade(grade);
+        if (result > 0) {
+            return true;
         }
+        throw new BusinessException(ErrorCode.OPERATION_FAILED, "发布成绩失败");
     }
 
     @Override
@@ -366,161 +361,128 @@ public class GradeServiceImpl implements GradeService {
     public List<Map<String, Object>> getGradeRanking(Long courseId, Long assignmentId) {
         logger.info("获取成绩排名，课程ID: {}, 作业ID: {}", courseId, assignmentId);
         
-        List<Grade> grades;
         if (assignmentId != null) {
-            grades = gradeMapper.selectByAssignmentId(assignmentId);
+            return gradeMapper.selectGradeRankingForAssignment(assignmentId);
+        } else if (courseId != null) {
+            return gradeMapper.selectGradeRankingForCourse(courseId);
         } else {
-            grades = gradeMapper.selectByCourseId(courseId);
+            return Collections.emptyList();
         }
-        
-        // 按分数排序并添加排名
-        return grades.stream()
-            .filter(grade -> grade.getScore() != null)
-            .sorted((g1, g2) -> g2.getScore().compareTo(g1.getScore()))
-            .map(this::convertGradeToRankingMap)
-            .collect(Collectors.toList());
     }
 
     @Override
     public Map<String, Object> getStudentRanking(Long studentId, Long courseId) {
         logger.info("获取学生排名，学生ID: {}, 课程ID: {}", studentId, courseId);
         
-        Map<String, Object> ranking = new HashMap<>();
+        List<Map<String, Object>> rankings = gradeMapper.selectGradeRankingForCourse(courseId);
         
-        // 获取课程所有成绩并排序
-        List<Grade> allGrades = gradeMapper.selectByCourseId(courseId);
-        List<Grade> sortedGrades = allGrades.stream()
-            .filter(grade -> grade.getScore() != null)
-            .sorted((g1, g2) -> g2.getScore().compareTo(g1.getScore()))
-            .toList();
-        
-        // 找到学生排名
-        for (int i = 0; i < sortedGrades.size(); i++) {
-            if (sortedGrades.get(i).getStudentId().equals(studentId)) {
-                ranking.put("rank", i + 1);
-                ranking.put("totalStudents", sortedGrades.size());
-                ranking.put("percentile", ((double) (sortedGrades.size() - i) / sortedGrades.size()) * 100);
-                break;
+        Optional<Map<String, Object>> studentRankOptional = rankings.stream()
+            .filter(rank -> studentId.equals(rank.get("student_id")))
+            .findFirst();
+            
+        if (studentRankOptional.isPresent()) {
+            Map<String, Object> studentRank = new HashMap<>(studentRankOptional.get());
+            long totalStudents = rankings.size();
+            long rank = (long) studentRank.get("rank");
+            
+            double percentile = 0.0;
+            if (totalStudents > 0) {
+                percentile = ((double) (totalStudents - rank + 1) / totalStudents) * 100.0;
             }
+            
+            studentRank.put("totalStudents", totalStudents);
+            studentRank.put("percentile", new BigDecimal(percentile).setScale(2, RoundingMode.HALF_UP));
+            return studentRank;
         }
         
-        return ranking;
+        return Collections.emptyMap();
     }
 
     @Override
     public Map<String, Object> exportGrades(Long courseId, Long assignmentId, String format) {
-        logger.info("导出成绩数据，课程ID: {}, 作业ID: {}, 格式: {}", courseId, assignmentId, format);
+        logger.info("Exporting grades for courseId: {}, assignmentId: {}, format: {}", courseId, assignmentId, format);
         
+        List<Map<String, Object>> gradesData = gradeMapper.selectGradesForExport(courseId, assignmentId);
+        
+        // In a real application, you would convert this data to the specified format (e.g., CSV, PDF)
+        // For this simplified version, we'll just return the data.
         Map<String, Object> result = new HashMap<>();
-        
-        // 模拟导出过程
-        String fileName = generateExportFileName(courseId, assignmentId, format);
-        String downloadUrl = "/api/files/download/" + fileName;
-        
-        result.put("fileName", fileName);
-        result.put("downloadUrl", downloadUrl);
         result.put("format", format);
-        result.put("exportTime", LocalDateTime.now());
+        result.put("data", gradesData);
+        result.put("message", "Grades exported successfully.");
         
         return result;
     }
 
     @Override
     public List<Map<String, Object>> getGradeTrend(Long studentId, Long courseId, Integer days) {
-        logger.info("获取成绩趋势，学生ID: {}, 课程ID: {}, 天数: {}", studentId, courseId, days);
-        
-        // 模拟趋势数据
-        List<Map<String, Object>> trend = new ArrayList<>();
-        LocalDateTime now = LocalDateTime.now();
-        
-        for (int i = days - 1; i >= 0; i--) {
-            Map<String, Object> point = new HashMap<>();
-            point.put("date", now.minusDays(i).toLocalDate());
-            point.put("averageScore", 75 + (Math.random() * 20)); // 模拟数据
-            trend.add(point);
-        }
-        
-        return trend;
+        logger.info("获取成绩趋势，学生ID: {}, 课程ID: {}, 周期天数: {}", studentId, courseId, days);
+
+        LocalDateTime endDate = LocalDateTime.now();
+        LocalDateTime startDate = endDate.minusDays(days);
+
+        return gradeMapper.selectGradeTrendByStudentAndCourse(studentId, courseId, startDate, endDate);
     }
 
     @Override
     public boolean canModifyGrade(Long gradeId, Long userId) {
         logger.info("检查成绩修改权限，成绩ID: {}, 用户ID: {}", gradeId, userId);
         
-        try {
-            Grade grade = gradeMapper.selectGradeById(gradeId);
-            if (grade == null) {
-                return false;
-            }
-            
-            // 检查是否是教师且是该作业的创建者
-            Assignment assignment = assignmentMapper.selectAssignmentById(grade.getAssignmentId());
-            return assignment != null && userId.equals(assignment.getTeacherId());
-            
-        } catch (Exception e) {
-            logger.error("检查成绩修改权限失败", e);
+        Grade grade = gradeMapper.selectGradeById(gradeId);
+        if (grade == null) {
             return false;
         }
+        
+        // 检查是否是教师且是该作业的创建者
+        Assignment assignment = assignmentMapper.selectAssignmentById(grade.getAssignmentId());
+        return assignment != null && userId.equals(assignment.getTeacherId());
     }
 
     @Override
     public boolean addGradeFeedback(Long gradeId, String feedback) {
-        try {
-            logger.info("添加成绩评语，成绩ID: {}", gradeId);
-            
-            Grade grade = new Grade();
-            grade.setId(gradeId);
-            grade.setFeedback(feedback);
-            grade.setUpdatedAt(LocalDateTime.now());
-            
-            int result = gradeMapper.updateGrade(grade);
-            return result > 0;
-        } catch (Exception e) {
-            logger.error("添加成绩评语失败", e);
-            return false;
+        logger.info("添加成绩评语，成绩ID: {}", gradeId);
+        
+        Grade grade = new Grade();
+        grade.setId(gradeId);
+        grade.setFeedback(feedback);
+        grade.setUpdatedAt(LocalDateTime.now());
+        
+        int result = gradeMapper.updateGrade(grade);
+        if(result > 0) {
+            return true;
         }
+        throw new BusinessException(ErrorCode.OPERATION_FAILED, "添加评语失败");
     }
 
     @Override
     public boolean regrade(Long gradeId, BigDecimal newScore, String reason) {
-        try {
-            logger.info("重新评分，成绩ID: {}, 新分数: {}, 原因: {}", gradeId, newScore, reason);
-            
-            Grade grade = gradeMapper.selectGradeById(gradeId);
-            if (grade == null) {
-                throw new BusinessException(ErrorCode.GRADE_NOT_FOUND);
-            }
-            
-            // 保存重评记录（这里简化实现）
-            grade.setScore(newScore);
-            grade.setUpdatedAt(LocalDateTime.now());
-            
-            // 重新计算百分比和等级
-            calculateGradeMetrics(grade);
-            
-            int result = gradeMapper.updateGrade(grade);
-            return result > 0;
-        } catch (Exception e) {
-            logger.error("重新评分失败", e);
-            return false;
+        logger.info("重新评分，成绩ID: {}, 新分数: {}, 原因: {}", gradeId, newScore, reason);
+        
+        Grade grade = gradeMapper.selectGradeById(gradeId);
+        if (grade == null) {
+            throw new BusinessException(ErrorCode.GRADE_NOT_FOUND);
         }
+        
+        // 保存重评记录（这里简化实现）
+        grade.setScore(newScore);
+        grade.setUpdatedAt(LocalDateTime.now());
+        
+        // 重新计算百分比和等级
+        calculateGradeMetrics(grade);
+        
+        int result = gradeMapper.updateGrade(grade);
+        if(result > 0) {
+            return true;
+        }
+        throw new BusinessException(ErrorCode.OPERATION_FAILED, "重新评分失败");
     }
 
     @Override
     public List<Map<String, Object>> getGradeHistory(Long gradeId) {
         logger.info("获取成绩历史记录，成绩ID: {}", gradeId);
-        
-        // 模拟历史记录
-        List<Map<String, Object>> history = new ArrayList<>();
-        Map<String, Object> record = new HashMap<>();
-        record.put("id", 1);
-        record.put("action", "创建");
-        record.put("score", "85.0");
-        record.put("operator", "张老师");
-        record.put("timestamp", LocalDateTime.now().minusDays(1));
-        history.add(record);
-        
-        return history;
+        // This is a simplified implementation as we don't have a separate audit/history table.
+        // It returns the current state as a single history entry.
+        return gradeMapper.selectGradeHistoryByGradeId(gradeId);
     }
 
     @Override
@@ -612,27 +574,20 @@ public class GradeServiceImpl implements GradeService {
     }
 
     /**
-     * 将成绩转换为排名Map
+     * Safely casts an object to a list of maps, returning an empty list if the cast is not possible.
+     * This method encapsulates the unavoidable unchecked cast.
+     *
+     * @param obj The object to cast.
+     * @return A list of maps, or an empty list.
      */
-    private Map<String, Object> convertGradeToRankingMap(Grade grade) {
-        Map<String, Object> ranking = new HashMap<>();
-        ranking.put("studentId", grade.getStudentId());
-        ranking.put("score", grade.getScore());
-        ranking.put("percentage", grade.getPercentage());
-        ranking.put("gradeLevel", grade.getGradeLevel());
-        
-        // 添加学生信息（简化实现）
-        ranking.put("studentName", "学生姓名");
-        
-        return ranking;
+    @SuppressWarnings("unchecked")
+    private List<Map<String, Object>> safeCastGradeDistribution(Object obj) {
+        if (obj instanceof List) {
+            // We assume the list contains Map<String, Object> as returned by the mapper.
+            // A more robust implementation would iterate and check each element, but this is a reasonable trade-off.
+            return (List<Map<String, Object>>) obj;
+        }
+        return Collections.emptyList();
     }
 
-    /**
-     * 生成导出文件名
-     */
-    private String generateExportFileName(Long courseId, Long assignmentId, String format) {
-        String timestamp = LocalDateTime.now().toString().replace(":", "-");
-        String prefix = assignmentId != null ? "assignment_" + assignmentId : "course_" + courseId;
-        return prefix + "_grades_" + timestamp + "." + format.toLowerCase();
-    }
 } 

@@ -5,6 +5,7 @@ import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 
@@ -65,12 +66,12 @@ public interface GradeMapper {
     /**
      * 统计学生成绩数量
      */
-    Integer countByStudentId(Long studentId);
+    long countByStudentId(Long studentId);
 
     /**
      * 统计作业成绩数量
      */
-    Integer countByAssignmentId(Long assignmentId);
+    long countByAssignmentId(Long assignmentId);
 
     /**
      * 根据学生和作业查询成绩
@@ -93,6 +94,11 @@ public interface GradeMapper {
      * 获取待评分成绩
      */
     List<Grade> selectPendingGrades(Long teacherId);
+
+    /**
+     * 分页获取待评分成绩
+     */
+    List<Grade> selectPendingGradesWithPagination(@Param("teacherId") Long teacherId);
 
     /**
      * 计算学生平均分
@@ -119,4 +125,30 @@ public interface GradeMapper {
      * 获取课程成绩统计
      */
     Map<String, Object> getCourseGradeStats(Long courseId);
+
+    /**
+     * 获取作业成绩排名
+     */
+    List<Map<String, Object>> selectGradeRankingForAssignment(@Param("assignmentId") Long assignmentId);
+
+    /**
+     * 获取课程成绩排名
+     */
+    List<Map<String, Object>> selectGradeRankingForCourse(@Param("courseId") Long courseId);
+
+    /**
+     * 查询用于导出的成绩数据
+     */
+    List<Map<String, Object>> selectGradesForExport(@Param("courseId") Long courseId, @Param("assignmentId") Long assignmentId);
+
+    /**
+     * 查询学生成绩趋势
+     */
+    List<Map<String, Object>> selectGradeTrendByStudentAndCourse(@Param("studentId") Long studentId, @Param("courseId") Long courseId, @Param("startDate") LocalDateTime startDate, @Param("endDate") LocalDateTime endDate);
+
+    /**
+     * 查询单条成绩的历史记录（简化版）
+     */
+    List<Map<String, Object>> selectGradeHistoryByGradeId(@Param("gradeId") Long gradeId);
+    
 } 

@@ -6,9 +6,6 @@ import com.noncore.assessment.exception.ErrorCode;
 import com.noncore.assessment.mapper.CourseMapper;
 import com.noncore.assessment.mapper.EnrollmentMapper;
 import com.noncore.assessment.service.CourseService;
-import com.noncore.assessment.util.PageResult;
-import com.github.pagehelper.PageHelper;
-import com.github.pagehelper.PageInfo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -16,9 +13,9 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
 import java.time.LocalDateTime;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import com.noncore.assessment.dto.response.CourseStatisticsResponse;
 
 /**
  * 课程服务实现类
@@ -142,240 +139,98 @@ public class CourseServiceImpl implements CourseService {
 
     @Override
     @Transactional(readOnly = true)
-    public PageResult<Course> getCourses(Integer page, Integer size, String keyword, 
-                                        String category, String difficulty, String status) {
-        logger.info("分页查询课程: page={}, size={}, keyword={}", page, size, keyword);
-
-        // 设置分页参数
-        PageHelper.startPage(page != null ? page : 1, size != null ? size : 10);
-
-        // 执行查询
-        List<Course> courses = courseMapper.selectCoursesWithPagination(
-            keyword, category, difficulty, status, null);
-
-        // 构建分页结果
-        PageInfo<Course> pageInfo = new PageInfo<>(courses);
-        return PageResult.of(
-            courses,
-            pageInfo.getPageNum(),
-            pageInfo.getPageSize(),
-            pageInfo.getTotal(),
-            pageInfo.getPages()
-        );
-    }
-
-    @Override
-    @Transactional(readOnly = true)
     public List<Course> getCoursesByTeacher(Long teacherId) {
         return courseMapper.selectCoursesByTeacherId(teacherId);
     }
 
     @Override
-    @Transactional(readOnly = true)
-    public List<Course> getEnrolledCourses(Long studentId) {
-        return courseMapper.selectCoursesByStudentId(studentId);
-    }
-
-    @Override
-    public void enrollCourse(Long courseId, Long studentId) {
-        logger.info("学生选课: courseId={}, studentId={}", courseId, studentId);
-
-        // 验证课程是否存在且可选
-        Course course = courseMapper.selectCourseById(courseId);
-        if (course == null) {
-            throw new BusinessException(ErrorCode.COURSE_NOT_FOUND);
-        }
-        if (!"published".equals(course.getStatus())) {
-            throw new BusinessException(ErrorCode.COURSE_NOT_PUBLISHED);
-        }
-        if (course.isFull()) {
-            throw new BusinessException(ErrorCode.COURSE_FULL);
-        }
-
-        // 检查是否已选课
-        if (isStudentEnrolled(courseId, studentId)) {
-            throw new BusinessException(ErrorCode.STUDENT_ALREADY_ENROLLED);
-        }
-
-        // 添加选课记录
-        int result = enrollmentMapper.insertEnrollment(studentId, courseId, "enrolled", LocalDateTime.now());
-        if (result <= 0) {
-            throw new BusinessException(ErrorCode.OPERATION_FAILED, "选课失败");
-        }
-
-        // 更新课程报名人数
-        courseMapper.updateEnrollmentCount(courseId, 1);
-
-        logger.info("选课成功: courseId={}, studentId={}", courseId, studentId);
-    }
-
-    @Override
-    public void unenrollCourse(Long courseId, Long studentId) {
-        logger.info("学生退课: courseId={}, studentId={}", courseId, studentId);
-
-        // 检查是否已选课
-        if (!isStudentEnrolled(courseId, studentId)) {
-            throw new BusinessException(ErrorCode.STUDENT_NOT_ENROLLED);
-        }
-
-        // 删除选课记录
-        int result = enrollmentMapper.deleteEnrollment(studentId, courseId);
-        if (result <= 0) {
-            throw new BusinessException(ErrorCode.OPERATION_FAILED, "退课失败");
-        }
-
-        // 更新课程报名人数
-        courseMapper.updateEnrollmentCount(courseId, -1);
-
-        logger.info("退课成功: courseId={}, studentId={}", courseId, studentId);
-    }
-
-    @Override
-    @Transactional(readOnly = true)
-    public boolean isStudentEnrolled(Long courseId, Long studentId) {
-        return enrollmentMapper.checkEnrollmentExists(studentId, courseId) > 0;
-    }
-
-    @Override
-    public void publishCourse(Long courseId) {
-        logger.info("发布课程: ID={}", courseId);
-
-        Course course = courseMapper.selectCourseById(courseId);
-        if (course == null) {
-            throw new BusinessException(ErrorCode.COURSE_NOT_FOUND);
-        }
+    public void publishCourse(Long courseId, Long teacherId) {
+        logger.info("发布课程: ID={}, 操作教师ID={}", courseId, teacherId);
+        Course course = checkCourseOwnership(courseId, teacherId);
 
         if ("published".equals(course.getStatus())) {
             throw new BusinessException(ErrorCode.COURSE_ALREADY_PUBLISHED);
         }
 
-        course.setStatus("published");
-        course.setUpdatedAt(LocalDateTime.now());
-        int result = courseMapper.updateCourse(course);
-        if (result <= 0) {
-            throw new BusinessException(ErrorCode.OPERATION_FAILED, "发布课程失败");
-        }
-
+        updateStatus(course, "published");
         logger.info("课程发布成功: ID={}", courseId);
     }
 
     @Override
-    public void unpublishCourse(Long courseId) {
-        logger.info("下架课程: ID={}", courseId);
-
-        Course course = courseMapper.selectCourseById(courseId);
-        if (course == null) {
-            throw new BusinessException(ErrorCode.COURSE_NOT_FOUND);
-        }
-
-        course.setStatus("draft");
-        course.setUpdatedAt(LocalDateTime.now());
-        int result = courseMapper.updateCourse(course);
-        if (result <= 0) {
-            throw new BusinessException(ErrorCode.OPERATION_FAILED, "下架课程失败");
-        }
-
+    public void unpublishCourse(Long courseId, Long teacherId) {
+        logger.info("下架课程: ID={}, 操作教师ID={}", courseId, teacherId);
+        Course course = checkCourseOwnership(courseId, teacherId);
+        updateStatus(course, "draft");
         logger.info("课程下架成功: ID={}", courseId);
     }
 
     @Override
-    @Transactional(readOnly = true)
-    public List<Course> getPopularCourses(Integer limit) {
-        return courseMapper.selectPopularCourses(limit != null ? limit : 10);
+    public void archiveCourse(Long courseId, Long teacherId) {
+        logger.info("归档课程: ID={}, 操作教师ID={}", courseId, teacherId);
+        Course course = checkCourseOwnership(courseId, teacherId);
+        updateStatus(course, "archived");
+        logger.info("课程归档成功: ID={}", courseId);
     }
 
     @Override
-    @Transactional(readOnly = true)
-    public List<Course> getRecommendedCourses(Integer limit) {
-        return courseMapper.selectRecommendedCourses(limit != null ? limit : 10);
-    }
-
-    @Override
-    @Transactional(readOnly = true)
-    public List<Course> getCoursesByCategory(String category) {
-        return courseMapper.selectCoursesByCategory(category);
-    }
-
-    @Override
-    @Transactional(readOnly = true)
-    public List<Course> searchCourses(String keyword) {
-        if (!StringUtils.hasText(keyword)) {
-            return List.of();
-        }
-        return courseMapper.searchCourses(keyword);
-    }
-
-    @Override
-    public void updateCourseRating(Long courseId, Double rating) {
-        logger.info("更新课程评分: courseId={}, rating={}", courseId, rating);
+    public void updateCourseRating(Long courseId, Double newRating, Integer newReviewCount) {
+        logger.info("更新课程评分: courseId={}, rating={}, reviewCount={}", courseId, newRating, newReviewCount);
 
         Course course = courseMapper.selectCourseById(courseId);
         if (course == null) {
             throw new BusinessException(ErrorCode.COURSE_NOT_FOUND);
         }
 
-        // 简化评分更新逻辑（实际应该根据所有评分计算平均值）
-        int newReviewCount = course.getReviewCount() + 1;
-        courseMapper.updateCourseRating(courseId, rating, newReviewCount);
+        // TODO: 此处评分更新逻辑已简化。未来应考虑更复杂的加权平均或重新计算逻辑。
+        courseMapper.updateCourseRating(courseId, newRating, newReviewCount);
 
         logger.info("课程评分更新成功: courseId={}", courseId);
     }
 
     @Override
     @Transactional(readOnly = true)
-    public Map<String, Object> getCourseStatistics(Long teacherId) {
+    public CourseStatisticsResponse getCourseStatistics(Long teacherId) {
         List<Map<String, Object>> stats = courseMapper.getCourseStatistics(teacherId);
         
-        Map<String, Object> result = new HashMap<>();
         int totalCourses = 0;
-        int totalEnrollments = 0;
-        double totalRating = 0.0;
         int publishedCourses = 0;
+        long totalEnrollments = 0; // Use long for safety
+        double totalRating = 0.0;
+        int coursesWithRating = 0;
 
         for (Map<String, Object> stat : stats) {
-            String status = (String) stat.get("status");
-            Integer count = (Integer) stat.get("count");
-            Double avgRating = (Double) stat.get("avg_rating");
-            Integer enrollments = (Integer) stat.get("total_enrollments");
-
+            long count = (long) stat.getOrDefault("count", 0L);
             totalCourses += count;
-            if ("published".equals(status)) {
-                publishedCourses = count;
-                if (avgRating != null) {
-                    totalRating = avgRating;
-                }
+
+            if ("published".equals(stat.get("status"))) {
+                publishedCourses += count;
             }
-            if (enrollments != null) {
-                totalEnrollments += enrollments;
+            
+            Number enrollments = (Number) stat.getOrDefault("total_enrollments", 0);
+            totalEnrollments += enrollments.longValue();
+
+            Number avgRating = (Number) stat.getOrDefault("avg_rating", 0.0);
+            if (avgRating.doubleValue() > 0) {
+                totalRating += avgRating.doubleValue() * count;
+                coursesWithRating += count;
             }
         }
 
-        result.put("totalCourses", totalCourses);
-        result.put("publishedCourses", publishedCourses);
-        result.put("totalEnrollments", totalEnrollments);
-        result.put("averageRating", totalRating);
-        result.put("details", stats);
+        double averageRating = (coursesWithRating > 0) ? totalRating / coursesWithRating : 0.0;
 
-        return result;
-    }
-
-    @Override
-    @Transactional(readOnly = true)
-    public List<Course> getUpcomingCourses(Integer days) {
-        return courseMapper.selectUpcomingCourses(days != null ? days : 7);
-    }
-
-    @Override
-    @Transactional(readOnly = true)
-    public List<Course> getEndingCourses(Integer days) {
-        return courseMapper.selectEndingCourses(days != null ? days : 7);
+        return CourseStatisticsResponse.builder()
+                .totalCourses(totalCourses)
+                .publishedCourses(publishedCourses)
+                .totalEnrollments((int) totalEnrollments) // Cast back if DTO requires int
+                .averageRating(averageRating)
+                .details(stats)
+                .build();
     }
 
     @Override
     @Transactional(readOnly = true)
     public boolean isTitleDuplicate(String title, Long excludeId) {
-        List<Course> courses = courseMapper.selectCoursesByTitle(title, excludeId);
-        return courses != null && !courses.isEmpty();
+        return courseMapper.checkTitleExists(title, excludeId) > 0;
     }
 
     @Override
@@ -413,5 +268,24 @@ public class CourseServiceImpl implements CourseService {
         if (course.getDuration() != null && course.getDuration() <= 0) {
             throw new BusinessException(ErrorCode.COURSE_DURATION_INVALID);
         }
+    }
+
+    private void updateStatus(Course course, String newStatus) {
+        course.setStatus(newStatus);
+        course.setUpdatedAt(LocalDateTime.now());
+        if (courseMapper.updateCourse(course) <= 0) {
+            throw new BusinessException(ErrorCode.OPERATION_FAILED, "更新课程状态失败: " + newStatus);
+        }
+    }
+
+    private Course checkCourseOwnership(Long courseId, Long teacherId) {
+        Course course = courseMapper.selectCourseById(courseId);
+        if (course == null) {
+            throw new BusinessException(ErrorCode.COURSE_NOT_FOUND);
+        }
+        if (!teacherId.equals(course.getTeacherId())) {
+            throw new BusinessException(ErrorCode.COURSE_ACCESS_DENIED, "教师没有权限操作该课程");
+        }
+        return course;
     }
 } 

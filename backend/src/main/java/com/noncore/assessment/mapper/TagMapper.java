@@ -48,6 +48,13 @@ public interface TagMapper {
     int updateById(Tag tag);
 
     /**
+     * 批量插入标签
+     * @param tags
+     * @return
+     */
+    int batchInsert(@Param("tags") List<Tag> tags);
+
+    /**
      * 删除标签
      *
      * @param id 标签ID

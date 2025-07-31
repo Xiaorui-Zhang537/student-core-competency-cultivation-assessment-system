@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.noncore.assessment.mapper.PostTagMapper">
+
+    <insert id="batchInsert">
+        INSERT INTO post_tags (post_id, tag_id)
+        VALUES
+        <foreach collection="list" item="postTag" separator=",">
+            (#{postTag.postId}, #{postTag.tagId})
+        </foreach>
+    </insert>
+
+    <delete id="deleteByPostId">
+        DELETE FROM post_tags WHERE post_id = #{postId}
+    </delete>
+
+    <select id="selectTagIdsByPostId" resultType="long">
+        SELECT tag_id FROM post_tags WHERE post_id = #{postId}
+    </select>
+
+    <select id="selectPostIdsByTagId" resultType="long">
+        SELECT post_id FROM post_tags WHERE tag_id = #{tagId}
+    </select>
+
+</mapper> 

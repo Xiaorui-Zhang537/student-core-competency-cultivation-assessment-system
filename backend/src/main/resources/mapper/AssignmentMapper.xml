@@ -146,7 +146,7 @@
     </select>
 
     <!-- 统计作业数量 -->
-    <select id="countAssignments" resultType="int">
+    <select id="countAssignments" resultType="long">
         SELECT COUNT(1) FROM assignments a
         WHERE a.deleted = false
         <if test="courseId != null">
@@ -220,4 +220,67 @@
         </if>
         GROUP BY status
     </select>
+
+    <!-- 统计待处理作业数量 -->
+    <select id="countPendingAssignments" resultType="long">
+        SELECT COUNT(a.id)
+        FROM assignments a
+        JOIN enrollments e ON a.course_id = e.course_id
+        LEFT JOIN submissions s ON a.id = s.assignment_id AND s.student_id = e.student_id
+        WHERE e.student_id = #{studentId}
+          AND a.deleted = false
+          AND a.due_date > NOW()
+          AND (s.id IS NULL OR s.status != 'submitted')
+    </select>
+
+    <!-- 获取待处理作业列表 (DTO) -->
+    <select id="findPendingAssignments" resultType="com.noncore.assessment.dto.response.StudentDashboardResponse$PendingAssignmentDto">
+        SELECT
+            a.id,
+            a.title,
+            c.title AS courseTitle,
+            a.due_date AS dueDate
+        FROM assignments a
+        JOIN courses c ON a.course_id = c.id
+        JOIN enrollments e ON a.course_id = e.course_id
+        LEFT JOIN submissions s ON a.id = s.assignment_id AND s.student_id = e.student_id
+        WHERE e.student_id = #{studentId}
+          AND a.deleted = false
+          AND (s.id IS NULL OR s.status != 'submitted')
+        ORDER BY a.due_date ASC
+        LIMIT #{limit}
+    </select>
+
+    <!-- 根据学生ID查询作业列表 -->
+    <select id="findAssignmentsByStudentId" resultMap="AssignmentResultMap">
+        SELECT a.*
+        FROM assignments a
+        JOIN enrollments e ON a.course_id = e.course_id
+        WHERE e.student_id = #{studentId} AND a.deleted = false
+        ORDER BY a.created_at DESC
+    </select>
+
+    <!-- 统计教师最近一月创建的作业数 -->
+    <select id="countMonthlyByTeacher" resultType="long">
+        SELECT COUNT(id)
+        FROM assignments
+        WHERE teacher_id = #{teacherId}
+          AND created_at >= DATE_SUB(NOW(), INTERVAL 1 MONTH)
+          AND deleted = false
+    </select>
+
+    <!-- 获取待处理作业列表 (返回实体) -->
+    <select id="findPendingAssignmentsForStudent" resultMap="AssignmentResultMap">
+        SELECT
+            <include refid="assignmentColumns"/>
+        FROM assignments a
+        JOIN enrollments e ON a.course_id = e.course_id
+        LEFT JOIN submissions s ON a.id = s.assignment_id AND s.student_id = e.student_id
+        WHERE e.student_id = #{studentId}
+          AND a.deleted = false
+          AND a.status = 'published'
+          AND (s.id IS NULL OR s.status != 'submitted')
+        ORDER BY a.due_date ASC
+    </select>
+
 </mapper> 

@@ -16,12 +16,16 @@ public enum ErrorCode {
     DATA_NOT_FOUND(1002, "数据不存在"),
     OPERATION_FAILED(1003, "操作失败"),
     PERMISSION_DENIED(1004, "权限不足"),
+    INTERNAL_SERVER_ERROR(1005, "服务器内部错误"),
+    UNAUTHORIZED_OPERATION(1006, "未授权操作"),
     
     // 用户认证相关 (1100-1199)
     LOGIN_FAILED(1100, "用户名或密码错误"),
     USER_NOT_FOUND(1101, "用户不存在"),
     USERNAME_EXISTS(1102, "用户名已存在"),
     EMAIL_EXISTS(1103, "邮箱已被注册"),
+    USERNAME_ALREADY_EXISTS(1102, "用户名已存在"),
+    EMAIL_ALREADY_EXISTS(1103, "邮箱已被注册"),
     PASSWORD_MISMATCH(1104, "两次输入的密码不一致"),
     PASSWORD_TOO_SHORT(1105, "密码长度至少6个字符"),
     CURRENT_PASSWORD_WRONG(1106, "当前密码错误"),
@@ -33,6 +37,7 @@ public enum ErrorCode {
     INVALID_PASSWORD(1106, "密码错误"),
     EMAIL_NOT_REGISTERED(1111, "该邮箱未注册"),
     EMAIL_VERIFIED(1110, "邮箱已验证"),
+    EMAIL_SEND_FAILED(1112, "邮件发送失败"),
     
     // 课程相关 (1200-1299)
     COURSE_NOT_FOUND(1200, "课程不存在"),

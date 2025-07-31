@@ -2,6 +2,10 @@ package com.noncore.assessment.entity;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 import io.swagger.v3.oas.annotations.media.Schema;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -15,6 +19,10 @@ import java.time.LocalDateTime;
  * @since 2024-12-28
  */
 @Schema(description = "学习建议实体")
+@Data
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class LearningRecommendation {
 
     @Schema(description = "建议ID", example = "1")
@@ -33,29 +41,35 @@ public class LearningRecommendation {
     private String description;
 
     @Schema(description = "建议类型", example = "course", allowableValues = {"course", "resource", "practice", "project"})
-    private String recommendationType;
+    @Builder.Default
+    private String recommendationType = "course";
 
     @Schema(description = "资源链接", example = "https://example.com/java-tutorial")
     private String resourceUrl;
 
     @Schema(description = "难度等级", example = "intermediate", allowableValues = {"beginner", "intermediate", "advanced"})
-    private String difficultyLevel;
+    @Builder.Default
+    private String difficultyLevel = "intermediate";
 
     @Schema(description = "预估学习时间", example = "2-3小时")
     private String estimatedTime;
 
     @Schema(description = "优先级分数", example = "0.85")
-    private BigDecimal priorityScore;
+    @Builder.Default
+    private BigDecimal priorityScore = BigDecimal.ONE;
 
     @Schema(description = "是否已读", example = "false")
-    private Boolean isRead;
+    @Builder.Default
+    private Boolean isRead = false;
 
     @Schema(description = "是否已采纳", example = "false")
-    private Boolean isAccepted;
+    @Builder.Default
+    private Boolean isAccepted = false;
 
     @Schema(description = "创建时间", example = "2024-12-28 10:30:00")
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
-    private LocalDateTime createdAt;
+    @Builder.Default
+    private LocalDateTime createdAt = LocalDateTime.now();
 
     @Schema(description = "过期时间", example = "2024-12-31 23:59:59")
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
@@ -70,30 +84,7 @@ public class LearningRecommendation {
 
     @Schema(description = "学生姓名", example = "张三")
     private String studentName;
-
-    /**
-     * 默认构造方法
-     */
-    public LearningRecommendation() {
-        this.recommendationType = "course";
-        this.difficultyLevel = "intermediate";
-        this.priorityScore = BigDecimal.ONE;
-        this.isRead = false;
-        this.isAccepted = false;
-        this.createdAt = LocalDateTime.now();
-    }
-
-    /**
-     * 构造方法
-     */
-    public LearningRecommendation(Long studentId, Long dimensionId, String title, String description) {
-        this();
-        this.studentId = studentId;
-        this.dimensionId = dimensionId;
-        this.title = title;
-        this.description = description;
-    }
-
+    
     /**
      * 标记为已读
      */
@@ -140,154 +131,5 @@ public class LearningRecommendation {
             case "project" -> "项目";
             default -> "其他";
         };
-    }
-
-    // Getter和Setter方法
-    public Long getId() {
-        return id;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
-    }
-
-    public Long getStudentId() {
-        return studentId;
-    }
-
-    public void setStudentId(Long studentId) {
-        this.studentId = studentId;
-    }
-
-    public Long getDimensionId() {
-        return dimensionId;
-    }
-
-    public void setDimensionId(Long dimensionId) {
-        this.dimensionId = dimensionId;
-    }
-
-    public String getTitle() {
-        return title;
-    }
-
-    public void setTitle(String title) {
-        this.title = title;
-    }
-
-    public String getDescription() {
-        return description;
-    }
-
-    public void setDescription(String description) {
-        this.description = description;
-    }
-
-    public String getRecommendationType() {
-        return recommendationType;
-    }
-
-    public void setRecommendationType(String recommendationType) {
-        this.recommendationType = recommendationType;
-    }
-
-    public String getResourceUrl() {
-        return resourceUrl;
-    }
-
-    public void setResourceUrl(String resourceUrl) {
-        this.resourceUrl = resourceUrl;
-    }
-
-    public String getDifficultyLevel() {
-        return difficultyLevel;
-    }
-
-    public void setDifficultyLevel(String difficultyLevel) {
-        this.difficultyLevel = difficultyLevel;
-    }
-
-    public String getEstimatedTime() {
-        return estimatedTime;
-    }
-
-    public void setEstimatedTime(String estimatedTime) {
-        this.estimatedTime = estimatedTime;
-    }
-
-    public BigDecimal getPriorityScore() {
-        return priorityScore;
-    }
-
-    public void setPriorityScore(BigDecimal priorityScore) {
-        this.priorityScore = priorityScore;
-    }
-
-    public Boolean getIsRead() {
-        return isRead;
-    }
-
-    public void setIsRead(Boolean isRead) {
-        this.isRead = isRead;
-    }
-
-    public Boolean getIsAccepted() {
-        return isAccepted;
-    }
-
-    public void setIsAccepted(Boolean isAccepted) {
-        this.isAccepted = isAccepted;
-    }
-
-    public LocalDateTime getCreatedAt() {
-        return createdAt;
-    }
-
-    public void setCreatedAt(LocalDateTime createdAt) {
-        this.createdAt = createdAt;
-    }
-
-    public LocalDateTime getExpiresAt() {
-        return expiresAt;
-    }
-
-    public void setExpiresAt(LocalDateTime expiresAt) {
-        this.expiresAt = expiresAt;
-    }
-
-    public String getDimensionName() {
-        return dimensionName;
-    }
-
-    public void setDimensionName(String dimensionName) {
-        this.dimensionName = dimensionName;
-    }
-
-    public String getDimensionCategory() {
-        return dimensionCategory;
-    }
-
-    public void setDimensionCategory(String dimensionCategory) {
-        this.dimensionCategory = dimensionCategory;
-    }
-
-    public String getStudentName() {
-        return studentName;
-    }
-
-    public void setStudentName(String studentName) {
-        this.studentName = studentName;
-    }
-
-    @Override
-    public String toString() {
-        return "LearningRecommendation{" +
-                "id=" + id +
-                ", studentId=" + studentId +
-                ", title='" + title + '\'' +
-                ", recommendationType='" + recommendationType + '\'' +
-                ", isRead=" + isRead +
-                ", isAccepted=" + isAccepted +
-                '}';
     }
 } 

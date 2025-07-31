@@ -133,7 +133,7 @@
     </select>
 
     <!-- 统计学生成绩数量 -->
-    <select id="countByStudentId" resultType="java.lang.Integer">
+    <select id="countByStudentId" resultType="long">
         SELECT COUNT(*)
         FROM grades
         WHERE student_id = #{studentId}
@@ -141,7 +141,7 @@
     </select>
 
     <!-- 统计作业成绩数量 -->
-    <select id="countByAssignmentId" resultType="java.lang.Integer">
+    <select id="countByAssignmentId" resultType="long">
         SELECT COUNT(*)
         FROM grades
         WHERE assignment_id = #{assignmentId}
@@ -151,6 +151,18 @@
     <!-- 获取待评分成绩 -->
     <select id="selectPendingGrades" resultMap="GradeResultMap">
         SELECT 
+        <include refid="Base_Column_List"/>
+        FROM grades g
+        INNER JOIN assignments a ON g.assignment_id = a.id
+        WHERE a.teacher_id = #{teacherId}
+        AND g.status = 'draft'
+        AND g.deleted = 0
+        ORDER BY g.created_at ASC
+    </select>
+
+    <!-- 分页获取待评分成绩 -->
+    <select id="selectPendingGradesWithPagination" resultMap="GradeResultMap">
+        SELECT
         <include refid="Base_Column_List"/>
         FROM grades g
         INNER JOIN assignments a ON g.assignment_id = a.id
@@ -230,6 +242,65 @@
         WHERE a.course_id = #{courseId}
         AND g.status = 'published'
         AND g.deleted = 0
+    </select>
+
+    <!-- 查询用于导出的成绩数据 -->
+    <select id="selectGradesForExport" resultType="java.util.Map">
+        SELECT
+            u.username as studentName,
+            u.email as studentEmail,
+            c.title as courseTitle,
+            a.title as assignmentTitle,
+            g.score,
+            g.max_score as maxScore,
+            g.feedback,
+            g.status,
+            g.graded_at as gradedAt
+        FROM grades g
+        JOIN users u ON g.student_id = u.id
+        JOIN assignments a ON g.assignment_id = a.id
+        JOIN courses c ON a.course_id = c.id
+        WHERE g.deleted = false
+        <if test="courseId != null">
+            AND a.course_id = #{courseId}
+        </if>
+        <if test="assignmentId != null">
+            AND g.assignment_id = #{assignmentId}
+        </if>
+        ORDER BY c.title, a.title, u.username
+    </select>
+
+    <!-- 查询学生成绩趋势 -->
+    <select id="selectGradeTrendByStudentAndCourse" resultType="java.util.Map">
+        SELECT
+            a.title as assignmentTitle,
+            g.score,
+            g.graded_at as gradedAt
+        FROM grades g
+        JOIN assignments a ON g.assignment_id = a.id
+        WHERE g.student_id = #{studentId}
+        AND g.deleted = false
+        AND g.status = 'published'
+        <if test="courseId != null">
+            AND a.course_id = #{courseId}
+        </if>
+        <if test="startDate != null and endDate != null">
+            AND g.graded_at BETWEEN #{startDate} AND #{endDate}
+        </if>
+        ORDER BY g.graded_at ASC
+    </select>
+
+    <!-- 查询单条成绩的历史记录 -->
+    <select id="selectGradeHistoryByGradeId" resultType="java.util.Map">
+        SELECT
+            g.score,
+            g.feedback,
+            g.status,
+            g.updated_at as modifiedAt,
+            grader.username as modifiedBy
+        FROM grades g
+        LEFT JOIN users grader ON g.grader_id = grader.id
+        WHERE g.id = #{gradeId}
     </select>
 
 </mapper>

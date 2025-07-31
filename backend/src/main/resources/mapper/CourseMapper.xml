@@ -14,11 +14,9 @@
         <result column="difficulty" property="difficulty"/>
         <result column="duration" property="duration"/>
         <result column="max_students" property="maxStudents"/>
-        <result column="price" property="price"/>
         <result column="status" property="status"/>
         <result column="start_date" property="startDate"/>
         <result column="end_date" property="endDate"/>
-        <result column="tags" property="tags"/>
         <result column="objectives" property="objectives"/>
         <result column="requirements" property="requirements"/>
         <result column="created_at" property="createdAt"/>
@@ -29,14 +27,14 @@
     <!-- 基础查询字段 -->
     <sql id="Base_Column_List">
         c.id, c.title, c.description, c.cover_image, c.teacher_id, c.category, c.difficulty,
-        c.duration, c.max_students, c.price, c.status, c.start_date, c.end_date, c.tags, c.objectives,
+        c.duration, c.max_students, c.status, c.start_date, c.end_date, c.objectives,
         c.requirements, c.enrollment_count, c.rating, c.review_count, c.created_at, c.updated_at, c.deleted
     </sql>
 
     <!-- 带教师信息的查询字段 -->
     <sql id="Course_With_Teacher_Column_List">
         c.id, c.title, c.description, c.cover_image, c.teacher_id, c.category, c.difficulty,
-        c.duration, c.max_students, c.price, c.status, c.start_date, c.end_date, c.tags, c.objectives,
+        c.duration, c.max_students, c.status, c.start_date, c.end_date, c.objectives,
         c.requirements, c.enrollment_count, c.rating, c.review_count, c.created_at, c.updated_at, c.deleted,
         u.display_name as teacher_name
     </sql>
@@ -45,11 +43,11 @@
     <insert id="insertCourse" parameterType="com.noncore.assessment.entity.Course" useGeneratedKeys="true" keyProperty="id">
         INSERT INTO courses (
             title, description, cover_image, teacher_id, category, difficulty, duration,
-            max_students, price, status, start_date, end_date, tags, objectives, requirements,
+            max_students, status, start_date, end_date, objectives, requirements,
             created_at, updated_at, deleted
         ) VALUES (
             #{title}, #{description}, #{coverImage}, #{teacherId}, #{category}, #{difficulty}, #{duration},
-            #{maxStudents}, #{price}, #{status}, #{startDate}, #{endDate}, #{tags}, #{objectives}, #{requirements},
+            #{maxStudents}, #{status}, #{startDate}, #{endDate}, #{objectives}, #{requirements},
             #{createdAt}, #{updatedAt}, #{deleted}
         )
     </insert>
@@ -72,11 +70,9 @@
             difficulty = #{difficulty},
             duration = #{duration},
             max_students = #{maxStudents},
-            price = #{price},
             status = #{status},
             start_date = #{startDate},
             end_date = #{endDate},
-            tags = #{tags},
             objectives = #{objectives},
             requirements = #{requirements},
             updated_at = #{updatedAt}
@@ -167,6 +163,7 @@
     <!-- 更新课程报名人数 -->
     <update id="updateEnrollmentCount">
         UPDATE courses SET 
+            enrollment_count = enrollment_count + #{increment},
             updated_at = NOW()
         WHERE id = #{courseId} AND deleted = false
     </update>
@@ -174,6 +171,8 @@
     <!-- 更新课程评分和评价数量 -->
     <update id="updateCourseRating">
         UPDATE courses SET 
+            rating = #{rating},
+            review_count = #{reviewCount},
             updated_at = NOW()
         WHERE id = #{courseId} AND deleted = false
     </update>
@@ -262,4 +261,91 @@
         </if>
         GROUP BY status
     </select>
+
+    <!-- 统计学生的活跃课程数量 -->
+    <select id="countActiveCoursesByStudent" resultType="long">
+        SELECT COUNT(DISTINCT c.id)
+        FROM courses c
+        JOIN enrollments e ON c.id = e.course_id
+        WHERE e.student_id = #{studentId} AND e.status = 'enrolled' AND c.deleted = false
+    </select>
+
+    <!-- 获取学生最近活跃的课程列表 (DTO) -->
+    <select id="findRecentCoursesByStudent" resultType="com.noncore.assessment.dto.response.StudentDashboardResponse$RecentCourseDto">
+        SELECT
+            c.id,
+            c.title,
+            u.display_name AS teacherName,
+            COALESCE(cp.avg_progress, 0) AS progress,
+            c.cover_image AS coverImage,
+            cp.last_studied AS lastStudied
+        FROM (
+            SELECT c_inner.*
+            FROM courses c_inner
+            JOIN enrollments e_inner ON c_inner.id = e_inner.course_id
+            WHERE e_inner.student_id = #{studentId}
+            ORDER BY (SELECT MAX(lp_inner.last_studied_at) FROM lesson_progress lp_inner WHERE lp_inner.lesson_id IN (SELECT id FROM lessons l_find WHERE l_find.course_id = c_inner.id) AND lp_inner.student_id = #{studentId}) DESC
+            LIMIT #{limit}
+        ) c
+        JOIN users u ON c.teacher_id = u.id
+        LEFT JOIN (
+            SELECT
+                l.course_id,
+                AVG(lp.progress) as avg_progress,
+                MAX(lp.last_studied_at) as last_studied
+            FROM lesson_progress lp
+            JOIN lessons l ON lp.lesson_id = l.id
+            WHERE lp.student_id = #{studentId}
+            GROUP BY l.course_id
+        ) cp ON c.id = cp.course_id
+    </select>
+
+    <!-- 根据学生ID查询课程列表 -->
+    <select id="findCoursesByStudentId" resultMap="CourseResultMap">
+        SELECT c.*
+        FROM courses c
+        JOIN enrollments e ON c.id = e.course_id
+        WHERE e.student_id = #{studentId} AND c.deleted = false
+        ORDER BY e.enrolled_at DESC
+    </select>
+
+    <!-- 统计教师的活跃课程数量 -->
+    <select id="countActiveByTeacher" resultType="long">
+        SELECT COUNT(*)
+        FROM courses
+        WHERE teacher_id = #{teacherId} AND status = 'published' AND deleted = false
+    </select>
+
+    <!-- 获取教师的活跃课程列表及统计信息 -->
+    <select id="findActiveWithStatsByTeacher" resultType="com.noncore.assessment.dto.response.TeacherDashboardResponse$ActiveCourseDto">
+        SELECT
+            c.id,
+            c.title,
+            c.updated_at AS updatedAt,
+            stats.enrolled_students AS enrolledStudents,
+            stats.active_students AS activeStudents,
+            stats.avg_progress AS avgProgress,
+            stats.pending_grades AS pendingGrades
+        FROM courses c
+        LEFT JOIN (
+            SELECT
+                c_inner.id as course_id,
+                COUNT(DISTINCT e_inner.student_id) as enrolled_students,
+                COUNT(DISTINCT CASE WHEN e_inner.last_access_time >= DATE_SUB(NOW(), INTERVAL 7 DAY) THEN e_inner.student_id END) as active_students,
+                COALESCE(AVG(lp_inner.progress), 0) as avg_progress,
+                COUNT(DISTINCT CASE WHEN s_inner.status = 'submitted' THEN s_inner.id END) as pending_grades
+            FROM courses c_inner
+            LEFT JOIN enrollments e_inner ON c_inner.id = e_inner.course_id
+            LEFT JOIN lessons l_inner ON c_inner.id = l_inner.course_id
+            LEFT JOIN lesson_progress lp_inner ON l_inner.id = lp_inner.lesson_id AND e_inner.student_id = lp_inner.student_id
+            LEFT JOIN assignments a_inner ON c_inner.id = a_inner.course_id
+            LEFT JOIN submissions s_inner ON a_inner.id = s_inner.assignment_id AND e_inner.student_id = s_inner.student_id
+            WHERE c_inner.teacher_id = #{teacherId}
+            GROUP BY c_inner.id
+        ) stats ON c.id = stats.course_id
+        WHERE c.teacher_id = #{teacherId} AND c.status = 'published' AND c.deleted = false
+        ORDER BY c.updated_at DESC
+        LIMIT #{limit}
+    </select>
+
 </mapper> 

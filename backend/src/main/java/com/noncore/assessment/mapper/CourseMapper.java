@@ -201,4 +201,16 @@ public interface CourseMapper {
      * @return 存在的课程数量
      */
     int checkTitleExists(@Param("title") String title, @Param("excludeId") Long excludeId);
+
+    List<Course> findByTeacherId(@Param("teacherId") Long teacherId);
+
+    long countActiveCoursesByStudent(@Param("studentId") Long studentId);
+
+    List<com.noncore.assessment.dto.response.StudentDashboardResponse.RecentCourseDto> findRecentCoursesByStudent(@Param("studentId") Long studentId, @Param("limit") int limit);
+
+    List<Course> findCoursesByStudentId(@Param("studentId") Long studentId);
+
+    long countActiveByTeacher(@Param("teacherId") Long teacherId);
+
+    List<com.noncore.assessment.dto.response.TeacherDashboardResponse.ActiveCourseDto> findActiveWithStatsByTeacher(@Param("teacherId") Long teacherId, @Param("limit") int limit);
 } 

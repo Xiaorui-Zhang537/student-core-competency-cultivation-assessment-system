@@ -3,7 +3,9 @@ package com.noncore.assessment;
 import org.mybatis.spring.annotation.MapperScan;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.cache.annotation.EnableCaching;
+import com.noncore.assessment.config.SecurityProperties;
 
 /**
  * 学生非核心能力发展评估系统 - 后端应用启动类
@@ -15,6 +17,7 @@ import org.springframework.cache.annotation.EnableCaching;
 @SpringBootApplication
 @EnableCaching
 @MapperScan("com.noncore.assessment.mapper")
+@EnableConfigurationProperties(SecurityProperties.class)
 public class AssessmentApplication {
 
     public static void main(String[] args) {

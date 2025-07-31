@@ -116,4 +116,12 @@ public interface LessonProgressMapper {
     LessonProgress selectByStudentCourseLesson(@Param("studentId") Long studentId, 
                                               @Param("courseId") Long courseId, 
                                               @Param("lessonId") Long lessonId);
+
+    int deleteByCourseId(@Param("courseId") Long courseId);
+
+    Long calculateWeeklyStudyTime(@Param("studentId") Long studentId);
+
+    Double getAverageRatingByTeacher(@Param("teacherId") Long teacherId);
+
+    Double getAverageCompletionRateByTeacher(@Param("teacherId") Long teacherId);
 } 

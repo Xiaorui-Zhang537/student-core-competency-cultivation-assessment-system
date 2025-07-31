@@ -1,5 +1,6 @@
 package com.noncore.assessment.service;
 
+import com.noncore.assessment.dto.response.GradeStatsResponse;
 import com.noncore.assessment.entity.Grade;
 import com.noncore.assessment.util.PageResult;
 
@@ -141,7 +142,7 @@ public interface GradeService {
      * @param courseId 课程ID
      * @return 成绩统计信息
      */
-    Map<String, Object> getCourseGradeStatistics(Long courseId);
+    GradeStatsResponse getCourseGradeStatistics(Long courseId);
 
     /**
      * 获取学生成绩统计

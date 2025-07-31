@@ -2,6 +2,10 @@ package com.noncore.assessment.entity;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 import io.swagger.v3.oas.annotations.media.Schema;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
 
@@ -14,6 +18,10 @@ import java.time.LocalDateTime;
  * @since 2024-12-28
  */
 @Schema(description = "文件记录实体")
+@Data
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class FileRecord {
 
     @Schema(description = "文件ID", example = "1")
@@ -59,10 +67,12 @@ public class FileRecord {
     private Long relatedId;
 
     @Schema(description = "文件状态", example = "active", allowableValues = {"active", "deleted", "archived"})
-    private String status;
+    @Builder.Default
+    private String status = "active";
 
     @Schema(description = "下载次数", example = "10")
-    private Integer downloadCount;
+    @Builder.Default
+    private Integer downloadCount = 0;
 
     @Schema(description = "最后下载时间", example = "2024-12-28 15:30:00")
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
@@ -70,44 +80,18 @@ public class FileRecord {
 
     @Schema(description = "创建时间", example = "2024-12-28 10:30:00")
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
-    private LocalDateTime createdAt;
+    @Builder.Default
+    private LocalDateTime createdAt = LocalDateTime.now();
 
     @Schema(description = "更新时间", example = "2024-12-28 10:30:00")
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
-    private LocalDateTime updatedAt;
+    @Builder.Default
+    private LocalDateTime updatedAt = LocalDateTime.now();
 
     @Schema(description = "是否删除", example = "false")
-    private Boolean deleted;
-
-    /**
-     * 默认构造方法
-     */
-    public FileRecord() {
-        this.status = "active";
-        this.downloadCount = 0;
-        this.deleted = false;
-        this.createdAt = LocalDateTime.now();
-        this.updatedAt = LocalDateTime.now();
-    }
-
-    /**
-     * 构造方法
-     */
-    public FileRecord(String originalName, String storedName, String filePath, Long fileSize, String contentType, Long uploaderId) {
-        this();
-        this.originalName = originalName;
-        this.storedName = storedName;
-        this.filePath = filePath;
-        this.fileSize = fileSize;
-        this.contentType = contentType;
-        this.uploaderId = uploaderId;
-        
-        // 提取文件扩展名
-        if (originalName != null && originalName.contains(".")) {
-            this.extension = originalName.substring(originalName.lastIndexOf(".") + 1).toLowerCase();
-        }
-    }
-
+    @Builder.Default
+    private Boolean deleted = false;
+    
     /**
      * 是否为图片文件
      */
@@ -164,182 +148,5 @@ public class FileRecord {
      */
     public void updateTimestamp() {
         this.updatedAt = LocalDateTime.now();
-    }
-
-    // Getter和Setter方法
-    public Long getId() {
-        return id;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
-    }
-
-    public String getOriginalName() {
-        return originalName;
-    }
-
-    public void setOriginalName(String originalName) {
-        this.originalName = originalName;
-    }
-
-    public String getStoredName() {
-        return storedName;
-    }
-
-    public void setStoredName(String storedName) {
-        this.storedName = storedName;
-    }
-
-    public String getFilePath() {
-        return filePath;
-    }
-
-    public void setFilePath(String filePath) {
-        this.filePath = filePath;
-    }
-
-    public Long getFileSize() {
-        return fileSize;
-    }
-
-    public void setFileSize(Long fileSize) {
-        this.fileSize = fileSize;
-    }
-
-    public String getFileType() {
-        return fileType;
-    }
-
-    public void setFileType(String fileType) {
-        this.fileType = fileType;
-    }
-
-    public String getMimeType() {
-        return mimeType;
-    }
-
-    public void setMimeType(String mimeType) {
-        this.mimeType = mimeType;
-    }
-
-    public String getUploadPurpose() {
-        return uploadPurpose;
-    }
-
-    public void setUploadPurpose(String uploadPurpose) {
-        this.uploadPurpose = uploadPurpose;
-    }
-
-    public String getContentType() {
-        return contentType;
-    }
-
-    public void setContentType(String contentType) {
-        this.contentType = contentType;
-    }
-
-    public String getExtension() {
-        return extension;
-    }
-
-    public void setExtension(String extension) {
-        this.extension = extension;
-    }
-
-    public String getMd5Hash() {
-        return md5Hash;
-    }
-
-    public void setMd5Hash(String md5Hash) {
-        this.md5Hash = md5Hash;
-    }
-
-    public Long getUploaderId() {
-        return uploaderId;
-    }
-
-    public void setUploaderId(Long uploaderId) {
-        this.uploaderId = uploaderId;
-    }
-
-    public String getRelatedType() {
-        return relatedType;
-    }
-
-    public void setRelatedType(String relatedType) {
-        this.relatedType = relatedType;
-    }
-
-    public Long getRelatedId() {
-        return relatedId;
-    }
-
-    public void setRelatedId(Long relatedId) {
-        this.relatedId = relatedId;
-    }
-
-    public String getStatus() {
-        return status;
-    }
-
-    public void setStatus(String status) {
-        this.status = status;
-    }
-
-    public Integer getDownloadCount() {
-        return downloadCount;
-    }
-
-    public void setDownloadCount(Integer downloadCount) {
-        this.downloadCount = downloadCount;
-    }
-
-    public LocalDateTime getLastDownloadAt() {
-        return lastDownloadAt;
-    }
-
-    public void setLastDownloadAt(LocalDateTime lastDownloadAt) {
-        this.lastDownloadAt = lastDownloadAt;
-    }
-
-    public LocalDateTime getCreatedAt() {
-        return createdAt;
-    }
-
-    public void setCreatedAt(LocalDateTime createdAt) {
-        this.createdAt = createdAt;
-    }
-
-    public LocalDateTime getUpdatedAt() {
-        return updatedAt;
-    }
-
-    public void setUpdatedAt(LocalDateTime updatedAt) {
-        this.updatedAt = updatedAt;
-    }
-
-    public Boolean getDeleted() {
-        return deleted;
-    }
-
-    public void setDeleted(Boolean deleted) {
-        this.deleted = deleted;
-    }
-
-    @Override
-    public String toString() {
-        return "FileRecord{" +
-                "id=" + id +
-                ", originalName='" + originalName + '\'' +
-                ", storedName='" + storedName + '\'' +
-                ", fileSize=" + fileSize +
-                ", contentType='" + contentType + '\'' +
-                ", uploaderId=" + uploaderId +
-                ", relatedType='" + relatedType + '\'' +
-                ", relatedId=" + relatedId +
-                ", status='" + status + '\'' +
-                ", createdAt=" + createdAt +
-                '}';
     }
 } 

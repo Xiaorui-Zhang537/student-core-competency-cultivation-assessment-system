@@ -1,0 +1,115 @@
+package com.noncore.assessment.service.impl;
+
+import com.noncore.assessment.dto.response.StudentDashboardResponse;
+import com.noncore.assessment.dto.response.TeacherDashboardResponse;
+import com.noncore.assessment.mapper.*;
+import com.noncore.assessment.service.DashboardService;
+import org.springframework.stereotype.Service;
+
+import java.math.BigDecimal;
+import java.util.List;
+import java.util.Optional;
+
+@Service
+public class DashboardServiceImpl implements DashboardService {
+
+    private final CourseMapper courseMapper;
+    private final AssignmentMapper assignmentMapper;
+    private final GradeMapper gradeMapper;
+    private final LessonProgressMapper lessonProgressMapper;
+    private final NotificationMapper notificationMapper;
+    private final StudentAbilityMapper studentAbilityMapper;
+    private final EnrollmentMapper enrollmentMapper;
+    private final SubmissionMapper submissionMapper;
+    private final UserMapper userMapper;
+
+    public DashboardServiceImpl(CourseMapper courseMapper,
+                                AssignmentMapper assignmentMapper,
+                                GradeMapper gradeMapper,
+                                LessonProgressMapper lessonProgressMapper,
+                                NotificationMapper notificationMapper,
+                                StudentAbilityMapper studentAbilityMapper,
+                                EnrollmentMapper enrollmentMapper,
+                                SubmissionMapper submissionMapper,
+                                UserMapper userMapper) {
+        this.courseMapper = courseMapper;
+        this.assignmentMapper = assignmentMapper;
+        this.gradeMapper = gradeMapper;
+        this.lessonProgressMapper = lessonProgressMapper;
+        this.notificationMapper = notificationMapper;
+        this.studentAbilityMapper = studentAbilityMapper;
+        this.enrollmentMapper = enrollmentMapper;
+        this.submissionMapper = submissionMapper;
+        this.userMapper = userMapper;
+    }
+
+    @Override
+    public StudentDashboardResponse getStudentDashboardData(Long studentId) {
+        long activeCourses = courseMapper.countActiveCoursesByStudent(studentId);
+        long pendingAssignmentsCount = assignmentMapper.countPendingAssignments(studentId);
+        BigDecimal averageScore = Optional.ofNullable(gradeMapper.calculateAverageScore(studentId)).orElse(BigDecimal.ZERO);
+        long totalStudyTime = Optional.ofNullable(lessonProgressMapper.calculateTotalStudyTime(studentId, null)).orElse(0);
+        long weeklyStudyTime = Optional.ofNullable(lessonProgressMapper.calculateWeeklyStudyTime(studentId)).orElse(0L);
+        Double overallProgress = Optional.ofNullable(lessonProgressMapper.calculateOverallProgress(studentId)).map(java.math.BigDecimal::doubleValue).orElse(0.0);
+        long unreadNotifications = notificationMapper.countUnreadByRecipient(studentId);
+
+        StudentDashboardResponse.Stats stats = StudentDashboardResponse.Stats.builder()
+                .activeCourses(activeCourses)
+                .pendingAssignments(pendingAssignmentsCount)
+                .averageScore(averageScore.doubleValue())
+                .totalStudyTime(totalStudyTime / 60) // to minutes
+                .weeklyStudyTime(weeklyStudyTime / 60) // to minutes
+                .overallProgress(overallProgress)
+                .unreadNotifications(unreadNotifications)
+                .build();
+
+        List<StudentDashboardResponse.RecentCourseDto> recentCourses = courseMapper.findRecentCoursesByStudent(studentId, 5);
+        List<StudentDashboardResponse.PendingAssignmentDto> pendingAssignments = assignmentMapper.findPendingAssignments(studentId, 5);
+        List<StudentDashboardResponse.RecentNotificationDto> recentNotifications = notificationMapper.findRecentNotifications(studentId, 5);
+        Double abilityOverallScore = Optional.ofNullable(studentAbilityMapper.selectOverallScoreByStudentId(studentId)).map(java.math.BigDecimal::doubleValue).orElse(0.0);
+
+        return StudentDashboardResponse.builder()
+                .stats(stats)
+                .recentCourses(recentCourses)
+                .pendingAssignments(pendingAssignments)
+                .recentNotifications(recentNotifications)
+                .abilityOverallScore(abilityOverallScore)
+                .build();
+    }
+
+    @Override
+    public TeacherDashboardResponse getTeacherDashboardData(Long teacherId) {
+        long activeCoursesCount = courseMapper.countActiveByTeacher(teacherId);
+        long totalStudents = enrollmentMapper.countStudentsByTeacher(teacherId);
+        long pendingGradingsCount = submissionMapper.countPendingByTeacher(teacherId);
+        long monthlyAssignments = assignmentMapper.countMonthlyByTeacher(teacherId);
+        // TODO: The getAverageScoreByTeacher method was removed. A new, efficient query is needed.
+        // For now, returning a placeholder value.
+        double averageAssignmentScore = 0.0;
+        double averageCourseRating = Optional.ofNullable(lessonProgressMapper.getAverageRatingByTeacher(teacherId)).orElse(0.0);
+        double studentCompletionRate = Optional.ofNullable(lessonProgressMapper.getAverageCompletionRateByTeacher(teacherId)).orElse(0.0);
+        long weeklyActiveStudents = enrollmentMapper.countWeeklyActiveStudentsByTeacher(teacherId);
+
+        TeacherDashboardResponse.Stats stats = TeacherDashboardResponse.Stats.builder()
+                .activeCourses(activeCoursesCount)
+                .totalStudents(totalStudents)
+                .pendingGradingsCount(pendingGradingsCount)
+                .monthlyAssignments(monthlyAssignments)
+                .averageAssignmentScore(averageAssignmentScore)
+                .averageCourseRating(averageCourseRating)
+                .studentCompletionRate(studentCompletionRate)
+                .weeklyActiveStudents(weeklyActiveStudents)
+                .build();
+
+        List<TeacherDashboardResponse.ActiveCourseDto> activeCourses = courseMapper.findActiveWithStatsByTeacher(teacherId, 5);
+        List<TeacherDashboardResponse.PendingGradingDto> pendingGradings = submissionMapper.findPendingByTeacher(teacherId, 5);
+        List<TeacherDashboardResponse.StudentOverviewDto> studentOverviews = userMapper.findStudentOverviewsByTeacher(teacherId, 10);
+
+        return TeacherDashboardResponse.builder()
+                .stats(stats)
+                .activeCourses(activeCourses)
+                .pendingGradings(pendingGradings)
+                .studentOverviews(studentOverviews)
+                .build();
+    }
+} 

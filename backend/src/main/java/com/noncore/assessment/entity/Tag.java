@@ -1,6 +1,10 @@
 package com.noncore.assessment.entity;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
 
@@ -9,7 +13,16 @@ import java.time.LocalDateTime;
  *
  * @author Assessment System
  */
+@Data
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class Tag {
+    public Tag(String name) {
+        this.name = name;
+        this.createdAt = LocalDateTime.now();
+        this.postsCount = 0;
+    }
     /**
      * 标签ID
      */
@@ -28,84 +41,21 @@ public class Tag {
     /**
      * 标签颜色
      */
-    private String color;
+    @Builder.Default
+    private String color = "#3B82F6";
 
     /**
      * 使用此标签的帖子数
      */
-    private Integer postsCount;
+    @Builder.Default
+    private Integer postsCount = 0;
 
     /**
      * 创建时间
      */
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private LocalDateTime createdAt;
-
-    // 构造函数
-    public Tag() {}
-
-    public Tag(String name) {
-        this.name = name;
-        this.color = "#3B82F6";
-        this.postsCount = 0;
-    }
-
-    public Tag(String name, String description, String color) {
-        this.name = name;
-        this.description = description;
-        this.color = color;
-        this.postsCount = 0;
-    }
-
-    // Getter和Setter方法
-    public Long getId() {
-        return id;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
-    }
-
-    public String getDescription() {
-        return description;
-    }
-
-    public void setDescription(String description) {
-        this.description = description;
-    }
-
-    public String getColor() {
-        return color;
-    }
-
-    public void setColor(String color) {
-        this.color = color;
-    }
-
-    public Integer getPostsCount() {
-        return postsCount;
-    }
-
-    public void setPostsCount(Integer postsCount) {
-        this.postsCount = postsCount;
-    }
-
-    public LocalDateTime getCreatedAt() {
-        return createdAt;
-    }
-
-    public void setCreatedAt(LocalDateTime createdAt) {
-        this.createdAt = createdAt;
-    }
-
+    
     /**
      * 增加帖子数量
      */
@@ -118,16 +68,5 @@ public class Tag {
      */
     public void decrementPostsCount() {
         this.postsCount = Math.max(0, (this.postsCount == null ? 0 : this.postsCount) - 1);
-    }
-
-    @Override
-    public String toString() {
-        return "Tag{" +
-                "id=" + id +
-                ", name='" + name + '\'' +
-                ", description='" + description + '\'' +
-                ", color='" + color + '\'' +
-                ", postsCount=" + postsCount +
-                '}';
     }
 } 

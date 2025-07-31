@@ -138,36 +138,36 @@ public class FileStorageServiceImpl implements FileStorageService {
 
     @Override
     public boolean deleteFile(Long fileId, Long userId) {
+        logger.info("删除文件，文件ID: {}, 用户ID: {}", fileId, userId);
+
+        // 检查权限
+        if (!hasFilePermission(fileId, userId)) {
+            throw new BusinessException(ErrorCode.FILE_PERMISSION_DENIED, "没有权限删除该文件");
+        }
+
+        // 获取文件记录
+        FileRecord fileRecord = fileRecordMapper.selectFileRecordById(fileId);
+        if (fileRecord == null) {
+            return true; // 文件不存在，视为删除成功
+        }
+
+        // 删除物理文件
         try {
-            logger.info("删除文件，文件ID: {}, 用户ID: {}", fileId, userId);
-
-            // 检查权限
-            if (!hasFilePermission(fileId, userId)) {
-                throw new BusinessException(ErrorCode.FILE_PERMISSION_DENIED, "没有权限删除该文件");
-            }
-
-            // 获取文件记录
-            FileRecord fileRecord = fileRecordMapper.selectFileRecordById(fileId);
-            if (fileRecord == null) {
-                return true; // 文件不存在，视为删除成功
-            }
-
-            // 删除物理文件
             Path filePath = Paths.get(fileRecord.getFilePath());
             if (Files.exists(filePath)) {
                 Files.delete(filePath);
             }
-
-            // 软删除数据库记录
-            int result = fileRecordMapper.deleteFileRecord(fileId);
-            
-            logger.info("文件删除成功，文件ID: {}", fileId);
-            return result > 0;
-
         } catch (IOException e) {
-            logger.error("文件删除失败", e);
-            throw new BusinessException(ErrorCode.OPERATION_FAILED, "文件删除失败: " + e.getMessage());
+            logger.error("删除物理文件失败, path: {}", fileRecord.getFilePath(), e);
+            throw new BusinessException(ErrorCode.OPERATION_FAILED, "物理文件删除失败");
         }
+
+
+        // 软删除数据库记录
+        int result = fileRecordMapper.deleteFileRecord(fileId);
+        
+        logger.info("文件删除成功，文件ID: {}", fileId);
+        return result > 0;
     }
 
     @Override
@@ -195,35 +195,29 @@ public class FileStorageServiceImpl implements FileStorageService {
 
     @Override
     public boolean hasFilePermission(Long fileId, Long userId) {
-        try {
-            FileRecord fileRecord = fileRecordMapper.selectFileRecordById(fileId);
-            if (fileRecord == null) {
-                return false;
-            }
-
-            // 文件上传者有权限
-            if (userId.equals(fileRecord.getUploaderId())) {
-                return true;
-            }
-
-            // 根据文件用途检查权限
-            String purpose = fileRecord.getUploadPurpose();
-            switch (purpose) {
-                case "avatar":
-                case "assignment":
-                    // 只有上传者可以访问
-                    return userId.equals(fileRecord.getUploaderId());
-                case "course":
-                case "lesson":
-                    // 课程相关文件，需要检查课程权限（简化实现，返回true）
-                    return true;
-                default:
-                    return false;
-            }
-
-        } catch (Exception e) {
-            logger.error("检查文件权限失败", e);
+        FileRecord fileRecord = fileRecordMapper.selectFileRecordById(fileId);
+        if (fileRecord == null) {
             return false;
+        }
+
+        // 文件上传者有权限
+        if (userId.equals(fileRecord.getUploaderId())) {
+            return true;
+        }
+
+        // 根据文件用途检查权限
+        String purpose = fileRecord.getUploadPurpose();
+        switch (purpose) {
+            case "avatar":
+            case "assignment":
+                // 只有上传者可以访问
+                return userId.equals(fileRecord.getUploaderId());
+            case "course":
+            case "lesson":
+                // 课程相关文件，需要检查课程权限（简化实现，返回true）
+                return true;
+            default:
+                return false;
         }
     }
 
@@ -289,7 +283,7 @@ public class FileStorageServiceImpl implements FileStorageService {
 
         String originalFilename = file.getOriginalFilename();
         if (originalFilename != null && originalFilename.contains(".")) {
-            String extension = originalFilename.substring(originalFilename.lastIndexOf(".")).toLowerCase();
+            String extension = originalFilename.substring(originalFilename.lastIndexOf(".") + 1).toLowerCase();
             if (!ALLOWED_EXTENSIONS.contains(extension)) {
                 throw new BusinessException(ErrorCode.FILE_TYPE_UNSUPPORTED, "不支持的文件类型: " + extension);
             }

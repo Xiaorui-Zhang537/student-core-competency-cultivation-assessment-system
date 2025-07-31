@@ -1,0 +1,119 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.noncore.assessment.mapper.AbilityReportMapper">
+
+    <!-- 结果映射 -->
+    <resultMap id="AbilityReportResultMap" type="com.noncore.assessment.entity.AbilityReport">
+        <id column="id" property="id"/>
+        <result column="student_id" property="studentId"/>
+        <result column="report_type" property="reportType"/>
+        <result column="title" property="title"/>
+        <result column="summary" property="summary"/>
+        <result column="content" property="content"/>
+        <result column="overall_score" property="overallScore"/>
+        <result column="dimension_scores" property="dimensionScores"/>
+        <result column="trends_analysis" property="trendsAnalysis"/>
+        <result column="achievements" property="achievements"/>
+        <result column="improvement_areas" property="improvementAreas"/>
+        <result column="recommendations" property="recommendations"/>
+        <result column="period_start" property="reportPeriodStart"/>
+        <result column="period_end" property="reportPeriodEnd"/>
+        <result column="generated_at" property="generatedAt"/>
+        <result column="published_at" property="publishedAt"/>
+        <result column="is_published" property="isPublished"/>
+        <result column="version" property="version"/>
+        <result column="created_at" property="createdAt"/>
+        <result column="updated_at" property="updatedAt"/>
+        <result column="deleted" property="deleted"/>
+    </resultMap>
+
+    <resultMap id="AbilityReportDetailResultMap" type="com.noncore.assessment.entity.AbilityReport" extends="AbilityReportResultMap">
+        <association property="student" javaType="com.noncore.assessment.entity.User">
+            <id column="student_id" property="id"/>
+            <result column="student_name" property="displayName"/>
+            <result column="student_number" property="studentNumber"/>
+        </association>
+    </resultMap>
+
+    <!-- 基础查询字段 -->
+    <sql id="abilityReportColumns">
+        r.id, r.student_id, r.report_type, r.title, r.summary, r.content,
+        r.overall_score, r.dimension_scores, r.trends_analysis, r.achievements,
+        r.improvement_areas, r.recommendations, r.period_start, r.period_end,
+        r.generated_at, r.published_at, r.is_published, r.version, r.created_at, r.updated_at, r.deleted
+    </sql>
+
+    <sql id="abilityReportDetailColumns">
+        <include refid="abilityReportColumns"/>,
+        u.display_name as student_name,
+        u.student_number as student_number
+    </sql>
+
+    <!-- 插入能力报告 -->
+    <insert id="insertReport" parameterType="com.noncore.assessment.entity.AbilityReport" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO ability_reports (
+            student_id, report_type, title, summary, content, overall_score, dimension_scores,
+            trends_analysis, achievements, improvement_areas, recommendations,
+            period_start, period_end, generated_at, published_at, is_published, version,
+            created_at, updated_at, deleted
+        ) VALUES (
+            #{studentId}, #{reportType}, #{title}, #{summary}, #{content}, #{overallScore}, #{dimensionScores},
+            #{trendsAnalysis}, #{achievements}, #{improvementAreas}, #{recommendations},
+            #{reportPeriodStart}, #{reportPeriodEnd}, #{generatedAt}, #{publishedAt}, #{isPublished}, 1,
+            NOW(), NOW(), false
+        )
+    </insert>
+
+    <!-- 根据ID查询能力报告 -->
+    <select id="selectReportById" parameterType="long" resultMap="AbilityReportDetailResultMap">
+        SELECT <include refid="abilityReportDetailColumns"/>
+        FROM ability_reports r
+        LEFT JOIN users u ON r.student_id = u.id
+        WHERE r.id = #{id} AND r.deleted = false
+    </select>
+
+    <!-- 分页查询能力报告 -->
+    <select id="selectReportsWithPagination" resultMap="AbilityReportDetailResultMap">
+        SELECT <include refid="abilityReportDetailColumns"/>
+        FROM ability_reports r
+        LEFT JOIN users u ON r.student_id = u.id
+        <where>
+            r.deleted = false
+            <if test="studentId != null">AND r.student_id = #{studentId}</if>
+            <if test="reportType != null and reportType != ''">AND r.report_type = #{reportType}</if>
+            <if test="isPublished != null">AND r.is_published = #{isPublished}</if>
+        </where>
+        ORDER BY r.generated_at DESC
+        LIMIT #{offset}, #{size}
+    </select>
+
+    <!-- 统计能力报告数量 -->
+    <select id="countReports" resultType="integer">
+        SELECT COUNT(1)
+        FROM ability_reports r
+        <where>
+            r.deleted = false
+            <if test="studentId != null">AND r.student_id = #{studentId}</if>
+            <if test="reportType != null and reportType != ''">AND r.report_type = #{reportType}</if>
+            <if test="isPublished != null">AND r.is_published = #{isPublished}</if>
+        </where>
+    </select>
+
+    <!-- 获取学生最新的报告 -->
+    <select id="selectLatestReportByStudent" parameterType="long" resultMap="AbilityReportDetailResultMap">
+        SELECT <include refid="abilityReportDetailColumns"/>
+        FROM ability_reports r
+        LEFT JOIN users u ON r.student_id = u.id
+        WHERE r.student_id = #{studentId} AND r.deleted = false
+        ORDER BY r.generated_at DESC
+        LIMIT 1
+    </select>
+
+    <!-- 发布报告 -->
+    <update id="publishReport" parameterType="long">
+        UPDATE ability_reports
+        SET is_published = true, published_at = NOW(), updated_at = NOW()
+        WHERE id = #{id}
+    </update>
+
+</mapper>

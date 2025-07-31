@@ -48,11 +48,15 @@ backend/
 │   │   │       ├── AssessmentApplication.java  # Spring Boot应用启动类
 │   │   │       ├── config                # 应用配置类
 │   │   │       ├── controller            # RESTful API控制器
+│   │   │       │   ├── BaseController.java   # 控制器基类，提供通用方法
+│   │   │       │   ├── SubmissionController.java # 新增：处理作业提交与评分
+│   │   │       │   └── UserController.java     # 新增：处理用户个人资料
 │   │   │       ├── dto                   # 数据传输对象 (Request/Response)
 │   │   │       ├── entity                # 数据库实体类
 │   │   │       ├── exception             # 全局异常处理
 │   │   │       ├── mapper                # MyBatis数据访问接口
-│   │   │       ├── service               # 业务逻辑服务接口与实现
+│   │   │       ├── service               # 业务逻辑服务接口
+│   │   │       │   └── impl              # 服务接口实现类
 │   │   │       └── util                  # 工具类
 │   │   └── resources
 │   │       ├── mapper                # MyBatis XML映射文件
@@ -100,18 +104,21 @@ backend/
 
 #### `controller` - API控制器
 
-*   **职责**: 接收HTTP请求，调用相应的`Service`处理业务逻辑，并返回JSON格式的响应。
+*   **职责**: 接收HTTP请求，调用相应的`Service`处理业务逻辑，并返回JSON格式的响应。所有控制器均继承自`BaseController`以实现通用功能。
+*   `BaseController.java`: **新增**，所有控制器的抽象基类，提供了获取当前登录用户、用户ID和权限判断等通用方法。
 *   `AbilityController.java`: 处理与能力评估相关的API请求。
-*   `AssignmentController.java`: 处理作业管理相关的API请求。
-*   `AuthController.java`: 处理用户认证（注册、登录、密码重置）相关的API请求。
+*   `AssignmentController.java`: **（重构）** 核心职责收缩为作业本身的CRUD和状态管理。作业提交和评分相关功能已移交。
+*   `AuthController.java`: **（重构）** 职责收缩为仅处理用户认证（注册、登录、令牌刷新、登出）。用户资料管理功能已移至`UserController`。
 *   `CommunityController.java`: 处理社区功能（帖子、评论）相关的API请求。
-*   `CourseController.java`: 处理课程管理相关的API请求。
+*   `CourseController.java`: **（重构）** 核心职责收缩为课程的CRUD和状态管理。学生选退课功能移至`EnrollmentService`，课程发现功能由`CourseDiscoveryService`提供支持。
 *   `FileController.java`: 处理文件上传和下载的API请求。
 *   `GradeController.java`: 处理成绩管理相关的API请求。
 *   `LessonController.java`: 处理课程章节相关的API请求。
 *   `NotificationController.java`: 处理通知相关的API请求。
-*   `StudentController.java`: 处理学生相关的API请求。
-*   `TeacherController.java`: 处理教师相关的API请求。
+*   `StudentController.java`: 处理学生专属的聚合API请求，如仪表板、我的课程等。
+*   `SubmissionController.java`: **新增**，处理学生作业的提交、保存草稿以及成绩查询等相关功能。
+*   `TeacherController.java`: 处理教师专属的聚合API请求，主要是各类教学分析数据的查询入口。
+*   `UserController.java`: **新增**，负责处理用户个人资料的查询、更新，以及密码修改、邮箱验证等。
 
 #### `dto` - 数据传输对象
 
@@ -164,9 +171,26 @@ backend/
 
 #### `service` - 业务逻辑服务
 
-*   **职责**: 实现核心业务逻辑，通常会调用一个或多个`Mapper`接口来完成数据库操作。
+*   **职责**: 实现核心业务逻辑，遵循**单一职责原则**，每个服务聚焦于一个特定的业务领域。
 *   `impl/`: 存放服务接口的实现类。
-*   `AbilityService.java`, `AuthService.java`, `CourseService.java`, 等: 每个`Service`接口定义了一组相关的业务操作。
+*   `AbilityService.java`: 负责能力评估、报告生成和目标管理。
+*   `AnalyticsQueryService.java`: **新增**，负责提供教师所需的实时教学分析数据查询。
+*   `AssignmentService.java`: **（重构）** 职责收缩为作业的CRUD和状态变更。
+*   `AuthService.java`: 负责用户认证，如注册、登录和令牌管理。
+*   `CacheService.java`: 提供缓存操作的通用接口。
+*   `CommunityService.java`: 负责社区帖子的CRUD、评论和点赞功能。
+*   `CourseService.java`: **（重构）** 职责收缩为课程的CRUD和核心管理。
+*   `CourseDiscoveryService.java`: **新增**，负责课程的发现功能，如列表查询、搜索、推荐等。
+*   `DashboardService.java`: 负责为学生和教师仪表盘聚合数据。
+*   `EmailService.java`: 负责发送电子邮件。
+*   `EnrollmentService.java`: **新增**，负责处理学生选课、退课以及课程学员管理。
+*   `FileStorageService.java`: 负责文件的上传、下载和管理。
+*   `GradeService.java`: 负责成绩的CRUD、发布和统计。
+*   `LessonService.java`: 负责课程章节的CRUD和学习进度跟踪。
+*   `NotificationService.java`: 负责生成和发送各类通知。
+*   `StudentService.java`: 负责学生特有的业务逻辑，如初始化学生档案。
+*   `SubmissionService.java`: **新增**，负责处理学生作业的提交和查询。
+*   `UserService.java`: 负责用户个人资料管理和密码操作。
 
 #### `util` - 工具类
 

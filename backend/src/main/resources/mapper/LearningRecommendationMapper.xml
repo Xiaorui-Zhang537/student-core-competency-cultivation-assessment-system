@@ -1,0 +1,198 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.noncore.assessment.mapper.LearningRecommendationMapper">
+
+    <!-- 结果映射 -->
+    <resultMap id="LearningRecommendationResultMap" type="com.noncore.assessment.entity.LearningRecommendation">
+        <id column="id" property="id"/>
+        <result column="student_id" property="studentId"/>
+        <result column="dimension_id" property="dimensionId"/>
+        <result column="recommendation_type" property="recommendationType"/>
+        <result column="title" property="title"/>
+        <result column="description" property="description"/>
+        <result column="link" property="link"/>
+        <result column="priority" property="priority"/>
+        <result column="is_read" property="isRead"/>
+        <result column="is_accepted" property="isAccepted"/>
+        <result column="generated_at" property="generatedAt"/>
+        <result column="expires_at" property="expiresAt"/>
+        <result column="created_at" property="createdAt"/>
+        <result column="updated_at" property="updatedAt"/>
+    </resultMap>
+
+    <resultMap id="LearningRecommendationDetailResultMap" type="com.noncore.assessment.entity.LearningRecommendation" extends="LearningRecommendationResultMap">
+        <association property="student" javaType="com.noncore.assessment.entity.User">
+            <id column="student_id" property="id"/>
+            <result column="student_name" property="displayName"/>
+        </association>
+        <association property="dimension" javaType="com.noncore.assessment.entity.AbilityDimension">
+            <id column="dimension_id" property="id"/>
+            <result column="dimension_name" property="name"/>
+            <result column="dimension_category" property="category"/>
+        </association>
+    </resultMap>
+
+    <!-- 基础查询字段 -->
+    <sql id="learningRecommendationColumns">
+        r.id, r.student_id, r.dimension_id, r.title, r.description,
+        r.recommendation_type, r.resource_url, r.status, r.priority,
+        r.created_at, r.updated_at, r.deleted
+    </sql>
+
+    <sql id="learningRecommendationDetailColumns">
+        <include refid="learningRecommendationColumns"/>,
+        u.display_name as student_name,
+        d.name as dimension_name,
+        d.category as dimension_category
+    </sql>
+
+    <!-- 插入学习建议 -->
+    <insert id="insertRecommendation" parameterType="com.noncore.assessment.entity.LearningRecommendation" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO learning_recommendations (
+            student_id, dimension_id, title, description,
+            recommendation_type, resource_url, status, priority,
+            created_at, updated_at, deleted
+        ) VALUES (
+            #{studentId}, #{dimensionId}, #{title}, #{description},
+            #{recommendationType}, #{resourceUrl}, #{status}, #{priority},
+            NOW(), NOW(), false
+        )
+    </insert>
+
+    <!-- 根据ID查询 -->
+    <select id="selectRecommendationById" parameterType="long" resultMap="LearningRecommendationDetailResultMap">
+        SELECT <include refid="learningRecommendationDetailColumns"/>
+        FROM learning_recommendations r
+        LEFT JOIN users u ON r.student_id = u.id
+        LEFT JOIN ability_dimensions d ON r.dimension_id = d.id
+        WHERE r.id = #{id} AND r.deleted = false
+    </select>
+
+    <!-- 更新学习建议 -->
+    <update id="updateRecommendation" parameterType="com.noncore.assessment.entity.LearningRecommendation">
+        UPDATE learning_recommendations
+        <set>
+            <if test="title != null">title = #{title},</if>
+            <if test="description != null">description = #{description},</if>
+            <if test="recommendationType != null">recommendation_type = #{recommendationType},</if>
+            <if test="resourceUrl != null">resource_url = #{resourceUrl},</if>
+            <if test="status != null">status = #{status},</if>
+            <if test="priority != null">priority = #{priority},</if>
+            updated_at = NOW()
+        </set>
+        WHERE id = #{id} AND deleted = false
+    </update>
+
+    <!-- 软删除学习建议 -->
+    <update id="deleteRecommendation" parameterType="long">
+        UPDATE learning_recommendations
+        SET deleted = true, updated_at = NOW()
+        WHERE id = #{id}
+    </update>
+
+    <!-- 根据学生ID查询 -->
+    <select id="selectByStudentId" parameterType="long" resultMap="LearningRecommendationDetailResultMap">
+        SELECT <include refid="learningRecommendationDetailColumns"/>
+        FROM learning_recommendations r
+        LEFT JOIN users u ON r.student_id = u.id
+        LEFT JOIN ability_dimensions d ON r.dimension_id = d.id
+        WHERE r.student_id = #{studentId} AND r.deleted = false
+        ORDER BY r.priority DESC, r.created_at DESC
+    </select>
+
+    <!-- 根据学生ID和维度ID查询 -->
+    <select id="selectByStudentAndDimension" resultMap="LearningRecommendationDetailResultMap">
+        SELECT <include refid="learningRecommendationDetailColumns"/>
+        FROM learning_recommendations r
+        LEFT JOIN users u ON r.student_id = u.id
+        LEFT JOIN ability_dimensions d ON r.dimension_id = d.id
+        WHERE r.student_id = #{studentId} AND r.dimension_id = #{dimensionId} AND r.deleted = false
+        ORDER BY r.priority DESC, r.created_at DESC
+    </select>
+
+    <!-- 分页查询 -->
+    <select id="selectRecommendationsWithPagination" resultMap="LearningRecommendationDetailResultMap">
+        SELECT <include refid="learningRecommendationDetailColumns"/>
+        FROM learning_recommendations r
+        LEFT JOIN users u ON r.student_id = u.id
+        LEFT JOIN ability_dimensions d ON r.dimension_id = d.id
+        <where>
+            r.deleted = false
+            <if test="studentId != null">AND r.student_id = #{studentId}</if>
+            <if test="dimensionId != null">AND r.dimension_id = #{dimensionId}</if>
+            <if test="recommendationType != null and recommendationType != ''">AND r.recommendation_type = #{recommendationType}</if>
+            <if test="status != null and status != ''">AND r.status = #{status}</if>
+        </where>
+        ORDER BY r.priority DESC, r.created_at DESC
+        LIMIT #{offset}, #{size}
+    </select>
+
+    <!-- 统计数量 -->
+    <select id="countRecommendations" resultType="integer">
+        SELECT COUNT(1)
+        FROM learning_recommendations r
+        <where>
+            r.deleted = false
+            <if test="studentId != null">AND r.student_id = #{studentId}</if>
+            <if test="dimensionId != null">AND r.dimension_id = #{dimensionId}</if>
+            <if test="recommendationType != null and recommendationType != ''">AND r.recommendation_type = #{recommendationType}</if>
+            <if test="status != null and status != ''">AND r.status = #{status}</if>
+        </where>
+    </select>
+
+    <!-- 根据优先级查询 -->
+    <select id="selectByPriority" resultMap="LearningRecommendationDetailResultMap">
+        SELECT <include refid="learningRecommendationDetailColumns"/>
+        FROM learning_recommendations r
+        LEFT JOIN users u ON r.student_id = u.id
+        LEFT JOIN ability_dimensions d ON r.dimension_id = d.id
+        WHERE r.student_id = #{studentId} AND r.priority = #{priority} AND r.deleted = false
+        ORDER BY r.created_at DESC
+    </select>
+
+    <!-- 标记为已读 -->
+    <update id="markAsRead">
+        UPDATE learning_recommendations
+        SET status = 'READ', updated_at = NOW()
+        WHERE id = #{recommendationId} AND student_id = #{studentId}
+    </update>
+
+    <!-- 标记为已接受 -->
+    <update id="markAsAccepted">
+        UPDATE learning_recommendations
+        SET status = 'ACCEPTED', updated_at = NOW()
+        WHERE id = #{recommendationId} AND student_id = #{studentId}
+    </update>
+
+    <!-- 删除过期的建议 -->
+    <delete id="deleteExpiredRecommendations">
+        DELETE FROM learning_recommendations
+        WHERE status != 'ACCEPTED' AND expiry_date &lt; NOW()
+    </delete>
+
+    <!-- 统计未读建议数量 -->
+    <select id="countUnreadRecommendations" parameterType="long" resultType="integer">
+        SELECT COUNT(1)
+        FROM learning_recommendations r
+        WHERE r.student_id = #{studentId} AND r.status = 'UNREAD' AND r.deleted = false
+    </select>
+
+    <!-- 按类型统计建议数量 -->
+    <select id="countRecommendationsByType" parameterType="long" resultType="map">
+        SELECT r.recommendation_type, COUNT(1) as count
+        FROM learning_recommendations r
+        WHERE r.student_id = #{studentId} AND r.deleted = false
+        GROUP BY r.recommendation_type
+    </select>
+
+    <!-- 获取热门建议类型 -->
+    <select id="getPopularRecommendationTypes" resultType="map">
+        SELECT r.recommendation_type, COUNT(1) as count
+        FROM learning_recommendations r
+        WHERE r.deleted = false
+        GROUP BY r.recommendation_type
+        ORDER BY count DESC
+        LIMIT #{limit}
+    </select>
+
+</mapper> 

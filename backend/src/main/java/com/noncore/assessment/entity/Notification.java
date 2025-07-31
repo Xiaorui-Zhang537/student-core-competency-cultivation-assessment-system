@@ -2,6 +2,10 @@ package com.noncore.assessment.entity;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 import io.swagger.v3.oas.annotations.media.Schema;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
 
@@ -14,6 +18,10 @@ import java.time.LocalDateTime;
  * @since 2024-12-28
  */
 @Schema(description = "通知实体")
+@Data
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class Notification {
 
     @Schema(description = "通知ID", example = "1")
@@ -47,14 +55,16 @@ public class Notification {
     private String data;
 
     @Schema(description = "是否已读", example = "false")
-    private Boolean isRead;
+    @Builder.Default
+    private Boolean isRead = false;
 
     @Schema(description = "阅读时间", example = "2024-12-28 15:30:00")
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private LocalDateTime readAt;
 
     @Schema(description = "通知优先级", example = "normal", allowableValues = {"low", "normal", "high", "urgent"})
-    private String priority;
+    @Builder.Default
+    private String priority = "normal";
 
     @Schema(description = "通知图标", example = "assignment")
     private String icon;
@@ -64,44 +74,17 @@ public class Notification {
 
     @Schema(description = "创建时间", example = "2024-12-28 10:30:00")
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
-    private LocalDateTime createdAt;
+    @Builder.Default
+    private LocalDateTime createdAt = LocalDateTime.now();
 
     @Schema(description = "更新时间", example = "2024-12-28 10:30:00")
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
-    private LocalDateTime updatedAt;
+    @Builder.Default
+    private LocalDateTime updatedAt = LocalDateTime.now();
 
     @Schema(description = "是否删除", example = "false")
-    private Boolean deleted;
-
-    /**
-     * 默认构造方法
-     */
-    public Notification() {
-        this.isRead = false;
-        this.priority = "normal";
-        this.deleted = false;
-        this.createdAt = LocalDateTime.now();
-        this.updatedAt = LocalDateTime.now();
-    }
-
-    /**
-     * 构造方法
-     */
-    public Notification(Long recipientId, String type, String title, String content) {
-        this();
-        this.recipientId = recipientId;
-        this.type = type;
-        this.title = title;
-        this.content = content;
-    }
-
-    /**
-     * 构造方法（带发送者）
-     */
-    public Notification(Long recipientId, Long senderId, String type, String title, String content) {
-        this(recipientId, type, title, content);
-        this.senderId = senderId;
-    }
+    @Builder.Default
+    private Boolean deleted = false;
 
     /**
      * 标记为已读
@@ -174,164 +157,5 @@ public class Notification {
      */
     public void updateTimestamp() {
         this.updatedAt = LocalDateTime.now();
-    }
-
-    // Getter和Setter方法
-    public Long getId() {
-        return id;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
-    }
-
-    public Long getRecipientId() {
-        return recipientId;
-    }
-
-    public void setRecipientId(Long recipientId) {
-        this.recipientId = recipientId;
-    }
-
-    public Long getSenderId() {
-        return senderId;
-    }
-
-    public void setSenderId(Long senderId) {
-        this.senderId = senderId;
-    }
-
-    public String getType() {
-        return type;
-    }
-
-    public void setType(String type) {
-        this.type = type;
-    }
-
-    public String getCategory() {
-        return category;
-    }
-
-    public void setCategory(String category) {
-        this.category = category;
-    }
-
-    public String getRelatedType() {
-        return relatedType;
-    }
-
-    public void setRelatedType(String relatedType) {
-        this.relatedType = relatedType;
-    }
-
-    public Long getRelatedId() {
-        return relatedId;
-    }
-
-    public void setRelatedId(Long relatedId) {
-        this.relatedId = relatedId;
-    }
-
-    public String getTitle() {
-        return title;
-    }
-
-    public void setTitle(String title) {
-        this.title = title;
-    }
-
-    public String getContent() {
-        return content;
-    }
-
-    public void setContent(String content) {
-        this.content = content;
-    }
-
-    public String getData() {
-        return data;
-    }
-
-    public void setData(String data) {
-        this.data = data;
-    }
-
-    public Boolean getIsRead() {
-        return isRead;
-    }
-
-    public void setIsRead(Boolean isRead) {
-        this.isRead = isRead;
-    }
-
-    public LocalDateTime getReadAt() {
-        return readAt;
-    }
-
-    public void setReadAt(LocalDateTime readAt) {
-        this.readAt = readAt;
-    }
-
-    public String getPriority() {
-        return priority;
-    }
-
-    public void setPriority(String priority) {
-        this.priority = priority;
-    }
-
-    public String getIcon() {
-        return icon;
-    }
-
-    public void setIcon(String icon) {
-        this.icon = icon;
-    }
-
-    public String getActionUrl() {
-        return actionUrl;
-    }
-
-    public void setActionUrl(String actionUrl) {
-        this.actionUrl = actionUrl;
-    }
-
-    public LocalDateTime getCreatedAt() {
-        return createdAt;
-    }
-
-    public void setCreatedAt(LocalDateTime createdAt) {
-        this.createdAt = createdAt;
-    }
-
-    public LocalDateTime getUpdatedAt() {
-        return updatedAt;
-    }
-
-    public void setUpdatedAt(LocalDateTime updatedAt) {
-        this.updatedAt = updatedAt;
-    }
-
-    public Boolean getDeleted() {
-        return deleted;
-    }
-
-    public void setDeleted(Boolean deleted) {
-        this.deleted = deleted;
-    }
-
-    @Override
-    public String toString() {
-        return "Notification{" +
-                "id=" + id +
-                ", recipientId=" + recipientId +
-                ", senderId=" + senderId +
-                ", type='" + type + '\'' +
-                ", title='" + title + '\'' +
-                ", isRead=" + isRead +
-                ", priority='" + priority + '\'' +
-                ", createdAt=" + createdAt +
-                '}';
     }
 } 

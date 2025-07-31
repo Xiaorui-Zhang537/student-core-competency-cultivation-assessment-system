@@ -1,0 +1,182 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.noncore.assessment.mapper.AbilityAssessmentMapper">
+
+    <!-- 结果映射 -->
+    <resultMap id="AbilityAssessmentResultMap" type="com.noncore.assessment.entity.AbilityAssessment">
+        <id column="id" property="id"/>
+        <result column="student_id" property="studentId"/>
+        <result column="dimension_id" property="dimensionId"/>
+        <result column="assessment_type" property="assessmentType"/>
+        <result column="status" property="status"/>
+        <result column="score" property="score"/>
+        <result column="confidence" property="confidence"/>
+        <result column="assessment_date" property="assessmentDate"/>
+        <result column="assessor_id" property="assessorId"/>
+        <result column="related_type" property="relatedType"/>
+        <result column="related_id" property="relatedId"/>
+        <result column="evidence" property="evidence"/>
+        <result column="remarks" property="remarks"/>
+        <result column="created_at" property="createdAt"/>
+        <result column="updated_at" property="updatedAt"/>
+        <result column="deleted" property="deleted"/>
+    </resultMap>
+
+    <!-- 详细结果映射，包含维度名称 -->
+    <resultMap id="AbilityAssessmentDetailResultMap" type="com.noncore.assessment.entity.AbilityAssessment" extends="AbilityAssessmentResultMap">
+        <association property="dimension" javaType="com.noncore.assessment.entity.AbilityDimension">
+            <id column="dimension_id" property="id"/>
+            <result column="dimension_name" property="name"/>
+        </association>
+    </resultMap>
+
+    <!-- 基础查询字段 -->
+    <sql id="abilityAssessmentColumns">
+        a.id, a.student_id, a.dimension_id, a.assessment_type, a.status, a.score, a.confidence,
+        a.assessment_date, a.assessor_id, a.related_type, a.related_id, a.evidence, a.remarks,
+        a.created_at, a.updated_at, a.deleted
+    </sql>
+
+    <sql id="abilityAssessmentDetailColumns">
+        <include refid="abilityAssessmentColumns"/>,
+        d.name as dimension_name
+    </sql>
+
+    <!-- 插入评估记录 -->
+    <insert id="insertAssessment" parameterType="com.noncore.assessment.entity.AbilityAssessment" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO ability_assessments (
+            student_id, dimension_id, assessment_type, status, score, confidence,
+            assessment_date, assessor_id, related_type, related_id, evidence, remarks,
+            created_at, updated_at, deleted
+        ) VALUES (
+            #{studentId}, #{dimensionId}, #{assessmentType}, #{status}, #{score}, #{confidence},
+            #{assessmentDate}, #{assessorId}, #{relatedType}, #{relatedId}, #{evidence}, #{remarks},
+            NOW(), NOW(), false
+        )
+    </insert>
+
+    <!-- 分页查询学生评估记录 -->
+    <select id="selectByStudentIdWithPagination" resultMap="AbilityAssessmentDetailResultMap">
+        SELECT <include refid="abilityAssessmentDetailColumns"/>
+        FROM ability_assessments a
+        LEFT JOIN ability_dimensions d ON a.dimension_id = d.id
+        WHERE a.student_id = #{studentId} AND a.deleted = false
+        ORDER BY a.assessment_date DESC
+        LIMIT #{offset}, #{size}
+    </select>
+
+    <!-- 统计学生评估记录数量 -->
+    <select id="countByStudentId" parameterType="long" resultType="integer">
+        SELECT COUNT(1)
+        FROM ability_assessments a
+        WHERE a.student_id = #{studentId} AND a.deleted = false
+    </select>
+
+    <!-- 根据学生和时间范围查询 -->
+    <select id="selectByStudentAndPeriod" resultMap="AbilityAssessmentDetailResultMap">
+        SELECT <include refid="abilityAssessmentDetailColumns"/>
+        FROM ability_assessments a
+        LEFT JOIN ability_dimensions d ON a.dimension_id = d.id
+        WHERE a.student_id = #{studentId} AND a.deleted = false
+          AND a.assessment_date BETWEEN #{startTime} AND #{endTime}
+        ORDER BY a.assessment_date DESC
+    </select>
+
+    <!-- 获取最近的评估记录 -->
+    <select id="getRecentAssessments" resultMap="AbilityAssessmentDetailResultMap">
+        SELECT <include refid="abilityAssessmentDetailColumns"/>
+        FROM ability_assessments a
+        LEFT JOIN ability_dimensions d ON a.dimension_id = d.id
+        WHERE a.student_id = #{studentId} AND a.deleted = false
+        ORDER BY a.assessment_date DESC
+        LIMIT #{limit}
+    </select>
+
+    <!-- 获取评估趋势数据 -->
+    <select id="getAssessmentTrends" resultType="map">
+        SELECT
+            DATE_FORMAT(a.assessment_date, '%Y-%m') AS month,
+            AVG(a.score) AS averageScore
+        FROM ability_assessments a
+        WHERE a.student_id = #{studentId} AND a.deleted = false
+        <if test="dimensionId != null">
+            AND a.dimension_id = #{dimensionId}
+        </if>
+        <if test="months != null">
+            AND a.assessment_date >= DATE_SUB(NOW(), INTERVAL #{months} MONTH)
+        </if>
+        GROUP BY month
+        ORDER BY month ASC
+    </select>
+
+    <!-- 批量插入评估记录 -->
+    <insert id="batchInsertAssessments">
+        INSERT INTO ability_assessments (
+            student_id, dimension_id, assessment_type, status, score, confidence,
+            assessment_date, assessor_id, related_type, related_id, evidence, remarks,
+            created_at, updated_at, deleted
+        ) VALUES
+        <foreach collection="assessments" item="item" separator=",">
+            (
+            #{item.studentId}, #{item.dimensionId}, #{item.assessmentType}, #{item.status}, #{item.score}, #{item.confidence},
+            #{item.assessmentDate}, #{item.assessorId}, #{item.relatedType}, #{item.relatedId}, #{item.evidence}, #{item.remarks},
+            NOW(), NOW(), false
+            )
+        </foreach>
+    </insert>
+
+    <!-- 批量更新评估状态 -->
+    <update id="batchUpdateAssessmentStatus">
+        UPDATE ability_assessments
+        SET status = #{status}, updated_at = NOW()
+        WHERE id IN
+        <foreach collection="assessmentIds" item="id" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </update>
+
+    <!-- 获取待审核的评估记录 -->
+    <select id="selectPendingAssessments" resultMap="AbilityAssessmentDetailResultMap">
+        SELECT <include refid="abilityAssessmentDetailColumns"/>
+        FROM ability_assessments a
+        LEFT JOIN ability_dimensions d ON a.dimension_id = d.id
+        WHERE a.status = 'PENDING' AND a.deleted = false
+        <if test="assessorId != null">
+            AND a.assessor_id = #{assessorId}
+        </if>
+        ORDER BY a.created_at DESC
+        <if test="limit != null">
+            LIMIT #{limit}
+        </if>
+    </select>
+
+    <!-- 根据置信度范围查询 -->
+    <select id="selectByConfidenceRange" resultMap="AbilityAssessmentDetailResultMap">
+        SELECT <include refid="abilityAssessmentDetailColumns"/>
+        FROM ability_assessments a
+        LEFT JOIN ability_dimensions d ON a.dimension_id = d.id
+        WHERE a.student_id = #{studentId} AND a.deleted = false
+          AND a.confidence BETWEEN #{minConfidence} AND #{maxConfidence}
+        ORDER BY a.confidence DESC
+    </select>
+
+    <!-- 获取高分评估记录 -->
+    <select id="selectHighScoreAssessments" resultMap="AbilityAssessmentDetailResultMap">
+        SELECT <include refid="abilityAssessmentDetailColumns"/>
+        FROM ability_assessments a
+        LEFT JOIN ability_dimensions d ON a.dimension_id = d.id
+        WHERE a.student_id = #{studentId} AND a.deleted = false
+          AND a.score >= #{minScore}
+        ORDER BY a.score DESC
+        <if test="limit != null">
+            LIMIT #{limit}
+        </if>
+    </select>
+
+    <!-- 删除旧的评估记录 -->
+    <delete id="deleteOldAssessments">
+        DELETE FROM ability_assessments
+        WHERE assessment_date &lt; #{beforeDate}
+    </delete>
+
+</mapper> 

@@ -58,6 +58,15 @@ public class BusinessException extends RuntimeException {
     }
 
     /**
+     * 基于ErrorCode的构造方法（带自定义消息和异常原因）
+     */
+    public BusinessException(ErrorCode errorCode, String customMessage, Throwable cause) {
+        super(customMessage, cause);
+        this.code = errorCode.getCode();
+        this.message = customMessage;
+    }
+
+    /**
      * 构造方法
      */
     public BusinessException(String message, Throwable cause) {

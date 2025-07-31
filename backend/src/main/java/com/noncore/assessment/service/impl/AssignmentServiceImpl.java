@@ -6,7 +6,6 @@ import com.noncore.assessment.exception.ErrorCode;
 import com.noncore.assessment.mapper.AssignmentMapper;
 import com.noncore.assessment.mapper.SubmissionMapper;
 import com.noncore.assessment.service.AssignmentService;
-import com.noncore.assessment.service.NotificationService;
 import com.noncore.assessment.util.PageResult;
 import com.github.pagehelper.PageHelper;
 import com.github.pagehelper.PageInfo;
@@ -38,12 +37,10 @@ public class AssignmentServiceImpl implements AssignmentService {
 
     private final AssignmentMapper assignmentMapper;
     private final SubmissionMapper submissionMapper;
-    private final NotificationService notificationService;
 
-    public AssignmentServiceImpl(AssignmentMapper assignmentMapper, SubmissionMapper submissionMapper, NotificationService notificationService) {
+    public AssignmentServiceImpl(AssignmentMapper assignmentMapper, SubmissionMapper submissionMapper) {
         this.assignmentMapper = assignmentMapper;
         this.submissionMapper = submissionMapper;
-        this.notificationService = notificationService;
     }
 
     @Override
@@ -175,61 +172,29 @@ public class AssignmentServiceImpl implements AssignmentService {
     @Override
     public void publishAssignment(Long assignmentId) {
         logger.info("发布作业: ID={}", assignmentId);
-
-        Assignment assignment = assignmentMapper.selectAssignmentById(assignmentId);
-        if (assignment == null) {
-            throw new BusinessException(ErrorCode.ASSIGNMENT_NOT_FOUND);
-        }
+        Assignment assignment = getAssignmentById(assignmentId);
 
         if ("published".equals(assignment.getStatus())) {
             throw new BusinessException(ErrorCode.ASSIGNMENT_ALREADY_SUBMITTED, "作业已发布");
         }
-
-        assignment.setStatus("published");
-        assignment.setUpdatedAt(LocalDateTime.now());
-        int result = assignmentMapper.updateAssignment(assignment);
-        if (result <= 0) {
-            throw new BusinessException(ErrorCode.OPERATION_FAILED, "发布作业失败");
-        }
-
+        
+        updateAssignmentStatus(assignment, "published");
         logger.info("作业发布成功: ID={}", assignmentId);
     }
 
     @Override
     public void unpublishAssignment(Long assignmentId) {
         logger.info("下架作业: ID={}", assignmentId);
-
-        Assignment assignment = assignmentMapper.selectAssignmentById(assignmentId);
-        if (assignment == null) {
-            throw new BusinessException(ErrorCode.ASSIGNMENT_NOT_FOUND);
-        }
-
-        assignment.setStatus("draft");
-        assignment.setUpdatedAt(LocalDateTime.now());
-        int result = assignmentMapper.updateAssignment(assignment);
-        if (result <= 0) {
-            throw new BusinessException(ErrorCode.OPERATION_FAILED, "下架作业失败");
-        }
-
+        Assignment assignment = getAssignmentById(assignmentId);
+        updateAssignmentStatus(assignment, "draft");
         logger.info("作业下架成功: ID={}", assignmentId);
     }
 
     @Override
     public void closeAssignment(Long assignmentId) {
         logger.info("关闭作业: ID={}", assignmentId);
-
-        Assignment assignment = assignmentMapper.selectAssignmentById(assignmentId);
-        if (assignment == null) {
-            throw new BusinessException(ErrorCode.ASSIGNMENT_NOT_FOUND);
-        }
-
-        assignment.setStatus("closed");
-        assignment.setUpdatedAt(LocalDateTime.now());
-        int result = assignmentMapper.updateAssignment(assignment);
-        if (result <= 0) {
-            throw new BusinessException(ErrorCode.OPERATION_FAILED, "关闭作业失败");
-        }
-
+        Assignment assignment = getAssignmentById(assignmentId);
+        updateAssignmentStatus(assignment, "closed");
         logger.info("作业关闭成功: ID={}", assignmentId);
     }
 
@@ -246,7 +211,12 @@ public class AssignmentServiceImpl implements AssignmentService {
         if (assignment == null) {
             return false;
         }
-        return assignment.canSubmit();
+        // 逻辑实现：作业必须是“已发布”状态，并且（未过截止日期 或 允许迟交）
+        boolean isPublished = "published".equals(assignment.getStatus());
+        boolean isNotExpired = assignment.getDueDate() == null || LocalDateTime.now().isBefore(assignment.getDueDate());
+        boolean allowLate = assignment.getAllowLate() != null && assignment.getAllowLate();
+
+        return isPublished && (isNotExpired || allowLate);
     }
 
     @Override
@@ -313,6 +283,14 @@ public class AssignmentServiceImpl implements AssignmentService {
         logger.info("作业提交计数更新成功: assignmentId={}", assignmentId);
     }
 
+    private void updateAssignmentStatus(Assignment assignment, String newStatus) {
+        assignment.setStatus(newStatus);
+        assignment.setUpdatedAt(LocalDateTime.now());
+        if (assignmentMapper.updateAssignment(assignment) <= 0) {
+            throw new BusinessException(ErrorCode.OPERATION_FAILED, "更新作业状态失败: " + newStatus);
+        }
+    }
+
     /**
      * 验证作业信息
      */
@@ -332,7 +310,7 @@ public class AssignmentServiceImpl implements AssignmentService {
         if (assignment.getMaxScore() == null || assignment.getMaxScore().compareTo(BigDecimal.ZERO) <= 0) {
             throw new BusinessException(ErrorCode.INVALID_PARAMETER, "满分必须大于0");
         }
-        if (assignment.getMaxSubmissions() != null && assignment.getMaxSubmissions() <= 0) {
+        if (assignment.getMaxAttempts() != null && assignment.getMaxAttempts() <= 0) {
             throw new BusinessException(ErrorCode.INVALID_PARAMETER, "最大提交次数必须大于0");
         }
         if (assignment.getDueDate() != null && assignment.getDueDate().isBefore(LocalDateTime.now())) {

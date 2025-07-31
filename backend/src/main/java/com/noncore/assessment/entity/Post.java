@@ -1,6 +1,10 @@
 package com.noncore.assessment.entity;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -10,6 +14,10 @@ import java.util.List;
  *
  * @author Assessment System
  */
+@Data
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class Post {
     /**
      * 帖子ID
@@ -39,37 +47,44 @@ public class Post {
     /**
      * 是否置顶
      */
-    private Boolean pinned;
+    @Builder.Default
+    private Boolean pinned = false;
 
     /**
      * 是否匿名发布
      */
-    private Boolean anonymous;
+    @Builder.Default
+    private Boolean anonymous = false;
 
     /**
      * 是否允许评论
      */
-    private Boolean allowComments;
+    @Builder.Default
+    private Boolean allowComments = true;
 
     /**
      * 浏览次数
      */
-    private Integer views;
+    @Builder.Default
+    private Integer views = 0;
 
     /**
      * 点赞数
      */
-    private Integer likesCount;
+    @Builder.Default
+    private Integer likesCount = 0;
 
     /**
      * 评论数
      */
-    private Integer commentsCount;
+    @Builder.Default
+    private Integer commentsCount = 0;
 
     /**
      * 状态：draft,published,deleted
      */
-    private String status;
+    @Builder.Default
+    private String status = "published";
 
     /**
      * 创建时间
@@ -86,7 +101,8 @@ public class Post {
     /**
      * 是否删除
      */
-    private Boolean deleted;
+    @Builder.Default
+    private Boolean deleted = false;
 
     // 额外字段，用于关联查询
     /**
@@ -113,185 +129,6 @@ public class Post {
      * 最后回复信息
      */
     private PostComment lastReply;
-
-    // 构造函数
-    public Post() {}
-
-    public Post(String title, String content, String category, Long authorId) {
-        this.title = title;
-        this.content = content;
-        this.category = category;
-        this.authorId = authorId;
-        this.pinned = false;
-        this.anonymous = false;
-        this.allowComments = true;
-        this.views = 0;
-        this.likesCount = 0;
-        this.commentsCount = 0;
-        this.status = "published";
-        this.deleted = false;
-    }
-
-    // Getter和Setter方法
-    public Long getId() {
-        return id;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
-    }
-
-    public String getTitle() {
-        return title;
-    }
-
-    public void setTitle(String title) {
-        this.title = title;
-    }
-
-    public String getContent() {
-        return content;
-    }
-
-    public void setContent(String content) {
-        this.content = content;
-    }
-
-    public String getCategory() {
-        return category;
-    }
-
-    public void setCategory(String category) {
-        this.category = category;
-    }
-
-    public Long getAuthorId() {
-        return authorId;
-    }
-
-    public void setAuthorId(Long authorId) {
-        this.authorId = authorId;
-    }
-
-    public Boolean getPinned() {
-        return pinned;
-    }
-
-    public void setPinned(Boolean pinned) {
-        this.pinned = pinned;
-    }
-
-    public Boolean getAnonymous() {
-        return anonymous;
-    }
-
-    public void setAnonymous(Boolean anonymous) {
-        this.anonymous = anonymous;
-    }
-
-    public Boolean getAllowComments() {
-        return allowComments;
-    }
-
-    public void setAllowComments(Boolean allowComments) {
-        this.allowComments = allowComments;
-    }
-
-    public Integer getViews() {
-        return views;
-    }
-
-    public void setViews(Integer views) {
-        this.views = views;
-    }
-
-    public Integer getLikesCount() {
-        return likesCount;
-    }
-
-    public void setLikesCount(Integer likesCount) {
-        this.likesCount = likesCount;
-    }
-
-    public Integer getCommentsCount() {
-        return commentsCount;
-    }
-
-    public void setCommentsCount(Integer commentsCount) {
-        this.commentsCount = commentsCount;
-    }
-
-    public String getStatus() {
-        return status;
-    }
-
-    public void setStatus(String status) {
-        this.status = status;
-    }
-
-    public LocalDateTime getCreatedAt() {
-        return createdAt;
-    }
-
-    public void setCreatedAt(LocalDateTime createdAt) {
-        this.createdAt = createdAt;
-    }
-
-    public LocalDateTime getUpdatedAt() {
-        return updatedAt;
-    }
-
-    public void setUpdatedAt(LocalDateTime updatedAt) {
-        this.updatedAt = updatedAt;
-    }
-
-    public Boolean getDeleted() {
-        return deleted;
-    }
-
-    public void setDeleted(Boolean deleted) {
-        this.deleted = deleted;
-    }
-
-    public User getAuthor() {
-        return author;
-    }
-
-    public void setAuthor(User author) {
-        this.author = author;
-    }
-
-    public List<Tag> getTags() {
-        return tags;
-    }
-
-    public void setTags(List<Tag> tags) {
-        this.tags = tags;
-    }
-
-    public List<PostComment> getRecentComments() {
-        return recentComments;
-    }
-
-    public void setRecentComments(List<PostComment> recentComments) {
-        this.recentComments = recentComments;
-    }
-
-    public Boolean getLiked() {
-        return liked;
-    }
-
-    public void setLiked(Boolean liked) {
-        this.liked = liked;
-    }
-
-    public PostComment getLastReply() {
-        return lastReply;
-    }
-
-    public void setLastReply(PostComment lastReply) {
-        this.lastReply = lastReply;
-    }
 
     /**
      * 增加浏览量
@@ -340,21 +177,5 @@ public class Post {
      */
     public boolean isViewable() {
         return isPublished() && !Boolean.TRUE.equals(this.deleted);
-    }
-
-    @Override
-    public String toString() {
-        return "Post{" +
-                "id=" + id +
-                ", title='" + title + '\'' +
-                ", category='" + category + '\'' +
-                ", authorId=" + authorId +
-                ", pinned=" + pinned +
-                ", views=" + views +
-                ", likesCount=" + likesCount +
-                ", commentsCount=" + commentsCount +
-                ", status='" + status + '\'' +
-                ", deleted=" + deleted +
-                '}';
     }
 } 

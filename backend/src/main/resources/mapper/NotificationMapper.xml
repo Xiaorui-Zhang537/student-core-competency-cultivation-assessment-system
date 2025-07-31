@@ -136,4 +136,19 @@
             </if>
     </select>
 
+    <!-- 获取最近的通知列表 (DTO) -->
+    <select id="findRecentNotifications" resultType="com.noncore.assessment.dto.response.StudentDashboardResponse$RecentNotificationDto">
+        SELECT
+            id,
+            title,
+            content,
+            type,
+            is_read,
+            created_at
+        FROM notifications
+        WHERE recipient_id = #{recipientId} AND deleted = false
+        ORDER BY created_at DESC
+        LIMIT #{limit}
+    </select>
+
 </mapper> 

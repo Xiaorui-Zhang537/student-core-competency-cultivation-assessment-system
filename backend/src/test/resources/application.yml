@@ -1,0 +1,4 @@
+spring:
+  mail:
+    host: localhost
+    port: 25 # or any other standard port, this is usually enough for tests to pass 

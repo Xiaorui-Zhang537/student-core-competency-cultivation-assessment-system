@@ -106,13 +106,6 @@ public interface UserMapper {
     Long countUsers(@Param("role") String role);
 
     /**
-     * 统计各角色用户数量
-     *
-     * @return 统计结果
-     */
-    List<Object> countUsersByRole();
-
-    /**
      * 检查用户名是否存在
      *
      * @param username 用户名
@@ -179,21 +172,36 @@ public interface UserMapper {
      * @param deleted 删除状态
      * @return 影响行数
      */
-    int batchUpdateUserStatus(@Param("userIds") List<Long> userIds, @Param("deleted") Boolean deleted);
+    int batchUpdateUserStatus(@Param("userIds") List<Long> userIds, @Param("deleted") boolean deleted);
+
+    List<com.noncore.assessment.dto.response.TeacherDashboardResponse.StudentOverviewDto> findStudentOverviewsByTeacher(@Param("teacherId") Long teacherId, @Param("limit") int limit);
 
     /**
-     * 根据用户名查询用户
-     *
-     * @param username 用户名
-     * @return 用户信息
+     * 查询所有用户ID
+     * @return 用户ID列表
      */
-    User selectByUsername(@Param("username") String username);
+    List<Long> selectAllUserIds();
 
     /**
-     * 根据邮箱查询用户
-     *
-     * @param email 邮箱
-     * @return 用户信息
+     * 根据角色查询用户ID列表
+     * @param role 角色
+     * @return 用户ID列表
      */
-    User selectByEmail(@Param("email") String email);
+    List<Long> selectUserIdsByRole(@Param("role") String role);
+
+    /**
+     * 更新用户邮箱验证状态
+     *
+     * @param userId 用户ID
+     * @param isVerified 是否已验证
+     * @return 影响的行数
+     */
+    int updateEmailVerified(@Param("userId") Long userId, @Param("isVerified") boolean isVerified);
+
+    /**
+     * 根据用户名或邮箱检查用户是否存在
+     * @param identifier 用户名或邮箱
+     * @return 是否存在
+     */
+    int checkUserExistsByIdentifier(@Param("identifier") String identifier);
 } 

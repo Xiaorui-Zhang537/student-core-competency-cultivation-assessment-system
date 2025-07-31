@@ -58,7 +58,7 @@ public interface SubmissionMapper {
     /**
      * 统计学生提交数量
      */
-    Integer countByStudentId(@Param("studentId") Long studentId);
+    long countByStudentId(@Param("studentId") Long studentId);
 
     /**
      * 根据作业ID查询提交列表
@@ -75,7 +75,7 @@ public interface SubmissionMapper {
     /**
      * 统计作业提交数量
      */
-    Integer countByAssignmentId(@Param("assignmentId") Long assignmentId);
+    long countByAssignmentId(@Param("assignmentId") Long assignmentId);
 
     /**
      * 获取学生成绩列表（关联查询）
@@ -87,7 +87,7 @@ public interface SubmissionMapper {
     /**
      * 统计学生成绩数量
      */
-    Integer countStudentGrades(@Param("studentId") Long studentId);
+    long countStudentGrades(@Param("studentId") Long studentId);
 
     /**
      * 获取提交的成绩详情
@@ -107,6 +107,10 @@ public interface SubmissionMapper {
     /**
      * 检查学生是否已提交
      */
-    Integer countByAssignmentAndStudent(@Param("assignmentId") Long assignmentId,
+    long countByAssignmentAndStudent(@Param("assignmentId") Long assignmentId,
                                        @Param("studentId") Long studentId);
+
+    long countPendingByTeacher(@Param("teacherId") Long teacherId);
+
+    List<com.noncore.assessment.dto.response.TeacherDashboardResponse.PendingGradingDto> findPendingByTeacher(@Param("teacherId") Long teacherId, @Param("limit") int limit);
 } 

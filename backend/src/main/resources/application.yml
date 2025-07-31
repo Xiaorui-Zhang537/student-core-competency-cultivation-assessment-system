@@ -122,3 +122,28 @@ springdoc:
     tags-sorter: alpha
   packages-to-scan: com.noncore.assessment.controller
   show-actuator: false 
+
+# 安全配置
+security:
+  cors:
+    allowed-origins: http://localhost:5173,http://127.0.0.1:5173
+  jwt:
+    public-urls:
+      - /api/auth/login
+      - /api/auth/register
+      - /api/auth/forgot-password
+      - /api/auth/reset-password
+      - /api/auth/verify-email
+      - /api/auth/check-username
+      - /api/auth/check-email
+      - /api/swagger-ui/**
+      - /api/swagger-ui.html
+      - /api/v3/api-docs/**
+      - /api/swagger-resources/**
+      - /api/webjars/**
+      - /api/actuator/health
+      - /api/actuator/info
+      - /static/**
+      - /public/**
+      - /favicon.ico
+      - /api/files/download/public/** 

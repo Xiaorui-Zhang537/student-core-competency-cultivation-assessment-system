@@ -1,6 +1,10 @@
 package com.noncore.assessment.dto.response;
 
-import com.noncore.assessment.entity.User;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
 import java.time.LocalDateTime;
 
 /**
@@ -11,28 +15,20 @@ import java.time.LocalDateTime;
  * @version 1.0.0
  * @since 2024-12-28
  */
+@Data
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class AuthResponse {
 
-    private User user;
+    private UserDto user;
     private String accessToken;
     private String refreshToken;
+    @Builder.Default
     private String tokenType = "Bearer";
     private Long expiresIn;
-    private LocalDateTime issuedAt;
-
-    // 默认构造方法
-    public AuthResponse() {
-        this.issuedAt = LocalDateTime.now();
-    }
-
-    // 带参构造方法
-    public AuthResponse(User user, String accessToken, String refreshToken, Long expiresIn) {
-        this();
-        this.user = user;
-        this.accessToken = accessToken;
-        this.refreshToken = refreshToken;
-        this.expiresIn = expiresIn;
-    }
+    @Builder.Default
+    private LocalDateTime issuedAt = LocalDateTime.now();
 
     /**
      * 创建完整的认证响应
@@ -43,8 +39,13 @@ public class AuthResponse {
      * @param expiresIn 过期时间（秒）
      * @return 认证响应对象
      */
-    public static AuthResponse of(User user, String accessToken, String refreshToken, Long expiresIn) {
-        return new AuthResponse(user, accessToken, refreshToken, expiresIn);
+    public static AuthResponse of(UserDto user, String accessToken, String refreshToken, Long expiresIn) {
+        return AuthResponse.builder()
+                .user(user)
+                .accessToken(accessToken)
+                .refreshToken(refreshToken)
+                .expiresIn(expiresIn)
+                .build();
     }
 
     /**
@@ -55,10 +56,10 @@ public class AuthResponse {
      * @return 认证响应对象
      */
     public static AuthResponse tokenRefresh(String accessToken, Long expiresIn) {
-        AuthResponse response = new AuthResponse();
-        response.setAccessToken(accessToken);
-        response.setExpiresIn(expiresIn);
-        return response;
+        return AuthResponse.builder()
+                .accessToken(accessToken)
+                .expiresIn(expiresIn)
+                .build();
     }
 
     /**
@@ -67,61 +68,12 @@ public class AuthResponse {
      * @param user 用户信息
      * @return 认证响应对象
      */
-    public static AuthResponse userOnly(User user) {
-        AuthResponse response = new AuthResponse();
-        response.setUser(user);
-        return response;
+    public static AuthResponse userOnly(UserDto user) {
+        return AuthResponse.builder()
+                .user(user)
+                .build();
     }
-
-    // Getter和Setter方法
-    public User getUser() {
-        return user;
-    }
-
-    public void setUser(User user) {
-        this.user = user;
-    }
-
-    public String getAccessToken() {
-        return accessToken;
-    }
-
-    public void setAccessToken(String accessToken) {
-        this.accessToken = accessToken;
-    }
-
-    public String getRefreshToken() {
-        return refreshToken;
-    }
-
-    public void setRefreshToken(String refreshToken) {
-        this.refreshToken = refreshToken;
-    }
-
-    public String getTokenType() {
-        return tokenType;
-    }
-
-    public void setTokenType(String tokenType) {
-        this.tokenType = tokenType;
-    }
-
-    public Long getExpiresIn() {
-        return expiresIn;
-    }
-
-    public void setExpiresIn(Long expiresIn) {
-        this.expiresIn = expiresIn;
-    }
-
-    public LocalDateTime getIssuedAt() {
-        return issuedAt;
-    }
-
-    public void setIssuedAt(LocalDateTime issuedAt) {
-        this.issuedAt = issuedAt;
-    }
-
+    
     @Override
     public String toString() {
         return "AuthResponse{" +

@@ -2,6 +2,10 @@ package com.noncore.assessment.entity;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 import io.swagger.v3.oas.annotations.media.Schema;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -15,6 +19,10 @@ import java.time.LocalDateTime;
  * @since 2024-12-28
  */
 @Schema(description = "课程学习进度实体")
+@Data
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class LessonProgress {
 
     @Schema(description = "进度ID", example = "1")
@@ -30,28 +38,35 @@ public class LessonProgress {
     private Long lessonId;
 
     @Schema(description = "学习进度（百分比）", example = "75.5")
-    private BigDecimal progress;
+    @Builder.Default
+    private BigDecimal progress = BigDecimal.ZERO;
 
     @Schema(description = "是否完成", example = "false")
-    private Boolean completed;
+    @Builder.Default
+    private Boolean completed = false;
 
     @Schema(description = "学习时长（分钟）", example = "45")
-    private Integer studyDuration;
+    @Builder.Default
+    private Integer studyDuration = 0;
 
     @Schema(description = "观看次数", example = "3")
-    private Integer viewCount;
+    @Builder.Default
+    private Integer viewCount = 0;
 
     @Schema(description = "最后观看位置（秒）", example = "1800")
-    private Integer lastPosition;
+    @Builder.Default
+    private Integer lastPosition = 0;
 
     @Schema(description = "学习状态", example = "in_progress", allowableValues = {"not_started", "in_progress", "completed", "paused"})
-    private String status;
+    @Builder.Default
+    private String status = "not_started";
 
     @Schema(description = "学习笔记", example = "这个章节讲的很详细，需要多复习几遍")
     private String notes;
 
     @Schema(description = "学习评分", example = "4")
-    private Integer rating;
+    @Builder.Default
+    private Integer rating = 0;
 
     @Schema(description = "开始学习时间", example = "2024-12-28 10:30:00")
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
@@ -67,36 +82,13 @@ public class LessonProgress {
 
     @Schema(description = "创建时间", example = "2024-12-28 10:30:00")
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
-    private LocalDateTime createdAt;
+    @Builder.Default
+    private LocalDateTime createdAt = LocalDateTime.now();
 
     @Schema(description = "更新时间", example = "2024-12-28 10:30:00")
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
-    private LocalDateTime updatedAt;
-
-    /**
-     * 默认构造方法
-     */
-    public LessonProgress() {
-        this.progress = BigDecimal.ZERO;
-        this.completed = false;
-        this.studyDuration = 0;
-        this.viewCount = 0;
-        this.lastPosition = 0;
-        this.status = "not_started";
-        this.rating = 0;
-        this.createdAt = LocalDateTime.now();
-        this.updatedAt = LocalDateTime.now();
-    }
-
-    /**
-     * 构造方法
-     */
-    public LessonProgress(Long studentId, Long courseId, Long lessonId) {
-        this();
-        this.studentId = studentId;
-        this.courseId = courseId;
-        this.lessonId = lessonId;
-    }
+    @Builder.Default
+    private LocalDateTime updatedAt = LocalDateTime.now();
 
     /**
      * 开始学习
@@ -212,143 +204,6 @@ public class LessonProgress {
         this.updatedAt = LocalDateTime.now();
     }
 
-    // Getter和Setter方法
-    public Long getId() {
-        return id;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
-    }
-
-    public Long getStudentId() {
-        return studentId;
-    }
-
-    public void setStudentId(Long studentId) {
-        this.studentId = studentId;
-    }
-
-    public Long getCourseId() {
-        return courseId;
-    }
-
-    public void setCourseId(Long courseId) {
-        this.courseId = courseId;
-    }
-
-    public Long getLessonId() {
-        return lessonId;
-    }
-
-    public void setLessonId(Long lessonId) {
-        this.lessonId = lessonId;
-    }
-
-    public BigDecimal getProgress() {
-        return progress;
-    }
-
-    public void setProgress(BigDecimal progress) {
-        this.progress = progress;
-    }
-
-    public Boolean getCompleted() {
-        return completed;
-    }
-
-    public void setCompleted(Boolean completed) {
-        this.completed = completed;
-    }
-
-    public Integer getStudyDuration() {
-        return studyDuration;
-    }
-
-    public void setStudyDuration(Integer studyDuration) {
-        this.studyDuration = studyDuration;
-    }
-
-    public Integer getViewCount() {
-        return viewCount;
-    }
-
-    public void setViewCount(Integer viewCount) {
-        this.viewCount = viewCount;
-    }
-
-    public Integer getLastPosition() {
-        return lastPosition;
-    }
-
-    public void setLastPosition(Integer lastPosition) {
-        this.lastPosition = lastPosition;
-    }
-
-    public String getStatus() {
-        return status;
-    }
-
-    public void setStatus(String status) {
-        this.status = status;
-    }
-
-    public String getNotes() {
-        return notes;
-    }
-
-    public void setNotes(String notes) {
-        this.notes = notes;
-    }
-
-    public Integer getRating() {
-        return rating;
-    }
-
-    public void setRating(Integer rating) {
-        this.rating = rating;
-    }
-
-    public LocalDateTime getStartedAt() {
-        return startedAt;
-    }
-
-    public void setStartedAt(LocalDateTime startedAt) {
-        this.startedAt = startedAt;
-    }
-
-    public LocalDateTime getCompletedAt() {
-        return completedAt;
-    }
-
-    public void setCompletedAt(LocalDateTime completedAt) {
-        this.completedAt = completedAt;
-    }
-
-    public LocalDateTime getLastStudiedAt() {
-        return lastStudiedAt;
-    }
-
-    public void setLastStudiedAt(LocalDateTime lastStudiedAt) {
-        this.lastStudiedAt = lastStudiedAt;
-    }
-
-    public LocalDateTime getCreatedAt() {
-        return createdAt;
-    }
-
-    public void setCreatedAt(LocalDateTime createdAt) {
-        this.createdAt = createdAt;
-    }
-
-    public LocalDateTime getUpdatedAt() {
-        return updatedAt;
-    }
-
-    public void setUpdatedAt(LocalDateTime updatedAt) {
-        this.updatedAt = updatedAt;
-    }
-
     // 别名方法，兼容LessonServiceImpl中的调用
     public Integer getStudyTime() {
         return getStudyDuration();
@@ -356,20 +211,5 @@ public class LessonProgress {
 
     public void setStudyTime(Integer studyTime) {
         setStudyDuration(studyTime);
-    }
-
-    @Override
-    public String toString() {
-        return "LessonProgress{" +
-                "id=" + id +
-                ", studentId=" + studentId +
-                ", courseId=" + courseId +
-                ", lessonId=" + lessonId +
-                ", progress=" + progress +
-                ", completed=" + completed +
-                ", status='" + status + '\'' +
-                ", studyDuration=" + studyDuration +
-                ", lastStudiedAt=" + lastStudiedAt +
-                '}';
     }
 } 
