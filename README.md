@@ -1,231 +1,227 @@
-# 学生非核心能力发展评估系统
+# **学生非核心能力发展评估系统**
 
-## 📋 项目概述
+> **最后更新：2025‑08‑01 | 当前版本：v1.0.1**
 
-本系统是一个基于AI的学生非核心能力发展评估与学习平台，旨在帮助学生发展批判性思维、创新能力、协作能力等21世纪核心素养。通过多维度评估、个性化学习路径推荐和智能分析，为教育工作者和学生提供全面的能力发展支持。
+------
 
-## 🏗️ 系统架构
 
-### 技术栈
-- **后端**: Spring Boot 3.2.1 + Java 21 + MyBatis + MySQL + Redis + Spring Security
-- **前端**: Vue 3.5.18 + TypeScript + Vite 5 + Tailwind CSS + Pinia + Element Plus
-- **数据库**: MySQL 9.0.1 (22个核心表)
-- **缓存**: Redis (JWT黑名单、邮件验证、会话管理)
-- **构建工具**: Maven 3.x (后端) + Vite 5.x (前端)
 
-### 核心功能模块
-1. **用户管理**: 学生、教师、管理员角色管理，JWT认证授权
-2. **课程管理**: 课程创建、发布、选课、内容管理
-3. **作业系统**: 作业发布、多模态提交、智能评分
-4. **能力评估**: 多维度能力评估、AI分析、学习建议
-5. **学习路径**: 个性化学习路径推荐和进度跟踪
-6. **社交学习**: 论坛、讨论、协作学习功能
-7. **数据分析**: 学习数据可视化、能力发展趋势分析
-8. **通知系统**: 实时消息推送、邮件通知
+## **📚 项目概述**
 
-## 🚀 快速开始
+本系统是一个基于 **AI** 的学生非核心能力发展评估与学习平台，旨在帮助学生发展批判性思维、创新能力、协作能力等 21 世纪核心素养。平台通过多维度评估、个性化学习路径推荐和智能分析，为教育工作者和学生提供 **全栈式能力发展支持**。
 
-### 环境要求
-- **Java**: JDK 21+
-- **Node.js**: 20.18.0+
-- **MySQL**: 8.0+
-- **Redis**: 6.0+ (可选，用于缓存和JWT管理)
-- **Maven**: 3.6+
+------
 
-### 数据库初始化
-```bash
-# 创建数据库
+
+
+## **🏗️ 系统架构**
+
+### **技术栈**
+
+| **层次** | **技术**                                                     | **说明**                  |
+| -------- | ------------------------------------------------------------ | ------------------------- |
+| 后端     | Spring Boot 3.2.1 · Java 21 · MyBatis · Spring Security + JWT · Redis | RESTful API、鉴权、缓存   |
+| 前端     | Vue 3.5.18 · TypeScript · Vite 5 · Tailwind CSS · Pinia · Element Plus | SPA 界面、状态管理        |
+| 数据库   | MySQL 9.0.1                                                  | 22 张核心表，主从分离预留 |
+| DevOps   | Maven 3.x · npm · GitHub Actions                             | CI/CD、代码质量扫描       |
+
+------
+
+
+
+## **🧩 核心功能模块**
+
+1. **用户管理** – 学生 / 教师 / 管理员的注册、登录、RBAC 授权
+2. **课程管理** – 课程发布、选课、章节与资源管理
+3. **作业系统** – 多模态作业提交（文档 / 音视频 / PPT 等）、AI 评分
+4. **能力评估** – 雷达图、趋势分析、学习建议
+5. **学习路径** – 基于画像的个性化路径推荐
+6. **社交学习** – 论坛、讨论区、@邀请、点赞
+7. **数据分析** – 实时可视化面板、关键指标跟踪
+8. **通知系统** – 邮件与 WebSocket 实时推送
+
+------
+
+
+
+## **🚀 快速开始（本地开发）**
+
+### **环境要求**
+
+- **Java 21+**
+- **Node.js 20.18.0+**
+- **MySQL 8.0+**
+- **Redis 6.0+**（可选，用于黑名单、会话）
+- **Maven 3.6+**
+
+### **数据库初始化**
+
+```
 mysql -u root -p
 CREATE DATABASE student_assessment_system CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-
-# 导入表结构和初始数据
+# 导入结构 & 初始数据
 mysql -u root -p student_assessment_system < backend/src/main/resources/schema.sql
 mysql -u root -p student_assessment_system < backend/src/main/resources/data.sql
 ```
 
-### 后端启动
-```bash
+### **启动后端**
+
+```
 cd backend
-export JAVA_HOME=$(/usr/libexec/java_home -v 21)  # macOS
-mvn clean compile
 mvn spring-boot:run
 ```
-后端服务将在 `http://localhost:8080` 启动
 
-### 前端启动
-```bash
+后端默认监听 http://localhost:8080。
+
+### **启动前端**
+
+```
 cd frontend
 npm install
 npm run dev
 ```
-前端服务将在 `http://localhost:5173` 启动
 
-### 验证安装
-访问以下地址确认系统正常运行：
-- **前端应用**: http://localhost:5173
-- **后端API文档**: http://localhost:8080/api/swagger-ui.html
-- **健康检查**: http://localhost:8080/api/actuator/health
+前端默认监听 http://localhost:5173。
 
-## 📊 系统状态
+> 访问 http://localhost:8080/api/swagger-ui.html 可查看在线 API 文档。
 
-### ✅ 完全正常运行
-- **后端服务**: ✅ Spring Boot 完全启动成功 (端口: 8080)
-- **前端服务**: ✅ Vue 3 开发服务器正常 (端口: 5173)
-- **数据库**: ✅ MySQL 连接正常，22个表结构完整
-- **缓存服务**: ✅ Redis 配置正常，JWT黑名单功能正常
-- **API功能**: ✅ 用户注册、登录、认证功能验证通过
-- **编译构建**: ✅ 前后端代码编译零错误
+------
 
-### 📈 质量指标
-- **后端**: 96个Java源文件，遵循Spring Boot最佳实践
-- **前端**: TypeScript编译0错误，ESLint警告91个(不影响功能)
-- **测试覆盖**: 核心API功能测试通过
-- **性能**: 后端启动时间 < 6秒，前端编译时间 < 3秒
 
-### 🔧 已解决的技术问题
-- ✅ MyBatis XML映射文件JDBC类型配置问题
-- ✅ Redis配置和依赖注入问题  
-- ✅ UserMapper参数名不匹配问题
-- ✅ 前端TypeScript类型错误和组件问题
-- ✅ Spring Security JWT认证配置
-- ✅ 数据库连接池和事务管理
 
-## 📚 API文档
+## **📦 运行与部署（生产环境）**
 
-### 认证模块 (已验证)
-- `POST /api/auth/login` - 用户登录 ✅
-- `POST /api/auth/register` - 用户注册 ✅  
-- `POST /api/auth/logout` - 用户登出
-- `GET /api/auth/check-username` - 检查用户名是否存在 ✅
-
-### 课程模块
-- `GET /api/courses` - 获取课程列表
-- `POST /api/courses` - 创建课程
-- `GET /api/courses/{id}` - 获取课程详情
-- `PUT /api/courses/{id}` - 更新课程
-- `DELETE /api/courses/{id}` - 删除课程
-
-### 作业模块
-- `GET /api/assignments` - 获取作业列表
-- `POST /api/assignments` - 创建作业
-- `GET /api/assignments/{id}` - 获取作业详情
-- `POST /api/submissions` - 提交作业
-
-### 能力评估模块
-- `GET /api/abilities/dashboard` - 能力仪表板
-- `POST /api/abilities/assessments` - 记录评估
-- `GET /api/abilities/reports` - 获取能力报告
-
-### 用户管理模块
-- `GET /api/students` - 学生列表
-- `GET /api/teachers` - 教师列表
-- `PUT /api/users/{id}` - 更新用户信息
-
-详细API文档请访问: http://localhost:8080/api/swagger-ui.html
-
-## 🔐 默认账户
-
-系统提供以下测试账户（密码均为: `123456`）：
-
-| 角色 | 用户名 | 邮箱 | 说明 |
-|------|--------|------|------|
-| 管理员 | admin | admin@example.com | 系统管理员 |
-| 教师 | teacher | teacher@example.com | 张老师 |
-| 教师 | teacher2 | wang@example.com | 王教授 |
-| 学生 | student | student@example.com | 李同学 |
-| 学生 | student2 | liu@example.com | 刘小明 |
-| 学生 | student3 | chen@example.com | 陈小红 |
-
-## 🔧 开发指南
-
-### 代码规范
-- **Java**: 遵循Google Java Style Guide
-- **TypeScript**: 使用严格模式，ESLint + Prettier
-- **数据库**: 统一命名规范，软删除机制
-- **API**: RESTful设计，统一响应格式
-
-### 错误处理
-- **后端**: BusinessException + ErrorCode枚举
-- **前端**: 全局错误拦截器
-- **数据库**: 事务回滚机制
-- **日志**: 分级日志记录
-
-### 安全机制
-- **认证**: JWT令牌 + Redis黑名单
-- **授权**: RBAC角色权限控制
-- **输入验证**: JSR-303 Bean Validation
-- **SQL注入防护**: MyBatis参数化查询
-
-## 📁 项目结构
+**打包后端** 
 
 ```
-Student Non-Core Competence Development Assessment System/
-├── backend/                 # Spring Boot后端
-│   ├── src/main/java/      # Java源代码
-│   ├── src/main/resources/ # 配置文件和静态资源
-│   └── pom.xml            # Maven配置
-├── frontend/               # Vue 3前端
-│   ├── src/               # 前端源代码
-│   ├── public/            # 静态资源
-│   └── package.json       # npm配置
-├── docs/                  # 项目文档
-└── README.md             # 项目说明
+cd backend
+mvn clean package -DskipTests
+# 生成 target/student-assessment-system.jar
+java -jar target/student-assessment-system.jar --spring.profiles.active=prod
 ```
 
-详细信息请查看：
-- [后端开发指南](./backend/README.md)
-- [前端开发指南](./frontend/README.md)
+**构建前端静态文件** 
 
-## 🤝 贡献指南
+```
+cd frontend
+npm run build
+# 输出到 dist/
+```
 
-1. Fork 项目到个人仓库
-2. 创建功能分支 (`git checkout -b feature/AmazingFeature`)
-3. 提交更改 (`git commit -m 'Add some AmazingFeature'`)
-4. 推送到分支 (`git push origin feature/AmazingFeature`)
-5. 创建 Pull Request
+**Nginx 示例配置**（可选）
 
-### 提交规范
-- `feat`: 新功能
-- `fix`: 错误修复
-- `docs`: 文档更新
-- `style`: 代码格式调整
-- `refactor`: 代码重构
-- `test`: 测试相关
+```
+server {
+  listen 80;
+  server_name assessment.example.com;
 
-## 📈 未来计划
+  location / {
+    root   /var/www/assessment/dist;
+    try_files $uri $uri/ /index.html;
+  }
 
-### 近期计划 (v1.1)
-- [ ] 移动端应用开发
-- [ ] 离线数据同步
-- [ ] 批量数据导入导出
-- [ ] 多语言国际化支持
+  location /api/ {
+    proxy_pass http://127.0.0.1:8080/;
+    proxy_set_header Host $host;
+    proxy_set_header X-Real-IP $remote_addr;
+  }
+}
+```
 
-### 中期计划 (v2.0)
-- [ ] AI智能推荐算法优化
-- [ ] 实时协作功能
-- [ ] 视频直播授课
-- [ ] 区块链证书认证
+------
 
-### 长期计划 (v3.0)
-- [ ] 云原生架构迁移
-- [ ] 微服务拆分
-- [ ] 大数据分析平台
-- [ ] 元宇宙学习环境
 
-## 📄 许可证
 
-本项目采用 MIT 许可证 - 查看 [LICENSE](LICENSE) 文件了解详情。
+## **📈 系统状态**
 
-## 📞 支持与联系
+- **后端服务**：✅ Spring Boot 启动成功（8080）
+- **前端服务**：✅ Vite 开发服务器正常（5173）
+- **数据库**：✅ 22 张表结构完整
+- **缓存服务**：✅ Redis 连接正常
 
-- **项目仓库**: [GitHub Repository](https://github.com/your-org/student-assessment-system)
-- **问题反馈**: [Issues](https://github.com/your-org/student-assessment-system/issues)
-- **技术讨论**: [Discussions](https://github.com/your-org/student-assessment-system/discussions)
-- **邮箱支持**: support@assessment-system.com
+------
 
----
 
-**开发团队**: Student Assessment Development Team  
-**最后更新**: 2025-01-29  
-**当前版本**: v1.0.0  
-**系统状态**: 🟢 完全正常运行 
+
+## **🗂️ 文件详解**
+
+| **路径 / 文件**                      | **类型** | **说明**                                        |
+| ------------------------------------ | -------- | ----------------------------------------------- |
+| **backend/**                         | 目录     | Spring Boot 服务端代码与配置                    |
+| ├── **pom.xml**                      | 配置     | 后端依赖与构建脚本                              |
+| ├── **src/main/java/**               | 源码     | Controller / Service / Mapper / Entity 分层结构 |
+| ├── **src/main/resources/**          | 资源     | application.yml、schema.sql、mapper/*.xml 等    |
+| **frontend/**                        | 目录     | Vue 3 单页应用代码                              |
+| ├── **package.json**                 | 配置     | Node 依赖与脚本命令                             |
+| ├── **src/**                         | 源码     | 组件、页面、Pinia store、路由等                 |
+| ├── **public/**                      | 资源     | 静态资源（favicon、图标等）                     |
+| **API_CRITICAL_ISSUES_SUMMARY.md**   | 文档     | 关键 API 问题追踪与总结                         |
+| **API_FIX_COMPLETION_REPORT.md**     | 文档     | 已修复缺陷清单                                  |
+| **API_INTERFACE_TEST_REPORT.md**     | 文档     | 接口测试覆盖与结果                              |
+| **ENV_CONFIG_EXAMPLE.md**            | 文档     | 环境变量示例（本地 / CI）                       |
+| **ESLINT_CLEANUP_GUIDE.md**          | 文档     | 前端 ESLint 警告修复指北                        |
+| **SECURITY_FIXES_SUMMARY.md**        | 文档     | 安全漏洞修复记录                                |
+| **UNIMPLEMENTED_FEATURES_REPORT.md** | 文档     | 待实现功能及优先级                              |
+| **pom.xml** / **package.json**       | 配置     | 根级别聚合 Maven & npm 脚本                     |
+
+> 如需深入了解后端 / 前端目录下的包结构，请阅读各自模块内的 README.md 或查看源码注释。
+
+------
+
+
+
+## **🛡️ 测试与质量保障**
+
+| **范围**      | **工具**                                 | **命令**                              |
+| ------------- | ---------------------------------------- | ------------------------------------- |
+| 后端单元测试  | JUnit 5 · Spring Boot Test               | mvn test                              |
+| 前端单元测试  | Vitest                                   | npm run test                          |
+| 静态代码扫描  | SonarLint (IDE) · SonarQube (CI)         | GitHub Actions 自动触发               |
+| 格式化 & Lint | Spotless (Java) · ESLint + Prettier (TS) | mvn spotless:apply / npm run lint:fix |
+| 安全检查      | OWASP Dependency‑Check                   | CI 自动执行                           |
+
+持续集成流程存放在 .github/workflows/，包括 **测试 → 构建 → 静态扫描 → 部署** 四阶段步骤。
+
+------
+
+
+
+## **🤝 贡献指南**
+
+1. Fork → 创建分支 (feat/xxx) → 提交 PR
+2. Commit 遵循 [Conventional Commits](https://www.conventionalcommits.org/) 规范
+3. 在 PR 描述中关联 Issue，并附带测试或截图
+
+------
+
+
+
+## **🔮 未来计划**
+
+- **v1.1**：移动端 H5、离线数据同步、多语言 i18n
+- **v2.0**：AI 推荐算法优化、实时协作编辑、直播授课
+- **v3.0**：云原生微服务拆分、大数据分析平台、元宇宙学习空间
+
+------
+
+
+
+## **📝 许可证**
+
+项目遵循 **MIT License**，详见 LICENSE 文件。
+
+------
+
+
+
+## **📬 支持与联系**
+
+- Issues: https://github.com/Xiaorui-Zhang537/student-assessment-system/issues
+- Discussions: https://github.com/Xiaorui-Zhang537/student-assessment-system/discussions
+- 邮箱: **xiaorui537537@Gmail.com**
+
+------
+
+
+
+> *Made with ❤️ by Student Assessment Development Team*
