@@ -6,3 +6,10 @@
 *.log
 node_modules/
 # 添加其他需要忽略的文件
+# === build & temp ===
+/target/
+/frontend/dist/
+/node_modules/
+*.log
+*.gz
+backend/logs/
