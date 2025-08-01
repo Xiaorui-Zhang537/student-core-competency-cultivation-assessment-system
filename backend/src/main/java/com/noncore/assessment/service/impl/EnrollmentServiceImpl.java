@@ -20,7 +20,6 @@ import com.noncore.assessment.entity.Enrollment;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Service
 @Transactional
@@ -112,7 +111,7 @@ public class EnrollmentServiceImpl implements EnrollmentService {
         logger.info("批量添加学生到课程，课程ID: {}, 学生数量: {}, 操作教师ID: {}", courseId, studentIds.size(), teacherId);
         checkCourseOwnership(courseId, teacherId);
 
-        if (studentIds == null || studentIds.isEmpty()) {
+        if (studentIds.isEmpty()) {
             return;
         }
 
@@ -122,7 +121,7 @@ public class EnrollmentServiceImpl implements EnrollmentService {
         // 2. 在内存中过滤出需要新注册的学生
         List<Long> toEnrollIds = studentIds.stream()
                 .filter(id -> !alreadyEnrolledIds.contains(id))
-                .collect(Collectors.toList());
+                .toList();
 
         if (toEnrollIds.isEmpty()) {
             logger.info("所有提供的学生都已注册课程 {}", courseId);

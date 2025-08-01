@@ -2,6 +2,8 @@ package com.noncore.assessment.dto.request;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
+import lombok.Getter;
+import lombok.Setter;
 
 /**
  * 重置密码请求DTO
@@ -11,8 +13,11 @@ import jakarta.validation.constraints.Size;
  * @version 1.0.0
  * @since 2024-12-28
  */
+@Setter
+@Getter
 public class ResetPasswordRequest {
 
+    // Getter和Setter方法
     @NotBlank(message = "重置令牌不能为空")
     private String token;
 
@@ -38,31 +43,6 @@ public class ResetPasswordRequest {
      */
     public boolean isPasswordMatch() {
         return newPassword != null && newPassword.equals(confirmPassword);
-    }
-
-    // Getter和Setter方法
-    public String getToken() {
-        return token;
-    }
-
-    public void setToken(String token) {
-        this.token = token;
-    }
-
-    public String getNewPassword() {
-        return newPassword;
-    }
-
-    public void setNewPassword(String newPassword) {
-        this.newPassword = newPassword;
-    }
-
-    public String getConfirmPassword() {
-        return confirmPassword;
-    }
-
-    public void setConfirmPassword(String confirmPassword) {
-        this.confirmPassword = confirmPassword;
     }
 
     @Override

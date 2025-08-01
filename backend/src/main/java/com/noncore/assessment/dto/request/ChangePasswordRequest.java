@@ -2,6 +2,8 @@ package com.noncore.assessment.dto.request;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
+import lombok.Getter;
+import lombok.Setter;
 
 /**
  * 修改密码请求DTO
@@ -11,8 +13,11 @@ import jakarta.validation.constraints.Size;
  * @version 1.0.0
  * @since 2024-12-28
  */
+@Setter
+@Getter
 public class ChangePasswordRequest {
 
+    // Getter和Setter方法
     @NotBlank(message = "当前密码不能为空")
     private String currentPassword;
 
@@ -38,31 +43,6 @@ public class ChangePasswordRequest {
      */
     public boolean isPasswordMatch() {
         return newPassword != null && newPassword.equals(confirmPassword);
-    }
-
-    // Getter和Setter方法
-    public String getCurrentPassword() {
-        return currentPassword;
-    }
-
-    public void setCurrentPassword(String currentPassword) {
-        this.currentPassword = currentPassword;
-    }
-
-    public String getNewPassword() {
-        return newPassword;
-    }
-
-    public void setNewPassword(String newPassword) {
-        this.newPassword = newPassword;
-    }
-
-    public String getConfirmPassword() {
-        return confirmPassword;
-    }
-
-    public void setConfirmPassword(String confirmPassword) {
-        this.confirmPassword = confirmPassword;
     }
 
     @Override

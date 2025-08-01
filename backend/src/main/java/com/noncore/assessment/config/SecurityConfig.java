@@ -1,5 +1,6 @@
 package com.noncore.assessment.config;
 
+import lombok.Getter;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -34,6 +35,7 @@ public class SecurityConfig {
 
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
     private final JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint;
+    @Getter
     private final JwtAccessDeniedHandler jwtAccessDeniedHandler;
     private final SecurityProperties securityProperties;
 
@@ -136,7 +138,4 @@ public class SecurityConfig {
         return source;
     }
 
-    public JwtAccessDeniedHandler getJwtAccessDeniedHandler() {
-        return jwtAccessDeniedHandler;
-    }
 }

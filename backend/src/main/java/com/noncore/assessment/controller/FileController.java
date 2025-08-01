@@ -58,7 +58,7 @@ public class FileController extends BaseController {
     @GetMapping("/{fileId}/download")
     @Operation(summary = "下载文件", description = "根据文件ID下载文件")
     @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<byte[]> downloadFile(@PathVariable Long fileId) throws Exception {
+    public ResponseEntity<byte[]> downloadFile(@PathVariable Long fileId) {
         Long userId = getCurrentUserId();
 
         FileRecord fileRecord = fileStorageService.getFileInfo(fileId);
@@ -161,7 +161,7 @@ public class FileController extends BaseController {
     @GetMapping("/{fileId}/preview")
     @Operation(summary = "图片预览", description = "预览图片文件")
     @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<byte[]> previewImage(@PathVariable Long fileId) throws Exception {
+    public ResponseEntity<byte[]> previewImage(@PathVariable Long fileId) {
         Long userId = getCurrentUserId();
 
         FileRecord fileRecord = fileStorageService.getFileInfo(fileId);

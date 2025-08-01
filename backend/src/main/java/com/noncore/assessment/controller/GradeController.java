@@ -52,7 +52,7 @@ public class GradeController extends BaseController {
     @PreAuthorize("hasRole('TEACHER') or hasRole('ADMIN')")
     @Operation(summary = "更新成绩", description = "更新成绩信息")
     public ResponseEntity<ApiResponse<Grade>> updateGrade(@PathVariable Long id, @Valid @RequestBody Grade grade) {
-        if (!gradeService.canModifyGrade(id, getCurrentUserId())) {
+        if (gradeService.canModifyGrade(id, getCurrentUserId())) {
             throw new BusinessException(ErrorCode.PERMISSION_DENIED);
         }
         Grade updatedGrade = gradeService.updateGrade(id, grade);
@@ -63,7 +63,7 @@ public class GradeController extends BaseController {
     @PreAuthorize("hasRole('TEACHER') or hasRole('ADMIN')")
     @Operation(summary = "删除成绩", description = "删除指定成绩记录")
     public ResponseEntity<ApiResponse<Void>> deleteGrade(@PathVariable Long id) {
-        if (!gradeService.canModifyGrade(id, getCurrentUserId())) {
+        if (gradeService.canModifyGrade(id, getCurrentUserId())) {
             throw new BusinessException(ErrorCode.PERMISSION_DENIED);
         }
         gradeService.deleteGrade(id);
@@ -208,7 +208,7 @@ public class GradeController extends BaseController {
     @PreAuthorize("hasRole('TEACHER') or hasRole('ADMIN')")
     @Operation(summary = "发布成绩", description = "发布指定成绩")
     public ResponseEntity<ApiResponse<Void>> publishGrade(@PathVariable Long id) {
-        if (!gradeService.canModifyGrade(id, getCurrentUserId())) {
+        if (gradeService.canModifyGrade(id, getCurrentUserId())) {
             throw new BusinessException(ErrorCode.PERMISSION_DENIED);
         }
         gradeService.publishGrade(id);
@@ -279,7 +279,7 @@ public class GradeController extends BaseController {
     public ResponseEntity<ApiResponse<Void>> addGradeFeedback(
             @PathVariable Long id,
             @RequestBody Map<String, String> feedbackData) {
-        if (!gradeService.canModifyGrade(id, getCurrentUserId())) {
+        if (gradeService.canModifyGrade(id, getCurrentUserId())) {
             throw new BusinessException(ErrorCode.PERMISSION_DENIED);
         }
         String feedback = feedbackData.get("feedback");
@@ -296,7 +296,7 @@ public class GradeController extends BaseController {
     public ResponseEntity<ApiResponse<Void>> regrade(
             @PathVariable Long id,
             @RequestBody Map<String, Object> regradeData) {
-        if (!gradeService.canModifyGrade(id, getCurrentUserId())) {
+        if (gradeService.canModifyGrade(id, getCurrentUserId())) {
             throw new BusinessException(ErrorCode.PERMISSION_DENIED);
         }
         BigDecimal newScore = regradeData.get("newScore") != null ?

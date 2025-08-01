@@ -16,7 +16,6 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.*;
-import java.util.stream.Collectors;
 
 /**
  * 能力评估服务实现类
@@ -302,9 +301,8 @@ public class AbilityServiceImpl implements AbilityService {
         
         // 这里应该实现具体的排名逻辑
         // 暂时返回空列表，后续可以根据具体需求实现
-        List<Map<String, Object>> rankings = new ArrayList<>();
-        
-        return rankings;
+
+        return new ArrayList<>();
     }
 
     @Override
@@ -346,7 +344,7 @@ public class AbilityServiceImpl implements AbilityService {
         // 暂时返回空列表，后续可以根据具体需求实现
         List<AbilityGoal> goals = new ArrayList<>();
         
-        logger.info("学生目标获取成功，学生ID: {}, 目标数量: {}", studentId, goals.size());
+        logger.info("学生目标获取成功，学生ID: {}, 目标数量: {}", studentId, 0);
         return goals;
     }
 
@@ -369,7 +367,7 @@ public class AbilityServiceImpl implements AbilityService {
         // 暂时返回空列表，后续可以根据具体需求实现
         List<Map<String, Object>> trends = new ArrayList<>();
         
-        logger.info("学生能力发展趋势获取成功，学生ID: {}, 数据点数量: {}", studentId, trends.size());
+        logger.info("学生能力发展趋势获取成功，学生ID: {}, 数据点数量: {}", studentId, 0);
         return trends;
     }
 
@@ -610,7 +608,7 @@ public class AbilityServiceImpl implements AbilityService {
         // 暂时返回空列表，后续可以根据具体需求实现
         List<LearningRecommendation> recommendations = new ArrayList<>();
         
-        logger.info("学习建议获取成功，学生ID: {}, 建议数量: {}", studentId, recommendations.size());
+        logger.info("学习建议获取成功，学生ID: {}, 建议数量: {}", studentId, 0);
         return recommendations;
     }
 }

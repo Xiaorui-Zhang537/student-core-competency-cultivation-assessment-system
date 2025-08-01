@@ -195,7 +195,7 @@ public class JwtUtil {
      */
     public boolean isTokenExpired(String token) {
         final Date expiration = getExpirationDateFromToken(token);
-        return expiration.before(new Date());
+        return !expiration.before(new Date());
     }
 
     /**
@@ -207,7 +207,7 @@ public class JwtUtil {
      */
     public boolean validateToken(String token, String username) {
         final String tokenUsername = getUsernameFromToken(token);
-        return (username.equals(tokenUsername) && !isTokenExpired(token));
+        return (username.equals(tokenUsername) && isTokenExpired(token));
     }
 
     /**
@@ -217,7 +217,7 @@ public class JwtUtil {
      * @return 是否有效
      */
     public boolean validateToken(String token) {
-        return !isTokenExpired(token);
+        return isTokenExpired(token);
     }
 
     /**

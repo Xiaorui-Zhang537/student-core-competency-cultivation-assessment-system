@@ -1,6 +1,8 @@
 package com.noncore.assessment.dto.request;
 
 import jakarta.validation.constraints.NotBlank;
+import lombok.Getter;
+import lombok.Setter;
 
 /**
  * 用户登录请求DTO
@@ -10,8 +12,11 @@ import jakarta.validation.constraints.NotBlank;
  * @version 1.0.0
  * @since 2024-12-28
  */
+@Setter
+@Getter
 public class LoginRequest {
 
+    // Getter和Setter方法
     @NotBlank(message = "用户名不能为空")
     private String username;
 
@@ -27,31 +32,6 @@ public class LoginRequest {
     public LoginRequest(String username, String password) {
         this.username = username;
         this.password = password;
-    }
-
-    // Getter和Setter方法
-    public String getUsername() {
-        return username;
-    }
-
-    public void setUsername(String username) {
-        this.username = username;
-    }
-
-    public String getPassword() {
-        return password;
-    }
-
-    public void setPassword(String password) {
-        this.password = password;
-    }
-
-    public boolean isRememberMe() {
-        return rememberMe;
-    }
-
-    public void setRememberMe(boolean rememberMe) {
-        this.rememberMe = rememberMe;
     }
 
     @Override

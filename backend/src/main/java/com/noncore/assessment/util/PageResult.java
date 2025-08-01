@@ -1,5 +1,8 @@
 package com.noncore.assessment.util;
 
+import lombok.Getter;
+import lombok.Setter;
+
 import java.util.List;
 
 /**
@@ -10,8 +13,11 @@ import java.util.List;
  * @version 1.0.0
  * @since 2024-12-28
  */
+@Setter
+@Getter
 public class PageResult<T> {
 
+    // Getter和Setter方法
     private List<T> items;
     private Integer page;
     private Integer size;
@@ -42,63 +48,6 @@ public class PageResult<T> {
     // 空结果
     public static <T> PageResult<T> empty() {
         return new PageResult<>(List.of(), 1, 0, 0L, 0);
-    }
-
-    // Getter和Setter方法
-    public List<T> getItems() {
-        return items;
-    }
-
-    public void setItems(List<T> items) {
-        this.items = items;
-    }
-
-    public Integer getPage() {
-        return page;
-    }
-
-    public void setPage(Integer page) {
-        this.page = page;
-    }
-
-    public Integer getSize() {
-        return size;
-    }
-
-    public void setSize(Integer size) {
-        this.size = size;
-    }
-
-    public Long getTotal() {
-        return total;
-    }
-
-    public void setTotal(Long total) {
-        this.total = total;
-    }
-
-    public Integer getTotalPages() {
-        return totalPages;
-    }
-
-    public void setTotalPages(Integer totalPages) {
-        this.totalPages = totalPages;
-    }
-
-    public boolean isHasNext() {
-        return hasNext;
-    }
-
-    public void setHasNext(boolean hasNext) {
-        this.hasNext = hasNext;
-    }
-
-    public boolean isHasPrevious() {
-        return hasPrevious;
-    }
-
-    public void setHasPrevious(boolean hasPrevious) {
-        this.hasPrevious = hasPrevious;
     }
 
     @Override

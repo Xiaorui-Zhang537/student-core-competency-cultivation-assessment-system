@@ -1,5 +1,8 @@
 package com.noncore.assessment.security;
 
+import lombok.Getter;
+
+import java.io.Serial;
 import java.io.Serializable;
 import java.security.Principal;
 
@@ -8,18 +11,16 @@ import java.security.Principal;
  */
 public class UserPrincipal implements Principal, Serializable {
 
+    @Serial
     private static final long serialVersionUID = 1L;
 
+    @Getter
     private final Long id;
     private final String username;
 
     public UserPrincipal(Long id, String username) {
         this.id = id;
         this.username = username;
-    }
-
-    public Long getId() {
-        return id;
     }
 
     @Override

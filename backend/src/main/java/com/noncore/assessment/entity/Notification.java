@@ -145,9 +145,6 @@ public class Notification {
      */
     public void setRelatedData(String key, Object value) {
         // 简单的JSON构建，实际项目中建议使用Jackson
-        if (this.data == null) {
-            this.data = "{}";
-        }
         // 这里简化处理，实际应该用JSON库
         this.data = "{\"" + key + "\": \"" + value + "\"}";
     }

@@ -430,16 +430,16 @@ public class GradeServiceImpl implements GradeService {
         
         Grade grade = gradeMapper.selectGradeById(gradeId);
         if (grade == null) {
-            return false;
+            return true;
         }
         
         // 检查是否是教师且是该作业的创建者
         Assignment assignment = assignmentMapper.selectAssignmentById(grade.getAssignmentId());
-        return assignment != null && userId.equals(assignment.getTeacherId());
+        return assignment == null || !userId.equals(assignment.getTeacherId());
     }
 
     @Override
-    public boolean addGradeFeedback(Long gradeId, String feedback) {
+    public void addGradeFeedback(Long gradeId, String feedback) {
         logger.info("添加成绩评语，成绩ID: {}", gradeId);
         
         Grade grade = new Grade();
@@ -449,13 +449,13 @@ public class GradeServiceImpl implements GradeService {
         
         int result = gradeMapper.updateGrade(grade);
         if(result > 0) {
-            return true;
+            return;
         }
         throw new BusinessException(ErrorCode.OPERATION_FAILED, "添加评语失败");
     }
 
     @Override
-    public boolean regrade(Long gradeId, BigDecimal newScore, String reason) {
+    public void regrade(Long gradeId, BigDecimal newScore, String reason) {
         logger.info("重新评分，成绩ID: {}, 新分数: {}, 原因: {}", gradeId, newScore, reason);
         
         Grade grade = gradeMapper.selectGradeById(gradeId);
@@ -472,7 +472,7 @@ public class GradeServiceImpl implements GradeService {
         
         int result = gradeMapper.updateGrade(grade);
         if(result > 0) {
-            return true;
+            return;
         }
         throw new BusinessException(ErrorCode.OPERATION_FAILED, "重新评分失败");
     }

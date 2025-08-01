@@ -1,5 +1,8 @@
 package com.noncore.assessment.exception;
 
+import lombok.Getter;
+import lombok.Setter;
+
 /**
  * 自定义业务异常类
  * 用于处理业务逻辑中的异常情况
@@ -8,8 +11,10 @@ package com.noncore.assessment.exception;
  * @version 1.0.0
  * @since 2024-12-28
  */
+@Setter
 public class BusinessException extends RuntimeException {
 
+    @Getter
     private Integer code;
     private String message;
 
@@ -93,20 +98,9 @@ public class BusinessException extends RuntimeException {
         this.message = errorCode.getMessage();
     }
 
-    public Integer getCode() {
-        return code;
-    }
-
-    public void setCode(Integer code) {
-        this.code = code;
-    }
-
     @Override
     public String getMessage() {
         return message;
     }
 
-    public void setMessage(String message) {
-        this.message = message;
-    }
-} 
+}

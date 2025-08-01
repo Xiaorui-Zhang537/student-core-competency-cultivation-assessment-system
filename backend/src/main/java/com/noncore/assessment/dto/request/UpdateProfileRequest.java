@@ -13,7 +13,7 @@ public class UpdateProfileRequest {
     private String nickname;
 
     @Size(max = 255, message = "头像URL长度不能超过255个字符")
-    @Schema(description = "头像URL", example = "http://example.com/new-avatar.jpg")
+    @Schema(description = "头像URL", example = "https://example.com/new-avatar.jpg")
     private String avatar;
 
     @Schema(description = "性别")

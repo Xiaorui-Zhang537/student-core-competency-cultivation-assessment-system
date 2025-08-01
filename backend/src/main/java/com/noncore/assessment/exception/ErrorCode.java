@@ -1,5 +1,7 @@
 package com.noncore.assessment.exception;
 
+import lombok.Getter;
+
 /**
  * 错误码枚举
  * 定义系统中所有业务异常的标准错误码和消息
@@ -8,6 +10,7 @@ package com.noncore.assessment.exception;
  * @version 1.0.0
  * @since 2024-12-28
  */
+@Getter
 public enum ErrorCode {
     
     // 通用错误 (1000-1099)
@@ -91,12 +94,5 @@ public enum ErrorCode {
         this.code = code;
         this.message = message;
     }
-    
-    public Integer getCode() {
-        return code;
-    }
-    
-    public String getMessage() {
-        return message;
-    }
+
 } 

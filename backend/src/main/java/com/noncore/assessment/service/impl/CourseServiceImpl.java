@@ -200,10 +200,10 @@ public class CourseServiceImpl implements CourseService {
 
         for (Map<String, Object> stat : stats) {
             long count = (long) stat.getOrDefault("count", 0L);
-            totalCourses += count;
+            totalCourses += (int) count;
 
             if ("published".equals(stat.get("status"))) {
-                publishedCourses += count;
+                publishedCourses += (int) count;
             }
             
             Number enrollments = (Number) stat.getOrDefault("total_enrollments", 0);
@@ -212,7 +212,7 @@ public class CourseServiceImpl implements CourseService {
             Number avgRating = (Number) stat.getOrDefault("avg_rating", 0.0);
             if (avgRating.doubleValue() > 0) {
                 totalRating += avgRating.doubleValue() * count;
-                coursesWithRating += count;
+                coursesWithRating += (int) count;
             }
         }
 

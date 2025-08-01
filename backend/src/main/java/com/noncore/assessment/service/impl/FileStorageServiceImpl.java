@@ -207,18 +207,15 @@ public class FileStorageServiceImpl implements FileStorageService {
 
         // 根据文件用途检查权限
         String purpose = fileRecord.getUploadPurpose();
-        switch (purpose) {
-            case "avatar":
-            case "assignment":
+        return switch (purpose) {
+            case "avatar", "assignment" ->
                 // 只有上传者可以访问
-                return userId.equals(fileRecord.getUploaderId());
-            case "course":
-            case "lesson":
+                    false;
+            case "course", "lesson" ->
                 // 课程相关文件，需要检查课程权限（简化实现，返回true）
-                return true;
-            default:
-                return false;
-        }
+                    true;
+            default -> false;
+        };
     }
 
     @Override

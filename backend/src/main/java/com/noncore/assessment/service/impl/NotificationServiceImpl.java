@@ -86,7 +86,7 @@ public class NotificationServiceImpl implements NotificationService {
                                                    String relatedType, Long relatedId) {
         logger.info("批量发送通知，接收者数量: {}, 发送者ID: {}", recipientIds.size(), senderId);
 
-        if (recipientIds == null || recipientIds.isEmpty()) {
+        if (recipientIds.isEmpty()) {
             return Map.of("successCount", 0, "failCount", 0, "errors", List.of("接收者列表为空"));
         }
 
@@ -154,7 +154,7 @@ public class NotificationServiceImpl implements NotificationService {
     public Map<String, Object> batchMarkAsRead(List<Long> notificationIds, Long userId) {
         logger.info("批量标记通知为已读，通知数量: {}, 用户ID: {}", notificationIds.size(), userId);
 
-        if (notificationIds == null || notificationIds.isEmpty()) {
+        if (notificationIds.isEmpty()) {
             return Map.of("successCount", 0, "failCount", 0);
         }
 
@@ -265,25 +265,19 @@ public class NotificationServiceImpl implements NotificationService {
                                                      String targetType, List<Long> targetIds, String role) {
         logger.info("发送系统通知，标题: {}, 目标类型: {}, 角色: {}", title, targetType, role);
 
-        List<Long> recipientIds = new ArrayList<>();
-
-        switch (targetType) {
-            case "all":
+        List<Long> recipientIds = switch (targetType) {
+            case "all" ->
                 // 从数据库获取所有用户ID
-                recipientIds = userMapper.selectAllUserIds();
-                break;
-            case "role":
+                    userMapper.selectAllUserIds();
+            case "role" -> {
                 if (role == null || role.isBlank()) {
                     throw new BusinessException(ErrorCode.INVALID_PARAMETER, "角色不能为空");
                 }
-                recipientIds = userMapper.selectUserIdsByRole(role);
-                break;
-            case "specific":
-                recipientIds = targetIds;
-                break;
-            default:
-                throw new BusinessException(ErrorCode.INVALID_PARAMETER, "不支持的目标类型: " + targetType);
-        }
+                yield userMapper.selectUserIdsByRole(role);
+            }
+            case "specific" -> targetIds;
+            default -> throw new BusinessException(ErrorCode.INVALID_PARAMETER, "不支持的目标类型: " + targetType);
+        };
 
         return batchSendNotification(recipientIds, null, title, content, type, "system", "normal", null, null);
     }

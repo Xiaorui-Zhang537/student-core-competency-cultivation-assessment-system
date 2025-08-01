@@ -59,7 +59,7 @@ public class AnalyticsQueryServiceImpl implements AnalyticsQueryService {
         List<Grade> grades = gradeMapper.selectByStudentId(studentId);
         if (courseId != null) {
             // 优化N+1查询
-            List<Long> assignmentIds = grades.stream().map(Grade::getAssignmentId).distinct().collect(Collectors.toList());
+            List<Long> assignmentIds = grades.stream().map(Grade::getAssignmentId).distinct().toList();
             if (assignmentIds.isEmpty()) {
                 grades = new ArrayList<>();
             } else {

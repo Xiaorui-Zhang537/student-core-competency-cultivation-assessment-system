@@ -24,7 +24,7 @@ public class RedisCacheServiceImpl implements CacheService {
     @Override
     public <T> Optional<T> get(String key, Class<T> clazz) {
         Object value = redisTemplate.opsForValue().get(key);
-        if (value != null && clazz.isInstance(value)) {
+        if (clazz.isInstance(value)) {
             return Optional.of(clazz.cast(value));
         }
         return Optional.empty();

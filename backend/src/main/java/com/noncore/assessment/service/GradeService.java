@@ -228,21 +228,19 @@ public interface GradeService {
     /**
      * 添加成绩评语
      *
-     * @param gradeId 成绩ID
+     * @param gradeId  成绩ID
      * @param feedback 评语内容
-     * @return 操作结果
      */
-    boolean addGradeFeedback(Long gradeId, String feedback);
+    void addGradeFeedback(Long gradeId, String feedback);
 
     /**
      * 重新评分
      *
-     * @param gradeId 成绩ID
+     * @param gradeId  成绩ID
      * @param newScore 新分数
-     * @param reason 重评原因
-     * @return 操作结果
+     * @param reason   重评原因
      */
-    boolean regrade(Long gradeId, BigDecimal newScore, String reason);
+    void regrade(Long gradeId, BigDecimal newScore, String reason);
 
     /**
      * 获取成绩历史记录
