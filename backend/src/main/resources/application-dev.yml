@@ -1,5 +1,7 @@
 # 开发环境配置
 spring:
+  mail:
+    from-address: 1519939545@qq.com
   datasource:
     url: jdbc:mysql://localhost:3306/student_assessment_system?useUnicode=true&characterEncoding=utf8&useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true
     username: root
@@ -26,8 +28,8 @@ logging:
 
 # 开发环境文件上传配置
 file:
-  upload-dir: ./dev-uploads
-  max-size: 10MB
+  upload-dir: ./uploads
+  max-size: 50MB
   
 # 开发环境JWT配置
 jwt:

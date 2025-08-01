@@ -1,0 +1,17 @@
+package com.noncore.assessment.config;
+
+import lombok.Getter;
+import lombok.Setter;
+import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.stereotype.Component;
+
+@Setter
+@Getter
+@Component
+@ConfigurationProperties(prefix = "file")
+public class FileProperties {
+    private String uploadDir;
+    private String maxSize;
+    private String allowedExtensions;
+
+}

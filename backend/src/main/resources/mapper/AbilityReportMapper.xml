@@ -131,13 +131,21 @@
 
     <!-- 根据类型和时间范围查报告 -->
     <select id="selectReportsByTypeAndPeriod" resultMap="AbilityReportResultMap">
-        SELECT <include refid="abilityReportColumns"/>
-        FROM ability_reports r
-        WHERE r.student_id = #{studentId}
-        AND r.report_type = #{reportType}
-        AND r.report_period_start >= #{periodStart}
-        AND r.report_period_end <= #{periodEnd}
-        ORDER BY r.report_period_end DESC
+        <![CDATA[
+    SELECT
+  ]]>
+        <include refid="abilityReportColumns"/>
+        <![CDATA[
+    , u.display_name AS student_name,
+      u.student_number AS student_number
+    FROM ability_reports r
+    LEFT JOIN users u ON r.student_id = u.id
+    WHERE r.student_id = #{studentId}
+      AND r.report_type = #{reportType}
+      AND r.report_period_start &gt;= #{periodStart}
+      AND r.report_period_end &lt;= #{periodEnd}
+    ORDER BY r.report_period_end DESC
+  ]]>
     </select>
 
     <!-- 检查报告是否存在 -->

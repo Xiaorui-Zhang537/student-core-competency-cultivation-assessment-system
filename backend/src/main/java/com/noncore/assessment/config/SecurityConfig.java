@@ -1,5 +1,7 @@
 package com.noncore.assessment.config;
 
+import com.noncore.assessment.service.AuthService;
+import com.noncore.assessment.util.JwtUtil;
 import lombok.Getter;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -33,18 +35,12 @@ import java.util.Arrays;
 @EnableMethodSecurity()
 public class SecurityConfig {
 
-    private final JwtAuthenticationFilter jwtAuthenticationFilter;
-    private final JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint;
     @Getter
     private final JwtAccessDeniedHandler jwtAccessDeniedHandler;
     private final SecurityProperties securityProperties;
 
-    public SecurityConfig(JwtAuthenticationFilter jwtAuthenticationFilter,
-                          JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint,
-                          JwtAccessDeniedHandler jwtAccessDeniedHandler,
+    public SecurityConfig(JwtAccessDeniedHandler jwtAccessDeniedHandler,
                           SecurityProperties securityProperties) {
-        this.jwtAuthenticationFilter = jwtAuthenticationFilter;
-        this.jwtAuthenticationEntryPoint = jwtAuthenticationEntryPoint;
         this.jwtAccessDeniedHandler = jwtAccessDeniedHandler;
         this.securityProperties = securityProperties;
     }
@@ -53,33 +49,28 @@ public class SecurityConfig {
      * 配置HTTP安全
      */
     @Bean
-    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+    public SecurityFilterChain filterChain(HttpSecurity http,
+                                           JwtAccessDeniedHandler jwtAccessDeniedHandler,
+                                           JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint,
+                                           AuthService authService,
+                                           JwtUtil jwtUtil) throws Exception {
+
+        JwtAuthenticationFilter jwtAuthenticationFilter = new JwtAuthenticationFilter(jwtUtil, authService);
+
         http
-            // 禁用CSRF保护（因为使用JWT）
-            .csrf(AbstractHttpConfigurer::disable)
-            
-            // 启用CORS
-            .cors(cors -> cors.configurationSource(corsConfigurationSource()))
-            
-            // 配置会话管理
-            .sessionManagement(session -> 
-                session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-            
-            // 配置异常处理
-            .exceptionHandling(exceptions -> 
-                exceptions.authenticationEntryPoint(jwtAuthenticationEntryPoint))
-            
-            // 配置路径访问权限
-            .authorizeHttpRequests(authz -> authz
-                // 公开路径，允许所有用户访问
-                .requestMatchers(securityProperties.getJwt().getPublicUrls().toArray(new String[0])).permitAll()
-                
-                // 其他所有请求都需要认证
-                .anyRequest().authenticated()
-            )
-            
-            // 添加JWT过滤器
-            .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
+                .csrf(AbstractHttpConfigurer::disable)
+                .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+                .sessionManagement(session ->
+                        session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .exceptionHandling(exceptions ->
+                        exceptions
+                                .authenticationEntryPoint(jwtAuthenticationEntryPoint)
+                                .accessDeniedHandler(jwtAccessDeniedHandler))
+                .authorizeHttpRequests(authz ->
+                        authz.requestMatchers(securityProperties.getJwt().getPublicUrls().toArray(new String[0]))
+                                .permitAll()
+                                .anyRequest().authenticated())
+                .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }

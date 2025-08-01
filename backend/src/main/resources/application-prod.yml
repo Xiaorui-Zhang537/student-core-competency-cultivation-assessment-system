@@ -129,4 +129,4 @@ management:
       show-details: when-authorized
   info:
     env:
-      enabled: true 
+      enabled: true
