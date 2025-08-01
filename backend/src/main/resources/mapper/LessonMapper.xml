@@ -3,36 +3,31 @@
 <mapper namespace="com.noncore.assessment.mapper.LessonMapper">
 
     <resultMap id="LessonResultMap" type="com.noncore.assessment.entity.Lesson">
-        <id column="id" property="id" jdbcType="BIGINT"/>
-        <result column="course_id" property="courseId" jdbcType="BIGINT"/>
-        <result column="title" property="title" jdbcType="VARCHAR"/>
-        <result column="description" property="description" jdbcType="CLOB"/>
-        <result column="content" property="content" jdbcType="LONGVARCHAR"/>
-        <result column="content_type" property="contentType" jdbcType="VARCHAR"/>
-        <result column="video_url" property="videoUrl" jdbcType="VARCHAR"/>
-        <result column="duration" property="duration" jdbcType="INTEGER"/>
-        <result column="order_index" property="orderIndex" jdbcType="INTEGER"/>
-        <result column="status" property="status" jdbcType="VARCHAR"/>
-        <result column="is_free" property="isFree" jdbcType="BOOLEAN"/>
-        <result column="created_at" property="createdAt" jdbcType="TIMESTAMP"/>
-        <result column="updated_at" property="updatedAt" jdbcType="TIMESTAMP"/>
-        <result column="deleted" property="deleted" jdbcType="BOOLEAN"/>
+        <id column="id" property="id"/>
+        <result column="course_id" property="courseId"/>
+        <result column="title" property="title"/>
+        <result column="description" property="description"/>
+        <result column="content" property="content"/>
+        <result column="video_url" property="videoUrl"/>
+        <result column="duration" property="duration"/>
+        <result column="order_index" property="orderIndex"/>
+        <result column="is_free" property="isFree"/>
+        <result column="created_at" property="createdAt"/>
+        <result column="updated_at" property="updatedAt"/>
+        <result column="deleted" property="deleted"/>
     </resultMap>
 
     <sql id="Base_Column_List">
-        id, course_id, title, description, content, content_type, video_url, duration, 
-        order_index, status, is_free, created_at, updated_at, deleted
+        id, course_id, title, description, content, video_url, duration, order_index, is_free, created_at, updated_at, deleted
     </sql>
 
     <!-- 插入课时 -->
     <insert id="insertLesson" parameterType="com.noncore.assessment.entity.Lesson" useGeneratedKeys="true" keyProperty="id">
         INSERT INTO lessons (
-            course_id, title, description, content, content_type, video_url, duration, 
-            order_index, status, is_free, created_at, updated_at, deleted
+            course_id, title, description, content, video_url, duration, order_index, is_free, created_at, updated_at, deleted
         ) VALUES (
-            #{courseId}, #{title}, #{description}, #{content}, #{contentType}, #{videoUrl}, #{duration}, 
-            #{orderIndex}, #{status}, #{isFree}, #{createdAt}, #{updatedAt}, #{deleted}
-        )
+                     #{courseId}, #{title}, #{description}, #{content}, #{videoUrl}, #{duration}, #{orderIndex}, #{isFree}, #{createdAt}, #{updatedAt}, #{deleted}
+                 )
     </insert>
 
     <!-- 根据ID查询课时 -->
@@ -47,22 +42,20 @@
         SELECT <include refid="Base_Column_List"/>
         FROM lessons
         WHERE course_id = #{courseId} AND deleted = false
-        ORDER BY order_index ASC
+        ORDER BY order_index
     </select>
 
     <!-- 更新课时 -->
     <update id="updateLesson" parameterType="com.noncore.assessment.entity.Lesson">
         UPDATE lessons SET
-            title = #{title},
-            description = #{description},
-            content = #{content},
-            content_type = #{contentType},
-            video_url = #{videoUrl},
-            duration = #{duration},
-            order_index = #{orderIndex},
-            status = #{status},
-            is_free = #{isFree},
-            updated_at = #{updatedAt}
+                           title = #{title},
+                           description = #{description},
+                           content = #{content},
+                           video_url = #{videoUrl},
+                           duration = #{duration},
+                           order_index = #{orderIndex},
+                           is_free = #{isFree},
+                           updated_at = #{updatedAt}
         WHERE id = #{id} AND deleted = false
     </update>
 
@@ -86,4 +79,4 @@
         WHERE course_id = #{courseId} AND deleted = false
     </select>
 
-</mapper> 
+</mapper>

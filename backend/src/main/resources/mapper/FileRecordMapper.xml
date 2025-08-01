@@ -3,51 +3,48 @@
 <mapper namespace="com.noncore.assessment.mapper.FileRecordMapper">
 
     <resultMap id="FileRecordResultMap" type="com.noncore.assessment.entity.FileRecord">
-        <id column="id" property="id" jdbcType="BIGINT"/>
-        <result column="original_name" property="originalName" jdbcType="VARCHAR"/>
-        <result column="stored_name" property="storedName" jdbcType="VARCHAR"/>
-        <result column="file_path" property="filePath" jdbcType="VARCHAR"/>
-        <result column="file_size" property="fileSize" jdbcType="BIGINT"/>
-        <result column="file_type" property="fileType" jdbcType="VARCHAR"/>
-        <result column="mime_type" property="mimeType" jdbcType="VARCHAR"/>
-        <result column="uploader_id" property="uploaderId" jdbcType="BIGINT"/>
-        <result column="upload_purpose" property="uploadPurpose" jdbcType="VARCHAR"/>
-        <result column="related_id" property="relatedId" jdbcType="BIGINT"/>
-        <result column="download_count" property="downloadCount" jdbcType="INTEGER"/>
-        <result column="status" property="status" jdbcType="VARCHAR"/>
-        <result column="created_at" property="createdAt" jdbcType="TIMESTAMP"/>
-        <result column="updated_at" property="updatedAt" jdbcType="TIMESTAMP"/>
-        <result column="deleted" property="deleted" jdbcType="BOOLEAN"/>
+        <id column="id" property="id"/>
+        <result column="original_name" property="originalName"/>
+        <result column="saved_name" property="storedName"/>
+        <result column="file_path" property="filePath"/>
+        <result column="file_size" property="fileSize"/>
+        <result column="file_type" property="fileType"/>
+        <result column="mime_type" property="mimeType"/>
+        <result column="uploader_id" property="uploaderId"/>
+        <result column="related_type" property="relatedType"/>
+        <result column="related_id" property="relatedId"/>
+        <result column="download_count" property="downloadCount"/>
+        <result column="created_at" property="createdAt"/>
     </resultMap>
 
     <sql id="Base_Column_List">
-        id, original_name, stored_name, file_path, file_size, file_type, mime_type, 
-        uploader_id, upload_purpose, related_id, download_count, status, created_at, updated_at, deleted
+        id, original_name, saved_name, file_path, file_size, file_type, mime_type,
+        uploader_id, related_type, related_id, download_count, created_at
     </sql>
 
     <!-- 插入文件记录 -->
     <insert id="insertFileRecord" parameterType="com.noncore.assessment.entity.FileRecord" useGeneratedKeys="true" keyProperty="id">
         INSERT INTO file_records (
-            original_name, stored_name, file_path, file_size, file_type, mime_type, 
-            uploader_id, upload_purpose, related_id, download_count, status, created_at, updated_at, deleted
+            original_name, saved_name, file_path, file_size, file_type, mime_type,
+            uploader_id, related_type, related_id, download_count, created_at
         ) VALUES (
-            #{originalName}, #{storedName}, #{filePath}, #{fileSize}, #{fileType}, #{mimeType}, 
-            #{uploaderId}, #{uploadPurpose}, #{relatedId}, #{downloadCount}, #{status}, #{createdAt}, #{updatedAt}, #{deleted}
-        )
+                     #{originalName}, #{storedName}, #{filePath}, #{fileSize}, #{fileType}, #{mimeType},
+                     #{uploaderId}, #{relatedType}, #{relatedId}, #{downloadCount}, #{createdAt}
+                 )
     </insert>
 
     <!-- 根据ID查询文件记录 -->
     <select id="selectFileRecordById" parameterType="java.lang.Long" resultMap="FileRecordResultMap">
         SELECT <include refid="Base_Column_List"/>
         FROM file_records
-        WHERE id = #{id} AND deleted = false
+        WHERE id = #{id}
     </select>
 
     <!-- 根据上传者ID查询文件列表 -->
     <select id="selectByUploaderId" parameterType="java.lang.Long" resultMap="FileRecordResultMap">
         SELECT <include refid="Base_Column_List"/>
         FROM file_records
-        WHERE uploader_id = #{uploaderId} AND deleted = false
+        WHERE uploader_id = #{uploaderId}
         ORDER BY created_at DESC
     </select>
 
@@ -55,50 +52,50 @@
     <select id="selectByPurposeAndRelatedId" resultMap="FileRecordResultMap">
         SELECT <include refid="Base_Column_List"/>
         FROM file_records
-        WHERE upload_purpose = #{purpose} AND related_id = #{relatedId} AND deleted = false
+        WHERE related_type = #{purpose} AND related_id = #{relatedId}
         ORDER BY created_at DESC
     </select>
 
     <!-- 更新文件记录 -->
     <update id="updateFileRecord" parameterType="com.noncore.assessment.entity.FileRecord">
         UPDATE file_records SET
-            original_name = #{originalName},
-            file_size = #{fileSize},
-            file_type = #{fileType},
-            mime_type = #{mimeType},
-            upload_purpose = #{uploadPurpose},
-            related_id = #{relatedId},
-            status = #{status},
-            updated_at = #{updatedAt}
-        WHERE id = #{id} AND deleted = false
-    </update>
-
-    <!-- 删除文件记录（软删除） -->
-    <update id="deleteFileRecord" parameterType="java.lang.Long">
-        UPDATE file_records SET deleted = true, updated_at = NOW()
+                                original_name = #{originalName},
+                                saved_name = #{storedName},
+                                file_path = #{filePath},
+                                file_size = #{fileSize},
+                                file_type = #{fileType},
+                                mime_type = #{mimeType},
+                                uploader_id = #{uploaderId},
+                                related_type = #{relatedType},
+                                related_id = #{relatedId}
         WHERE id = #{id}
     </update>
 
+    <!-- 删除文件记录（软删除，只做物理删除时这样写，逻辑删除需有deleted字段） -->
+    <delete id="deleteFileRecord" parameterType="java.lang.Long">
+        DELETE FROM file_records
+        WHERE id = #{id}
+    </delete>
+
     <!-- 增加下载次数 -->
     <update id="incrementDownloadCount" parameterType="java.lang.Long">
-        UPDATE file_records SET 
-            download_count = download_count + 1,
-            updated_at = NOW()
-        WHERE id = #{id} AND deleted = false
+        UPDATE file_records SET
+            download_count = download_count + 1
+        WHERE id = #{id}
     </update>
 
     <!-- 根据文件类型统计数量 -->
     <select id="countByFileType" parameterType="java.lang.String" resultType="java.lang.Integer">
         SELECT COUNT(*)
         FROM file_records
-        WHERE file_type = #{fileType} AND deleted = false
+        WHERE file_type = #{fileType}
     </select>
 
     <!-- 获取用户存储使用量 -->
     <select id="getUserStorageUsage" parameterType="java.lang.Long" resultType="java.lang.Long">
         SELECT COALESCE(SUM(file_size), 0)
         FROM file_records
-        WHERE uploader_id = #{uploaderId} AND deleted = false
+        WHERE uploader_id = #{userId}
     </select>
 
-</mapper> 
+</mapper>

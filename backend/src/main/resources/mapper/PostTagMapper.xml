@@ -5,7 +5,7 @@
     <insert id="batchInsert">
         INSERT INTO post_tags (post_id, tag_id)
         VALUES
-        <foreach collection="list" item="postTag" separator=",">
+        <foreach collection="postTags" item="postTag" separator=",">
             (#{postTag.postId}, #{postTag.tagId})
         </foreach>
     </insert>

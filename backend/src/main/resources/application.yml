@@ -13,7 +13,7 @@ spring:
   
   application:
     name: student-assessment-system
-  
+
   # 数据源配置
   datasource:
     url: jdbc:mysql://${DB_HOST:localhost}:${DB_PORT:3306}/${DB_NAME:student_assessment_system}?useUnicode=true&characterEncoding=utf8&useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true
@@ -29,21 +29,8 @@ spring:
       max-lifetime: 1800000
       connection-timeout: 30000
       leak-detection-threshold: 60000
-  
+
   # Redis配置
-  redis:
-    host: ${REDIS_HOST:localhost}
-    port: ${REDIS_PORT:6379}
-    database: ${REDIS_DATABASE:0}
-    timeout: ${REDIS_TIMEOUT:3000ms}
-    password: ${REDIS_PASSWORD:}
-    lettuce:
-      pool:
-        max-active: 8
-        max-idle: 8
-        min-idle: 0
-        max-wait: -1ms
-  
   servlet:
     multipart:
       enabled: true
@@ -57,6 +44,13 @@ spring:
     serialization:
       write-dates-as-timestamps: false
     default-property-inclusion: non_null
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+      database: ${REDIS_DATABASE:0}
+      timeout: ${REDIS_TIMEOUT:3000ms}
+      password: ${REDIS_PASSWORD:}
 
 # MyBatis配置
 mybatis:
@@ -146,4 +140,4 @@ security:
       - /static/**
       - /public/**
       - /favicon.ico
-      - /api/files/download/public/** 
+      - /api/files/download/public/**

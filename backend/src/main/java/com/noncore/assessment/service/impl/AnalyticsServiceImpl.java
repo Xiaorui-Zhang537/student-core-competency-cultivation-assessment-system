@@ -37,7 +37,8 @@ public class AnalyticsServiceImpl implements AnalyticsService {
         AnalyticsCache cache = analyticsCacheMapper.findByKey(key);
         if (cache != null) {
             try {
-                return objectMapper.readValue(cache.getCacheValue(), new TypeReference<Map<String, Object>>() {});
+                return objectMapper.readValue(cache.getCacheValue(), new TypeReference<>() {
+                });
             } catch (IOException e) {
                 logger.error("Error parsing analytics cache for key: {}", key, e);
                 throw new BusinessException(ErrorCode.INTERNAL_SERVER_ERROR, "解析缓存数据失败", e);

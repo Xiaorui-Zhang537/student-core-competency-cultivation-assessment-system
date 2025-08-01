@@ -30,20 +30,6 @@ spring:
       connection-timeout: 30000
       leak-detection-threshold: 60000
   
-  # 生产环境Redis配置
-  redis:
-    host: ${REDIS_HOST}
-    port: ${REDIS_PORT}
-    database: ${REDIS_DATABASE:0}
-    timeout: ${REDIS_TIMEOUT:3000ms}
-    password: ${REDIS_PASSWORD}
-    lettuce:
-      pool:
-        max-active: 16
-        max-idle: 8
-        min-idle: 2
-        max-wait: -1ms
-  
   servlet:
     multipart:
       enabled: true
@@ -57,6 +43,13 @@ spring:
     serialization:
       write-dates-as-timestamps: false
     default-property-inclusion: non_null
+  data:
+    redis:
+      host: ${REDIS_HOST}
+      port: ${REDIS_PORT}
+      database: ${REDIS_DATABASE:0}
+      timeout: ${REDIS_TIMEOUT:3000ms}
+      password: ${REDIS_PASSWORD}
 
 # 生产环境MyBatis配置
 mybatis:
@@ -113,8 +106,10 @@ logging:
     file: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{50} - %msg%n"
   file:
     name: /app/logs/application.log
-    max-size: 100MB
-    max-history: 30
+  logback:
+    rollingpolicy:
+      max-history: 30
+      max-file-size: 100MB
 
 # 生产环境SpringDoc配置 (Swagger) - 关闭
 springdoc:

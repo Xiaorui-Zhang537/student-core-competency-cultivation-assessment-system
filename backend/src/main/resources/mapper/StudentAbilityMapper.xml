@@ -1,268 +1,250 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
 <mapper namespace="com.noncore.assessment.mapper.StudentAbilityMapper">
 
-    <!-- 结果映射 -->
+    <!-- 结果映射：基本字段 -->
     <resultMap id="StudentAbilityResultMap" type="com.noncore.assessment.entity.StudentAbility">
         <id column="id" property="id"/>
         <result column="student_id" property="studentId"/>
         <result column="dimension_id" property="dimensionId"/>
-        <result column="score" property="score"/>
+        <result column="current_score" property="currentScore"/>
         <result column="level" property="level"/>
-        <result column="trend" property="trend"/>
+        <result column="last_assessment_at" property="lastAssessmentAt"/>
         <result column="assessment_count" property="assessmentCount"/>
-        <result column="last_assessed_at" property="lastAssessedAt"/>
-        <result column="deleted" property="deleted"/>
-        <result column="last_updated_by" property="lastUpdatedBy"/>
+        <result column="trend" property="trend"/>
         <result column="created_at" property="createdAt"/>
         <result column="updated_at" property="updatedAt"/>
+        <!-- 冗余字段（如有） -->
+        <result column="dimension_name" property="dimensionName"/>
+        <result column="dimension_category" property="dimensionCategory"/>
+        <result column="student_name" property="studentName"/>
     </resultMap>
-
-    <resultMap id="StudentAbilityDetailResultMap" type="com.noncore.assessment.entity.StudentAbility" extends="StudentAbilityResultMap">
-        <association property="student" javaType="com.noncore.assessment.entity.User">
-            <id column="student_id" property="id"/>
-            <result column="student_name" property="displayName"/>
-        </association>
-        <association property="dimension" javaType="com.noncore.assessment.entity.AbilityDimension">
-            <id column="dimension_id" property="id"/>
-            <result column="dimension_name" property="name"/>
-            <result column="dimension_category" property="category"/>
-        </association>
-    </resultMap>
-
-    <!-- 基础查询字段 -->
-    <sql id="studentAbilityColumns">
-        sa.id, sa.student_id, sa.dimension_id, sa.score, sa.level, sa.trend,
-        sa.assessment_count, sa.last_assessed_at, sa.created_at, sa.updated_at, sa.deleted
-    </sql>
-
-    <sql id="studentAbilityDetailColumns">
-        <include refid="studentAbilityColumns"/>,
-        u.display_name as student_name,
-        d.name as dimension_name,
-        d.category as dimension_category
-    </sql>
 
     <!-- 插入学生能力记录 -->
     <insert id="insertStudentAbility" parameterType="com.noncore.assessment.entity.StudentAbility" useGeneratedKeys="true" keyProperty="id">
         INSERT INTO student_abilities (
-            student_id, dimension_id, score, level, trend,
-            assessment_count, last_assessed_at, created_at, updated_at, deleted
+            student_id,
+            dimension_id,
+            current_score,
+            level,
+            last_assessment_at,
+            assessment_count,
+            trend,
+            created_at,
+            updated_at
         ) VALUES (
-            #{studentId}, #{dimensionId}, #{score}, #{level}, #{trend},
-            #{assessmentCount}, #{lastAssessedAt}, NOW(), NOW(), false
-        )
+                     #{studentId},
+                     #{dimensionId},
+                     #{currentScore},
+                     #{level},
+                     #{lastAssessmentAt},
+                     #{assessmentCount},
+                     #{trend},
+                     NOW(),
+                     NOW()
+                 )
     </insert>
 
     <!-- 根据ID查询 -->
-    <select id="selectStudentAbilityById" parameterType="long" resultMap="StudentAbilityDetailResultMap">
-        SELECT <include refid="studentAbilityDetailColumns"/>
+    <select id="selectStudentAbilityById" resultMap="StudentAbilityResultMap">
+        SELECT sa.*,
+               d.name as dimension_name,
+               d.category as dimension_category,
+               u.display_name as student_name
         FROM student_abilities sa
-        LEFT JOIN users u ON sa.student_id = u.id
-        LEFT JOIN ability_dimensions d ON sa.dimension_id = d.id
-        WHERE sa.id = #{id} AND sa.deleted = false
+                 LEFT JOIN ability_dimensions d ON sa.dimension_id = d.id
+                 LEFT JOIN users u ON sa.student_id = u.id
+        WHERE sa.id = #{id}
     </select>
 
     <!-- 更新学生能力记录 -->
     <update id="updateStudentAbility" parameterType="com.noncore.assessment.entity.StudentAbility">
         UPDATE student_abilities
         <set>
-            <if test="score != null">score = #{score},</if>
+            <if test="currentScore != null">current_score = #{currentScore},</if>
             <if test="level != null">level = #{level},</if>
-            <if test="trend != null">trend = #{trend},</if>
+            <if test="lastAssessmentAt != null">last_assessment_at = #{lastAssessmentAt},</if>
             <if test="assessmentCount != null">assessment_count = #{assessmentCount},</if>
-            <if test="lastAssessedAt != null">last_assessed_at = #{lastAssessedAt},</if>
+            <if test="trend != null">trend = #{trend},</if>
             updated_at = NOW()
         </set>
-        WHERE id = #{id} AND deleted = false
-    </update>
-
-    <!-- 软删除学生能力记录 -->
-    <update id="deleteStudentAbility" parameterType="long">
-        UPDATE student_abilities
-        SET deleted = true, updated_at = NOW()
         WHERE id = #{id}
     </update>
 
-    <!-- 根据学生和维度查询 -->
-    <select id="selectByStudentAndDimension" resultMap="StudentAbilityDetailResultMap">
-        SELECT <include refid="studentAbilityDetailColumns"/>
+    <!-- 删除学生能力记录 -->
+    <delete id="deleteStudentAbility">
+        DELETE FROM student_abilities WHERE id = #{id}
+    </delete>
+
+    <!-- 根据学生ID和维度ID查询能力记录 -->
+    <select id="selectByStudentAndDimension" resultMap="StudentAbilityResultMap">
+        SELECT sa.*,
+               d.name as dimension_name,
+               d.category as dimension_category,
+               u.display_name as student_name
         FROM student_abilities sa
-        LEFT JOIN users u ON sa.student_id = u.id
-        LEFT JOIN ability_dimensions d ON sa.dimension_id = d.id
-        WHERE sa.student_id = #{studentId} AND sa.dimension_id = #{dimensionId} AND sa.deleted = false
+                 LEFT JOIN ability_dimensions d ON sa.dimension_id = d.id
+                 LEFT JOIN users u ON sa.student_id = u.id
+        WHERE sa.student_id = #{studentId} AND sa.dimension_id = #{dimensionId}
     </select>
 
-    <!-- 根据学生ID查询 -->
-    <select id="selectByStudentId" parameterType="long" resultMap="StudentAbilityDetailResultMap">
-        SELECT <include refid="studentAbilityDetailColumns"/>
+    <!-- 根据学生ID查询所有能力记录 -->
+    <select id="selectByStudentId" resultMap="StudentAbilityResultMap">
+        SELECT sa.*,
+               d.name as dimension_name,
+               d.category as dimension_category,
+               u.display_name as student_name
         FROM student_abilities sa
-        LEFT JOIN users u ON sa.student_id = u.id
-        LEFT JOIN ability_dimensions d ON sa.dimension_id = d.id
-        WHERE sa.student_id = #{studentId} AND sa.deleted = false
-        ORDER BY d.sort_order ASC
+                 LEFT JOIN ability_dimensions d ON sa.dimension_id = d.id
+                 LEFT JOIN users u ON sa.student_id = u.id
+        WHERE sa.student_id = #{studentId}
     </select>
 
-    <!-- 根据维度ID查询 -->
-    <select id="selectByDimensionId" parameterType="long" resultMap="StudentAbilityDetailResultMap">
-        SELECT <include refid="studentAbilityDetailColumns"/>
+    <!-- 根据维度ID查询所有学生能力记录 -->
+    <select id="selectByDimensionId" resultMap="StudentAbilityResultMap">
+        SELECT sa.*,
+               d.name as dimension_name,
+               d.category as dimension_category,
+               u.display_name as student_name
         FROM student_abilities sa
-        LEFT JOIN users u ON sa.student_id = u.id
-        LEFT JOIN ability_dimensions d ON sa.dimension_id = d.id
-        WHERE sa.dimension_id = #{dimensionId} AND sa.deleted = false
-        ORDER BY sa.score DESC
+                 LEFT JOIN ability_dimensions d ON sa.dimension_id = d.id
+                 LEFT JOIN users u ON sa.student_id = u.id
+        WHERE sa.dimension_id = #{dimensionId}
+        ORDER BY sa.current_score DESC
     </select>
 
-    <!-- 分页查询学生能力 -->
-    <select id="selectStudentAbilitiesWithPagination" resultMap="StudentAbilityDetailResultMap">
-        SELECT <include refid="studentAbilityDetailColumns"/>
+    <!-- 分页查询学生能力记录 -->
+    <select id="selectStudentAbilitiesWithPagination" resultMap="StudentAbilityResultMap">
+        SELECT sa.*,
+        d.name as dimension_name,
+        d.category as dimension_category,
+        u.display_name as student_name
         FROM student_abilities sa
-        LEFT JOIN users u ON sa.student_id = u.id
         LEFT JOIN ability_dimensions d ON sa.dimension_id = d.id
-        <where>
-            sa.deleted = false
-            <if test="studentId != null">AND sa.student_id = #{studentId}</if>
-            <if test="dimensionId != null">AND sa.dimension_id = #{dimensionId}</if>
-            <if test="level != null and level != ''">AND sa.level = #{level}</if>
-        </where>
-        ORDER BY d.sort_order ASC, sa.score DESC
+        LEFT JOIN users u ON sa.student_id = u.id
+        WHERE 1=1
+        <if test="studentId != null">AND sa.student_id = #{studentId}</if>
+        <if test="dimensionId != null">AND sa.dimension_id = #{dimensionId}</if>
+        <if test="category != null and category != ''">AND d.category = #{category}</if>
+        <if test="level != null and level != ''">AND sa.level = #{level}</if>
+        ORDER BY sa.updated_at DESC
         LIMIT #{offset}, #{size}
     </select>
 
-    <!-- 统计学生能力数量 -->
+    <!-- 统计学生能力记录数量 -->
     <select id="countStudentAbilities" resultType="integer">
         SELECT COUNT(1)
         FROM student_abilities sa
-        <where>
-            sa.deleted = false
-            <if test="studentId != null">AND sa.student_id = #{studentId}</if>
-            <if test="dimensionId != null">AND sa.dimension_id = #{dimensionId}</if>
-            <if test="level != null and level != ''">AND sa.level = #{level}</if>
-        </where>
+        LEFT JOIN ability_dimensions d ON sa.dimension_id = d.id
+        WHERE 1=1
+        <if test="studentId != null">AND sa.student_id = #{studentId}</if>
+        <if test="dimensionId != null">AND sa.dimension_id = #{dimensionId}</if>
+        <if test="category != null and category != ''">AND d.category = #{category}</if>
+        <if test="level != null and level != ''">AND sa.level = #{level}</if>
     </select>
 
-    <!-- 更新学生分数 -->
+    <!-- 更新学生能力分数 -->
     <update id="updateStudentScore">
         UPDATE student_abilities
-        SET score = #{score}, last_assessed_at = NOW(), assessment_count = assessment_count + 1, updated_at = NOW()
+        SET current_score = #{newScore},
+            assessment_count = assessment_count + 1,
+            last_assessment_at = NOW(),
+            updated_at = NOW()
         WHERE student_id = #{studentId} AND dimension_id = #{dimensionId}
     </update>
 
-    <!-- 批量更新学生能力 -->
+    <!-- 批量更新学生能力记录 -->
     <update id="batchUpdateStudentAbilities">
-        <foreach collection="studentAbilities" item="item" separator=";">
+        <foreach collection="abilities" item="item" separator=";">
             UPDATE student_abilities
             <set>
-                <if test="item.score != null">score = #{item.score},</if>
+                <if test="item.currentScore != null">current_score = #{item.currentScore},</if>
                 <if test="item.level != null">level = #{item.level},</if>
-                <if test="item.trend != null">trend = #{item.trend},</if>
+                <if test="item.lastAssessmentAt != null">last_assessment_at = #{item.lastAssessmentAt},</if>
                 <if test="item.assessmentCount != null">assessment_count = #{item.assessmentCount},</if>
-                <if test="item.lastAssessedAt != null">last_assessed_at = #{item.lastAssessedAt},</if>
+                <if test="item.trend != null">trend = #{item.trend},</if>
                 updated_at = NOW()
             </set>
-            WHERE id = #{item.id} AND deleted = false
+            WHERE id = #{item.id}
         </foreach>
     </update>
 
-    <!-- 获取学生能力统计 -->
+    <!-- 获取学生能力统计信息 -->
     <select id="getStudentAbilityStats" parameterType="long" resultType="map">
-        SELECT
-            AVG(sa.score) as average_score,
-            COUNT(1) as total_dimensions,
-            SUM(CASE WHEN sa.level = 'EXPERT' THEN 1 ELSE 0 END) as expert_count,
-            SUM(CASE WHEN sa.level = 'ADVANCED' THEN 1 ELSE 0 END) as advanced_count,
-            SUM(CASE WHEN sa.level = 'INTERMEDIATE' THEN 1 ELSE 0 END) as intermediate_count
-        FROM student_abilities sa
-        WHERE sa.student_id = #{studentId} AND sa.deleted = false
+        SELECT AVG(current_score)                    as average_score,
+               COUNT(1)                              as total_dimensions,
+               SUM(IF(level = 'expert', 1, 0))       as expert_count,
+               SUM(IF(level = 'advanced', 1, 0))     as advanced_count,
+               SUM(IF(level = 'intermediate', 1, 0)) as intermediate_count
+        FROM student_abilities
+        WHERE student_id = #{studentId}
     </select>
 
-    <!-- 获取班级能力统计 -->
+    <!-- 获取班级/课程能力统计 -->
     <select id="getClassAbilityStats" resultType="map">
         SELECT
-            AVG(sa.score) as average_score,
-            MAX(sa.score) as max_score,
-            MIN(sa.score) as min_score,
-            d.name as dimension_name
+        AVG(sa.current_score) as average_score,
+        MAX(sa.current_score) as max_score,
+        MIN(sa.current_score) as min_score,
+        d.name as dimension_name
         FROM student_abilities sa
-        INNER JOIN ability_dimensions d ON sa.dimension_id = d.id
-        WHERE sa.dimension_id = #{dimensionId} AND sa.deleted = false
-        <if test="studentIds != null and studentIds.size > 0">
-            AND sa.student_id IN
-            <foreach collection="studentIds" item="studentId" open="(" separator="," close=")">
-                #{studentId}
-            </foreach>
-        </if>
+        LEFT JOIN ability_dimensions d ON sa.dimension_id = d.id
+        WHERE 1=1
+        <if test="courseId != null">AND d.course_id = #{courseId}</if>
+        <if test="dimensionId != null">AND sa.dimension_id = #{dimensionId}</if>
         GROUP BY d.name
     </select>
 
     <!-- 获取学生能力排名 -->
-    <select id="getStudentAbilityRanking" resultMap="StudentAbilityDetailResultMap">
+    <select id="getStudentAbilityRanking" resultType="map">
         SELECT
-            <include refid="studentAbilityDetailColumns"/>,
-            RANK() OVER (ORDER BY sa.score DESC) as ranking
+            sa.student_id,
+            u.display_name as student_name,
+            sa.current_score,
+            sa.level,
+            RANK() OVER (ORDER BY sa.current_score DESC) as ranking
         FROM student_abilities sa
-        LEFT JOIN users u ON sa.student_id = u.id
-        LEFT JOIN ability_dimensions d ON sa.dimension_id = d.id
-        WHERE sa.dimension_id = #{dimensionId} AND sa.deleted = false
-        ORDER BY sa.score DESC
+                 LEFT JOIN users u ON sa.student_id = u.id
+        WHERE sa.dimension_id = #{dimensionId}
+        ORDER BY sa.current_score DESC
         LIMIT #{limit}
     </select>
 
-    <!-- 初始化学生能力 -->
+    <!-- 初始化学生能力记录 -->
     <insert id="initializeStudentAbilities">
-        INSERT INTO student_abilities (student_id, dimension_id, created_at, updated_at)
-        SELECT #{studentId}, id, NOW(), NOW()
-        FROM ability_dimensions
-        WHERE id NOT IN (SELECT dimension_id FROM student_abilities WHERE student_id = #{studentId})
+        INSERT INTO student_abilities (student_id, dimension_id, current_score, level, assessment_count, trend, created_at, updated_at)
+        SELECT #{studentId}, d.id, 0, 'beginner', 0, 'stable', NOW(), NOW()
+        FROM ability_dimensions d
+        WHERE d.id NOT IN (SELECT dimension_id FROM student_abilities WHERE student_id = #{studentId})
     </insert>
 
-    <!-- 获取学生能力趋势 -->
+    <!-- 获取学生能力发展趋势数据 -->
     <select id="getStudentAbilityTrends" resultType="map">
-        SELECT
-            DATE_FORMAT(a.assessment_date, '%Y-%m') AS month,
-            AVG(a.score) AS average_score
-        FROM ability_assessments a
-        WHERE a.student_id = #{studentId} AND a.dimension_id = #{dimensionId} AND a.deleted = false
-        AND a.assessment_date >= DATE_SUB(NOW(), INTERVAL #{months} MONTH)
+        SELECT DATE_FORMAT(a.created_at, '%Y-%m') AS month,
+               AVG(a.current_score)               AS average_score
+        FROM student_abilities a
+        WHERE a.student_id = #{studentId}
+          AND a.dimension_id = #{dimensionId}
+          AND a.created_at >= DATE_SUB(NOW(), INTERVAL #{months} MONTH)
         GROUP BY month
-        ORDER BY month ASC
+        ORDER BY month
     </select>
 
     <!-- 检查学生能力记录是否存在 -->
     <select id="existsByStudentAndDimension" resultType="boolean">
         SELECT COUNT(1) > 0
-        FROM student_abilities sa
-        WHERE sa.student_id = #{studentId} AND sa.dimension_id = #{dimensionId} AND sa.deleted = false
+        FROM student_abilities
+        WHERE student_id = #{studentId} AND dimension_id = #{dimensionId}
     </select>
 
+    <!-- 查询学生综合能力均分 -->
     <select id="selectOverallScoreByStudentId" resultType="java.math.BigDecimal">
-        SELECT AVG(score)
+        SELECT AVG(current_score)
         FROM student_abilities
         WHERE student_id = #{studentId}
     </select>
 
-    <select id="selectDimensionScoresByStudentId" resultType="java.util.Map">
-        SELECT ad.name, sa.score
-        FROM student_abilities sa
-        JOIN ability_dimensions ad ON sa.dimension_id = ad.id
-        WHERE sa.student_id = #{studentId}
-    </select>
-
-    <!-- 统计所有有能力得分的学生总数 -->
-    <select id="countTotalStudentsWithAbilityScores" resultType="long">
-        SELECT COUNT(DISTINCT student_id)
-        FROM student_abilities
-    </select>
-
-    <!-- 统计综合能力分高于给定分数的学生数量 -->
-    <select id="countStudentsWithHigherOverallScore" parameterType="java.math.BigDecimal" resultType="long">
-        SELECT COUNT(*)
-        FROM (
-            SELECT student_id, AVG(score) as avg_score
-            FROM student_abilities
-            GROUP BY student_id
-            HAVING avg_score > #{score}
-        ) as higher_students
-    </select>
-
-</mapper> 
+</mapper>

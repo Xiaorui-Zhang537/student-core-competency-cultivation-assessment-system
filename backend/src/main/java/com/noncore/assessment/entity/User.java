@@ -6,6 +6,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.io.Serial;
 import java.io.Serializable;
 import java.util.Date;
 
@@ -16,21 +17,22 @@ import java.util.Date;
 @Schema(description = "用户实体")
 public class User implements Serializable {
 
+    @Serial
     private static final long serialVersionUID = 1L;
 
     @Schema(description = "用户ID")
     private Long id;
 
-    @Schema(description = "用户名", required = true)
+    @Schema(description = "用户名")
     private String username;
 
-    @Schema(description = "邮箱", required = true)
+    @Schema(description = "邮箱")
     private String email;
 
-    @Schema(description = "密码", required = true)
+    @Schema(description = "密码")
     private String password;
 
-    @Schema(description = "角色", required = true, example = "student")
+    @Schema(description = "角色", example = "student")
     private String role;
 
     @Schema(description = "头像URL")
@@ -65,13 +67,13 @@ public class User implements Serializable {
 
     @Schema(description = "电话号码")
     private String phone;
-    
+
     @Schema(description = "创建时间")
     private Date createdAt;
 
     @Schema(description = "更新时间")
     private Date updatedAt;
-    
+
     @Schema(description = "是否已删除", example = "false")
     private boolean deleted;
 
@@ -88,8 +90,4 @@ public class User implements Serializable {
     public void updateTimestamp() {
         this.updatedAt = new Date();
     }
-
-    public boolean isEmailVerified() {
-        return emailVerified;
-    }
-} 
+}

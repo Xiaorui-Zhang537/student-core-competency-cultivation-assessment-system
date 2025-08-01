@@ -49,8 +49,9 @@ public interface TagMapper {
 
     /**
      * 批量插入标签
-     * @param tags
-     * @return
+     *
+     * @param tags 标签列表
+     * @return 成功插入的记录数
      */
     int batchInsert(@Param("tags") List<Tag> tags);
 
@@ -65,7 +66,7 @@ public interface TagMapper {
     /**
      * 查询标签列表
      *
-     * @param params 查询参数
+     * @param params 查询参数（可包含条件如名称、状态等）
      * @return 标签列表
      */
     List<Tag> selectList(Map<String, Object> params);
@@ -73,7 +74,7 @@ public interface TagMapper {
     /**
      * 查询标签总数
      *
-     * @param params 查询参数
+     * @param params 查询参数（可包含条件如名称、状态等）
      * @return 标签总数
      */
     long countList(Map<String, Object> params);
@@ -97,7 +98,7 @@ public interface TagMapper {
     /**
      * 查询热门标签
      *
-     * @param limit 限制数量
+     * @param limit 限制返回数量
      * @return 热门标签列表
      */
     List<Tag> selectHotTags(int limit);
@@ -121,9 +122,9 @@ public interface TagMapper {
     /**
      * 搜索标签
      *
-     * @param keyword 关键词
-     * @param limit 限制数量
-     * @return 标签列表
+     * @param keyword 搜索关键字
+     * @param limit 限制返回数量
+     * @return 匹配的标签列表
      */
     List<Tag> searchTags(@Param("keyword") String keyword, @Param("limit") int limit);
-} 
+}

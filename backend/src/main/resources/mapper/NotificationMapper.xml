@@ -2,153 +2,209 @@
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.noncore.assessment.mapper.NotificationMapper">
 
+    <!-- 通知结果映射 -->
     <resultMap id="NotificationResultMap" type="com.noncore.assessment.entity.Notification">
-        <id column="id" property="id" jdbcType="BIGINT"/>
-        <result column="recipient_id" property="recipientId" jdbcType="BIGINT"/>
-        <result column="sender_id" property="senderId" jdbcType="BIGINT"/>
-        <result column="title" property="title" jdbcType="VARCHAR"/>
-        <result column="content" property="content" jdbcType="CLOB"/>
-        <result column="type" property="type" jdbcType="VARCHAR"/>
-        <result column="category" property="category" jdbcType="VARCHAR"/>
-        <result column="priority" property="priority" jdbcType="VARCHAR"/>
-        <result column="related_type" property="relatedType" jdbcType="VARCHAR"/>
-        <result column="related_id" property="relatedId" jdbcType="BIGINT"/>
-        <result column="is_read" property="isRead" jdbcType="BOOLEAN"/>
-        <result column="read_at" property="readAt" jdbcType="TIMESTAMP"/>
-        <result column="created_at" property="createdAt" jdbcType="TIMESTAMP"/>
-        <result column="updated_at" property="updatedAt" jdbcType="TIMESTAMP"/>
-        <result column="deleted" property="deleted" jdbcType="BOOLEAN"/>
+        <id column="id" property="id"/>
+        <result column="user_id" property="recipientId"/>
+        <!-- senderId 非必需，可扩展，见下 -->
+        <result column="title" property="title"/>
+        <result column="content" property="content"/>
+        <result column="type" property="type"/>
+        <result column="priority" property="priority"/>
+        <result column="is_read" property="isRead"/>
+        <result column="related_type" property="relatedType"/>
+        <result column="related_id" property="relatedId"/>
+        <result column="expired_at" property="expiredAt"/>
+        <result column="created_at" property="createdAt"/>
+        <!-- 业务拓展 -->
+        <result column="category" property="category"/>
+        <result column="read_at" property="readAt"/>
+        <result column="updated_at" property="updatedAt"/>
+        <result column="deleted" property="deleted"/>
+        <result column="data" property="data"/>
+        <result column="icon" property="icon"/>
+        <result column="action_url" property="actionUrl"/>
     </resultMap>
 
+    <!-- 公共列 -->
     <sql id="Base_Column_List">
-        id, recipient_id, sender_id, title, content, type, category, priority, 
-        related_type, related_id, is_read, read_at, created_at, updated_at, deleted
+        id, user_id, title, content, type, priority, is_read, related_type, related_id, expired_at, created_at,
+        <!-- 下面字段视是否加到表里自动兼容 -->
+        category, read_at, updated_at, deleted, data, icon, action_url
     </sql>
 
     <!-- 插入通知 -->
     <insert id="insertNotification" parameterType="com.noncore.assessment.entity.Notification" useGeneratedKeys="true" keyProperty="id">
         INSERT INTO notifications (
-            recipient_id, sender_id, title, content, type, category, priority, 
-            related_type, related_id, is_read, read_at, created_at, updated_at, deleted
+        user_id, title, content, type, priority, is_read, related_type, related_id, expired_at, created_at,
+        <!-- 扩展字段自动适配 -->
+        <if test="category != null">category,</if>
+        <if test="readAt != null">read_at,</if>
+        <if test="updatedAt != null">updated_at,</if>
+        <if test="deleted != null">deleted,</if>
+        <if test="data != null">data,</if>
+        <if test="icon != null">icon,</if>
+        <if test="actionUrl != null">action_url,</if>
         ) VALUES (
-            #{recipientId}, #{senderId}, #{title}, #{content}, #{type}, #{category}, #{priority}, 
-            #{relatedType}, #{relatedId}, #{isRead}, #{readAt}, #{createdAt}, #{updatedAt}, #{deleted}
+        #{recipientId}, #{title}, #{content}, #{type}, #{priority}, #{isRead}, #{relatedType}, #{relatedId}, #{expiredAt}, #{createdAt},
+        <if test="category != null">#{category},</if>
+        <if test="readAt != null">#{readAt},</if>
+        <if test="updatedAt != null">#{updatedAt},</if>
+        <if test="deleted != null">#{deleted},</if>
+        <if test="data != null">#{data},</if>
+        <if test="icon != null">#{icon},</if>
+        <if test="actionUrl != null">#{actionUrl},</if>
         )
     </insert>
 
-    <!-- 根据ID查询通知 -->
-    <select id="selectNotificationById" parameterType="java.lang.Long" resultMap="NotificationResultMap">
+    <!-- 批量插入 -->
+    <insert id="batchInsertNotifications" parameterType="java.util.List">
+        INSERT INTO notifications (
+        user_id, title, content, type, priority, is_read, related_type, related_id, expired_at, created_at
+        ) VALUES
+        <foreach collection="notifications" item="item" separator=",">
+            (#{item.recipientId}, #{item.title}, #{item.content}, #{item.type}, #{item.priority}, #{item.isRead}, #{item.relatedType}, #{item.relatedId}, #{item.expiredAt}, #{item.createdAt})
+        </foreach>
+    </insert>
+
+    <!-- 查询 -->
+    <select id="selectNotificationById" resultMap="NotificationResultMap">
         SELECT <include refid="Base_Column_List"/>
         FROM notifications
-        WHERE id = #{id} AND deleted = false
+        WHERE id = #{id} AND deleted = 0
     </select>
 
-    <!-- 根据接收者ID查询通知列表 -->
-    <select id="selectByRecipientId" parameterType="java.lang.Long" resultMap="NotificationResultMap">
+    <select id="selectByRecipientId" resultMap="NotificationResultMap">
         SELECT <include refid="Base_Column_List"/>
         FROM notifications
-        WHERE recipient_id = #{recipientId} AND deleted = false
+        WHERE user_id = #{recipientId} AND deleted = 0
         ORDER BY created_at DESC
     </select>
 
-    <!-- 根据发送者ID查询通知列表 -->
-    <select id="selectBySenderId" parameterType="java.lang.Long" resultMap="NotificationResultMap">
+    <select id="selectBySenderId" resultMap="NotificationResultMap">
         SELECT <include refid="Base_Column_List"/>
         FROM notifications
-        WHERE sender_id = #{senderId} AND deleted = false
+        WHERE sender_id = #{senderId} AND deleted = 0
         ORDER BY created_at DESC
+    </select>
+
+    <select id="selectByRecipientAndType" resultMap="NotificationResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM notifications
+        WHERE user_id = #{recipientId} AND type = #{type} AND deleted = 0
+        ORDER BY created_at DESC
+    </select>
+
+    <!-- 分页 -->
+    <select id="selectByRecipientWithPagination" resultMap="NotificationResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM notifications
+        WHERE user_id = #{recipientId} AND deleted = 0
+        <if test="type != null and type != ''">
+            AND type = #{type}
+        </if>
+        ORDER BY created_at DESC
+        LIMIT #{offset}, #{size}
+    </select>
+
+    <!-- 总数 -->
+    <select id="countByRecipient" resultType="java.lang.Integer">
+        SELECT COUNT(*)
+        FROM notifications
+        WHERE user_id = #{recipientId} AND deleted = 0
+        <if test="type != null and type != ''">
+            AND type = #{type}
+        </if>
+    </select>
+
+    <!-- 按类型统计未读 -->
+    <select id="countUnreadByRecipientWithType" resultType="java.lang.Integer">
+        SELECT COUNT(*)
+        FROM notifications
+        WHERE user_id = #{recipientId} AND is_read = 0 AND deleted = 0
+          AND type = #{type}
+    </select>
+
+    <!-- 统计未读 -->
+    <select id="countUnreadByRecipient" resultType="java.lang.Integer">
+        SELECT COUNT(*)
+        FROM notifications
+        WHERE user_id = #{recipientId} AND is_read = 0 AND deleted = 0
     </select>
 
     <!-- 更新通知 -->
     <update id="updateNotification" parameterType="com.noncore.assessment.entity.Notification">
         UPDATE notifications SET
-            title = #{title},
-            content = #{content},
-            type = #{type},
-            category = #{category},
-            priority = #{priority},
-            related_type = #{relatedType},
-            related_id = #{relatedId},
-            updated_at = #{updatedAt}
-        WHERE id = #{id} AND deleted = false
+        title = #{title},
+        content = #{content},
+        type = #{type},
+        priority = #{priority},
+        related_type = #{relatedType},
+        related_id = #{relatedId},
+        expired_at = #{expiredAt},
+        updated_at = NOW(),
+        <if test="category != null">category = #{category},</if>
+        <if test="readAt != null">read_at = #{readAt},</if>
+        <if test="deleted != null">deleted = #{deleted},</if>
+        <if test="data != null">data = #{data},</if>
+        <if test="icon != null">icon = #{icon},</if>
+        <if test="actionUrl != null">action_url = #{actionUrl},</if>
+        WHERE id = #{id} AND deleted = 0
     </update>
 
-    <!-- 标记通知为已读 -->
-    <update id="markAsRead" parameterType="java.lang.Long">
-        UPDATE notifications SET 
-            is_read = true,
-            read_at = NOW(),
-            updated_at = NOW()
-        WHERE id = #{id} AND deleted = false
+    <!-- 标记为已读 -->
+    <update id="markAsRead">
+        UPDATE notifications
+        SET is_read = 1, read_at = NOW(), updated_at = NOW()
+        WHERE id = #{id} AND deleted = 0
     </update>
 
-    <!-- 批量标记通知为已读 -->
-    <update id="markAllAsReadByRecipient" parameterType="java.lang.Long">
-        UPDATE notifications SET 
-            is_read = true,
-            read_at = NOW(),
-            updated_at = NOW()
-        WHERE recipient_id = #{recipientId} AND is_read = false AND deleted = false
+    <!-- 批量标记为已读 -->
+    <update id="batchMarkAsRead">
+        UPDATE notifications
+        SET is_read = 1, read_at = NOW(), updated_at = NOW()
+        WHERE id IN
+        <foreach collection="notificationIds" item="id" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+        AND user_id = #{userId} AND deleted = 0
     </update>
 
-    <!-- 删除通知（软删除） -->
-    <update id="deleteNotification" parameterType="java.lang.Long">
-        UPDATE notifications SET deleted = true, updated_at = NOW()
+    <!-- 全部标记为已读 -->
+    <update id="markAllAsReadByRecipient">
+        UPDATE notifications
+        SET is_read = 1, read_at = NOW(), updated_at = NOW()
+        WHERE user_id = #{recipientId} AND is_read = 0 AND deleted = 0
+    </update>
+
+    <!-- 软删除 -->
+    <update id="deleteNotification">
+        UPDATE notifications
+        SET deleted = 1, updated_at = NOW()
         WHERE id = #{id}
     </update>
 
-    <!-- 统计未读通知数量 -->
-    <select id="countUnreadByRecipient" parameterType="java.lang.Long" resultType="java.lang.Integer">
-        SELECT COUNT(*)
-        FROM notifications
-        WHERE recipient_id = #{recipientId} AND is_read = false AND deleted = false
-    </select>
-
-    <!-- 根据类型查询通知列表 -->
-    <select id="selectByRecipientAndType" resultMap="NotificationResultMap">
+    <!-- 获取最近通知 -->
+    <select id="selectRecentNotifications" resultMap="NotificationResultMap">
         SELECT <include refid="Base_Column_List"/>
         FROM notifications
-        WHERE recipient_id = #{recipientId} AND type = #{type} AND deleted = false
-        ORDER BY created_at DESC
-    </select>
-
-    <!-- 分页查询接收者的通知 -->
-    <select id="selectByRecipientWithPagination" resultMap="NotificationResultMap">
-        SELECT <include refid="Base_Column_List"/>
-        FROM notifications
-        WHERE recipient_id = #{recipientId} 
-            AND deleted = false
-            <if test="type != null and type != ''">
-                AND type = #{type}
-            </if>
-        ORDER BY created_at DESC
-        LIMIT #{offset}, #{size}
-    </select>
-
-    <!-- 统计通知总数（用于分页） -->
-    <select id="countByRecipient" resultType="java.lang.Integer">
-        SELECT COUNT(*)
-        FROM notifications
-        WHERE recipient_id = #{recipientId} 
-            AND deleted = false
-            <if test="type != null and type != ''">
-                AND type = #{type}
-            </if>
-    </select>
-
-    <!-- 获取最近的通知列表 (DTO) -->
-    <select id="findRecentNotifications" resultType="com.noncore.assessment.dto.response.StudentDashboardResponse$RecentNotificationDto">
-        SELECT
-            id,
-            title,
-            content,
-            type,
-            is_read,
-            created_at
-        FROM notifications
-        WHERE recipient_id = #{recipientId} AND deleted = false
+        WHERE user_id = #{userId} AND deleted = 0
         ORDER BY created_at DESC
         LIMIT #{limit}
     </select>
 
-</mapper> 
+    <!-- 按类型分组统计数量 -->
+    <select id="countByRecipientGroupByType" resultType="map">
+        SELECT type, COUNT(*) as count
+        FROM notifications
+        WHERE user_id = #{userId} AND deleted = 0
+        GROUP BY type
+    </select>
+
+    <!-- 清理过期通知 -->
+    <delete id="deleteExpiredNotifications">
+        DELETE FROM notifications
+        WHERE expired_at &lt;= #{cutoffDate}
+    </delete>
+
+</mapper>

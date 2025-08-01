@@ -3,48 +3,49 @@
 <mapper namespace="com.noncore.assessment.mapper.GradeMapper">
 
     <resultMap id="GradeResultMap" type="com.noncore.assessment.entity.Grade">
-        <id column="id" property="id" jdbcType="BIGINT"/>
-        <result column="submission_id" property="submissionId" jdbcType="BIGINT"/>
-        <result column="student_id" property="studentId" jdbcType="BIGINT"/>
-        <result column="assignment_id" property="assignmentId" jdbcType="BIGINT"/>
-        <result column="grader_id" property="graderId" jdbcType="BIGINT"/>
-        <result column="score" property="score" jdbcType="DECIMAL"/>
-        <result column="max_score" property="maxScore" jdbcType="DECIMAL"/>
-        <result column="feedback" property="feedback" jdbcType="CLOB"/>
-        <result column="rubric" property="rubric" jdbcType="CLOB"/>
-        <result column="ai_analysis" property="aiAnalysis" jdbcType="CLOB"/>
-        <result column="status" property="status" jdbcType="VARCHAR"/>
-        <result column="graded_at" property="gradedAt" jdbcType="TIMESTAMP"/>
-        <result column="created_at" property="createdAt" jdbcType="TIMESTAMP"/>
-        <result column="updated_at" property="updatedAt" jdbcType="TIMESTAMP"/>
-        <result column="deleted" property="deleted" jdbcType="BOOLEAN"/>
+        <id column="id" property="id"/>
+        <result column="student_id" property="studentId"/>
+        <result column="assignment_id" property="assignmentId"/>
+        <result column="submission_id" property="submissionId"/>
+        <result column="grader_id" property="graderId"/>
+        <result column="score" property="score"/>
+        <result column="max_score" property="maxScore"/>
+        <result column="percentage" property="percentage"/>
+        <result column="grade_level" property="gradeLevel"/>
+        <result column="feedback" property="feedback"/>
+        <result column="status" property="status"/>
+        <result column="created_at" property="createdAt"/>
+        <result column="updated_at" property="updatedAt"/>
+        <result column="deleted" property="deleted"/>
     </resultMap>
 
     <sql id="Base_Column_List">
-        id, submission_id, student_id, assignment_id, grader_id, score, max_score, feedback, 
-        rubric, ai_analysis, status, graded_at, created_at, updated_at, deleted
+        id, student_id, assignment_id, submission_id, grader_id, score, max_score, percentage,
+        grade_level, feedback, status, created_at, updated_at, deleted
     </sql>
 
     <!-- 插入成绩 -->
     <insert id="insertGrade" parameterType="com.noncore.assessment.entity.Grade" useGeneratedKeys="true" keyProperty="id">
         INSERT INTO grades (
-            submission_id, student_id, assignment_id, grader_id, score, max_score, feedback, 
-            rubric, ai_analysis, status, graded_at, created_at, updated_at, deleted
+            student_id, assignment_id, submission_id, grader_id,
+            score, max_score, percentage, grade_level,
+            feedback, status, created_at, updated_at, deleted
         ) VALUES (
-            #{submissionId}, #{studentId}, #{assignmentId}, #{graderId}, #{score}, #{maxScore}, #{feedback}, 
-            #{rubric}, #{aiAnalysis}, #{status}, #{gradedAt}, #{createdAt}, #{updatedAt}, #{deleted}
-        )
+                     #{studentId}, #{assignmentId}, #{submissionId}, #{graderId},
+                     #{score}, #{maxScore}, #{percentage}, #{gradeLevel},
+                     #{feedback}, #{status}, #{createdAt}, #{updatedAt}, #{deleted}
+                 )
     </insert>
 
     <!-- 根据ID查询成绩 -->
-    <select id="selectGradeById" parameterType="java.lang.Long" resultMap="GradeResultMap">
+    <select id="selectGradeById" parameterType="long" resultMap="GradeResultMap">
         SELECT <include refid="Base_Column_List"/>
         FROM grades
         WHERE id = #{id} AND deleted = false
     </select>
 
     <!-- 根据学生ID查询成绩列表 -->
-    <select id="selectByStudentId" parameterType="java.lang.Long" resultMap="GradeResultMap">
+    <select id="selectByStudentId" parameterType="long" resultMap="GradeResultMap">
         SELECT <include refid="Base_Column_List"/>
         FROM grades
         WHERE student_id = #{studentId} AND deleted = false
@@ -52,7 +53,7 @@
     </select>
 
     <!-- 根据作业ID查询成绩列表 -->
-    <select id="selectByAssignmentId" parameterType="java.lang.Long" resultMap="GradeResultMap">
+    <select id="selectByAssignmentId" parameterType="long" resultMap="GradeResultMap">
         SELECT <include refid="Base_Column_List"/>
         FROM grades
         WHERE assignment_id = #{assignmentId} AND deleted = false
@@ -62,72 +63,68 @@
     <!-- 更新成绩 -->
     <update id="updateGrade" parameterType="com.noncore.assessment.entity.Grade">
         UPDATE grades SET
-            score = #{score},
-            max_score = #{maxScore},
-            feedback = #{feedback},
-            rubric = #{rubric},
-            ai_analysis = #{aiAnalysis},
-            status = #{status},
-            graded_at = #{gradedAt},
-            updated_at = #{updatedAt}
+                          score = #{score},
+                          max_score = #{maxScore},
+                          percentage = #{percentage},
+                          grade_level = #{gradeLevel},
+                          feedback = #{feedback},
+                          status = #{status},
+                          submission_id = #{submissionId},
+                          grader_id = #{graderId},
+                          updated_at = #{updatedAt}
         WHERE id = #{id} AND deleted = false
     </update>
 
     <!-- 删除成绩（软删除） -->
-    <update id="deleteGrade" parameterType="java.lang.Long">
+    <update id="deleteGrade" parameterType="long">
         UPDATE grades SET deleted = true, updated_at = NOW()
         WHERE id = #{id}
     </update>
 
     <!-- 根据学生和作业查询成绩 -->
     <select id="selectByStudentAndAssignment" resultMap="GradeResultMap">
-        SELECT 
-        <include refid="Base_Column_List"/>
+        SELECT <include refid="Base_Column_List"/>
         FROM grades
         WHERE student_id = #{studentId}
         AND assignment_id = #{assignmentId}
-        AND deleted = 0
+        AND deleted = false
     </select>
 
     <!-- 根据学生和课程查询成绩 -->
     <select id="selectByStudentAndCourse" resultMap="GradeResultMap">
-        SELECT 
-        <include refid="Base_Column_List"/>
+        SELECT g.<include refid="Base_Column_List"/>
         FROM grades g
         INNER JOIN assignments a ON g.assignment_id = a.id
         WHERE g.student_id = #{studentId}
         AND a.course_id = #{courseId}
-        AND g.deleted = 0
+        AND g.deleted = false
     </select>
 
     <!-- 根据课程查询成绩 -->
     <select id="selectByCourseId" resultMap="GradeResultMap">
-        SELECT 
-        <include refid="Base_Column_List"/>
+        SELECT g.<include refid="Base_Column_List"/>
         FROM grades g
         INNER JOIN assignments a ON g.assignment_id = a.id
         WHERE a.course_id = #{courseId}
-        AND g.deleted = 0
+        AND g.deleted = false
     </select>
 
     <!-- 分页查询学生成绩 -->
     <select id="selectByStudentIdWithPagination" resultMap="GradeResultMap">
-        SELECT 
-        <include refid="Base_Column_List"/>
+        SELECT <include refid="Base_Column_List"/>
         FROM grades
         WHERE student_id = #{studentId}
-        AND deleted = 0
+        AND deleted = false
         ORDER BY created_at DESC
         LIMIT #{size} OFFSET #{offset}
     </select>
 
     <!-- 分页查询作业成绩 -->
     <select id="selectByAssignmentIdWithPagination" resultMap="GradeResultMap">
-        SELECT 
-        <include refid="Base_Column_List"/>
+        SELECT <include refid="Base_Column_List"/>
         FROM grades
         WHERE assignment_id = #{assignmentId}
-        AND deleted = 0
+        AND deleted = false
         ORDER BY score DESC
         LIMIT #{size} OFFSET #{offset}
     </select>
@@ -137,7 +134,7 @@
         SELECT COUNT(*)
         FROM grades
         WHERE student_id = #{studentId}
-        AND deleted = 0
+          AND deleted = false
     </select>
 
     <!-- 统计作业成绩数量 -->
@@ -145,30 +142,28 @@
         SELECT COUNT(*)
         FROM grades
         WHERE assignment_id = #{assignmentId}
-        AND deleted = 0
+          AND deleted = false
     </select>
 
-    <!-- 获取待评分成绩 -->
+    <!-- 根据教师ID获取待评分成绩 -->
     <select id="selectPendingGrades" resultMap="GradeResultMap">
-        SELECT 
-        <include refid="Base_Column_List"/>
+        SELECT g.<include refid="Base_Column_List"/>
         FROM grades g
         INNER JOIN assignments a ON g.assignment_id = a.id
         WHERE a.teacher_id = #{teacherId}
         AND g.status = 'draft'
-        AND g.deleted = 0
+        AND g.deleted = false
         ORDER BY g.created_at ASC
     </select>
 
     <!-- 分页获取待评分成绩 -->
     <select id="selectPendingGradesWithPagination" resultMap="GradeResultMap">
-        SELECT
-        <include refid="Base_Column_List"/>
+        SELECT g.<include refid="Base_Column_List"/>
         FROM grades g
         INNER JOIN assignments a ON g.assignment_id = a.id
         WHERE a.teacher_id = #{teacherId}
         AND g.status = 'draft'
-        AND g.deleted = 0
+        AND g.deleted = false
         ORDER BY g.created_at ASC
     </select>
 
@@ -177,19 +172,19 @@
         SELECT COALESCE(AVG(score), 0) as average_score
         FROM grades
         WHERE student_id = #{studentId}
-        AND status = 'published'
-        AND deleted = 0
+          AND status = 'published'
+          AND deleted = false
     </select>
 
     <!-- 计算学生课程平均分 -->
     <select id="calculateCourseAverageScore" resultType="java.math.BigDecimal">
         SELECT COALESCE(AVG(g.score), 0) as average_score
         FROM grades g
-        INNER JOIN assignments a ON g.assignment_id = a.id
+                 INNER JOIN assignments a ON g.assignment_id = a.id
         WHERE g.student_id = #{studentId}
-        AND a.course_id = #{courseId}
-        AND g.status = 'published'
-        AND g.deleted = 0
+          AND a.course_id = #{courseId}
+          AND g.status = 'published'
+          AND g.deleted = false
     </select>
 
     <!-- 计算作业平均分 -->
@@ -197,40 +192,33 @@
         SELECT COALESCE(AVG(score), 0) as average_score
         FROM grades
         WHERE assignment_id = #{assignmentId}
-        AND status = 'published'
-        AND deleted = 0
+          AND status = 'published'
+          AND deleted = false
     </select>
 
     <!-- 获取成绩分布 -->
-    <select id="getGradeDistribution" resultType="java.util.Map">
-        SELECT 
-            CASE 
-                WHEN score >= 90 THEN 'A'
-                WHEN score >= 80 THEN 'B'
-                WHEN score >= 70 THEN 'C'
-                WHEN score >= 60 THEN 'D'
+    <select id="getGradeDistribution" resultType="map">
+        SELECT
+            CASE
+                WHEN percentage >= 90 THEN 'A'
+                WHEN percentage >= 80 THEN 'B'
+                WHEN percentage >= 70 THEN 'C'
+                WHEN percentage >= 60 THEN 'D'
                 ELSE 'F'
-            END as grade_level,
+                END as grade_level,
             COUNT(*) as count,
-            ROUND(COUNT(*) * 100.0 / (SELECT COUNT(*) FROM grades WHERE assignment_id = #{assignmentId} AND deleted = 0), 2) as percentage
+            ROUND(COUNT(*) * 100.0 / (SELECT COUNT(*) FROM grades WHERE assignment_id = #{assignmentId} AND deleted = false), 2) as percentage
         FROM grades
         WHERE assignment_id = #{assignmentId}
-        AND status = 'published'
-        AND deleted = 0
-        GROUP BY 
-            CASE 
-                WHEN score >= 90 THEN 'A'
-                WHEN score >= 80 THEN 'B'
-                WHEN score >= 70 THEN 'C'
-                WHEN score >= 60 THEN 'D'
-                ELSE 'F'
-            END
+          AND status = 'published'
+          AND deleted = false
+        GROUP BY grade_level
         ORDER BY grade_level
     </select>
 
     <!-- 获取课程成绩统计 -->
-    <select id="getCourseGradeStats" resultType="java.util.Map">
-        SELECT 
+    <select id="getCourseGradeStats" resultType="map">
+        SELECT
             COUNT(*) as totalGrades,
             COALESCE(AVG(g.score), 0) as averageScore,
             COALESCE(MAX(g.score), 0) as highestScore,
@@ -238,24 +226,27 @@
             COUNT(DISTINCT g.student_id) as totalStudents,
             COUNT(DISTINCT g.assignment_id) as totalAssignments
         FROM grades g
-        INNER JOIN assignments a ON g.assignment_id = a.id
+                 INNER JOIN assignments a ON g.assignment_id = a.id
         WHERE a.course_id = #{courseId}
-        AND g.status = 'published'
-        AND g.deleted = 0
+          AND g.status = 'published'
+          AND g.deleted = false
     </select>
 
     <!-- 查询用于导出的成绩数据 -->
-    <select id="selectGradesForExport" resultType="java.util.Map">
+    <select id="selectGradesForExport" resultType="map">
         SELECT
-            u.username as studentName,
-            u.email as studentEmail,
-            c.title as courseTitle,
-            a.title as assignmentTitle,
-            g.score,
-            g.max_score as maxScore,
-            g.feedback,
-            g.status,
-            g.graded_at as gradedAt
+        u.username as studentName,
+        u.email as studentEmail,
+        c.title as courseTitle,
+        a.title as assignmentTitle,
+        g.score,
+        g.max_score as maxScore,
+        g.percentage,
+        g.grade_level,
+        g.feedback,
+        g.status,
+        g.created_at as createdAt,
+        g.updated_at as updatedAt
         FROM grades g
         JOIN users u ON g.student_id = u.id
         JOIN assignments a ON g.assignment_id = a.id
@@ -271,11 +262,13 @@
     </select>
 
     <!-- 查询学生成绩趋势 -->
-    <select id="selectGradeTrendByStudentAndCourse" resultType="java.util.Map">
+    <select id="selectGradeTrendByStudentAndCourse" resultType="map">
         SELECT
-            a.title as assignmentTitle,
-            g.score,
-            g.graded_at as gradedAt
+        a.title as assignmentTitle,
+        g.score,
+        g.percentage,
+        g.grade_level,
+        g.created_at as gradedAt
         FROM grades g
         JOIN assignments a ON g.assignment_id = a.id
         WHERE g.student_id = #{studentId}
@@ -285,13 +278,13 @@
             AND a.course_id = #{courseId}
         </if>
         <if test="startDate != null and endDate != null">
-            AND g.graded_at BETWEEN #{startDate} AND #{endDate}
+            AND g.created_at BETWEEN #{startDate} AND #{endDate}
         </if>
-        ORDER BY g.graded_at ASC
+        ORDER BY g.created_at
     </select>
 
     <!-- 查询单条成绩的历史记录 -->
-    <select id="selectGradeHistoryByGradeId" resultType="java.util.Map">
+    <select id="selectGradeHistoryByGradeId" resultType="map">
         SELECT
             g.score,
             g.feedback,
@@ -299,7 +292,7 @@
             g.updated_at as modifiedAt,
             grader.username as modifiedBy
         FROM grades g
-        LEFT JOIN users grader ON g.grader_id = grader.id
+                 LEFT JOIN users grader ON g.grader_id = grader.id
         WHERE g.id = #{gradeId}
     </select>
 

@@ -5,6 +5,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
@@ -48,6 +49,8 @@ public class Course {
     private LocalDateTime updatedAt;
     @Builder.Default
     private Boolean deleted = false;
+    private BigDecimal price;
+    private String tags;
     
     /**
      * 检查课程是否已发布

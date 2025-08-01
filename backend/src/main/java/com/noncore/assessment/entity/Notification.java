@@ -158,4 +158,6 @@ public class Notification {
     public void updateTimestamp() {
         this.updatedAt = LocalDateTime.now();
     }
+
+    private LocalDateTime expiredAt;
 } 

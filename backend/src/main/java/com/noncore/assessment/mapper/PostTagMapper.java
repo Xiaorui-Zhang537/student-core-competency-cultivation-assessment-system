@@ -17,11 +17,10 @@ public interface PostTagMapper {
     /**
      * 批量插入帖子与标签的关联
      *
-     * @param postId 帖子ID
-     * @param tagIds 标签ID列表
+     * @param postTags 帖子ID
      * @return 影响行数
      */
-    int batchInsert(@Param("list") List<PostTag> postTags);
+    int batchInsert(@Param("postTags") List<PostTag> postTags);
 
     /**
      * 根据帖子ID删除所有关联

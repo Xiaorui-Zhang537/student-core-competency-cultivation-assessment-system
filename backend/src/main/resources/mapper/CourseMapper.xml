@@ -19,6 +19,11 @@
         <result column="end_date" property="endDate"/>
         <result column="objectives" property="objectives"/>
         <result column="requirements" property="requirements"/>
+        <result column="price" property="price"/>
+        <result column="tags" property="tags"/>
+        <result column="enrollment_count" property="enrollmentCount"/>
+        <result column="rating" property="rating"/>
+        <result column="review_count" property="reviewCount"/>
         <result column="created_at" property="createdAt"/>
         <result column="updated_at" property="updatedAt"/>
         <result column="deleted" property="deleted"/>
@@ -28,14 +33,13 @@
     <sql id="Base_Column_List">
         c.id, c.title, c.description, c.cover_image, c.teacher_id, c.category, c.difficulty,
         c.duration, c.max_students, c.status, c.start_date, c.end_date, c.objectives,
-        c.requirements, c.enrollment_count, c.rating, c.review_count, c.created_at, c.updated_at, c.deleted
+        c.requirements, c.price, c.tags, c.enrollment_count, c.rating, c.review_count,
+        c.created_at, c.updated_at, c.deleted
     </sql>
 
     <!-- 带教师信息的查询字段 -->
     <sql id="Course_With_Teacher_Column_List">
-        c.id, c.title, c.description, c.cover_image, c.teacher_id, c.category, c.difficulty,
-        c.duration, c.max_students, c.status, c.start_date, c.end_date, c.objectives,
-        c.requirements, c.enrollment_count, c.rating, c.review_count, c.created_at, c.updated_at, c.deleted,
+        <include refid="Base_Column_List"/>,
         u.display_name as teacher_name
     </sql>
 
@@ -44,12 +48,14 @@
         INSERT INTO courses (
             title, description, cover_image, teacher_id, category, difficulty, duration,
             max_students, status, start_date, end_date, objectives, requirements,
+            price, tags, enrollment_count, rating, review_count,
             created_at, updated_at, deleted
         ) VALUES (
-            #{title}, #{description}, #{coverImage}, #{teacherId}, #{category}, #{difficulty}, #{duration},
-            #{maxStudents}, #{status}, #{startDate}, #{endDate}, #{objectives}, #{requirements},
-            #{createdAt}, #{updatedAt}, #{deleted}
-        )
+                     #{title}, #{description}, #{coverImage}, #{teacherId}, #{category}, #{difficulty}, #{duration},
+                     #{maxStudents}, #{status}, #{startDate}, #{endDate}, #{objectives}, #{requirements},
+                     #{price}, #{tags}, #{enrollmentCount}, #{rating}, #{reviewCount},
+                     #{createdAt}, #{updatedAt}, #{deleted}
+                 )
     </insert>
 
     <!-- 根据ID查询课程 -->
@@ -63,27 +69,32 @@
     <!-- 更新课程信息 -->
     <update id="updateCourse" parameterType="com.noncore.assessment.entity.Course">
         UPDATE courses SET
-            title = #{title},
-            description = #{description},
-            cover_image = #{coverImage},
-            category = #{category},
-            difficulty = #{difficulty},
-            duration = #{duration},
-            max_students = #{maxStudents},
-            status = #{status},
-            start_date = #{startDate},
-            end_date = #{endDate},
-            objectives = #{objectives},
-            requirements = #{requirements},
-            updated_at = #{updatedAt}
+                           title = #{title},
+                           description = #{description},
+                           cover_image = #{coverImage},
+                           category = #{category},
+                           difficulty = #{difficulty},
+                           duration = #{duration},
+                           max_students = #{maxStudents},
+                           status = #{status},
+                           start_date = #{startDate},
+                           end_date = #{endDate},
+                           objectives = #{objectives},
+                           requirements = #{requirements},
+                           price = #{price},
+                           tags = #{tags},
+                           enrollment_count = #{enrollmentCount},
+                           rating = #{rating},
+                           review_count = #{reviewCount},
+                           updated_at = #{updatedAt}
         WHERE id = #{id} AND deleted = false
     </update>
 
     <!-- 软删除课程 -->
     <update id="deleteCourse" parameterType="long">
-        UPDATE courses SET 
-            deleted = true,
-            updated_at = NOW()
+        UPDATE courses SET
+                           deleted = true,
+                           updated_at = NOW()
         WHERE id = #{id}
     </update>
 
@@ -94,9 +105,9 @@
         LEFT JOIN users u ON c.teacher_id = u.id
         WHERE c.deleted = false
         <if test="keyword != null and keyword != ''">
-            AND (c.title LIKE CONCAT('%', #{keyword}, '%') 
-                 OR c.description LIKE CONCAT('%', #{keyword}, '%')
-                 OR u.display_name LIKE CONCAT('%', #{keyword}, '%'))
+            AND (c.title LIKE CONCAT('%', #{keyword}, '%')
+            OR c.description LIKE CONCAT('%', #{keyword}, '%')
+            OR u.display_name LIKE CONCAT('%', #{keyword}, '%'))
         </if>
         <if test="category != null and category != ''">
             AND c.category = #{category}
@@ -137,7 +148,7 @@
         FROM courses c
         LEFT JOIN users u ON c.teacher_id = u.id
         WHERE c.deleted = false AND c.status = 'published'
-        ORDER BY c.created_at DESC, c.price DESC
+        ORDER BY c.enrollment_count DESC, c.created_at DESC
         LIMIT #{limit}
     </select>
 
@@ -146,8 +157,8 @@
         SELECT <include refid="Course_With_Teacher_Column_List"/>
         FROM courses c
         LEFT JOIN users u ON c.teacher_id = u.id
-        WHERE c.deleted = false AND c.status = 'published' AND c.price >= 0
-        ORDER BY c.price ASC, c.created_at DESC
+        WHERE c.deleted = false AND c.status = 'published'
+        ORDER BY c.rating DESC, c.created_at DESC
         LIMIT #{limit}
     </select>
 
@@ -162,24 +173,24 @@
 
     <!-- 更新课程报名人数 -->
     <update id="updateEnrollmentCount">
-        UPDATE courses SET 
-            enrollment_count = enrollment_count + #{increment},
-            updated_at = NOW()
+        UPDATE courses SET
+                           enrollment_count = enrollment_count + #{increment},
+                           updated_at = NOW()
         WHERE id = #{courseId} AND deleted = false
     </update>
 
     <!-- 更新课程评分和评价数量 -->
     <update id="updateCourseRating">
-        UPDATE courses SET 
-            rating = #{rating},
-            review_count = #{reviewCount},
-            updated_at = NOW()
+        UPDATE courses SET
+                           rating = #{rating},
+                           review_count = #{reviewCount},
+                           updated_at = NOW()
         WHERE id = #{courseId} AND deleted = false
     </update>
 
     <!-- 统计课程数量 -->
     <select id="countCourses" resultType="int">
-        SELECT COUNT(1) FROM courses 
+        SELECT COUNT(1) FROM courses
         WHERE deleted = false
         <if test="teacherId != null">
             AND teacher_id = #{teacherId}
@@ -191,7 +202,7 @@
 
     <!-- 检查课程是否存在 -->
     <select id="checkCourseExists" parameterType="long" resultType="int">
-        SELECT COUNT(1) FROM courses 
+        SELECT COUNT(1) FROM courses
         WHERE id = #{id} AND deleted = false
     </select>
 
@@ -207,9 +218,9 @@
 
     <!-- 批量更新课程状态 -->
     <update id="batchUpdateCourseStatus">
-        UPDATE courses SET 
-            status = #{status},
-            updated_at = NOW()
+        UPDATE courses SET
+        status = #{status},
+        updated_at = NOW()
         WHERE deleted = false AND id IN
         <foreach collection="courseIds" item="id" open="(" close=")" separator=",">
             #{id}
@@ -221,9 +232,9 @@
         SELECT <include refid="Course_With_Teacher_Column_List"/>
         FROM courses c
         LEFT JOIN users u ON c.teacher_id = u.id
-        WHERE c.deleted = false AND c.status = 'published' 
-              AND c.start_date BETWEEN CURDATE() AND DATE_ADD(CURDATE(), INTERVAL #{days} DAY)
-        ORDER BY c.start_date ASC
+        WHERE c.deleted = false AND c.status = 'published'
+        AND c.start_date BETWEEN CURDATE() AND DATE_ADD(CURDATE(), INTERVAL #{days} DAY)
+        ORDER BY c.start_date
     </select>
 
     <!-- 查询即将结束的课程 -->
@@ -231,9 +242,9 @@
         SELECT <include refid="Course_With_Teacher_Column_List"/>
         FROM courses c
         LEFT JOIN users u ON c.teacher_id = u.id
-        WHERE c.deleted = false AND c.status = 'published' 
-              AND c.end_date BETWEEN CURDATE() AND DATE_ADD(CURDATE(), INTERVAL #{days} DAY)
-        ORDER BY c.end_date ASC
+        WHERE c.deleted = false AND c.status = 'published'
+        AND c.end_date BETWEEN CURDATE() AND DATE_ADD(CURDATE(), INTERVAL #{days} DAY)
+        ORDER BY c.end_date
     </select>
 
     <!-- 根据关键词搜索课程 -->
@@ -242,19 +253,19 @@
         FROM courses c
         LEFT JOIN users u ON c.teacher_id = u.id
         WHERE c.deleted = false AND c.status = 'published'
-              AND (c.title LIKE CONCAT('%', #{keyword}, '%') 
-                   OR c.description LIKE CONCAT('%', #{keyword}, '%')
-                   OR c.category LIKE CONCAT('%', #{keyword}, '%'))
-        ORDER BY c.created_at DESC, c.price ASC
+        AND (c.title LIKE CONCAT('%', #{keyword}, '%')
+        OR c.description LIKE CONCAT('%', #{keyword}, '%')
+        OR c.category LIKE CONCAT('%', #{keyword}, '%'))
+        ORDER BY c.created_at DESC, c.rating DESC
     </select>
 
     <!-- 获取课程统计信息 -->
     <select id="getCourseStatistics" resultType="map">
-        SELECT 
-            status,
-            COUNT(*) as count,
-            AVG(price) as avg_price
-        FROM courses 
+        SELECT
+        status,
+        COUNT(*) AS count,
+        AVG(price) AS avg_price
+        FROM courses
         WHERE deleted = false
         <if test="teacherId != null">
             AND teacher_id = #{teacherId}
@@ -266,7 +277,7 @@
     <select id="countActiveCoursesByStudent" resultType="long">
         SELECT COUNT(DISTINCT c.id)
         FROM courses c
-        JOIN enrollments e ON c.id = e.course_id
+                 JOIN enrollments e ON c.id = e.course_id
         WHERE e.student_id = #{studentId} AND e.status = 'enrolled' AND c.deleted = false
     </select>
 
@@ -280,21 +291,21 @@
             c.cover_image AS coverImage,
             cp.last_studied AS lastStudied
         FROM (
-            SELECT c_inner.*
-            FROM courses c_inner
-            JOIN enrollments e_inner ON c_inner.id = e_inner.course_id
-            WHERE e_inner.student_id = #{studentId}
-            ORDER BY (SELECT MAX(lp_inner.last_studied_at) FROM lesson_progress lp_inner WHERE lp_inner.lesson_id IN (SELECT id FROM lessons l_find WHERE l_find.course_id = c_inner.id) AND lp_inner.student_id = #{studentId}) DESC
-            LIMIT #{limit}
-        ) c
-        JOIN users u ON c.teacher_id = u.id
-        LEFT JOIN (
+                 SELECT c_inner.*
+                 FROM courses c_inner
+                          JOIN enrollments e_inner ON c_inner.id = e_inner.course_id
+                 WHERE e_inner.student_id = #{studentId}
+                 ORDER BY (SELECT MAX(lp_inner.last_studied_at) FROM lesson_progress lp_inner WHERE lp_inner.lesson_id IN (SELECT id FROM lessons l_find WHERE l_find.course_id = c_inner.id) AND lp_inner.student_id = #{studentId}) DESC
+                 LIMIT #{limit}
+             ) c
+                 JOIN users u ON c.teacher_id = u.id
+                 LEFT JOIN (
             SELECT
                 l.course_id,
                 AVG(lp.progress) as avg_progress,
                 MAX(lp.last_studied_at) as last_studied
             FROM lesson_progress lp
-            JOIN lessons l ON lp.lesson_id = l.id
+                     JOIN lessons l ON lp.lesson_id = l.id
             WHERE lp.student_id = #{studentId}
             GROUP BY l.course_id
         ) cp ON c.id = cp.course_id
@@ -304,7 +315,7 @@
     <select id="findCoursesByStudentId" resultMap="CourseResultMap">
         SELECT c.*
         FROM courses c
-        JOIN enrollments e ON c.id = e.course_id
+                 JOIN enrollments e ON c.id = e.course_id
         WHERE e.student_id = #{studentId} AND c.deleted = false
         ORDER BY e.enrolled_at DESC
     </select>
@@ -327,7 +338,7 @@
             stats.avg_progress AS avgProgress,
             stats.pending_grades AS pendingGrades
         FROM courses c
-        LEFT JOIN (
+                 LEFT JOIN (
             SELECT
                 c_inner.id as course_id,
                 COUNT(DISTINCT e_inner.student_id) as enrolled_students,
@@ -335,11 +346,11 @@
                 COALESCE(AVG(lp_inner.progress), 0) as avg_progress,
                 COUNT(DISTINCT CASE WHEN s_inner.status = 'submitted' THEN s_inner.id END) as pending_grades
             FROM courses c_inner
-            LEFT JOIN enrollments e_inner ON c_inner.id = e_inner.course_id
-            LEFT JOIN lessons l_inner ON c_inner.id = l_inner.course_id
-            LEFT JOIN lesson_progress lp_inner ON l_inner.id = lp_inner.lesson_id AND e_inner.student_id = lp_inner.student_id
-            LEFT JOIN assignments a_inner ON c_inner.id = a_inner.course_id
-            LEFT JOIN submissions s_inner ON a_inner.id = s_inner.assignment_id AND e_inner.student_id = s_inner.student_id
+                     LEFT JOIN enrollments e_inner ON c_inner.id = e_inner.course_id
+                     LEFT JOIN lessons l_inner ON c_inner.id = l_inner.course_id
+                     LEFT JOIN lesson_progress lp_inner ON l_inner.id = lp_inner.lesson_id AND e_inner.student_id = lp_inner.student_id
+                     LEFT JOIN assignments a_inner ON c_inner.id = a_inner.course_id
+                     LEFT JOIN submissions s_inner ON a_inner.id = s_inner.assignment_id AND e_inner.student_id = s_inner.student_id
             WHERE c_inner.teacher_id = #{teacherId}
             GROUP BY c_inner.id
         ) stats ON c.id = stats.course_id
@@ -348,4 +359,18 @@
         LIMIT #{limit}
     </select>
 
-</mapper> 
+    <select id="checkTitleExists" resultType="int">
+        SELECT COUNT(1)
+        FROM courses
+        WHERE title = #{title} AND deleted = false
+        <if test="excludeId != null">
+            AND id != #{excludeId}
+        </if>
+    </select>
+
+    <select id="findByTeacherId" resultMap="CourseResultMap">
+        SELECT * FROM courses
+        WHERE teacher_id = #{teacherId} AND deleted = false
+        ORDER BY created_at DESC
+    </select>
+</mapper>
