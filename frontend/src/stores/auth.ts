@@ -1,104 +1,109 @@
-import { defineStore } from 'pinia'
-import { ref, computed } from 'vue'
-import type { User, LoginCredentials, RegisterData } from '@/types/auth'
-import { authAPI } from '@/api/auth.api'
+import { defineStore } from 'pinia';
+import { ref, computed } from 'vue';
+import { authApi } from '@/api/auth.api';
+import { userApi } from '@/api/user.api';
+import type { User, LoginRequest, RegisterRequest } from '@/types/auth';
+import type { UpdateProfileRequest } from '@/types/user';
+import { useUIStore } from './ui';
+import router from '@/router';
 
 export const useAuthStore = defineStore('auth', () => {
-  // 状态
-  const user = ref<User | null>(null)
-  const token = ref<string | null>(localStorage.getItem('auth_token'))
-  const loading = ref(false)
+  const uiStore = useUIStore();
+  
+  const user = ref<User | null>(null);
+  const token = ref<string | null>(localStorage.getItem('token'));
+  const loading = ref(false);
+  const error = ref<string | null>(null);
 
-  // 如果有token但没有用户信息，尝试从localStorage恢复用户信息
-  if (token.value && !user.value) {
-    const savedUser = localStorage.getItem('auth_user')
-    if (savedUser) {
-      try {
-        user.value = JSON.parse(savedUser)
-      } catch (error) {
-        console.error('恢复用户信息失败:', error)
-        // 如果恢复失败，清除相关数据
-        token.value = null
-        localStorage.removeItem('auth_token')
-        localStorage.removeItem('auth_user')
-      }
-    }
-    // 注意：不要在没有用户信息时立即清除token，可能是Mock模式
-  }
+  const isAuthenticated = computed(() => !!token.value && !!user.value);
+  const userRole = computed(() => user.value?.role);
 
-  // 计算属性
-  const isAuthenticated = computed(() => !!token.value && !!user.value)
-  const userRole = computed(() => user.value?.role)
-
-  // 方法
-  const login = async (credentials: LoginCredentials) => {
-    loading.value = true
+  const handleApiCall = async <T>(apiCall: () => Promise<T>): Promise<T | null> => {
+    loading.value = true;
+    error.value = null;
     try {
-      // 使用真实API登录
-      const response = await authAPI.login(credentials)
-      user.value = response.data.user
-      token.value = response.data.accessToken
-      localStorage.setItem('auth_token', token.value)
-              localStorage.setItem('auth_user', JSON.stringify(response.data.user))
-      return response
+      return await apiCall();
+    } catch (e: any) {
+      error.value = e.message || 'An unknown error occurred';
+      uiStore.showNotification({ type: 'error', title: '操作失败', message: error.value });
+      return null;
     } finally {
-      loading.value = false
+      loading.value = false;
     }
-  }
+  };
 
-  const register = async (data: RegisterData) => {
-    loading.value = true
-    try {
-      const response = await authAPI.register(data)
-      user.value = response.data.user
-      token.value = response.data.accessToken
-      localStorage.setItem('auth_token', token.value)
-      return response
-    } finally {
-      loading.value = false
+  const setAuthData = (data: { user: User; token: string; refreshToken: string }) => {
+    user.value = data.user;
+    token.value = data.token;
+    localStorage.setItem('token', data.token);
+    localStorage.setItem('refreshToken', data.refreshToken);
+    // Set token for subsequent API calls
+    // This needs to be implemented in api/config.ts
+  };
+
+  const clearAuthData = () => {
+    user.value = null;
+    token.value = null;
+    localStorage.removeItem('token');
+    localStorage.removeItem('refreshToken');
+    // Clear token from api config
+  };
+
+  const login = async (credentials: LoginRequest) => {
+    const response = await handleApiCall(() => authApi.login(credentials));
+    if (response) {
+      setAuthData(response.data);
+      uiStore.showNotification({ type: 'success', title: '登录成功' });
+      router.push(user.value?.role === 'TEACHER' ? '/teacher/dashboard' : '/student/dashboard');
     }
-  }
+  };
 
-  const logout = () => {
-    user.value = null
-    token.value = null
-    localStorage.removeItem('auth_token')
-    localStorage.removeItem('auth_user')
-  }
+  const register = async (details: RegisterRequest) => {
+    const response = await handleApiCall(() => authApi.register(details));
+    if (response) {
+      setAuthData(response.data);
+      uiStore.showNotification({ type: 'success', title: '注册成功' });
+      router.push(user.value?.role === 'TEACHER' ? '/teacher/dashboard' : '/student/dashboard');
+    }
+  };
+
+  const logout = async () => {
+    await handleApiCall(authApi.logout);
+    clearAuthData();
+    router.push('/login');
+  };
 
   const fetchUser = async () => {
-    if (!token.value) return
-    
-    try {
-      const response = await authAPI.getProfile()
-      user.value = response.data
-    } catch (error) {
-      // Token 无效，清除认证状态
-      logout()
-      throw error
+    if (!token.value) return;
+    const response = await handleApiCall(userApi.getProfile);
+    if (response) {
+      user.value = { ...response.data, token: token.value, refreshToken: '' }; // refreshToken is not available here
+    } else {
+      // Token is invalid
+      clearAuthData();
     }
-  }
-
-  // 初始化时尝试获取用户信息
-  const initAuth = async () => {
-    if (token.value) {
-      await fetchUser()
-    }
+  };
+  
+  const updateUserProfile = async (data: UpdateProfileRequest) => {
+      const response = await handleApiCall(() => userApi.updateProfile(data));
+      if (response && user.value) {
+          user.value.nickname = response.data.nickname;
+          user.value.avatar = response.data.avatar;
+          uiStore.showNotification({ type: 'success', title: '个人资料已更新' });
+      }
   }
 
   return {
-    // 状态
     user,
     token,
     loading,
-    // 计算属性
+    error,
     isAuthenticated,
     userRole,
-    // 方法
     login,
     register,
     logout,
     fetchUser,
-    initAuth
-  }
-}) 
+    updateUserProfile,
+  };
+});

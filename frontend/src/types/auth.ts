@@ -1,46 +1,31 @@
+// Based on backend LoginRequest.java, RegisterRequest.java, and AuthResponse.java
+
+export interface LoginRequest {
+  usernameOrEmail: string;
+  password?: string;
+}
+
+export interface RegisterRequest {
+  username: string;
+  email: string;
+  password?: string;
+  role: 'STUDENT' | 'TEACHER';
+}
+
 export interface User {
-  id: string
-  username: string
-  email: string
-  role: 'student' | 'teacher' | 'admin'
-  avatar?: string
-  firstName?: string
-  lastName?: string
-  displayName?: string
-  bio?: string
-  grade?: string
-  subject?: string
-  school?: string
-  phone?: string
-  createdAt: string
-  updatedAt: string
-}
-
-
-
-export interface LoginCredentials {
-  username: string
-  password: string
-  remember?: boolean
-}
-
-export interface RegisterData {
-  username: string
-  email: string
-  password: string
-  confirmPassword: string
-  role: 'student' | 'teacher'
-    firstName: string
-    lastName: string
-    grade?: string
-    subject?: string
-    school?: string
+  id: string;
+  username: string;
+  email: string;
+  role: 'STUDENT' | 'TEACHER' | 'ADMIN';
+  token: string;
+  refreshToken: string;
+  emailVerified?: boolean;
+  avatar?: string;
+  nickname?: string;
 }
 
 export interface AuthResponse {
-  user: User
-  accessToken: string
-  refreshToken: string
-  expiresIn: number
-  tokenType?: string
-} 
+  user: User;
+  token: string;
+  refreshToken: string;
+}

@@ -1,72 +1,56 @@
+// DTOs based on backend entities (e.g., Course.java)
 export interface Course {
-  id: string
-  title: string
-  description: string
-  coverImage?: string
-  instructor: {
-    id: string
-    name: string
-    avatar?: string
-  }
-  category: string
-  level: 'beginner' | 'intermediate' | 'advanced'
-  duration: number // 课程总时长（分钟）
-  totalLessons: number
-  completedLessons: number
-  progress: number // 进度百分比
-  rating: number
-  studentsCount: number
-  isEnrolled: boolean
-  status: 'draft' | 'published' | 'archived'
-  tags: string[]
-  createdAt: string
-  updatedAt: string
+  id: number;
+  title: string;
+  description: string;
+  content?: string; // Added field
+  teacherId: number;
+  teacherName: string; // Denormalized for convenience
+  category: string;
+  tags: string[];
+  coverImage: string;
+  status: 'DRAFT' | 'PUBLISHED' | 'ARCHIVED';
+  createdAt: string;
+  updatedAt: string;
+  studentCount: number;
+  averageRating: number;
+  isPublished: boolean; // Added based on CourseController logic
 }
 
-export interface Lesson {
-  id: string
-  courseId: string
-  title: string
-  description: string
-  duration: number // 课时时长（分钟）
-  videoUrl?: string
-  resources: LessonResource[]
-  isCompleted: boolean
-  order: number
-  type: 'video' | 'reading' | 'quiz' | 'assignment'
+export interface CourseDetailed extends Course {
+  lessons: any[]; // Replace with Lesson type when available
+  assignments: any[]; // Replace with Assignment type when available
+  resources: any[]; // Replace with Resource type when available
 }
 
-export interface LessonResource {
-  id: string
-  name: string
-  type: 'pdf' | 'doc' | 'ppt' | 'link' | 'video'
-  url: string
-  size?: number
+// Request payloads for API endpoints
+export interface CourseCreationRequest {
+  title: string;
+  description: string;
+  content?: string; // Added field
+  category: string;
+  tags: string[];
+  coverImage?: string;
 }
 
-export interface CourseEnrollment {
-  id: string
-  userId: string
-  courseId: string
-  enrolledAt: string
-  completedAt?: string
-  progress: number
-  lastAccessedAt: string
+export interface CourseUpdateRequest {
+  title?: string;
+  description?: string;
+  content?: string; // Added field
+  category?: string;
+  tags?: string[];
+  coverImage?: string;
 }
 
-export interface CourseFilter {
-  category?: string
-  level?: string
-  instructor?: string
-  search?: string
-  tags?: string[]
-  status?: string
+export interface BatchStatusUpdateRequest {
+  courseIds: number[];
+  status: 'PUBLISHED' | 'UNPUBLISHED' | 'ARCHIVED';
 }
 
-export interface CourseStats {
-  totalCourses: number
-  completedCourses: number
-  inProgressCourses: number
-  totalStudyTime: number
-  averageProgress: number
-} 
+// API Response Types
+export interface CourseStatistics {
+  totalCourses: number;
+  publishedCourses: number;
+  draftCourses: number;
+  enrollmentCount: number;
+}

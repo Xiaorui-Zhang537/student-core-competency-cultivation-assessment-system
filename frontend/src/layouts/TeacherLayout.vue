@@ -183,16 +183,6 @@
                     </div>
                   </router-link>
                   <router-link
-                    to="/teacher/settings"
-                    class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
-                    @click="showUserMenu = false"
-                  >
-                    <div class="flex items-center space-x-2">
-                      <cog-icon class="h-4 w-4" />
-                      <span>系统设置</span>
-                    </div>
-                  </router-link>
-                  <router-link
                     to="/teacher/help"
                     class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
                     @click="showUserMenu = false"
@@ -321,15 +311,6 @@
                 <folder-icon class="mr-3 h-5 w-5" />
                 教学资源
               </router-link>
-              
-              <router-link
-                to="/teacher/reports"
-                active-class="bg-primary-50 border-primary-500 text-primary-700 dark:bg-primary-900 dark:text-primary-300"
-                class="group flex items-center px-2 py-2 text-sm font-medium rounded-md text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-white border-l-4 border-transparent"
-              >
-                <document-chart-bar-icon class="mr-3 h-5 w-5" />
-                报告导出
-              </router-link>
             </div>
           </nav>
         </div>
@@ -364,7 +345,6 @@ import {
   MoonIcon,
   ChevronDownIcon,
   UserIcon,
-  CogIcon,
   QuestionMarkCircleIcon,
   ArrowRightOnRectangleIcon,
   HomeIcon,
@@ -374,8 +354,7 @@ import {
   ChartBarIcon,
   ChatBubbleLeftRightIcon,
   CalendarIcon,
-  FolderIcon,
-  DocumentChartBarIcon
+  FolderIcon
 } from '@heroicons/vue/24/outline'
 
 // Stores & Router

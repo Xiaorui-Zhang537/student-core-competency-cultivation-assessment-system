@@ -1,291 +1,146 @@
-import { defineStore } from 'pinia'
-import { ref, computed } from 'vue'
-import * as communityApi from '@/api/community'
-import type { PostData, CommunityStats, HotTopic, ActiveUser } from '@/api/community'
+import { defineStore } from 'pinia';
+import { ref, computed } from 'vue';
+import { communityApi } from '@/api/community.api';
+import { handleApiCall } from '@/utils/api-handler';
+import { useUIStore } from './ui';
+import type {
+  Post,
+  PostComment,
+  CommunityStats,
+  HotTopic,
+  ActiveUser,
+  PostCreationRequest,
+} from '@/types/community';
 
 export const useCommunityStore = defineStore('community', () => {
-  // 状态
-  const posts = ref<PostData[]>([])
-  const currentPost = ref<PostData | null>(null)
-  const stats = ref<CommunityStats>({
-    totalPosts: 0,
-    activeMembers: 0,
-    todayPosts: 0,
-    totalViews: 0
-  })
-  const hotTopics = ref<HotTopic[]>([])
-  const activeUsers = ref<ActiveUser[]>([])
-  const loading = ref(false)
-  const error = ref<string | null>(null)
+  const uiStore = useUIStore();
 
-  // 分页信息
-  const pagination = ref({
-    current: 1,
-    pageSize: 20,
-    total: 0
-  })
+  // State
+  const posts = ref<Post[]>([]);
+  const totalPosts = ref(0);
+  const currentPost = ref<Post | null>(null);
+  const comments = ref<PostComment[]>([]);
+  const totalComments = ref(0);
+  const stats = ref<CommunityStats | null>(null);
+  const hotTopics = ref<HotTopic[]>([]);
+  const activeUsers = ref<ActiveUser[]>([]);
 
-  // 查询条件
-  const filters = ref({
-    category: '',
-    keyword: '',
-    orderBy: 'latest'
-  })
+  const loading = computed(() => uiStore.loading);
 
-  // 计算属性
-  const filteredPosts = computed(() => {
-    let result = posts.value
-
-    // 分类筛选
-    if (filters.value.category && filters.value.category !== 'all') {
-      result = result.filter(post => post.category === filters.value.category)
-    }
-
-    // 搜索筛选
-    if (filters.value.keyword) {
-      const keyword = filters.value.keyword.toLowerCase()
-      result = result.filter(post => 
-        post.title.toLowerCase().includes(keyword) ||
-        post.content.toLowerCase().includes(keyword) ||
-        post.tags.some(tag => tag.toLowerCase().includes(keyword))
-      )
-    }
-
-    // 排序
-    result.sort((a, b) => {
-      // 置顶帖子始终在前
-      if (a.pinned && !b.pinned) return -1
-      if (!a.pinned && b.pinned) return 1
-      
-      switch (filters.value.orderBy) {
-        case 'latest':
-          return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-        case 'popular':
-          return b.replies - a.replies
-        case 'hottest':
-          return b.likes - a.likes
-        case 'views':
-          return b.views - a.views
-        default:
-          return 0
-      }
-    })
-
-    return result
-  })
-
-  // 方法
-  const fetchPosts = async (params?: {
-    page?: number
-    size?: number
-    category?: string
-    keyword?: string
-    orderBy?: string
+  // Actions
+  const fetchPosts = async (params: {
+    page?: number;
+    size?: number;
+    category?: string;
+    keyword?: string;
+    orderBy?: 'latest' | 'popular';
   }) => {
-    loading.value = true
-    error.value = null
-    
-    try {
-      const response = await communityApi.getPostList({
-        page: params?.page || pagination.value.current,
-        size: params?.size || pagination.value.pageSize,
-        category: params?.category || filters.value.category,
-        keyword: params?.keyword || filters.value.keyword,
-        orderBy: params?.orderBy || filters.value.orderBy
-      })
-      
-      if (response.data.code === 200) {
-        const result = response.data.data
-        posts.value = result.items
-        pagination.value = {
-          current: result.current,
-          pageSize: result.size,
-          total: result.total
+    const response = await handleApiCall(
+      () => communityApi.getPosts(params),
+      { loadingRef: uiStore.loadingState, errorMessage: '获取帖子列表失败' }
+    );
+    if (response) {
+      posts.value = response.data.items;
+      totalPosts.value = response.data.total;
+    }
+  };
+
+  const fetchPostById = async (id: number) => {
+    const response = await handleApiCall(
+      () => communityApi.getPostById(id),
+      { loadingRef: uiStore.loadingState, errorMessage: '获取帖子详情失败' }
+    );
+    if (response) {
+      currentPost.value = response.data;
+    }
+  };
+
+  const createPost = async (data: PostCreationRequest) => {
+    const response = await handleApiCall(
+      () => communityApi.createPost(data),
+      { successMessage: '帖子发布成功', errorMessage: '发布帖子失败' }
+    );
+    if (response) {
+      await fetchPosts({}); // Refresh posts list
+    }
+    return response?.data;
+  };
+  
+  const toggleLikePost = async (id: number) => {
+    const response = await handleApiCall(
+      () => communityApi.likePost(id),
+      { errorMessage: '操作失败' }
+    );
+    if (response) {
+        // Update post in the list
+        const postInList = posts.value.find(p => p.id === id);
+        if (postInList) {
+            postInList.isLiked = response.data.liked;
+            postInList.likeCount += response.data.liked ? 1 : -1;
         }
-      } else {
-        throw new Error(response.data.message)
-      }
-    } catch (err) {
-      error.value = err instanceof Error ? err.message : '获取帖子列表失败'
-      console.error('Error fetching posts:', err)
-    } finally {
-      loading.value = false
-    }
-  }
-
-  const fetchPostDetail = async (id: string) => {
-    loading.value = true
-    error.value = null
-    
-    try {
-      const response = await communityApi.getPostDetail(id)
-      
-      if (response.data.code === 200) {
-        currentPost.value = response.data.data
-        return response.data.data
-      } else {
-        throw new Error(response.data.message)
-      }
-    } catch (err) {
-      error.value = err instanceof Error ? err.message : '获取帖子详情失败'
-      console.error('Error fetching post detail:', err)
-      return null
-    } finally {
-      loading.value = false
-    }
-  }
-
-  const createPost = async (postData: {
-    title: string
-    content: string
-    category: string
-    tagsInput: string
-    anonymous?: boolean
-    allowComments?: boolean
-  }) => {
-    loading.value = true
-    error.value = null
-    
-    try {
-      const response = await communityApi.createPost(postData)
-      
-      if (response.data.code === 200) {
-        // 重新获取帖子列表
-        await fetchPosts()
-        return response.data.data
-      } else {
-        throw new Error(response.data.message)
-      }
-    } catch (err) {
-      error.value = err instanceof Error ? err.message : '发布帖子失败'
-      console.error('Error creating post:', err)
-      throw err
-    } finally {
-      loading.value = false
-    }
-  }
-
-  const likePost = async (id: string) => {
-    try {
-      const response = await communityApi.likePost(id)
-      
-      if (response.data.code === 200) {
-        const liked = response.data.data.liked
-        
-        // 更新本地状态
-        const post = posts.value.find(p => p.id === id)
-        if (post) {
-          post.liked = liked
-          post.likes += liked ? 1 : -1
-        }
-        
+        // Update current post if it's the one
         if (currentPost.value && currentPost.value.id === id) {
-          currentPost.value.liked = liked
-          currentPost.value.likes += liked ? 1 : -1
+            currentPost.value.isLiked = response.data.liked;
+            currentPost.value.likeCount += response.data.liked ? 1 : -1;
         }
-        
-        return liked
-      } else {
-        throw new Error(response.data.message)
-      }
-    } catch (err) {
-      error.value = err instanceof Error ? err.message : '操作失败'
-      console.error('Error liking post:', err)
-      throw err
     }
-  }
+  };
 
-  const fetchStats = async () => {
-    try {
-      const response = await communityApi.getCommunityStats()
-      
-      if (response.data.code === 200) {
-        stats.value = response.data.data
-      }
-    } catch (err) {
-      console.error('Error fetching stats:', err)
+  const fetchComments = async (postId: number, params: { page?: number; size?: number }) => {
+    const response = await handleApiCall(
+      () => communityApi.getCommentsByPostId(postId, params),
+      { loadingRef: uiStore.loadingState, errorMessage: '获取评论失败' }
+    );
+    if (response) {
+      comments.value = response.data.items;
+      totalComments.value = response.data.total;
     }
-  }
+  };
+
+  const postComment = async (postId: number, content: string, parentId?: number) => {
+    const response = await handleApiCall(
+        () => communityApi.createComment(postId, content, parentId),
+        { successMessage: '评论成功', errorMessage: '发表评论失败' }
+    );
+    if (response) {
+        await fetchComments(postId, {}); // Refresh comments
+    }
+  };
+
+  const fetchCommunityStats = async () => {
+      const response = await handleApiCall(() => communityApi.getCommunityStats());
+      if(response) stats.value = response.data;
+  };
 
   const fetchHotTopics = async () => {
-    try {
-      const response = await communityApi.getHotTopics()
-      
-      if (response.data.code === 200) {
-        hotTopics.value = response.data.data.map((topic: any, index: number) => ({
-          id: topic.id,
-          name: topic.name,
-          rank: index + 1,
-          postCount: topic.postCount
-        }))
-      }
-    } catch (err) {
-      console.error('Error fetching hot topics:', err)
-    }
-  }
-
+    const response = await handleApiCall(() => communityApi.getHotTopics());
+    if(response) hotTopics.value = response.data;
+  };
+  
   const fetchActiveUsers = async () => {
-    try {
-      const response = await communityApi.getActiveUsers()
-      
-      if (response.data.code === 200) {
-        activeUsers.value = response.data.data
-      }
-    } catch (err) {
-      console.error('Error fetching active users:', err)
-    }
-  }
+    const response = await handleApiCall(() => communityApi.getActiveUsers());
+    if(response) activeUsers.value = response.data;
+  };
 
-  const setFilters = (newFilters: Partial<typeof filters.value>) => {
-    Object.assign(filters.value, newFilters)
-  }
-
-  const resetFilters = () => {
-    filters.value = {
-      category: '',
-      keyword: '',
-      orderBy: 'latest'
-    }
-  }
-
-  const getCategoryStats = async () => {
-    try {
-      const response = await communityApi.getCommunityStats()
-      if (response.data.code === 200) {
-        return response.data.data.categoryStats || []
-      }
-      return []
-    } catch (err) {
-      console.error('Error fetching category stats:', err)
-      return []
-    }
-  }
 
   return {
-    // 状态
     posts,
+    totalPosts,
     currentPost,
+    comments,
+    totalComments,
     stats,
     hotTopics,
     activeUsers,
     loading,
-    error,
-    pagination,
-    filters,
-    
-    // 计算属性
-    filteredPosts,
-    
-    // 方法
     fetchPosts,
-    fetchPostDetail,
+    fetchPostById,
     createPost,
-    likePost,
-    fetchStats,
+    toggleLikePost,
+    fetchComments,
+    postComment,
+    fetchCommunityStats,
     fetchHotTopics,
     fetchActiveUsers,
-    setFilters,
-    resetFilters,
-    getCategoryStats
-  }
-}) 
+  };
+});
