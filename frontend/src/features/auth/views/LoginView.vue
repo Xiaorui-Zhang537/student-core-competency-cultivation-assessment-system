@@ -8,15 +8,15 @@
     <!-- Quick Login for Dev -->
     <div v-if="isDevelopment" class="mt-6 p-4 bg-blue-50 rounded-lg border border-blue-200">
         <div class="flex gap-2 mt-2">
-            <button @click="handleLogin({ usernameOrEmail: 'teacher', password: 'password' })" class="flex-1 btn btn-sm bg-blue-500 hover:bg-blue-600 text-white">教师登录</button>
-            <button @click="handleLogin({ usernameOrEmail: 'student', password: 'password' })" class="flex-1 btn btn-sm bg-green-500 hover:bg-green-600 text-white">学生登录</button>
+            <button @click="handleLogin({ username: 'teacher', password: 'password' })" class="flex-1 btn btn-sm bg-blue-500 hover:bg-blue-600 text-white">教师登录</button>
+            <button @click="handleLogin({ username: 'student', password: 'password' })" class="flex-1 btn btn-sm bg-green-500 hover:bg-green-600 text-white">学生登录</button>
         </div>
     </div>
 
     <form @submit.prevent="handleLogin(form)" class="space-y-6">
       <div>
         <label for="username" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">用户名或邮箱</label>
-        <input id="username" v-model="form.usernameOrEmail" type="text" required class="input" :disabled="authStore.loading" />
+        <input id="username" v-model="form.username" type="text" required class="input" :disabled="authStore.loading" />
       </div>
 
       <div>
@@ -59,7 +59,7 @@ const authStore = useAuthStore();
 const isDevelopment = ref(import.meta.env.DEV);
 
 const form = ref<LoginRequest>({
-  usernameOrEmail: '',
+  username: '',
   password: '',
 });
 

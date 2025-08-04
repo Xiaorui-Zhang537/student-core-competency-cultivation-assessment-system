@@ -9,25 +9,25 @@ export const gradeApi = {
   },
 
   // Get specific grade details
-  getGradeById: (id: number): Promise<ApiResponse<Grade>> => {
+  getGradeById: (id: string): Promise<ApiResponse<Grade>> => {
     return api.get(`/api/grades/${id}`);
   },
 
   // Get grades by different criteria
-  getGradeForStudentAssignment: (studentId: number, assignmentId: number): Promise<ApiResponse<Grade>> => {
+  getGradeForStudentAssignment: (studentId: string, assignmentId: string): Promise<ApiResponse<Grade>> => {
     return api.get(`/api/grades/student/${studentId}/assignment/${assignmentId}`);
   },
 
-  getGradesByStudent: (studentId: number, params?: { page?: number; size?: number }): Promise<ApiResponse<PaginatedResponse<Grade>>> => {
+  getGradesByStudent: (studentId: string, params?: { page?: number; size?: number }): Promise<ApiResponse<PaginatedResponse<Grade>>> => {
     return api.get(`/api/grades/student/${studentId}/page`, { params });
   },
 
-  getGradesByAssignment: (assignmentId: number, params?: { page?: number; size?: number }): Promise<ApiResponse<PaginatedResponse<Grade>>> => {
+  getGradesByAssignment: (assignmentId: string, params?: { page?: number; size?: number }): Promise<ApiResponse<PaginatedResponse<Grade>>> => {
     return api.get(`/api/grades/assignment/${assignmentId}/page`, { params });
   },
 
   // Publish a grade
-  publishGrade: (id: number): Promise<ApiResponse<void>> => {
+  publishGrade: (id: string): Promise<ApiResponse<void>> => {
     return api.post(`/api/grades/${id}/publish`);
   },
 
@@ -36,7 +36,7 @@ export const gradeApi = {
     return api.post('/api/grades/batch', grades);
   },
   
-  publishBatchGrades: (gradeIds: number[]): Promise<ApiResponse<void>> => {
+  publishBatchGrades: (gradeIds: string[]): Promise<ApiResponse<void>> => {
       return api.post('/api/grades/batch-publish', { gradeIds });
   }
 };

@@ -1,6 +1,6 @@
 // Based on FileInfo DTO from backend
 export interface FileInfo {
-  id: number;
+  id: string;
   fileName: string;
   fileType: string;
   fileSize: number;

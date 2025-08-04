@@ -9,7 +9,7 @@
     <!-- Loading State -->
     <div v-if="gradeStore.loading" class="text-center py-12">
       <p>正在加载成绩...</p>
-    </div>
+        </div>
 
     <!-- Grade List -->
     <div v-else-if="gradeStore.grades.length > 0" class="space-y-4">
@@ -33,7 +33,7 @@
     <div v-else class="text-center py-12 card">
       <h3 class="text-lg font-medium">暂无已评分的作业</h3>
       <p class="text-gray-500">完成并提交作业后，您可以在此处查看您的成绩。</p>
-    </div>
+      </div>
   </div>
 </template>
 
@@ -59,4 +59,4 @@ onMounted(() => {
     gradeStore.fetchGradesByStudent(user.id);
   }
 });
-</script>
+</script> 

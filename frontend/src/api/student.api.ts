@@ -1,23 +1,33 @@
 import { api } from './config';
 import type { ApiResponse, PaginatedResponse } from '@/types/api';
-import type { StudentDashboardData } from '@/types/student';
-import type { Course } from '@/types/course';
-import type { Assignment } from '@/types/assignment';
+import type { StudentDashboardData, StudentCourse, StudentLesson, StudentSubmission } from '@/types/student';
 
 export const studentApi = {
-  getDashboard: (): Promise<ApiResponse<StudentDashboardData>> => {
+  getDashboardData: (): Promise<ApiResponse<StudentDashboardData>> => {
     return api.get('/api/students/dashboard');
   },
 
-  getMyCourses: (params?: { page?: number; size?: number }): Promise<ApiResponse<PaginatedResponse<Course>>> => {
-    return api.get('/api/students/my/courses', { params });
+  getMyCourses: (params?: { page?: number; size?: number }): Promise<ApiResponse<PaginatedResponse<StudentCourse>>> => {
+    return api.get('/api/students/my-courses', { params });
   },
 
-  getMyAssignments: (params?: { page?: number; size?: number }): Promise<ApiResponse<PaginatedResponse<Assignment>>> => {
-    return api.get('/api/students/my/assignments', { params });
+  getCourseProgress: (courseId: string): Promise<ApiResponse<StudentCourse>> => {
+    return api.get(`/api/students/courses/${courseId}/progress`);
   },
 
-  getMyPendingAssignments: (): Promise<ApiResponse<Assignment[]>> => {
-    return api.get('/api/students/my/assignments/pending');
+  getLessonDetails: (lessonId: string): Promise<ApiResponse<StudentLesson>> => {
+    return api.get(`/api/students/lessons/${lessonId}`);
+  },
+
+  markLessonAsCompleted: (lessonId: string): Promise<ApiResponse<void>> => {
+    return api.post(`/api/students/lessons/${lessonId}/complete`);
+  },
+
+  markLessonAsIncomplete: (lessonId: string): Promise<ApiResponse<void>> => {
+    return api.post(`/api/students/lessons/${lessonId}/incomplete`);
+  },
+
+  getMySubmissions: (params?: { courseId?: string }): Promise<ApiResponse<StudentSubmission[]>> => {
+    return api.get('/api/students/my-submissions', { params });
   },
 };

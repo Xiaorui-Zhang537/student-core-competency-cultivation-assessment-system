@@ -1,7 +1,7 @@
 // Based on backend LoginRequest.java, RegisterRequest.java, and AuthResponse.java
 
 export interface LoginRequest {
-  usernameOrEmail: string;
+  username: string;
   password?: string;
 }
 
@@ -17,8 +17,8 @@ export interface User {
   username: string;
   email: string;
   role: 'STUDENT' | 'TEACHER' | 'ADMIN';
-  token: string;
-  refreshToken: string;
+  token?: string;
+  refreshToken?: string;
   emailVerified?: boolean;
   avatar?: string;
   nickname?: string;
@@ -26,6 +26,6 @@ export interface User {
 
 export interface AuthResponse {
   user: User;
-  token: string;
+  accessToken: string;
   refreshToken: string;
 }

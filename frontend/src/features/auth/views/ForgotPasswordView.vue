@@ -45,7 +45,7 @@ const handleForgotPassword = async () => {
     return;
   }
   
-  uiStore.setLoading(true);
+  uiStore.loading = true;
   try {
     await userApi.forgotPassword(email.value);
     uiStore.showNotification({ type: 'success', title: '成功', message: '如果该邮箱已注册，您将收到一封密码重置邮件。' });
@@ -53,7 +53,7 @@ const handleForgotPassword = async () => {
     // For security reasons, we don't tell the user if the email exists or not.
     uiStore.showNotification({ type: 'success', title: '成功', message: '如果该邮箱已注册，您将收到一封密码重置邮件。' });
   } finally {
-    uiStore.setLoading(false);
+    uiStore.loading = false;
   }
 };
 </script>

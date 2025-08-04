@@ -100,24 +100,16 @@ const router = createRouter({
   routes
 });
 
-router.beforeEach(async (to, from, next) => {
+router.beforeEach((to, from, next) => {
   const authStore = useAuthStore();
-  const token = localStorage.getItem('token');
-
-  // If user is not loaded but token exists, try to fetch user
-  if (!authStore.user && token) {
-    await authStore.fetchUser();
-  }
-
   const isAuthenticated = authStore.isAuthenticated;
   const userRole = authStore.userRole;
 
   if (to.meta.requiresAuth) {
     if (!isAuthenticated) {
-      return next({ name: 'Login' });
+      return next({ name: 'Login', query: { redirect: to.fullPath } });
     }
     if (to.meta.role && to.meta.role !== userRole) {
-      // Redirect to their own dashboard if role does not match
       const dashboard = userRole === 'TEACHER' ? '/teacher/dashboard' : '/student/dashboard';
       return next(dashboard);
     }

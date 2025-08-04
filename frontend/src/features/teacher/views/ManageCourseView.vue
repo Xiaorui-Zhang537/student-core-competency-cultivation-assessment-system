@@ -38,7 +38,7 @@
             <span class="badge" :class="statusClass(course.status)">{{ course.status }}</span>
             <div>
               <button @click="openEditModal(course)" class="btn btn-sm btn-outline mr-2">编辑</button>
-              <button @click="handleDeleteCourse(course.id)" class="btn btn-sm btn-danger-outline">删除</button>
+              <button @click="handleDeleteCourse(String(course.id))" class="btn btn-sm btn-danger-outline">删除</button>
             </div>
           </div>
         </div>
@@ -84,7 +84,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, onMounted, computed } from 'vue';
+import { ref, reactive, onMounted } from 'vue';
 import { useCourseStore } from '@/stores/course';
 import type { Course, CourseCreationRequest, CourseUpdateRequest } from '@/types/course';
 import { debounce } from 'lodash-es';
@@ -93,9 +93,9 @@ const courseStore = useCourseStore();
 
 const showModal = ref(false);
 const isEditing = ref(false);
-const editingCourseId = ref<number | null>(null);
+const editingCourseId = ref<string | null>(null);
 
-const form = reactive<CourseCreationRequest & { id?: number }>({
+const form = reactive<Omit<CourseCreationRequest, 'tags'> & { id?: string; tags: string[] }>({
   title: '',
   description: '',
   category: '',
@@ -118,6 +118,7 @@ const statusClass = (status: string) => {
 
 const openCreateModal = () => {
   isEditing.value = false;
+  editingCourseId.value = null;
   Object.assign(form, { title: '', description: '', category: '', tags: [] });
   tagsInput.value = '';
   showModal.value = true;
@@ -125,7 +126,7 @@ const openCreateModal = () => {
 
 const openEditModal = (course: Course) => {
   isEditing.value = true;
-  editingCourseId.value = course.id;
+  editingCourseId.value = String(course.id);
   Object.assign(form, { ...course });
   tagsInput.value = course.tags.join(', ');
   showModal.value = true;
@@ -139,30 +140,30 @@ const handleSubmit = async () => {
   form.tags = tagsInput.value.split(',').map(t => t.trim()).filter(Boolean);
   
   if (isEditing.value && editingCourseId.value) {
-    const updateData: CourseUpdateRequest = { ...form };
-    await courseStore.updateCourse(editingCourseId.value, updateData);
+    const { id, ...updateData } = form;
+    await courseStore.updateCourse(editingCourseId.value, updateData as CourseUpdateRequest);
   } else {
-    const createData: CourseCreationRequest = { ...form };
-    await courseStore.createCourse(createData);
+    const { id, ...createData } = form;
+    await courseStore.createCourse(createData as CourseCreationRequest);
   }
   
   if (!courseStore.loading) {
     closeModal();
+    // Refresh the list
+    await courseStore.fetchCourses({ page: 1, size: 10 });
   }
 };
 
-const handleDeleteCourse = async (id: number) => {
+const handleDeleteCourse = async (id: string) => {
   if (confirm('您确定要删除这门课程吗？此操作无法撤销。')) {
     await courseStore.deleteCourse(id);
   }
 };
 
 const applyFilters = debounce(() => {
-    // This is a placeholder for now. Real filtering should be done via API params.
-    // For now, it will rely on the computed property which filters client-side.
-    // In a real app, you would do:
-    // courseStore.fetchCourses({ page: 0, query: filters.query, status: filters.status });
     console.log('Applying filters:', filters);
+    // In a real app, you would do:
+    courseStore.fetchCourses({ page: 1, size: 10, query: filters.query, status: filters.status });
 }, 300);
 
 const clearFilters = () => {
@@ -172,6 +173,6 @@ const clearFilters = () => {
 }
 
 onMounted(() => {
-  courseStore.fetchCourses();
+  courseStore.fetchCourses({ page: 1, size: 10 });
 });
 </script>

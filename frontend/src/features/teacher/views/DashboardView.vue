@@ -68,7 +68,7 @@ import * as echarts from 'echarts';
 const teacherStore = useTeacherStore();
 const courseStore = useCourseStore();
 
-const selectedCourseId = ref<number | null>(null);
+const selectedCourseId = ref<string | null>(null);
 const chartRef = ref<HTMLElement | null>(null);
 let chart: echarts.ECharts | null = null;
 
@@ -113,9 +113,9 @@ watch(classPerformance, (newData) => {
 }, { deep: true });
 
 onMounted(async () => {
-  await courseStore.fetchCourses();
+  await courseStore.fetchCourses({ page: 1, size: 100 }); // Fetch all courses for selector
   if (courseStore.courses.length > 0) {
-      selectedCourseId.value = courseStore.courses[0].id;
+      selectedCourseId.value = String(courseStore.courses[0].id);
       onCourseSelect();
   }
   window.addEventListener('resize', resizeChart);

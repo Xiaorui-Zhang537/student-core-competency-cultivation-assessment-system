@@ -8,11 +8,11 @@ export const assignmentApi = {
     return api.get('/api/assignments', { params });
   },
   
-  getAssignmentsByCourse: (courseId: number, params: { page?: number; size?: number; sort?: string }): Promise<ApiResponse<PaginatedResponse<Assignment>>> => {
+  getAssignmentsByCourse: (courseId: string, params: { page?: number; size?: number; sort?: string }): Promise<ApiResponse<PaginatedResponse<Assignment>>> => {
     return api.get(`/api/courses/${courseId}/assignments`, { params });
   },
 
-  getAssignmentById: (id: number): Promise<ApiResponse<Assignment>> => {
+  getAssignmentById: (id: string): Promise<ApiResponse<Assignment>> => {
     return api.get(`/api/assignments/${id}`);
   },
 
@@ -20,20 +20,20 @@ export const assignmentApi = {
     return api.post('/api/assignments', data);
   },
 
-  updateAssignment: (id: number, data: AssignmentUpdateRequest): Promise<ApiResponse<Assignment>> => {
+  updateAssignment: (id: string, data: AssignmentUpdateRequest): Promise<ApiResponse<Assignment>> => {
     return api.put(`/api/assignments/${id}`, data);
   },
 
-  deleteAssignment: (id: number): Promise<ApiResponse<void>> => {
+  deleteAssignment: (id: string): Promise<ApiResponse<void>> => {
     return api.delete(`/api/assignments/${id}`);
   },
 
   // Status changes
-  publishAssignment: (id: number): Promise<ApiResponse<void>> => {
+  publishAssignment: (id: string): Promise<ApiResponse<void>> => {
     return api.post(`/api/assignments/${id}/publish`);
   },
 
-  closeAssignment: (id: number): Promise<ApiResponse<void>> => {
+  closeAssignment: (id: string): Promise<ApiResponse<void>> => {
     return api.post(`/api/assignments/${id}/close`);
   },
 };

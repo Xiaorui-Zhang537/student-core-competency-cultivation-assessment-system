@@ -34,7 +34,7 @@
           <div
             v-for="category in categories"
             :key="category.id"
-            @click="selectCategory(category)"
+            @click="handleSelectCategory(category)"
             class="category-card"
             :class="{ 'category-active': selectedCategory?.id === category.id }"
           >
@@ -60,7 +60,7 @@
           </button>
         </div>
 
-        <div v-if="loadingPopular" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div v-if="discoveryLoading.popular" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           <div v-for="i in 4" :key="i" class="course-card-skeleton">
             <div class="animate-pulse">
               <div class="h-48 bg-gray-300 rounded-t-lg"></div>
@@ -137,7 +137,7 @@
           </button>
         </div>
 
-        <div v-if="loadingRecommended" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div v-if="discoveryLoading.recommended" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           <div v-for="i in 3" :key="i" class="course-card-skeleton">
             <div class="animate-pulse">
               <div class="h-48 bg-gray-300 rounded-t-lg"></div>
@@ -214,7 +214,7 @@
           </button>
         </div>
 
-        <div v-if="loadingCategoryList" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div v-if="discoveryLoading.categoryCourses" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           <div v-for="i in 6" :key="i" class="course-card-skeleton">
             <div class="animate-pulse">
               <div class="h-48 bg-gray-300 rounded-t-lg"></div>
@@ -272,7 +272,7 @@
           <div v-if="categoryPagination.totalPages > 1" class="flex justify-center mt-8">
             <div class="flex items-center space-x-2">
               <button
-                @click="loadCategoryPage(categoryPagination.page - 1)"
+                @click="handleCategoryPageChange(categoryPagination.page - 1)"
                 :disabled="categoryPagination.page <= 1"
                 class="pagination-btn"
               >
@@ -282,7 +282,7 @@
                 第 {{ categoryPagination.page }} 页，共 {{ categoryPagination.totalPages }} 页
               </span>
               <button
-                @click="loadCategoryPage(categoryPagination.page + 1)"
+                @click="handleCategoryPageChange(categoryPagination.page + 1)"
                 :disabled="categoryPagination.page >= categoryPagination.totalPages"
                 class="pagination-btn"
               >
@@ -299,8 +299,9 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
-import { coursesAPI, type PopularCourse, type CourseCategory } from '@/api/courses.api'
-import type { Course } from '@/types/course'
+import { storeToRefs } from 'pinia';
+import { useCourseStore } from '@/stores/course';
+import type { Course, CourseCategory } from '@/types/course'
 import {
   MagnifyingGlassIcon,
   ChevronRightIcon,
@@ -322,36 +323,58 @@ import {
   EllipsisHorizontalIcon
 } from '@heroicons/vue/24/outline'
 
-// 路由
+// Store setup
 const router = useRouter()
+const courseStore = useCourseStore()
+const {
+  popularCourses,
+  recommendedCourses,
+  categories,
+  categoryCourses,
+  categoryPagination,
+  discoveryLoading,
+} = storeToRefs(courseStore);
 
-// 响应式状态
+// Local component state
 const searchQuery = ref('')
-const loadingPopular = ref(false)
-const loadingRecommended = ref(false)
-const loadingCategories = ref(false)
-const loadingCategoryList = ref(false)
-
-const categories = ref<CourseCategory[]>([])
-const popularCourses = ref<PopularCourse[]>([])
-const recommendedCourses = ref<Course[]>([])
-const categoryCourses = ref<Course[]>([])
 const selectedCategory = ref<CourseCategory | null>(null)
 
-const categoryPagination = ref({
-  page: 1,
-  size: 12,
-  total: 0,
-  totalPages: 0
-})
-
-// 方法
+// Methods delegating to store or router
 const handleSearch = () => {
   if (searchQuery.value.trim()) {
     router.push(`/courses/search?q=${encodeURIComponent(searchQuery.value)}`)
   }
 }
 
+const handleSelectCategory = async (category: CourseCategory) => {
+  selectedCategory.value = category
+  courseStore.categoryPagination.page = 1 // Reset page for new category
+  await courseStore.fetchCoursesByCategory(category.id)
+}
+
+const clearCategoryFilter = () => {
+  selectedCategory.value = null
+}
+
+const handleCategoryPageChange = async (page: number) => {
+  if (selectedCategory.value) {
+    await courseStore.changeCategoryPage(selectedCategory.value.id, page)
+  }
+}
+
+const viewCourse = (course: Course) => {
+  router.push(`/courses/${course.id}`)
+}
+
+const viewAllPopular = () => {
+  router.push('/courses?sort=popular')
+}
+
+const refreshRecommended = async () => {
+  await courseStore.fetchRecommendedCourses()
+}
+
+// UI Helper functions
 const getCategoryIcon = (categoryId: string) => {
   const icons: Record<string, any> = {
     programming: CodeBracketIcon,
@@ -366,61 +389,6 @@ const getCategoryIcon = (categoryId: string) => {
   return icons[categoryId] || EllipsisHorizontalIcon
 }
 
-const selectCategory = async (category: CourseCategory) => {
-  selectedCategory.value = category
-  categoryPagination.value.page = 1
-  await loadCategoryCourses()
-}
-
-const clearCategoryFilter = () => {
-  selectedCategory.value = null
-  categoryCourses.value = []
-}
-
-const loadCategoryCourses = async () => {
-  if (!selectedCategory.value) return
-  
-  loadingCategoryList.value = true
-  try {
-    const response = await coursesAPI.getCoursesByCategory(
-      selectedCategory.value.id,
-      {
-        page: categoryPagination.value.page,
-        size: categoryPagination.value.size
-      }
-    )
-    
-    categoryCourses.value = response.data.items
-    categoryPagination.value = {
-      page: response.data.page,
-      size: response.data.size,
-      total: response.data.total,
-      totalPages: response.data.totalPages
-    }
-  } catch (error) {
-    console.error('获取分类课程失败:', error)
-  } finally {
-    loadingCategoryList.value = false
-  }
-}
-
-const loadCategoryPage = async (page: number) => {
-  categoryPagination.value.page = page
-  await loadCategoryCourses()
-}
-
-const viewCourse = (course: Course) => {
-  router.push(`/courses/${course.id}`)
-}
-
-const viewAllPopular = () => {
-  router.push('/courses?sort=popular')
-}
-
-const refreshRecommended = async () => {
-  await loadRecommendedCourses()
-}
-
 const formatStudentCount = (count: number) => {
   if (count >= 10000) {
     return `${Math.floor(count / 10000)}万+`
@@ -431,6 +399,7 @@ const formatStudentCount = (count: number) => {
 }
 
 const formatDuration = (minutes: number) => {
+  if (!minutes) return 'N/A';
   const hours = Math.floor(minutes / 60)
   const mins = minutes % 60
   if (hours === 0) {
@@ -440,67 +409,28 @@ const formatDuration = (minutes: number) => {
 }
 
 const getLevelClass = (level: string) => {
-  const classes = {
+  const classes: Record<string, string> = {
     beginner: 'bg-green-100 text-green-800',
     intermediate: 'bg-yellow-100 text-yellow-800',
     advanced: 'bg-red-100 text-red-800'
   }
-  return classes[level as keyof typeof classes] || 'bg-gray-100 text-gray-800'
+  return classes[level] || 'bg-gray-100 text-gray-800'
 }
 
 const getLevelText = (level: string) => {
-  const texts = {
+  const texts: Record<string, string> = {
     beginner: '初级',
     intermediate: '中级',
     advanced: '高级'
   }
-  return texts[level as keyof typeof texts] || level
+  return texts[level] || level
 }
 
-// 数据加载
-const loadCategories = async () => {
-  loadingCategories.value = true
-  try {
-    const response = await coursesAPI.getCategories()
-    categories.value = response.data
-  } catch (error) {
-    console.error('获取课程分类失败:', error)
-  } finally {
-    loadingCategories.value = false
-  }
-}
-
-const loadPopularCourses = async () => {
-  loadingPopular.value = true
-  try {
-    const response = await coursesAPI.getPopularCourses({ limit: 8 })
-    popularCourses.value = response.data
-  } catch (error) {
-    console.error('获取热门课程失败:', error)
-  } finally {
-    loadingPopular.value = false
-  }
-}
-
-const loadRecommendedCourses = async () => {
-  loadingRecommended.value = true
-  try {
-    const response = await coursesAPI.getRecommendedCourses()
-    recommendedCourses.value = response.data.slice(0, 6)
-  } catch (error) {
-    console.error('获取推荐课程失败:', error)
-  } finally {
-    loadingRecommended.value = false
-  }
-}
-
-// 生命周期
-onMounted(async () => {
-  await Promise.all([
-    loadCategories(),
-    loadPopularCourses(),
-    loadRecommendedCourses()
-  ])
+// Initial data loading
+onMounted(() => {
+  courseStore.fetchCategories()
+  courseStore.fetchPopularCourses()
+  courseStore.fetchRecommendedCourses()
 })
 </script>
 

@@ -147,21 +147,21 @@ const selectedCategory = ref('');
 // Computed Properties
 const myCourses = computed(() => studentStore.myCourses);
 
-const activeCoursesCount = computed(() => myCourses.value.filter(c => c.progress < 100).length);
-const completedCoursesCount = computed(() => myCourses.value.filter(c => c.progress === 100).length);
+const activeCoursesCount = computed(() => myCourses.value.filter((c: StudentCourse) => c.progress < 100).length);
+const completedCoursesCount = computed(() => myCourses.value.filter((c: StudentCourse) => c.progress === 100).length);
 const averageProgress = computed(() => {
   if (myCourses.value.length === 0) return 0;
-  const total = myCourses.value.reduce((sum, course) => sum + course.progress, 0);
+  const total = myCourses.value.reduce((sum: number, course: StudentCourse) => sum + course.progress, 0);
   return total / myCourses.value.length;
 });
 
 const categories = computed(() => {
-  const cats = new Set(myCourses.value.map(c => c.category));
+  const cats = new Set(myCourses.value.map((c: StudentCourse) => c.category));
   return Array.from(cats).sort();
 });
 
 const filteredCourses = computed(() => {
-  return myCourses.value.filter(course => {
+  return myCourses.value.filter((course: StudentCourse) => {
     const searchMatch = searchQuery.value.toLowerCase() === '' || course.title.toLowerCase().includes(searchQuery.value.toLowerCase());
     const categoryMatch = selectedCategory.value === '' || course.category === selectedCategory.value;
     return searchMatch && categoryMatch;
@@ -175,21 +175,21 @@ const enterCourse = (course: StudentCourse) => {
 
 const handleEnroll = async (courseId: string) => {
   enrollingId.value = courseId;
-  const success = await courseStore.enrollInCourse(courseId);
-  if (success) {
-    await studentStore.fetchMyCourses(); // Refresh student's course list
-  }
+  await courseStore.enrollInCourse(courseId);
+  // After enrollment, refresh the student's course list to reflect the change.
+  await studentStore.fetchMyCourses();
   enrollingId.value = null;
 };
 
 const isEnrolled = (courseId: string) => {
-  return myCourses.value.some(c => c.id === courseId);
+  // Assuming myCourses contains course objects with string IDs
+  return myCourses.value.some((c: StudentCourse) => String(c.id) === courseId);
 };
 
 // Lifecycle Hooks
 onMounted(() => {
   studentStore.fetchMyCourses();
-  courseStore.fetchCourses(); // For the course store modal
+  courseStore.fetchCourses({ page: 1, size: 20 }); // For the course store modal
 });
 </script>
 
@@ -197,6 +197,7 @@ onMounted(() => {
 .line-clamp-2 {
   display: -webkit-box;
   -webkit-line-clamp: 2;
+  line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
 }

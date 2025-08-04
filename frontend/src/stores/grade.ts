@@ -14,7 +14,7 @@ export const useGradeStore = defineStore('grade', () => {
   const loading = computed(() => uiStore.loading);
 
   // Actions
-  const fetchGradesByStudent = async (studentId: number, params?: { page?: number; size?: number }) => {
+  const fetchGradesByStudent = async (studentId: string, params?: { page?: number; size?: number }) => {
     const response = await handleApiCall(
       () => gradeApi.getGradesByStudent(studentId, params),
       uiStore,
@@ -26,7 +26,7 @@ export const useGradeStore = defineStore('grade', () => {
     }
   };
 
-  const fetchGradesByAssignment = async (assignmentId: number, params?: { page?: number; size?: number }) => {
+  const fetchGradesByAssignment = async (assignmentId: string, params?: { page?: number; size?: number }) => {
     const response = await handleApiCall(
       () => gradeApi.getGradesByAssignment(assignmentId, params),
       uiStore,
@@ -52,7 +52,7 @@ export const useGradeStore = defineStore('grade', () => {
     return null;
   };
 
-  const publishGrade = async (gradeId: number) => {
+  const publishGrade = async (gradeId: string) => {
     const response = await handleApiCall(
       () => gradeApi.publishGrade(gradeId),
       uiStore,

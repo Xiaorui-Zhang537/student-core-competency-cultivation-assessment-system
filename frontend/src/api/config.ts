@@ -11,7 +11,7 @@ const apiClient = axios.create({
 })
 
 // 检查是否启用Mock模式 - 临时启用Mock模式进行测试
-const isMockMode = true // import.meta.env.VITE_MOCK_API === 'true'
+const isMockMode = false
 
 // 只在明确启用Mock模式时才使用Mock拦截器
 if (isMockMode) {
@@ -79,7 +79,7 @@ if (isMockMode) {
 apiClient.interceptors.request.use(
   (config) => {
     // 添加认证token
-    const token = localStorage.getItem('auth_token')
+    const token = localStorage.getItem('token')
     if (token) {
       config.headers.Authorization = `Bearer ${token}`
     }
@@ -109,7 +109,7 @@ apiClient.interceptors.response.use(
       switch (status) {
         case 401:
           // 未授权，清除token并跳转到登录页
-          localStorage.removeItem('auth_token')
+          localStorage.removeItem('token')
           window.location.href = '/auth/login'
           break
         case 403:

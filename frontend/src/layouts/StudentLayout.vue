@@ -171,7 +171,7 @@
       </nav>
 
       <!-- 主内容区域 -->
-      <main class="flex-1 md:ml-0">
+      <main class="flex-1 md:pl-64">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <router-view />
         </div>

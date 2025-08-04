@@ -1,7 +1,7 @@
 // Based on Assignment.java
 export interface Assignment {
-  id: number;
-  courseId: number;
+  id: string;
+  courseId: string;
   title: string;
   description: string;
   dueDate: string;
@@ -12,7 +12,7 @@ export interface Assignment {
 
 // For creating a new assignment
 export interface AssignmentCreationRequest {
-  courseId: number;
+  courseId: string;
   title: string;
   description: string;
   dueDate: string;

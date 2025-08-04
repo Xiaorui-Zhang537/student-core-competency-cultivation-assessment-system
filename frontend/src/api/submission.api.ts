@@ -5,15 +5,15 @@ import type { Submission, SubmissionRequest, DraftRequest } from '@/types/submis
 // import type { Grade } from '@/types/grade';
 
 export const submissionApi = {
-  getSubmissionForAssignment: (assignmentId: number): Promise<ApiResponse<Submission>> => {
+  getSubmissionForAssignment: (assignmentId: string): Promise<ApiResponse<Submission>> => {
     return api.get(`/api/assignments/${assignmentId}/submission`);
   },
 
-  submitAssignment: (assignmentId: number, data: SubmissionRequest): Promise<ApiResponse<Submission>> => {
+  submitAssignment: (assignmentId: string, data: SubmissionRequest): Promise<ApiResponse<Submission>> => {
     return api.post(`/api/assignments/${assignmentId}/submit`, data);
   },
 
-  saveDraft: (assignmentId: number, data: DraftRequest): Promise<ApiResponse<void>> => {
+  saveDraft: (assignmentId: string, data: DraftRequest): Promise<ApiResponse<void>> => {
     return api.post(`/api/assignments/${assignmentId}/draft`, data);
   },
   
@@ -23,7 +23,7 @@ export const submissionApi = {
     return api.get('/api/submissions/my/grades');
   },
 
-  getGradeForSubmission: (submissionId: number): Promise<ApiResponse<Grade>> => {
+  getGradeForSubmission: (submissionId: string): Promise<ApiResponse<Grade>> => {
     return api.get(`/api/submissions/${submissionId}/grade`);
   },
   */

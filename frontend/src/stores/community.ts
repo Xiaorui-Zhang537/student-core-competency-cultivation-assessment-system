@@ -11,6 +11,7 @@ import type {
   ActiveUser,
   PostCreationRequest,
 } from '@/types/community';
+import type { PaginatedResponse } from '@/types/api';
 
 export const useCommunityStore = defineStore('community', () => {
   const uiStore = useUIStore();
@@ -37,18 +38,21 @@ export const useCommunityStore = defineStore('community', () => {
   }) => {
     const response = await handleApiCall(
       () => communityApi.getPosts(params),
-      { loadingRef: uiStore.loadingState, errorMessage: '获取帖子列表失败' }
+      uiStore,
+      '获取帖子列表失败'
     );
     if (response) {
-      posts.value = response.data.items;
-      totalPosts.value = response.data.total;
+      const data = response.data as PaginatedResponse<Post>;
+      posts.value = data.items;
+      totalPosts.value = data.total;
     }
   };
 
   const fetchPostById = async (id: number) => {
     const response = await handleApiCall(
       () => communityApi.getPostById(id),
-      { loadingRef: uiStore.loadingState, errorMessage: '获取帖子详情失败' }
+      uiStore,
+      '获取帖子详情失败'
     );
     if (response) {
       currentPost.value = response.data;
@@ -58,7 +62,9 @@ export const useCommunityStore = defineStore('community', () => {
   const createPost = async (data: PostCreationRequest) => {
     const response = await handleApiCall(
       () => communityApi.createPost(data),
-      { successMessage: '帖子发布成功', errorMessage: '发布帖子失败' }
+      uiStore,
+      '发布帖子失败',
+      { successMessage: '帖子发布成功' }
     );
     if (response) {
       await fetchPosts({}); // Refresh posts list
@@ -69,7 +75,8 @@ export const useCommunityStore = defineStore('community', () => {
   const toggleLikePost = async (id: number) => {
     const response = await handleApiCall(
       () => communityApi.likePost(id),
-      { errorMessage: '操作失败' }
+      uiStore,
+      '操作失败'
     );
     if (response) {
         // Update post in the list
@@ -89,18 +96,22 @@ export const useCommunityStore = defineStore('community', () => {
   const fetchComments = async (postId: number, params: { page?: number; size?: number }) => {
     const response = await handleApiCall(
       () => communityApi.getCommentsByPostId(postId, params),
-      { loadingRef: uiStore.loadingState, errorMessage: '获取评论失败' }
+      uiStore,
+      '获取评论失败'
     );
     if (response) {
-      comments.value = response.data.items;
-      totalComments.value = response.data.total;
+      const data = response.data as PaginatedResponse<PostComment>;
+      comments.value = data.items;
+      totalComments.value = data.total;
     }
   };
 
   const postComment = async (postId: number, content: string, parentId?: number) => {
     const response = await handleApiCall(
         () => communityApi.createComment(postId, content, parentId),
-        { successMessage: '评论成功', errorMessage: '发表评论失败' }
+        uiStore,
+        '发表评论失败',
+        { successMessage: '评论成功' }
     );
     if (response) {
         await fetchComments(postId, {}); // Refresh comments
@@ -108,17 +119,17 @@ export const useCommunityStore = defineStore('community', () => {
   };
 
   const fetchCommunityStats = async () => {
-      const response = await handleApiCall(() => communityApi.getCommunityStats());
+      const response = await handleApiCall(() => communityApi.getCommunityStats(), uiStore, '获取社区统计数据失败');
       if(response) stats.value = response.data;
   };
 
   const fetchHotTopics = async () => {
-    const response = await handleApiCall(() => communityApi.getHotTopics());
+    const response = await handleApiCall(() => communityApi.getHotTopics(), uiStore, '获取热门话题失败');
     if(response) hotTopics.value = response.data;
   };
   
   const fetchActiveUsers = async () => {
-    const response = await handleApiCall(() => communityApi.getActiveUsers());
+    const response = await handleApiCall(() => communityApi.getActiveUsers(), uiStore, '获取活跃用户失败');
     if(response) activeUsers.value = response.data;
   };
 

@@ -66,9 +66,9 @@
              <div class="p-4 text-center">
                 <div class="w-16 h-16 bg-gray-200 rounded-full mx-auto mb-4 flex items-center justify-center">
                   <!-- Avatar placeholder -->
-                  <span class="text-xl font-medium text-gray-600">{{ course.instructorName.charAt(0) }}</span>
+                  <span class="text-xl font-medium text-gray-600">{{ course.teacherName.charAt(0) }}</span>
                 </div>
-                <h4 class="font-medium">{{ course.instructorName }}</h4>
+                <h4 class="font-medium">{{ course.teacherName }}</h4>
              </div>
           </div>
         </div>
@@ -88,6 +88,7 @@ import { ref, computed, onMounted } from 'vue';
 import { useRoute } from 'vue-router';
 import { useCourseStore } from '@/stores/course';
 import { useLessonStore } from '@/stores/lesson';
+import type { StudentLesson } from '@/types/lesson';
 
 const route = useRoute();
 const courseStore = useCourseStore();
@@ -98,7 +99,7 @@ const completingId = ref<string | null>(null);
 
 // Computed Properties
 const course = computed(() => courseStore.currentCourse);
-const lessons = computed(() => lessonStore.lessons);
+const lessons = computed(() => lessonStore.lessons as StudentLesson[]);
 const completedLessonsCount = computed(() => lessons.value.filter(l => l.isCompleted).length);
 
 // Methods
@@ -106,8 +107,7 @@ const handleCompleteLesson = async (lessonId: string) => {
   completingId.value = lessonId;
   const success = await lessonStore.completeLesson(lessonId);
   if (success && course.value) {
-    // Optionally, re-fetch course to update progress, or calculate locally
-    await courseStore.fetchCourse(course.value.id);
+    await courseStore.fetchCourseById(String(course.value.id));
   }
   completingId.value = null;
 };
@@ -117,7 +117,7 @@ onMounted(async () => {
   const courseId = route.params.id as string;
   if (courseId) {
     await Promise.all([
-      courseStore.fetchCourse(courseId),
+      courseStore.fetchCourseById(courseId),
       lessonStore.fetchLessonsForCourse(courseId)
     ]);
   }

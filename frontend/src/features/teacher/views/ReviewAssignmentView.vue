@@ -99,11 +99,11 @@ const courseStore = useCourseStore();
 
 const showModal = ref(false);
 const isEditing = ref(false);
-const editingAssignmentId = ref<number | null>(null);
-const selectedCourseId = ref<number | null>(null);
+const editingAssignmentId = ref<string | null>(null);
+const selectedCourseId = ref<string | null>(null);
 
-const form = reactive<AssignmentCreationRequest & { id?: number }>({
-  courseId: 0,
+const form = reactive<AssignmentCreationRequest & { id?: string }>({
+  courseId: '',
   title: '',
   description: '',
   dueDate: '',
@@ -116,7 +116,7 @@ const statusClass = (status: string) => ({
 });
 
 const resetForm = () => {
-    Object.assign(form, { courseId: selectedCourseId.value || 0, title: '', description: '', dueDate: '' });
+    Object.assign(form, { courseId: selectedCourseId.value || '', title: '', description: '', dueDate: '' });
 };
 
 const openCreateModal = () => {
@@ -125,9 +125,10 @@ const openCreateModal = () => {
       return;
   }
   isEditing.value = false;
+  editingAssignmentId.value = null;
   resetForm();
   if (!form.courseId && courseStore.courses.length > 0) {
-      form.courseId = courseStore.courses[0].id;
+      form.courseId = String(courseStore.courses[0].id);
   }
   showModal.value = true;
 };
@@ -136,7 +137,7 @@ const openEditModal = (assignment: Assignment) => {
   isEditing.value = true;
   editingAssignmentId.value = assignment.id;
   const dueDate = new Date(assignment.dueDate).toISOString().split('T')[0];
-  Object.assign(form, { ...assignment, dueDate });
+  Object.assign(form, { ...assignment, courseId: String(assignment.courseId), dueDate });
   showModal.value = true;
 };
 
@@ -161,7 +162,7 @@ const handleSubmit = async () => {
 
 const handleDeleteAssignment = async (assignment: Assignment) => {
   if (confirm('您确定要删除这个作业吗？此操作无法撤销。')) {
-    await assignmentStore.deleteAssignment(assignment.id, assignment.courseId);
+    await assignmentStore.deleteAssignment(assignment.id, String(assignment.courseId));
   }
 };
 
@@ -174,9 +175,9 @@ const handleCourseFilterChange = () => {
 };
 
 onMounted(async () => {
-  await courseStore.fetchCourses();
+  await courseStore.fetchCourses({ page: 1, size: 100 });
   if(courseStore.courses.length > 0) {
-      selectedCourseId.value = courseStore.courses[0].id;
+      selectedCourseId.value = String(courseStore.courses[0].id);
       handleCourseFilterChange();
   }
 });

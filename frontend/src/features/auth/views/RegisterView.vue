@@ -35,7 +35,7 @@
 
       <div>
         <label for="confirmPassword" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">确认密码</label>
-        <input id="confirmPassword" v-model="form.confirmPassword" type="password" required class="input" :disabled="authStore.loading" />
+        <input id="confirmPassword" v-model="confirmPassword" type="password" required class="input" :disabled="authStore.loading" />
       </div>
 
       <div>
@@ -57,7 +57,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue';
+import { ref, reactive } from 'vue';
 import { useAuthStore } from '@/stores/auth';
 import { useUIStore } from '@/stores/ui';
 import type { RegisterRequest } from '@/types/auth';
@@ -70,19 +70,19 @@ const roles = [
   { label: '教师', value: 'TEACHER' },
 ];
 
-const form = ref<RegisterRequest>({
+const form = reactive<RegisterRequest>({
   username: '',
   email: '',
   password: '',
-  confirmPassword: '',
   role: 'STUDENT',
 });
+const confirmPassword = ref('');
 
 const handleSubmit = () => {
-  if (form.value.password !== form.value.confirmPassword) {
+  if (form.password !== confirmPassword.value) {
     uiStore.showNotification({ type: 'error', title: '注册失败', message: '两次输入的密码不一致' });
     return;
   }
-  authStore.register(form.value);
+  authStore.register(form);
 };
 </script>

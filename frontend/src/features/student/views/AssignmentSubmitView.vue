@@ -64,7 +64,7 @@ const uiStore = useUIStore();
 
 const form = reactive({
   content: '',
-  fileIds: [] as number[],
+  fileIds: [] as string[],
 });
 
 const uploadedFiles = ref<FileInfo[]>([]);
@@ -72,7 +72,7 @@ const isUploading = ref(false);
 
 const assignment = computed(() => assignmentStore.selectedAssignment);
 const submission = computed(() => {
-    const assignmentId = Number(route.params.id);
+    const assignmentId = route.params.id as string;
     return submissionStore.submissions.get(assignmentId);
 });
 
@@ -103,7 +103,7 @@ const handleFileUpload = async (event: Event) => {
   }
 };
 
-const removeFile = async (fileId: number) => {
+const removeFile = async (fileId: string) => {
   try {
     await fileApi.deleteFile(fileId);
     uploadedFiles.value = uploadedFiles.value.filter(f => f.id !== fileId);
@@ -114,7 +114,7 @@ const removeFile = async (fileId: number) => {
 };
 
 const handleSaveDraft = () => {
-  const assignmentId = Number(route.params.id);
+  const assignmentId = route.params.id as string;
   submissionStore.saveDraft(assignmentId, form);
 };
 
@@ -123,12 +123,12 @@ const handleSubmit = () => {
     uiStore.showNotification({ type: 'error', title: '内容为空', message: '请输入作业内容后再提交。'});
     return;
   }
-  const assignmentId = Number(route.params.id);
+  const assignmentId = route.params.id as string;
   submissionStore.submitAssignment(assignmentId, form);
 };
 
 onMounted(async () => {
-  const assignmentId = Number(route.params.id);
+  const assignmentId = route.params.id as string;
   await assignmentStore.fetchAssignmentById(assignmentId);
   await submissionStore.fetchSubmissionForAssignment(assignmentId);
 

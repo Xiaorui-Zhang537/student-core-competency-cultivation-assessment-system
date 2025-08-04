@@ -16,19 +16,18 @@ export const useTeacherStore = defineStore('teacher', () => {
   const loading = computed(() => uiStore.loading);
 
   // Actions
-  const fetchStudentProgress = async (params?: { page?: number; size?: number; courseId?: number }) => {
+  const fetchStudentProgress = async (params?: { page?: number; size?: number; courseId?: string }) => {
     const response = await handleApiCall(
       () => teacherApi.getStudentProgress(params),
       uiStore,
       '获取学生进度失败'
     );
     if (response) {
-      // Corrected from response.data.content to response.data.items
       studentProgress.value = response.data.items;
     }
   };
 
-  const fetchCourseAnalytics = async (courseId: number) => {
+  const fetchCourseAnalytics = async (courseId: string) => {
     const response = await handleApiCall(
       () => teacherApi.getCourseAnalytics(courseId),
       uiStore,
@@ -39,7 +38,7 @@ export const useTeacherStore = defineStore('teacher', () => {
     }
   };
   
-  const fetchAssignmentAnalytics = async (assignmentId: number) => {
+  const fetchAssignmentAnalytics = async (assignmentId: string) => {
     const response = await handleApiCall(
       () => teacherApi.getAssignmentAnalytics(assignmentId),
       uiStore,
@@ -50,7 +49,7 @@ export const useTeacherStore = defineStore('teacher', () => {
     }
   };
 
-  const fetchClassPerformance = async (courseId: number) => {
+  const fetchClassPerformance = async (courseId: string) => {
     const response = await handleApiCall(
       () => teacherApi.getClassPerformance(courseId),
       uiStore,

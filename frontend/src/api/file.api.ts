@@ -14,11 +14,11 @@ export const fileApi = {
     });
   },
 
-  getFileInfo: (fileId: number): Promise<ApiResponse<FileInfo>> => {
+  getFileInfo: (fileId: string): Promise<ApiResponse<FileInfo>> => {
     return api.get(`/api/files/${fileId}/info`);
   },
 
-  deleteFile: (fileId: number): Promise<ApiResponse<void>> => {
+  deleteFile: (fileId: string): Promise<ApiResponse<void>> => {
     return api.delete(`/api/files/${fileId}`);
   },
   

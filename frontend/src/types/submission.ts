@@ -1,22 +1,22 @@
 // Based on Submission.java DTOs
 export interface Submission {
-  id: number;
-  assignmentId: number;
-  studentId: number;
+  id: string;
+  assignmentId: string;
+  studentId: string;
   content: string;
   submittedAt: string;
   status: 'SUBMITTED' | 'LATE' | 'GRADED';
-  fileIds: number[];
+  fileIds: string[];
 }
 
 // For creating a new submission
 export interface SubmissionRequest {
   content: string;
-  fileIds?: number[];
+  fileIds?: string[];
 }
 
 // For saving a draft
 export interface DraftRequest {
   content: string;
-  fileIds?: number[];
+  fileIds?: string[];
 }

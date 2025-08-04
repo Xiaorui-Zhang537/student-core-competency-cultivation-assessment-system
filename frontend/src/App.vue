@@ -75,31 +75,13 @@
               </div>
               <div class="ml-4 flex-shrink-0 flex">
                 <button
-                  @click="removeNotification(notification.id)"
+                  @click="uiStore.removeNotification(notification.id)"
                   class="bg-white dark:bg-gray-800 rounded-md inline-flex text-gray-400 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500"
                 >
                   <x-mark-icon class="h-5 w-5" />
                 </button>
               </div>
             </div>
-          </div>
-          <!-- 进度条 -->
-          <div 
-            v-if="notification.duration > 0"
-            class="h-1 bg-gray-200 dark:bg-gray-700"
-          >
-            <div 
-              :class="[
-                'h-full transition-all duration-100 ease-linear',
-                {
-                  'bg-green-500': notification.type === 'success',
-                  'bg-yellow-500': notification.type === 'warning', 
-                  'bg-red-500': notification.type === 'error',
-                  'bg-blue-500': notification.type === 'info'
-                }
-              ]"
-              :style="{ width: `${notification.progress}%` }"
-            ></div>
           </div>
         </div>
       </transition-group>
@@ -161,11 +143,11 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted, nextTick, watch } from 'vue'
-import { useRouter, useRoute } from 'vue-router'
+import { ref, onMounted, onUnmounted, nextTick } from 'vue'
+import { useRouter } from 'vue-router'
 import { useUIStore } from '@/stores/ui'
-import { useThemeStore } from '@/stores/theme'
 import { useAuthStore } from '@/stores/auth'
+import { storeToRefs } from 'pinia'
 import {
   CheckCircleIcon,
   ExclamationTriangleIcon,
@@ -177,16 +159,14 @@ import {
 
 // Stores
 const router = useRouter()
-const route = useRoute()
 const uiStore = useUIStore()
-const themeStore = useThemeStore()
 const authStore = useAuthStore()
+const { notifications } = storeToRefs(uiStore)
 
 // 响应式状态
 const globalLoading = ref(false)
 const routeLoading = ref(false)
 const loadingText = ref('加载中')
-const notifications = ref<any[]>([])
 const showErrorModal = ref(false)
 const isOnline = ref(navigator.onLine)
 const isDevelopment = ref(import.meta.env.DEV)
@@ -202,50 +182,17 @@ const onAfterEnter = () => {
   })
 }
 
-// 通知系统
-const addNotification = (notification: any) => {
-  const id = Date.now() + Math.random()
-  const newNotification = {
-    ...notification,
-    id,
-    progress: 100,
-    duration: notification.duration || 5000
-  }
-  
-  notifications.value.push(newNotification)
-
-  // 自动移除通知
-  if (newNotification.duration > 0) {
-    const interval = setInterval(() => {
-      newNotification.progress -= 100 / (newNotification.duration / 100)
-      if (newNotification.progress <= 0) {
-        clearInterval(interval)
-        removeNotification(id)
-      }
-    }, 100)
-  }
-}
-
-const removeNotification = (id: number) => {
-  const index = notifications.value.findIndex(n => n.id === id)
-  if (index > -1) {
-    notifications.value.splice(index, 1)
-  }
-}
-
 // 全局错误处理
 const handleGlobalError = (error: Error, info?: string) => {
   console.error('Global error:', error, info)
   
-  // 显示错误通知
-  addNotification({
+  uiStore.showNotification({
     type: 'error',
     title: '发生错误',
     message: error.message || '未知错误',
-    duration: 0 // 不自动消失
+    timeout: 0 // 不自动消失
   })
 
-  // 对于严重错误，显示错误模态框
   if (error.name === 'ChunkLoadError' || error.message.includes('Loading chunk')) {
     showErrorModal.value = true
   }
@@ -259,11 +206,11 @@ const reloadPage = () => {
 // 网络状态监听
 const handleOnline = () => {
   isOnline.value = true
-  addNotification({
+  uiStore.showNotification({
     type: 'success',
     title: '网络已连接',
     message: '网络连接已恢复',
-    duration: 3000
+    timeout: 3000
   })
 }
 
@@ -271,65 +218,8 @@ const handleOffline = () => {
   isOnline.value = false
 }
 
-// 应用初始化
-const initializeApp = async () => {
-  try {
-    globalLoading.value = true
-    loadingText.value = '初始化应用...'
-
-    // 初始化主题
-    themeStore.initTheme()
-    
-    // 初始化UI状态
-    await uiStore.initDarkMode()
-    
-    // 尝试自动登录
-    loadingText.value = '验证身份...'
-    try {
-      await authStore.initAuth()
-    } catch (error) {
-      // 自动登录失败是正常的，不需要显示错误
-      console.log('自动登录失败，用户需要手动登录')
-    }
-
-    loadingText.value = '准备完成...'
-    
-    // 添加欢迎通知
-    setTimeout(() => {
-      addNotification({
-        type: 'success',
-        title: '欢迎使用',
-        message: '学生非核心能力发展评估系统',
-        duration: 4000
-      })
-    }, 1000)
-
-  } catch (error) {
-    console.error('应用初始化失败:', error)
-    handleGlobalError(error as Error, '应用初始化')
-  } finally {
-    globalLoading.value = false
-  }
-}
-
-// 路由错误处理
-router.onError((error) => {
-  console.error('路由错误:', error)
-  handleGlobalError(error, '路由导航')
-})
-
-// 监听UI store的通知
-watch(() => uiStore.notifications, (newNotifications) => {
-  newNotifications.forEach(notification => {
-    addNotification(notification)
-  })
-  // 清空store中的通知
-  uiStore.clearNotifications()
-}, { deep: true })
-
 // 生命周期
-onMounted(async () => {
-  // 设置全局错误处理
+onMounted(() => {
   window.addEventListener('error', (event) => {
     handleGlobalError(event.error || new Error(event.message))
   })
@@ -338,12 +228,13 @@ onMounted(async () => {
     handleGlobalError(new Error(event.reason))
   })
 
-  // 网络状态监听
   window.addEventListener('online', handleOnline)
   window.addEventListener('offline', handleOffline)
-
-  // 初始化应用
-  await initializeApp()
+  
+  router.onError((error) => {
+    console.error('路由错误:', error)
+    handleGlobalError(error, '路由导航')
+  })
 })
 
 onUnmounted(() => {

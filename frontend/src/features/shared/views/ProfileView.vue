@@ -6,11 +6,11 @@
         <p class="text-gray-500">管理您的个人信息和账户设置</p>
       </div>
 
-      <div v-if="authStore.loading" class="text-center py-12">
+      <div v-if="authStore.loading && !userProfile" class="text-center py-12">
         <p>加载用户信息中...</p>
       </div>
 
-      <div v-else-if="authStore.user" class="space-y-8">
+      <div v-else-if="userProfile" class="space-y-8">
         <!-- Profile Info -->
         <div class="card p-6">
           <h2 class="text-lg font-semibold mb-4">个人信息</h2>
@@ -19,22 +19,30 @@
               <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label class="block text-sm font-medium mb-1">用户名</label>
-                  <p class="font-medium">{{ authStore.user.username }}</p>
+                  <p class="font-medium">{{ userProfile.username }}</p>
                 </div>
                 <div>
                   <label class="block text-sm font-medium mb-1">邮箱</label>
-                  <p>{{ authStore.user.email }}</p>
+                  <p>{{ userProfile.email }}</p>
                 </div>
                 <div>
                   <label class="block text-sm font-medium mb-1">角色</label>
-                  <p>{{ authStore.user.role }}</p>
+                  <p>{{ userProfile.role }}</p>
                 </div>
                 <div>
                   <label class="block text-sm font-medium mb-1">昵称</label>
-                  <p>{{ authStore.user.nickname || '未设置' }}</p>
+                  <p>{{ userProfile.nickname || '未设置' }}</p>
+                </div>
+                 <div>
+                  <label class="block text-sm font-medium mb-1">性别</label>
+                  <p>{{ userProfile.gender || '未设置' }}</p>
+                </div>
+                 <div>
+                  <label class="block text-sm font-medium mb-1">简介</label>
+                  <p>{{ userProfile.bio || '未设置' }}</p>
                 </div>
               </div>
-              <button @click="showEditProfile = true" class="btn btn-outline mt-4">编辑资料</button>
+              <button @click="openEditProfile" class="btn btn-outline mt-4">编辑资料</button>
             </div>
           </div>
         </div>
@@ -64,7 +72,7 @@
             </div>
             <div class="flex justify-end space-x-3">
               <button type="button" @click="cancelEdit" class="btn btn-outline">取消</button>
-              <button type="submit" :disabled="authStore.loading" class="btn btn-primary">保存更改</button>
+              <button type="submit" :disabled="uiStore.loading" class="btn btn-primary">保存更改</button>
             </div>
           </form>
         </div>
@@ -73,19 +81,19 @@
         <div class="card p-6">
           <h2 class="text-lg font-semibold mb-4">账户安全</h2>
           <div class="space-y-4">
-            <div class="flex items-center justify-between p-4 bg-gray-100 rounded-lg">
+            <div class="flex items-center justify-between p-4 bg-gray-100 dark:bg-gray-700 rounded-lg">
               <div>
                 <h3 class="text-sm font-medium">登录密码</h3>
                 <p class="text-sm text-gray-500">定期修改密码以保证账户安全</p>
               </div>
               <button @click="showChangePassword = true" class="btn btn-outline btn-sm">修改密码</button>
             </div>
-            <div class="flex items-center justify-between p-4 bg-gray-100 rounded-lg">
+            <div class="flex items-center justify-between p-4 bg-gray-100 dark:bg-gray-700 rounded-lg">
               <div>
                 <h3 class="text-sm font-medium">邮箱验证</h3>
-                <p class="text-sm text-gray-500">{{ authStore.user.emailVerified ? '已验证' : '未验证' }}</p>
+                <p class="text-sm text-gray-500">{{ userProfile.emailVerified ? '已验证' : '未验证' }}</p>
               </div>
-              <button v-if="!authStore.user.emailVerified" @click="handleResendVerification" :disabled="uiStore.loading" class="btn btn-outline btn-sm">
+              <button v-if="!userProfile.emailVerified" @click="handleResendVerification" :disabled="uiStore.loading" class="btn btn-outline btn-sm">
                 发送验证邮件
               </button>
             </div>
@@ -106,7 +114,7 @@
             </div>
             <div>
               <label for="confirmNewPassword" class="block text-sm font-medium mb-2">确认新密码</label>
-              <input id="confirmNewPassword" v-model="passwordForm.confirmNewPassword" type="password" required class="input" />
+              <input id="confirmNewPassword" v-model="confirmNewPassword" type="password" required class="input" />
             </div>
             <div class="flex justify-end space-x-3">
               <button type="button" @click="showChangePassword = false" class="btn btn-outline">取消</button>
@@ -121,15 +129,17 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, onMounted, watch } from 'vue';
+import { ref, reactive, onMounted } from 'vue';
 import { useAuthStore } from '@/stores/auth';
 import { useUIStore } from '@/stores/ui';
 import { userApi } from '@/api/user.api';
-import type { UpdateProfileRequest, ChangePasswordRequest } from '@/types/user';
+import type { UpdateProfileRequest, ChangePasswordRequest, UserProfileResponse } from '@/types/user';
+import { handleApiCall } from '@/utils/api-handler';
 
 const authStore = useAuthStore();
 const uiStore = useUIStore();
 
+const userProfile = ref<UserProfileResponse | null>(null);
 const showEditProfile = ref(false);
 const showChangePassword = ref(false);
 
@@ -142,70 +152,65 @@ const profileForm = reactive<UpdateProfileRequest>({
 const passwordForm = reactive<ChangePasswordRequest>({
   currentPassword: '',
   newPassword: '',
-  confirmNewPassword: '',
 });
+const confirmNewPassword = ref('');
+
+const fetchUserProfile = async () => {
+    const response = await handleApiCall(() => userApi.getProfile(), uiStore, '获取用户信息失败');
+    if(response) {
+        userProfile.value = response.data;
+    }
+}
 
 const setProfileForm = () => {
-  if (authStore.user) {
-    profileForm.nickname = authStore.user.nickname;
-    profileForm.gender = authStore.user.gender;
-    profileForm.bio = authStore.user.bio;
+  if (userProfile.value) {
+    profileForm.nickname = userProfile.value.nickname || '';
+    profileForm.gender = userProfile.value.gender || '';
+    profileForm.bio = userProfile.value.bio || '';
   }
 };
 
-onMounted(() => {
-  if (!authStore.user) {
-    authStore.fetchUser();
-  }
-  setProfileForm();
+onMounted(async () => {
+  await fetchUserProfile();
 });
 
-watch(() => authStore.user, (newUser) => {
-  if (newUser) {
+const openEditProfile = () => {
     setProfileForm();
-  }
-}, { deep: true });
+    showEditProfile.value = true;
+}
 
 const cancelEdit = () => {
   showEditProfile.value = false;
-  setProfileForm();
 }
 
 const handleUpdateProfile = async () => {
-  await authStore.updateUserProfile(profileForm);
-  showEditProfile.value = false;
+  const response = await handleApiCall(() => userApi.updateProfile(profileForm), uiStore, '更新失败', { successMessage: '个人信息已更新' });
+  if (response) {
+    await fetchUserProfile();
+    if (authStore.user) {
+        authStore.user.nickname = response.data.nickname;
+    }
+    showEditProfile.value = false;
+  }
 };
 
 const handleChangePassword = async () => {
-  if (passwordForm.newPassword !== passwordForm.confirmNewPassword) {
+  if (passwordForm.newPassword !== confirmNewPassword.value) {
     uiStore.showNotification({ type: 'error', title: '错误', message: '新密码和确认密码不匹配。' });
     return;
   }
+  
+  const response = await handleApiCall(() => userApi.changePassword(passwordForm), uiStore, '修改密码失败', { successMessage: '密码已成功修改' });
 
-  uiStore.setLoading(true);
-  try {
-    await userApi.changePassword(passwordForm);
-    uiStore.showNotification({ type: 'success', title: '成功', message: '密码已成功修改。' });
+  if (response) {
     showChangePassword.value = false;
     passwordForm.currentPassword = '';
     passwordForm.newPassword = '';
-    passwordForm.confirmNewPassword = '';
-  } catch (error: any) {
-    uiStore.showNotification({ type: 'error', title: '错误', message: error.message || '修改密码失败。' });
-  } finally {
-    uiStore.setLoading(false);
+    confirmNewPassword.value = '';
   }
 };
 
 const handleResendVerification = async () => {
-  uiStore.setLoading(true);
-  try {
-    await userApi.resendVerification();
-    uiStore.showNotification({ type: 'success', title: '成功', message: '验证邮件已发送，请检查您的收件箱。' });
-  } catch (error: any) {
-    uiStore.showNotification({ type: 'error', title: '错误', message: error.message || '发送邮件失败。' });
-  } finally {
-    uiStore.setLoading(false);
-  }
+  await handleApiCall(() => userApi.resendVerification(), uiStore, '发送邮件失败', { successMessage: '验证邮件已发送，请检查您的收件箱。' });
 };
 </script>

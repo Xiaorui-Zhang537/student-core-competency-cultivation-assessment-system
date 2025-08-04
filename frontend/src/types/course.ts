@@ -54,3 +54,9 @@ export interface CourseStatistics {
   draftCourses: number;
   enrollmentCount: number;
 }
+
+export interface CourseCategory {
+  id: string;
+  name: string;
+  courseCount: number;
+}

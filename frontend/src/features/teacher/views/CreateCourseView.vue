@@ -61,6 +61,7 @@ const courseForm = reactive<CourseCreationRequest>({
   description: '',
   content: '',
   category: '',
+  tags: [], // Added missing property
 });
 
 // Mock categories, ideally this should come from a dedicated API
@@ -84,7 +85,7 @@ const handleCreateCourse = async () => {
 };
 </script>
 
-<style scoped>
+<style scoped lang="postcss">
 .label {
     @apply block text-sm font-medium text-gray-700 mb-2;
 }

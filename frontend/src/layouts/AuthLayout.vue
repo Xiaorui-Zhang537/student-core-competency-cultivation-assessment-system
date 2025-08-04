@@ -224,7 +224,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted, nextTick } from 'vue'
 import { useRoute } from 'vue-router'
-import { useThemeStore } from '@/stores/theme'
+import { useUIStore } from '@/stores/ui'
 import {
   SunIcon,
   MoonIcon,
@@ -242,7 +242,7 @@ import {
 
 // 组合式API
 const route = useRoute()
-const themeStore = useThemeStore()
+const uiStore = useUIStore()
 
 // 响应式状态
 const isLoading = ref(false)
@@ -251,7 +251,7 @@ const showLanguageMenu = ref(false)
 const currentLanguage = ref({ code: 'zh-CN', label: '中文' })
 
 // 主题相关
-const isDark = computed(() => themeStore.isDark)
+const isDark = computed(() => uiStore.isDarkMode)
 
 // 语言选项
 const languages = [
@@ -359,7 +359,7 @@ const socialLinks = [
 
 // 方法
 const toggleTheme = () => {
-  themeStore.toggleTheme()
+  uiStore.toggleDarkMode()
 }
 
 const setLanguage = (langCode: string) => {

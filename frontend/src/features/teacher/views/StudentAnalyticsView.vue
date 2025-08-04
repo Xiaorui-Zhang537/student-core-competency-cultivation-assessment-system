@@ -83,7 +83,7 @@ import { useCourseStore } from '@/stores/course';
 const teacherStore = useTeacherStore();
 const courseStore = useCourseStore();
 
-const selectedCourseId = ref<number | null>(null);
+const selectedCourseId = ref<string | null>(null);
 
 const studentProgress = computed(() => teacherStore.studentProgress);
 
@@ -101,12 +101,12 @@ const averageScore = computed(() => {
 
 const loadStudentProgress = () => {
     teacherStore.fetchStudentProgress({
-        courseId: selectedCourseId.value ?? undefined
+        courseId: selectedCourseId.value || undefined
     });
 };
 
 onMounted(() => {
-    courseStore.fetchCourses();
+    courseStore.fetchCourses({ page: 1, size: 100 });
     loadStudentProgress();
 });
 </script>

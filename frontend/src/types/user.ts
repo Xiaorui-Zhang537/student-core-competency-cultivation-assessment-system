@@ -21,4 +21,6 @@ export interface ResetPasswordRequest {
 // UserProfileResponse matches the structure returned by /api/users/profile
 export interface UserProfileResponse extends Omit<User, 'token' | 'refreshToken'> {
   displayName: string;
+  gender?: string;
+  bio?: string;
 }

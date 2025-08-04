@@ -1,8 +1,8 @@
 import { defineStore } from 'pinia';
-import { ref, computed } from 'vue';
+import { ref, computed, nextTick } from 'vue';
 import { authApi } from '@/api/auth.api';
 import { userApi } from '@/api/user.api';
-import type { User, LoginRequest, RegisterRequest } from '@/types/auth';
+import type { User, LoginRequest, RegisterRequest, AuthResponse } from '@/types/auth';
 import type { UpdateProfileRequest } from '@/types/user';
 import { useUIStore } from './ui';
 import router from '@/router';
@@ -24,21 +24,24 @@ export const useAuthStore = defineStore('auth', () => {
     try {
       return await apiCall();
     } catch (e: any) {
-      error.value = e.message || 'An unknown error occurred';
-      uiStore.showNotification({ type: 'error', title: '操作失败', message: error.value });
+      const errorMessage = e.message || 'An unknown error occurred';
+      error.value = errorMessage;
+      uiStore.showNotification({ type: 'error', title: '操作失败', message: errorMessage });
       return null;
     } finally {
       loading.value = false;
     }
   };
 
-  const setAuthData = (data: { user: User; token: string; refreshToken: string }) => {
-    user.value = data.user;
-    token.value = data.token;
-    localStorage.setItem('token', data.token);
+  const setAuthData = (data: AuthResponse) => {
+    const userData = { ...data.user, id: String(data.user.id) };
+    if (userData.role) {
+      userData.role = userData.role.toUpperCase();
+    }
+    user.value = userData;
+    token.value = data.accessToken;
+    localStorage.setItem('token', data.accessToken);
     localStorage.setItem('refreshToken', data.refreshToken);
-    // Set token for subsequent API calls
-    // This needs to be implemented in api/config.ts
   };
 
   const clearAuthData = () => {
@@ -46,14 +49,14 @@ export const useAuthStore = defineStore('auth', () => {
     token.value = null;
     localStorage.removeItem('token');
     localStorage.removeItem('refreshToken');
-    // Clear token from api config
   };
 
   const login = async (credentials: LoginRequest) => {
     const response = await handleApiCall(() => authApi.login(credentials));
     if (response) {
       setAuthData(response.data);
-      uiStore.showNotification({ type: 'success', title: '登录成功' });
+      uiStore.showNotification({ type: 'success', title: '登录成功', message: `欢迎回来, ${response.data.user.username}!` });
+      await nextTick();
       router.push(user.value?.role === 'TEACHER' ? '/teacher/dashboard' : '/student/dashboard');
     }
   };
@@ -62,7 +65,8 @@ export const useAuthStore = defineStore('auth', () => {
     const response = await handleApiCall(() => authApi.register(details));
     if (response) {
       setAuthData(response.data);
-      uiStore.showNotification({ type: 'success', title: '注册成功' });
+      uiStore.showNotification({ type: 'success', title: '注册成功', message: '欢迎加入我们的平台！' });
+      await nextTick();
       router.push(user.value?.role === 'TEACHER' ? '/teacher/dashboard' : '/student/dashboard');
     }
   };
@@ -77,9 +81,12 @@ export const useAuthStore = defineStore('auth', () => {
     if (!token.value) return;
     const response = await handleApiCall(userApi.getProfile);
     if (response) {
-      user.value = { ...response.data, token: token.value, refreshToken: '' }; // refreshToken is not available here
+      const userData = { ...response.data, id: String(response.data.id) };
+      if (userData.role) {
+        userData.role = userData.role.toUpperCase();
+      }
+      user.value = userData;
     } else {
-      // Token is invalid
       clearAuthData();
     }
   };
@@ -89,7 +96,7 @@ export const useAuthStore = defineStore('auth', () => {
       if (response && user.value) {
           user.value.nickname = response.data.nickname;
           user.value.avatar = response.data.avatar;
-          uiStore.showNotification({ type: 'success', title: '个人资料已更新' });
+          uiStore.showNotification({ type: 'success', title: '个人资料已更新', message: '您的信息已成功保存。' });
       }
   }
 

@@ -80,7 +80,7 @@ import { useGradeStore } from '@/stores/grade';
 const route = useRoute();
 const gradeStore = useGradeStore();
 
-const studentId = ref<number | null>(null);
+const studentId = ref<string | null>(null);
 const studentName = ref(route.query.name as string || '学生');
 
 const grades = computed(() => gradeStore.grades);
@@ -99,8 +99,8 @@ const involvedCourses = computed(() => {
 });
 
 onMounted(() => {
-    const id = Number(route.params.id);
-    if (!isNaN(id)) {
+    const id = route.params.id as string;
+    if (id) {
         studentId.value = id;
         gradeStore.fetchGradesByStudent(id);
     }

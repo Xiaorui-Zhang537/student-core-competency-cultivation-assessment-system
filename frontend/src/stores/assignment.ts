@@ -15,7 +15,7 @@ export const useAssignmentStore = defineStore('assignment', () => {
   const loading = computed(() => uiStore.loading);
 
   // Actions
-  const fetchAssignments = async (params: { courseId?: number; page?: number; size?: number; sort?: string } = {}) => {
+  const fetchAssignments = async (params: { courseId?: string; page?: number; size?: number; sort?: string } = {}) => {
     const apiCall = params.courseId 
       ? () => assignmentApi.getAssignmentsByCourse(params.courseId!, params)
       : () => assignmentApi.getAssignments(params);
@@ -26,12 +26,12 @@ export const useAssignmentStore = defineStore('assignment', () => {
       '获取作业列表失败'
     );
     if (response) {
-      assignments.value = response.data.content;
-      totalAssignments.value = response.data.totalElements;
+      assignments.value = response.data.items;
+      totalAssignments.value = response.data.total;
     }
   };
   
-  const fetchAssignmentById = async (id: number) => {
+  const fetchAssignmentById = async (id: string) => {
     const response = await handleApiCall(
       () => assignmentApi.getAssignmentById(id),
       uiStore,
@@ -49,21 +49,21 @@ export const useAssignmentStore = defineStore('assignment', () => {
       '创建作业失败'
     );
     if (response) {
-      uiStore.showNotification({ type: 'success', title: '作业已创建' });
+      uiStore.showNotification({ type: 'success', title: '作业已创建', message: '新作业已成功添加。' });
       await fetchAssignments({ courseId: data.courseId });
       return response.data;
     }
     return null;
   };
   
-  const updateAssignment = async (id: number, data: AssignmentUpdateRequest) => {
+  const updateAssignment = async (id: string, data: AssignmentUpdateRequest) => {
     const response = await handleApiCall(
       () => assignmentApi.updateAssignment(id, data),
       uiStore,
       '更新作业失败'
     );
     if (response) {
-      uiStore.showNotification({ type: 'success', title: '作业已更新' });
+      uiStore.showNotification({ type: 'success', title: '作业已更新', message: '作业信息已成功保存。' });
       if (selectedAssignment.value && selectedAssignment.value.id === id) {
         selectedAssignment.value = { ...selectedAssignment.value, ...response.data };
       }
@@ -76,22 +76,22 @@ export const useAssignmentStore = defineStore('assignment', () => {
     return null;
   };
 
-  const deleteAssignment = async (id: number, courseId: number) => {
+  const deleteAssignment = async (id: string, courseId: string) => {
     const response = await handleApiCall(
       () => assignmentApi.deleteAssignment(id),
       uiStore,
       '删除作业失败'
     );
     if (response) {
-      uiStore.showNotification({ type: 'success', title: '作业已删除' });
+      uiStore.showNotification({ type: 'success', title: '作业已删除', message: '该作业已被成功删除。' });
       await fetchAssignments({ courseId });
     }
   };
 
-  const publishAssignment = async (id: number) => {
+  const publishAssignment = async (id: string) => {
       const response = await handleApiCall(() => assignmentApi.publishAssignment(id), uiStore, '发布作业失败');
       if (response) {
-          uiStore.showNotification({ type: 'success', title: '作业已发布' });
+          uiStore.showNotification({ type: 'success', title: '作业已发布', message: '学生现在可以查看并提交此作业。' });
           const assignment = assignments.value.find(a => a.id === id);
           if (assignment) assignment.status = 'PUBLISHED';
       }

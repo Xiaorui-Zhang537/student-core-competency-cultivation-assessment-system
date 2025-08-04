@@ -142,7 +142,7 @@ const handleFormSubmit = async () => {
         title: lessonForm.title,
         description: lessonForm.description,
         content: lessonForm.content,
-        courseId: course.value.id,
+        courseId: String(course.value.id),
     };
     
     let success = false;
@@ -166,9 +166,11 @@ const handleDeleteLesson = async (lessonId: string) => {
 const togglePublish = async () => {
     if (!course.value) return;
     if (course.value.isPublished) {
-        await courseStore.unpublishCourse(course.value.id);
+        // TODO: Implement unpublish logic if available in API
+        console.warn("Unpublish action not implemented yet.");
+        // await courseStore.unpublishCourse(String(course.value.id));
     } else {
-        await courseStore.publishCourse(course.value.id);
+        await courseStore.publishCourse(String(course.value.id));
     }
 };
 
@@ -177,7 +179,7 @@ onMounted(async () => {
   const courseId = route.params.id as string;
   if (courseId) {
     await Promise.all([
-        courseStore.fetchCourse(courseId),
+        courseStore.fetchCourseById(courseId),
         lessonStore.fetchLessonsForCourse(courseId),
         teacherStore.fetchCourseAnalytics(courseId)
     ]);

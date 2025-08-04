@@ -2,26 +2,37 @@ import { createApp } from 'vue'
 import { createPinia } from 'pinia'
 import App from './App.vue'
 import router from './router'
-import { useUIStore } from '@/stores/ui'
 import { useAuthStore } from '@/stores/auth'
+import { useUIStore } from '@/stores/ui'
 import '@/styles/main.postcss'
 
-const app = createApp(App)
-const pinia = createPinia()
+async function initializeApp() {
+  const app = createApp(App)
+  const pinia = createPinia()
 
-app.use(pinia)
-app.use(router)
+  app.use(pinia)
 
-// 初始化store
-const uiStore = useUIStore()
-const authStore = useAuthStore()
+  const authStore = useAuthStore()
+  const uiStore = useUIStore()
 
-// 初始化暗黑模式
-uiStore.initDarkMode()
+  try {
+    if (authStore.token) {
+      await authStore.fetchUser()
+    }
+  } catch (error) {
+    console.error('自动登录失败，token可能已过期:', error)
+    // 如果获取用户信息失败，可以选择登出，清理无效的token
+    authStore.logout() 
+  }
 
-// 尝试自动登录
-authStore.initAuth().catch(() => {
-  // 忽略初始化认证失败
-})
+  // 只有在认证状态确定后才使用路由
+  app.use(router)
 
-app.mount('#app') 
+  // 初始化UI相关的store
+  uiStore.initDarkMode()
+  
+  // 最后挂载应用
+  app.mount('#app')
+}
+
+initializeApp()

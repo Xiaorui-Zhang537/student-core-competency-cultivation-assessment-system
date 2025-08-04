@@ -165,7 +165,7 @@ const quickLinks = computed(() => {
     { title: '系统设置', path: '/settings', icon: Cog6ToothIcon }
   ]
 
-  if (authStore.user?.role === 'student') {
+  if (authStore.user?.role === 'STUDENT') {
     return [
       { title: '学生工作台', path: '/student', icon: HomeIcon },
       { title: '我的课程', path: '/student/courses', icon: BookOpenIcon },
@@ -173,7 +173,7 @@ const quickLinks = computed(() => {
       { title: '学习社区', path: '/community', icon: UserGroupIcon },
       ...commonLinks
     ]
-  } else if (authStore.user?.role === 'teacher') {
+  } else if (authStore.user?.role === 'TEACHER') {
     return [
               { title: '教师工作台', path: '/teacher/dashboard', icon: HomeIcon },
       { title: '课程管理', path: '/teacher/courses', icon: AcademicCapIcon },
@@ -193,9 +193,9 @@ const quickLinks = computed(() => {
 // 方法
 const goHome = () => {
   if (authStore.isAuthenticated) {
-    if (authStore.user?.role === 'student') {
+    if (authStore.user?.role === 'STUDENT') {
       router.push('/student')
-    } else if (authStore.user?.role === 'teacher') {
+    } else if (authStore.user?.role === 'TEACHER') {
               router.push('/teacher/dashboard')
     } else {
       router.push('/')
@@ -214,9 +214,9 @@ const goBack = () => {
 }
 
 const browseCourses = () => {
-  if (authStore.user?.role === 'student') {
+  if (authStore.user?.role === 'STUDENT') {
     router.push('/student/courses')
-  } else if (authStore.user?.role === 'teacher') {
+  } else if (authStore.user?.role === 'TEACHER') {
     router.push('/teacher/courses')
   } else {
     router.push('/auth/login')
@@ -237,15 +237,15 @@ const handleSearch = () => {
   if (lowerQuery.includes('课程') || lowerQuery.includes('course')) {
     browseCourses()
   } else if (lowerQuery.includes('作业') || lowerQuery.includes('assignment')) {
-    if (authStore.user?.role === 'student') {
+    if (authStore.user?.role === 'STUDENT') {
               router.push('/student/grades')
-    } else if (authStore.user?.role === 'teacher') {
+    } else if (authStore.user?.role === 'TEACHER') {
       router.push('/teacher/grading')
     }
   } else if (lowerQuery.includes('成绩') || lowerQuery.includes('grade')) {
-    if (authStore.user?.role === 'student') {
+    if (authStore.user?.role === 'STUDENT') {
       router.push('/student/grades')
-    } else if (authStore.user?.role === 'teacher') {
+    } else if (authStore.user?.role === 'TEACHER') {
       router.push('/teacher/analytics')
     }
   } else if (lowerQuery.includes('帮助') || lowerQuery.includes('help')) {

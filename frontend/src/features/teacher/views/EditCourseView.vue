@@ -14,37 +14,37 @@
 
       <!-- Form -->
       <form v-else-if="courseForm.id" @submit.prevent="handleUpdateCourse" class="card p-8 space-y-6">
-        <div>
+                <div>
           <label for="title" class="label">课程标题 <span class="text-red-500">*</span></label>
           <input id="title" v-model="courseForm.title" type="text" class="input" required />
-        </div>
+                </div>
 
-        <div>
+                <div>
           <label for="description" class="label">课程简介 <span class="text-red-500">*</span></label>
           <textarea id="description" v-model="courseForm.description" rows="3" class="input" required></textarea>
-        </div>
-        
-        <div>
+                </div>
+
+                <div>
           <label for="content" class="label">详细描述</label>
           <textarea id="content" v-model="courseForm.content" rows="6" class="input"></textarea>
-        </div>
+                  </div>
 
-        <div>
+                  <div>
           <label for="category" class="label">课程分类 <span class="text-red-500">*</span></label>
           <select id="category" v-model="courseForm.category" class="input" required>
             <option disabled value="">请选择一个分类</option>
             <option v-for="cat in categories" :key="cat" :value="cat">{{ cat }}</option>
-          </select>
-        </div>
-        
+                    </select>
+                </div>
+
         <!-- Actions -->
         <div class="flex justify-end gap-4 pt-4">
-            <router-link to="/teacher/manage-course" class="btn btn-secondary">
+            <router-link :to="'/teacher/courses/' + courseForm.id" class="btn btn-secondary">
                 取消
             </router-link>
             <button type="submit" class="btn btn-primary" :disabled="courseStore.loading">
                 {{ courseStore.loading ? '保存中...' : '保存更改' }}
-            </button>
+              </button>
         </div>
       </form>
       
@@ -90,23 +90,18 @@ const categories = [
 const handleUpdateCourse = async () => {
     if (!courseForm.id) return;
     
-    const updateData: CourseUpdateRequest = {
-        title: courseForm.title,
-        description: courseForm.description,
-        content: courseForm.content,
-        category: courseForm.category,
-    };
+    const { id, ...updateData } = courseForm;
 
-    const success = await courseStore.updateCourse(courseForm.id, updateData);
-    if (success) {
-        router.push('/teacher/manage-course');
+    const response = await courseStore.updateCourse(courseForm.id, updateData);
+    if (response) {
+        router.push(`/teacher/courses/${courseForm.id}`);
     }
 };
 
 // Watch for the course data to be loaded into the store
 watch(() => courseStore.currentCourse, (newCourse) => {
     if (newCourse) {
-        courseForm.id = newCourse.id;
+        courseForm.id = String(newCourse.id);
         courseForm.title = newCourse.title;
         courseForm.description = newCourse.description;
         courseForm.content = newCourse.content || '';
@@ -117,7 +112,7 @@ watch(() => courseStore.currentCourse, (newCourse) => {
 onMounted(async () => {
   const courseId = route.params.id as string;
   if (courseId) {
-    await courseStore.fetchCourse(courseId);
+    await courseStore.fetchCourseById(courseId);
   } else {
       // Handle case where ID is missing
       router.push('/teacher/manage-course');
@@ -125,7 +120,7 @@ onMounted(async () => {
 });
 </script>
 
-<style scoped>
+<style scoped lang="postcss">
 .label {
     @apply block text-sm font-medium text-gray-700 mb-2;
 }

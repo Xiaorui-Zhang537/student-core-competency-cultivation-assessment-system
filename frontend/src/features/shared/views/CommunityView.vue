@@ -102,7 +102,7 @@
           <div class="p-4 bg-white dark:bg-gray-800 rounded-lg shadow">
             <div class="flex justify-between items-center mb-4">
               <h2 class="text-lg font-semibold text-gray-900 dark:text-white">
-                {{ categories.find(c => c.id === filterOptions.category)?.name || '全部帖子' }}
+                {{ categories.find((c: { id: string; name: string; icon: any; }) => c.id === filterOptions.category)?.name || '全部帖子' }}
               </h2>
               <div class="flex items-center space-x-3">
                 <div class="relative">
