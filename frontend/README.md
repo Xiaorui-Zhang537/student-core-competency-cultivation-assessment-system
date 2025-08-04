@@ -25,6 +25,7 @@
 -   **路由**: [Vue Router 4](https://router.vuejs.org/)
 -   **UI 框架**: [Tailwind CSS](https://tailwindcss.com/)
 -   **HTTP 客户端**: [Axios](https://axios-http.com/)
+-   **图表库**: [ECharts](https://echarts.apache.org/)
 -   **代码规范**: [ESLint](https://eslint.org/) + [Prettier](https://prettier.io/)
 
 ---
@@ -149,21 +150,31 @@ frontend/
 ## 🏛️ 架构核心
 
 ### API 层 (`src/api`)
-此目录下的每个文件都对应后端的一个 `Controller`，提供类型安全的方法来调用API。
-
+此目录下的每个文件都对应后端的一个 `Controller`，提供类型安全的方法来调用API。这种一对一的映射关系使得追踪数据来源和调试API调用变得非常简单。
 -   `auth.api.ts` -> `AuthController`
 -   `course.api.ts` -> `CourseController`
 -   `community.api.ts` -> `CommunityController`
 -   ...等等。
 
 ### 状态管理层 (`src/stores`)
-Pinia stores 是应用的“大脑”，负责处理业务逻辑、调用API和管理全局状态。
-
+Pinia stores 是应用的“大脑”，负责处理业务逻辑、调用API和管理全局状态。它们是组件与API之间的桥梁。
 -   `useAuthStore`: 管理用户认证和个人信息。
 -   `useUIStore`: 管理全局UI状态，如加载指示器和通知。
 -   `useCourseStore`: 管理课程列表、详情和相关操作。
 -   `useCommunityStore`: 管理社区帖子、评论和互动。
--   ...每个核心功能都有其专属的store。
+-   ...每个核心功能都有其专属的store，实现了业务逻辑的内聚。
 
 ### 类型定义层 (`src/types`)
-此目录包含了所有与后端数据实体 (Entity) 和数据传输对象 (DTO) 严格匹配的TypeScript接口。这确保了从API响应到组件渲染的整个链路都是类型安全的。
+此目录包含了所有与后端数据实体 (Entity) 和数据传输对象 (DTO) 严格匹配的TypeScript接口。这确保了从API响应到组件渲染的整个链路都是类型安全的，极大地减少了运行时错误。
+
+### 通用工具 (`src/utils`)
+-   `api-handler.ts`: 提供了一个名为 `handleApiCall` 的封装函数。它统一处理了API请求中的 `loading` 状态管理、成功/错误通知的显示，简化了Store中的异步操作代码，避免了大量的重复 `try...catch` 块。
+
+---
+## ✅ 代码质量与规范
+
+项目配置了完整的工具链以保证代码质量。
+-   **ESLint**: 用于静态代码分析，发现潜在的错误和不符合规范的代码。配置文件为 `.eslintrc.cjs`。
+-   **Prettier**: 用于代码格式化，确保整个项目代码风格的一致性。配置文件为 `.prettierrc.json`。
+-   **TypeScript**: 项目完全使用TypeScript编写，并在`tsconfig.json`中开启了严格模式，以获得最强的类型检查。
+-   **Husky & lint-staged** (推荐配置): 可以在`package.json`中配置`pre-commit`钩子，在每次提交前自动运行 `lint` 和 `type-check`，从源头保证入库代码的质量。

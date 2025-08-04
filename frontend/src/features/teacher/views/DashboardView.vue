@@ -60,7 +60,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, computed, watch, nextTick } from 'vue';
+import { ref, onMounted, computed, watch, nextTick, onUnmounted } from 'vue';
 import { useTeacherStore } from '@/stores/teacher';
 import { useCourseStore } from '@/stores/course';
 import * as echarts from 'echarts';
