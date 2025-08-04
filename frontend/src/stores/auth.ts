@@ -34,10 +34,8 @@ export const useAuthStore = defineStore('auth', () => {
   };
 
   const setAuthData = (data: AuthResponse) => {
-    const userData = { ...data.user, id: String(data.user.id) };
-    if (userData.role) {
-      userData.role = userData.role.toUpperCase();
-    }
+    const userData: User = { ...data.user, id: String(data.user.id) };
+    userData.role = (data.user.role || 'STUDENT').toUpperCase() as 'STUDENT' | 'TEACHER' | 'ADMIN';
     user.value = userData;
     token.value = data.accessToken;
     localStorage.setItem('token', data.accessToken);
@@ -81,10 +79,8 @@ export const useAuthStore = defineStore('auth', () => {
     if (!token.value) return;
     const response = await handleApiCall(userApi.getProfile);
     if (response) {
-      const userData = { ...response.data, id: String(response.data.id) };
-      if (userData.role) {
-        userData.role = userData.role.toUpperCase();
-      }
+      const userData: User = { ...response.data, id: String(response.data.id) };
+      userData.role = (response.data.role || 'STUDENT').toUpperCase() as 'STUDENT' | 'TEACHER' | 'ADMIN';
       user.value = userData;
     } else {
       clearAuthData();
