@@ -104,20 +104,22 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        
-        // configuration.setAllowedOriginPatterns(securityProperties.getCors().getAllowedOrigins());
-        // Allow the development origin (or use "*" to allow all):
-        configuration.addAllowedOriginPattern("http://192.168.1.48:5173");
-        
+
+        // Allow the development origins (both local IP and localhost)
+        configuration.setAllowedOriginPatterns(Arrays.asList(
+            "http://192.168.1.48:5173",
+            "http://localhost:5173"
+        ));
+
         // 允许的HTTP方法
         configuration.setAllowedMethods(Arrays.asList(
             "GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"
         ));
-        
+
         // 允许的请求头
         configuration.setAllowedHeaders(Arrays.asList(
-            "Authorization", 
-            "Content-Type", 
+            "Authorization",
+            "Content-Type",
             "X-Requested-With",
             "Accept",
             "Origin",
@@ -125,16 +127,16 @@ public class SecurityConfig {
             "Access-Control-Request-Headers",
             "X-Request-Time"
         ));
-        
+
         // 允许发送Cookie
         configuration.setAllowCredentials(true);
-        
+
         // 预检请求的缓存时间（秒）
         configuration.setMaxAge(3600L);
-        
+
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", configuration);
-        
+
         return source;
     }
 
