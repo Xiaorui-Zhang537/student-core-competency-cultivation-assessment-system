@@ -67,9 +67,16 @@ public class SecurityConfig {
                                 .authenticationEntryPoint(jwtAuthenticationEntryPoint)
                                 .accessDeniedHandler(jwtAccessDeniedHandler))
                 .authorizeHttpRequests(authz ->
-                        authz.requestMatchers(securityProperties.getJwt().getPublicUrls().toArray(new String[0]))
+                        authz
+                            // allow all auth endpoints under /api/auth
+                            .requestMatchers("/api/auth/**", "/auth/**")
                                 .permitAll()
-                                .anyRequest().authenticated())
+                            // preserve any additional public URLs from config
+                            .requestMatchers(securityProperties.getJwt().getPublicUrls().toArray(new String[0]))
+                                .permitAll()
+                            .anyRequest()
+                                .authenticated()
+                )
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
@@ -98,7 +105,9 @@ public class SecurityConfig {
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
         
-        configuration.setAllowedOriginPatterns(securityProperties.getCors().getAllowedOrigins());
+        // configuration.setAllowedOriginPatterns(securityProperties.getCors().getAllowedOrigins());
+        // Allow the development origin (or use "*" to allow all):
+        configuration.addAllowedOriginPattern("http://192.168.1.48:5173");
         
         // 允许的HTTP方法
         configuration.setAllowedMethods(Arrays.asList(

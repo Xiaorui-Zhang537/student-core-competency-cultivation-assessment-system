@@ -2,7 +2,7 @@ import axios from 'axios';
 import type { ApiResponse, ApiError } from '@/types/api';
 
 const apiClient = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE_URL || '', // 彻底移除 /api
+  baseURL: import.meta.env.VITE_API_BASE_URL || '',
   timeout: 10000,
   headers: {
     'Content-Type': 'application/json'
