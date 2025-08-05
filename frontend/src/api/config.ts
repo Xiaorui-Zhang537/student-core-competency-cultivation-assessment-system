@@ -2,20 +2,27 @@ import axios from 'axios';
 import type { ApiResponse, ApiError } from '@/types/api';
 
 const apiClient = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE_URL || '',
+  // 主机地址（如需切换生产，只改环境变量即可）
+  baseURL: import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080',
   timeout: 10000,
   headers: {
     'Content-Type': 'application/json'
   }
 });
 
-console.log('🌐 使用真实API模式');
+console.log('🌐 Axios baseURL =>', apiClient.defaults.baseURL);
 
 apiClient.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem('token');
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
+    }
+    // 自动补全后端统一前缀 /api，避免各接口手写
+    if (typeof config.url === 'string'
+        && config.url.startsWith('/')          // 只处理绝对路径
+        && !config.url.startsWith('/api/')) {  // 已有 /api 的不再重复
+      config.url = `/api${config.url}`;
     }
     return config;
   },

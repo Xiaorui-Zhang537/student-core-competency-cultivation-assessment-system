@@ -21,28 +21,28 @@ export const communityApi = {
     keyword?: string;
     orderBy?: 'latest' | 'popular';
   }): Promise<ApiResponse<PaginatedResponse<Post>>> => {
-    return api.get('/api/community/posts', { params });
+    return api.get('/community/posts', { params });
   },
 
   /**
    * 获取帖子详情
    */
   getPostById: (id: number): Promise<ApiResponse<Post>> => {
-    return api.get(`/api/community/posts/${id}`);
+    return api.get(`/community/posts/${id}`);
   },
 
   /**
    * 创建新帖子
    */
   createPost: (data: PostCreationRequest): Promise<ApiResponse<Post>> => {
-    return api.post('/api/community/posts', data);
+    return api.post('/community/posts', data);
   },
 
   /**
    * 点赞或取消点赞帖子
    */
   likePost: (id: number): Promise<ApiResponse<{ liked: boolean }>> => {
-    return api.post(`/api/community/posts/${id}/like`);
+    return api.post(`/community/posts/${id}/like`);
   },
 
   /**
@@ -52,7 +52,7 @@ export const communityApi = {
     postId: number,
     params: { page?: number; size?: number }
   ): Promise<ApiResponse<PaginatedResponse<PostComment>>> => {
-    return api.get(`/api/community/posts/${postId}/comments`, { params });
+    return api.get(`/community/posts/${postId}/comments`, { params });
   },
 
   /**
@@ -63,28 +63,28 @@ export const communityApi = {
     content: string,
     parentId?: number
   ): Promise<ApiResponse<PostComment>> => {
-    return api.post(`/api/community/posts/${postId}/comments`, { content, parentId });
+    return api.post(`/community/posts/${postId}/comments`, { content, parentId });
   },
 
   /**
    * 获取社区统计信息
    */
   getCommunityStats: (): Promise<ApiResponse<CommunityStats>> => {
-    return api.get('/api/community/stats');
+    return api.get('/community/stats');
   },
 
   /**
    * 获取热门话题
    */
   getHotTopics: (limit = 10): Promise<ApiResponse<HotTopic[]>> => {
-    return api.get('/api/community/hot-topics', { params: { limit } });
+    return api.get('/community/hot-topics', { params: { limit } });
   },
 
   /**
    * 获取活跃用户
    */
   getActiveUsers: (limit = 10): Promise<ApiResponse<ActiveUser[]>> => {
-    return api.get('/api/community/active-users', { params: { limit } });
+    return api.get('/community/active-users', { params: { limit } });
   },
 
   /**
@@ -94,13 +94,13 @@ export const communityApi = {
     page?: number;
     size?: number;
   }): Promise<ApiResponse<PaginatedResponse<Post>>> => {
-    return api.get('/api/community/my-posts', { params });
+    return api.get('/community/my-posts', { params });
   },
-  
+
   /**
    * 搜索标签
    */
   searchTags: (keyword: string, limit = 10): Promise<ApiResponse<Tag[]>> => {
-    return api.get('/api/community/search/tags', { params: { keyword, limit } });
+    return api.get('/community/search/tags', { params: { keyword, limit } });
   },
 };

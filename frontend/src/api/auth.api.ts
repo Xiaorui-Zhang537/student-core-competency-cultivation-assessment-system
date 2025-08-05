@@ -4,15 +4,15 @@ import type { LoginRequest, RegisterRequest, AuthResponse } from '@/types/auth';
 
 export const authApi = {
   login: (data: LoginRequest): Promise<ApiResponse<AuthResponse>> => {
-    return api.post('/api/auth/login', data);
+    return api.post('/auth/login', data);
   },
   register: (data: RegisterRequest): Promise<ApiResponse<AuthResponse>> => {
-    return api.post('/api/auth/register', data);
+    return api.post('/auth/register', data);
   },
   refreshToken: (refreshToken: string): Promise<ApiResponse<AuthResponse>> => {
-    return api.post('/api/auth/refresh', null, { params: { refreshToken } });
+    return api.post('/auth/refresh', null, { params: { refreshToken } });
   },
   logout: (): Promise<ApiResponse<void>> => {
-    return api.post('/api/auth/logout');
+    return api.post('/auth/logout');
   },
 };

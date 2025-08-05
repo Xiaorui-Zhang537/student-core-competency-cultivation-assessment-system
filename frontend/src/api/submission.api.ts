@@ -6,25 +6,25 @@ import type { Submission, SubmissionRequest, DraftRequest } from '@/types/submis
 
 export const submissionApi = {
   getSubmissionForAssignment: (assignmentId: string): Promise<ApiResponse<Submission>> => {
-    return api.get(`/api/assignments/${assignmentId}/submission`);
+    return api.get(`/assignments/${assignmentId}/submission`);
   },
 
   submitAssignment: (assignmentId: string, data: SubmissionRequest): Promise<ApiResponse<Submission>> => {
-    return api.post(`/api/assignments/${assignmentId}/submit`, data);
+    return api.post(`/assignments/${assignmentId}/submit`, data);
   },
 
   saveDraft: (assignmentId: string, data: DraftRequest): Promise<ApiResponse<void>> => {
-    return api.post(`/api/assignments/${assignmentId}/draft`, data);
+    return api.post(`/assignments/${assignmentId}/draft`, data);
   },
-  
+
   // NOTE: These endpoints are related to grades, and will be used when Grade module is refactored.
   /*
   getMyGradedSubmissions: (): Promise<ApiResponse<any[]>> => {
-    return api.get('/api/submissions/my/grades');
+    return api.get('/submissions/my/grades');
   },
 
   getGradeForSubmission: (submissionId: string): Promise<ApiResponse<Grade>> => {
-    return api.get(`/api/submissions/${submissionId}/grade`);
+    return api.get(`/submissions/${submissionId}/grade`);
   },
   */
 };

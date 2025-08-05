@@ -5,19 +5,19 @@ import type { AbilityDimension, AbilityDashboardData, AbilityTrendData, AbilityR
 export const abilityApi = {
   // Student-facing endpoints
   getAbilityDimensions: (): Promise<ApiResponse<AbilityDimension[]>> => {
-    return api.get('/api/ability/dimensions');
+    return api.get('/ability/dimensions');
   },
 
   getStudentDashboard: (): Promise<ApiResponse<AbilityDashboardData>> => {
-    return api.get('/api/ability/student/dashboard');
+    return api.get('/ability/student/dashboard');
   },
 
   getStudentTrends: (): Promise<ApiResponse<AbilityTrendData>> => {
-    return api.get('/api/ability/student/trends');
+    return api.get('/ability/student/trends');
   },
 
   getStudentRecommendations: (): Promise<ApiResponse<AbilityRecommendation[]>> => {
-    return api.get('/api/ability/student/recommendations');
+    return api.get('/ability/student/recommendations');
   },
   
   // Teacher-facing endpoints can be added here later

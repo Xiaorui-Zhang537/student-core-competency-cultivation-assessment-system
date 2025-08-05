@@ -4,22 +4,22 @@ import type { StudentProgressData, CourseAnalyticsData, AssignmentAnalyticsData,
 
 export const teacherApi = {
   getDashboardAnalytics: (): Promise<ApiResponse<DashboardAnalyticsData>> => {
-    return api.get('/api/teachers/analytics/dashboard');
+    return api.get('/teachers/analytics/dashboard');
   },
 
   getStudentProgress: (params?: { page?: number; size?: number; courseId?: string }): Promise<ApiResponse<PaginatedResponse<StudentProgressData>>> => {
-    return api.get('/api/teachers/analytics/student-progress', { params });
+    return api.get('/teachers/analytics/student-progress', { params });
   },
 
   getCourseAnalytics: (courseId: string): Promise<ApiResponse<CourseAnalyticsData>> => {
-    return api.get(`/api/teachers/analytics/course/${courseId}`);
+    return api.get(`/teachers/analytics/course/${courseId}`);
   },
 
   getAssignmentAnalytics: (assignmentId: string): Promise<ApiResponse<AssignmentAnalyticsData>> => {
-    return api.get(`/api/teachers/analytics/assignment/${assignmentId}`);
+    return api.get(`/teachers/analytics/assignment/${assignmentId}`);
   },
 
   getClassPerformance: (courseId: string): Promise<ApiResponse<ClassPerformanceData>> => {
-    return api.get(`/api/teachers/analytics/class-performance/${courseId}`);
+    return api.get(`/teachers/analytics/class-performance/${courseId}`);
   },
 };

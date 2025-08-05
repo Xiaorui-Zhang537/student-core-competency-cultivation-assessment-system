@@ -69,7 +69,7 @@ public class SecurityConfig {
                 .authorizeHttpRequests(authz ->
                         authz
                             // allow all auth endpoints under /api/auth
-                            .requestMatchers("/api/auth/**", "/auth/**")
+                            .requestMatchers("/api/auth/**")
                                 .permitAll()
                             // preserve any additional public URLs from config
                             .requestMatchers(securityProperties.getJwt().getPublicUrls().toArray(new String[0]))
