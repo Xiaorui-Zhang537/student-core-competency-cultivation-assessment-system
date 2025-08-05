@@ -31,11 +31,11 @@
                 <p class="text-sm text-gray-500">学生人数</p>
             </div>
             <div class="card p-4 text-center">
-                <h3 class="text-2xl font-bold">{{ courseAnalytics.averageCompletionRate.toFixed(1) }}%</h3>
+                <h3 class="text-2xl font-bold">{{ (courseAnalytics.averageCompletionRate || 0).toFixed(1) }}%</h3>
                 <p class="text-sm text-gray-500">平均完成率</p>
             </div>
             <div class="card p-4 text-center">
-                <h3 class="text-2xl font-bold">{{ courseAnalytics.averageScore.toFixed(1) }}</h3>
+                <h3 class="text-2xl font-bold">{{ (courseAnalytics.averageScore || 0).toFixed(1) }}</h3>
                 <p class="text-sm text-gray-500">平均分</p>
             </div>
              <div class="card p-4 text-center">
@@ -83,7 +83,7 @@ const onCourseSelect = () => {
 };
 
 const initChart = () => {
-    if (!chartRef.value || !classPerformance.value) return;
+    if (!chartRef.value || !classPerformance.value || !Array.isArray(classPerformance.value.scoreDistribution)) return;
     chart = echarts.init(chartRef.value);
 
     const option = {

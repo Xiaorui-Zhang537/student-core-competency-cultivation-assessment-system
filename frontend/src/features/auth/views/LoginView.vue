@@ -63,7 +63,7 @@ const form = ref<LoginRequest>({
   password: '',
 });
 
-const handleLogin = (credentials: LoginRequest) => {
-  authStore.login(credentials);
+const handleLogin = async (credentials: LoginRequest) => {
+  await authStore.login(credentials);
 };
 </script>

@@ -94,6 +94,6 @@ const getScoreColor = (score: number) => {
 };
 
 onMounted(() => {
-  studentStore.fetchDashboard();
+  studentStore.fetchDashboardData();
 });
 </script>

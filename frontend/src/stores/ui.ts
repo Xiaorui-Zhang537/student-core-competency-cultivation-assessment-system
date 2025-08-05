@@ -49,6 +49,10 @@ export const useUIStore = defineStore('ui', () => {
   const toggleSidebar = () => {
     sidebarOpen.value = !sidebarOpen.value
   }
+  
+  const closeSidebar = () => {
+      sidebarOpen.value = false
+  }
 
   const showNotification = (notification: {
     type: 'success' | 'error' | 'warning' | 'info'
@@ -89,6 +93,7 @@ export const useUIStore = defineStore('ui', () => {
     initDarkMode,
     toggleDarkMode,
     toggleSidebar,
+    closeSidebar,
     showNotification,
     removeNotification,
     clearNotifications

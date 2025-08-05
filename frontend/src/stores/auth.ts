@@ -55,7 +55,7 @@ export const useAuthStore = defineStore('auth', () => {
       setAuthData(response.data);
       uiStore.showNotification({ type: 'success', title: '登录成功', message: `欢迎回来, ${response.data.user.username}!` });
       await nextTick();
-      router.push(user.value?.role === 'TEACHER' ? '/teacher/dashboard' : '/student/dashboard');
+      await router.push(user.value?.role === 'TEACHER' ? '/teacher/dashboard' : '/student/dashboard');
     }
   };
 
@@ -65,14 +65,14 @@ export const useAuthStore = defineStore('auth', () => {
       setAuthData(response.data);
       uiStore.showNotification({ type: 'success', title: '注册成功', message: '欢迎加入我们的平台！' });
       await nextTick();
-      router.push(user.value?.role === 'TEACHER' ? '/teacher/dashboard' : '/student/dashboard');
+      await router.push(user.value?.role === 'TEACHER' ? '/teacher/dashboard' : '/student/dashboard');
     }
   };
 
   const logout = async () => {
     await handleApiCall(authApi.logout);
     clearAuthData();
-    router.push('/login');
+    await router.push('/auth/login');
   };
 
   const fetchUser = async () => {
