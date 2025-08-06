@@ -27,7 +27,7 @@ import java.util.Map;
  * @since 2024-12-28
  */
 @RestController
-@RequestMapping("/api/files")
+@RequestMapping("/files")
 @Tag(name = "文件管理", description = "文件上传、下载、删除等操作")
 public class FileController extends BaseController {
 

@@ -22,7 +22,7 @@ export const useAbilityStore = defineStore('ability', () => {
       '获取能力仪表盘数据失败'
     );
     if (response) {
-      dashboardData.value = response.data;
+      dashboardData.value = response;
     }
   };
   
@@ -33,7 +33,7 @@ export const useAbilityStore = defineStore('ability', () => {
       '获取能力趋势数据失败'
     );
     if (response) {
-      trendsData.value = response.data;
+      trendsData.value = response;
     }
   };
   
@@ -44,7 +44,7 @@ export const useAbilityStore = defineStore('ability', () => {
       '获取能力建议失败'
     );
     if (response) {
-      recommendations.value = response.data;
+      recommendations.value = response;
     }
   };
 

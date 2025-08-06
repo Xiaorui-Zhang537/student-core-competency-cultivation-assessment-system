@@ -1,3 +1,7 @@
+import AuthLayout from '@/layouts/AuthLayout.vue'
+import StudentLayout from '@/layouts/StudentLayout.vue'
+import TeacherLayout from '@/layouts/TeacherLayout.vue'
+import NotFoundView from '@/components/layout/NotFoundView.vue'
 import { createRouter, createWebHistory } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 
@@ -8,7 +12,7 @@ const routes = [
   },
   {
     path: '/auth',
-    component: () => import('@/layouts/AuthLayout.vue'),
+    component: AuthLayout,
     children: [
       {
         path: 'login',
@@ -32,9 +36,13 @@ const routes = [
   },
   {
     path: '/student',
-    component: () => import('@/layouts/StudentLayout.vue'),
+    component: StudentLayout,
     meta: { requiresAuth: true, role: 'STUDENT' },
     children: [
+      {
+        path: '',
+        redirect: 'dashboard'
+      },
       {
         path: 'dashboard',
         name: 'StudentDashboard',
@@ -61,9 +69,13 @@ const routes = [
   },
   {
     path: '/teacher',
-    component: () => import('@/layouts/TeacherLayout.vue'),
+    component: TeacherLayout,
     meta: { requiresAuth: true, role: 'TEACHER' },
     children: [
+      {
+        path: '',
+        redirect: 'dashboard'
+      },
       {
         path: 'dashboard',
         name: 'TeacherDashboard',
@@ -91,7 +103,7 @@ const routes = [
   {
     path: '/:pathMatch(.*)*',
     name: 'NotFound',
-    component: () => import('@/components/layout/NotFoundView.vue')
+    component: NotFoundView
   }
 ];
 

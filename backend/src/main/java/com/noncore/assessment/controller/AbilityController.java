@@ -27,7 +27,7 @@ import java.util.Map;
  * @since 2024-12-28
  */
 @RestController
-@RequestMapping("/api/ability")
+@RequestMapping("/ability")
 @Tag(name = "能力评估", description = "能力评估相关操作")
 public class AbilityController extends BaseController {
 

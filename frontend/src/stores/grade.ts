@@ -21,8 +21,8 @@ export const useGradeStore = defineStore('grade', () => {
       '获取学生成绩失败'
     );
     if (response) {
-      grades.value = response.data.content;
-      totalGrades.value = response.data.totalElements;
+      grades.value = response.content;
+      totalGrades.value = response.totalElements;
     }
   };
 
@@ -33,8 +33,8 @@ export const useGradeStore = defineStore('grade', () => {
       '获取作业成绩失败'
     );
     if (response) {
-      grades.value = response.data.content;
-      totalGrades.value = response.data.totalElements;
+      grades.value = response.content;
+      totalGrades.value = response.totalElements;
     }
   };
 
@@ -47,7 +47,7 @@ export const useGradeStore = defineStore('grade', () => {
     if (response) {
       uiStore.showNotification({ type: 'success', title: '评分成功' });
       // Optionally refresh the list or update the specific grade
-      return response.data;
+      return response;
     }
     return null;
   };

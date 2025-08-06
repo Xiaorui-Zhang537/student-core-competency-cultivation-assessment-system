@@ -27,19 +27,19 @@
         <!-- Stats Cards -->
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             <div class="card p-4 text-center">
-                <h3 class="text-2xl font-bold">{{ courseAnalytics.enrollmentCount }}</h3>
+                <h3 class="text-2xl font-bold">{{ safeAnalytics.enrollmentCount }}</h3>
                 <p class="text-sm text-gray-500">学生人数</p>
             </div>
             <div class="card p-4 text-center">
-                <h3 class="text-2xl font-bold">{{ (courseAnalytics.averageCompletionRate || 0).toFixed(1) }}%</h3>
+                <h3 class="text-2xl font-bold">{{ (safeAnalytics.averageCompletionRate || 0).toFixed(1) }}%</h3>
                 <p class="text-sm text-gray-500">平均完成率</p>
             </div>
             <div class="card p-4 text-center">
-                <h3 class="text-2xl font-bold">{{ (courseAnalytics.averageScore || 0).toFixed(1) }}</h3>
+                <h3 class="text-2xl font-bold">{{ (safeAnalytics.averageScore || 0).toFixed(1) }}</h3>
                 <p class="text-sm text-gray-500">平均分</p>
             </div>
              <div class="card p-4 text-center">
-                <h3 class="text-2xl font-bold">{{ courseAnalytics.assignmentCount }}</h3>
+                <h3 class="text-2xl font-bold">{{ safeAnalytics.assignmentCount }}</h3>
                 <p class="text-sm text-gray-500">作业数</p>
             </div>
         </div>
@@ -60,69 +60,64 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, computed, watch, nextTick, onUnmounted } from 'vue';
-import { useTeacherStore } from '@/stores/teacher';
-import { useCourseStore } from '@/stores/course';
-import * as echarts from 'echarts';
+import { ref, onMounted, computed, watch, nextTick, onUnmounted } from 'vue'
+import { useUIStore } from '@/stores/ui'
+import { useTeacherStore } from '@/stores/teacher'
+import { useCourseStore } from '@/stores/course'
+import * as echarts from 'echarts'
 
-const teacherStore = useTeacherStore();
-const courseStore = useCourseStore();
+const uiStore = useUIStore()
+const teacherStore = useTeacherStore()
+const courseStore = useCourseStore()
 
-const selectedCourseId = ref<string | null>(null);
-const chartRef = ref<HTMLElement | null>(null);
-let chart: echarts.ECharts | null = null;
+const selectedCourseId = ref<string | null>(null)
+const chartRef = ref<HTMLElement | null>(null)
+let chart: echarts.ECharts | null = null
 
-const courseAnalytics = computed(() => teacherStore.courseAnalytics);
-const classPerformance = computed(() => teacherStore.classPerformance);
+const loading = teacherStore.loading
+const courseAnalytics = computed(() => teacherStore.courseAnalytics)
+const classPerformance = computed(() => teacherStore.classPerformance)
+
+const safeAnalytics = computed(() => ({
+  enrollmentCount: courseAnalytics.value.enrollmentCount ?? 0,
+  averageCompletionRate: courseAnalytics.value.averageCompletionRate ?? 0,
+  averageScore: courseAnalytics.value.averageScore ?? 0,
+  assignmentCount: courseAnalytics.value.assignmentCount ?? 0,
+}))
+
+const toggleSidebar = () => uiStore.toggleSidebar()
 
 const onCourseSelect = () => {
-    if (selectedCourseId.value) {
-        teacherStore.fetchCourseAnalytics(selectedCourseId.value);
-        teacherStore.fetchClassPerformance(selectedCourseId.value);
-    }
-};
+  if (selectedCourseId.value) {
+    teacherStore.fetchCourseAnalytics(selectedCourseId.value)
+    teacherStore.fetchClassPerformance(selectedCourseId.value)
+  }
+}
 
 const initChart = () => {
-    if (!chartRef.value || !classPerformance.value || !Array.isArray(classPerformance.value.scoreDistribution)) return;
-    chart = echarts.init(chartRef.value);
+  if (!chartRef.value || !classPerformance.value.scoreDistribution?.length) return
+  chart = echarts.init(chartRef.value)
+  chart.setOption({
+    tooltip: { trigger: 'item' },
+    xAxis: { type: 'category', data: classPerformance.value.scoreDistribution.map(d => d.range) },
+    yAxis: { type: 'value' },
+    series: [{ name: '学生人数', type: 'bar', data: classPerformance.value.scoreDistribution.map(d => d.count) }]
+  })
+}
 
-    const option = {
-        tooltip: { trigger: 'item' },
-        xAxis: {
-            type: 'category',
-            data: classPerformance.value.scoreDistribution.map(d => d.range),
-        },
-        yAxis: { type: 'value' },
-        series: [{
-            name: '学生人数',
-            type: 'bar',
-            data: classPerformance.value.scoreDistribution.map(d => d.count),
-        }]
-    };
-    chart.setOption(option);
-};
-
-const resizeChart = () => {
-    chart?.resize();
-};
-
-watch(classPerformance, (newData) => {
-    if (newData) {
-        nextTick(initChart);
-    }
-}, { deep: true });
+watch(classPerformance, () => nextTick(initChart), { deep: true })
 
 onMounted(async () => {
-  await courseStore.fetchCourses({ page: 1, size: 100 }); // Fetch all courses for selector
-  if (courseStore.courses.length > 0) {
-      selectedCourseId.value = String(courseStore.courses[0].id);
-      onCourseSelect();
+  await courseStore.fetchCourses({ page: 1, size: 100 })
+  if (courseStore.courses.length) {
+    selectedCourseId.value = String(courseStore.courses[0].id)
+    onCourseSelect()
   }
-  window.addEventListener('resize', resizeChart);
-});
+  window.addEventListener('resize', () => chart?.resize())
+})
 
 onUnmounted(() => {
-    chart?.dispose();
-    window.removeEventListener('resize', resizeChart);
-});
+  chart?.dispose()
+  window.removeEventListener('resize', () => chart?.resize())
+})
 </script>

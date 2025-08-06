@@ -49,24 +49,37 @@ export const useAuthStore = defineStore('auth', () => {
     localStorage.removeItem('refreshToken');
   };
 
+  // ◇ Utility to handle possible AxiosResponse wrappers
+  function unwrap<T>(res: any): T {
+    return res && res.data !== undefined ? res.data : res;
+  }
+
   const login = async (credentials: LoginRequest) => {
     const response = await handleApiCall(() => authApi.login(credentials));
-    if (response) {
-      setAuthData(response.data);
-      uiStore.showNotification({ type: 'success', title: '登录成功', message: `欢迎回来, ${response.data.user.username}!` });
-      await nextTick();
-      await router.push(user.value?.role === 'TEACHER' ? '/teacher/dashboard' : '/student/dashboard');
-    }
+    if (!response) return;
+    const data = unwrap<AuthResponse>(response);
+    setAuthData(data);
+    uiStore.showNotification({
+      type: 'success',
+      title: '登录成功',
+      message: `欢迎回来, ${data.user.username}!`
+    });
+    await nextTick();
+    await router.push(data.user.role === 'TEACHER' ? '/teacher/dashboard' : '/student/dashboard');
   };
 
   const register = async (details: RegisterRequest) => {
     const response = await handleApiCall(() => authApi.register(details));
-    if (response) {
-      setAuthData(response.data);
-      uiStore.showNotification({ type: 'success', title: '注册成功', message: '欢迎加入我们的平台！' });
-      await nextTick();
-      await router.push(user.value?.role === 'TEACHER' ? '/teacher/dashboard' : '/student/dashboard');
-    }
+    if (!response) return;
+    const data = unwrap<AuthResponse>(response);
+    setAuthData(data);
+    uiStore.showNotification({
+      type: 'success',
+      title: '注册成功',
+      message: '欢迎加入我们的平台！'
+    });
+    await nextTick();
+    await router.push(data.user.role === 'TEACHER' ? '/teacher/dashboard' : '/student/dashboard');
   };
 
   const logout = async () => {
@@ -79,20 +92,26 @@ export const useAuthStore = defineStore('auth', () => {
     if (!token.value) return;
     const response = await handleApiCall(userApi.getProfile);
     if (response) {
-      const userData: User = { ...response.data, id: String(response.data.id) };
-      userData.role = (response.data.role || 'STUDENT').toUpperCase() as 'STUDENT' | 'TEACHER' | 'ADMIN';
+      const data = unwrap<User>(response);
+      const userData: User = { ...data, id: String(data.id) };
+      userData.role = (data.role || 'STUDENT').toUpperCase() as 'STUDENT' | 'TEACHER' | 'ADMIN';
       user.value = userData;
     } else {
       clearAuthData();
     }
   };
-  
+
   const updateUserProfile = async (data: UpdateProfileRequest) => {
       const response = await handleApiCall(() => userApi.updateProfile(data));
       if (response && user.value) {
-          user.value.nickname = response.data.nickname;
-          user.value.avatar = response.data.avatar;
-          uiStore.showNotification({ type: 'success', title: '个人资料已更新', message: '您的信息已成功保存。' });
+          const resData = unwrap<UpdateProfileRequest & { avatar: string; nickname: string }>(response);
+          user.value.nickname = resData.nickname;
+          user.value.avatar = resData.avatar;
+          uiStore.showNotification({
+            type: 'success',
+            title: '个人资料已更新',
+            message: '您的信息已成功保存。'
+          });
       }
   }
 

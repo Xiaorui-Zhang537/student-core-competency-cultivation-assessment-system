@@ -193,6 +193,15 @@
         LIMIT #{limit}
     </select>
 
+    <!-- 获取最近通知（兼容旧调用） -->
+    <select id="findRecentNotifications" resultMap="NotificationResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM notifications
+        WHERE user_id = #{userId} AND deleted = 0
+        ORDER BY created_at DESC
+        LIMIT #{limit}
+    </select>
+
     <!-- 按类型分组统计数量 -->
     <select id="countByRecipientGroupByType" resultType="map">
         SELECT type, COUNT(*) as count

@@ -26,7 +26,7 @@ import java.util.Map;
  * @since 2024-12-28
  */
 @RestController
-@RequestMapping("/api/notifications")
+@RequestMapping("/notifications")
 @Tag(name = "通知管理", description = "通知发送、查询、标记已读等操作")
 public class NotificationController extends BaseController {
 

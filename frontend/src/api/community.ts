@@ -72,27 +72,27 @@ export const getPostList = (params: {
   keyword?: string
   orderBy?: string
 }) => {
-  return apiRequest.get('/api/community/posts', { params })
+  return apiRequest.get('/community/posts', { params })
 }
 
 // 获取帖子详情
 export const getPostDetail = (id: string) => {
-  return apiRequest.get(`/api/community/posts/${id}`)
+  return apiRequest.get(`/community/posts/${id}`)
 }
 
 // 发布帖子
 export const createPost = (data: CreatePostRequest) => {
-  return apiRequest.post('/api/community/posts', data)
+  return apiRequest.post('/community/posts', data)
 }
 
 // 点赞/取消点赞帖子
 export const likePost = (id: string) => {
-  return apiRequest.post(`/api/community/posts/${id}/like`)
+  return apiRequest.post(`/community/posts/${id}/like`)
 }
 
 // 发表评论
 export const createComment = (postId: string, data: CreateCommentRequest) => {
-  return apiRequest.post(`/api/community/posts/${postId}/comments`, data)
+  return apiRequest.post(`/community/posts/${postId}/comments`, data)
 }
 
 // 获取评论列表
@@ -100,22 +100,22 @@ export const getCommentList = (postId: string, params: {
   page?: number
   size?: number
 }) => {
-  return apiRequest.get(`/api/community/posts/${postId}/comments`, { params })
+  return apiRequest.get(`/community/posts/${postId}/comments`, { params })
 }
 
 // 获取社区统计
 export const getCommunityStats = () => {
-  return apiRequest.get('/api/community/stats')
+  return apiRequest.get('/community/stats')
 }
 
 // 获取热门话题
 export const getHotTopics = (limit = 10) => {
-  return apiRequest.get('/api/community/hot-topics', { params: { limit } })
+  return apiRequest.get('/community/hot-topics', { params: { limit } })
 }
 
 // 获取活跃用户
 export const getActiveUsers = (limit = 10) => {
-  return apiRequest.get('/api/community/active-users', { params: { limit } })
+  return apiRequest.get('/community/active-users', { params: { limit } })
 }
 
 // 获取我的帖子
@@ -123,10 +123,10 @@ export const getMyPosts = (params: {
   page?: number
   size?: number
 }) => {
-  return apiRequest.get('/api/community/my-posts', { params })
+  return apiRequest.get('/community/my-posts', { params })
 }
 
 // 搜索标签
 export const searchTags = (keyword: string, limit = 10) => {
-  return apiRequest.get('/api/community/search/tags', { params: { keyword, limit } })
-} 
+  return apiRequest.get('/community/search/tags', { params: { keyword, limit } })
+}

@@ -26,7 +26,7 @@ import java.util.Map;
  * @since 2024-12-28
  */
 @RestController
-@RequestMapping("/api/assignments")
+@RequestMapping("/assignments")
 @Tag(name = "作业管理", description = "作业发布、查询、提交等相关接口")
 public class AssignmentController extends BaseController {
 

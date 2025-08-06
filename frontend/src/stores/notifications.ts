@@ -70,7 +70,7 @@ export const useNotificationsStore = defineStore('notifications', () => {
         priority: filters.value.priority || undefined
       })
 
-      const data = response.data as PaginatedResponse<Notification>
+      const data = response as PaginatedResponse<Notification>
       
       if (refresh) {
         notifications.value = data.items
@@ -100,8 +100,8 @@ export const useNotificationsStore = defineStore('notifications', () => {
 
     try {
       const response = await notificationAPI.getNotification(notificationId)
-      currentNotification.value = response.data
-      return response.data
+      currentNotification.value = response
+      return response
     } catch (err: any) {
       console.error('获取通知详情失败:', err)
       error.value = err.message || '获取通知详情失败'
@@ -222,7 +222,7 @@ export const useNotificationsStore = defineStore('notifications', () => {
   const fetchStats = async () => {
     try {
       const response = await notificationAPI.getNotificationStats()
-      stats.value = response.data
+      stats.value = response
     } catch (err: any) {
       console.error('获取通知统计失败:', err)
     }
@@ -232,7 +232,7 @@ export const useNotificationsStore = defineStore('notifications', () => {
   const fetchUnreadCount = async () => {
     try {
       const response = await notificationAPI.getUnreadCount()
-      stats.value.unreadCount = response.data.count
+      stats.value.unreadCount = response.count
     } catch (err: any) {
       console.error('获取未读数量失败:', err)
     }

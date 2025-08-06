@@ -42,7 +42,7 @@ export const useCommunityStore = defineStore('community', () => {
       '获取帖子列表失败'
     );
     if (response) {
-      const data = response.data as PaginatedResponse<Post>;
+      const data = response as PaginatedResponse<Post>;
       posts.value = data.items;
       totalPosts.value = data.total;
     }
@@ -55,7 +55,7 @@ export const useCommunityStore = defineStore('community', () => {
       '获取帖子详情失败'
     );
     if (response) {
-      currentPost.value = response.data;
+      currentPost.value = response;
     }
   };
 
@@ -82,13 +82,13 @@ export const useCommunityStore = defineStore('community', () => {
         // Update post in the list
         const postInList = posts.value.find(p => p.id === id);
         if (postInList) {
-            postInList.isLiked = response.data.liked;
-            postInList.likeCount += response.data.liked ? 1 : -1;
+            postInList.isLiked = response.liked;
+            postInList.likeCount += response.liked ? 1 : -1;
         }
         // Update current post if it's the one
         if (currentPost.value && currentPost.value.id === id) {
-            currentPost.value.isLiked = response.data.liked;
-            currentPost.value.likeCount += response.data.liked ? 1 : -1;
+            currentPost.value.isLiked = response.liked;
+            currentPost.value.likeCount += response.liked ? 1 : -1;
         }
     }
   };
@@ -100,7 +100,7 @@ export const useCommunityStore = defineStore('community', () => {
       '获取评论失败'
     );
     if (response) {
-      const data = response.data as PaginatedResponse<PostComment>;
+      const data = response as PaginatedResponse<PostComment>;
       comments.value = data.items;
       totalComments.value = data.total;
     }
@@ -120,17 +120,17 @@ export const useCommunityStore = defineStore('community', () => {
 
   const fetchCommunityStats = async () => {
       const response = await handleApiCall(() => communityApi.getCommunityStats(), uiStore, '获取社区统计数据失败');
-      if(response) stats.value = response.data;
+      if(response) stats.value = response;
   };
 
   const fetchHotTopics = async () => {
     const response = await handleApiCall(() => communityApi.getHotTopics(), uiStore, '获取热门话题失败');
-    if(response) hotTopics.value = response.data;
+    if(response) hotTopics.value = response;
   };
   
   const fetchActiveUsers = async () => {
     const response = await handleApiCall(() => communityApi.getActiveUsers(), uiStore, '获取活跃用户失败');
-    if(response) activeUsers.value = response.data;
+    if(response) activeUsers.value = response;
   };
 
 

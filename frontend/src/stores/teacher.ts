@@ -5,14 +5,34 @@ import type { StudentProgressData, CourseAnalyticsData, AssignmentAnalyticsData,
 import { useUIStore } from './ui';
 import { handleApiCall } from '@/utils/api-handler';
 
+// --- default placeholders to avoid undefined errors on first render ---
+const defaultCourseAnalytics: CourseAnalyticsData = {
+  enrollmentCount: 0,
+  averageCompletionRate: 0,
+  averageScore: 0,
+  assignmentCount: 0,
+};
+
+const defaultAssignmentAnalytics: AssignmentAnalyticsData = {
+  submissions: 0,
+  averageScore: 0,
+  highestScore: 0,
+  lowestScore: 0,
+};
+
+const defaultClassPerformance: ClassPerformanceData = {
+  scoreDistribution: [],
+};
+// ----------------------------------------------------------------------
+
 export const useTeacherStore = defineStore('teacher', () => {
   const uiStore = useUIStore();
 
   // State
   const studentProgress = ref<StudentProgressData[]>([]);
-  const courseAnalytics = ref<CourseAnalyticsData | null>(null);
-  const assignmentAnalytics = ref<AssignmentAnalyticsData | null>(null);
-  const classPerformance = ref<ClassPerformanceData | null>(null);
+  const courseAnalytics = ref<CourseAnalyticsData>({ ...defaultCourseAnalytics });
+  const assignmentAnalytics = ref<AssignmentAnalyticsData>({ ...defaultAssignmentAnalytics });
+  const classPerformance = ref<ClassPerformanceData>({ ...defaultClassPerformance });
   const loading = computed(() => uiStore.loading);
 
   // Actions
@@ -23,7 +43,7 @@ export const useTeacherStore = defineStore('teacher', () => {
       '获取学生进度失败'
     );
     if (response) {
-      studentProgress.value = response.data.items;
+      studentProgress.value = response.items;
     }
   };
 
@@ -34,10 +54,10 @@ export const useTeacherStore = defineStore('teacher', () => {
       '获取课程分析数据失败'
     );
     if (response) {
-      courseAnalytics.value = response.data;
+      courseAnalytics.value = { ...defaultCourseAnalytics, ...response };
     }
   };
-  
+
   const fetchAssignmentAnalytics = async (assignmentId: string) => {
     const response = await handleApiCall(
       () => teacherApi.getAssignmentAnalytics(assignmentId),
@@ -45,7 +65,7 @@ export const useTeacherStore = defineStore('teacher', () => {
       '获取作业分析数据失败'
     );
     if (response) {
-      assignmentAnalytics.value = response.data;
+      assignmentAnalytics.value = { ...defaultAssignmentAnalytics, ...response };
     }
   };
 
@@ -56,7 +76,7 @@ export const useTeacherStore = defineStore('teacher', () => {
       '获取班级表现数据失败'
     );
     if (response) {
-      classPerformance.value = response.data;
+      classPerformance.value = { ...defaultClassPerformance, ...response };
     }
   };
 

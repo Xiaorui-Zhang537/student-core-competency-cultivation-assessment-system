@@ -48,12 +48,12 @@ export const useCourseStore = defineStore('course', {
         const uiStore = useUIStore();
         const response = await handleApiCall(() => courseApi.getCourses(params), uiStore, '获取课程列表失败');
         if (response) {
-            this.courses = response.data.items;
+            this.courses = response.items;
             this.pagination = {
-                page: response.data.page,
-                size: response.data.size,
-                total: response.data.total,
-                totalPages: response.data.totalPages,
+                page: response.page,
+                size: response.size,
+                total: response.total,
+                totalPages: response.totalPages,
             };
         }
         this.loading = false;
@@ -64,7 +64,7 @@ export const useCourseStore = defineStore('course', {
       const uiStore = useUIStore();
       const response = await handleApiCall(() => courseApi.getCourseById(id), uiStore, '获取课程详情失败');
       if (response) {
-        this.currentCourse = response.data;
+        this.currentCourse = response;
       }
       this.loading = false;
       return this.currentCourse;
@@ -101,7 +101,7 @@ export const useCourseStore = defineStore('course', {
         const uiStore = useUIStore();
         await handleApiCall(() => courseApi.getPopularCourses({ limit }), uiStore, '获取热门课程失败', { loadingRef: ref(this.discoveryLoading.popular) });
         if (response) {
-            this.popularCourses = response.data;
+            this.popularCourses = response;
         }
     },
 
@@ -109,7 +109,7 @@ export const useCourseStore = defineStore('course', {
         const uiStore = useUIStore();
         const response = await handleApiCall(() => courseApi.getRecommendedCourses({ limit }), uiStore, '获取推荐课程失败', { loadingRef: ref(this.discoveryLoading.recommended) });
         if (response) {
-            this.recommendedCourses = response.data;
+            this.recommendedCourses = response;
         }
     },
 
@@ -117,7 +117,7 @@ export const useCourseStore = defineStore('course', {
         const uiStore = useUIStore();
         const response = await handleApiCall(() => courseApi.getCategories(), uiStore, '获取课程分类失败', { loadingRef: ref(this.discoveryLoading.categories) });
         if(response) {
-            this.categories = response.data;
+            this.categories = response;
         }
     },
     
@@ -127,7 +127,7 @@ export const useCourseStore = defineStore('course', {
         const response = await handleApiCall(() => courseApi.getCoursesByCategory(categoryId, queryParams), uiStore, '获取分类课程失败', { loadingRef: ref(this.discoveryLoading.categoryCourses) });
 
         if (response) {
-            const data = response.data as PaginatedResponse<Course>;
+            const data = response as PaginatedResponse<Course>;
             this.categoryCourses = data.items;
             this.categoryPagination = {
                 page: data.page,

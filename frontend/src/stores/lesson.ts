@@ -21,7 +21,7 @@ export const useLessonStore = defineStore('lesson', () => {
       { loadingRef: loading, errorMessage: '获取课时列表失败' }
     );
     if (response?.data) {
-      lessons.value = response.data;
+      lessons.value = response;
     }
   }
 
@@ -31,7 +31,7 @@ export const useLessonStore = defineStore('lesson', () => {
       { loadingRef: loading, errorMessage: '获取课时详情失败' }
     );
     if (response?.data) {
-      currentLesson.value = response.data;
+      currentLesson.value = response;
     }
   }
   
@@ -58,8 +58,8 @@ export const useLessonStore = defineStore('lesson', () => {
       { loadingRef: loading, successMessage: '课时创建成功', errorMessage: '创建课时失败' }
     );
     if (response?.data) {
-      lessons.value.push(response.data);
-      return response.data;
+      lessons.value.push(response);
+      return response;
     }
     return null;
   }
@@ -72,9 +72,9 @@ export const useLessonStore = defineStore('lesson', () => {
     if (response?.data) {
       const index = lessons.value.findIndex(l => l.id === lessonId);
       if (index !== -1) {
-        lessons.value[index] = { ...lessons.value[index], ...response.data };
+        lessons.value[index] = { ...lessons.value[index], ...response };
       }
-      return response.data;
+      return response;
     }
     return null;
   }

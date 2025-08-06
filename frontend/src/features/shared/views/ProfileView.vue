@@ -158,7 +158,7 @@ const confirmNewPassword = ref('');
 const fetchUserProfile = async () => {
     const response = await handleApiCall(() => userApi.getProfile(), uiStore, '获取用户信息失败');
     if(response) {
-        userProfile.value = response.data;
+        userProfile.value = response;
     }
 }
 
@@ -188,7 +188,7 @@ const handleUpdateProfile = async () => {
   if (response) {
     await fetchUserProfile();
     if (authStore.user) {
-        authStore.user.nickname = response.data.nickname;
+        authStore.user.nickname = response.nickname;
     }
     showEditProfile.value = false;
   }

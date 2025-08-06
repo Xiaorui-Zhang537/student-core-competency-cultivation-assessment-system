@@ -26,8 +26,8 @@ export const useAssignmentStore = defineStore('assignment', () => {
       '获取作业列表失败'
     );
     if (response) {
-      assignments.value = response.data.items;
-      totalAssignments.value = response.data.total;
+      assignments.value = response.items;
+      totalAssignments.value = response.total;
     }
   };
   
@@ -38,7 +38,7 @@ export const useAssignmentStore = defineStore('assignment', () => {
       '获取作业详情失败'
     );
     if (response) {
-      selectedAssignment.value = response.data;
+      selectedAssignment.value = response;
     }
   };
 
@@ -51,7 +51,7 @@ export const useAssignmentStore = defineStore('assignment', () => {
     if (response) {
       uiStore.showNotification({ type: 'success', title: '作业已创建', message: '新作业已成功添加。' });
       await fetchAssignments({ courseId: data.courseId });
-      return response.data;
+      return response;
     }
     return null;
   };
@@ -65,13 +65,13 @@ export const useAssignmentStore = defineStore('assignment', () => {
     if (response) {
       uiStore.showNotification({ type: 'success', title: '作业已更新', message: '作业信息已成功保存。' });
       if (selectedAssignment.value && selectedAssignment.value.id === id) {
-        selectedAssignment.value = { ...selectedAssignment.value, ...response.data };
+        selectedAssignment.value = { ...selectedAssignment.value, ...response };
       }
       const index = assignments.value.findIndex(a => a.id === id);
       if (index !== -1) {
-        assignments.value[index] = { ...assignments.value[index], ...response.data };
+        assignments.value[index] = { ...assignments.value[index], ...response };
       }
-      return response.data;
+      return response;
     }
     return null;
   };

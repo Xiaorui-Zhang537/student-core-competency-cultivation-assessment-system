@@ -16,7 +16,7 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("/api/auth")
+@RequestMapping("/auth")
 @Tag(name = "认证管理", description = "用户注册、登录、密码重置等认证相关接口")
 @Validated
 public class AuthController extends BaseController {

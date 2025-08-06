@@ -12,17 +12,17 @@
     </div>
 
     <!-- Main Content -->
-    <div v-else-if="dashboardData" class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+    <div v-else-if="dashboardReady && !studentStore.loading" class="grid grid-cols-1 lg:grid-cols-3 gap-8">
       <!-- Left Column: Assignments and Courses -->
       <div class="lg:col-span-2 space-y-8">
         <!-- Upcoming Assignments -->
         <div class="card p-6">
           <h2 class="text-xl font-semibold mb-4">即将到期的作业</h2>
-          <div v-if="dashboardData.upcomingAssignments.length > 0" class="space-y-3">
-            <div v-for="assignment in dashboardData.upcomingAssignments" :key="assignment.id" class="p-3 bg-gray-50 rounded flex justify-between items-center">
+          <div v-if="upcomingAssignments.length > 0" class="space-y-3">
+            <div v-for="assignment in upcomingAssignments" :key="assignment.id" class="p-3 bg-gray-50 rounded flex justify-between items-center">
               <div>
                 <h4 class="font-medium">{{ assignment.title }}</h4>
-                <p class="text-sm text-gray-500">截止日期: {{ new Date(assignment.dueDate).toLocaleDateString() }}</p>
+                <p class="text-sm text-gray-500">截止日期: {{ assignment.dueDate ? new Date(assignment.dueDate).toLocaleDateString() : '-' }}</p>
               </div>
               <router-link :to="`/student/assignments/${assignment.id}/submit`" class="btn btn-sm btn-outline">去完成</router-link>
             </div>
@@ -33,8 +33,8 @@
         <!-- Active Courses -->
         <div class="card p-6">
           <h2 class="text-xl font-semibold mb-4">进行中的课程</h2>
-          <div v-if="dashboardData.activeCourses.length > 0" class="space-y-3">
-            <div v-for="course in dashboardData.activeCourses" :key="course.id" class="p-3 bg-gray-50 rounded flex justify-between items-center">
+          <div v-if="activeCourses.length > 0" class="space-y-3">
+            <div v-for="course in activeCourses" :key="course.id" class="p-3 bg-gray-50 rounded flex justify-between items-center">
               <div>
                 <h4 class="font-medium">{{ course.title }}</h4>
                 <p class="text-sm text-gray-500">{{ course.teacherName }}</p>
@@ -51,14 +51,14 @@
         <!-- Overall Progress -->
         <div class="card p-6 text-center">
           <h2 class="text-xl font-semibold mb-4">总学习进度</h2>
-          <div class="text-4xl font-bold text-primary-600">{{ dashboardData.overallProgress }}%</div>
+          <div class="text-4xl font-bold text-primary-600">{{ overallProgress }}%</div>
         </div>
 
         <!-- Recent Grades -->
         <div class="card p-6">
           <h2 class="text-xl font-semibold mb-4">最近成绩</h2>
-          <div v-if="dashboardData.recentGrades.length > 0" class="space-y-3">
-            <div v-for="(grade, index) in dashboardData.recentGrades" :key="index" class="p-3 bg-gray-50 rounded flex justify-between items-center">
+          <div v-if="recentGrades.length > 0" class="space-y-3">
+            <div v-for="(grade, index) in recentGrades" :key="index" class="p-3 bg-gray-50 rounded flex justify-between items-center">
               <div>
                 <h4 class="font-medium">{{ grade.assignmentTitle }}</h4>
                 <p class="text-sm text-gray-500">{{ grade.courseTitle }}</p>
@@ -79,21 +79,18 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, computed } from 'vue';
-import { useStudentStore } from '@/stores/student';
+import { onMounted } from 'vue'
+import { useUIStore } from '@/stores/ui'
+import { useStudentStore } from '@/stores/student'
 
-const studentStore = useStudentStore();
-const dashboardData = computed(() => studentStore.dashboardData);
+const uiStore = useUIStore()
+const studentStore = useStudentStore()
+const dashboardData = studentStore.dashboardData
+const loading = studentStore.loading
 
-const getScoreColor = (score: number) => {
-  if (score >= 90) return 'text-green-600';
-  if (score >= 80) return 'text-blue-600';
-  if (score >= 70) return 'text-yellow-600';
-  if (score >= 60) return 'text-orange-600';
-  return 'text-red-600';
-};
+const toggleSidebar = () => uiStore.toggleSidebar()
 
 onMounted(() => {
-  studentStore.fetchDashboardData();
-});
+  studentStore.fetchDashboardData()
+})
 </script>

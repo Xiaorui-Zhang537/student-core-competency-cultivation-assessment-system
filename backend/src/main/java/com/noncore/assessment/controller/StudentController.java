@@ -14,7 +14,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/students")
+@RequestMapping("/students")
 @Tag(name = "学生模块", description = "学生相关接口")
 public class StudentController extends BaseController {
 

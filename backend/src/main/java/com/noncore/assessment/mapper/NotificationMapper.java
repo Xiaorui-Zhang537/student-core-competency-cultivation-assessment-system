@@ -68,9 +68,9 @@ public interface NotificationMapper {
      * @param size 每页大小
      * @return 通知列表
      */
-    List<Notification> selectByRecipientWithPagination(@Param("recipientId") Long recipientId, 
-                                                      @Param("type") String type, 
-                                                      @Param("offset") int offset, 
+    List<Notification> selectByRecipientWithPagination(@Param("recipientId") Long recipientId,
+                                                      @Param("type") String type,
+                                                      @Param("offset") int offset,
                                                       @Param("size") Integer size);
 
     /**
@@ -138,7 +138,7 @@ public interface NotificationMapper {
      * @return 未读通知数量
      */
     Integer countUnreadByRecipient(@Param("recipientId") Long recipientId);
-    
+
     /**
      * 根据类型统计未读通知数量
      *
@@ -179,5 +179,13 @@ public interface NotificationMapper {
      */
     int deleteExpiredNotifications(@Param("cutoffDate") java.time.LocalDateTime cutoffDate);
 
-    List<StudentDashboardResponse.RecentNotificationDto> findRecentNotifications(@Param("recipientId") Long recipientId, @Param("limit") int limit);
+    /**
+     * 查询最近的通知（按创建时间倒序）
+     *
+     * @param recipientId 接收者ID
+     * @param limit       返回条数
+     * @return 最近通知列表
+     */
+    List<StudentDashboardResponse.RecentNotificationDto> findRecentNotifications(@Param("recipientId") Long recipientId,
+                                                                                 @Param("limit") int limit);
 } 

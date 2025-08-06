@@ -20,7 +20,7 @@ import com.noncore.assessment.dto.request.BatchCourseStatusRequest;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/courses")
+@RequestMapping("/courses")
 @Tag(name = "课程管理", description = "课程创建、查询、更新、删除等相关接口")
 public class CourseController extends BaseController {
 

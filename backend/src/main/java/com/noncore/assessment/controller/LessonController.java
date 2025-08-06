@@ -31,7 +31,7 @@ import java.util.Map;
  * @since 2024-12-28
  */
 @RestController
-@RequestMapping("/api/lessons")
+@RequestMapping("/lessons")
 @Tag(name = "课程章节管理", description = "课程章节的增删改查及学习进度管理")
 public class LessonController extends BaseController {
 

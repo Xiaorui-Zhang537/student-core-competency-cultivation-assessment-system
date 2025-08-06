@@ -21,7 +21,7 @@ import java.util.List;
 import java.util.Map;
 
 @RestController
-@RequestMapping("/api/grades")
+@RequestMapping("/grades")
 @Tag(name = "成绩管理", description = "成绩录入、查询、统计等相关接口")
 public class GradeController extends BaseController {
 

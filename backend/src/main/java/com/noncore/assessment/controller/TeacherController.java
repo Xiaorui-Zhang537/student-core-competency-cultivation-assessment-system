@@ -11,7 +11,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("/api/teachers")
+@RequestMapping("/teachers")
 @Tag(name = "Teacher Management", description = "Endpoints for teachers to manage courses, students, and analytics.")
 public class TeacherController extends BaseController {
 

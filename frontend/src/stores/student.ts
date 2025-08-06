@@ -8,8 +8,15 @@ import { handleApiCall } from '@/utils/api-handler';
 export const useStudentStore = defineStore('student', () => {
   const uiStore = useUIStore();
 
-  // State
-  const dashboardData = ref<StudentDashboardData | null>(null);
+  // 默认仪表盘结构，避免模板首次渲染时报 undefined
+  const defaultDashboardData: StudentDashboardData = {
+    upcomingAssignments: [],
+    activeCourses: [],
+    recentGrades: [],
+    overallProgress: 0,
+  };
+
+  const dashboardData = ref<StudentDashboardData>(defaultDashboardData);
   const myCourses = ref<StudentCourse[]>([]);
   const currentCourseProgress = ref<StudentCourse | null>(null);
   const currentLesson = ref<StudentLesson | null>(null);
@@ -24,7 +31,8 @@ export const useStudentStore = defineStore('student', () => {
       '获取仪表盘数据失败'
     );
     if (response) {
-      dashboardData.value = response.data;
+      // 用后端返回的数据覆盖默认占位，缺失字段仍保持安全默认值
+      dashboardData.value = { ...defaultDashboardData, ...response };
     }
   };
 
@@ -35,7 +43,7 @@ export const useStudentStore = defineStore('student', () => {
       '获取我的课程失败'
     );
     if (response) {
-      myCourses.value = response.data.items;
+      myCourses.value = response.items;
     }
   };
 
@@ -46,7 +54,7 @@ export const useStudentStore = defineStore('student', () => {
       '获取课程进度失败'
     );
     if (response) {
-      currentCourseProgress.value = response.data;
+      currentCourseProgress.value = response;
     }
   };
 
@@ -57,7 +65,7 @@ export const useStudentStore = defineStore('student', () => {
       '获取课程详情失败'
     );
     if (response) {
-      currentLesson.value = response.data;
+      currentLesson.value = response;
     }
   };
   

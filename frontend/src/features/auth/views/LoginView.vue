@@ -16,12 +16,28 @@
     <form @submit.prevent="handleLogin(form)" class="space-y-6">
       <div>
         <label for="username" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">用户名或邮箱</label>
-        <input id="username" v-model="form.username" type="text" required class="input" :disabled="authStore.loading" />
+        <input
+          id="username"
+          v-model="form.username"
+          type="text"
+          autocomplete="username"
+          required
+          class="input"
+          :disabled="authStore.loading"
+        />
       </div>
 
       <div>
         <label for="password" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">密码</label>
-        <input id="password" v-model="form.password" type="password" required class="input" :disabled="authStore.loading" />
+        <input
+          id="password"
+          v-model="form.password"
+          type="password"
+          autocomplete="current-password"
+          required
+          class="input"
+          :disabled="authStore.loading"
+        />
       </div>
 
       <div class="flex items-center justify-between">
@@ -51,19 +67,20 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue';
-import { useAuthStore } from '@/stores/auth';
-import type { LoginRequest } from '@/types/auth';
+import { ref } from 'vue'
+import { useAuthStore } from '@/stores/auth'
+import type { LoginRequest } from '@/types/auth'
+import { useRouter } from 'vue-router'
 
-const authStore = useAuthStore();
-const isDevelopment = ref(import.meta.env.DEV);
+const authStore = useAuthStore()
+const isDevelopment = ref(import.meta.env.DEV)
+const router = useRouter()
 
-const form = ref<LoginRequest>({
-  username: '',
-  password: '',
-});
+const form = ref<LoginRequest>({ username: '', password: '' })
 
 const handleLogin = async (credentials: LoginRequest) => {
-  await authStore.login(credentials);
-};
+  await authStore.login(credentials)
+  await router.push('/student/dashboard')
+  window.location.reload()
+}
 </script>

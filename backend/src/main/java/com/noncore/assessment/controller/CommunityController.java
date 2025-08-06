@@ -25,7 +25,7 @@ import java.util.Map;
  * @since 2024-12-28
  */
 @RestController
-@RequestMapping("/api/community")
+@RequestMapping("/community")
 @Tag(name = "社区管理", description = "社区帖子、评论、点赞等相关接口")
 public class CommunityController extends BaseController {
 

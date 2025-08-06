@@ -20,7 +20,7 @@ export const useSubmissionStore = defineStore('submission', () => {
       '获取提交记录失败'
     );
     if (response) {
-      submissions.value.set(assignmentId, response.data);
+      submissions.value.set(assignmentId, response);
     }
   };
 
@@ -32,8 +32,8 @@ export const useSubmissionStore = defineStore('submission', () => {
       { successMessage: '作业已成功提交' }
     );
     if (response) {
-      submissions.value.set(assignmentId, response.data);
-      return response.data;
+      submissions.value.set(assignmentId, response);
+      return response;
     }
     return null;
   };

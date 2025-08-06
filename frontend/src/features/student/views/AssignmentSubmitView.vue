@@ -92,8 +92,8 @@ const handleFileUpload = async (event: Event) => {
     try {
       const response = await fileApi.uploadFile(target.files[0]);
       if(response) {
-        uploadedFiles.value.push(response.data);
-        form.fileIds.push(response.data.id);
+        uploadedFiles.value.push(response);
+        form.fileIds.push(response.id);
       }
     } catch (error) {
       uiStore.showNotification({ type: 'error', title: '上传失败', message: '文件上传失败，请重试。'});
