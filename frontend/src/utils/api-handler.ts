@@ -11,7 +11,7 @@ export const handleApiCall = async <T>(
 ): Promise<T | null> => {
   const loadingRef = options?.loadingRef;
   if (loadingRef) loadingRef.value = true;
-  uiStore.loading = true;
+  uiStore.setLoading(true);
 
   try {
     const response = await apiCall();
@@ -25,6 +25,6 @@ export const handleApiCall = async <T>(
     return null;
   } finally {
     if (loadingRef) loadingRef.value = false;
-    uiStore.loading = false;
+    uiStore.setLoading(false);
   }
 };

@@ -541,7 +541,7 @@ onUnmounted(() => {
 }
 
 /* 高对比度模式支持 */
-@media (prefers-contrast: high) {
+@media (prefers-contrast: more) {
   .bg-white\/80 {
     background-color: rgb(255 255 255 / 0.95);
   }

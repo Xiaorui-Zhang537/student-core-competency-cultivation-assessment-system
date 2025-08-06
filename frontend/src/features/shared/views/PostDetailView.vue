@@ -15,12 +15,12 @@
         <h1 class="text-3xl font-bold text-gray-900 dark:text-white mb-2">{{ currentPost.title }}</h1>
         <div class="flex items-center space-x-4 text-sm text-gray-500 dark:text-gray-400">
           <div class="flex items-center space-x-2">
-            <UserIcon class="w-5 h-5" />
+            <user-icon class="w-5 h-5" />
             <span>{{ currentPost.author?.username || '匿名用户' }}</span>
           </div>
           <span>发布于 {{ formatDate(currentPost.createdAt) }}</span>
-           <div class="flex items-center space-x-1"><EyeIcon class="w-4 h-4" /><span>{{ currentPost.viewCount }}</span></div>
-           <div class="flex items-center space-x-1"><ChatBubbleLeftIcon class="w-4 h-4" /><span>{{ currentPost.commentCount }}</span></div>
+           <div class="flex items-center space-x-1"><eye-icon class="w-4 h-4" /><span>{{ currentPost.viewCount }}</span></div>
+           <div class="flex items-center space-x-1"><chat-bubble-left-icon class="w-4 h-4" /><span>{{ currentPost.commentCount }}</span></div>
         </div>
          <div v-if="currentPost.tags?.length" class="flex items-center space-x-2 mt-4">
             <span v-for="tag in currentPost.tags" :key="tag.id" class="text-xs px-2 py-1 rounded-full bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300">#{{ tag.name }}</span>
@@ -32,7 +32,7 @@
         <div class="prose dark:prose-invert max-w-none" v-html="currentPost.content"></div>
         <div class="mt-6 pt-4 border-t border-gray-200 dark:border-gray-700 flex items-center space-x-4">
            <button @click="communityStore.toggleLikePost(currentPost.id)" :class="currentPost.isLiked ? 'text-red-500' : 'text-gray-600 dark:text-gray-400'" class="flex items-center space-x-2 btn btn-ghost">
-            <HandThumbUpIcon class="w-5 h-5" />
+            <hand-thumb-up-icon class="w-5 h-5" />
             <span>{{ currentPost.likeCount }} 点赞</span>
           </button>
         </div>
@@ -52,7 +52,7 @@
         <div class="space-y-4">
           <div v-for="comment in comments" :key="comment.id" class="flex items-start space-x-3">
             <div class="w-10 h-10 rounded-full bg-gray-200 dark:bg-gray-700 flex-shrink-0 flex items-center justify-center">
-              <UserIcon class="w-5 h-5 text-gray-500"/>
+              <user-icon class="w-5 h-5 text-gray-500"/>
             </div>
             <div class="flex-1">
               <div class="bg-gray-100 dark:bg-gray-700 rounded-lg p-3">
@@ -106,7 +106,7 @@ onMounted(async () => {
 });
 
 onUnmounted(() => {
-  communityStore.currentPost = null;
-  communityStore.comments = [];
+  currentPost.value = null;
+  comments.value = [];
 });
 </script>

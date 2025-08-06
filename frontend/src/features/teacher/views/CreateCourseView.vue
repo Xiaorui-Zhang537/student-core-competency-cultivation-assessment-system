@@ -80,7 +80,7 @@ const handleCreateCourse = async () => {
   const newCourse = await courseStore.createCourse(courseForm);
   if (newCourse) {
     // Navigate to the course management page after successful creation
-    router.push('/teacher/manage-course');
+    await router.push('/teacher/manage-course');
   }
 };
 </script>

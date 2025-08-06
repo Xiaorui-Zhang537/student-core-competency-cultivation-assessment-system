@@ -170,7 +170,7 @@ const handleCourseFilterChange = () => {
     if(selectedCourseId.value) {
         assignmentStore.fetchAssignments({ courseId: selectedCourseId.value });
     } else {
-        assignmentStore.assignments = [];
+        assignmentStore.setAssignments([]);
     }
 };
 

@@ -10,7 +10,7 @@
           </div>
           <div class="flex items-center space-x-3">
              <button @click="showCreatePostModal = true" class="btn btn-primary">
-              <PlusIcon class="w-4 h-4 mr-2" />
+              <plus-icon class="w-4 h-4 mr-2" />
               发布帖子
             </button>
           </div>
@@ -51,10 +51,10 @@
                 class="w-full flex items-center justify-between px-3 py-2 text-sm rounded-lg transition-colors"
                 :class="filterOptions.category === category.id ? 'bg-primary-100 dark:bg-primary-900 text-primary-700 dark:text-primary-300' : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700'"
               >
-                <div class="flex items-center">
+                <span class="flex items-center">
                   <component :is="category.icon" class="w-4 h-4 mr-3" />
                   <span>{{ category.name }}</span>
-                </div>
+                </span>
               </button>
             </div>
           </div>
@@ -85,7 +85,7 @@
               <div v-for="user in activeUsers" :key="user.userId" class="flex items-center space-x-3">
                 <div class="flex-shrink-0">
                    <div class="w-8 h-8 rounded-full bg-gray-200 dark:bg-gray-600 flex items-center justify-center">
-                    <UserIcon class="w-4 h-4 text-gray-400" />
+                    <user-icon class="w-4 h-4 text-gray-400" />
                   </div>
                 </div>
                 <div class="flex-1 min-w-0">
@@ -106,7 +106,7 @@
               </h2>
               <div class="flex items-center space-x-3">
                 <div class="relative">
-                  <MagnifyingGlassIcon class="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+                  <magnifying-glass-icon class="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
                   <input
                     v-model="filterOptions.keyword"
                     @keyup.enter="applyFilters"
@@ -133,7 +133,7 @@
                  <div class="flex items-start space-x-4">
                   <div class="flex-shrink-0">
                     <div class="w-10 h-10 rounded-full bg-gray-200 dark:bg-gray-600 flex items-center justify-center">
-                      <UserIcon class="w-5 h-5 text-gray-400" />
+                      <user-icon class="w-5 h-5 text-gray-400" />
                     </div>
                   </div>
                   <div class="flex-1 min-w-0">
@@ -145,10 +145,10 @@
                     <div class="flex items-center space-x-4 text-xs text-gray-500">
                       <span>{{ post.author?.username || '匿名用户' }}</span>
                       <span>{{ formatDate(post.createdAt) }}</span>
-                      <div class="flex items-center space-x-1"><EyeIcon class="w-3 h-3" /><span>{{ post.viewCount }}</span></div>
-                      <div class="flex items-center space-x-1"><ChatBubbleLeftIcon class="w-3 h-3" /><span>{{ post.commentCount }}</span></div>
+                      <div class="flex items-center space-x-1"><eye-icon class="w-3 h-3" /><span>{{ post.viewCount }}</span></div>
+                      <div class="flex items-center space-x-1"><chat-bubble-left-icon class="w-3 h-3" /><span>{{ post.commentCount }}</span></div>
                       <button @click.stop="communityStore.toggleLikePost(post.id)" :class="post.isLiked ? 'text-red-500' : ''" class="flex items-center space-x-1">
-                        <HandThumbUpIcon class="w-3 h-3" />
+                        <hand-thumb-up-icon class="w-3 h-3" />
                         <span>{{ post.likeCount }}</span>
                       </button>
                     </div>
@@ -167,13 +167,13 @@
 
             <!-- Empty State -->
             <div v-if="!loading && !posts.length" class="text-center py-12">
-              <ChatBubbleLeftIcon class="w-16 h-16 text-gray-400 mx-auto mb-4" />
+              <chat-bubble-left-icon class="w-16 h-16 text-gray-400 mx-auto mb-4" />
               <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-2">暂无帖子</h3>
               <p class="text-gray-600 dark:text-gray-400 mb-4">
                 {{ filterOptions.keyword ? '没有找到匹配的帖子' : '这个分类还没有帖子' }}
               </p>
               <button @click="showCreatePostModal = true" class="btn btn-primary">
-                <PlusIcon class="w-4 h-4 mr-2" />
+                <plus-icon class="w-4 h-4 mr-2" />
                 发布第一个帖子
               </button>
             </div>
