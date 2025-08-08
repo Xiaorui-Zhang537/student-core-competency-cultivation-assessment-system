@@ -4,9 +4,12 @@ import { teacherApi } from '@/api/teacher.api';
 import type { StudentProgressData, CourseAnalyticsData, AssignmentAnalyticsData, ClassPerformanceData } from '@/types/teacher';
 import { useUIStore } from './ui';
 import { handleApiCall } from '@/utils/api-handler';
+import type { PaginatedResponse } from '@/types/api';
 
 // --- default placeholders to avoid undefined errors on first render ---
 const defaultCourseAnalytics: CourseAnalyticsData = {
+  courseId: 0,
+  courseTitle: '',
   enrollmentCount: 0,
   averageCompletionRate: 0,
   averageScore: 0,
@@ -14,16 +17,25 @@ const defaultCourseAnalytics: CourseAnalyticsData = {
 };
 
 const defaultAssignmentAnalytics: AssignmentAnalyticsData = {
-  submissions: 0,
+  assignmentId: 0,
+  assignmentTitle: '',
+  submissionCount: 0,
   averageScore: 0,
-  highestScore: 0,
-  lowestScore: 0,
+  submissionRate: 0,
 };
 
 const defaultClassPerformance: ClassPerformanceData = {
+  courseId: 0,
+  courseTitle: '',
+  studentPerformance: [],
   scoreDistribution: [],
 };
 // ----------------------------------------------------------------------
+
+// ◇ Utility to handle possible AxiosResponse wrappers
+function unwrap<T>(res: any): T {
+  return res && res.data !== undefined ? res.data : res;
+}
 
 export const useTeacherStore = defineStore('teacher', () => {
   const uiStore = useUIStore();
@@ -43,7 +55,8 @@ export const useTeacherStore = defineStore('teacher', () => {
       '获取学生进度失败'
     );
     if (response) {
-      studentProgress.value = response.items;
+      const data = unwrap<PaginatedResponse<StudentProgressData>>(response);
+      studentProgress.value = data.items;
     }
   };
 
@@ -54,7 +67,8 @@ export const useTeacherStore = defineStore('teacher', () => {
       '获取课程分析数据失败'
     );
     if (response) {
-      courseAnalytics.value = { ...defaultCourseAnalytics, ...response };
+        const data = unwrap<CourseAnalyticsData>(response);
+      courseAnalytics.value = { ...defaultCourseAnalytics, ...data };
     }
   };
 
@@ -65,7 +79,8 @@ export const useTeacherStore = defineStore('teacher', () => {
       '获取作业分析数据失败'
     );
     if (response) {
-      assignmentAnalytics.value = { ...defaultAssignmentAnalytics, ...response };
+        const data = unwrap<AssignmentAnalyticsData>(response);
+      assignmentAnalytics.value = { ...defaultAssignmentAnalytics, ...data };
     }
   };
 
@@ -76,7 +91,8 @@ export const useTeacherStore = defineStore('teacher', () => {
       '获取班级表现数据失败'
     );
     if (response) {
-      classPerformance.value = { ...defaultClassPerformance, ...response };
+        const data = unwrap<ClassPerformanceData>(response);
+      classPerformance.value = { ...defaultClassPerformance, ...data };
     }
   };
 

@@ -1,11 +1,12 @@
 import { api } from './config';
 import type { ApiResponse, PaginatedResponse } from '@/types/api';
-import type { StudentProgressData, CourseAnalyticsData, AssignmentAnalyticsData, ClassPerformanceData, DashboardAnalyticsData } from '@/types/teacher';
+import type { StudentProgressData, CourseAnalyticsData, AssignmentAnalyticsData, ClassPerformanceData } from '@/types/teacher';
 
 export const teacherApi = {
-  getDashboardAnalytics: (): Promise<ApiResponse<DashboardAnalyticsData>> => {
-    return api.get('/teachers/analytics/dashboard');
-  },
+  // Note: backend currently has no '/teachers/analytics/dashboard' endpoint
+  // getDashboardAnalytics: (): Promise<ApiResponse<DashboardAnalyticsData>> => {
+  //   return api.get('/teachers/analytics/dashboard');
+  // },
 
   getStudentProgress: (params?: { page?: number; size?: number; courseId?: string }): Promise<ApiResponse<PaginatedResponse<StudentProgressData>>> => {
     return api.get('/teachers/analytics/student-progress', { params });

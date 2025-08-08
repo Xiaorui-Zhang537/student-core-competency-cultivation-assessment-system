@@ -39,11 +39,12 @@ public class CourseController extends BaseController {
     public ResponseEntity<ApiResponse<PageResult<Course>>> getCourses(
             @Parameter(description = "页码", example = "1") @RequestParam(defaultValue = "1") Integer page,
             @Parameter(description = "每页大小", example = "10") @RequestParam(defaultValue = "10") Integer size,
-            @Parameter(description = "搜索关键词") @RequestParam(required = false) String keyword,
+            @Parameter(description = "搜索关键词") @RequestParam(required = false, name = "query") String query,
             @Parameter(description = "课程分类") @RequestParam(required = false) String category,
             @Parameter(description = "难度级别") @RequestParam(required = false) String difficulty,
-            @Parameter(description = "课程状态") @RequestParam(required = false) String status) {
-        PageResult<Course> result = courseDiscoveryService.getCourses(page, size, keyword, category, difficulty, status);
+            @Parameter(description = "课程状态") @RequestParam(required = false) String status,
+            @Parameter(description = "教师ID") @RequestParam(required = false) Long teacherId) {
+        PageResult<Course> result = courseDiscoveryService.getCourses(page, size, query, category, difficulty, status, teacherId);
         return ResponseEntity.ok(ApiResponse.success(result));
     }
 

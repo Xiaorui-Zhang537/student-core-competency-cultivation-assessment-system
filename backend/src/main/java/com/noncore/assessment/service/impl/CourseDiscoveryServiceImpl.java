@@ -27,10 +27,10 @@ public class CourseDiscoveryServiceImpl implements CourseDiscoveryService {
     }
 
     @Override
-    public PageResult<Course> getCourses(Integer page, Integer size, String keyword, String category, String difficulty, String status) {
-        logger.info("分页查询课程: page={}, size={}, keyword={}", page, size, keyword);
+    public PageResult<Course> getCourses(Integer page, Integer size, String keyword, String category, String difficulty, String status, Long teacherId) {
+        logger.info("分页查询课程: page={}, size={}, keyword={}, teacherId={}", page, size, keyword, teacherId);
         PageHelper.startPage(page != null ? page : 1, size != null ? size : 10);
-        List<Course> courses = courseMapper.selectCoursesWithPagination(keyword, category, difficulty, status, null);
+        List<Course> courses = courseMapper.selectCoursesWithPagination(keyword, category, difficulty, status, teacherId);
         PageInfo<Course> pageInfo = new PageInfo<>(courses);
         return PageResult.of(pageInfo.getList(), pageInfo.getPageNum(), pageInfo.getPageSize(), pageInfo.getTotal(), pageInfo.getPages());
     }

@@ -150,19 +150,21 @@
               </div>
             </div>
 
-            <!-- 路由内容 -->
-            <div class="transition-all duration-300" :class="{ 'opacity-30 pointer-events-none': isLoading }">
-              <router-view v-slot="{ Component, route }">
-                <transition
-                  name="page"
-                  mode="out-in"
-                  @before-enter="onBeforeEnter"
-                  @after-enter="onAfterEnter"
-                >
-                  <component :is="Component" :key="route.path" />
-                </transition>
-              </router-view>
-            </div>
+                          <!-- 路由内容 -->
+              <div class="transition-all duration-300" :class="{ 'opacity-30 pointer-events-none': isLoading }">
+                <router-view>
+                  <template #default="{ Component, route }">
+                    <transition
+                      name="page"
+                      mode="out-in"
+                      @before-enter="onBeforeEnter"
+                      @after-enter="onAfterEnter"
+                    >
+                      <component :is="Component" :key="route.path" />
+                    </transition>
+                  </template>
+                </router-view>
+              </div>
           </div>
         </div>
 

@@ -28,7 +28,7 @@
         <p>正在加载课程...</p>
     </div>
     <div v-else class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-      <div v-for="course in courseStore.courses" :key="course.id" class="card overflow-hidden">
+      <div v-for="course in courseStore.courses" :key="course.id" class="card overflow-hidden cursor-pointer hover:shadow-lg transition-shadow" @click="navigateToCourse(course)">
         <div class="h-40 bg-gray-200"></div>
         <div class="p-4">
           <h3 class="font-bold text-lg">{{ course.title }}</h3>
@@ -37,8 +37,8 @@
           <div class="mt-4 flex justify-between items-center">
             <span class="badge" :class="statusClass(course.status)">{{ course.status }}</span>
             <div>
-              <button @click="openEditModal(course)" class="btn btn-sm btn-outline mr-2">编辑</button>
-              <button @click="handleDeleteCourse(String(course.id))" class="btn btn-sm btn-danger-outline">删除</button>
+              <button @click.stop="openEditModal(course)" class="btn btn-sm btn-outline mr-2">编辑</button>
+              <button @click.stop="handleDeleteCourse(String(course.id))" class="btn btn-sm btn-danger-outline">删除</button>
             </div>
           </div>
         </div>
@@ -86,10 +86,14 @@
 <script setup lang="ts">
 import { ref, reactive, onMounted } from 'vue';
 import { useCourseStore } from '@/stores/course';
+import { useAuthStore } from '@/stores/auth';
+import { useRouter } from 'vue-router';
 import type { Course, CourseCreationRequest, CourseUpdateRequest } from '@/types/course';
 import { debounce } from 'lodash-es';
 
 const courseStore = useCourseStore();
+const authStore = useAuthStore();
+const router = useRouter();
 
 const showModal = ref(false);
 const isEditing = ref(false);
@@ -116,6 +120,12 @@ const statusClass = (status: string) => {
     }
 }
 
+const navigateToCourse = (course: Course) => {
+    if (course && course.id) {
+        router.push({ name: 'TeacherCourseDetail', params: { id: course.id } });
+    }
+};
+
 const openCreateModal = () => {
   isEditing.value = false;
   editingCourseId.value = null;
@@ -128,7 +138,7 @@ const openEditModal = (course: Course) => {
   isEditing.value = true;
   editingCourseId.value = String(course.id);
   Object.assign(form, { ...course });
-  tagsInput.value = course.tags.join(', ');
+  tagsInput.value = (Array.isArray(course.tags) ? course.tags : []).join(', ');
   showModal.value = true;
 };
 
@@ -137,34 +147,53 @@ const closeModal = () => {
 };
 
 const handleSubmit = async () => {
-  form.tags = tagsInput.value.split(',').map(t => t.trim()).filter(Boolean);
+  const teacherId = authStore.user?.id;
+  if (!teacherId) {
+      console.error("User not authenticated");
+      return;
+  }
   
+  // Prepare payload for the API
+  const payload = {
+      ...form,
+      tags: tagsInput.value, // Send tags as a string
+      teacherId: String(teacherId)
+  };
+
   if (isEditing.value && editingCourseId.value) {
-    const { id, ...updateData } = form;
+    const { id, ...updateData } = payload;
     await courseStore.updateCourse(editingCourseId.value, updateData as CourseUpdateRequest);
   } else {
-    const { id, ...createData } = form;
+    const { id, ...createData } = payload;
     await courseStore.createCourse(createData as CourseCreationRequest);
   }
   
   if (!courseStore.loading) {
     closeModal();
-    // Refresh the list
-    await courseStore.fetchCourses({ page: 1, size: 10 });
+    fetchTeacherCourses();
   }
 };
 
 const handleDeleteCourse = async (id: string) => {
   if (confirm('您确定要删除这门课程吗？此操作无法撤销。')) {
     await courseStore.deleteCourse(id);
+    fetchTeacherCourses();
   }
 };
 
-const applyFilters = debounce(() => {
-    console.log('Applying filters:', filters);
-    // In a real app, you would do:
-    courseStore.fetchCourses({ page: 1, size: 10, query: filters.query, status: filters.status });
-}, 300);
+const fetchTeacherCourses = () => {
+    const teacherId = authStore.user?.id;
+    if (!teacherId) return;
+    courseStore.fetchCourses({
+        page: 1, 
+        size: 10,
+        query: filters.query,
+        status: filters.status,
+        teacherId: String(teacherId),
+    });
+};
+
+const applyFilters = debounce(fetchTeacherCourses, 300);
 
 const clearFilters = () => {
     filters.query = '';
@@ -172,7 +201,10 @@ const clearFilters = () => {
     applyFilters();
 }
 
-onMounted(() => {
-  courseStore.fetchCourses({ page: 1, size: 10 });
+onMounted(async () => {
+    if (!authStore.user) {
+        await authStore.fetchUser();
+    }
+    fetchTeacherCourses();
 });
 </script>

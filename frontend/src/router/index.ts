@@ -96,6 +96,29 @@ const routes = [
         name: 'TeacherPostDetail',
         component: () => import('@/features/shared/views/PostDetailView.vue'),
         props: true
+      },
+      {
+        path: 'courses',
+        name: 'TeacherCourseManagement',
+        component: () => import('@/features/teacher/views/ManageCourseView.vue'),
+      },
+      {
+        path: 'analytics',
+        name: 'TeacherAnalytics',
+        component: () => import('@/features/teacher/views/AnalyticsView.vue'),
+        meta: { requiresAuth: true, role: 'TEACHER' }
+      },
+      {
+        path: 'student-analytics',
+        name: 'TeacherStudentAnalytics',
+        component: () => import('@/features/teacher/views/StudentAnalyticsView.vue'),
+        meta: { requiresAuth: true, role: 'TEACHER' }
+      },
+      {
+        path: 'courses/:id',
+        name: 'TeacherCourseDetail',
+        component: () => import('@/features/teacher/views/CourseDetailView.vue'),
+        props: true
       }
       // ... 其他教师路由
     ]

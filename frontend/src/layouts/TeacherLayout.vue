@@ -10,7 +10,7 @@
               @click="uiStore.toggleSidebar()"
               class="p-2 rounded-md text-gray-400 hover:text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-primary-500 lg:hidden"
             >
-              <bars3-icon class="h-6 w-6" />
+              <Bars3Icon class="h-6 w-6" />
             </button>
             <div class="flex-shrink-0 flex items-center ml-4 lg:ml-0">
               <h1 class="text-xl font-bold text-gray-900 dark:text-white">
@@ -25,7 +25,7 @@
               <label for="search" class="sr-only">搜索</label>
               <div class="relative">
                 <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <magnifying-glass-icon class="h-5 w-5 text-gray-400" />
+                  <MagnifyingGlassIcon class="h-5 w-5 text-gray-400" />
                 </div>
                 <input
                   id="search"
@@ -46,8 +46,8 @@
               @click="uiStore.toggleDarkMode()"
               class="p-1 rounded-full text-gray-400 hover:text-gray-500 dark:hover:text-gray-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500"
             >
-              <sun-icon v-if="uiStore.isDarkMode" class="h-6 w-6" />
-              <moon-icon v-else class="h-6 w-6" />
+              <SunIcon v-if="uiStore.isDarkMode" class="h-6 w-6" />
+              <MoonIcon v-else class="h-6 w-6" />
             </button>
 
             <!-- 用户菜单 -->
@@ -68,7 +68,7 @@
                       教师
                     </p>
                   </div>
-                  <chevron-down-icon class="h-4 w-4 text-gray-400" />
+                  <ChevronDownIcon class="h-4 w-4 text-gray-400" />
                 </div>
               </button>
 
@@ -85,7 +85,7 @@
                     @click="showUserMenu = false"
                   >
                     <div class="flex items-center space-x-2">
-                      <user-icon class="h-4 w-4" />
+                      <UserIcon class="h-4 w-4" />
                       <span>个人资料</span>
                     </div>
                   </router-link>
@@ -95,7 +95,7 @@
                     class="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-gray-100 dark:hover:bg-gray-700"
                   >
                     <div class="flex items-center space-x-2">
-                      <arrow-right-on-rectangle-icon class="h-4 w-4" />
+                      <ArrowRightOnRectangleIcon class="h-4 w-4" />
                       <span>退出登录</span>
                     </div>
                   </button>
@@ -124,7 +124,7 @@
               exact-active-class="bg-primary-50 border-primary-500 text-primary-700 dark:bg-primary-900 dark:text-primary-300"
               class="group flex items-center px-2 py-2 text-sm font-medium rounded-md text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-white border-l-4 border-transparent"
             >
-              <home-icon class="mr-3 h-5 w-5" />
+              <HomeIcon class="mr-3 h-5 w-5" />
               工作台
             </router-link>
             
@@ -133,8 +133,26 @@
               active-class="bg-primary-50 border-primary-500 text-primary-700 dark:bg-primary-900 dark:text-primary-300"
               class="group flex items-center px-2 py-2 text-sm font-medium rounded-md text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-white border-l-4 border-transparent"
             >
-              <academic-cap-icon class="mr-3 h-5 w-5" />
+              <AcademicCapIcon class="mr-3 h-5 w-5" />
               课程管理
+            </router-link>
+            
+            <router-link
+              to="/teacher/analytics"
+              active-class="bg-primary-50 border-primary-500 text-primary-700 dark:bg-primary-900 dark:text-primary-300"
+              class="group flex items-center px-2 py-2 text-sm font-medium rounded-md text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-white border-l-4 border-transparent"
+            >
+              <ChartBarIcon class="mr-3 h-5 w-5" />
+              数据分析
+            </router-link>
+            
+            <router-link
+              to="/teacher/student-analytics"
+              active-class="bg-primary-50 border-primary-500 text-primary-700 dark:bg-primary-900 dark:text-primary-300"
+              class="group flex items-center px-2 py-2 text-sm font-medium rounded-md text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-white border-l-4 border-transparent"
+            >
+              <UsersIcon class="mr-3 h-5 w-5" />
+              学生进度
             </router-link>
             
              <router-link
@@ -142,7 +160,7 @@
               active-class="bg-primary-50 border-primary-500 text-primary-700 dark:bg-primary-900 dark:text-primary-300"
               class="group flex items-center px-2 py-2 text-sm font-medium rounded-md text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-white border-l-4 border-transparent"
             >
-              <chat-bubble-left-right-icon class="mr-3 h-5 w-5" />
+              <ChatBubbleLeftRightIcon class="mr-3 h-5 w-5" />
               社区
             </router-link>
             
@@ -180,6 +198,8 @@ import {
   ArrowRightOnRectangleIcon,
   HomeIcon,
   AcademicCapIcon,
+  ChartBarIcon,
+  UsersIcon,
   ChatBubbleLeftRightIcon,
 } from '@heroicons/vue/24/outline'
 

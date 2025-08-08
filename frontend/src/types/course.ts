@@ -29,7 +29,7 @@ export interface CourseCreationRequest {
   description: string;
   content?: string; // Added field
   category: string;
-  tags: string[];
+  tags: string[] | string;
   coverImage?: string;
 }
 
@@ -38,7 +38,7 @@ export interface CourseUpdateRequest {
   description?: string;
   content?: string; // Added field
   category?: string;
-  tags?: string[];
+  tags?: string[] | string;
   coverImage?: string;
 }
 

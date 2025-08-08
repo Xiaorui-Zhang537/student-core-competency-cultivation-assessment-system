@@ -83,6 +83,10 @@ export const useUIStore = defineStore('ui', () => {
     notifications.value = []
   }
 
+  const setLoading = (v: boolean) => {
+    loading.value = v
+  }
+
   return {
     // 状态
     isDarkMode,
@@ -96,6 +100,7 @@ export const useUIStore = defineStore('ui', () => {
     closeSidebar,
     showNotification,
     removeNotification,
-    clearNotifications
+    clearNotifications,
+    setLoading,
   }
-}) 
+})

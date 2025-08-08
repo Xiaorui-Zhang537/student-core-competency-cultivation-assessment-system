@@ -107,7 +107,7 @@ public class SecurityConfig {
 
         // Allow the development origins (both local IP and localhost)
         configuration.setAllowedOriginPatterns(Arrays.asList(
-            "http://192.168.1.48:5173",
+            "http://192.168.1.54:5173",
             "http://localhost:5173"
         ));
 

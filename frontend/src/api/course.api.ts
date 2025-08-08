@@ -4,7 +4,7 @@ import type { Course, CourseDetailed, CourseCreationRequest, CourseUpdateRequest
 
 export const courseApi = {
   // CRUD operations
-  getCourses: (params: { page?: number; size?: number; sort?: string }): Promise<ApiResponse<PaginatedResponse<Course>>> => {
+  getCourses: (params: { page?: number; size?: number; sort?: string; query?: string; status?: string; teacherId?: string; }): Promise<ApiResponse<PaginatedResponse<Course>>> => {
     return api.get('/courses', { params });
   },
 

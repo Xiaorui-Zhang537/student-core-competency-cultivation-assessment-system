@@ -6,8 +6,8 @@ import java.util.List;
 
 public interface CourseDiscoveryService {
 
-    PageResult<Course> getCourses(Integer page, Integer size, String keyword, 
-                                 String category, String difficulty, String status);
+    PageResult<Course> getCourses(Integer page, Integer size, String keyword,
+                                 String category, String difficulty, String status, Long teacherId);
 
     List<Course> getPopularCourses(Integer limit);
 

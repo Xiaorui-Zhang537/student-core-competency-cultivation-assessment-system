@@ -11,7 +11,7 @@
         <label for="course-select" class="block text-sm font-medium mb-1">选择课程</label>
         <select id="course-select" v-model="selectedCourseId" @change="onCourseSelect" class="input">
             <option :value="null" disabled>请选择一门课程</option>
-            <option v-for="course in courseStore.courses" :key="course.id" :value="course.id">
+            <option v-for="course in teacherCourses" :key="course.id" :value="course.id">
                 {{ course.title }}
             </option>
         </select>
@@ -64,15 +64,23 @@ import { ref, onMounted, computed, watch, nextTick, onUnmounted } from 'vue'
 import { useUIStore } from '@/stores/ui'
 import { useTeacherStore } from '@/stores/teacher'
 import { useCourseStore } from '@/stores/course'
+import { useAuthStore } from '@/stores/auth' // 1. 导入 useAuthStore
 import * as echarts from 'echarts'
 
 const uiStore = useUIStore()
 const teacherStore = useTeacherStore()
 const courseStore = useCourseStore()
+const authStore = useAuthStore() // 2. 获取 authStore 实例
 
 const selectedCourseId = ref<string | null>(null)
 const chartRef = ref<HTMLElement | null>(null)
 let chart: echarts.ECharts | null = null
+
+// 3. 创建 teacherCourses 计算属性
+const teacherCourses = computed(() => {
+  if (!authStore.user?.id) return []
+  return courseStore.courses.filter(course => String(course.teacherId) === String(authStore.user?.id))
+})
 
 const loading = teacherStore.loading
 const courseAnalytics = computed(() => teacherStore.courseAnalytics)
@@ -108,9 +116,14 @@ const initChart = () => {
 watch(classPerformance, () => nextTick(initChart), { deep: true })
 
 onMounted(async () => {
+  // 确保在获取课程之前，用户信息是可用的
+  if (!authStore.user) {
+    await authStore.fetchUser()
+  }
   await courseStore.fetchCourses({ page: 1, size: 100 })
-  if (courseStore.courses.length) {
-    selectedCourseId.value = String(courseStore.courses[0].id)
+  // 5. 使用过滤后的列表
+  if (teacherCourses.value.length) {
+    selectedCourseId.value = String(teacherCourses.value[0].id)
     onCourseSelect()
   }
   window.addEventListener('resize', () => chart?.resize())

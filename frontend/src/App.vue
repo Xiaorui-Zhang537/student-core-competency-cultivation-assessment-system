@@ -23,15 +23,17 @@
     </div>
 
     <!-- 主要内容区域 -->
-    <router-view v-slot="{ Component, route }">
-      <transition 
-        name="page" 
-        mode="out-in"
-        @before-enter="onBeforeEnter"
-        @after-enter="onAfterEnter"
-      >
-        <component :is="Component" :key="route.path" />
-      </transition>
+    <router-view>
+      <template #default="{ Component, route }">
+        <transition 
+          name="page" 
+          mode="out-in"
+          @before-enter="onBeforeEnter"
+          @after-enter="onAfterEnter"
+        >
+          <component :is="Component" :key="route.path" />
+        </transition>
+      </template>
     </router-view>
 
     <!-- 全局通知系统 -->

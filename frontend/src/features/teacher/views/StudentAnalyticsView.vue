@@ -10,103 +10,87 @@
     <div class="mb-6 card p-4">
       <div class="flex items-center gap-4">
         <label for="course-filter" class="font-medium">按课程筛选:</label>
-        <select id="course-filter" v-model="selectedCourseId" @change="loadStudentProgress" class="input flex-grow">
-          <option :value="null">所有课程</option>
-          <option v-for="course in courseStore.courses" :key="course.id" :value="course.id">
+        <select id="course-filter" v-model="selectedCourseId" @change="loadClassPerformance" class="input flex-grow">
+          <option :value="null">请选择课程</option>
+          <option v-for="course in teacherCourses" :key="course.id" :value="String(course.id)">
             {{ course.title }}
           </option>
         </select>
       </div>
     </div>
 
-    <!-- Stats -->
+    <!-- Stats (from class performance) -->
     <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
         <div class="card p-4 text-center">
-            <h3 class="text-2xl font-bold">{{ studentProgress.length }}</h3>
+            <h3 class="text-2xl font-bold">{{ (classPerformance?.totalStudents || 0) }}</h3>
             <p class="text-sm text-gray-500">学生总数</p>
         </div>
         <div class="card p-4 text-center">
-            <h3 class="text-2xl font-bold">{{ averageProgress.toFixed(1) }}%</h3>
-            <p class="text-sm text-gray-500">平均进度</p>
-        </div>
-        <div class="card p-4 text-center">
-            <h3 class="text-2xl font-bold">{{ averageScore.toFixed(1) }}</h3>
+            <h3 class="text-2xl font-bold">{{ (avgScoreFromStats || 0).toFixed(1) }}</h3>
             <p class="text-sm text-gray-500">平均分</p>
         </div>
-    </div>
-    
-    <!-- Student List Table -->
-    <div class="card overflow-x-auto">
-        <div v-if="teacherStore.loading" class="text-center p-8">正在加载学生进度...</div>
-        <div v-else-if="studentProgress.length === 0" class="text-center p-8">
-            <p>没有找到符合条件的学生数据。</p>
+        <div class="card p-4 text-center">
+            <h3 class="text-2xl font-bold">{{ (passRateFromStats || 0).toFixed(1) }}%</h3>
+            <p class="text-sm text-gray-500">及格率</p>
         </div>
-        <table v-else class="w-full text-left">
-            <thead>
-                <tr class="border-b">
-                    <th class="p-4">学生姓名</th>
-                    <th class="p-4">已完成课程数</th>
-                    <th class="p-4">平均进度</th>
-                    <th class="p-4">平均分</th>
-                    <th class="p-4">操作</th>
-                </tr>
-            </thead>
-            <tbody>
-                <tr v-for="student in studentProgress" :key="student.studentId" class="border-b hover:bg-gray-50">
-                    <td class="p-4 font-medium">{{ student.studentName }}</td>
-                    <td class="p-4">{{ student.completedCourses }}</td>
-                    <td class="p-4">
-                        <div class="w-full bg-gray-200 rounded-full h-2.5">
-                            <div class="bg-blue-600 h-2.5 rounded-full" :style="{ width: student.progressPercentage + '%' }"></div>
-                        </div>
-                        <span class="text-sm">{{ student.progressPercentage.toFixed(1) }}%</span>
-                    </td>
-                    <td class="p-4">{{ student.averageScore.toFixed(1) }}</td>
-                    <td class="p-4">
-                        <router-link :to="`/teacher/student-detail/${student.studentId}?name=${encodeURIComponent(student.studentName)}`" class="btn btn-sm btn-outline-primary">
-                            查看详情
-                        </router-link>
-                    </td>
-                </tr>
-            </tbody>
-        </table>
+    </div>
+
+    <!-- Placeholder content since backend has no student progress list API -->
+    <div class="card p-8 text-center text-gray-500">
+      <p>当前为按课程的班级整体表现汇总。若需查看学生逐项进度，请提供后端分页列表接口。</p>
     </div>
 
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue';
+import { ref, computed, onMounted, nextTick } from 'vue';
 import { useTeacherStore } from '@/stores/teacher';
 import { useCourseStore } from '@/stores/course';
+import { useAuthStore } from '@/stores/auth';
 
 const teacherStore = useTeacherStore();
 const courseStore = useCourseStore();
+const authStore = useAuthStore();
 
 const selectedCourseId = ref<string | null>(null);
 
-const studentProgress = computed(() => teacherStore.studentProgress);
-
-const averageProgress = computed(() => {
-    if (studentProgress.value.length === 0) return 0;
-    const total = studentProgress.value.reduce((sum, s) => sum + s.progressPercentage, 0);
-    return total / studentProgress.value.length;
+const teacherCourses = computed(() => {
+  if (!authStore.user?.id) return []
+  return courseStore.courses.filter(c => String(c.teacherId) === String(authStore.user?.id))
 });
 
-const averageScore = computed(() => {
-    if (studentProgress.value.length === 0) return 0;
-    const total = studentProgress.value.reduce((sum, s) => sum + s.averageScore, 0);
-    return total / studentProgress.value.length;
+const classPerformance = computed(() => teacherStore.classPerformance as any);
+
+const avgScoreFromStats = computed(() => {
+  const gradeStats = classPerformance.value?.gradeStats as any;
+  if (!gradeStats) return 0;
+  // 允许后端返回 { averageScore: number } 或分布；仅提取平均分
+  if (typeof gradeStats.averageScore === 'number') return gradeStats.averageScore;
+  return 0;
 });
 
-const loadStudentProgress = () => {
-    teacherStore.fetchStudentProgress({
-        courseId: selectedCourseId.value || undefined
-    });
+const passRateFromStats = computed(() => {
+  const gradeStats = classPerformance.value?.gradeStats as any;
+  if (!gradeStats) return 0;
+  if (typeof gradeStats.passRate === 'number') return gradeStats.passRate;
+  return 0;
+});
+
+const loadClassPerformance = () => {
+  if (!selectedCourseId.value) return;
+  teacherStore.fetchClassPerformance(selectedCourseId.value);
 };
 
-onMounted(() => {
-    courseStore.fetchCourses({ page: 1, size: 100 });
-    loadStudentProgress();
+onMounted(async () => {
+  if (!authStore.user) {
+    await authStore.fetchUser();
+  }
+  await courseStore.fetchCourses({ page: 1, size: 100 });
+  await nextTick();
+  if (teacherCourses.value.length) {
+    selectedCourseId.value = String(teacherCourses.value[0].id);
+    loadClassPerformance();
+  }
 });
 </script>
