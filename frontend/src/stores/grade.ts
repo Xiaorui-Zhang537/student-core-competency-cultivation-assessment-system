@@ -14,7 +14,7 @@ export const useGradeStore = defineStore('grade', () => {
   const loading = computed(() => uiStore.loading);
 
   // Actions
-  const fetchGradesByStudent = async (studentId: string, params?: { page?: number; size?: number }) => {
+  const fetchGradesByStudent = async (studentId: string, params?: { page?: number; size?: number; courseId?: string | number }) => {
     const response = await handleApiCall(
       () => gradeApi.getGradesByStudent(studentId, params),
       uiStore,

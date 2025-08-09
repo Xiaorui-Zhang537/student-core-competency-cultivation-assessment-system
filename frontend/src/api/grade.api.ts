@@ -13,12 +13,17 @@ export const gradeApi = {
     return api.get(`/grades/${id}`);
   },
 
+  // Get grade history
+  getGradeHistory: (id: string): Promise<ApiResponse<any[]>> => {
+    return api.get(`/grades/${id}/history`);
+  },
+
   // Get grades by different criteria
   getGradeForStudentAssignment: (studentId: string, assignmentId: string): Promise<ApiResponse<Grade>> => {
     return api.get(`/grades/student/${studentId}/assignment/${assignmentId}`);
   },
 
-  getGradesByStudent: (studentId: string, params?: { page?: number; size?: number }): Promise<ApiResponse<PaginatedResponse<Grade>>> => {
+  getGradesByStudent: (studentId: string, params?: { page?: number; size?: number; courseId?: string | number }): Promise<ApiResponse<PaginatedResponse<Grade>>> => {
     return api.get(`/grades/student/${studentId}/page`, { params });
   },
 

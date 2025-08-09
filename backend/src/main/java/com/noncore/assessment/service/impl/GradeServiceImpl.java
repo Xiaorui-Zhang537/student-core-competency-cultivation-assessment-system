@@ -136,10 +136,10 @@ public class GradeServiceImpl implements GradeService {
     }
 
     @Override
-    public PageResult<Grade> getStudentGradesWithPagination(Long studentId, Integer page, Integer size) {
-        logger.info("分页获取学生成绩，学生ID: {}, 页码: {}, 每页大小: {}", studentId, page, size);
+    public PageResult<Grade> getStudentGradesWithPagination(Long studentId, Integer page, Integer size, Long courseId) {
+        logger.info("分页获取学生成绩，学生ID: {}, 页码: {}, 每页大小: {}, 课程ID: {}", studentId, page, size, courseId);
         PageHelper.startPage(page, size);
-        List<Grade> grades = gradeMapper.selectByStudentId(studentId);
+        List<Grade> grades = gradeMapper.selectByStudentIdFiltered(studentId, courseId);
         PageInfo<Grade> pageInfo = new PageInfo<>(grades);
         return PageResult.of(pageInfo.getList(), page, size, pageInfo.getTotal(), pageInfo.getPages());
     }

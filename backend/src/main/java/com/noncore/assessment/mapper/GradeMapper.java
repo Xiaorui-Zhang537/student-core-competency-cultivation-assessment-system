@@ -86,6 +86,12 @@ public interface GradeMapper {
                                         @Param("courseId") Long courseId);
 
     /**
+     * 根据学生ID查询成绩，支持可选课程过滤
+     */
+    List<Grade> selectByStudentIdFiltered(@Param("studentId") Long studentId,
+                                          @Param("courseId") Long courseId);
+
+    /**
      * 根据课程查询成绩
      */
     List<Grade> selectByCourseId(Long courseId);

@@ -523,6 +523,22 @@ const loadSubmission = async () => {
     assignment.dueDate = a.dueDate
     assignment.totalScore = Number((a.maxScore ?? a.totalScore ?? 100))
     assignment.courseName = a.courseName || ''
+    if ((s as any)?.gradeId) {
+      try {
+        const hist = await gradeApi.getGradeHistory(String((s as any).gradeId))
+        gradingHistory.value = hist.data || []
+      } catch {}
+    } else {
+      // 兜底：通过提交ID查询一次成绩摘要，取到 grade_id 再查历史
+      try {
+        const sg = await submissionApi.getSubmissionGrade(submissionId)
+        const gid = (sg as any)?.data?.grade_id || (sg as any)?.grade_id
+        if (gid) {
+          const hist = await gradeApi.getGradeHistory(String(gid))
+          gradingHistory.value = hist.data || []
+        }
+      } catch {}
+    }
   } catch (error) {
     uiStore.showNotification({
       type: 'error',

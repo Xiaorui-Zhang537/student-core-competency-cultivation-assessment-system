@@ -87,11 +87,12 @@ public class GradeController extends BaseController {
     public ResponseEntity<ApiResponse<PageResult<Grade>>> getStudentGradesWithPagination(
             @PathVariable Long studentId,
             @Parameter(description = "页码", example = "1") @RequestParam(defaultValue = "1") Integer page,
-            @Parameter(description = "每页大小", example = "10") @RequestParam(defaultValue = "10") Integer size) {
+            @Parameter(description = "每页大小", example = "10") @RequestParam(defaultValue = "10") Integer size,
+            @Parameter(description = "课程ID") @RequestParam(required = false) Long courseId) {
         if (hasRole("STUDENT") && !getCurrentUserId().equals(studentId)) {
             throw new BusinessException(ErrorCode.PERMISSION_DENIED);
         }
-        PageResult<Grade> result = gradeService.getStudentGradesWithPagination(studentId, page, size);
+        PageResult<Grade> result = gradeService.getStudentGradesWithPagination(studentId, page, size, courseId);
         return ResponseEntity.ok(ApiResponse.success(result));
     }
 

@@ -16,6 +16,14 @@
             </div>
       
       <div v-else class="space-y-8">
+          <!-- Course Filter -->
+          <div class="card p-4 flex items-center space-x-3">
+            <label class="text-sm text-gray-600">筛选课程</label>
+            <select class="input input-sm w-72" v-model="selectedCourseId" @change="onCourseChange">
+              <option :value="''">全部课程</option>
+              <option v-for="c in teacherCourses" :key="c.id" :value="String(c.id)">{{ c.title }}</option>
+            </select>
+          </div>
           <!-- Stats -->
           <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
               <div class="card p-4 text-center">
@@ -93,8 +101,12 @@ import { ref, computed, onMounted } from 'vue';
 import { useRoute } from 'vue-router';
 import { useGradeStore } from '@/stores/grade';
 
+import { useCourseStore } from '@/stores/course';
+import { useAuthStore } from '@/stores/auth';
 const route = useRoute();
 const gradeStore = useGradeStore();
+const courseStore = useCourseStore();
+const authStore = useAuthStore();
 
 const studentId = ref<string | null>(null);
 const studentName = ref(route.query.name as string || '学生');
@@ -118,17 +130,31 @@ const currentPage = ref(1);
 const pageSize = ref(10);
 const total = computed(() => gradeStore.totalGrades);
 const totalPages = computed(() => Math.max(1, Math.ceil((total.value || 0) / pageSize.value)));
+const selectedCourseId = ref<string>('');
+const teacherCourses = computed(() => {
+  const me = authStore.user;
+  // 仅显示当前教师教授的课程；如需进一步过滤为该学生参与过的课程，可后续在后端提供专用接口
+  return (courseStore.courses || []).filter((c: any) => String(c.teacherId) === String(me?.id));
+});
 
 async function fetchPage(page: number) {
   if (!studentId.value) return;
   currentPage.value = page;
-  await gradeStore.fetchGradesByStudent(studentId.value, { page: currentPage.value, size: pageSize.value });
+  await gradeStore.fetchGradesByStudent(studentId.value, { page: currentPage.value, size: pageSize.value, courseId: selectedCourseId.value || undefined });
 }
 
-onMounted(() => {
+function onCourseChange() {
+  fetchPage(1);
+}
+
+onMounted(async () => {
     const id = route.params.id as string;
     if (id) {
         studentId.value = id;
+        // 预取教师课程用于筛选（若 store 尚未载入）
+        if (!courseStore.courses || courseStore.courses.length === 0) {
+          try { await courseStore.fetchCourses({ page: 1, size: 100 }); } catch {}
+        }
         fetchPage(1);
     }
 });

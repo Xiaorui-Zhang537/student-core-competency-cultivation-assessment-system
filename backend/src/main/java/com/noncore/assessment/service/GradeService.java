@@ -66,7 +66,7 @@ public interface GradeService {
      * @param size 每页大小
      * @return 分页结果
      */
-    PageResult<Grade> getStudentGradesWithPagination(Long studentId, Integer page, Integer size);
+    PageResult<Grade> getStudentGradesWithPagination(Long studentId, Integer page, Integer size, Long courseId);
 
     /**
      * 获取作业的所有成绩
