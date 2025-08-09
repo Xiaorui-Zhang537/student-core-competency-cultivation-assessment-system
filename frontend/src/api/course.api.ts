@@ -1,6 +1,8 @@
 import { api } from './config';
 import type { ApiResponse, PaginatedResponse } from '@/types/api';
 import type { Course, CourseDetailed, CourseCreationRequest, CourseUpdateRequest, BatchStatusUpdateRequest, CourseStatistics } from '@/types/course';
+import type { PaginatedResponse } from '@/types/api';
+import type { User } from '@/types/user';
 
 export const courseApi = {
   // CRUD operations
@@ -70,5 +72,10 @@ export const courseApi = {
   // Statistics
   getCourseStatistics: (): Promise<ApiResponse<CourseStatistics>> => {
     return api.get('/courses/statistics');
+  },
+
+  // Enrollment listings (teacher only)
+  getCourseStudents: (courseId: string, params?: { page?: number; size?: number }): Promise<ApiResponse<PaginatedResponse<User>>> => {
+    return api.get(`/courses/${courseId}/students`, { params });
   }
 };

@@ -66,6 +66,22 @@
               <div v-if="grades.length === 0" class="text-center p-8">
                   <p>该学生暂无成绩记录。</p>
               </div>
+              <div class="p-4 flex items-center justify-between">
+                <div class="flex items-center space-x-2">
+                  <span class="text-sm text-gray-700">每页</span>
+                  <select class="input input-sm w-20" v-model.number="pageSize" @change="fetchPage(1)">
+                    <option :value="10">10</option>
+                    <option :value="20">20</option>
+                    <option :value="50">50</option>
+                  </select>
+                  <span class="text-sm text-gray-700">条</span>
+                </div>
+                <div class="flex items-center space-x-2">
+                  <button class="btn btn-sm btn-outline" :disabled="currentPage===1" @click="fetchPage(currentPage-1)">上一页</button>
+                  <span class="text-sm">第 {{ currentPage }} / {{ totalPages }} 页</span>
+                  <button class="btn btn-sm btn-outline" :disabled="currentPage>=totalPages" @click="fetchPage(currentPage+1)">下一页</button>
+                </div>
+              </div>
           </div>
       </div>
     </div>
@@ -98,11 +114,22 @@ const involvedCourses = computed(() => {
     return Array.from(courseTitles);
 });
 
+const currentPage = ref(1);
+const pageSize = ref(10);
+const total = computed(() => gradeStore.totalGrades);
+const totalPages = computed(() => Math.max(1, Math.ceil((total.value || 0) / pageSize.value)));
+
+async function fetchPage(page: number) {
+  if (!studentId.value) return;
+  currentPage.value = page;
+  await gradeStore.fetchGradesByStudent(studentId.value, { page: currentPage.value, size: pageSize.value });
+}
+
 onMounted(() => {
     const id = route.params.id as string;
     if (id) {
         studentId.value = id;
-        gradeStore.fetchGradesByStudent(id);
+        fetchPage(1);
     }
 });
 </script>

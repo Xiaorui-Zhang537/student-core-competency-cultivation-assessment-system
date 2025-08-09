@@ -4,9 +4,16 @@
       <p>正在加载课程详情...</p>
     </div>
     <div v-else-if="course" class="space-y-6">
-      <div>
-        <h1 class="text-3xl font-bold">{{ course.title }}</h1>
-        <p class="text-gray-500">{{ course.category }}</p>
+      <div class="flex items-start justify-between">
+        <div>
+          <h1 class="text-3xl font-bold">{{ course.title }}</h1>
+          <p class="text-gray-500">{{ course.category }}</p>
+        </div>
+        <div class="flex items-center gap-2">
+          <router-link :to="`/teacher/courses/${course.id}/students`" class="btn btn-outline">学生管理</router-link>
+          <router-link :to="{ name: 'TeacherAssignments' }" class="btn btn-outline">作业管理</router-link>
+          <router-link :to="`/teacher/courses/${course.id}/analytics`" class="btn btn-primary">课程分析</router-link>
+        </div>
       </div>
       <div class="card p-6">
         <h2 class="text-xl font-semibold mb-4">课程描述</h2>

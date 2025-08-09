@@ -20,6 +20,10 @@ spring:
     hibernate:
       ddl-auto: none
 
+# MyBatis（确保 dev 下也能解析 mapper 文件）
+mybatis:
+  mapper-locations: classpath*:mapper/*.xml
+
 # 开发环境日志配置
 logging:
   level:

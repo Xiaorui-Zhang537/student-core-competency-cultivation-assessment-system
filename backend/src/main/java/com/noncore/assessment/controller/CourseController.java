@@ -18,6 +18,7 @@ import org.springframework.web.bind.annotation.*;
 import com.noncore.assessment.dto.request.BatchCourseStatusRequest;
 
 import java.util.List;
+import com.noncore.assessment.entity.User;
 
 @RestController
 @RequestMapping("/courses")
@@ -169,5 +170,19 @@ public class CourseController extends BaseController {
     public ResponseEntity<ApiResponse<Void>> batchUpdateStatus(@RequestBody BatchCourseStatusRequest request) {
         courseService.batchUpdateStatus(request.getCourseIds(), request.getStatus());
         return ResponseEntity.ok(ApiResponse.success());
+    }
+
+    /**
+     * 教师获取课程学生列表（分页）
+     */
+    @GetMapping("/{id}/students")
+    @PreAuthorize("hasRole('TEACHER') or hasRole('ADMIN')")
+    @Operation(summary = "获取课程学生列表", description = "教师获取自己课程的学生列表（分页）")
+    public ResponseEntity<ApiResponse<PageResult<User>>> getCourseStudents(
+            @PathVariable("id") Long courseId,
+            @Parameter(description = "页码", example = "1") @RequestParam(defaultValue = "1") Integer page,
+            @Parameter(description = "每页大小", example = "20") @RequestParam(defaultValue = "20") Integer size) {
+        PageResult<User> result = enrollmentService.getCourseStudents(getCurrentUserId(), courseId, page, size);
+        return ResponseEntity.ok(ApiResponse.success(result));
     }
 } 

@@ -4,12 +4,14 @@ import type { Assignment, AssignmentCreationRequest, AssignmentUpdateRequest } f
 
 export const assignmentApi = {
   // CRUD operations
-  getAssignments: (params: { page?: number; size?: number; sort?: string }): Promise<ApiResponse<PaginatedResponse<Assignment>>> => {
+  getAssignments: (params: { page?: number; size?: number; sort?: string; courseId?: string; teacherId?: string; status?: string; keyword?: string }): Promise<ApiResponse<PaginatedResponse<Assignment>>> => {
     return api.get('/assignments', { params });
   },
 
   getAssignmentsByCourse: (courseId: string, params: { page?: number; size?: number; sort?: string }): Promise<ApiResponse<PaginatedResponse<Assignment>>> => {
-    return api.get(`/courses/${courseId}/assignments`, { params });
+    // 后端 AssignmentController 暴露的课程作业接口路径为 /assignments?courseId=xxx
+    const merged = { ...(params||{}), courseId } as any
+    return api.get('/assignments', { params: merged });
   },
 
   getAssignmentById: (id: string): Promise<ApiResponse<Assignment>> => {

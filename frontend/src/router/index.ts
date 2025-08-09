@@ -103,15 +103,63 @@ const routes = [
         component: () => import('@/features/teacher/views/ManageCourseView.vue'),
       },
       {
+        path: 'assignments',
+        name: 'TeacherAssignments',
+        component: () => import('@/features/teacher/views/ReviewAssignmentView.vue'),
+        meta: { requiresAuth: true, role: 'TEACHER' }
+      },
+      {
+        path: 'courses/:id/assignments',
+        name: 'TeacherCourseAssignments',
+        component: () => import('@/features/teacher/views/ReviewAssignmentView.vue'),
+        props: true,
+        meta: { requiresAuth: true, role: 'TEACHER' }
+      },
+      {
+        path: 'assignments/:assignmentId/submissions',
+        name: 'TeacherAssignmentSubmissions',
+        component: () => import('@/features/teacher/views/AssignmentSubmissionsView.vue'),
+        props: true,
+        meta: { requiresAuth: true, role: 'TEACHER' }
+      },
+      {
+        path: 'assignments/:assignmentId/submissions/:submissionId/grade',
+        name: 'TeacherGradeAssignment',
+        component: () => import('@/features/teacher/views/GradeAssignmentView.vue'),
+        props: true,
+        meta: { requiresAuth: true, role: 'TEACHER' }
+      },
+      {
         path: 'analytics',
         name: 'TeacherAnalytics',
         component: () => import('@/features/teacher/views/AnalyticsView.vue'),
         meta: { requiresAuth: true, role: 'TEACHER' }
       },
       {
+        path: 'courses/:id/analytics',
+        name: 'TeacherCourseAnalytics',
+        component: () => import('@/features/teacher/views/AnalyticsView.vue'),
+        props: true,
+        meta: { requiresAuth: true, role: 'TEACHER' }
+      },
+      {
         path: 'student-analytics',
         name: 'TeacherStudentAnalytics',
         component: () => import('@/features/teacher/views/StudentAnalyticsView.vue'),
+        meta: { requiresAuth: true, role: 'TEACHER' }
+      },
+      {
+        path: 'courses/:id/students',
+        name: 'TeacherCourseStudents',
+        component: () => import('@/features/teacher/views/CourseStudentsView.vue'),
+        props: true,
+        meta: { requiresAuth: true, role: 'TEACHER' }
+      },
+      {
+        path: 'students/:studentId',
+        name: 'TeacherStudentDetail',
+        component: () => import('@/features/teacher/views/StudentDetailView.vue'),
+        props: true,
         meta: { requiresAuth: true, role: 'TEACHER' }
       },
       {

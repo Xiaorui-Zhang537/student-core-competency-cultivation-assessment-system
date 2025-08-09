@@ -21,8 +21,12 @@ export const useGradeStore = defineStore('grade', () => {
       '获取学生成绩失败'
     );
     if (response) {
-      grades.value = response.content;
-      totalGrades.value = response.totalElements;
+      // Support multiple backend pagination shapes
+      // Prefer PageResult { items, total } else fallback to Spring Page { content, totalElements }
+      // @ts-expect-error runtime shape
+      grades.value = (response.items as Grade[]) || (response.content as Grade[]) || [];
+      // @ts-expect-error runtime shape
+      totalGrades.value = (response.total as number) ?? (response.totalElements as number) ?? 0;
     }
   };
 
@@ -33,8 +37,10 @@ export const useGradeStore = defineStore('grade', () => {
       '获取作业成绩失败'
     );
     if (response) {
-      grades.value = response.content;
-      totalGrades.value = response.totalElements;
+      // @ts-expect-error runtime shape
+      grades.value = (response.items as Grade[]) || (response.content as Grade[]) || [];
+      // @ts-expect-error runtime shape
+      totalGrades.value = (response.total as number) ?? (response.totalElements as number) ?? 0;
     }
   };
 

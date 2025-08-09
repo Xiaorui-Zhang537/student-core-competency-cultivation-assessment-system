@@ -4,11 +4,12 @@
     <div class="mb-8">
       <div class="flex items-center justify-between">
         <div>
+          
           <h1 class="text-3xl font-bold text-gray-900 dark:text-white mb-2">数据分析</h1>
           <p class="text-gray-600 dark:text-gray-400">全面了解教学效果和学生学习情况</p>
         </div>
-        <div class="flex items-center space-x-4">
-          <select v-model="selectedCourseId" @change="onCourseChange" class="input">
+      <div class="flex items-center space-x-4">
+        <select v-model="selectedCourseId" @change="onCourseChange" class="input">
             <option :value="null">请选择课程</option>
             <option v-for="course in teacherCourses" :key="course.id" :value="String(course.id)">
               {{ course.title }}
@@ -131,6 +132,7 @@
 
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted, nextTick, computed } from 'vue'
+import { useRoute } from 'vue-router'
 import { useTeacherStore } from '@/stores/teacher'
 import { useCourseStore } from '@/stores/course'
 import { useAuthStore } from '@/stores/auth'
@@ -143,7 +145,8 @@ import * as echarts from 'echarts'
 import {
   DocumentArrowDownIcon,
   ArrowTrendingUpIcon,
-  ArrowTrendingDownIcon
+  ArrowTrendingDownIcon,
+  ChevronRightIcon
 } from '@heroicons/vue/24/outline'
 
 // Stores
@@ -170,6 +173,15 @@ const teacherCourses = computed(() => {
   return courseStore.courses.filter(c => String(c.teacherId) === String(authStore.user?.id))
 })
 
+const route = useRoute()
+
+const currentCourseTitle = computed(() => {
+  const cid = (route.params as any)?.id || null
+  if (!cid) return ''
+  const found = courseStore.courses.find(c => String(c.id) === String(cid))
+  return found?.title || ''
+})
+
 const safeCourseAnalytics = computed(() => ({
   totalStudents: (teacherStore.courseAnalytics.enrollmentCount ?? 0) as number,
   averageScore: (teacherStore.courseAnalytics.averageScore as any) ?? 0,
@@ -190,10 +202,21 @@ const initCharts = () => {
   initCoursePerformanceChart()
 }
 
+function getOrCreateChart(el: HTMLElement | undefined, existing: echarts.ECharts | null): echarts.ECharts | null {
+  if (!el) return null
+  let inst = echarts.getInstanceByDom(el)
+  if (!inst) {
+    inst = echarts.init(el)
+  } else {
+    inst.clear()
+  }
+  return inst
+}
+
 const initLearningTrendChart = () => {
   if (!learningTrendRef.value) return
 
-  learningTrendChart = echarts.init(learningTrendRef.value)
+  learningTrendChart = getOrCreateChart(learningTrendRef.value, learningTrendChart)
 
   const seriesData = Array.isArray(safeCourseAnalytics.value.timeSeriesData)
     ? safeCourseAnalytics.value.timeSeriesData
@@ -212,7 +235,7 @@ const initLearningTrendChart = () => {
       }
     },
     legend: {
-      data: ['平均成绩', '完成率', '参与度'],
+      data: ['学生人数'],
       bottom: 0
     },
     grid: {
@@ -249,13 +272,13 @@ const initLearningTrendChart = () => {
     ]
   }
 
-  learningTrendChart.setOption(option)
+  learningTrendChart && learningTrendChart.setOption(option)
 }
 
 const initScoreDistributionChart = () => {
   if (!scoreDistributionRef.value) return
 
-  scoreDistributionChart = echarts.init(scoreDistributionRef.value)
+  scoreDistributionChart = getOrCreateChart(scoreDistributionRef.value, scoreDistributionChart)
 
   const option = {
     title: {
@@ -266,8 +289,7 @@ const initScoreDistributionChart = () => {
       formatter: '{a} <br/>{b}: {c} ({d}%)'
     },
     legend: {
-      orient: 'vertical',
-      left: 'left'
+      show: false
     },
     series: [
       {
@@ -280,13 +302,13 @@ const initScoreDistributionChart = () => {
     ]
   }
 
-  scoreDistributionChart.setOption(option)
+  scoreDistributionChart && scoreDistributionChart.setOption(option)
 }
 
 const initCoursePerformanceChart = () => {
   if (!coursePerformanceRef.value) return
 
-  coursePerformanceChart = echarts.init(coursePerformanceRef.value)
+  coursePerformanceChart = getOrCreateChart(coursePerformanceRef.value, coursePerformanceChart)
 
   const option = {
     title: {
@@ -298,7 +320,7 @@ const initCoursePerformanceChart = () => {
         type: 'shadow'
       }
     },
-    legend: { data: ['学生数量', '平均成绩', '完成率'], bottom: 0 },
+    legend: { data: ['学生数量'], bottom: 0 },
     grid: {
       left: '3%',
       right: '4%',
@@ -342,27 +364,11 @@ const initCoursePerformanceChart = () => {
         type: 'bar',
         data: teacherCourses.value.map(() => safeCourseAnalytics.value.totalStudents),
         itemStyle: { color: '#3b82f6' }
-      },
-      {
-        name: '平均成绩',
-        type: 'line',
-        yAxisIndex: 1,
-        data: teacherCourses.value.map(() => safeCourseAnalytics.value.averageScore || 0),
-        lineStyle: { color: '#10b981', width: 3 },
-        itemStyle: { color: '#10b981' }
-      },
-      {
-        name: '完成率',
-        type: 'line',
-        yAxisIndex: 1,
-        data: teacherCourses.value.map(() => safeCourseAnalytics.value.completionRate || 0),
-        lineStyle: { color: '#f59e0b', width: 3 },
-        itemStyle: { color: '#f59e0b' }
       }
     ]
   }
 
-  coursePerformanceChart.setOption(option)
+  coursePerformanceChart && coursePerformanceChart.setOption(option)
 }
 
 const onCourseChange = () => {
@@ -392,10 +398,13 @@ onMounted(async () => {
     await authStore.fetchUser()
   }
   await courseStore.fetchCourses({ page: 1, size: 100 })
-  if (teacherCourses.value.length) {
+  const routeCourseId = (route.params as any)?.id || null
+  if (routeCourseId) {
+    selectedCourseId.value = String(routeCourseId)
+  } else if (teacherCourses.value.length) {
     selectedCourseId.value = String(teacherCourses.value[0].id)
-    onCourseChange()
   }
+  onCourseChange()
   window.addEventListener('resize', resizeCharts)
 })
 

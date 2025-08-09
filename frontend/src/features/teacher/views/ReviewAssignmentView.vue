@@ -2,7 +2,20 @@
   <div class="p-6">
     <!-- Header -->
     <div class="mb-8 flex items-center justify-between">
-      <div>
+      <div class="flex-1">
+        <nav class="flex items-center space-x-2 text-sm text-gray-500 dark:text-gray-400 mb-2">
+          <router-link to="/teacher/courses" class="hover:text-gray-700 dark:hover:text-gray-200">
+            课程管理
+          </router-link>
+          <chevron-right-icon class="w-4 h-4" />
+          <template v-if="hasCourseContext">
+            <router-link :to="`/teacher/courses/${effectiveCourseId}`" class="hover:text-gray-700 dark:hover:text-gray-200">
+              {{ currentCourseTitle }}
+            </router-link>
+            <chevron-right-icon class="w-4 h-4" />
+          </template>
+          <span>作业管理</span>
+        </nav>
         <h1 class="text-3xl font-bold">作业管理</h1>
         <p class="text-gray-500">创建、查看和管理课程作业</p>
       </div>
@@ -17,8 +30,8 @@
         <div>
           <label for="course-filter" class="block text-sm font-medium mb-1">按课程筛选</label>
           <select id="course-filter" v-model="selectedCourseId" @change="handleCourseFilterChange" class="input">
-            <option :value="null">所有课程</option>
-            <option v-for="course in courseStore.courses" :key="course.id" :value="course.id">
+            <option :value="null">请选择课程</option>
+            <option v-for="course in teacherCourses" :key="course.id" :value="String(course.id)">
               {{ course.title }}
             </option>
           </select>
@@ -41,6 +54,7 @@
           </div>
         </div>
         <div>
+          <button @click="() => viewSubmissions(assignment)" class="btn btn-sm btn-outline mr-2">查看提交</button>
           <button @click="openEditModal(assignment)" class="btn btn-sm btn-outline mr-2">编辑</button>
           <button @click="handleDeleteAssignment(assignment)" class="btn btn-sm btn-danger-outline">删除</button>
         </div>
@@ -48,6 +62,24 @@
        <div v-if="!assignmentStore.loading && assignmentStore.assignments.length === 0" class="text-center py-12 card">
         <h3 class="text-lg font-medium">暂无作业</h3>
         <p class="text-gray-500">{{ selectedCourseId ? '该课程下暂无作业。' : '请先选择一个课程以查看作业。' }}</p>
+      </div>
+      <!-- Pagination -->
+      <div class="mt-6 flex items-center justify-between">
+        <div class="flex items-center space-x-2">
+          <span class="text-sm text-gray-700">每页显示</span>
+          <select class="input input-sm w-20" @change="handleCourseFilterChange" v-model.number="pageSize">
+            <option :value="10">10</option>
+            <option :value="20">20</option>
+            <option :value="50">50</option>
+          </select>
+          <span class="text-sm text-gray-700">条</span>
+        </div>
+
+        <div class="flex items-center space-x-2">
+          <button variant="outline" size="sm" @click="prevPage" :disabled="currentPage === 1">上一页</button>
+          <span class="text-sm">第 {{ currentPage }} 页</span>
+          <button variant="outline" size="sm" @click="nextPage">下一页</button>
+        </div>
       </div>
     </div>
 
@@ -89,18 +121,25 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, onMounted } from 'vue';
+import { ref, reactive, onMounted, computed } from 'vue';
 import { useAssignmentStore } from '@/stores/assignment';
 import { useCourseStore } from '@/stores/course';
+import { useAuthStore } from '@/stores/auth';
 import type { Assignment, AssignmentCreationRequest, AssignmentUpdateRequest } from '@/types/assignment';
+import { useRoute } from 'vue-router';
+import { ChevronRightIcon } from '@heroicons/vue/24/outline';
 
 const assignmentStore = useAssignmentStore();
 const courseStore = useCourseStore();
+const authStore = useAuthStore();
+const route = useRoute();
 
 const showModal = ref(false);
 const isEditing = ref(false);
 const editingAssignmentId = ref<string | null>(null);
 const selectedCourseId = ref<string | null>(null);
+const currentPage = ref(1);
+const pageSize = ref(10);
 
 const form = reactive<AssignmentCreationRequest & { id?: string }>({
   courseId: '',
@@ -108,6 +147,27 @@ const form = reactive<AssignmentCreationRequest & { id?: string }>({
   description: '',
   dueDate: '',
 });
+const teacherCourses = computed(() => {
+  if (!authStore.user?.id) return []
+  return courseStore.courses.filter(c => String(c.teacherId) === String(authStore.user?.id))
+});
+
+const currentCourseTitle = computed(() => {
+  const idToUse = (route.params.id as string | undefined) || selectedCourseId.value || ''
+  if (!idToUse) return ''
+  const found = courseStore.courses.find(c => String(c.id) === String(idToUse)) || courseStore.currentCourse
+  return found?.title || ''
+})
+
+const effectiveCourseId = computed(() => {
+  const cid = route.params.id as string | undefined
+  if (cid) return cid
+  if (selectedCourseId.value) return selectedCourseId.value
+  return ''
+})
+
+const hasCourseContext = computed(() => effectiveCourseId.value !== '')
+
 
 const statusClass = (status: string) => ({
   'bg-green-100 text-green-800': status === 'PUBLISHED',
@@ -166,19 +226,49 @@ const handleDeleteAssignment = async (assignment: Assignment) => {
   }
 };
 
+  const viewSubmissions = (assignment: Assignment) => {
+    // 跳转到提交列表页
+    window.location.href = `/teacher/assignments/${assignment.id}/submissions`;
+  };
+
 const handleCourseFilterChange = () => {
-    if(selectedCourseId.value) {
-        assignmentStore.fetchAssignments({ courseId: selectedCourseId.value });
-    } else {
-        assignmentStore.setAssignments([]);
-    }
+  if (selectedCourseId.value) {
+    assignmentStore.fetchAssignments({ courseId: selectedCourseId.value, page: currentPage.value, size: pageSize.value })
+  } else {
+    assignmentStore.fetchAssignments({ page: currentPage.value, size: pageSize.value })
+  }
+};
+
+const prevPage = () => {
+  if (currentPage.value > 1) {
+    currentPage.value--;
+    handleCourseFilterChange();
+  }
+};
+
+const nextPage = () => {
+  currentPage.value++;
+  handleCourseFilterChange();
 };
 
 onMounted(async () => {
+  if (!authStore.user) {
+    await authStore.fetchUser();
+  }
   await courseStore.fetchCourses({ page: 1, size: 100 });
-  if(courseStore.courses.length > 0) {
-      selectedCourseId.value = String(courseStore.courses[0].id);
-      handleCourseFilterChange();
+  // 若带课程ID则确保 currentCourse 可用于面包屑
+  const cid = route.params.id as string | undefined
+  if (cid) {
+    await courseStore.fetchCourseById(cid)
+  }
+  if (teacherCourses.value.length > 0) {
+    // 如果 URL 中没有课程ID，但需要默认上下文，选取第一门课程
+    if (!cid) {
+      selectedCourseId.value = String(teacherCourses.value[0].id)
+      // 填充 currentCourse 以便面包屑能立即显示课程名
+      await courseStore.fetchCourseById(selectedCourseId.value)
+    }
+    handleCourseFilterChange();
   }
 });
 </script>

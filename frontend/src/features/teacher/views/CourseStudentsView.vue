@@ -510,7 +510,7 @@ const uiStore = useUIStore()
 
 // 状态
 const courseId = route.params.id as string
-const courseName = ref('高等数学基础教程')
+const courseName = ref('')
 const searchQuery = ref('')
 const progressFilter = ref('')
 const gradeFilter = ref('')
@@ -522,90 +522,50 @@ const showStudentMenu = ref<string | null>(null)
 const currentPage = ref(1)
 const pageSize = ref(20)
 
-// 统计数据
+// 统计数据（占位：后续可接入专用统计端点）
 const stats = reactive({
-  totalStudents: 156,
-  newStudentsThisWeek: 12,
-  averageProgress: 78,
-  averageGrade: 82.5,
-  passRate: 85,
-  activeStudents: 142
+  totalStudents: 0,
+  newStudentsThisWeek: 0,
+  averageProgress: 0,
+  averageGrade: 0,
+  passRate: 0,
+  activeStudents: 0
 })
 
-// 模拟学生数据
-const students = ref([
-  {
-    id: '1',
-    name: '张同学',
-    studentId: '2021001001',
-    avatar: '',
-    progress: 85,
-    completedLessons: 17,
-    totalLessons: 20,
-    averageGrade: 88,
-    activityLevel: 'high',
-    studyTime: 12,
-    lastActiveAt: '2024-01-15T10:30:00Z',
-    joinedAt: '2023-09-01T00:00:00Z'
-  },
-  {
-    id: '2',
-    name: '李同学',
-    studentId: '2021001002',
-    avatar: '',
-    progress: 92,
-    completedLessons: 18,
-    totalLessons: 20,
-    averageGrade: 92,
-    activityLevel: 'high',
-    studyTime: 15,
-    lastActiveAt: '2024-01-15T09:15:00Z',
-    joinedAt: '2023-09-01T00:00:00Z'
-  },
-  {
-    id: '3',
-    name: '王同学',
-    studentId: '2021001003',
-    avatar: '',
-    progress: 65,
-    completedLessons: 13,
-    totalLessons: 20,
-    averageGrade: 75,
-    activityLevel: 'medium',
-    studyTime: 8,
-    lastActiveAt: '2024-01-14T16:20:00Z',
-    joinedAt: '2023-09-01T00:00:00Z'
-  },
-  {
-    id: '4',
-    name: '刘同学',
-    studentId: '2021001004',
-    avatar: '',
-    progress: 45,
-    completedLessons: 9,
-    totalLessons: 20,
-    averageGrade: 68,
-    activityLevel: 'low',
-    studyTime: 5,
-    lastActiveAt: '2024-01-13T14:45:00Z',
-    joinedAt: '2023-09-01T00:00:00Z'
-  },
-  {
-    id: '5',
-    name: '陈同学',
-    studentId: '2021001005',
-    avatar: '',
-    progress: 30,
-    completedLessons: 6,
-    totalLessons: 20,
-    averageGrade: 55,
-    activityLevel: 'inactive',
-    studyTime: 2,
-    lastActiveAt: '2024-01-10T11:30:00Z',
-    joinedAt: '2023-09-01T00:00:00Z'
+// 学生数据（从后端拉取）
+const students = ref<any[]>([])
+
+const fetchCourseStudents = async () => {
+  try {
+    // 拉取课程名
+    const { courseApi } = await import('@/api/course.api')
+    const courseRes: any = await courseApi.getCourseById(Number(courseId))
+    // Axios 拦截器已解包，直接是课程对象
+    courseName.value = courseRes?.title || ''
+  } catch { /* empty */ }
+  try {
+    const { courseApi } = await import('@/api/course.api')
+    const res: any = await courseApi.getCourseStudents(courseId, { page: currentPage.value, size: pageSize.value })
+    // 适配 User 到页面所需字段（最小映射）
+    students.value = (res?.data?.items || []).map((u: any) => ({
+      id: String(u.id),
+      name: u.username || u.nickname || u.name || `学生${u.id}`,
+      studentId: u.studentNo || String(u.id),
+      avatar: u.avatar || '',
+      progress: 0,
+      completedLessons: 0,
+      totalLessons: 0,
+      averageGrade: undefined,
+      activityLevel: 'medium',
+      studyTime: 0,
+      lastActiveAt: new Date().toISOString(),
+      joinedAt: new Date().toISOString()
+    }))
+    stats.totalStudents = res?.data?.total || students.value.length
+  } catch (e: any) {
+    uiStore.showNotification({ type: 'error', title: '加载失败', message: e?.message || '获取课程学生失败' })
   }
-  // 更多学生数据...
-])
+}
 
 // 计算属性
 const filteredStudents = computed(() => {
@@ -920,16 +880,16 @@ const inviteStudents = () => {
 }
 
 // 生命周期
-onMounted(() => {
+onMounted(async () => {
   // 点击外部关闭菜单
-  document.addEventListener('click', () => {
-    showStudentMenu.value = null
-  })
+  const close = () => { showStudentMenu.value = null }
+  document.addEventListener('click', close)
+  await fetchCourseStudents()
 })
 
 onUnmounted(() => {
-  document.removeEventListener('click', () => {
-    showStudentMenu.value = null
-  })
+  // 事件在 onMounted 中注册为具名函数
+  const close = () => { showStudentMenu.value = null }
+  document.removeEventListener('click', close)
 })
 </script> 

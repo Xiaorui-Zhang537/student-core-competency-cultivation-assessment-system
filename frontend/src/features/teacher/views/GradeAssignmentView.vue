@@ -85,32 +85,25 @@
                 </div>
               </div>
 
-              <!-- 附件列表 -->
-              <div v-if="submission.attachments.length > 0">
+              <!-- 附件（单文件） -->
+              <div v-if="submission.fileName">
                 <h3 class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">附件文件</h3>
-                <div class="space-y-3">
-                  <div v-for="file in submission.attachments" 
-                       :key="file.id"
-                       class="flex items-center justify-between p-3 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 rounded-lg">
-                    <div class="flex items-center space-x-3">
-                      <div class="flex-shrink-0">
-                        <document-icon class="w-6 h-6 text-gray-400" />
-                      </div>
-                      <div>
-                        <p class="text-sm font-medium text-gray-900 dark:text-white">{{ file.name }}</p>
-                        <p class="text-xs text-gray-500 dark:text-gray-400">
-                          {{ formatFileSize(file.size) }} • {{ getFileType(file.name) }}
-                        </p>
-                      </div>
+                <div class="flex items-center justify-between p-3 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 rounded-lg">
+                  <div class="flex items-center space-x-3">
+                    <div class="flex-shrink-0">
+                      <document-icon class="w-6 h-6 text-gray-400" />
                     </div>
-                    <div class="flex items-center space-x-2">
-                      <button variant="ghost" size="sm" @click="previewFile(file)">
-                        <eye-icon class="w-4 h-4" />
-                      </button>
-                      <button variant="ghost" size="sm" @click="downloadFile(file)">
-                        <arrow-down-tray-icon class="w-4 h-4" />
-                      </button>
+                    <div>
+                      <p class="text-sm font-medium text-gray-900 dark:text-white">{{ submission.fileName }}</p>
                     </div>
+                  </div>
+                  <div class="flex items-center space-x-2">
+                    <button variant="ghost" size="sm" @click="previewSingleFile">
+                      <eye-icon class="w-4 h-4" />
+                    </button>
+                    <button variant="ghost" size="sm" @click="downloadSingleFile">
+                      <arrow-down-tray-icon class="w-4 h-4" />
+                    </button>
                   </div>
                 </div>
               </div>
@@ -457,83 +450,32 @@ const isDraftSaving = ref(false)
 
 // 作业和提交数据
 const assignment = reactive({
-  id: route.params.id as string,
-  title: '第3章课后作业 - 导数应用',
-  description: '请完成教材第3章后的习题1-10题，并解释每个步骤的数学原理。要求书写清晰，逻辑严谨。',
-  dueDate: '2024-01-20T23:59:59Z',
+  id: String(route.params.assignmentId || ''),
+  title: '',
+  description: '',
+  dueDate: '',
   totalScore: 100,
-  courseName: '高等数学'
+  courseName: ''
 })
 
-const submission = reactive({
-  id: 'sub-001',
-  studentId: '2021001001',
-  studentName: '张同学',
-  className: '计算机科学1班',
-  submittedAt: '2024-01-19T15:30:00Z',
+const submission = reactive<any>({
+  id: String(route.params.submissionId || ''),
+  studentId: '',
+  studentName: '',
+  className: '',
+  submittedAt: '',
   isLate: false,
-  status: 'submitted',
-  content: `第1题解答：
-根据导数的定义，我们需要计算函数f(x) = x²在x=2处的导数。
-
-使用导数定义公式：
-f'(2) = lim(h→0) [f(2+h) - f(2)] / h
-
-将f(x) = x²代入：
-f'(2) = lim(h→0) [(2+h)² - 2²] / h
-= lim(h→0) [4 + 4h + h² - 4] / h
-= lim(h→0) [4h + h²] / h
-= lim(h→0) (4 + h)
-= 4
-
-因此，f(x) = x²在x=2处的导数为4。
-
-第2题解答：
-...（其他题目解答）`,
-  attachments: [
-    {
-      id: 'file-1',
-      name: '导数计算过程图.jpg',
-      size: 2048576,
-      type: 'image/jpeg'
-    },
-    {
-      id: 'file-2',
-      name: '习题答案详解.pdf',
-      size: 5242880,
-      type: 'application/pdf'
-    }
-  ],
-  selfEvaluation: '我认为这次作业完成得比较好，每个步骤都有详细的推导过程，但可能在某些数学符号的书写上还有待改进。',
-  averageScore: 86,
-  rank: 5,
-  totalStudents: 45
+  status: '',
+  content: '',
+  fileName: '',
+  filePath: ''
 })
 
 // AI评分建议
-const aiSuggestion = reactive({
-  suggestedScore: 88,
-  accuracy: 92,
-  completeness: 85,
-  clarity: 88,
-  analysis: '学生对导数概念理解透彻，计算步骤清晰，数学表达规范。部分题目的解答过程略显简略，建议补充更多推理细节。',
-  improvements: [
-    '在复杂函数求导时，建议标明使用的求导法则',
-    '图形解释部分可以更加详细',
-    '最终答案的单位和意义说明可以加强'
-  ]
-})
+const aiSuggestion = ref<any | null>(null)
 
 // 评分历史
-const gradingHistory = ref([
-  {
-    id: 'grade-1',
-    graderName: '王老师',
-    gradedAt: '2024-01-18T10:00:00Z',
-    score: 85,
-    feedback: '初步评分，整体完成较好，需要进一步完善部分解答。'
-  }
-])
+const gradingHistory = ref<any[]>([])
 
 // 评分表单
 const gradeForm = reactive({
@@ -562,11 +504,25 @@ const isFormValid = computed(() => {
 })
 
 // 方法
+import { submissionApi } from '@/api/submission.api'
+import { assignmentApi } from '@/api/assignment.api'
+import { gradeApi } from '@/api/grade.api'
+import { baseURL } from '@/api/config'
+
 const loadSubmission = async () => {
   try {
-    // 模拟加载数据
-    await new Promise(resolve => setTimeout(resolve, 1000))
-    // 数据已在上面定义，这里可以从API加载
+    const submissionId = String(route.params.submissionId || '')
+    const assignmentId = String(route.params.assignmentId || '')
+    const sRes = await submissionApi.getSubmissionById(submissionId)
+    const s = sRes.data
+    Object.assign(submission, s)
+    const aRes = await assignmentApi.getAssignmentById(assignmentId)
+    const a: any = aRes.data as any
+    assignment.title = a.title
+    assignment.description = a.description
+    assignment.dueDate = a.dueDate
+    assignment.totalScore = Number((a.maxScore ?? a.totalScore ?? 100))
+    assignment.courseName = a.courseName || ''
   } catch (error) {
     uiStore.showNotification({
       type: 'error',
@@ -643,9 +599,10 @@ const validateFeedback = () => {
 }
 
 const applyAiSuggestion = () => {
-  gradeForm.score = aiSuggestion.suggestedScore
-  gradeForm.feedback = aiSuggestion.analysis
-  gradeForm.improvements = aiSuggestion.improvements.join('\n')
+  if (!aiSuggestion.value) return
+  gradeForm.score = aiSuggestion.value.suggestedScore
+  gradeForm.feedback = aiSuggestion.value.analysis
+  gradeForm.improvements = (aiSuggestion.value.improvements || []).join('\n')
   
   uiStore.showNotification({
     type: 'success',
@@ -670,6 +627,25 @@ const downloadFile = (file: any) => {
     title: '下载开始',
     message: `正在下载: ${file.name}`
   })
+}
+
+const previewSingleFile = () => {
+  if (!submission.filePath) return
+  // 后端有 /files/{fileId}/preview 或 download，此处 filePath 为存储路径，若后端返回 fileId 可替换为基于ID的URL
+  // 简化：直接打开下载链接（若有预览接口可切换）
+  const url = submission.filePath.startsWith('http') ? submission.filePath : `${baseURL}${submission.filePath}`
+  window.open(url, '_blank')
+}
+
+const downloadSingleFile = () => {
+  if (!submission.filePath) return
+  const url = submission.filePath.startsWith('http') ? submission.filePath : `${baseURL}${submission.filePath}`
+  const a = document.createElement('a')
+  a.href = url
+  a.download = submission.fileName || 'attachment'
+  document.body.appendChild(a)
+  a.click()
+  a.remove()
 }
 
 const saveDraft = async () => {
@@ -707,7 +683,17 @@ const submitGrade = async () => {
 
   isSubmitting.value = true
   try {
-    await new Promise(resolve => setTimeout(resolve, 2000))
+    const payload = {
+      submissionId: submission.id,
+      studentId: submission.studentId,
+      score: gradeForm.score,
+      feedback: gradeForm.feedback
+    }
+    const gr = await gradeApi.gradeSubmission(payload)
+    const gradeId = gr?.data?.id
+    if (gradeForm.publishImmediately && gradeId) {
+      await gradeApi.publishGrade(String(gradeId))
+    }
     
     uiStore.showNotification({
       type: 'success',
@@ -716,7 +702,7 @@ const submitGrade = async () => {
     })
     
     // 跳转回作业列表
-    router.push('/teacher/grading')
+    router.push('/teacher/assignments')
   } catch (error) {
     uiStore.showNotification({
       type: 'error',
