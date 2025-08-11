@@ -2,6 +2,7 @@ package com.noncore.assessment.controller;
 
 import com.noncore.assessment.entity.Post;
 import com.noncore.assessment.entity.PostComment;
+import com.noncore.assessment.dto.request.PostCreateRequest;
 import com.noncore.assessment.service.CommunityService;
 import com.noncore.assessment.service.UserService;
 import com.noncore.assessment.util.ApiResponse;
@@ -39,10 +40,34 @@ public class CommunityController extends BaseController {
     @PostMapping("/posts")
     @Operation(summary = "发布帖子")
     @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<ApiResponse<Post>> createPost(@RequestBody Post post) {
+    public ResponseEntity<ApiResponse<Post>> createPost(@RequestBody PostCreateRequest req) {
+        Post post = new Post();
+        post.setTitle(req.getTitle());
+        post.setContent(req.getContent());
+        post.setCategory(req.getCategory());
+        post.setAllowComments(Boolean.TRUE.equals(req.getAllowComments()));
+        post.setAnonymous(Boolean.TRUE.equals(req.getAnonymous()));
+        post.setPinned(Boolean.TRUE.equals(req.getPinned()));
         post.setAuthorId(getCurrentUserId());
-        Post createdPost = communityService.createPost(post, null); // Tags logic needs to be handled if required
+        Post createdPost = communityService.createPost(post, req.getTags());
         return ResponseEntity.ok(ApiResponse.success(createdPost));
+    }
+
+    @PutMapping("/posts/{id}")
+    @Operation(summary = "编辑帖子（仅作者）")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<ApiResponse<Post>> updatePost(@PathVariable Long id, @RequestBody PostCreateRequest req) {
+        Post post = new Post();
+        post.setId(id);
+        post.setTitle(req.getTitle());
+        post.setContent(req.getContent());
+        post.setCategory(req.getCategory());
+        post.setAllowComments(Boolean.TRUE.equals(req.getAllowComments()));
+        post.setAnonymous(Boolean.TRUE.equals(req.getAnonymous()));
+        post.setPinned(Boolean.TRUE.equals(req.getPinned()));
+        // 当前用户校验在 service 内完成
+        Post updated = communityService.updatePost(post, req.getTags(), getCurrentUserId());
+        return ResponseEntity.ok(ApiResponse.success(updated));
     }
 
     @GetMapping("/posts")
@@ -64,6 +89,14 @@ public class CommunityController extends BaseController {
         Long userId = getOptionalUserId();
         Post post = communityService.getPostDetail(id, userId);
         return ResponseEntity.ok(ApiResponse.success(post));
+    }
+
+    @DeleteMapping("/posts/{id}")
+    @Operation(summary = "删除帖子")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<ApiResponse<Void>> deletePost(@PathVariable Long id) {
+        communityService.deletePost(id, getCurrentUserId());
+        return ResponseEntity.ok(ApiResponse.success());
     }
 
     @PostMapping("/posts/{id}/like")
@@ -89,10 +122,28 @@ public class CommunityController extends BaseController {
     public ResponseEntity<ApiResponse<PageResult<PostComment>>> getCommentList(
             @PathVariable Long id,
             @RequestParam(defaultValue = "1") int page,
-            @RequestParam(defaultValue = "10") int size) {
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(required = false) Long parentId,
+            @RequestParam(required = false, defaultValue = "time") String orderBy) {
         Long userId = getOptionalUserId();
-        PageResult<PostComment> result = communityService.getCommentList(id, page, size, userId);
+        PageResult<PostComment> result = communityService.getCommentList(id, page, size, userId, parentId, orderBy);
         return ResponseEntity.ok(ApiResponse.success(result));
+    }
+
+    @PostMapping("/comments/{commentId}/like")
+    @Operation(summary = "点赞/取消点赞评论")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<ApiResponse<Map<String, Object>>> likeComment(@PathVariable Long commentId) {
+        boolean liked = communityService.likeComment(commentId, getCurrentUserId());
+        return ResponseEntity.ok(ApiResponse.success(Map.of("liked", liked)));
+    }
+
+    @DeleteMapping("/comments/{commentId}")
+    @Operation(summary = "删除评论")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<ApiResponse<Void>> deleteComment(@PathVariable Long commentId) {
+        communityService.deleteComment(commentId, getCurrentUserId());
+        return ResponseEntity.ok(ApiResponse.success());
     }
 
     @GetMapping("/stats")

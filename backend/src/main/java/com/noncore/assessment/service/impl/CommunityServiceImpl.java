@@ -89,7 +89,16 @@ public class CommunityServiceImpl implements CommunityService {
 
     @Override
     @Transactional
-    public Post updatePost(Post post, List<String> tags) {
+    public Post updatePost(Post post, List<String> tags, Long userId) {
+        // 权限校验：仅作者可编辑
+        Post exist = postMapper.selectById(post.getId());
+        if (exist == null) {
+            throw new BusinessException(ErrorCode.DATA_NOT_FOUND, "帖子不存在");
+        }
+        if (!Objects.equals(exist.getAuthorId(), userId)) {
+            throw new BusinessException(ErrorCode.UNAUTHORIZED_OPERATION, "用户无权编辑此帖子");
+        }
+
         // 更新帖子
         postMapper.updateById(post);
 
@@ -180,14 +189,30 @@ public class CommunityServiceImpl implements CommunityService {
     }
 
     @Override
-    public PageResult<PostComment> getCommentList(Long postId, int page, int size, Long userId) {
+    public PageResult<PostComment> getCommentList(Long postId, int page, int size, Long userId, Long parentId, String orderBy) {
         PageHelper.startPage(page, size);
 
         Map<String, Object> params = new HashMap<>();
         params.put("postId", postId);
         params.put("status", "published");
+        if (parentId != null) {
+            params.put("parentId", parentId);
+        }
+        // orderBy: time(默认) / hot
+        params.put("orderBy", orderBy);
 
-        List<PostComment> comments = postCommentMapper.selectDetailList(params);
+        List<PostComment> comments = parentId == null
+                ? postCommentMapper.selectDetailList(params)
+                : postCommentMapper.selectByPostId(postId, params);
+
+        // 标记当前用户是否点赞过该评论，避免前端状态与后端不一致导致首次点击出现相反增减
+        if (userId != null && comments != null && !comments.isEmpty()) {
+            for (PostComment c : comments) {
+                Integer likedCount = commentLikeMapper.selectByCommentIdAndUserId(c.getId(), userId);
+                boolean liked = likedCount != null && likedCount > 0;
+                c.setLiked(liked);
+            }
+        }
 
         PageInfo<PostComment> pageInfo = new PageInfo<>(comments);
         return PageResult.of(comments, pageInfo.getPageNum(), pageInfo.getPageSize(), pageInfo.getTotal(), pageInfo.getPages());
@@ -195,8 +220,23 @@ public class CommunityServiceImpl implements CommunityService {
 
     @Override
     @Transactional
+    public void deleteComment(Long commentId, Long userId) {
+        PostComment comment = postCommentMapper.selectById(commentId);
+        if (comment == null) {
+            return;
+        }
+        if (!Objects.equals(comment.getAuthorId(), userId)) {
+            throw new BusinessException(ErrorCode.UNAUTHORIZED_OPERATION, "用户无权删除该评论");
+        }
+        postCommentMapper.softDeleteById(commentId);
+        postMapper.decrementComments(comment.getPostId());
+    }
+
+    @Override
+    @Transactional
     public boolean likeComment(Long commentId, Long userId) {
-        if (commentLikeMapper.selectByCommentIdAndUserId(commentId, userId) != null) {
+        Integer existCount = commentLikeMapper.selectByCommentIdAndUserId(commentId, userId);
+        if (existCount != null && existCount > 0) {
             // 取消点赞
             commentLikeMapper.delete(commentId, userId);
             postCommentMapper.decrementLikes(commentId);

@@ -110,7 +110,7 @@
           </div>
           <div>
             <label class="block text-sm font-medium mb-1">附件上传（可选，多文件）</label>
-            <FileUpload
+            <file-upload
               ref="assignmentUploader"
               :multiple="true"
               :autoUpload="false"

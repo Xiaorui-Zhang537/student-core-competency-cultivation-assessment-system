@@ -8,12 +8,12 @@
             <h1 class="text-3xl font-bold text-gray-900 dark:text-white mb-2">学习社区</h1>
             <p class="text-gray-600 dark:text-gray-400">与同学交流学习心得，分享知识经验</p>
           </div>
-          <div class="flex items-center space-x-3">
-             <button @click="showCreatePostModal = true" class="btn btn-primary">
-              <plus-icon class="w-4 h-4 mr-2" />
-              发布帖子
-            </button>
-          </div>
+           <div class="flex items-center space-x-3">
+             <button @click="showCreatePostModal = true" class="btn btn-primary inline-flex items-center whitespace-nowrap px-4">
+               <plus-icon class="w-4 h-4 mr-2" />
+               发布帖子
+             </button>
+           </div>
         </div>
       </div>
 
@@ -117,7 +117,10 @@
                 </div>
                 <select v-model="filterOptions.orderBy" @change="applyFilters" class="input input-sm">
                   <option value="latest">最新发布</option>
-                  <option value="popular">最受欢迎</option>
+                  <option value="hot">最热</option>
+                  <option value="comments">评论最多</option>
+                  <option value="likes">点赞最多</option>
+                  <option value="views">浏览最多</option>
                 </select>
               </div>
             </div>
@@ -127,8 +130,7 @@
               <div
                 v-for="post in posts"
                 :key="post.id"
-                @click="viewPost(post.id)"
-                class="p-4 border border-gray-200 dark:border-gray-600 rounded-lg cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                class="p-4 border border-gray-200 dark:border-gray-600 rounded-lg transition-colors"
               >
                  <div class="flex items-start space-x-4">
                   <div class="flex-shrink-0">
@@ -136,7 +138,7 @@
                       <user-icon class="w-5 h-5 text-gray-400" />
                     </div>
                   </div>
-                  <div class="flex-1 min-w-0">
+                  <div class="flex-1 min-w-0" @click="viewPost(post.id)">
                     <div class="flex items-center space-x-2 mb-1">
                       <h3 class="text-sm font-medium text-gray-900 dark:text-white">{{ post.title }}</h3>
                        <div class="text-xs px-2 py-0.5 rounded-full" :class="getCategoryClass(post.category)">{{ post.category }}</div>
@@ -156,6 +158,10 @@
                       <span v-for="tag in post.tags" :key="tag.id" class="text-xs text-primary-600 dark:text-primary-400">#{{ tag.name }}</span>
                     </div>
                   </div>
+                  <div class="flex-shrink-0 space-x-2">
+                    <button v-if="authStore.user?.id && String(authStore.user.id) === String(post.author?.id || post.authorId)" class="btn btn-ghost btn-sm" @click.stop="onEditPost(post)">编辑</button>
+                    <button v-if="authStore.user?.id && String(authStore.user.id) === String(post.author?.id || post.authorId)" class="btn btn-ghost btn-sm" @click.stop="onDeletePost(post.id)">删除</button>
+                  </div>
                 </div>
               </div>
             </div>
@@ -172,7 +178,7 @@
               <p class="text-gray-600 dark:text-gray-400 mb-4">
                 {{ filterOptions.keyword ? '没有找到匹配的帖子' : '这个分类还没有帖子' }}
               </p>
-              <button @click="showCreatePostModal = true" class="btn btn-primary">
+              <button @click="showCreatePostModal = true" class="btn btn-primary inline-flex items-center whitespace-nowrap px-4">
                 <plus-icon class="w-4 h-4 mr-2" />
                 发布第一个帖子
               </button>
@@ -211,7 +217,19 @@
             </div>
             <div>
               <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">话题标签</label>
-              <input v-model="newPost.tagsInput" type="text" placeholder="输入话题标签，用空格分隔" class="input" />
+              <input v-model="newPost.tagsInput" type="text" placeholder="输入话题标签，用空格分隔" class="input mb-2" />
+              <div class="mb-2">
+                <input v-model="newPost.tagSearch" @input="searchTags" type="text" placeholder="搜索标签..." class="input" />
+                <div v-if="newPost.tagOptions.length" class="mt-2 border border-gray-200 dark:border-gray-700 rounded-md divide-y divide-gray-100 dark:divide-gray-700">
+                  <button v-for="opt in newPost.tagOptions" :key="opt.id" type="button" class="w-full text-left px-3 py-2 text-sm hover:bg-gray-50 dark:hover:bg-gray-700" @click="addTag(opt.name)">#{{ opt.name }}</button>
+                </div>
+              </div>
+              <div v-if="newPost.selectedTags.length" class="flex flex-wrap gap-2">
+                <span v-for="t in newPost.selectedTags" :key="t" class="text-xs px-2 py-1 rounded-full bg-primary-50 text-primary-700 dark:bg-primary-900 dark:text-primary-300">
+                  #{{ t }}
+                  <button type="button" class="ml-1" @click="removeTag(t)">×</button>
+                </span>
+              </div>
             </div>
             <div>
               <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">帖子内容</label>
@@ -219,7 +237,7 @@
             </div>
             <div>
               <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">图片附件（可选）</label>
-              <FileUpload
+              <file-upload
                 ref="postUploader"
                 :accept="'image/*'"
                 :multiple="true"
@@ -234,6 +252,37 @@
             <div class="flex justify-end space-x-3 pt-4">
               <button type="button" @click="showCreatePostModal = false" class="btn btn-outline">取消</button>
               <button type="submit" :disabled="loading" class="btn btn-primary">发布帖子</button>
+            </div>
+          </form>
+        </div>
+      </div>
+
+      <!-- Edit Post Modal -->
+      <div v-if="editModal.visible" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div class="bg-white dark:bg-gray-800 rounded-lg p-6 max-w-2xl w-full mx-4">
+          <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-4">编辑帖子</h3>
+          <form @submit.prevent="handleUpdatePost" class="space-y-4">
+            <div>
+              <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">帖子标题</label>
+              <input v-model="editModal.form.title" type="text" class="input" required />
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">分类</label>
+              <select v-model="editModal.form.category" class="input">
+                <option value="学习讨论">学习讨论</option>
+                <option value="作业求助">作业求助</option>
+                <option value="经验分享">经验分享</option>
+                <option value="问答">问答</option>
+                <option value="闲聊">闲聊</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">帖子内容</label>
+              <textarea v-model="editModal.form.content" rows="6" class="input" required></textarea>
+            </div>
+            <div class="flex justify-end space-x-3 pt-4">
+              <button type="button" @click="editModal.visible = false" class="btn btn-outline">取消</button>
+              <button type="submit" :disabled="loading" class="btn btn-primary">保存</button>
             </div>
           </form>
         </div>
@@ -265,12 +314,12 @@ const authStore = useAuthStore();
 const { posts, totalPosts, stats, hotTopics, activeUsers, loading } = storeToRefs(communityStore);
 
 const showCreatePostModal = ref(false);
-const filterOptions = reactive({
+const filterOptions = reactive<{ page: number; size: number; category: string; keyword: string; orderBy: 'latest' | 'hot' | 'comments' | 'likes' | 'views' }>({
   page: 1,
   size: 10,
   category: 'all',
   keyword: '',
-  orderBy: 'latest' as 'latest' | 'popular',
+  orderBy: 'latest',
 });
 
 const newPost = reactive({
@@ -278,7 +327,14 @@ const newPost = reactive({
   category: '学习讨论',
   content: '',
   tagsInput: '',
+  tagSearch: '',
+  tagOptions: [] as { id: number; name: string }[],
+  selectedTags: [] as string[],
 });
+const editModal = reactive<{ visible: boolean; form: { id?: number; title: string; category: string; content: string } }>({
+  visible: false,
+  form: { id: undefined, title: '', category: '学习讨论', content: '' }
+})
 const postUploader = ref();
 const postUploadData = reactive<{ purpose: string; relatedId?: string | number }>({ purpose: 'community_post' });
 const uploadHeaders = {
@@ -331,12 +387,31 @@ const viewPost = (postId: number) => {
   router.push({ name: routeName, params: { id: postId } });
 };
 
+const onEditPost = (post: any) => {
+  editModal.visible = true
+  editModal.form.id = post.id
+  editModal.form.title = post.title
+  editModal.form.category = post.category
+  editModal.form.content = post.content
+}
+
+const handleUpdatePost = async () => {
+  if (!editModal.form.id) return
+  await communityStore.updatePost(editModal.form.id, {
+    title: editModal.form.title,
+    category: editModal.form.category,
+    content: editModal.form.content,
+  })
+  editModal.visible = false
+  applyFilters()
+}
+
 const handleCreatePost = async () => {
   const postData = {
     title: newPost.title,
     content: newPost.content,
     category: newPost.category,
-    tags: newPost.tagsInput.split(' ').filter(t => t),
+    tags: Array.from(new Set([...(newPost.tagsInput.split(' ').filter(t => t)), ...newPost.selectedTags])),
   };
   
   const created = await communityStore.createPost(postData);
@@ -350,6 +425,8 @@ const handleCreatePost = async () => {
     newPost.title = '';
     newPost.content = '';
     newPost.tagsInput = '';
+    newPost.tagSearch = '';
+    newPost.selectedTags = [];
     newPost.category = '学习讨论';
     applyFilters(); // Refresh list
   }
@@ -361,6 +438,26 @@ const onPostUploadSuccess = () => {
 const onPostUploadError = (msg: string) => {
   console.error('帖子附件上传失败:', msg);
 };
+
+let tagSearchTimer: number | undefined
+const searchTags = async () => {
+  if (tagSearchTimer) clearTimeout(tagSearchTimer)
+  tagSearchTimer = window.setTimeout(async () => {
+    if (!newPost.tagSearch.trim()) { newPost.tagOptions = []; return }
+    const { communityApi } = await import('@/api/community.api')
+    const res = await communityApi.searchTags(newPost.tagSearch, 10)
+    newPost.tagOptions = (res || []).map(t => ({ id: (t as any).id, name: (t as any).name }))
+  }, 300)
+}
+
+const addTag = (name: string) => {
+  if (!name) return
+  if (!newPost.selectedTags.includes(name)) newPost.selectedTags.push(name)
+}
+
+const removeTag = (name: string) => {
+  newPost.selectedTags = newPost.selectedTags.filter(t => t !== name)
+}
 
 const formatDate = (dateString: string) => {
   if (!dateString) return '';
@@ -395,4 +492,9 @@ onMounted(() => {
   communityStore.fetchActiveUsers();
   applyFilters();
 });
+
+const onDeletePost = async (postId: number) => {
+  if (!confirm('确认删除该帖子？')) return;
+  await communityStore.deletePost(postId);
+}
 </script>

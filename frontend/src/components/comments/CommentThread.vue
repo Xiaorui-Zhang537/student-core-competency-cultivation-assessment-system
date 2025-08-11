@@ -1,0 +1,158 @@
+<template>
+  <div class="flex items-start space-x-3">
+    <div class="w-10 h-10 rounded-full bg-gray-200 dark:bg-gray-700 flex-shrink-0 flex items-center justify-center">
+      <user-icon class="w-5 h-5 text-gray-500"/>
+    </div>
+    <div class="flex-1">
+      <div class="bg-gray-100 dark:bg-gray-700 rounded-lg p-3">
+        <p class="text-sm font-semibold text-gray-900 dark:text-white">{{ comment.author?.username || '匿名用户' }}</p>
+        <p class="text-sm text-gray-700 dark:text-gray-200 mt-1">{{ comment.content }}</p>
+      </div>
+      <div class="text-xs text-gray-500 mt-1 flex items-center space-x-3">
+        <span>{{ formatDate(comment.createdAt) }}</span>
+        <button class="flex items-center space-x-1" :class="comment.isLiked ? 'text-red-500' : ''" @click="onLikeComment" :disabled="likeBusy">
+          <hand-thumb-up-icon class="w-3.5 h-3.5" />
+          <span>{{ safeLikeCount }}</span>
+        </button>
+        <button class="hover:underline" @click="toggleReply">回复</button>
+        <button v-if="authStore.user?.id && String(authStore.user.id) === String(comment.authorId)" class="text-red-500 hover:underline" @click="handleDeleteSelf">删除</button>
+      </div>
+      <!-- 回复输入框 -->
+      <div v-if="showReplyBox" class="mt-2">
+        <textarea v-model="replyContent" rows="2" class="input w-full" placeholder="回复..." />
+        <div class="mt-1 flex items-center gap-2">
+          <EmojiPicker @select="(e) => replyContent = (replyContent || '') + e" />
+          <button class="btn btn-primary btn-sm" :disabled="!replyContent.trim()" @click="submitReply">提交</button>
+          <button class="btn btn-ghost btn-sm" @click="toggleReply">取消</button>
+        </div>
+      </div>
+
+      <!-- 子评论列表（递归） -->
+      <div class="mt-2 pl-4 border-l border-gray-200 dark:border-gray-600" v-if="replies.items.length">
+        <CommentThread
+          v-for="rc in replies.items"
+          :key="rc.id"
+          :comment="rc"
+          :post-id="postId"
+          @deleted="handleChildDeleted"
+        />
+        <button v-if="replies.items.length < replies.total" class="btn btn-ghost btn-sm mt-1" @click="loadMoreReplies">加载更多回复</button>
+      </div>
+    </div>
+  </div>
+</template>
+
+<script setup lang="ts">
+import { ref, onMounted, computed } from 'vue'
+import { useAuthStore } from '@/stores/auth'
+import { useCommunityStore } from '@/stores/community'
+import { UserIcon, HandThumbUpIcon } from '@heroicons/vue/24/outline'
+import EmojiPicker from '@/components/ui/EmojiPicker.vue'
+
+defineOptions({ name: 'CommentThread' })
+
+const props = defineProps<{ comment: any; postId: number }>()
+const emit = defineEmits<{ (e: 'deleted', id: number): void }>()
+
+const authStore = useAuthStore()
+const communityStore = useCommunityStore()
+
+const showReplyBox = ref(false)
+const replyContent = ref('')
+const replies = ref<{ items: any[]; page: number; size: number; total: number }>({ items: [], page: 0, size: 10, total: 0 })
+const safeLikeCount = computed(() => {
+  const v = (props.comment as any).likeCount ?? (props.comment as any).likesCount
+  const n = Number(v)
+  return Number.isFinite(n) ? Math.max(0, n) : 0
+})
+const likeBusy = ref(false)
+
+const formatDate = (dateString: string) => {
+  if (!dateString) return ''
+  const date = new Date(dateString)
+  return date.toLocaleString('zh-CN')
+}
+
+const toggleReply = () => {
+  showReplyBox.value = !showReplyBox.value
+  if (!showReplyBox.value) replyContent.value = ''
+}
+
+const submitReply = async () => {
+  if (!replyContent.value.trim()) return
+  await communityStore.postComment(props.postId, replyContent.value, props.comment.id)
+  replyContent.value = ''
+  showReplyBox.value = false
+  // 直接刷新该节点的子回复，并确保最新在顶部
+  await loadReplies(true)
+}
+
+const loadReplies = async (reset = false) => {
+  const nextPage = reset ? 1 : replies.value.page + 1
+  const { communityApi } = await import('@/api/community.api')
+  const res = await communityApi.getCommentsByPostId(props.postId, { page: nextPage, size: replies.value.size, parentId: props.comment.id })
+  const toBool = (v: any) => v === true || v === 1 || v === '1' || v === 'true'
+  const toNum = (v: any) => { const n = Number(v); return Number.isFinite(n) ? Math.max(0, n) : 0 }
+  const items = (res.items || []).map((c: any) => ({
+    ...c,
+    likeCount: toNum(c.likeCount ?? c.likesCount ?? 0),
+    isLiked: toBool(c.isLiked ?? c.liked ?? false),
+    author: c.author || (c.authorUsername || c.author_display_name
+      ? { username: c.authorUsername || c.author_username, displayName: c.authorDisplayName || c.author_display_name, avatar: c.authorAvatar || c.author_avatar }
+      : undefined),
+  }))
+  const total = res.total || 0
+  replies.value = {
+    items: reset ? items : [...replies.value.items, ...items],
+    page: nextPage,
+    size: replies.value.size,
+    total
+  }
+}
+
+const loadMoreReplies = async () => {
+  await loadReplies(false)
+}
+
+const handleChildDeleted = async (id: number) => {
+  // 从本地移除已删除的子回复
+  replies.value.items = replies.value.items.filter(i => i.id !== id)
+  replies.value.total = Math.max(0, replies.value.total - 1)
+}
+
+const handleDeleteSelf = async () => {
+  if (!confirm('确认删除该评论？')) return
+  await communityStore.deleteComment(props.comment.id, props.postId)
+  emit('deleted', props.comment.id)
+}
+
+onMounted(async () => {
+  await loadReplies(true)
+})
+
+const onLikeComment = async () => {
+  if (likeBusy.value) return
+  likeBusy.value = true
+  try {
+    const before = (props.comment as any).isLiked === true || (props.comment as any).isLiked === 'true' || (props.comment as any).isLiked === 1 || (props.comment as any).isLiked === '1'
+    const liked = await communityStore.toggleLikeComment(props.comment.id)
+    if (typeof liked === 'boolean') {
+      // 仅在后端状态与本地原状态不同的情况下调整计数，避免双重加减
+      const current = Number((props.comment as any).likeCount ?? (props.comment as any).likesCount) || 0
+      if (liked !== before) {
+        (props.comment as any).isLiked = liked
+        ;(props.comment as any).likeCount = Math.max(0, current + (liked ? 1 : -1))
+      } else {
+        // 如果后端返回与本地一致，仅同步 liked，计数保持不变
+        (props.comment as any).isLiked = liked
+      }
+    }
+  } finally {
+    likeBusy.value = false
+  }
+}
+</script>
+
+<style scoped>
+</style>
+

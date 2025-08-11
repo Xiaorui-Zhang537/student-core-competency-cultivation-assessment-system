@@ -106,12 +106,19 @@
         UPDATE tags SET posts_count = GREATEST(0, posts_count - 1) WHERE id = #{id}
     </update>
 
-    <!-- 查询热门标签 -->
+    <!-- 查询热门标签（优先基于 post_tags 真实聚合，回退使用 posts_count） -->
     <select id="selectHotTags" resultMap="BaseResultMap">
-        SELECT <include refid="Base_Column_List"/>
-        FROM tags
-        WHERE posts_count > 0
-        ORDER BY posts_count DESC
+        SELECT t.id, t.name, t.description, t.color,
+               COALESCE(pt.posts_count, t.posts_count) as posts_count,
+               t.created_at
+        FROM tags t
+        LEFT JOIN (
+            SELECT tag_id, COUNT(*) as posts_count
+            FROM post_tags
+            GROUP BY tag_id
+        ) pt ON t.id = pt.tag_id
+        WHERE COALESCE(pt.posts_count, t.posts_count) > 0
+        ORDER BY COALESCE(pt.posts_count, t.posts_count) DESC
         LIMIT #{limit}
     </select>
 

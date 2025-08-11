@@ -4,6 +4,15 @@
       <p>正在加载课程详情...</p>
     </div>
     <div v-else-if="course" class="space-y-6">
+      <!-- 面包屑导航（与学生管理界面风格一致） -->
+      <nav class="flex items-center space-x-2 text-sm text-gray-500 dark:text-gray-400 mb-2">
+        <router-link to="/teacher/courses" class="hover:text-gray-700 dark:hover:text-gray-200">
+          课程管理
+        </router-link>
+        <chevron-right-icon class="w-4 h-4" />
+        <span>{{ course.title }}</span>
+      </nav>
+
       <div class="flex items-start justify-between">
         <div>
           <h1 class="text-3xl font-bold">{{ course.title }}</h1>
@@ -30,7 +39,7 @@
         <div class="card p-6">
           <div class="flex items-center justify-between mb-4">
             <h2 class="text-xl font-semibold">课程资料</h2>
-            <FileUpload
+            <file-upload
               ref="materialUploader"
               :multiple="true"
               :autoUpload="true"
@@ -69,7 +78,7 @@
         <div class="card p-6">
           <div class="flex items-center justify-between mb-4">
             <h2 class="text-xl font-semibold">课程视频</h2>
-            <FileUpload
+            <file-upload
               ref="videoUploader"
               :multiple="true"
               :autoUpload="true"
@@ -121,7 +130,7 @@ import { useRoute } from 'vue-router';
 import apiClient, { baseURL } from '@/api/config';
 import FileUpload from '@/components/forms/FileUpload.vue';
 import { fileApi } from '@/api/file.api';
-import { DocumentIcon, PhotoIcon, FilmIcon, ArchiveBoxIcon } from '@heroicons/vue/24/outline'
+import { DocumentIcon, PhotoIcon, FilmIcon, ArchiveBoxIcon, ChevronRightIcon } from '@heroicons/vue/24/outline'
 
 const courseStore = useCourseStore();
 const route = useRoute();

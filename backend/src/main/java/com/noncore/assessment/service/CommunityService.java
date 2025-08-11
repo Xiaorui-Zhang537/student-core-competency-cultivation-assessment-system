@@ -40,7 +40,7 @@ public interface CommunityService {
      * @param tags 标签列表
      * @return 更新的帖子
      */
-    Post updatePost(Post post, List<String> tags);
+    Post updatePost(Post post, List<String> tags, Long userId);
 
     /**
      * 删除帖子
@@ -89,7 +89,12 @@ public interface CommunityService {
      * @param userId 当前用户ID
      * @return 评论分页结果
      */
-    PageResult<PostComment> getCommentList(Long postId, int page, int size, Long userId);
+    PageResult<PostComment> getCommentList(Long postId, int page, int size, Long userId, Long parentId, String orderBy);
+
+    /**
+     * 删除评论（作者或有权限用户）
+     */
+    void deleteComment(Long commentId, Long userId);
 
     /**
      * 点赞/取消点赞评论

@@ -79,7 +79,7 @@
           </div>
           <div>
             <label class="block text-sm font-medium mb-1">课程封面</label>
-            <FileUpload
+            <file-upload
               ref="coverUploader"
               :accept="'image/*'"
               :multiple="false"

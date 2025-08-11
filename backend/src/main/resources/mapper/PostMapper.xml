@@ -267,7 +267,15 @@
             (SELECT COUNT(*) FROM posts WHERE status = 'published' AND deleted = false) as total_posts,
             (SELECT COUNT(DISTINCT author_id) FROM posts WHERE status = 'published' AND deleted = false) as active_members,
             (SELECT COUNT(*) FROM posts WHERE status = 'published' AND deleted = false AND DATE(created_at) = CURDATE()) as today_posts,
-            (SELECT SUM(views) FROM posts WHERE status = 'published' AND deleted = false) as total_views
+            (SELECT SUM(views) FROM posts WHERE status = 'published' AND deleted = false) as total_views,
+            (SELECT COUNT(*) FROM post_comments WHERE status = 'published' AND deleted = false) as total_comments,
+            (
+               SELECT COUNT(DISTINCT uid) FROM (
+                   SELECT author_id AS uid FROM posts WHERE status = 'published' AND deleted = false AND DATE(created_at) = CURDATE()
+                   UNION ALL
+                   SELECT author_id AS uid FROM post_comments WHERE status = 'published' AND deleted = false AND DATE(created_at) = CURDATE()
+               ) t
+            ) AS today_active_users
     </select>
 
     <!-- 查询活跃用户 -->

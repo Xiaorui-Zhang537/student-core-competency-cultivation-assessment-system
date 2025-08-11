@@ -106,7 +106,14 @@
         FROM post_comments c
         LEFT JOIN users u ON c.author_id = u.id
         <include refid="Where_Clause"/>
-        ORDER BY c.created_at
+        <choose>
+            <when test="orderBy != null and orderBy == 'hot'">
+                ORDER BY c.likes_count DESC, c.created_at DESC
+            </when>
+            <otherwise>
+                ORDER BY c.created_at DESC
+            </otherwise>
+        </choose>
     </select>
 
     <!-- 查询总数 -->
@@ -123,7 +130,14 @@
         LEFT JOIN users u ON c.author_id = u.id
         WHERE c.post_id = #{postId} AND c.deleted = false AND c.status = 'published'
         <if test="params.parentId != null">AND c.parent_id = #{params.parentId}</if>
-        ORDER BY c.created_at
+        <choose>
+            <when test="params.orderBy != null and params.orderBy == 'hot'">
+                ORDER BY c.likes_count DESC, c.created_at DESC
+            </when>
+            <otherwise>
+                ORDER BY c.created_at DESC
+            </otherwise>
+        </choose>
     </select>
 
     <!-- 帖子评论总数 -->
