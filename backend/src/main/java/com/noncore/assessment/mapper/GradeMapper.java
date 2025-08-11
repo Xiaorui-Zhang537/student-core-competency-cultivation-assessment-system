@@ -128,6 +128,11 @@ public interface GradeMapper {
     List<Map<String, Object>> getGradeDistribution(Long assignmentId);
 
     /**
+     * 获取课程成绩分布
+     */
+    List<Map<String, Object>> getCourseGradeDistribution(@Param("courseId") Long courseId);
+
+    /**
      * 获取课程成绩统计
      */
     Map<String, Object> getCourseGradeStats(Long courseId);

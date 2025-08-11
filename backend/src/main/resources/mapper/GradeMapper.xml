@@ -247,6 +247,33 @@
           AND g.deleted = false
     </select>
 
+    <!-- 获取课程成绩分布 -->
+    <select id="getCourseGradeDistribution" resultType="map">
+        SELECT
+            CASE
+                WHEN g.percentage >= 90 THEN 'A'
+                WHEN g.percentage >= 80 THEN 'B'
+                WHEN g.percentage >= 70 THEN 'C'
+                WHEN g.percentage >= 60 THEN 'D'
+                ELSE 'F'
+            END as gradeLevel,
+            COUNT(*) as count,
+            ROUND(COUNT(*) * 100.0 / NULLIF((
+                SELECT COUNT(*) FROM grades g2
+                INNER JOIN assignments a2 ON g2.assignment_id = a2.id
+                WHERE a2.course_id = #{courseId}
+                  AND g2.status = 'published'
+                  AND g2.deleted = false
+            ), 0), 2) as percentage
+        FROM grades g
+        INNER JOIN assignments a ON g.assignment_id = a.id
+        WHERE a.course_id = #{courseId}
+          AND g.status = 'published'
+          AND g.deleted = false
+        GROUP BY gradeLevel
+        ORDER BY gradeLevel
+    </select>
+
     <!-- 查询用于导出的成绩数据 -->
     <select id="selectGradesForExport" resultType="map">
         SELECT

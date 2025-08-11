@@ -9,12 +9,19 @@ export interface StudentProgressData {
 }
 
 export interface CourseAnalyticsData {
-  courseId: number;
-  courseTitle: string;
-  enrollmentCount: number;
-  averageCompletionRate: number;
-  averageScore: number;
-  assignmentCount: number;
+  // 兼容后端 CourseAnalyticsResponse
+  courseId?: number;
+  courseTitle?: string;
+  enrollmentCount?: number; // 旧字段，保留
+  averageCompletionRate?: number; // 旧字段，保留
+  averageScore?: number;
+  assignmentCount?: number; // 旧字段，保留
+  // 新增与服务端对齐字段
+  totalStudents?: number;
+  activeStudents?: number;
+  totalAssignments?: number;
+  completionRate?: number;
+  timeSeriesData?: any[];
 }
 
 export interface AssignmentAnalyticsData {
@@ -26,17 +33,14 @@ export interface AssignmentAnalyticsData {
 }
 
 export interface ClassPerformanceData {
-    courseId: number;
-    courseTitle: string;
-    studentPerformance: {
-        studentId: number;
-        studentName: string;
-        score: number;
-    }[];
-    scoreDistribution: {
-        range: string; // e.g., "90-100"
-        count: number;
-    }[];
+    courseId?: number;
+    courseTitle?: string;
+    // 兼容后端 ClassPerformanceResponse
+    totalStudents?: number;
+    gradeStats?: Record<string, any> | null;
+    activityStats?: Record<string, any> | null;
+    // 饼图数据（后端将提供 gradeDistribution）
+    gradeDistribution?: { gradeLevel: string; count: number; percentage: number }[];
 }
 
 export interface CourseStudentPerformanceItem {

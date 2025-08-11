@@ -30,10 +30,6 @@
           {{ safeCourseAnalytics.totalStudents }}
         </div>
         <p class="text-sm text-gray-600 dark:text-gray-400">总学生数</p>
-        <div class="mt-2 flex items-center justify-center space-x-1">
-          <arrow-trending-up-icon class="w-4 h-4 text-green-500" />
-          <span class="text-xs text-green-600">+12% 相比上月</span>
-        </div>
       </card>
 
       <card padding="lg" class="text-center">
@@ -41,10 +37,6 @@
           {{ (safeCourseAnalytics.averageScore || 0).toFixed(1) }}
         </div>
         <p class="text-sm text-gray-600 dark:text-gray-400">平均成绩</p>
-        <div class="mt-2 flex items-center justify-center space-x-1">
-          <arrow-trending-up-icon class="w-4 h-4 text-green-500" />
-          <span class="text-xs text-green-600">+5.2% 相比上月</span>
-        </div>
       </card>
 
       <card padding="lg" class="text-center">
@@ -52,21 +44,13 @@
           {{ (safeCourseAnalytics.completionRate || 0) }}%
         </div>
         <p class="text-sm text-gray-600 dark:text-gray-400">作业完成率</p>
-        <div class="mt-2 flex items-center justify-center space-x-1">
-          <arrow-trending-down-icon class="w-4 h-4 text-red-500" />
-          <span class="text-xs text-red-600">-2.1% 相比上月</span>
-        </div>
       </card>
 
       <card padding="lg" class="text-center">
         <div class="text-3xl font-bold text-purple-600 dark:text-purple-400 mb-2">
-          {{ safeClassPerformance.totalStudents }}
+          {{ safeCourseAnalytics.activeStudents }}
         </div>
-        <p class="text-sm text-gray-600 dark:text-gray-400">参与度评分</p>
-        <div class="mt-2 flex items-center justify-center space-x-1">
-          <arrow-trending-up-icon class="w-4 h-4 text-green-500" />
-          <span class="text-xs text-green-600">+8.3% 相比上月</span>
-        </div>
+        <p class="text-sm text-gray-600 dark:text-gray-400">活跃学生</p>
       </card>
     </div>
 
@@ -112,9 +96,18 @@
         <template #header>
           <h3 class="text-lg font-semibold text-gray-900 dark:text-white">学生表现排行</h3>
         </template>
-          <div class="space-y-4 text-center text-gray-500 dark:text-gray-400">
+          <div v-if="!topStudents.length" class="space-y-4 text-center text-gray-500 dark:text-gray-400">
             暂无学生排行数据
           </div>
+          <ul v-else class="divide-y divide-gray-200 dark:divide-gray-700">
+            <li v-for="(s, idx) in topStudents" :key="s.studentId" class="py-2 flex items-center justify-between">
+              <div class="flex items-center gap-3">
+                <span class="text-sm w-6 text-center font-semibold text-gray-600 dark:text-gray-300">{{ idx + 1 }}</span>
+                <span class="text-sm text-gray-900 dark:text-gray-100">{{ s.studentName }}</span>
+              </div>
+              <div class="text-sm text-gray-700 dark:text-gray-200">{{ (s.averageGrade ?? 0).toFixed(1) }}</div>
+            </li>
+          </ul>
       </card>
 
       <!-- 课程统计 -->
@@ -122,8 +115,23 @@
         <template #header>
           <h3 class="text-lg font-semibold text-gray-900 dark:text-white">课程统计</h3>
         </template>
-         <div class="space-y-4 text-center text-gray-500 dark:text-gray-400">
-           暂无课程统计数据
+         <div class="grid grid-cols-2 gap-4">
+           <div class="p-4 rounded bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700">
+             <div class="text-xs text-gray-500 mb-1">总学生数</div>
+             <div class="text-xl font-semibold">{{ safeClassPerformance.totalStudents }}</div>
+           </div>
+           <div class="p-4 rounded bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700">
+             <div class="text-xs text-gray-500 mb-1">平均成绩</div>
+             <div class="text-xl font-semibold">{{ (safeCourseAnalytics.averageScore || 0).toFixed(1) }}</div>
+           </div>
+           <div class="p-4 rounded bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700">
+             <div class="text-xs text-gray-500 mb-1">作业数量</div>
+             <div class="text-xl font-semibold">{{ safeCourseAnalytics.totalAssignments }}</div>
+           </div>
+           <div class="p-4 rounded bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700">
+             <div class="text-xs text-gray-500 mb-1">完成率</div>
+             <div class="text-xl font-semibold">{{ (safeCourseAnalytics.completionRate || 0) }}%</div>
+           </div>
          </div>
       </card>
     </div>
@@ -132,11 +140,13 @@
 
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted, nextTick, computed } from 'vue'
-import { useRoute } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import { useTeacherStore } from '@/stores/teacher'
 import { useCourseStore } from '@/stores/course'
 import { useAuthStore } from '@/stores/auth'
 import { useUIStore } from '@/stores/ui'
+import { teacherApi } from '@/api/teacher.api'
+import type { CourseStudentPerformanceItem } from '@/types/teacher'
 import Card from '@/components/ui/Card.vue'
 import Button from '@/components/ui/Button.vue'
 import Badge from '@/components/ui/Badge.vue'
@@ -157,6 +167,7 @@ const uiStore = useUIStore()
 
 // 状态
 const selectedCourseId = ref<string | null>(null)
+const topStudents = ref<CourseStudentPerformanceItem[]>([])
 
 // 图表引用
 const learningTrendRef = ref<HTMLElement>()
@@ -174,6 +185,7 @@ const teacherCourses = computed(() => {
 })
 
 const route = useRoute()
+const router = useRouter()
 
 const currentCourseTitle = computed(() => {
   const cid = (route.params as any)?.id || null
@@ -286,6 +298,11 @@ const initScoreDistributionChart = () => {
 
   scoreDistributionChart = getOrCreateChart(scoreDistributionRef.value, scoreDistributionChart)
 
+  const dist: any[] = (teacherStore.classPerformance as any)?.gradeDistribution || []
+  const pieData = Array.isArray(dist)
+    ? dist.map(d => ({ name: d.gradeLevel ?? d.level ?? '未知', value: d.count ?? 0 }))
+    : []
+
   const option = {
     title: {
       show: false
@@ -303,7 +320,7 @@ const initScoreDistributionChart = () => {
         type: 'pie',
         radius: ['50%', '70%'],
         center: ['60%', '50%'],
-        data: [],
+        data: pieData,
       }
     ]
   }
@@ -379,17 +396,36 @@ const initCoursePerformanceChart = () => {
 
 const onCourseChange = () => {
   if (!selectedCourseId.value) return
+  // 同步URL query，统一入口 /teacher/analytics?courseId=
+  router.replace({ name: 'TeacherAnalytics', query: { courseId: selectedCourseId.value } })
   teacherStore.fetchCourseAnalytics(selectedCourseId.value)
   teacherStore.fetchClassPerformance(selectedCourseId.value)
+  // 获取学生表现排行（前5名，按成绩）
+  teacherApi.getCourseStudentPerformance(selectedCourseId.value, { page: 1, size: 5, sortBy: 'grade' })
+    .then((resp: any) => {
+      const data = (resp && (resp as any).items) ? (resp as any) : resp
+      topStudents.value = (data?.items ?? []) as CourseStudentPerformanceItem[]
+    })
+    .catch(() => { topStudents.value = [] })
   nextTick(() => initCharts())
 }
 
 const exportReport = async () => {
-  uiStore.showNotification({
-    type: 'info',
-    title: '功能提示',
-    message: '当前未提供导出接口，如需导出请告知后端接口方案'
-  })
+  if (!selectedCourseId.value) {
+    return uiStore.showNotification({ type: 'warning', title: '请选择课程', message: '请先选择要导出的课程' })
+  }
+  try {
+    const res = await teacherApi.exportCourseStudents(selectedCourseId.value)
+    const blob = new Blob([res as any], { type: 'text/csv;charset=utf-8;' })
+    const url = window.URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `course_${selectedCourseId.value}_students.csv`
+    a.click()
+    window.URL.revokeObjectURL(url)
+  } catch (e: any) {
+    uiStore.showNotification({ type: 'error', title: '导出失败', message: e?.message || '请稍后重试' })
+  }
 }
 
 const resizeCharts = () => {
@@ -404,7 +440,7 @@ onMounted(async () => {
     await authStore.fetchUser()
   }
   await courseStore.fetchCourses({ page: 1, size: 100 })
-  const routeCourseId = (route.params as any)?.id || null
+  const routeCourseId = (route.query as any)?.courseId || (route.params as any)?.id || null
   if (routeCourseId) {
     selectedCourseId.value = String(routeCourseId)
   } else if (teacherCourses.value.length) {

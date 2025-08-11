@@ -7,6 +7,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.util.Map;
+import java.util.List;
 
 @Data
 @Builder
@@ -18,4 +19,5 @@ public class ClassPerformanceResponse {
     private int totalStudents;
     private Map<String, Object> gradeStats;
     private Map<String, Object> activityStats;
+    private List<Map<String, Object>> gradeDistribution;
 } 

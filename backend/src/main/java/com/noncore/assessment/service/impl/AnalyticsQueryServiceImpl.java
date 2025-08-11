@@ -157,6 +157,7 @@ public class AnalyticsQueryServiceImpl implements AnalyticsQueryService {
         
         List<User> students = userMapper.selectStudentsByCourseId(courseId);
         Map<String, Object> gradeStats = gradeMapper.getCourseGradeStats(courseId);
+        List<Map<String, Object>> gradeDistribution = gradeMapper.getCourseGradeDistribution(courseId);
         Map<String, Object> activityStats = generateActivityStats(courseId, timeRange);
         
         return ClassPerformanceResponse.builder()
@@ -164,6 +165,7 @@ public class AnalyticsQueryServiceImpl implements AnalyticsQueryService {
             .totalStudents(students.size())
             .gradeStats(gradeStats)
             .activityStats(activityStats)
+            .gradeDistribution(gradeDistribution)
             .build();
     }
 

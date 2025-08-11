@@ -14,6 +14,11 @@ const defaultCourseAnalytics: CourseAnalyticsData = {
   averageCompletionRate: 0,
   averageScore: 0,
   assignmentCount: 0,
+  totalStudents: 0,
+  activeStudents: 0,
+  totalAssignments: 0,
+  completionRate: 0,
+  timeSeriesData: [],
 };
 
 const defaultAssignmentAnalytics: AssignmentAnalyticsData = {
@@ -27,8 +32,10 @@ const defaultAssignmentAnalytics: AssignmentAnalyticsData = {
 const defaultClassPerformance: ClassPerformanceData = {
   courseId: 0,
   courseTitle: '',
-  studentPerformance: [],
-  scoreDistribution: [],
+  totalStudents: 0,
+  gradeStats: null,
+  activityStats: null,
+  gradeDistribution: [],
 };
 // ----------------------------------------------------------------------
 
@@ -67,7 +74,7 @@ export const useTeacherStore = defineStore('teacher', () => {
       '获取课程分析数据失败'
     );
     if (response) {
-        const data = unwrap<CourseAnalyticsData>(response);
+      const data = unwrap<CourseAnalyticsData>(response);
       courseAnalytics.value = { ...defaultCourseAnalytics, ...data };
     }
   };
@@ -91,7 +98,7 @@ export const useTeacherStore = defineStore('teacher', () => {
       '获取班级表现数据失败'
     );
     if (response) {
-        const data = unwrap<ClassPerformanceData>(response);
+      const data = unwrap<ClassPerformanceData>(response);
       classPerformance.value = { ...defaultClassPerformance, ...data };
     }
   };

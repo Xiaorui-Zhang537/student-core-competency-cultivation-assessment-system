@@ -11,7 +11,7 @@
         <label for="course-select" class="block text-sm font-medium mb-1">选择课程</label>
         <select id="course-select" v-model="selectedCourseId" @change="onCourseSelect" class="input">
             <option :value="null" disabled>请选择一门课程</option>
-            <option v-for="course in teacherCourses" :key="course.id" :value="course.id">
+            <option v-for="course in teacherCourses" :key="course.id" :value="String(course.id)">
                 {{ course.title }}
             </option>
         </select>
@@ -27,11 +27,11 @@
         <!-- Stats Cards -->
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             <div class="card p-4 text-center">
-                <h3 class="text-2xl font-bold">{{ safeAnalytics.enrollmentCount }}</h3>
+                <h3 class="text-2xl font-bold">{{ safeAnalytics.totalStudents }}</h3>
                 <p class="text-sm text-gray-500">学生人数</p>
             </div>
             <div class="card p-4 text-center">
-                <h3 class="text-2xl font-bold">{{ (safeAnalytics.averageCompletionRate || 0).toFixed(1) }}%</h3>
+                <h3 class="text-2xl font-bold">{{ (safeAnalytics.completionRate || 0).toFixed(1) }}%</h3>
                 <p class="text-sm text-gray-500">平均完成率</p>
             </div>
             <div class="card p-4 text-center">
@@ -39,7 +39,7 @@
                 <p class="text-sm text-gray-500">平均分</p>
             </div>
              <div class="card p-4 text-center">
-                <h3 class="text-2xl font-bold">{{ safeAnalytics.assignmentCount }}</h3>
+                <h3 class="text-2xl font-bold">{{ safeAnalytics.totalAssignments }}</h3>
                 <p class="text-sm text-gray-500">作业数</p>
             </div>
         </div>
@@ -87,10 +87,10 @@ const courseAnalytics = computed(() => teacherStore.courseAnalytics)
 const classPerformance = computed(() => teacherStore.classPerformance)
 
 const safeAnalytics = computed(() => ({
-  enrollmentCount: courseAnalytics.value.enrollmentCount ?? 0,
-  averageCompletionRate: courseAnalytics.value.averageCompletionRate ?? 0,
+  totalStudents: (courseAnalytics.value as any).totalStudents ?? courseAnalytics.value.enrollmentCount ?? 0,
+  completionRate: (courseAnalytics.value as any).completionRate ?? courseAnalytics.value.averageCompletionRate ?? 0,
   averageScore: courseAnalytics.value.averageScore ?? 0,
-  assignmentCount: courseAnalytics.value.assignmentCount ?? 0,
+  totalAssignments: (courseAnalytics.value as any).totalAssignments ?? courseAnalytics.value.assignmentCount ?? 0,
 }))
 
 const toggleSidebar = () => uiStore.toggleSidebar()
@@ -103,13 +103,14 @@ const onCourseSelect = () => {
 }
 
 const initChart = () => {
-  if (!chartRef.value || !classPerformance.value.scoreDistribution?.length) return
+  const dist: any[] = (classPerformance.value as any).gradeDistribution || []
+  if (!chartRef.value || !dist.length) return
   chart = echarts.init(chartRef.value)
   chart.setOption({
     tooltip: { trigger: 'item' },
-    xAxis: { type: 'category', data: classPerformance.value.scoreDistribution.map(d => d.range) },
+    xAxis: { type: 'category', data: dist.map(d => d.gradeLevel ?? d.level ?? '未知') },
     yAxis: { type: 'value' },
-    series: [{ name: '学生人数', type: 'bar', data: classPerformance.value.scoreDistribution.map(d => d.count) }]
+    series: [{ name: '学生人数', type: 'bar', data: dist.map(d => d.count ?? 0) }]
   })
 }
 

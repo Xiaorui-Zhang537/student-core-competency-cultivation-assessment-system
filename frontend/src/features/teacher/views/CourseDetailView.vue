@@ -12,7 +12,7 @@
         <div class="flex items-center gap-2">
           <router-link :to="`/teacher/courses/${course.id}/students`" class="btn btn-outline">学生管理</router-link>
           <router-link :to="{ name: 'TeacherAssignments' }" class="btn btn-outline">作业管理</router-link>
-          <router-link :to="`/teacher/courses/${course.id}/analytics`" class="btn btn-primary">课程分析</router-link>
+          <router-link :to="`/teacher/analytics?courseId=${course.id}`" class="btn btn-primary">课程分析</router-link>
         </div>
       </div>
       <div class="w-full h-56 bg-gray-200 rounded overflow-hidden" v-if="course.coverImage">

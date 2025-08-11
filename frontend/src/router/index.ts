@@ -2,7 +2,7 @@ import AuthLayout from '@/layouts/AuthLayout.vue'
 import StudentLayout from '@/layouts/StudentLayout.vue'
 import TeacherLayout from '@/layouts/TeacherLayout.vue'
 import NotFoundView from '@/components/layout/NotFoundView.vue'
-import { createRouter, createWebHistory } from 'vue-router'
+import { createRouter, createWebHistory, type RouteLocationNormalized } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 
 const routes = [
@@ -138,14 +138,14 @@ const routes = [
       {
         path: 'courses/:id/analytics',
         name: 'TeacherCourseAnalytics',
-        component: () => import('@/features/teacher/views/AnalyticsView.vue'),
-        props: true,
+        // Redirect to unified analytics route with courseId query
+        redirect: ((to: any) => ({ name: 'TeacherAnalytics', query: { courseId: String((to.params as any).id) } })) as any,
         meta: { requiresAuth: true, role: 'TEACHER' }
       },
       {
-        path: 'student-analytics',
-        name: 'TeacherStudentAnalytics',
-        component: () => import('@/features/teacher/views/StudentAnalyticsView.vue'),
+        path: 'ai',
+        name: 'TeacherAI',
+        component: () => import('@/features/teacher/views/AiAssistantView.vue'),
         meta: { requiresAuth: true, role: 'TEACHER' }
       },
       {

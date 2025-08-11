@@ -30,4 +30,11 @@ export const teacherApi = {
   ): Promise<ApiResponse<CourseStudentPerformanceResponse>> => {
     return api.get(`/teachers/analytics/course/${courseId}/students`, { params });
   },
+  
+  exportCourseStudents: (
+    courseId: string,
+    params?: { search?: string; sortBy?: string; activity?: string; grade?: string; progress?: string }
+  ) => {
+    return api.get(`/teachers/analytics/course/${courseId}/students/export`, { params, responseType: 'blob' as any });
+  },
 };
