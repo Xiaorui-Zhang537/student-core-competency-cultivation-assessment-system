@@ -8,6 +8,7 @@
         <result column="title" property="title"/>
         <result column="description" property="description"/>
         <result column="cover_image" property="coverImage"/>
+        <result column="content" property="content"/>
         <result column="teacher_id" property="teacherId"/>
         <result column="teacher_name" property="teacherName"/>
         <result column="category" property="category"/>
@@ -31,7 +32,7 @@
 
     <!-- 基础查询字段 -->
     <sql id="Base_Column_List">
-        c.id, c.title, c.description, c.cover_image, c.teacher_id, c.category, c.difficulty,
+        c.id, c.title, c.description, c.content, c.cover_image, c.teacher_id, c.category, c.difficulty,
         c.duration, c.max_students, c.status, c.start_date, c.end_date, c.objectives,
         c.requirements, c.price, c.tags, c.enrollment_count, c.rating, c.review_count,
         c.created_at, c.updated_at, c.deleted
@@ -46,12 +47,12 @@
     <!-- 插入课程 -->
     <insert id="insertCourse" parameterType="com.noncore.assessment.entity.Course" useGeneratedKeys="true" keyProperty="id">
         INSERT INTO courses (
-            title, description, cover_image, teacher_id, category, difficulty, duration,
+            title, description, content, cover_image, teacher_id, category, difficulty, duration,
             max_students, status, start_date, end_date, objectives, requirements,
             price, tags, enrollment_count, rating, review_count,
             created_at, updated_at, deleted
         ) VALUES (
-                     #{title}, #{description}, #{coverImage}, #{teacherId}, #{category}, #{difficulty}, #{duration},
+                      #{title}, #{description}, #{content}, #{coverImage}, #{teacherId}, #{category}, #{difficulty}, #{duration},
                      #{maxStudents}, #{status}, #{startDate}, #{endDate}, #{objectives}, #{requirements},
                      #{price}, #{tags}, #{enrollmentCount}, #{rating}, #{reviewCount},
                      #{createdAt}, #{updatedAt}, #{deleted}
@@ -71,7 +72,8 @@
         UPDATE courses SET
                            title = #{title},
                            description = #{description},
-                           cover_image = #{coverImage},
+                            cover_image = #{coverImage},
+                            content = #{content},
                            category = #{category},
                            difficulty = #{difficulty},
                            duration = #{duration},

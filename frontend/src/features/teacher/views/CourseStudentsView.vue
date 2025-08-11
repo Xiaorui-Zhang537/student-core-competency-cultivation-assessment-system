@@ -24,15 +24,12 @@
               <document-arrow-down-icon class="w-4 h-4 mr-2" />
               导出数据
             </button>
-            <button variant="primary" @click="inviteStudents">
-              <user-plus-icon class="w-4 h-4 mr-2" />
-              邀请学生
-            </button>
+            <!-- 去除模拟邀请功能，后续有真实接口再恢复 -->
           </div>
         </div>
       </div>
 
-      <!-- 统计卡片 -->
+      <!-- 统计卡片（基于接口数据汇总） -->
       <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
         <card padding="lg" class="text-center">
           <div class="text-3xl font-bold text-blue-600 dark:text-blue-400 mb-2">
@@ -44,7 +41,6 @@
             <span class="text-xs text-green-600">+{{ stats.newStudentsThisWeek }} 本周新增</span>
           </div>
         </card>
-
         <card padding="lg" class="text-center">
           <div class="text-3xl font-bold text-green-600 dark:text-green-400 mb-2">
             {{ stats.averageProgress }}%
@@ -54,10 +50,9 @@
             <progress :value="stats.averageProgress" :max="100" size="sm" color="primary" />
           </div>
         </card>
-
         <card padding="lg" class="text-center">
           <div class="text-3xl font-bold text-yellow-600 dark:text-yellow-400 mb-2">
-            {{ stats.averageGrade.toFixed(1) }}
+            {{ Number(stats.averageGrade || 0).toFixed(1) }}
           </div>
           <p class="text-sm text-gray-600 dark:text-gray-400">平均成绩</p>
           <div class="mt-2 flex items-center justify-center space-x-1">
@@ -65,7 +60,6 @@
             <span class="text-xs text-gray-600">{{ stats.passRate }}% 及格率</span>
           </div>
         </card>
-
         <card padding="lg" class="text-center">
           <div class="text-3xl font-bold text-purple-600 dark:text-purple-400 mb-2">
             {{ stats.activeStudents }}
@@ -94,15 +88,13 @@
               />
             </div>
 
-            <!-- 进度筛选 -->
+            <!-- 筛选项：后续后端支持后开启提交查询参数（当前保留UI与本地过滤） -->
             <select v-model="progressFilter" class="input w-40">
               <option value="">全部进度</option>
               <option value="not-started">未开始</option>
               <option value="in-progress">进行中</option>
               <option value="completed">已完成</option>
             </select>
-
-            <!-- 成绩筛选 -->
             <select v-model="gradeFilter" class="input w-40">
               <option value="">全部成绩</option>
               <option value="excellent">优秀(90+)</option>
@@ -110,8 +102,6 @@
               <option value="average">中等(70-79)</option>
               <option value="below">需提高(&#60;70)</option>
             </select>
-
-            <!-- 活跃度筛选 -->
             <select v-model="activityFilter" class="input w-40">
               <option value="">全部活跃度</option>
               <option value="high">高活跃</option>
@@ -179,7 +169,7 @@
             <h2 class="text-lg font-semibold text-gray-900 dark:text-white">学生列表</h2>
             <div class="flex items-center space-x-2">
               <span class="text-sm text-gray-500 dark:text-gray-400">
-                共 {{ filteredStudents.length }} 名学生
+                共 {{ stats.totalStudents }} 名学生
               </span>
             </div>
           </div>
@@ -480,7 +470,8 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, computed, onMounted, onUnmounted } from 'vue'
+import { ref, reactive, computed, onMounted, onUnmounted, watch } from 'vue'
+import apiClient, { baseURL } from '@/api/config'
 import { useRoute, useRouter } from 'vue-router'
 import { useUIStore } from '@/stores/ui'
 import Card from '@/components/ui/Card.vue'
@@ -544,105 +535,49 @@ const fetchCourseStudents = async () => {
     courseName.value = courseRes?.title || ''
   } catch { /* empty */ }
   try {
-    const { courseApi } = await import('@/api/course.api')
-    const res: any = await courseApi.getCourseStudents(courseId, { page: currentPage.value, size: pageSize.value })
-    // 适配 User 到页面所需字段（最小映射）
-    students.value = (res?.data?.items || []).map((u: any) => ({
-      id: String(u.id),
-      name: u.username || u.nickname || u.name || `学生${u.id}`,
-      studentId: u.studentNo || String(u.id),
-      avatar: u.avatar || '',
-      progress: 0,
-      completedLessons: 0,
-      totalLessons: 0,
-      averageGrade: undefined,
-      activityLevel: 'medium',
-      studyTime: 0,
-      lastActiveAt: new Date().toISOString(),
+    const { teacherApi } = await import('@/api/teacher.api')
+    const res: any = await teacherApi.getCourseStudentPerformance(courseId, {
+      page: currentPage.value,
+      size: pageSize.value,
+      search: searchQuery.value || undefined,
+      sortBy: sortBy.value || 'name',
+      activity: activityFilter.value || undefined,
+      grade: gradeFilter.value || undefined,
+      progress: progressFilter.value || undefined
+    })
+    const payload = res?.data || res
+    const items = payload?.items || []
+    students.value = items.map((i: any) => ({
+      id: String(i.studentId),
+      name: i.studentName || `学生${i.studentId}`,
+      studentId: i.studentNo || String(i.studentId),
+      avatar: i.avatar || '',
+      progress: i.progress ?? 0,
+      completedLessons: i.completedLessons ?? 0,
+      totalLessons: i.totalLessons ?? 0,
+      averageGrade: i.averageGrade ?? undefined,
+      activityLevel: i.activityLevel || 'medium',
+      studyTime: i.studyTimePerWeek || 0,
+      lastActiveAt: i.lastActiveAt || new Date().toISOString(),
       joinedAt: new Date().toISOString()
     }))
-    stats.totalStudents = res?.data?.total || students.value.length
+    stats.totalStudents = payload?.total || students.value.length
+    // 汇总统计（后端返回全集过滤统计）
+    stats.averageProgress = payload?.averageProgress ?? 0
+    stats.averageGrade = payload?.averageGrade ?? 0
+    stats.activeStudents = payload?.activeStudents ?? 0
+    stats.passRate = payload?.passRate ?? 0
   } catch (e: any) {
     uiStore.showNotification({ type: 'error', title: '加载失败', message: e?.message || '获取课程学生失败' })
   }
 }
 
 // 计算属性
-const filteredStudents = computed(() => {
-  return students.value.filter(student => {
-    // 搜索筛选
-    if (searchQuery.value) {
-      const query = searchQuery.value.toLowerCase()
-      if (!student.name.toLowerCase().includes(query) && 
-          !student.studentId.toLowerCase().includes(query)) {
-        return false
-      }
-    }
+const filteredStudents = computed(() => students.value)
 
-    // 进度筛选
-    if (progressFilter.value) {
-      switch (progressFilter.value) {
-        case 'not-started':
-          if (student.progress > 0) return false
-          break
-        case 'in-progress':
-          if (student.progress === 0 || student.progress === 100) return false
-          break
-        case 'completed':
-          if (student.progress < 100) return false
-          break
-      }
-    }
+const totalPages = computed(() => Math.max(1, Math.ceil((stats.totalStudents || 0) / pageSize.value)))
 
-    // 成绩筛选
-    if (gradeFilter.value && student.averageGrade) {
-      switch (gradeFilter.value) {
-        case 'excellent':
-          if (student.averageGrade < 90) return false
-          break
-        case 'good':
-          if (student.averageGrade < 80 || student.averageGrade >= 90) return false
-          break
-        case 'average':
-          if (student.averageGrade < 70 || student.averageGrade >= 80) return false
-          break
-        case 'below':
-          if (student.averageGrade >= 70) return false
-          break
-      }
-    }
-
-    // 活跃度筛选
-    if (activityFilter.value) {
-      if (student.activityLevel !== activityFilter.value) return false
-    }
-
-    return true
-  }).sort((a, b) => {
-    switch (sortBy.value) {
-      case 'name':
-        return a.name.localeCompare(b.name)
-      case 'progress':
-        return b.progress - a.progress
-      case 'grade':
-        return (b.averageGrade || 0) - (a.averageGrade || 0)
-      case 'lastActive':
-        return new Date(b.lastActiveAt).getTime() - new Date(a.lastActiveAt).getTime()
-      case 'joinDate':
-        return new Date(b.joinedAt).getTime() - new Date(a.joinedAt).getTime()
-      default:
-        return 0
-    }
-  })
-})
-
-const totalPages = computed(() => Math.ceil(filteredStudents.value.length / pageSize.value))
-
-const paginatedStudents = computed(() => {
-  const start = (currentPage.value - 1) * pageSize.value
-  const end = start + pageSize.value
-  return filteredStudents.value.slice(start, end)
-})
+const paginatedStudents = computed(() => students.value)
 
 const pageNumbers = computed(() => {
   const pages = []
@@ -722,59 +657,17 @@ const viewStudentDetail = (studentId: string) => {
   router.push(`/teacher/students/${studentId}`)
 }
 
-const sendMessage = (studentId: string) => {
-  uiStore.showNotification({
-    type: 'info',
-    title: '发送消息',
-    message: '消息功能开发中...'
-  })
-}
+// 移除模拟的发送消息入口（占位保留函数，避免模板引用报错）
+const sendMessage = (_studentId: string) => {}
 
 const viewGrades = (studentId: string) => {
         router.push(`/teacher/students/${studentId}`)
 }
 
-const resetProgress = async (studentId: string) => {
-  if (confirm('确定要重置该学生的学习进度吗？')) {
-    try {
-      await new Promise(resolve => setTimeout(resolve, 1000))
-      const student = students.value.find(s => s.id === studentId)
-      if (student) {
-        student.progress = 0
-        student.completedLessons = 0
-      }
-      
-      uiStore.showNotification({
-        type: 'success',
-        title: '重置成功',
-        message: '学生学习进度已重置'
-      })
-    } catch (error) {
-      uiStore.showNotification({
-        type: 'error',
-        title: '重置失败',
-        message: '重置进度时发生错误'
-      })
-    }
-  }
-}
+// 移除模拟重置逻辑，保留空函数
+const resetProgress = async (_studentId: string) => {}
 
-const exportStudentData = async (studentId: string) => {
-  try {
-    await new Promise(resolve => setTimeout(resolve, 1000))
-    uiStore.showNotification({
-      type: 'success',
-      title: '导出成功',
-      message: '学生数据已导出'
-    })
-  } catch (error) {
-    uiStore.showNotification({
-      type: 'error',
-      title: '导出失败',
-      message: '导出数据时发生错误'
-    })
-  }
-}
+const exportStudentData = async (_studentId: string) => {}
 
 const removeStudent = async (studentId: string) => {
   if (confirm('确定要将该学生从课程中移除吗？')) {
@@ -800,84 +693,36 @@ const removeStudent = async (studentId: string) => {
   }
 }
 
-const batchSendMessage = () => {
-  uiStore.showNotification({
-    type: 'info',
-    title: '批量发送消息',
-    message: '消息功能开发中...'
-  })
-}
+const batchSendMessage = () => {}
 
-const batchExport = async () => {
-  try {
-    await new Promise(resolve => setTimeout(resolve, 2000))
-    uiStore.showNotification({
-      type: 'success',
-      title: '批量导出成功',
-      message: `已导出 ${selectedStudents.value.length} 名学生的数据`
-    })
-  } catch (error) {
-    uiStore.showNotification({
-      type: 'error',
-      title: '导出失败',
-      message: '批量导出时发生错误'
-    })
-  }
-}
+const batchExport = async () => {}
 
-const batchRemove = async () => {
-  if (confirm(`确定要移除选中的 ${selectedStudents.value.length} 名学生吗？`)) {
-    try {
-      await new Promise(resolve => setTimeout(resolve, 1500))
-      students.value = students.value.filter(s => !selectedStudents.value.includes(s.id))
-      selectedStudents.value = []
-      
-      uiStore.showNotification({
-        type: 'success',
-        title: '批量移除成功',
-        message: '选中的学生已从课程中移除'
-      })
-    } catch (error) {
-      uiStore.showNotification({
-        type: 'error',
-        title: '移除失败',
-        message: '批量移除时发生错误'
-      })
-    }
-  }
-}
+const batchRemove = async () => {}
 
 const exportData = async () => {
   try {
-    uiStore.showNotification({
-      type: 'info',
-      title: '导出中...',
-      message: '正在生成学生数据报告'
-    })
-    
-    await new Promise(resolve => setTimeout(resolve, 3000))
-    
-    uiStore.showNotification({
-      type: 'success',
-      title: '导出完成',
-      message: '学生数据已导出到本地'
-    })
-  } catch (error) {
-    uiStore.showNotification({
-      type: 'error',
-      title: '导出失败',
-      message: '导出数据时发生错误'
-    })
+    const params = new URLSearchParams()
+    if (searchQuery.value) params.append('search', searchQuery.value)
+    if (sortBy.value) params.append('sortBy', sortBy.value)
+    if (activityFilter.value) params.append('activity', activityFilter.value)
+    if (gradeFilter.value) params.append('grade', gradeFilter.value)
+    if (progressFilter.value) params.append('progress', progressFilter.value)
+
+    const url = `${baseURL}/teachers/analytics/course/${courseId}/students/export?${params.toString()}`
+    const res = await apiClient.get(url, { responseType: 'blob' })
+    const blob = new Blob([res as any], { type: 'text/csv;charset=UTF-8' })
+    const link = document.createElement('a')
+    link.href = URL.createObjectURL(blob)
+    link.download = `course_${courseId}_students.csv`
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+  } catch (e: any) {
+    uiStore.showNotification({ type: 'error', title: '导出失败', message: e?.message || '导出数据时发生错误' })
   }
 }
 
-const inviteStudents = () => {
-  uiStore.showNotification({
-    type: 'info',
-    title: '邀请学生',
-    message: '邀请功能开发中...'
-  })
-}
+const inviteStudents = () => {}
 
 // 生命周期
 onMounted(async () => {
@@ -885,6 +730,15 @@ onMounted(async () => {
   const close = () => { showStudentMenu.value = null }
   document.addEventListener('click', close)
   await fetchCourseStudents()
+})
+
+// 监听筛选/分页/排序/搜索，服务端拉取
+watch([currentPage, pageSize, sortBy, progressFilter, gradeFilter, activityFilter], () => {
+  fetchCourseStudents()
+})
+watch(searchQuery, () => {
+  currentPage.value = 1
+  fetchCourseStudents()
 })
 
 onUnmounted(() => {

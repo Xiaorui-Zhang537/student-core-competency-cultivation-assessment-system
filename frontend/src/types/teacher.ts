@@ -38,3 +38,26 @@ export interface ClassPerformanceData {
         count: number;
     }[];
 }
+
+export interface CourseStudentPerformanceItem {
+  studentId: number;
+  studentName: string;
+  studentNo: string;
+  avatar?: string;
+  progress?: number;
+  completedLessons?: number;
+  totalLessons?: number;
+  averageGrade?: number;
+  activityLevel?: string;
+  studyTimePerWeek?: number;
+  lastActiveAt?: string;
+}
+
+export interface CourseStudentPerformanceResponse {
+  courseId: number;
+  courseTitle: string;
+  total: number;
+  page: number;
+  size: number;
+  items: CourseStudentPerformanceItem[];
+}

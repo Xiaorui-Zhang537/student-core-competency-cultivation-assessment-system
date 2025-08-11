@@ -108,6 +108,35 @@
             <label for="dueDate" class="block text-sm font-medium mb-1">截止日期</label>
             <input id="dueDate" v-model="form.dueDate" type="date" required class="input" />
           </div>
+          <div>
+            <label class="block text-sm font-medium mb-1">附件上传（可选，多文件）</label>
+            <FileUpload
+              ref="assignmentUploader"
+              :multiple="true"
+              :autoUpload="false"
+              :accept="'.pdf,.doc,.docx,.ppt,.pptx,.zip,image/*'"
+              :upload-url="`${baseURL}/files/upload`"
+              :upload-headers="uploadHeaders"
+              :upload-data="assignmentUploadData"
+              @upload-error="onAssignmentUploadError"
+            />
+            <!-- 已有关联附件列表（编辑时显示） -->
+            <div v-if="editingAssignmentId && attachments.length" class="mt-4">
+              <h4 class="text-sm font-medium mb-2">已上传附件</h4>
+              <ul class="divide-y divide-gray-200">
+                <li v-for="f in attachments" :key="f.id" class="py-2 flex items-center justify-between">
+                  <div class="min-w-0 mr-3">
+                    <div class="text-sm truncate">{{ f.originalName || f.fileName || ('附件#' + f.id) }}</div>
+                    <div class="text-xs text-gray-500">大小：{{ formatSize(f.fileSize) }}</div>
+                  </div>
+                  <div class="flex items-center gap-2">
+                    <a class="btn btn-sm btn-outline" :href="`${baseURL}/files/${f.id}/download`">下载</a>
+                    <button class="btn btn-sm btn-danger-outline" @click="confirmDeleteAttachment(f.id)">删除</button>
+                  </div>
+                </li>
+              </ul>
+            </div>
+          </div>
           <div class="flex justify-end space-x-3 mt-6">
             <button type="button" @click="closeModal" class="btn btn-outline">取消</button>
             <button type="submit" :disabled="assignmentStore.loading" class="btn btn-primary">
@@ -128,6 +157,9 @@ import { useAuthStore } from '@/stores/auth';
 import type { Assignment, AssignmentCreationRequest, AssignmentUpdateRequest } from '@/types/assignment';
 import { useRoute } from 'vue-router';
 import { ChevronRightIcon } from '@heroicons/vue/24/outline';
+import FileUpload from '@/components/forms/FileUpload.vue';
+import { baseURL } from '@/api/config';
+import { fileApi } from '@/api/file.api';
 
 const assignmentStore = useAssignmentStore();
 const courseStore = useCourseStore();
@@ -147,6 +179,32 @@ const form = reactive<AssignmentCreationRequest & { id?: string }>({
   description: '',
   dueDate: '',
 });
+const assignmentUploader = ref();
+const assignmentUploadData = reactive<{ purpose: string; relatedId?: string | number }>({ purpose: 'assignment_attachment' });
+const uploadHeaders = {
+  Authorization: localStorage.getItem('token') ? `Bearer ${localStorage.getItem('token')}` : ''
+};
+const attachments = ref<any[]>([]);
+
+const refreshAttachments = async (assignmentId: string | number) => {
+  const res: any = await fileApi.getRelatedFiles('assignment_attachment', assignmentId);
+  attachments.value = res?.data || res || [];
+};
+
+const confirmDeleteAttachment = async (fileId: string | number) => {
+  if (!editingAssignmentId.value) return;
+  if (!confirm('确认删除该附件？此操作不可撤销。')) return;
+  await fileApi.deleteFile(String(fileId));
+  await refreshAttachments(editingAssignmentId.value);
+};
+
+const formatSize = (bytes?: number) => {
+  if (!bytes || bytes <= 0) return '未知';
+  const units = ['B','KB','MB','GB'];
+  let i = 0; let n = bytes;
+  while (n >= 1024 && i < units.length - 1) { n /= 1024; i++; }
+  return `${n.toFixed(1)} ${units[i]}`;
+};
 const teacherCourses = computed(() => {
   if (!authStore.user?.id) return []
   return courseStore.courses.filter(c => String(c.teacherId) === String(authStore.user?.id))
@@ -199,6 +257,8 @@ const openEditModal = (assignment: Assignment) => {
   const dueDate = new Date(assignment.dueDate).toISOString().split('T')[0];
   Object.assign(form, { ...assignment, courseId: String(assignment.courseId), dueDate });
   showModal.value = true;
+  // 加载已有附件
+  refreshAttachments(assignment.id);
 };
 
 const closeModal = () => {
@@ -209,15 +269,31 @@ const handleSubmit = async () => {
   if (isEditing.value && editingAssignmentId.value) {
     const { title, description, dueDate } = form;
     const updateData: AssignmentUpdateRequest = { title, description, dueDate };
-    await assignmentStore.updateAssignment(editingAssignmentId.value, updateData);
+    const updated = await assignmentStore.updateAssignment(editingAssignmentId.value, updateData);
+    // 编辑时，如有新文件被选择，则上传
+    if (updated && assignmentUploader.value) {
+      assignmentUploadData.relatedId = editingAssignmentId.value;
+      await assignmentUploader.value.uploadFiles?.();
+      await refreshAttachments(editingAssignmentId.value);
+    }
   } else {
     const createData: AssignmentCreationRequest = { ...form };
-    await assignmentStore.createAssignment(createData);
+    const created = await assignmentStore.createAssignment(createData);
+    if (created) {
+      const assignmentId = (created as any)?.id || (created as any)?.data?.id;
+      if (assignmentId && assignmentUploader.value) {
+        assignmentUploadData.relatedId = assignmentId;
+        await assignmentUploader.value.uploadFiles?.();
+      }
+    }
   }
-  
   if (!assignmentStore.loading) {
     closeModal();
   }
+};
+
+const onAssignmentUploadError = (msg: string) => {
+  console.error('作业附件上传失败:', msg);
 };
 
 const handleDeleteAssignment = async (assignment: Assignment) => {

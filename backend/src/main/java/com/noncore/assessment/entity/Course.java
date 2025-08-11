@@ -26,6 +26,7 @@ public class Course {
     private Long id;
     private String title;
     private String description;
+    private String content; // 课程内容（富文本/HTML）
     private String coverImage;
     private Long teacherId;
     private String teacherName; // 冗余字段，用于显示

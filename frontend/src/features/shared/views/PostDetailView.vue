@@ -30,6 +30,15 @@
       <!-- Post Content -->
       <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6 mb-6">
         <div class="prose dark:prose-invert max-w-none" v-html="currentPost.content"></div>
+        <div v-if="attachments.length" class="mt-6 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+          <div v-for="f in attachments" :key="f.id" class="border border-gray-200 dark:border-gray-700 rounded overflow-hidden">
+            <img v-if="f.isImage || f.mimeType?.startsWith('image/')" :src="`${baseURL}/files/${f.id}/preview`" class="w-full h-32 object-cover" />
+            <div class="p-2 text-xs flex items-center justify-between">
+              <span class="truncate" :title="f.originalName || f.fileName">{{ f.originalName || f.fileName || ('附件#' + f.id) }}</span>
+              <a class="text-primary-600" :href="`${baseURL}/files/${f.id}/download`">下载</a>
+            </div>
+          </div>
+        </div>
         <div class="mt-6 pt-4 border-t border-gray-200 dark:border-gray-700 flex items-center space-x-4">
            <button @click="communityStore.toggleLikePost(currentPost.id)" :class="currentPost.isLiked ? 'text-red-500' : 'text-gray-600 dark:text-gray-400'" class="flex items-center space-x-2 btn btn-ghost">
             <hand-thumb-up-icon class="w-5 h-5" />
@@ -77,6 +86,8 @@ import { useRoute } from 'vue-router';
 import { storeToRefs } from 'pinia';
 import { useCommunityStore } from '@/stores/community';
 import { UserIcon, EyeIcon, HandThumbUpIcon, ChatBubbleLeftIcon } from '@heroicons/vue/24/outline';
+import { baseURL } from '@/api/config';
+import { fileApi } from '@/api/file.api';
 
 const route = useRoute();
 const communityStore = useCommunityStore();
@@ -84,6 +95,7 @@ const communityStore = useCommunityStore();
 const { currentPost, comments, totalComments, loading } = storeToRefs(communityStore);
 
 const newComment = ref('');
+const attachments = ref<any[]>([]);
 
 const handlePostComment = async () => {
     if (!currentPost.value) return;
@@ -102,11 +114,14 @@ onMounted(async () => {
   if (postId) {
     await communityStore.fetchPostById(postId);
     await communityStore.fetchComments(postId, { page: 1, size: 20 });
+    const files: any = await fileApi.getRelatedFiles('community_post', postId);
+    attachments.value = files?.data || files || [];
   }
 });
 
 onUnmounted(() => {
   currentPost.value = null;
   comments.value = [];
+  attachments.value = [];
 });
 </script>

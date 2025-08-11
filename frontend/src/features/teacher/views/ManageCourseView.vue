@@ -27,9 +27,11 @@
     <div v-if="courseStore.loading" class="text-center py-12">
         <p>正在加载课程...</p>
     </div>
-    <div v-else class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div v-else class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
       <div v-for="course in courseStore.courses" :key="course.id" class="card overflow-hidden cursor-pointer hover:shadow-lg transition-shadow" @click="navigateToCourse(course)">
-        <div class="h-40 bg-gray-200"></div>
+        <div class="h-40 bg-gray-200 overflow-hidden">
+          <img v-if="course.coverImage && getCoverSrc(course)" :src="getCoverSrc(course)" alt="课程封面" class="w-full h-full object-cover" @error="onCardCoverError(course)" />
+        </div>
         <div class="p-4">
           <h3 class="font-bold text-lg">{{ course.title }}</h3>
           <p class="text-sm text-gray-500 mb-2">{{ course.category }}</p>
@@ -64,12 +66,31 @@
             <textarea id="description" v-model="form.description" rows="3" class="input"></textarea>
           </div>
           <div>
+            <label for="content" class="block text-sm font-medium mb-1">课程内容</label>
+            <textarea id="content" v-model="form.content" rows="6" class="input" placeholder="可填写课程大纲、教学安排等"></textarea>
+          </div>
+          <div>
             <label for="category" class="block text-sm font-medium mb-1">分类</label>
             <input id="category" v-model="form.category" type="text" required class="input" />
           </div>
           <div>
             <label for="tags" class="block text-sm font-medium mb-1">标签 (逗号分隔)</label>
             <input id="tags" v-model="tagsInput" type="text" class="input" />
+          </div>
+          <div>
+            <label class="block text-sm font-medium mb-1">课程封面</label>
+            <FileUpload
+              ref="coverUploader"
+              :accept="'image/*'"
+              :multiple="false"
+              :autoUpload="true"
+              :upload-url="`${baseURL}/files/upload`"
+              :upload-headers="uploadHeaders"
+              :upload-data="{ purpose: 'course_cover' }"
+              @upload-success="onCoverUploaded"
+              @upload-error="onCoverUploadError"
+            />
+            <p v-if="form.coverImage" class="text-xs text-gray-500 mt-2">已选择封面（文件ID：{{ form.coverImage }}）</p>
           </div>
           <div class="flex justify-end space-x-3 mt-6">
             <button type="button" @click="closeModal" class="btn btn-outline">取消</button>
@@ -90,6 +111,8 @@ import { useAuthStore } from '@/stores/auth';
 import { useRouter } from 'vue-router';
 import type { Course, CourseCreationRequest, CourseUpdateRequest } from '@/types/course';
 import { debounce } from 'lodash-es';
+import FileUpload from '@/components/forms/FileUpload.vue';
+import apiClient, { baseURL } from '@/api/config';
 
 const courseStore = useCourseStore();
 const authStore = useAuthStore();
@@ -99,13 +122,46 @@ const showModal = ref(false);
 const isEditing = ref(false);
 const editingCourseId = ref<string | null>(null);
 
-const form = reactive<Omit<CourseCreationRequest, 'tags'> & { id?: string; tags: string[] }>({
+const form = reactive<Omit<CourseCreationRequest, 'tags'> & { id?: string; tags: string[]; coverImage?: string; content?: string }>({
   title: '',
   description: '',
+  content: '',
   category: '',
   tags: [],
+  coverImage: ''
 });
 const tagsInput = ref('');
+const coverUploader = ref();
+const uploadHeaders = {
+  Authorization: localStorage.getItem('token') ? `Bearer ${localStorage.getItem('token')}` : ''
+};
+
+// 封面预览：支持外链URL与受保护预览（以blob方式加载避免<img>不带Authorization）
+const coverSrcMap = reactive<Record<string, string>>({});
+const isHttpUrl = (v?: string) => !!v && /^(http|https):\/\//i.test(v);
+const getCoverSrc = (course: Course) => {
+  const v: any = (course as any).coverImage;
+  if (!v) return '';
+  // 避免加载外网被拦截导致报错：对外链封面直接不加载，使用灰底占位
+  if (isHttpUrl(v)) return '';
+  const key = String(v);
+  if (coverSrcMap[key]) return coverSrcMap[key];
+  // 延迟加载blob
+  apiClient
+    .get(`/files/${encodeURIComponent(key)}/preview`, { responseType: 'blob' })
+    .then((res) => {
+      const url = URL.createObjectURL(res as any);
+      coverSrcMap[key] = url;
+    })
+    .catch(() => {
+      // ignore
+    });
+  return '';
+};
+
+const onCardCoverError = (_course: Course) => {
+  // 忽略错误，显示灰底占位
+};
 
 const filters = reactive({
     query: '',
@@ -129,7 +185,7 @@ const navigateToCourse = (course: Course) => {
 const openCreateModal = () => {
   isEditing.value = false;
   editingCourseId.value = null;
-  Object.assign(form, { title: '', description: '', category: '', tags: [] });
+  Object.assign(form, { title: '', description: '', content: '', category: '', tags: [], coverImage: '' });
   tagsInput.value = '';
   showModal.value = true;
 };
@@ -172,6 +228,19 @@ const handleSubmit = async () => {
     closeModal();
     fetchTeacherCourses();
   }
+};
+
+const onCoverUploaded = (response: any) => {
+  // axios 拦截器可能已解包，兼容 { id } 或 { data: { id } }
+  const data = response?.data ?? response;
+  if (data && (data.id || data.fileId)) {
+    form.coverImage = String(data.id ?? data.fileId);
+  }
+};
+
+const onCoverUploadError = (message: string) => {
+  // 简单打印错误，表单仍可继续提交
+  console.error('封面上传失败:', message);
 };
 
 const handleDeleteCourse = async (id: string) => {

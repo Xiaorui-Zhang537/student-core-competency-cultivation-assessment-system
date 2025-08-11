@@ -182,18 +182,24 @@ const currentCourseTitle = computed(() => {
   return found?.title || ''
 })
 
-const safeCourseAnalytics = computed(() => ({
-  totalStudents: (teacherStore.courseAnalytics.enrollmentCount ?? 0) as number,
-  averageScore: (teacherStore.courseAnalytics.averageScore as any) ?? 0,
-  completionRate: (teacherStore.courseAnalytics.averageCompletionRate as any) ?? 0,
-  totalAssignments: (teacherStore.courseAnalytics.assignmentCount ?? 0) as number,
-  timeSeriesData: (teacherStore.courseAnalytics as any).timeSeriesData ?? []
-}))
+const safeCourseAnalytics = computed(() => {
+  const ca: any = teacherStore.courseAnalytics as any
+  return {
+    totalStudents: (ca.totalStudents ?? ca.enrollmentCount ?? 0) as number,
+    averageScore: (ca.averageScore ?? 0) as number,
+    completionRate: (ca.completionRate ?? ca.averageCompletionRate ?? 0) as number,
+    totalAssignments: (ca.totalAssignments ?? ca.assignmentCount ?? 0) as number,
+    timeSeriesData: ca.timeSeriesData ?? []
+  }
+})
 
-const safeClassPerformance = computed(() => ({
-  totalStudents: (teacherStore.classPerformance as any)?.totalStudents ?? 0,
-  gradeStats: (teacherStore.classPerformance as any)?.gradeStats ?? null
-}))
+const safeClassPerformance = computed(() => {
+  const cp: any = teacherStore.classPerformance as any
+  return {
+    totalStudents: cp?.totalStudents ?? 0,
+    gradeStats: cp?.gradeStats ?? null,
+  }
+})
 
 // 方法
 const initCharts = () => {
@@ -222,7 +228,7 @@ const initLearningTrendChart = () => {
     ? safeCourseAnalytics.value.timeSeriesData
     : []
   const months = seriesData.map((d: any) => d.date ?? d.month ?? '')
-  const studentsSeries = seriesData.map((d: any) => d.students ?? 0)
+  const studentsSeries = seriesData.map((d: any) => (d.students ?? d.value ?? 0))
 
   const option = {
     title: {

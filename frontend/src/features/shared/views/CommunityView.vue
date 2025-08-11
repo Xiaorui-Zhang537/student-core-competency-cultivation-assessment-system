@@ -217,6 +217,20 @@
               <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">帖子内容</label>
               <textarea v-model="newPost.content" rows="6" placeholder="分享你的想法..." class="input" required></textarea>
             </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">图片附件（可选）</label>
+              <FileUpload
+                ref="postUploader"
+                :accept="'image/*'"
+                :multiple="true"
+                :autoUpload="false"
+                :upload-url="`${baseURL}/files/upload`"
+                :upload-headers="uploadHeaders"
+                :upload-data="postUploadData"
+                @upload-success="onPostUploadSuccess"
+                @upload-error="onPostUploadError"
+              />
+            </div>
             <div class="flex justify-end space-x-3 pt-4">
               <button type="button" @click="showCreatePostModal = false" class="btn btn-outline">取消</button>
               <button type="submit" :disabled="loading" class="btn btn-primary">发布帖子</button>
@@ -240,6 +254,8 @@ import {
 } from '@heroicons/vue/24/outline';
 
 import { useAuthStore } from '@/stores/auth';
+import FileUpload from '@/components/forms/FileUpload.vue';
+import { baseURL } from '@/api/config';
 
 const router = useRouter();
 const communityStore = useCommunityStore();
@@ -263,6 +279,11 @@ const newPost = reactive({
   content: '',
   tagsInput: '',
 });
+const postUploader = ref();
+const postUploadData = reactive<{ purpose: string; relatedId?: string | number }>({ purpose: 'community_post' });
+const uploadHeaders = {
+  Authorization: localStorage.getItem('token') ? `Bearer ${localStorage.getItem('token')}` : ''
+};
 
 const categories = ref([
   { id: 'all', name: '全部帖子', icon: ChatBubbleLeftIcon },
@@ -320,6 +341,11 @@ const handleCreatePost = async () => {
   
   const created = await communityStore.createPost(postData);
   if (created) {
+    const postId = (created as any)?.id || (created as any)?.data?.id;
+    if (postId && postUploader.value) {
+      postUploadData.relatedId = postId;
+      await postUploader.value.uploadFiles?.();
+    }
     showCreatePostModal.value = false;
     newPost.title = '';
     newPost.content = '';
@@ -327,6 +353,13 @@ const handleCreatePost = async () => {
     newPost.category = '学习讨论';
     applyFilters(); // Refresh list
   }
+};
+
+const onPostUploadSuccess = () => {
+  // 可选：提示成功
+};
+const onPostUploadError = (msg: string) => {
+  console.error('帖子附件上传失败:', msg);
 };
 
 const formatDate = (dateString: string) => {

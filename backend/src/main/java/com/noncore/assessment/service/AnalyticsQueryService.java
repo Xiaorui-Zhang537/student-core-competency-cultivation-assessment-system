@@ -3,6 +3,7 @@ package com.noncore.assessment.service;
 import com.noncore.assessment.dto.response.AssignmentAnalyticsResponse;
 import com.noncore.assessment.dto.response.ClassPerformanceResponse;
 import com.noncore.assessment.dto.response.CourseAnalyticsResponse;
+import com.noncore.assessment.dto.response.CourseStudentPerformanceResponse;
 import com.noncore.assessment.dto.response.StudentProgressReportResponse;
 import java.util.Map;
 
@@ -19,4 +20,7 @@ public interface AnalyticsQueryService {
     Map<String, Object> getTeachingAnalytics(Long teacherId, String timeRange);
     
     Map<String, Object> generateTeachingReport(Long teacherId, Long courseId, String reportType, String timeRange);
+
+    CourseStudentPerformanceResponse getCourseStudentPerformance(Long teacherId, Long courseId, Integer page, Integer size,
+                                                                String search, String sortBy, String activityFilter, String gradeFilter, String progressFilter);
 } 

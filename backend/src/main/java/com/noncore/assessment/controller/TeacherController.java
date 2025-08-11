@@ -1,6 +1,8 @@
 package com.noncore.assessment.controller;
 
 import com.noncore.assessment.dto.response.*;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import com.noncore.assessment.service.AnalyticsQueryService;
 import com.noncore.assessment.service.UserService;
 import com.noncore.assessment.util.ApiResponse;
@@ -59,5 +61,71 @@ public class TeacherController extends BaseController {
         Long teacherId = getCurrentUserId();
         ClassPerformanceResponse performance = analyticsQueryService.getClassPerformance(teacherId, courseId, timeRange);
         return ResponseEntity.ok(ApiResponse.success(performance));
+    }
+
+    @GetMapping("/analytics/course/{courseId}/students")
+    @Operation(summary = "获取课程学生表现列表（分页）")
+    public ResponseEntity<ApiResponse<CourseStudentPerformanceResponse>> getCourseStudentPerformance(
+            @Parameter(description = "课程ID") @PathVariable Long courseId,
+            @Parameter(description = "页码") @RequestParam(defaultValue = "1") Integer page,
+            @Parameter(description = "每页大小") @RequestParam(defaultValue = "20") Integer size,
+            @Parameter(description = "搜索关键词") @RequestParam(required = false) String search,
+            @Parameter(description = "排序字段(name|grade)") @RequestParam(required = false, defaultValue = "name") String sortBy,
+            @Parameter(description = "活跃度筛选") @RequestParam(required = false) String activity,
+            @Parameter(description = "成绩筛选") @RequestParam(required = false) String grade,
+            @Parameter(description = "进度筛选") @RequestParam(required = false) String progress
+    ) {
+        Long teacherId = getCurrentUserId();
+        CourseStudentPerformanceResponse resp = analyticsQueryService.getCourseStudentPerformance(teacherId, courseId, page, size, search, sortBy, activity, grade, progress);
+        return ResponseEntity.ok(ApiResponse.success(resp));
+    }
+
+    @GetMapping("/analytics/course/{courseId}/students/export")
+    @Operation(summary = "导出课程学生表现（CSV）")
+    public ResponseEntity<byte[]> exportCourseStudentPerformanceCsv(
+            @Parameter(description = "课程ID") @PathVariable Long courseId,
+            @Parameter(description = "搜索关键词") @RequestParam(required = false) String search,
+            @Parameter(description = "排序字段(name|grade)") @RequestParam(required = false, defaultValue = "name") String sortBy,
+            @Parameter(description = "活跃度筛选") @RequestParam(required = false) String activity,
+            @Parameter(description = "成绩筛选") @RequestParam(required = false) String grade,
+            @Parameter(description = "进度筛选") @RequestParam(required = false) String progress
+    ) {
+        Long teacherId = getCurrentUserId();
+        // 取全部数据（设置大尺寸）
+        CourseStudentPerformanceResponse resp = analyticsQueryService.getCourseStudentPerformance(teacherId, courseId, 1, 100000, search, sortBy, activity, grade, progress);
+        StringBuilder sb = new StringBuilder();
+        sb.append("studentId,studentName,studentNo,progress,averageGrade,activityLevel,studyTimePerWeek,completedLessons,totalLessons,lastActiveAt\n");
+        if (resp.getItems() != null) {
+            for (CourseStudentPerformanceItem i : resp.getItems()) {
+                sb.append(nullToEmpty(i.getStudentId()))
+                  .append(',').append(escapeCsv(i.getStudentName()))
+                  .append(',').append(escapeCsv(i.getStudentNo()))
+                  .append(',').append(nullToEmpty(i.getProgress()))
+                  .append(',').append(nullToEmpty(i.getAverageGrade()))
+                  .append(',').append(escapeCsv(i.getActivityLevel()))
+                  .append(',').append(nullToEmpty(i.getStudyTimePerWeek()))
+                  .append(',').append(nullToEmpty(i.getCompletedLessons()))
+                  .append(',').append(nullToEmpty(i.getTotalLessons()))
+                  .append(',').append(escapeCsv(i.getLastActiveAt()))
+                  .append('\n');
+            }
+        }
+        byte[] bytes = sb.toString().getBytes(java.nio.charset.StandardCharsets.UTF_8);
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.parseMediaType("text/csv;charset=UTF-8"));
+        headers.set(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=course_" + courseId + "_students.csv");
+        return ResponseEntity.ok().headers(headers).body(bytes);
+    }
+
+    private static String nullToEmpty(Object v) {
+        return v == null ? "" : String.valueOf(v);
+    }
+    private static String escapeCsv(String v) {
+        if (v == null) return "";
+        String s = v.replace("\r", " ").replace("\n", " ");
+        if (s.contains(",") || s.contains("\"") ) {
+            s = '"' + s.replace("\"", "\"\"") + '"';
+        }
+        return s;
     }
 } 

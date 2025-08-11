@@ -24,4 +24,7 @@ export const fileApi = {
 
   // Note: The download URL is typically constructed directly, e.g., `/files/{fileId}/download`
   // So a dedicated API client function might not be necessary unless it needs special headers.
+  getRelatedFiles: (purpose: string, relatedId: string | number): Promise<ApiResponse<any[]>> => {
+    return api.get(`/files/related`, { params: { purpose, relatedId } });
+  },
 };
