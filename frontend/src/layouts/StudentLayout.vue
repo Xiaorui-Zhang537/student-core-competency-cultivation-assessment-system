@@ -42,16 +42,18 @@
               <moon-icon v-else class="h-6 w-6" />
             </button>
 
-            <div class="relative">
+              <div class="relative">
               <button
                 @click="showUserMenu = !showUserMenu"
                 class="flex items-center text-sm rounded-full focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500"
               >
-                <div class="h-8 w-8 rounded-full bg-gradient-to-r from-primary-500 to-purple-600 flex items-center justify-center text-white font-medium text-sm">
-                  {{ (authStore.user?.username || 'S').charAt(0).toUpperCase() }}
-                </div>
+                <UserAvatar :avatar="(authStore.user as any)?.avatar" :size="32">
+                  <div class="h-8 w-8 rounded-full bg-gradient-to-r from-primary-500 to-purple-600 flex items-center justify-center text-white font-medium text-sm">
+                    {{ (authStore.user?.username || 'S').charAt(0).toUpperCase() }}
+                  </div>
+                </UserAvatar>
                 <div class="hidden md:block text-left ml-2">
-                  <p class="text-sm font-medium text-gray-900 dark:text-white">{{ authStore.user?.username || '学生' }}</p>
+                  <p class="text-sm font-medium text-gray-900 dark:text-white">{{ (authStore.user as any)?.nickname || authStore.user?.username || '学生' }}</p>
                   <p class="text-xs text-gray-500 dark:text-gray-400">学生</p>
                 </div>
                 <chevron-down-icon class="h-4 w-4 text-gray-400 ml-1" />
@@ -152,6 +154,7 @@ import {
   AcademicCapIcon,
   ClipboardDocumentListIcon,
 } from '@heroicons/vue/24/outline'
+import UserAvatar from '@/components/ui/UserAvatar.vue'
 
 const router = useRouter()
 const uiStore = useUIStore()

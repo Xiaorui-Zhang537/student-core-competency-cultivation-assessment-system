@@ -20,7 +20,8 @@ public class UserDto {
     private String avatar;
     private String firstName;
     private String lastName;
-    private String displayName;
+    private String studentNo;
+    private String teacherNo;
     private String bio;
     private String grade;
     private String subject;
@@ -42,7 +43,8 @@ public class UserDto {
                 .avatar(user.getAvatar())
                 .firstName(user.getFirstName())
                 .lastName(user.getLastName())
-                .displayName(user.getDisplayName())
+                .studentNo(user.getStudentNo())
+                .teacherNo(user.getTeacherNo())
                 .bio(user.getBio())
                 .grade(user.getGrade())
                 .subject(user.getSubject())

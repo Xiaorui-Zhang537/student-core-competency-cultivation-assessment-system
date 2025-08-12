@@ -64,4 +64,8 @@ export interface CourseStudentPerformanceResponse {
   page: number;
   size: number;
   items: CourseStudentPerformanceItem[];
+  averageProgress?: number;
+  averageGrade?: number;
+  activeStudents?: number;
+  passRate?: number;
 }

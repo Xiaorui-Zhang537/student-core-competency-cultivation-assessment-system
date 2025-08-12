@@ -61,13 +61,52 @@
     </div>
 
     <!-- 图表区域 -->
-    <div class="grid grid-cols-1 gap-8 mb-8">
+    <div class="grid grid-cols-1 xl:grid-cols-2 gap-8 mb-8">
       <!-- 成绩分布图 -->
       <card padding="lg">
         <template #header>
-          <h3 class="text-lg font-semibold text-gray-900 dark:text-white">成绩分布</h3>
+          <div class="flex items-center justify-between h-11">
+            <h3 class="text-lg font-semibold text-gray-900 dark:text-white">成绩分布</h3>
+            <!-- 保持左右卡片header高度一致（右侧有按钮），这里用占位 -->
+            <div class="invisible flex items-center gap-2">
+              <button class="btn">1</button>
+              <button class="btn">2</button>
+            </div>
+          </div>
         </template>
-        <div ref="scoreDistributionRef" class="h-80 w-full"></div>
+        <!-- 对齐工具栏占位，使左右两图表起始Y对齐 -->
+        <div class="mb-3 min-h-[44px]"></div>
+        <div class="w-full flex justify-center">
+          <div ref="scoreDistributionRef" class="h-80 w-full max-w-[520px]"></div>
+        </div>
+      </card>
+
+      <!-- 五维能力雷达图 -->
+      <card padding="lg">
+        <template #header>
+          <div class="flex items-center justify-between h-11">
+            <h3 class="text-lg font-semibold text-gray-900 dark:text-white">五维能力雷达</h3>
+            <div class="flex items-center gap-2">
+              <button class="btn" @click="openWeights = true" :disabled="!selectedCourseId">设置权重</button>
+              <button class="btn" title="刷新" @click="loadRadar" :disabled="!selectedCourseId">
+                <arrow-path-icon class="w-4 h-4" />
+              </button>
+              <button class="btn" @click="exportRadar" :disabled="!selectedCourseId">导出CSV</button>
+            </div>
+          </div>
+        </template>
+        <div class="flex flex-nowrap items-center gap-2 mb-3 overflow-x-auto min-h-[44px]">
+          <select v-model="selectedStudentId" class="input w-44" :disabled="!selectedCourseId">
+            <option :value="null">请选择学生</option>
+            <option v-for="s in topStudents" :key="s.studentId" :value="String(s.studentId)">{{ s.studentName }}</option>
+          </select>
+          <input type="date" v-model="startDate" class="input w-36" />
+          <input type="date" v-model="endDate" class="input w-36" />
+        </div>
+        <div v-if="radarIndicators.length" class="w-full flex justify-center">
+          <RadarChart :indicators="radarIndicators" :series="radarSeries" width="520px" height="320px" />
+        </div>
+        <div v-else class="text-sm text-gray-500 text-center">暂无雷达数据</div>
       </card>
     </div>
 
@@ -94,6 +133,8 @@
 
     
     </div>
+    <!-- 权重设置弹窗（保持在同一 <template> 内） -->
+    <AbilityWeightsDialog :open="openWeights" :weights="weights" @close="openWeights=false" @saved="onWeightsSaved" />
   </div>
 </template>
 
@@ -111,7 +152,9 @@ import Button from '@/components/ui/Button.vue'
 import Badge from '@/components/ui/Badge.vue'
 import Progress from '@/components/ui/Progress.vue'
 import * as echarts from 'echarts'
-import { DocumentArrowDownIcon, SparklesIcon } from '@heroicons/vue/24/outline'
+import RadarChart from '@/components/charts/RadarChart.vue'
+import AbilityWeightsDialog from '@/features/teacher/components/AbilityWeightsDialog.vue'
+import { DocumentArrowDownIcon, SparklesIcon, ArrowPathIcon } from '@heroicons/vue/24/outline'
 
 // Stores
 const teacherStore = useTeacherStore()
@@ -123,6 +166,13 @@ const uiStore = useUIStore()
 const selectedCourseId = ref<string | null>(null)
 const topStudents = ref<CourseStudentPerformanceItem[]>([])
 const studentTotal = ref<number>(0)
+const selectedStudentId = ref<string | null>(null)
+const startDate = ref<string>('2024-11-01')
+const endDate = ref<string>('2024-11-30')
+const openWeights = ref(false)
+const weights = ref<Record<string, number> | null>(null)
+const radarIndicators = ref<{ name: string; max: number }[]>([])
+const radarSeries = ref<{ name: string; values: number[] }[]>([])
 
 // 图表引用
 const learningTrendRef = ref<HTMLElement>()
@@ -215,7 +265,7 @@ const initScoreDistributionChart = () => {
         name: '成绩分布',
         type: 'pie',
         radius: ['50%', '70%'],
-        center: ['60%', '50%'],
+        center: ['50%', '48%'],
         data: pieData,
       }
     ]
@@ -234,15 +284,19 @@ const onCourseChange = () => {
   router.replace({ name: 'TeacherAnalytics', query: { courseId: selectedCourseId.value } })
   teacherStore.fetchCourseAnalytics(selectedCourseId.value)
   teacherStore.fetchClassPerformance(selectedCourseId.value)
+  // 初始化权重
+  teacherApi.getAbilityWeights(selectedCourseId.value).then((r: any) => { weights.value = r?.weights || r?.data?.weights || null }).catch(() => {})
   // 获取学生表现排行（前5名，按成绩）
   teacherApi.getCourseStudentPerformance(selectedCourseId.value, { page: 1, size: 5, sortBy: 'grade' })
-    .then((resp: any) => {
-      const data = (resp && (resp as any).items) ? (resp as any) : resp
+    .then((data: any) => {
       topStudents.value = (data?.items ?? []) as CourseStudentPerformanceItem[]
       if (typeof data?.total === 'number') studentTotal.value = data.total
     })
     .catch(() => { topStudents.value = [] })
-  nextTick(() => initCharts())
+  nextTick(() => { 
+    initCharts()
+    loadRadar()
+  })
 }
 
 // 当路由中的 courseId 改变（例如从其它页面跳转）时，自动同步当前课程并刷新数据
@@ -252,6 +306,11 @@ watch(() => route.query.courseId, (cid) => {
     onCourseChange()
   }
 })
+
+// 监听班级表现数据变化以刷新成绩分布图
+watch(() => teacherStore.classPerformance, () => {
+  nextTick(() => initScoreDistributionChart())
+}, { deep: true })
 
 const exportReport = async () => {
   if (!selectedCourseId.value) {
@@ -321,5 +380,49 @@ const askAiForAnalytics = () => {
   const q = `请根据以下课程数据做教学洞察与建议，并指出高风险点与可执行改进项（用中文回答）。\n` +
            `数据(JSON)：\n` + JSON.stringify(payload, null, 2)
   router.push({ path: '/teacher/ai', query: { q } })
+}
+
+const loadRadar = async () => {
+  try {
+    if (!selectedCourseId.value || !startDate.value || !endDate.value) return
+    if (new Date(startDate.value) > new Date(endDate.value)) {
+      return uiStore.showNotification({ type: 'warning', title: '时间范围错误', message: '开始日期不能晚于结束日期' })
+    }
+    const params: any = { courseId: selectedCourseId.value, startDate: startDate.value, endDate: endDate.value }
+    if (selectedStudentId.value) params.studentId = selectedStudentId.value
+    const r: any = await teacherApi.getAbilityRadar(params)
+    const data: any = r?.data?.data ?? r?.data ?? r
+    const dims: string[] = data?.dimensions || []
+    radarIndicators.value = dims.map(n => ({ name: n, max: 100 }))
+    const student = (data?.studentScores || []) as number[]
+    const clazz = (data?.classAvgScores || []) as number[]
+    radarSeries.value = [
+      { name: '学生', values: student },
+      { name: '班级', values: clazz },
+    ]
+  } catch (e: any) {
+    uiStore.showNotification({ type: 'error', title: '刷新失败', message: e?.message || '请稍后再试' })
+  }
+}
+
+const exportRadar = async () => {
+  if (!selectedCourseId.value || !startDate.value || !endDate.value) return
+  const params: any = { courseId: selectedCourseId.value, startDate: startDate.value, endDate: endDate.value }
+  if (selectedStudentId.value) params.studentId = selectedStudentId.value
+  const res = await teacherApi.exportAbilityRadarCsv(params)
+  const blob = new Blob([res as any], { type: 'text/csv;charset=utf-8;' })
+  const url = window.URL.createObjectURL(blob)
+  const a = document.createElement('a')
+  a.href = url
+  a.download = `radar_${selectedCourseId.value}.csv`
+  a.click()
+  window.URL.revokeObjectURL(url)
+}
+
+const onWeightsSaved = async (w: Record<string, number>) => {
+  if (!selectedCourseId.value) return
+  weights.value = { ...w }
+  await teacherApi.updateAbilityWeights({ courseId: selectedCourseId.value, weights: weights.value as any })
+  await loadRadar()
 }
 </script> 

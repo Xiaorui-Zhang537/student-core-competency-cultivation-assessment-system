@@ -83,11 +83,13 @@ public class EnrollmentServiceImpl implements EnrollmentService {
 
     @Override
     @Transactional(readOnly = true)
-    public PageResult<User> getCourseStudents(Long teacherId, Long courseId, Integer page, Integer size) {
+    public PageResult<User> getCourseStudents(Long teacherId, Long courseId, Integer page, Integer size, String search, String sortBy, String activity, String grade, String progress) {
         logger.info("获取课程学生列表，课程ID: {}, 操作教师ID: {}", courseId, teacherId);
         checkCourseOwnership(courseId, teacherId);
         PageHelper.startPage(page, size);
-        List<User> students = userMapper.selectStudentsByCourseId(courseId);
+        // 优先使用高级查询（已支持keyword与部分排序白名单；其余筛选后续扩展）
+        String kw = (search != null && !search.isBlank()) ? "%" + search.trim() + "%" : null;
+        List<User> students = userMapper.selectStudentsByCourseIdAdvanced(courseId, kw, activity, grade, progress, sortBy);
         PageInfo<User> pageInfo = new PageInfo<>(students);
         return PageResult.of(pageInfo.getList(), pageInfo.getPageNum(), pageInfo.getPageSize(), pageInfo.getTotal(), pageInfo.getPages());
     }

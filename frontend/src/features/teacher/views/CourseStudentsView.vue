@@ -225,15 +225,11 @@
                 <td class="px-6 py-4">
                   <div class="flex items-center">
                     <div class="flex-shrink-0 w-10 h-10">
-                      <img 
-                        v-if="student.avatar" 
-                        :src="student.avatar" 
-                        :alt="student.name"
-                        class="w-10 h-10 rounded-full"
-                      />
-                      <div v-else class="w-10 h-10 rounded-full bg-gray-200 dark:bg-gray-600 flex items-center justify-center">
-                        <user-icon class="w-5 h-5 text-gray-400" />
-                      </div>
+                      <UserAvatar :avatar="student.avatar" :size="40">
+                        <div class="w-10 h-10 rounded-full bg-gray-200 dark:bg-gray-600 flex items-center justify-center">
+                          <user-icon class="w-5 h-5 text-gray-400" />
+                        </div>
+                      </UserAvatar>
                     </div>
                     <div class="ml-4">
                       <div class="text-sm font-medium text-gray-900 dark:text-white">
@@ -426,6 +422,7 @@ import {
   AcademicCapIcon,
   ArrowPathIcon
 } from '@heroicons/vue/24/outline'
+import UserAvatar from '@/components/ui/UserAvatar.vue'
 
 // Router and Stores
 const route = useRoute()
@@ -469,7 +466,7 @@ const fetchCourseStudents = async () => {
   } catch { /* empty */ }
   try {
     const { teacherApi } = await import('@/api/teacher.api')
-    const res: any = await teacherApi.getCourseStudentPerformance(courseId, {
+    const payload: any = await teacherApi.getCourseStudentPerformance(courseId, {
       page: currentPage.value,
       size: pageSize.value,
       search: searchQuery.value || undefined,
@@ -478,7 +475,6 @@ const fetchCourseStudents = async () => {
       grade: gradeFilter.value || undefined,
       progress: progressFilter.value || undefined
     })
-    const payload = res?.data || res
     const items = payload?.items || []
     students.value = items.map((i: any) => ({
       id: String(i.studentId),
@@ -505,12 +501,64 @@ const fetchCourseStudents = async () => {
   }
 }
 
-// 计算属性
-const filteredStudents = computed(() => students.value)
+// 计算属性：本地筛选与排序（后端部分能力未就绪时的兜底）
+const filteredStudents = computed(() => {
+  let arr = students.value.slice()
+  // 关键字（本地）补充过滤
+  if (searchQuery.value) {
+    const q = searchQuery.value.trim().toLowerCase()
+    arr = arr.filter((s) =>
+      String(s.name || '').toLowerCase().includes(q) ||
+      String(s.studentId || '').toLowerCase().includes(q)
+    )
+  }
+  // 进度过滤
+  if (progressFilter.value) {
+    arr = arr.filter((s) => {
+      const p = Number(s.progress || 0)
+      if (progressFilter.value === 'not-started') return p <= 0
+      if (progressFilter.value === 'in-progress') return p > 0 && p < 100
+      if (progressFilter.value === 'completed') return p >= 100
+      return true
+    })
+  }
+  // 成绩过滤
+  if (gradeFilter.value) {
+    arr = arr.filter((s) => {
+      const g = Number(s.averageGrade)
+      if (!Number.isFinite(g)) return false
+      if (gradeFilter.value === 'excellent') return g >= 90
+      if (gradeFilter.value === 'good') return g >= 80 && g < 90
+      if (gradeFilter.value === 'average') return g >= 70 && g < 80
+      if (gradeFilter.value === 'below') return g < 70
+      return true
+    })
+  }
+  // 活跃度过滤
+  if (activityFilter.value) {
+    arr = arr.filter((s) => String(s.activityLevel || '').toLowerCase() === activityFilter.value)
+  }
+  // 排序
+  const by = sortBy.value
+  arr.sort((a: any, b: any) => {
+    switch (by) {
+      case 'progress': return Number(b.progress || 0) - Number(a.progress || 0)
+      case 'grade': return Number(b.averageGrade || 0) - Number(a.averageGrade || 0)
+      case 'lastActive': return new Date(b.lastActiveAt || 0).getTime() - new Date(a.lastActiveAt || 0).getTime()
+      case 'joinDate': return new Date(b.joinedAt || 0).getTime() - new Date(a.joinedAt || 0).getTime()
+      default: return String(a.name || '').localeCompare(String(b.name || ''))
+    }
+  })
+  return arr
+})
 
-const totalPages = computed(() => Math.max(1, Math.ceil((stats.totalStudents || 0) / pageSize.value)))
+const totalPages = computed(() => Math.max(1, Math.ceil((filteredStudents.value.length || 0) / pageSize.value)))
 
-const paginatedStudents = computed(() => students.value)
+const paginatedStudents = computed(() => {
+  const start = (currentPage.value - 1) * pageSize.value
+  const end = start + pageSize.value
+  return filteredStudents.value.slice(start, end)
+})
 
 const pageNumbers = computed(() => {
   const pages = []
@@ -527,6 +575,15 @@ const pageNumbers = computed(() => {
   }
   return pages
 })
+
+// 基于筛选后的统计（前端兜底）
+watch(filteredStudents, (arr) => {
+  const avg = (ns: number[]) => (ns.length ? Math.round((ns.reduce((a, b) => a + b, 0) / ns.length) * 100) / 100 : 0)
+  stats.totalStudents = arr.length
+  stats.averageProgress = avg(arr.map((s: any) => Number(s.progress || 0)))
+  const grades = arr.map((s: any) => Number(s.averageGrade)).filter((n) => Number.isFinite(n))
+  stats.averageGrade = grades.length ? avg(grades) : 0
+}, { immediate: true })
 
 // 方法
 const getGradeBadgeVariant = (grade: number) => {
@@ -692,10 +749,10 @@ const submitInvite = async () => {
 }
 
 // 生命周期
+const handleDocClick = () => { showStudentMenu.value = null }
+
 onMounted(async () => {
-  // 点击外部关闭菜单
-  const close = () => { showStudentMenu.value = null }
-  document.addEventListener('click', close)
+  document.addEventListener('click', handleDocClick)
   await fetchCourseStudents()
 })
 
@@ -709,8 +766,6 @@ watch(searchQuery, () => {
 })
 
 onUnmounted(() => {
-  // 事件在 onMounted 中注册为具名函数
-  const close = () => { showStudentMenu.value = null }
-  document.removeEventListener('click', close)
+  document.removeEventListener('click', handleDocClick)
 })
 </script> 

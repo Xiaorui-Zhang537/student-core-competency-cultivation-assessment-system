@@ -1,7 +1,7 @@
 import { defineStore } from 'pinia';
 import { ref, computed } from 'vue';
 import { teacherApi } from '@/api/teacher.api';
-import type { StudentProgressData, CourseAnalyticsData, AssignmentAnalyticsData, ClassPerformanceData } from '@/types/teacher';
+import type { CourseAnalyticsData, AssignmentAnalyticsData, ClassPerformanceData } from '@/types/teacher';
 import { useUIStore } from './ui';
 import { handleApiCall } from '@/utils/api-handler';
 import type { PaginatedResponse } from '@/types/api';
@@ -48,24 +48,13 @@ export const useTeacherStore = defineStore('teacher', () => {
   const uiStore = useUIStore();
 
   // State
-  const studentProgress = ref<StudentProgressData[]>([]);
   const courseAnalytics = ref<CourseAnalyticsData>({ ...defaultCourseAnalytics });
   const assignmentAnalytics = ref<AssignmentAnalyticsData>({ ...defaultAssignmentAnalytics });
   const classPerformance = ref<ClassPerformanceData>({ ...defaultClassPerformance });
   const loading = computed(() => uiStore.loading);
 
   // Actions
-  const fetchStudentProgress = async (params?: { page?: number; size?: number; courseId?: string }) => {
-    const response = await handleApiCall(
-      () => teacherApi.getStudentProgress(params),
-      uiStore,
-      '获取学生进度失败'
-    );
-    if (response) {
-      const data = unwrap<PaginatedResponse<StudentProgressData>>(response);
-      studentProgress.value = data.items;
-    }
-  };
+  // 移除学生进度分页逻辑，统一使用课程学生表现端点
 
   const fetchCourseAnalytics = async (courseId: string) => {
     const response = await handleApiCall(
@@ -104,12 +93,10 @@ export const useTeacherStore = defineStore('teacher', () => {
   };
 
   return {
-    studentProgress,
     courseAnalytics,
     assignmentAnalytics,
     classPerformance,
     loading,
-    fetchStudentProgress,
     fetchCourseAnalytics,
     fetchAssignmentAnalytics,
     fetchClassPerformance,

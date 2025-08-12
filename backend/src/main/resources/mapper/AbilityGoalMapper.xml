@@ -31,7 +31,7 @@
     <sql id="abilityGoalDetailColumns">
         <include refid="abilityGoalColumns"/>,
         d.name AS dimension_name,
-        u.display_name AS student_name
+        COALESCE(u.nickname, u.username) AS student_name
     </sql>
 
     <!-- 插入能力目标 -->

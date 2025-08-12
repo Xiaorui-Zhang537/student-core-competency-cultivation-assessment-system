@@ -1,11 +1,15 @@
 <template>
   <div class="flex items-start space-x-3">
-    <div class="w-10 h-10 rounded-full bg-gray-200 dark:bg-gray-700 flex-shrink-0 flex items-center justify-center">
-      <user-icon class="w-5 h-5 text-gray-500"/>
+    <div class="w-10 h-10 flex-shrink-0">
+      <UserAvatar :avatar="(comment.author && comment.author.avatar) ? String(comment.author.avatar) : undefined" :size="40">
+        <div class="w-10 h-10 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center">
+          <user-icon class="w-5 h-5 text-gray-500"/>
+        </div>
+      </UserAvatar>
     </div>
     <div class="flex-1">
       <div class="bg-gray-100 dark:bg-gray-700 rounded-lg p-3">
-        <p class="text-sm font-semibold text-gray-900 dark:text-white">{{ comment.author?.username || '匿名用户' }}</p>
+        <p class="text-sm font-semibold text-gray-900 dark:text-white">{{ comment.author?.nickname || comment.author?.username || '匿名用户' }}</p>
         <p class="text-sm text-gray-700 dark:text-gray-200 mt-1">{{ comment.content }}</p>
       </div>
       <div class="text-xs text-gray-500 mt-1 flex items-center space-x-3">
@@ -50,6 +54,7 @@ import { ref, onMounted, computed } from 'vue'
 import { useAuthStore } from '@/stores/auth'
 import { useCommunityStore } from '@/stores/community'
 import { UserIcon, HandThumbUpIcon, SparklesIcon } from '@heroicons/vue/24/outline'
+import UserAvatar from '@/components/ui/UserAvatar.vue'
 import EmojiPicker from '@/components/ui/EmojiPicker.vue'
 import { useRouter } from 'vue-router'
 
@@ -103,7 +108,7 @@ const loadReplies = async (reset = false) => {
     likeCount: toNum(c.likeCount ?? c.likesCount ?? 0),
     isLiked: toBool(c.isLiked ?? c.liked ?? false),
     author: c.author || (c.authorUsername || c.author_display_name
-      ? { username: c.authorUsername || c.author_username, displayName: c.authorDisplayName || c.author_display_name, avatar: c.authorAvatar || c.author_avatar }
+      ? { username: c.authorUsername || c.author_username, nickname: c.authorNickname || c.author_nickname, avatar: c.authorAvatar || c.author_avatar }
       : undefined),
   }))
   const total = res.total || 0

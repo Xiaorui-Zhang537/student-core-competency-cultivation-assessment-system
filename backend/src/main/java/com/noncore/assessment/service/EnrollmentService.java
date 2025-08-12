@@ -13,7 +13,7 @@ public interface EnrollmentService {
 
     boolean isStudentEnrolled(Long courseId, Long studentId);
 
-    PageResult<User> getCourseStudents(Long teacherId, Long courseId, Integer page, Integer size);
+    PageResult<User> getCourseStudents(Long teacherId, Long courseId, Integer page, Integer size, String search, String sortBy, String activity, String grade, String progress);
 
     void removeStudentFromCourse(Long teacherId, Long courseId, Long studentId);
 

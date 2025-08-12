@@ -52,7 +52,7 @@ export const useCommunityStore = defineStore('community', () => {
         likeCount: p.likeCount ?? p.likesCount ?? 0,
         commentCount: p.commentCount ?? p.commentsCount ?? 0,
         isLiked: p.isLiked ?? p.liked ?? false,
-        author: p.author || (p.authorUsername || p.author_display_name ? { username: p.authorUsername || p.author_username, displayName: p.authorDisplayName || p.author_display_name, avatar: p.authorAvatar || p.author_avatar } : undefined),
+        author: p.author || (p.authorUsername || p.author_display_name ? { username: p.authorUsername || p.author_username, nickname: p.authorNickname || p.author_nickname, avatar: p.authorAvatar || p.author_avatar } : undefined),
       })) as Post[];
       totalPosts.value = data.total;
     }
@@ -73,7 +73,7 @@ export const useCommunityStore = defineStore('community', () => {
         commentCount: r.commentCount ?? r.commentsCount ?? r.comment_count ?? 0,
         isLiked: r.isLiked ?? r.liked ?? false,
         author: r.author || (r.authorUsername || r.author_display_name
-          ? { username: r.authorUsername || r.author_username, displayName: r.authorDisplayName || r.author_display_name, avatar: r.authorAvatar || r.author_avatar }
+          ? { username: r.authorUsername || r.author_username, nickname: r.authorNickname || r.author_nickname, avatar: r.authorAvatar || r.author_avatar }
           : undefined),
       } as unknown as Post;
     }
@@ -167,7 +167,7 @@ export const useCommunityStore = defineStore('community', () => {
         likeCount: toNum(c.likeCount ?? c.likesCount ?? 0),
         isLiked: toBool(c.isLiked ?? c.liked ?? false),
         author: c.author || (c.authorUsername || c.author_display_name
-          ? { username: c.authorUsername || c.author_username, displayName: c.authorDisplayName || c.author_display_name, avatar: c.authorAvatar || c.author_avatar }
+          ? { username: c.authorUsername || c.author_username, nickname: c.authorNickname || c.author_nickname, avatar: c.authorAvatar || c.author_avatar }
           : undefined),
       })) as PostComment[];
       totalComments.value = data.total;
@@ -242,6 +242,7 @@ export const useCommunityStore = defineStore('community', () => {
       activeUsers.value = arr.map((u: any) => ({
         userId: u.userId ?? u.id,
         username: u.username ?? u.name,
+        nickname: u.nickname ?? u.name ?? u.username,
         avatarUrl: u.avatarUrl ?? u.avatar,
         postCount: u.postCount ?? u.post_count ?? 0,
       }));

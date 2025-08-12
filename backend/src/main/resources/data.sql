@@ -2,6 +2,7 @@ USE student_assessment_system;
 SET FOREIGN_KEY_CHECKS = 0;
 TRUNCATE TABLE ability_assessments;
 TRUNCATE TABLE ability_dimensions;
+TRUNCATE TABLE course_ability_weights;
 TRUNCATE TABLE ability_goals;
 TRUNCATE TABLE ability_reports;
 TRUNCATE TABLE abilities;
@@ -38,20 +39,19 @@ VALUES
 -- =========================
 -- 能力维度表：定义能力的维度类型
 -- =========================
+-- 固定四个非成绩维度：道德认知、学习态度、学习能力、学习方法
 INSERT INTO ability_dimensions (id, name, description, category, weight, max_score, icon, color, sort_order, is_active, created_at, updated_at)
 VALUES
-    (1, '编程能力', '代码编写与调试能力', 'technical', 1.00, 100, 'code', '#10B981', 1, 1, NOW(), NOW()),
-    (2, '沟通能力', '表达与沟通协作能力', 'soft', 1.00, 100, 'chat', '#3B82F6', 2, 1, NOW(), NOW()),
-    (3, '创新能力', '创新与解决问题', 'creative', 1.00, 100, 'lightbulb', '#F59E0B', 3, 1, NOW(), NOW());
+    (1, '道德认知', '价值观与道德判断', 'soft', 1.00, 100, 'scale', '#EF4444', 1, 1, NOW(), NOW()),
+    (2, '学习态度', '积极性、坚持性与自律', 'soft', 1.00, 100, 'heart', '#F59E0B', 2, 1, NOW(), NOW()),
+    (3, '学习能力', '理解、分析与迁移应用', 'academic', 1.00, 100, 'sparkles', '#3B82F6', 3, 1, NOW(), NOW()),
+    (4, '学习方法', '策略、反思与资源利用', 'academic', 1.00, 100, 'book-open', '#10B981', 4, 1, NOW(), NOW());
 
 -- =========================
 -- 能力库表：所有能力项（挂靠维度）
 -- =========================
-INSERT INTO abilities (id, name, description, category, level, weight, parent_id, sort_order, is_active, created_at, updated_at, deleted)
-VALUES
-    (1, 'Java基础', 'Java基础语法', '编程', 'beginner', 1.00, NULL, 1, 1, NOW(), NOW(), 0),
-    (2, '团队沟通', '团队沟通协作能力', '软技能', 'intermediate', 1.00, NULL, 2, 1, NOW(), NOW(), 0),
-    (3, '创新设计', '新方案开发能力', '创新', 'advanced', 1.00, NULL, 3, 1, NOW(), NOW(), 0);
+-- abilities 表可按需保留，当前与雷达图无直接耦合；示例数据移除
+
 
 -- =========================
 -- 课程表：存储课程基本信息
@@ -193,9 +193,10 @@ VALUES
 -- =========================
 INSERT INTO ability_assessments (id, student_id, dimension_id, ability_id, assessor_id, assessment_type, related_id, score, max_score, ability_level, confidence, evidence, improvement, status, assessed_at, created_at, updated_at, deleted)
 VALUES
-    (1, 3, 1, 1, 2, 'assignment', 1, 80, 100, 'beginner', 0.95, '作业提交', '多写代码', 'completed', NOW(), NOW(), NOW(), 0),
-    (2, 3, 2, 2, 2, 'project', 2, 85, 100, 'intermediate', 0.90, '小组项目', '加强沟通', 'completed', NOW(), NOW(), NOW(), 0),
-    (3, 3, 3, 3, 2, 'exam', 3, 90, 100, 'advanced', 0.98, '期末考试', '创新不足', 'completed', NOW(), NOW(), NOW(), 0);
+    (1, 3, 1, NULL, 2, 'assignment', 1, 78, 100, 'beginner', 0.95, '课堂表现与作业', '加强案例讨论', 'completed', NOW(), NOW(), NOW(), 0),
+    (2, 3, 2, NULL, 2, 'project', 2, 82, 100, 'intermediate', 0.90, '小组项目协作', '提升时间管理', 'completed', NOW(), NOW(), NOW(), 0),
+    (3, 3, 3, NULL, 2, 'exam', 3, 88, 100, 'advanced', 0.98, '阶段测评', '加强迁移训练', 'completed', NOW(), NOW(), NOW(), 0),
+    (4, 3, 4, NULL, 2, 'assignment', 1, 75, 100, 'intermediate', 0.92, '学习反思', '优化方法结构', 'completed', NOW(), NOW(), NOW(), 0);
 
 -- =========================
 -- 能力发展目标表：学生针对维度设置的发展目标
@@ -220,9 +221,18 @@ VALUES
 -- =========================
 INSERT INTO student_abilities (id, student_id, dimension_id, current_score, level, last_assessment_at, assessment_count, trend, created_at, updated_at)
 VALUES
-    (1, 3, 1, 80, 'beginner', NOW(), 3, 'rising', NOW(), NOW()),
-    (2, 3, 2, 75, 'intermediate', NOW(), 2, 'stable', NOW(), NOW()),
-    (3, 3, 3, 90, 'advanced', NOW(), 4, 'rising', NOW(), NOW());
+    (1, 3, 1, 78, 'beginner', NOW(), 3, 'rising', NOW(), NOW()),
+    (2, 3, 2, 82, 'intermediate', NOW(), 2, 'stable', NOW(), NOW()),
+    (3, 3, 3, 88, 'advanced', NOW(), 4, 'rising', NOW(), NOW()),
+    (4, 3, 4, 75, 'intermediate', NOW(), 2, 'rising', NOW(), NOW());
+
+-- 为课程初始化默认权重（等权 1.00），包含学习成绩维度
+INSERT INTO course_ability_weights (course_id, dimension_code, weight, updated_at) VALUES
+  (1, 'MORAL_COGNITION', 1.00, NOW()),
+  (1, 'LEARNING_ATTITUDE', 1.00, NOW()),
+  (1, 'LEARNING_ABILITY', 1.00, NOW()),
+  (1, 'LEARNING_METHOD', 1.00, NOW()),
+  (1, 'ACADEMIC_GRADE', 1.00, NOW());
 
 -- =========================
 -- 文件记录表：上传文件的管理

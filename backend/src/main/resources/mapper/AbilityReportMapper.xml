@@ -33,7 +33,7 @@
     </sql>
     <sql id="abilityReportDetailColumns">
         <include refid="abilityReportColumns"/>,
-        u.display_name AS student_name,
+        COALESCE(u.nickname, u.username) AS student_name,
         u.student_number AS student_number
     </sql>
 
@@ -136,7 +136,7 @@
   ]]>
         <include refid="abilityReportColumns"/>
         <![CDATA[
-    , u.display_name AS student_name,
+        , COALESCE(u.nickname, u.username) AS student_name,
       u.student_number AS student_number
     FROM ability_reports r
     LEFT JOIN users u ON r.student_id = u.id

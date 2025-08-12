@@ -36,7 +36,7 @@
     <sql id="assignmentWithDetailsColumns">
         <include refid="assignmentColumns"/>,
         c.title as course_name,
-        u.display_name as teacher_name
+        COALESCE(u.nickname, u.username) as teacher_name
     </sql>
 
     <!-- 插入作业 -->

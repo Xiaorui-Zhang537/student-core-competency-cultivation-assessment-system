@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.noncore.assessment.mapper.AbilityAnalyticsMapper">
+
+    <!-- 学生在时间范围内的各维度平均分（ability_assessments） -->
+    <select id="selectStudentDimensionAvg" resultType="map">
+        SELECT ad.name AS dimensionName,
+               COALESCE(AVG(aa.score), 0) AS avgScore,
+               COALESCE(MAX(aa.max_score), 100) AS maxScore
+        FROM ability_assessments aa
+                 JOIN ability_dimensions ad ON aa.dimension_id = ad.id
+                 LEFT JOIN assignments a ON aa.related_id = a.id
+        WHERE aa.student_id = #{studentId}
+          <if test="courseId != null">
+              AND a.course_id = #{courseId}
+          </if>
+          <if test="start != null and end != null">
+              AND aa.assessed_at BETWEEN #{start} AND #{end}
+          </if>
+        GROUP BY ad.name
+    </select>
+
+    <!-- 班级/课程层面的各维度平均分（按选课与评估汇总） -->
+    <select id="selectClassOrCourseDimensionAvg" resultType="map">
+        SELECT ad.name AS dimensionName,
+               COALESCE(AVG(aa.score), 0) AS avgScore,
+               COALESCE(MAX(aa.max_score), 100) AS maxScore
+        FROM ability_assessments aa
+                 JOIN ability_dimensions ad ON aa.dimension_id = ad.id
+                 LEFT JOIN assignments a ON aa.related_id = a.id
+                 <if test="classId != null">
+                     JOIN enrollments e ON e.student_id = aa.student_id AND e.course_id = a.course_id
+                 </if>
+        WHERE 1=1
+          <if test="courseId != null">AND a.course_id = #{courseId}</if>
+          <if test="classId != null">AND e.status = 'active'</if>
+          <if test="start != null and end != null">
+              AND aa.assessed_at BETWEEN #{start} AND #{end}
+          </if>
+        GROUP BY ad.name
+    </select>
+
+    <!-- 成绩均分（课程/学生/班级口径），使用 grades + assignments -->
+    <select id="selectCourseGradeAvg" resultType="map">
+        SELECT COALESCE(AVG(g.score), 0) AS avgScore,
+               COALESCE(MAX(g.max_score), 100) AS maxScore
+        FROM grades g
+                 JOIN assignments a ON g.assignment_id = a.id
+                 <if test="classId != null">
+                     JOIN enrollments e ON e.student_id = g.student_id AND e.course_id = a.course_id
+                 </if>
+        WHERE 1=1
+          <if test="courseId != null">AND a.course_id = #{courseId}</if>
+          <if test="studentId != null">AND g.student_id = #{studentId}</if>
+          <if test="classId != null">AND e.status = 'active'</if>
+          <if test="start != null and end != null">AND g.created_at BETWEEN #{start} AND #{end}</if>
+          AND g.deleted = false AND g.status = 'published'
+    </select>
+
+    <!-- 读取课程权重配置 -->
+    <select id="selectCourseWeights" resultType="map">
+        SELECT dimension_code AS dimensionCode,
+               weight AS weight,
+               updated_at AS updatedAt
+        FROM course_ability_weights
+        WHERE course_id = #{courseId}
+    </select>
+
+    <!-- upsert 权重（MySQL 语法） -->
+    <insert id="upsertCourseWeight">
+        INSERT INTO course_ability_weights (course_id, dimension_code, weight, updated_at)
+        VALUES (#{courseId}, #{dimensionCode}, #{weight}, NOW())
+        ON DUPLICATE KEY UPDATE weight = VALUES(weight), updated_at = NOW()
+    </insert>
+
+</mapper>
+

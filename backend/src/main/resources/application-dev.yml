@@ -39,3 +39,16 @@ file:
 jwt:
   secret: dev-jwt-secret-key-for-development-environment-should-be-secure
   expiration: 86400000  # 24小时 
+
+# 开发环境默认走 OpenRouter（OpenAI 兼容）。密钥请用环境变量 DEEPSEEK_API_KEY 注入。
+ai:
+  default-provider: openrouter
+  providers:
+    openrouter:
+      base-url: https://openrouter.ai/api
+      # api-key 走环境变量 OPENROUTER_API_KEY
+    deepseek:
+      base-url: https://api.deepseek.com
+      # api-key 走环境变量 DEEPOFFICIAL_API_KEY
+  deepseek:
+    model: deepseek/deepseek-chat-v3-0324:free

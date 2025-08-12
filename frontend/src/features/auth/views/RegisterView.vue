@@ -6,6 +6,23 @@
     </div>
 
     <form @submit.prevent="handleSubmit" class="space-y-6">
+      <!-- 默认头像选择 -->
+      <div>
+        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">选择头像（可选）</label>
+        <div class="grid grid-cols-5 gap-2">
+          <button
+            v-for="(url, idx) in defaultAvatars"
+            :key="idx"
+            type="button"
+            class="h-12 w-12 rounded-full overflow-hidden border transition-colors"
+            :class="form.avatar === url ? 'border-primary-500' : 'border-gray-300 dark:border-gray-600'"
+            @click="form.avatar = url"
+            :title="'默认头像 ' + (idx+1)"
+          >
+            <img :src="url" alt="默认头像" class="w-full h-full object-cover" />
+          </button>
+        </div>
+      </div>
       <div>
         <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">账户类型</label>
         <div class="grid grid-cols-2 gap-4">
@@ -70,13 +87,27 @@ const roles = [
   { label: '教师', value: 'TEACHER' },
 ];
 
-const form = reactive<RegisterRequest>({
+const form = reactive<RegisterRequest & { avatar?: string }>({
   username: '',
   email: '',
   password: '',
   role: 'STUDENT',
+  avatar: undefined,
 });
 const confirmPassword = ref('');
+
+const defaultAvatars = [
+  'https://api.dicebear.com/7.x/adventurer-neutral/svg?seed=Nova',
+  'https://api.dicebear.com/7.x/adventurer/svg?seed=Luna',
+  'https://api.dicebear.com/7.x/avataaars/svg?seed=Kai',
+  'https://api.dicebear.com/7.x/notionists-neutral/svg?seed=Iris',
+  'https://api.dicebear.com/7.x/big-smile/svg?seed=Leo',
+  'https://api.dicebear.com/7.x/thumbs/svg?seed=Mila',
+  'https://api.dicebear.com/7.x/micah/svg?seed=Aiden',
+  'https://api.dicebear.com/7.x/miniavs/svg?seed=Sage',
+  'https://api.dicebear.com/7.x/adventurer-neutral/svg?seed=Zoe',
+  'https://api.dicebear.com/7.x/notionists/svg?seed=Eli'
+] as string[]
 
 const handleSubmit = () => {
   if (form.password !== confirmPassword.value) {

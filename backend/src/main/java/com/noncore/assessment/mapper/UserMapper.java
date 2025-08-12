@@ -82,6 +82,23 @@ public interface UserMapper {
     List<User> selectStudentsByCourseId(Long courseId);
 
     /**
+     * 根据课程ID查询学生（带搜索）
+     */
+    List<User> selectStudentsByCourseIdWithSearch(@Param("courseId") Long courseId, @Param("keyword") String keyword);
+
+    /**
+     * 根据课程ID查询学生（高级筛选与排序）
+     */
+    List<User> selectStudentsByCourseIdAdvanced(
+            @Param("courseId") Long courseId,
+            @Param("keyword") String keyword,
+            @Param("activity") String activity,
+            @Param("gradeFilter") String gradeFilter,
+            @Param("progressFilter") String progressFilter,
+            @Param("sortBy") String sortBy
+    );
+
+    /**
      * 分页查询用户列表
      *
      * @param role 角色筛选（可选）
@@ -122,6 +139,16 @@ public interface UserMapper {
      * @return 是否存在
      */
     int checkEmailExists(@Param("email") String email, @Param("excludeId") Long excludeId);
+
+    /**
+     * 检查学号是否存在
+     */
+    int checkStudentNoExists(@Param("studentNo") String studentNo, @Param("excludeId") Long excludeId);
+
+    /**
+     * 检查工号是否存在
+     */
+    int checkTeacherNoExists(@Param("teacherNo") String teacherNo, @Param("excludeId") Long excludeId);
 
     /**
      * 更新用户最后登录时间

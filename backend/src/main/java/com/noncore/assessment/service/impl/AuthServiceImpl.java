@@ -96,6 +96,12 @@ public class AuthServiceImpl implements AuthService {
         user.setEmail(registerRequest.getEmail());
         user.setPassword(passwordEncoder.encode(registerRequest.getPassword()));
         user.setRole("student".equals(role) ? "ROLE_STUDENT" : "ROLE_TEACHER");
+        if (StringUtils.hasText(registerRequest.getNickname())) {
+            user.setNickname(registerRequest.getNickname());
+        }
+        if (registerRequest.getAvatar() != null && StringUtils.hasText(registerRequest.getAvatar())) {
+            user.setAvatar(registerRequest.getAvatar().trim());
+        }
         user.initialize();
         
         userMapper.insertUser(user);

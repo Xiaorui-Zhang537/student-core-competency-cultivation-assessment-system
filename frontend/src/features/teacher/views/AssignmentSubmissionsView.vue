@@ -29,11 +29,20 @@
       <div v-else-if="submissions.length === 0" class="card p-6 text-center text-gray-500">暂无提交</div>
       <div v-else class="space-y-3">
         <div v-for="s in submissions" :key="s.id" class="card p-4 flex items-center justify-between">
-          <div>
-            <div class="font-medium">{{ s.studentName || s.studentId }}</div>
-            <div class="text-sm text-gray-500">提交时间：{{ formatDate(s.submittedAt) }}<span v-if="s.isLate" class="ml-2 text-red-600">(迟交)</span></div>
-            <div class="text-xs mt-1">
-              <span :class="badgeClass(s.status)">{{ statusText(s.status) }}</span>
+          <div class="flex items-center gap-3">
+            <div class="w-9 h-9">
+              <UserAvatar :avatar="s.avatar" :size="36">
+                <div class="w-9 h-9 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center">
+                  <user-icon class="w-4 h-4 text-gray-500" />
+                </div>
+              </UserAvatar>
+            </div>
+            <div>
+              <div class="font-medium">{{ s.studentName || s.studentId }}</div>
+              <div class="text-sm text-gray-500">提交时间：{{ formatDate(s.submittedAt) }}<span v-if="s.isLate" class="ml-2 text-red-600">(迟交)</span></div>
+              <div class="text-xs mt-1">
+                <span :class="badgeClass(s.status)">{{ statusText(s.status) }}</span>
+              </div>
             </div>
           </div>
           <div>
@@ -72,7 +81,8 @@ import { useRoute, useRouter } from 'vue-router';
 import { submissionApi } from '@/api/submission.api';
 import { useUIStore } from '@/stores/ui';
 import Button from '@/components/ui/Button.vue'
-import { ArrowUturnLeftIcon, ArrowPathIcon, CheckBadgeIcon } from '@heroicons/vue/24/outline'
+import UserAvatar from '@/components/ui/UserAvatar.vue'
+import { ArrowUturnLeftIcon, ArrowPathIcon, CheckBadgeIcon, UserIcon } from '@heroicons/vue/24/outline'
 import { ChevronRightIcon } from '@heroicons/vue/24/outline';
 
 const route = useRoute();

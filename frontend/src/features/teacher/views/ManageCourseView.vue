@@ -18,7 +18,7 @@
 
       <!-- Filters -->
       <div class="mb-6 card p-4">
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-4 items-center">
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4 items-center">
         <!-- 搜索框 with 图标 -->
         <div class="relative">
           <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -32,18 +32,20 @@
             class="input pl-10"
           />
         </div>
-        <!-- 状态分段按钮组 -->
-        <div class="flex rounded-lg overflow-hidden border border-gray-300 dark:border-gray-600">
-          <button type="button" @click="setStatus('')" :class="segClass('')">全部</button>
-          <button type="button" @click="setStatus('DRAFT')" :class="segClass('DRAFT')">草稿</button>
-          <button type="button" @click="setStatus('PUBLISHED')" :class="segClass('PUBLISHED')">已发布</button>
-          <button type="button" @click="setStatus('ARCHIVED')" :class="segClass('ARCHIVED')">已归档</button>
-        </div>
-        <div class="flex justify-start md:justify-end">
-          <Button variant="outline" @click="clearFilters">
-            <XMarkIcon class="w-4 h-4 mr-2" />
-            清除筛选
-          </Button>
+        <!-- 状态分段按钮组 + 清空按钮（同列左右分布，消除右侧空白） -->
+        <div class="flex items-center justify-between gap-4">
+          <div class="inline-flex whitespace-nowrap rounded-lg overflow-hidden border border-gray-300 dark:border-gray-600">
+            <button type="button" @click="setStatus('')" :class="segClass('')">全部</button>
+            <button type="button" @click="setStatus('DRAFT')" :class="segClass('DRAFT')">草稿</button>
+            <button type="button" @click="setStatus('PUBLISHED')" :class="segClass('PUBLISHED')">已发布</button>
+            <button type="button" @click="setStatus('ARCHIVED')" :class="segClass('ARCHIVED')">已归档</button>
+          </div>
+          <div class="flex-shrink-0">
+            <Button variant="outline" @click="clearFilters">
+              <XMarkIcon class="w-4 h-4 mr-2" />
+              清除筛选
+            </Button>
+          </div>
         </div>
       </div>
       </div>
@@ -171,7 +173,14 @@ import { useCourseStore } from '@/stores/course';
 import { useAuthStore } from '@/stores/auth';
 import { useRouter } from 'vue-router';
 import type { Course, CourseCreationRequest, CourseUpdateRequest } from '@/types/course';
-import { debounce } from 'lodash-es';
+// 轻量去依赖：局部实现 debounce，避免引入 lodash-es
+const debounce = (fn: (...args: any[]) => void, delay = 300) => {
+  let timer: any = null
+  return (...args: any[]) => {
+    if (timer) clearTimeout(timer)
+    timer = setTimeout(() => fn(...args), delay)
+  }
+}
 import FileUpload from '@/components/forms/FileUpload.vue';
 import apiClient, { baseURL } from '@/api/config';
 import Button from '@/components/ui/Button.vue'
@@ -261,7 +270,7 @@ const setStatus = (val: string) => {
 const segClass = (val: string) => {
   const isActive = filters.status === val
   return [
-    'px-3 py-2 text-sm transition-colors',
+    'px-3 py-2 text-sm transition-colors focus:outline-none',
     isActive
       ? 'bg-primary-600 text-white'
       : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'

@@ -41,7 +41,7 @@
     <!-- 带教师信息的查询字段 -->
     <sql id="Course_With_Teacher_Column_List">
         <include refid="Base_Column_List"/>,
-        u.display_name as teacher_name
+        COALESCE(u.nickname, u.username) as teacher_name
     </sql>
 
     <!-- 插入课程 -->
@@ -109,7 +109,7 @@
         <if test="keyword != null and keyword != ''">
             AND (c.title LIKE CONCAT('%', #{keyword}, '%')
             OR c.description LIKE CONCAT('%', #{keyword}, '%')
-            OR u.display_name LIKE CONCAT('%', #{keyword}, '%'))
+        OR COALESCE(u.nickname, u.username) LIKE CONCAT('%', #{keyword}, '%'))
         </if>
         <if test="category != null and category != ''">
             AND c.category = #{category}
@@ -288,7 +288,7 @@
         SELECT
             c.id,
             c.title,
-            u.display_name AS teacherName,
+        COALESCE(u.nickname, u.username) AS teacherName,
             COALESCE(cp.avg_progress, 0) AS progress,
             c.cover_image AS coverImage,
             cp.last_studied AS lastStudied

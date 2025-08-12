@@ -182,8 +182,14 @@ public class CourseController extends BaseController {
     public ResponseEntity<ApiResponse<PageResult<User>>> getCourseStudents(
             @PathVariable("id") Long courseId,
             @Parameter(description = "页码", example = "1") @RequestParam(defaultValue = "1") Integer page,
-            @Parameter(description = "每页大小", example = "20") @RequestParam(defaultValue = "20") Integer size) {
-        PageResult<User> result = enrollmentService.getCourseStudents(getCurrentUserId(), courseId, page, size);
+            @Parameter(description = "每页大小", example = "20") @RequestParam(defaultValue = "20") Integer size,
+            @Parameter(description = "搜索关键词（昵称/用户名/学号/工号）") @RequestParam(required = false) String search,
+            @Parameter(description = "排序字段(name|progress|grade|lastActive|joinDate)") @RequestParam(required = false, defaultValue = "joinDate") String sortBy,
+            @Parameter(description = "活跃度筛选(high|medium|low|inactive)") @RequestParam(required = false) String activity,
+            @Parameter(description = "成绩筛选(excellent|good|average|below)") @RequestParam(required = false) String grade,
+            @Parameter(description = "进度筛选(not-started|in-progress|completed)") @RequestParam(required = false) String progress
+    ) {
+        PageResult<User> result = enrollmentService.getCourseStudents(getCurrentUserId(), courseId, page, size, search, sortBy, activity, grade, progress);
         return ResponseEntity.ok(ApiResponse.success(result));
     }
 

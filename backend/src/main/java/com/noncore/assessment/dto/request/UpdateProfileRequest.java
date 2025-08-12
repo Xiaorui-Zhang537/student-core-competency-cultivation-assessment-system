@@ -38,4 +38,28 @@ public class UpdateProfileRequest {
     @Schema(description = "手机号")
     private String phone;
 
+    @Schema(description = "名")
+    @Size(max = 50)
+    private String firstName;
+
+    @Schema(description = "姓")
+    @Size(max = 50)
+    private String lastName;
+
+    @Schema(description = "学校")
+    @Size(max = 100)
+    private String school;
+
+    @Schema(description = "专业/科目")
+    @Size(max = 100)
+    private String subject;
+
+    @Schema(description = "学号")
+    @Size(max = 50)
+    private String studentNo;
+
+    @Schema(description = "工号")
+    @Size(max = 50)
+    private String teacherNo;
+
 } 

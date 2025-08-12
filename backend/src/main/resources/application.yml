@@ -117,6 +117,19 @@ springdoc:
   packages-to-scan: com.noncore.assessment.controller
   show-actuator: false 
 
+# AI 集成配置（DeepSeek/OpenAI 兼容）
+ai:
+  default-provider: ${AI_DEFAULT_PROVIDER:openrouter}
+  providers:
+    openrouter:
+      base-url: ${OPENROUTER_BASE_URL:https://openrouter.ai/api}
+      api-key: ${OPENROUTER_API_KEY:${DEEPSEEK_API_KEY:}}
+    deepseek:
+      base-url: ${DEEPOFFICIAL_BASE_URL:https://api.deepseek.com}
+      api-key: ${DEEPOFFICIAL_API_KEY:}
+  deepseek:
+    model: ${DEEPSEEK_MODEL:deepseek/deepseek-chat-v3-0324:free}
+
 # 安全配置
 security:
   cors:

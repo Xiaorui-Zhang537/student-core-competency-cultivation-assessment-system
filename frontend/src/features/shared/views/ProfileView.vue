@@ -15,11 +15,17 @@
         <div class="card p-6">
           <h2 class="text-lg font-semibold mb-4">个人信息</h2>
           <div class="flex items-start space-x-6">
+            <!-- 头像展示 -->
+            <div class="w-24 flex-shrink-0">
+              <UserAvatar :avatar="(userProfile as any)?.avatar" :size="96">
+                <img :src="defaultAvatars[0]" alt="默认头像" class="w-24 h-24 rounded-full object-cover" />
+              </UserAvatar>
+            </div>
             <div class="flex-1">
               <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label class="block text-sm font-medium mb-1">用户名</label>
-                  <p class="font-medium">{{ userProfile.username }}</p>
+                  <p class="font-medium">{{ userProfile.nickname || userProfile.username }}</p>
                 </div>
                 <div>
                   <label class="block text-sm font-medium mb-1">邮箱</label>
@@ -36,6 +42,30 @@
                  <div>
                   <label class="block text-sm font-medium mb-1">性别</label>
                   <p>{{ userProfile.gender || '未设置' }}</p>
+                </div>
+                <div>
+                  <label class="block text-sm font-medium mb-1">名字</label>
+                  <p>{{ userProfile.firstName || '未设置' }}</p>
+                </div>
+                <div>
+                  <label class="block text-sm font-medium mb-1">姓氏</label>
+                  <p>{{ userProfile.lastName || '未设置' }}</p>
+                </div>
+                <div>
+                  <label class="block text-sm font-medium mb-1">学校</label>
+                  <p>{{ userProfile.school || '未设置' }}</p>
+                </div>
+                <div>
+                  <label class="block text-sm font-medium mb-1">专业/科目</label>
+                  <p>{{ userProfile.subject || '未设置' }}</p>
+                </div>
+                <div v-if="authStore.userRole === 'STUDENT'">
+                  <label class="block text-sm font-medium mb-1">学号</label>
+                  <p>{{ userProfile.studentNo || '未设置' }}</p>
+                </div>
+                <div v-if="authStore.userRole === 'TEACHER'">
+                  <label class="block text-sm font-medium mb-1">工号</label>
+                  <p>{{ userProfile.teacherNo || '未设置' }}</p>
                 </div>
                  <div>
                   <label class="block text-sm font-medium mb-1">简介</label>
@@ -71,6 +101,40 @@
         <div v-if="showEditProfile" class="card p-6">
           <h2 class="text-lg font-semibold mb-4">编辑个人信息</h2>
           <form @submit.prevent="handleUpdateProfile" class="space-y-6">
+              <!-- 头像上传 -->
+              <div>
+                <label class="block text-sm font-medium mb-2">头像</label>
+                <FileUpload
+                  :accept="'image/*'"
+                  :multiple="false"
+                  :autoUpload="true"
+                  :upload-url="`${baseURL}/files/upload`"
+                  :upload-headers="uploadHeaders"
+                  :upload-data="{ purpose: 'avatar' }"
+                  @upload-success="onAvatarUploaded"
+                  @upload-error="onAvatarUploadError"
+                />
+                <p v-if="profileForm.avatar" class="text-xs text-gray-500 mt-2">已选择头像（文件ID：{{ profileForm.avatar }}）</p>
+                <!-- 默认头像选择 -->
+                <div class="mt-4">
+                  <div class="flex items-center justify-between mb-2">
+                    <span class="text-sm text-gray-600 dark:text-gray-400">或选择一个默认头像</span>
+                  </div>
+                  <div class="grid grid-cols-5 gap-2">
+                    <button
+                      v-for="(url, idx) in defaultAvatars"
+                      :key="idx"
+                      type="button"
+                      class="h-12 w-12 rounded-full overflow-hidden border transition-colors"
+                      :class="profileForm.avatar === url ? 'border-primary-500' : 'border-gray-300 dark:border-gray-600'"
+                      @click="selectDefaultAvatar(url)"
+                      :title="'默认头像 ' + (idx+1)"
+                    >
+                      <img :src="url" alt="默认头像" class="w-full h-full object-cover" />
+                    </button>
+                  </div>
+                </div>
+              </div>
               <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
                 <label for="nickname" class="block text-sm font-medium mb-2">昵称</label>
@@ -90,8 +154,32 @@
                   <input id="birthday" v-model="profileForm.birthday" type="date" class="input" />
                 </div>
                 <div>
+                  <label for="firstName" class="block text-sm font-medium mb-2">名字</label>
+                  <input id="firstName" v-model="profileForm.firstName" type="text" class="input" />
+                </div>
+                <div>
+                  <label for="lastName" class="block text-sm font-medium mb-2">姓氏</label>
+                  <input id="lastName" v-model="profileForm.lastName" type="text" class="input" />
+                </div>
+                <div>
                   <label for="phone" class="block text-sm font-medium mb-2">手机号</label>
                   <input id="phone" v-model="profileForm.phone" type="tel" class="input" placeholder="请输入手机号" />
+                </div>
+                <div>
+                  <label for="school" class="block text-sm font-medium mb-2">学校</label>
+                  <input id="school" v-model="profileForm.school" type="text" class="input" placeholder="学校名称" />
+                </div>
+                <div>
+                  <label for="subject" class="block text-sm font-medium mb-2">专业/科目</label>
+                  <input id="subject" v-model="profileForm.subject" type="text" class="input" placeholder="专业/科目" />
+                </div>
+                <div v-if="authStore.userRole === 'STUDENT'">
+                  <label for="studentNo" class="block text-sm font-medium mb-2">学号</label>
+                  <input id="studentNo" v-model="profileForm.studentNo" type="text" class="input" placeholder="学号" />
+                </div>
+                <div v-if="authStore.userRole === 'TEACHER'">
+                  <label for="teacherNo" class="block text-sm font-medium mb-2">工号</label>
+                  <input id="teacherNo" v-model="profileForm.teacherNo" type="text" class="input" placeholder="工号" />
                 </div>
                 <div>
                   <label for="country" class="block text-sm font-medium mb-2">国家</label>
@@ -169,12 +257,15 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, onMounted } from 'vue';
+import { ref, reactive, onMounted, computed } from 'vue';
 import { useAuthStore } from '@/stores/auth';
 import { useUIStore } from '@/stores/ui';
 import { userApi } from '@/api/user.api';
 import type { UpdateProfileRequest, ChangePasswordRequest, UserProfileResponse } from '@/types/user';
 import { handleApiCall } from '@/utils/api-handler';
+import FileUpload from '@/components/forms/FileUpload.vue';
+import { baseURL } from '@/api/config';
+import UserAvatar from '@/components/ui/UserAvatar.vue';
 
 const authStore = useAuthStore();
 const uiStore = useUIStore();
@@ -182,9 +273,24 @@ const uiStore = useUIStore();
 const userProfile = ref<UserProfileResponse | null>(null);
 const showEditProfile = ref(false);
 const showChangePassword = ref(false);
+const uploadHeaders = { Authorization: localStorage.getItem('token') ? `Bearer ${localStorage.getItem('token')}` : '' } as Record<string, string>;
+// 头像展示统一由 UserAvatar 处理
+const defaultAvatars = [
+  'https://api.dicebear.com/7.x/adventurer-neutral/svg?seed=Nova',
+  'https://api.dicebear.com/7.x/adventurer/svg?seed=Luna',
+  'https://api.dicebear.com/7.x/avataaars/svg?seed=Kai',
+  'https://api.dicebear.com/7.x/notionists-neutral/svg?seed=Iris',
+  'https://api.dicebear.com/7.x/big-smile/svg?seed=Leo',
+  'https://api.dicebear.com/7.x/thumbs/svg?seed=Mila',
+  'https://api.dicebear.com/7.x/micah/svg?seed=Aiden',
+  'https://api.dicebear.com/7.x/miniavs/svg?seed=Sage',
+  'https://api.dicebear.com/7.x/adventurer-neutral/svg?seed=Zoe',
+  'https://api.dicebear.com/7.x/notionists/svg?seed=Eli'
+] as string[]
 
 const profileForm = reactive<UpdateProfileRequest>({
   nickname: '',
+  avatar: '',
   gender: '',
   bio: '',
   birthday: '',
@@ -203,16 +309,25 @@ const confirmNewPassword = ref('');
 const fetchUserProfile = async () => {
     const response = await handleApiCall(() => userApi.getProfile(), uiStore, '获取用户信息失败');
     if(response) {
-        userProfile.value = (response as any) as UserProfileResponse;
+        const data = (response as any)?.data ?? response
+        userProfile.value = data as UserProfileResponse;
+        // 头像展示交由模板中的 UserAvatar 处理
     }
 }
 
 const setProfileForm = () => {
   if (userProfile.value) {
     profileForm.nickname = userProfile.value.nickname || '';
+    profileForm.avatar = (userProfile.value as any).avatar || '';
     profileForm.gender = userProfile.value.gender || '';
     profileForm.bio = userProfile.value.bio || '';
     profileForm.birthday = userProfile.value.birthday || '';
+    profileForm.firstName = userProfile.value.firstName || '';
+    profileForm.lastName = userProfile.value.lastName || '';
+    profileForm.school = userProfile.value.school || '';
+    profileForm.subject = userProfile.value.subject || '';
+    profileForm.studentNo = userProfile.value.studentNo || '';
+    profileForm.teacherNo = userProfile.value.teacherNo || '';
     profileForm.country = userProfile.value.country || '';
     profileForm.province = userProfile.value.province || '';
     profileForm.city = userProfile.value.city || '';
@@ -239,6 +354,8 @@ const handleUpdateProfile = async () => {
     await fetchUserProfile();
     if (authStore.user) {
         (authStore.user as any).nickname = (response as any).nickname;
+        (authStore.user as any).avatar = (response as any).avatar;
+        (authStore.user as any).gender = (response as any).gender;
     }
     showEditProfile.value = false;
   }
@@ -263,4 +380,19 @@ const handleChangePassword = async () => {
 const handleResendVerification = async () => {
   await handleApiCall(() => userApi.resendVerification(), uiStore, '发送邮件失败', { successMessage: '验证邮件已发送，请检查您的收件箱。' });
 };
+
+// 头像上传回调
+const onAvatarUploaded = (res: any) => {
+  const data = res?.data ?? res;
+  if (data && (data.id || data.fileId)) {
+    profileForm.avatar = String(data.id ?? data.fileId);
+  }
+};
+const onAvatarUploadError = (msg: string) => {
+  uiStore.showNotification({ type: 'error', title: '上传失败', message: msg || '头像上传失败' });
+};
+
+const selectDefaultAvatar = (url: string) => {
+  profileForm.avatar = url
+}
 </script>
