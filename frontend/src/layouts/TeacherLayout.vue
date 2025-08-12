@@ -1,26 +1,27 @@
 <template>
-  <div class="min-h-screen bg-gray-50 dark:bg-gray-900">
+  <div class="min-h-screen relative">
+    <AnimatedBackground class="fixed inset-0 z-0 pointer-events-none" :particle-count="80" :connect-distance="120" :max-speed="0.4" :opacity="0.5" />
     <!-- 顶部导航栏 -->
-    <nav class="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-600 sticky top-0 z-40">
-      <div class="px-4 sm:px-6 lg:px-8">
-        <div class="flex justify-between h-16">
+    <nav class="bg-white/90 dark:bg-gray-800/80 backdrop-blur-md border-b border-gray-200 dark:border-gray-600 shadow-sm sticky top-0 z-20">
+      <div class="px-4 sm:px-6 lg:px-12">
+        <div class="flex justify-between h-14">
           <!-- 左侧：Logo和菜单切换 -->
-          <div class="flex items-center">
+          <div class="flex items-center space-x-6">
             <button
               @click="uiStore.toggleSidebar()"
-              class="p-2 rounded-md text-gray-400 hover:text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-primary-500 lg:hidden"
+              class="p-2 -ml-2 rounded-md text-gray-400 hover:text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-primary-500"
             >
               <bars3-icon class="h-6 w-6" />
             </button>
-            <div class="flex-shrink-0 flex items-center ml-4 lg:ml-0">
+            <div class="flex-shrink-0 flex items-center">
               <h1 class="text-xl font-bold text-gray-900 dark:text-white">
-                教师工作台
+                学生核心能力培养评估系统
               </h1>
             </div>
           </div>
 
           <!-- 中间：搜索栏 -->
-          <div class="flex-1 flex items-center justify-center px-2 lg:ml-6 lg:justify-start">
+          <div class="flex-1 flex items-center justify-center px-2">
             <div class="max-w-lg w-full lg:max-w-xs">
               <label for="search" class="sr-only">搜索</label>
               <div class="relative">
@@ -108,14 +109,14 @@
     </nav>
 
     <!-- 主要内容区域 -->
-    <div class="flex pt-16">
+    <div class="flex pt-14 relative z-10">
       <!-- 侧边栏 -->
       <aside
         :class="[
-          'fixed inset-y-0 left-0 z-30 w-64 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-600 transform transition-transform duration-300 ease-in-out lg:translate-x-0 lg:static lg:inset-0',
+          'fixed inset-y-0 left-0 z-30 w-64 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-600 transform transition-transform duration-300 ease-in-out',
           uiStore.sidebarOpen ? 'translate-x-0' : '-translate-x-full'
         ]"
-        style="top: 4rem;"
+        style="top: 3.5rem;"
       >
         <div class="h-full px-3 py-4 overflow-y-auto">
           <nav class="space-y-2">
@@ -176,8 +177,10 @@
       ></div>
 
       <!-- 主要内容 -->
-      <main class="flex-1 lg:pl-64">
-        <router-view />
+      <main :class="['flex-1', uiStore.sidebarOpen ? 'lg:pl-64' : 'pl-0']">
+        <div class="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-0 pb-6">
+          <router-view />
+        </div>
       </main>
     </div>
   </div>
@@ -188,6 +191,7 @@ import { ref, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useUIStore } from '@/stores/ui'
 import { useAuthStore } from '@/stores/auth'
+import AnimatedBackground from '@/components/ui/AnimatedBackground.vue'
 import {
   Bars3Icon,
   MagnifyingGlassIcon,

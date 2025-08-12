@@ -1,18 +1,30 @@
 <template>
-  <div class="p-6">
-    <div class="mb-6 flex items-center justify-between">
-      <div>
-        <h1 class="text-2xl font-bold">提交列表</h1>
-        <p class="text-gray-500">查看并前往评分</p>
+  <div class="min-h-screen p-6">
+    <div class="max-w-7xl mx-auto">
+      <div class="mb-6 flex items-center justify-between">
+        <div>
+          <nav class="flex items-center space-x-2 text-sm text-gray-500 dark:text-gray-400 mb-2">
+            <span>作业管理</span>
+            <chevron-right-icon class="w-4 h-4" />
+            <span>提交列表</span>
+          </nav>
+          <h1 class="text-2xl font-bold text-gray-900 dark:text-white">提交列表</h1>
+          <p class="text-gray-600 dark:text-gray-400">查看并前往评分</p>
+        </div>
+        <Button variant="outline" @click="$router.push('/teacher/assignments')">
+          <ArrowUturnLeftIcon class="w-4 h-4 mr-2" />
+          返回作业
+        </Button>
       </div>
-      <button class="btn btn-outline" @click="$router.push('/teacher/assignments')">返回作业</button>
-    </div>
 
     <div v-if="loading" class="text-center py-12">正在加载...</div>
     <div v-else>
       <div v-if="errorMessage" class="card p-6 text-center text-red-600">
         <p class="mb-3">{{ errorMessage }}</p>
-        <button class="btn btn-primary" @click="fetch()">重试</button>
+         <Button variant="indigo" @click="fetch()">
+           <ArrowPathIcon class="w-4 h-4 mr-2" />
+           重试
+         </Button>
       </div>
       <div v-else-if="submissions.length === 0" class="card p-6 text-center text-gray-500">暂无提交</div>
       <div v-else class="space-y-3">
@@ -25,7 +37,10 @@
             </div>
           </div>
           <div>
-            <button class="btn btn-sm btn-primary" :disabled="loading" @click="goGrade(s)">评分</button>
+            <Button size="sm" variant="purple" :disabled="loading" @click="goGrade(s)">
+              <CheckBadgeIcon class="w-4 h-4 mr-1" />
+              评分
+            </Button>
           </div>
         </div>
       </div>
@@ -47,6 +62,7 @@
         </div>
       </div>
     </div>
+    </div>
   </div>
 </template>
 
@@ -55,6 +71,9 @@ import { ref, onMounted } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { submissionApi } from '@/api/submission.api';
 import { useUIStore } from '@/stores/ui';
+import Button from '@/components/ui/Button.vue'
+import { ArrowUturnLeftIcon, ArrowPathIcon, CheckBadgeIcon } from '@heroicons/vue/24/outline'
+import { ChevronRightIcon } from '@heroicons/vue/24/outline';
 
 const route = useRoute();
 const router = useRouter();

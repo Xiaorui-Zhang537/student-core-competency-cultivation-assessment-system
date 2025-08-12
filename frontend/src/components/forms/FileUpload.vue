@@ -4,18 +4,22 @@
     <div
       ref="dropZoneRef"
       :class="[
-        'border-2 border-dashed rounded-lg p-6 transition-all duration-300',
+        'border-2 border-dashed rounded-xl p-6 transition-all duration-300 cursor-pointer bg-white/60 dark:bg-gray-800/40 hover:bg-gray-50 dark:hover:bg-gray-700 hover:border-primary-400 shadow-sm',
         {
           'border-primary-400 bg-primary-50 dark:bg-primary-900/20': isDragOver,
           'border-gray-300 dark:border-gray-600': !isDragOver && !error,
           'border-red-400 bg-red-50 dark:bg-red-900/20': error
         }
       ]"
+      role="button"
+      tabindex="0"
       @click="triggerFileSelect"
       @drop="handleDrop"
       @dragover="handleDragOver"
       @dragenter="handleDragEnter"
       @dragleave="handleDragLeave"
+      @keydown.enter.prevent="triggerFileSelect"
+      @keydown.space.prevent="triggerFileSelect"
     >
       <div class="text-center">
         <!-- 上传图标 -->
@@ -54,15 +58,16 @@
         </div>
 
         <!-- 上传按钮 -->
-        <button 
+        <Button 
           v-if="!uploading"
-          variant="primary" 
+          variant="primary"
+          size="md"
           @click.stop="triggerFileSelect"
           :disabled="disabled"
         >
           <photo-icon class="w-4 h-4 mr-2" />
           选择文件
-        </button>
+        </Button>
 
         <!-- 上传进度 -->
         <div v-if="uploading && progress > 0" class="mt-4">
@@ -95,7 +100,7 @@
         <div
           v-for="(file, index) in files"
           :key="index"
-          class="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800 rounded-lg"
+          class="flex items-center justify-between p-3 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700"
         >
           <div class="flex items-center space-x-3 flex-1 min-w-0">
             <!-- 文件图标 -->
@@ -145,7 +150,7 @@
           <button
             v-if="!disabled"
             @click="removeFile(index)"
-            class="ml-3 p-1 text-gray-400 hover:text-red-500 transition-colors"
+            class="ml-3 p-1.5 rounded hover:bg-red-50 dark:hover:bg-red-900/20 text-gray-400 hover:text-red-600 transition-colors"
             :title="'删除 ' + file.name"
           >
             <x-mark-icon class="w-4 h-4" />

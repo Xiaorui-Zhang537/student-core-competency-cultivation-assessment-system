@@ -44,6 +44,9 @@
             <hand-thumb-up-icon class="w-5 h-5" />
             <span>{{ currentPost.likeCount }} 点赞</span>
           </button>
+            <button class="btn inline-flex items-center justify-center px-6 w-36 bg-indigo-600 hover:bg-indigo-700 text-white dark:text-white" @click="askAiForCurrentPost">
+              <sparkles-icon class="w-4 h-4 mr-2" />询问AI
+            </button>
             <button v-if="authStore.user?.id && String(authStore.user.id) === String(currentPost.author?.id || currentPost.authorId)" class="btn btn-ghost" @click="openEditCurrentPost">编辑帖子</button>
             <button v-if="authStore.user?.id && String(authStore.user.id) === String(currentPost.author?.id || currentPost.authorId)" class="btn btn-ghost text-red-600" @click="onDeleteCurrentPost">删除帖子</button>
         </div>
@@ -119,17 +122,18 @@
 
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted, computed, reactive } from 'vue';
-import { useRoute } from 'vue-router';
+import { useRoute, useRouter } from 'vue-router';
 import { storeToRefs } from 'pinia';
 import { useCommunityStore } from '@/stores/community';
 import { useAuthStore } from '@/stores/auth';
-import { UserIcon, EyeIcon, HandThumbUpIcon, ChatBubbleLeftIcon } from '@heroicons/vue/24/outline';
+import { UserIcon, EyeIcon, HandThumbUpIcon, ChatBubbleLeftIcon, SparklesIcon } from '@heroicons/vue/24/outline';
 import CommentThread from '@/components/comments/CommentThread.vue'
 import EmojiPicker from '@/components/ui/EmojiPicker.vue'
 import { baseURL } from '@/api/config';
 import { fileApi } from '@/api/file.api';
 
 const route = useRoute();
+const router = useRouter();
 const authStore = useAuthStore();
 const communityStore = useCommunityStore();
 
@@ -243,6 +247,14 @@ const setOrder = async (order: 'time' | 'hot') => {
 const onTopDeleted = (id: number) => {
   // 从顶层移除已删除评论
   localComments.value = localComments.value.filter(c => c.id !== id)
+}
+
+const askAiForCurrentPost = () => {
+  if (!currentPost.value) return
+  const content = (currentPost.value.title ? `【问题标题】${currentPost.value.title}\n` : '') +
+                  (currentPost.value.content ? `【问题内容】${currentPost.value.content}` : '')
+  // 角色统一使用教师AI页面；如需学生也支持，可按角色跳不同路由
+  router.push({ path: '/teacher/ai', query: { q: content } })
 }
 
 

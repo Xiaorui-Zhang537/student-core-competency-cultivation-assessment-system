@@ -19,9 +19,24 @@
           <p class="text-gray-500">{{ course.category }}</p>
         </div>
         <div class="flex items-center gap-2">
-          <router-link :to="`/teacher/courses/${course.id}/students`" class="btn btn-outline">学生管理</router-link>
-          <router-link :to="{ name: 'TeacherAssignments' }" class="btn btn-outline">作业管理</router-link>
-          <router-link :to="`/teacher/analytics?courseId=${course.id}`" class="btn btn-primary">课程分析</router-link>
+          <router-link :to="`/teacher/courses/${course.id}/students`">
+            <Button variant="teal">
+              <UserGroupIcon class="w-4 h-4 mr-2" />
+              学生管理
+            </Button>
+          </router-link>
+          <router-link :to="{ name: 'TeacherAssignments' }">
+            <Button variant="purple">
+              <ClipboardDocumentListIcon class="w-4 h-4 mr-2" />
+              作业管理
+            </Button>
+          </router-link>
+          <router-link :to="`/teacher/analytics?courseId=${course.id}`">
+            <Button variant="indigo">
+              <PresentationChartBarIcon class="w-4 h-4 mr-2" />
+              课程分析
+            </Button>
+          </router-link>
         </div>
       </div>
       <div class="w-full h-56 bg-gray-200 rounded overflow-hidden" v-if="course.coverImage">
@@ -38,7 +53,7 @@
       <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <div class="card p-6">
           <div class="flex items-center justify-between mb-4">
-            <h2 class="text-xl font-semibold">课程资料</h2>
+            <h2 class="text-xl font-semibold leading-tight break-all"><span class="inline-block">课程</span><span class="inline-block ml-0">资料</span></h2>
             <file-upload
               ref="materialUploader"
               :multiple="true"
@@ -77,7 +92,7 @@
         </div>
         <div class="card p-6">
           <div class="flex items-center justify-between mb-4">
-            <h2 class="text-xl font-semibold">课程视频</h2>
+            <h2 class="text-xl font-semibold leading-tight break-all"><span class="inline-block">课程</span><span class="inline-block ml-0">视频</span></h2>
             <file-upload
               ref="videoUploader"
               :multiple="true"
@@ -130,7 +145,8 @@ import { useRoute } from 'vue-router';
 import apiClient, { baseURL } from '@/api/config';
 import FileUpload from '@/components/forms/FileUpload.vue';
 import { fileApi } from '@/api/file.api';
-import { DocumentIcon, PhotoIcon, FilmIcon, ArchiveBoxIcon, ChevronRightIcon } from '@heroicons/vue/24/outline'
+import Button from '@/components/ui/Button.vue'
+import { DocumentIcon, PhotoIcon, FilmIcon, ArchiveBoxIcon, ChevronRightIcon, UserGroupIcon, ClipboardDocumentListIcon, PresentationChartBarIcon } from '@heroicons/vue/24/outline'
 
 const courseStore = useCourseStore();
 const route = useRoute();

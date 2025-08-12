@@ -41,6 +41,26 @@
                   <label class="block text-sm font-medium mb-1">简介</label>
                   <p>{{ userProfile.bio || '未设置' }}</p>
                 </div>
+                 <div>
+                  <label class="block text-sm font-medium mb-1">生日</label>
+                  <p>{{ userProfile.birthday || '未设置' }}</p>
+                </div>
+                <div>
+                  <label class="block text-sm font-medium mb-1">手机号</label>
+                  <p>{{ userProfile.phone || '未设置' }}</p>
+                </div>
+                <div>
+                  <label class="block text-sm font-medium mb-1">国家</label>
+                  <p>{{ userProfile.country || '未设置' }}</p>
+                </div>
+                <div>
+                  <label class="block text-sm font-medium mb-1">省份/州</label>
+                  <p>{{ userProfile.province || '未设置' }}</p>
+                </div>
+                <div>
+                  <label class="block text-sm font-medium mb-1">城市</label>
+                  <p>{{ userProfile.city || '未设置' }}</p>
+                </div>
               </div>
               <button @click="openEditProfile" class="btn btn-outline mt-4">编辑资料</button>
             </div>
@@ -51,7 +71,7 @@
         <div v-if="showEditProfile" class="card p-6">
           <h2 class="text-lg font-semibold mb-4">编辑个人信息</h2>
           <form @submit.prevent="handleUpdateProfile" class="space-y-6">
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
                 <label for="nickname" class="block text-sm font-medium mb-2">昵称</label>
                 <input id="nickname" v-model="profileForm.nickname" type="text" class="input" />
@@ -65,6 +85,26 @@
                   <option value="OTHER">其他</option>
                 </select>
               </div>
+                <div>
+                  <label for="birthday" class="block text-sm font-medium mb-2">生日</label>
+                  <input id="birthday" v-model="profileForm.birthday" type="date" class="input" />
+                </div>
+                <div>
+                  <label for="phone" class="block text-sm font-medium mb-2">手机号</label>
+                  <input id="phone" v-model="profileForm.phone" type="tel" class="input" placeholder="请输入手机号" />
+                </div>
+                <div>
+                  <label for="country" class="block text-sm font-medium mb-2">国家</label>
+                  <input id="country" v-model="profileForm.country" type="text" class="input" placeholder="中国" />
+                </div>
+                <div>
+                  <label for="province" class="block text-sm font-medium mb-2">省份/州</label>
+                  <input id="province" v-model="profileForm.province" type="text" class="input" placeholder="浙江省" />
+                </div>
+                <div>
+                  <label for="city" class="block text-sm font-medium mb-2">城市</label>
+                  <input id="city" v-model="profileForm.city" type="text" class="input" placeholder="杭州市" />
+                </div>
             </div>
             <div>
               <label for="bio" class="block text-sm font-medium mb-2">个人简介</label>
@@ -147,6 +187,11 @@ const profileForm = reactive<UpdateProfileRequest>({
   nickname: '',
   gender: '',
   bio: '',
+  birthday: '',
+  country: '',
+  province: '',
+  city: '',
+  phone: '',
 });
 
 const passwordForm = reactive<ChangePasswordRequest>({
@@ -158,7 +203,7 @@ const confirmNewPassword = ref('');
 const fetchUserProfile = async () => {
     const response = await handleApiCall(() => userApi.getProfile(), uiStore, '获取用户信息失败');
     if(response) {
-        userProfile.value = response;
+        userProfile.value = (response as any) as UserProfileResponse;
     }
 }
 
@@ -167,6 +212,11 @@ const setProfileForm = () => {
     profileForm.nickname = userProfile.value.nickname || '';
     profileForm.gender = userProfile.value.gender || '';
     profileForm.bio = userProfile.value.bio || '';
+    profileForm.birthday = userProfile.value.birthday || '';
+    profileForm.country = userProfile.value.country || '';
+    profileForm.province = userProfile.value.province || '';
+    profileForm.city = userProfile.value.city || '';
+    profileForm.phone = userProfile.value.phone || '';
   }
 };
 
@@ -188,7 +238,7 @@ const handleUpdateProfile = async () => {
   if (response) {
     await fetchUserProfile();
     if (authStore.user) {
-        authStore.user.nickname = response.nickname;
+        (authStore.user as any).nickname = (response as any).nickname;
     }
     showEditProfile.value = false;
   }

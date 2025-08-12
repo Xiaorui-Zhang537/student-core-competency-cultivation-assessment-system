@@ -68,6 +68,18 @@ public class User implements Serializable {
     @Schema(description = "电话号码")
     private String phone;
 
+    @Schema(description = "生日")
+    private Date birthday;
+
+    @Schema(description = "国家")
+    private String country;
+
+    @Schema(description = "省份/州")
+    private String province;
+
+    @Schema(description = "城市")
+    private String city;
+
     @Schema(description = "创建时间")
     private Date createdAt;
 

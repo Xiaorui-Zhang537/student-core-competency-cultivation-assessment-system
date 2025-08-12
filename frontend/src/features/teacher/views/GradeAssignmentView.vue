@@ -1,5 +1,5 @@
 <template>
-  <div class="min-h-screen bg-gray-50 dark:bg-gray-900 p-6">
+  <div class="min-h-screen p-6">
     <div class="max-w-7xl mx-auto">
       <!-- 页面标题 -->
       <div class="mb-8">
@@ -21,9 +21,10 @@
             <badge :variant="getSubmissionStatusVariant(submission.status)">
               {{ getSubmissionStatusText(submission.status) }}
             </badge>
-            <button variant="outline" @click="$router.go(-1)">
+            <Button variant="outline" @click="$router.go(-1)">
+              <ArrowUturnLeftIcon class="w-4 h-4 mr-2" />
               返回列表
-            </button>
+            </Button>
           </div>
         </div>
       </div>
@@ -315,19 +316,19 @@
 
               <!-- 提交按钮 -->
               <div class="space-y-3">
-                <button
+                <Button
                   type="submit"
-                  variant="primary"
+                  variant="success"
                   size="lg"
                   class="w-full"
                   :loading="isSubmitting"
                   :disabled="!isFormValid"
                 >
-                  <check-icon class="w-4 h-4 mr-2" />
+                  <CheckIcon class="w-4 h-4 mr-2" />
                   提交评分
-                </button>
+                </Button>
                 
-                <button
+                <Button
                   type="button"
                   variant="outline"
                   size="lg"
@@ -335,9 +336,9 @@
                   @click="saveDraft"
                   :loading="isDraftSaving"
                 >
-                  <document-duplicate-icon class="w-4 h-4 mr-2" />
+                  <DocumentDuplicateIcon class="w-4 h-4 mr-2" />
                   保存草稿
-                </button>
+                </Button>
               </div>
             </form>
           </card>
@@ -428,6 +429,7 @@ import {
   DocumentIcon,
   EyeIcon,
   ArrowDownTrayIcon,
+  ArrowUturnLeftIcon,
   SparklesIcon,
   AcademicCapIcon,
   CheckIcon,

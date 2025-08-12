@@ -1,5 +1,5 @@
 <template>
-  <div class="min-h-screen bg-gray-50 dark:bg-gray-900 p-6">
+  <div class="min-h-screen p-6">
     <div class="max-w-7xl mx-auto">
       <!-- 页面标题 -->
       <div class="mb-8">
@@ -20,10 +20,14 @@
             <p class="text-gray-600 dark:text-gray-400">管理课程学生的学习进度和成绩</p>
           </div>
           <div class="flex items-center space-x-3">
-            <button variant="outline" @click="exportData">
-              <document-arrow-down-icon class="w-4 h-4 mr-2" />
+            <Button variant="indigo" @click="openInviteModal">
+              <UserPlusIcon class="w-4 h-4 mr-2" />
+              邀请学生
+            </Button>
+            <Button variant="teal" @click="exportData">
+              <ArrowDownTrayIcon class="w-4 h-4 mr-2" />
               导出数据
-            </button>
+            </Button>
             <!-- 去除模拟邀请功能，后续有真实接口再恢复 -->
           </div>
         </div>
@@ -117,15 +121,18 @@
               <span class="text-sm text-gray-600 dark:text-gray-400">
                 已选择 {{ selectedStudents.length }} 名学生
               </span>
-              <button variant="outline" size="sm" @click="batchSendMessage">
+              <Button variant="purple" size="sm" @click="batchSendMessage">
+                <PaperAirplaneIcon class="w-4 h-4 mr-1" />
                 发送消息
-              </button>
-              <button variant="outline" size="sm" @click="batchExport">
+              </Button>
+              <Button variant="teal" size="sm" @click="batchExport">
+                <ArrowDownTrayIcon class="w-4 h-4 mr-1" />
                 批量导出
-              </button>
-              <button variant="danger" size="sm" @click="batchRemove">
+              </Button>
+              <Button variant="outline" size="sm" @click="batchRemove">
+                <UserMinusIcon class="w-4 h-4 mr-1" />
                 移除学生
-              </button>
+              </Button>
             </div>
             
             <!-- 排序 -->
@@ -137,33 +144,31 @@
               <option value="joinDate">按加入时间排序</option>
             </select>
 
-            <!-- 视图切换 -->
-            <div class="flex rounded-md border border-gray-300 dark:border-gray-600">
-              <button
-                @click="viewMode = 'table'"
-                class="px-3 py-1 text-sm rounded-l-md transition-colors"
-                :class="viewMode === 'table' 
-                  ? 'bg-primary-600 text-white' 
-                  : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'"
-              >
-                <table-cells-icon class="w-4 h-4" />
-              </button>
-              <button
-                @click="viewMode = 'grid'"
-                class="px-3 py-1 text-sm rounded-r-md transition-colors"
-                :class="viewMode === 'grid' 
-                  ? 'bg-primary-600 text-white' 
-                  : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'"
-              >
-                <squares2-x2-icon class="w-4 h-4" />
-              </button>
-            </div>
+            <!-- 已移除视图切换按钮，固定为表格视图 -->
           </div>
         </div>
       </card>
 
+      <!-- 邀请学生弹窗 -->
+      <div v-if="showInviteModal" class="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+        <div class="bg-white dark:bg-gray-800 w-full max-w-lg rounded-xl shadow-xl border border-gray-200 dark:border-gray-700">
+          <div class="p-4 border-b border-gray-200 dark:border-gray-700">
+            <h3 class="text-lg font-semibold text-gray-900 dark:text-white">邀请学生加入课程</h3>
+          </div>
+          <div class="p-4 space-y-4">
+            <p class="text-sm text-gray-600 dark:text-gray-400">支持批量输入学生ID，使用逗号或换行分隔。</p>
+            <textarea v-model="inviteRaw" rows="6" class="input w-full" placeholder="例如：1001,1002,1003 或者每行一个"></textarea>
+            <div class="text-xs text-gray-500">已解析：{{ parsedInviteIds.length }} 个</div>
+          </div>
+          <div class="p-4 flex justify-end gap-2 border-t border-gray-200 dark:border-gray-700">
+            <Button variant="outline" @click="closeInviteModal">取消</Button>
+            <Button variant="teal" :disabled="parsedInviteIds.length===0 || inviting" :loading="inviting" @click="submitInvite">确认邀请</Button>
+          </div>
+        </div>
+      </div>
+
       <!-- 学生列表 - 表格视图 -->
-      <card padding="lg" v-if="viewMode === 'table'">
+      <card padding="lg">
         <template #header>
           <div class="flex justify-between items-center">
             <h2 class="text-lg font-semibold text-gray-900 dark:text-white">学生列表</h2>
@@ -292,32 +297,38 @@
                 </td>
                 <td class="px-6 py-4">
                   <div class="flex items-center space-x-2">
-                    <button variant="ghost" size="sm" @click="viewStudentDetail(student.id)">
-                      <eye-icon class="w-4 h-4" />
-                    </button>
-                    <button variant="ghost" size="sm" @click="sendMessage(student.id)">
-                      <chat-bubble-left-icon class="w-4 h-4" />
-                    </button>
+                    <Button variant="outline" size="sm" @click="viewStudentDetail(student.id)">
+                      <EyeIcon class="w-4 h-4 mr-1" />
+                      详情
+                    </Button>
+                    <Button variant="purple" size="sm" @click="sendMessage(student.id)">
+                      <ChatBubbleLeftIcon class="w-4 h-4 mr-1" />
+                      消息
+                    </Button>
                     <div class="relative" @click.stop>
-                      <button variant="ghost" size="sm" @click="toggleStudentMenu(student.id)">
-                        <ellipsis-vertical-icon class="w-4 h-4" />
-                      </button>
+                      <Button variant="ghost" size="sm" @click="toggleStudentMenu(student.id)">
+                        <EllipsisVerticalIcon class="w-4 h-4" />
+                      </Button>
                       <div
                         v-if="showStudentMenu === student.id"
                         class="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-800 rounded-md shadow-lg z-10 border border-gray-200 dark:border-gray-600"
                       >
                         <div class="py-1">
-                          <button @click="viewGrades(student.id)" class="block w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700">
+                          <button @click="viewGrades(student.id)" class="flex items-center gap-2 w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700">
+                            <AcademicCapIcon class="w-4 h-4" />
                             查看成绩
                           </button>
-                          <button @click="resetProgress(student.id)" class="block w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700">
+                          <button @click="resetProgress(student.id)" class="flex items-center gap-2 w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700">
+                            <ArrowPathIcon class="w-4 h-4" />
                             重置进度
                           </button>
-                          <button @click="exportStudentData(student.id)" class="block w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700">
+                          <button @click="exportStudentData(student.id)" class="flex items-center gap-2 w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700">
+                            <ArrowDownTrayIcon class="w-4 h-4" />
                             导出数据
                           </button>
                           <hr class="my-1 border-gray-200 dark:border-gray-600" />
-                          <button @click="removeStudent(student.id)" class="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-gray-100 dark:hover:bg-gray-700">
+                          <button @click="removeStudent(student.id)" class="flex items-center gap-2 w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-gray-100 dark:hover:bg-gray-700">
+                            <UserMinusIcon class="w-4 h-4" />
                             移除学生
                           </button>
                         </div>
@@ -344,14 +355,15 @@
           </div>
           
           <div class="flex items-center space-x-2">
-            <button 
+            <Button 
               variant="outline" 
               size="sm" 
               @click="currentPage--" 
               :disabled="currentPage === 1"
             >
+              <ChevronLeftIcon class="w-4 h-4 mr-1" />
               上一页
-            </button>
+            </Button>
             
             <div class="flex space-x-1">
               <button
@@ -367,104 +379,20 @@
               </button>
             </div>
             
-            <button 
+            <Button 
               variant="outline" 
               size="sm" 
               @click="currentPage++" 
               :disabled="currentPage === totalPages"
             >
               下一页
-            </button>
+              <ChevronRightIcon2 class="w-4 h-4 ml-1" />
+            </Button>
           </div>
         </div>
       </card>
 
-      <!-- 学生列表 - 卡片视图 -->
-      <div v-if="viewMode === 'grid'" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-        <card 
-          v-for="student in paginatedStudents" 
-          :key="student.id"
-          padding="lg"
-          hoverable
-          class="relative"
-        >
-          <div class="absolute top-4 right-4">
-            <input
-              type="checkbox"
-              :value="student.id"
-              v-model="selectedStudents"
-              class="rounded border-gray-300 text-primary-600 focus:ring-primary-500"
-            />
-          </div>
-          
-          <div class="text-center">
-            <div class="mx-auto w-16 h-16 mb-4">
-              <img 
-                v-if="student.avatar" 
-                :src="student.avatar" 
-                :alt="student.name"
-                class="w-16 h-16 rounded-full"
-              />
-              <div v-else class="w-16 h-16 rounded-full bg-gray-200 dark:bg-gray-600 flex items-center justify-center">
-                <user-icon class="w-8 h-8 text-gray-400" />
-              </div>
-            </div>
-            
-            <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-1">
-              {{ student.name }}
-            </h3>
-            <p class="text-sm text-gray-500 dark:text-gray-400 mb-4">
-              {{ student.studentId }}
-            </p>
-            
-            <!-- 进度 -->
-            <div class="mb-4">
-              <div class="flex justify-between items-center mb-2">
-                <span class="text-sm text-gray-600 dark:text-gray-400">学习进度</span>
-                <span class="text-sm font-medium">{{ student.progress }}%</span>
-              </div>
-              <progress :value="student.progress" :max="100" size="sm" />
-            </div>
-            
-            <!-- 统计信息 -->
-            <div class="grid grid-cols-2 gap-4 mb-4 text-sm">
-              <div class="text-center">
-                <div class="font-semibold text-gray-900 dark:text-white">
-                  {{ student.averageGrade || '--' }}
-                </div>
-                <div class="text-gray-500 dark:text-gray-400">平均成绩</div>
-              </div>
-              <div class="text-center">
-                <div class="font-semibold text-gray-900 dark:text-white">
-                  {{ student.studyTime }}h
-                </div>
-                <div class="text-gray-500 dark:text-gray-400">周学习时长</div>
-              </div>
-            </div>
-            
-            <!-- 活跃状态 -->
-            <div class="flex items-center justify-center space-x-2 mb-4">
-              <div
-                class="w-2 h-2 rounded-full"
-                :class="getActivityColor(student.activityLevel)"
-              ></div>
-              <span class="text-sm text-gray-600 dark:text-gray-400">
-                {{ getActivityText(student.activityLevel) }}
-              </span>
-            </div>
-            
-            <!-- 操作按钮 -->
-            <div class="flex space-x-2">
-              <button variant="outline" size="sm" class="flex-1" @click="viewStudentDetail(student.id)">
-                查看详情
-              </button>
-              <button variant="outline" size="sm" @click="sendMessage(student.id)">
-                <chat-bubble-left-icon class="w-4 h-4" />
-              </button>
-            </div>
-          </div>
-        </card>
-      </div>
+      <!-- 已移除卡片视图 -->
     </div>
   </div>
 </template>
@@ -486,12 +414,17 @@ import {
   StarIcon,
   ClockIcon,
   MagnifyingGlassIcon,
-  TableCellsIcon,
-  Squares2X2Icon,
   UserIcon,
   EyeIcon,
   ChatBubbleLeftIcon,
-  EllipsisVerticalIcon
+  EllipsisVerticalIcon,
+  ArrowDownTrayIcon,
+  PaperAirplaneIcon,
+  UserMinusIcon,
+  ChevronLeftIcon,
+  ChevronRightIcon as ChevronRightIcon2,
+  AcademicCapIcon,
+  ArrowPathIcon
 } from '@heroicons/vue/24/outline'
 
 // Router and Stores
@@ -722,7 +655,41 @@ const exportData = async () => {
   }
 }
 
-const inviteStudents = () => {}
+// 邀请学生弹窗与提交逻辑
+const showInviteModal = ref(false)
+const inviteRaw = ref('')
+const inviting = ref(false)
+const parsedInviteIds = computed(() => {
+  const tokens = inviteRaw.value.split(/[^0-9]+/).filter(Boolean)
+  const nums = Array.from(new Set(tokens.map((t) => Number(t)).filter((n) => Number.isFinite(n))))
+  return nums
+})
+const openInviteModal = () => {
+  showInviteModal.value = true
+}
+const closeInviteModal = () => {
+  showInviteModal.value = false
+  inviteRaw.value = ''
+}
+const submitInvite = async () => {
+  if (parsedInviteIds.value.length === 0) return
+  try {
+    inviting.value = true
+    const { courseApi } = await import('@/api/course.api')
+    await courseApi.inviteStudents(courseId, parsedInviteIds.value)
+    uiStore.showNotification({
+      type: 'success',
+      title: '邀请成功',
+      message: `已处理 ${parsedInviteIds.value.length} 个学生ID`
+    })
+    closeInviteModal()
+    await fetchCourseStudents()
+  } catch (e: any) {
+    uiStore.showNotification({ type: 'error', title: '邀请失败', message: e?.message || '提交失败' })
+  } finally {
+    inviting.value = false
+  }
+}
 
 // 生命周期
 onMounted(async () => {

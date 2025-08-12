@@ -73,6 +73,24 @@ public class UserServiceImpl implements UserService {
         if (StringUtils.hasText(request.getBio())) {
             existingUser.setBio(request.getBio());
         }
+        if (StringUtils.hasText(request.getPhone())) {
+            existingUser.setPhone(request.getPhone());
+        }
+        if (StringUtils.hasText(request.getCountry())) {
+            existingUser.setCountry(request.getCountry());
+        }
+        if (StringUtils.hasText(request.getProvince())) {
+            existingUser.setProvince(request.getProvince());
+        }
+        if (StringUtils.hasText(request.getCity())) {
+            existingUser.setCity(request.getCity());
+        }
+        if (StringUtils.hasText(request.getBirthday())) {
+            try {
+                java.util.Date bd = new java.text.SimpleDateFormat("yyyy-MM-dd").parse(request.getBirthday());
+                existingUser.setBirthday(bd);
+            } catch (Exception ignored) {}
+        }
 
         existingUser.setUpdatedAt(new java.util.Date());
         int result = userMapper.updateUser(existingUser);

@@ -45,6 +45,11 @@ public class UserController extends BaseController {
                 .bio(user.getBio())
                 .emailVerified(user.isEmailVerified())
                 .displayName(user.getDisplayName())
+                .birthday(user.getBirthday() != null ? new java.text.SimpleDateFormat("yyyy-MM-dd").format(user.getBirthday()) : null)
+                .country(user.getCountry())
+                .province(user.getProvince())
+                .city(user.getCity())
+                .phone(user.getPhone())
                 .build();
         return ResponseEntity.ok(ApiResponse.success(profileResponse));
     }

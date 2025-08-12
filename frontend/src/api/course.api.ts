@@ -77,5 +77,11 @@ export const courseApi = {
   // Enrollment listings (teacher only)
   getCourseStudents: (courseId: string, params?: { page?: number; size?: number }): Promise<ApiResponse<PaginatedResponse<User>>> => {
     return api.get(`/courses/${courseId}/students`, { params });
+  },
+
+  // Teacher invite/add students to course
+  inviteStudents: (courseId: string | number, studentIds: Array<number|string>): Promise<ApiResponse<void>> => {
+    const ids = (studentIds || []).map(id => Number(id)).filter(n => !Number.isNaN(n));
+    return api.post(`/courses/${courseId}/students/invite`, { studentIds: ids });
   }
 };

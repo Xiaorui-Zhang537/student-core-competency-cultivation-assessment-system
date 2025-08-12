@@ -39,4 +39,19 @@ public class UserProfileResponse {
     // 可以根据需要添加更多安全的字段，如名字等
     @Schema(description = "显示名称")
     private String displayName;
+
+    @Schema(description = "生日，yyyy-MM-dd")
+    private String birthday;
+
+    @Schema(description = "国家")
+    private String country;
+
+    @Schema(description = "省份/州")
+    private String province;
+
+    @Schema(description = "城市")
+    private String city;
+
+    @Schema(description = "手机号")
+    private String phone;
 } 

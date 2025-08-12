@@ -1,7 +1,8 @@
 <template>
-  <div class="p-6">
+  <div class="min-h-screen p-6">
+    <div class="max-w-7xl mx-auto">
     <!-- Header -->
-    <div class="mb-8 flex items-center justify-between">
+      <div class="mb-8 flex items-center justify-between">
       <div class="flex-1">
         <nav class="flex items-center space-x-2 text-sm text-gray-500 dark:text-gray-400 mb-2">
           <router-link to="/teacher/courses" class="hover:text-gray-700 dark:hover:text-gray-200">
@@ -19,9 +20,10 @@
         <h1 class="text-3xl font-bold">作业管理</h1>
         <p class="text-gray-500">创建、查看和管理课程作业</p>
       </div>
-      <button @click="openCreateModal" class="btn btn-primary" :disabled="!courseStore.courses.length">
-        创建作业
-      </button>
+        <Button variant="purple" @click="openCreateModal" :disabled="!courseStore.courses.length">
+          <PlusIcon class="w-4 h-4 mr-2" />
+          创建作业
+        </Button>
     </div>
 
     <!-- Filters -->
@@ -54,9 +56,18 @@
           </div>
         </div>
         <div>
-          <button @click="() => viewSubmissions(assignment)" class="btn btn-sm btn-outline mr-2">查看提交</button>
-          <button @click="openEditModal(assignment)" class="btn btn-sm btn-outline mr-2">编辑</button>
-          <button @click="handleDeleteAssignment(assignment)" class="btn btn-sm btn-danger-outline">删除</button>
+          <Button size="sm" variant="teal" class="mr-2" @click="() => viewSubmissions(assignment)">
+            <InboxArrowDownIcon class="w-4 h-4 mr-1" />
+            查看提交
+          </Button>
+          <Button size="sm" variant="outline" class="mr-2" @click="openEditModal(assignment)">
+            <PencilSquareIcon class="w-4 h-4 mr-1" />
+            编辑
+          </Button>
+          <Button size="sm" variant="outline" @click="handleDeleteAssignment(assignment)">
+            <TrashIcon class="w-4 h-4 mr-1" />
+            删除
+          </Button>
         </div>
       </div>
        <div v-if="!assignmentStore.loading && assignmentStore.assignments.length === 0" class="text-center py-12 card">
@@ -146,6 +157,7 @@
         </form>
       </div>
     </div>
+    </div>
   </div>
 </template>
 
@@ -156,7 +168,8 @@ import { useCourseStore } from '@/stores/course';
 import { useAuthStore } from '@/stores/auth';
 import type { Assignment, AssignmentCreationRequest, AssignmentUpdateRequest } from '@/types/assignment';
 import { useRoute } from 'vue-router';
-import { ChevronRightIcon } from '@heroicons/vue/24/outline';
+import Button from '@/components/ui/Button.vue'
+import { ChevronRightIcon, PlusIcon, InboxArrowDownIcon, PencilSquareIcon, TrashIcon } from '@heroicons/vue/24/outline';
 import FileUpload from '@/components/forms/FileUpload.vue';
 import { baseURL } from '@/api/config';
 import { fileApi } from '@/api/file.api';
@@ -337,14 +350,26 @@ onMounted(async () => {
   if (cid) {
     await courseStore.fetchCourseById(cid)
   }
+  // 读取查询参数：courseId 用于筛选，openCreate=1 用于自动弹出创建
+  const qCourseId = (route.query.courseId as string | undefined) || undefined
+  const qOpenCreate = String(route.query.openCreate || '')
   if (teacherCourses.value.length > 0) {
     // 如果 URL 中没有课程ID，但需要默认上下文，选取第一门课程
     if (!cid) {
-      selectedCourseId.value = String(teacherCourses.value[0].id)
+      selectedCourseId.value = qCourseId || String(teacherCourses.value[0].id)
       // 填充 currentCourse 以便面包屑能立即显示课程名
       await courseStore.fetchCourseById(selectedCourseId.value)
     }
     handleCourseFilterChange();
+  }
+  // 若要求自动创建作业
+  if (qOpenCreate === '1') {
+    if (qCourseId) {
+      form.courseId = qCourseId
+    } else if (!form.courseId && courseStore.courses.length > 0) {
+      form.courseId = String(courseStore.courses[0].id)
+    }
+    openCreateModal()
   }
 });
 </script>

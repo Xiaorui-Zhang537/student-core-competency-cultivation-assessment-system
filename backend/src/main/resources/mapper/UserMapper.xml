@@ -18,6 +18,10 @@
         <result column="subject" property="subject"/>
         <result column="school" property="school"/>
         <result column="phone" property="phone"/>
+        <result column="birthday" property="birthday"/>
+        <result column="country" property="country"/>
+        <result column="province" property="province"/>
+        <result column="city" property="city"/>
         <result column="created_at" property="createdAt"/>
         <result column="updated_at" property="updatedAt"/>
         <result column="deleted" property="deleted"/>
@@ -26,13 +30,13 @@
     <!-- 基础查询字段 -->
     <sql id="userColumns">
         id, username, email, password, role, avatar, first_name, last_name, 
-        display_name, bio, grade, subject, school, phone, created_at, updated_at, deleted
+        display_name, bio, grade, subject, school, phone, birthday, country, province, city, created_at, updated_at, deleted
     </sql>
 
     <!-- 带别名的基础查询字段 -->
     <sql id="aliasedUserColumns">
         u.id, u.username, u.email, u.password, u.role, u.avatar, u.first_name, u.last_name,
-        u.display_name, u.bio, u.grade, u.subject, u.school, u.phone,
+        u.display_name, u.bio, u.grade, u.subject, u.school, u.phone, u.birthday, u.country, u.province, u.city,
         u.created_at, u.updated_at, u.deleted
     </sql>
 
@@ -40,10 +44,10 @@
     <insert id="insertUser" parameterType="com.noncore.assessment.entity.User" useGeneratedKeys="true" keyProperty="id">
         INSERT INTO users (
             username, email, password, role, avatar, first_name, last_name,
-            display_name, bio, grade, subject, school, phone, created_at, updated_at, deleted
+            display_name, bio, grade, subject, school, phone, birthday, country, province, city, created_at, updated_at, deleted
         ) VALUES (
             #{username}, #{email}, #{password}, #{role}, #{avatar}, #{firstName}, #{lastName},
-            #{displayName}, #{bio}, #{grade}, #{subject}, #{school}, #{phone}, 
+            #{displayName}, #{bio}, #{grade}, #{subject}, #{school}, #{phone}, #{birthday}, #{country}, #{province}, #{city},
             #{createdAt}, #{updatedAt}, #{deleted}
         )
     </insert>
@@ -84,6 +88,10 @@
             <if test="subject != null and subject != ''">subject = #{subject},</if>
             <if test="school != null and school != ''">school = #{school},</if>
             <if test="phone != null and phone != ''">phone = #{phone},</if>
+            <if test="birthday != null">birthday = #{birthday},</if>
+            <if test="country != null and country != ''">country = #{country},</if>
+            <if test="province != null and province != ''">province = #{province},</if>
+            <if test="city != null and city != ''">city = #{city},</if>
             <if test="updatedAt != null">updated_at = #{updatedAt},</if>
         </set>
         WHERE id = #{id} AND deleted = false

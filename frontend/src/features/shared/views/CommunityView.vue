@@ -1,5 +1,5 @@
 <template>
-  <div class="min-h-screen bg-gray-50 dark:bg-gray-900 p-6">
+  <div class="min-h-screen p-6">
     <div class="max-w-7xl mx-auto">
       <!-- Page Header -->
       <div class="mb-8">
@@ -386,6 +386,12 @@ const viewPost = (postId: number) => {
   const routeName = authStore.userRole === 'TEACHER' ? 'TeacherPostDetail' : 'StudentPostDetail';
   router.push({ name: routeName, params: { id: postId } });
 };
+
+const askAiForPost = (post: any) => {
+  const content = (post?.title ? `【问题标题】${post.title}\n` : '') +
+                  (post?.content ? `【问题内容】${post.content}` : '')
+  router.push({ name: 'TeacherAiAssistant', query: { q: content } })
+}
 
 const onEditPost = (post: any) => {
   editModal.visible = true

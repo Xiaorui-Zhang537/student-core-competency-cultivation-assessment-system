@@ -1,60 +1,117 @@
 <template>
-  <div class="p-6">
-    <!-- Header -->
-    <div class="mb-8 flex items-center justify-between">
-      <div>
-        <h1 class="text-3xl font-bold">课程管理</h1>
-        <p class="text-gray-500">管理您的所有课程</p>
-      </div>
-      <button @click="openCreateModal" class="btn btn-primary">创建课程</button>
-    </div>
-
-    <!-- Filters -->
-    <div class="mb-6 card p-4">
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <input v-model="filters.query" type="text" placeholder="搜索课程..." @input="applyFilters" class="input" />
-        <select v-model="filters.status" @change="applyFilters" class="input">
-          <option value="">全部状态</option>
-          <option value="DRAFT">草稿</option>
-          <option value="PUBLISHED">已发布</option>
-          <option value="ARCHIVED">已归档</option>
-        </select>
-        <button @click="clearFilters" class="btn btn-outline">清除筛选</button>
-      </div>
-    </div>
-
-    <!-- Course List -->
-    <div v-if="courseStore.loading" class="text-center py-12">
-        <p>正在加载课程...</p>
-    </div>
-      <div v-else class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-      <div v-for="course in courseStore.courses" :key="course.id" class="card overflow-hidden cursor-pointer hover:shadow-lg transition-shadow" @click="navigateToCourse(course)">
-        <div class="h-40 bg-gray-200 overflow-hidden">
-          <img v-if="course.coverImage && getCoverSrc(course)" :src="getCoverSrc(course)" alt="课程封面" class="w-full h-full object-cover" @error="onCardCoverError(course)" />
+  <div class="min-h-screen p-6">
+    <div class="max-w-7xl mx-auto">
+      <!-- Header -->
+      <div class="mb-8 flex items-center justify-between">
+        <div class="flex-1">
+          <nav class="flex items-center space-x-2 text-sm text-gray-500 dark:text-gray-400 mb-2">
+            <span>课程管理</span>
+          </nav>
+          <h1 class="text-3xl font-bold text-gray-900 dark:text-white">课程管理</h1>
+          <p class="text-gray-600 dark:text-gray-400">管理您的所有课程</p>
         </div>
-        <div class="p-4">
-          <h3 class="font-bold text-lg">{{ course.title }}</h3>
-          <p class="text-sm text-gray-500 mb-2">{{ course.category }}</p>
-          <p class="text-sm text-gray-600 truncate">{{ course.description }}</p>
-          <div class="mt-4 flex justify-between items-center">
-            <span class="badge" :class="statusClass(course.status)">{{ course.status }}</span>
-            <div>
-              <button @click.stop="openEditModal(course)" class="btn btn-sm btn-outline mr-2">编辑</button>
-              <button @click.stop="handleDeleteCourse(String(course.id))" class="btn btn-sm btn-danger-outline">删除</button>
+        <Button variant="indigo" @click="openCreateModal">
+          <PlusIcon class="w-4 h-4 mr-2" />
+          创建课程
+        </Button>
+      </div>
+
+      <!-- Filters -->
+      <div class="mb-6 card p-4">
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4 items-center">
+        <!-- 搜索框 with 图标 -->
+        <div class="relative">
+          <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+            <magnifying-glass-icon class="h-5 w-5 text-gray-400" />
+          </div>
+          <input
+            v-model="filters.query"
+            type="text"
+            placeholder="搜索课程标题/描述..."
+            @input="applyFilters"
+            class="input pl-10"
+          />
+        </div>
+        <!-- 状态分段按钮组 -->
+        <div class="flex rounded-lg overflow-hidden border border-gray-300 dark:border-gray-600">
+          <button type="button" @click="setStatus('')" :class="segClass('')">全部</button>
+          <button type="button" @click="setStatus('DRAFT')" :class="segClass('DRAFT')">草稿</button>
+          <button type="button" @click="setStatus('PUBLISHED')" :class="segClass('PUBLISHED')">已发布</button>
+          <button type="button" @click="setStatus('ARCHIVED')" :class="segClass('ARCHIVED')">已归档</button>
+        </div>
+        <div class="flex justify-start md:justify-end">
+          <Button variant="outline" @click="clearFilters">
+            <XMarkIcon class="w-4 h-4 mr-2" />
+            清除筛选
+          </Button>
+        </div>
+      </div>
+      </div>
+
+      <!-- Course List -->
+      <div v-if="courseStore.loading" class="text-center py-12">
+        <p>正在加载课程...</p>
+      </div>
+      <div v-else class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div
+          v-for="course in courseStore.courses"
+          :key="course.id"
+          class="relative card overflow-hidden cursor-pointer transition-all duration-300 hover:shadow-md hover:-translate-y-0.5"
+          @click="navigateToCourse(course)"
+        >
+          <div class="h-40 bg-gray-100 dark:bg-gray-700 overflow-hidden relative">
+            <img
+              v-if="course.coverImage && getCoverSrc(course)"
+              :src="getCoverSrc(course)"
+              alt="课程封面"
+              class="w-full h-full object-cover"
+              @error="onCardCoverError(course)"
+            />
+            <!-- 状态徽标浮层 -->
+            <span
+              class="absolute top-3 left-3 text-xs px-2 py-0.5 rounded bg-white/90 dark:bg-gray-800/90 border border-gray-200 dark:border-gray-700"
+              :class="statusBadgeClass(course.status)"
+            >
+              {{ statusText(course.status) }}
+            </span>
+          </div>
+          <div class="p-4">
+            <h3 class="font-bold text-lg line-clamp-1">{{ course.title }}</h3>
+            <p class="text-xs text-gray-500 mb-2">{{ course.category }}</p>
+            <p class="text-sm text-gray-600 dark:text-gray-300 line-clamp-2 min-h-[2.5rem]">{{ course.description }}</p>
+            <div class="mt-4 flex justify-between items-center">
+              <div class="text-xs text-gray-500">
+                <span>标签：</span>
+                <span v-if="getTagsText(course)" class="text-gray-700 dark:text-gray-200">{{ getTagsText(course) }}</span>
+                <span v-else class="text-gray-400">无</span>
+              </div>
+              <div class="flex items-center">
+                <Button size="sm" variant="outline" class="mr-2" @click.stop="openEditModal(course)">
+                  <PencilSquareIcon class="w-4 h-4 mr-1" />
+                  编辑
+                </Button>
+                <Button size="sm" variant="outline" @click.stop="handleDeleteCourse(String(course.id))">
+                  <TrashIcon class="w-4 h-4 mr-1" />
+                  删除
+                </Button>
+              </div>
             </div>
           </div>
         </div>
       </div>
-    </div>
-     <div v-if="!courseStore.loading && courseStore.courses.length === 0" class="text-center py-12 card">
+      <div v-if="!courseStore.loading && courseStore.courses.length === 0" class="text-center py-12 card">
         <h3 class="text-lg font-medium">暂无课程</h3>
         <p class="text-gray-500 mb-4">开始创建您的第一个课程吧！</p>
-        <button @click="openCreateModal" class="btn btn-primary">创建课程</button>
+        <Button variant="indigo" @click="openCreateModal">
+          <PlusIcon class="w-4 h-4 mr-2" />
+          创建课程
+        </Button>
       </div>
 
-    <!-- Create/Edit Modal -->
-    <div v-if="showModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div class="bg-white rounded-lg p-6 w-full max-w-lg">
+      <!-- Create/Edit Modal -->
+      <div v-if="showModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+      <div class="bg-white dark:bg-gray-800 rounded-xl shadow-xl w-full max-w-2xl max-h-[85vh] overflow-y-auto">
+        <div class="p-6">
         <h2 class="text-xl font-bold mb-4">{{ isEditing ? '编辑课程' : '创建新课程' }}</h2>
         <form @submit.prevent="handleSubmit" class="space-y-4">
           <div>
@@ -93,13 +150,17 @@
             <p v-if="form.coverImage" class="text-xs text-gray-500 mt-2">已选择封面（文件ID：{{ form.coverImage }}）</p>
           </div>
           <div class="flex justify-end space-x-3 mt-6">
-            <button type="button" @click="closeModal" class="btn btn-outline">取消</button>
-            <button type="submit" :disabled="courseStore.loading" class="btn btn-primary">
+            <Button type="button" variant="outline" @click="closeModal">取消</Button>
+            <Button type="submit" :disabled="courseStore.loading" variant="indigo">
               {{ isEditing ? '保存更改' : '创建课程' }}
-            </button>
+            </Button>
           </div>
         </form>
+        </div>
       </div>
+    </div>
+    
+    <!-- root wrapper close -->
     </div>
   </div>
 </template>
@@ -113,6 +174,8 @@ import type { Course, CourseCreationRequest, CourseUpdateRequest } from '@/types
 import { debounce } from 'lodash-es';
 import FileUpload from '@/components/forms/FileUpload.vue';
 import apiClient, { baseURL } from '@/api/config';
+import Button from '@/components/ui/Button.vue'
+import { MagnifyingGlassIcon, PlusIcon, XMarkIcon, PencilSquareIcon, TrashIcon } from '@heroicons/vue/24/outline'
 
 const courseStore = useCourseStore();
 const authStore = useAuthStore();
@@ -174,6 +237,42 @@ const statusClass = (status: string) => {
         'bg-yellow-100 text-yellow-800': status === 'DRAFT',
         'bg-gray-100 text-gray-800': status === 'ARCHIVED',
     }
+}
+
+const statusText = (status: string) => {
+  const map: Record<string, string> = { DRAFT: '草稿', PUBLISHED: '已发布', ARCHIVED: '已归档' }
+  return map[status] || status || '未知'
+}
+
+const statusBadgeClass = (status: string) => {
+  const map: Record<string, string> = {
+    DRAFT: 'text-yellow-700 dark:text-yellow-300',
+    PUBLISHED: 'text-green-700 dark:text-green-300',
+    ARCHIVED: 'text-gray-600 dark:text-gray-300'
+  }
+  return map[status] || 'text-gray-600'
+}
+
+const setStatus = (val: string) => {
+  filters.status = val
+  applyFilters()
+}
+
+const segClass = (val: string) => {
+  const isActive = filters.status === val
+  return [
+    'px-3 py-2 text-sm transition-colors',
+    isActive
+      ? 'bg-primary-600 text-white'
+      : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'
+  ]
+}
+
+const getTagsText = (course: any): string => {
+  const t = (course as any)?.tags
+  if (Array.isArray(t)) return t.join(', ')
+  if (typeof t === 'string') return t
+  return ''
 }
 
 const navigateToCourse = (course: Course) => {

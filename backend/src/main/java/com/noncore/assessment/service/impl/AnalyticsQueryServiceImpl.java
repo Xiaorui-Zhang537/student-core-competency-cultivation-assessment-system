@@ -106,13 +106,40 @@ public class AnalyticsQueryServiceImpl implements AnalyticsQueryService {
         List<Assignment> assignments = assignmentMapper.selectAssignmentsByCourseId(courseId);
         List<Map<String, Object>> timeSeriesData = generateTimeSeriesData(timeRange);
 
+        // 课程成绩统计（用于平均分与完成率计算）
+        Map<String, Object> gradeStats = gradeMapper.getCourseGradeStats(courseId);
+        BigDecimal avgScore = BigDecimal.ZERO;
+        long totalGrades = 0L;
+        if (gradeStats != null) {
+            Object avgObj = gradeStats.get("averageScore");
+            if (avgObj instanceof BigDecimal) {
+                avgScore = (BigDecimal) avgObj;
+            } else if (avgObj instanceof Number) {
+                avgScore = BigDecimal.valueOf(((Number) avgObj).doubleValue());
+            }
+            Object tg = gradeStats.get("totalGrades");
+            if (tg instanceof Number) {
+                totalGrades = ((Number) tg).longValue();
+            }
+        }
+
+        int totalStudents = students.size();
+        int totalAssignments = assignments.size();
+        BigDecimal completionRate = BigDecimal.ZERO;
+        long denominator = (long) totalStudents * (long) totalAssignments;
+        if (denominator > 0) {
+            completionRate = BigDecimal.valueOf(totalGrades)
+                    .multiply(BigDecimal.valueOf(100))
+                    .divide(BigDecimal.valueOf(denominator), 2, java.math.RoundingMode.HALF_UP);
+        }
+
         return CourseAnalyticsResponse.builder()
                 .course(course)
-                .totalStudents(students.size())
-                .activeStudents((int)(students.size() * 0.85)) // Simplified
-                .totalAssignments(assignments.size())
-                .completionRate(new BigDecimal("78.5")) // Simplified
-                .averageScore(new BigDecimal("82.3")) // Simplified
+                .totalStudents(totalStudents)
+                .activeStudents((int) Math.round(totalStudents * 0.85)) // 可后续用真实活跃度替换
+                .totalAssignments(totalAssignments)
+                .completionRate(completionRate)
+                .averageScore(avgScore)
                 .timeSeriesData(timeSeriesData)
                 .build();
     }

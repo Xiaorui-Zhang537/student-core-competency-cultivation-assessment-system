@@ -1,5 +1,5 @@
 <template>
-  <div class="min-h-screen bg-gray-50 dark:bg-gray-900 p-6">
+  <div class="min-h-screen p-6">
     <!-- 页面标题 -->
     <div class="mb-8">
       <div class="flex items-center justify-between">
@@ -15,10 +15,16 @@
               {{ course.title }}
             </option>
           </select>
-          <button variant="outline" @click="exportReport">
-            <document-arrow-down-icon class="w-4 h-4 mr-2" />
-            导出报告
-          </button>
+          <div class="flex items-center gap-3">
+            <button class="btn inline-flex items-center justify-center px-6 w-36 bg-indigo-600 hover:bg-indigo-700 text-white dark:text-white" :disabled="!selectedCourseId" @click="askAiForAnalytics">
+              <sparkles-icon class="w-4 h-4 mr-2" />
+              询问AI
+            </button>
+            <button class="btn btn-primary inline-flex items-center justify-center px-6 w-36" @click="exportReport">
+              <document-arrow-down-icon class="w-4 h-4 mr-2" />
+              导出报告
+            </button>
+          </div>
         </div>
       </div>
     </div>
@@ -48,22 +54,14 @@
 
       <card padding="lg" class="text-center">
         <div class="text-3xl font-bold text-purple-600 dark:text-purple-400 mb-2">
-          {{ safeCourseAnalytics.activeStudents }}
+          {{ safeCourseAnalytics.totalAssignments }}
         </div>
-        <p class="text-sm text-gray-600 dark:text-gray-400">活跃学生</p>
+        <p class="text-sm text-gray-600 dark:text-gray-400">作业数量</p>
       </card>
     </div>
 
     <!-- 图表区域 -->
-    <div class="grid grid-cols-1 xl:grid-cols-2 gap-8 mb-8">
-      <!-- 学习趋势图 -->
-      <card padding="lg">
-        <template #header>
-          <h3 class="text-lg font-semibold text-gray-900 dark:text-white">学习趋势分析</h3>
-        </template>
-        <div ref="learningTrendRef" class="h-80 w-full"></div>
-      </card>
-
+    <div class="grid grid-cols-1 gap-8 mb-8">
       <!-- 成绩分布图 -->
       <card padding="lg">
         <template #header>
@@ -72,22 +70,6 @@
         <div ref="scoreDistributionRef" class="h-80 w-full"></div>
       </card>
     </div>
-
-    <!-- 课程表现分析 -->
-    <card padding="lg" class="mb-8">
-      <template #header>
-        <div class="flex justify-between items-center">
-          <h3 class="text-lg font-semibold text-gray-900 dark:text-white">课程表现分析</h3>
-           <select v-model="selectedCourseId" @change="onCourseChange" class="input input-sm">
-            <option :value="null">请选择课程</option>
-            <option v-for="course in teacherCourses" :key="course.id" :value="String(course.id)">
-              {{ course.title }}
-            </option>
-          </select>
-        </div>
-      </template>
-       <div ref="coursePerformanceRef" class="h-96 w-full"></div>
-    </card>
 
     <!-- 详细数据表格 -->
     <div class="grid grid-cols-1 xl:grid-cols-2 gap-8">
@@ -110,36 +92,13 @@
           </ul>
       </card>
 
-      <!-- 课程统计 -->
-      <card padding="lg">
-        <template #header>
-          <h3 class="text-lg font-semibold text-gray-900 dark:text-white">课程统计</h3>
-        </template>
-         <div class="grid grid-cols-2 gap-4">
-           <div class="p-4 rounded bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700">
-             <div class="text-xs text-gray-500 mb-1">总学生数</div>
-             <div class="text-xl font-semibold">{{ safeClassPerformance.totalStudents }}</div>
-           </div>
-           <div class="p-4 rounded bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700">
-             <div class="text-xs text-gray-500 mb-1">平均成绩</div>
-             <div class="text-xl font-semibold">{{ (safeCourseAnalytics.averageScore || 0).toFixed(1) }}</div>
-           </div>
-           <div class="p-4 rounded bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700">
-             <div class="text-xs text-gray-500 mb-1">作业数量</div>
-             <div class="text-xl font-semibold">{{ safeCourseAnalytics.totalAssignments }}</div>
-           </div>
-           <div class="p-4 rounded bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700">
-             <div class="text-xs text-gray-500 mb-1">完成率</div>
-             <div class="text-xl font-semibold">{{ (safeCourseAnalytics.completionRate || 0) }}%</div>
-           </div>
-         </div>
-      </card>
+    
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted, nextTick, computed } from 'vue'
+import { ref, onMounted, onUnmounted, nextTick, computed, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useTeacherStore } from '@/stores/teacher'
 import { useCourseStore } from '@/stores/course'
@@ -152,12 +111,7 @@ import Button from '@/components/ui/Button.vue'
 import Badge from '@/components/ui/Badge.vue'
 import Progress from '@/components/ui/Progress.vue'
 import * as echarts from 'echarts'
-import {
-  DocumentArrowDownIcon,
-  ArrowTrendingUpIcon,
-  ArrowTrendingDownIcon,
-  ChevronRightIcon
-} from '@heroicons/vue/24/outline'
+import { DocumentArrowDownIcon, SparklesIcon } from '@heroicons/vue/24/outline'
 
 // Stores
 const teacherStore = useTeacherStore()
@@ -168,6 +122,7 @@ const uiStore = useUIStore()
 // 状态
 const selectedCourseId = ref<string | null>(null)
 const topStudents = ref<CourseStudentPerformanceItem[]>([])
+const studentTotal = ref<number>(0)
 
 // 图表引用
 const learningTrendRef = ref<HTMLElement>()
@@ -196,12 +151,14 @@ const currentCourseTitle = computed(() => {
 
 const safeCourseAnalytics = computed(() => {
   const ca: any = teacherStore.courseAnalytics as any
+  const cp: any = teacherStore.classPerformance as any
   return {
-    totalStudents: (ca.totalStudents ?? ca.enrollmentCount ?? 0) as number,
-    averageScore: (ca.averageScore ?? 0) as number,
-    completionRate: (ca.completionRate ?? ca.averageCompletionRate ?? 0) as number,
+    // 如果后端未在 courseAnalytics 提供 totalStudents，则回退到 classPerformance.totalStudents
+    totalStudents: (ca.totalStudents ?? ca.enrollmentCount ?? cp?.totalStudents ?? studentTotal.value ?? 0) as number,
+    averageScore: Number(ca.averageScore ?? 0) as number,
+    completionRate: Number(ca.completionRate ?? ca.averageCompletionRate ?? 0) as number,
     totalAssignments: (ca.totalAssignments ?? ca.assignmentCount ?? 0) as number,
-    timeSeriesData: ca.timeSeriesData ?? []
+    timeSeriesData: Array.isArray(ca.timeSeriesData) ? ca.timeSeriesData : []
   }
 })
 
@@ -215,9 +172,8 @@ const safeClassPerformance = computed(() => {
 
 // 方法
 const initCharts = () => {
-  initLearningTrendChart()
+  // 仅保留成绩分布图
   initScoreDistributionChart()
-  initCoursePerformanceChart()
 }
 
 function getOrCreateChart(el: HTMLElement | undefined, existing: echarts.ECharts | null): echarts.ECharts | null {
@@ -231,67 +187,7 @@ function getOrCreateChart(el: HTMLElement | undefined, existing: echarts.ECharts
   return inst
 }
 
-const initLearningTrendChart = () => {
-  if (!learningTrendRef.value) return
-
-  learningTrendChart = getOrCreateChart(learningTrendRef.value, learningTrendChart)
-
-  const seriesData = Array.isArray(safeCourseAnalytics.value.timeSeriesData)
-    ? safeCourseAnalytics.value.timeSeriesData
-    : []
-  const months = seriesData.map((d: any) => d.date ?? d.month ?? '')
-  const studentsSeries = seriesData.map((d: any) => (d.students ?? d.value ?? 0))
-
-  const option = {
-    title: {
-      show: false
-    },
-    tooltip: {
-      trigger: 'axis',
-      axisPointer: {
-        type: 'cross'
-      }
-    },
-    legend: {
-      data: ['学生人数'],
-      bottom: 0
-    },
-    grid: {
-      left: '3%',
-      right: '4%',
-      bottom: '15%',
-      containLabel: true
-    },
-    xAxis: {
-      type: 'category',
-      data: months,
-      axisLine: {
-        lineStyle: { color: '#e5e7eb' }
-      }
-    },
-    yAxis: {
-      type: 'value',
-      axisLine: {
-        lineStyle: { color: '#e5e7eb' }
-      },
-      splitLine: {
-        lineStyle: { color: '#f3f4f6' }
-      }
-    },
-    series: [
-      {
-        name: '学生人数',
-        type: 'line',
-        smooth: true,
-        data: studentsSeries,
-        lineStyle: { color: '#3b82f6', width: 3 },
-        itemStyle: { color: '#3b82f6' }
-      }
-    ]
-  }
-
-  learningTrendChart && learningTrendChart.setOption(option)
-}
+// 删除学习趋势图，保留接口位置以便后续启用
 
 const initScoreDistributionChart = () => {
   if (!scoreDistributionRef.value) return
@@ -328,74 +224,12 @@ const initScoreDistributionChart = () => {
   scoreDistributionChart && scoreDistributionChart.setOption(option)
 }
 
-const initCoursePerformanceChart = () => {
-  if (!coursePerformanceRef.value) return
-
-  coursePerformanceChart = getOrCreateChart(coursePerformanceRef.value, coursePerformanceChart)
-
-  const option = {
-    title: {
-      show: false
-    },
-    tooltip: {
-      trigger: 'axis',
-      axisPointer: {
-        type: 'shadow'
-      }
-    },
-    legend: { data: ['学生数量'], bottom: 0 },
-    grid: {
-      left: '3%',
-      right: '4%',
-      bottom: '15%',
-      containLabel: true
-    },
-    xAxis: {
-      type: 'category',
-      data: teacherCourses.value.map(c => c.title),
-      axisLine: {
-        lineStyle: { color: '#e5e7eb' }
-      }
-    },
-    yAxis: [
-      {
-        type: 'value',
-        name: '人数',
-        position: 'left',
-        axisLine: {
-          lineStyle: { color: '#e5e7eb' }
-        },
-        splitLine: {
-          lineStyle: { color: '#f3f4f6' }
-        }
-      },
-      {
-        type: 'value',
-        name: '百分比',
-        position: 'right',
-        axisLine: {
-          lineStyle: { color: '#e5e7eb' }
-        },
-        splitLine: {
-          show: false
-        }
-      }
-    ],
-    series: [
-      {
-        name: '学生数量',
-        type: 'bar',
-        data: teacherCourses.value.map(() => safeCourseAnalytics.value.totalStudents),
-        itemStyle: { color: '#3b82f6' }
-      }
-    ]
-  }
-
-  coursePerformanceChart && coursePerformanceChart.setOption(option)
-}
+// 删除课程表现图，保留接口位置以便后续启用
 
 const onCourseChange = () => {
   if (!selectedCourseId.value) return
+  // 切换课程时重置本地总学生兜底值，避免显示上一个课程数据
+  studentTotal.value = 0
   // 同步URL query，统一入口 /teacher/analytics?courseId=
   router.replace({ name: 'TeacherAnalytics', query: { courseId: selectedCourseId.value } })
   teacherStore.fetchCourseAnalytics(selectedCourseId.value)
@@ -405,10 +239,19 @@ const onCourseChange = () => {
     .then((resp: any) => {
       const data = (resp && (resp as any).items) ? (resp as any) : resp
       topStudents.value = (data?.items ?? []) as CourseStudentPerformanceItem[]
+      if (typeof data?.total === 'number') studentTotal.value = data.total
     })
     .catch(() => { topStudents.value = [] })
   nextTick(() => initCharts())
 }
+
+// 当路由中的 courseId 改变（例如从其它页面跳转）时，自动同步当前课程并刷新数据
+watch(() => route.query.courseId, (cid) => {
+  if (cid) {
+    selectedCourseId.value = String(cid)
+    onCourseChange()
+  }
+})
 
 const exportReport = async () => {
   if (!selectedCourseId.value) {
@@ -429,9 +272,7 @@ const exportReport = async () => {
 }
 
 const resizeCharts = () => {
-  learningTrendChart?.resize()
   scoreDistributionChart?.resize()
-  coursePerformanceChart?.resize()
 }
 
 // 生命周期
@@ -451,9 +292,34 @@ onMounted(async () => {
 })
 
 onUnmounted(() => {
-  learningTrendChart?.dispose()
   scoreDistributionChart?.dispose()
-  coursePerformanceChart?.dispose()
   window.removeEventListener('resize', resizeCharts)
 })
+
+const askAiForAnalytics = () => {
+  if (!selectedCourseId.value) return
+  const ca = safeCourseAnalytics.value
+  const dist: any[] = (teacherStore.classPerformance as any)?.gradeDistribution || []
+  const top = (topStudents.value || []).map(s => ({
+    studentId: s.studentId,
+    studentName: s.studentName,
+    averageGrade: s.averageGrade,
+    progress: s.progress,
+    lastActiveAt: s.lastActiveAt,
+  }))
+  const payload = {
+    courseId: Number(selectedCourseId.value),
+    metrics: {
+      totalStudents: ca.totalStudents,
+      averageScore: ca.averageScore,
+      completionRate: ca.completionRate,
+      totalAssignments: ca.totalAssignments,
+    },
+    gradeDistribution: dist,
+    topStudents: top,
+  }
+  const q = `请根据以下课程数据做教学洞察与建议，并指出高风险点与可执行改进项（用中文回答）。\n` +
+           `数据(JSON)：\n` + JSON.stringify(payload, null, 2)
+  router.push({ path: '/teacher/ai', query: { q } })
+}
 </script> 

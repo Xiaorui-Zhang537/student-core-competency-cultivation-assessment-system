@@ -1,5 +1,5 @@
 <template>
-  <div class="min-h-screen bg-gray-50 dark:bg-gray-900 p-6">
+  <div class="min-h-screen p-6">
     <div class="max-w-5xl mx-auto">
       <div class="mb-6 flex items-center justify-between">
         <div>
@@ -49,6 +49,7 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
+import { useRoute } from 'vue-router'
 import { useCourseStore } from '@/stores/course'
 import { useAuthStore } from '@/stores/auth'
 import { aiApi } from '@/api/ai.api'
@@ -91,10 +92,15 @@ const send = async () => {
 }
 
 onMounted(async () => {
+  const route = useRoute()
   if (!authStore.user) {
     await authStore.fetchUser()
   }
   await courseStore.fetchCourses({ page: 1, size: 200 })
+  const q = route.query.q as string | undefined
+  if (q && q.trim()) {
+    input.value = q
+  }
 })
 </script>
 

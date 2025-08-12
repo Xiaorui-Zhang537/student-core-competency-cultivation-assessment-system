@@ -6,6 +6,11 @@ export interface UpdateProfileRequest {
   avatar?: string;
   gender?: string;
   bio?: string;
+  birthday?: string; // yyyy-MM-dd
+  country?: string;
+  province?: string;
+  city?: string;
+  phone?: string;
 }
 
 export interface ChangePasswordRequest {
@@ -23,4 +28,9 @@ export interface UserProfileResponse extends Omit<User, 'token' | 'refreshToken'
   displayName: string;
   gender?: string;
   bio?: string;
+  birthday?: string;
+  country?: string;
+  province?: string;
+  city?: string;
+  phone?: string;
 }

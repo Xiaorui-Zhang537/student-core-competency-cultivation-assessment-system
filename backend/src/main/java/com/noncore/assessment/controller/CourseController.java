@@ -1,6 +1,7 @@
 package com.noncore.assessment.controller;
 
 import com.noncore.assessment.dto.response.CourseStatisticsResponse;
+import com.noncore.assessment.dto.request.InviteStudentsRequest;
 import com.noncore.assessment.entity.Course;
 import com.noncore.assessment.service.CourseDiscoveryService;
 import com.noncore.assessment.service.CourseService;
@@ -184,5 +185,18 @@ public class CourseController extends BaseController {
             @Parameter(description = "每页大小", example = "20") @RequestParam(defaultValue = "20") Integer size) {
         PageResult<User> result = enrollmentService.getCourseStudents(getCurrentUserId(), courseId, page, size);
         return ResponseEntity.ok(ApiResponse.success(result));
+    }
+
+    /**
+     * 教师批量邀请/添加学生到课程
+     */
+    @PostMapping("/{id}/students/invite")
+    @PreAuthorize("hasRole('TEACHER') or hasRole('ADMIN')")
+    @Operation(summary = "批量添加学生到课程", description = "教师批量添加学生到自己的课程（传入学生ID列表）")
+    public ResponseEntity<ApiResponse<Void>> inviteStudents(
+            @PathVariable("id") Long courseId,
+            @Valid @RequestBody InviteStudentsRequest request) {
+        enrollmentService.addStudentsToCourse(getCurrentUserId(), courseId, request.getStudentIds());
+        return ResponseEntity.ok(ApiResponse.success());
     }
 } 

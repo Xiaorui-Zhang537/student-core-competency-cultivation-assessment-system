@@ -23,4 +23,19 @@ public class UpdateProfileRequest {
     @Schema(description = "个人简介", example = "这是我的新简介。")
     private String bio;
 
+    @Schema(description = "生日，格式yyyy-MM-dd")
+    private String birthday;
+
+    @Schema(description = "国家")
+    private String country;
+
+    @Schema(description = "省份/州")
+    private String province;
+
+    @Schema(description = "城市")
+    private String city;
+
+    @Schema(description = "手机号")
+    private String phone;
+
 } 

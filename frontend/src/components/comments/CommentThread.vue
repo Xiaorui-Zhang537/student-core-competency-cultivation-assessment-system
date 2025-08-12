@@ -14,6 +14,9 @@
           <hand-thumb-up-icon class="w-3.5 h-3.5" />
           <span>{{ safeLikeCount }}</span>
         </button>
+        <button class="inline-flex items-center px-2 text-indigo-600 hover:underline" @click="askAiForComment">
+          <sparkles-icon class="w-3.5 h-3.5 mr-1" />询问AI
+        </button>
         <button class="hover:underline" @click="toggleReply">回复</button>
         <button v-if="authStore.user?.id && String(authStore.user.id) === String(comment.authorId)" class="text-red-500 hover:underline" @click="handleDeleteSelf">删除</button>
       </div>
@@ -46,8 +49,9 @@
 import { ref, onMounted, computed } from 'vue'
 import { useAuthStore } from '@/stores/auth'
 import { useCommunityStore } from '@/stores/community'
-import { UserIcon, HandThumbUpIcon } from '@heroicons/vue/24/outline'
+import { UserIcon, HandThumbUpIcon, SparklesIcon } from '@heroicons/vue/24/outline'
 import EmojiPicker from '@/components/ui/EmojiPicker.vue'
+import { useRouter } from 'vue-router'
 
 defineOptions({ name: 'CommentThread' })
 
@@ -56,6 +60,7 @@ const emit = defineEmits<{ (e: 'deleted', id: number): void }>()
 
 const authStore = useAuthStore()
 const communityStore = useCommunityStore()
+const router = useRouter()
 
 const showReplyBox = ref(false)
 const replyContent = ref('')
@@ -150,6 +155,11 @@ const onLikeComment = async () => {
   } finally {
     likeBusy.value = false
   }
+}
+
+const askAiForComment = () => {
+  const content = (props.comment?.content ? `【评论内容】${props.comment.content}` : '')
+  router.push({ path: '/teacher/ai', query: { q: content } })
 }
 </script>
 
