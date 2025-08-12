@@ -135,13 +135,7 @@ const routes = [
         component: () => import('@/features/teacher/views/AnalyticsView.vue'),
         meta: { requiresAuth: true, role: 'TEACHER' }
       },
-      {
-        path: 'courses/:id/analytics',
-        name: 'TeacherCourseAnalytics',
-        // Redirect to unified analytics route with courseId query
-        redirect: ((to: any) => ({ name: 'TeacherAnalytics', query: { courseId: String((to.params as any).id) } })) as any,
-        meta: { requiresAuth: true, role: 'TEACHER' }
-      },
+      
       {
         path: 'ai',
         name: 'TeacherAI',

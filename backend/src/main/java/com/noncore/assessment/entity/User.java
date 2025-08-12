@@ -50,8 +50,11 @@ public class User implements Serializable {
     @Schema(description = "姓氏")
     private String lastName;
 
-    @Schema(description = "显示名称")
-    private String displayName;
+    @Schema(description = "学号")
+    private String studentNo;
+
+    @Schema(description = "工号")
+    private String teacherNo;
 
     @Schema(description = "个人简介")
     private String bio;

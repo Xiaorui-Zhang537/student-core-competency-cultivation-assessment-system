@@ -53,7 +53,7 @@
         SELECT sa.*,
                d.name as dimension_name,
                d.category as dimension_category,
-               u.display_name as student_name
+               COALESCE(u.nickname, u.username) as student_name
         FROM student_abilities sa
                  LEFT JOIN ability_dimensions d ON sa.dimension_id = d.id
                  LEFT JOIN users u ON sa.student_id = u.id
@@ -84,7 +84,7 @@
         SELECT sa.*,
                d.name as dimension_name,
                d.category as dimension_category,
-               u.display_name as student_name
+               COALESCE(u.nickname, u.username) as student_name
         FROM student_abilities sa
                  LEFT JOIN ability_dimensions d ON sa.dimension_id = d.id
                  LEFT JOIN users u ON sa.student_id = u.id
@@ -96,7 +96,7 @@
         SELECT sa.*,
                d.name as dimension_name,
                d.category as dimension_category,
-               u.display_name as student_name
+               COALESCE(u.nickname, u.username) as student_name
         FROM student_abilities sa
                  LEFT JOIN ability_dimensions d ON sa.dimension_id = d.id
                  LEFT JOIN users u ON sa.student_id = u.id
@@ -108,7 +108,7 @@
         SELECT sa.*,
                d.name as dimension_name,
                d.category as dimension_category,
-               u.display_name as student_name
+               COALESCE(u.nickname, u.username) as student_name
         FROM student_abilities sa
                  LEFT JOIN ability_dimensions d ON sa.dimension_id = d.id
                  LEFT JOIN users u ON sa.student_id = u.id
@@ -121,7 +121,7 @@
         SELECT sa.*,
         d.name as dimension_name,
         d.category as dimension_category,
-        u.display_name as student_name
+        COALESCE(u.nickname, u.username) as student_name
         FROM student_abilities sa
         LEFT JOIN ability_dimensions d ON sa.dimension_id = d.id
         LEFT JOIN users u ON sa.student_id = u.id
@@ -202,7 +202,7 @@
     <select id="getStudentAbilityRanking" resultType="map">
         SELECT
             sa.student_id,
-            u.display_name as student_name,
+            COALESCE(u.nickname, u.username) as student_name,
             sa.current_score,
             sa.level,
             RANK() OVER (ORDER BY sa.current_score DESC) as ranking

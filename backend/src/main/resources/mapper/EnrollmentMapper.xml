@@ -53,9 +53,9 @@
     <!-- 根据ID查询选课记录 -->
     <select id="selectEnrollmentById" parameterType="long" resultMap="EnrollmentResultMap">
         SELECT e.*,
-               u.display_name as student_name,
+               COALESCE(u.nickname, u.username) as student_name,
                c.title as course_name,
-               t.display_name as teacher_name
+               COALESCE(t.nickname, t.username) as teacher_name
         FROM enrollments e
                  LEFT JOIN users u ON e.student_id = u.id
                  LEFT JOIN courses c ON e.course_id = c.id
@@ -66,9 +66,9 @@
     <!-- 根据学生和课程查询选课记录 -->
     <select id="selectEnrollmentByStudentAndCourse" resultMap="EnrollmentResultMap">
         SELECT e.*,
-               u.display_name as student_name,
+               COALESCE(u.nickname, u.username) as student_name,
                c.title as course_name,
-               t.display_name as teacher_name
+               COALESCE(t.nickname, t.username) as teacher_name
         FROM enrollments e
                  LEFT JOIN users u ON e.student_id = u.id
                  LEFT JOIN courses c ON e.course_id = c.id
@@ -86,7 +86,7 @@
     <select id="selectEnrollmentsByStudentId" resultMap="EnrollmentResultMap">
         SELECT e.*,
                c.title as course_name,
-               t.display_name as teacher_name
+               COALESCE(t.nickname, t.username) as teacher_name
         FROM enrollments e
                  LEFT JOIN courses c ON e.course_id = c.id
                  LEFT JOIN users t ON c.teacher_id = t.id
@@ -97,7 +97,7 @@
     <!-- 根据课程ID查询选课记录 -->
     <select id="selectEnrollmentsByCourseId" resultMap="EnrollmentResultMap">
         SELECT e.*,
-               u.display_name as student_name
+               COALESCE(u.nickname, u.username) as student_name
         FROM enrollments e
                  LEFT JOIN users u ON e.student_id = u.id
         WHERE e.course_id = #{courseId}
@@ -107,9 +107,9 @@
     <!-- 根据状态查询选课记录 -->
     <select id="selectEnrollmentsByStatus" resultMap="EnrollmentResultMap">
         SELECT e.*,
-               u.display_name as student_name,
+               COALESCE(u.nickname, u.username) as student_name,
                c.title as course_name,
-               t.display_name as teacher_name
+               COALESCE(t.nickname, t.username) as teacher_name
         FROM enrollments e
                  LEFT JOIN users u ON e.student_id = u.id
                  LEFT JOIN courses c ON e.course_id = c.id
@@ -205,9 +205,9 @@
     <!-- 分页查询选课记录 -->
     <select id="selectEnrollmentsWithPagination" resultMap="EnrollmentResultMap">
         SELECT e.*,
-        u.display_name as student_name,
+        COALESCE(u.nickname, u.username) as student_name,
         c.title as course_name,
-        t.display_name as teacher_name
+        COALESCE(t.nickname, t.username) as teacher_name
         FROM enrollments e
         LEFT JOIN users u ON e.student_id = u.id
         LEFT JOIN courses c ON e.course_id = c.id
@@ -223,7 +223,7 @@
             AND e.status = #{status}
         </if>
         <if test="keyword != null and keyword != ''">
-            AND (u.display_name LIKE CONCAT('%', #{keyword}, '%')
+            AND (COALESCE(u.nickname, u.username) LIKE CONCAT('%', #{keyword}, '%')
             OR c.title LIKE CONCAT('%', #{keyword}, '%'))
         </if>
         ORDER BY e.enrolled_at DESC

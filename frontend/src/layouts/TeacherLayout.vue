@@ -20,25 +20,8 @@
             </div>
           </div>
 
-          <!-- 中间：搜索栏 -->
-          <div class="flex-1 flex items-center justify-center px-2">
-            <div class="max-w-lg w-full lg:max-w-xs">
-              <label for="search" class="sr-only">搜索</label>
-              <div class="relative">
-                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <magnifying-glass-icon class="h-5 w-5 text-gray-400" />
-                </div>
-                <input
-                  id="search"
-                  v-model="searchQuery"
-                  name="search"
-                  class="block w-full pl-10 pr-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md leading-5 bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-primary-500 focus:border-primary-500 sm:text-sm"
-                  placeholder="搜索..."
-                  type="search"
-                />
-              </div>
-            </div>
-          </div>
+          <!-- 中间区域移除搜索框（预留占位以保持两侧布局） -->
+          <div class="flex-1"></div>
 
           <!-- 右侧：主题切换、用户菜单 -->
           <div class="ml-4 flex items-center md:ml-6 space-x-3">
@@ -58,12 +41,12 @@
                 class="flex items-center text-sm rounded-full focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500"
               >
                 <div class="flex items-center space-x-2">
-                  <div class="h-8 w-8 rounded-full bg-gradient-to-r from-primary-500 to-purple-600 flex items-center justify-center text-white font-medium text-sm">
-                    {{ (authStore.user?.username || 'T').charAt(0).toUpperCase() }}
-                  </div>
+                  <UserAvatar :avatar="(authStore.user as any)?.avatar" :size="28">
+                    <span class="text-white font-medium text-sm">{{ (authStore.user?.username || 'T').charAt(0).toUpperCase() }}</span>
+                  </UserAvatar>
                   <div class="hidden md:block text-left">
                     <p class="text-sm font-medium text-gray-900 dark:text-white">
-                      {{ authStore.user?.username || '教师' }}
+                      {{ (authStore.user as any)?.nickname || authStore.user?.username || '教师' }}
                     </p>
                     <p class="text-xs text-gray-500 dark:text-gray-400">
                       教师
@@ -162,7 +145,7 @@
               class="group flex items-center px-2 py-2 text-sm font-medium rounded-md text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-white border-l-4 border-transparent"
             >
               <chat-bubble-left-right-icon class="mr-3 h-5 w-5" />
-              社区
+              学习社区
             </router-link>
             
           </nav>
@@ -192,9 +175,9 @@ import { useRouter } from 'vue-router'
 import { useUIStore } from '@/stores/ui'
 import { useAuthStore } from '@/stores/auth'
 import AnimatedBackground from '@/components/ui/AnimatedBackground.vue'
+import UserAvatar from '@/components/ui/UserAvatar.vue'
 import {
   Bars3Icon,
-  MagnifyingGlassIcon,
   SunIcon,
   MoonIcon,
   ChevronDownIcon,
@@ -214,7 +197,6 @@ const authStore = useAuthStore()
 
 // 状态
 const showUserMenu = ref(false)
-const searchQuery = ref('')
 
 const handleLogout = async () => {
   showUserMenu.value = false

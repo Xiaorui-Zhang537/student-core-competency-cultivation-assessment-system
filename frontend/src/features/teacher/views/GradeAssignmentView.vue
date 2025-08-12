@@ -351,8 +351,12 @@
             
             <div class="space-y-4">
               <div class="flex items-center space-x-3">
-                <div class="w-12 h-12 rounded-full bg-blue-100 dark:bg-blue-900 flex items-center justify-center">
-                  <user-icon class="w-6 h-6 text-blue-600 dark:text-blue-400" />
+                <div class="w-12 h-12">
+                  <UserAvatar :avatar="submission.avatar" :size="48">
+                    <div class="w-12 h-12 rounded-full bg-blue-100 dark:bg-blue-900 flex items-center justify-center">
+                      <user-icon class="w-6 h-6 text-blue-600 dark:text-blue-400" />
+                    </div>
+                  </UserAvatar>
                 </div>
                 <div>
                   <h4 class="font-medium text-gray-900 dark:text-white">{{ submission.studentName }}</h4>
@@ -434,11 +438,11 @@ import {
   AcademicCapIcon,
   CheckIcon,
   DocumentDuplicateIcon,
-  UserIcon,
   ChatBubbleLeftIcon,
   DocumentTextIcon,
   ExclamationTriangleIcon
 } from '@heroicons/vue/24/outline'
+import UserAvatar from '@/components/ui/UserAvatar.vue'
 
 // Router and Stores
 const route = useRoute()

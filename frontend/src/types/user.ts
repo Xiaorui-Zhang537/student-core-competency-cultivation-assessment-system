@@ -11,6 +11,12 @@ export interface UpdateProfileRequest {
   province?: string;
   city?: string;
   phone?: string;
+  firstName?: string;
+  lastName?: string;
+  school?: string;
+  subject?: string;
+  studentNo?: string;
+  teacherNo?: string;
 }
 
 export interface ChangePasswordRequest {
@@ -25,7 +31,12 @@ export interface ResetPasswordRequest {
 
 // UserProfileResponse matches the structure returned by /api/users/profile
 export interface UserProfileResponse extends Omit<User, 'token' | 'refreshToken'> {
-  displayName: string;
+  firstName?: string;
+  lastName?: string;
+  school?: string;
+  subject?: string;
+  studentNo?: string;
+  teacherNo?: string;
   gender?: string;
   bio?: string;
   birthday?: string;

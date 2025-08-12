@@ -46,8 +46,11 @@ public class RegisterRequest {
     @Size(max = 20, message = "名字长度不能超过20个字符")
     private String lastName;
 
-    @Size(max = 50, message = "显示名称长度不能超过50个字符")
-    private String displayName;
+    @Size(max = 50, message = "昵称长度不能超过50个字符")
+    private String nickname;
+
+    @Size(max = 255, message = "头像长度不能超过255个字符")
+    private String avatar;
 
     @Size(max = 20, message = "年级信息长度不能超过20个字符")
     private String grade;
@@ -90,7 +93,8 @@ public class RegisterRequest {
                 "username='" + username + '\'' +
                 ", email='" + email + '\'' +
                 ", role='" + role + '\'' +
-                ", displayName='" + displayName + '\'' +
+                ", nickname='" + nickname + '\'' +
+                ", avatar='" + avatar + '\'' +
                 '}';
     }
 } 

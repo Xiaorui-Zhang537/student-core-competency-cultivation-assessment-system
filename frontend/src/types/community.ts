@@ -82,6 +82,7 @@ export interface HotTopic {
 export interface ActiveUser {
   userId: number;
   username: string;
+  nickname?: string;
   avatarUrl?: string;
   postCount: number;
 }

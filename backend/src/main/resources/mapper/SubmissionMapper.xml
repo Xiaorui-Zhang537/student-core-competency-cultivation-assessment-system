@@ -46,7 +46,7 @@
         SELECT
         <include refid="Base_Column_List"/>,
         a.title AS assignment_title,
-        u.display_name AS student_name,
+            COALESCE(u.nickname, u.username) AS student_name,
         c.title AS course_name
         FROM submissions s
         LEFT JOIN assignments a ON s.assignment_id = a.id
@@ -125,7 +125,7 @@
     <select id="selectByAssignmentId" resultMap="SubmissionResultMap">
         SELECT
         <include refid="Base_Column_List"/>,
-        u.display_name AS student_name
+            COALESCE(u.nickname, u.username) AS student_name
         FROM submissions s
         LEFT JOIN users u ON s.student_id = u.id
         WHERE s.assignment_id = #{assignmentId}
@@ -136,7 +136,7 @@
     <select id="selectByAssignmentIdWithPagination" resultMap="SubmissionResultMap">
         SELECT
         <include refid="Base_Column_List"/>,
-        u.display_name AS student_name
+            COALESCE(u.nickname, u.username) AS student_name
         FROM submissions s
         LEFT JOIN users u ON s.student_id = u.id
         WHERE s.assignment_id = #{assignmentId}
@@ -199,7 +199,7 @@
             g.grade_level,
             g.feedback,
             g.updated_at AS graded_at,
-            t.display_name AS teacher_name
+            COALESCE(t.nickname, t.username) AS teacher_name
         FROM submissions s
                  LEFT JOIN assignments a ON s.assignment_id = a.id
                  LEFT JOIN courses c ON a.course_id = c.id
@@ -245,7 +245,7 @@
     <select id="findPendingByTeacher" resultType="com.noncore.assessment.dto.response.PendingGradingDto">
         SELECT s.id           AS submissionId,
                a.title        AS assignmentTitle,
-               u.display_name AS studentName,
+            COALESCE(u.nickname, u.username) AS studentName,
                c.title        AS courseTitle,
                s.submitted_at AS submittedAt,
                a.due_date     AS dueDate

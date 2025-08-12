@@ -66,7 +66,7 @@ public class TeacherDashboardResponse {
     @AllArgsConstructor
     public static class StudentOverviewDto {
         private Long id;
-        private String displayName;
+        private String nickname;
         private String avatar;
         private double avgGrade;
         private double avgProgress;

@@ -36,7 +36,7 @@
 
     <sql id="learningRecommendationDetailColumns">
         <include refid="learningRecommendationColumns"/>,
-        u.display_name as student_name,
+        COALESCE(u.nickname, u.username) as student_name,
         d.name as dimension_name,
         d.category as dimension_category
     </sql>

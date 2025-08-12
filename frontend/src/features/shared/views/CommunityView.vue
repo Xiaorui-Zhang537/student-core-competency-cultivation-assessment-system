@@ -84,12 +84,14 @@
             <div class="space-y-3">
               <div v-for="user in activeUsers" :key="user.userId" class="flex items-center space-x-3">
                 <div class="flex-shrink-0">
-                   <div class="w-8 h-8 rounded-full bg-gray-200 dark:bg-gray-600 flex items-center justify-center">
-                    <user-icon class="w-4 h-4 text-gray-400" />
-                  </div>
+                  <UserAvatar :avatar="user.avatarUrl" :size="32">
+                    <div class="w-8 h-8 rounded-full bg-gray-200 dark:bg-gray-600 flex items-center justify-center">
+                      <user-icon class="w-4 h-4 text-gray-400" />
+                    </div>
+                  </UserAvatar>
                 </div>
                 <div class="flex-1 min-w-0">
-                  <p class="text-sm font-medium text-gray-900 dark:text-white">{{ user.username }}</p>
+                  <p class="text-sm font-medium text-gray-900 dark:text-white">{{ user.nickname || user.username }}</p>
                   <p class="text-xs text-gray-500">{{ user.postCount }} 帖子</p>
                 </div>
               </div>
@@ -132,20 +134,22 @@
                 :key="post.id"
                 class="p-4 border border-gray-200 dark:border-gray-600 rounded-lg transition-colors"
               >
-                 <div class="flex items-start space-x-4">
+                  <div class="flex items-start space-x-4">
                   <div class="flex-shrink-0">
-                    <div class="w-10 h-10 rounded-full bg-gray-200 dark:bg-gray-600 flex items-center justify-center">
-                      <user-icon class="w-5 h-5 text-gray-400" />
-                    </div>
+                    <UserAvatar :avatar="post.author?.avatar" :size="40">
+                      <div class="w-10 h-10 rounded-full bg-gray-200 dark:bg-gray-600 flex items-center justify-center">
+                        <user-icon class="w-5 h-5 text-gray-400" />
+                      </div>
+                    </UserAvatar>
                   </div>
                   <div class="flex-1 min-w-0" @click="viewPost(post.id)">
-                    <div class="flex items-center space-x-2 mb-1">
+                   <div class="flex items-center space-x-2 mb-1">
                       <h3 class="text-sm font-medium text-gray-900 dark:text-white">{{ post.title }}</h3>
                        <div class="text-xs px-2 py-0.5 rounded-full" :class="getCategoryClass(post.category)">{{ post.category }}</div>
                     </div>
                     <p class="text-sm text-gray-600 dark:text-gray-400 line-clamp-2 mb-2" v-html="post.content"></p>
                     <div class="flex items-center space-x-4 text-xs text-gray-500">
-                      <span>{{ post.author?.username || '匿名用户' }}</span>
+                      <span>{{ post.author?.nickname || post.author?.username || '匿名用户' }}</span>
                       <span>{{ formatDate(post.createdAt) }}</span>
                       <div class="flex items-center space-x-1"><eye-icon class="w-3 h-3" /><span>{{ post.viewCount }}</span></div>
                       <div class="flex items-center space-x-1"><chat-bubble-left-icon class="w-3 h-3" /><span>{{ post.commentCount }}</span></div>
@@ -301,6 +305,7 @@ import {
   EyeIcon, HandThumbUpIcon, BookOpenIcon, QuestionMarkCircleIcon,
   LightBulbIcon, AcademicCapIcon, ChatBubbleOvalLeftEllipsisIcon
 } from '@heroicons/vue/24/outline';
+import UserAvatar from '@/components/ui/UserAvatar.vue'
 
 import { useAuthStore } from '@/stores/auth';
 import FileUpload from '@/components/forms/FileUpload.vue';

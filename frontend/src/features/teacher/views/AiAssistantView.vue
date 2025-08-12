@@ -31,15 +31,40 @@
         <div class="space-y-4">
           <div class="card p-4">
             <h3 class="font-semibold mb-2">上下文</h3>
-            <p class="text-sm text-gray-600 dark:text-gray-400">可选：选择课程为 AI 提供上下文，获得更相关的建议。</p>
+            <p class="text-sm text-gray-600 dark:text-gray-400">可选：选择课程与学生为 AI 提供上下文，获得更相关的建议。</p>
             <select v-model="selectedCourseId" class="input mt-3">
               <option :value="null">不指定课程</option>
               <option v-for="c in teacherCourses" :key="c.id" :value="String(c.id)">{{ c.title }}</option>
             </select>
+            <div v-if="selectedCourseId" class="mt-3 space-y-2">
+              <label class="text-xs text-gray-500">选择学生（最多5名）</label>
+              <div class="flex gap-2">
+                <select v-model.number="studentToAdd" class="input flex-1">
+                  <option :value="0">选择学生</option>
+                  <option v-for="s in courseStudents" :key="s.id" :value="Number(s.id)">
+                    {{ s.nickname || s.username || ('学生'+s.id) }}
+                  </option>
+                </select>
+                <button class="btn btn-primary" :disabled="!studentToAdd || selectedStudentIds.length>=5 || selectedStudentIds.includes(studentToAdd)" @click="addStudent">添加</button>
+              </div>
+              <div v-if="selectedStudentIds.length" class="flex flex-wrap gap-2 mt-2">
+                <span v-for="sid in selectedStudentIds" :key="sid" class="px-2 py-1 rounded-full text-xs bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200">
+                  {{ studentLabel(sid) }}
+                  <button class="ml-1" @click="removeStudent(sid)">×</button>
+                </span>
+                <button class="btn" @click="clearStudents">清空</button>
+              </div>
+              <p class="text-xs text-gray-500" v-if="selectedStudentIds.length">上下文已生效：课程 {{ courseTitle }}，学生 {{ selectedStudentIds.length }} 名</p>
+            </div>
           </div>
           <div class="card p-4">
-            <h3 class="font-semibold mb-2">模型设置</h3>
-            <p class="text-sm text-gray-600 dark:text-gray-400">当前为占位实现，后端未接入大模型时将返回友好的提示。</p>
+            <h3 class="font-semibold mb-2">模型设置（通过 OpenRouter）</h3>
+            <div class="space-y-2">
+              <label class="text-xs text-gray-500">模型</label>
+              <select v-model="model" class="input">
+                <option value="openai/gpt-4o-mini">OpenAI GPT-4o-mini（via OpenRouter）</option>
+              </select>
+            </div>
           </div>
         </div>
       </div>
@@ -48,11 +73,12 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { useCourseStore } from '@/stores/course'
 import { useAuthStore } from '@/stores/auth'
 import { aiApi } from '@/api/ai.api'
+import { courseApi } from '@/api/course.api'
 
 type ChatMessage = { role: 'user' | 'assistant'; content: string }
 
@@ -65,6 +91,42 @@ const messages = ref<ChatMessage[]>([
 const input = ref('')
 const loading = ref(false)
 const selectedCourseId = ref<string | null>(null)
+const courseStudents = ref<any[]>([])
+const selectedStudentIds = ref<number[]>([])
+const studentToAdd = ref<number>(0)
+const model = ref<string>('openai/gpt-4o-mini')
+
+const courseTitle = computed(() => {
+  const c = teacherCourses.value.find(c => String(c.id) === String(selectedCourseId.value))
+  return c?.title || ''
+})
+
+watch(selectedCourseId, async (val) => {
+  selectedStudentIds.value = []
+  courseStudents.value = []
+  studentToAdd.value = 0
+  if (val) {
+    const res: any = await courseApi.getCourseStudents(String(val), { page: 1, size: 100 })
+    const items = res?.data?.items || res?.items || []
+    courseStudents.value = items
+  }
+})
+
+function addStudent() {
+  const sid = Number(studentToAdd.value)
+  if (!sid || selectedStudentIds.value.includes(sid)) return
+  if (selectedStudentIds.value.length >= 5) return
+  selectedStudentIds.value = [...selectedStudentIds.value, sid]
+  studentToAdd.value = 0
+}
+function removeStudent(sid: number) {
+  selectedStudentIds.value = selectedStudentIds.value.filter(id => id !== sid)
+}
+function clearStudents() { selectedStudentIds.value = [] }
+function studentLabel(sid: number) {
+  const s = courseStudents.value.find((x:any) => Number(x.id) === Number(sid))
+  return s?.nickname || s?.username || `学生${sid}`
+}
 
 const teacherCourses = computed(() => {
   if (!authStore.user?.id) return [] as any[]
@@ -79,8 +141,10 @@ const send = async () => {
   loading.value = true
   try {
     const resp = await aiApi.chat({
-      messages: messages.value,
+      messages: messages.value as any,
       courseId: selectedCourseId.value ? Number(selectedCourseId.value) : undefined,
+      studentIds: selectedStudentIds.value.length ? selectedStudentIds.value : undefined,
+      model: model.value,
     })
     const answer = (resp as any)?.answer || '后端尚未接入大模型，现在返回占位响应。'
     messages.value.push({ role: 'assistant', content: String(answer) })

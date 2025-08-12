@@ -15,8 +15,10 @@
         <h1 class="text-3xl font-bold text-gray-900 dark:text-white mb-2">{{ currentPost.title }}</h1>
         <div class="flex items-center space-x-4 text-sm text-gray-500 dark:text-gray-400">
           <div class="flex items-center space-x-2">
-            <user-icon class="w-5 h-5" />
-            <span>{{ currentPost.author?.username || '匿名用户' }}</span>
+            <UserAvatar :avatar="currentPost.author?.avatar" :size="20">
+              <user-icon class="w-5 h-5" />
+            </UserAvatar>
+            <span>{{ currentPost.author?.nickname || currentPost.author?.username || '匿名用户' }}</span>
           </div>
           <span>发布于 {{ formatDate(currentPost.createdAt) }}</span>
            <div class="flex items-center space-x-1"><eye-icon class="w-4 h-4" /><span>{{ currentPost.viewCount }}</span></div>
@@ -129,6 +131,7 @@ import { useAuthStore } from '@/stores/auth';
 import { UserIcon, EyeIcon, HandThumbUpIcon, ChatBubbleLeftIcon, SparklesIcon } from '@heroicons/vue/24/outline';
 import CommentThread from '@/components/comments/CommentThread.vue'
 import EmojiPicker from '@/components/ui/EmojiPicker.vue'
+import UserAvatar from '@/components/ui/UserAvatar.vue'
 import { baseURL } from '@/api/config';
 import { fileApi } from '@/api/file.api';
 

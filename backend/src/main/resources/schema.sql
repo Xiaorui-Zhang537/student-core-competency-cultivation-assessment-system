@@ -87,6 +87,20 @@ CREATE TABLE `ability_dimensions` (
                                       KEY `idx_sort_order` (`sort_order`)
 ) ENGINE=InnoDB AUTO_INCREMENT=9 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='能力维度表';
 
+-- ================== course_ability_weights：课程能力权重表 ==================
+-- 每门课程针对五维（含学习成绩）配置的权重，默认等权 1.00
+CREATE TABLE IF NOT EXISTS `course_ability_weights` (
+  `id` bigint NOT NULL AUTO_INCREMENT COMMENT '主键',
+  `course_id` bigint NOT NULL COMMENT '课程ID',
+  `dimension_code` varchar(50) NOT NULL COMMENT '维度编码：MORAL_COGNITION/LEARNING_ATTITUDE/LEARNING_ABILITY/LEARNING_METHOD/ACADEMIC_GRADE',
+  `weight` decimal(5,2) NOT NULL DEFAULT '1.00' COMMENT '权重',
+  `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uk_course_dimension` (`course_id`,`dimension_code`),
+  KEY `idx_course_id` (`course_id`),
+  CONSTRAINT `fk_course_weights_course` FOREIGN KEY (`course_id`) REFERENCES `courses` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='课程能力权重表';
+
 -- ================== ability_goals：能力目标表 ==================
 -- 存储每个学生在某个能力维度下设定的成长目标（如“编程能力提升至90分”）
 CREATE TABLE `ability_goals` (
@@ -550,32 +564,37 @@ CREATE TABLE `tags` (
                         UNIQUE KEY `uk_tag_name` (`name`)
 ) ENGINE=InnoDB AUTO_INCREMENT=9 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='标签表';
 
--- ================== users：用户表 ==================
 -- 存储所有用户信息，包括学生、教师和管理员
 CREATE TABLE `users` (
-                         `id` bigint NOT NULL AUTO_INCREMENT COMMENT '用户ID',
-                         `username` varchar(50) COLLATE utf8mb4_unicode_ci NOT NULL COMMENT '用户名',
-                         `real_name` varchar(50) COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT '真实姓名',
-                         `role` enum('student','teacher','admin') COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'student' COMMENT '用户角色',
-                         `email` varchar(100) COLLATE utf8mb4_unicode_ci NOT NULL COMMENT '邮箱',
-                         `phone` varchar(20) COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT '手机号',
-                         `avatar_url` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT '头像URL',
-                         `password_hash` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL COMMENT '密码Hash',
-                         `status` enum('active','inactive','banned') COLLATE utf8mb4_unicode_ci DEFAULT 'active' COMMENT '账号状态',
-                         `gender` enum('male','female','other') COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT '性别',
-                         `school` varchar(100) COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT '学校名称',
-                         `student_number` varchar(20) COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT '学号',
-                         `grade` varchar(20) COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT '年级/班级',
-                         `bio` varchar(200) COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT '简介',
-                         `register_time` timestamp NULL DEFAULT CURRENT_TIMESTAMP COMMENT '注册时间',
-                         `last_login_time` timestamp NULL DEFAULT NULL COMMENT '最后登录时间',
-                         `is_verified` tinyint(1) DEFAULT '0' COMMENT '邮箱是否已验证',
-                         `deleted` tinyint(1) DEFAULT '0' COMMENT '是否删除',
-                         `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
-                         `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
-                         PRIMARY KEY (`id`),
-                         UNIQUE KEY `uk_username` (`username`),
-                         UNIQUE KEY `uk_email` (`email`),
-                         KEY `idx_role` (`role`),
-                         KEY `idx_status` (`status`)
-) ENGINE=InnoDB AUTO_INCREMENT=10 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='用户表';
+  `id` bigint NOT NULL AUTO_INCREMENT COMMENT '用户ID',
+  `username` varchar(50) COLLATE utf8mb4_unicode_ci NOT NULL COMMENT '用户名',
+  `email` varchar(100) COLLATE utf8mb4_unicode_ci NOT NULL COMMENT '邮箱',
+  `password` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL COMMENT '密码Hash',
+  `role` enum('student','teacher','admin') COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'student' COMMENT '用户角色',
+  `avatar` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT '头像URL',
+  `student_no` varchar(50) COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT '学号',
+  `teacher_no` varchar(50) COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT '工号',
+  `first_name` varchar(50) COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT '名',
+  `last_name` varchar(50) COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT '姓',
+  `nickname` varchar(50) COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT '昵称',
+  `gender` varchar(20) COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT '性别',
+  `bio` varchar(500) COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT '简介',
+  `birthday` date DEFAULT NULL COMMENT '生日',
+  `country` varchar(100) COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT '国家',
+  `province` varchar(100) COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT '省份/州',
+  `city` varchar(100) COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT '城市',
+  `phone` varchar(20) COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT '手机号',
+  `school` varchar(100) COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT '学校名称',
+  `subject` varchar(100) COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT '专业/科目',
+  `grade` varchar(20) COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT '年级/班级',
+  `email_verified` tinyint(1) DEFAULT '0' COMMENT '邮箱是否已验证',
+  `deleted` tinyint(1) DEFAULT '0' COMMENT '是否删除',
+  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+  `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uk_username` (`username`),
+  UNIQUE KEY `uk_email` (`email`),
+  UNIQUE KEY `uk_student_no` (`student_no`),
+  UNIQUE KEY `uk_teacher_no` (`teacher_no`),
+  KEY `idx_role` (`role`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='用户表';

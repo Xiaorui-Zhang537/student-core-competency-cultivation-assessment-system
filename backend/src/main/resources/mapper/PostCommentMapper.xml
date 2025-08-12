@@ -21,7 +21,7 @@
         <association property="author" javaType="com.noncore.assessment.entity.User">
             <id column="author_id" property="id"/>
             <result column="author_username" property="username"/>
-            <result column="author_display_name" property="displayName"/>
+            <result column="author_nickname" property="nickname"/>
             <result column="author_avatar" property="avatar"/>
         </association>
     </resultMap>
@@ -33,7 +33,7 @@
     <!-- 详情字段列表（附带作者） -->
     <sql id="Detail_Column_List">
         <include refid="Base_Column_List"/>,
-        u.username as author_username, u.display_name as author_display_name, u.avatar as author_avatar
+        u.username as author_username, u.nickname as author_nickname, COALESCE(u.nickname, u.username) as author_display_name, u.avatar as author_avatar
     </sql>
 
     <!-- 动态条件 -->

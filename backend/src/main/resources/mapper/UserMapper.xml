@@ -10,45 +10,51 @@
         <result column="password" property="password"/>
         <result column="role" property="role"/>
         <result column="avatar" property="avatar"/>
+        <result column="nickname" property="nickname"/>
         <result column="first_name" property="firstName"/>
         <result column="last_name" property="lastName"/>
-        <result column="display_name" property="displayName"/>
+        <result column="student_no" property="studentNo"/>
+        <result column="teacher_no" property="teacherNo"/>
         <result column="bio" property="bio"/>
-        <result column="grade" property="grade"/>
-        <result column="subject" property="subject"/>
-        <result column="school" property="school"/>
-        <result column="phone" property="phone"/>
+        <result column="gender" property="gender"/>
         <result column="birthday" property="birthday"/>
         <result column="country" property="country"/>
         <result column="province" property="province"/>
         <result column="city" property="city"/>
+        <result column="grade" property="grade"/>
+        <result column="subject" property="subject"/>
+        <result column="school" property="school"/>
+        <result column="phone" property="phone"/>
         <result column="created_at" property="createdAt"/>
         <result column="updated_at" property="updatedAt"/>
         <result column="deleted" property="deleted"/>
+        <result column="email_verified" property="emailVerified"/>
     </resultMap>
 
     <!-- 基础查询字段 -->
     <sql id="userColumns">
-        id, username, email, password, role, avatar, first_name, last_name, 
-        display_name, bio, grade, subject, school, phone, birthday, country, province, city, created_at, updated_at, deleted
+        id, username, email, password, role, avatar, nickname, first_name, last_name,
+        student_no, teacher_no, gender, bio, birthday, country, province, city, phone, school, subject, grade, email_verified, deleted,
+        created_at, updated_at
     </sql>
 
     <!-- 带别名的基础查询字段 -->
     <sql id="aliasedUserColumns">
-        u.id, u.username, u.email, u.password, u.role, u.avatar, u.first_name, u.last_name,
-        u.display_name, u.bio, u.grade, u.subject, u.school, u.phone, u.birthday, u.country, u.province, u.city,
-        u.created_at, u.updated_at, u.deleted
+        u.id, u.username, u.email, u.password, u.role, u.avatar, u.nickname, u.first_name, u.last_name,
+        u.student_no, u.teacher_no, u.gender, u.bio, u.birthday, u.country, u.province, u.city, u.phone, u.school, u.subject, u.grade,
+        u.email_verified, u.deleted, u.created_at, u.updated_at
     </sql>
 
     <!-- 插入用户 -->
     <insert id="insertUser" parameterType="com.noncore.assessment.entity.User" useGeneratedKeys="true" keyProperty="id">
         INSERT INTO users (
-            username, email, password, role, avatar, first_name, last_name,
-            display_name, bio, grade, subject, school, phone, birthday, country, province, city, created_at, updated_at, deleted
+            username, email, password, role, avatar, nickname, first_name, last_name,
+            student_no, teacher_no, gender, bio, birthday, country, province, city, phone, school, subject, grade,
+            email_verified, deleted, created_at, updated_at
         ) VALUES (
-            #{username}, #{email}, #{password}, #{role}, #{avatar}, #{firstName}, #{lastName},
-            #{displayName}, #{bio}, #{grade}, #{subject}, #{school}, #{phone}, #{birthday}, #{country}, #{province}, #{city},
-            #{createdAt}, #{updatedAt}, #{deleted}
+            #{username}, #{email}, #{password}, #{role}, #{avatar}, #{nickname}, #{firstName}, #{lastName},
+            #{studentNo}, #{teacherNo}, #{gender}, #{bio}, #{birthday}, #{country}, #{province}, #{city}, #{phone}, #{school}, #{subject}, #{grade},
+            #{emailVerified}, #{deleted}, #{createdAt}, #{updatedAt}
         )
     </insert>
 
@@ -59,6 +65,29 @@
         WHERE id = #{id} AND deleted = false
     </select>
 
+    <!-- 根据课程ID查询学生（高级筛选/排序 - 预留扩展，当前仅实现关键字与排序字段白名单） -->
+    <select id="selectStudentsByCourseIdAdvanced" resultMap="UserResultMap">
+        SELECT <include refid="aliasedUserColumns"/>
+        FROM users u
+        INNER JOIN enrollments e ON u.id = e.student_id
+        WHERE e.course_id = #{courseId}
+          AND u.deleted = false
+          AND e.status = 'enrolled'
+        <if test="keyword != null and keyword != ''">
+          AND (
+              u.nickname LIKE #{keyword}
+              OR u.username LIKE #{keyword}
+              OR u.student_no LIKE #{keyword}
+              OR u.teacher_no LIKE #{keyword}
+          )
+        </if>
+        <!-- TODO: 当有对应维度统计表时，联表支持 activity/grade/progress 过滤 -->
+        <choose>
+          <when test="sortBy == 'name'"> ORDER BY u.nickname ASC, u.username ASC </when>
+          <when test="sortBy == 'joinDate'"> ORDER BY e.enrolled_at DESC </when>
+          <otherwise> ORDER BY e.enrolled_at DESC </otherwise>
+        </choose>
+    </select>
     <!-- 根据用户名查询用户 -->
     <select id="selectUserByUsername" parameterType="string" resultMap="UserResultMap">
         SELECT <include refid="userColumns"/>
@@ -80,9 +109,12 @@
             <if test="username != null and username != ''">username = #{username},</if>
             <if test="email != null and email != ''">email = #{email},</if>
             <if test="avatar != null and avatar != ''">avatar = #{avatar},</if>
+            <if test="nickname != null and nickname != ''">nickname = #{nickname},</if>
+            <if test="gender != null and gender != ''">gender = #{gender},</if>
             <if test="firstName != null and firstName != ''">first_name = #{firstName},</if>
             <if test="lastName != null and lastName != ''">last_name = #{lastName},</if>
-            <if test="displayName != null and displayName != ''">display_name = #{displayName},</if>
+            <if test="studentNo != null and studentNo != ''">student_no = #{studentNo},</if>
+            <if test="teacherNo != null and teacherNo != ''">teacher_no = #{teacherNo},</if>
             <if test="bio != null">bio = #{bio},</if>
             <if test="grade != null and grade != ''">grade = #{grade},</if>
             <if test="subject != null and subject != ''">subject = #{subject},</if>
@@ -146,6 +178,24 @@
         </if>
     </select>
 
+    <!-- 检查学号是否存在 -->
+    <select id="checkStudentNoExists" resultType="int">
+        SELECT COUNT(1) FROM users
+        WHERE student_no = #{studentNo} AND deleted = false
+        <if test="excludeId != null">
+            AND id != #{excludeId}
+        </if>
+    </select>
+
+    <!-- 检查工号是否存在 -->
+    <select id="checkTeacherNoExists" resultType="int">
+        SELECT COUNT(1) FROM users
+        WHERE teacher_no = #{teacherNo} AND deleted = false
+        <if test="excludeId != null">
+            AND id != #{excludeId}
+        </if>
+    </select>
+
     <!-- 根据角色查询用户列表 -->
     <select id="selectUsersByRole" parameterType="string" resultMap="UserResultMap">
         SELECT <include refid="userColumns"/>
@@ -163,9 +213,9 @@
             AND role = #{role}
         </if>
         <if test="keyword != null and keyword != ''">
-            AND (username LIKE CONCAT('%', #{keyword}, '%') 
-                 OR email LIKE CONCAT('%', #{keyword}, '%')
-                 OR display_name LIKE CONCAT('%', #{keyword}, '%'))
+             AND (username LIKE CONCAT('%', #{keyword}, '%') 
+                  OR email LIKE CONCAT('%', #{keyword}, '%')
+                  OR nickname LIKE CONCAT('%', #{keyword}, '%'))
         </if>
         ORDER BY created_at DESC
     </select>
@@ -176,6 +226,23 @@
         FROM users u
         INNER JOIN enrollments e ON u.id = e.student_id
         WHERE e.course_id = #{courseId} AND u.deleted = false AND e.status = 'enrolled'
+        ORDER BY e.enrolled_at DESC
+    </select>
+
+    <!-- 根据课程ID查询学生（带搜索：昵称/用户名/学号/工号） -->
+    <select id="selectStudentsByCourseIdWithSearch" resultMap="UserResultMap">
+        SELECT <include refid="aliasedUserColumns"/>
+        FROM users u
+        INNER JOIN enrollments e ON u.id = e.student_id
+        WHERE e.course_id = #{courseId}
+          AND u.deleted = false
+          AND e.status = 'enrolled'
+          AND (
+              u.nickname LIKE #{keyword}
+              OR u.username LIKE #{keyword}
+              OR u.student_no LIKE #{keyword}
+              OR u.teacher_no LIKE #{keyword}
+          )
         ORDER BY e.enrolled_at DESC
     </select>
 
@@ -194,7 +261,7 @@
     <select id="findStudentOverviewsByTeacher" resultType="com.noncore.assessment.dto.response.TeacherDashboardResponse$StudentOverviewDto">
         SELECT
             u.id,
-            u.display_name AS displayName,
+            COALESCE(u.nickname, u.username) AS nickname,
             u.avatar,
             stats.avg_grade AS avgGrade,
             stats.avg_progress AS avgProgress,

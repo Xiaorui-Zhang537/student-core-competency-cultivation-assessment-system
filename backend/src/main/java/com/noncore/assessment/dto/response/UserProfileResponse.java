@@ -36,9 +36,23 @@ public class UserProfileResponse {
     @Schema(description = "邮箱是否已验证")
     private boolean emailVerified;
     
-    // 可以根据需要添加更多安全的字段，如名字等
-    @Schema(description = "显示名称")
-    private String displayName;
+    @Schema(description = "名")
+    private String firstName;
+
+    @Schema(description = "姓")
+    private String lastName;
+
+    @Schema(description = "学校")
+    private String school;
+
+    @Schema(description = "专业/科目")
+    private String subject;
+
+    @Schema(description = "学号")
+    private String studentNo;
+
+    @Schema(description = "工号")
+    private String teacherNo;
 
     @Schema(description = "生日，yyyy-MM-dd")
     private String birthday;

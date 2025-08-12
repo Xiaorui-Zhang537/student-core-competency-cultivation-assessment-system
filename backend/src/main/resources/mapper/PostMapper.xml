@@ -26,7 +26,7 @@
         <association property="author" javaType="com.noncore.assessment.entity.User">
             <id column="author_id" property="id"/>
             <result column="author_username" property="username"/>
-            <result column="author_display_name" property="displayName"/>
+            <result column="author_nickname" property="nickname"/>
             <result column="author_avatar" property="avatar"/>
         </association>
     </resultMap>
@@ -40,7 +40,7 @@
     <!-- 详情字段列表（包含作者信息） -->
     <sql id="Detail_Column_List">
         <include refid="Base_Column_List"/>,
-        u.username as author_username, u.display_name as author_display_name, u.avatar as author_avatar
+        u.username as author_username, u.nickname as author_nickname, COALESCE(u.nickname, u.username) as author_display_name, u.avatar as author_avatar
     </sql>
 
     <!-- 查询条件 -->
@@ -282,7 +282,8 @@
     <select id="selectActiveUsers" resultType="map">
         SELECT 
             u.id,
-            u.display_name as name,
+            COALESCE(u.nickname, u.username) as name,
+            u.nickname as nickname,
             u.avatar,
             COUNT(p.id) as post_count,
             SUM(p.likes_count) as total_likes
@@ -290,7 +291,7 @@
         INNER JOIN posts p ON u.id = p.author_id
         WHERE p.status = 'published' AND p.deleted = false
         AND p.created_at >= DATE_SUB(NOW(), INTERVAL 30 DAY)
-        GROUP BY u.id, u.display_name, u.avatar
+        GROUP BY u.id, COALESCE(u.nickname, u.username), u.nickname, u.avatar
         ORDER BY post_count DESC, total_likes DESC
         LIMIT #{limit}
     </select>

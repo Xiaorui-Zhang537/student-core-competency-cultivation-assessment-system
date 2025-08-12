@@ -64,13 +64,14 @@ public class UserServiceImpl implements UserService {
         if (StringUtils.hasText(request.getNickname())) {
             existingUser.setNickname(request.getNickname());
         }
-        if (StringUtils.hasText(request.getAvatar())) {
-            existingUser.setAvatar(request.getAvatar());
+        if (request.getAvatar() != null) {
+            String av = request.getAvatar().trim();
+            existingUser.setAvatar(av.isEmpty() ? null : av);
         }
-        if (StringUtils.hasText(request.getGender())) {
+        if (request.getGender() != null) {
             existingUser.setGender(request.getGender());
         }
-        if (StringUtils.hasText(request.getBio())) {
+        if (request.getBio() != null) {
             existingUser.setBio(request.getBio());
         }
         if (StringUtils.hasText(request.getPhone())) {
@@ -90,6 +91,36 @@ public class UserServiceImpl implements UserService {
                 java.util.Date bd = new java.text.SimpleDateFormat("yyyy-MM-dd").parse(request.getBirthday());
                 existingUser.setBirthday(bd);
             } catch (Exception ignored) {}
+        }
+
+        // 新增：first/last/school/subject
+        if (StringUtils.hasText(request.getFirstName())) {
+            existingUser.setFirstName(request.getFirstName());
+        }
+        if (StringUtils.hasText(request.getLastName())) {
+            existingUser.setLastName(request.getLastName());
+        }
+        if (request.getSchool() != null) {
+            existingUser.setSchool(request.getSchool());
+        }
+        if (request.getSubject() != null) {
+            existingUser.setSubject(request.getSubject());
+        }
+
+        // 学号/工号唯一性校验（根据角色判定允许编辑哪一个，或者两者都校验）
+        if (StringUtils.hasText(request.getStudentNo())) {
+            int exists = userMapper.checkStudentNoExists(request.getStudentNo(), userId);
+            if (exists > 0) {
+                throw new BusinessException(ErrorCode.INVALID_PARAMETER, "学号已存在");
+            }
+            existingUser.setStudentNo(request.getStudentNo());
+        }
+        if (StringUtils.hasText(request.getTeacherNo())) {
+            int exists = userMapper.checkTeacherNoExists(request.getTeacherNo(), userId);
+            if (exists > 0) {
+                throw new BusinessException(ErrorCode.INVALID_PARAMETER, "工号已存在");
+            }
+            existingUser.setTeacherNo(request.getTeacherNo());
         }
 
         existingUser.setUpdatedAt(new java.util.Date());
