@@ -26,7 +26,6 @@ public class AiServiceImpl implements AiService {
 
     private final EnrollmentService enrollmentService;
     private final CourseService courseService;
-    private final AnalyticsQueryService analyticsQueryService;
     private final DeepseekClient deepseekClient;
     private final PromptBuilder promptBuilder;
     private final AiConfigProperties aiConfigProperties;
@@ -52,7 +51,7 @@ public class AiServiceImpl implements AiService {
 
             if (!CollectionUtils.isEmpty(studentIds)) {
                 // 去重并限制数量
-                List<Long> unique = studentIds.stream().filter(Objects::nonNull).distinct().limit(5).collect(Collectors.toList());
+                List<Long> unique = studentIds.stream().filter(Objects::nonNull).distinct().limit(5).toList();
 
                 // 拉取课程学生（分页 1, size 大值），实际可优化为专用校验
                 var page = enrollmentService.getCourseStudents(teacherId, courseId, 1, 1000, null, "joinDate", null, null, null);
@@ -70,9 +69,8 @@ public class AiServiceImpl implements AiService {
         // 画像与提示词构建
         List<Message> built = promptBuilder.buildMessages(messages, course, students);
 
-        String provider = (request.getProvider() == null || request.getProvider().isBlank())
-                ? aiConfigProperties.getDefaultProvider()
-                : request.getProvider();
+        // 默认通过 OpenRouter 调用（兼容未来扩展）
+        String provider = "openrouter";
 
         String model = (request.getModel() == null || request.getModel().isBlank())
                 ? aiConfigProperties.getDeepseek().getModel()
@@ -80,13 +78,8 @@ public class AiServiceImpl implements AiService {
 
         String baseUrl;
         String apiKey;
-        if ("deepseek".equalsIgnoreCase(provider)) {
-            baseUrl = aiConfigProperties.getProviders().getDeepseek().getBaseUrl();
-            apiKey = aiConfigProperties.getProviders().getDeepseek().getApiKey();
-        } else {
-            baseUrl = aiConfigProperties.getProviders().getOpenrouter().getBaseUrl();
-            apiKey = aiConfigProperties.getProviders().getOpenrouter().getApiKey();
-        }
+        baseUrl = aiConfigProperties.getProviders().getOpenrouter().getBaseUrl();
+        apiKey = aiConfigProperties.getProviders().getOpenrouter().getApiKey();
 
         if (baseUrl == null || baseUrl.isBlank()) {
             throw new BusinessException(ErrorCode.INVALID_PARAMETER, "LLM base-url 未配置");

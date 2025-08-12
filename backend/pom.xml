@@ -24,6 +24,7 @@
         <pagehelper.version>2.1.0</pagehelper.version>
         <jwt.version>0.12.3</jwt.version>
         <springdoc.version>2.3.0</springdoc.version>
+        <lombok.version>1.18.32</lombok.version>
     </properties>
 
     <dependencyManagement>
@@ -167,6 +168,18 @@
                     <compilerArgs>
                         <arg>-Xlint:-options</arg>
                     </compilerArgs>
+                    <annotationProcessorPaths>
+                        <path>
+                            <groupId>org.projectlombok</groupId>
+                            <artifactId>lombok</artifactId>
+                            <version>${lombok.version}</version>
+                        </path>
+                        <path>
+                            <groupId>org.springframework.boot</groupId>
+                            <artifactId>spring-boot-configuration-processor</artifactId>
+                            <version>${project.parent.version}</version>
+                        </path>
+                    </annotationProcessorPaths>
                 </configuration>
             </plugin>
             <plugin>

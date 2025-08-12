@@ -58,18 +58,11 @@
             </div>
           </div>
           <div class="card p-4">
-            <h3 class="font-semibold mb-2">模型设置</h3>
+            <h3 class="font-semibold mb-2">模型设置（通过 OpenRouter）</h3>
             <div class="space-y-2">
-              <label class="text-xs text-gray-500">提供商</label>
-              <select v-model="provider" class="input">
-                <option value="openrouter">OpenRouter（默认，free档）</option>
-                <option value="deepseek">DeepSeek 官方</option>
-              </select>
               <label class="text-xs text-gray-500">模型</label>
               <select v-model="model" class="input">
-                <option v-if="provider==='openrouter'" value="deepseek/deepseek-chat-v3-0324:free">DeepSeek V3 0324（free）</option>
-                <option v-if="provider==='deepseek'" value="deepseek-chat">DeepSeek V3（官方）</option>
-                <option v-if="provider==='deepseek'" value="deepseek-reasoner">DeepSeek R1（官方）</option>
+                <option value="openai/gpt-4o-mini">OpenAI GPT-4o-mini（via OpenRouter）</option>
               </select>
             </div>
           </div>
@@ -101,8 +94,7 @@ const selectedCourseId = ref<string | null>(null)
 const courseStudents = ref<any[]>([])
 const selectedStudentIds = ref<number[]>([])
 const studentToAdd = ref<number>(0)
-const provider = ref<'openrouter'|'deepseek'>('openrouter')
-const model = ref<string>('deepseek/deepseek-chat-v3-0324:free')
+const model = ref<string>('openai/gpt-4o-mini')
 
 const courseTitle = computed(() => {
   const c = teacherCourses.value.find(c => String(c.id) === String(selectedCourseId.value))
@@ -152,7 +144,6 @@ const send = async () => {
       messages: messages.value as any,
       courseId: selectedCourseId.value ? Number(selectedCourseId.value) : undefined,
       studentIds: selectedStudentIds.value.length ? selectedStudentIds.value : undefined,
-      provider: provider.value,
       model: model.value,
     })
     const answer = (resp as any)?.answer || '后端尚未接入大模型，现在返回占位响应。'
