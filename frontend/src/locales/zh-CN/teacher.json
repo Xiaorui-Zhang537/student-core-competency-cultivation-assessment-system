@@ -1,0 +1,604 @@
+{
+	"teacher": {
+		"dashboard": {
+			"header": {
+				"title": "工作台",
+				"subtitle": "快捷掌握课程核心指标与近期动态"
+			},
+			"course": {
+				"select": {
+					"label": "选择课程",
+					"placeholder": "请选择一门课程"
+				}
+			},
+			"actions": {
+				"publish": "发布作业",
+				"grade": "批改作业"
+			},
+			"cards": {
+				"totalStudents": "总学生数",
+				"completionRate": "作业完成率",
+				"averageScore": "平均成绩",
+				"totalAssignments": "作业数量"
+			},
+			"chart": {
+				"title": "班级成绩分布",
+				"subtitle": "按成绩区间统计",
+				"series": {
+					"students": "学生人数"
+				},
+				"level": {
+					"unknown": "未知"
+				}
+			},
+			"empty": {
+				"title": "请选择一门课程",
+				"description": "选择一门课程后，将显示相关的统计数据与图表"
+			}
+		},
+		"courses": {
+			"breadcrumb": "课程管理",
+			"title": "课程管理",
+			"subtitle": "管理您的所有课程",
+			"loading": "正在加载课程...",
+			"filters": {
+				"searchPlaceholder": "搜索课程标题/描述...",
+				"status": {
+					"all": "全部",
+					"draft": "草稿",
+					"published": "已发布",
+					"archived": "已归档"
+				},
+				"clear": "清除筛选"
+			},
+			"status": {
+				"draft": "草稿",
+				"published": "已发布",
+				"archived": "已归档",
+				"unknown": "未知"
+			},
+			"card": {
+				"coverAlt": "课程封面",
+				"tags": "标签：",
+				"none": "无"
+			},
+			"actions": {
+				"create": "创建课程",
+				"edit": "编辑",
+				"delete": "删除",
+				"save": "保存更改"
+			},
+			"empty": {
+				"title": "暂无课程",
+				"description": "开始创建您的第一个课程吧！"
+			},
+			"modal": {
+				"editTitle": "编辑课程",
+				"createTitle": "创建新课程",
+				"title": "标题",
+				"description": "描述",
+				"content": "课程内容",
+				"category": "分类",
+				"tags": "标签 (逗号分隔)",
+				"cover": "课程封面",
+				"coverPicked": "已选择封面（文件ID：{id}）",
+				"cancel": "取消"
+			},
+			"confirm": {
+				"deleteCourse": "您确定要删除这门课程吗？此操作无法撤销。"
+			}
+		},
+		"assignments": {
+			"breadcrumb": {
+				"courses": "课程管理",
+				"self": "作业管理"
+			},
+			"title": "作业管理",
+			"subtitle": "创建、查看和管理课程作业",
+			"filters": {
+				"byCourse": "按课程筛选",
+				"selectCourse": "请选择课程"
+			},
+			"loading": "正在加载作业...",
+			"actions": {
+				"create": "创建作业",
+				"viewSubmissions": "查看提交",
+				"edit": "编辑",
+				"delete": "删除",
+				"save": "保存更改"
+			},
+			"list": {
+				"dueDate": "截止日期",
+				"emptyTitle": "暂无作业",
+				"emptyDescWithCourse": "该课程下暂无作业。",
+				"emptyDescNoCourse": "请先选择一个课程以查看作业。"
+			},
+			"pagination": {
+				"perPagePrefix": "每页显示",
+				"perPageSuffix": "条",
+				"prev": "上一页",
+				"next": "下一页",
+				"page": "第 {page} 页"
+			},
+			"modal": {
+				"editTitle": "编辑作业",
+				"createTitle": "创建新作业",
+				"course": "课程",
+				"title": "标题",
+				"description": "描述",
+				"dueDate": "截止日期",
+				"attachments": "附件上传（可选，多文件）",
+				"existing": "已上传附件",
+				"size": "大小",
+				"download": "下载",
+				"delete": "删除",
+				"cancel": "取消",
+				"create": "创建作业"
+			},
+			"confirm": {
+				"deleteAttachment": "确认删除该附件？此操作不可撤销。",
+				"deleteAssignment": "您确定要删除这个作业吗？此操作无法撤销。"
+			},
+			"alerts": {
+				"createCourseFirst": "请先创建一门课程。"
+			},
+			"notify": {
+				"createdTitle": "作业已创建",
+				"createdMsg": "新作业已成功添加。",
+				"updatedTitle": "作业已更新",
+				"updatedMsg": "作业信息已成功保存。",
+				"deletedTitle": "作业已删除",
+				"deletedMsg": "该作业已被成功删除。",
+				"publishedTitle": "作业已发布",
+				"publishedMsg": "学生现在可以查看并提交此作业。"
+			}
+		},
+		"submissions": {
+			"breadcrumb": {
+				"assignments": "作业管理",
+				"self": "提交列表"
+			},
+			"title": "提交列表",
+			"subtitle": "查看并前往评分",
+			"back": "返回作业",
+			"loading": "正在加载...",
+			"retry": "重试",
+			"empty": "暂无提交",
+			"submittedAt": "提交时间：{time}",
+			"late": "迟交",
+			"status": {
+				"submitted": "已提交",
+				"graded": "已评分",
+				"returned": "已退回",
+				"draft": "草稿",
+				"late": "迟交"
+			},
+			"actions": {
+				"grade": "评分",
+				"remindUnsubmitted": "提醒未提交"
+			},
+			"pagination": {
+				"perPage": "每页",
+				"items": "条",
+				"prev": "上一页",
+				"next": "下一页",
+				"page": "第 {page} 页"
+			},
+			"errors": {
+				"fetch": "获取提交列表失败"
+			}
+			,
+			"stats": {
+				"totalEnrolled": "总人数",
+				"submitted": "已提交",
+				"unsubmitted": "未提交"
+			},
+			"notify": {
+				"remindSuccess": "提醒已发送",
+				"remindSuccessMsg": "成功发送 {count} 条提醒",
+				"remindFailed": "提醒失败",
+				"remindFailedMsg": "发送提醒时出错，请稍后重试",
+				"statsLoadFailed": "统计加载失败",
+				"statsLoadFailedMsg": "无法加载该作业的提交统计"
+			}
+		},
+		"grading": {
+			"breadcrumb": {
+				"self": "作业评分"
+			},
+			"title": "评分：{name}",
+			"back": "返回列表",
+			"loading": "加载作业详情中...",
+			"assignment": {
+				"requirements": "作业要求",
+				"due": "截止时间：",
+				"totalScore": "总分：",
+				"submitStatus": "提交状态：",
+				"late": "迟交",
+				"onTime": "按时提交"
+			},
+			"submission": {
+				"content": "学生提交内容",
+				"answer": "作业答案",
+				"attachment": "附件文件",
+				"selfEvaluation": "学生自评"
+			},
+			"ai": {
+				"title": "AI评分建议",
+				"badge": "AI分析",
+				"suggestedScore": "建议分数",
+				"accuracy": "准确性",
+				"completeness": "完整性",
+				"clarity": "清晰度",
+				"apply": "采用建议",
+				"analysis": "AI分析",
+				"improvements": "改进建议"
+			},
+			"history": {
+				"title": "评分历史",
+				"scoreSuffix": "分"
+			},
+			"form": {
+				"title": "评分",
+				"score": "分数",
+				"ofTotal": "/ {total}",
+				"grade": "等级评定",
+				"selectGrade": "选择等级",
+				"feedback": "反馈意见",
+				"feedbackPlaceholder": "请提供详细的反馈意见，帮助学生改进...",
+				"strengths": "优点",
+				"strengthsPlaceholder": "指出学生的优点和亮点...",
+				"improvements": "改进建议",
+				"improvementsPlaceholder": "提供具体的改进建议...",
+				"allowResubmit": "允许重新提交",
+				"sendNotification": "发送通知给学生",
+				"publishImmediately": "立即发布成绩",
+				"submit": "提交评分",
+				"saveDraft": "保存草稿"
+			},
+			"student": {
+				"title": "学生信息",
+				"course": "课程：",
+				"class": "班级：",
+				"avg": "平均分：",
+				"rank": "排名：",
+				"viewProfile": "查看学生档案"
+			},
+			"quick": {
+				"title": "快速操作",
+				"contact": "联系学生",
+				"viewOthers": "查看其他提交",
+				"export": "导出提交内容",
+				"report": "举报抄袭"
+			},
+			"notify": {
+				"gradeSuccess": "评分成功",
+				"publishSuccess": "成绩已发布",
+				"aiApplied": "AI建议已应用",
+				"aiAppliedMsg": "已将AI评分建议填入表单",
+				"filePreview": "文件预览",
+				"downloading": "下载开始",
+				"draftSaved": "草稿已保存",
+				"draftSavedMsg": "评分草稿已保存",
+				"saveFailed": "保存失败",
+				"saveFailedMsg": "保存草稿时发生错误",
+				"formInvalid": "表单验证失败",
+				"formInvalidMsg": "请检查并填写必填字段",
+				"submitSuccess": "评分提交成功",
+				"submitPublished": "成绩已发布给学生",
+				"submitSaved": "评分已保存，待发布",
+				"submitFailed": "提交失败",
+				"submitFailedMsg": "提交评分时发生错误",
+				"loadFailed": "加载失败",
+				"loadFailedMsg": "无法加载作业提交数据",
+				"remindSuccess": "提醒已发送",
+				"remindSuccessMsg": "成功发送 {count} 条提醒",
+				"remindFailed": "提醒失败",
+				"remindFailedMsg": "发送提醒时出错，请稍后重试",
+				"statsLoadFailed": "统计加载失败",
+				"statsLoadFailedMsg": "无法加载该作业的提交统计"
+			},
+			"errors": {
+				"scoreTooLow": "分数不能小于0",
+				"scoreTooHigh": "分数不能大于{max}",
+				"feedbackRequired": "请输入反馈意见"
+			}
+		},
+        "actions": {
+            "remindUnsubmitted": "提醒未提交"
+        },
+        "stats": {
+            "totalEnrolled": "总人数",
+            "submitted": "已提交",
+            "unsubmitted": "未提交"
+        },
+		"analytics": {
+			"title": "数据分析",
+			"subtitle": "全面了解教学效果和学生学习情况",
+			"selectCourse": "请选择课程",
+			"askAi": "询问AI",
+			"exportReport": "导出报告",
+			"cards": {
+				"totalStudents": "总学生数",
+				"averageScore": "平均成绩",
+				"completionRate": "作业完成率",
+				"totalAssignments": "作业数量"
+			},
+            "charts": {
+				"scoreDistribution": "成绩分布",
+				"radar": "五维能力雷达",
+				"setWeights": "设置权重",
+				"refresh": "刷新",
+				"exportCsv": "导出CSV",
+				"selectStudent": "请选择学生",
+				"noRadar": "暂无雷达数据",
+				"unknown": "未知",
+				"series": {
+					"distribution": "成绩分布",
+					"student": "学生",
+					"class": "班级"
+				}
+            },
+            "weights": {
+              "title": "设置五维权重",
+              "cancel": "取消",
+              "save": "保存",
+              "dimensions": {
+                "MORAL_COGNITION": "道德认知",
+                "LEARNING_ATTITUDE": "学习态度",
+                "LEARNING_ABILITY": "学习能力",
+                "LEARNING_METHOD": "学习方法",
+                "ACADEMIC_GRADE": "学习成绩"
+              }
+            },
+			"tables": {
+				"studentRanking": "学生表现排行",
+				"noRanking": "暂无学生排行数据"
+			},
+			"messages": {
+				"chooseCourse": "请选择课程",
+				"chooseCourseMsg": "请先选择要导出的课程",
+				"exportFailed": "导出失败",
+				"exportFailedMsg": "请稍后重试",
+				"timeRangeError": "时间范围错误",
+				"timeRangeMsg": "开始日期不能晚于结束日期",
+				"refreshFailed": "刷新失败",
+				"refreshFailedMsg": "请稍后再试",
+				"aiPromptHeader": "请根据以下课程数据做教学洞察与建议，并指出高风险点与可执行改进项。数据(JSON)："
+			}
+		},
+		"ai": {
+			"title": "AI 助理",
+			"subtitle": "与智能体对话，获取教学建议与分析洞察",
+			"thinking": "AI 正在思考...",
+			"placeholder": "输入你的问题，按 Enter 发送",
+			"send": "发送",
+			"context": {
+				"title": "上下文",
+				"desc": "可选：选择课程与学生为 AI 提供上下文，获得更相关的建议。",
+				"noCourse": "不指定课程",
+				"selectStudents": "选择学生（最多5名）",
+				"selectStudent": "选择学生",
+				"add": "添加",
+				"clear": "清空",
+				"applied": "上下文已生效：课程 {course}，学生 {count} 名"
+			},
+			"model": {
+				"title": "模型设置（通过 OpenRouter）",
+				"label": "模型",
+				"default": "OpenAI GPT-4o-mini（via OpenRouter）"
+			},
+			"greeting": "你好，我是 AI 助理。你可以向我咨询课程分析、作业设计、学习建议等问题。",
+			"sendFailed": "发送失败，请稍后重试。"
+		},
+		"students": {
+			"breadcrumb": {
+				"courses": "课程管理",
+				"self": "学生管理"
+			},
+			"title": "学生管理",
+			"subtitle": "管理课程学生的学习进度和成绩",
+			"actions": {
+				"invite": "邀请学生",
+				"export": "导出数据"
+			},
+			"cards": {
+				"total": "总学生数",
+				"newThisWeek": "+{count} 本周新增",
+				"avgProgress": "平均进度",
+				"avgGrade": "平均成绩",
+				"passRate": "{rate}% 及格率",
+				"active": "活跃学生",
+				"activeThisWeek": "本周活跃"
+			},
+			"filters": {
+				"searchPlaceholder": "搜索学生姓名或学号...",
+				"progress": {
+					"all": "全部进度",
+					"notStarted": "未开始",
+					"inProgress": "进行中",
+					"completed": "已完成"
+				},
+				"grade": {
+					"all": "全部成绩",
+					"excellent": "优秀(90+)",
+					"good": "良好(80-89)",
+					"average": "中等(70-79)",
+					"below": "需提高(<70)"
+				},
+				"activity": {
+					"all": "全部活跃度",
+					"high": "高活跃",
+					"medium": "中等活跃",
+					"low": "低活跃",
+					"inactive": "不活跃"
+				},
+				"sort": {
+					"name": "按姓名排序",
+					"progress": "按进度排序",
+					"grade": "按成绩排序",
+					"lastActive": "按活跃度排序",
+					"joinDate": "按加入时间排序"
+				}
+			},
+			"batch": {
+				"selectedCount": "已选 {count}",
+				"sendMessage": "发送消息",
+				"export": "导出",
+				"remove": "移除"
+			},
+			"invite": {
+				"title": "邀请学生加入课程",
+				"desc": "支持批量输入学生ID，使用逗号或换行分隔。",
+				"placeholder": "例如：1001,1002,1003 或者每行一个",
+				"parsed": "已解析：{count} 个",
+				"cancel": "取消",
+				"confirm": "确认邀请",
+				"successTitle": "邀请成功",
+				"successMsg": "已处理 {count} 个学生ID",
+				"failTitle": "邀请失败",
+				"failMsg": "提交失败"
+			},
+			"table": {
+				"student": "学生信息",
+				"progress": "学习进度",
+				"grade": "成绩",
+				"activity": "活跃度",
+				"lastActive": "最后活动",
+				"actions": "操作",
+				"level": {
+					"excellent": "优秀",
+					"good": "良好",
+					"average": "中等",
+					"improve": "需提高",
+					"unknown": "未知"
+				},
+				"studyHours": "{hours}小时/周",
+				"view": "详情",
+				"message": "消息",
+				"viewGrades": "查看成绩",
+				"reset": "重置进度",
+				"export": "导出数据",
+				"remove": "移除学生",
+				"list": "学生列表",
+				"total": "共 {count} 名学生",
+				"empty": "暂无资料",
+				"prev": "上一页",
+				"next": "下一页",
+				"perPagePrefix": "每页显示",
+				"perPageSuffix": "条记录",
+				"confirmRemove": "确定要将该学生从课程中移除吗？",
+				"removeSuccess": "移除成功",
+				"removeSuccessMsg": "学生已从课程中移除",
+				"removeFail": "移除失败",
+				"removeFailMsg": "移除学生时发生错误"
+			},
+			"export": {
+				"failTitle": "导出失败",
+				"failMsg": "导出数据时发生错误"
+			},
+			"load": {
+				"failTitle": "加载失败",
+				"failMsg": "获取课程学生失败"
+			}
+		},
+		"studentDetail": {
+			"breadcrumb": {
+				"overview": "学生进度概览"
+			},
+			"title": "学生详情: {name}",
+			"loading": "正在加载学生成绩数据...",
+			"filter": {
+				"label": "筛选课程",
+				"all": "全部课程"
+			},
+			"stats": {
+				"graded": "已评分作业",
+				"average": "平均分",
+				"courses": "相关课程"
+			},
+			"table": {
+				"title": "成绩记录",
+				"assignment": "作业标题",
+				"course": "所属课程",
+				"score": "分数",
+				"teacher": "评分教师",
+				"date": "评分日期",
+				"status": "状态",
+				"published": "已发布",
+				"unpublished": "未发布",
+				"empty": "该学生暂无成绩记录。",
+				"perPage": "每页",
+				"items": "条",
+				"prev": "上一页",
+				"next": "下一页",
+				"page": "第 {page} / {total} 页"
+			}
+		},
+		"courseDetail": {
+			"loading": "正在加载课程详情...",
+			"breadcrumb": {
+				"courses": "课程管理"
+			},
+			"buttons": {
+				"students": "学生管理",
+				"assignments": "作业管理",
+				"analytics": "课程分析"
+			},
+			"sections": {
+				"description": "课程描述",
+				"content": "课程内容",
+				"materials": "课程资料",
+				"videos": "课程视频",
+				"searchMaterial": "搜索资料文件名...",
+				"searchVideo": "搜索视频文件名...",
+				"file": "文件#{id}",
+				"size": "大小：{size}",
+				"download": "下载",
+				"delete": "删除",
+				"noMaterials": "暂无资料",
+				"noVideos": "暂无视频",
+				"prev": "上一页",
+				"next": "下一页"
+			},
+			"notFound": {
+				"title": "未找到课程",
+				"desc": "无法加载所请求的课程详情。"
+			},
+			"confirm": {
+				"deleteFile": "确认删除该文件？此操作不可撤销。"
+			}
+		},
+		"courseEdit": {
+			"title": "编辑课程",
+			"subtitle": "更新课程的基本信息",
+			"loading": "正在加载课程数据...",
+			"form": {
+				"title": "课程标题",
+				"description": "课程简介",
+				"content": "详细描述",
+				"category": "课程分类",
+				"selectCategory": "请选择一个分类",
+				"categoryOptions": {
+					"programming": "编程开发",
+					"design": "设计创意",
+					"business": "商业管理",
+					"marketing": "市场营销",
+					"language": "语言学习",
+					"science": "科学技术",
+					"art": "艺术人文",
+					"other": "其他"
+				}
+			},
+			"actions": {
+				"cancel": "取消",
+				"saving": "保存中...",
+				"save": "保存更改"
+			},
+			"error": {
+				"title": "加载失败",
+				"desc": "无法加载课程数据，或课程不存在。"
+			}
+		}
+	}
+}

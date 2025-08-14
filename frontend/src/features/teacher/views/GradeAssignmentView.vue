@@ -6,25 +6,27 @@
         <div class="flex items-center justify-between">
           <div>
             <nav class="flex items-center space-x-2 text-sm text-gray-500 dark:text-gray-400 mb-2">
-              <span>作业评分</span>
-              <chevron-right-icon class="w-4 h-4" />
-              <span>{{ assignment.title }}</span>
+              <span class="hover:text-gray-700 dark:hover:text-gray-200 cursor-pointer" @click="router.push('/teacher/courses')">{{ t('teacher.courses.breadcrumb') }}</span>
+              <ChevronRightIcon class="w-4 h-4" />
+              <span v-if="assignment.courseName || assignmentCourseId" class="hover:text-gray-700 dark:hover:text-gray-200 cursor-pointer" @click="goCourse()">{{ assignment.courseName || `#${assignmentCourseId}` }}</span>
+              <ChevronRightIcon class="w-4 h-4" />
+              <span class="hover:text-gray-700 dark:hover:text-gray-200 cursor-pointer" @click="router.push('/teacher/assignments')">{{ t('teacher.submissions.breadcrumb.assignments') }}</span>
+              <ChevronRightIcon class="w-4 h-4" />
+              <span class="hover:text-gray-700 dark:hover:text-gray-200 cursor-pointer" @click="router.push(`/teacher/assignments/${assignment.id}/submissions`)">{{ t('teacher.submissions.breadcrumb.self') }}</span>
+              <ChevronRightIcon class="w-4 h-4" />
+              <span>{{ submission.studentName || submission.studentId }}</span>
             </nav>
             <h1 class="text-3xl font-bold text-gray-900 dark:text-white mb-2">
-              评分: {{ submission.studentName }}
+              {{ t('teacher.grading.title', { name: submission.studentName }) }}
             </h1>
             <p class="text-gray-600 dark:text-gray-400">
-              提交时间: {{ formatDate(submission.submittedAt) }}
+              {{ t('teacher.submissions.submittedAt', { time: formatDate(submission.submittedAt) }) }}
             </p>
           </div>
           <div class="flex items-center space-x-3">
             <badge :variant="getSubmissionStatusVariant(submission.status)">
               {{ getSubmissionStatusText(submission.status) }}
             </badge>
-            <Button variant="outline" @click="$router.go(-1)">
-              <ArrowUturnLeftIcon class="w-4 h-4 mr-2" />
-              返回列表
-            </Button>
           </div>
         </div>
       </div>
@@ -32,7 +34,7 @@
       <!-- 加载状态 -->
       <div v-if="isLoading" class="text-center py-12">
         <div class="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600"></div>
-        <p class="mt-2 text-gray-600 dark:text-gray-400">加载作业详情中...</p>
+        <p class="mt-2 text-gray-600 dark:text-gray-400">{{ t('teacher.grading.loading') }}</p>
       </div>
 
       <div v-else class="grid grid-cols-1 xl:grid-cols-3 gap-8">
@@ -41,7 +43,7 @@
           <!-- 作业信息 -->
           <card padding="lg">
             <template #header>
-              <h2 class="text-lg font-semibold text-gray-900 dark:text-white">作业要求</h2>
+              <h2 class="text-lg font-semibold text-gray-900 dark:text-white">{{ t('teacher.grading.assignment.requirements') }}</h2>
             </template>
             
             <div class="space-y-4">
@@ -52,17 +54,17 @@
               
               <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
                 <div>
-                  <span class="text-gray-500 dark:text-gray-400">截止时间：</span>
+                  <span class="text-gray-500 dark:text-gray-400">{{ t('teacher.grading.assignment.due') }}</span>
                   <span class="font-medium text-gray-900 dark:text-white">{{ formatDate(assignment.dueDate) }}</span>
                 </div>
                 <div>
-                  <span class="text-gray-500 dark:text-gray-400">总分：</span>
-                  <span class="font-medium text-gray-900 dark:text-white">{{ assignment.totalScore }} 分</span>
+                  <span class="text-gray-500 dark:text-gray-400">{{ t('teacher.grading.assignment.totalScore') }}</span>
+                  <span class="font-medium text-gray-900 dark:text-white">{{ assignment.totalScore }}{{ t('teacher.grading.history.scoreSuffix') }}</span>
                 </div>
                 <div>
-                  <span class="text-gray-500 dark:text-gray-400">提交状态：</span>
+                  <span class="text-gray-500 dark:text-gray-400">{{ t('teacher.grading.assignment.submitStatus') }}</span>
                   <span class="font-medium" :class="submission.isLate ? 'text-red-600' : 'text-green-600'">
-                    {{ submission.isLate ? '迟交' : '按时提交' }}
+                    {{ submission.isLate ? t('teacher.grading.assignment.late') : t('teacher.grading.assignment.onTime') }}
                   </span>
                 </div>
               </div>
@@ -72,13 +74,13 @@
           <!-- 学生提交内容 -->
           <card padding="lg">
             <template #header>
-              <h2 class="text-lg font-semibold text-gray-900 dark:text-white">学生提交内容</h2>
+              <h2 class="text-lg font-semibold text-gray-900 dark:text-white">{{ t('teacher.grading.submission.content') }}</h2>
             </template>
             
             <div class="space-y-6">
               <!-- 文字内容 -->
               <div v-if="submission.content">
-                <h3 class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">作业答案</h3>
+                <h3 class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{{ t('teacher.grading.submission.answer') }}</h3>
                 <div class="bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
                   <div class="prose max-w-none dark:prose-invert">
                     <p class="whitespace-pre-line">{{ submission.content }}</p>
@@ -88,7 +90,7 @@
 
               <!-- 附件（单文件） -->
               <div v-if="submission.fileName">
-                <h3 class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">附件文件</h3>
+                <h3 class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">{{ t('teacher.grading.submission.attachment') }}</h3>
                 <div class="flex items-center justify-between p-3 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 rounded-lg">
                   <div class="flex items-center space-x-3">
                     <div class="flex-shrink-0">
@@ -99,19 +101,19 @@
                     </div>
                   </div>
                   <div class="flex items-center space-x-2">
-                    <button variant="ghost" size="sm" @click="previewSingleFile">
+                    <Button variant="ghost" size="sm" @click="previewSingleFile">
                       <eye-icon class="w-4 h-4" />
-                    </button>
-                    <button variant="ghost" size="sm" @click="downloadSingleFile">
+                    </Button>
+                    <Button variant="ghost" size="sm" @click="downloadSingleFile">
                       <arrow-down-tray-icon class="w-4 h-4" />
-                    </button>
+                    </Button>
                   </div>
                 </div>
               </div>
 
               <!-- 学生自评 -->
               <div v-if="submission.selfEvaluation">
-                <h3 class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">学生自评</h3>
+              <h3 class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{{ t('teacher.grading.submission.selfEvaluation') }}</h3>
                 <div class="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-4">
                   <p class="text-sm text-gray-700 dark:text-gray-300">{{ submission.selfEvaluation }}</p>
                 </div>
@@ -123,10 +125,10 @@
           <card padding="lg" v-if="aiSuggestion">
             <template #header>
               <div class="flex items-center justify-between">
-                <h2 class="text-lg font-semibold text-gray-900 dark:text-white">AI评分建议</h2>
+                <h2 class="text-lg font-semibold text-gray-900 dark:text-white">{{ t('teacher.grading.ai.title') }}</h2>
                 <badge variant="secondary" class="flex items-center">
                   <sparkles-icon class="w-3 h-3 mr-1" />
-                  AI分析
+                  {{ t('teacher.grading.ai.badge') }}
                 </badge>
               </div>
             </template>
@@ -137,36 +139,36 @@
                   <div class="text-2xl font-bold text-blue-600 dark:text-blue-400">
                     {{ aiSuggestion.suggestedScore }}
                   </div>
-                  <p class="text-xs text-gray-500">建议分数</p>
+                  <p class="text-xs text-gray-500">{{ t('teacher.grading.ai.suggestedScore') }}</p>
                 </div>
                 <div class="flex-1">
                   <div class="grid grid-cols-3 gap-2 text-sm">
                     <div class="text-center">
                       <div class="font-medium text-gray-900 dark:text-white">{{ aiSuggestion.accuracy }}%</div>
-                      <p class="text-gray-500">准确性</p>
+                      <p class="text-gray-500">{{ t('teacher.grading.ai.accuracy') }}</p>
                     </div>
                     <div class="text-center">
                       <div class="font-medium text-gray-900 dark:text-white">{{ aiSuggestion.completeness }}%</div>
-                      <p class="text-gray-500">完整性</p>
+                      <p class="text-gray-500">{{ t('teacher.grading.ai.completeness') }}</p>
                     </div>
                     <div class="text-center">
                       <div class="font-medium text-gray-900 dark:text-white">{{ aiSuggestion.clarity }}%</div>
-                      <p class="text-gray-500">清晰度</p>
+                      <p class="text-gray-500">{{ t('teacher.grading.ai.clarity') }}</p>
                     </div>
                   </div>
                 </div>
-                <button variant="outline" size="sm" @click="applyAiSuggestion">
-                  采用建议
-                </button>
+                <Button variant="outline" size="sm" @click="applyAiSuggestion">
+                  {{ t('teacher.grading.ai.apply') }}
+                </Button>
               </div>
               
               <div>
-                <h4 class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">AI分析</h4>
+                <h4 class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{{ t('teacher.grading.ai.analysis') }}</h4>
                 <p class="text-sm text-gray-600 dark:text-gray-400">{{ aiSuggestion.analysis }}</p>
               </div>
               
               <div>
-                <h4 class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">改进建议</h4>
+                <h4 class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{{ t('teacher.grading.ai.improvements') }}</h4>
                 <ul class="text-sm text-gray-600 dark:text-gray-400 space-y-1">
                   <li v-for="suggestion in aiSuggestion.improvements" :key="suggestion" class="flex items-start">
                     <span class="text-blue-500 mr-2">•</span>
@@ -180,7 +182,7 @@
           <!-- 评分历史 -->
           <card padding="lg" v-if="gradingHistory.length > 0">
             <template #header>
-              <h2 class="text-lg font-semibold text-gray-900 dark:text-white">评分历史</h2>
+              <h2 class="text-lg font-semibold text-gray-900 dark:text-white">{{ t('teacher.grading.history.title') }}</h2>
             </template>
             
             <div class="space-y-4">
@@ -196,7 +198,7 @@
                   <div class="flex items-center space-x-3 mb-1">
                     <span class="font-medium text-gray-900 dark:text-white">{{ history.graderName }}</span>
                     <span class="text-sm text-gray-500">{{ formatDate(history.gradedAt) }}</span>
-                    <badge variant="secondary" size="sm">{{ history.score }}分</badge>
+                    <badge variant="secondary" size="sm">{{ history.score }}{{ t('teacher.grading.history.scoreSuffix') }}</badge>
                   </div>
                   <p class="text-sm text-gray-600 dark:text-gray-400">{{ history.feedback }}</p>
                 </div>
@@ -210,14 +212,14 @@
           <!-- 评分表单 -->
           <card padding="lg">
             <template #header>
-              <h3 class="text-lg font-semibold text-gray-900 dark:text-white">评分</h3>
+              <h3 class="text-lg font-semibold text-gray-900 dark:text-white">{{ t('teacher.grading.form.title') }}</h3>
             </template>
             
             <form @submit.prevent="submitGrade" class="space-y-6">
               <!-- 分数输入 -->
               <div>
                 <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  分数 <span class="text-red-500">*</span>
+                  {{ t('teacher.grading.form.score') }} <span class="text-red-500">*</span>
                 </label>
                 <div class="flex items-center space-x-2">
                   <input
@@ -230,7 +232,7 @@
                     :class="{ 'border-red-500': errors.score }"
                     @blur="validateScore"
                   />
-                  <span class="text-sm text-gray-500 dark:text-gray-400">/ {{ assignment.totalScore }}</span>
+                  <span class="text-sm text-gray-500 dark:text-gray-400">{{ t('teacher.grading.form.ofTotal', { total: assignment.totalScore }) }}</span>
                 </div>
                 <p v-if="errors.score" class="mt-1 text-sm text-red-600">{{ errors.score }}</p>
                 <div class="mt-2">
@@ -241,10 +243,10 @@
               <!-- 等级评定 -->
               <div>
                 <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  等级评定
+                  {{ t('teacher.grading.form.grade') }}
                 </label>
                 <select v-model="gradeForm.grade" class="input">
-                  <option value="">选择等级</option>
+                  <option value="">{{ t('teacher.grading.form.selectGrade') }}</option>
                   <option value="A+">A+ (优秀+)</option>
                   <option value="A">A (优秀)</option>
                   <option value="B+">B+ (良好+)</option>
@@ -259,12 +261,12 @@
               <!-- 反馈内容 -->
               <div>
                 <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  反馈意见 <span class="text-red-500">*</span>
+                  {{ t('teacher.grading.form.feedback') }} <span class="text-red-500">*</span>
                 </label>
                 <textarea
                   v-model="gradeForm.feedback"
                   rows="6"
-                  placeholder="请提供详细的反馈意见，帮助学生改进..."
+                  :placeholder="t('teacher.grading.form.feedbackPlaceholder')"
                   class="input"
                   :class="{ 'border-red-500': errors.feedback }"
                   @blur="validateFeedback"
@@ -276,23 +278,23 @@
               <div class="grid grid-cols-1 gap-4">
                 <div>
                   <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    优点
+                    {{ t('teacher.grading.form.strengths') }}
                   </label>
                   <textarea
                     v-model="gradeForm.strengths"
                     rows="3"
-                    placeholder="指出学生的优点和亮点..."
+                    :placeholder="t('teacher.grading.form.strengthsPlaceholder')"
                     class="input"
                   ></textarea>
                 </div>
                 <div>
                   <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    改进建议
+                    {{ t('teacher.grading.form.improvements') }}
                   </label>
                   <textarea
                     v-model="gradeForm.improvements"
                     rows="3"
-                    placeholder="提供具体的改进建议..."
+                    :placeholder="t('teacher.grading.form.improvementsPlaceholder')"
                     class="input"
                   ></textarea>
                 </div>
@@ -302,15 +304,15 @@
               <div class="space-y-3">
                 <label class="flex items-center">
                   <input v-model="gradeForm.allowResubmit" type="checkbox" class="rounded border-gray-300 text-primary-600 focus:ring-primary-500" />
-                  <span class="ml-2 text-sm text-gray-700 dark:text-gray-300">允许重新提交</span>
+                  <span class="ml-2 text-sm text-gray-700 dark:text-gray-300">{{ t('teacher.grading.form.allowResubmit') }}</span>
                 </label>
                 <label class="flex items-center">
                   <input v-model="gradeForm.sendNotification" type="checkbox" class="rounded border-gray-300 text-primary-600 focus:ring-primary-500" />
-                  <span class="ml-2 text-sm text-gray-700 dark:text-gray-300">发送通知给学生</span>
+                  <span class="ml-2 text-sm text-gray-700 dark:text-gray-300">{{ t('teacher.grading.form.sendNotification') }}</span>
                 </label>
                 <label class="flex items-center">
                   <input v-model="gradeForm.publishImmediately" type="checkbox" class="rounded border-gray-300 text-primary-600 focus:ring-primary-500" />
-                  <span class="ml-2 text-sm text-gray-700 dark:text-gray-300">立即发布成绩</span>
+                  <span class="ml-2 text-sm text-gray-700 dark:text-gray-300">{{ t('teacher.grading.form.publishImmediately') }}</span>
                 </label>
               </div>
 
@@ -324,8 +326,8 @@
                   :loading="isSubmitting"
                   :disabled="!isFormValid"
                 >
-                  <CheckIcon class="w-4 h-4 mr-2" />
-                  提交评分
+                  <check-icon class="w-4 h-4 mr-2" />
+                  {{ t('teacher.grading.form.submit') }}
                 </Button>
                 
                 <Button
@@ -336,8 +338,8 @@
                   @click="saveDraft"
                   :loading="isDraftSaving"
                 >
-                  <DocumentDuplicateIcon class="w-4 h-4 mr-2" />
-                  保存草稿
+                  <document-duplicate-icon class="w-4 h-4 mr-2" />
+                  {{ t('teacher.grading.form.saveDraft') }}
                 </Button>
               </div>
             </form>
@@ -346,17 +348,17 @@
           <!-- 学生信息 -->
           <card padding="lg">
             <template #header>
-              <h3 class="text-lg font-semibold text-gray-900 dark:text-white">学生信息</h3>
+              <h3 class="text-lg font-semibold text-gray-900 dark:text-white">{{ t('teacher.grading.student.title') }}</h3>
             </template>
             
             <div class="space-y-4">
               <div class="flex items-center space-x-3">
                 <div class="w-12 h-12">
-                  <UserAvatar :avatar="submission.avatar" :size="48">
+                  <user-avatar :avatar="submission.avatar" :size="48">
                     <div class="w-12 h-12 rounded-full bg-blue-100 dark:bg-blue-900 flex items-center justify-center">
                       <user-icon class="w-6 h-6 text-blue-600 dark:text-blue-400" />
                     </div>
-                  </UserAvatar>
+                  </user-avatar>
                 </div>
                 <div>
                   <h4 class="font-medium text-gray-900 dark:text-white">{{ submission.studentName }}</h4>
@@ -366,25 +368,25 @@
               
               <div class="grid grid-cols-2 gap-4 text-sm">
                 <div>
-                  <span class="text-gray-500 dark:text-gray-400">课程：</span>
+                  <span class="text-gray-500 dark:text-gray-400">{{ t('teacher.grading.student.course') }}</span>
                   <span class="font-medium text-gray-900 dark:text-white block">{{ assignment.courseName }}</span>
                 </div>
                 <div>
-                  <span class="text-gray-500 dark:text-gray-400">班级：</span>
+                  <span class="text-gray-500 dark:text-gray-400">{{ t('teacher.grading.student.class') }}</span>
                   <span class="font-medium text-gray-900 dark:text-white block">{{ submission.className }}</span>
                 </div>
                 <div>
-                  <span class="text-gray-500 dark:text-gray-400">平均分：</span>
+                  <span class="text-gray-500 dark:text-gray-400">{{ t('teacher.grading.student.avg') }}</span>
                   <span class="font-medium text-gray-900 dark:text-white block">{{ submission.averageScore }}/100</span>
                 </div>
                 <div>
-                  <span class="text-gray-500 dark:text-gray-400">排名：</span>
+                  <span class="text-gray-500 dark:text-gray-400">{{ t('teacher.grading.student.rank') }}</span>
                   <span class="font-medium text-gray-900 dark:text-white block">{{ submission.rank }}/{{ submission.totalStudents }}</span>
                 </div>
               </div>
               
               <button variant="outline" size="sm" class="w-full" @click="viewStudentProfile">
-                查看学生档案
+                {{ t('teacher.grading.student.viewProfile') }}
               </button>
             </div>
           </card>
@@ -392,26 +394,26 @@
           <!-- 快速操作 -->
           <card padding="lg">
             <template #header>
-              <h3 class="text-lg font-semibold text-gray-900 dark:text-white">快速操作</h3>
+              <h3 class="text-lg font-semibold text-gray-900 dark:text-white">{{ t('teacher.grading.quick.title') }}</h3>
             </template>
             
             <div class="space-y-3">
-              <button variant="outline" class="w-full justify-start" @click="contactStudent">
+              <Button variant="outline" class="w-full justify-start" @click="contactStudent">
                 <chat-bubble-left-icon class="w-4 h-4 mr-3" />
-                联系学生
-              </button>
-              <button variant="outline" class="w-full justify-start" @click="viewOtherSubmissions">
+                {{ t('teacher.grading.quick.contact') }}
+              </Button>
+              <Button variant="outline" class="w-full justify-start" @click="viewOtherSubmissions">
                 <document-text-icon class="w-4 h-4 mr-3" />
-                查看其他提交
-              </button>
-              <button variant="outline" class="w-full justify-start" @click="exportSubmission">
+                {{ t('teacher.grading.quick.viewOthers') }}
+              </Button>
+              <Button variant="outline" class="w-full justify-start" @click="exportSubmission">
                 <arrow-down-tray-icon class="w-4 h-4 mr-3" />
-                导出提交内容
-              </button>
-              <button variant="outline" class="w-full justify-start" @click="reportPlagiarism">
+                {{ t('teacher.grading.quick.export') }}
+              </Button>
+              <Button variant="outline" class="w-full justify-start" @click="reportPlagiarism">
                 <exclamation-triangle-icon class="w-4 h-4 mr-3" />
-                举报抄袭
-              </button>
+                {{ t('teacher.grading.quick.report') }}
+              </Button>
             </div>
           </card>
         </div>
@@ -436,6 +438,7 @@ import {
   ArrowUturnLeftIcon,
   SparklesIcon,
   AcademicCapIcon,
+  UserIcon,
   CheckIcon,
   DocumentDuplicateIcon,
   ChatBubbleLeftIcon,
@@ -443,11 +446,13 @@ import {
   ExclamationTriangleIcon
 } from '@heroicons/vue/24/outline'
 import UserAvatar from '@/components/ui/UserAvatar.vue'
+import { useLocale } from '@/i18n/useLocale'
 
 // Router and Stores
 const route = useRoute()
 const router = useRouter()
 const uiStore = useUIStore()
+const { t } = useLocale()
 
 // 状态
 const isLoading = ref(true)
@@ -461,7 +466,8 @@ const assignment = reactive({
   description: '',
   dueDate: '',
   totalScore: 100,
-  courseName: ''
+  courseName: '',
+  courseId: ''
 })
 
 const submission = reactive<any>({
@@ -482,6 +488,7 @@ const aiSuggestion = ref<any | null>(null)
 
 // 评分历史
 const gradingHistory = ref<any[]>([])
+const assignmentCourseId = computed(() => String(assignment.courseId || ''))
 
 // 评分表单
 const gradeForm = reactive({
@@ -529,6 +536,9 @@ const loadSubmission = async () => {
     assignment.dueDate = a.dueDate
     assignment.totalScore = Number((a.maxScore ?? a.totalScore ?? 100))
     assignment.courseName = a.courseName || ''
+    if (!assignment.courseName && (s as any)?.courseName) assignment.courseName = (s as any).courseName
+    assignment.courseId = String(a.courseId || '')
+    assignment.courseId = String(a.courseId || '')
     if ((s as any)?.gradeId) {
       try {
         const hist = await gradeApi.getGradeHistory(String((s as any).gradeId))
@@ -548,8 +558,8 @@ const loadSubmission = async () => {
   } catch (error) {
     uiStore.showNotification({
       type: 'error',
-      title: '加载失败',
-      message: '无法加载作业提交数据'
+      title: t('teacher.grading.notify.loadFailed'),
+      message: t('teacher.grading.notify.loadFailedMsg')
     })
   } finally {
     isLoading.value = false
@@ -568,10 +578,10 @@ const getSubmissionStatusVariant = (status: string) => {
 
 const getSubmissionStatusText = (status: string) => {
   const textMap: Record<string, string> = {
-    submitted: '已提交',
-    graded: '已评分',
-    returned: '已返回',
-    late: '迟交'
+    submitted: t('teacher.submissions.status.submitted'),
+    graded: t('teacher.submissions.status.graded'),
+    returned: t('teacher.submissions.status.returned'),
+    late: t('teacher.submissions.status.late')
   }
   return textMap[status] || status
 }
@@ -604,9 +614,9 @@ const getFileType = (filename: string) => {
 
 const validateScore = () => {
   if (gradeForm.score < 0) {
-    errors.score = '分数不能小于0'
+    errors.score = t('teacher.grading.errors.scoreTooLow')
   } else if (gradeForm.score > assignment.totalScore) {
-    errors.score = `分数不能大于${assignment.totalScore}`
+    errors.score = t('teacher.grading.errors.scoreTooHigh', { max: assignment.totalScore }) as string
   } else {
     errors.score = ''
   }
@@ -614,7 +624,7 @@ const validateScore = () => {
 
 const validateFeedback = () => {
   if (gradeForm.feedback.trim() === '') {
-    errors.feedback = '请输入反馈意见'
+    errors.feedback = t('teacher.grading.errors.feedbackRequired')
   } else {
     errors.feedback = ''
   }
@@ -628,8 +638,8 @@ const applyAiSuggestion = () => {
   
   uiStore.showNotification({
     type: 'success',
-    title: 'AI建议已应用',
-    message: '已将AI评分建议填入表单'
+    title: t('teacher.grading.notify.aiApplied'),
+    message: t('teacher.grading.notify.aiAppliedMsg')
   })
 }
 
@@ -637,8 +647,8 @@ const previewFile = (file: any) => {
   // 实现文件预览
   uiStore.showNotification({
     type: 'info',
-    title: '文件预览',
-    message: `正在预览文件: ${file.name}`
+    title: t('teacher.grading.notify.filePreview'),
+    message: `\${t('teacher.grading.notify.filePreview')}: ${file.name}`
   })
 }
 
@@ -646,8 +656,8 @@ const downloadFile = (file: any) => {
   // 实现文件下载
   uiStore.showNotification({
     type: 'success',
-    title: '下载开始',
-    message: `正在下载: ${file.name}`
+    title: t('teacher.grading.notify.downloading'),
+    message: `${t('teacher.grading.notify.downloading')}: ${file.name}`
   })
 }
 
@@ -676,14 +686,14 @@ const saveDraft = async () => {
     await new Promise(resolve => setTimeout(resolve, 1000))
     uiStore.showNotification({
       type: 'success',
-      title: '草稿已保存',
-      message: '评分草稿已保存'
+      title: t('teacher.grading.notify.draftSaved'),
+      message: t('teacher.grading.notify.draftSavedMsg')
     })
   } catch (error) {
     uiStore.showNotification({
       type: 'error',
-      title: '保存失败',
-      message: '保存草稿时发生错误'
+      title: t('teacher.grading.notify.saveFailed'),
+      message: t('teacher.grading.notify.saveFailedMsg')
     })
   } finally {
     isDraftSaving.value = false
@@ -697,19 +707,23 @@ const submitGrade = async () => {
   if (!isFormValid.value) {
     uiStore.showNotification({
       type: 'error',
-      title: '表单验证失败',
-      message: '请检查并填写必填字段'
+      title: t('teacher.grading.notify.formInvalid'),
+      message: t('teacher.grading.notify.formInvalidMsg')
     })
     return
   }
 
   isSubmitting.value = true
   try {
-    const payload = {
-      submissionId: submission.id,
-      studentId: submission.studentId,
-      score: gradeForm.score,
-      feedback: gradeForm.feedback
+    const payload: any = {
+      submissionId: String(submission.id),
+      studentId: String(submission.studentId),
+      assignmentId: String(assignment.id),
+      score: Number(gradeForm.score),
+      maxScore: Number(assignment.totalScore || 100),
+      feedback: gradeForm.feedback || '',
+      publishImmediately: !!gradeForm.publishImmediately,
+      status: (gradeForm.publishImmediately ? 'published' : 'draft') as 'published' | 'draft'
     }
     const gr = await gradeApi.gradeSubmission(payload)
     const gradeId = gr?.data?.id
@@ -719,8 +733,8 @@ const submitGrade = async () => {
     
     uiStore.showNotification({
       type: 'success',
-      title: '评分提交成功',
-      message: gradeForm.publishImmediately ? '成绩已发布给学生' : '评分已保存，待发布'
+      title: t('teacher.grading.notify.submitSuccess'),
+      message: gradeForm.publishImmediately ? t('teacher.grading.notify.submitPublished') : t('teacher.grading.notify.submitSaved')
     })
     
     // 跳转回作业列表
@@ -728,8 +742,8 @@ const submitGrade = async () => {
   } catch (error) {
     uiStore.showNotification({
       type: 'error',
-      title: '提交失败',
-      message: '提交评分时发生错误'
+      title: t('teacher.grading.notify.submitFailed'),
+      message: t('teacher.grading.notify.submitFailedMsg')
     })
   } finally {
     isSubmitting.value = false
@@ -743,8 +757,8 @@ const viewStudentProfile = () => {
 const contactStudent = () => {
   uiStore.showNotification({
     type: 'info',
-    title: '联系学生',
-    message: '消息功能开发中...'
+    title: t('teacher.grading.quick.contact'),
+    message: t('teacher.grading.notify.loadFailedMsg')
   })
 }
 
@@ -755,16 +769,22 @@ const viewOtherSubmissions = () => {
 const exportSubmission = () => {
   uiStore.showNotification({
     type: 'success',
-    title: '导出中...',
-    message: '正在生成提交内容报告'
+    title: t('teacher.analytics.exportReport'),
+    message: t('teacher.analytics.messages.refreshFailedMsg')
   })
+}
+
+function goCourse() {
+  if (assignmentCourseId.value) {
+    router.push(`/teacher/courses/${assignmentCourseId.value}`)
+  }
 }
 
 const reportPlagiarism = () => {
   uiStore.showNotification({
     type: 'warning',
-    title: '举报抄袭',
-    message: '抄袭检测功能开发中...'
+    title: t('teacher.grading.quick.report'),
+    message: t('teacher.analytics.messages.refreshFailedMsg')
   })
 }
 

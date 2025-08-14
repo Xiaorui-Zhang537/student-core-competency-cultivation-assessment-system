@@ -5,24 +5,24 @@
       <div class="flex items-center justify-between">
         <div>
           
-          <h1 class="text-3xl font-bold text-gray-900 dark:text-white mb-2">数据分析</h1>
-          <p class="text-gray-600 dark:text-gray-400">全面了解教学效果和学生学习情况</p>
+          <h1 class="text-3xl font-bold text-gray-900 dark:text-white mb-2">{{ t('teacher.analytics.title') }}</h1>
+          <p class="text-gray-600 dark:text-gray-400">{{ t('teacher.analytics.subtitle') }}</p>
         </div>
       <div class="flex items-center space-x-4">
         <select v-model="selectedCourseId" @change="onCourseChange" class="input">
-            <option :value="null">请选择课程</option>
+            <option :value="null">{{ t('teacher.analytics.selectCourse') }}</option>
             <option v-for="course in teacherCourses" :key="course.id" :value="String(course.id)">
               {{ course.title }}
             </option>
           </select>
           <div class="flex items-center gap-3">
-            <button class="btn inline-flex items-center justify-center px-6 w-36 bg-indigo-600 hover:bg-indigo-700 text-white dark:text-white" :disabled="!selectedCourseId" @click="askAiForAnalytics">
-              <sparkles-icon class="w-4 h-4 mr-2" />
-              询问AI
+            <button class="btn inline-flex items-center justify-center px-6 w-36 bg-indigo-600 hover:bg-indigo-700 text-white dark:text-white whitespace-nowrap" :disabled="!selectedCourseId" @click="askAiForAnalytics">
+              <SparklesIcon class="w-4 h-4 mr-2" />
+              {{ t('teacher.analytics.askAi') }}
             </button>
-            <button class="btn btn-primary inline-flex items-center justify-center px-6 w-36" @click="exportReport">
-              <document-arrow-down-icon class="w-4 h-4 mr-2" />
-              导出报告
+            <button class="btn btn-primary inline-flex items-center justify-center px-6 w-36 whitespace-nowrap" @click="exportReport">
+              <DocumentArrowDownIcon class="w-4 h-4 mr-2 flex-shrink-0" />
+              {{ t('teacher.analytics.exportReport') }}
             </button>
           </div>
         </div>
@@ -35,28 +35,28 @@
         <div class="text-3xl font-bold text-blue-600 dark:text-blue-400 mb-2">
           {{ safeCourseAnalytics.totalStudents }}
         </div>
-        <p class="text-sm text-gray-600 dark:text-gray-400">总学生数</p>
+        <p class="text-sm text-gray-600 dark:text-gray-400">{{ t('teacher.analytics.cards.totalStudents') }}</p>
       </card>
 
       <card padding="lg" class="text-center">
         <div class="text-3xl font-bold text-green-600 dark:text-green-400 mb-2">
           {{ (safeCourseAnalytics.averageScore || 0).toFixed(1) }}
         </div>
-        <p class="text-sm text-gray-600 dark:text-gray-400">平均成绩</p>
+        <p class="text-sm text-gray-600 dark:text-gray-400">{{ t('teacher.analytics.cards.averageScore') }}</p>
       </card>
 
       <card padding="lg" class="text-center">
         <div class="text-3xl font-bold text-yellow-600 dark:text-yellow-400 mb-2">
           {{ (safeCourseAnalytics.completionRate || 0) }}%
         </div>
-        <p class="text-sm text-gray-600 dark:text-gray-400">作业完成率</p>
+        <p class="text-sm text-gray-600 dark:text-gray-400">{{ t('teacher.analytics.cards.completionRate') }}</p>
       </card>
 
       <card padding="lg" class="text-center">
         <div class="text-3xl font-bold text-purple-600 dark:text-purple-400 mb-2">
           {{ safeCourseAnalytics.totalAssignments }}
         </div>
-        <p class="text-sm text-gray-600 dark:text-gray-400">作业数量</p>
+        <p class="text-sm text-gray-600 dark:text-gray-400">{{ t('teacher.analytics.cards.totalAssignments') }}</p>
       </card>
     </div>
 
@@ -66,7 +66,7 @@
       <card padding="lg">
         <template #header>
           <div class="flex items-center justify-between h-11">
-            <h3 class="text-lg font-semibold text-gray-900 dark:text-white">成绩分布</h3>
+            <h3 class="text-lg font-semibold text-gray-900 dark:text-white">{{ t('teacher.analytics.charts.scoreDistribution') }}</h3>
             <!-- 保持左右卡片header高度一致（右侧有按钮），这里用占位 -->
             <div class="invisible flex items-center gap-2">
               <button class="btn">1</button>
@@ -84,29 +84,34 @@
       <!-- 五维能力雷达图 -->
       <card padding="lg">
         <template #header>
-          <div class="flex items-center justify-between h-11">
-            <h3 class="text-lg font-semibold text-gray-900 dark:text-white">五维能力雷达</h3>
+          <div class="flex items-center justify-between h-11 relative z-10">
+            <h3 class="text-lg font-semibold text-gray-900 dark:text-white">{{ t('teacher.analytics.charts.radar') }}</h3>
             <div class="flex items-center gap-2">
-              <button class="btn" @click="openWeights = true" :disabled="!selectedCourseId">设置权重</button>
-              <button class="btn" title="刷新" @click="loadRadar" :disabled="!selectedCourseId">
-                <arrow-path-icon class="w-4 h-4" />
-              </button>
-              <button class="btn" @click="exportRadar" :disabled="!selectedCourseId">导出CSV</button>
+              <Button size="sm" variant="indigo" @click="openWeights = true" :disabled="!selectedCourseId">
+                {{ t('teacher.analytics.charts.setWeights') }}
+              </Button>
+              <Button size="sm" variant="outline" :title="t('teacher.analytics.charts.refresh')" @click="loadRadar" :disabled="!selectedCourseId">
+                <ArrowPathIcon class="w-4 h-4" />
+              </Button>
+              <Button size="sm" variant="outline" @click="exportRadar" :disabled="!selectedCourseId">
+                <DocumentArrowDownIcon class="w-4 h-4 mr-1" />
+                {{ t('teacher.analytics.charts.exportCsv') }}
+              </Button>
             </div>
           </div>
         </template>
         <div class="flex flex-nowrap items-center gap-2 mb-3 overflow-x-auto min-h-[44px]">
           <select v-model="selectedStudentId" class="input w-44" :disabled="!selectedCourseId">
-            <option :value="null">请选择学生</option>
+            <option :value="null">{{ t('teacher.analytics.charts.selectStudent') }}</option>
             <option v-for="s in topStudents" :key="s.studentId" :value="String(s.studentId)">{{ s.studentName }}</option>
           </select>
           <input type="date" v-model="startDate" class="input w-36" />
           <input type="date" v-model="endDate" class="input w-36" />
         </div>
         <div v-if="radarIndicators.length" class="w-full flex justify-center">
-          <RadarChart :indicators="radarIndicators" :series="radarSeries" width="520px" height="320px" />
+          <radar-chart :indicators="radarIndicators" :series="radarSeries" width="520px" height="320px" />
         </div>
-        <div v-else class="text-sm text-gray-500 text-center">暂无雷达数据</div>
+        <div v-else class="text-sm text-gray-500 text-center">{{ t('teacher.analytics.charts.noRadar') }}</div>
       </card>
     </div>
 
@@ -115,10 +120,10 @@
       <!-- 学生表现排行 -->
       <card padding="lg">
         <template #header>
-          <h3 class="text-lg font-semibold text-gray-900 dark:text-white">学生表现排行</h3>
+          <h3 class="text-lg font-semibold text-gray-900 dark:text-white">{{ t('teacher.analytics.tables.studentRanking') }}</h3>
         </template>
           <div v-if="!topStudents.length" class="space-y-4 text-center text-gray-500 dark:text-gray-400">
-            暂无学生排行数据
+            {{ t('teacher.analytics.tables.noRanking') }}
           </div>
           <ul v-else class="divide-y divide-gray-200 dark:divide-gray-700">
             <li v-for="(s, idx) in topStudents" :key="s.studentId" class="py-2 flex items-center justify-between">
@@ -134,7 +139,7 @@
     
     </div>
     <!-- 权重设置弹窗（保持在同一 <template> 内） -->
-    <AbilityWeightsDialog :open="openWeights" :weights="weights" @close="openWeights=false" @saved="onWeightsSaved" />
+    <ability-weights-dialog :open="openWeights" :weights="weights" @close="openWeights=false" @saved="onWeightsSaved" />
   </div>
 </template>
 
@@ -155,12 +160,15 @@ import * as echarts from 'echarts'
 import RadarChart from '@/components/charts/RadarChart.vue'
 import AbilityWeightsDialog from '@/features/teacher/components/AbilityWeightsDialog.vue'
 import { DocumentArrowDownIcon, SparklesIcon, ArrowPathIcon } from '@heroicons/vue/24/outline'
+// @ts-ignore shim for vue-i18n types in this project
+import { useI18n } from 'vue-i18n'
 
 // Stores
 const teacherStore = useTeacherStore()
 const courseStore = useCourseStore()
 const authStore = useAuthStore()
 const uiStore = useUIStore()
+const { t, locale } = useI18n()
 
 // 状态
 const selectedCourseId = ref<string | null>(null)
@@ -173,6 +181,22 @@ const openWeights = ref(false)
 const weights = ref<Record<string, number> | null>(null)
 const radarIndicators = ref<{ name: string; max: number }[]>([])
 const radarSeries = ref<{ name: string; values: number[] }[]>([])
+// 保留后端原始维度名称以便在语言切换时重新本地化
+const rawRadarDimensions = ref<string[]>([])
+
+// 后端固定返回中文维度名称，这里在前端做代码映射并按当前语言本地化
+const NAME_ZH_TO_CODE: Record<string, string> = {
+  '道德认知': 'MORAL_COGNITION',
+  '学习态度': 'LEARNING_ATTITUDE',
+  '学习能力': 'LEARNING_ABILITY',
+  '学习方法': 'LEARNING_METHOD',
+  '学习成绩': 'ACADEMIC_GRADE'
+}
+
+function localizeDimensionName(serverName: string): string {
+  const code = NAME_ZH_TO_CODE[serverName]
+  return code ? t(`teacher.analytics.weights.dimensions.${code}`) : serverName
+}
 
 // 图表引用
 const learningTrendRef = ref<HTMLElement>()
@@ -246,7 +270,7 @@ const initScoreDistributionChart = () => {
 
   const dist: any[] = (teacherStore.classPerformance as any)?.gradeDistribution || []
   const pieData = Array.isArray(dist)
-    ? dist.map(d => ({ name: d.gradeLevel ?? d.level ?? '未知', value: d.count ?? 0 }))
+    ? dist.map(d => ({ name: d.gradeLevel ?? d.level ?? t('teacher.analytics.charts.unknown'), value: d.count ?? 0 }))
     : []
 
   const option = {
@@ -255,14 +279,14 @@ const initScoreDistributionChart = () => {
     },
     tooltip: {
       trigger: 'item',
-      formatter: '{a} <br/>{b}: {c} ({d}%)'
+      formatter: '{b}: {c} ({d}%)'
     },
     legend: {
       show: false
     },
     series: [
       {
-        name: '成绩分布',
+        name: t('teacher.analytics.charts.series.distribution'),
         type: 'pie',
         radius: ['50%', '70%'],
         center: ['50%', '48%'],
@@ -314,7 +338,7 @@ watch(() => teacherStore.classPerformance, () => {
 
 const exportReport = async () => {
   if (!selectedCourseId.value) {
-    return uiStore.showNotification({ type: 'warning', title: '请选择课程', message: '请先选择要导出的课程' })
+    return uiStore.showNotification({ type: 'warning', title: t('teacher.analytics.messages.chooseCourse'), message: t('teacher.analytics.messages.chooseCourseMsg') })
   }
   try {
     const res = await teacherApi.exportCourseStudents(selectedCourseId.value)
@@ -326,7 +350,7 @@ const exportReport = async () => {
     a.click()
     window.URL.revokeObjectURL(url)
   } catch (e: any) {
-    uiStore.showNotification({ type: 'error', title: '导出失败', message: e?.message || '请稍后重试' })
+    uiStore.showNotification({ type: 'error', title: t('teacher.analytics.messages.exportFailed'), message: e?.message || t('teacher.analytics.messages.exportFailedMsg') })
   }
 }
 
@@ -377,8 +401,7 @@ const askAiForAnalytics = () => {
     gradeDistribution: dist,
     topStudents: top,
   }
-  const q = `请根据以下课程数据做教学洞察与建议，并指出高风险点与可执行改进项（用中文回答）。\n` +
-           `数据(JSON)：\n` + JSON.stringify(payload, null, 2)
+  const q = t('teacher.analytics.messages.aiPromptHeader') + "\n" + JSON.stringify(payload, null, 2)
   router.push({ path: '/teacher/ai', query: { q } })
 }
 
@@ -386,22 +409,23 @@ const loadRadar = async () => {
   try {
     if (!selectedCourseId.value || !startDate.value || !endDate.value) return
     if (new Date(startDate.value) > new Date(endDate.value)) {
-      return uiStore.showNotification({ type: 'warning', title: '时间范围错误', message: '开始日期不能晚于结束日期' })
+      return uiStore.showNotification({ type: 'warning', title: t('teacher.analytics.messages.timeRangeError'), message: t('teacher.analytics.messages.timeRangeMsg') })
     }
     const params: any = { courseId: selectedCourseId.value, startDate: startDate.value, endDate: endDate.value }
     if (selectedStudentId.value) params.studentId = selectedStudentId.value
     const r: any = await teacherApi.getAbilityRadar(params)
     const data: any = r?.data?.data ?? r?.data ?? r
     const dims: string[] = data?.dimensions || []
-    radarIndicators.value = dims.map(n => ({ name: n, max: 100 }))
+    rawRadarDimensions.value = [...dims]
+    radarIndicators.value = dims.map(n => ({ name: localizeDimensionName(n), max: 100 }))
     const student = (data?.studentScores || []) as number[]
     const clazz = (data?.classAvgScores || []) as number[]
     radarSeries.value = [
-      { name: '学生', values: student },
-      { name: '班级', values: clazz },
+      { name: t('teacher.analytics.charts.series.student'), values: student },
+      { name: t('teacher.analytics.charts.series.class'), values: clazz },
     ]
   } catch (e: any) {
-    uiStore.showNotification({ type: 'error', title: '刷新失败', message: e?.message || '请稍后再试' })
+    uiStore.showNotification({ type: 'error', title: t('teacher.analytics.messages.refreshFailed'), message: e?.message || t('teacher.analytics.messages.refreshFailedMsg') })
   }
 }
 
@@ -425,4 +449,21 @@ const onWeightsSaved = async (w: Record<string, number>) => {
   await teacherApi.updateAbilityWeights({ courseId: selectedCourseId.value, weights: weights.value as any })
   await loadRadar()
 }
+
+// 语言切换时，仅根据缓存的原始维度与当前 series 数值重新本地化显示文本
+function refreshRadarLocalization() {
+  if (rawRadarDimensions.value.length) {
+    radarIndicators.value = rawRadarDimensions.value.map(n => ({ name: localizeDimensionName(n), max: 100 }))
+  }
+  const studentValues = radarSeries.value[0]?.values || []
+  const classValues = radarSeries.value[1]?.values || []
+  radarSeries.value = [
+    { name: t('teacher.analytics.charts.series.student'), values: studentValues },
+    { name: t('teacher.analytics.charts.series.class'), values: classValues },
+  ]
+}
+
+watch(locale, () => {
+  nextTick(() => refreshRadarLocalization())
+})
 </script> 

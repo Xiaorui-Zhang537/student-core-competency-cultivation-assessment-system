@@ -5,14 +5,14 @@
       <div class="mb-8 flex items-center justify-between">
         <div class="flex-1">
           <nav class="flex items-center space-x-2 text-sm text-gray-500 dark:text-gray-400 mb-2">
-            <span>课程管理</span>
+            <span>{{ t('teacher.courses.breadcrumb') }}</span>
           </nav>
-          <h1 class="text-3xl font-bold text-gray-900 dark:text-white">课程管理</h1>
-          <p class="text-gray-600 dark:text-gray-400">管理您的所有课程</p>
+          <h1 class="text-3xl font-bold text-gray-900 dark:text-white">{{ t('teacher.courses.title') }}</h1>
+          <p class="text-gray-600 dark:text-gray-400">{{ t('teacher.courses.subtitle') }}</p>
         </div>
         <Button variant="indigo" @click="openCreateModal">
           <PlusIcon class="w-4 h-4 mr-2" />
-          创建课程
+          {{ t('teacher.courses.actions.create') }}
         </Button>
       </div>
 
@@ -22,12 +22,12 @@
         <!-- 搜索框 with 图标 -->
         <div class="relative">
           <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-            <magnifying-glass-icon class="h-5 w-5 text-gray-400" />
+            <MagnifyingGlassIcon class="h-5 w-5 text-gray-400" />
           </div>
           <input
             v-model="filters.query"
             type="text"
-            placeholder="搜索课程标题/描述..."
+            :placeholder="t('teacher.courses.filters.searchPlaceholder')"
             @input="applyFilters"
             class="input pl-10"
           />
@@ -35,15 +35,15 @@
         <!-- 状态分段按钮组 + 清空按钮（同列左右分布，消除右侧空白） -->
         <div class="flex items-center justify-between gap-4">
           <div class="inline-flex whitespace-nowrap rounded-lg overflow-hidden border border-gray-300 dark:border-gray-600">
-            <button type="button" @click="setStatus('')" :class="segClass('')">全部</button>
-            <button type="button" @click="setStatus('DRAFT')" :class="segClass('DRAFT')">草稿</button>
-            <button type="button" @click="setStatus('PUBLISHED')" :class="segClass('PUBLISHED')">已发布</button>
-            <button type="button" @click="setStatus('ARCHIVED')" :class="segClass('ARCHIVED')">已归档</button>
+            <button type="button" @click="setStatus('')" :class="segClass('')">{{ t('teacher.courses.filters.status.all') }}</button>
+            <button type="button" @click="setStatus('DRAFT')" :class="segClass('DRAFT')">{{ t('teacher.courses.filters.status.draft') }}</button>
+            <button type="button" @click="setStatus('PUBLISHED')" :class="segClass('PUBLISHED')">{{ t('teacher.courses.filters.status.published') }}</button>
+            <button type="button" @click="setStatus('ARCHIVED')" :class="segClass('ARCHIVED')">{{ t('teacher.courses.filters.status.archived') }}</button>
           </div>
           <div class="flex-shrink-0">
             <Button variant="outline" @click="clearFilters">
               <XMarkIcon class="w-4 h-4 mr-2" />
-              清除筛选
+              {{ t('teacher.courses.filters.clear') }}
             </Button>
           </div>
         </div>
@@ -52,7 +52,7 @@
 
       <!-- Course List -->
       <div v-if="courseStore.loading" class="text-center py-12">
-        <p>正在加载课程...</p>
+        <p>{{ t('teacher.courses.loading') }}</p>
       </div>
       <div v-else class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         <div
@@ -65,12 +65,12 @@
             <img
               v-if="course.coverImage && getCoverSrc(course)"
               :src="getCoverSrc(course)"
-              alt="课程封面"
+              :alt="t('teacher.courses.card.coverAlt')"
               class="w-full h-full object-cover"
               @error="onCardCoverError(course)"
             />
             <!-- 状态徽标浮层 -->
-            <span
+              <span
               class="absolute top-3 left-3 text-xs px-2 py-0.5 rounded bg-white/90 dark:bg-gray-800/90 border border-gray-200 dark:border-gray-700"
               :class="statusBadgeClass(course.status)"
             >
@@ -83,18 +83,18 @@
             <p class="text-sm text-gray-600 dark:text-gray-300 line-clamp-2 min-h-[2.5rem]">{{ course.description }}</p>
             <div class="mt-4 flex justify-between items-center">
               <div class="text-xs text-gray-500">
-                <span>标签：</span>
+                <span>{{ t('teacher.courses.card.tags') }}</span>
                 <span v-if="getTagsText(course)" class="text-gray-700 dark:text-gray-200">{{ getTagsText(course) }}</span>
-                <span v-else class="text-gray-400">无</span>
+                <span v-else class="text-gray-400">{{ t('teacher.courses.card.none') }}</span>
               </div>
               <div class="flex items-center">
                 <Button size="sm" variant="outline" class="mr-2" @click.stop="openEditModal(course)">
                   <PencilSquareIcon class="w-4 h-4 mr-1" />
-                  编辑
+                  {{ t('teacher.courses.actions.edit') }}
                 </Button>
                 <Button size="sm" variant="outline" @click.stop="handleDeleteCourse(String(course.id))">
                   <TrashIcon class="w-4 h-4 mr-1" />
-                  删除
+                  {{ t('teacher.courses.actions.delete') }}
                 </Button>
               </div>
             </div>
@@ -102,11 +102,11 @@
         </div>
       </div>
       <div v-if="!courseStore.loading && courseStore.courses.length === 0" class="text-center py-12 card">
-        <h3 class="text-lg font-medium">暂无课程</h3>
-        <p class="text-gray-500 mb-4">开始创建您的第一个课程吧！</p>
+        <h3 class="text-lg font-medium">{{ t('teacher.courses.empty.title') }}</h3>
+        <p class="text-gray-500 mb-4">{{ t('teacher.courses.empty.description') }}</p>
         <Button variant="indigo" @click="openCreateModal">
           <PlusIcon class="w-4 h-4 mr-2" />
-          创建课程
+          {{ t('teacher.courses.actions.create') }}
         </Button>
       </div>
 
@@ -114,30 +114,30 @@
       <div v-if="showModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
       <div class="bg-white dark:bg-gray-800 rounded-xl shadow-xl w-full max-w-2xl max-h-[85vh] overflow-y-auto">
         <div class="p-6">
-        <h2 class="text-xl font-bold mb-4">{{ isEditing ? '编辑课程' : '创建新课程' }}</h2>
+        <h2 class="text-xl font-bold mb-4">{{ isEditing ? t('teacher.courses.modal.editTitle') : t('teacher.courses.modal.createTitle') }}</h2>
         <form @submit.prevent="handleSubmit" class="space-y-4">
           <div>
-            <label for="title" class="block text-sm font-medium mb-1">标题</label>
+            <label for="title" class="block text-sm font-medium mb-1">{{ t('teacher.courses.modal.title') }}</label>
             <input id="title" v-model="form.title" type="text" required class="input" />
           </div>
           <div>
-            <label for="description" class="block text-sm font-medium mb-1">描述</label>
+            <label for="description" class="block text-sm font-medium mb-1">{{ t('teacher.courses.modal.description') }}</label>
             <textarea id="description" v-model="form.description" rows="3" class="input"></textarea>
           </div>
           <div>
-            <label for="content" class="block text-sm font-medium mb-1">课程内容</label>
-            <textarea id="content" v-model="form.content" rows="6" class="input" placeholder="可填写课程大纲、教学安排等"></textarea>
+            <label for="content" class="block text-sm font-medium mb-1">{{ t('teacher.courses.modal.content') }}</label>
+            <textarea id="content" v-model="form.content" rows="6" class="input" placeholder=""></textarea>
           </div>
           <div>
-            <label for="category" class="block text-sm font-medium mb-1">分类</label>
+            <label for="category" class="block text-sm font-medium mb-1">{{ t('teacher.courses.modal.category') }}</label>
             <input id="category" v-model="form.category" type="text" required class="input" />
           </div>
           <div>
-            <label for="tags" class="block text-sm font-medium mb-1">标签 (逗号分隔)</label>
+            <label for="tags" class="block text-sm font-medium mb-1">{{ t('teacher.courses.modal.tags') }}</label>
             <input id="tags" v-model="tagsInput" type="text" class="input" />
           </div>
           <div>
-            <label class="block text-sm font-medium mb-1">课程封面</label>
+            <label class="block text-sm font-medium mb-1">{{ t('teacher.courses.modal.cover') }}</label>
             <file-upload
               ref="coverUploader"
               :accept="'image/*'"
@@ -149,12 +149,12 @@
               @upload-success="onCoverUploaded"
               @upload-error="onCoverUploadError"
             />
-            <p v-if="form.coverImage" class="text-xs text-gray-500 mt-2">已选择封面（文件ID：{{ form.coverImage }}）</p>
+            <p v-if="form.coverImage" class="text-xs text-gray-500 mt-2">{{ t('teacher.courses.modal.coverPicked', { id: form.coverImage }) }}</p>
           </div>
           <div class="flex justify-end space-x-3 mt-6">
-            <Button type="button" variant="outline" @click="closeModal">取消</Button>
+            <Button type="button" variant="outline" @click="closeModal">{{ t('teacher.courses.modal.cancel') }}</Button>
             <Button type="submit" :disabled="courseStore.loading" variant="indigo">
-              {{ isEditing ? '保存更改' : '创建课程' }}
+              {{ isEditing ? t('teacher.courses.actions.save') : t('teacher.courses.actions.create') }}
             </Button>
           </div>
         </form>
@@ -185,10 +185,13 @@ import FileUpload from '@/components/forms/FileUpload.vue';
 import apiClient, { baseURL } from '@/api/config';
 import Button from '@/components/ui/Button.vue'
 import { MagnifyingGlassIcon, PlusIcon, XMarkIcon, PencilSquareIcon, TrashIcon } from '@heroicons/vue/24/outline'
+// @ts-ignore - vue-i18n runtime is available at build time; type may be resolved via shim
+import { useI18n } from 'vue-i18n'
 
 const courseStore = useCourseStore();
 const authStore = useAuthStore();
 const router = useRouter();
+const { t } = useI18n()
 
 const showModal = ref(false);
 const isEditing = ref(false);
@@ -249,8 +252,8 @@ const statusClass = (status: string) => {
 }
 
 const statusText = (status: string) => {
-  const map: Record<string, string> = { DRAFT: '草稿', PUBLISHED: '已发布', ARCHIVED: '已归档' }
-  return map[status] || status || '未知'
+  const map: Record<string, string> = { DRAFT: t('teacher.courses.status.draft'), PUBLISHED: t('teacher.courses.status.published'), ARCHIVED: t('teacher.courses.status.archived') }
+  return map[status] || status || t('teacher.courses.status.unknown')
 }
 
 const statusBadgeClass = (status: string) => {
@@ -352,7 +355,7 @@ const onCoverUploadError = (message: string) => {
 };
 
 const handleDeleteCourse = async (id: string) => {
-  if (confirm('您确定要删除这门课程吗？此操作无法撤销。')) {
+  if (confirm(t('teacher.courses.confirm.deleteCourse'))) {
     await courseStore.deleteCourse(id);
     fetchTeacherCourses();
   }

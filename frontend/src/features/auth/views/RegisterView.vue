@@ -78,9 +78,11 @@ import { ref, reactive } from 'vue';
 import { useAuthStore } from '@/stores/auth';
 import { useUIStore } from '@/stores/ui';
 import type { RegisterRequest } from '@/types/auth';
+import { useI18n } from 'vue-i18n'
 
 const authStore = useAuthStore();
 const uiStore = useUIStore();
+const { t } = useI18n()
 
 const roles = [
   { label: '学生', value: 'STUDENT' },
@@ -111,7 +113,7 @@ const defaultAvatars = [
 
 const handleSubmit = () => {
   if (form.password !== confirmPassword.value) {
-    uiStore.showNotification({ type: 'error', title: '注册失败', message: '两次输入的密码不一致' });
+    uiStore.showNotification({ type: 'error', title: t('app.notifications.error.title'), message: t('app.auth.register.passwordMismatch') });
     return;
   }
   authStore.register(form);

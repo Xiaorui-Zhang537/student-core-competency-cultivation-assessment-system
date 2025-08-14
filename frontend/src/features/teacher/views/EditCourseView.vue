@@ -3,36 +3,36 @@
     <div class="max-w-4xl mx-auto">
       <!-- Header -->
       <div class="mb-8">
-        <h1 class="text-3xl font-bold">编辑课程</h1>
-        <p class="text-gray-500">更新课程的基本信息</p>
+        <h1 class="text-3xl font-bold">{{ t('teacher.courseEdit.title') }}</h1>
+        <p class="text-gray-500">{{ t('teacher.courseEdit.subtitle') }}</p>
       </div>
 
       <!-- Loading State -->
       <div v-if="courseStore.loading && !courseForm.id" class="text-center py-12 card">
-        <p>正在加载课程数据...</p>
+        <p>{{ t('teacher.courseEdit.loading') }}</p>
       </div>
 
       <!-- Form -->
       <form v-else-if="courseForm.id" @submit.prevent="handleUpdateCourse" class="card p-8 space-y-6">
                 <div>
-          <label for="title" class="label">课程标题 <span class="text-red-500">*</span></label>
+          <label for="title" class="label">{{ t('teacher.courseEdit.form.title') }} <span class="text-red-500">*</span></label>
           <input id="title" v-model="courseForm.title" type="text" class="input" required />
                 </div>
 
                 <div>
-          <label for="description" class="label">课程简介 <span class="text-red-500">*</span></label>
+          <label for="description" class="label">{{ t('teacher.courseEdit.form.description') }} <span class="text-red-500">*</span></label>
           <textarea id="description" v-model="courseForm.description" rows="3" class="input" required></textarea>
                 </div>
 
                 <div>
-          <label for="content" class="label">详细描述</label>
+          <label for="content" class="label">{{ t('teacher.courseEdit.form.content') }}</label>
           <textarea id="content" v-model="courseForm.content" rows="6" class="input"></textarea>
                   </div>
 
                   <div>
-          <label for="category" class="label">课程分类 <span class="text-red-500">*</span></label>
+          <label for="category" class="label">{{ t('teacher.courseEdit.form.category') }} <span class="text-red-500">*</span></label>
           <select id="category" v-model="courseForm.category" class="input" required>
-            <option disabled value="">请选择一个分类</option>
+            <option disabled value="">{{ t('teacher.courseEdit.form.selectCategory') }}</option>
             <option v-for="cat in categories" :key="cat" :value="cat">{{ cat }}</option>
                     </select>
                 </div>
@@ -40,18 +40,18 @@
         <!-- Actions -->
         <div class="flex justify-end gap-4 pt-4">
             <router-link :to="'/teacher/courses/' + courseForm.id" class="btn btn-secondary">
-                取消
+                {{ t('teacher.courseEdit.actions.cancel') }}
             </router-link>
             <button type="submit" class="btn btn-primary" :disabled="courseStore.loading">
-                {{ courseStore.loading ? '保存中...' : '保存更改' }}
+                {{ courseStore.loading ? t('teacher.courseEdit.actions.saving') : t('teacher.courseEdit.actions.save') }}
               </button>
         </div>
       </form>
       
       <!-- Error State -->
       <div v-else class="text-center py-12 card">
-          <h3 class="text-lg font-medium">加载失败</h3>
-          <p class="text-gray-500 mt-2">无法加载课程数据，或课程不存在。</p>
+          <h3 class="text-lg font-medium">{{ t('teacher.courseEdit.error.title') }}</h3>
+          <p class="text-gray-500 mt-2">{{ t('teacher.courseEdit.error.desc') }}</p>
       </div>
     </div>
   </div>
@@ -62,10 +62,12 @@ import { reactive, onMounted, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useCourseStore } from '@/stores/course';
 import type { CourseUpdateRequest } from '@/types/course';
+import { useI18n } from 'vue-i18n'
 
 const route = useRoute();
 const router = useRouter();
 const courseStore = useCourseStore();
+const { t } = useI18n()
 
 const courseForm = reactive<CourseUpdateRequest & { id: string | null }>({
   id: null,
@@ -76,15 +78,16 @@ const courseForm = reactive<CourseUpdateRequest & { id: string | null }>({
 });
 
 // Mock categories
+// reuse t from useI18n to avoid redeclare
 const categories = [
-  '编程开发',
-  '设计创意',
-  '商业管理',
-  '市场营销',
-  '语言学习',
-  '科学技术',
-  '艺术人文',
-  '其他',
+  t('teacher.courseEdit.form.categoryOptions.programming'),
+  t('teacher.courseEdit.form.categoryOptions.design'),
+  t('teacher.courseEdit.form.categoryOptions.business'),
+  t('teacher.courseEdit.form.categoryOptions.marketing'),
+  t('teacher.courseEdit.form.categoryOptions.language'),
+  t('teacher.courseEdit.form.categoryOptions.science'),
+  t('teacher.courseEdit.form.categoryOptions.art'),
+  t('teacher.courseEdit.form.categoryOptions.other'),
 ];
 
 const handleUpdateCourse = async () => {

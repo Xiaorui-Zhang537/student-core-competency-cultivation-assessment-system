@@ -225,6 +225,67 @@ public class UserServiceImpl implements UserService {
         logger.info("验证邮件已重新发送至: {}", user.getEmail());
     }
 
+    @Override
+    public void resendVerificationByEmail(String email, String lang) {
+        logger.info("通过邮箱重发验证邮件: {}", email);
+        User user = userMapper.selectUserByEmail(email);
+        if (user == null) {
+            logger.warn("重发验证邮件的邮箱不存在: {}", email);
+            return;
+        }
+        if (user.isEmailVerified()) {
+            throw new BusinessException(ErrorCode.EMAIL_ALREADY_VERIFIED);
+        }
+        String verifyToken = generateVerifyToken(user.getId());
+        String verifyKey = "email_verify:" + verifyToken;
+        redisTemplate.opsForValue().set(verifyKey, user.getId(), 24, TimeUnit.HOURS);
+        sendVerificationEmail(user.getEmail(), verifyToken);
+        logger.info("验证邮件已发送至: {}", email);
+    }
+
+    @Override
+    public void initiateChangeEmail(Long userId, String newEmail, String lang) {
+        logger.info("发起更换邮箱: userId={}, newEmail={}", userId, newEmail);
+        if (!StringUtils.hasText(newEmail)) {
+            throw new BusinessException(ErrorCode.INVALID_PARAMETER, "新邮箱不能为空");
+        }
+        int exists = userMapper.checkEmailExists(newEmail, userId);
+        if (exists > 0) {
+            throw new BusinessException(ErrorCode.EMAIL_ALREADY_EXISTS);
+        }
+        String token = UUID.randomUUID().toString().replace("-", "") + "_change_" + userId;
+        String key = "email_change:" + token;
+        redisTemplate.opsForValue().set(key, newEmail, 24, TimeUnit.HOURS);
+        sendChangeEmailConfirm(newEmail, token);
+    }
+
+    @Override
+    public void confirmChangeEmail(String token) {
+        logger.info("确认更换邮箱");
+        String key = "email_change:" + token;
+        Object newEmailObj = redisTemplate.opsForValue().get(key);
+        if (newEmailObj == null) {
+            throw new BusinessException(ErrorCode.EMAIL_CHANGE_TOKEN_INVALID);
+        }
+        String newEmail = String.valueOf(newEmailObj);
+        try {
+            String[] parts = token.split("_change_");
+            String left = parts[1];
+            Long userId = Long.parseLong(left);
+            User user = userMapper.selectUserById(userId);
+            if (user == null) {
+                throw new BusinessException(ErrorCode.USER_NOT_FOUND);
+            }
+            user.setEmail(newEmail);
+            user.setEmailVerified(true);
+            user.setUpdatedAt(new java.util.Date());
+            userMapper.updateUser(user);
+            redisTemplate.delete(key);
+        } catch (Exception e) {
+            throw new BusinessException(ErrorCode.EMAIL_CHANGE_TOKEN_INVALID);
+        }
+    }
+
     private String generateResetToken(Long userId) {
         return UUID.randomUUID().toString().replace("-", "") + "_" + userId;
     }
@@ -234,18 +295,32 @@ public class UserServiceImpl implements UserService {
     }
 
     private void sendPasswordResetEmail(String email, String resetToken) {
-        // TODO: 考虑将邮件模板外部化
         String resetUrl = applicationBaseUrl + "/reset-password?token=" + resetToken;
-        String subject = "【学生非核心能力发展评估系统】重置密码";
-        String content = String.format("请点击此链接重置您的密码（15分钟内有效）: <a href=\"%s\">重置密码</a>", resetUrl);
-        emailService.sendSimpleMessage(email, subject, content);
+        java.util.Map<String, Object> vars = new java.util.HashMap<>();
+        vars.put("appName", "学生核心能力培养系统");
+        vars.put("actionUrl", resetUrl);
+        vars.put("expireHours", 0.25);
+        vars.put("year", java.time.Year.now().getValue());
+        emailService.sendTemplate(email, "【学生核心能力培养系统】重置密码", "password_reset_zh", vars, "zh-CN");
     }
 
     private void sendVerificationEmail(String email, String verifyToken) {
-        // TODO: 考虑将邮件模板外部化
         String verifyUrl = applicationBaseUrl + "/verify-email?token=" + verifyToken;
-        String subject = "【学生非核心能力发展评估系统】邮箱验证";
-        String content = String.format("请点击此链接验证您的邮箱（24小时内有效）: <a href=\"%s\">验证邮箱</a>", verifyUrl);
-        emailService.sendSimpleMessage(email, subject, content);
+        java.util.Map<String, Object> vars = new java.util.HashMap<>();
+        vars.put("appName", "学生核心能力培养系统");
+        vars.put("actionUrl", verifyUrl);
+        vars.put("expireHours", 24);
+        vars.put("year", java.time.Year.now().getValue());
+        emailService.sendTemplate(email, "【学生核心能力培养系统】邮箱验证", "verify_email_zh", vars, "zh-CN");
+    }
+
+    private void sendChangeEmailConfirm(String email, String token) {
+        String confirmUrl = applicationBaseUrl + "/email-change/confirm?token=" + token;
+        java.util.Map<String, Object> vars = new java.util.HashMap<>();
+        vars.put("appName", "学生核心能力培养系统");
+        vars.put("actionUrl", confirmUrl);
+        vars.put("expireHours", 24);
+        vars.put("year", java.time.Year.now().getValue());
+        emailService.sendTemplate(email, "【学生核心能力培养系统】确认更换邮箱", "change_email_zh", vars, "zh-CN");
     }
 } 

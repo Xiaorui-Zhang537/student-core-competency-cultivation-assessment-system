@@ -1,0 +1,21 @@
+{
+	"layout": {
+		"teacher": {
+			"title": "学生核心能力培养评估系统",
+			"role": "教师",
+			"sidebar": {
+				"dashboard": "工作台",
+				"courses": "课程管理",
+				"analytics": "数据分析",
+				"ai": "AI 助理",
+				"community": "学习社区"
+			},
+			"user": {
+				"profile": "个人资料",
+				"logout": "退出登录"
+			}
+		}
+	}
+}
+
+

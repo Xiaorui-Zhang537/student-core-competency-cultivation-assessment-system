@@ -13,6 +13,19 @@ spring:
   
   application:
     name: student-assessment-system
+  mail:
+    host: ${MAIL_HOST:smtp.qq.com}
+    port: ${MAIL_PORT:465}
+    username: ${MAIL_USERNAME}
+    password: ${MAIL_PASSWORD}
+    properties:
+      mail:
+        smtp:
+          auth: true
+          ssl:
+            enable: true
+    from-address: ${MAIL_FROM_ADDRESS}
+    from-name: ${MAIL_FROM_NAME:Student Core Competence System}
   
   # 生产环境数据源配置
   datasource:
@@ -87,6 +100,11 @@ jwt:
   secret: ${JWT_SECRET}
   expiration: ${JWT_EXPIRATION:86400000}
   refresh-expiration: ${JWT_REFRESH_EXPIRATION:604800000}
+
+application:
+  base-url: ${APP_BASE_URL:https://example.com}
+  email:
+    default-language: ${EMAIL_DEFAULT_LANGUAGE:zh-CN}
 
 # 生产环境文件上传配置
 file:

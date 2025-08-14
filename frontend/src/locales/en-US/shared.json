@@ -1,0 +1,155 @@
+{
+  "shared": {
+    "upload": {
+      "uploading": "Uploading...",
+      "dragTip": "Drag files here or click to upload",
+      "acceptHint": "Supported: {accept}",
+      "maxSize": "Max file size: {size}",
+      "select": "Select Files",
+      "progress": "Progress",
+      "selectedCount": "Selected ({count})",
+      "removeWithName": "Remove {name}",
+      "imagePreview": "Image Preview",
+      "sizeExceeded": "File exceeds max size ({size})",
+      "unsupportedType": "Unsupported file type: {type}",
+      "maxFilesExceeded": "At most {count} files",
+      "duplicate": "File \"{name}\" already exists"
+    },
+    "profile": {
+      "title": "Profile",
+      "subtitle": "Manage your personal information and account settings",
+      "section": {
+        "profileInfo": "Profile Info",
+        "accountSecurity": "Account Security",
+        "editProfile": "Edit Profile",
+        "changePassword": "Change Password"
+      },
+      "fields": {
+        "username": "Username",
+        "email": "Email",
+        "role": "Role",
+        "nickname": "Nickname",
+        "gender": "Gender",
+        "firstName": "First Name",
+        "lastName": "Last Name",
+        "school": "School",
+        "subject": "Subject",
+        "studentNo": "Student No.",
+        "teacherNo": "Teacher No.",
+        "bio": "Bio",
+        "birthday": "Birthday",
+        "phone": "Phone",
+        "country": "Country",
+        "province": "Province/State",
+        "city": "City",
+        "avatar": "Avatar"
+      },
+      "status": {
+        "notSet": "Not set",
+        "verified": "Verified",
+        "notVerified": "Not verified"
+      },
+      "actions": {
+        "edit": "Edit",
+        "save": "Save Changes",
+        "cancel": "Cancel",
+        "sendVerification": "Send Verification Email",
+        "changePassword": "Change Password"
+      },
+      "messages": {
+        "loadUser": "Loading user info...",
+        "updateSuccess": "Profile updated",
+        "updateFail": "Update failed",
+        "passwordMismatch": "New password and confirmation do not match.",
+        "passwordChanged": "Password changed successfully",
+        "emailSent": "Verification email sent. Please check your inbox.",
+        "uploadFail": "Avatar upload failed",
+        "uploadFailedTitle": "Upload Failed"
+      }
+    },
+    "community": {
+      "title": "Community",
+      "subtitle": "Share knowledge and connect with peers",
+      "createPost": "New Post",
+      "stats": {
+        "posts": "Posts",
+        "users": "Members",
+        "comments": "Comments",
+        "activeToday": "Active Today"
+      },
+      "categories": {
+        "title": "Categories",
+        "all": "All Posts",
+        "study": "Study",
+        "help": "Homework Help",
+        "share": "Experience",
+        "qa": "Q&A",
+        "chat": "Chit-Chat"
+      },
+      "hotTopics": "Hot Topics",
+      "activeUsers": "Active Users",
+      "list": {
+        "searchPlaceholder": "Search posts...",
+        "edit": "Edit",
+        "delete": "Delete",
+        "anonymous": "Anonymous",
+        "justNow": "just now",
+        "minutesAgo": "{count} minutes ago",
+        "hoursAgo": "{count} hours ago",
+        "daysAgo": "{count} days ago",
+        "emptyTitle": "No posts yet",
+        "emptyDescKeyword": "No matching posts found",
+        "emptyDescCategory": "No posts in this category",
+        "publishFirst": "Publish the first post",
+        "total": "Total {count}",
+        "prev": "Previous",
+        "next": "Next"
+      },
+      "modal": {
+        "createTitle": "Create Post",
+        "editTitle": "Edit Post",
+        "title": "Title",
+        "category": "Category",
+        "tags": "Tags",
+        "tagSearch": "Search tags...",
+        "content": "Content",
+        "contentPlaceholder": "Share your thoughts...",
+        "images": "Images (optional)",
+        "cancel": "Cancel",
+        "publish": "Publish",
+        "save": "Save"
+      },
+      "confirm": {
+        "deletePost": "Delete this post?"
+      },
+      "detail": {
+        "back": "Back to Community",
+        "postedAt": "Posted {datetime}",
+        "download": "Download",
+        "like": "{count} Likes",
+        "askAi": "Ask AI",
+        "edit": "Edit Post",
+        "delete": "Delete Post",
+        "comments": "{count} Comments",
+        "writeComment": "Write your comment...",
+        "postComment": "Post Comment",
+        "order": "Order:",
+        "orderTime": "By Time",
+        "orderHot": "By Hot",
+        "more": "Load more",
+        "page": "Page {page}",
+        "total": "Total {count}",
+        "notFound": "Post not found.",
+        "loading": "Loading..."
+      }
+    },
+    "emojiPicker": {
+      "button": "Emoji"
+    },
+    "file": {
+      "unknownSize": "Unknown"
+    }
+  }
+}
+
+

@@ -90,19 +90,24 @@ public class UserController extends BaseController {
         return ResponseEntity.ok(ApiResponse.success(null));
     }
 
-    @PostMapping("/verify-email")
-    @Operation(summary = "验证邮箱", description = "使用验证令牌验证邮箱")
-    public ResponseEntity<ApiResponse<Void>> verifyEmail(
-            @Parameter(description = "验证令牌", required = true)
-            @RequestParam @NotBlank(message = "验证令牌不能为空") String token) {
-        userService.verifyEmail(token);
+    // 邮箱验证与重发移动至 AuthController，以下新增邮箱更换相关接口
+
+    @PostMapping("/me/email/change-initiate")
+    @Operation(summary = "发起更换邮箱", description = "向新邮箱发送确认链接，确认后才生效")
+    public ResponseEntity<ApiResponse<Void>> changeEmailInitiate(
+            @Parameter(description = "新邮箱", required = true)
+            @RequestParam @Email(message = "邮箱格式不正确") @NotBlank(message = "新邮箱不能为空") String newEmail,
+            @RequestParam(required = false, defaultValue = "zh-CN") String lang) {
+        userService.initiateChangeEmail(getCurrentUserId(), newEmail, lang);
         return ResponseEntity.ok(ApiResponse.success(null));
     }
 
-    @PostMapping("/resend-verification")
-    @Operation(summary = "重新发送验证邮件", description = "重新发送邮箱验证邮件")
-    public ResponseEntity<ApiResponse<Void>> resendVerification() {
-        userService.resendVerification(getCurrentUserId());
+    @PostMapping("/email/change/confirm")
+    @Operation(summary = "确认更换邮箱", description = "使用令牌确认更换邮箱")
+    public ResponseEntity<ApiResponse<Void>> changeEmailConfirm(
+            @Parameter(description = "确认令牌", required = true)
+            @RequestParam @NotBlank(message = "确认令牌不能为空") String token) {
+        userService.confirmChangeEmail(token);
         return ResponseEntity.ok(ApiResponse.success(null));
     }
 

@@ -38,4 +38,15 @@ export const assignmentApi = {
   closeAssignment: (id: string): Promise<ApiResponse<void>> => {
     return api.post(`/assignments/${id}/close`);
   },
+
+  // Submission stats for a specific assignment
+  getAssignmentSubmissionStats: (id: string): Promise<ApiResponse<{ assignmentId: string; courseId: string; totalEnrolled: number; submittedCount: number; unsubmittedCount: number }>> => {
+    return api.get(`/assignments/${id}/submission-stats`);
+  },
+
+  // Remind unsubmitted students
+  remindUnsubmitted: (id: string, message?: string): Promise<ApiResponse<{ sent: number; failed: number }>> => {
+    const payload = message ? { message } : undefined as any
+    return api.post(`/assignments/${id}/remind-unsubmitted`, payload);
+  },
 };

@@ -3,8 +3,8 @@
     <div class="max-w-5xl mx-auto">
       <div class="mb-6 flex items-center justify-between">
         <div>
-          <h1 class="text-3xl font-bold text-gray-900 dark:text-white">AI 助理</h1>
-          <p class="text-gray-600 dark:text-gray-400">与智能体对话，获取教学建议与分析洞察</p>
+          <h1 class="text-3xl font-bold text-gray-900 dark:text-white">{{ t('teacher.ai.title') }}</h1>
+          <p class="text-gray-600 dark:text-gray-400">{{ t('teacher.ai.subtitle') }}</p>
         </div>
       </div>
 
@@ -18,51 +18,51 @@
                 <p class="whitespace-pre-wrap">{{ m.content }}</p>
               </div>
             </div>
-            <div v-if="loading" class="text-center text-sm text-gray-500">AI 正在思考...</div>
+            <div v-if="loading" class="text-center text-sm text-gray-500">{{ t('teacher.ai.thinking') }}</div>
           </div>
           <div class="border-t border-gray-200 dark:border-gray-700 p-3 bg-gray-50 dark:bg-gray-900 flex items-end gap-2">
-            <textarea v-model="input" @keydown.enter.prevent="send" rows="1" placeholder="输入你的问题，按 Enter 发送"
+            <textarea v-model="input" @keydown.enter.prevent="send" rows="1" :placeholder="t('teacher.ai.placeholder')"
                       class="flex-1 input resize-none" />
-            <button class="btn btn-primary" :disabled="!input.trim() || loading" @click="send">发送</button>
+            <button class="btn btn-primary" :disabled="!input.trim() || loading" @click="send">{{ t('teacher.ai.send') }}</button>
           </div>
         </div>
 
         <!-- Context Panel -->
         <div class="space-y-4">
           <div class="card p-4">
-            <h3 class="font-semibold mb-2">上下文</h3>
-            <p class="text-sm text-gray-600 dark:text-gray-400">可选：选择课程与学生为 AI 提供上下文，获得更相关的建议。</p>
+            <h3 class="font-semibold mb-2">{{ t('teacher.ai.context.title') }}</h3>
+            <p class="text-sm text-gray-600 dark:text-gray-400">{{ t('teacher.ai.context.desc') }}</p>
             <select v-model="selectedCourseId" class="input mt-3">
-              <option :value="null">不指定课程</option>
+              <option :value="null">{{ t('teacher.ai.context.noCourse') }}</option>
               <option v-for="c in teacherCourses" :key="c.id" :value="String(c.id)">{{ c.title }}</option>
             </select>
             <div v-if="selectedCourseId" class="mt-3 space-y-2">
-              <label class="text-xs text-gray-500">选择学生（最多5名）</label>
+              <label class="text-xs text-gray-500">{{ t('teacher.ai.context.selectStudents') }}</label>
               <div class="flex gap-2">
                 <select v-model.number="studentToAdd" class="input flex-1">
-                  <option :value="0">选择学生</option>
+                  <option :value="0">{{ t('teacher.ai.context.selectStudent') }}</option>
                   <option v-for="s in courseStudents" :key="s.id" :value="Number(s.id)">
-                    {{ s.nickname || s.username || ('学生'+s.id) }}
+                    {{ s.nickname || s.username || (t('teacher.students.table.list') + ' #' + s.id) }}
                   </option>
                 </select>
-                <button class="btn btn-primary" :disabled="!studentToAdd || selectedStudentIds.length>=5 || selectedStudentIds.includes(studentToAdd)" @click="addStudent">添加</button>
+                <button class="btn btn-primary" :disabled="!studentToAdd || selectedStudentIds.length>=5 || selectedStudentIds.includes(studentToAdd)" @click="addStudent">{{ t('teacher.ai.context.add') }}</button>
               </div>
               <div v-if="selectedStudentIds.length" class="flex flex-wrap gap-2 mt-2">
                 <span v-for="sid in selectedStudentIds" :key="sid" class="px-2 py-1 rounded-full text-xs bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200">
                   {{ studentLabel(sid) }}
                   <button class="ml-1" @click="removeStudent(sid)">×</button>
                 </span>
-                <button class="btn" @click="clearStudents">清空</button>
+                <button class="btn" @click="clearStudents">{{ t('teacher.ai.context.clear') }}</button>
               </div>
-              <p class="text-xs text-gray-500" v-if="selectedStudentIds.length">上下文已生效：课程 {{ courseTitle }}，学生 {{ selectedStudentIds.length }} 名</p>
+              <p class="text-xs text-gray-500" v-if="selectedStudentIds.length">{{ t('teacher.ai.context.applied', { course: courseTitle, count: selectedStudentIds.length }) }}</p>
             </div>
           </div>
           <div class="card p-4">
-            <h3 class="font-semibold mb-2">模型设置（通过 OpenRouter）</h3>
+            <h3 class="font-semibold mb-2">{{ t('teacher.ai.model.title') }}</h3>
             <div class="space-y-2">
-              <label class="text-xs text-gray-500">模型</label>
+              <label class="text-xs text-gray-500">{{ t('teacher.ai.model.label') }}</label>
               <select v-model="model" class="input">
-                <option value="openai/gpt-4o-mini">OpenAI GPT-4o-mini（via OpenRouter）</option>
+                <option value="openai/gpt-4o-mini">{{ t('teacher.ai.model.default') }}</option>
               </select>
             </div>
           </div>
@@ -85,8 +85,10 @@ type ChatMessage = { role: 'user' | 'assistant'; content: string }
 const courseStore = useCourseStore()
 const authStore = useAuthStore()
 
+import { useI18n } from 'vue-i18n'
+const { t } = useI18n()
 const messages = ref<ChatMessage[]>([
-  { role: 'assistant', content: '你好，我是 AI 助理。你可以向我咨询课程分析、作业设计、学习建议等问题。' }
+  { role: 'assistant', content: t('teacher.ai.greeting') }
 ])
 const input = ref('')
 const loading = ref(false)
@@ -125,7 +127,7 @@ function removeStudent(sid: number) {
 function clearStudents() { selectedStudentIds.value = [] }
 function studentLabel(sid: number) {
   const s = courseStudents.value.find((x:any) => Number(x.id) === Number(sid))
-  return s?.nickname || s?.username || `学生${sid}`
+  return s?.nickname || s?.username || `${t('teacher.students.table.list')} #${sid}`
 }
 
 const teacherCourses = computed(() => {
@@ -146,10 +148,10 @@ const send = async () => {
       studentIds: selectedStudentIds.value.length ? selectedStudentIds.value : undefined,
       model: model.value,
     })
-    const answer = (resp as any)?.answer || '后端尚未接入大模型，现在返回占位响应。'
+    const answer = (resp as any)?.answer || t('teacher.ai.sendFailed')
     messages.value.push({ role: 'assistant', content: String(answer) })
   } catch (e: any) {
-    messages.value.push({ role: 'assistant', content: '发送失败，请稍后重试。' })
+    messages.value.push({ role: 'assistant', content: t('teacher.ai.sendFailed') })
   } finally {
     loading.value = false
   }

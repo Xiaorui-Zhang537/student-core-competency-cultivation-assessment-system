@@ -148,4 +148,15 @@ public interface AssignmentService {
      * @param increment 增量
      */
     void updateSubmissionCount(Long assignmentId, Integer increment);
+
+    /**
+     * 获取指定作业的提交统计（课程总人数、已提交、未提交）
+     */
+    com.noncore.assessment.dto.response.AssignmentSubmissionStatsResponse getSubmissionStats(Long assignmentId, Long currentUserId);
+
+    /**
+     * 向未提交的学生发送提醒
+     * @return 发送结果统计 { sent, failed }
+     */
+    java.util.Map<String, Object> remindUnsubmitted(Long assignmentId, Long currentUserId, String customMessage);
 } 

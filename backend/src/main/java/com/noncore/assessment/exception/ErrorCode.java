@@ -35,12 +35,14 @@ public enum ErrorCode {
     TOKEN_INVALID(1107, "令牌无效或已过期"),
     TOKEN_TYPE_ERROR(1108, "令牌类型错误"),
     USER_NOT_VERIFIED(1109, "邮箱未验证"),
+    EMAIL_NOT_VERIFIED(1109, "邮箱未验证"),
     EMAIL_ALREADY_VERIFIED(1110, "邮箱已验证，无需重复验证"),
     INVALID_TOKEN(1107, "无效的令牌"),
     INVALID_PASSWORD(1106, "密码错误"),
     EMAIL_NOT_REGISTERED(1111, "该邮箱未注册"),
     EMAIL_VERIFIED(1110, "邮箱已验证"),
     EMAIL_SEND_FAILED(1112, "邮件发送失败"),
+    EMAIL_CHANGE_TOKEN_INVALID(1113, "邮箱更换确认令牌无效或已过期"),
     
     // 课程相关 (1200-1299)
     COURSE_NOT_FOUND(1200, "课程不存在"),

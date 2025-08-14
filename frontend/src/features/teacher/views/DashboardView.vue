@@ -3,14 +3,14 @@
     <!-- Header -->
     <div class="mb-8 flex items-center justify-between">
       <div>
-        <h1 class="text-3xl font-bold text-gray-900 dark:text-white">工作台</h1>
-        <p class="text-gray-600 dark:text-gray-400">快捷掌握课程核心指标与近期动态</p>
+        <h1 class="text-3xl font-bold text-gray-900 dark:text-white">{{ t('teacher.dashboard.header.title') }}</h1>
+        <p class="text-gray-600 dark:text-gray-400">{{ t('teacher.dashboard.header.subtitle') }}</p>
       </div>
       <div class="flex items-end gap-4 w-full sm:w-auto">
         <div class="w-full sm:w-64">
-          <label for="course-select" class="block text-xs font-medium mb-1 text-gray-500 dark:text-gray-400">选择课程</label>
+          <label for="course-select" class="block text-xs font-medium mb-1 text-gray-500 dark:text-gray-400">{{ t('teacher.dashboard.course.select.label') }}</label>
           <select id="course-select" v-model="selectedCourseId" @change="onCourseSelect" class="input">
-            <option :value="null" disabled>请选择一门课程</option>
+            <option :value="null" disabled>{{ t('teacher.dashboard.course.select.placeholder') }}</option>
             <option v-for="course in teacherCourses" :key="course.id" :value="String(course.id)">
               {{ course.title }}
             </option>
@@ -18,10 +18,10 @@
         </div>
         <div class="hidden sm:flex items-center gap-2">
           <button class="btn btn-primary inline-flex items-center" @click="goPublishAssignment">
-            <span class="mr-2">＋</span>发布作业
+            <PlusIcon class="w-4 h-4 mr-2" />{{ t('teacher.dashboard.actions.publish') }}
           </button>
           <button class="btn inline-flex items-center bg-indigo-600 hover:bg-indigo-700 text-white" @click="goGradeAssignments">
-            批改作业
+            <CheckBadgeIcon class="w-4 h-4 mr-2" />{{ t('teacher.dashboard.actions.grade') }}
           </button>
         </div>
       </div>
@@ -31,9 +31,9 @@
     
 
     <!-- Loading State -->
-    <div v-if="teacherStore.loading" class="text-center py-12">
-      <p>正在加载分析数据...</p>
-    </div>
+      <div v-if="teacherStore.loading" class="text-center py-12">
+        <p>{{ t('app.loading.title') }}</p>
+      </div>
 
     <!-- Analytics Content -->
     <div v-else-if="selectedCourseId && courseAnalytics" class="space-y-8">
@@ -41,39 +41,39 @@
         <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
           <div class="p-6 rounded-2xl bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-900/20 dark:to-blue-800/20 border border-blue-100 dark:border-blue-800 shadow-sm">
             <div class="flex items-center justify-between mb-2">
-              <span class="text-sm text-blue-700 dark:text-blue-300">总学生数</span>
+              <span class="text-sm text-blue-700 dark:text-blue-300">{{ t('teacher.dashboard.cards.totalStudents') }}</span>
               <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-blue-500" viewBox="0 0 24 24" fill="currentColor"><path d="M12 14c-3.866 0-7 1.79-7 4v2h14v-2c0-2.21-3.134-4-7-4zm0-2a4 4 0 100-8 4 4 0 000 8z"/></svg>
             </div>
-            <div class="text-3xl font-bold text-blue-700 dark:text-blue-300">{{ safeAnalytics.totalStudents }}</div>
+            <div class="text-3xl font-bold text-blue-700 dark:text-blue-300">{{ n(safeAnalytics.totalStudents, 'integer') }}</div>
           </div>
           <div class="p-6 rounded-2xl bg-gradient-to-br from-emerald-50 to-emerald-100 dark:from-emerald-900/20 dark:to-emerald-800/20 border border-emerald-100 dark:border-emerald-800 shadow-sm">
             <div class="flex items-center justify-between mb-2">
-              <span class="text-sm text-emerald-700 dark:text-emerald-300">作业完成率</span>
+              <span class="text-sm text-emerald-700 dark:text-emerald-300">{{ t('teacher.dashboard.cards.completionRate') }}</span>
               <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-emerald-500" viewBox="0 0 24 24" fill="currentColor"><path d="M10 15l-3.5-3.5 1.42-1.42L10 12.17l5.59-5.59L17 8l-7 7z"/></svg>
             </div>
-            <div class="text-3xl font-bold text-emerald-700 dark:text-emerald-300">{{ (safeAnalytics.completionRate || 0).toFixed(1) }}%</div>
+            <div class="text-3xl font-bold text-emerald-700 dark:text-emerald-300">{{ n((safeAnalytics.completionRate || 0) / 100, 'percent') }}</div>
           </div>
           <div class="p-6 rounded-2xl bg-gradient-to-br from-violet-50 to-violet-100 dark:from-violet-900/20 dark:to-violet-800/20 border border-violet-100 dark:border-violet-800 shadow-sm">
             <div class="flex items-center justify-between mb-2">
-              <span class="text-sm text-violet-700 dark:text-violet-300">平均成绩</span>
+              <span class="text-sm text-violet-700 dark:text-violet-300">{{ t('teacher.dashboard.cards.averageScore') }}</span>
               <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-violet-500" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3 7h7l-5.5 4.5L18 21l-6-4-6 4 1.5-7.5L2 9h7z"/></svg>
             </div>
             <div class="text-3xl font-bold text-violet-700 dark:text-violet-300">{{ (safeAnalytics.averageScore || 0).toFixed(1) }}</div>
           </div>
           <div class="p-6 rounded-2xl bg-gradient-to-br from-amber-50 to-amber-100 dark:from-amber-900/20 dark:to-amber-800/20 border border-amber-100 dark:border-amber-800 shadow-sm">
             <div class="flex items-center justify-between mb-2">
-              <span class="text-sm text-amber-700 dark:text-amber-300">作业数量</span>
+              <span class="text-sm text-amber-700 dark:text-amber-300">{{ t('teacher.dashboard.cards.totalAssignments') }}</span>
               <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-amber-500" viewBox="0 0 24 24" fill="currentColor"><path d="M19 3H5a2 2 0 00-2 2v14l4-4h12a2 2 0 002-2V5a2 2 0 00-2-2z"/></svg>
             </div>
-            <div class="text-3xl font-bold text-amber-700 dark:text-amber-300">{{ safeAnalytics.totalAssignments }}</div>
+            <div class="text-3xl font-bold text-amber-700 dark:text-amber-300">{{ n(safeAnalytics.totalAssignments, 'integer') }}</div>
           </div>
         </div>
 
         <!-- Class Performance Chart -->
         <div class="card p-6">
           <div class="flex items-center justify-between mb-4">
-            <h2 class="text-xl font-semibold text-gray-900 dark:text-white">班级成绩分布</h2>
-            <span class="text-xs text-gray-500">按成绩区间统计</span>
+            <h2 class="text-xl font-semibold text-gray-900 dark:text-white">{{ t('teacher.dashboard.chart.title') }}</h2>
+            <span class="text-xs text-gray-500">{{ t('teacher.dashboard.chart.subtitle') }}</span>
           </div>
           <div ref="chartRef" class="h-96 w-full"></div>
         </div>
@@ -82,8 +82,8 @@
      <!-- Empty State -->
     <div v-else class="text-center py-16 card">
       <svg xmlns="http://www.w3.org/2000/svg" class="w-12 h-12 mx-auto text-gray-400 mb-3" viewBox="0 0 24 24" fill="currentColor"><path d="M19 3H5a2 2 0 00-2 2v14l4-4h12a2 2 0 002-2V5a2 2 0 00-2-2z"/></svg>
-      <h3 class="text-lg font-medium text-gray-900 dark:text-white">请选择一门课程</h3>
-      <p class="text-gray-500">选择一门课程后，将显示相关的统计数据与图表</p>
+      <h3 class="text-lg font-medium text-gray-900 dark:text-white">{{ t('teacher.dashboard.empty.title') }}</h3>
+      <p class="text-gray-500">{{ t('teacher.dashboard.empty.description') }}</p>
     </div>
   </div>
 </template>
@@ -96,12 +96,16 @@ import { useTeacherStore } from '@/stores/teacher'
 import { useCourseStore } from '@/stores/course'
 import { useAuthStore } from '@/stores/auth' // 1. 导入 useAuthStore
 import * as echarts from 'echarts'
+import { useI18n } from 'vue-i18n'
+import { loadLocaleMessages } from '@/i18n'
+import { PlusIcon, CheckBadgeIcon } from '@heroicons/vue/24/outline'
 
 const uiStore = useUIStore()
 const router = useRouter()
 const teacherStore = useTeacherStore()
 const courseStore = useCourseStore()
 const authStore = useAuthStore() // 2. 获取 authStore 实例
+const { t, n, locale } = useI18n()
 
 const selectedCourseId = ref<string | null>(null)
 const chartRef = ref<HTMLElement | null>(null)
@@ -152,9 +156,9 @@ const initChart = () => {
   chart = echarts.init(chartRef.value)
   chart.setOption({
     tooltip: { trigger: 'item' },
-    xAxis: { type: 'category', data: dist.map(d => d.gradeLevel ?? d.level ?? '未知') },
+    xAxis: { type: 'category', data: dist.map(d => d.gradeLevel ?? d.level ?? t('teacher.dashboard.chart.level.unknown')) },
     yAxis: { type: 'value' },
-    series: [{ name: '学生人数', type: 'bar', data: dist.map(d => d.count ?? 0) }]
+    series: [{ name: t('teacher.dashboard.chart.series.students'), type: 'bar', data: dist.map(d => d.count ?? 0) }]
   })
 }
 
@@ -171,6 +175,8 @@ onMounted(async () => {
     selectedCourseId.value = String(teacherCourses.value[0].id)
     onCourseSelect()
   }
+  // 预加载教师端命名空间
+  await loadLocaleMessages(locale.value as 'zh-CN' | 'en-US', ['teacher'])
   window.addEventListener('resize', () => chart?.resize())
 })
 

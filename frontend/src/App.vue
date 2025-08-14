@@ -9,8 +9,8 @@
         <div class="inline-flex items-center justify-center w-16 h-16 bg-primary-100 dark:bg-primary-900/30 rounded-2xl mb-4">
           <div class="w-8 h-8 border-3 border-primary-600 border-t-transparent rounded-full animate-spin"></div>
         </div>
-        <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-1">{{ loadingText }}</h3>
-        <p class="text-sm text-gray-600 dark:text-gray-400">请稍候...</p>
+        <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-1">{{ t('app.loading.title') }}</h3>
+        <p class="text-sm text-gray-600 dark:text-gray-400">{{ t('app.loading.subtitle') }}</p>
       </div>
     </div>
 
@@ -98,23 +98,23 @@
       <div class="bg-white dark:bg-gray-800 rounded-lg max-w-md w-full p-6">
         <div class="flex items-center mb-4">
           <x-circle-icon class="w-8 h-8 text-red-500 mr-3" />
-          <h3 class="text-lg font-semibold text-gray-900 dark:text-white">应用程序错误</h3>
+          <h3 class="text-lg font-semibold text-gray-900 dark:text-white">{{ t('app.error.title') }}</h3>
         </div>
         <p class="text-gray-600 dark:text-gray-400 mb-6">
-          应用程序遇到了一个意外错误。我们已经记录了这个问题，请稍后重试。
+          {{ t('app.error.description') }}
         </p>
         <div class="flex space-x-3">
           <button
             @click="reloadPage"
             class="flex-1 bg-primary-600 text-white px-4 py-2 rounded-lg hover:bg-primary-700 transition-colors"
           >
-            刷新页面
+            {{ t('app.error.button.reload') }}
           </button>
           <button
             @click="showErrorModal = false"
             class="flex-1 bg-gray-200 dark:bg-gray-600 text-gray-900 dark:text-white px-4 py-2 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-500 transition-colors"
           >
-            关闭
+            {{ t('app.error.button.close') }}
           </button>
         </div>
       </div>
@@ -128,8 +128,8 @@
       <div class="flex items-center">
         <wifi-icon class="w-5 h-5 text-orange-500 mr-3" />
         <div class="flex-1">
-          <p class="text-sm font-medium text-orange-800 dark:text-orange-200">网络连接断开</p>
-          <p class="text-xs text-orange-600 dark:text-orange-300">请检查您的网络连接</p>
+          <p class="text-sm font-medium text-orange-800 dark:text-orange-200">{{ t('app.network.offline.title') }}</p>
+          <p class="text-xs text-orange-600 dark:text-orange-300">{{ t('app.network.offline.description') }}</p>
         </div>
       </div>
     </div>
@@ -139,7 +139,7 @@
       v-if="isDevelopment"
       class="fixed bottom-4 left-4 bg-blue-100 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-800 rounded-lg px-3 py-1 z-30"
     >
-      <p class="text-xs font-medium text-blue-800 dark:text-blue-200">开发模式</p>
+      <p class="text-xs font-medium text-blue-800 dark:text-blue-200">{{ t('app.devMode') }}</p>
     </div>
   </div>
 </template>
@@ -150,6 +150,7 @@ import { useRouter } from 'vue-router'
 import { useUIStore } from '@/stores/ui'
 import { useAuthStore } from '@/stores/auth'
 import { storeToRefs } from 'pinia'
+import { useI18n } from 'vue-i18n'
 import {
   CheckCircleIcon,
   ExclamationTriangleIcon,
@@ -168,10 +169,11 @@ const { notifications } = storeToRefs(uiStore)
 // 响应式状态
 const globalLoading = ref(false)
 const routeLoading = ref(false)
-const loadingText = ref('加载中')
+const loadingText = ref('')
 const showErrorModal = ref(false)
 const isOnline = ref(navigator.onLine)
 const isDevelopment = ref(import.meta.env.DEV)
+const { t } = useI18n()
 
 // 路由加载处理
 const onBeforeEnter = () => {
@@ -190,8 +192,8 @@ const handleGlobalError = (error: Error, info?: string) => {
   
   uiStore.showNotification({
     type: 'error',
-    title: '发生错误',
-    message: error.message || '未知错误',
+    title: t('app.notifications.error.title'),
+    message: error.message || t('app.notifications.error.unknown'),
     timeout: 0 // 不自动消失
   })
 
@@ -210,8 +212,8 @@ const handleOnline = () => {
   isOnline.value = true
   uiStore.showNotification({
     type: 'success',
-    title: '网络已连接',
-    message: '网络连接已恢复',
+    title: t('app.network.online.title'),
+    message: t('app.network.online.description'),
     timeout: 3000
   })
 }

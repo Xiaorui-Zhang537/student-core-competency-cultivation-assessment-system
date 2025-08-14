@@ -1,6 +1,6 @@
 <template>
   <div class="min-h-screen relative">
-    <AnimatedBackground class="fixed inset-0 z-0 pointer-events-none" :particle-count="80" :connect-distance="120" :max-speed="0.4" :opacity="0.5" />
+    <animated-background class="fixed inset-0 z-0 pointer-events-none" :particle-count="80" :connect-distance="120" :max-speed="0.4" :opacity="0.5" />
     <!-- 顶部导航栏 -->
     <nav class="bg-white/90 dark:bg-gray-800/80 backdrop-blur-md border-b border-gray-200 dark:border-gray-600 shadow-sm sticky top-0 z-20">
       <div class="px-4 sm:px-6 lg:px-12">
@@ -15,7 +15,7 @@
             </button>
             <div class="flex-shrink-0 flex items-center">
               <h1 class="text-xl font-bold text-gray-900 dark:text-white">
-                学生核心能力培养评估系统
+                {{ t('layout.teacher.title') }}
               </h1>
             </div>
           </div>
@@ -34,6 +34,8 @@
               <moon-icon v-else class="h-6 w-6" />
             </button>
 
+            <language-switcher />
+
             <!-- 用户菜单 -->
             <div class="relative">
               <button
@@ -41,15 +43,15 @@
                 class="flex items-center text-sm rounded-full focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500"
               >
                 <div class="flex items-center space-x-2">
-                  <UserAvatar :avatar="(authStore.user as any)?.avatar" :size="28">
+                  <user-avatar :avatar="(authStore.user as any)?.avatar" :size="28">
                     <span class="text-white font-medium text-sm">{{ (authStore.user?.username || 'T').charAt(0).toUpperCase() }}</span>
-                  </UserAvatar>
+                  </user-avatar>
                   <div class="hidden md:block text-left">
                     <p class="text-sm font-medium text-gray-900 dark:text-white">
-                      {{ (authStore.user as any)?.nickname || authStore.user?.username || '教师' }}
+                      {{ (authStore.user as any)?.nickname || authStore.user?.username || t('layout.teacher.role') }}
                     </p>
                     <p class="text-xs text-gray-500 dark:text-gray-400">
-                      教师
+                      {{ t('layout.teacher.role') }}
                     </p>
                   </div>
                   <chevron-down-icon class="h-4 w-4 text-gray-400" />
@@ -70,7 +72,7 @@
                   >
                     <div class="flex items-center space-x-2">
                       <user-icon class="h-4 w-4" />
-                      <span>个人资料</span>
+                      <span>{{ t('layout.teacher.user.profile') }}</span>
                     </div>
                   </router-link>
                   <div class="border-t border-gray-100 dark:border-gray-600"></div>
@@ -80,7 +82,7 @@
                   >
                     <div class="flex items-center space-x-2">
                       <arrow-right-on-rectangle-icon class="h-4 w-4" />
-                      <span>退出登录</span>
+                      <span>{{ t('layout.teacher.user.logout') }}</span>
                     </div>
                   </button>
                 </div>
@@ -109,7 +111,7 @@
               class="group flex items-center px-2 py-2 text-sm font-medium rounded-md text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-white border-l-4 border-transparent"
             >
               <home-icon class="mr-3 h-5 w-5" />
-              工作台
+              {{ t('layout.teacher.sidebar.dashboard') }}
             </router-link>
             
             <router-link
@@ -118,7 +120,7 @@
               class="group flex items-center px-2 py-2 text-sm font-medium rounded-md text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-white border-l-4 border-transparent"
             >
               <academic-cap-icon class="mr-3 h-5 w-5" />
-              课程管理
+              {{ t('layout.teacher.sidebar.courses') }}
             </router-link>
             
             <router-link
@@ -127,7 +129,7 @@
               class="group flex items-center px-2 py-2 text-sm font-medium rounded-md text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-white border-l-4 border-transparent"
             >
               <chart-bar-icon class="mr-3 h-5 w-5" />
-              数据分析
+              {{ t('layout.teacher.sidebar.analytics') }}
             </router-link>
             
             <router-link
@@ -136,7 +138,7 @@
               class="group flex items-center px-2 py-2 text-sm font-medium rounded-md text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-white border-l-4 border-transparent"
             >
               <users-icon class="mr-3 h-5 w-5" />
-              AI 助理
+              {{ t('layout.teacher.sidebar.ai') }}
             </router-link>
             
              <router-link
@@ -145,7 +147,7 @@
               class="group flex items-center px-2 py-2 text-sm font-medium rounded-md text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-white border-l-4 border-transparent"
             >
               <chat-bubble-left-right-icon class="mr-3 h-5 w-5" />
-              学习社区
+              {{ t('layout.teacher.sidebar.community') }}
             </router-link>
             
           </nav>
@@ -176,6 +178,8 @@ import { useUIStore } from '@/stores/ui'
 import { useAuthStore } from '@/stores/auth'
 import AnimatedBackground from '@/components/ui/AnimatedBackground.vue'
 import UserAvatar from '@/components/ui/UserAvatar.vue'
+import LanguageSwitcher from '@/components/ui/LanguageSwitcher.vue'
+import { useI18n } from 'vue-i18n'
 import {
   Bars3Icon,
   SunIcon,
@@ -194,6 +198,7 @@ import {
 const router = useRouter()
 const uiStore = useUIStore()
 const authStore = useAuthStore()
+const { t } = useI18n()
 
 // 状态
 const showUserMenu = ref(false)

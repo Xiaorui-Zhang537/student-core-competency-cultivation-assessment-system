@@ -9,7 +9,7 @@ import java.util.Map;
 
 public interface AnalyticsQueryService {
 
-    StudentProgressReportResponse getStudentProgressReport(Long teacherId, Long studentId, Long courseId);
+    // Removed legacy single-student progress report method
 
     CourseAnalyticsResponse getCourseAnalytics(Long teacherId, Long courseId, String timeRange);
 
@@ -17,9 +17,7 @@ public interface AnalyticsQueryService {
 
     ClassPerformanceResponse getClassPerformance(Long teacherId, Long courseId, String timeRange);
 
-    Map<String, Object> getTeachingAnalytics(Long teacherId, String timeRange);
-    
-    Map<String, Object> generateTeachingReport(Long teacherId, Long courseId, String reportType, String timeRange);
+    // Removed unused analytics placeholders to simplify API surface
 
     CourseStudentPerformanceResponse getCourseStudentPerformance(Long teacherId, Long courseId, Integer page, Integer size,
                                                                 String search, String sortBy, String activityFilter, String gradeFilter, String progressFilter);

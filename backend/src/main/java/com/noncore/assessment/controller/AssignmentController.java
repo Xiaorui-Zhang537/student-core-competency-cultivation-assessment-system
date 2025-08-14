@@ -1,6 +1,7 @@
 package com.noncore.assessment.controller;
 
 import com.noncore.assessment.entity.Assignment;
+import com.noncore.assessment.dto.response.AssignmentSubmissionStatsResponse;
 import com.noncore.assessment.service.AssignmentService;
 import com.noncore.assessment.service.UserService;
 import com.noncore.assessment.util.ApiResponse;
@@ -199,6 +200,30 @@ public class AssignmentController extends BaseController {
         }
         Map<String, Object> statistics = assignmentService.getAssignmentStatistics(teacherId, courseId);
         return ResponseEntity.ok(ApiResponse.success(statistics));
+    }
+
+    /**
+     * 获取指定作业的提交统计（课程总人数、已提交、未提交）
+     */
+    @GetMapping("/{id}/submission-stats")
+    @PreAuthorize("hasRole('TEACHER') or hasRole('ADMIN')")
+    @Operation(summary = "获取作业提交统计", description = "返回课程活跃选课人数与该作业的提交统计")
+    public ResponseEntity<ApiResponse<AssignmentSubmissionStatsResponse>> getAssignmentSubmissionStats(@PathVariable Long id) {
+        AssignmentSubmissionStatsResponse stats = assignmentService.getSubmissionStats(id, getCurrentUserId());
+        return ResponseEntity.ok(ApiResponse.success(stats));
+    }
+
+    /**
+     * 提醒未提交学生
+     */
+    @PostMapping("/{id}/remind-unsubmitted")
+    @PreAuthorize("hasRole('TEACHER') or hasRole('ADMIN')")
+    @Operation(summary = "提醒未提交学生", description = "向未提交该作业的在读学生发送提醒通知")
+    public ResponseEntity<ApiResponse<Map<String, Object>>> remindUnsubmitted(@PathVariable Long id,
+                                                                              @RequestBody(required = false) Map<String, String> body) {
+        String customMessage = body != null ? body.getOrDefault("message", null) : null;
+        Map<String, Object> res = assignmentService.remindUnsubmitted(id, getCurrentUserId(), customMessage);
+        return ResponseEntity.ok(ApiResponse.success(res));
     }
 
     /**

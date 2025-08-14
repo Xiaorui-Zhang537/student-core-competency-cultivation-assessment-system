@@ -1,0 +1,604 @@
+{
+	"teacher": {
+		"dashboard": {
+			"header": {
+				"title": "Dashboard",
+				"subtitle": "Quick insights into key metrics and recent activities"
+			},
+			"course": {
+				"select": {
+					"label": "Select Course",
+					"placeholder": "Please select a course"
+				}
+			},
+			"actions": {
+				"publish": "Publish Assignment",
+				"grade": "Grade Assignments"
+			},
+			"cards": {
+				"totalStudents": "Total Students",
+				"completionRate": "Completion Rate",
+				"averageScore": "Average Score",
+				"totalAssignments": "Assignments"
+			},
+			"chart": {
+				"title": "Class Score Distribution",
+				"subtitle": "By score ranges",
+				"series": {
+					"students": "Students"
+				},
+				"level": {
+					"unknown": "Unknown"
+				}
+			},
+			"empty": {
+				"title": "Select a course",
+				"description": "Stats and charts will appear after selecting a course"
+			}
+		},
+		"courses": {
+			"breadcrumb": "Course Management",
+			"title": "Course Management",
+			"subtitle": "Manage all your courses",
+			"loading": "Loading courses...",
+			"filters": {
+				"searchPlaceholder": "Search by title/description...",
+				"status": {
+					"all": "All",
+					"draft": "Draft",
+					"published": "Published",
+					"archived": "Archived"
+				},
+				"clear": "Clear Filters"
+			},
+			"status": {
+				"draft": "Draft",
+				"published": "Published",
+				"archived": "Archived",
+				"unknown": "Unknown"
+			},
+			"card": {
+				"coverAlt": "Course cover",
+				"tags": "Tags:",
+				"none": "None"
+			},
+			"actions": {
+				"create": "Create Course",
+				"edit": "Edit",
+				"delete": "Delete",
+				"save": "Save Changes"
+			},
+			"empty": {
+				"title": "No courses yet",
+				"description": "Create your first course to get started!"
+			},
+			"modal": {
+				"editTitle": "Edit Course",
+				"createTitle": "Create Course",
+				"title": "Title",
+				"description": "Description",
+				"content": "Course Content",
+				"category": "Category",
+				"tags": "Tags (comma-separated)",
+				"cover": "Course Cover",
+				"coverPicked": "Cover selected (ID: {id})",
+				"cancel": "Cancel"
+			},
+			"confirm": {
+				"deleteCourse": "Are you sure you want to delete this course? This action cannot be undone."
+			}
+		},
+		"assignments": {
+			"breadcrumb": {
+				"courses": "Course Management",
+				"self": "Assignments"
+			},
+			"title": "Assignments",
+			"subtitle": "Create, view and manage course assignments",
+			"filters": {
+				"byCourse": "Filter by Course",
+				"selectCourse": "Select a course"
+			},
+			"loading": "Loading assignments...",
+			"actions": {
+				"create": "Create Assignment",
+				"viewSubmissions": "View Submissions",
+				"edit": "Edit",
+				"delete": "Delete",
+				"save": "Save Changes"
+			},
+			"list": {
+				"dueDate": "Due Date",
+				"emptyTitle": "No assignments",
+				"emptyDescWithCourse": "No assignments under this course.",
+				"emptyDescNoCourse": "Select a course to view assignments."
+			},
+			"pagination": {
+				"perPagePrefix": "Per page",
+				"perPageSuffix": "items",
+				"prev": "Previous",
+				"next": "Next",
+				"page": "Page {page}"
+			},
+			"modal": {
+				"editTitle": "Edit Assignment",
+				"createTitle": "Create Assignment",
+				"course": "Course",
+				"title": "Title",
+				"description": "Description",
+				"dueDate": "Due Date",
+				"attachments": "Attachments (optional, multiple)",
+				"existing": "Existing Attachments",
+				"size": "Size",
+				"download": "Download",
+				"delete": "Delete",
+				"cancel": "Cancel",
+				"create": "Create"
+			},
+			"confirm": {
+				"deleteAttachment": "Delete this attachment? This cannot be undone.",
+				"deleteAssignment": "Are you sure you want to delete this assignment? This action cannot be undone."
+			},
+			"alerts": {
+				"createCourseFirst": "Please create a course first."
+			},
+			"notify": {
+				"createdTitle": "Assignment created",
+				"createdMsg": "A new assignment has been added.",
+				"updatedTitle": "Assignment updated",
+				"updatedMsg": "Assignment changes have been saved.",
+				"deletedTitle": "Assignment deleted",
+				"deletedMsg": "The assignment has been removed.",
+				"publishedTitle": "Assignment published",
+				"publishedMsg": "Students can now view and submit this assignment."
+			}
+		},
+		"submissions": {
+			"breadcrumb": {
+				"assignments": "Assignments",
+				"self": "Submissions"
+			},
+			"title": "Submissions",
+			"subtitle": "View and go to grading",
+			"back": "Back to Assignments",
+			"loading": "Loading...",
+			"retry": "Retry",
+			"empty": "No submissions",
+			"submittedAt": "Submitted at: {time}",
+			"late": "Late",
+			"status": {
+				"submitted": "Submitted",
+				"graded": "Graded",
+				"returned": "Returned",
+				"draft": "Draft",
+				"late": "Late"
+			},
+			"actions": {
+				"grade": "Grade",
+				"remindUnsubmitted": "Remind Unsubmitted"
+			},
+			"pagination": {
+				"perPage": "Per page",
+				"items": "items",
+				"prev": "Previous",
+				"next": "Next",
+				"page": "Page {page}"
+			},
+			"errors": {
+				"fetch": "Failed to fetch submissions"
+			}
+			,
+			"stats": {
+				"totalEnrolled": "Total",
+				"submitted": "Submitted",
+				"unsubmitted": "Unsubmitted"
+			},
+			"notify": {
+				"remindSuccess": "Reminders sent",
+				"remindSuccessMsg": "Successfully sent {count} reminders",
+				"remindFailed": "Remind failed",
+				"remindFailedMsg": "Error while sending reminders",
+				"statsLoadFailed": "Stats load failed",
+				"statsLoadFailedMsg": "Unable to load submission stats"
+			}
+		},
+		"grading": {
+			"breadcrumb": {
+				"self": "Grading"
+			},
+			"title": "Grade: {name}",
+			"back": "Back to list",
+			"loading": "Loading assignment details...",
+			"assignment": {
+				"requirements": "Assignment Requirements",
+				"due": "Due:",
+				"totalScore": "Total:",
+				"submitStatus": "Submission:",
+				"late": "Late",
+				"onTime": "On time"
+			},
+			"submission": {
+				"content": "Submitted Content",
+				"answer": "Answer",
+				"attachment": "Attachment",
+				"selfEvaluation": "Self-evaluation"
+			},
+			"ai": {
+				"title": "AI Suggestions",
+				"badge": "AI Analysis",
+				"suggestedScore": "Suggested Score",
+				"accuracy": "Accuracy",
+				"completeness": "Completeness",
+				"clarity": "Clarity",
+				"apply": "Apply",
+				"analysis": "Analysis",
+				"improvements": "Improvements"
+			},
+			"history": {
+				"title": "Grading History",
+				"scoreSuffix": "pts"
+			},
+			"form": {
+				"title": "Grading",
+				"score": "Score",
+				"ofTotal": "/ {total}",
+				"grade": "Grade",
+				"selectGrade": "Select grade",
+				"feedback": "Feedback",
+				"feedbackPlaceholder": "Provide detailed feedback to help improvement...",
+				"strengths": "Strengths",
+				"strengthsPlaceholder": "Highlight student's strengths...",
+				"improvements": "Improvements",
+				"improvementsPlaceholder": "Provide actionable suggestions...",
+				"allowResubmit": "Allow resubmission",
+				"sendNotification": "Notify student",
+				"publishImmediately": "Publish immediately",
+				"submit": "Submit Grade",
+				"saveDraft": "Save Draft"
+			},
+			"student": {
+				"title": "Student Info",
+				"course": "Course:",
+				"class": "Class:",
+				"avg": "Average:",
+				"rank": "Rank:",
+				"viewProfile": "View student profile"
+			},
+			"quick": {
+				"title": "Quick Actions",
+				"contact": "Contact Student",
+				"viewOthers": "View other submissions",
+				"export": "Export submission",
+				"report": "Report plagiarism"
+			},
+			"notify": {
+				"gradeSuccess": "Graded successfully",
+				"publishSuccess": "Grade published",
+				"aiApplied": "AI suggestions applied",
+				"aiAppliedMsg": "Filled AI suggestions into the form",
+				"filePreview": "File Preview",
+				"downloading": "Download started",
+				"draftSaved": "Draft saved",
+				"draftSavedMsg": "Grading draft saved",
+				"saveFailed": "Save failed",
+				"saveFailedMsg": "An error occurred while saving draft",
+				"formInvalid": "Form validation failed",
+				"formInvalidMsg": "Please check required fields",
+				"submitSuccess": "Submitted successfully",
+				"submitPublished": "Grade published to student",
+				"submitSaved": "Saved. Pending publish",
+				"submitFailed": "Submit failed",
+				"submitFailedMsg": "An error occurred while submitting",
+				"loadFailed": "Load failed",
+				"loadFailedMsg": "Unable to load submission",
+				"remindSuccess": "Reminders sent",
+				"remindSuccessMsg": "Successfully sent {count} reminders",
+				"remindFailed": "Remind failed",
+				"remindFailedMsg": "Error while sending reminders",
+				"statsLoadFailed": "Stats load failed",
+				"statsLoadFailedMsg": "Unable to load submission stats"
+			},
+			"errors": {
+				"scoreTooLow": "Score cannot be less than 0",
+				"scoreTooHigh": "Score cannot exceed {max}",
+				"feedbackRequired": "Feedback is required"
+			},
+			"actions": {
+				"remindUnsubmitted": "Remind Unsubmitted"
+			},
+			"stats": {
+				"totalEnrolled": "Total",
+				"submitted": "Submitted",
+				"unsubmitted": "Unsubmitted"
+			}
+		},
+		"analytics": {
+			"title": "Analytics",
+			"subtitle": "Understand teaching outcomes and student learning",
+			"selectCourse": "Select a course",
+			"askAi": "Ask AI",
+			"exportReport": "Export Report",
+			"cards": {
+				"totalStudents": "Total Students",
+				"averageScore": "Average Score",
+				"completionRate": "Completion Rate",
+				"totalAssignments": "Assignments"
+			},
+            "charts": {
+				"scoreDistribution": "Score Distribution",
+				"radar": "Capability Radar",
+				"setWeights": "Set Weights",
+				"refresh": "Refresh",
+				"exportCsv": "Export CSV",
+				"selectStudent": "Select Student",
+				"noRadar": "No radar data",
+				"unknown": "Unknown",
+				"series": {
+					"distribution": "Score Distribution",
+					"student": "Student",
+					"class": "Class"
+				}
+            },
+            "weights": {
+              "title": "Set capability weights",
+              "cancel": "Cancel",
+              "save": "Save",
+              "dimensions": {
+                "MORAL_COGNITION": "Moral cognition",
+                "LEARNING_ATTITUDE": "Learning attitude",
+                "LEARNING_ABILITY": "Learning ability",
+                "LEARNING_METHOD": "Learning method",
+                "ACADEMIC_GRADE": "Academic performance"
+              }
+            },
+			"tables": {
+				"studentRanking": "Student Ranking",
+				"noRanking": "No ranking data"
+			},
+			"messages": {
+				"chooseCourse": "Please select a course",
+				"chooseCourseMsg": "Select a course to export",
+				"exportFailed": "Export failed",
+				"exportFailedMsg": "Please try again later",
+				"timeRangeError": "Invalid time range",
+				"timeRangeMsg": "Start date cannot be later than end date",
+				"refreshFailed": "Refresh failed",
+				"refreshFailedMsg": "Please try again later",
+				"aiPromptHeader": "Analyze the following course data and provide insights and actionable improvements. Data (JSON):"
+			}
+		},
+		"ai": {
+			"title": "AI Assistant",
+			"subtitle": "Chat with AI for teaching suggestions and insights",
+			"thinking": "AI is thinking...",
+			"placeholder": "Type your question and press Enter",
+			"send": "Send",
+			"context": {
+				"title": "Context",
+				"desc": "Optionally pick a course and students for better suggestions.",
+				"noCourse": "No course",
+				"selectStudents": "Select students (up to 5)",
+				"selectStudent": "Select student",
+				"add": "Add",
+				"clear": "Clear",
+				"applied": "Context applied: course {course}, {count} students"
+			},
+			"model": {
+				"title": "Model Settings (via OpenRouter)",
+				"label": "Model",
+				"default": "OpenAI GPT-4o-mini (via OpenRouter)"
+			},
+			"greeting": "Hello, I'm the AI assistant. Ask me about course analytics, assignment design, and learning recommendations.",
+			"sendFailed": "Send failed. Please try again."
+		},
+		"students": {
+			"breadcrumb": {
+				"courses": "Course Management",
+				"self": "Students"
+			},
+			"title": "Students",
+			"subtitle": "Manage student progress and grades",
+			"actions": {
+				"invite": "Invite Students",
+				"export": "Export Data"
+			},
+			"cards": {
+				"total": "Total Students",
+				"newThisWeek": "+{count} this week",
+				"avgProgress": "Average Progress",
+				"avgGrade": "Average Grade",
+				"passRate": "{rate}% pass rate",
+				"active": "Active Students",
+				"activeThisWeek": "Active this week"
+			},
+			"filters": {
+				"searchPlaceholder": "Search by name or ID...",
+				"progress": {
+					"all": "All progress",
+					"notStarted": "Not started",
+					"inProgress": "In progress",
+					"completed": "Completed"
+				},
+				"grade": {
+					"all": "All grades",
+					"excellent": "Excellent (90+)",
+					"good": "Good (80-89)",
+					"average": "Average (70-79)",
+					"below": "Below (<70)"
+				},
+				"activity": {
+					"all": "All activity",
+					"high": "High",
+					"medium": "Medium",
+					"low": "Low",
+					"inactive": "Inactive"
+				},
+				"sort": {
+					"name": "Sort by name",
+					"progress": "Sort by progress",
+					"grade": "Sort by grade",
+					"lastActive": "Sort by activity",
+					"joinDate": "Sort by join date"
+				}
+			},
+			"batch": {
+				"selectedCount": "Selected {count}",
+				"sendMessage": "Send Message",
+				"export": "Export",
+				"remove": "Remove"
+			},
+			"invite": {
+				"title": "Invite Students",
+				"desc": "Enter IDs separated by comma or newline.",
+				"placeholder": "e.g. 1001,1002,1003 or one per line",
+				"parsed": "Parsed: {count}",
+				"cancel": "Cancel",
+				"confirm": "Confirm",
+				"successTitle": "Invitation sent",
+				"successMsg": "Processed {count} IDs",
+				"failTitle": "Invitation failed",
+				"failMsg": "Submit failed"
+			},
+			"table": {
+				"student": "Student",
+				"progress": "Progress",
+				"grade": "Grade",
+				"activity": "Activity",
+				"lastActive": "Last Active",
+				"actions": "Actions",
+				"level": {
+					"excellent": "Excellent",
+					"good": "Good",
+					"average": "Average",
+					"improve": "Improve",
+					"unknown": "Unknown"
+				},
+				"studyHours": "{hours}h/week",
+				"view": "View",
+				"message": "Message",
+				"viewGrades": "View Grades",
+				"reset": "Reset Progress",
+				"export": "Export",
+				"remove": "Remove",
+				"list": "Students",
+				"total": "Total {count}",
+				"empty": "No data",
+				"prev": "Previous",
+				"next": "Next",
+				"perPagePrefix": "Per page",
+				"perPageSuffix": "items",
+				"confirmRemove": "Remove this student from the course?",
+				"removeSuccess": "Removed",
+				"removeSuccessMsg": "Student removed",
+				"removeFail": "Remove failed",
+				"removeFailMsg": "Error while removing"
+			},
+			"export": {
+				"failTitle": "Export failed",
+				"failMsg": "Error while exporting"
+			},
+			"load": {
+				"failTitle": "Load failed",
+				"failMsg": "Failed to fetch course students"
+			}
+		},
+		"studentDetail": {
+			"breadcrumb": {
+				"overview": "Students Overview"
+			},
+			"title": "Student: {name}",
+			"loading": "Loading grades...",
+			"filter": {
+				"label": "Filter course",
+				"all": "All courses"
+			},
+			"stats": {
+				"graded": "Graded Assignments",
+				"average": "Average Score",
+				"courses": "Related Courses"
+			},
+			"table": {
+				"title": "Grades",
+				"assignment": "Assignment",
+				"course": "Course",
+				"score": "Score",
+				"teacher": "Grader",
+				"date": "Date",
+				"status": "Status",
+				"published": "Published",
+				"unpublished": "Unpublished",
+				"empty": "No grades yet.",
+				"perPage": "Per page",
+				"items": "items",
+				"prev": "Previous",
+				"next": "Next",
+				"page": "Page {page} / {total}"
+			}
+		},
+		"courseDetail": {
+			"loading": "Loading course details...",
+			"breadcrumb": {
+				"courses": "Course Management"
+			},
+			"buttons": {
+				"students": "Students",
+				"assignments": "Assignments",
+				"analytics": "Analytics"
+			},
+			"sections": {
+				"description": "Description",
+				"content": "Content",
+				"materials": "Materials",
+				"videos": "Videos",
+				"searchMaterial": "Search materials...",
+				"searchVideo": "Search videos...",
+				"file": "File #{id}",
+				"size": "Size: {size}",
+				"download": "Download",
+				"delete": "Delete",
+				"noMaterials": "No materials",
+				"noVideos": "No videos",
+				"prev": "Prev",
+				"next": "Next"
+			},
+			"notFound": {
+				"title": "Course not found",
+				"desc": "Failed to load course details."
+			},
+			"confirm": {
+				"deleteFile": "Delete this file? This cannot be undone."
+			}
+		},
+		"courseEdit": {
+			"title": "Edit Course",
+			"subtitle": "Update basic course information",
+			"loading": "Loading course...",
+			"form": {
+				"title": "Title",
+				"description": "Description",
+				"content": "Detailed Description",
+				"category": "Category",
+				"selectCategory": "Select a category",
+				"categoryOptions": {
+					"programming": "Programming",
+					"design": "Design",
+					"business": "Business",
+					"marketing": "Marketing",
+					"language": "Language",
+					"science": "Science & Tech",
+					"art": "Arts & Humanities",
+					"other": "Other"
+				}
+			},
+			"actions": {
+				"cancel": "Cancel",
+				"saving": "Saving...",
+				"save": "Save Changes"
+			},
+			"error": {
+				"title": "Load failed",
+				"desc": "Unable to load course or it does not exist."
+			}
+		}
+	}
+}

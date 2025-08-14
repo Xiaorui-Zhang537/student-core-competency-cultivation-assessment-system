@@ -19,7 +19,11 @@ export interface GradeRequest {
   submissionId: string;
   studentId: string;
   score: number;
-  feedback: string;
+  feedback?: string;
+  assignmentId: string;
+  maxScore: number;
+  status?: 'draft' | 'published';
+  publishImmediately?: boolean;
 }
 
 // For publishing a grade

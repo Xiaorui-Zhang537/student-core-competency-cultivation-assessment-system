@@ -6,6 +6,7 @@ import type { User, LoginRequest, RegisterRequest, AuthResponse } from '@/types/
 import type { UpdateProfileRequest } from '@/types/user';
 import { useUIStore } from './ui';
 import router from '@/router';
+import { i18n } from '@/i18n'
 
 export const useAuthStore = defineStore('auth', () => {
   const uiStore = useUIStore();
@@ -24,9 +25,9 @@ export const useAuthStore = defineStore('auth', () => {
     try {
       return await apiCall();
     } catch (e: any) {
-      const errorMessage = e.message || 'An unknown error occurred';
+      const errorMessage = e.message || (i18n.global.t('app.notifications.error.unknown') as string);
       error.value = errorMessage;
-      uiStore.showNotification({ type: 'error', title: '操作失败', message: errorMessage });
+      uiStore.showNotification({ type: 'error', title: i18n.global.t('app.notifications.error.title') as string, message: errorMessage });
       return null;
     } finally {
       loading.value = false;
@@ -61,8 +62,8 @@ export const useAuthStore = defineStore('auth', () => {
     setAuthData(data);
     uiStore.showNotification({
       type: 'success',
-      title: '登录成功',
-      message: `欢迎回来, ${data.user.username}!`
+      title: i18n.global.t('app.auth.loginSuccess.title') as string,
+      message: i18n.global.t('app.auth.loginSuccess.msg', { name: data.user.username }) as string
     });
     await nextTick();
     await router.push(data.user.role === 'TEACHER' ? '/teacher/dashboard' : '/student/dashboard');
@@ -75,8 +76,8 @@ export const useAuthStore = defineStore('auth', () => {
     setAuthData(data);
     uiStore.showNotification({
       type: 'success',
-      title: '注册成功',
-      message: '欢迎加入我们的平台！'
+      title: i18n.global.t('app.auth.registerSuccess.title') as string,
+      message: i18n.global.t('app.auth.registerSuccess.msg') as string
     });
     await nextTick();
     await router.push(data.user.role === 'TEACHER' ? '/teacher/dashboard' : '/student/dashboard');

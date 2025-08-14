@@ -4,8 +4,11 @@ import com.noncore.assessment.entity.Assignment;
 import com.noncore.assessment.exception.BusinessException;
 import com.noncore.assessment.exception.ErrorCode;
 import com.noncore.assessment.mapper.AssignmentMapper;
+import com.noncore.assessment.mapper.EnrollmentMapper;
 import com.noncore.assessment.mapper.SubmissionMapper;
 import com.noncore.assessment.service.AssignmentService;
+import com.noncore.assessment.service.NotificationService;
+import com.noncore.assessment.dto.response.AssignmentSubmissionStatsResponse;
 import com.noncore.assessment.util.PageResult;
 import com.github.pagehelper.PageHelper;
 import com.github.pagehelper.PageInfo;
@@ -37,10 +40,17 @@ public class AssignmentServiceImpl implements AssignmentService {
 
     private final AssignmentMapper assignmentMapper;
     private final SubmissionMapper submissionMapper;
+    private final EnrollmentMapper enrollmentMapper;
+    private final NotificationService notificationService;
 
-    public AssignmentServiceImpl(AssignmentMapper assignmentMapper, SubmissionMapper submissionMapper) {
+    public AssignmentServiceImpl(AssignmentMapper assignmentMapper,
+                                 SubmissionMapper submissionMapper,
+                                 EnrollmentMapper enrollmentMapper,
+                                 NotificationService notificationService) {
         this.assignmentMapper = assignmentMapper;
         this.submissionMapper = submissionMapper;
+        this.enrollmentMapper = enrollmentMapper;
+        this.notificationService = notificationService;
     }
 
     @Override
@@ -281,6 +291,62 @@ public class AssignmentServiceImpl implements AssignmentService {
         }
 
         logger.info("作业提交计数更新成功: assignmentId={}", assignmentId);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public AssignmentSubmissionStatsResponse getSubmissionStats(Long assignmentId, Long currentUserId) {
+        Assignment assignment = getAssignmentById(assignmentId);
+        // 若需要限制教师只能查看自己作业的统计，可在此校验 assignment.getTeacherId()
+        long totalEnrolled = enrollmentMapper.countActiveByCourse(assignment.getCourseId());
+        long submitted = submissionMapper.countByAssignment(assignmentId);
+        long unsubmitted = Math.max(0L, totalEnrolled - submitted);
+        return AssignmentSubmissionStatsResponse.builder()
+                .assignmentId(assignment.getId())
+                .courseId(assignment.getCourseId())
+                .totalEnrolled((int) totalEnrolled)
+                .submittedCount((int) submitted)
+                .unsubmittedCount((int) unsubmitted)
+                .build();
+    }
+
+    @Override
+    public Map<String, Object> remindUnsubmitted(Long assignmentId, Long currentUserId, String customMessage) {
+        Assignment assignment = getAssignmentById(assignmentId);
+        // 授权：仅教师本人或管理员（控制器层也应加角色校验，这里再做一次）
+        if (assignment.getTeacherId() != null && !assignment.getTeacherId().equals(currentUserId)) {
+            throw new BusinessException(ErrorCode.COURSE_ACCESS_DENIED, "无权提醒非本人作业");
+        }
+        List<Long> activeStudentIds = enrollmentMapper.findActiveStudentIdsByCourse(assignment.getCourseId());
+        // 过滤已提交学生
+        // 简化：逐个判定是否已提交（可优化为批量查询）
+        List<Long> targets = new java.util.ArrayList<>();
+        for (Long sid : activeStudentIds) {
+            long cnt = submissionMapper.countByAssignmentAndStudent(assignmentId, sid);
+            if (cnt == 0) targets.add(sid);
+        }
+        if (targets.isEmpty()) {
+            Map<String, Object> result = new HashMap<>();
+            result.put("sent", 0);
+            result.put("failed", 0);
+            return result;
+        }
+        String title = "作业提醒";
+        String content = customMessage != null && !customMessage.isBlank()
+                ? customMessage
+                : String.format("作业《%s》提醒：请尽快提交。", assignment.getTitle());
+        Map<String, Object> res = notificationService.batchSendNotification(
+                targets,
+                assignment.getTeacherId(),
+                title,
+                content,
+                "assignment_reminder",
+                "assignment",
+                "normal",
+                "assignment",
+                assignmentId
+        );
+        return res;
     }
 
     private void updateAssignmentStatus(Assignment assignment, String newStatus) {

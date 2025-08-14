@@ -180,6 +180,11 @@
         WHERE s.student_id = #{studentId}
     </select>
 
+    <!-- 统计作业提交（排除软删除），如无deleted字段则与 countByAssignmentId 等价 -->
+    <select id="countByAssignment" resultType="long">
+        SELECT COUNT(*) FROM submissions WHERE assignment_id = #{assignmentId}
+    </select>
+
     <!-- 获取提交的成绩详情 -->
     <select id="selectSubmissionGrade" resultType="java.util.Map">
         SELECT

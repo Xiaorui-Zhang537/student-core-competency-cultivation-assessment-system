@@ -68,8 +68,11 @@ public class SecurityConfig {
                                 .accessDeniedHandler(jwtAccessDeniedHandler))
                 .authorizeHttpRequests(authz ->
                         authz
-                            // allow all auth endpoints under /auth
+                            // allow all auth endpoints under /auth (login/register/verify/resend)
                             .requestMatchers("/auth/**")
+                                .permitAll()
+                            // allow public confirm email change endpoint
+                            .requestMatchers("/users/email/change/confirm")
                                 .permitAll()
                             // preserve any additional public URLs from config
                             .requestMatchers(securityProperties.getJwt().getPublicUrls().toArray(new String[0]))

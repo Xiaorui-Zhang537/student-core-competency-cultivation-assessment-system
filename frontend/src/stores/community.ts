@@ -46,14 +46,34 @@ export const useCommunityStore = defineStore('community', () => {
     if (response) {
       const data = response as unknown as PaginatedResponse<any>;
       // 字段兼容映射
-      posts.value = (data.items || []).map((p: any) => ({
-        ...p,
-        viewCount: p.viewCount ?? p.views ?? 0,
-        likeCount: p.likeCount ?? p.likesCount ?? 0,
-        commentCount: p.commentCount ?? p.commentsCount ?? 0,
-        isLiked: p.isLiked ?? p.liked ?? false,
-        author: p.author || (p.authorUsername || p.author_display_name ? { username: p.authorUsername || p.author_username, nickname: p.authorNickname || p.author_nickname, avatar: p.authorAvatar || p.author_avatar } : undefined),
-      })) as Post[];
+      const normalizeAuthor = (obj: any) => {
+        if (!obj) return undefined
+        if (obj.author && (obj.author.avatar || obj.author.username || obj.author.nickname)) {
+          // 内部已有 author 对象，兜底填充 avatar
+          const av = obj.author.avatar || obj.authorAvatar || obj.author_avatar || obj.avatar || obj.avatarUrl || obj.author_avatar_url
+          return { ...obj.author, avatar: av }
+        }
+        if (obj.authorUsername || obj.author_display_name || obj.authorNickname || obj.author_nickname) {
+          return {
+            username: obj.authorUsername || obj.author_username,
+            nickname: obj.authorNickname || obj.author_nickname,
+            avatar: obj.authorAvatar || obj.author_avatar || obj.avatar || obj.avatarUrl || obj.author_avatar_url,
+          }
+        }
+        return undefined
+      }
+
+      posts.value = (data.items || []).map((p: any) => {
+        const author = normalizeAuthor(p)
+        return {
+          ...p,
+          viewCount: p.viewCount ?? p.views ?? 0,
+          likeCount: p.likeCount ?? p.likesCount ?? 0,
+          commentCount: p.commentCount ?? p.commentsCount ?? 0,
+          isLiked: p.isLiked ?? p.liked ?? false,
+          author,
+        } as Post
+      });
       totalPosts.value = data.total;
     }
   };
@@ -66,15 +86,29 @@ export const useCommunityStore = defineStore('community', () => {
     );
     if (response) {
       const r: any = response;
+      const normalizeAuthor = (obj: any) => {
+        if (!obj) return undefined
+        if (obj.author && (obj.author.avatar || obj.author.username || obj.author.nickname)) {
+          const av = obj.author.avatar || obj.authorAvatar || obj.author_avatar || obj.avatar || obj.avatarUrl || obj.author_avatar_url
+          return { ...obj.author, avatar: av }
+        }
+        if (obj.authorUsername || obj.author_display_name || obj.authorNickname || obj.author_nickname) {
+          return {
+            username: obj.authorUsername || obj.author_username,
+            nickname: obj.authorNickname || obj.author_nickname,
+            avatar: obj.authorAvatar || obj.author_avatar || obj.avatar || obj.avatarUrl || obj.author_avatar_url,
+          }
+        }
+        return undefined
+      }
+
       currentPost.value = {
         ...(r as any),
         viewCount: r.viewCount ?? r.views ?? 0,
         likeCount: r.likeCount ?? r.likesCount ?? r.likes ?? 0,
         commentCount: r.commentCount ?? r.commentsCount ?? r.comment_count ?? 0,
         isLiked: r.isLiked ?? r.liked ?? false,
-        author: r.author || (r.authorUsername || r.author_display_name
-          ? { username: r.authorUsername || r.author_username, nickname: r.authorNickname || r.author_nickname, avatar: r.authorAvatar || r.author_avatar }
-          : undefined),
+        author: normalizeAuthor(r),
       } as unknown as Post;
     }
   };

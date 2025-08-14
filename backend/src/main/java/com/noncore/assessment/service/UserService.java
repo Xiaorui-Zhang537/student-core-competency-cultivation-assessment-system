@@ -67,4 +67,25 @@ public interface UserService {
      * @param userId 用户ID
      */
     void resendVerification(Long userId);
+
+    /**
+     * 通过邮箱重发验证邮件（防止枚举攻击，若邮箱不存在也返回成功）
+     * @param email 邮箱
+     * @param lang 语言
+     */
+    void resendVerificationByEmail(String email, String lang);
+
+    /**
+     * 发起更换邮箱流程，向新邮箱发送确认链接
+     * @param userId 用户ID
+     * @param newEmail 新邮箱
+     * @param lang 语言
+     */
+    void initiateChangeEmail(Long userId, String newEmail, String lang);
+
+    /**
+     * 确认更换邮箱
+     * @param token 确认令牌
+     */
+    void confirmChangeEmail(String token);
 } 

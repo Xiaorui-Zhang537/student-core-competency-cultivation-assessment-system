@@ -35,23 +35,25 @@
 import { ref } from 'vue';
 import { useUIStore } from '@/stores/ui';
 import { userApi } from '@/api/user.api';
+import { useI18n } from 'vue-i18n'
 
 const uiStore = useUIStore();
+const { t } = useI18n()
 const email = ref('');
 
 const handleForgotPassword = async () => {
   if (!email.value) {
-    uiStore.showNotification({ type: 'error', title: '错误', message: '请输入您的邮箱地址。' });
+    uiStore.showNotification({ type: 'error', title: t('app.notifications.error.title'), message: t('app.auth.forgot.emailRequired') });
     return;
   }
   
   uiStore.setLoading(true);
   try {
     await userApi.forgotPassword(email.value);
-    uiStore.showNotification({ type: 'success', title: '成功', message: '如果该邮箱已注册，您将收到一封密码重置邮件。' });
+    uiStore.showNotification({ type: 'success', title: t('app.notifications.success.title'), message: t('app.auth.forgot.emailSent') });
   } catch (error: any) {
     // For security reasons, we don't tell the user if the email exists or not.
-    uiStore.showNotification({ type: 'success', title: '成功', message: '如果该邮箱已注册，您将收到一封密码重置邮件。' });
+    uiStore.showNotification({ type: 'success', title: t('app.notifications.success.title'), message: t('app.auth.forgot.emailSent') });
   } finally {
     uiStore.setLoading(false);
   }

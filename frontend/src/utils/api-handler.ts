@@ -1,5 +1,6 @@
 import type { useUIStore } from '@/stores/ui';
 import type { Ref } from 'vue';
+import { i18n } from '@/i18n'
 
 type UIStore = ReturnType<typeof useUIStore>;
 
@@ -16,12 +17,12 @@ export const handleApiCall = async <T>(
   try {
     const response = await apiCall();
     if (options?.successMessage) {
-      uiStore.showNotification({ type: 'success', title: '成功', message: options.successMessage });
+      uiStore.showNotification({ type: 'success', title: i18n.global.t('app.notifications.success.title') as string, message: options.successMessage });
     }
     return response;
   } catch (e: any) {
     const message = e?.response?.data?.message || e.message || errorMessage;
-    uiStore.showNotification({ type: 'error', title: '操作失败', message });
+    uiStore.showNotification({ type: 'error', title: i18n.global.t('app.notifications.error.title') as string, message });
     return null;
   } finally {
     if (loadingRef) loadingRef.value = false;

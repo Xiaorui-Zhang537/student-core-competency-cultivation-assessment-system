@@ -36,6 +36,10 @@ public class GradeController extends BaseController {
     @PreAuthorize("hasRole('TEACHER') or hasRole('ADMIN')")
     @Operation(summary = "创建成绩", description = "教师为学生作业创建成绩记录")
     public ResponseEntity<ApiResponse<Grade>> createGrade(@Valid @RequestBody Grade grade) {
+        // 补充评分人ID
+        if (grade.getGraderId() == null) {
+            grade.setGraderId(getCurrentUserId());
+        }
         Grade createdGrade = gradeService.createGrade(grade);
         return ResponseEntity.ok(ApiResponse.success(createdGrade));
     }

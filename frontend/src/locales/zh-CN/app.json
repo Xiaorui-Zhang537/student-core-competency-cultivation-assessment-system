@@ -1,0 +1,63 @@
+{
+	"app": {
+		"loading": {
+			"title": "加载中",
+			"subtitle": "请稍候..."
+		},
+		"error": {
+			"title": "应用程序错误",
+			"description": "应用程序遇到了一个意外错误。我们已经记录了这个问题，请稍后重试。",
+			"button": {
+				"reload": "刷新页面",
+				"close": "关闭"
+			}
+		},
+		"network": {
+			"offline": {
+				"title": "网络连接断开",
+				"description": "请检查您的网络连接"
+			},
+			"online": {
+				"title": "网络已连接",
+				"description": "网络连接已恢复"
+			}
+		},
+		"devMode": "开发模式",
+		"notifications": {
+			"error": {
+				"title": "发生错误",
+				"unknown": "未知错误"
+			},
+			"success": {
+				"title": "成功"
+			}
+		},
+		"auth": {
+			"loginSuccess": {
+				"title": "登录成功",
+				"msg": "欢迎回来，{name}!"
+			},
+			"registerSuccess": {
+				"title": "注册成功",
+				"msg": "欢迎加入我们的平台！"
+			},
+			"forgot": {
+				"emailRequired": "请输入您的邮箱地址。",
+				"emailSent": "如果该邮箱已注册，您将收到一封密码重置邮件。"
+			},
+			"register": {
+				"passwordMismatch": "两次输入的密码不一致"
+			}
+		},
+		"language": {
+			"zhCN": "中文（简体）",
+			"enUS": "English",
+			"short": {
+				"zh": "中文",
+				"en": "EN"
+			}
+		}
+	}
+}
+
+

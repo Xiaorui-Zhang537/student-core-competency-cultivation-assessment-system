@@ -13,6 +13,8 @@ spring:
   
   application:
     name: student-assessment-system
+    # Default base URL can be overridden per profile
+    base-url: ${APP_BASE_URL:http://localhost:5173}
 
   # 数据源配置
   datasource:
@@ -116,6 +118,13 @@ springdoc:
     tags-sorter: alpha
   packages-to-scan: com.noncore.assessment.controller
   show-actuator: false 
+
+  thymeleaf:
+    prefix: classpath:/templates/
+    suffix: .html
+    mode: HTML
+    encoding: UTF-8
+    cache: false
 
 # AI 集成配置（DeepSeek/OpenAI 兼容）
 ai:

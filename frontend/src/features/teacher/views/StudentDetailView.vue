@@ -4,23 +4,23 @@
       <!-- Header -->
       <div class="mb-8">
         <nav class="text-sm mb-2">
-          <router-link to="/teacher/student-analytics" class="text-gray-500 hover:text-blue-600">学生进度概览</router-link>
+          <router-link to="/teacher/student-analytics" class="text-gray-500 hover:text-blue-600">{{ t('teacher.studentDetail.breadcrumb.overview') }}</router-link>
           <span class="mx-2">/</span>
           <span class="font-medium">{{ studentName }}</span>
             </nav>
-        <h1 class="text-3xl font-bold">学生详情: {{ studentName }}</h1>
+        <h1 class="text-3xl font-bold">{{ t('teacher.studentDetail.title', { name: studentName }) }}</h1>
       </div>
 
       <div v-if="gradeStore.loading" class="text-center card p-8">
-          <p>正在加载学生成绩数据...</p>
+          <p>{{ t('teacher.studentDetail.loading') }}</p>
             </div>
       
       <div v-else class="space-y-8">
           <!-- Course Filter -->
           <div class="card p-4 flex items-center space-x-3">
-            <label class="text-sm text-gray-600">筛选课程</label>
+            <label class="text-sm text-gray-600">{{ t('teacher.studentDetail.filter.label') }}</label>
             <select class="input input-sm w-72" v-model="selectedCourseId" @change="onCourseChange">
-              <option :value="''">全部课程</option>
+              <option :value="''">{{ t('teacher.studentDetail.filter.all') }}</option>
               <option v-for="c in teacherCourses" :key="c.id" :value="String(c.id)">{{ c.title }}</option>
             </select>
           </div>
@@ -28,32 +28,32 @@
           <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
               <div class="card p-4 text-center">
                   <h3 class="text-2xl font-bold">{{ gradedAssignmentsCount }}</h3>
-                  <p class="text-sm text-gray-500">已评分作业</p>
+                  <p class="text-sm text-gray-500">{{ t('teacher.studentDetail.stats.graded') }}</p>
               </div>
               <div class="card p-4 text-center">
                   <h3 class="text-2xl font-bold">{{ averageScore.toFixed(1) }}</h3>
-                  <p class="text-sm text-gray-500">平均分</p>
+                  <p class="text-sm text-gray-500">{{ t('teacher.studentDetail.stats.average') }}</p>
               </div>
               <div class="card p-4 text-center">
                   <h3 class="text-2xl font-bold">{{ involvedCourses.length }}</h3>
-                  <p class="text-sm text-gray-500">相关课程</p>
+                  <p class="text-sm text-gray-500">{{ t('teacher.studentDetail.stats.courses') }}</p>
               </div>
             </div>
           
           <!-- Grades Table -->
           <div class="card overflow-x-auto">
               <div class="card-header">
-                  <h2 class="text-xl font-semibold">成绩记录</h2>
+                   <h2 class="text-xl font-semibold">{{ t('teacher.studentDetail.table.title') }}</h2>
               </div>
               <table class="w-full text-left">
                   <thead>
                       <tr class="border-b">
-                          <th class="p-4">作业标题</th>
-                          <th class="p-4">所属课程</th>
-                          <th class="p-4">分数</th>
-                          <th class="p-4">评分教师</th>
-                          <th class="p-4">评分日期</th>
-                          <th class="p-4">状态</th>
+                           <th class="p-4">{{ t('teacher.studentDetail.table.assignment') }}</th>
+                           <th class="p-4">{{ t('teacher.studentDetail.table.course') }}</th>
+                           <th class="p-4">{{ t('teacher.studentDetail.table.score') }}</th>
+                           <th class="p-4">{{ t('teacher.studentDetail.table.teacher') }}</th>
+                           <th class="p-4">{{ t('teacher.studentDetail.table.date') }}</th>
+                           <th class="p-4">{{ t('teacher.studentDetail.table.status') }}</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -65,29 +65,29 @@
                           <td class="p-4">{{ new Date(grade.gradedAt).toLocaleDateString() }}</td>
                           <td class="p-4">
                               <span class="badge" :class="grade.isPublished ? 'badge-success' : 'badge-warning'">
-                                  {{ grade.isPublished ? '已发布' : '未发布' }}
+                                   {{ grade.isPublished ? t('teacher.studentDetail.table.published') : t('teacher.studentDetail.table.unpublished') }}
                               </span>
                       </td>
                     </tr>
                   </tbody>
                 </table>
               <div v-if="grades.length === 0" class="text-center p-8">
-                  <p>该学生暂无成绩记录。</p>
+                  <p>{{ t('teacher.studentDetail.table.empty') }}</p>
               </div>
               <div class="p-4 flex items-center justify-between">
                 <div class="flex items-center space-x-2">
-                  <span class="text-sm text-gray-700">每页</span>
+                  <span class="text-sm text-gray-700">{{ t('teacher.studentDetail.table.perPage') }}</span>
                   <select class="input input-sm w-20" v-model.number="pageSize" @change="fetchPage(1)">
                     <option :value="10">10</option>
                     <option :value="20">20</option>
                     <option :value="50">50</option>
                   </select>
-                  <span class="text-sm text-gray-700">条</span>
+                  <span class="text-sm text-gray-700">{{ t('teacher.studentDetail.table.items') }}</span>
                 </div>
                 <div class="flex items-center space-x-2">
-                  <button class="btn btn-sm btn-outline" :disabled="currentPage===1" @click="fetchPage(currentPage-1)">上一页</button>
-                  <span class="text-sm">第 {{ currentPage }} / {{ totalPages }} 页</span>
-                  <button class="btn btn-sm btn-outline" :disabled="currentPage>=totalPages" @click="fetchPage(currentPage+1)">下一页</button>
+                  <button class="btn btn-sm btn-outline" :disabled="currentPage===1" @click="fetchPage(currentPage-1)">{{ t('teacher.studentDetail.table.prev') }}</button>
+                  <span class="text-sm">{{ t('teacher.studentDetail.table.page', { page: currentPage, total: totalPages }) }}</span>
+                  <button class="btn btn-sm btn-outline" :disabled="currentPage>=totalPages" @click="fetchPage(currentPage+1)">{{ t('teacher.studentDetail.table.next') }}</button>
                 </div>
               </div>
           </div>
@@ -103,13 +103,16 @@ import { useGradeStore } from '@/stores/grade';
 
 import { useCourseStore } from '@/stores/course';
 import { useAuthStore } from '@/stores/auth';
+import { useI18n } from 'vue-i18n'
 const route = useRoute();
 const gradeStore = useGradeStore();
 const courseStore = useCourseStore();
 const authStore = useAuthStore();
+const { t } = useI18n()
 
 const studentId = ref<string | null>(null);
-const studentName = ref(route.query.name as string || '学生');
+// keep single t from useI18n to avoid redeclare
+const studentName = ref(route.query.name as string || (t('teacher.students.table.student') as string));
 
 const grades = computed(() => gradeStore.grades);
 

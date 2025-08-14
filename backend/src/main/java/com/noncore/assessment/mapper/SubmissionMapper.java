@@ -113,4 +113,7 @@ public interface SubmissionMapper {
     long countPendingByTeacher(@Param("teacherId") Long teacherId);
 
     List<com.noncore.assessment.dto.response.TeacherDashboardResponse.PendingGradingDto> findPendingByTeacher(@Param("teacherId") Long teacherId, @Param("limit") int limit);
+
+    /** 统计作业提交（排除软删除） */
+    long countByAssignment(@Param("assignmentId") Long assignmentId);
 } 

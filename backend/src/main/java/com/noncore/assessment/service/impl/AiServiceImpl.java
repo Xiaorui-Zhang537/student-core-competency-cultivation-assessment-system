@@ -6,7 +6,9 @@ import com.noncore.assessment.entity.Course;
 import com.noncore.assessment.entity.User;
 import com.noncore.assessment.exception.BusinessException;
 import com.noncore.assessment.exception.ErrorCode;
-import com.noncore.assessment.service.*;
+import com.noncore.assessment.service.AiService;
+import com.noncore.assessment.service.CourseService;
+import com.noncore.assessment.service.EnrollmentService;
 import com.noncore.assessment.service.llm.DeepseekClient;
 import com.noncore.assessment.service.llm.PromptBuilder;
 import com.noncore.assessment.config.AiConfigProperties;
@@ -68,9 +70,6 @@ public class AiServiceImpl implements AiService {
 
         // 画像与提示词构建
         List<Message> built = promptBuilder.buildMessages(messages, course, students);
-
-        // 默认通过 OpenRouter 调用（兼容未来扩展）
-        String provider = "openrouter";
 
         String model = (request.getModel() == null || request.getModel().isBlank())
                 ? aiConfigProperties.getDeepseek().getModel()
