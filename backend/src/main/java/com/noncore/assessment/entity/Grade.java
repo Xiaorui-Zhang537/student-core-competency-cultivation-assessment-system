@@ -60,6 +60,21 @@ public class Grade {
     @Builder.Default
     private String status = "draft";
 
+    @Schema(description = "优点总结")
+    private String strengths;
+
+    @Schema(description = "改进建议")
+    private String improvements;
+
+    @Schema(description = "是否允许重交")
+    private Boolean allowResubmit;
+
+    @Schema(description = "评分细则JSON（可选）")
+    private String rubricJson;
+
+    @Schema(description = "重新评分原因")
+    private String regradeReason;
+
     @Schema(description = "创建时间", example = "2024-12-28 10:30:00")
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     @Builder.Default
@@ -69,6 +84,10 @@ public class Grade {
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     @Builder.Default
     private LocalDateTime updatedAt = LocalDateTime.now();
+
+    @Schema(description = "发布时间")
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+    private LocalDateTime publishedAt;
 
     @Schema(description = "是否删除", example = "false")
     @Builder.Default

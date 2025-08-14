@@ -526,11 +526,11 @@ const loadSubmission = async () => {
   try {
     const submissionId = String(route.params.submissionId || '')
     const assignmentId = String(route.params.assignmentId || '')
-    const sRes = await submissionApi.getSubmissionById(submissionId)
-    const s = sRes.data
+  const sRes = await submissionApi.getSubmissionById(submissionId)
+  const s = sRes
     Object.assign(submission, s)
-    const aRes = await assignmentApi.getAssignmentById(assignmentId)
-    const a: any = aRes.data as any
+  const aRes = await assignmentApi.getAssignmentById(assignmentId)
+  const a: any = aRes as any
     assignment.title = a.title
     assignment.description = a.description
     assignment.dueDate = a.dueDate
@@ -542,16 +542,16 @@ const loadSubmission = async () => {
     if ((s as any)?.gradeId) {
       try {
         const hist = await gradeApi.getGradeHistory(String((s as any).gradeId))
-        gradingHistory.value = hist.data || []
+        gradingHistory.value = (hist as any) || []
       } catch {}
     } else {
       // 兜底：通过提交ID查询一次成绩摘要，取到 grade_id 再查历史
       try {
         const sg = await submissionApi.getSubmissionGrade(submissionId)
-        const gid = (sg as any)?.data?.grade_id || (sg as any)?.grade_id
+        const gid = (sg as any)?.grade_id
         if (gid) {
           const hist = await gradeApi.getGradeHistory(String(gid))
-          gradingHistory.value = hist.data || []
+          gradingHistory.value = (hist as any) || []
         }
       } catch {}
     }
@@ -683,7 +683,20 @@ const downloadSingleFile = () => {
 const saveDraft = async () => {
   isDraftSaving.value = true
   try {
-    await new Promise(resolve => setTimeout(resolve, 1000))
+    const payload: any = {
+      submissionId: String(submission.id),
+      studentId: String(submission.studentId),
+      assignmentId: String(assignment.id),
+      score: Number(gradeForm.score || 0),
+      maxScore: Number(assignment.totalScore || 100),
+      feedback: gradeForm.feedback || '',
+      strengths: gradeForm.strengths || '',
+      improvements: gradeForm.improvements || '',
+      allowResubmit: !!gradeForm.allowResubmit,
+      status: 'draft' as const,
+      publishImmediately: false
+    }
+    await gradeApi.gradeSubmission(payload)
     uiStore.showNotification({
       type: 'success',
       title: t('teacher.grading.notify.draftSaved'),
@@ -722,11 +735,14 @@ const submitGrade = async () => {
       score: Number(gradeForm.score),
       maxScore: Number(assignment.totalScore || 100),
       feedback: gradeForm.feedback || '',
+      strengths: gradeForm.strengths || '',
+      improvements: gradeForm.improvements || '',
+      allowResubmit: !!gradeForm.allowResubmit,
       publishImmediately: !!gradeForm.publishImmediately,
       status: (gradeForm.publishImmediately ? 'published' : 'draft') as 'published' | 'draft'
     }
     const gr = await gradeApi.gradeSubmission(payload)
-    const gradeId = gr?.data?.id
+    const gradeId = (gr as any)?.id
     if (gradeForm.publishImmediately && gradeId) {
       await gradeApi.publishGrade(String(gradeId))
     }
@@ -737,8 +753,8 @@ const submitGrade = async () => {
       message: gradeForm.publishImmediately ? t('teacher.grading.notify.submitPublished') : t('teacher.grading.notify.submitSaved')
     })
     
-    // 跳转回作业列表
-    router.push('/teacher/assignments')
+    // 跳转回该作业的提交列表，便于继续批改
+    router.push(`/teacher/assignments/${assignment.id}/submissions`)
   } catch (error) {
     uiStore.showNotification({
       type: 'error',
