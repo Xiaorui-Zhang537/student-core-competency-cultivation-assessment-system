@@ -211,7 +211,9 @@ async function remindUnsubmitted() {
   try {
     const res = await assignmentApi.remindUnsubmitted(assignmentId)
     const d: any = (res as any)?.data || res
-    const sent = Number(d?.sent || 0)
+    const sent = Number(
+      d?.sent ?? d?.successCount ?? d?.success ?? d?.count ?? 0
+    )
     ui.showNotification({ type: 'success', title: t('teacher.submissions.notify.remindSuccess'), message: t('teacher.submissions.notify.remindSuccessMsg', { count: sent }) as string })
     // 发送后可选择刷新统计
     await fetch()

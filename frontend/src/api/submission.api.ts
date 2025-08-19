@@ -31,6 +31,14 @@ export const submissionApi = {
     return api.get(`/submissions/${submissionId}/grade`);
   },
 
+  // Export submission as ZIP (authorized blob)
+  exportSubmission: (submissionId: string): Promise<Blob> => {
+    return import('./config').then(({ default: apiClient }: any) =>
+      apiClient.get(`/submissions/${submissionId}/export`, { responseType: 'blob' })
+        .then((response: any) => response as Blob)
+    );
+  },
+
   // NOTE: These endpoints are related to grades, and will be used when Grade module is refactored.
   /*
   getMyGradedSubmissions: (): Promise<ApiResponse<any[]>> => {

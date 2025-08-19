@@ -548,6 +548,8 @@
 				"date": "评分日期",
 				"status": "状态",
 				"actions": "操作",
+				"reason": "原因",
+				"details": "详情",
 				"published": "已发布",
 				"unpublished": "未发布",
 				"empty": "该学生暂无成绩记录。",

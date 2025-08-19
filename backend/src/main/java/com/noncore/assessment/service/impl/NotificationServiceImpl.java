@@ -90,6 +90,7 @@ public class NotificationServiceImpl implements NotificationService {
             return Map.of("successCount", 0, "failCount", 0, "errors", List.of("接收者列表为空"));
         }
 
+        java.time.LocalDateTime now = java.time.LocalDateTime.now();
         List<Notification> notifications = recipientIds.stream().map(recipientId -> {
             Notification notification = new Notification();
             notification.setRecipientId(recipientId);
@@ -101,6 +102,10 @@ public class NotificationServiceImpl implements NotificationService {
             notification.setPriority(priority != null ? priority : "normal");
             notification.setRelatedType(relatedType);
             notification.setRelatedId(relatedId);
+            notification.setIsRead(false);
+            notification.setCreatedAt(now);
+            notification.setUpdatedAt(now);
+            notification.setDeleted(false);
             return notification;
         }).collect(Collectors.toList());
 

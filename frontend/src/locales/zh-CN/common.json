@@ -1,5 +1,7 @@
 {
   "common": {
+    "cancel": "取消",
+    "submit": "提交"
   }
 }
 

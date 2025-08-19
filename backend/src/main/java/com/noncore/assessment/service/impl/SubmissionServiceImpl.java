@@ -19,6 +19,10 @@ import org.springframework.web.multipart.MultipartFile;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipOutputStream;
+import java.io.ByteArrayOutputStream;
+import java.nio.charset.StandardCharsets;
 import com.github.pagehelper.PageHelper;
 import com.github.pagehelper.PageInfo;
 
@@ -207,6 +211,22 @@ public class SubmissionServiceImpl implements SubmissionService {
         if (grade == null) {
             throw new BusinessException(ErrorCode.GRADE_NOT_FOUND);
         }
+        // 追加班级平均分与排名（后续可迁到SQL层窗口函数实现）
+        try {
+            // 平均分
+            Object avg = grade.get("avg_score");
+            if (avg != null) {
+                grade.put("averageScore", avg);
+            }
+            // 总人数
+            Object total = grade.get("total_students");
+            if (total != null) {
+                grade.put("totalStudents", total);
+            }
+            // 排名：基于该作业所有已评分成绩按 score 降序排名
+            // 这里简单通过 mapper 的现有方法拼装数据较重，暂用占位，当无成绩时给 null
+            // 前端将做兜底显示
+        } catch (Exception ignore) {}
         return grade;
     }
 
@@ -239,5 +259,67 @@ public class SubmissionServiceImpl implements SubmissionService {
     public Map<String, Object> getSubmissionStatistics(Long assignmentId) {
         logger.info("获取作业提交统计，作业ID: {}", assignmentId);
         return submissionMapper.getSubmissionStatistics(assignmentId);
+    }
+
+    @Override
+    public byte[] exportSubmissionZip(Long submissionId) {
+        logger.info("导出提交为ZIP，提交ID: {}", submissionId);
+        Submission submission = submissionMapper.selectSubmissionById(submissionId);
+        if (submission == null) {
+            throw new BusinessException(ErrorCode.SUBMISSION_NOT_FOUND);
+        }
+        Map<String, Object> grade = null;
+        try {
+            grade = submissionMapper.selectSubmissionGrade(submissionId);
+        } catch (Exception e) {
+            logger.warn("获取提交成绩失败，继续仅导出提交内容。submissionId={}", submissionId, e);
+        }
+
+        try (ByteArrayOutputStream baos = new ByteArrayOutputStream(); ZipOutputStream zos = new ZipOutputStream(baos)) {
+            // 元数据
+            String metaJson = "{" +
+                    "\"submissionId\":" + submission.getId() + "," +
+                    "\"assignmentId\":" + submission.getAssignmentId() + "," +
+                    "\"studentId\":" + submission.getStudentId() + "," +
+                    "\"submittedAt\":\"" + (submission.getSubmittedAt() == null ? "" : submission.getSubmittedAt()) + "\"," +
+                    "\"status\":\"" + (submission.getStatus() == null ? "" : submission.getStatus()) + "\"" +
+                    "}";
+            zos.putNextEntry(new ZipEntry("meta.json"));
+            zos.write(metaJson.getBytes(StandardCharsets.UTF_8));
+            zos.closeEntry();
+
+            // 提交文本
+            if (submission.getContent() != null && !submission.getContent().isEmpty()) {
+                zos.putNextEntry(new ZipEntry("submission.txt"));
+                zos.write(submission.getContent().getBytes(StandardCharsets.UTF_8));
+                zos.closeEntry();
+            }
+
+            // 评分摘要
+            if (grade != null && !grade.isEmpty()) {
+                StringBuilder sb = new StringBuilder();
+                sb.append("Score: ").append(grade.getOrDefault("score", "")).append('\n');
+                sb.append("Max Score: ").append(grade.getOrDefault("max_score", "")).append('\n');
+                sb.append("Feedback: ").append(grade.getOrDefault("feedback", "")).append('\n');
+                sb.append("Teacher: ").append(grade.getOrDefault("teacher_name", "")).append('\n');
+                zos.putNextEntry(new ZipEntry("grade_summary.txt"));
+                zos.write(sb.toString().getBytes(StandardCharsets.UTF_8));
+                zos.closeEntry();
+            }
+
+            // 附件（若 filePath 可直接访问本地/远程存储，当前仅打包占位说明）
+            if (submission.getFileName() != null) {
+                String note = "Attachment not embedded. Please download via system file management. File: " + submission.getFileName();
+                zos.putNextEntry(new ZipEntry("attachment.README.txt"));
+                zos.write(note.getBytes(StandardCharsets.UTF_8));
+                zos.closeEntry();
+            }
+
+            zos.finish();
+            return baos.toByteArray();
+        } catch (Exception e) {
+            logger.error("导出ZIP失败，submissionId={}", submissionId, e);
+            throw new BusinessException(ErrorCode.OPERATION_FAILED, "导出失败");
+        }
     }
 } 

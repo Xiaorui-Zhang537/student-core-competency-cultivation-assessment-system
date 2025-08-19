@@ -340,7 +340,7 @@ public class AssignmentServiceImpl implements AssignmentService {
                 assignment.getTeacherId(),
                 title,
                 content,
-                "assignment_reminder",
+                "assignment",
                 "assignment",
                 "normal",
                 "assignment",

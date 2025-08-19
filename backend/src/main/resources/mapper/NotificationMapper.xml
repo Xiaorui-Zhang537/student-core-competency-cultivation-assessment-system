@@ -82,10 +82,10 @@
     <!-- 批量插入 -->
     <insert id="batchInsertNotifications" parameterType="java.util.List">
         INSERT INTO notifications (
-        user_id, sender_id, title, content, type, priority, is_read, related_type, related_id, expired_at, created_at
+        user_id, sender_id, title, content, type, priority, is_read, related_type, related_id, expired_at, created_at, updated_at, deleted
         ) VALUES
         <foreach collection="notifications" item="item" separator=",">
-            (#{item.recipientId}, #{item.senderId}, #{item.title}, #{item.content}, #{item.type}, #{item.priority}, #{item.isRead}, #{item.relatedType}, #{item.relatedId}, #{item.expiredAt}, #{item.createdAt})
+            (#{item.recipientId}, #{item.senderId}, #{item.title}, #{item.content}, #{item.type}, #{item.priority}, #{item.isRead}, #{item.relatedType}, #{item.relatedId}, #{item.expiredAt}, #{item.createdAt}, #{item.updatedAt}, #{item.deleted})
         </foreach>
     </insert>
 

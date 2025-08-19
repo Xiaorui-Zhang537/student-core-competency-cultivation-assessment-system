@@ -377,17 +377,18 @@
                 </div>
                 <div>
                   <span class="text-gray-500 dark:text-gray-400">{{ t('teacher.grading.student.avg') }}</span>
-                  <span class="font-medium text-gray-900 dark:text-white block">{{ submission.averageScore }}/100</span>
+                  <span class="font-medium text-gray-900 dark:text-white block">{{ submission.averageScore ?? '--' }}/100</span>
                 </div>
                 <div>
                   <span class="text-gray-500 dark:text-gray-400">{{ t('teacher.grading.student.rank') }}</span>
-                  <span class="font-medium text-gray-900 dark:text-white block">{{ submission.rank }}/{{ submission.totalStudents }}</span>
+                  <span class="font-medium text-gray-900 dark:text-white block">{{ submission.rank ?? '--' }}/{{ submission.totalStudents ?? '--' }}</span>
                 </div>
               </div>
               
-              <button variant="outline" size="sm" class="w-full" @click="viewStudentProfile">
+              <Button variant="indigo" size="lg" class="w-full justify-center" @click="viewStudentProfile">
+                <UserIcon class="w-4 h-4 mr-2" />
                 {{ t('teacher.grading.student.viewProfile') }}
-              </button>
+              </Button>
             </div>
           </card>
 
@@ -418,6 +419,36 @@
           </card>
         </div>
       </div>
+      <!-- 举报弹窗 -->
+      <teleport to="body">
+        <div v-if="showReport" class="fixed inset-0 z-50">
+          <div class="absolute inset-0 bg-black/30" @click="showReport=false"></div>
+          <div class="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-md bg-white dark:bg-gray-800 rounded shadow p-5 space-y-4">
+            <div class="text-lg font-semibold">{{ t('teacher.grading.quick.report') }}</div>
+            <div class="space-y-2">
+              <label class="text-sm">{{ t('teacher.studentDetail.table.reason') || '原因' }}</label>
+              <input v-model="reportForm.reason" class="input w-full" />
+              <label class="text-sm">{{ t('teacher.studentDetail.table.details') || '详情' }}</label>
+              <textarea v-model="reportForm.details" class="input w-full" rows="4"></textarea>
+            </div>
+            <div class="flex items-center justify-end gap-2">
+              <Button variant="outline" size="sm" @click="showReport=false">{{ t('common.cancel') || '取消' }}</Button>
+              <Button variant="indigo" size="sm" @click="submitReport">{{ t('common.submit') || '提交' }}</Button>
+            </div>
+          </div>
+        </div>
+      </teleport>
+
+      <!-- 联系学生聊天抽屉 -->
+      <teleport to="body">
+        <ChatDrawer
+          :open="chattingOpen"
+          :peer-id="String(submission.studentId || '')"
+          :course-id="String(assignment.courseId || '')"
+          :peer-name="String(submission.studentName || '')"
+          @close="chattingOpen=false"
+        />
+      </teleport>
     </div>
   </div>
 </template>
@@ -517,10 +548,13 @@ const isFormValid = computed(() => {
 })
 
 // 方法
-import { submissionApi } from '@/api/submission.api'
 import { assignmentApi } from '@/api/assignment.api'
 import { gradeApi } from '@/api/grade.api'
 import { baseURL } from '@/api/config'
+import { teacherStudentApi } from '@/api/teacher-student.api'
+import { reportApi } from '@/api/report.api'
+import ChatDrawer from '@/features/teacher/components/ChatDrawer.vue'
+import { submissionApi } from '@/api/submission.api'
 
 const loadSubmission = async () => {
   try {
@@ -549,10 +583,24 @@ const loadSubmission = async () => {
       try {
         const sg = await submissionApi.getSubmissionGrade(submissionId)
         const gid = (sg as any)?.grade_id
+        // 兼容平均分、总人数、排名（注意后端字段名）
+        const avgVal = (sg as any)?.averageScore ?? (sg as any)?.avg_score
+        submission.averageScore = (avgVal === null || avgVal === undefined) ? undefined : Number(avgVal)
+        const totalVal = (sg as any)?.totalStudents ?? (sg as any)?.total_students
+        submission.totalStudents = (totalVal === null || totalVal === undefined) ? undefined : Number(totalVal)
+        const rankVal = (sg as any)?.rank ?? (sg as any)?.student_rank
+        submission.rank = (rankVal === null || rankVal === undefined) ? undefined : Number(rankVal)
         if (gid) {
           const hist = await gradeApi.getGradeHistory(String(gid))
           gradingHistory.value = (hist as any) || []
         }
+      } catch {}
+    }
+    // 兜底头像
+    if (!submission.avatar && submission.studentId) {
+      try {
+        const prof: any = await teacherStudentApi.getStudentProfile(String(submission.studentId))
+        if (prof && (prof as any).avatar) submission.avatar = (prof as any).avatar
       } catch {}
     }
   } catch (error) {
@@ -770,24 +818,31 @@ const viewStudentProfile = () => {
   router.push(`/teacher/students/${submission.studentId}`)
 }
 
+const chattingOpen = ref(false)
 const contactStudent = () => {
-  uiStore.showNotification({
-    type: 'info',
-    title: t('teacher.grading.quick.contact'),
-    message: t('teacher.grading.notify.loadFailedMsg')
-  })
+  if (!submission.studentId) return
+  chattingOpen.value = true
 }
 
 const viewOtherSubmissions = () => {
-        router.push('/teacher/grading')
+  router.push(`/teacher/assignments/${assignment.id}/submissions?highlightStudentId=${submission.studentId}`)
 }
 
-const exportSubmission = () => {
-  uiStore.showNotification({
-    type: 'success',
-    title: t('teacher.analytics.exportReport'),
-    message: t('teacher.analytics.messages.refreshFailedMsg')
-  })
+const exportSubmission = async () => {
+  if (!submission.id) return
+  try {
+    const blob = await submissionApi.exportSubmission(String(submission.id))
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `submission_${submission.id}.zip`
+    document.body.appendChild(a)
+    a.click()
+    a.remove()
+    URL.revokeObjectURL(url)
+  } catch (e) {
+    uiStore.showNotification({ type: 'error', title: t('teacher.analytics.messages.exportFailed') || 'Export failed', message: t('teacher.analytics.messages.exportFailedMsg') || 'Please try again later' })
+  }
 }
 
 function goCourse() {
@@ -796,12 +851,30 @@ function goCourse() {
   }
 }
 
-const reportPlagiarism = () => {
-  uiStore.showNotification({
-    type: 'warning',
-    title: t('teacher.grading.quick.report'),
-    message: t('teacher.analytics.messages.refreshFailedMsg')
-  })
+const showReport = ref(false)
+const reportForm = reactive({ reason: '', details: '' })
+const reportPlagiarism = () => { showReport.value = true }
+const submitReport = async () => {
+  if (!reportForm.reason.trim()) {
+    uiStore.showNotification({ type: 'error', title: t('teacher.grading.quick.report'), message: t('teacher.grading.errors.feedbackRequired') })
+    return
+  }
+  try {
+    await reportApi.createReport({
+      reportedStudentId: String(submission.studentId || ''),
+      courseId: String(assignment.courseId || ''),
+      assignmentId: String(assignment.id || ''),
+      submissionId: String(submission.id || ''),
+      reason: reportForm.reason,
+      details: reportForm.details || ''
+    })
+    uiStore.showNotification({ type: 'success', title: t('teacher.grading.quick.report'), message: t('teacher.grading.notify.submitSuccess') })
+    showReport.value = false
+    reportForm.reason = ''
+    reportForm.details = ''
+  } catch (e) {
+    uiStore.showNotification({ type: 'error', title: t('teacher.grading.quick.report'), message: t('teacher.grading.notify.submitFailed') })
+  }
 }
 
 // 生命周期

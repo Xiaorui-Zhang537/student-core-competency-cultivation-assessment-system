@@ -545,6 +545,8 @@
 				"date": "Date",
 				"status": "Status",
 				"actions": "Actions",
+				"reason": "Reason",
+				"details": "Details",
 				"published": "Published",
 				"unpublished": "Unpublished",
 				"empty": "No grades yet.",

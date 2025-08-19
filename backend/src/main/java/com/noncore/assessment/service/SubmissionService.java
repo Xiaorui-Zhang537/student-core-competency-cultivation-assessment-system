@@ -123,4 +123,12 @@ public interface SubmissionService {
      * @return 统计信息
      */
     Map<String, Object> getSubmissionStatistics(Long assignmentId);
+
+    /**
+     * 导出提交为ZIP（包含提交文本、附件与评分摘要）
+     *
+     * @param submissionId 提交ID
+     * @return ZIP字节数组
+     */
+    byte[] exportSubmissionZip(Long submissionId);
 } 

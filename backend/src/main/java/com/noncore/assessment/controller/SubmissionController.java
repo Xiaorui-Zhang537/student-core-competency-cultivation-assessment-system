@@ -8,6 +8,8 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -91,5 +93,17 @@ public class SubmissionController extends BaseController {
     public ResponseEntity<ApiResponse<Map<String, Object>>> getSubmissionGrade(@PathVariable Long submissionId) {
         Map<String, Object> grade = submissionService.getSubmissionGrade(submissionId);
         return ResponseEntity.ok(ApiResponse.success(grade));
+    }
+
+    @GetMapping("/submissions/{submissionId}/export")
+    @Operation(summary = "导出提交", description = "导出指定提交为ZIP压缩包")
+    @PreAuthorize("hasAnyRole('TEACHER','ADMIN')")
+    public ResponseEntity<byte[]> exportSubmission(@PathVariable Long submissionId) {
+        byte[] data = submissionService.exportSubmissionZip(submissionId);
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_OCTET_STREAM);
+        headers.set(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"submission_" + submissionId + ".zip\"");
+        headers.setContentLength(data.length);
+        return ResponseEntity.ok().headers(headers).body(data);
     }
 } 

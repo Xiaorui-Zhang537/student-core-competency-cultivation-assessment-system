@@ -549,6 +549,29 @@ CREATE TABLE `submissions` (
                                CONSTRAINT `submissions_ibfk_3` FOREIGN KEY (`file_id`) REFERENCES `file_records` (`id`) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='作业提交表';
 
+-- ================== reports：举报表 ==================
+-- 存储教师/管理员对可疑提交的举报记录
+CREATE TABLE IF NOT EXISTS `reports` (
+  `id` bigint NOT NULL AUTO_INCREMENT COMMENT '举报ID',
+  `reporter_id` bigint NOT NULL COMMENT '举报人ID',
+  `reported_student_id` bigint NOT NULL COMMENT '被举报学生ID',
+  `course_id` bigint DEFAULT NULL COMMENT '课程ID',
+  `assignment_id` bigint DEFAULT NULL COMMENT '作业ID',
+  `submission_id` bigint DEFAULT NULL COMMENT '提交ID',
+  `reason` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL COMMENT '举报原因',
+  `details` text COLLATE utf8mb4_unicode_ci COMMENT '详细说明',
+  `evidence_file_id` bigint DEFAULT NULL COMMENT '证据文件ID',
+  `status` enum('pending','in_review','resolved','rejected') COLLATE utf8mb4_unicode_ci DEFAULT 'pending' COMMENT '处理状态',
+  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+  `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+  PRIMARY KEY (`id`),
+  KEY `idx_reporter_id` (`reporter_id`),
+  KEY `idx_reported_student_id` (`reported_student_id`),
+  KEY `idx_submission_id` (`submission_id`),
+  CONSTRAINT `reports_ibfk_reporter` FOREIGN KEY (`reporter_id`) REFERENCES `users` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `reports_ibfk_student` FOREIGN KEY (`reported_student_id`) REFERENCES `users` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='举报表';
+
 -- ================== tags：标签表 ==================
 -- 论坛与问答社区的所有标签定义
 CREATE TABLE `tags` (
