@@ -55,6 +55,7 @@ export interface CourseStudentPerformanceItem {
   activityLevel?: string;
   studyTimePerWeek?: number;
   lastActiveAt?: string;
+  joinedAt?: string;
 }
 
 export interface CourseStudentPerformanceResponse {

@@ -508,6 +508,13 @@
 			},
 			"title": "学生详情: {name}",
 			"loading": "正在加载学生成绩数据...",
+			"actions": {
+				"contact": "联系学生",
+				"overview": "概览分析",
+				"export": "导出成绩",
+				"viewSubmissions": "查看提交",
+				"regrade": "重新评分"
+			},
 			"filter": {
 				"label": "筛选课程",
 				"all": "全部课程"
@@ -525,6 +532,7 @@
 				"teacher": "评分教师",
 				"date": "评分日期",
 				"status": "状态",
+				"actions": "操作",
 				"published": "已发布",
 				"unpublished": "未发布",
 				"empty": "该学生暂无成绩记录。",

@@ -26,6 +26,12 @@ export const teacherApi = {
   ): Promise<ApiResponse<CourseStudentPerformanceResponse>> => {
     return api.get(`/teachers/analytics/course/${courseId}/students`, { params });
   },
+  // 获取课程全部学生（用于雷达图下拉），默认一次取最多10000条
+  getAllCourseStudentsBasic: (courseId: string, keyword?: string) => {
+    const params: any = { page: 1, size: 10000 };
+    if (keyword) params.keyword = keyword;
+    return api.get(`/teachers/students/basic`, { params: { ...params, courseId } });
+  },
   
   exportCourseStudents: (
     courseId: string,

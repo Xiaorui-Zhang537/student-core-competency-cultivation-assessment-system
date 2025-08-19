@@ -91,9 +91,10 @@ const handleFileUpload = async (event: Event) => {
     isUploading.value = true;
     try {
       const response = await fileApi.uploadFile(target.files[0]);
-      if(response) {
-        uploadedFiles.value.push(response);
-        form.fileIds.push(response.id);
+      if (response && (response as any).data) {
+        const fileInfo = (response as any).data as FileInfo
+        uploadedFiles.value.push(fileInfo);
+        form.fileIds.push(fileInfo.id);
       }
     } catch (error) {
       uiStore.showNotification({ type: 'error', title: '上传失败', message: '文件上传失败，请重试。'});
@@ -138,7 +139,7 @@ onMounted(async () => {
     // If files exist, fetch their info to display
     if(form.fileIds.length > 0) {
         const fileInfos = await Promise.all(form.fileIds.map(id => fileApi.getFileInfo(id)));
-        uploadedFiles.value = fileInfos.map(res => res.data).filter(Boolean);
+        uploadedFiles.value = fileInfos.map(res => (res as any).data as FileInfo).filter(Boolean);
     }
   }
 });

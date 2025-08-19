@@ -205,4 +205,17 @@ public class CourseController extends BaseController {
         enrollmentService.addStudentsToCourse(getCurrentUserId(), courseId, request.getStudentIds());
         return ResponseEntity.ok(ApiResponse.success());
     }
+
+    /**
+     * 教师从课程中移除学生
+     */
+    @DeleteMapping("/{id}/students/{studentId}")
+    @PreAuthorize("hasRole('TEACHER') or hasRole('ADMIN')")
+    @Operation(summary = "移除课程中的学生", description = "教师将某位学生从自己的课程中移除")
+    public ResponseEntity<ApiResponse<Void>> removeStudent(
+            @PathVariable("id") Long courseId,
+            @PathVariable("studentId") Long studentId) {
+        enrollmentService.removeStudentFromCourse(getCurrentUserId(), courseId, studentId);
+        return ResponseEntity.ok(ApiResponse.success());
+    }
 } 

@@ -1,8 +1,7 @@
 import { api } from './config';
 import type { ApiResponse, PaginatedResponse } from '@/types/api';
 import type { Course, CourseDetailed, CourseCreationRequest, CourseUpdateRequest, BatchStatusUpdateRequest, CourseStatistics } from '@/types/course';
-import type { PaginatedResponse } from '@/types/api';
-import type { User } from '@/types/user';
+import type { User } from '@/types/auth';
 
 export const courseApi = {
   // CRUD operations
@@ -83,5 +82,10 @@ export const courseApi = {
   inviteStudents: (courseId: string | number, studentIds: Array<number|string>): Promise<ApiResponse<void>> => {
     const ids = (studentIds || []).map(id => Number(id)).filter(n => !Number.isNaN(n));
     return api.post(`/courses/${courseId}/students/invite`, { studentIds: ids });
+  },
+
+  // Teacher remove a student from a course
+  removeStudent: (courseId: string | number, studentId: string | number): Promise<ApiResponse<void>> => {
+    return api.delete(`/courses/${courseId}/students/${studentId}`);
   }
 };

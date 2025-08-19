@@ -215,7 +215,9 @@ public class AbilityAnalyticsServiceImpl implements AbilityAnalyticsService {
 
     private Map<String, Double> aggregateDimensions(Long studentId, Long courseId, Long classId,
                                                     LocalDateTime start, LocalDateTime end) {
-        List<Map<String, Object>> rows = analyticsMapper.selectStudentDimensionAvg(studentId, courseId, classId, start, end);
+        List<Map<String, Object>> rows = (studentId == null)
+                ? analyticsMapper.selectClassOrCourseDimensionAvg(courseId, classId, start, end)
+                : analyticsMapper.selectStudentDimensionAvg(studentId, courseId, classId, start, end);
         Map<String, Double> result = new HashMap<>();
         for (Map<String, Object> r : rows) {
             String name = String.valueOf(r.get("dimensionName"));

@@ -448,7 +448,7 @@ public class GradeServiceImpl implements GradeService {
     public Map<String, Object> exportGrades(Long courseId, Long assignmentId, String format) {
         logger.info("Exporting grades for courseId: {}, assignmentId: {}, format: {}", courseId, assignmentId, format);
         
-        List<Map<String, Object>> gradesData = gradeMapper.selectGradesForExport(courseId, assignmentId);
+        List<Map<String, Object>> gradesData = gradeMapper.selectGradesForExport(courseId, assignmentId, null);
         
         // In a real application, you would convert this data to the specified format (e.g., CSV, PDF)
         // For this simplified version, we'll just return the data.

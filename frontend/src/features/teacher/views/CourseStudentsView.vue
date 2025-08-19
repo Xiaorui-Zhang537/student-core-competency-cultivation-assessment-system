@@ -337,41 +337,21 @@
           </table>
         </div>
 
-        <!-- 分页 -->
-          <div class="mt-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-          <div class="flex items-center space-x-2">
-            <span class="text-sm text-gray-700 dark:text-gray-300">{{ t('teacher.students.table.perPagePrefix') }}</span>
-            <select v-model="pageSize" class="input input-sm w-20">
-              <option :value="10">10</option>
-              <option :value="20">20</option>
-              <option :value="50">50</option>
-              <option :value="100">100</option>
-            </select>
-            <span class="text-sm text-gray-700 dark:text-gray-300">{{ t('teacher.students.table.perPageSuffix') }}</span>
-          </div>
-          
+        <!-- 分页（统一为作业管理样式） -->
+          <div class="mt-6 flex items-center justify-between">
             <div class="flex items-center space-x-2">
-              <Button variant="outline" size="sm" @click="currentPage--" :disabled="currentPage === 1">
-                <ChevronLeftIcon class="w-4 h-4 mr-1" />
-                {{ t('teacher.students.table.prev') }}
-              </Button>
-              <div class="flex space-x-1">
-                <button
-                  v-for="page in pageNumbers"
-                  :key="page"
-                  @click="currentPage = page"
-                  class="px-3 py-1 text-sm rounded transition-colors"
-                  :class="currentPage === page 
-                    ? 'bg-primary-600 text-white' 
-                    : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'"
-                >
-                  {{ page }}
-                </button>
-              </div>
-              <Button variant="outline" size="sm" @click="currentPage++" :disabled="currentPage === totalPages">
-                {{ t('teacher.students.table.next') }}
-                <ChevronRightIcon2 class="w-4 h-4 ml-1" />
-              </Button>
+              <span class="text-sm text-gray-700 dark:text-gray-300">{{ t('teacher.assignments.pagination.perPagePrefix') }}</span>
+              <select v-model.number="pageSize" class="input input-sm w-20">
+                <option :value="10">10</option>
+                <option :value="20">20</option>
+                <option :value="50">50</option>
+              </select>
+              <span class="text-sm text-gray-700 dark:text-gray-300">{{ t('teacher.assignments.pagination.perPageSuffix') }}</span>
+            </div>
+            <div class="flex items-center space-x-2">
+              <Button variant="outline" size="sm" @click="currentPage = Math.max(1, currentPage - 1)" :disabled="currentPage === 1">{{ t('teacher.assignments.pagination.prev') }}</Button>
+              <span class="text-sm">{{ t('teacher.assignments.pagination.page', { page: currentPage }) }}</span>
+              <Button variant="outline" size="sm" @click="currentPage = Math.min(totalPages, currentPage + 1)" :disabled="currentPage >= totalPages">{{ t('teacher.assignments.pagination.next') }}</Button>
             </div>
         </div>
       </card>
@@ -651,25 +631,23 @@ const resetProgress = async (_studentId: string) => {}
 const exportStudentData = async (_studentId: string) => {}
 
 const removeStudent = async (studentId: string) => {
-  if (confirm(t('teacher.students.table.confirmRemove'))) {
-    try {
-      await new Promise(resolve => setTimeout(resolve, 1000))
-      const index = students.value.findIndex(s => s.id === studentId)
-      if (index > -1) {
-        students.value.splice(index, 1)
-      }
-      uiStore.showNotification({
-        type: 'success',
-        title: t('teacher.students.table.removeSuccess'),
-        message: t('teacher.students.table.removeSuccessMsg')
-      })
-    } catch (error) {
-      uiStore.showNotification({
-        type: 'error',
-        title: t('teacher.students.table.removeFail'),
-        message: t('teacher.students.table.removeFailMsg')
-      })
-    }
+  if (!confirm(t('teacher.students.table.confirmRemove') as string)) return
+  try {
+    const { courseApi } = await import('@/api/course.api')
+    await courseApi.removeStudent(courseId, studentId)
+    const index = students.value.findIndex(s => s.id === studentId)
+    if (index > -1) students.value.splice(index, 1)
+    uiStore.showNotification({
+      type: 'success',
+      title: t('teacher.students.table.removeSuccess'),
+      message: t('teacher.students.table.removeSuccessMsg')
+    })
+  } catch (error: any) {
+    uiStore.showNotification({
+      type: 'error',
+      title: t('teacher.students.table.removeFail'),
+      message: error?.message || t('teacher.students.table.removeFailMsg')
+    })
   }
 }
 
@@ -681,15 +659,14 @@ const batchRemove = async () => {}
 
 const exportData = async () => {
   try {
-    const params = new URLSearchParams()
-    if (searchQuery.value) params.append('search', searchQuery.value)
-    if (sortBy.value) params.append('sortBy', sortBy.value)
-    if (activityFilter.value) params.append('activity', activityFilter.value)
-    if (gradeFilter.value) params.append('grade', gradeFilter.value)
-    if (progressFilter.value) params.append('progress', progressFilter.value)
-
-    const url = `${baseURL}/teachers/analytics/course/${courseId}/students/export?${params.toString()}`
-    const res = await apiClient.get(url, { responseType: 'blob' })
+    const { teacherApi } = await import('@/api/teacher.api')
+    const params: any = {}
+    if (searchQuery.value) params.search = searchQuery.value
+    if (sortBy.value) params.sortBy = sortBy.value
+    if (activityFilter.value) params.activity = activityFilter.value
+    if (gradeFilter.value) params.grade = gradeFilter.value
+    if (progressFilter.value) params.progress = progressFilter.value
+    const res: any = await teacherApi.exportCourseStudents(courseId, params)
     const blob = new Blob([res as any], { type: 'text/csv;charset=UTF-8' })
     const link = document.createElement('a')
     link.href = URL.createObjectURL(blob)

@@ -175,8 +175,17 @@ const selectedCourseId = ref<string | null>(null)
 const topStudents = ref<CourseStudentPerformanceItem[]>([])
 const studentTotal = ref<number>(0)
 const selectedStudentId = ref<string | null>(null)
-const startDate = ref<string>('2024-11-01')
-const endDate = ref<string>('2024-11-30')
+function fmt(d: Date): string {
+  const y = d.getFullYear()
+  const m = String(d.getMonth() + 1).padStart(2, '0')
+  const day = String(d.getDate()).padStart(2, '0')
+  return `${y}-${m}-${day}`
+}
+const today = new Date()
+const start30 = new Date(today)
+start30.setDate(start30.getDate() - 29)
+const startDate = ref<string>(fmt(start30))
+const endDate = ref<string>(fmt(today))
 const openWeights = ref(false)
 const weights = ref<Record<string, number> | null>(null)
 const radarIndicators = ref<{ name: string; max: number }[]>([])
@@ -311,7 +320,8 @@ const onCourseChange = () => {
   // 初始化权重
   teacherApi.getAbilityWeights(selectedCourseId.value).then((r: any) => { weights.value = r?.weights || r?.data?.weights || null }).catch(() => {})
   // 获取学生表现排行（前5名，按成绩）
-  teacherApi.getCourseStudentPerformance(selectedCourseId.value, { page: 1, size: 5, sortBy: 'grade' })
+  // 获取课程全部学生，用于雷达图下拉选择任意学生
+  teacherApi.getAllCourseStudentsBasic(selectedCourseId.value)
     .then((data: any) => {
       topStudents.value = (data?.items ?? []) as CourseStudentPerformanceItem[]
       if (typeof data?.total === 'number') studentTotal.value = data.total
@@ -335,6 +345,11 @@ watch(() => route.query.courseId, (cid) => {
 watch(() => teacherStore.classPerformance, () => {
   nextTick(() => initScoreDistributionChart())
 }, { deep: true })
+
+// 学生切换时自动刷新雷达图
+watch(selectedStudentId, () => {
+  loadRadar()
+})
 
 const exportReport = async () => {
   if (!selectedCourseId.value) {

@@ -48,59 +48,59 @@ export const notificationAPI = {
     isRead?: boolean
     priority?: string
   }): Promise<ApiResponse<PaginatedResponse<Notification>>> => {
-    return api.get<PaginatedResponse<Notification>>('/notifications/my', { params })
+    return api.get('/notifications/my', { params })
   },
 
   // 获取通知详情
   getNotification: (notificationId: string): Promise<ApiResponse<Notification>> => {
-    return api.get<Notification>(`/notifications/${notificationId}`)
+    return api.get(`/notifications/${notificationId}`)
   },
 
   // 标记通知为已读
   markAsRead: (notificationId: string): Promise<ApiResponse<void>> => {
-    return api.put<void>(`/notifications/${notificationId}/read`)
+    return api.put(`/notifications/${notificationId}/read`)
   },
 
   // 批量标记通知为已读
   batchMarkAsRead: (notificationIds: string[]): Promise<ApiResponse<void>> => {
-    return api.put<void>('/notifications/batch/read', { notificationIds })
+    return api.put('/notifications/batch/read', { notificationIds })
   },
 
   // 全部标记为已读
   markAllAsRead: (): Promise<ApiResponse<void>> => {
-    return api.put<void>('/notifications/all/read')
+    return api.put('/notifications/all/read')
   },
 
   // 删除通知
   deleteNotification: (notificationId: string): Promise<ApiResponse<void>> => {
-    return api.delete<void>(`/notifications/${notificationId}`)
+    return api.delete(`/notifications/${notificationId}`)
   },
 
   // 批量删除通知
   batchDeleteNotifications: (notificationIds: string[]): Promise<ApiResponse<void>> => {
-    return api.delete<void>('/notifications/batch', { data: { notificationIds } })
+    return api.delete('/notifications/batch', { data: { notificationIds } })
   },
 
   // 获取未读通知数量
   getUnreadCount: (): Promise<ApiResponse<{ count: number }>> => {
-    return api.get<{ count: number }>('/notifications/unread/count')
+    return api.get('/notifications/unread/count')
   },
 
   // 获取通知统计
   getNotificationStats: (): Promise<ApiResponse<NotificationStats>> => {
-    return api.get<NotificationStats>('/notifications/stats')
+    return api.get('/notifications/stats')
   },
 
   // 发送通知（管理员/教师功能）
   sendNotification: (data: CreateNotificationRequest): Promise<ApiResponse<Notification>> => {
-    return api.post<Notification>('/notifications/send', data)
+    return api.post('/notifications/send', data)
   },
 
   // 批量发送通知（管理员/教师功能）
   batchSendNotifications: (data: {
     notifications: CreateNotificationRequest[]
   }): Promise<ApiResponse<Notification[]>> => {
-    return api.post<Notification[]>('/notifications/batch/send', data)
+    return api.post('/notifications/batch/send', data)
   },
 
   // 发送作业通知（教师功能）
@@ -110,7 +110,7 @@ export const notificationAPI = {
     type: 'assignment' | 'grade'
     priority?: string
   }): Promise<ApiResponse<void>> => {
-    return api.post<void>(`/notifications/assignment/${assignmentId}`, data)
+    return api.post(`/notifications/assignment/${assignmentId}`, data)
   },
 
   // 发送课程通知（教师功能）
@@ -120,7 +120,7 @@ export const notificationAPI = {
     type: 'course' | 'system'
     priority?: string
   }): Promise<ApiResponse<void>> => {
-    return api.post<void>(`/notifications/course/${courseId}`, data)
+    return api.post(`/notifications/course/${courseId}`, data)
   }
 }
 

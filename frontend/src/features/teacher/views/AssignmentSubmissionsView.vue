@@ -70,18 +70,18 @@
 
       <div class="mt-6 flex items-center justify-between">
         <div class="flex items-center space-x-2">
-          <span class="text-sm text-gray-700">{{ t('teacher.submissions.pagination.perPage') }}</span>
+          <span class="text-sm text-gray-700">{{ t('teacher.assignments.pagination.perPagePrefix') }}</span>
           <select class="input input-sm w-20" v-model.number="pageSize" :disabled="loading" @change="changePageSize">
             <option :value="10">10</option>
             <option :value="20">20</option>
             <option :value="50">50</option>
           </select>
-          <span class="text-sm text-gray-700">{{ t('teacher.submissions.pagination.items') }}</span>
+          <span class="text-sm text-gray-700">{{ t('teacher.assignments.pagination.perPageSuffix') }}</span>
         </div>
         <div class="flex items-center space-x-2">
-          <button class="btn btn-sm btn-outline" :disabled="loading || currentPage===1" @click="prevPage">{{ t('teacher.submissions.pagination.prev') }}</button>
-          <span class="text-sm">{{ t('teacher.submissions.pagination.page', { page: currentPage }) }}</span>
-          <button class="btn btn-sm btn-outline" :disabled="loading || currentPage>=totalPages" @click="nextPage">{{ t('teacher.submissions.pagination.next') }}</button>
+          <Button variant="outline" size="sm" :disabled="loading || currentPage===1" @click="prevPage">{{ t('teacher.assignments.pagination.prev') }}</Button>
+          <span class="text-sm">{{ t('teacher.assignments.pagination.page', { page: currentPage }) }}</span>
+          <Button variant="outline" size="sm" :disabled="loading || currentPage>=totalPages" @click="nextPage">{{ t('teacher.assignments.pagination.next') }}</Button>
         </div>
       </div>
     </div>

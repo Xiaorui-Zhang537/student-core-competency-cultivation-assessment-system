@@ -508,6 +508,13 @@
 			},
 			"title": "Student: {name}",
 			"loading": "Loading grades...",
+			"actions": {
+				"contact": "Contact",
+				"overview": "Overview",
+				"export": "Export",
+				"viewSubmissions": "View Submissions",
+				"regrade": "Regrade"
+			},
 			"filter": {
 				"label": "Filter course",
 				"all": "All courses"
@@ -525,6 +532,7 @@
 				"teacher": "Grader",
 				"date": "Date",
 				"status": "Status",
+				"actions": "Actions",
 				"published": "Published",
 				"unpublished": "Unpublished",
 				"empty": "No grades yet.",

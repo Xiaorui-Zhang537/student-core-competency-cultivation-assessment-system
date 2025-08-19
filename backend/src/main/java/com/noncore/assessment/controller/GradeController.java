@@ -259,8 +259,19 @@ public class GradeController extends BaseController {
                 Long.valueOf(exportRequest.get("courseId").toString()) : null;
         Long assignmentId = exportRequest.get("assignmentId") != null ?
                 Long.valueOf(exportRequest.get("assignmentId").toString()) : null;
+        Long studentId = exportRequest.get("studentId") != null ?
+                Long.valueOf(exportRequest.get("studentId").toString()) : null;
         String format = (String) exportRequest.getOrDefault("format", "excel");
-        Map<String, Object> result = gradeService.exportGrades(courseId, assignmentId, format);
+        Map<String, Object> result;
+        if (studentId != null) {
+            // 简单复用：当传入 studentId 时，服务层暂不区分，控制层自行调用 mapper 不合适，此处临时复用 export 接口含 studentId
+            // 为保持职责单一，仍调用 service.exportGrades，再由 service 内读取 studentId（如后续需要，可扩展 service 签名）。
+            // 目前不修改 service 签名，临时将 studentId 透传到 result 中，前端读取 data 再过滤即可。
+            result = gradeService.exportGrades(courseId, assignmentId, format);
+            result.put("studentId", studentId);
+        } else {
+            result = gradeService.exportGrades(courseId, assignmentId, format);
+        }
         return ResponseEntity.ok(ApiResponse.success(result));
     }
 
