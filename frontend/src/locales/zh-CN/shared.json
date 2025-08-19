@@ -97,6 +97,13 @@
         "minutesAgo": "{count}分钟前",
         "hoursAgo": "{count}小时前",
         "daysAgo": "{count}天前",
+        "order": {
+          "latest": "最新",
+          "hot": "最热",
+          "comments": "最多评论",
+          "likes": "最多点赞",
+          "views": "最多浏览"
+        },
         "emptyTitle": "暂无帖子",
         "emptyDescKeyword": "没有找到匹配的帖子",
         "emptyDescCategory": "这个分类还没有帖子",

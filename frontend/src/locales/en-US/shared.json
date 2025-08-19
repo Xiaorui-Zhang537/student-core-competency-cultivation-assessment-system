@@ -97,6 +97,13 @@
         "minutesAgo": "{count} minutes ago",
         "hoursAgo": "{count} hours ago",
         "daysAgo": "{count} days ago",
+        "order": {
+          "latest": "Latest",
+          "hot": "Hottest",
+          "comments": "Most Comments",
+          "likes": "Most Likes",
+          "views": "Most Views"
+        },
         "emptyTitle": "No posts yet",
         "emptyDescKeyword": "No matching posts found",
         "emptyDescCategory": "No posts in this category",

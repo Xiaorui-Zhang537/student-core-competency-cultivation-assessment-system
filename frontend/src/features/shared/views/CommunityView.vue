@@ -117,11 +117,11 @@
                   />
                 </div>
                 <select v-model="filterOptions.orderBy" @change="applyFilters" class="input input-sm">
-                  <option value="latest">latest</option>
-                  <option value="hot">hot</option>
-                  <option value="comments">comments</option>
-                  <option value="likes">likes</option>
-                  <option value="views">views</option>
+                  <option value="latest">{{ t('shared.community.list.order.latest') }}</option>
+                  <option value="hot">{{ t('shared.community.list.order.hot') }}</option>
+                  <option value="comments">{{ t('shared.community.list.order.comments') }}</option>
+                  <option value="likes">{{ t('shared.community.list.order.likes') }}</option>
+                  <option value="views">{{ t('shared.community.list.order.views') }}</option>
                 </select>
               </div>
             </div>
@@ -294,7 +294,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, onMounted } from 'vue';
+import { ref, reactive, onMounted, computed } from 'vue';
 import { useRouter } from 'vue-router';
 import { storeToRefs } from 'pinia';
 import { useCommunityStore } from '@/stores/community';
@@ -347,14 +347,14 @@ const uploadHeaders = {
   Authorization: localStorage.getItem('token') ? `Bearer ${localStorage.getItem('token')}` : ''
 };
 
-const categories = ref([
-  { id: 'all', name: t('shared.community.categories.all'), icon: ChatBubbleLeftIcon },
-  { id: 'study', name: t('shared.community.categories.study'), icon: BookOpenIcon },
-  { id: 'help', name: t('shared.community.categories.help'), icon: QuestionMarkCircleIcon },
-  { id: 'share', name: t('shared.community.categories.share'), icon: LightBulbIcon },
-  { id: 'qa', name: t('shared.community.categories.qa'), icon: AcademicCapIcon },
-  { id: 'chat', name: t('shared.community.categories.chat'), icon: ChatBubbleOvalLeftEllipsisIcon }
-]);
+const categories = computed(() => ([
+  { id: 'all', name: t('shared.community.categories.all') as string, icon: ChatBubbleLeftIcon },
+  { id: 'study', name: t('shared.community.categories.study') as string, icon: BookOpenIcon },
+  { id: 'help', name: t('shared.community.categories.help') as string, icon: QuestionMarkCircleIcon },
+  { id: 'share', name: t('shared.community.categories.share') as string, icon: LightBulbIcon },
+  { id: 'qa', name: t('shared.community.categories.qa') as string, icon: AcademicCapIcon },
+  { id: 'chat', name: t('shared.community.categories.chat') as string, icon: ChatBubbleOvalLeftEllipsisIcon }
+]));
 
 const categoryIdToLabel: Record<string, string> = {
   study: '学习讨论',
