@@ -40,6 +40,10 @@ export const teacherApi = {
     return api.get(`/teachers/analytics/course/${courseId}/students/export`, { params, responseType: 'blob' as any });
   },
 
+  resetStudentCourseProgress: (courseId: string, studentId: string) => {
+    return api.post(`/teachers/courses/${courseId}/students/${studentId}/progress/reset`);
+  },
+
   // Ability radar & weights
   getAbilityRadar: (params: { courseId: string; classId?: string; studentId?: string; startDate: string; endDate: string }) => {
     return api.get('/teachers/ability/radar', { params });

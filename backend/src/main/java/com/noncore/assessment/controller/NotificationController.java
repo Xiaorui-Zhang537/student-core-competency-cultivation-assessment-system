@@ -143,6 +143,31 @@ public class NotificationController extends BaseController {
     }
 
     /**
+     * 获取与某人的会话（分页）
+     */
+    @GetMapping("/conversation")
+    @Operation(summary = "获取会话", description = "获取当前用户与指定对端的会话消息")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<ApiResponse<PageResult<Notification>>> getConversation(
+            @RequestParam("peerId") Long peerId,
+            @RequestParam(value = "page", defaultValue = "1") Integer page,
+            @RequestParam(value = "size", defaultValue = "20") Integer size
+    ) {
+        PageResult<Notification> result = notificationService.getConversation(getCurrentUserId(), peerId, page, size);
+        return ResponseEntity.ok(ApiResponse.success(result));
+    }
+
+    /**
+     * 将与某人的会话全部标记为已读
+     */
+    @PostMapping("/conversation/read")
+    @Operation(summary = "标记会话已读")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<ApiResponse<Map<String, Object>>> readConversation(@RequestParam("peerId") Long peerId) {
+        int count = notificationService.markConversationAsRead(getCurrentUserId(), peerId);
+        return ResponseEntity.ok(ApiResponse.success(Map.of("marked", count)));
+    }
+    /**
      * 发送通知（教师专用）
      */
     @PostMapping("/send")

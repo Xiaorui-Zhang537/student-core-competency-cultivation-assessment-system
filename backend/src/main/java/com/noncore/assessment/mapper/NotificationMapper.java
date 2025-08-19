@@ -188,4 +188,15 @@ public interface NotificationMapper {
      */
     List<StudentDashboardResponse.RecentNotificationDto> findRecentNotifications(@Param("recipientId") Long recipientId,
                                                                                  @Param("limit") int limit);
+
+    /**
+     * 查询双方会话消息（分页）
+     */
+    List<Notification> selectConversationBetween(@Param("userId") Long userId,
+                                                 @Param("peerId") Long peerId,
+                                                 @Param("offset") int offset,
+                                                 @Param("size") Integer size);
+
+    Integer countConversationBetween(@Param("userId") Long userId,
+                                     @Param("peerId") Long peerId);
 } 

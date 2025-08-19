@@ -97,10 +97,27 @@ export const notificationAPI = {
   },
 
   // 批量发送通知（管理员/教师功能）
-  batchSendNotifications: (data: {
-    notifications: CreateNotificationRequest[]
-  }): Promise<ApiResponse<Notification[]>> => {
+  batchSend: (data: {
+    recipientIds: (string|number)[]
+    title: string
+    content: string
+    type?: string
+    category?: string
+    priority?: string
+    relatedType?: string
+    relatedId?: string|number
+  }): Promise<ApiResponse<{ sentCount: number }>> => {
     return api.post('/notifications/batch/send', data)
+  },
+
+  // 获取与某人的会话
+  getConversation: (peerId: string | number, params?: { page?: number; size?: number }): Promise<ApiResponse<PaginatedResponse<Notification>>> => {
+    return api.get('/notifications/conversation', { params: { peerId, ...(params || {}) } })
+  },
+
+  // 标记会话已读
+  readConversation: (peerId: string | number): Promise<ApiResponse<{ marked: number }>> => {
+    return api.post('/notifications/conversation/read', undefined, { params: { peerId } })
   },
 
   // 发送作业通知（教师功能）

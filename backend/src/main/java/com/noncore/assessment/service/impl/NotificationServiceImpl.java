@@ -436,4 +436,30 @@ public class NotificationServiceImpl implements NotificationService {
         }
         return result;
     }
+
+    @Override
+    public PageResult<Notification> getConversation(Long userId, Long peerId, Integer page, Integer size) {
+        logger.info("获取会话：userId={}, peerId={}, page={}, size={}", userId, peerId, page, size);
+        int p = (page == null || page < 1) ? 1 : page;
+        int s = (size == null || size < 1) ? 20 : size;
+        int offset = (p - 1) * s;
+        List<Notification> items = notificationMapper.selectConversationBetween(userId, peerId, offset, s);
+        Integer total = notificationMapper.countConversationBetween(userId, peerId);
+        int totalPages = (int) Math.ceil((total == null ? 0 : total) / (double) s);
+        return PageResult.of(items, p, s, total == null ? 0L : total.longValue(), totalPages);
+    }
+
+    @Override
+    public int markConversationAsRead(Long userId, Long peerId) {
+        logger.info("标记会话已读：userId={}, peerId={}", userId, peerId);
+        // 简化处理：取我作为接收者的未读消息，逐条标记
+        List<Notification> mine = notificationMapper.selectConversationBetween(userId, peerId, 0, Integer.MAX_VALUE);
+        int count = 0;
+        for (Notification n : mine) {
+            if (Boolean.FALSE.equals(n.getIsRead()) && userId.equals(n.getRecipientId())) {
+                count += notificationMapper.markAsRead(n.getId());
+            }
+        }
+        return count;
+    }
 } 

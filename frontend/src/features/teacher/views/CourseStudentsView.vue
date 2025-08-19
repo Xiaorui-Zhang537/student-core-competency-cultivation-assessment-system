@@ -121,10 +121,6 @@
                <span class="text-sm text-gray-600 dark:text-gray-400">
                  {{ t('teacher.students.batch.selectedCount', { count: selectedStudents.length }) }}
                </span>
-               <Button variant="purple" size="sm" @click="batchSendMessage">
-                 <paper-airplane-icon class="w-4 h-4 mr-1" />
-                 {{ t('teacher.students.batch.sendMessage') }}
-               </Button>
                <Button variant="teal" size="sm" @click="batchExport">
                  <arrow-down-tray-icon class="w-4 h-4 mr-1" />
                  {{ t('teacher.students.batch.export') }}
@@ -136,7 +132,7 @@
              </div>
             
             <!-- 排序 -->
-            <select v-model="sortBy" class="input input-sm">
+            <select v-if="selectedStudents.length === 0" v-model="sortBy" class="input input-sm">
               <option value="name">{{ t('teacher.students.filters.sort.name') }}</option>
               <option value="progress">{{ t('teacher.students.filters.sort.progress') }}</option>
               <option value="grade">{{ t('teacher.students.filters.sort.grade') }}</option>
@@ -357,6 +353,16 @@
       </card>
 
       <!-- 已移除卡片视图 -->
+
+      <teleport to="body">
+        <ChatDrawer
+          :open="chattingOpen"
+          :peer-id="chattingPeerId || ''"
+          :course-id="courseId"
+          :peer-name="chattingPeerName"
+          @close="chattingOpen=false"
+        />
+      </teleport>
     </div>
   </div>
 </template>
@@ -391,6 +397,7 @@ import {
   ArrowPathIcon
 } from '@heroicons/vue/24/outline'
 import UserAvatar from '@/components/ui/UserAvatar.vue'
+import ChatDrawer from '@/features/teacher/components/ChatDrawer.vue'
 // @ts-ignore shim for vue-i18n types in this project
 import { useI18n } from 'vue-i18n'
 
@@ -413,6 +420,13 @@ const selectedStudents = ref<string[]>([])
 const showStudentMenu = ref<string | null>(null)
 const currentPage = ref(1)
 const pageSize = ref(20)
+const chattingPeerId = ref<string | null>(null)
+const chattingOpen = ref(false)
+const chattingPeerName = computed(() => {
+  const pid = chattingPeerId.value
+  const stu = students.value.find((s: any) => s.id === pid)
+  return (stu && stu.name) ? stu.name : ''
+})
 
 // 统计数据（占位：后续可接入专用统计端点）
 const stats = reactive({
@@ -599,9 +613,9 @@ const formatRelativeTime = (timestamp: string) => {
   const hours = Math.floor(minutes / 60)
   const days = Math.floor(hours / 24)
   
-  if (minutes < 60) return `${minutes} ${t('shared.community.list.minutesAgo', { count: minutes })}`
-  if (hours < 24) return `${hours} ${t('shared.community.list.hoursAgo', { count: hours })}`
-  if (days < 7) return `${days} ${t('shared.community.list.daysAgo', { count: days })}`
+  if (minutes < 60) return String(t('shared.community.list.minutesAgo', { count: minutes }))
+  if (hours < 24) return String(t('shared.community.list.hoursAgo', { count: hours }))
+  if (days < 7) return String(t('shared.community.list.daysAgo', { count: days }))
   return time.toLocaleDateString(locale.value as unknown as string)
 }
 
@@ -615,20 +629,72 @@ const toggleStudentMenu = (studentId: string) => {
 }
 
 const viewStudentDetail = (studentId: string) => {
-  router.push(`/teacher/students/${studentId}`)
+  const s = students.value.find(x => x.id === studentId)
+  router.push({
+    path: `/teacher/students/${studentId}`,
+    query: {
+      name: s?.name || '',
+      courseId,
+      courseTitle: courseName.value || ''
+    }
+  })
 }
 
-// 移除模拟的发送消息入口（占位保留函数，避免模板引用报错）
-const sendMessage = (_studentId: string) => {}
+const sendMessage = async (studentId: string) => {
+  chattingPeerId.value = studentId
+  chattingOpen.value = true
+}
 
 const viewGrades = (studentId: string) => {
         router.push(`/teacher/students/${studentId}`)
 }
 
 // 移除模拟重置逻辑，保留空函数
-const resetProgress = async (_studentId: string) => {}
+const resetProgress = async (studentId: string) => {
+  if (!confirm(t('teacher.students.table.confirmReset') as string)) return
+  try {
+    const { teacherApi } = await import('@/api/teacher.api')
+    await teacherApi.resetStudentCourseProgress(courseId, studentId)
+    const s = students.value.find(x => x.id === studentId)
+    if (s) {
+      s.progress = 0
+      s.completedLessons = 0
+      s.lastActiveAt = new Date().toISOString()
+    }
+    uiStore.showNotification({ type: 'success', title: t('app.notifications.success.title') as string, message: t('teacher.students.table.resetSuccess') as string })
+  } catch (e: any) {
+    uiStore.showNotification({ type: 'error', title: t('app.notifications.error.title') as string, message: e?.message || t('teacher.students.table.resetFailed') as string })
+  }
+}
 
-const exportStudentData = async (_studentId: string) => {}
+const exportStudentData = async (_studentId: string) => {
+  const s = students.value.find(x => x.id === _studentId)
+  if (!s) return
+  // 生成单个学生的CSV（前端导出）
+  const headers = [
+    'student_id','name','progress','completed_lessons','total_lessons','average_grade','activity_level','study_time_per_week','last_active_at','joined_at'
+  ]
+  const row = [
+    `"${String(s.studentId ?? '')}"`,
+    `"${String(s.name ?? '').replace(/"/g, '""')}"`,
+    String(s.progress ?? ''),
+    String(s.completedLessons ?? ''),
+    String(s.totalLessons ?? ''),
+    String(s.averageGrade ?? ''),
+    `"${String(s.activityLevel ?? '')}"`,
+    String(s.studyTime ?? ''),
+    `"${String(s.lastActiveAt ?? '')}"`,
+    `"${String(s.joinedAt ?? '')}"`
+  ]
+  const csv = `${headers.join(',')}\n${row.join(',')}\n`
+  const blob = new Blob([csv], { type: 'text/csv;charset=UTF-8' })
+  const link = document.createElement('a')
+  link.href = URL.createObjectURL(blob)
+  link.download = `course_${courseId}_student_${_studentId}.csv`
+  document.body.appendChild(link)
+  link.click()
+  document.body.removeChild(link)
+}
 
 const removeStudent = async (studentId: string) => {
   if (!confirm(t('teacher.students.table.confirmRemove') as string)) return
@@ -651,11 +717,80 @@ const removeStudent = async (studentId: string) => {
   }
 }
 
-const batchSendMessage = () => {}
+const batchSendMessage = async () => {
+  if (selectedStudents.value.length === 0) return
+  const title = prompt(t('teacher.students.message.promptTitle') as string, t('teacher.students.message.defaultTitle') as string) || ''
+  const content = prompt(t('teacher.students.message.promptContent') as string, '') || ''
+  if (!title || !content) return
+  try {
+    const { notificationAPI } = await import('@/api/notification.api')
+    const recipientIds = selectedStudents.value.map(id => Number(id))
+    await notificationAPI.batchSend({ recipientIds, title, content, type: 'message', category: 'course', relatedType: 'course', relatedId: Number(courseId) })
+    uiStore.showNotification({ type: 'success', title: t('app.notifications.success.title') as string, message: t('teacher.students.message.batchSent') as string })
+  } catch (e: any) {
+    uiStore.showNotification({ type: 'error', title: t('app.notifications.error.title') as string, message: e?.message || t('teacher.students.message.failed') as string })
+  }
+}
 
-const batchExport = async () => {}
+const batchExport = async () => {
+  if (selectedStudents.value.length === 0) return
+  // headers 与单个导出保持一致
+  const headers = [
+    'student_id','name','progress','completed_lessons','total_lessons','average_grade','activity_level','study_time_per_week','last_active_at','joined_at'
+  ]
+  const selected = students.value.filter(s => selectedStudents.value.includes(s.id))
+  if (selected.length === 0) return
+  const escape = (v: any) => `"${String(v ?? '').replace(/"/g, '""')}"`
+  const rows = selected.map((s) => [
+    escape(s.studentId),
+    escape(s.name),
+    String(s.progress ?? ''),
+    String(s.completedLessons ?? ''),
+    String(s.totalLessons ?? ''),
+    String(s.averageGrade ?? ''),
+    escape(s.activityLevel),
+    String(s.studyTime ?? ''),
+    escape(s.lastActiveAt),
+    escape(s.joinedAt)
+  ].join(','))
+  const csv = `${headers.join(',')}\n${rows.join('\n')}\n`
+  const blob = new Blob([csv], { type: 'text/csv;charset=UTF-8' })
+  const link = document.createElement('a')
+  link.href = URL.createObjectURL(blob)
+  link.download = `course_${courseId}_students_selected.csv`
+  document.body.appendChild(link)
+  link.click()
+  document.body.removeChild(link)
+  uiStore.showNotification({ type: 'success', title: t('app.notifications.success.title') as string, message: `${selected.length} ${t('teacher.students.batch.export')}` })
+}
 
-const batchRemove = async () => {}
+const batchRemove = async () => {
+  if (selectedStudents.value.length === 0) return
+  if (!confirm(t('teacher.students.table.confirmRemove') as string)) return
+  try {
+    const { courseApi } = await import('@/api/course.api')
+    const ids = [...selectedStudents.value]
+    // 逐个调用后端移除
+    const results = await Promise.allSettled(ids.map(id => courseApi.removeStudent(courseId, id)))
+    // 成功的ID集合
+    const successIds = ids.filter((_, idx) => results[idx].status === 'fulfilled')
+    if (successIds.length > 0) {
+      students.value = students.value.filter(s => !successIds.includes(s.id))
+    }
+    // 清空选择
+    selectedStudents.value = []
+    const okCount = successIds.length
+    const failCount = ids.length - okCount
+    if (okCount > 0) {
+      uiStore.showNotification({ type: 'success', title: t('teacher.students.table.removeSuccess') as string, message: `${okCount}` })
+    }
+    if (failCount > 0) {
+      uiStore.showNotification({ type: 'warning', title: t('teacher.students.table.removeFail') as string, message: `${failCount}` })
+    }
+  } catch (error: any) {
+    uiStore.showNotification({ type: 'error', title: t('teacher.students.table.removeFail') as string, message: error?.message || '' })
+  }
+}
 
 const exportData = async () => {
   try {
@@ -735,4 +870,4 @@ watch(searchQuery, () => {
 onUnmounted(() => {
   document.removeEventListener('click', handleDocClick)
 })
-</script> 
+ </script> 

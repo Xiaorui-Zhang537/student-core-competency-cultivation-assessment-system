@@ -314,7 +314,7 @@ const onCourseChange = () => {
   // 切换课程时重置本地总学生兜底值，避免显示上一个课程数据
   studentTotal.value = 0
   // 同步URL query，统一入口 /teacher/analytics?courseId=
-  router.replace({ name: 'TeacherAnalytics', query: { courseId: selectedCourseId.value } })
+  router.replace({ name: 'TeacherAnalytics', query: { courseId: selectedCourseId.value, studentId: selectedStudentId.value || undefined } })
   teacherStore.fetchCourseAnalytics(selectedCourseId.value)
   teacherStore.fetchClassPerformance(selectedCourseId.value)
   // 初始化权重
@@ -325,6 +325,11 @@ const onCourseChange = () => {
     .then((data: any) => {
       topStudents.value = (data?.items ?? []) as CourseStudentPerformanceItem[]
       if (typeof data?.total === 'number') studentTotal.value = data.total
+      // 若路由携带 studentId，则自动选中该学生
+      const routeStudentId: any = (route.query as any)?.studentId || null
+      if (routeStudentId) {
+        selectedStudentId.value = String(routeStudentId)
+      }
     })
     .catch(() => { topStudents.value = [] })
   nextTick(() => { 
@@ -338,6 +343,14 @@ watch(() => route.query.courseId, (cid) => {
   if (cid) {
     selectedCourseId.value = String(cid)
     onCourseChange()
+  }
+})
+
+// 当路由中的 studentId 改变时，自动选中该学生并刷新雷达图
+watch(() => route.query.studentId, (sid) => {
+  selectedStudentId.value = sid ? String(sid) : null
+  if (selectedCourseId.value) {
+    loadRadar()
   }
 })
 
@@ -380,10 +393,14 @@ onMounted(async () => {
   }
   await courseStore.fetchCourses({ page: 1, size: 100 })
   const routeCourseId = (route.query as any)?.courseId || (route.params as any)?.id || null
+  const routeStudentId = (route.query as any)?.studentId || null
   if (routeCourseId) {
     selectedCourseId.value = String(routeCourseId)
   } else if (teacherCourses.value.length) {
     selectedCourseId.value = String(teacherCourses.value[0].id)
+  }
+  if (routeStudentId) {
+    selectedStudentId.value = String(routeStudentId)
   }
   onCourseChange()
   window.addEventListener('resize', resizeCharts)

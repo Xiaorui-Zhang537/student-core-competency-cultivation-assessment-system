@@ -193,4 +193,14 @@ public interface NotificationService {
      * @return 清理统计
      */
     Map<String, Object> cleanupExpiredNotifications(int days);
+
+    /**
+     * 获取与某人的会话记录
+     */
+    PageResult<Notification> getConversation(Long userId, Long peerId, Integer page, Integer size);
+
+    /**
+     * 将与某人的会话全部标记为已读
+     */
+    int markConversationAsRead(Long userId, Long peerId);
 } 

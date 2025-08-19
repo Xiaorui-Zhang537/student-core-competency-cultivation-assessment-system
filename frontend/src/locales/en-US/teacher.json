@@ -459,6 +459,18 @@
 				"failTitle": "Invitation failed",
 				"failMsg": "Submit failed"
 			},
+			"message": {
+				"promptTitle": "Message title",
+				"defaultTitle": "Teacher Notice",
+				"promptContent": "Enter message content",
+				"sent": "Message sent",
+				"failed": "Send failed",
+				"batchSent": "Batch messages sent"
+			},
+			"chat": {
+				"title": "Chat with {name}",
+				"placeholder": "Type a message..."
+			},
 			"table": {
 				"student": "Student",
 				"progress": "Progress",
@@ -475,7 +487,7 @@
 				},
 				"studyHours": "{hours}h/week",
 				"view": "View",
-				"message": "Message",
+				"message": "Chat",
 				"viewGrades": "View Grades",
 				"reset": "Reset Progress",
 				"export": "Export",

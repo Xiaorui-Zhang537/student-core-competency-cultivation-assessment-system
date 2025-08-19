@@ -6,7 +6,7 @@
     <resultMap id="NotificationResultMap" type="com.noncore.assessment.entity.Notification">
         <id column="id" property="id"/>
         <result column="user_id" property="recipientId"/>
-        <!-- senderId 非必需，可扩展，见下 -->
+        <result column="sender_id" property="senderId"/>
         <result column="title" property="title"/>
         <result column="content" property="content"/>
         <result column="type" property="type"/>
@@ -28,42 +28,64 @@
 
     <!-- 公共列 -->
     <sql id="Base_Column_List">
-        id, user_id, title, content, type, priority, is_read, related_type, related_id, expired_at, created_at,
+        id, user_id, sender_id, title, content, type, priority, is_read, related_type, related_id, expired_at, created_at,
         <!-- 下面字段视是否加到表里自动兼容 -->
         category, read_at, updated_at, deleted, data, icon, action_url
     </sql>
 
     <!-- 插入通知 -->
     <insert id="insertNotification" parameterType="com.noncore.assessment.entity.Notification" useGeneratedKeys="true" keyProperty="id">
-        INSERT INTO notifications (
-        user_id, title, content, type, priority, is_read, related_type, related_id, expired_at, created_at,
-        <!-- 扩展字段自动适配 -->
-        <if test="category != null">category,</if>
-        <if test="readAt != null">read_at,</if>
-        <if test="updatedAt != null">updated_at,</if>
-        <if test="deleted != null">deleted,</if>
-        <if test="data != null">data,</if>
-        <if test="icon != null">icon,</if>
-        <if test="actionUrl != null">action_url,</if>
-        ) VALUES (
-        #{recipientId}, #{title}, #{content}, #{type}, #{priority}, #{isRead}, #{relatedType}, #{relatedId}, #{expiredAt}, #{createdAt},
-        <if test="category != null">#{category},</if>
-        <if test="readAt != null">#{readAt},</if>
-        <if test="updatedAt != null">#{updatedAt},</if>
-        <if test="deleted != null">#{deleted},</if>
-        <if test="data != null">#{data},</if>
-        <if test="icon != null">#{icon},</if>
-        <if test="actionUrl != null">#{actionUrl},</if>
-        )
+        INSERT INTO notifications
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            user_id,
+            sender_id,
+            title,
+            content,
+            type,
+            priority,
+            is_read,
+            related_type,
+            related_id,
+            expired_at,
+            created_at,
+            <if test="category != null">category,</if>
+            <if test="readAt != null">read_at,</if>
+            <if test="updatedAt != null">updated_at,</if>
+            <if test="deleted != null">deleted,</if>
+            <if test="data != null">data,</if>
+            <if test="icon != null">icon,</if>
+            <if test="actionUrl != null">action_url,</if>
+        </trim>
+        VALUES
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            #{recipientId},
+            #{senderId},
+            #{title},
+            #{content},
+            #{type},
+            #{priority},
+            #{isRead},
+            #{relatedType},
+            #{relatedId},
+            #{expiredAt},
+            #{createdAt},
+            <if test="category != null">#{category},</if>
+            <if test="readAt != null">#{readAt},</if>
+            <if test="updatedAt != null">#{updatedAt},</if>
+            <if test="deleted != null">#{deleted},</if>
+            <if test="data != null">#{data},</if>
+            <if test="icon != null">#{icon},</if>
+            <if test="actionUrl != null">#{actionUrl},</if>
+        </trim>
     </insert>
 
     <!-- 批量插入 -->
     <insert id="batchInsertNotifications" parameterType="java.util.List">
         INSERT INTO notifications (
-        user_id, title, content, type, priority, is_read, related_type, related_id, expired_at, created_at
+        user_id, sender_id, title, content, type, priority, is_read, related_type, related_id, expired_at, created_at
         ) VALUES
         <foreach collection="notifications" item="item" separator=",">
-            (#{item.recipientId}, #{item.title}, #{item.content}, #{item.type}, #{item.priority}, #{item.isRead}, #{item.relatedType}, #{item.relatedId}, #{item.expiredAt}, #{item.createdAt})
+            (#{item.recipientId}, #{item.senderId}, #{item.title}, #{item.content}, #{item.type}, #{item.priority}, #{item.isRead}, #{item.relatedType}, #{item.relatedId}, #{item.expiredAt}, #{item.createdAt})
         </foreach>
     </insert>
 
@@ -86,6 +108,29 @@
         FROM notifications
         WHERE sender_id = #{senderId} AND deleted = 0
         ORDER BY created_at DESC
+    </select>
+
+    <!-- 会话：双方消息（我->对方 或 对方->我）按时间升序 -->
+    <select id="selectConversationBetween" resultMap="NotificationResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM notifications
+        WHERE deleted = 0
+          AND (
+              (user_id = #{userId} AND sender_id = #{peerId})
+              OR (user_id = #{peerId} AND sender_id = #{userId})
+          )
+        ORDER BY created_at ASC
+        LIMIT #{offset}, #{size}
+    </select>
+
+    <select id="countConversationBetween" resultType="java.lang.Integer">
+        SELECT COUNT(*)
+        FROM notifications
+        WHERE deleted = 0
+          AND (
+              (user_id = #{userId} AND sender_id = #{peerId})
+              OR (user_id = #{peerId} AND sender_id = #{userId})
+          )
     </select>
 
     <select id="selectByRecipientAndType" resultMap="NotificationResultMap">

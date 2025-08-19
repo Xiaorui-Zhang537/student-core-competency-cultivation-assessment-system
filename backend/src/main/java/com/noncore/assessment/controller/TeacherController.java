@@ -4,6 +4,7 @@ import com.noncore.assessment.dto.response.*;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import com.noncore.assessment.service.AnalyticsQueryService;
+import com.noncore.assessment.service.EnrollmentService;
 import com.noncore.assessment.service.UserService;
 import com.noncore.assessment.util.ApiResponse;
 import io.swagger.v3.oas.annotations.Operation;
@@ -20,10 +21,12 @@ import org.springframework.web.bind.annotation.*;
 public class TeacherController extends BaseController {
 
     private final AnalyticsQueryService analyticsQueryService;
+    private final EnrollmentService enrollmentService;
 
-    public TeacherController(AnalyticsQueryService analyticsQueryService, UserService userService) {
+    public TeacherController(AnalyticsQueryService analyticsQueryService, UserService userService, EnrollmentService enrollmentService) {
         super(userService);
         this.analyticsQueryService = analyticsQueryService;
+        this.enrollmentService = enrollmentService;
     }
 
     // Removed legacy single-student progress endpoint; analytics now uses course-scoped student performance APIs
@@ -112,4 +115,16 @@ public class TeacherController extends BaseController {
     }
 
     // CSV helpers moved to CsvUtils
-} 
+
+    @PostMapping("/courses/{courseId}/students/{studentId}/progress/reset")
+    @Operation(summary = "重置学生课程进度")
+    @PreAuthorize("hasRole('TEACHER') or hasRole('ADMIN')")
+    public ResponseEntity<ApiResponse<Void>> resetStudentCourseProgress(
+            @PathVariable Long courseId,
+            @PathVariable Long studentId
+    ) {
+        Long teacherId = getCurrentUserId();
+        enrollmentService.resetStudentCourseProgress(teacherId, courseId, studentId);
+        return ResponseEntity.ok(ApiResponse.success());
+    }
+}

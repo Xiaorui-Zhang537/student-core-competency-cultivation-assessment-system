@@ -20,4 +20,10 @@ public interface EnrollmentService {
     void addStudentsToCourse(Long teacherId, Long courseId, List<Long> studentIds);
 
     List<Course> getEnrolledCourses(Long studentId);
+
+    /**
+     * 教师重置某学生在某课程下的学习进度
+     * 将 lesson_progress 以及 enrollments.progress 归零
+     */
+    void resetStudentCourseProgress(Long teacherId, Long courseId, Long studentId);
 } 

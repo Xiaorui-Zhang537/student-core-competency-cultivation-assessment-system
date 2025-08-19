@@ -9,6 +9,7 @@ import com.noncore.assessment.exception.ErrorCode;
 import com.noncore.assessment.mapper.CourseMapper;
 import com.noncore.assessment.mapper.EnrollmentMapper;
 import com.noncore.assessment.mapper.UserMapper;
+import com.noncore.assessment.mapper.LessonProgressMapper;
 import com.noncore.assessment.service.EnrollmentService;
 import com.noncore.assessment.util.PageResult;
 import org.slf4j.Logger;
@@ -30,11 +31,13 @@ public class EnrollmentServiceImpl implements EnrollmentService {
     private final EnrollmentMapper enrollmentMapper;
     private final CourseMapper courseMapper;
     private final UserMapper userMapper;
+    private final LessonProgressMapper lessonProgressMapper;
 
-    public EnrollmentServiceImpl(EnrollmentMapper enrollmentMapper, CourseMapper courseMapper, UserMapper userMapper) {
+    public EnrollmentServiceImpl(EnrollmentMapper enrollmentMapper, CourseMapper courseMapper, UserMapper userMapper, LessonProgressMapper lessonProgressMapper) {
         this.enrollmentMapper = enrollmentMapper;
         this.courseMapper = courseMapper;
         this.userMapper = userMapper;
+        this.lessonProgressMapper = lessonProgressMapper;
     }
 
     @Override
@@ -53,7 +56,7 @@ public class EnrollmentServiceImpl implements EnrollmentService {
         if (isStudentEnrolled(courseId, studentId)) {
             throw new BusinessException(ErrorCode.STUDENT_ALREADY_ENROLLED);
         }
-        int result = enrollmentMapper.insertEnrollment(studentId, courseId, "enrolled", LocalDateTime.now());
+        int result = enrollmentMapper.insertEnrollment(studentId, courseId, "active", LocalDateTime.now());
         if (result <= 0) {
             throw new BusinessException(ErrorCode.OPERATION_FAILED, "选课失败");
         }
@@ -136,7 +139,7 @@ public class EnrollmentServiceImpl implements EnrollmentService {
             Enrollment enrollment = new Enrollment();
             enrollment.setStudentId(studentId);
             enrollment.setCourseId(courseId);
-            enrollment.setStatus("enrolled");
+            enrollment.setStatus("active");
             enrollment.setEnrolledAt(LocalDateTime.now());
             enrollmentsToInsert.add(enrollment);
         }
@@ -156,6 +159,15 @@ public class EnrollmentServiceImpl implements EnrollmentService {
         return courseMapper.selectCoursesByStudentId(studentId);
     }
 
+    @Override
+    public void resetStudentCourseProgress(Long teacherId, Long courseId, Long studentId) {
+        logger.info("重置课程进度: courseId={}, studentId={}, teacherId={}", courseId, studentId, teacherId);
+        checkCourseOwnership(courseId, teacherId);
+        // 重置章节进度
+        lessonProgressMapper.resetCourseProgress(studentId, courseId);
+        // 重置选课冗余进度
+        enrollmentMapper.updateProgress(studentId, courseId, 0.0);
+    }
     private void checkCourseOwnership(Long courseId, Long teacherId) {
         Course course = courseMapper.selectCourseById(courseId);
         if (course == null) {
