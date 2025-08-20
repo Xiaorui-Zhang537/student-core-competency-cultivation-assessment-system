@@ -1,7 +1,15 @@
 {
   "common": {
     "cancel": "Cancel",
-    "submit": "Submit"
+    "submit": "Submit",
+    "search": "Search",
+    "new": "New",
+    "enable": "Enable",
+    "rename": "Rename",
+    "pin": "Pin",
+    "unpin": "Unpin",
+    "delete": "Delete",
+    "uploadImage": "Upload Image"
   }
 }
 

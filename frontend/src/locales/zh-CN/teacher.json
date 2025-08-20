@@ -373,6 +373,10 @@
 			"thinking": "AI 正在思考...",
 			"placeholder": "输入你的问题，按 Enter 发送",
 			"send": "发送",
+			"conversations": "我的会话",
+			"memory": "长期记忆",
+			"memoryPlaceholder": "个性化偏好、口吻等...",
+			"renameTitle": "重命名对话",
 			"context": {
 				"title": "上下文",
 				"desc": "可选：选择课程与学生为 AI 提供上下文，获得更相关的建议。",
@@ -384,12 +388,13 @@
 				"applied": "上下文已生效：课程 {course}，学生 {count} 名"
 			},
 			"model": {
-				"title": "模型设置（通过 OpenRouter）",
+				"title": "模型设置",
 				"label": "模型",
-				"default": "OpenAI GPT-4o-mini（via OpenRouter）"
+				"default": "OpenAI GPT-4o-mini"
 			},
 			"greeting": "你好，我是 AI 助理。你可以向我咨询课程分析、作业设计、学习建议等问题。",
-			"sendFailed": "发送失败，请稍后重试。"
+			"sendFailed": "发送失败，请稍后重试。",
+			"untitled": "未命名会话"
 		},
 		"students": {
 			"breadcrumb": {

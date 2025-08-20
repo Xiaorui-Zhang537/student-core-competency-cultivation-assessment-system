@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.noncore.assessment.mapper.AiMemoryMapper">
+
+    <resultMap id="BaseResultMap" type="com.noncore.assessment.entity.AiMemory">
+        <id column="id" property="id"/>
+        <result column="user_id" property="userId"/>
+        <result column="enabled" property="enabled"/>
+        <result column="content" property="content"/>
+        <result column="updated_at" property="updatedAt"/>
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        id, user_id, enabled, content, updated_at
+    </sql>
+
+    <select id="selectByUserId" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM ai_memories
+        WHERE user_id = #{userId}
+    </select>
+
+    <!-- MySQL 8+ 可用 ON DUPLICATE KEY UPDATE 或 REPLACE INTO，这里使用 ON DUPLICATE -->
+    <insert id="upsertByUserId" parameterType="com.noncore.assessment.entity.AiMemory">
+        INSERT INTO ai_memories (user_id, enabled, content, updated_at)
+        VALUES (#{userId}, #{enabled}, #{content}, NOW())
+        ON DUPLICATE KEY UPDATE enabled = VALUES(enabled), content = VALUES(content), updated_at = NOW()
+    </insert>
+
+</mapper>
+
+

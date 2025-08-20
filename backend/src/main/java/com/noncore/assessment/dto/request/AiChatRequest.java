@@ -25,6 +25,10 @@ public class AiChatRequest {
 
     private String provider; // openrouter | deepseek (official)
 
+    private Long conversationId; // 可选：指定会话
+
+    private java.util.List<Long> attachmentFileIds; // 可选：多模态附件（若模型不支持将忽略）
+
     @Data
     @NoArgsConstructor
     @AllArgsConstructor

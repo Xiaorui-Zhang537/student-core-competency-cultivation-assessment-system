@@ -373,6 +373,10 @@
 			"thinking": "AI is thinking...",
 			"placeholder": "Type your question and press Enter",
 			"send": "Send",
+			"conversations": "My Conversations",
+			"memory": "Long-term Memory",
+			"memoryPlaceholder": "Preferences, tone, etc...",
+			"renameTitle": "Rename Conversation",
 			"context": {
 				"title": "Context",
 				"desc": "Optionally pick a course and students for better suggestions.",
@@ -384,12 +388,13 @@
 				"applied": "Context applied: course {course}, {count} students"
 			},
 			"model": {
-				"title": "Model Settings (via OpenRouter)",
+				"title": "Model Settings",
 				"label": "Model",
-				"default": "OpenAI GPT-4o-mini (via OpenRouter)"
+				"default": "OpenAI GPT-4o-mini"
 			},
 			"greeting": "Hello, I'm the AI assistant. Ask me about course analytics, assignment design, and learning recommendations.",
-			"sendFailed": "Send failed. Please try again."
+			"sendFailed": "Send failed. Please try again.",
+			"untitled": "Untitled conversation"
 		},
 		"students": {
 			"breadcrumb": {

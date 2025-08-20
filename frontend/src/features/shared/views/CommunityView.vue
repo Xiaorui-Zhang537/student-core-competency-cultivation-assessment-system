@@ -439,7 +439,8 @@ const viewPost = (postId: number) => {
 const askAiForPost = (post: any) => {
   const content = (post?.title ? `【问题标题】${post.title}\n` : '') +
                   (post?.content ? `【问题内容】${post.content}` : '')
-  router.push({ name: 'TeacherAiAssistant', query: { q: content } })
+  const target = authStore.userRole === 'TEACHER' ? { path: '/teacher/assistant' } : { path: '/student/assistant' }
+  router.push({ ...target, query: { q: content } })
 }
 
 const onEditPost = (post: any) => {

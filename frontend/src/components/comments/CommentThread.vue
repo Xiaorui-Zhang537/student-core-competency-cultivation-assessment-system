@@ -167,7 +167,7 @@ const onLikeComment = async () => {
 
 const askAiForComment = () => {
   const content = (props.comment?.content ? `【评论内容】${props.comment.content}` : '')
-  router.push({ path: '/teacher/ai', query: { q: content } })
+  router.push({ path: '/teacher/assistant', query: { q: content } })
 }
 </script>
 

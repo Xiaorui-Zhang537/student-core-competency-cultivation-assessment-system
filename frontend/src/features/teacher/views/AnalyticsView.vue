@@ -434,7 +434,7 @@ const askAiForAnalytics = () => {
     topStudents: top,
   }
   const q = t('teacher.analytics.messages.aiPromptHeader') + "\n" + JSON.stringify(payload, null, 2)
-  router.push({ path: '/teacher/ai', query: { q } })
+  router.push({ path: '/teacher/assistant', query: { q } })
 }
 
 const loadRadar = async () => {

@@ -297,7 +297,8 @@ const askAiForCurrentPost = () => {
   const content = (currentPost.value.title ? `【问题标题】${currentPost.value.title}\n` : '') +
                   (currentPost.value.content ? `【问题内容】${currentPost.value.content}` : '')
   // 角色统一使用教师AI页面；如需学生也支持，可按角色跳不同路由
-  router.push({ path: '/teacher/ai', query: { q: content } })
+  const target = authStore.userRole === 'TEACHER' ? { path: '/teacher/assistant' } : { path: '/student/assistant' }
+  router.push({ ...target, query: { q: content } })
 }
 
 const refreshDetailEditAttachments = async () => {

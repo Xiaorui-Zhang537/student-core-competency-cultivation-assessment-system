@@ -2,7 +2,7 @@ import AuthLayout from '@/layouts/AuthLayout.vue'
 import StudentLayout from '@/layouts/StudentLayout.vue'
 import TeacherLayout from '@/layouts/TeacherLayout.vue'
 import NotFoundView from '@/components/layout/NotFoundView.vue'
-import { createRouter, createWebHistory, type RouteLocationNormalized } from 'vue-router'
+import { createRouter, createWebHistory } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 
 const routes = [
@@ -63,6 +63,13 @@ const routes = [
         name: 'StudentPostDetail',
         component: () => import('@/features/shared/views/PostDetailView.vue'),
         props: true
+      }
+      ,
+      {
+        path: 'assistant',
+        name: 'StudentAssistant',
+        component: () => import('@/features/shared/views/AIAssistantView.vue'),
+        meta: { requiresAuth: true }
       }
       // ... 其他学生路由
     ]
@@ -139,7 +146,13 @@ const routes = [
       {
         path: 'ai',
         name: 'TeacherAI',
-        component: () => import('@/features/teacher/views/AiAssistantView.vue'),
+        component: () => import('@/features/shared/views/AIAssistantView.vue'),
+        meta: { requiresAuth: true, role: 'TEACHER' }
+      },
+      {
+        path: 'assistant',
+        name: 'TeacherAssistant',
+        component: () => import('@/features/shared/views/AIAssistantView.vue'),
         meta: { requiresAuth: true, role: 'TEACHER' }
       },
       {
@@ -164,6 +177,23 @@ const routes = [
       }
       // ... 其他教师路由
     ]
+  },
+  // 兼容旧路径：/assistant → 按角色重定向到嵌套路由，保留查询参数
+  {
+    path: '/assistant',
+    name: 'AssistantCompat',
+    redirect: (to: any) => {
+      const authStore = useAuthStore();
+      const isAuthed = authStore.isAuthenticated;
+      const role = authStore.userRole;
+      if (isAuthed && role === 'TEACHER') {
+        return { path: '/teacher/assistant', query: to.query };
+      }
+      if (isAuthed) {
+        return { path: '/student/assistant', query: to.query };
+      }
+      return { name: 'Login', query: { redirect: to.fullPath, ...to.query } };
+    }
   },
   {
     path: '/:pathMatch(.*)*',
