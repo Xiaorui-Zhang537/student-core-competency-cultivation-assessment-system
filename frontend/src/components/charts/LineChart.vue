@@ -104,8 +104,12 @@ const initChart = async () => {
     chartInstance.value = echarts.init(chartRef.value, theme)
     
     // 配置选项
+    const palette = theme === 'dark'
+      ? ['#93c5fd', '#22d3ee', '#f472b6', '#f59e0b', '#34d399']
+      : ['#3b82f6', '#06b6d4', '#ec4899', '#f59e0b', '#10b981']
+
     const option = {
-      backgroundColor: props.backgroundColor,
+      backgroundColor: theme === 'dark' ? '#0b0f1a' : '#ffffff',
       title: props.title ? {
         text: props.title,
         left: 'center',
@@ -166,7 +170,7 @@ const initChart = async () => {
         type: 'value',
         axisLine: {
           lineStyle: {
-            color: theme === 'dark' ? '#4b5563' : '#d1d5db'
+            color: theme === 'dark' ? '#6b7280' : '#d1d5db'
           }
         },
         axisLabel: {
@@ -174,32 +178,34 @@ const initChart = async () => {
         },
         splitLine: {
           lineStyle: {
-            color: theme === 'dark' ? '#374151' : '#f3f4f6'
+            color: theme === 'dark' ? '#4b5563' : '#e5e7eb'
           }
         }
       },
       
-      series: props.data.map(item => ({
+      series: props.data.map((item, idx) => ({
         name: item.name,
         type: item.type || 'line',
         smooth: item.smooth !== false,
         data: item.data,
+        symbol: 'circle',
+        symbolSize: theme === 'dark' ? 5 : 4,
         itemStyle: {
-          color: item.color || (theme === 'dark' ? '#60a5fa' : '#3b82f6')
+          color: item.color || palette[idx % palette.length]
         },
         lineStyle: {
-          color: item.color || (theme === 'dark' ? '#60a5fa' : '#3b82f6'),
-          width: 2
+          color: item.color || palette[idx % palette.length],
+          width: theme === 'dark' ? 3 : 2
         },
         areaStyle: item.type !== 'bar' ? {
           color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
             {
               offset: 0,
-              color: (item.color || (theme === 'dark' ? '#60a5fa' : '#3b82f6')) + '30'
+              color: (item.color || palette[idx % palette.length]) + (theme === 'dark' ? '40' : '30')
             },
             {
               offset: 1,
-              color: (item.color || (theme === 'dark' ? '#60a5fa' : '#3b82f6')) + '05'
+              color: (item.color || palette[idx % palette.length]) + (theme === 'dark' ? '10' : '05')
             }
           ])
         } : undefined,
@@ -266,12 +272,9 @@ watch(
 // 导出方法
 const exportChart = (type: 'png' | 'jpeg' = 'png') => {
   if (!chartInstance.value) return null
-  
-  return chartInstance.value.getDataURL({
-    type,
-    pixelRatio: 2,
-    backgroundColor: '#fff'
-  })
+  const isDark = document.documentElement.classList.contains('dark')
+  const bg = isDark ? '#0b0f1a' : '#ffffff'
+  return chartInstance.value.getDataURL({ type, pixelRatio: 2, backgroundColor: bg })
 }
 
 const downloadChart = (filename: string = 'chart', type: 'png' | 'jpeg' = 'png') => {

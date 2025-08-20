@@ -260,7 +260,7 @@
 				"title": "Student Info",
 				"course": "Course:",
 				"class": "Class:",
-				"avg": "Average:",
+				"avg": "Class Average:",
 				"rank": "Rank:",
 				"viewProfile": "View student profile"
 			},
