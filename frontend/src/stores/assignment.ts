@@ -43,28 +43,32 @@ export const useAssignmentStore = defineStore('assignment', () => {
     }
   };
 
-  const createAssignment = async (data: AssignmentCreationRequest) => {
+  const createAssignment = async (data: AssignmentCreationRequest, opts?: { suppressNotify?: boolean }) => {
     const response = await handleApiCall(
       () => assignmentApi.createAssignment(data),
       uiStore,
       '创建作业失败'
     );
     if (response) {
-      uiStore.showNotification({ type: 'success', title: i18n.global.t('teacher.assignments.notify.createdTitle') as string, message: i18n.global.t('teacher.assignments.notify.createdMsg') as string });
+      if (!opts?.suppressNotify) {
+        uiStore.showNotification({ type: 'success', title: i18n.global.t('teacher.assignments.notify.createdTitle') as string, message: i18n.global.t('teacher.assignments.notify.createdMsg') as string });
+      }
       await fetchAssignments({ courseId: data.courseId });
       return response;
     }
     return null;
   };
   
-  const updateAssignment = async (id: string, data: AssignmentUpdateRequest) => {
+  const updateAssignment = async (id: string, data: AssignmentUpdateRequest, opts?: { suppressNotify?: boolean }) => {
     const response = await handleApiCall(
       () => assignmentApi.updateAssignment(id, data),
       uiStore,
       '更新作业失败'
     );
     if (response) {
-      uiStore.showNotification({ type: 'success', title: i18n.global.t('teacher.assignments.notify.updatedTitle') as string, message: i18n.global.t('teacher.assignments.notify.updatedMsg') as string });
+      if (!opts?.suppressNotify) {
+        uiStore.showNotification({ type: 'success', title: i18n.global.t('teacher.assignments.notify.updatedTitle') as string, message: i18n.global.t('teacher.assignments.notify.updatedMsg') as string });
+      }
       if (selectedAssignment.value && selectedAssignment.value.id === id) {
         selectedAssignment.value = { ...selectedAssignment.value, ...response };
       }

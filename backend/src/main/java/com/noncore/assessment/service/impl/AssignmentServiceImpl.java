@@ -42,15 +42,18 @@ public class AssignmentServiceImpl implements AssignmentService {
     private final SubmissionMapper submissionMapper;
     private final EnrollmentMapper enrollmentMapper;
     private final NotificationService notificationService;
+    private final com.noncore.assessment.service.FileStorageService fileStorageService;
 
     public AssignmentServiceImpl(AssignmentMapper assignmentMapper,
                                  SubmissionMapper submissionMapper,
                                  EnrollmentMapper enrollmentMapper,
-                                 NotificationService notificationService) {
+                                 NotificationService notificationService,
+                                 com.noncore.assessment.service.FileStorageService fileStorageService) {
         this.assignmentMapper = assignmentMapper;
         this.submissionMapper = submissionMapper;
         this.enrollmentMapper = enrollmentMapper;
         this.notificationService = notificationService;
+        this.fileStorageService = fileStorageService;
     }
 
     @Override
@@ -117,6 +120,13 @@ public class AssignmentServiceImpl implements AssignmentService {
         // 检查是否有提交记录
         if (submissionMapper.countByAssignmentId(assignmentId) > 0) {
             throw new BusinessException(ErrorCode.ASSIGNMENT_ALREADY_SUBMITTED, "作业已有提交记录，无法删除");
+        }
+
+        // 清理附件: assignment_attachment
+        try {
+            fileStorageService.cleanupRelatedFiles("assignment_attachment", assignmentId);
+        } catch (Exception e) {
+            logger.warn("清理作业附件失败 assignmentId={}", assignmentId, e);
         }
 
         int result = assignmentMapper.deleteAssignment(assignmentId);

@@ -69,6 +69,7 @@
           variant="primary"
           :size="dense ? 'sm' : (compact ? 'sm' : 'md')"
           @click.stop="triggerFileSelect"
+          type="button"
           :disabled="disabled"
         >
           <PhotoIcon :class="[dense ? 'w-3 h-3' : (compact ? 'w-3 h-3' : 'w-4 h-4'), 'mr-2']" />
@@ -157,6 +158,7 @@
             v-if="!disabled"
             @click="removeFile(index)"
             class="ml-3 p-1.5 rounded hover:bg-red-50 dark:hover:bg-red-900/20 text-gray-400 hover:text-red-600 transition-colors"
+            type="button"
             :title="t('shared.upload.removeWithName', { name: file.name })"
           >
             <XMarkIcon class="w-4 h-4" />
@@ -183,6 +185,7 @@
             v-if="!disabled"
             @click="removeFile(files.indexOf(file))"
             class="absolute -top-2 -right-2 w-6 h-6 bg-red-500 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+            type="button"
           >
             <XMarkIcon class="w-3 h-3" />
           </Button>

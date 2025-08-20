@@ -10,6 +10,9 @@ export const userApi = {
   updateProfile: (data: UpdateProfileRequest): Promise<ApiResponse<User>> => {
     return api.put('/users/profile', data);
   },
+  updateAvatar: (fileId: number): Promise<ApiResponse<void>> => {
+    return api.put('/users/me/avatar', { fileId });
+  },
   changePassword: (data: ChangePasswordRequest): Promise<ApiResponse<void>> => {
     return api.post('/users/change-password', data);
   },

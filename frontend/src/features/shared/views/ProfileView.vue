@@ -110,7 +110,7 @@
                   :autoUpload="true"
                   :upload-url="`${baseURL}/files/upload`"
                   :upload-headers="uploadHeaders"
-                  :upload-data="{ purpose: 'avatar' }"
+                  :upload-data="{ purpose: 'avatar', relatedId: (userProfile as any)?.id }"
                   @upload-success="onAvatarUploaded"
                   @upload-error="onAvatarUploadError"
                 />
@@ -384,10 +384,12 @@ const handleResendVerification = async () => {
 };
 
 // 头像上传回调
-const onAvatarUploaded = (res: any) => {
+const onAvatarUploaded = async (res: any) => {
   const data = res?.data ?? res;
-  if (data && (data.id || data.fileId)) {
-    profileForm.avatar = String(data.id ?? data.fileId);
+  const newId = data && (data.id || data.fileId);
+  if (newId) {
+    await handleApiCall(() => userApi.updateAvatar(Number(newId)), uiStore, t('shared.profile.messages.updateFail'), { successMessage: t('shared.profile.messages.updateSuccess') as string });
+    await fetchUserProfile();
   }
 };
 const onAvatarUploadError = (msg: string) => {

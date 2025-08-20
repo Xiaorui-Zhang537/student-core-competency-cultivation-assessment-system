@@ -80,4 +80,9 @@ public interface PostLikeMapper {
      * @return 点赞的帖子ID列表
      */
     List<Long> selectLikedPostIds(@Param("postIds") List<Long> postIds, @Param("userId") Long userId);
+
+    /**
+     * 删除某帖子的所有点赞
+     */
+    int deleteByPostId(@Param("postId") Long postId);
 } 

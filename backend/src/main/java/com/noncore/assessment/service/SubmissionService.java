@@ -2,6 +2,7 @@ package com.noncore.assessment.service;
 
 import com.noncore.assessment.entity.Submission;
 import com.noncore.assessment.util.PageResult;
+import com.noncore.assessment.dto.request.SubmissionRequest;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.Map;
@@ -26,6 +27,11 @@ public interface SubmissionService {
      * @return 提交记录
      */
     Submission submitAssignment(Long assignmentId, Long studentId, String content, MultipartFile file);
+
+    /**
+     * 学生提交作业（JSON流程，fileIds为已上传文件ID列表，取首个作为主附件）
+     */
+    Submission submitAssignment(Long assignmentId, Long studentId, SubmissionRequest request);
 
     /**
      * 保存作业草稿

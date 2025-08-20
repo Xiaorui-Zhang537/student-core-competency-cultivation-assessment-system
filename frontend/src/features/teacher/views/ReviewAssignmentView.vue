@@ -129,6 +129,7 @@
               :upload-url="`${baseURL}/files/upload`"
               :upload-headers="uploadHeaders"
               :upload-data="assignmentUploadData"
+              @update:files="onFilesUpdate"
               @upload-error="onAssignmentUploadError"
             />
             <!-- 已有关联附件列表（编辑时显示） -->
@@ -142,7 +143,7 @@
                   </div>
                   <div class="flex items-center gap-2">
                     <a class="btn btn-sm btn-outline" :href="`${baseURL}/files/${f.id}/download`">{{ t('teacher.assignments.modal.download') }}</a>
-                    <button class="btn btn-sm btn-danger-outline" @click="confirmDeleteAttachment(f.id)">{{ t('teacher.assignments.modal.delete') }}</button>
+                    <button type="button" class="btn btn-sm btn-danger-outline" @click="confirmDeleteAttachment(f.id)">{{ t('teacher.assignments.modal.delete') }}</button>
                   </div>
                 </li>
               </ul>
@@ -283,9 +284,14 @@ const closeModal = () => {
 };
 
 const handleSubmit = async () => {
+  const normalize = (v: string) => (/^\d{4}-\d{2}-\d{2}$/.test(v) ? `${v} 23:59:59` : v)
   if (isEditing.value && editingAssignmentId.value) {
     const { title, description, dueDate } = form;
-    const updateData: AssignmentUpdateRequest = { title, description, dueDate };
+    const updateData: AssignmentUpdateRequest = { title, description, dueDate: normalize(dueDate) } as any;
+    // 确保 courseId 传回后端，避免“课程ID不能为空”
+    (updateData as any).courseId = form.courseId;
+    // 提供默认满分，避免后端校验失败（若后端允许不更新可移除）
+    (updateData as any).maxScore = (updateData as any).maxScore || 100;
     const updated = await assignmentStore.updateAssignment(editingAssignmentId.value, updateData);
     // 编辑时，如有新文件被选择，则上传
     if (updated && assignmentUploader.value) {
@@ -294,23 +300,39 @@ const handleSubmit = async () => {
       await refreshAttachments(editingAssignmentId.value);
     }
   } else {
-    const createData: AssignmentCreationRequest = { ...form };
+    const createData: AssignmentCreationRequest = { ...form, dueDate: normalize(form.dueDate) } as any;
+    // 默认满分 100 分
+    (createData as any).maxScore = 100;
+    // 先创建作业，但不立即弹出成功提示，待附件上传完成后再关闭弹窗
     const created = await assignmentStore.createAssignment(createData);
     if (created) {
       const assignmentId = (created as any)?.id || (created as any)?.data?.id;
       if (assignmentId && assignmentUploader.value) {
         assignmentUploadData.relatedId = assignmentId;
-        await assignmentUploader.value.uploadFiles?.();
+        try {
+          await assignmentUploader.value.uploadFiles?.();
+        } catch (_) {
+          // FileUpload 内部已处理错误提示，这里不打断流程
+        }
       }
     }
   }
   if (!assignmentStore.loading) {
+    // 直接关闭，无弹窗
     closeModal();
   }
 };
 
+const uploadFailed = ref(false);
 const onAssignmentUploadError = (msg: string) => {
+  uploadFailed.value = true;
   console.error('作业附件上传失败:', msg);
+};
+
+// 本地缓存当前选择的附件，用于“有附件才允许创建”的约束
+const selectedFiles = ref<any[]>([]);
+const onFilesUpdate = (files: any[]) => {
+  selectedFiles.value = files || [];
 };
 
 const handleDeleteAssignment = async (assignment: Assignment) => {

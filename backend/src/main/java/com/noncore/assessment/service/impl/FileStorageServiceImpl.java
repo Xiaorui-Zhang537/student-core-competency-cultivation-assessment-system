@@ -8,6 +8,7 @@ import com.noncore.assessment.service.FileStorageService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import jakarta.annotation.PostConstruct;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -40,49 +41,86 @@ public class FileStorageServiceImpl implements FileStorageService {
         this.fileRecordMapper = fileRecordMapper;
     }
 
-    @Value("${file.upload.path:/tmp/uploads}")
+    // Unified configuration keys aligned with application.yml
+    @Value("${file.upload-dir:/tmp/uploads}")
     private String uploadPath;
 
-    @Value("${file.upload.maxSize:10485760}") // 10MB
-    private long maxFileSize;
+    // Support human-readable size such as 50MB, 10MB, or plain number in bytes
+    @Value("${file.max-size:10485760}")
+    private String maxFileSizeStr;
 
-    private static final Set<String> ALLOWED_EXTENSIONS = Set.of(
-        "jpg", "jpeg", "png", "gif", "pdf", "doc", "docx", "xls", "xlsx", "ppt", "pptx", "txt", "zip", "rar"
-    );
+    @Value("${file.allowed-extensions:jpg,jpeg,png,gif,pdf,doc,docx,xls,xlsx,ppt,pptx,txt,zip,rar}")
+    private String allowedExtensionsCsv;
+
+    // Purpose-specific max sizes, e.g. "course_material=1GB,course_video=1GB"
+    @Value("${file.purpose-max-sizes:}")
+    private String purposeMaxSizesCsv;
+
+    private long maxFileSize;
+    private Set<String> allowedExtensions;
+    private Path baseUploadDir;
+    private Map<String, Long> purposeMaxSizeBytes = new HashMap<>();
+
+    @PostConstruct
+    public void initUploadConfig() {
+        this.maxFileSize = parseSizeToBytes(maxFileSizeStr);
+        this.allowedExtensions = parseExtensions(allowedExtensionsCsv);
+        this.purposeMaxSizeBytes = parsePurposeMaxSizes(purposeMaxSizesCsv);
+        // Resolve upload base directory to absolute path to avoid servlet temp dir resolution
+        Path configured = Paths.get(uploadPath);
+        if (configured.isAbsolute()) {
+            this.baseUploadDir = configured.normalize();
+        } else {
+            this.baseUploadDir = Paths.get(System.getProperty("user.dir")).resolve(configured).normalize();
+        }
+        try {
+            Files.createDirectories(this.baseUploadDir);
+            logger.info("文件上传根目录: {}", this.baseUploadDir);
+        } catch (IOException e) {
+            logger.warn("创建上传根目录失败: {}", this.baseUploadDir, e);
+        }
+    }
 
     @Override
     public FileRecord uploadFile(MultipartFile file, Long uploaderId, String purpose, Long relatedId) {
         try {
             logger.info("上传文件，用户ID: {}, 文件名: {}, 用途: {}", uploaderId, file.getOriginalFilename(), purpose);
 
-            // 验证文件
-            validateFile(file);
+            // 验证文件（按用途应用特定大小限制）
+            validateFile(file, purpose);
 
-            // 创建存储目录
+            // 创建存储目录（使用绝对路径）
             String datePath = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy/MM/dd"));
             String purposePath = purpose != null ? purpose : "general";
-            String fullPath = uploadPath + "/" + purposePath + "/" + datePath;
-            Files.createDirectories(Paths.get(fullPath));
+            Path storageDir = baseUploadDir.resolve(purposePath).resolve(datePath).normalize();
+            Files.createDirectories(storageDir);
 
             // 生成唯一文件名
             String originalName = file.getOriginalFilename();
             String extension = getFileExtension(originalName);
             String storedName = generateUniqueFileName(extension);
-            String filePath = fullPath + "/" + storedName;
+            Path targetPath = storageDir.resolve(storedName).normalize();
 
-            // 保存文件
-            file.transferTo(new File(filePath));
+            // 保存文件（确保父目录存在，且使用绝对路径）
+            File targetFile = targetPath.toFile();
+            File parent = targetFile.getParentFile();
+            if (parent != null && !parent.exists()) {
+                // 双保险
+                parent.mkdirs();
+            }
+            file.transferTo(targetFile);
 
             // 创建文件记录
             FileRecord fileRecord = new FileRecord();
             fileRecord.setOriginalName(originalName);
             fileRecord.setStoredName(storedName);
-            fileRecord.setFilePath(filePath);
+            fileRecord.setFilePath(targetPath.toString());
             fileRecord.setFileSize(file.getSize());
             fileRecord.setFileType(extension);
             fileRecord.setMimeType(file.getContentType());
             fileRecord.setUploaderId(uploaderId);
             fileRecord.setUploadPurpose(purpose);
+            fileRecord.setRelatedType(purpose);
             fileRecord.setRelatedId(relatedId);
             fileRecord.setDownloadCount(0);
             fileRecord.setStatus("active");
@@ -179,18 +217,58 @@ public class FileStorageServiceImpl implements FileStorageService {
     @Override
     public List<FileRecord> getUserFiles(Long uploaderId, String purpose) {
         logger.info("获取用户文件列表，用户ID: {}, 用途: {}", uploaderId, purpose);
-        
+
         if (purpose != null) {
-            return fileRecordMapper.selectByPurposeAndRelatedId(purpose, uploaderId);
-        } else {
-            return fileRecordMapper.selectByUploaderId(uploaderId);
+            // Filter by uploader and related type when a purpose is provided
+            return fileRecordMapper.selectByUploaderIdAndRelatedType(uploaderId, purpose);
         }
+        return fileRecordMapper.selectByUploaderId(uploaderId);
     }
 
     @Override
     public List<FileRecord> getRelatedFiles(String purpose, Long relatedId) {
         logger.info("获取关联文件列表，用途: {}, 关联ID: {}", purpose, relatedId);
         return fileRecordMapper.selectByPurposeAndRelatedId(purpose, relatedId);
+    }
+
+    @Override
+    public void cleanupRelatedFiles(String purpose, Long relatedId) {
+        logger.info("清理关联文件，用途: {}, 关联ID: {}", purpose, relatedId);
+        List<FileRecord> files = fileRecordMapper.selectByPurposeAndRelatedId(purpose, relatedId);
+        if (files == null || files.isEmpty()) return;
+        for (FileRecord f : files) {
+            try {
+                Path path = Paths.get(f.getFilePath());
+                if (Files.exists(path)) {
+                    Files.delete(path);
+                }
+            } catch (Exception e) {
+                logger.warn("删除物理文件失败(id={}): {}", f.getId(), f.getFilePath(), e);
+            }
+            try {
+                fileRecordMapper.deleteFileRecord(f.getId());
+            } catch (Exception e) {
+                logger.warn("删除文件记录失败(id={})", f.getId(), e);
+            }
+        }
+    }
+
+    @Override
+    public void relinkFilesTo(List<Long> fileIds, String newPurpose, Long newRelatedId, Long expectedUploaderId) {
+        if (fileIds == null || fileIds.isEmpty()) return;
+        List<FileRecord> records = fileRecordMapper.selectByIds(fileIds);
+        if (records.size() != fileIds.size()) {
+            throw new BusinessException(ErrorCode.INVALID_PARAMETER, "部分文件不存在");
+        }
+        for (FileRecord r : records) {
+            if (!Objects.equals(r.getUploaderId(), expectedUploaderId)) {
+                throw new BusinessException(ErrorCode.FILE_PERMISSION_DENIED, "不能操作他人文件");
+            }
+        }
+        int updated = fileRecordMapper.updateRelatedByIds(fileIds, newPurpose, newRelatedId);
+        if (updated <= 0) {
+            throw new BusinessException(ErrorCode.OPERATION_FAILED, "重绑定文件失败");
+        }
     }
 
     @Override
@@ -211,8 +289,8 @@ public class FileStorageServiceImpl implements FileStorageService {
             case "avatar", "assignment" ->
                 // 只有上传者可以访问
                     false;
-            case "course", "lesson" ->
-                // 课程相关文件，需要检查课程权限（简化实现，返回true）
+            case "course", "lesson", "community_post" ->
+                // 课程/章节/社区帖子附件：已登录即允许（更精细的校验可后续补充）
                     true;
             default -> false;
         };
@@ -269,19 +347,27 @@ public class FileStorageServiceImpl implements FileStorageService {
 
     // 私有辅助方法
 
-    private void validateFile(MultipartFile file) {
+    private void validateFile(MultipartFile file, String purpose) {
         if (file == null || file.isEmpty()) {
             throw new BusinessException(ErrorCode.FILE_EMPTY, "文件不能为空");
         }
 
-        if (file.getSize() > maxFileSize) {
-            throw new BusinessException(ErrorCode.FILE_SIZE_EXCEED, "文件大小超过限制: " + (maxFileSize / 1024 / 1024) + "MB");
+        long effectiveMax = maxFileSize;
+        if (purpose != null && purposeMaxSizeBytes != null) {
+            Long p = purposeMaxSizeBytes.get(purpose);
+            if (p != null && p > 0) effectiveMax = p;
+        }
+
+        if (file.getSize() > effectiveMax) {
+            long mb = effectiveMax / 1024 / 1024;
+            String tip = mb >= 1024 ? String.format("%.1fGB", mb / 1024.0) : (mb + "MB");
+            throw new BusinessException(ErrorCode.FILE_SIZE_EXCEED, "文件大小超过限制: " + tip);
         }
 
         String originalFilename = file.getOriginalFilename();
         if (originalFilename != null && originalFilename.contains(".")) {
             String extension = originalFilename.substring(originalFilename.lastIndexOf(".") + 1).toLowerCase();
-            if (!ALLOWED_EXTENSIONS.contains(extension)) {
+            if (allowedExtensions != null && !allowedExtensions.contains(extension)) {
                 throw new BusinessException(ErrorCode.FILE_TYPE_UNSUPPORTED, "不支持的文件类型: " + extension);
             }
         }
@@ -296,5 +382,48 @@ public class FileStorageServiceImpl implements FileStorageService {
 
     private String generateUniqueFileName(String extension) {
         return UUID.randomUUID().toString().replace("-", "") + "." + extension;
+    }
+
+    private long parseSizeToBytes(String size) {
+        if (size == null || size.isBlank()) return 10 * 1024 * 1024L;
+        String s = size.trim().toUpperCase();
+        try {
+            if (s.endsWith("KB")) return Long.parseLong(s.replace("KB", "").trim()) * 1024L;
+            if (s.endsWith("MB")) return Long.parseLong(s.replace("MB", "").trim()) * 1024L * 1024L;
+            if (s.endsWith("GB")) return Long.parseLong(s.replace("GB", "").trim()) * 1024L * 1024L * 1024L;
+            return Long.parseLong(s);
+        } catch (NumberFormatException e) {
+            logger.warn("无法解析文件大小配置: {}，使用默认10MB", size);
+            return 10 * 1024 * 1024L;
+        }
+    }
+
+    private Set<String> parseExtensions(String csv) {
+        if (csv == null || csv.isBlank()) {
+            return Set.of("jpg","jpeg","png","gif","pdf","doc","docx","xls","xlsx","ppt","pptx","txt","zip","rar");
+        }
+        String[] arr = csv.split(",");
+        Set<String> set = new HashSet<>();
+        for (String a : arr) {
+            String v = a.trim().toLowerCase();
+            if (!v.isEmpty()) set.add(v);
+        }
+        return set.isEmpty() ? Set.of("jpg","jpeg","png","gif","pdf","doc","docx","xls","xlsx","ppt","pptx","txt","zip","rar") : set;
+    }
+
+    private Map<String, Long> parsePurposeMaxSizes(String csv) {
+        Map<String, Long> map = new HashMap<>();
+        if (csv == null || csv.isBlank()) return map;
+        String[] pairs = csv.split(",");
+        for (String pair : pairs) {
+            String[] kv = pair.split("=");
+            if (kv.length == 2) {
+                String key = kv[0].trim();
+                String val = kv[1].trim();
+                long bytes = parseSizeToBytes(val);
+                if (!key.isEmpty() && bytes > 0) map.put(key, bytes);
+            }
+        }
+        return map;
     }
 } 

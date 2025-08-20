@@ -4,6 +4,7 @@ import com.noncore.assessment.dto.request.ChangePasswordRequest;
 import com.noncore.assessment.dto.request.ResetPasswordRequest;
 import com.noncore.assessment.dto.request.UpdateProfileRequest;
 import com.noncore.assessment.dto.response.UserProfileResponse;
+import com.noncore.assessment.dto.request.UpdateAvatarRequest;
 import com.noncore.assessment.entity.User;
 import com.noncore.assessment.service.UserService;
 import com.noncore.assessment.util.ApiResponse;
@@ -111,4 +112,10 @@ public class UserController extends BaseController {
         return ResponseEntity.ok(ApiResponse.success(null));
     }
 
-} 
+    @PutMapping("/me/avatar")
+    @Operation(summary = "更新头像", description = "使用已上传的文件ID设置为当前用户头像，并清理旧头像文件")
+    public ResponseEntity<ApiResponse<Void>> updateAvatar(@Valid @RequestBody UpdateAvatarRequest request) {
+        userService.updateAvatar(getCurrentUserId(), request.getFileId());
+        return ResponseEntity.ok(ApiResponse.success());
+    }
+}

@@ -83,6 +83,8 @@ public class AssignmentController extends BaseController {
     @PreAuthorize("hasRole('TEACHER') or hasRole('ADMIN')")
     @Operation(summary = "更新作业", description = "更新作业信息")
     public ResponseEntity<ApiResponse<Assignment>> updateAssignment(@PathVariable Long id, @Valid @RequestBody Assignment assignment) {
+        // 对齐创建接口的行为：由当前用户作为教师ID，避免前端必须传 teacherId
+        assignment.setTeacherId(getCurrentUserId());
         Assignment updatedAssignment = assignmentService.updateAssignment(id, assignment);
         return ResponseEntity.ok(ApiResponse.success(updatedAssignment));
     }

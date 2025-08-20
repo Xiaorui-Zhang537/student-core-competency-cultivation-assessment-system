@@ -34,10 +34,10 @@
         <div class="prose dark:prose-invert max-w-none" v-html="currentPost.content"></div>
         <div v-if="attachments.length" class="mt-6 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
           <div v-for="f in attachments" :key="f.id" class="border border-gray-200 dark:border-gray-700 rounded overflow-hidden">
-            <img v-if="f.isImage || f.mimeType?.startsWith('image/')" :src="`${baseURL}/files/${f.id}/preview`" class="w-full h-32 object-cover" />
+            <img v-if="isImageAttachment(f)" :src="f._previewUrl || ''" class="w-full h-32 object-cover" @error="loadPreview(f)" />
             <div class="p-2 text-xs flex items-center justify-between">
               <span class="truncate" :title="f.originalName || f.fileName">{{ f.originalName || f.fileName || ('#' + f.id) }}</span>
-              <a class="text-primary-600" :href="`${baseURL}/files/${f.id}/download`">{{ t('shared.community.detail.download') }}</a>
+              <button type="button" class="text-primary-600" @click="downloadAttachment(f)">{{ t('shared.community.detail.download') }}</button>
             </div>
           </div>
         </div>
@@ -111,6 +111,35 @@
               <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{{ t('shared.community.modal.content') }}</label>
               <textarea v-model="editCurrent.form.content" rows="6" class="input" required></textarea>
             </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">附件</label>
+              <FileUpload
+                ref="detailEditUploader"
+                :accept="'.pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.txt,.zip,.rar,image/*,video/*'"
+                :multiple="true"
+                :autoUpload="true"
+                :upload-url="`${baseURL}/files/upload`"
+                :upload-headers="uploadHeaders"
+                :upload-data="detailEditUploadData"
+                @upload-success="onDetailEditUploadSuccess"
+                @upload-error="onDetailEditUploadError"
+              />
+              <div v-if="detailEditAttachments.length" class="mt-3">
+                <h4 class="text-sm font-medium mb-2">已有关联附件</h4>
+                <ul class="divide-y divide-gray-200 dark:divide-gray-700">
+                  <li v-for="f in detailEditAttachments" :key="f.id" class="py-2 flex items-center justify-between">
+                    <div class="min-w-0 mr-3">
+                      <div class="text-sm truncate">{{ f.originalName || f.fileName || ('附件#' + f.id) }}</div>
+                      <div class="text-xs text-gray-500">{{ (f.fileSize ? (f.fileSize/1024/1024).toFixed(1)+' MB' : '') }}</div>
+                    </div>
+                    <div class="flex items-center gap-2">
+                      <button type="button" class="btn btn-sm btn-outline" @click="downloadDetailEditAttachment(f)">下载</button>
+                      <button type="button" class="btn btn-sm btn-danger-outline" @click="deleteDetailEditAttachment(f.id)">删除</button>
+                    </div>
+                  </li>
+                </ul>
+              </div>
+            </div>
             <div class="flex justify-end space-x-3 pt-4">
               <button type="button" @click="editCurrent.visible = false" class="btn btn-outline">{{ t('shared.community.modal.cancel') }}</button>
               <button type="submit" :disabled="loading" class="btn btn-primary">{{ t('shared.community.modal.save') }}</button>
@@ -134,6 +163,7 @@ import EmojiPicker from '@/components/ui/EmojiPicker.vue'
 import UserAvatar from '@/components/ui/UserAvatar.vue'
 import { baseURL } from '@/api/config';
 import { fileApi } from '@/api/file.api';
+import FileUpload from '@/components/forms/FileUpload.vue';
 import { useI18n } from 'vue-i18n'
 
 const route = useRoute();
@@ -147,6 +177,12 @@ const localComments = ref<any[]>([])
 
 const newComment = ref('');
 const attachments = ref<any[]>([]);
+const uploadHeaders = {
+  Authorization: localStorage.getItem('token') ? `Bearer ${localStorage.getItem('token')}` : ''
+};
+const detailEditUploader = ref();
+const detailEditUploadData = reactive<{ purpose: string; relatedId?: string | number }>({ purpose: 'community_post' });
+const detailEditAttachments = ref<any[]>([]);
 const commentsPage = ref(1);
 const commentsSize = ref(20);
 const commentOrderBy = ref<'time' | 'hot'>('time')
@@ -188,6 +224,8 @@ const openEditCurrentPost = () => {
   editCurrent.form.title = currentPost.value.title
   editCurrent.form.category = currentPost.value.category
   editCurrent.form.content = currentPost.value.content
+  detailEditUploadData.relatedId = currentPost.value.id
+  refreshDetailEditAttachments()
 }
 
 const handleUpdateCurrentPost = async () => {
@@ -198,6 +236,7 @@ const handleUpdateCurrentPost = async () => {
     content: editCurrent.form.content,
   })
   await communityStore.fetchPostById(currentPost.value.id)
+  await refreshMainAttachments()
   editCurrent.visible = false
 }
 
@@ -213,8 +252,7 @@ onMounted(async () => {
     await communityStore.fetchPostById(postId);
     await communityStore.fetchComments(postId, { page: commentsPage.value, size: commentsSize.value, orderBy: commentOrderBy.value });
     localComments.value = comments.value.slice();
-    const files: any = await fileApi.getRelatedFiles('community_post', postId);
-    attachments.value = files?.data || files || [];
+    await refreshMainAttachments();
   }
 });
 
@@ -261,6 +299,66 @@ const askAiForCurrentPost = () => {
   // 角色统一使用教师AI页面；如需学生也支持，可按角色跳不同路由
   router.push({ path: '/teacher/ai', query: { q: content } })
 }
+
+const refreshDetailEditAttachments = async () => {
+  if (!currentPost.value) return
+  const res: any = await fileApi.getRelatedFiles('community_post', currentPost.value.id);
+  detailEditAttachments.value = res?.data || res || [];
+};
+
+const onDetailEditUploadSuccess = async () => {
+  await refreshDetailEditAttachments();
+};
+
+const onDetailEditUploadError = (msg: string) => {
+  console.error('帖子详情附件上传失败:', msg);
+};
+
+const deleteDetailEditAttachment = async (fileId: number | string) => {
+  await fileApi.deleteFile(String(fileId));
+  await refreshDetailEditAttachments();
+};
+
+const downloadDetailEditAttachment = async (f: any) => {
+  await fileApi.downloadFile(f.id, f.originalName || f.fileName || `attachment_${f.id}`);
+};
+
+
+// 正文区域附件下载（带鉴权）
+const downloadAttachment = async (f: any) => {
+  await fileApi.downloadFile(f.id, f.originalName || f.fileName || `attachment_${f.id}`);
+};
+
+// 工具：是否为图片
+const isImageAttachment = (f: any) => {
+  const mime = (f.mimeType || f.contentType || '').toLowerCase();
+  const name = String(f.originalName || f.fileName || '').toLowerCase();
+  const ext = name.split('.').pop() || '';
+  return mime.startsWith('image/') || ['png','jpg','jpeg','gif','webp','bmp'].includes(ext);
+};
+
+// 加载/刷新正文附件与预览
+const refreshMainAttachments = async () => {
+  if (!currentPost.value) return;
+  const files: any = await fileApi.getRelatedFiles('community_post', currentPost.value.id);
+  const list = (files?.data || files || []) as any[];
+  attachments.value = list;
+  // 为图片准备预览 URL（鉴权 blob）
+  for (const f of attachments.value) {
+    if (isImageAttachment(f)) {
+      await loadPreview(f);
+    }
+  }
+};
+
+const loadPreview = async (f: any) => {
+  try {
+    const blob = await fileApi.getPreview(f.id);
+    f._previewUrl = URL.createObjectURL(blob);
+  } catch (_) {
+    f._previewUrl = '';
+  }
+};
 
 
 </script>

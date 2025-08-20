@@ -45,4 +45,9 @@ public interface CommentLikeMapper {
      * @return 点赞总数
      */
     int countByCommentId(@Param("commentId") Long commentId);
+
+    /**
+     * 删除某评论的所有点赞
+     */
+    int deleteByCommentId(@Param("commentId") Long commentId);
 } 

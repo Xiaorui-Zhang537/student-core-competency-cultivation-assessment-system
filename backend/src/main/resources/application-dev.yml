@@ -50,6 +50,8 @@ application:
 file:
   upload-dir: ./uploads
   max-size: 50MB
+  allowed-extensions: jpg,jpeg,png,gif,pdf,doc,docx,xls,xlsx,ppt,pptx,txt,zip,rar,mp4,mov,avi,mkv,webm
+  purpose-max-sizes: course_material=1GB,course_video=1GB
   
 # 开发环境JWT配置
 jwt:

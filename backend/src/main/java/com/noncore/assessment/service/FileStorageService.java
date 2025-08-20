@@ -72,6 +72,20 @@ public interface FileStorageService {
     List<FileRecord> getRelatedFiles(String purpose, Long relatedId);
 
     /**
+     * 清理某用途+关联ID下的所有文件（删除物理文件与数据库记录）
+     */
+    void cleanupRelatedFiles(String purpose, Long relatedId);
+
+    /**
+     * 将一批文件重绑定到新的用途与关联ID
+     * @param fileIds 文件ID列表
+     * @param newPurpose 新用途
+     * @param newRelatedId 新关联ID
+     * @param expectedUploaderId 期望的上传者（用于安全校验）
+     */
+    void relinkFilesTo(java.util.List<Long> fileIds, String newPurpose, Long newRelatedId, Long expectedUploaderId);
+
+    /**
      * 检查文件权限
      *
      * @param fileId 文件ID

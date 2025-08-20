@@ -10,6 +10,7 @@ import com.noncore.assessment.mapper.SubmissionMapper;
 import com.noncore.assessment.service.FileStorageService;
 import com.noncore.assessment.service.SubmissionService;
 import com.noncore.assessment.util.PageResult;
+import com.noncore.assessment.dto.request.SubmissionRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -123,6 +124,98 @@ public class SubmissionServiceImpl implements SubmissionService {
         }
 
         logger.info("作业提交成功，提交ID: {}", submission.getId());
+        return submission;
+    }
+
+    @Override
+    public Submission submitAssignment(Long assignmentId, Long studentId, SubmissionRequest request) {
+        logger.info("学生提交作业(JSON)，作业ID: {}, 学生ID: {}", assignmentId, studentId);
+
+        // 参数解构
+        String content = request != null ? request.getContent() : null;
+        Long fileId = null;
+        if (request != null && request.getFileIds() != null && !request.getFileIds().isEmpty()) {
+            fileId = request.getFileIds().get(0);
+        }
+
+        // 检查作业是否存在和可提交
+        Assignment assignment = assignmentMapper.selectAssignmentById(assignmentId);
+        if (assignment == null) {
+            throw new BusinessException(ErrorCode.ASSIGNMENT_NOT_FOUND);
+        }
+        if (!"published".equals(assignment.getStatus())) {
+            throw new BusinessException(ErrorCode.ASSIGNMENT_NOT_PUBLISHED);
+        }
+        // 截止时间
+        boolean isLate = LocalDateTime.now().isAfter(assignment.getDueDate());
+        if (isLate && !assignment.getAllowLate()) {
+            throw new BusinessException(ErrorCode.ASSIGNMENT_EXPIRED);
+        }
+
+        // 查是否已有提交
+        Submission existingSubmission = submissionMapper.selectByAssignmentAndStudent(assignmentId, studentId);
+
+        Submission submission;
+        boolean isNewSubmission = false;
+        if (existingSubmission != null) {
+            submission = existingSubmission;
+            submission.setContent(content);
+            submission.setSubmissionCount(submission.getSubmissionCount() + 1);
+            submission.setStatus("submitted");
+            submission.setSubmittedAt(LocalDateTime.now());
+            submission.setIsLate(isLate);
+            submission.setUpdatedAt(LocalDateTime.now());
+        } else {
+            isNewSubmission = true;
+            submission = new Submission();
+            submission.setAssignmentId(assignmentId);
+            submission.setStudentId(studentId);
+            submission.setContent(content);
+            submission.setStatus("submitted");
+            submission.setSubmittedAt(LocalDateTime.now());
+            submission.setIsLate(isLate);
+            submission.setSubmissionCount(1);
+            submission.setCreatedAt(LocalDateTime.now());
+            submission.setUpdatedAt(LocalDateTime.now());
+        }
+
+        // 若传入 fileIds，从文件记录表读取首个文件信息回填名称与路径（保持最小改动兼容现有Submission字段）
+        if (fileId != null) {
+            try {
+                // 直接通过 mapper 读取，避免强耦合 service
+                FileRecord fileRecord = null;
+                // 轻量查询：通过 FileStorageService 暂无直接方法，改为简单复用私有查询逻辑由 mapper 完成
+                // 由于当前类未持有 FileRecordMapper，引入更改较大，采用委托 fileStorageService.getFileInfo
+                fileRecord = fileStorageService.getFileInfo(fileId);
+                if (fileRecord != null) {
+                    submission.setFileName(fileRecord.getOriginalName());
+                    submission.setFilePath(fileRecord.getFilePath());
+                }
+            } catch (Exception e) {
+                logger.warn("回填文件信息失败，fileId={}", fileId, e);
+            }
+        }
+
+        if (existingSubmission != null) {
+            submissionMapper.updateSubmission(submission);
+        } else {
+            submissionMapper.insertSubmission(submission);
+        }
+
+        if (isNewSubmission) {
+            assignmentMapper.updateSubmissionCount(assignmentId, 1);
+        }
+
+        // 将预上传的所有文件重绑到具体的 submissionId，目的为 submission
+        if (request != null && request.getFileIds() != null && !request.getFileIds().isEmpty()) {
+            try {
+                fileStorageService.relinkFilesTo(request.getFileIds(), "submission", submission.getId(), studentId);
+            } catch (Exception e) {
+                logger.warn("重绑定提交文件失败 submissionId={}, fileIds={}", submission.getId(), request.getFileIds(), e);
+            }
+        }
+
+        logger.info("作业提交成功(JSON)，提交ID: {}", submission.getId());
         return submission;
     }
 
@@ -242,6 +335,12 @@ public class SubmissionServiceImpl implements SubmissionService {
     @Override
     public void deleteSubmission(Long submissionId) {
         logger.info("删除提交记录，ID: {}", submissionId);
+        // 先清理该提交的附件
+        try {
+            fileStorageService.cleanupRelatedFiles("submission", submissionId);
+        } catch (Exception e) {
+            logger.warn("清理提交附件失败 submissionId={}", submissionId, e);
+        }
         int result = submissionMapper.deleteSubmission(submissionId);
         if (result == 0) {
             throw new BusinessException(ErrorCode.OPERATION_FAILED, "删除提交失败");

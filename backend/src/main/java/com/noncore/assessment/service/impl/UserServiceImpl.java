@@ -33,11 +33,18 @@ public class UserServiceImpl implements UserService {
     @Value("${application.base-url:http://localhost:5173}")
     private String applicationBaseUrl;
 
-    public UserServiceImpl(UserMapper userMapper, PasswordEncoder passwordEncoder, RedisTemplate<String, Object> redisTemplate, EmailService emailService) {
+    private final com.noncore.assessment.mapper.FileRecordMapper fileRecordMapper;
+    private final com.noncore.assessment.service.FileStorageService fileStorageService;
+
+    public UserServiceImpl(UserMapper userMapper, PasswordEncoder passwordEncoder, RedisTemplate<String, Object> redisTemplate, EmailService emailService,
+                           com.noncore.assessment.mapper.FileRecordMapper fileRecordMapper,
+                           com.noncore.assessment.service.FileStorageService fileStorageService) {
         this.userMapper = userMapper;
         this.passwordEncoder = passwordEncoder;
         this.redisTemplate = redisTemplate;
         this.emailService = emailService;
+        this.fileRecordMapper = fileRecordMapper;
+        this.fileStorageService = fileStorageService;
     }
 
     @Override
@@ -283,6 +290,42 @@ public class UserServiceImpl implements UserService {
             redisTemplate.delete(key);
         } catch (Exception e) {
             throw new BusinessException(ErrorCode.EMAIL_CHANGE_TOKEN_INVALID);
+        }
+    }
+
+    @Override
+    public void updateAvatar(Long userId, Long fileId) {
+        logger.info("更新头像 userId={}, fileId={}", userId, fileId);
+        User user = userMapper.selectUserById(userId);
+        if (user == null) throw new BusinessException(ErrorCode.USER_NOT_FOUND);
+
+        com.noncore.assessment.entity.FileRecord fr = fileRecordMapper.selectFileRecordById(fileId);
+        if (fr == null) throw new BusinessException(ErrorCode.FILE_NOT_FOUND);
+        if (!"avatar".equals(fr.getRelatedType()) && !"avatar".equals(fr.getUploadPurpose())) {
+            throw new BusinessException(ErrorCode.INVALID_PARAMETER, "文件用途不是头像");
+        }
+        if (!java.util.Objects.equals(fr.getUploaderId(), userId)) {
+            throw new BusinessException(ErrorCode.FILE_PERMISSION_DENIED, "不能使用他人文件作为头像");
+        }
+
+        // 更新用户头像URL（可用统一下载接口路径，亦可直接存文件路径，这里使用下载接口）
+        String avatarUrl = "/api/files/" + fileId + "/download";
+        user.setAvatar(avatarUrl);
+        user.setUpdatedAt(new java.util.Date());
+        userMapper.updateUser(user);
+
+        // 清理旧头像：删除该用户所有 avatar 文件中除当前 fileId 之外的文件
+        try {
+            java.util.List<com.noncore.assessment.entity.FileRecord> avatars = fileRecordMapper.selectByUploaderIdAndRelatedType(userId, "avatar");
+            if (avatars != null) {
+                for (com.noncore.assessment.entity.FileRecord a : avatars) {
+                    if (!java.util.Objects.equals(a.getId(), fileId)) {
+                        try { fileStorageService.deleteFile(a.getId(), userId); } catch (Exception ignore) {}
+                    }
+                }
+            }
+        } catch (Exception e) {
+            logger.warn("清理旧头像失败 userId={}", userId, e);
         }
     }
 

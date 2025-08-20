@@ -28,7 +28,7 @@
           <div v-if="uploadedFiles.length > 0" class="mt-4 space-y-2">
             <h3 class="text-sm font-medium">已上传文件:</h3>
             <div v-for="file in uploadedFiles" :key="file.id" class="flex justify-between items-center p-2 bg-gray-100 rounded">
-              <span>{{ file.fileName }}</span>
+              <span>{{ (file as any).originalName || file.fileName }}</span>
               <button @click="removeFile(file.id)" class="btn btn-sm btn-danger-outline">删除</button>
             </div>
           </div>
@@ -90,11 +90,11 @@ const handleFileUpload = async (event: Event) => {
   if (target.files && target.files[0]) {
     isUploading.value = true;
     try {
-      const response = await fileApi.uploadFile(target.files[0]);
-      if (response && (response as any).data) {
-        const fileInfo = (response as any).data as FileInfo
-        uploadedFiles.value.push(fileInfo);
-        form.fileIds.push(fileInfo.id);
+      const assignmentId = route.params.id as string;
+      const fileInfo = await fileApi.uploadFile(target.files[0], { purpose: 'submission', relatedId: assignmentId });
+      if (fileInfo) {
+        uploadedFiles.value.push(fileInfo as FileInfo);
+        form.fileIds.push((fileInfo as any).id);
       }
     } catch (error) {
       uiStore.showNotification({ type: 'error', title: '上传失败', message: '文件上传失败，请重试。'});
@@ -139,7 +139,8 @@ onMounted(async () => {
     // If files exist, fetch their info to display
     if(form.fileIds.length > 0) {
         const fileInfos = await Promise.all(form.fileIds.map(id => fileApi.getFileInfo(id)));
-        uploadedFiles.value = fileInfos.map(res => (res as any).data as FileInfo).filter(Boolean);
+        // api 拦截器会解包返回 data
+        uploadedFiles.value = (fileInfos as any[]).filter(Boolean) as any;
     }
   }
 });

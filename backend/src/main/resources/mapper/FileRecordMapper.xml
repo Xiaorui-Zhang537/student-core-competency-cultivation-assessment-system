@@ -56,6 +56,19 @@
         ORDER BY created_at DESC
     </select>
 
+    <!-- 根据上传者与关联类型查询文件列表 -->
+    <select id="selectByUploaderIdAndRelatedType" resultMap="FileRecordResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM file_records
+        WHERE uploader_id = #{uploaderId} AND related_type = #{relatedType}
+        ORDER BY created_at DESC
+    </select>
+
+    <!-- 根据用途与关联ID删除文件记录 -->
+    <delete id="deleteByPurposeAndRelatedId">
+        DELETE FROM file_records WHERE related_type = #{purpose} AND related_id = #{relatedId}
+    </delete>
+
     <!-- 更新文件记录 -->
     <update id="updateFileRecord" parameterType="com.noncore.assessment.entity.FileRecord">
         UPDATE file_records SET
@@ -97,5 +110,25 @@
         FROM file_records
         WHERE uploader_id = #{userId}
     </select>
+
+    <!-- 根据ID集合查询文件记录 -->
+    <select id="selectByIds" parameterType="list" resultMap="FileRecordResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM file_records
+        WHERE id IN
+        <foreach collection="ids" item="id" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </select>
+
+    <!-- 批量重绑定文件到新的用途与关联ID -->
+    <update id="updateRelatedByIds">
+        UPDATE file_records
+        SET related_type = #{newPurpose}, related_id = #{newRelatedId}
+        WHERE id IN
+        <foreach collection="ids" item="id" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </update>
 
 </mapper>

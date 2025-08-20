@@ -28,17 +28,20 @@ public class CommunityServiceImpl implements CommunityService {
     private final TagMapper tagMapper;
     private final CommentLikeMapper commentLikeMapper;
     private final PostTagMapper postTagMapper;
+    private final FileRecordMapper fileRecordMapper;
 
 
     public CommunityServiceImpl(PostMapper postMapper, PostCommentMapper postCommentMapper,
                                 PostLikeMapper postLikeMapper, TagMapper tagMapper,
-                                CommentLikeMapper commentLikeMapper, PostTagMapper postTagMapper) {
+                                CommentLikeMapper commentLikeMapper, PostTagMapper postTagMapper,
+                                FileRecordMapper fileRecordMapper) {
         this.postMapper = postMapper;
         this.postCommentMapper = postCommentMapper;
         this.postLikeMapper = postLikeMapper;
         this.tagMapper = tagMapper;
         this.commentLikeMapper = commentLikeMapper;
         this.postTagMapper = postTagMapper;
+        this.fileRecordMapper = fileRecordMapper;
     }
 
     @Override
@@ -121,7 +124,37 @@ public class CommunityServiceImpl implements CommunityService {
         if (!post.getAuthorId().equals(userId)) {
             throw new BusinessException(ErrorCode.UNAUTHORIZED_OPERATION, "用户无权删除此帖子");
         }
-        postMapper.softDeleteById(id);
+        // 1) 删除该帖子的评论点赞
+        List<PostComment> commentList = postCommentMapper.selectByPostId(id, new java.util.HashMap<>());
+        if (commentList != null) {
+            for (PostComment c : commentList) {
+                // 删除该评论的点赞
+                commentLikeMapper.deleteByCommentId(c.getId());
+                // 删除评论本身
+                postCommentMapper.deleteById(c.getId());
+            }
+        }
+        // 2) 删除帖子点赞
+        postLikeMapper.deleteByPostId(id);
+        // 3) 删除标签关联
+        postTagMapper.deleteByPostId(id);
+        // 4) 删除关联文件记录与物理文件
+        try {
+            List<FileRecord> files = fileRecordMapper.selectByPurposeAndRelatedId("community_post", id);
+            if (files != null) {
+                for (FileRecord f : files) {
+                    // 物理文件删除
+                    java.nio.file.Path p = java.nio.file.Paths.get(f.getFilePath());
+                    try { java.nio.file.Files.deleteIfExists(p); } catch (Exception ignore) {}
+                    // 记录删除
+                    fileRecordMapper.deleteFileRecord(f.getId());
+                }
+            }
+        } catch (Exception e) {
+            // ignore file cleanup errors
+        }
+        // 5) 删除帖子
+        postMapper.deleteById(id);
     }
 
     @Override

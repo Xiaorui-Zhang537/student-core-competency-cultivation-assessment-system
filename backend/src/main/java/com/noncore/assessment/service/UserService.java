@@ -88,4 +88,11 @@ public interface UserService {
      * @param token 确认令牌
      */
     void confirmChangeEmail(String token);
+
+    /**
+     * 更新用户头像并清理旧头像文件
+     * @param userId 用户ID
+     * @param fileId 新头像的文件ID
+     */
+    void updateAvatar(Long userId, Long fileId);
 } 

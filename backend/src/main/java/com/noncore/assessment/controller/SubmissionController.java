@@ -13,6 +13,7 @@ import org.springframework.http.MediaType;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+import com.noncore.assessment.dto.request.SubmissionRequest;
 
 import java.util.Map;
 import com.noncore.assessment.util.PageResult;
@@ -64,6 +65,16 @@ public class SubmissionController extends BaseController {
             @RequestParam(required = false) String content,
             @RequestParam(required = false) MultipartFile file) {
         Submission submission = submissionService.submitAssignment(assignmentId, getCurrentUserId(), content, file);
+        return ResponseEntity.ok(ApiResponse.success(submission));
+    }
+
+    @PostMapping(value = "/assignments/{assignmentId}/submit", consumes = "application/json")
+    @Operation(summary = "提交作业(JSON)", description = "学生以JSON提交作业，fileIds为已上传文件ID列表")
+    @PreAuthorize("hasRole('STUDENT')")
+    public ResponseEntity<ApiResponse<Submission>> submitAssignmentJson(
+            @PathVariable Long assignmentId,
+            @RequestBody SubmissionRequest request) {
+        Submission submission = submissionService.submitAssignment(assignmentId, getCurrentUserId(), request);
         return ResponseEntity.ok(ApiResponse.success(submission));
     }
 

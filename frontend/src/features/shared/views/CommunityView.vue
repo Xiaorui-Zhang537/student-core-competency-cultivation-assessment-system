@@ -143,7 +143,7 @@
                   <div class="flex-1 min-w-0" @click="viewPost(post.id)">
                    <div class="flex items-center space-x-2 mb-1">
                       <h3 class="text-sm font-medium text-gray-900 dark:text-white">{{ post.title }}</h3>
-                       <div class="text-xs px-2 py-0.5 rounded-full" :class="getCategoryClass(post.category)">{{ post.category }}</div>
+                       <div class="text-xs px-2 py-0.5 rounded-full" :class="getCategoryClass(post.category)">{{ displayCategory(post.category) }}</div>
                     </div>
                    <p class="text-sm text-gray-600 dark:text-gray-400 line-clamp-2 mb-2" v-html="post.content"></p>
                     <div class="flex items-center space-x-4 text-xs text-gray-500">
@@ -161,7 +161,8 @@
                     </div>
                   </div>
                   <div class="flex-shrink-0 space-x-2">
-                     <button v-if="authStore.user?.id && String(authStore.user.id) === String(post.author?.id || post.authorId)" class="btn btn-ghost btn-sm" @click.stop="onEditPost(post)">{{ t('shared.community.list.edit') }}</button>
+                    <button v-if="post.attachments?.length" class="btn btn-ghost btn-sm" @click.stop="downloadFirstAttachment(post)">下载附件</button>
+                    <button v-if="authStore.user?.id && String(authStore.user.id) === String(post.author?.id || post.authorId)" class="btn btn-ghost btn-sm" @click.stop="onEditPost(post)">{{ t('shared.community.list.edit') }}</button>
                     <button v-if="authStore.user?.id && String(authStore.user.id) === String(post.author?.id || post.authorId)" class="btn btn-ghost btn-sm" @click.stop="onDeletePost(post.id)">{{ t('shared.community.list.delete') }}</button>
                   </div>
                 </div>
@@ -238,10 +239,10 @@
               <textarea v-model="newPost.content" rows="6" :placeholder="t('shared.community.modal.contentPlaceholder')" class="input" required></textarea>
             </div>
             <div>
-              <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{{ t('shared.community.modal.images') }}</label>
+              <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">附件</label>
               <FileUpload
                 ref="postUploader"
-                :accept="'image/*'"
+                :accept="'.pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.txt,.zip,.rar,image/*,video/*'"
                 :multiple="true"
                 :autoUpload="false"
                 :upload-url="`${baseURL}/files/upload`"
@@ -282,6 +283,35 @@
               <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">帖子内容</label>
               <textarea v-model="editModal.form.content" rows="6" class="input" required></textarea>
             </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">附件</label>
+              <FileUpload
+                ref="postEditUploader"
+                :accept="'.pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.txt,.zip,.rar,image/*,video/*'"
+                :multiple="true"
+                :autoUpload="true"
+                :upload-url="`${baseURL}/files/upload`"
+                :upload-headers="uploadHeaders"
+                :upload-data="editUploadData"
+                @upload-success="onEditUploadSuccess"
+                @upload-error="onPostUploadError"
+              />
+              <div v-if="editAttachments.length" class="mt-3">
+                <h4 class="text-sm font-medium mb-2">已有关联附件</h4>
+                <ul class="divide-y divide-gray-200 dark:divide-gray-700">
+                  <li v-for="f in editAttachments" :key="f.id" class="py-2 flex items-center justify-between">
+                    <div class="min-w-0 mr-3">
+                      <div class="text-sm truncate">{{ f.originalName || f.fileName || ('附件#' + f.id) }}</div>
+                      <div class="text-xs text-gray-500">{{ (f.fileSize ? (f.fileSize/1024/1024).toFixed(1)+' MB' : '') }}</div>
+                    </div>
+                    <div class="flex items-center gap-2">
+                      <button type="button" class="btn btn-sm btn-outline" @click="downloadEditAttachment(f)">下载</button>
+                      <button type="button" class="btn btn-sm btn-danger-outline" @click="deleteEditAttachment(f.id)">删除</button>
+                    </div>
+                  </li>
+                </ul>
+              </div>
+            </div>
             <div class="flex justify-end space-x-3 pt-4">
               <button type="button" @click="editModal.visible = false" class="btn btn-outline">取消</button>
               <button type="submit" :disabled="loading" class="btn btn-primary">保存</button>
@@ -308,6 +338,7 @@ import UserAvatar from '@/components/ui/UserAvatar.vue'
 import { useAuthStore } from '@/stores/auth';
 import FileUpload from '@/components/forms/FileUpload.vue';
 import { baseURL } from '@/api/config';
+import { fileApi } from '@/api/file.api';
 
 const router = useRouter();
 const communityStore = useCommunityStore();
@@ -342,7 +373,10 @@ const editModal = reactive<{ visible: boolean; form: { id?: number; title: strin
   form: { id: undefined, title: '', category: 'study', content: '' }
 })
 const postUploader = ref();
+const postEditUploader = ref();
 const postUploadData = reactive<{ purpose: string; relatedId?: string | number }>({ purpose: 'community_post' });
+const editUploadData = reactive<{ purpose: string; relatedId?: string | number }>({ purpose: 'community_post' });
+const editAttachments = ref<any[]>([]);
 const uploadHeaders = {
   Authorization: localStorage.getItem('token') ? `Bearer ${localStorage.getItem('token')}` : ''
 };
@@ -415,6 +449,8 @@ const onEditPost = (post: any) => {
   // 将后端中文分类转换为前端英文 id
   editModal.form.category = labelToCategoryId[post.category] || post.category
   editModal.form.content = post.content
+  editUploadData.relatedId = post.id
+  refreshEditAttachments(post.id)
 }
 
 const handleUpdatePost = async () => {
@@ -463,6 +499,27 @@ const onPostUploadError = (msg: string) => {
   console.error('帖子附件上传失败:', msg);
 };
 
+const refreshEditAttachments = async (postId: number | string) => {
+  const res: any = await fileApi.getRelatedFiles('community_post', postId);
+  editAttachments.value = res?.data || res || [];
+};
+
+const onEditUploadSuccess = async () => {
+  if (editModal.form.id) {
+    await refreshEditAttachments(editModal.form.id);
+  }
+};
+
+const deleteEditAttachment = async (fileId: number | string) => {
+  if (!editModal.form.id) return;
+  await fileApi.deleteFile(String(fileId));
+  await refreshEditAttachments(editModal.form.id);
+};
+
+const downloadEditAttachment = async (f: any) => {
+  await fileApi.downloadFile(f.id, f.originalName || f.fileName || `attachment_${f.id}`);
+};
+
 let tagSearchTimer: number | undefined
 const searchTags = async () => {
   if (tagSearchTimer) clearTimeout(tagSearchTimer)
@@ -509,6 +566,29 @@ const getCategoryClass = (category: string) => {
   return classMap[category] || 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300';
 };
 
+// 根据当前语言显示分类的本地化文案
+const displayCategory = (category: string) => {
+  const mapZhToEn: Record<string, string> = {
+    '学习讨论': t('shared.community.categories.study') as string,
+    '作业求助': t('shared.community.categories.help') as string,
+    '经验分享': t('shared.community.categories.share') as string,
+    '问答': t('shared.community.categories.qa') as string,
+    '闲聊': t('shared.community.categories.chat') as string,
+  };
+  const mapEnToKey: Record<string, string> = {
+    study: t('shared.community.categories.study') as string,
+    help: t('shared.community.categories.help') as string,
+    share: t('shared.community.categories.share') as string,
+    qa: t('shared.community.categories.qa') as string,
+    chat: t('shared.community.categories.chat') as string,
+  };
+  // 若后端返回中文分类
+  if (mapZhToEn[category]) return mapZhToEn[category];
+  // 若后端返回英文 id
+  // 兼容可能的 'study' | 'help' | 'share' | 'qa' | 'chat'
+  return mapEnToKey[category] || category;
+};
+
 
 onMounted(() => {
   communityStore.fetchCommunityStats();
@@ -520,5 +600,12 @@ onMounted(() => {
 const onDeletePost = async (postId: number) => {
   if (!confirm('确认删除该帖子？')) return;
   await communityStore.deletePost(postId);
+}
+
+// 下载首个附件（如需列表可扩展UI，这里作为示例）
+const downloadFirstAttachment = async (post: any) => {
+  const att = (post.attachments || [])[0];
+  if (!att) return;
+  await fileApi.downloadFile(att.id, att.originalName || att.fileName || `attachment_${att.id}`);
 }
 </script>
