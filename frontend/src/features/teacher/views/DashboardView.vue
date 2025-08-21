@@ -75,7 +75,7 @@
             <h2 class="text-xl font-semibold text-gray-900 dark:text-white">{{ t('teacher.dashboard.chart.title') }}</h2>
             <span class="text-xs text-gray-500">{{ t('teacher.dashboard.chart.subtitle') }}</span>
           </div>
-          <div ref="chartRef" class="h-96 w-full"></div>
+          <div ref="chartRef" class="h-[32rem] w-full"></div>
         </div>
     </div>
 
@@ -110,6 +110,8 @@ const { t, n, locale } = useI18n()
 const selectedCourseId = ref<string | null>(null)
 const chartRef = ref<HTMLElement | null>(null)
 let chart: echarts.ECharts | null = null
+let resizeBound = false
+const onResize = () => chart?.resize()
 
 // 3. 创建 teacherCourses 计算属性
 const teacherCourses = computed(() => {
@@ -152,17 +154,51 @@ const goGradeAssignments = () => {
 
 const initChart = () => {
   const dist: any[] = (classPerformance.value as any).gradeDistribution || []
-  if (!chartRef.value || !dist.length) return
-  chart = echarts.init(chartRef.value)
+  if (!chartRef.value) return
+  // 复用已存在的实例，避免重复 init 警告
+  chart = echarts.getInstanceByDom(chartRef.value) || echarts.init(chartRef.value)
+  if (!dist.length) {
+    chart.clear()
+    return
+  }
+  const palette = ['#3b82f6', '#06b6d4', '#ec4899', '#f59e0b', '#10b981', '#8b5cf6', '#f43f5e']
+  const categories = dist.map(d => d.gradeLevel ?? d.level ?? t('teacher.dashboard.chart.level.unknown'))
+  const values = dist.map(d => d.count ?? 0)
+  // 动态计算更粗的柱宽（默认近似直方图，仍保留一定间隔）
+  const containerWidth = (chartRef.value as HTMLElement).clientWidth || 800
+  const innerWidth = Math.floor(containerWidth * 0.94) // 近似减去 grid 边距
+  const n = Math.max(categories.length, 1)
+  const minGapPx = 12
+  const computedBarWidth = (() => {
+    const widthIfDense = Math.floor(innerWidth / (n * 1.2)) // 普通密度
+    const widthIfFew = Math.floor((innerWidth - (n + 1) * minGapPx) / n) // 类直方图（少分类更粗）
+    const base = n <= 6 ? widthIfFew : widthIfDense
+    return Math.min(140, Math.max(36, base))
+  })()
   chart.setOption({
-    tooltip: { trigger: 'item' },
-    xAxis: { type: 'category', data: dist.map(d => d.gradeLevel ?? d.level ?? t('teacher.dashboard.chart.level.unknown')) },
+    tooltip: {
+      trigger: 'item',
+      formatter: (p: any) => `${p.name}<br/>${t('teacher.dashboard.chart.series.students')}: ${p.value}`
+    },
+    grid: { left: '4%', right: '2%', bottom: '5%', containLabel: true },
+    xAxis: { type: 'category', data: categories, axisTick: { alignWithLabel: true } },
     yAxis: { type: 'value' },
-    series: [{ name: t('teacher.dashboard.chart.series.students'), type: 'bar', data: dist.map(d => d.count ?? 0) }]
-  })
+    series: [{
+      name: t('teacher.dashboard.chart.series.students'),
+      type: 'bar',
+      data: values,
+      barWidth: computedBarWidth,
+      barCategoryGap: '8%',
+      itemStyle: {
+        color: (params: any) => palette[params.dataIndex % palette.length]
+      }
+    }]
+  }, { notMerge: true, lazyUpdate: false })
 }
 
 watch(classPerformance, () => nextTick(initChart), { deep: true })
+// 当语言切换时，重绘图表以应用新文案
+watch(() => locale.value, () => nextTick(initChart))
 
 onMounted(async () => {
   // 确保在获取课程之前，用户信息是可用的
@@ -177,11 +213,17 @@ onMounted(async () => {
   }
   // 预加载教师端命名空间
   await loadLocaleMessages(locale.value as 'zh-CN' | 'en-US', ['teacher'])
-  window.addEventListener('resize', () => chart?.resize())
+  if (!resizeBound) {
+    window.addEventListener('resize', onResize)
+    resizeBound = true
+  }
 })
 
 onUnmounted(() => {
+  if (resizeBound) {
+    window.removeEventListener('resize', onResize)
+    resizeBound = false
+  }
   chart?.dispose()
-  window.removeEventListener('resize', () => chart?.resize())
 })
 </script>

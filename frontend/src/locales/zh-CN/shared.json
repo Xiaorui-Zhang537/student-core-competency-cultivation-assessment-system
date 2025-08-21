@@ -44,6 +44,16 @@
         "city": "城市",
         "avatar": "头像"
       },
+      "roles": {
+        "student": "学生",
+        "teacher": "教师",
+        "admin": "管理员"
+      },
+      "genders": {
+        "male": "男",
+        "female": "女",
+        "other": "其他"
+      },
       "status": {
         "notSet": "未设置",
         "verified": "已验证",
@@ -55,6 +65,11 @@
         "cancel": "取消",
         "sendVerification": "发送验证邮件",
         "changePassword": "修改密码"
+      },
+      "changePwd": {
+        "current": "当前密码",
+        "new": "新密码",
+        "confirm": "确认新密码"
       },
       "messages": {
         "loadUser": "加载用户信息中...",

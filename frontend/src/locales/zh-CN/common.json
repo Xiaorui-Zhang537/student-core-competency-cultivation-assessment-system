@@ -2,6 +2,7 @@
   "common": {
     "cancel": "取消",
     "submit": "提交",
+    "select": "选择",
     "search": "搜索",
     "new": "新建",
     "enable": "启用",

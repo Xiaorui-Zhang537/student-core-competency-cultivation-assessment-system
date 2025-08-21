@@ -44,6 +44,16 @@
         "city": "City",
         "avatar": "Avatar"
       },
+      "roles": {
+        "student": "Student",
+        "teacher": "Teacher",
+        "admin": "Admin"
+      },
+      "genders": {
+        "male": "Male",
+        "female": "Female",
+        "other": "Other"
+      },
       "status": {
         "notSet": "Not set",
         "verified": "Verified",
@@ -55,6 +65,11 @@
         "cancel": "Cancel",
         "sendVerification": "Send Verification Email",
         "changePassword": "Change Password"
+      },
+      "changePwd": {
+        "current": "Current Password",
+        "new": "New Password",
+        "confirm": "Confirm New Password"
       },
       "messages": {
         "loadUser": "Loading user info...",

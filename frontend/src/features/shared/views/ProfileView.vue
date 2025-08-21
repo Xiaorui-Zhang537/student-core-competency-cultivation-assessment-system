@@ -33,7 +33,7 @@
                 </div>
                 <div>
                   <label class="block text-sm font-medium mb-1">{{ t('shared.profile.fields.role') }}</label>
-                  <p>{{ userProfile.role }}</p>
+                  <p>{{ userProfile.role ? t('shared.profile.roles.' + String(userProfile.role).toLowerCase()) : t('shared.profile.status.notSet') }}</p>
                 </div>
                 <div>
                   <label class="block text-sm font-medium mb-1">{{ t('shared.profile.fields.nickname') }}</label>
@@ -41,7 +41,7 @@
                 </div>
                  <div>
                   <label class="block text-sm font-medium mb-1">{{ t('shared.profile.fields.gender') }}</label>
-                  <p>{{ userProfile.gender || t('shared.profile.status.notSet') }}</p>
+                  <p>{{ userProfile.gender ? t('shared.profile.genders.' + String(userProfile.gender).toLowerCase()) : t('shared.profile.status.notSet') }}</p>
                 </div>
                 <div>
                   <label class="block text-sm font-medium mb-1">{{ t('shared.profile.fields.firstName') }}</label>
@@ -144,9 +144,9 @@
                   <label for="gender" class="block text-sm font-medium mb-2">{{ t('shared.profile.fields.gender') }}</label>
                 <select id="gender" v-model="profileForm.gender" class="input">
                   <option value="">{{ t('common.select') || '请选择' }}</option>
-                  <option value="MALE">{{ t('shared.profile.fields.gender') }}-M</option>
-                  <option value="FEMALE">{{ t('shared.profile.fields.gender') }}-F</option>
-                  <option value="OTHER">{{ t('shared.profile.fields.gender') }}-O</option>
+                  <option value="MALE">{{ t('shared.profile.genders.male') }}</option>
+                  <option value="FEMALE">{{ t('shared.profile.genders.female') }}</option>
+                  <option value="OTHER">{{ t('shared.profile.genders.other') }}</option>
                 </select>
               </div>
                 <div>
@@ -233,15 +233,15 @@
           <h2 class="text-lg font-semibold mb-4">{{ t('shared.profile.section.changePassword') }}</h2>
           <form @submit.prevent="handleChangePassword" class="space-y-6">
             <div>
-              <label for="currentPassword" class="block text-sm font-medium mb-2">Current Password</label>
+              <label for="currentPassword" class="block text-sm font-medium mb-2">{{ t('shared.profile.changePwd.current') || 'Current Password' }}</label>
               <input id="currentPassword" v-model="passwordForm.currentPassword" type="password" required class="input" />
             </div>
             <div>
-              <label for="newPassword" class="block text-sm font-medium mb-2">New Password</label>
+              <label for="newPassword" class="block text-sm font-medium mb-2">{{ t('shared.profile.changePwd.new') || 'New Password' }}</label>
               <input id="newPassword" v-model="passwordForm.newPassword" type="password" required class="input" />
             </div>
             <div>
-              <label for="confirmNewPassword" class="block text-sm font-medium mb-2">Confirm New Password</label>
+              <label for="confirmNewPassword" class="block text-sm font-medium mb-2">{{ t('shared.profile.changePwd.confirm') || 'Confirm New Password' }}</label>
               <input id="confirmNewPassword" v-model="confirmNewPassword" type="password" required class="input" />
             </div>
             <div class="flex justify-end space-x-3">
