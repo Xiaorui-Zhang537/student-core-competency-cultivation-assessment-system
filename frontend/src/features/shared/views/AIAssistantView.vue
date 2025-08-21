@@ -132,7 +132,7 @@
       <h3 class="text-base font-semibold mb-3">{{ t('teacher.ai.renameTitle') || '重命名对话' }}</h3>
       <input v-model="renameTitle" type="text" class="input mb-4" placeholder="请输入新的标题" />
       <div class="flex justify-end gap-2">
-        <button class="btn" @click="showRename=false">{{ t('common.cancel') || '取消' }}</button>
+        <button class="btn btn-secondary" @click="showRename=false">{{ t('common.cancel') || '取消' }}</button>
         <button class="btn btn-primary" @click="confirmRename">{{ t('teacher.courses.actions.save') || '保存' }}</button>
       </div>
     </div>

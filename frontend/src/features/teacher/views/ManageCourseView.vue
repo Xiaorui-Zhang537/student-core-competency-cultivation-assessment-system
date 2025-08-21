@@ -152,7 +152,7 @@
             <p v-if="form.coverImage" class="text-xs text-gray-500 mt-2">{{ t('teacher.courses.modal.coverPicked', { id: form.coverImage }) }}</p>
           </div>
           <div class="flex justify-end space-x-3 mt-6">
-            <Button type="button" variant="outline" @click="closeModal">{{ t('teacher.courses.modal.cancel') }}</Button>
+            <Button type="button" variant="secondary" @click="closeModal">{{ t('teacher.courses.modal.cancel') }}</Button>
             <Button type="submit" :disabled="courseStore.loading" variant="indigo">
               {{ isEditing ? t('teacher.courses.actions.save') : t('teacher.courses.actions.create') }}
             </Button>
@@ -330,9 +330,19 @@ const handleSubmit = async () => {
   if (isEditing.value && editingCourseId.value) {
     const { id, ...updateData } = payload;
     await courseStore.updateCourse(editingCourseId.value, updateData as CourseUpdateRequest);
+    {
+      const { useUIStore } = await import('@/stores/ui')
+      const ui = useUIStore()
+      ui.showNotification({ type: 'success', title: t('teacher.courses.notify.updatedTitle') as string, message: t('teacher.courses.notify.updatedMsg') as string })
+    }
   } else {
     const { id, ...createData } = payload;
     await courseStore.createCourse(createData as CourseCreationRequest);
+    {
+      const { useUIStore } = await import('@/stores/ui')
+      const ui = useUIStore()
+      ui.showNotification({ type: 'success', title: t('teacher.courses.notify.createdTitle') as string, message: t('teacher.courses.notify.createdMsg') as string })
+    }
   }
   
   if (!courseStore.loading) {
@@ -349,14 +359,22 @@ const onCoverUploaded = (response: any) => {
   }
 };
 
-const onCoverUploadError = (message: string) => {
+const onCoverUploadError = async (message: string) => {
   // 简单打印错误，表单仍可继续提交
   console.error('封面上传失败:', message);
+  const { useUIStore } = await import('@/stores/ui')
+  const ui = useUIStore()
+  ui.showNotification({ type: 'error', title: t('app.notifications.error.title') as string, message: message || '' })
 };
 
 const handleDeleteCourse = async (id: string) => {
   if (confirm(t('teacher.courses.confirm.deleteCourse'))) {
     await courseStore.deleteCourse(id);
+    {
+      const { useUIStore } = await import('@/stores/ui')
+      const ui = useUIStore()
+      ui.showNotification({ type: 'success', title: t('teacher.courses.notify.deletedTitle') as string, message: t('teacher.courses.notify.deletedMsg') as string })
+    }
     fetchTeacherCourses();
   }
 };

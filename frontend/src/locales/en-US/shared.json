@@ -139,10 +139,15 @@
         "images": "Images (optional)",
         "cancel": "Cancel",
         "publish": "Publish",
-        "save": "Save"
+        "save": "Save",
+        "attachment": "Attachment",
+        "existingTitle": "Existing Attachments",
+        "download": "Download",
+        "delete": "Delete"
       },
       "confirm": {
-        "deletePost": "Delete this post?"
+        "deletePost": "Delete this post?",
+        "deleteComment": "Delete this comment?"
       },
       "detail": {
         "back": "Back to Community",
@@ -163,6 +168,31 @@
         "total": "Total {count}",
         "notFound": "Post not found.",
         "loading": "Loading..."
+      },
+      "notify": {
+        "postCreatedTitle": "Post published",
+        "postCreatedMsg": "Your post has been published.",
+        "postUpdatedTitle": "Post updated",
+        "postUpdatedMsg": "The post has been updated.",
+        "postDeletedTitle": "Post deleted",
+        "postDeletedMsg": "The post has been deleted.",
+        "commentPostedTitle": "Comment posted",
+        "commentPostedMsg": "Your comment has been posted.",
+        "commentDeletedTitle": "Comment deleted",
+        "commentDeletedMsg": "The comment has been deleted.",
+        "attachmentUploadedTitle": "Attachment uploaded",
+        "attachmentUploadedMsg": "Attachment has been uploaded.",
+        "attachmentDeletedTitle": "Attachment deleted",
+        "attachmentDeletedMsg": "Attachment has been deleted."
+      }
+    },
+    "notifications": {
+      "confirm": {
+        "delete": "Delete this notification?"
+      },
+      "notify": {
+        "deletedTitle": "Notification deleted",
+        "deletedMsg": "The notification has been deleted."
       }
     },
     "emojiPicker": {

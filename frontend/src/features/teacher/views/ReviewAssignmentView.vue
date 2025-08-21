@@ -96,7 +96,7 @@
 
     <!-- Create/Edit Modal -->
     <div v-if="showModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div class="bg-white rounded-lg p-6 w-full max-w-lg max-h-[80vh] overflow-y-auto">
+      <div class="bg-white dark:bg-gray-800 rounded-lg p-6 w-full max-w-lg max-h-[80vh] overflow-y-auto">
         <h2 class="text-xl font-bold mb-4">{{ isEditing ? t('teacher.assignments.modal.editTitle') : t('teacher.assignments.modal.createTitle') }}</h2>
         <form @submit.prevent="handleSubmit" class="space-y-4">
            <div>
@@ -150,7 +150,7 @@
             </div>
           </div>
           <div class="flex justify-end space-x-3 mt-6">
-            <button type="button" @click="closeModal" class="btn btn-outline">{{ t('teacher.assignments.modal.cancel') }}</button>
+            <button type="button" @click="closeModal" class="btn btn-secondary">{{ t('teacher.assignments.modal.cancel') }}</button>
             <button type="submit" :disabled="assignmentStore.loading" class="btn btn-primary">
               {{ isEditing ? t('teacher.assignments.actions.save') : t('teacher.assignments.modal.create') }}
             </button>

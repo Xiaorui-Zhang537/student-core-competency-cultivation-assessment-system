@@ -10,7 +10,7 @@
         </div>
       </div>
       <div class="flex justify-end gap-3 mt-6">
-        <button class="btn" @click="$emit('close')">{{ t('teacher.analytics.weights.cancel') }}</button>
+        <button class="btn btn-secondary" @click="$emit('close')">{{ t('teacher.analytics.weights.cancel') }}</button>
         <button class="btn btn-primary" @click="save" :disabled="saving">{{ t('teacher.analytics.weights.save') }}</button>
       </div>
     </div>

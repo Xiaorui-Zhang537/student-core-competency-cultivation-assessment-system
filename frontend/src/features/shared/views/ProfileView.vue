@@ -92,7 +92,10 @@
                   <p>{{ userProfile.city || t('shared.profile.status.notSet') }}</p>
                 </div>
               </div>
-              <button @click="openEditProfile" class="btn btn-outline mt-4">{{ t('shared.profile.actions.edit') }}</button>
+              <Button variant="indigo" class="mt-4" @click="openEditProfile">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5M18.5 2.5a2.121 2.121 0 113 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                {{ t('shared.profile.actions.edit') }}
+              </Button>
             </div>
           </div>
         </div>
@@ -199,8 +202,14 @@
               <textarea id="bio" v-model="profileForm.bio" rows="4" class="input"></textarea>
             </div>
             <div class="flex justify-end space-x-3">
-              <button type="button" @click="cancelEdit" class="btn btn-outline">{{ t('shared.profile.actions.cancel') }}</button>
-              <button type="submit" :disabled="uiStore.loading" class="btn btn-primary">{{ t('shared.profile.actions.save') }}</button>
+              <Button type="button" variant="secondary" @click="cancelEdit">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                {{ t('shared.profile.actions.cancel') }}
+              </Button>
+              <Button type="submit" :disabled="uiStore.loading" variant="indigo">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                {{ t('shared.profile.actions.save') }}
+              </Button>
             </div>
           </form>
         </div>
@@ -214,16 +223,20 @@
                 <h3 class="text-sm font-medium">{{ t('shared.profile.section.changePassword') }}</h3>
                 <p class="text-sm text-gray-500"></p>
               </div>
-               <button @click="showChangePassword = true" class="btn btn-outline btn-sm">{{ t('shared.profile.actions.changePassword') }}</button>
+               <Button variant="outline" size="sm" @click="showChangePassword = true">
+                 <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 11c-1.657 0-3 1.343-3 3v4h6v-4c0-1.657-1.343-3-3-3z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 11V7a5 5 0 1110 0v4"/></svg>
+                 {{ t('shared.profile.actions.changePassword') }}
+               </Button>
             </div>
             <div class="flex items-center justify-between p-4 bg-gray-100 dark:bg-gray-700 rounded-lg">
               <div>
                 <h3 class="text-sm font-medium">{{ t('shared.profile.fields.email') }}</h3>
-                <p class="text-sm text-gray-500">{{ userProfile.emailVerified ? t('shared.profile.status.verified') : t('shared.profile.status.notVerified') }}</p>
+                <p class="text-sm text_gray-500">{{ userProfile.emailVerified ? t('shared.profile.status.verified') : t('shared.profile.status.notVerified') }}</p>
               </div>
-               <button v-if="!userProfile.emailVerified" @click="handleResendVerification" :disabled="uiStore.loading" class="btn btn-outline btn-sm">
+               <Button v-if="!userProfile.emailVerified" variant="secondary" size="sm" :disabled="uiStore.loading" @click="handleResendVerification">
+                 <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v16h16"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 8l4 4-4 4"/></svg>
                  {{ t('shared.profile.actions.sendVerification') }}
-               </button>
+               </Button>
             </div>
           </div>
         </div>
@@ -244,9 +257,15 @@
               <label for="confirmNewPassword" class="block text-sm font-medium mb-2">{{ t('shared.profile.changePwd.confirm') || 'Confirm New Password' }}</label>
               <input id="confirmNewPassword" v-model="confirmNewPassword" type="password" required class="input" />
             </div>
-            <div class="flex justify-end space-x-3">
-              <button type="button" @click="showChangePassword = false" class="btn btn-outline">{{ t('shared.profile.actions.cancel') }}</button>
-              <button type="submit" :disabled="uiStore.loading" class="btn btn-primary">{{ t('shared.profile.actions.changePassword') }}</button>
+            <div class="flex justify_end space-x-3">
+              <Button type="button" variant="secondary" @click="showChangePassword = false">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                {{ t('shared.profile.actions.cancel') }}
+              </Button>
+              <Button type="submit" :disabled="uiStore.loading" variant="indigo">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 11c-1.657 0-3 1.343-3 3v4h6v-4c0-1.657-1.343-3-3-3z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 11V7a5 5 0 1110 0v4"/></svg>
+                {{ t('shared.profile.actions.changePassword') }}
+              </Button>
             </div>
           </form>
         </div>
@@ -266,6 +285,7 @@ import { handleApiCall } from '@/utils/api-handler';
 import FileUpload from '@/components/forms/FileUpload.vue';
 import { baseURL } from '@/api/config';
 import UserAvatar from '@/components/ui/UserAvatar.vue';
+import Button from '@/components/ui/Button.vue'
 import { useI18n } from 'vue-i18n'
 
 const authStore = useAuthStore();
@@ -351,7 +371,12 @@ const cancelEdit = () => {
 }
 
 const handleUpdateProfile = async () => {
-  const response = await handleApiCall(() => userApi.updateProfile(profileForm), uiStore, '更新失败', { successMessage: '个人信息已更新' });
+  const response = await handleApiCall(
+    () => userApi.updateProfile(profileForm),
+    uiStore,
+    t('shared.profile.messages.updateFail') as string,
+    { successI18n: { titleKey: 'app.notifications.success.title', messageKey: 'shared.profile.messages.updateSuccess' } }
+  );
   if (response) {
     await fetchUserProfile();
     if (authStore.user) {
@@ -369,7 +394,12 @@ const handleChangePassword = async () => {
     return;
   }
   
-  const response = await handleApiCall(() => userApi.changePassword(passwordForm), uiStore, '修改密码失败', { successMessage: '密码已成功修改' });
+  const response = await handleApiCall(
+    () => userApi.changePassword(passwordForm),
+    uiStore,
+    t('shared.profile.messages.updateFail') as string,
+    { successI18n: { titleKey: 'app.notifications.success.title', messageKey: 'shared.profile.messages.passwordChanged' } }
+  );
 
   if (response) {
     showChangePassword.value = false;
@@ -380,7 +410,12 @@ const handleChangePassword = async () => {
 };
 
 const handleResendVerification = async () => {
-  await handleApiCall(() => userApi.resendVerification(), uiStore, t('shared.profile.messages.updateFail'), { successMessage: t('shared.profile.messages.emailSent') });
+  await handleApiCall(
+    () => userApi.resendVerification(),
+    uiStore,
+    t('shared.profile.messages.updateFail') as string,
+    { successI18n: { titleKey: 'app.notifications.success.title', messageKey: 'shared.profile.messages.emailSent' } }
+  );
 };
 
 // 头像上传回调
@@ -388,7 +423,12 @@ const onAvatarUploaded = async (res: any) => {
   const data = res?.data ?? res;
   const newId = data && (data.id || data.fileId);
   if (newId) {
-    await handleApiCall(() => userApi.updateAvatar(Number(newId)), uiStore, t('shared.profile.messages.updateFail'), { successMessage: t('shared.profile.messages.updateSuccess') as string });
+    await handleApiCall(
+      () => userApi.updateAvatar(Number(newId)),
+      uiStore,
+      t('shared.profile.messages.updateFail') as string,
+      { successI18n: { titleKey: 'app.notifications.success.title', messageKey: 'shared.profile.messages.updateSuccess' } }
+    );
     await fetchUserProfile();
   }
 };

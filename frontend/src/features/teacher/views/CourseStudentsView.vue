@@ -157,7 +157,7 @@
             <div class="text-xs text-gray-500">{{ t('teacher.students.invite.parsed', { count: parsedInviteIds.length }) }}</div>
           </div>
           <div class="p-4 flex justify-end gap-2 border-t border-gray-200 dark:border-gray-700">
-            <Button variant="outline" @click="closeInviteModal">{{ t('teacher.students.invite.cancel') }}</Button>
+            <Button variant="secondary" @click="closeInviteModal">{{ t('teacher.students.invite.cancel') }}</Button>
             <Button variant="teal" :disabled="parsedInviteIds.length===0 || inviting" :loading="inviting" @click="submitInvite">{{ t('teacher.students.invite.confirm') }}</Button>
           </div>
         </div>

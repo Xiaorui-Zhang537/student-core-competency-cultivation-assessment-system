@@ -87,6 +87,15 @@
 			"confirm": {
 				"deleteCourse": "Are you sure you want to delete this course? This action cannot be undone."
 			}
+			,
+			"notify": {
+				"createdTitle": "Course created",
+				"createdMsg": "A new course has been created.",
+				"updatedTitle": "Course updated",
+				"updatedMsg": "Course changes have been saved.",
+				"deletedTitle": "Course deleted",
+				"deletedMsg": "The course has been deleted."
+			}
 		},
 		"assignments": {
 			"breadcrumb": {
@@ -594,6 +603,13 @@
 			},
 			"confirm": {
 				"deleteFile": "Delete this file? This cannot be undone."
+			}
+			,
+			"notify": {
+				"fileDeletedTitle": "File deleted",
+				"fileDeletedMsg": "The file has been deleted.",
+				"fileDeleteFailedTitle": "Delete failed",
+				"fileDeleteFailedMsg": "An error occurred when deleting the file."
 			}
 		},
 		"courseEdit": {

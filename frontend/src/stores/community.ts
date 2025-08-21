@@ -117,8 +117,7 @@ export const useCommunityStore = defineStore('community', () => {
     const response = await handleApiCall(
       () => communityApi.createPost(data),
       uiStore,
-      '发布帖子失败',
-      { successMessage: '帖子发布成功' }
+      '发布帖子失败'
     );
     if (response) {
       await fetchPosts({}); // Refresh posts list
@@ -154,8 +153,7 @@ export const useCommunityStore = defineStore('community', () => {
     const response = await handleApiCall(
       () => communityApi.deletePost(postId),
       uiStore,
-      '删除帖子失败',
-      { successMessage: '删除成功' }
+      '删除帖子失败'
     );
     if (response) {
       posts.value = posts.value.filter(p => p.id !== postId);
@@ -167,8 +165,7 @@ export const useCommunityStore = defineStore('community', () => {
     const response = await handleApiCall(
       () => communityApi.updatePost(id, data as any),
       uiStore,
-      '编辑帖子失败',
-      { successMessage: '保存成功' }
+      '编辑帖子失败'
     );
     if (response) {
       // 列表中同步更新
@@ -225,8 +222,7 @@ export const useCommunityStore = defineStore('community', () => {
     const response = await handleApiCall(
         () => communityApi.createComment(postId, content, parentId),
         uiStore,
-        '发表评论失败',
-        { successMessage: '评论成功' }
+        '发表评论失败'
     );
     if (response) {
         await fetchComments(postId, {}); // Refresh comments
@@ -237,8 +233,7 @@ export const useCommunityStore = defineStore('community', () => {
     const response = await handleApiCall(
       () => communityApi.deleteComment(commentId),
       uiStore,
-      '删除评论失败',
-      { successMessage: '删除成功' }
+      '删除评论失败'
     );
     if (response) {
       await fetchComments(postId, {});

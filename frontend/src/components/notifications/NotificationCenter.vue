@@ -205,6 +205,8 @@
 import { computed, onMounted, ref } from 'vue'
 import { useNotificationsStore } from '@/stores/notifications'
 import { storeToRefs } from 'pinia'
+// @ts-ignore shim for vue-i18n types in this project
+import { useI18n } from 'vue-i18n'
 import {
   BellIcon,
   BellSlashIcon,
@@ -221,6 +223,7 @@ import {
 
 // Store
 const notificationsStore = useNotificationsStore()
+const { t } = useI18n()
 const {
   notifications,
   loading,
@@ -262,13 +265,20 @@ const handleMarkAsRead = async (notificationId: string) => {
 }
 
 const handleDeleteNotification = async (notificationId: string) => {
-  if (confirm('确定要删除这条通知吗？')) {
+  if (confirm(t('shared.notifications.confirm.delete') as string)) {
     try {
       await notificationsStore.deleteNotification(notificationId)
+      uiToast('success', t('shared.notifications.notify.deletedTitle') as string, t('shared.notifications.notify.deletedMsg') as string)
     } catch (error) {
       console.error('删除通知失败:', error)
     }
   }
+}
+
+const uiToast = (type: 'success'|'error'|'warning'|'info', title: string, message: string) => {
+  const { useUIStore } = require('@/stores/ui')
+  const ui = useUIStore()
+  ui.showNotification({ type, title, message })
 }
 
 const handleFilterChange = () => {

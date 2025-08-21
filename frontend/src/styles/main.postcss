@@ -23,6 +23,29 @@
 
 /* 组件样式 */
 @layer components {
+  /* 暗黑主题变量（可根据需要调整） */
+  :root {
+    --color-surface: #ffffff;
+    --color-surface-2: #f9fafb;
+    --color-border: #e5e7eb;
+    --color-text-primary: #111827;
+    --color-text-secondary: #4b5563;
+    --color-placeholder: #9ca3af;
+    --color-backdrop: #111827;
+    --ring-primary: 59 130 246; /* primary-500 */
+  }
+
+  .dark {
+    --color-surface: #0f172a;   /* slate-900 */
+    --color-surface-2: #111827; /* gray-900 */
+    --color-border: #374151;    /* gray-700 */
+    --color-text-primary: #f3f4f6;  /* gray-100 */
+    --color-text-secondary: #d1d5db;/* gray-300 */
+    --color-placeholder: #9ca3af;   /* gray-400 */
+    --color-backdrop: #000000;
+    --ring-primary: 99 102 241; /* indigo-500 */
+  }
+
   .btn {
     @apply px-4 py-2 rounded-lg font-medium transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2;
   }
@@ -36,12 +59,64 @@
   }
 
   .card {
-    @apply bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700;
+    @apply rounded-xl shadow-sm border;
+    background-color: var(--color-surface-2);
+    border-color: var(--color-border);
+    color: var(--color-text-primary);
   }
 
   .input {
-    @apply w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white;
+    @apply w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2;
+    background-color: theme('colors.white');
+    border-color: theme('colors.gray.300');
+    color: theme('colors.gray.900');
   }
+
+  .dark .input {
+    background-color: theme('colors.gray.800');
+    border-color: var(--color-border);
+    color: var(--color-text-primary);
+  }
+
+  .input::placeholder {
+    color: var(--color-placeholder);
+  }
+
+  .input:focus {
+    outline: none;
+    border-color: rgb(var(--ring-primary));
+    box-shadow: 0 0 0 2px rgba(var(--ring-primary), 0.35);
+  }
+
+  /* 统一弹窗容器（给所有弹窗根节点添加 .modal 类） */
+  .modal {
+    background-color: var(--color-surface);
+    color: var(--color-text-primary);
+    border: 1px solid var(--color-border);
+    @apply rounded-xl shadow-xl;
+  }
+
+  .modal .modal-header {
+    color: var(--color-text-primary);
+    @apply text-lg font-semibold;
+  }
+
+  .modal .modal-subtitle, .modal .muted {
+    color: var(--color-text-secondary);
+  }
+
+  /* 按钮在暗黑下的可读性（Button.vue 已覆盖大部分，这里兜底） */
+  .dark .btn-primary { @apply bg-indigo-600 hover:bg-indigo-700 text-white; }
+  .dark .btn-secondary { @apply bg-gray-700 text-gray-100 hover:bg-gray-600; }
+  .dark .btn { @apply focus:ring-indigo-500; }
+
+  /* 占位符/提示文字 */
+  .placeholder-muted::placeholder {
+    color: var(--color-placeholder);
+  }
+
+  /* 长文本换行可读性 */
+  .prose-readable { @apply whitespace-normal break-words leading-relaxed; }
 
   /* Line clamp utilities for text truncation */
   .line-clamp-1 {

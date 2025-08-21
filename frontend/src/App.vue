@@ -38,40 +38,37 @@
 
     <!-- 全局通知系统 -->
     <div class="fixed top-4 right-4 z-50 space-y-2">
-      <transition-group name="notification" tag="div">
+      <div class="space-y-2">
         <div
           v-for="notification in notifications"
           :key="notification.id"
-          :class="[
-            'max-w-sm w-full bg-white dark:bg-gray-800 shadow-lg rounded-lg pointer-events-auto ring-1 ring-black ring-opacity-5 overflow-hidden',
-            'transform transition-all duration-300 ease-in-out'
-          ]"
+          class="w-auto max-w-[90vw] sm:max-w-[560px] bg-white dark:bg-gray-800 shadow-lg rounded-lg pointer-events-auto ring-1 ring-black ring-opacity-5 overflow-hidden transform transition-all duration-300 ease-in-out"
         >
           <div class="p-4">
             <div class="flex items-start">
               <div class="flex-shrink-0">
-                <check-circle-icon 
+                <CheckCircleIcon 
                   v-if="notification.type === 'success'" 
                   class="h-6 w-6 text-green-400" 
                 />
-                <exclamation-triangle-icon 
+                <ExclamationTriangleIcon 
                   v-else-if="notification.type === 'warning'" 
                   class="h-6 w-6 text-yellow-400" 
                 />
-                <x-circle-icon 
+                <XCircleIcon 
                   v-else-if="notification.type === 'error'" 
                   class="h-6 w-6 text-red-400" 
                 />
-                <information-circle-icon 
+                <InformationCircleIcon 
                   v-else 
                   class="h-6 w-6 text-blue-400" 
                 />
               </div>
-              <div class="ml-3 w-0 flex-1">
-                <p class="text-sm font-medium text-gray-900 dark:text-white">
+              <div class="ml-3 min-w-0 flex-1">
+                <p class="text-sm font-medium text-gray-900 dark:text-white break-words whitespace-normal">
                   {{ notification.title }}
                 </p>
-                <p v-if="notification.message" class="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                <p v-if="notification.message" class="mt-1 text-sm text-gray-500 dark:text-gray-400 break-words whitespace-normal">
                   {{ notification.message }}
                 </p>
               </div>
@@ -86,7 +83,7 @@
             </div>
           </div>
         </div>
-      </transition-group>
+      </div>
     </div>
 
     <!-- 全局错误边界弹窗 -->

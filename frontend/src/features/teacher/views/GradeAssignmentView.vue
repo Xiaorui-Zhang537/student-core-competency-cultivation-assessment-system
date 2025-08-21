@@ -432,7 +432,7 @@
               <textarea v-model="reportForm.details" class="input w-full" rows="4"></textarea>
             </div>
             <div class="flex items-center justify-end gap-2">
-              <Button variant="outline" size="sm" @click="showReport=false">{{ t('common.cancel') || '取消' }}</Button>
+              <Button variant="secondary" size="sm" @click="showReport=false">{{ t('common.cancel') || '取消' }}</Button>
               <Button variant="indigo" size="sm" @click="submitReport">{{ t('common.submit') || '提交' }}</Button>
             </div>
           </div>

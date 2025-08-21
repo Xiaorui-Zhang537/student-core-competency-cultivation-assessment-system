@@ -200,7 +200,7 @@
       </div>
 
       <!-- Create Post Modal -->
-      <div v-if="showCreatePostModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+      <div v-if="showCreatePostModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
         <div class="bg-white dark:bg-gray-800 rounded-lg p-6 max-w-2xl w-full mx-4 max-h-[80vh] overflow-y-auto">
            <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-4">{{ t('shared.community.modal.createTitle') }}</h3>
           <form @submit.prevent="handleCreatePost" class="space-y-4">
@@ -211,11 +211,11 @@
             <div>
               <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{{ t('shared.community.modal.category') }}</label>
               <select v-model="newPost.category" class="input">
-                <option value="学习讨论">学习讨论</option>
-                <option value="作业求助">作业求助</option>
-                <option value="经验分享">经验分享</option>
-                <option value="问答">问答</option>
-                <option value="闲聊">闲聊</option>
+                <option value="study">{{ t('shared.community.categories.study') }}</option>
+                <option value="help">{{ t('shared.community.categories.help') }}</option>
+                <option value="share">{{ t('shared.community.categories.share') }}</option>
+                <option value="qa">{{ t('shared.community.categories.qa') }}</option>
+                <option value="chat">{{ t('shared.community.categories.chat') }}</option>
               </select>
             </div>
             <div>
@@ -253,7 +253,7 @@
               />
             </div>
             <div class="flex justify-end space-x-3 pt-4">
-              <button type="button" @click="showCreatePostModal = false" class="btn btn-outline">{{ t('shared.community.modal.cancel') }}</button>
+              <button type="button" @click="showCreatePostModal = false" class="btn btn-secondary">{{ t('shared.community.modal.cancel') }}</button>
               <button type="submit" :disabled="loading" class="btn btn-primary">{{ t('shared.community.modal.publish') }}</button>
             </div>
           </form>
@@ -261,30 +261,30 @@
       </div>
 
       <!-- Edit Post Modal -->
-      <div v-if="editModal.visible" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+      <div v-if="editModal.visible" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
         <div class="bg-white dark:bg-gray-800 rounded-lg p-6 max-w-2xl w-full mx-4 max-h-[80vh] overflow-y-auto">
-          <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-4">编辑帖子</h3>
+          <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-4">{{ t('shared.community.modal.editTitle') }}</h3>
           <form @submit.prevent="handleUpdatePost" class="space-y-4">
             <div>
-              <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">帖子标题</label>
+              <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{{ t('shared.community.modal.title') }}</label>
               <input v-model="editModal.form.title" type="text" class="input" required />
             </div>
             <div>
-              <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">分类</label>
+              <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{{ t('shared.community.modal.category') }}</label>
               <select v-model="editModal.form.category" class="input">
-                <option value="学习讨论">学习讨论</option>
-                <option value="作业求助">作业求助</option>
-                <option value="经验分享">经验分享</option>
-                <option value="问答">问答</option>
-                <option value="闲聊">闲聊</option>
+                <option value="study">{{ t('shared.community.categories.study') }}</option>
+                <option value="help">{{ t('shared.community.categories.help') }}</option>
+                <option value="share">{{ t('shared.community.categories.share') }}</option>
+                <option value="qa">{{ t('shared.community.categories.qa') }}</option>
+                <option value="chat">{{ t('shared.community.categories.chat') }}</option>
               </select>
             </div>
             <div>
-              <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">帖子内容</label>
+              <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{{ t('shared.community.modal.content') }}</label>
               <textarea v-model="editModal.form.content" rows="6" class="input" required></textarea>
             </div>
             <div>
-              <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">附件</label>
+              <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{{ t('shared.community.modal.attachment') }}</label>
               <FileUpload
                 ref="postEditUploader"
                 :accept="'.pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.txt,.zip,.rar,image/*,video/*'"
@@ -297,24 +297,24 @@
                 @upload-error="onPostUploadError"
               />
               <div v-if="editAttachments.length" class="mt-3">
-                <h4 class="text-sm font-medium mb-2">已有关联附件</h4>
+                <h4 class="text-sm font-medium mb-2">{{ t('shared.community.modal.existingTitle') }}</h4>
                 <ul class="divide-y divide-gray-200 dark:divide-gray-700">
                   <li v-for="f in editAttachments" :key="f.id" class="py-2 flex items-center justify-between">
                     <div class="min-w-0 mr-3">
-                      <div class="text-sm truncate">{{ f.originalName || f.fileName || ('附件#' + f.id) }}</div>
+                      <div class="text-sm truncate">{{ f.originalName || f.fileName || ('#' + f.id) }}</div>
                       <div class="text-xs text-gray-500">{{ (f.fileSize ? (f.fileSize/1024/1024).toFixed(1)+' MB' : '') }}</div>
                     </div>
                     <div class="flex items-center gap-2">
-                      <button type="button" class="btn btn-sm btn-outline" @click="downloadEditAttachment(f)">下载</button>
-                      <button type="button" class="btn btn-sm btn-danger-outline" @click="deleteEditAttachment(f.id)">删除</button>
+                      <button type="button" class="btn btn-sm btn-outline" @click="downloadEditAttachment(f)">{{ t('shared.community.modal.download') }}</button>
+                      <button type="button" class="btn btn-sm btn-danger-outline" @click="deleteEditAttachment(f.id)">{{ t('shared.community.modal.delete') }}</button>
                     </div>
                   </li>
                 </ul>
               </div>
             </div>
             <div class="flex justify-end space-x-3 pt-4">
-              <button type="button" @click="editModal.visible = false" class="btn btn-outline">取消</button>
-              <button type="submit" :disabled="loading" class="btn btn-primary">保存</button>
+              <button type="button" @click="editModal.visible = false" class="btn btn-secondary">{{ t('shared.community.modal.cancel') }}</button>
+              <button type="submit" :disabled="loading" class="btn btn-primary">{{ t('shared.community.modal.save') }}</button>
             </div>
           </form>
         </div>
@@ -447,7 +447,7 @@ const onEditPost = (post: any) => {
   editModal.visible = true
   editModal.form.id = post.id
   editModal.form.title = post.title
-  // 将后端中文分类转换为前端英文 id
+  // 将后端中文分类转换为前端英文 id（保持选项值稳定）
   editModal.form.category = labelToCategoryId[post.category] || post.category
   editModal.form.content = post.content
   editUploadData.relatedId = post.id
@@ -458,10 +458,15 @@ const handleUpdatePost = async () => {
   if (!editModal.form.id) return
   await communityStore.updatePost(editModal.form.id, {
     title: editModal.form.title,
-    // 提交给后端中文分类
+    // 提交给后端中文分类（由稳定 id -> 中文标签）
     category: categoryIdToLabel[editModal.form.category] || editModal.form.category,
     content: editModal.form.content,
   })
+  {
+    const { useUIStore } = await import('@/stores/ui')
+    const ui = useUIStore()
+    ui.showNotification({ type: 'success', title: t('shared.community.notify.postUpdatedTitle') as string, message: t('shared.community.notify.postUpdatedMsg') as string })
+  }
   editModal.visible = false
   applyFilters()
 }
@@ -470,13 +475,16 @@ const handleCreatePost = async () => {
   const postData = {
     title: newPost.title,
     content: newPost.content,
-    // 提交给后端中文分类
+    // 提交给后端中文分类（由稳定 id -> 中文标签）
     category: categoryIdToLabel[newPost.category] || newPost.category,
     tags: Array.from(new Set([...(newPost.tagsInput.split(' ').filter(t => t)), ...newPost.selectedTags])),
   };
   
   const created = await communityStore.createPost(postData);
   if (created) {
+    const { useUIStore } = await import('@/stores/ui')
+    const ui = useUIStore()
+    ui.showNotification({ type: 'success', title: t('shared.community.notify.postCreatedTitle') as string, message: t('shared.community.notify.postCreatedMsg') as string })
     const postId = (created as any)?.id || (created as any)?.data?.id;
     if (postId && postUploader.value) {
       postUploadData.relatedId = postId;
@@ -488,7 +496,7 @@ const handleCreatePost = async () => {
     newPost.tagsInput = '';
     newPost.tagSearch = '';
     newPost.selectedTags = [];
-    newPost.category = '学习讨论';
+    newPost.category = 'study';
     applyFilters(); // Refresh list
   }
 };
@@ -509,6 +517,9 @@ const onEditUploadSuccess = async () => {
   if (editModal.form.id) {
     await refreshEditAttachments(editModal.form.id);
   }
+  const { useUIStore } = await import('@/stores/ui')
+  const ui = useUIStore()
+  ui.showNotification({ type: 'success', title: t('shared.community.notify.attachmentUploadedTitle') as string, message: t('shared.community.notify.attachmentUploadedMsg') as string })
 };
 
 const deleteEditAttachment = async (fileId: number | string) => {
@@ -599,8 +610,13 @@ onMounted(() => {
 });
 
 const onDeletePost = async (postId: number) => {
-  if (!confirm('确认删除该帖子？')) return;
+  if (!confirm(t('shared.community.confirm.deletePost') as string)) return;
   await communityStore.deletePost(postId);
+  {
+    const { useUIStore } = await import('@/stores/ui')
+    const ui = useUIStore()
+    ui.showNotification({ type: 'success', title: t('shared.community.notify.postDeletedTitle') as string, message: t('shared.community.notify.postDeletedMsg') as string })
+  }
 }
 
 // 下载首个附件（如需列表可扩展UI，这里作为示例）

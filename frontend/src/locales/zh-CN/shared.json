@@ -139,10 +139,15 @@
         "images": "图片附件（可选）",
         "cancel": "取消",
         "publish": "发布帖子",
-        "save": "保存"
+        "save": "保存",
+        "attachment": "附件",
+        "existingTitle": "已有关联附件",
+        "download": "下载",
+        "delete": "删除"
       },
       "confirm": {
-        "deletePost": "确认删除该帖子？"
+        "deletePost": "确认删除该帖子？",
+        "deleteComment": "确认删除该评论？"
       },
       "detail": {
         "back": "返回社区",
@@ -163,6 +168,31 @@
         "total": "共 {count} 条",
         "notFound": "帖子未找到。",
         "loading": "加载中..."
+      },
+      "notify": {
+        "postCreatedTitle": "帖子已发布",
+        "postCreatedMsg": "您的帖子已成功发布。",
+        "postUpdatedTitle": "帖子已更新",
+        "postUpdatedMsg": "帖子内容已保存。",
+        "postDeletedTitle": "帖子已删除",
+        "postDeletedMsg": "该帖子已被删除。",
+        "commentPostedTitle": "评论已发布",
+        "commentPostedMsg": "您的评论已发布。",
+        "commentDeletedTitle": "评论已删除",
+        "commentDeletedMsg": "该评论已删除。",
+        "attachmentUploadedTitle": "附件已上传",
+        "attachmentUploadedMsg": "附件上传完成。",
+        "attachmentDeletedTitle": "附件已删除",
+        "attachmentDeletedMsg": "附件已删除。"
+      }
+    },
+    "notifications": {
+      "confirm": {
+        "delete": "确定要删除这条通知吗？"
+      },
+      "notify": {
+        "deletedTitle": "通知已删除",
+        "deletedMsg": "该通知已删除。"
       }
     },
     "emojiPicker": {

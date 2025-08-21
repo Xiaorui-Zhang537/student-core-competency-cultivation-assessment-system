@@ -87,6 +87,15 @@
 			"confirm": {
 				"deleteCourse": "您确定要删除这门课程吗？此操作无法撤销。"
 			}
+			,
+			"notify": {
+				"createdTitle": "课程已创建",
+				"createdMsg": "新课程已成功创建。",
+				"updatedTitle": "课程已更新",
+				"updatedMsg": "课程信息已保存。",
+				"deletedTitle": "课程已删除",
+				"deletedMsg": "该课程已成功删除。"
+			}
 		},
 		"assignments": {
 			"breadcrumb": {
@@ -597,6 +606,13 @@
 			},
 			"confirm": {
 				"deleteFile": "确认删除该文件？此操作不可撤销。"
+			}
+			,
+			"notify": {
+				"fileDeletedTitle": "文件已删除",
+				"fileDeletedMsg": "所选文件已删除。",
+				"fileDeleteFailedTitle": "删除失败",
+				"fileDeleteFailedMsg": "删除文件时发生错误。"
 			}
 		},
 		"courseEdit": {

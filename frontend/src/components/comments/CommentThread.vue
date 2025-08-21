@@ -93,7 +93,12 @@ const toggleReply = () => {
 
 const submitReply = async () => {
   if (!replyContent.value.trim()) return
-  await communityStore.postComment(props.postId, replyContent.value, props.comment.id)
+  const ok = await communityStore.postComment(props.postId, replyContent.value, props.comment.id)
+  if (ok !== false) {
+    const { useUIStore } = await import('@/stores/ui')
+    const ui = useUIStore()
+    ui.showNotification({ type: 'success', title: t('shared.community.notify.commentPostedTitle') as string, message: t('shared.community.notify.commentPostedMsg') as string })
+  }
   replyContent.value = ''
   showReplyBox.value = false
   // 直接刷新该节点的子回复，并确保最新在顶部
@@ -134,8 +139,13 @@ const handleChildDeleted = async (id: number) => {
 }
 
 const handleDeleteSelf = async () => {
-  if (!confirm('确认删除该评论？')) return
-  await communityStore.deleteComment(props.comment.id, props.postId)
+  if (!confirm(t('shared.community.confirm.deleteComment') as string)) return
+  const ok = await communityStore.deleteComment(props.comment.id, props.postId)
+  if (ok !== false) {
+    const { useUIStore } = await import('@/stores/ui')
+    const ui = useUIStore()
+    ui.showNotification({ type: 'success', title: t('shared.community.notify.commentDeletedTitle') as string, message: t('shared.community.notify.commentDeletedMsg') as string })
+  }
   emit('deleted', props.comment.id)
 }
 

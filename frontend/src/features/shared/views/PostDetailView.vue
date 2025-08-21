@@ -62,7 +62,7 @@
         <div class="mb-6">
             <textarea v-model="newComment" rows="3" :placeholder="t('shared.community.detail.writeComment')" class="input w-full"></textarea>
             <div class="mt-2 flex items-center gap-2">
-              <emoji-picker @select="(e) => newComment = (newComment || '') + e" />
+              <emoji-picker @select="onEmojiSelect" />
               <button @click="handlePostComment" :disabled="!newComment.trim() || loading" class="btn btn-primary">{{ t('shared.community.detail.postComment') }}</button>
             </div>
         </div>
@@ -89,7 +89,7 @@
       </div>
 
       <!-- Edit Current Post Modal -->
-      <div v-if="editCurrent.visible" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+      <div v-if="editCurrent.visible" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
         <div class="bg-white dark:bg-gray-800 rounded-lg p-6 max-w-2xl w-full mx-4 max-h-[80vh] overflow-y-auto">
           <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-4">{{ t('shared.community.modal.editTitle') }}</h3>
           <form @submit.prevent="handleUpdateCurrentPost" class="space-y-4">
@@ -100,11 +100,11 @@
             <div>
               <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{{ t('shared.community.modal.category') }}</label>
               <select v-model="editCurrent.form.category" class="input">
-                <option value="学习讨论">学习讨论</option>
-                <option value="作业求助">作业求助</option>
-                <option value="经验分享">经验分享</option>
-                <option value="问答">问答</option>
-                <option value="闲聊">闲聊</option>
+                <option value="study">{{ t('shared.community.categories.study') }}</option>
+                <option value="help">{{ t('shared.community.categories.help') }}</option>
+                <option value="share">{{ t('shared.community.categories.share') }}</option>
+                <option value="qa">{{ t('shared.community.categories.qa') }}</option>
+                <option value="chat">{{ t('shared.community.categories.chat') }}</option>
               </select>
             </div>
             <div>
@@ -112,7 +112,7 @@
               <textarea v-model="editCurrent.form.content" rows="6" class="input" required></textarea>
             </div>
             <div>
-              <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">附件</label>
+              <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{{ t('shared.community.modal.attachment') }}</label>
               <FileUpload
                 ref="detailEditUploader"
                 :accept="'.pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.txt,.zip,.rar,image/*,video/*'"
@@ -125,23 +125,23 @@
                 @upload-error="onDetailEditUploadError"
               />
               <div v-if="detailEditAttachments.length" class="mt-3">
-                <h4 class="text-sm font-medium mb-2">已有关联附件</h4>
+                <h4 class="text-sm font-medium mb-2">{{ t('shared.community.modal.existingTitle') }}</h4>
                 <ul class="divide-y divide-gray-200 dark:divide-gray-700">
                   <li v-for="f in detailEditAttachments" :key="f.id" class="py-2 flex items-center justify-between">
                     <div class="min-w-0 mr-3">
-                      <div class="text-sm truncate">{{ f.originalName || f.fileName || ('附件#' + f.id) }}</div>
+                      <div class="text-sm truncate">{{ f.originalName || f.fileName || ('#' + f.id) }}</div>
                       <div class="text-xs text-gray-500">{{ (f.fileSize ? (f.fileSize/1024/1024).toFixed(1)+' MB' : '') }}</div>
                     </div>
                     <div class="flex items-center gap-2">
-                      <button type="button" class="btn btn-sm btn-outline" @click="downloadDetailEditAttachment(f)">下载</button>
-                      <button type="button" class="btn btn-sm btn-danger-outline" @click="deleteDetailEditAttachment(f.id)">删除</button>
+                      <button type="button" class="btn btn-sm btn-outline" @click="downloadDetailEditAttachment(f)">{{ t('shared.community.modal.download') }}</button>
+                      <button type="button" class="btn btn-sm btn-danger-outline" @click="deleteDetailEditAttachment(f.id)">{{ t('shared.community.modal.delete') }}</button>
                     </div>
                   </li>
                 </ul>
               </div>
             </div>
             <div class="flex justify-end space-x-3 pt-4">
-              <button type="button" @click="editCurrent.visible = false" class="btn btn-outline">{{ t('shared.community.modal.cancel') }}</button>
+              <button type="button" @click="editCurrent.visible = false" class="btn btn-secondary">{{ t('shared.community.modal.cancel') }}</button>
               <button type="submit" :disabled="loading" class="btn btn-primary">{{ t('shared.community.modal.save') }}</button>
             </div>
           </form>
@@ -172,6 +172,18 @@ const authStore = useAuthStore();
 const communityStore = useCommunityStore();
 const { t } = useI18n()
 
+// 分类映射：保持前端选项值使用稳定 id，提交与回显时与后端中文互转
+const categoryIdToLabel: Record<string, string> = {
+  study: '学习讨论',
+  help: '作业求助',
+  share: '经验分享',
+  qa: '问答',
+  chat: '闲聊',
+}
+const labelToCategoryId: Record<string, string> = Object.fromEntries(
+  Object.entries(categoryIdToLabel).map(([k, v]) => [v, k])
+) as Record<string, string>
+
 const { currentPost, comments, totalComments, loading } = storeToRefs(communityStore);
 const localComments = ref<any[]>([])
 
@@ -192,6 +204,9 @@ const backToCommunity = computed(() => authStore.userRole === 'TEACHER' ? '/teac
 const handlePostComment = async () => {
   if (!currentPost.value) return;
   await communityStore.postComment(currentPost.value.id, newComment.value);
+  const { useUIStore } = await import('@/stores/ui')
+  const ui = useUIStore()
+  ui.showNotification({ type: 'success', title: t('shared.community.notify.commentPostedTitle') as string, message: t('shared.community.notify.commentPostedMsg') as string })
   newComment.value = '';
   // 重新拉取第一页评论，保证新评论立即可见
   commentsPage.value = 1;
@@ -201,28 +216,35 @@ const handlePostComment = async () => {
 
 const handleDeleteComment = async (commentId: number) => {
   if (!currentPost.value) return;
-  if (!confirm('确认删除该评论？')) return;
+  if (!confirm(t('shared.community.confirm.deleteComment') as string)) return;
   await communityStore.deleteComment(commentId, currentPost.value.id);
+  const { useUIStore } = await import('@/stores/ui')
+  const ui = useUIStore()
+  ui.showNotification({ type: 'success', title: t('shared.community.notify.commentDeletedTitle') as string, message: t('shared.community.notify.commentDeletedMsg') as string })
 }
 
 const onDeleteCurrentPost = async () => {
   if (!currentPost.value) return;
-  if (!confirm('确认删除该帖子？')) return;
+  if (!confirm(t('shared.community.confirm.deletePost') as string)) return;
   await communityStore.deletePost(currentPost.value.id);
+  const { useUIStore } = await import('@/stores/ui')
+  const ui = useUIStore()
+  ui.showNotification({ type: 'success', title: t('shared.community.notify.postDeletedTitle') as string, message: t('shared.community.notify.postDeletedMsg') as string })
   // 返回社区
   window.history.back();
 }
 
 const editCurrent = reactive<{ visible: boolean; form: { title: string; category: string; content: string } }>({
   visible: false,
-  form: { title: '', category: '学习讨论', content: '' }
+  form: { title: '', category: 'study', content: '' }
 })
 
 const openEditCurrentPost = () => {
   if (!currentPost.value) return
   editCurrent.visible = true
   editCurrent.form.title = currentPost.value.title
-  editCurrent.form.category = currentPost.value.category
+  // 将后端中文分类转换为前端英文 id（保持选项值稳定）
+  editCurrent.form.category = labelToCategoryId[currentPost.value.category] || currentPost.value.category
   editCurrent.form.content = currentPost.value.content
   detailEditUploadData.relatedId = currentPost.value.id
   refreshDetailEditAttachments()
@@ -232,7 +254,8 @@ const handleUpdateCurrentPost = async () => {
   if (!currentPost.value) return
   await communityStore.updatePost(currentPost.value.id, {
     title: editCurrent.form.title,
-    category: editCurrent.form.category,
+    // 提交给后端中文分类（由稳定 id -> 中文标签）
+    category: categoryIdToLabel[editCurrent.form.category] || editCurrent.form.category,
     content: editCurrent.form.content,
   })
   await communityStore.fetchPostById(currentPost.value.id)
@@ -243,7 +266,7 @@ const handleUpdateCurrentPost = async () => {
 const formatDate = (dateString: string) => {
   if (!dateString) return '';
   const date = new Date(dateString);
-  return date.toLocaleString('zh-CN');
+  return date.toLocaleString();
 };
 
 onMounted(async () => {
@@ -309,6 +332,9 @@ const refreshDetailEditAttachments = async () => {
 
 const onDetailEditUploadSuccess = async () => {
   await refreshDetailEditAttachments();
+  const { useUIStore } = await import('@/stores/ui')
+  const ui = useUIStore()
+  ui.showNotification({ type: 'success', title: t('shared.community.notify.attachmentUploadedTitle') as string, message: t('shared.community.notify.attachmentUploadedMsg') as string })
 };
 
 const onDetailEditUploadError = (msg: string) => {
@@ -318,6 +344,9 @@ const onDetailEditUploadError = (msg: string) => {
 const deleteDetailEditAttachment = async (fileId: number | string) => {
   await fileApi.deleteFile(String(fileId));
   await refreshDetailEditAttachments();
+  const { useUIStore } = await import('@/stores/ui')
+  const ui = useUIStore()
+  ui.showNotification({ type: 'success', title: t('shared.community.notify.attachmentDeletedTitle') as string, message: t('shared.community.notify.attachmentDeletedMsg') as string })
 };
 
 const downloadDetailEditAttachment = async (f: any) => {
@@ -351,6 +380,11 @@ const refreshMainAttachments = async () => {
     }
   }
 };
+
+// 选择表情回调（避免模板中隐式 any）
+const onEmojiSelect = (emoji: string) => {
+  newComment.value = (newComment.value || '') + emoji
+}
 
 const loadPreview = async (f: any) => {
   try {
