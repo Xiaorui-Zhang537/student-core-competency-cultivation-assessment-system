@@ -14,14 +14,21 @@
         <result column="grade_level" property="gradeLevel"/>
         <result column="feedback" property="feedback"/>
         <result column="status" property="status"/>
+        <result column="strengths" property="strengths"/>
+        <result column="improvements" property="improvements"/>
+        <result column="allow_resubmit" property="allowResubmit"/>
+        <result column="rubric_json" property="rubricJson"/>
+        <result column="regrade_reason" property="regradeReason"/>
         <result column="created_at" property="createdAt"/>
         <result column="updated_at" property="updatedAt"/>
+        <result column="published_at" property="publishedAt"/>
         <result column="deleted" property="deleted"/>
     </resultMap>
 
     <sql id="Base_Column_List">
         id, student_id, assignment_id, submission_id, grader_id, score, max_score, percentage,
-        grade_level, feedback, status, created_at, updated_at, deleted
+        grade_level, feedback, status, strengths, improvements, allow_resubmit, rubric_json, regrade_reason,
+        created_at, updated_at, published_at, deleted
     </sql>
 
     <!-- 插入成绩 -->
@@ -29,11 +36,13 @@
         INSERT INTO grades (
             student_id, assignment_id, submission_id, grader_id,
             score, max_score, percentage, grade_level,
-            feedback, status, created_at, updated_at, deleted
+            feedback, status, strengths, improvements, allow_resubmit, rubric_json, regrade_reason,
+            created_at, updated_at, published_at, deleted
         ) VALUES (
                      #{studentId}, #{assignmentId}, #{submissionId}, #{graderId},
                      #{score}, #{maxScore}, #{percentage}, #{gradeLevel},
-                     #{feedback}, #{status}, #{createdAt}, #{updatedAt}, #{deleted}
+                     #{feedback}, #{status}, #{strengths}, #{improvements}, #{allowResubmit}, #{rubricJson}, #{regradeReason},
+                     #{createdAt}, #{updatedAt}, #{publishedAt}, #{deleted}
                  )
     </insert>
 
@@ -60,18 +69,26 @@
         ORDER BY created_at DESC
     </select>
 
-    <!-- 更新成绩 -->
+    <!-- 更新成绩（仅更新非空字段，避免将字段置空覆盖默认值） -->
     <update id="updateGrade" parameterType="com.noncore.assessment.entity.Grade">
-        UPDATE grades SET
-                          score = #{score},
-                          max_score = #{maxScore},
-                          percentage = #{percentage},
-                          grade_level = #{gradeLevel},
-                          feedback = #{feedback},
-                          status = #{status},
-                          submission_id = #{submissionId},
-                          grader_id = #{graderId},
-                          updated_at = #{updatedAt}
+        UPDATE grades
+        <set>
+            <if test="score != null">score = #{score},</if>
+            <if test="maxScore != null">max_score = #{maxScore},</if>
+            <if test="percentage != null">percentage = #{percentage},</if>
+            <if test="gradeLevel != null">grade_level = #{gradeLevel},</if>
+            <if test="feedback != null">feedback = #{feedback},</if>
+            <if test="status != null">status = #{status},</if>
+            <if test="strengths != null">strengths = #{strengths},</if>
+            <if test="improvements != null">improvements = #{improvements},</if>
+            <if test="allowResubmit != null">allow_resubmit = #{allowResubmit},</if>
+            <if test="rubricJson != null">rubric_json = #{rubricJson},</if>
+            <if test="regradeReason != null">regrade_reason = #{regradeReason},</if>
+            <if test="submissionId != null">submission_id = #{submissionId},</if>
+            <if test="graderId != null">grader_id = #{graderId},</if>
+            <if test="publishedAt != null">published_at = #{publishedAt},</if>
+            updated_at = #{updatedAt}
+        </set>
         WHERE id = #{id} AND deleted = false
     </update>
 
@@ -119,17 +136,38 @@
         LIMIT #{size} OFFSET #{offset}
     </select>
 
-    <!-- 根据学生ID查询成绩，支持可选课程过滤（配合 PageHelper 使用） -->
+    <!-- 根据学生ID查询成绩，支持可选课程过滤（配合 PageHelper 使用）
+         使用 EXISTS 避免列名歧义与不必要的联表开销 -->
     <select id="selectByStudentIdFiltered" resultMap="GradeResultMap">
-        SELECT g.<include refid="Base_Column_List"/>
+        SELECT
+            g.id,
+            g.student_id,
+            g.assignment_id,
+            g.submission_id,
+            g.grader_id,
+            g.score,
+            g.max_score,
+            g.percentage,
+            g.grade_level,
+            g.feedback,
+            g.status,
+            g.strengths,
+            g.improvements,
+            g.allow_resubmit,
+            g.rubric_json,
+            g.regrade_reason,
+            g.created_at,
+            g.updated_at,
+            g.published_at,
+            g.deleted
         FROM grades g
-        <if test="courseId != null">
-            INNER JOIN assignments a ON g.assignment_id = a.id
-        </if>
         WHERE g.student_id = #{studentId}
           AND g.deleted = false
         <if test="courseId != null">
-            AND a.course_id = #{courseId}
+          AND EXISTS (
+            SELECT 1 FROM assignments a
+            WHERE a.id = g.assignment_id AND a.course_id = #{courseId}
+          )
         </if>
         ORDER BY g.created_at DESC
     </select>
@@ -299,6 +337,9 @@
         </if>
         <if test="assignmentId != null">
             AND g.assignment_id = #{assignmentId}
+        </if>
+        <if test="studentId != null">
+            AND g.student_id = #{studentId}
         </if>
         ORDER BY c.title, a.title, u.username
     </select>

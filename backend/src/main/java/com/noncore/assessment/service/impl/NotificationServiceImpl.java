@@ -90,6 +90,7 @@ public class NotificationServiceImpl implements NotificationService {
             return Map.of("successCount", 0, "failCount", 0, "errors", List.of("接收者列表为空"));
         }
 
+        java.time.LocalDateTime now = java.time.LocalDateTime.now();
         List<Notification> notifications = recipientIds.stream().map(recipientId -> {
             Notification notification = new Notification();
             notification.setRecipientId(recipientId);
@@ -101,6 +102,10 @@ public class NotificationServiceImpl implements NotificationService {
             notification.setPriority(priority != null ? priority : "normal");
             notification.setRelatedType(relatedType);
             notification.setRelatedId(relatedId);
+            notification.setIsRead(false);
+            notification.setCreatedAt(now);
+            notification.setUpdatedAt(now);
+            notification.setDeleted(false);
             return notification;
         }).collect(Collectors.toList());
 
@@ -435,5 +440,31 @@ public class NotificationServiceImpl implements NotificationService {
             result.put("error", e.getMessage());
         }
         return result;
+    }
+
+    @Override
+    public PageResult<Notification> getConversation(Long userId, Long peerId, Integer page, Integer size) {
+        logger.info("获取会话：userId={}, peerId={}, page={}, size={}", userId, peerId, page, size);
+        int p = (page == null || page < 1) ? 1 : page;
+        int s = (size == null || size < 1) ? 20 : size;
+        int offset = (p - 1) * s;
+        List<Notification> items = notificationMapper.selectConversationBetween(userId, peerId, offset, s);
+        Integer total = notificationMapper.countConversationBetween(userId, peerId);
+        int totalPages = (int) Math.ceil((total == null ? 0 : total) / (double) s);
+        return PageResult.of(items, p, s, total == null ? 0L : total.longValue(), totalPages);
+    }
+
+    @Override
+    public int markConversationAsRead(Long userId, Long peerId) {
+        logger.info("标记会话已读：userId={}, peerId={}", userId, peerId);
+        // 简化处理：取我作为接收者的未读消息，逐条标记
+        List<Notification> mine = notificationMapper.selectConversationBetween(userId, peerId, 0, Integer.MAX_VALUE);
+        int count = 0;
+        for (Notification n : mine) {
+            if (Boolean.FALSE.equals(n.getIsRead()) && userId.equals(n.getRecipientId())) {
+                count += notificationMapper.markAsRead(n.getId());
+            }
+        }
+        return count;
     }
 } 

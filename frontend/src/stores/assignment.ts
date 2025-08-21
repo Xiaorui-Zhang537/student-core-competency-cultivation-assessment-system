@@ -3,6 +3,7 @@ import { ref, computed } from 'vue';
 import { assignmentApi } from '@/api/assignment.api';
 import type { Assignment, AssignmentCreationRequest, AssignmentUpdateRequest } from '@/types/assignment';
 import { useUIStore } from './ui';
+import { i18n } from '@/i18n'
 import { handleApiCall } from '@/utils/api-handler';
 
 export const useAssignmentStore = defineStore('assignment', () => {
@@ -42,28 +43,32 @@ export const useAssignmentStore = defineStore('assignment', () => {
     }
   };
 
-  const createAssignment = async (data: AssignmentCreationRequest) => {
+  const createAssignment = async (data: AssignmentCreationRequest, opts?: { suppressNotify?: boolean }) => {
     const response = await handleApiCall(
       () => assignmentApi.createAssignment(data),
       uiStore,
       '创建作业失败'
     );
     if (response) {
-      uiStore.showNotification({ type: 'success', title: '作业已创建', message: '新作业已成功添加。' });
+      if (!opts?.suppressNotify) {
+        uiStore.showNotification({ type: 'success', title: i18n.global.t('teacher.assignments.notify.createdTitle') as string, message: i18n.global.t('teacher.assignments.notify.createdMsg') as string });
+      }
       await fetchAssignments({ courseId: data.courseId });
       return response;
     }
     return null;
   };
   
-  const updateAssignment = async (id: string, data: AssignmentUpdateRequest) => {
+  const updateAssignment = async (id: string, data: AssignmentUpdateRequest, opts?: { suppressNotify?: boolean }) => {
     const response = await handleApiCall(
       () => assignmentApi.updateAssignment(id, data),
       uiStore,
       '更新作业失败'
     );
     if (response) {
-      uiStore.showNotification({ type: 'success', title: '作业已更新', message: '作业信息已成功保存。' });
+      if (!opts?.suppressNotify) {
+        uiStore.showNotification({ type: 'success', title: i18n.global.t('teacher.assignments.notify.updatedTitle') as string, message: i18n.global.t('teacher.assignments.notify.updatedMsg') as string });
+      }
       if (selectedAssignment.value && selectedAssignment.value.id === id) {
         selectedAssignment.value = { ...selectedAssignment.value, ...response };
       }
@@ -83,7 +88,7 @@ export const useAssignmentStore = defineStore('assignment', () => {
       '删除作业失败'
     );
     if (response) {
-      uiStore.showNotification({ type: 'success', title: '作业已删除', message: '该作业已被成功删除。' });
+      uiStore.showNotification({ type: 'success', title: i18n.global.t('teacher.assignments.notify.deletedTitle') as string, message: i18n.global.t('teacher.assignments.notify.deletedMsg') as string });
       await fetchAssignments({ courseId });
     }
   };
@@ -91,7 +96,7 @@ export const useAssignmentStore = defineStore('assignment', () => {
   const publishAssignment = async (id: string) => {
       const response = await handleApiCall(() => assignmentApi.publishAssignment(id), uiStore, '发布作业失败');
       if (response) {
-          uiStore.showNotification({ type: 'success', title: '作业已发布', message: '学生现在可以查看并提交此作业。' });
+          uiStore.showNotification({ type: 'success', title: i18n.global.t('teacher.assignments.notify.publishedTitle') as string, message: i18n.global.t('teacher.assignments.notify.publishedMsg') as string });
           const assignment = assignments.value.find(a => a.id === id);
           if (assignment) assignment.status = 'PUBLISHED';
       }

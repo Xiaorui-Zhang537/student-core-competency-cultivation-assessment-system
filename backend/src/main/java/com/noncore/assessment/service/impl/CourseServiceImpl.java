@@ -33,10 +33,20 @@ public class CourseServiceImpl implements CourseService {
 
     private final CourseMapper courseMapper;
     private final EnrollmentMapper enrollmentMapper;
+    private final com.noncore.assessment.mapper.AssignmentMapper assignmentMapper;
+    private final com.noncore.assessment.mapper.SubmissionMapper submissionMapper;
+    private final com.noncore.assessment.service.FileStorageService fileStorageService;
 
-    public CourseServiceImpl(CourseMapper courseMapper, EnrollmentMapper enrollmentMapper) {
+    public CourseServiceImpl(CourseMapper courseMapper,
+                             EnrollmentMapper enrollmentMapper,
+                             com.noncore.assessment.mapper.AssignmentMapper assignmentMapper,
+                             com.noncore.assessment.mapper.SubmissionMapper submissionMapper,
+                             com.noncore.assessment.service.FileStorageService fileStorageService) {
         this.courseMapper = courseMapper;
         this.enrollmentMapper = enrollmentMapper;
+        this.assignmentMapper = assignmentMapper;
+        this.submissionMapper = submissionMapper;
+        this.fileStorageService = fileStorageService;
     }
 
     @Override
@@ -119,6 +129,35 @@ public class CourseServiceImpl implements CourseService {
         if (enrollmentMapper.countByCourseId(courseId) > 0) {
             throw new BusinessException(ErrorCode.COURSE_HAS_STUDENTS);
         }
+
+        // 级联清理：先清理作业及其提交与附件
+        try {
+            java.util.List<com.noncore.assessment.entity.Assignment> assignments = assignmentMapper.selectAssignmentsByCourseId(courseId);
+            if (assignments != null) {
+                for (com.noncore.assessment.entity.Assignment a : assignments) {
+                    java.util.List<com.noncore.assessment.entity.Submission> subs = submissionMapper.selectByAssignmentId(a.getId());
+                    if (subs != null) {
+                        for (com.noncore.assessment.entity.Submission s : subs) {
+                            try {
+                                fileStorageService.cleanupRelatedFiles("submission", s.getId());
+                            } catch (Exception e) { logger.warn("清理提交附件失败 submissionId={}", s.getId(), e); }
+                            submissionMapper.deleteSubmission(s.getId());
+                        }
+                    }
+                    try {
+                        fileStorageService.cleanupRelatedFiles("assignment_attachment", a.getId());
+                    } catch (Exception e) { logger.warn("清理作业附件失败 assignmentId={}", a.getId(), e); }
+                    assignmentMapper.deleteAssignment(a.getId());
+                }
+            }
+        } catch (Exception e) {
+            logger.warn("清理课程下作业/提交失败 courseId={}", courseId, e);
+        }
+
+        // 清理课程附件
+        try { fileStorageService.cleanupRelatedFiles("course_material", courseId); } catch (Exception e) { logger.warn("清理课程资料失败 courseId={}", courseId, e); }
+        try { fileStorageService.cleanupRelatedFiles("course_video", courseId); } catch (Exception e) { logger.warn("清理课程视频失败 courseId={}", courseId, e); }
+        try { fileStorageService.cleanupRelatedFiles("course_cover", courseId); } catch (Exception e) { logger.warn("清理课程封面失败 courseId={}", courseId, e); }
 
         if (courseMapper.deleteCourse(courseId) <= 0) {
             throw new BusinessException(ErrorCode.OPERATION_FAILED, "删除课程失败");

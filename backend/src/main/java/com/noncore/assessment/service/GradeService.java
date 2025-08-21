@@ -258,4 +258,12 @@ public interface GradeService {
      * @return GPA值
      */
     BigDecimal calculateGPA(Long studentId, Long courseId);
+
+    /**
+     * 创建或更新成绩，并可选立即发布
+     * @param grade 成绩数据
+     * @param publishImmediately 是否立即发布
+     * @return 最新成绩
+     */
+    Grade upsertGradeAndMaybePublish(Grade grade, boolean publishImmediately);
 } 

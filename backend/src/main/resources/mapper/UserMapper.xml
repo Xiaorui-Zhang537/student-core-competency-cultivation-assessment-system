@@ -72,7 +72,7 @@
         INNER JOIN enrollments e ON u.id = e.student_id
         WHERE e.course_id = #{courseId}
           AND u.deleted = false
-          AND e.status = 'enrolled'
+          AND e.status IN ('active','completed')
         <if test="keyword != null and keyword != ''">
           AND (
               u.nickname LIKE #{keyword}
@@ -225,7 +225,7 @@
         SELECT <include refid="aliasedUserColumns"/>
         FROM users u
         INNER JOIN enrollments e ON u.id = e.student_id
-        WHERE e.course_id = #{courseId} AND u.deleted = false AND e.status = 'enrolled'
+        WHERE e.course_id = #{courseId} AND u.deleted = false AND e.status IN ('active','completed')
         ORDER BY e.enrolled_at DESC
     </select>
 
@@ -236,7 +236,7 @@
         INNER JOIN enrollments e ON u.id = e.student_id
         WHERE e.course_id = #{courseId}
           AND u.deleted = false
-          AND e.status = 'enrolled'
+          AND e.status IN ('active','completed')
           AND (
               u.nickname LIKE #{keyword}
               OR u.username LIKE #{keyword}

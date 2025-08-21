@@ -262,4 +262,14 @@
         </foreach>
     </insert>
 
+    <!-- 统计课程在读（active）选课人数 -->
+    <select id="countActiveByCourse" resultType="long">
+        SELECT COUNT(*) FROM enrollments WHERE course_id = #{courseId} AND status = 'active'
+    </select>
+
+    <!-- 查询课程在读（active）学生ID列表 -->
+    <select id="findActiveStudentIdsByCourse" resultType="long">
+        SELECT student_id FROM enrollments WHERE course_id = #{courseId} AND status = 'active'
+    </select>
+
 </mapper>

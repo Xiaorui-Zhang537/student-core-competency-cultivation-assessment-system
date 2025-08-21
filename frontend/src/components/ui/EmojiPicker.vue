@@ -1,23 +1,33 @@
 <template>
-  <div class="relative inline-block">
+  <div class="relative inline-block" ref="btnRef">
     <button type="button" class="btn btn-ghost btn-sm flex items-center" @click="toggle">
-      <face-smile-icon class="w-5 h-5 mr-1" />
-      表情
+      <FaceSmileIcon class="w-5 h-5 mr-1" />
+      {{ t('shared.emojiPicker.button') }}
     </button>
-    <div v-if="open" class="absolute z-50 mt-2 p-2 w-60 max-h-56 overflow-auto bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded shadow grid grid-cols-8 gap-1">
+  </div>
+  <teleport to="body">
+    <div
+      v-if="open"
+      class="fixed z-[9999] p-2 w-60 max-h-56 overflow-auto bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded shadow grid grid-cols-8 gap-1"
+      :style="{ left: `${pos.left}px`, top: `${pos.top}px` }"
+    >
       <button v-for="(e, idx) in emojis" :key="idx" type="button" class="text-xl hover:bg-gray-100 dark:hover:bg-gray-700 rounded" @click="pick(e)">{{ e }}</button>
     </div>
-  </div>
-  
+  </teleport>
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, onMounted, onBeforeUnmount } from 'vue'
 import { FaceSmileIcon } from '@heroicons/vue/24/outline'
+// @ts-ignore shim for vue-i18n types in this project
+import { useI18n } from 'vue-i18n'
 
-const emit = defineEmits<{ (e: 'select', emoji: string): void }>()
+const emit = defineEmits<{ (e: 'emoji', emoji: string): void; (e: 'select', emoji: string): void }>()
 
 const open = ref(false)
+const btnRef = ref<HTMLElement | null>(null)
+const pos = ref({ left: 0, top: 0 })
+const { t } = useI18n()
 const emojis = [
   '😀','😁','😂','🤣','😊','😇','🙂','😉','😍','😘','😗','😄','😅','😆','😌','🤗',
   '🤔','🤨','😐','😑','😶','🙄','😏','😴','😪','😷','🤒','🤕','🤧','🥳','🤩','🥰',
@@ -25,14 +35,35 @@ const emojis = [
   '💚','💙','💜','🖤','🤍','🤎','💯','🔥','✨','🌟','🎉','🎊','🍀','🌈','🍻','☕'
 ]
 
+const computePos = () => {
+  const el = btnRef.value
+  if (!el) return
+  const rect = el.getBoundingClientRect()
+  pos.value = { left: rect.left, top: rect.bottom + 6 }
+}
+
 const toggle = () => {
+  if (!open.value) computePos()
   open.value = !open.value
 }
 
 const pick = (e: string) => {
+  emit('emoji', e)
   emit('select', e)
   open.value = false
 }
+
+const onResize = () => { if (open.value) computePos() }
+
+onMounted(() => {
+  window.addEventListener('resize', onResize)
+  window.addEventListener('scroll', onResize, true)
+})
+
+onBeforeUnmount(() => {
+  window.removeEventListener('resize', onResize)
+  window.removeEventListener('scroll', onResize, true)
+})
 </script>
 
 <style scoped>

@@ -41,6 +41,8 @@ public class Submission {
     private String assignmentTitle;
     private String studentName;
     private String courseName;
+    /** 学生头像URL（冗余字段，便于前端展示） */
+    private String avatar;
     
     /**
      * 检查是否已批改

@@ -150,7 +150,7 @@ public interface GradeMapper {
     /**
      * 查询用于导出的成绩数据
      */
-    List<Map<String, Object>> selectGradesForExport(@Param("courseId") Long courseId, @Param("assignmentId") Long assignmentId);
+    List<Map<String, Object>> selectGradesForExport(@Param("courseId") Long courseId, @Param("assignmentId") Long assignmentId, @Param("studentId") Long studentId);
 
     /**
      * 查询学生成绩趋势

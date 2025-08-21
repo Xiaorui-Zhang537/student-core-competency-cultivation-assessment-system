@@ -104,8 +104,14 @@ const initChart = async () => {
     chartInstance.value = echarts.init(chartRef.value, theme)
     
     // 配置选项
+    const palette = theme === 'dark'
+      ? ['#93c5fd', '#22d3ee', '#f472b6', '#f59e0b', '#34d399']
+      : ['#3b82f6', '#06b6d4', '#ec4899', '#f59e0b', '#10b981']
+
+    const hasBar = (props.data || []).some(s => (s.type || 'line') === 'bar')
+
     const option = {
-      backgroundColor: props.backgroundColor,
+      backgroundColor: theme === 'dark' ? '#0b0f1a' : '#ffffff',
       title: props.title ? {
         text: props.title,
         left: 'center',
@@ -150,7 +156,7 @@ const initChart = async () => {
       
       xAxis: {
         type: 'category',
-        boundaryGap: false,
+        boundaryGap: hasBar ? true : false,
         data: props.xAxisData,
         axisLine: {
           lineStyle: {
@@ -166,7 +172,7 @@ const initChart = async () => {
         type: 'value',
         axisLine: {
           lineStyle: {
-            color: theme === 'dark' ? '#4b5563' : '#d1d5db'
+            color: theme === 'dark' ? '#6b7280' : '#d1d5db'
           }
         },
         axisLabel: {
@@ -174,40 +180,50 @@ const initChart = async () => {
         },
         splitLine: {
           lineStyle: {
-            color: theme === 'dark' ? '#374151' : '#f3f4f6'
+            color: theme === 'dark' ? '#4b5563' : '#e5e7eb'
           }
         }
       },
       
-      series: props.data.map(item => ({
-        name: item.name,
-        type: item.type || 'line',
-        smooth: item.smooth !== false,
-        data: item.data,
-        itemStyle: {
-          color: item.color || (theme === 'dark' ? '#60a5fa' : '#3b82f6')
-        },
-        lineStyle: {
-          color: item.color || (theme === 'dark' ? '#60a5fa' : '#3b82f6'),
-          width: 2
-        },
-        areaStyle: item.type !== 'bar' ? {
-          color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
-            {
-              offset: 0,
-              color: (item.color || (theme === 'dark' ? '#60a5fa' : '#3b82f6')) + '30'
-            },
-            {
-              offset: 1,
-              color: (item.color || (theme === 'dark' ? '#60a5fa' : '#3b82f6')) + '05'
-            }
-          ])
-        } : undefined,
-        emphasis: {
-          focus: 'series'
-        },
-        animationDuration: props.animation ? 1000 : 0
-      }))
+      series: props.data.map((item, idx) => {
+        const isBar = (item.type || 'line') === 'bar'
+        const baseColor = item.color || palette[idx % palette.length]
+        return {
+          name: item.name,
+          type: item.type || 'line',
+          smooth: item.smooth !== false,
+          data: item.data,
+          symbol: 'circle',
+          symbolSize: theme === 'dark' ? 5 : 4,
+          // 为柱状图设置每个柱子不同颜色；折线图保持系列颜色
+          itemStyle: isBar
+            ? {
+                color: (params: any) => palette[params.dataIndex % palette.length]
+              }
+            : {
+                color: baseColor
+              },
+          lineStyle: !isBar
+            ? {
+                color: baseColor,
+                width: theme === 'dark' ? 3 : 2
+              }
+            : undefined,
+          areaStyle: !isBar
+            ? {
+                color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+                  { offset: 0, color: baseColor + (theme === 'dark' ? '40' : '30') },
+                  { offset: 1, color: baseColor + (theme === 'dark' ? '10' : '05') }
+                ])
+              }
+            : undefined,
+          barMaxWidth: isBar ? 32 : undefined,
+          emphasis: {
+            focus: 'series'
+          },
+          animationDuration: props.animation ? 1000 : 0
+        }
+      })
     }
     
     // 设置选项
@@ -228,17 +244,46 @@ const initChart = async () => {
 // 更新图表
 const updateChart = () => {
   if (!chartInstance.value) return
-  
+
+  const isDark = (props.theme === 'auto')
+    ? document.documentElement.classList.contains('dark')
+    : props.theme === 'dark'
+  const palette = isDark
+    ? ['#93c5fd', '#22d3ee', '#f472b6', '#f59e0b', '#34d399']
+    : ['#3b82f6', '#06b6d4', '#ec4899', '#f59e0b', '#10b981']
+
+  const hasBar = (props.data || []).some(s => (s.type || 'line') === 'bar')
+
   const option = {
     xAxis: {
-      data: props.xAxisData
+      data: props.xAxisData,
+      boundaryGap: hasBar ? true : false
     },
-    series: props.data.map(item => ({
-      name: item.name,
-      data: item.data
-    }))
+    series: props.data.map((item, idx) => {
+      const isBar = (item.type || 'line') === 'bar'
+      const baseColor = item.color || palette[idx % palette.length]
+      return {
+        name: item.name,
+        type: item.type || 'line',
+        data: item.data,
+        smooth: item.smooth !== false,
+        symbol: 'circle',
+        symbolSize: isDark ? 5 : 4,
+        itemStyle: isBar
+          ? { color: (params: any) => palette[params.dataIndex % palette.length] }
+          : { color: baseColor },
+        lineStyle: !isBar ? { color: baseColor, width: isDark ? 3 : 2 } : undefined,
+        areaStyle: !isBar
+          ? { color: new (echarts as any).graphic.LinearGradient(0, 0, 0, 1, [
+              { offset: 0, color: baseColor + (isDark ? '40' : '30') },
+              { offset: 1, color: baseColor + (isDark ? '10' : '05') }
+            ]) }
+          : undefined,
+        barMaxWidth: isBar ? 32 : undefined
+      }
+    })
   }
-  
+
   chartInstance.value.setOption(option)
 }
 
@@ -266,12 +311,9 @@ watch(
 // 导出方法
 const exportChart = (type: 'png' | 'jpeg' = 'png') => {
   if (!chartInstance.value) return null
-  
-  return chartInstance.value.getDataURL({
-    type,
-    pixelRatio: 2,
-    backgroundColor: '#fff'
-  })
+  const isDark = document.documentElement.classList.contains('dark')
+  const bg = isDark ? '#0b0f1a' : '#ffffff'
+  return chartInstance.value.getDataURL({ type, pixelRatio: 2, backgroundColor: bg })
 }
 
 const downloadChart = (filename: string = 'chart', type: 'png' | 'jpeg' = 'png') => {

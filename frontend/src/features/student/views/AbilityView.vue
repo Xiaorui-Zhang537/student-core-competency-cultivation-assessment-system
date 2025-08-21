@@ -44,27 +44,48 @@
 import { ref, onMounted, onUnmounted, watch, nextTick } from 'vue';
 import { useAbilityStore } from '@/stores/ability';
 import * as echarts from 'echarts';
+// @ts-ignore shim for vue-i18n types in this project
+import { useI18n } from 'vue-i18n'
 
 const abilityStore = useAbilityStore();
+const { t, locale } = useI18n()
 
 const radarChartRef = ref<HTMLElement | null>(null);
 const trendChartRef = ref<HTMLElement | null>(null);
 let radarChart: echarts.ECharts | null = null;
 let trendChart: echarts.ECharts | null = null;
 
+// 后端通常返回中文维度名，这里做代码映射并按当前语言本地化
+const NAME_ZH_TO_CODE: Record<string, string> = {
+  '道德认知': 'MORAL_COGNITION',
+  '学习态度': 'LEARNING_ATTITUDE',
+  '学习能力': 'LEARNING_ABILITY',
+  '学习方法': 'LEARNING_METHOD',
+  '学习成绩': 'ACADEMIC_GRADE'
+}
+
+function localizeDimensionName(serverName: string): string {
+  const code = NAME_ZH_TO_CODE[serverName]
+  return code ? t(`teacher.analytics.weights.dimensions.${code}`) : serverName
+}
+
+const rawRadarLabels = ref<string[]>([])
+
 const initRadarChart = () => {
   if (!radarChartRef.value || !abilityStore.dashboardData) return;
   radarChart = echarts.init(radarChartRef.value);
   
+  const labels = abilityStore.dashboardData.radarChartData.labels || []
+  rawRadarLabels.value = Array.isArray(labels) ? [...labels] : []
   const option = {
     radar: {
-      indicator: abilityStore.dashboardData.radarChartData.labels.map(name => ({ name, max: 100 })),
+      indicator: rawRadarLabels.value.map(n => ({ name: localizeDimensionName(n), max: 100 })),
     },
     series: [{
       type: 'radar',
       data: [{
         value: abilityStore.dashboardData.radarChartData.scores,
-        name: '能力评分'
+        name: t('teacher.analytics.charts.series.student')
       }]
     }]
   };
@@ -116,4 +137,22 @@ onUnmounted(() => {
   trendChart?.dispose();
   window.removeEventListener('resize', resizeCharts);
 });
+
+// 语言切换时本地化雷达维度与系列名称
+watch(locale, () => {
+  if (!radarChart) return
+  const option = {
+    radar: {
+      indicator: rawRadarLabels.value.map(n => ({ name: localizeDimensionName(n), max: 100 }))
+    },
+    series: [{
+      type: 'radar',
+      data: [{
+        value: abilityStore.dashboardData?.radarChartData?.scores || [],
+        name: t('teacher.analytics.charts.series.student')
+      }]
+    }]
+  }
+  radarChart.setOption(option, true)
+})
 </script>

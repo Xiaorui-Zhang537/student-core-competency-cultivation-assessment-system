@@ -3,6 +3,7 @@ import { ref, computed } from 'vue';
 import { gradeApi } from '@/api/grade.api';
 import type { Grade, GradeRequest } from '@/types/grade';
 import { useUIStore } from './ui';
+import { i18n } from '@/i18n'
 import { handleApiCall } from '@/utils/api-handler';
 
 export const useGradeStore = defineStore('grade', () => {
@@ -51,7 +52,7 @@ export const useGradeStore = defineStore('grade', () => {
       '评分失败'
     );
     if (response) {
-      uiStore.showNotification({ type: 'success', title: '评分成功' });
+      uiStore.showNotification({ type: 'success', title: i18n.global.t('teacher.grading.notify.gradeSuccess') as string });
       // Optionally refresh the list or update the specific grade
       return response;
     }
@@ -65,7 +66,7 @@ export const useGradeStore = defineStore('grade', () => {
       '发布成绩失败'
     );
     if (response) {
-      uiStore.showNotification({ type: 'success', title: '成绩已发布' });
+      uiStore.showNotification({ type: 'success', title: i18n.global.t('teacher.grading.notify.publishSuccess') as string });
       const grade = grades.value.find(g => g.id === gradeId);
       if (grade) {
         grade.isPublished = true;

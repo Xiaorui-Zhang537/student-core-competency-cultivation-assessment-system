@@ -22,6 +22,7 @@
         <result property="assignmentTitle" column="assignment_title"/>
         <result property="studentName" column="student_name"/>
         <result property="courseName" column="course_name"/>
+        <result property="avatar" column="avatar"/>
     </resultMap>
 
     <!-- 基础字段列表 -->
@@ -47,7 +48,8 @@
         <include refid="Base_Column_List"/>,
         a.title AS assignment_title,
             COALESCE(u.nickname, u.username) AS student_name,
-        c.title AS course_name
+        c.title AS course_name,
+        u.avatar AS avatar
         FROM submissions s
         LEFT JOIN assignments a ON s.assignment_id = a.id
         LEFT JOIN users u ON s.student_id = u.id
@@ -80,10 +82,12 @@
         SELECT
         <include refid="Base_Column_List"/>,
         a.title AS assignment_title,
-        c.title AS course_name
+        c.title AS course_name,
+        u.avatar AS avatar
         FROM submissions s
         LEFT JOIN assignments a ON s.assignment_id = a.id
         LEFT JOIN courses c ON a.course_id = c.id
+        LEFT JOIN users u ON s.student_id = u.id
         WHERE s.assignment_id = #{assignmentId} AND s.student_id = #{studentId}
         ORDER BY s.created_at DESC
         LIMIT 1
@@ -94,10 +98,12 @@
         SELECT
         <include refid="Base_Column_List"/>,
         a.title AS assignment_title,
-        c.title AS course_name
+        c.title AS course_name,
+        u.avatar AS avatar
         FROM submissions s
         LEFT JOIN assignments a ON s.assignment_id = a.id
         LEFT JOIN courses c ON a.course_id = c.id
+        LEFT JOIN users u ON s.student_id = u.id
         WHERE s.student_id = #{studentId}
         ORDER BY s.created_at DESC
     </select>
@@ -107,10 +113,12 @@
         SELECT
         <include refid="Base_Column_List"/>,
         a.title AS assignment_title,
-        c.title AS course_name
+        c.title AS course_name,
+        u.avatar AS avatar
         FROM submissions s
         LEFT JOIN assignments a ON s.assignment_id = a.id
         LEFT JOIN courses c ON a.course_id = c.id
+        LEFT JOIN users u ON s.student_id = u.id
         WHERE s.student_id = #{studentId}
         ORDER BY s.created_at DESC
         LIMIT #{offset}, #{size}
@@ -125,7 +133,8 @@
     <select id="selectByAssignmentId" resultMap="SubmissionResultMap">
         SELECT
         <include refid="Base_Column_List"/>,
-            COALESCE(u.nickname, u.username) AS student_name
+            COALESCE(u.nickname, u.username) AS student_name,
+            u.avatar AS avatar
         FROM submissions s
         LEFT JOIN users u ON s.student_id = u.id
         WHERE s.assignment_id = #{assignmentId}
@@ -136,7 +145,8 @@
     <select id="selectByAssignmentIdWithPagination" resultMap="SubmissionResultMap">
         SELECT
         <include refid="Base_Column_List"/>,
-            COALESCE(u.nickname, u.username) AS student_name
+            COALESCE(u.nickname, u.username) AS student_name,
+            u.avatar AS avatar
         FROM submissions s
         LEFT JOIN users u ON s.student_id = u.id
         WHERE s.assignment_id = #{assignmentId}
@@ -180,6 +190,11 @@
         WHERE s.student_id = #{studentId}
     </select>
 
+    <!-- 统计作业提交（排除软删除），如无deleted字段则与 countByAssignmentId 等价 -->
+    <select id="countByAssignment" resultType="long">
+        SELECT COUNT(*) FROM submissions WHERE assignment_id = #{assignmentId}
+    </select>
+
     <!-- 获取提交的成绩详情 -->
     <select id="selectSubmissionGrade" resultType="java.util.Map">
         SELECT
@@ -199,12 +214,34 @@
             g.grade_level,
             g.feedback,
             g.updated_at AS graded_at,
-            COALESCE(t.nickname, t.username) AS teacher_name
+            COALESCE(t.nickname, t.username) AS teacher_name,
+            agg.avg_score,
+            ec.total_students,
+            rnk.student_rank,
+            u.avatar AS avatar
         FROM submissions s
                  LEFT JOIN assignments a ON s.assignment_id = a.id
                  LEFT JOIN courses c ON a.course_id = c.id
                  LEFT JOIN grades g ON g.student_id = s.student_id AND g.assignment_id = s.assignment_id
                  LEFT JOIN users t ON a.teacher_id = t.id
+                 LEFT JOIN users u ON s.student_id = u.id
+                 LEFT JOIN (
+                    SELECT assignment_id, AVG(score) AS avg_score
+                    FROM grades
+                    WHERE score IS NOT NULL AND status = 'published'
+                    GROUP BY assignment_id
+                 ) agg ON agg.assignment_id = a.id
+                 LEFT JOIN (
+                    SELECT e.course_id, COUNT(e.student_id) AS total_students
+                    FROM enrollments e
+                    WHERE e.status IN ('active','completed')
+                    GROUP BY e.course_id
+                 ) ec ON ec.course_id = a.course_id
+                 LEFT JOIN (
+                    SELECT gx.assignment_id, gx.student_id,
+                           1 + (SELECT COUNT(*) FROM grades gy WHERE gy.assignment_id = gx.assignment_id AND gy.score IS NOT NULL AND gy.score > gx.score) AS student_rank
+                    FROM grades gx
+                 ) rnk ON rnk.assignment_id = a.id AND rnk.student_id = s.student_id
         WHERE s.id = #{submissionId}
     </select>
 

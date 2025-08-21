@@ -7,26 +7,26 @@
           <div>
             <nav class="flex items-center space-x-2 text-sm text-gray-500 dark:text-gray-400 mb-2">
               <router-link to="/teacher/courses" class="hover:text-gray-700 dark:hover:text-gray-200">
-                课程管理
+                {{ t('teacher.students.breadcrumb.courses') }}
               </router-link>
               <chevron-right-icon class="w-4 h-4" />
               <router-link :to="`/teacher/courses/${courseId}`" class="hover:text-gray-700 dark:hover:text-gray-200">
                 {{ courseName }}
               </router-link>
               <chevron-right-icon class="w-4 h-4" />
-              <span>学生管理</span>
+              <span>{{ t('teacher.students.breadcrumb.self') }}</span>
             </nav>
-            <h1 class="text-3xl font-bold text-gray-900 dark:text-white mb-2">学生管理</h1>
-            <p class="text-gray-600 dark:text-gray-400">管理课程学生的学习进度和成绩</p>
+            <h1 class="text-3xl font-bold text-gray-900 dark:text-white mb-2">{{ t('teacher.students.title') }}</h1>
+            <p class="text-gray-600 dark:text-gray-400">{{ t('teacher.students.subtitle') }}</p>
           </div>
           <div class="flex items-center space-x-3">
             <Button variant="indigo" @click="openInviteModal">
               <UserPlusIcon class="w-4 h-4 mr-2" />
-              邀请学生
+              {{ t('teacher.students.actions.invite') }}
             </Button>
             <Button variant="teal" @click="exportData">
               <ArrowDownTrayIcon class="w-4 h-4 mr-2" />
-              导出数据
+              {{ t('teacher.students.actions.export') }}
             </Button>
             <!-- 去除模拟邀请功能，后续有真实接口再恢复 -->
           </div>
@@ -39,39 +39,39 @@
           <div class="text-3xl font-bold text-blue-600 dark:text-blue-400 mb-2">
             {{ stats.totalStudents }}
           </div>
-          <p class="text-sm text-gray-600 dark:text-gray-400">总学生数</p>
+          <p class="text-sm text-gray-600 dark:text-gray-400">{{ t('teacher.students.cards.total') }}</p>
           <div class="mt-2 flex items-center justify-center space-x-1">
-            <arrow-trending-up-icon class="w-4 h-4 text-green-500" />
-            <span class="text-xs text-green-600">+{{ stats.newStudentsThisWeek }} 本周新增</span>
+             <ArrowTrendingUpIcon class="w-4 h-4 text-green-500" />
+            <span class="text-xs text-green-600">{{ t('teacher.students.cards.newThisWeek', { count: stats.newStudentsThisWeek }) }}</span>
           </div>
         </card>
         <card padding="lg" class="text-center">
           <div class="text-3xl font-bold text-green-600 dark:text-green-400 mb-2">
             {{ stats.averageProgress }}%
           </div>
-          <p class="text-sm text-gray-600 dark:text-gray-400">平均进度</p>
+          <p class="text-sm text-gray-600 dark:text-gray-400">{{ t('teacher.students.cards.avgProgress') }}</p>
           <div class="mt-2">
-            <progress :value="stats.averageProgress" :max="100" size="sm" color="primary" />
+             <Progress :value="stats.averageProgress" :max="100" size="sm" color="primary" />
           </div>
         </card>
         <card padding="lg" class="text-center">
           <div class="text-3xl font-bold text-yellow-600 dark:text-yellow-400 mb-2">
             {{ Number(stats.averageGrade || 0).toFixed(1) }}
           </div>
-          <p class="text-sm text-gray-600 dark:text-gray-400">平均成绩</p>
+          <p class="text-sm text-gray-600 dark:text-gray-400">{{ t('teacher.students.cards.avgGrade') }}</p>
           <div class="mt-2 flex items-center justify-center space-x-1">
-            <star-icon class="w-4 h-4 text-yellow-500" />
-            <span class="text-xs text-gray-600">{{ stats.passRate }}% 及格率</span>
+             <StarIcon class="w-4 h-4 text-yellow-500" />
+            <span class="text-xs text-gray-600">{{ t('teacher.students.cards.passRate', { rate: stats.passRate }) }}</span>
           </div>
         </card>
         <card padding="lg" class="text-center">
           <div class="text-3xl font-bold text-purple-600 dark:text-purple-400 mb-2">
             {{ stats.activeStudents }}
           </div>
-          <p class="text-sm text-gray-600 dark:text-gray-400">活跃学生</p>
+          <p class="text-sm text-gray-600 dark:text-gray-400">{{ t('teacher.students.cards.active') }}</p>
           <div class="mt-2 flex items-center justify-center space-x-1">
-            <clock-icon class="w-4 h-4 text-blue-500" />
-            <span class="text-xs text-blue-600">本周活跃</span>
+             <ClockIcon class="w-4 h-4 text-blue-500" />
+            <span class="text-xs text-blue-600">{{ t('teacher.students.cards.activeThisWeek') }}</span>
           </div>
         </card>
       </div>
@@ -82,66 +82,62 @@
           <!-- 搜索和筛选 -->
           <div class="flex flex-col sm:flex-row space-y-3 sm:space-y-0 sm:space-x-4">
             <!-- 搜索框 -->
-            <div class="relative">
-              <magnifying-glass-icon class="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+             <div class="relative">
+              <MagnifyingGlassIcon class="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
               <input
                 v-model="searchQuery"
                 type="text"
-                placeholder="搜索学生姓名或学号..."
+                :placeholder="t('teacher.students.filters.searchPlaceholder')"
                 class="input pl-10 w-64"
               />
             </div>
 
             <!-- 筛选项：后续后端支持后开启提交查询参数（当前保留UI与本地过滤） -->
             <select v-model="progressFilter" class="input w-40">
-              <option value="">全部进度</option>
-              <option value="not-started">未开始</option>
-              <option value="in-progress">进行中</option>
-              <option value="completed">已完成</option>
+              <option value="">{{ t('teacher.students.filters.progress.all') }}</option>
+              <option value="not-started">{{ t('teacher.students.filters.progress.notStarted') }}</option>
+              <option value="in-progress">{{ t('teacher.students.filters.progress.inProgress') }}</option>
+              <option value="completed">{{ t('teacher.students.filters.progress.completed') }}</option>
             </select>
             <select v-model="gradeFilter" class="input w-40">
-              <option value="">全部成绩</option>
-              <option value="excellent">优秀(90+)</option>
-              <option value="good">良好(80-89)</option>
-              <option value="average">中等(70-79)</option>
-              <option value="below">需提高(&#60;70)</option>
+              <option value="">{{ t('teacher.students.filters.grade.all') }}</option>
+              <option value="excellent">{{ t('teacher.students.filters.grade.excellent') }}</option>
+              <option value="good">{{ t('teacher.students.filters.grade.good') }}</option>
+              <option value="average">{{ t('teacher.students.filters.grade.average') }}</option>
+              <option value="below">{{ t('teacher.students.filters.grade.below') }}</option>
             </select>
             <select v-model="activityFilter" class="input w-40">
-              <option value="">全部活跃度</option>
-              <option value="high">高活跃</option>
-              <option value="medium">中等活跃</option>
-              <option value="low">低活跃</option>
-              <option value="inactive">不活跃</option>
+              <option value="">{{ t('teacher.students.filters.activity.all') }}</option>
+              <option value="high">{{ t('teacher.students.filters.activity.high') }}</option>
+              <option value="medium">{{ t('teacher.students.filters.activity.medium') }}</option>
+              <option value="low">{{ t('teacher.students.filters.activity.low') }}</option>
+              <option value="inactive">{{ t('teacher.students.filters.activity.inactive') }}</option>
             </select>
           </div>
 
           <!-- 批量操作 -->
           <div class="flex items-center space-x-3">
-            <div v-if="selectedStudents.length > 0" class="flex items-center space-x-2">
-              <span class="text-sm text-gray-600 dark:text-gray-400">
-                已选择 {{ selectedStudents.length }} 名学生
-              </span>
-              <Button variant="purple" size="sm" @click="batchSendMessage">
-                <PaperAirplaneIcon class="w-4 h-4 mr-1" />
-                发送消息
-              </Button>
-              <Button variant="teal" size="sm" @click="batchExport">
-                <ArrowDownTrayIcon class="w-4 h-4 mr-1" />
-                批量导出
-              </Button>
-              <Button variant="outline" size="sm" @click="batchRemove">
-                <UserMinusIcon class="w-4 h-4 mr-1" />
-                移除学生
-              </Button>
-            </div>
+             <div v-if="selectedStudents.length > 0" class="flex items-center space-x-2">
+               <span class="text-sm text-gray-600 dark:text-gray-400">
+                 {{ t('teacher.students.batch.selectedCount', { count: selectedStudents.length }) }}
+               </span>
+               <Button variant="teal" size="sm" @click="batchExport">
+                 <arrow-down-tray-icon class="w-4 h-4 mr-1" />
+                 {{ t('teacher.students.batch.export') }}
+               </Button>
+               <Button variant="outline" size="sm" @click="batchRemove">
+                 <user-minus-icon class="w-4 h-4 mr-1" />
+                 {{ t('teacher.students.batch.remove') }}
+               </Button>
+             </div>
             
             <!-- 排序 -->
-            <select v-model="sortBy" class="input input-sm">
-              <option value="name">按姓名排序</option>
-              <option value="progress">按进度排序</option>
-              <option value="grade">按成绩排序</option>
-              <option value="lastActive">按活跃度排序</option>
-              <option value="joinDate">按加入时间排序</option>
+            <select v-if="selectedStudents.length === 0" v-model="sortBy" class="input input-sm">
+              <option value="name">{{ t('teacher.students.filters.sort.name') }}</option>
+              <option value="progress">{{ t('teacher.students.filters.sort.progress') }}</option>
+              <option value="grade">{{ t('teacher.students.filters.sort.grade') }}</option>
+              <option value="lastActive">{{ t('teacher.students.filters.sort.lastActive') }}</option>
+              <option value="joinDate">{{ t('teacher.students.filters.sort.joinDate') }}</option>
             </select>
 
             <!-- 已移除视图切换按钮，固定为表格视图 -->
@@ -153,16 +149,16 @@
       <div v-if="showInviteModal" class="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
         <div class="bg-white dark:bg-gray-800 w-full max-w-lg rounded-xl shadow-xl border border-gray-200 dark:border-gray-700">
           <div class="p-4 border-b border-gray-200 dark:border-gray-700">
-            <h3 class="text-lg font-semibold text-gray-900 dark:text-white">邀请学生加入课程</h3>
+            <h3 class="text-lg font-semibold text-gray-900 dark:text-white">{{ t('teacher.students.invite.title') }}</h3>
           </div>
           <div class="p-4 space-y-4">
-            <p class="text-sm text-gray-600 dark:text-gray-400">支持批量输入学生ID，使用逗号或换行分隔。</p>
-            <textarea v-model="inviteRaw" rows="6" class="input w-full" placeholder="例如：1001,1002,1003 或者每行一个"></textarea>
-            <div class="text-xs text-gray-500">已解析：{{ parsedInviteIds.length }} 个</div>
+            <p class="text-sm text-gray-600 dark:text-gray-400">{{ t('teacher.students.invite.desc') }}</p>
+            <textarea v-model="inviteRaw" rows="6" class="input w-full" :placeholder="t('teacher.students.invite.placeholder')"></textarea>
+            <div class="text-xs text-gray-500">{{ t('teacher.students.invite.parsed', { count: parsedInviteIds.length }) }}</div>
           </div>
           <div class="p-4 flex justify-end gap-2 border-t border-gray-200 dark:border-gray-700">
-            <Button variant="outline" @click="closeInviteModal">取消</Button>
-            <Button variant="teal" :disabled="parsedInviteIds.length===0 || inviting" :loading="inviting" @click="submitInvite">确认邀请</Button>
+            <Button variant="secondary" @click="closeInviteModal">{{ t('teacher.students.invite.cancel') }}</Button>
+            <Button variant="teal" :disabled="parsedInviteIds.length===0 || inviting" :loading="inviting" @click="submitInvite">{{ t('teacher.students.invite.confirm') }}</Button>
           </div>
         </div>
       </div>
@@ -171,10 +167,10 @@
       <card padding="lg">
         <template #header>
           <div class="flex justify-between items-center">
-            <h2 class="text-lg font-semibold text-gray-900 dark:text-white">学生列表</h2>
+            <h2 class="text-lg font-semibold text-gray-900 dark:text-white">{{ t('teacher.students.table.list') }}</h2>
             <div class="flex items-center space-x-2">
               <span class="text-sm text-gray-500 dark:text-gray-400">
-                共 {{ stats.totalStudents }} 名学生
+                {{ t('teacher.students.table.total', { count: stats.totalStudents }) }}
               </span>
             </div>
           </div>
@@ -193,22 +189,22 @@
                   />
                 </th>
                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                  学生信息
+                  {{ t('teacher.students.table.student') }}
                 </th>
                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                  学习进度
+                  {{ t('teacher.students.table.progress') }}
                 </th>
                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                  成绩
+                  {{ t('teacher.students.table.grade') }}
                 </th>
                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                  活跃度
+                  {{ t('teacher.students.table.activity') }}
                 </th>
                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                  最后活动
+                  {{ t('teacher.students.table.lastActive') }}
                 </th>
                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                  操作
+                  {{ t('teacher.students.table.actions') }}
                 </th>
               </tr>
             </thead>
@@ -227,7 +223,7 @@
                     <div class="flex-shrink-0 w-10 h-10">
                       <UserAvatar :avatar="student.avatar" :size="40">
                         <div class="w-10 h-10 rounded-full bg-gray-200 dark:bg-gray-600 flex items-center justify-center">
-                          <user-icon class="w-5 h-5 text-gray-400" />
+                          <UserIcon class="w-5 h-5 text-gray-400" />
                         </div>
                       </UserAvatar>
                     </div>
@@ -261,13 +257,13 @@
                     <span class="text-sm font-medium text-gray-900 dark:text-white">
                       {{ student.averageGrade || '--' }}
                     </span>
-                    <badge 
+                     <Badge 
                       v-if="student.averageGrade"
                       :variant="getGradeBadgeVariant(student.averageGrade)"
                       size="sm"
                     >
                       {{ getGradeLevel(student.averageGrade) }}
-                    </badge>
+                     </Badge>
                   </div>
                 </td>
                 <td class="px-6 py-4">
@@ -283,7 +279,7 @@
                         </span>
                       </div>
                       <div class="text-xs text-gray-500 mt-1">
-                        {{ student.studyTime }}小时/周
+                        {{ t('teacher.students.table.studyHours', { hours: student.studyTime }) }}
                       </div>
                     </div>
                   </div>
@@ -295,11 +291,11 @@
                   <div class="flex items-center space-x-2">
                     <Button variant="outline" size="sm" @click="viewStudentDetail(student.id)">
                       <EyeIcon class="w-4 h-4 mr-1" />
-                      详情
+                      {{ t('teacher.students.table.view') }}
                     </Button>
                     <Button variant="purple" size="sm" @click="sendMessage(student.id)">
                       <ChatBubbleLeftIcon class="w-4 h-4 mr-1" />
-                      消息
+                      {{ t('teacher.students.table.message') }}
                     </Button>
                     <div class="relative" @click.stop>
                       <Button variant="ghost" size="sm" @click="toggleStudentMenu(student.id)">
@@ -311,21 +307,21 @@
                       >
                         <div class="py-1">
                           <button @click="viewGrades(student.id)" class="flex items-center gap-2 w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700">
-                            <AcademicCapIcon class="w-4 h-4" />
-                            查看成绩
+                             <AcademicCapIcon class="w-4 h-4" />
+                           {{ t('teacher.students.table.viewGrades') }}
                           </button>
                           <button @click="resetProgress(student.id)" class="flex items-center gap-2 w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700">
-                            <ArrowPathIcon class="w-4 h-4" />
-                            重置进度
+                             <ArrowPathIcon class="w-4 h-4" />
+                             {{ t('teacher.students.table.reset') }}
                           </button>
                           <button @click="exportStudentData(student.id)" class="flex items-center gap-2 w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700">
-                            <ArrowDownTrayIcon class="w-4 h-4" />
-                            导出数据
+                             <ArrowDownTrayIcon class="w-4 h-4" />
+                             {{ t('teacher.students.table.export') }}
                           </button>
                           <hr class="my-1 border-gray-200 dark:border-gray-600" />
                           <button @click="removeStudent(student.id)" class="flex items-center gap-2 w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-gray-100 dark:hover:bg-gray-700">
-                            <UserMinusIcon class="w-4 h-4" />
-                            移除学生
+                             <UserMinusIcon class="w-4 h-4" />
+                             {{ t('teacher.students.table.remove') }}
                           </button>
                         </div>
                       </div>
@@ -337,58 +333,36 @@
           </table>
         </div>
 
-        <!-- 分页 -->
-        <div class="mt-6 flex items-center justify-between">
-          <div class="flex items-center space-x-2">
-            <span class="text-sm text-gray-700 dark:text-gray-300">每页显示</span>
-            <select v-model="pageSize" class="input input-sm w-20">
-              <option :value="10">10</option>
-              <option :value="20">20</option>
-              <option :value="50">50</option>
-              <option :value="100">100</option>
-            </select>
-            <span class="text-sm text-gray-700 dark:text-gray-300">条记录</span>
-          </div>
-          
-          <div class="flex items-center space-x-2">
-            <Button 
-              variant="outline" 
-              size="sm" 
-              @click="currentPage--" 
-              :disabled="currentPage === 1"
-            >
-              <ChevronLeftIcon class="w-4 h-4 mr-1" />
-              上一页
-            </Button>
-            
-            <div class="flex space-x-1">
-              <button
-                v-for="page in pageNumbers"
-                :key="page"
-                @click="currentPage = page"
-                class="px-3 py-1 text-sm rounded transition-colors"
-                :class="currentPage === page 
-                  ? 'bg-primary-600 text-white' 
-                  : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'"
-              >
-                {{ page }}
-              </button>
+        <!-- 分页（统一为作业管理样式） -->
+          <div class="mt-6 flex items-center justify-between">
+            <div class="flex items-center space-x-2">
+              <span class="text-sm text-gray-700 dark:text-gray-300">{{ t('teacher.assignments.pagination.perPagePrefix') }}</span>
+              <select v-model.number="pageSize" class="input input-sm w-20">
+                <option :value="10">10</option>
+                <option :value="20">20</option>
+                <option :value="50">50</option>
+              </select>
+              <span class="text-sm text-gray-700 dark:text-gray-300">{{ t('teacher.assignments.pagination.perPageSuffix') }}</span>
             </div>
-            
-            <Button 
-              variant="outline" 
-              size="sm" 
-              @click="currentPage++" 
-              :disabled="currentPage === totalPages"
-            >
-              下一页
-              <ChevronRightIcon2 class="w-4 h-4 ml-1" />
-            </Button>
-          </div>
+            <div class="flex items-center space-x-2">
+              <Button variant="outline" size="sm" @click="currentPage = Math.max(1, currentPage - 1)" :disabled="currentPage === 1">{{ t('teacher.assignments.pagination.prev') }}</Button>
+              <span class="text-sm">{{ t('teacher.assignments.pagination.page', { page: currentPage }) }}</span>
+              <Button variant="outline" size="sm" @click="currentPage = Math.min(totalPages, currentPage + 1)" :disabled="currentPage >= totalPages">{{ t('teacher.assignments.pagination.next') }}</Button>
+            </div>
         </div>
       </card>
 
       <!-- 已移除卡片视图 -->
+
+      <teleport to="body">
+        <ChatDrawer
+          :open="chattingOpen"
+          :peer-id="chattingPeerId || ''"
+          :course-id="courseId"
+          :peer-name="chattingPeerName"
+          @close="chattingOpen=false"
+        />
+      </teleport>
     </div>
   </div>
 </template>
@@ -423,11 +397,15 @@ import {
   ArrowPathIcon
 } from '@heroicons/vue/24/outline'
 import UserAvatar from '@/components/ui/UserAvatar.vue'
+import ChatDrawer from '@/features/teacher/components/ChatDrawer.vue'
+// @ts-ignore shim for vue-i18n types in this project
+import { useI18n } from 'vue-i18n'
 
 // Router and Stores
 const route = useRoute()
 const router = useRouter()
 const uiStore = useUIStore()
+const { t, locale } = useI18n()
 
 // 状态
 const courseId = route.params.id as string
@@ -442,6 +420,13 @@ const selectedStudents = ref<string[]>([])
 const showStudentMenu = ref<string | null>(null)
 const currentPage = ref(1)
 const pageSize = ref(20)
+const chattingPeerId = ref<string | null>(null)
+const chattingOpen = ref(false)
+const chattingPeerName = computed(() => {
+  const pid = chattingPeerId.value
+  const stu = students.value.find((s: any) => s.id === pid)
+  return (stu && stu.name) ? stu.name : ''
+})
 
 // 统计数据（占位：后续可接入专用统计端点）
 const stats = reactive({
@@ -497,7 +482,7 @@ const fetchCourseStudents = async () => {
     stats.activeStudents = payload?.activeStudents ?? 0
     stats.passRate = payload?.passRate ?? 0
   } catch (e: any) {
-    uiStore.showNotification({ type: 'error', title: '加载失败', message: e?.message || '获取课程学生失败' })
+    uiStore.showNotification({ type: 'error', title: t('teacher.students.load.failTitle'), message: e?.message || t('teacher.students.load.failMsg') })
   }
 }
 
@@ -594,10 +579,10 @@ const getGradeBadgeVariant = (grade: number) => {
 }
 
 const getGradeLevel = (grade: number) => {
-  if (grade >= 90) return '优秀'
-  if (grade >= 80) return '良好'
-  if (grade >= 70) return '中等'
-  return '需提高'
+  if (grade >= 90) return t('teacher.students.table.level.excellent')
+  if (grade >= 80) return t('teacher.students.table.level.good')
+  if (grade >= 70) return t('teacher.students.table.level.average')
+  return t('teacher.students.table.level.improve')
 }
 
 const getActivityColor = (level: string) => {
@@ -612,11 +597,11 @@ const getActivityColor = (level: string) => {
 
 const getActivityText = (level: string) => {
   switch (level) {
-    case 'high': return '高活跃'
-    case 'medium': return '中等活跃'
-    case 'low': return '低活跃'
-    case 'inactive': return '不活跃'
-    default: return '未知'
+    case 'high': return t('teacher.students.filters.activity.high')
+    case 'medium': return t('teacher.students.filters.activity.medium')
+    case 'low': return t('teacher.students.filters.activity.low')
+    case 'inactive': return t('teacher.students.filters.activity.inactive')
+    default: return t('teacher.students.table.level.unknown')
   }
 }
 
@@ -628,10 +613,10 @@ const formatRelativeTime = (timestamp: string) => {
   const hours = Math.floor(minutes / 60)
   const days = Math.floor(hours / 24)
   
-  if (minutes < 60) return `${minutes}分钟前`
-  if (hours < 24) return `${hours}小时前`
-  if (days < 7) return `${days}天前`
-  return time.toLocaleDateString('zh-CN')
+  if (minutes < 60) return String(t('shared.community.list.minutesAgo', { count: minutes }))
+  if (hours < 24) return String(t('shared.community.list.hoursAgo', { count: hours }))
+  if (days < 7) return String(t('shared.community.list.daysAgo', { count: days }))
+  return time.toLocaleDateString(locale.value as unknown as string)
 }
 
 const toggleSelectAll = (event: Event) => {
@@ -644,62 +629,179 @@ const toggleStudentMenu = (studentId: string) => {
 }
 
 const viewStudentDetail = (studentId: string) => {
-  router.push(`/teacher/students/${studentId}`)
+  const s = students.value.find(x => x.id === studentId)
+  router.push({
+    path: `/teacher/students/${studentId}`,
+    query: {
+      name: s?.name || '',
+      courseId,
+      courseTitle: courseName.value || ''
+    }
+  })
 }
 
-// 移除模拟的发送消息入口（占位保留函数，避免模板引用报错）
-const sendMessage = (_studentId: string) => {}
+const sendMessage = async (studentId: string) => {
+  chattingPeerId.value = studentId
+  chattingOpen.value = true
+}
 
 const viewGrades = (studentId: string) => {
         router.push(`/teacher/students/${studentId}`)
 }
 
 // 移除模拟重置逻辑，保留空函数
-const resetProgress = async (_studentId: string) => {}
-
-const exportStudentData = async (_studentId: string) => {}
-
-const removeStudent = async (studentId: string) => {
-  if (confirm('确定要将该学生从课程中移除吗？')) {
-    try {
-      await new Promise(resolve => setTimeout(resolve, 1000))
-      const index = students.value.findIndex(s => s.id === studentId)
-      if (index > -1) {
-        students.value.splice(index, 1)
-      }
-      
-      uiStore.showNotification({
-        type: 'success',
-        title: '移除成功',
-        message: '学生已从课程中移除'
-      })
-    } catch (error) {
-      uiStore.showNotification({
-        type: 'error',
-        title: '移除失败',
-        message: '移除学生时发生错误'
-      })
+const resetProgress = async (studentId: string) => {
+  if (!confirm(t('teacher.students.table.confirmReset') as string)) return
+  try {
+    const { teacherApi } = await import('@/api/teacher.api')
+    await teacherApi.resetStudentCourseProgress(courseId, studentId)
+    const s = students.value.find(x => x.id === studentId)
+    if (s) {
+      s.progress = 0
+      s.completedLessons = 0
+      s.lastActiveAt = new Date().toISOString()
     }
+    uiStore.showNotification({ type: 'success', title: t('app.notifications.success.title') as string, message: t('teacher.students.table.resetSuccess') as string })
+  } catch (e: any) {
+    uiStore.showNotification({ type: 'error', title: t('app.notifications.error.title') as string, message: e?.message || t('teacher.students.table.resetFailed') as string })
   }
 }
 
-const batchSendMessage = () => {}
+const exportStudentData = async (_studentId: string) => {
+  const s = students.value.find(x => x.id === _studentId)
+  if (!s) return
+  // 生成单个学生的CSV（前端导出）
+  const headers = [
+    'student_id','name','progress','completed_lessons','total_lessons','average_grade','activity_level','study_time_per_week','last_active_at','joined_at'
+  ]
+  const row = [
+    `"${String(s.studentId ?? '')}"`,
+    `"${String(s.name ?? '').replace(/"/g, '""')}"`,
+    String(s.progress ?? ''),
+    String(s.completedLessons ?? ''),
+    String(s.totalLessons ?? ''),
+    String(s.averageGrade ?? ''),
+    `"${String(s.activityLevel ?? '')}"`,
+    String(s.studyTime ?? ''),
+    `"${String(s.lastActiveAt ?? '')}"`,
+    `"${String(s.joinedAt ?? '')}"`
+  ]
+  const csv = `${headers.join(',')}\n${row.join(',')}\n`
+  const blob = new Blob([csv], { type: 'text/csv;charset=UTF-8' })
+  const link = document.createElement('a')
+  link.href = URL.createObjectURL(blob)
+  link.download = `course_${courseId}_student_${_studentId}.csv`
+  document.body.appendChild(link)
+  link.click()
+  document.body.removeChild(link)
+}
 
-const batchExport = async () => {}
+const removeStudent = async (studentId: string) => {
+  if (!confirm(t('teacher.students.table.confirmRemove') as string)) return
+  try {
+    const { courseApi } = await import('@/api/course.api')
+    await courseApi.removeStudent(courseId, studentId)
+    const index = students.value.findIndex(s => s.id === studentId)
+    if (index > -1) students.value.splice(index, 1)
+    uiStore.showNotification({
+      type: 'success',
+      title: t('teacher.students.table.removeSuccess'),
+      message: t('teacher.students.table.removeSuccessMsg')
+    })
+  } catch (error: any) {
+    uiStore.showNotification({
+      type: 'error',
+      title: t('teacher.students.table.removeFail'),
+      message: error?.message || t('teacher.students.table.removeFailMsg')
+    })
+  }
+}
 
-const batchRemove = async () => {}
+const batchSendMessage = async () => {
+  if (selectedStudents.value.length === 0) return
+  const title = prompt(t('teacher.students.message.promptTitle') as string, t('teacher.students.message.defaultTitle') as string) || ''
+  const content = prompt(t('teacher.students.message.promptContent') as string, '') || ''
+  if (!title || !content) return
+  try {
+    const { notificationAPI } = await import('@/api/notification.api')
+    const recipientIds = selectedStudents.value.map(id => Number(id))
+    await notificationAPI.batchSend({ recipientIds, title, content, type: 'message', category: 'course', relatedType: 'course', relatedId: Number(courseId) })
+    uiStore.showNotification({ type: 'success', title: t('app.notifications.success.title') as string, message: t('teacher.students.message.batchSent') as string })
+  } catch (e: any) {
+    uiStore.showNotification({ type: 'error', title: t('app.notifications.error.title') as string, message: e?.message || t('teacher.students.message.failed') as string })
+  }
+}
+
+const batchExport = async () => {
+  if (selectedStudents.value.length === 0) return
+  // headers 与单个导出保持一致
+  const headers = [
+    'student_id','name','progress','completed_lessons','total_lessons','average_grade','activity_level','study_time_per_week','last_active_at','joined_at'
+  ]
+  const selected = students.value.filter(s => selectedStudents.value.includes(s.id))
+  if (selected.length === 0) return
+  const escape = (v: any) => `"${String(v ?? '').replace(/"/g, '""')}"`
+  const rows = selected.map((s) => [
+    escape(s.studentId),
+    escape(s.name),
+    String(s.progress ?? ''),
+    String(s.completedLessons ?? ''),
+    String(s.totalLessons ?? ''),
+    String(s.averageGrade ?? ''),
+    escape(s.activityLevel),
+    String(s.studyTime ?? ''),
+    escape(s.lastActiveAt),
+    escape(s.joinedAt)
+  ].join(','))
+  const csv = `${headers.join(',')}\n${rows.join('\n')}\n`
+  const blob = new Blob([csv], { type: 'text/csv;charset=UTF-8' })
+  const link = document.createElement('a')
+  link.href = URL.createObjectURL(blob)
+  link.download = `course_${courseId}_students_selected.csv`
+  document.body.appendChild(link)
+  link.click()
+  document.body.removeChild(link)
+  uiStore.showNotification({ type: 'success', title: t('app.notifications.success.title') as string, message: `${selected.length} ${t('teacher.students.batch.export')}` })
+}
+
+const batchRemove = async () => {
+  if (selectedStudents.value.length === 0) return
+  if (!confirm(t('teacher.students.table.confirmRemove') as string)) return
+  try {
+    const { courseApi } = await import('@/api/course.api')
+    const ids = [...selectedStudents.value]
+    // 逐个调用后端移除
+    const results = await Promise.allSettled(ids.map(id => courseApi.removeStudent(courseId, id)))
+    // 成功的ID集合
+    const successIds = ids.filter((_, idx) => results[idx].status === 'fulfilled')
+    if (successIds.length > 0) {
+      students.value = students.value.filter(s => !successIds.includes(s.id))
+    }
+    // 清空选择
+    selectedStudents.value = []
+    const okCount = successIds.length
+    const failCount = ids.length - okCount
+    if (okCount > 0) {
+      uiStore.showNotification({ type: 'success', title: t('teacher.students.table.removeSuccess') as string, message: `${okCount}` })
+    }
+    if (failCount > 0) {
+      uiStore.showNotification({ type: 'warning', title: t('teacher.students.table.removeFail') as string, message: `${failCount}` })
+    }
+  } catch (error: any) {
+    uiStore.showNotification({ type: 'error', title: t('teacher.students.table.removeFail') as string, message: error?.message || '' })
+  }
+}
 
 const exportData = async () => {
   try {
-    const params = new URLSearchParams()
-    if (searchQuery.value) params.append('search', searchQuery.value)
-    if (sortBy.value) params.append('sortBy', sortBy.value)
-    if (activityFilter.value) params.append('activity', activityFilter.value)
-    if (gradeFilter.value) params.append('grade', gradeFilter.value)
-    if (progressFilter.value) params.append('progress', progressFilter.value)
-
-    const url = `${baseURL}/teachers/analytics/course/${courseId}/students/export?${params.toString()}`
-    const res = await apiClient.get(url, { responseType: 'blob' })
+    const { teacherApi } = await import('@/api/teacher.api')
+    const params: any = {}
+    if (searchQuery.value) params.search = searchQuery.value
+    if (sortBy.value) params.sortBy = sortBy.value
+    if (activityFilter.value) params.activity = activityFilter.value
+    if (gradeFilter.value) params.grade = gradeFilter.value
+    if (progressFilter.value) params.progress = progressFilter.value
+    const res: any = await teacherApi.exportCourseStudents(courseId, params)
     const blob = new Blob([res as any], { type: 'text/csv;charset=UTF-8' })
     const link = document.createElement('a')
     link.href = URL.createObjectURL(blob)
@@ -708,7 +810,7 @@ const exportData = async () => {
     link.click()
     document.body.removeChild(link)
   } catch (e: any) {
-    uiStore.showNotification({ type: 'error', title: '导出失败', message: e?.message || '导出数据时发生错误' })
+    uiStore.showNotification({ type: 'error', title: t('teacher.students.export.failTitle'), message: e?.message || t('teacher.students.export.failMsg') })
   }
 }
 
@@ -736,13 +838,13 @@ const submitInvite = async () => {
     await courseApi.inviteStudents(courseId, parsedInviteIds.value)
     uiStore.showNotification({
       type: 'success',
-      title: '邀请成功',
-      message: `已处理 ${parsedInviteIds.value.length} 个学生ID`
+      title: t('teacher.students.invite.successTitle'),
+      message: t('teacher.students.invite.successMsg', { count: parsedInviteIds.value.length })
     })
     closeInviteModal()
     await fetchCourseStudents()
   } catch (e: any) {
-    uiStore.showNotification({ type: 'error', title: '邀请失败', message: e?.message || '提交失败' })
+    uiStore.showNotification({ type: 'error', title: t('teacher.students.invite.failTitle'), message: e?.message || t('teacher.students.invite.failMsg') })
   } finally {
     inviting.value = false
   }
@@ -768,4 +870,4 @@ watch(searchQuery, () => {
 onUnmounted(() => {
   document.removeEventListener('click', handleDocClick)
 })
-</script> 
+ </script> 

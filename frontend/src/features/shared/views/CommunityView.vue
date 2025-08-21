@@ -3,15 +3,15 @@
     <div class="max-w-7xl mx-auto">
       <!-- Page Header -->
       <div class="mb-8">
-        <div class="flex items-center justify-between">
+            <div class="flex items-center justify-between">
           <div>
-            <h1 class="text-3xl font-bold text-gray-900 dark:text-white mb-2">学习社区</h1>
-            <p class="text-gray-600 dark:text-gray-400">与同学交流学习心得，分享知识经验</p>
+            <h1 class="text-3xl font-bold text-gray-900 dark:text-white mb-2">{{ t('shared.community.title') }}</h1>
+            <p class="text-gray-600 dark:text-gray-400">{{ t('shared.community.subtitle') }}</p>
           </div>
            <div class="flex items-center space-x-3">
-             <button @click="showCreatePostModal = true" class="btn btn-primary inline-flex items-center whitespace-nowrap px-4">
-               <plus-icon class="w-4 h-4 mr-2" />
-               发布帖子
+              <button @click="showCreatePostModal = true" class="btn btn-primary inline-flex items-center whitespace-nowrap px-4">
+               <PlusIcon class="w-4 h-4 mr-2" />
+              {{ t('shared.community.createPost') }}
              </button>
            </div>
         </div>
@@ -19,21 +19,21 @@
 
       <!-- Community Stats -->
       <div v-if="stats" class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-        <div class="text-center p-4 bg-white dark:bg-gray-800 rounded-lg shadow">
+          <div class="text-center p-4 bg-white dark:bg-gray-800 rounded-lg shadow">
           <div class="text-2xl font-bold text-blue-600 dark:text-blue-400 mb-1">{{ stats.totalPosts }}</div>
-          <p class="text-sm text-gray-600 dark:text-gray-400">讨论帖子</p>
+           <p class="text-sm text-gray-600 dark:text-gray-400">{{ t('shared.community.stats.posts') }}</p>
         </div>
-        <div class="text-center p-4 bg-white dark:bg-gray-800 rounded-lg shadow">
+          <div class="text-center p-4 bg-white dark:bg-gray-800 rounded-lg shadow">
           <div class="text-2xl font-bold text-green-600 dark:text-green-400 mb-1">{{ stats.totalUsers }}</div>
-          <p class="text-sm text-gray-600 dark:text-gray-400">社区成员</p>
+           <p class="text-sm text-gray-600 dark:text-gray-400">{{ t('shared.community.stats.users') }}</p>
         </div>
-        <div class="text-center p-4 bg-white dark:bg-gray-800 rounded-lg shadow">
+          <div class="text-center p-4 bg-white dark:bg-gray-800 rounded-lg shadow">
           <div class="text-2xl font-bold text-purple-600 dark:text-purple-400 mb-1">{{ stats.totalComments }}</div>
-          <p class="text-sm text-gray-600 dark:text-gray-400">总评论数</p>
+           <p class="text-sm text-gray-600 dark:text-gray-400">{{ t('shared.community.stats.comments') }}</p>
         </div>
-        <div class="text-center p-4 bg-white dark:bg-gray-800 rounded-lg shadow">
+          <div class="text-center p-4 bg-white dark:bg-gray-800 rounded-lg shadow">
           <div class="text-2xl font-bold text-yellow-600 dark:text-yellow-400 mb-1">{{ stats.activeUsersToday }}</div>
-          <p class="text-sm text-gray-600 dark:text-gray-400">今日活跃</p>
+           <p class="text-sm text-gray-600 dark:text-gray-400">{{ t('shared.community.stats.activeToday') }}</p>
         </div>
       </div>
 
@@ -42,7 +42,7 @@
         <div class="lg:col-span-1 space-y-6">
           <!-- Categories -->
           <div class="p-4 bg-white dark:bg-gray-800 rounded-lg shadow">
-             <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">讨论分类</h2>
+             <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">{{ t('shared.community.categories.title') }}</h2>
             <div class="space-y-2">
               <button
                 v-for="category in categories"
@@ -51,9 +51,9 @@
                 class="w-full flex items-center justify-between px-3 py-2 text-sm rounded-lg transition-colors"
                 :class="filterOptions.category === category.id ? 'bg-primary-100 dark:bg-primary-900 text-primary-700 dark:text-primary-300' : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700'"
               >
-                <span class="flex items-center">
+                 <span class="flex items-center">
                   <component :is="category.icon" class="w-4 h-4 mr-3" />
-                  <span>{{ category.name }}</span>
+                   <span>{{ category.name }}</span>
                 </span>
               </button>
             </div>
@@ -61,7 +61,7 @@
 
           <!-- Hot Topics -->
           <div v-if="hotTopics.length" class="p-4 bg-white dark:bg-gray-800 rounded-lg shadow">
-            <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">热门话题</h3>
+            <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">{{ t('shared.community.hotTopics') }}</h3>
             <div class="space-y-3">
               <div
                 v-for="(topic, index) in hotTopics"
@@ -80,15 +80,14 @@
 
           <!-- Active Users -->
           <div v-if="activeUsers.length" class="p-4 bg-white dark:bg-gray-800 rounded-lg shadow">
-            <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">活跃用户</h3>
+            <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">{{ t('shared.community.activeUsers') }}</h3>
             <div class="space-y-3">
               <div v-for="user in activeUsers" :key="user.userId" class="flex items-center space-x-3">
                 <div class="flex-shrink-0">
-                  <UserAvatar :avatar="user.avatarUrl" :size="32">
-                    <div class="w-8 h-8 rounded-full bg-gray-200 dark:bg-gray-600 flex items-center justify-center">
-                      <user-icon class="w-4 h-4 text-gray-400" />
-                    </div>
-                  </UserAvatar>
+                  <img v-if="user.avatarUrl" :src="user.avatarUrl" alt="avatar" class="w-8 h-8 rounded-full object-cover" />
+                  <div v-else class="w-8 h-8 rounded-full bg-gray-200 dark:bg-gray-600 flex items-center justify-center">
+                    <UserIcon class="w-4 h-4 text-gray-400" />
+                  </div>
                 </div>
                 <div class="flex-1 min-w-0">
                   <p class="text-sm font-medium text-gray-900 dark:text-white">{{ user.nickname || user.username }}</p>
@@ -108,21 +107,21 @@
               </h2>
               <div class="flex items-center space-x-3">
                 <div class="relative">
-                  <magnifying-glass-icon class="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
-                  <input
+                  <MagnifyingGlassIcon class="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+                   <input
                     v-model="filterOptions.keyword"
                     @keyup.enter="applyFilters"
                     type="text"
-                    placeholder="搜索帖子..."
+                    :placeholder="t('shared.community.list.searchPlaceholder')"
                     class="input pl-10 pr-4 py-2"
                   />
                 </div>
                 <select v-model="filterOptions.orderBy" @change="applyFilters" class="input input-sm">
-                  <option value="latest">最新发布</option>
-                  <option value="hot">最热</option>
-                  <option value="comments">评论最多</option>
-                  <option value="likes">点赞最多</option>
-                  <option value="views">浏览最多</option>
+                  <option value="latest">{{ t('shared.community.list.order.latest') }}</option>
+                  <option value="hot">{{ t('shared.community.list.order.hot') }}</option>
+                  <option value="comments">{{ t('shared.community.list.order.comments') }}</option>
+                  <option value="likes">{{ t('shared.community.list.order.likes') }}</option>
+                  <option value="views">{{ t('shared.community.list.order.views') }}</option>
                 </select>
               </div>
             </div>
@@ -136,25 +135,24 @@
               >
                   <div class="flex items-start space-x-4">
                   <div class="flex-shrink-0">
-                    <UserAvatar :avatar="post.author?.avatar" :size="40">
-                      <div class="w-10 h-10 rounded-full bg-gray-200 dark:bg-gray-600 flex items-center justify-center">
-                        <user-icon class="w-5 h-5 text-gray-400" />
-                      </div>
-                    </UserAvatar>
+                    <img v-if="post.author?.avatar" :src="post.author.avatar" alt="avatar" class="w-10 h-10 rounded-full object-cover" />
+                    <div v-else class="w-10 h-10 rounded-full bg-gray-200 dark:bg-gray-600 flex items-center justify-center">
+                      <UserIcon class="w-5 h-5 text-gray-400" />
+                    </div>
                   </div>
                   <div class="flex-1 min-w-0" @click="viewPost(post.id)">
                    <div class="flex items-center space-x-2 mb-1">
                       <h3 class="text-sm font-medium text-gray-900 dark:text-white">{{ post.title }}</h3>
-                       <div class="text-xs px-2 py-0.5 rounded-full" :class="getCategoryClass(post.category)">{{ post.category }}</div>
+                       <div class="text-xs px-2 py-0.5 rounded-full" :class="getCategoryClass(post.category)">{{ displayCategory(post.category) }}</div>
                     </div>
-                    <p class="text-sm text-gray-600 dark:text-gray-400 line-clamp-2 mb-2" v-html="post.content"></p>
+                   <p class="text-sm text-gray-600 dark:text-gray-400 line-clamp-2 mb-2" v-html="post.content"></p>
                     <div class="flex items-center space-x-4 text-xs text-gray-500">
-                      <span>{{ post.author?.nickname || post.author?.username || '匿名用户' }}</span>
+                      <span>{{ post.author?.nickname || post.author?.username || t('shared.community.list.anonymous') }}</span>
                       <span>{{ formatDate(post.createdAt) }}</span>
-                      <div class="flex items-center space-x-1"><eye-icon class="w-3 h-3" /><span>{{ post.viewCount }}</span></div>
-                      <div class="flex items-center space-x-1"><chat-bubble-left-icon class="w-3 h-3" /><span>{{ post.commentCount }}</span></div>
+                       <div class="flex items-center space-x-1"><EyeIcon class="w-3 h-3" /><span>{{ post.viewCount }}</span></div>
+                      <div class="flex items-center space-x-1"><ChatBubbleLeftIcon class="w-3 h-3" /><span>{{ post.commentCount }}</span></div>
                       <button @click.stop="communityStore.toggleLikePost(post.id)" :class="post.isLiked ? 'text-red-500' : ''" class="flex items-center space-x-1">
-                        <hand-thumb-up-icon class="w-3 h-3" />
+                        <HandThumbUpIcon class="w-3 h-3" />
                         <span>{{ post.likeCount }}</span>
                       </button>
                     </div>
@@ -163,37 +161,38 @@
                     </div>
                   </div>
                   <div class="flex-shrink-0 space-x-2">
-                    <button v-if="authStore.user?.id && String(authStore.user.id) === String(post.author?.id || post.authorId)" class="btn btn-ghost btn-sm" @click.stop="onEditPost(post)">编辑</button>
-                    <button v-if="authStore.user?.id && String(authStore.user.id) === String(post.author?.id || post.authorId)" class="btn btn-ghost btn-sm" @click.stop="onDeletePost(post.id)">删除</button>
+                    <button v-if="post.attachments?.length" class="btn btn-ghost btn-sm" @click.stop="downloadFirstAttachment(post)">下载附件</button>
+                    <button v-if="authStore.user?.id && String(authStore.user.id) === String(post.author?.id || post.authorId)" class="btn btn-ghost btn-sm" @click.stop="onEditPost(post)">{{ t('shared.community.list.edit') }}</button>
+                    <button v-if="authStore.user?.id && String(authStore.user.id) === String(post.author?.id || post.authorId)" class="btn btn-ghost btn-sm" @click.stop="onDeletePost(post.id)">{{ t('shared.community.list.delete') }}</button>
                   </div>
                 </div>
               </div>
             </div>
 
             <!-- Loading State -->
-            <div v-if="loading" class="text-center py-12">
-              <p>加载中...</p>
+             <div v-if="loading" class="text-center py-12">
+              <p>{{ t('shared.community.detail.loading') }}</p>
             </div>
 
             <!-- Empty State -->
             <div v-if="!loading && !posts.length" class="text-center py-12">
-              <chat-bubble-left-icon class="w-16 h-16 text-gray-400 mx-auto mb-4" />
-              <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-2">暂无帖子</h3>
+              <ChatBubbleLeftIcon class="w-16 h-16 text-gray-400 mx-auto mb-4" />
+              <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-2">{{ t('shared.community.list.emptyTitle') }}</h3>
               <p class="text-gray-600 dark:text-gray-400 mb-4">
-                {{ filterOptions.keyword ? '没有找到匹配的帖子' : '这个分类还没有帖子' }}
+                {{ filterOptions.keyword ? t('shared.community.list.emptyDescKeyword') : t('shared.community.list.emptyDescCategory') }}
               </p>
               <button @click="showCreatePostModal = true" class="btn btn-primary inline-flex items-center whitespace-nowrap px-4">
-                <plus-icon class="w-4 h-4 mr-2" />
-                发布第一个帖子
+                <PlusIcon class="w-4 h-4 mr-2" />
+                {{ t('shared.community.list.publishFirst') }}
               </button>
             </div>
 
             <!-- Pagination -->
             <div v-if="!loading && totalPosts > filterOptions.size" class="mt-6 flex justify-between items-center">
-               <span class="text-sm text-gray-500">共 {{ totalPosts }} 条</span>
+               <span class="text-sm text-gray-500">{{ t('shared.community.list.total', { count: totalPosts }) }}</span>
               <div class="flex space-x-1">
-                <button @click="changePage(filterOptions.page - 1)" :disabled="filterOptions.page === 1" class="btn btn-ghost">上一页</button>
-                <button @click="changePage(filterOptions.page + 1)" :disabled="filterOptions.page * filterOptions.size >= totalPosts" class="btn btn-ghost">下一页</button>
+                <button @click="changePage(filterOptions.page - 1)" :disabled="filterOptions.page === 1" class="btn btn-ghost">{{ t('shared.community.list.prev') }}</button>
+                <button @click="changePage(filterOptions.page + 1)" :disabled="filterOptions.page * filterOptions.size >= totalPosts" class="btn btn-ghost">{{ t('shared.community.list.next') }}</button>
               </div>
             </div>
           </div>
@@ -201,29 +200,29 @@
       </div>
 
       <!-- Create Post Modal -->
-      <div v-if="showCreatePostModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-        <div class="bg-white dark:bg-gray-800 rounded-lg p-6 max-w-2xl w-full mx-4">
-          <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-4">发布新帖子</h3>
+      <div v-if="showCreatePostModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+        <div class="bg-white dark:bg-gray-800 rounded-lg p-6 max-w-2xl w-full mx-4 max-h-[80vh] overflow-y-auto">
+           <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-4">{{ t('shared.community.modal.createTitle') }}</h3>
           <form @submit.prevent="handleCreatePost" class="space-y-4">
             <div>
-              <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">帖子标题</label>
-              <input v-model="newPost.title" type="text" placeholder="输入帖子标题" class="input" required />
+              <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{{ t('shared.community.modal.title') }}</label>
+              <input v-model="newPost.title" type="text" :placeholder="t('shared.community.modal.title')" class="input" required />
             </div>
             <div>
-              <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">分类</label>
+              <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{{ t('shared.community.modal.category') }}</label>
               <select v-model="newPost.category" class="input">
-                <option value="学习讨论">学习讨论</option>
-                <option value="作业求助">作业求助</option>
-                <option value="经验分享">经验分享</option>
-                <option value="问答">问答</option>
-                <option value="闲聊">闲聊</option>
+                <option value="study">{{ t('shared.community.categories.study') }}</option>
+                <option value="help">{{ t('shared.community.categories.help') }}</option>
+                <option value="share">{{ t('shared.community.categories.share') }}</option>
+                <option value="qa">{{ t('shared.community.categories.qa') }}</option>
+                <option value="chat">{{ t('shared.community.categories.chat') }}</option>
               </select>
             </div>
             <div>
-              <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">话题标签</label>
-              <input v-model="newPost.tagsInput" type="text" placeholder="输入话题标签，用空格分隔" class="input mb-2" />
+              <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{{ t('shared.community.modal.tags') }}</label>
+              <input v-model="newPost.tagsInput" type="text" :placeholder="t('shared.community.modal.tags')" class="input mb-2" />
               <div class="mb-2">
-                <input v-model="newPost.tagSearch" @input="searchTags" type="text" placeholder="搜索标签..." class="input" />
+                <input v-model="newPost.tagSearch" @input="searchTags" type="text" :placeholder="t('shared.community.modal.tagSearch')" class="input" />
                 <div v-if="newPost.tagOptions.length" class="mt-2 border border-gray-200 dark:border-gray-700 rounded-md divide-y divide-gray-100 dark:divide-gray-700">
                   <button v-for="opt in newPost.tagOptions" :key="opt.id" type="button" class="w-full text-left px-3 py-2 text-sm hover:bg-gray-50 dark:hover:bg-gray-700" @click="addTag(opt.name)">#{{ opt.name }}</button>
                 </div>
@@ -236,14 +235,14 @@
               </div>
             </div>
             <div>
-              <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">帖子内容</label>
-              <textarea v-model="newPost.content" rows="6" placeholder="分享你的想法..." class="input" required></textarea>
+              <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{{ t('shared.community.modal.content') }}</label>
+              <textarea v-model="newPost.content" rows="6" :placeholder="t('shared.community.modal.contentPlaceholder')" class="input" required></textarea>
             </div>
             <div>
-              <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">图片附件（可选）</label>
-              <file-upload
+              <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">附件</label>
+              <FileUpload
                 ref="postUploader"
-                :accept="'image/*'"
+                :accept="'.pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.txt,.zip,.rar,image/*,video/*'"
                 :multiple="true"
                 :autoUpload="false"
                 :upload-url="`${baseURL}/files/upload`"
@@ -254,39 +253,68 @@
               />
             </div>
             <div class="flex justify-end space-x-3 pt-4">
-              <button type="button" @click="showCreatePostModal = false" class="btn btn-outline">取消</button>
-              <button type="submit" :disabled="loading" class="btn btn-primary">发布帖子</button>
+              <button type="button" @click="showCreatePostModal = false" class="btn btn-secondary">{{ t('shared.community.modal.cancel') }}</button>
+              <button type="submit" :disabled="loading" class="btn btn-primary">{{ t('shared.community.modal.publish') }}</button>
             </div>
           </form>
         </div>
       </div>
 
       <!-- Edit Post Modal -->
-      <div v-if="editModal.visible" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-        <div class="bg-white dark:bg-gray-800 rounded-lg p-6 max-w-2xl w-full mx-4">
-          <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-4">编辑帖子</h3>
+      <div v-if="editModal.visible" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+        <div class="bg-white dark:bg-gray-800 rounded-lg p-6 max-w-2xl w-full mx-4 max-h-[80vh] overflow-y-auto">
+          <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-4">{{ t('shared.community.modal.editTitle') }}</h3>
           <form @submit.prevent="handleUpdatePost" class="space-y-4">
             <div>
-              <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">帖子标题</label>
+              <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{{ t('shared.community.modal.title') }}</label>
               <input v-model="editModal.form.title" type="text" class="input" required />
             </div>
             <div>
-              <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">分类</label>
+              <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{{ t('shared.community.modal.category') }}</label>
               <select v-model="editModal.form.category" class="input">
-                <option value="学习讨论">学习讨论</option>
-                <option value="作业求助">作业求助</option>
-                <option value="经验分享">经验分享</option>
-                <option value="问答">问答</option>
-                <option value="闲聊">闲聊</option>
+                <option value="study">{{ t('shared.community.categories.study') }}</option>
+                <option value="help">{{ t('shared.community.categories.help') }}</option>
+                <option value="share">{{ t('shared.community.categories.share') }}</option>
+                <option value="qa">{{ t('shared.community.categories.qa') }}</option>
+                <option value="chat">{{ t('shared.community.categories.chat') }}</option>
               </select>
             </div>
             <div>
-              <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">帖子内容</label>
+              <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{{ t('shared.community.modal.content') }}</label>
               <textarea v-model="editModal.form.content" rows="6" class="input" required></textarea>
             </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{{ t('shared.community.modal.attachment') }}</label>
+              <FileUpload
+                ref="postEditUploader"
+                :accept="'.pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.txt,.zip,.rar,image/*,video/*'"
+                :multiple="true"
+                :autoUpload="true"
+                :upload-url="`${baseURL}/files/upload`"
+                :upload-headers="uploadHeaders"
+                :upload-data="editUploadData"
+                @upload-success="onEditUploadSuccess"
+                @upload-error="onPostUploadError"
+              />
+              <div v-if="editAttachments.length" class="mt-3">
+                <h4 class="text-sm font-medium mb-2">{{ t('shared.community.modal.existingTitle') }}</h4>
+                <ul class="divide-y divide-gray-200 dark:divide-gray-700">
+                  <li v-for="f in editAttachments" :key="f.id" class="py-2 flex items-center justify-between">
+                    <div class="min-w-0 mr-3">
+                      <div class="text-sm truncate">{{ f.originalName || f.fileName || ('#' + f.id) }}</div>
+                      <div class="text-xs text-gray-500">{{ (f.fileSize ? (f.fileSize/1024/1024).toFixed(1)+' MB' : '') }}</div>
+                    </div>
+                    <div class="flex items-center gap-2">
+                      <button type="button" class="btn btn-sm btn-outline" @click="downloadEditAttachment(f)">{{ t('shared.community.modal.download') }}</button>
+                      <button type="button" class="btn btn-sm btn-danger-outline" @click="deleteEditAttachment(f.id)">{{ t('shared.community.modal.delete') }}</button>
+                    </div>
+                  </li>
+                </ul>
+              </div>
+            </div>
             <div class="flex justify-end space-x-3 pt-4">
-              <button type="button" @click="editModal.visible = false" class="btn btn-outline">取消</button>
-              <button type="submit" :disabled="loading" class="btn btn-primary">保存</button>
+              <button type="button" @click="editModal.visible = false" class="btn btn-secondary">{{ t('shared.community.modal.cancel') }}</button>
+              <button type="submit" :disabled="loading" class="btn btn-primary">{{ t('shared.community.modal.save') }}</button>
             </div>
           </form>
         </div>
@@ -296,7 +324,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, onMounted } from 'vue';
+import { ref, reactive, onMounted, computed } from 'vue';
 import { useRouter } from 'vue-router';
 import { storeToRefs } from 'pinia';
 import { useCommunityStore } from '@/stores/community';
@@ -310,10 +338,14 @@ import UserAvatar from '@/components/ui/UserAvatar.vue'
 import { useAuthStore } from '@/stores/auth';
 import FileUpload from '@/components/forms/FileUpload.vue';
 import { baseURL } from '@/api/config';
+import { fileApi } from '@/api/file.api';
 
 const router = useRouter();
 const communityStore = useCommunityStore();
 const authStore = useAuthStore();
+// @ts-ignore shim for vue-i18n types in this project
+import { useI18n } from 'vue-i18n'
+const { t } = useI18n()
 
 
 const { posts, totalPosts, stats, hotTopics, activeUsers, loading } = storeToRefs(communityStore);
@@ -329,7 +361,7 @@ const filterOptions = reactive<{ page: number; size: number; category: string; k
 
 const newPost = reactive({
   title: '',
-  category: '学习讨论',
+  category: 'study',
   content: '',
   tagsInput: '',
   tagSearch: '',
@@ -338,22 +370,34 @@ const newPost = reactive({
 });
 const editModal = reactive<{ visible: boolean; form: { id?: number; title: string; category: string; content: string } }>({
   visible: false,
-  form: { id: undefined, title: '', category: '学习讨论', content: '' }
+  form: { id: undefined, title: '', category: 'study', content: '' }
 })
 const postUploader = ref();
+const postEditUploader = ref();
 const postUploadData = reactive<{ purpose: string; relatedId?: string | number }>({ purpose: 'community_post' });
+const editUploadData = reactive<{ purpose: string; relatedId?: string | number }>({ purpose: 'community_post' });
+const editAttachments = ref<any[]>([]);
 const uploadHeaders = {
   Authorization: localStorage.getItem('token') ? `Bearer ${localStorage.getItem('token')}` : ''
 };
 
-const categories = ref([
-  { id: 'all', name: '全部帖子', icon: ChatBubbleLeftIcon },
-  { id: '学习讨论', name: '学习讨论', icon: BookOpenIcon },
-  { id: '作业求助', name: '作业求助', icon: QuestionMarkCircleIcon },
-  { id: '经验分享', name: '经验分享', icon: LightBulbIcon },
-  { id: '问答', name: '问答', icon: AcademicCapIcon },
-  { id: '闲聊', name: '闲聊', icon: ChatBubbleOvalLeftEllipsisIcon }
-]);
+const categories = computed(() => ([
+  { id: 'all', name: t('shared.community.categories.all') as string, icon: ChatBubbleLeftIcon },
+  { id: 'study', name: t('shared.community.categories.study') as string, icon: BookOpenIcon },
+  { id: 'help', name: t('shared.community.categories.help') as string, icon: QuestionMarkCircleIcon },
+  { id: 'share', name: t('shared.community.categories.share') as string, icon: LightBulbIcon },
+  { id: 'qa', name: t('shared.community.categories.qa') as string, icon: AcademicCapIcon },
+  { id: 'chat', name: t('shared.community.categories.chat') as string, icon: ChatBubbleOvalLeftEllipsisIcon }
+]));
+
+const categoryIdToLabel: Record<string, string> = {
+  study: '学习讨论',
+  help: '作业求助',
+  share: '经验分享',
+  qa: '问答',
+  chat: '闲聊',
+}
+const labelToCategoryId: Record<string, string> = Object.fromEntries(Object.entries(categoryIdToLabel).map(([k, v]) => [v, k]))
 
 const applyFilters = () => {
   filterOptions.page = 1;
@@ -362,7 +406,7 @@ const applyFilters = () => {
     size: filterOptions.size,
     orderBy: filterOptions.orderBy,
     keyword: filterOptions.keyword,
-    category: filterOptions.category === 'all' ? undefined : filterOptions.category
+    category: filterOptions.category === 'all' ? undefined : categoryIdToLabel[filterOptions.category] || filterOptions.category
   };
   communityStore.fetchPosts(params);
 };
@@ -395,24 +439,34 @@ const viewPost = (postId: number) => {
 const askAiForPost = (post: any) => {
   const content = (post?.title ? `【问题标题】${post.title}\n` : '') +
                   (post?.content ? `【问题内容】${post.content}` : '')
-  router.push({ name: 'TeacherAiAssistant', query: { q: content } })
+  const target = authStore.userRole === 'TEACHER' ? { path: '/teacher/assistant' } : { path: '/student/assistant' }
+  router.push({ ...target, query: { q: content } })
 }
 
 const onEditPost = (post: any) => {
   editModal.visible = true
   editModal.form.id = post.id
   editModal.form.title = post.title
-  editModal.form.category = post.category
+  // 将后端中文分类转换为前端英文 id（保持选项值稳定）
+  editModal.form.category = labelToCategoryId[post.category] || post.category
   editModal.form.content = post.content
+  editUploadData.relatedId = post.id
+  refreshEditAttachments(post.id)
 }
 
 const handleUpdatePost = async () => {
   if (!editModal.form.id) return
   await communityStore.updatePost(editModal.form.id, {
     title: editModal.form.title,
-    category: editModal.form.category,
+    // 提交给后端中文分类（由稳定 id -> 中文标签）
+    category: categoryIdToLabel[editModal.form.category] || editModal.form.category,
     content: editModal.form.content,
   })
+  {
+    const { useUIStore } = await import('@/stores/ui')
+    const ui = useUIStore()
+    ui.showNotification({ type: 'success', title: t('shared.community.notify.postUpdatedTitle') as string, message: t('shared.community.notify.postUpdatedMsg') as string })
+  }
   editModal.visible = false
   applyFilters()
 }
@@ -421,12 +475,16 @@ const handleCreatePost = async () => {
   const postData = {
     title: newPost.title,
     content: newPost.content,
-    category: newPost.category,
+    // 提交给后端中文分类（由稳定 id -> 中文标签）
+    category: categoryIdToLabel[newPost.category] || newPost.category,
     tags: Array.from(new Set([...(newPost.tagsInput.split(' ').filter(t => t)), ...newPost.selectedTags])),
   };
   
   const created = await communityStore.createPost(postData);
   if (created) {
+    const { useUIStore } = await import('@/stores/ui')
+    const ui = useUIStore()
+    ui.showNotification({ type: 'success', title: t('shared.community.notify.postCreatedTitle') as string, message: t('shared.community.notify.postCreatedMsg') as string })
     const postId = (created as any)?.id || (created as any)?.data?.id;
     if (postId && postUploader.value) {
       postUploadData.relatedId = postId;
@@ -438,7 +496,7 @@ const handleCreatePost = async () => {
     newPost.tagsInput = '';
     newPost.tagSearch = '';
     newPost.selectedTags = [];
-    newPost.category = '学习讨论';
+    newPost.category = 'study';
     applyFilters(); // Refresh list
   }
 };
@@ -448,6 +506,30 @@ const onPostUploadSuccess = () => {
 };
 const onPostUploadError = (msg: string) => {
   console.error('帖子附件上传失败:', msg);
+};
+
+const refreshEditAttachments = async (postId: number | string) => {
+  const res: any = await fileApi.getRelatedFiles('community_post', postId);
+  editAttachments.value = res?.data || res || [];
+};
+
+const onEditUploadSuccess = async () => {
+  if (editModal.form.id) {
+    await refreshEditAttachments(editModal.form.id);
+  }
+  const { useUIStore } = await import('@/stores/ui')
+  const ui = useUIStore()
+  ui.showNotification({ type: 'success', title: t('shared.community.notify.attachmentUploadedTitle') as string, message: t('shared.community.notify.attachmentUploadedMsg') as string })
+};
+
+const deleteEditAttachment = async (fileId: number | string) => {
+  if (!editModal.form.id) return;
+  await fileApi.deleteFile(String(fileId));
+  await refreshEditAttachments(editModal.form.id);
+};
+
+const downloadEditAttachment = async (f: any) => {
+  await fileApi.downloadFile(f.id, f.originalName || f.fileName || `attachment_${f.id}`);
 };
 
 let tagSearchTimer: number | undefined
@@ -496,6 +578,29 @@ const getCategoryClass = (category: string) => {
   return classMap[category] || 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300';
 };
 
+// 根据当前语言显示分类的本地化文案
+const displayCategory = (category: string) => {
+  const mapZhToEn: Record<string, string> = {
+    '学习讨论': t('shared.community.categories.study') as string,
+    '作业求助': t('shared.community.categories.help') as string,
+    '经验分享': t('shared.community.categories.share') as string,
+    '问答': t('shared.community.categories.qa') as string,
+    '闲聊': t('shared.community.categories.chat') as string,
+  };
+  const mapEnToKey: Record<string, string> = {
+    study: t('shared.community.categories.study') as string,
+    help: t('shared.community.categories.help') as string,
+    share: t('shared.community.categories.share') as string,
+    qa: t('shared.community.categories.qa') as string,
+    chat: t('shared.community.categories.chat') as string,
+  };
+  // 若后端返回中文分类
+  if (mapZhToEn[category]) return mapZhToEn[category];
+  // 若后端返回英文 id
+  // 兼容可能的 'study' | 'help' | 'share' | 'qa' | 'chat'
+  return mapEnToKey[category] || category;
+};
+
 
 onMounted(() => {
   communityStore.fetchCommunityStats();
@@ -505,7 +610,19 @@ onMounted(() => {
 });
 
 const onDeletePost = async (postId: number) => {
-  if (!confirm('确认删除该帖子？')) return;
+  if (!confirm(t('shared.community.confirm.deletePost') as string)) return;
   await communityStore.deletePost(postId);
+  {
+    const { useUIStore } = await import('@/stores/ui')
+    const ui = useUIStore()
+    ui.showNotification({ type: 'success', title: t('shared.community.notify.postDeletedTitle') as string, message: t('shared.community.notify.postDeletedMsg') as string })
+  }
+}
+
+// 下载首个附件（如需列表可扩展UI，这里作为示例）
+const downloadFirstAttachment = async (post: any) => {
+  const att = (post.attachments || [])[0];
+  if (!att) return;
+  await fileApi.downloadFile(att.id, att.originalName || att.fileName || `attachment_${att.id}`);
 }
 </script>

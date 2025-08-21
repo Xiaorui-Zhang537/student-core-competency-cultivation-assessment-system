@@ -1,10 +1,16 @@
 <template>
-  <div class="file-upload-container">
+  <div
+    class="file-upload-container"
+    :class="dense ? 'inline-block align-middle' : ''"
+    :style="dense ? { width: 'auto' } : {}"
+  >
     <!-- 拖拽上传区域 -->
     <div
       ref="dropZoneRef"
       :class="[
-        'border-2 border-dashed rounded-xl p-6 transition-all duration-300 cursor-pointer bg-white/60 dark:bg-gray-800/40 hover:bg-gray-50 dark:hover:bg-gray-700 hover:border-primary-400 shadow-sm',
+        'border-2 border-dashed rounded-xl transition-all duration-300 cursor-pointer bg-white/60 dark:bg-gray-800/40 hover:bg-gray-50 dark:hover:bg-gray-700 hover:border-primary-400 shadow-sm',
+        dense ? 'p-2' : (compact ? 'p-3' : 'p-6'),
+        dense ? 'inline-block w-[280px] sm:w-[300px] md:w-[340px] lg:w-[380px]' : '',
         {
           'border-primary-400 bg-primary-50 dark:bg-primary-900/20': isDragOver,
           'border-gray-300 dark:border-gray-600': !isDragOver && !error,
@@ -21,12 +27,12 @@
       @keydown.enter.prevent="triggerFileSelect"
       @keydown.space.prevent="triggerFileSelect"
     >
-      <div class="text-center">
+      <div class="text-center flex flex-col items-center justify-center h-full" :style="dense ? { aspectRatio: '16 / 10' } : {}">
         <!-- 上传图标 -->
-        <div class="mb-4">
-          <cloud-arrow-up-icon 
+        <div class="mb-3">
+          <CloudArrowUpIcon 
             v-if="!uploading"
-            class="mx-auto h-12 w-12 text-gray-400"
+            :class="['mx-auto text-gray-400', dense ? 'h-6 w-6' : (compact ? 'h-8 w-8' : 'h-12 w-12')]"
           />
           <div 
             v-else
@@ -37,15 +43,15 @@
         </div>
 
         <!-- 上传文本 -->
-        <div class="mb-4">
-          <p class="text-lg font-medium text-gray-900 dark:text-white mb-1">
-            {{ uploading ? '正在上传...' : '拖拽文件到此处或点击上传' }}
+        <div :class="dense ? 'mb-2' : 'mb-4'">
+          <p :class="[dense ? 'text-sm' : (compact ? 'text-base' : 'text-lg'), 'font-medium text-gray-900 dark:text-white mb-1']">
+            {{ uploading ? t('shared.upload.uploading') : t('shared.upload.dragTip') }}
           </p>
-          <p class="text-sm text-gray-600 dark:text-gray-400">
-            {{ acceptText || `支持 ${accept || '*'} 格式` }}
+          <p v-if="!dense" :class="[compact ? 'text-xs' : 'text-sm', 'text-gray-600 dark:text-gray-400']">
+            {{ acceptText || t('shared.upload.acceptHint', { accept: accept || '*' }) }}
           </p>
-          <p v-if="maxSize" class="text-xs text-gray-500 dark:text-gray-400 mt-1">
-            最大文件大小: {{ formatFileSize(maxSize) }}
+          <p v-if="maxSize && !dense" class="text-xs text-gray-500 dark:text-gray-400 mt-1">
+            {{ t('shared.upload.maxSize', { size: formatFileSize(maxSize) }) }}
           </p>
         </div>
 
@@ -61,21 +67,22 @@
         <Button 
           v-if="!uploading"
           variant="primary"
-          size="md"
+          :size="dense ? 'sm' : (compact ? 'sm' : 'md')"
           @click.stop="triggerFileSelect"
+          type="button"
           :disabled="disabled"
         >
-          <photo-icon class="w-4 h-4 mr-2" />
-          选择文件
+          <PhotoIcon :class="[dense ? 'w-3 h-3' : (compact ? 'w-3 h-3' : 'w-4 h-4'), 'mr-2']" />
+          {{ t('shared.upload.select') }}
         </Button>
 
         <!-- 上传进度 -->
         <div v-if="uploading && progress > 0" class="mt-4">
           <div class="flex items-center justify-between mb-1">
-            <span class="text-sm text-gray-600 dark:text-gray-400">上传进度</span>
+            <span class="text-sm text-gray-600 dark:text-gray-400">{{ t('shared.upload.progress') }}</span>
             <span class="text-sm font-medium text-gray-900 dark:text-white">{{ progress }}%</span>
           </div>
-          <progress :value="progress" color="primary" size="sm" />
+          <Progress :value="progress" color="primary" size="sm" />
         </div>
       </div>
     </div>
@@ -93,7 +100,7 @@
     <!-- 文件列表 -->
     <div v-if="files.length > 0" class="mt-4 space-y-2">
       <h4 class="text-sm font-medium text-gray-900 dark:text-white mb-2">
-        已选择的文件 ({{ files.length }})
+        {{ t('shared.upload.selectedCount', { count: files.length }) }}
       </h4>
       
       <div class="space-y-2 max-h-48 overflow-y-auto">
@@ -105,11 +112,11 @@
           <div class="flex items-center space-x-3 flex-1 min-w-0">
             <!-- 文件图标 -->
             <div class="flex-shrink-0">
-              <document-icon 
+              <DocumentIcon 
                 v-if="!isImage(file)"
                 class="w-8 h-8 text-gray-400"
               />
-              <photo-icon 
+              <PhotoIcon 
                 v-else
                 class="w-8 h-8 text-blue-500"
               />
@@ -130,7 +137,7 @@
             
             <!-- 上传状态 -->
             <div class="flex-shrink-0">
-              <check-circle-icon 
+              <CheckCircleIcon 
                 v-if="file.uploaded"
                 class="w-5 h-5 text-green-500"
               />
@@ -138,7 +145,7 @@
                 v-else-if="file.uploading"
                 class="w-5 h-5 border-2 border-blue-500 border-t-transparent rounded-full animate-spin"
               ></div>
-              <exclamation-circle-icon 
+              <ExclamationCircleIcon 
                 v-else-if="file.error"
                 class="w-5 h-5 text-red-500"
                 :title="file.error"
@@ -147,21 +154,22 @@
           </div>
           
           <!-- 删除按钮 -->
-          <button
+          <Button
             v-if="!disabled"
             @click="removeFile(index)"
             class="ml-3 p-1.5 rounded hover:bg-red-50 dark:hover:bg-red-900/20 text-gray-400 hover:text-red-600 transition-colors"
-            :title="'删除 ' + file.name"
+            type="button"
+            :title="t('shared.upload.removeWithName', { name: file.name })"
           >
-            <x-mark-icon class="w-4 h-4" />
-          </button>
+            <XMarkIcon class="w-4 h-4" />
+          </Button>
         </div>
       </div>
     </div>
 
     <!-- 图片预览 -->
     <div v-if="showPreview && imageFiles.length > 0" class="mt-4">
-      <h4 class="text-sm font-medium text-gray-900 dark:text-white mb-2">图片预览</h4>
+      <h4 class="text-sm font-medium text-gray-900 dark:text-white mb-2">{{ t('shared.upload.imagePreview') }}</h4>
       <div class="grid grid-cols-2 md:grid-cols-4 gap-2">
         <div
           v-for="(file, index) in imageFiles"
@@ -173,13 +181,14 @@
             :alt="file.name"
             class="w-full h-24 object-cover rounded-lg border border-gray-200 dark:border-gray-700"
           />
-          <button
+          <Button
             v-if="!disabled"
             @click="removeFile(files.indexOf(file))"
             class="absolute -top-2 -right-2 w-6 h-6 bg-red-500 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+            type="button"
           >
-            <x-mark-icon class="w-3 h-3" />
-          </button>
+            <XMarkIcon class="w-3 h-3" />
+          </Button>
         </div>
       </div>
     </div>
@@ -190,6 +199,7 @@
 import { ref, computed, watch } from 'vue'
 import Button from '@/components/ui/Button.vue'
 import Progress from '@/components/ui/Progress.vue'
+import { useLocale } from '@/i18n/useLocale'
 import {
   CloudArrowUpIcon,
   PhotoIcon,
@@ -220,6 +230,8 @@ interface Props {
   uploadUrl?: string
   uploadHeaders?: Record<string, string>
   uploadData?: Record<string, any>
+  compact?: boolean
+  dense?: boolean
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -229,7 +241,9 @@ const props = withDefaults(defineProps<Props>(), {
   maxFiles: 10,
   disabled: false,
   showPreview: true,
-  autoUpload: false
+  autoUpload: false,
+  compact: false,
+  dense: false
 })
 
 // Emits
@@ -251,6 +265,7 @@ const isDragOver = ref(false)
 const uploading = ref(false)
 const progress = ref(0)
 const error = ref('')
+const { t } = useLocale()
 
 // 计算属性
 const imageFiles = computed(() => 
@@ -280,7 +295,7 @@ const isImage = (file: File): boolean => {
 const validateFile = (file: File): string | null => {
   // 检查文件大小
   if (props.maxSize && file.size > props.maxSize) {
-    return `文件大小超过限制 (${formatFileSize(props.maxSize)})`
+    return t('shared.upload.sizeExceeded', { size: formatFileSize(props.maxSize) }) as string
   }
 
   // 检查文件类型
@@ -300,7 +315,7 @@ const validateFile = (file: File): string | null => {
     })
 
     if (!isValidType) {
-      return `不支持的文件类型: ${file.type || fileExtension}`
+      return t('shared.upload.unsupportedType', { type: file.type || fileExtension }) as string
     }
   }
 
@@ -331,7 +346,7 @@ const addFiles = async (newFiles: FileList | File[]) => {
   for (const file of Array.from(newFiles)) {
     // 检查文件数量限制
     if (props.maxFiles && files.value.length + filesToAdd.length >= props.maxFiles) {
-      error.value = `最多只能上传 ${props.maxFiles} 个文件`
+      error.value = t('shared.upload.maxFilesExceeded', { count: props.maxFiles }) as string
       break
     }
 
@@ -347,7 +362,7 @@ const addFiles = async (newFiles: FileList | File[]) => {
       existingFile.name === file.name && existingFile.size === file.size
     )
     if (isDuplicate) {
-      error.value = `文件 "${file.name}" 已存在`
+      error.value = t('shared.upload.duplicate', { name: file.name }) as string
       continue
     }
 

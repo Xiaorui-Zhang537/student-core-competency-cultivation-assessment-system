@@ -51,48 +51,7 @@ public class AnalyticsQueryServiceImpl implements AnalyticsQueryService {
         this.lessonMapper = lessonMapper;
     }
 
-    @Override
-    public StudentProgressReportResponse getStudentProgressReport(Long teacherId, Long studentId, Long courseId) {
-        logger.info("获取学生进度报告，教师ID: {}, 学生ID: {}, 课程ID: {}", teacherId, studentId, courseId);
-        if (courseId != null) {
-            Course course = courseMapper.selectCourseById(courseId);
-            if (course == null || !teacherId.equals(course.getTeacherId())) {
-                throw new BusinessException(ErrorCode.COURSE_ACCESS_DENIED);
-            }
-        }
-
-        User student = userMapper.selectUserById(studentId);
-        List<Grade> grades = gradeMapper.selectByStudentId(studentId);
-        if (courseId != null) {
-            // 优化N+1查询
-            List<Long> assignmentIds = grades.stream().map(Grade::getAssignmentId).distinct().toList();
-            if (assignmentIds.isEmpty()) {
-                grades = new ArrayList<>();
-            } else {
-                List<Assignment> assignments = assignmentMapper.selectAssignmentsByCourseId(courseId);
-                Set<Long> courseAssignmentIds = assignments.stream().map(Assignment::getId).collect(Collectors.toSet());
-                grades = grades.stream()
-                        .filter(grade -> courseAssignmentIds.contains(grade.getAssignmentId()))
-                        .collect(Collectors.toList());
-            }
-        }
-        
-        BigDecimal averageGrade = grades.stream()
-            .map(Grade::getScore)
-            .filter(Objects::nonNull)
-            .reduce(BigDecimal.ZERO, BigDecimal::add)
-            .divide(new BigDecimal(Math.max(grades.size(), 1)), 2, RoundingMode.HALF_UP);
-
-        return StudentProgressReportResponse.builder()
-            .student(student)
-            .overallProgress(new BigDecimal("75.5")) // Simplified
-            .completedLessons(18) // Simplified
-            .totalLessons(24) // Simplified
-            .studyTimeMinutes(360) // Simplified
-            .averageGrade(averageGrade)
-            .grades(grades)
-            .build();
-    }
+    // Removed legacy single-student progress report implementation
 
     @Override
     public CourseAnalyticsResponse getCourseAnalytics(Long teacherId, Long courseId, String timeRange) {
@@ -196,17 +155,7 @@ public class AnalyticsQueryServiceImpl implements AnalyticsQueryService {
             .build();
     }
 
-    @Override
-    public Map<String, Object> getTeachingAnalytics(Long teacherId, String timeRange) {
-        // Simplified implementation
-        return new HashMap<>();
-    }
-
-    @Override
-    public Map<String, Object> generateTeachingReport(Long teacherId, Long courseId, String reportType, String timeRange) {
-        // Simplified implementation
-        return new HashMap<>();
-    }
+    // Removed unused teaching analytics/report methods
 
     @Override
     public CourseStudentPerformanceResponse getCourseStudentPerformance(Long teacherId, Long courseId, Integer page, Integer size,

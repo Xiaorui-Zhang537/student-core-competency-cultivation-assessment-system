@@ -7,6 +7,7 @@ import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import com.fasterxml.jackson.annotation.JsonFormat;
 
 /**
  * 作业实体类
@@ -29,6 +30,7 @@ public class Assignment {
     private String description;
     private String requirements; // 作业要求
     private BigDecimal maxScore; // 满分
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "Asia/Shanghai")
     private LocalDateTime dueDate; // 截止时间
     @Builder.Default
     private Boolean allowLate = false; // 是否允许迟交
@@ -40,7 +42,9 @@ public class Assignment {
     private String status = "draft"; // draft, published, closed
     @Builder.Default
     private Integer submissionCount = 0; // 已提交数量
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "Asia/Shanghai")
     private LocalDateTime createdAt;
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "Asia/Shanghai")
     private LocalDateTime updatedAt;
     @Builder.Default
     private Boolean deleted = false;

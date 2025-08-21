@@ -1,7 +1,18 @@
 # 开发环境配置
 spring:
   mail:
-    from-address: 1519939545@qq.com
+    host: smtp.qq.com
+    port: 465
+    username: ${MAIL_USERNAME:1519939545@qq.com}
+    password: ${MAIL_PASSWORD:neosiexgnwgjgbjb}
+    properties:
+      mail:
+        smtp:
+          auth: true
+          ssl:
+            enable: true
+    from-address: ${MAIL_FROM_ADDRESS:1519939545@qq.com}
+    from-name: ${MAIL_FROM_NAME:学生核心能力培养系统}
   datasource:
     url: jdbc:mysql://localhost:3306/student_assessment_system?useUnicode=true&characterEncoding=utf8&useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true
     username: root
@@ -30,10 +41,17 @@ logging:
     com.noncore.assessment: INFO
     root: WARN
 
+application:
+  base-url: http://localhost:5173
+  email:
+    default-language: zh-CN
+
 # 开发环境文件上传配置
 file:
   upload-dir: ./uploads
   max-size: 50MB
+  allowed-extensions: jpg,jpeg,png,gif,pdf,doc,docx,xls,xlsx,ppt,pptx,txt,zip,rar,mp4,mov,avi,mkv,webm
+  purpose-max-sizes: course_material=1GB,course_video=1GB
   
 # 开发环境JWT配置
 jwt:

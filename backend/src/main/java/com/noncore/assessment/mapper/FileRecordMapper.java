@@ -67,6 +67,17 @@ public interface FileRecordMapper {
     int deleteFileRecord(@Param("id") Long id);
 
     /**
+     * 根据上传者与关联类型查询文件列表
+     */
+    List<FileRecord> selectByUploaderIdAndRelatedType(@Param("uploaderId") Long uploaderId,
+                                                      @Param("relatedType") String relatedType);
+
+    /**
+     * 根据用途与关联ID删除文件记录
+     */
+    int deleteByPurposeAndRelatedId(@Param("purpose") String purpose, @Param("relatedId") Long relatedId);
+
+    /**
      * 增加下载次数
      *
      * @param id 文件记录ID
@@ -89,4 +100,16 @@ public interface FileRecordMapper {
      * @return 文件数量
      */
     Integer countByFileType(@Param("fileType") String fileType);
+
+    /**
+     * 根据ID集合查询文件记录
+     */
+    List<FileRecord> selectByIds(@Param("ids") java.util.List<Long> ids);
+
+    /**
+     * 批量重绑定文件到新的用途与关联ID
+     */
+    int updateRelatedByIds(@Param("ids") java.util.List<Long> ids,
+                           @Param("newPurpose") String newPurpose,
+                           @Param("newRelatedId") Long newRelatedId);
 } 

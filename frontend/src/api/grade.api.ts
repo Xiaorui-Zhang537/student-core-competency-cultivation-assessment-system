@@ -41,7 +41,7 @@ export const gradeApi = {
     return api.post('/grades/batch', grades);
   },
 
-  publishBatchGrades: (gradeIds: string[]): Promise<ApiResponse<void>> => {
-      return api.post('/grades/batch-publish', { gradeIds });
+  publishBatchGrades: (gradeIds: string[]): Promise<ApiResponse<any>> => {
+      return api.post('/grades/batch-publish', gradeIds);
   }
 };

@@ -1,0 +1,21 @@
+{
+	"layout": {
+		"teacher": {
+			"title": "Student Non-Core Competence Assessment",
+			"role": "Teacher",
+			"sidebar": {
+				"dashboard": "Dashboard",
+				"courses": "Courses",
+				"analytics": "Analytics",
+				"ai": "AI Assistant",
+				"community": "Community"
+			},
+			"user": {
+				"profile": "Profile",
+				"logout": "Log out"
+			}
+		}
+	}
+}
+
+

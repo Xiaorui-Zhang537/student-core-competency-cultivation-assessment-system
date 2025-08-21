@@ -27,6 +27,11 @@
         WHERE post_id = #{postId} AND user_id = #{userId}
     </delete>
 
+    <!-- 删除某帖子的所有点赞 -->
+    <delete id="deleteByPostId">
+        DELETE FROM post_likes WHERE post_id = #{postId}
+    </delete>
+
     <!-- 查询用户是否已点赞 -->
     <select id="selectByPostIdAndUserId" resultMap="BaseResultMap">
         SELECT <include refid="Base_Column_List"/>

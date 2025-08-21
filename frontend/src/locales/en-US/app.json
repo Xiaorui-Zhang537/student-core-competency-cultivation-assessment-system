@@ -1,0 +1,63 @@
+{
+	"app": {
+		"loading": {
+			"title": "Loading",
+			"subtitle": "Please wait..."
+		},
+		"error": {
+			"title": "Application Error",
+			"description": "An unexpected error occurred. It has been logged. Please try again later.",
+			"button": {
+				"reload": "Reload",
+				"close": "Close"
+			}
+		},
+		"network": {
+			"offline": {
+				"title": "Offline",
+				"description": "Please check your network connection"
+			},
+			"online": {
+				"title": "Online",
+				"description": "Network connection restored"
+			}
+		},
+		"devMode": "Development Mode",
+		"notifications": {
+			"error": {
+				"title": "Error",
+				"unknown": "Unknown error"
+			},
+			"success": {
+				"title": "Success"
+			}
+		},
+		"auth": {
+			"loginSuccess": {
+				"title": "Login successful",
+				"msg": "Welcome back, {name}!"
+			},
+			"registerSuccess": {
+				"title": "Registration successful",
+				"msg": "Welcome!"
+			},
+			"forgot": {
+				"emailRequired": "Please enter your email address.",
+				"emailSent": "If the email exists, you will receive a password reset email."
+			},
+			"register": {
+				"passwordMismatch": "Passwords do not match"
+			}
+		},
+		"language": {
+			"zhCN": "中文（简体）",
+			"enUS": "English",
+			"short": {
+				"zh": "中文",
+				"en": "EN"
+			}
+		}
+	}
+}
+
+

@@ -210,4 +210,10 @@ public interface EnrollmentMapper {
     List<Long> selectEnrolledStudentIds(@Param("courseId") Long courseId, @Param("studentIds") List<Long> studentIds);
 
     void batchInsertEnrollments(@Param("enrollments") List<Enrollment> enrollments);
+
+    /** 统计课程在读（active）选课人数 */
+    long countActiveByCourse(@Param("courseId") Long courseId);
+
+    /** 查询课程在读（active）学生ID列表 */
+    List<Long> findActiveStudentIdsByCourse(@Param("courseId") Long courseId);
 } 

@@ -52,9 +52,10 @@
         WHERE 1=1
           <if test="courseId != null">AND a.course_id = #{courseId}</if>
           <if test="studentId != null">AND g.student_id = #{studentId}</if>
-          <if test="classId != null">AND e.status = 'active'</if>
+          <if test="classId != null">AND (e.status = 'active' OR e.status = 1)</if>
           <if test="start != null and end != null">AND g.created_at BETWEEN #{start} AND #{end}</if>
-          AND g.deleted = false AND g.status = 'published'
+          AND (g.deleted = false OR g.deleted = 0)
+          AND (g.status = 'published' OR g.status = 'PUBLISHED' OR g.status = 1)
     </select>
 
     <!-- 读取课程权重配置 -->

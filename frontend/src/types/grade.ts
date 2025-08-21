@@ -3,7 +3,7 @@ export interface Grade {
   id: string;
   submissionId: string;
   studentId: string;
-  teacherId: string;
+  graderId: string;
   score: number;
   feedback: string;
   gradedAt: string;
@@ -19,7 +19,14 @@ export interface GradeRequest {
   submissionId: string;
   studentId: string;
   score: number;
-  feedback: string;
+  feedback?: string;
+  assignmentId: string;
+  maxScore: number;
+  status?: 'draft' | 'published';
+  publishImmediately?: boolean;
+  strengths?: string;
+  improvements?: string;
+  allowResubmit?: boolean;
 }
 
 // For publishing a grade

@@ -4,35 +4,32 @@ import com.noncore.assessment.dto.response.*;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import com.noncore.assessment.service.AnalyticsQueryService;
+import com.noncore.assessment.service.EnrollmentService;
 import com.noncore.assessment.service.UserService;
 import com.noncore.assessment.util.ApiResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/teachers")
 @Tag(name = "Teacher Management", description = "Endpoints for teachers to manage courses, students, and analytics.")
+@PreAuthorize("hasRole('TEACHER') or hasRole('ADMIN')")
 public class TeacherController extends BaseController {
 
     private final AnalyticsQueryService analyticsQueryService;
+    private final EnrollmentService enrollmentService;
 
-    public TeacherController(AnalyticsQueryService analyticsQueryService, UserService userService) {
+    public TeacherController(AnalyticsQueryService analyticsQueryService, UserService userService, EnrollmentService enrollmentService) {
         super(userService);
         this.analyticsQueryService = analyticsQueryService;
+        this.enrollmentService = enrollmentService;
     }
 
-    @GetMapping("/analytics/student-progress")
-    @Operation(summary = "获取特定学生的详细进度报告")
-    public ResponseEntity<ApiResponse<StudentProgressReportResponse>> getStudentProgressReport(
-            @Parameter(description = "学生ID") @RequestParam Long studentId,
-            @Parameter(description = "课程ID（可选）") @RequestParam(required = false) Long courseId) {
-        Long teacherId = getCurrentUserId();
-        StudentProgressReportResponse report = analyticsQueryService.getStudentProgressReport(teacherId, studentId, courseId);
-        return ResponseEntity.ok(ApiResponse.success(report));
-    }
+    // Removed legacy single-student progress endpoint; analytics now uses course-scoped student performance APIs
 
     @GetMapping("/analytics/course/{courseId}")
     @Operation(summary = "获取课程分析数据")
@@ -97,16 +94,16 @@ public class TeacherController extends BaseController {
         sb.append("studentId,studentName,studentNo,progress,averageGrade,activityLevel,studyTimePerWeek,completedLessons,totalLessons,lastActiveAt\n");
         if (resp.getItems() != null) {
             for (CourseStudentPerformanceItem i : resp.getItems()) {
-                sb.append(nullToEmpty(i.getStudentId()))
-                  .append(',').append(escapeCsv(i.getStudentName()))
-                  .append(',').append(escapeCsv(i.getStudentNo()))
-                  .append(',').append(nullToEmpty(i.getProgress()))
-                  .append(',').append(nullToEmpty(i.getAverageGrade()))
-                  .append(',').append(escapeCsv(i.getActivityLevel()))
-                  .append(',').append(nullToEmpty(i.getStudyTimePerWeek()))
-                  .append(',').append(nullToEmpty(i.getCompletedLessons()))
-                  .append(',').append(nullToEmpty(i.getTotalLessons()))
-                  .append(',').append(escapeCsv(i.getLastActiveAt()))
+                sb.append(com.noncore.assessment.util.CsvUtils.nullToEmpty(i.getStudentId()))
+                  .append(',').append(com.noncore.assessment.util.CsvUtils.escape(i.getStudentName()))
+                  .append(',').append(com.noncore.assessment.util.CsvUtils.escape(i.getStudentNo()))
+                  .append(',').append(com.noncore.assessment.util.CsvUtils.nullToEmpty(i.getProgress()))
+                  .append(',').append(com.noncore.assessment.util.CsvUtils.nullToEmpty(i.getAverageGrade()))
+                  .append(',').append(com.noncore.assessment.util.CsvUtils.escape(String.valueOf(i.getActivityLevel())))
+                  .append(',').append(com.noncore.assessment.util.CsvUtils.nullToEmpty(i.getStudyTimePerWeek()))
+                  .append(',').append(com.noncore.assessment.util.CsvUtils.nullToEmpty(i.getCompletedLessons()))
+                  .append(',').append(com.noncore.assessment.util.CsvUtils.nullToEmpty(i.getTotalLessons()))
+                  .append(',').append(com.noncore.assessment.util.CsvUtils.escape(i.getLastActiveAt()))
                   .append('\n');
             }
         }
@@ -117,15 +114,17 @@ public class TeacherController extends BaseController {
         return ResponseEntity.ok().headers(headers).body(bytes);
     }
 
-    private static String nullToEmpty(Object v) {
-        return v == null ? "" : String.valueOf(v);
+    // CSV helpers moved to CsvUtils
+
+    @PostMapping("/courses/{courseId}/students/{studentId}/progress/reset")
+    @Operation(summary = "重置学生课程进度")
+    @PreAuthorize("hasRole('TEACHER') or hasRole('ADMIN')")
+    public ResponseEntity<ApiResponse<Void>> resetStudentCourseProgress(
+            @PathVariable Long courseId,
+            @PathVariable Long studentId
+    ) {
+        Long teacherId = getCurrentUserId();
+        enrollmentService.resetStudentCourseProgress(teacherId, courseId, studentId);
+        return ResponseEntity.ok(ApiResponse.success());
     }
-    private static String escapeCsv(String v) {
-        if (v == null) return "";
-        String s = v.replace("\r", " ").replace("\n", " ");
-        if (s.contains(",") || s.contains("\"") ) {
-            s = '"' + s.replace("\"", "\"\"") + '"';
-        }
-        return s;
-    }
-} 
+}

@@ -9,5 +9,7 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class AiChatResponse {
     private String answer;
+    private Long conversationId;
+    private Long messageId;
 }
 

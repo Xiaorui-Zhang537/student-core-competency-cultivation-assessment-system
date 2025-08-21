@@ -47,11 +47,11 @@
                 @click="showUserMenu = !showUserMenu"
                 class="flex items-center text-sm rounded-full focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500"
               >
-                <UserAvatar :avatar="(authStore.user as any)?.avatar" :size="32">
+                <user-avatar :avatar="(authStore.user as any)?.avatar" :size="32">
                   <div class="h-8 w-8 rounded-full bg-gradient-to-r from-primary-500 to-purple-600 flex items-center justify-center text-white font-medium text-sm">
                     {{ (authStore.user?.username || 'S').charAt(0).toUpperCase() }}
                   </div>
-                </UserAvatar>
+                </user-avatar>
                 <div class="hidden md:block text-left ml-2">
                   <p class="text-sm font-medium text-gray-900 dark:text-white">{{ (authStore.user as any)?.nickname || authStore.user?.username || '学生' }}</p>
                   <p class="text-xs text-gray-500 dark:text-gray-400">学生</p>

@@ -1,15 +1,15 @@
 <template>
   <div class="flex items-start space-x-3">
     <div class="w-10 h-10 flex-shrink-0">
-      <UserAvatar :avatar="(comment.author && comment.author.avatar) ? String(comment.author.avatar) : undefined" :size="40">
+      <user-avatar :avatar="(comment.author && comment.author.avatar) ? String(comment.author.avatar) : undefined" :size="40">
         <div class="w-10 h-10 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center">
           <user-icon class="w-5 h-5 text-gray-500"/>
         </div>
-      </UserAvatar>
+      </user-avatar>
     </div>
     <div class="flex-1">
       <div class="bg-gray-100 dark:bg-gray-700 rounded-lg p-3">
-        <p class="text-sm font-semibold text-gray-900 dark:text-white">{{ comment.author?.nickname || comment.author?.username || '匿名用户' }}</p>
+        <p class="text-sm font-semibold text-gray-900 dark:text-white">{{ comment.author?.nickname || comment.author?.username || t('shared.community.list.anonymous') }}</p>
         <p class="text-sm text-gray-700 dark:text-gray-200 mt-1">{{ comment.content }}</p>
       </div>
       <div class="text-xs text-gray-500 mt-1 flex items-center space-x-3">
@@ -19,18 +19,18 @@
           <span>{{ safeLikeCount }}</span>
         </button>
         <button class="inline-flex items-center px-2 text-indigo-600 hover:underline" @click="askAiForComment">
-          <sparkles-icon class="w-3.5 h-3.5 mr-1" />询问AI
+          <SparklesIcon class="w-3.5 h-3.5 mr-1" />{{ t('teacher.analytics.askAi') }}
         </button>
-        <button class="hover:underline" @click="toggleReply">回复</button>
-        <button v-if="authStore.user?.id && String(authStore.user.id) === String(comment.authorId)" class="text-red-500 hover:underline" @click="handleDeleteSelf">删除</button>
+        <button class="hover:underline" @click="toggleReply">{{ t('shared.community.detail.postComment') }}</button>
+        <button v-if="authStore.user?.id && String(authStore.user.id) === String(comment.authorId)" class="text-red-500 hover:underline" @click="handleDeleteSelf">{{ t('shared.community.list.delete') }}</button>
       </div>
       <!-- 回复输入框 -->
       <div v-if="showReplyBox" class="mt-2">
-        <textarea v-model="replyContent" rows="2" class="input w-full" placeholder="回复..." />
+        <textarea v-model="replyContent" rows="2" class="input w-full" :placeholder="t('shared.community.detail.writeComment')" />
         <div class="mt-1 flex items-center gap-2">
-          <EmojiPicker @select="(e) => replyContent = (replyContent || '') + e" />
-          <button class="btn btn-primary btn-sm" :disabled="!replyContent.trim()" @click="submitReply">提交</button>
-          <button class="btn btn-ghost btn-sm" @click="toggleReply">取消</button>
+          <emoji-picker @select="(e) => replyContent = (replyContent || '') + e" />
+          <button class="btn btn-primary btn-sm" :disabled="!replyContent.trim()" @click="submitReply">{{ t('shared.community.detail.postComment') }}</button>
+          <button class="btn btn-ghost btn-sm" @click="toggleReply">{{ t('shared.community.modal.cancel') }}</button>
         </div>
       </div>
 
@@ -43,7 +43,7 @@
           :post-id="postId"
           @deleted="handleChildDeleted"
         />
-        <button v-if="replies.items.length < replies.total" class="btn btn-ghost btn-sm mt-1" @click="loadMoreReplies">加载更多回复</button>
+        <button v-if="replies.items.length < replies.total" class="btn btn-ghost btn-sm mt-1" @click="loadMoreReplies">{{ t('shared.community.detail.more') }}</button>
       </div>
     </div>
   </div>
@@ -57,6 +57,8 @@ import { UserIcon, HandThumbUpIcon, SparklesIcon } from '@heroicons/vue/24/outli
 import UserAvatar from '@/components/ui/UserAvatar.vue'
 import EmojiPicker from '@/components/ui/EmojiPicker.vue'
 import { useRouter } from 'vue-router'
+// @ts-ignore shim for vue-i18n types in this project
+import { useI18n } from 'vue-i18n'
 
 defineOptions({ name: 'CommentThread' })
 
@@ -66,6 +68,7 @@ const emit = defineEmits<{ (e: 'deleted', id: number): void }>()
 const authStore = useAuthStore()
 const communityStore = useCommunityStore()
 const router = useRouter()
+const { t } = useI18n()
 
 const showReplyBox = ref(false)
 const replyContent = ref('')
@@ -90,7 +93,12 @@ const toggleReply = () => {
 
 const submitReply = async () => {
   if (!replyContent.value.trim()) return
-  await communityStore.postComment(props.postId, replyContent.value, props.comment.id)
+  const ok = await communityStore.postComment(props.postId, replyContent.value, props.comment.id)
+  if (ok !== false) {
+    const { useUIStore } = await import('@/stores/ui')
+    const ui = useUIStore()
+    ui.showNotification({ type: 'success', title: t('shared.community.notify.commentPostedTitle') as string, message: t('shared.community.notify.commentPostedMsg') as string })
+  }
   replyContent.value = ''
   showReplyBox.value = false
   // 直接刷新该节点的子回复，并确保最新在顶部
@@ -131,8 +139,13 @@ const handleChildDeleted = async (id: number) => {
 }
 
 const handleDeleteSelf = async () => {
-  if (!confirm('确认删除该评论？')) return
-  await communityStore.deleteComment(props.comment.id, props.postId)
+  if (!confirm(t('shared.community.confirm.deleteComment') as string)) return
+  const ok = await communityStore.deleteComment(props.comment.id, props.postId)
+  if (ok !== false) {
+    const { useUIStore } = await import('@/stores/ui')
+    const ui = useUIStore()
+    ui.showNotification({ type: 'success', title: t('shared.community.notify.commentDeletedTitle') as string, message: t('shared.community.notify.commentDeletedMsg') as string })
+  }
   emit('deleted', props.comment.id)
 }
 
@@ -164,7 +177,7 @@ const onLikeComment = async () => {
 
 const askAiForComment = () => {
   const content = (props.comment?.content ? `【评论内容】${props.comment.content}` : '')
-  router.push({ path: '/teacher/ai', query: { q: content } })
+  router.push({ path: '/teacher/assistant', query: { q: content } })
 }
 </script>
 

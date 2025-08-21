@@ -9,6 +9,7 @@ import com.noncore.assessment.exception.BusinessException;
 import com.noncore.assessment.exception.ErrorCode;
 import com.noncore.assessment.mapper.UserMapper;
 import com.noncore.assessment.service.AuthService;
+import com.noncore.assessment.service.UserService;
 import com.noncore.assessment.service.StudentService;
 import com.noncore.assessment.util.JwtUtil;
 import org.slf4j.Logger;
@@ -34,13 +35,15 @@ public class AuthServiceImpl implements AuthService {
     private final JwtUtil jwtUtil;
     private final RedisTemplate<String, Object> redisTemplate;
     private final StudentService studentService;
+    private final UserService userService;
 
-    public AuthServiceImpl(UserMapper userMapper, PasswordEncoder passwordEncoder, JwtUtil jwtUtil, RedisTemplate<String, Object> redisTemplate, StudentService studentService) {
+    public AuthServiceImpl(UserMapper userMapper, PasswordEncoder passwordEncoder, JwtUtil jwtUtil, RedisTemplate<String, Object> redisTemplate, StudentService studentService, UserService userService) {
         this.userMapper = userMapper;
         this.passwordEncoder = passwordEncoder;
         this.jwtUtil = jwtUtil;
         this.redisTemplate = redisTemplate;
         this.studentService = studentService;
+        this.userService = userService;
     }
 
     @Override
@@ -62,6 +65,9 @@ public class AuthServiceImpl implements AuthService {
             throw new BusinessException(ErrorCode.LOGIN_FAILED);
         }
 
+        if (!user.isEmailVerified()) {
+            throw new BusinessException(ErrorCode.EMAIL_NOT_VERIFIED, "邮箱未验证，请先完成邮箱验证");
+        }
         String accessToken = jwtUtil.generateAccessToken(user.getId(), user.getUsername(), user.getRole());
         String refreshToken = jwtUtil.generateRefreshToken(user.getId(), user.getUsername());
 
@@ -110,14 +116,16 @@ public class AuthServiceImpl implements AuthService {
             studentService.createStudentProfile(user);
         }
 
-        logger.info("用户注册成功: {} ({})", user.getUsername(), user.getRole());
+        logger.info("用户注册成功: {} ({})，准备发送验证邮件", user.getUsername(), user.getRole());
 
-        String accessToken = jwtUtil.generateAccessToken(user.getId(), user.getUsername(), user.getRole());
-        String refreshToken = jwtUtil.generateRefreshToken(user.getId(), user.getUsername());
+        // 生成并发送邮箱验证
+        // 复用 UserServiceImpl 的逻辑：生成 token -> Redis 保存 -> 发送验证邮件
+        // 这里直接调用 resendVerification(userId) 以复用发送逻辑
+        userService.resendVerification(user.getId());
 
         user.setPassword(null);
-
-        return AuthResponse.of(UserDto.fromEntity(user), accessToken, refreshToken, jwtUtil.getExpiration());
+        // 注册后不返回令牌
+        return AuthResponse.userOnly(UserDto.fromEntity(user));
     }
 
     @Override

@@ -39,37 +39,69 @@ public class GradeServiceImpl implements GradeService {
 
     private final GradeMapper gradeMapper;
     private final AssignmentMapper assignmentMapper;
+    private final com.noncore.assessment.service.SubmissionService submissionService;
 
-    public GradeServiceImpl(GradeMapper gradeMapper, AssignmentMapper assignmentMapper) {
+    public GradeServiceImpl(GradeMapper gradeMapper, AssignmentMapper assignmentMapper,
+                            com.noncore.assessment.service.SubmissionService submissionService) {
         this.gradeMapper = gradeMapper;
         this.assignmentMapper = assignmentMapper;
+        this.submissionService = submissionService;
     }
 
     @Override
     public Grade createGrade(Grade grade) {
         logger.info("创建成绩记录，学生ID: {}, 作业ID: {}, 分数: {}",
                     grade.getStudentId(), grade.getAssignmentId(), grade.getScore());
-        
-        // 设置创建时间和默认值
-        grade.setCreatedAt(LocalDateTime.now());
-        grade.setUpdatedAt(LocalDateTime.now());
-        grade.setDeleted(false);
-        
-        // 设置默认状态
-        if (grade.getStatus() == null) {
+        // 基础校验与补全：作业存在、maxScore 兜底
+        if (grade.getAssignmentId() == null || grade.getStudentId() == null) {
+            throw new BusinessException(ErrorCode.INVALID_PARAMETER, "assignmentId 与 studentId 不能为空");
+        }
+
+        Assignment assignment = assignmentMapper.selectAssignmentById(grade.getAssignmentId());
+        if (assignment == null) {
+            throw new BusinessException(ErrorCode.ASSIGNMENT_NOT_FOUND);
+        }
+
+        // 兜底 maxScore
+        if (grade.getMaxScore() == null && assignment.getMaxScore() != null) {
+            grade.setMaxScore(assignment.getMaxScore());
+        }
+
+        // 时间与删除标记
+        LocalDateTime now = LocalDateTime.now();
+        if (grade.getCreatedAt() == null) {
+            grade.setCreatedAt(now);
+        }
+        grade.setUpdatedAt(now);
+        if (grade.getDeleted() == null) {
+            grade.setDeleted(false);
+        }
+
+        // 默认状态
+        if (grade.getStatus() == null || grade.getStatus().isBlank()) {
             grade.setStatus("draft");
         }
-        
-        // 计算百分比和等级
+
+        // upsert：如已存在该学生在该作业的成绩，则走更新
+        Grade existing = gradeMapper.selectByStudentAndAssignment(grade.getStudentId(), grade.getAssignmentId());
         calculateGradeMetrics(grade);
-        
+
+        if (existing != null && existing.getId() != null) {
+            grade.setId(existing.getId());
+            int u = gradeMapper.updateGrade(grade);
+            if (u > 0) {
+                logger.info("成绩记录更新成功（upsert），ID: {}", existing.getId());
+                return gradeMapper.selectGradeById(existing.getId());
+            }
+            throw new BusinessException(ErrorCode.OPERATION_FAILED, "更新成绩记录失败");
+        }
+
         int result = gradeMapper.insertGrade(grade);
         if (result > 0) {
             logger.info("成绩记录创建成功，ID: {}", grade.getId());
             return grade;
-        } else {
-            throw new BusinessException(ErrorCode.OPERATION_FAILED, "创建成绩记录失败");
         }
+        throw new BusinessException(ErrorCode.OPERATION_FAILED, "创建成绩记录失败");
     }
 
     @Override
@@ -314,13 +346,27 @@ public class GradeServiceImpl implements GradeService {
     public boolean publishGrade(Long gradeId) {
         logger.info("发布成绩，ID: {}", gradeId);
         
+        Grade existing = gradeMapper.selectGradeById(gradeId);
+        if (existing == null) {
+            throw new BusinessException(ErrorCode.GRADE_NOT_FOUND);
+        }
+
         Grade grade = new Grade();
         grade.setId(gradeId);
         grade.setStatus("published");
         grade.setUpdatedAt(LocalDateTime.now());
-        
+        grade.setPublishedAt(LocalDateTime.now());
+
         int result = gradeMapper.updateGrade(grade);
         if (result > 0) {
+            // 同步提交状态
+            if (existing.getSubmissionId() != null) {
+                try {
+                    submissionService.updateSubmissionStatus(existing.getSubmissionId(), "graded");
+                } catch (Exception e) {
+                    logger.warn("发布成绩成功但同步提交状态失败，submissionId={}", existing.getSubmissionId(), e);
+                }
+            }
             return true;
         }
         throw new BusinessException(ErrorCode.OPERATION_FAILED, "发布成绩失败");
@@ -402,7 +448,7 @@ public class GradeServiceImpl implements GradeService {
     public Map<String, Object> exportGrades(Long courseId, Long assignmentId, String format) {
         logger.info("Exporting grades for courseId: {}, assignmentId: {}, format: {}", courseId, assignmentId, format);
         
-        List<Map<String, Object>> gradesData = gradeMapper.selectGradesForExport(courseId, assignmentId);
+        List<Map<String, Object>> gradesData = gradeMapper.selectGradesForExport(courseId, assignmentId, null);
         
         // In a real application, you would convert this data to the specified format (e.g., CSV, PDF)
         // For this simplified version, we'll just return the data.
@@ -465,6 +511,7 @@ public class GradeServiceImpl implements GradeService {
         
         // 保存重评记录（这里简化实现）
         grade.setScore(newScore);
+        grade.setRegradeReason(reason);
         grade.setUpdatedAt(LocalDateTime.now());
         
         // 重新计算百分比和等级
@@ -513,6 +560,18 @@ public class GradeServiceImpl implements GradeService {
         }
         
         return count > 0 ? totalPoints.divide(new BigDecimal(count), 2, RoundingMode.HALF_UP) : BigDecimal.ZERO;
+    }
+
+    @Override
+    public Grade upsertGradeAndMaybePublish(Grade grade, boolean publishImmediately) {
+        // 复用 createGrade 的 upsert 行为
+        Grade saved = createGrade(grade);
+        if (publishImmediately || "published".equalsIgnoreCase(grade.getStatus())) {
+            publishGrade(saved.getId());
+            // 返回最新状态
+            return gradeMapper.selectGradeById(saved.getId());
+        }
+        return saved;
     }
 
     // 私有辅助方法
