@@ -166,11 +166,10 @@ public interface NotificationMapper {
     List<Notification> selectRecentNotifications(@Param("userId") Long userId, @Param("limit") int limit);
 
     /**
-     * 按类型统计通知数量
-     * @param userId 用户ID
-     * @return 统计结果
+     * 按类型统计通知数量（返回多行，每行包含 {type, count}）
+     * 注意与 XML 中 resultType="map" 对应
      */
-    Map<String, Long> countByRecipientGroupByType(@Param("userId") Long userId);
+    List<Map<String, Object>> countByRecipientGroupByType(@Param("userId") Long userId);
 
     /**
      * 清理过期的通知

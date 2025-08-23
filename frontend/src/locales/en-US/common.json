@@ -11,6 +11,76 @@
     "unpin": "Unpin",
     "delete": "Delete",
     "uploadImage": "Upload Image"
+  },
+  "notifications": {
+    "title": "Notifications",
+    "subtitle": "Stay informed with updates, reminders and course activities",
+    "unreadSuffix": " unread",
+    "loading": "Loading...",
+    "empty": "No notifications",
+    "status": {
+      "read": "Read",
+      "unread": "Unread"
+    },
+    "actions": {
+      "markAll": "Mark all as read",
+      "viewAll": "View all",
+      "markRead": "Mark as read",
+      "goRelated": "Go to related",
+      "backToCenter": "Back to center",
+      "clearFilters": "Clear Filters",
+      "loadMore": "Load More",
+      "refresh": "Refresh"
+    },
+    "filters": {
+      "type": "Type",
+      "status": "Status",
+      "priority": "Priority",
+      "all": "All"
+    },
+    "types": {
+      "system": "System",
+      "assignment": "Assignment",
+      "grade": "Grade",
+      "course": "Course",
+      "message": "Message"
+    },
+    "priority": {
+      "urgent": "Urgent",
+      "high": "High",
+      "normal": "Normal",
+      "low": "Low"
+    },
+    "categoryTitles": {
+      "systemAnnouncement": "System Announcement",
+      "courseUpdate": "Course Update",
+      "assignmentDeadline": "Assignment Deadline",
+      "gradePosted": "Grade Posted",
+      "message": "Message",
+      "systemGeneral": "System",
+      "assignmentGeneral": "Assignment"
+    },
+    "time": {
+      "justNow": "Just now",
+      "minutesAgo": "{count}m ago",
+      "hoursAgo": "{count}h ago",
+      "daysAgo": "{count}d ago"
+    },
+    "confirm": {
+      "delete": "Are you sure you want to delete this notification?"
+    },
+    "notify": {
+      "deletedTitle": "Notification Deleted",
+      "deletedMsg": "The notification has been successfully deleted.",
+      "errorTitle": "Operation Failed",
+      "markAllReadTitle": "All Marked Read",
+      "markAllReadMsg": "All notifications have been marked as read.",
+      "markAllReadError": "Failed to mark all as read.",
+      "markReadTitle": "Marked as Read",
+      "markReadMsg": "Notification marked as read.",
+      "markReadError": "Failed to mark as read.",
+      "deleteError": "Failed to delete notification."
+    }
   }
 }
 

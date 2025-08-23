@@ -63,6 +63,17 @@ const routes = [
         name: 'StudentPostDetail',
         component: () => import('@/features/shared/views/PostDetailView.vue'),
         props: true
+      },
+      {
+        path: 'notifications',
+        name: 'StudentNotifications',
+        component: () => import('@/features/student/views/NotificationsView.vue')
+      },
+      {
+        path: 'notifications/:id',
+        name: 'StudentNotificationDetail',
+        component: () => import('@/features/student/views/NotificationDetailView.vue'),
+        props: true
       }
       ,
       {
@@ -173,6 +184,17 @@ const routes = [
         path: 'courses/:id',
         name: 'TeacherCourseDetail',
         component: () => import('@/features/teacher/views/CourseDetailView.vue'),
+        props: true
+      },
+      {
+        path: 'notifications',
+        name: 'TeacherNotifications',
+        component: () => import('@/features/teacher/views/NotificationsView.vue')
+      },
+      {
+        path: 'notifications/:id',
+        name: 'TeacherNotificationDetail',
+        component: () => import('@/features/teacher/views/NotificationDetailView.vue'),
         props: true
       }
       // ... 其他教师路由

@@ -32,11 +32,8 @@ export const useNotificationsStore = defineStore('notifications', () => {
   })
 
   // 计算属性
-  const unreadNotifications = computed(() => 
-    notifications.value.filter(n => !n.isRead)
-  )
-
-  const unreadCount = computed(() => unreadNotifications.value.length)
+  const unreadNotifications = computed(() => notifications.value.filter(n => !n.isRead))
+  const unreadCount = computed(() => stats.value.unreadCount)
 
   const hasUnread = computed(() => unreadCount.value > 0)
 
@@ -220,8 +217,11 @@ export const useNotificationsStore = defineStore('notifications', () => {
   // 获取统计信息
   const fetchStats = async () => {
     try {
-      const response = await notificationAPI.getNotificationStats()
-      stats.value = response as unknown as NotificationStats
+      const response: any = await notificationAPI.getNotificationStats()
+      stats.value.totalCount = Number(response?.total || 0)
+      stats.value.unreadCount = Number(response?.unread || 0)
+      stats.value.todayCount = Number(response?.today || 0)
+      stats.value.typeDistribution = (response?.byType || {}) as Record<string, number>
     } catch (err: any) {
       console.error('获取通知统计失败:', err)
     }
@@ -230,8 +230,8 @@ export const useNotificationsStore = defineStore('notifications', () => {
   // 获取未读数量
   const fetchUnreadCount = async () => {
     try {
-      const response = await notificationAPI.getUnreadCount()
-      stats.value.unreadCount = (response as unknown as { count: number }).count
+      const response: any = await notificationAPI.getUnreadCount()
+      stats.value.unreadCount = Number(response?.unreadCount || 0)
     } catch (err: any) {
       console.error('获取未读数量失败:', err)
     }

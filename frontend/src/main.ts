@@ -4,6 +4,7 @@ import App from './App.vue'
 import router from './router'
 import { useAuthStore } from '@/stores/auth'
 import { useUIStore } from '@/stores/ui'
+import { createNotificationStream } from '@/composables/useNotificationStream'
 import '@/styles/main.postcss'
 import { i18n, loadLocaleMessages, REQUIRED_NAMESPACES } from '@/i18n'
 
@@ -16,6 +17,7 @@ async function initializeApp() {
 
   const authStore = useAuthStore()
   const uiStore = useUIStore()
+  let notificationStream: ReturnType<typeof createNotificationStream> | null = null
 
   try {
     if (authStore.token) {
@@ -39,6 +41,23 @@ async function initializeApp() {
   
   // 最后挂载应用
   app.mount('#app')
+
+  // 基于登录状态管理 SSE 连接
+  const setupSse = () => {
+    const isAuthed = authStore.isAuthenticated
+    if (isAuthed) {
+      if (!notificationStream) notificationStream = createNotificationStream()
+      notificationStream.connect()
+    } else {
+      if (notificationStream) {
+        notificationStream.disconnect()
+        notificationStream = null
+      }
+    }
+  }
+  setupSse()
+  window.addEventListener('storage', (e) => { if (e.key === 'token') setupSse() })
+  window.addEventListener('beforeunload', () => { if (notificationStream) notificationStream.disconnect() })
 }
 
 initializeApp()

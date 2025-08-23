@@ -42,6 +42,9 @@
               <moon-icon v-else class="h-6 w-6" />
             </button>
 
+            <!-- 通知铃铛 -->
+            <notification-bell />
+
               <div class="relative">
               <button
                 @click="showUserMenu = !showUserMenu"
@@ -133,6 +136,16 @@
           <router-view />
         </div>
       </main>
+
+      <!-- 全局聊天抽屉（如学生端也需要，可保留；否则可后续移除） -->
+      <ChatDrawer
+        v-if="chat.isOpen"
+        :open="chat.isOpen"
+        :peer-id="chat.peerId as any"
+        :peer-name="chat.peerName as any"
+        :course-id="chat.courseId as any"
+        @close="chat.closeChat()"
+      />
     </div>
   </div>
 </template>
@@ -142,6 +155,9 @@ import { ref, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useUIStore } from '@/stores/ui'
 import { useAuthStore } from '@/stores/auth'
+import NotificationBell from '@/components/notifications/NotificationBell.vue'
+import ChatDrawer from '@/features/teacher/components/ChatDrawer.vue'
+import { useChatStore } from '@/stores/chat'
 import {
   Bars3Icon,
   MagnifyingGlassIcon,
@@ -159,6 +175,7 @@ import UserAvatar from '@/components/ui/UserAvatar.vue'
 const router = useRouter()
 const uiStore = useUIStore()
 const authStore = useAuthStore()
+const chat = useChatStore()
 
 const showUserMenu = ref(false)
 const searchQuery = ref('')

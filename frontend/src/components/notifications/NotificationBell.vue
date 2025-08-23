@@ -28,51 +28,43 @@
     >
       <div
         v-if="isDropdownOpen"
-        class="notification-dropdown"
+        class="notification-dropdown dark:bg-gray-800 dark:border-gray-700"
       >
         <!-- 下拉面板头部 -->
-        <div class="dropdown-header">
-          <h3 class="text-lg font-semibold text-gray-900">
-            通知
-            <span v-if="unreadCount > 0" class="text-sm font-normal text-gray-500 ml-2">
-              ({{ unreadCount }}条未读)
+        <div class="dropdown-header dark:border-gray-700">
+          <h3 class="text-lg font-semibold text-gray-900 dark:text-white flex items-center">
+            <span>{{ t('notifications.title') }}</span>
+            <span v-if="unreadCount > 0" class="text-sm font-normal text-gray-500 dark:text-gray-400 ml-2">
+              ({{ unreadCount }}{{ t('notifications.unreadSuffix') }})
             </span>
-          </h3>
-          <div class="flex items-center space-x-2">
             <button
               v-if="hasUnread"
               @click="handleMarkAllAsRead"
-              class="text-sm text-blue-600 hover:text-blue-700"
+              class="ml-3 text-xs px-2 py-1 rounded-md text-blue-600 hover:text-blue-700 hover:bg-blue-50 dark:text-blue-300 dark:hover:text-blue-200 dark:hover:bg-slate-700 disabled:opacity-50 disabled:cursor-not-allowed"
               :disabled="loading"
             >
-              全部已读
+              {{ t('notifications.actions.markAll') }}
             </button>
-            <button
-              @click="openNotificationCenter"
-              class="text-sm text-gray-600 hover:text-gray-700"
-            >
-              查看全部
-            </button>
-          </div>
+          </h3>
         </div>
 
         <!-- 通知列表 -->
         <div class="dropdown-content">
           <div v-if="loading" class="loading-state">
             <div class="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600 mx-auto"></div>
-            <p class="text-gray-500 text-center text-sm mt-2">加载中...</p>
+            <p class="text-gray-500 dark:text-gray-400 text-center text-sm mt-2">{{ t('notifications.loading') }}</p>
           </div>
 
           <div v-else-if="recentNotifications.length === 0" class="empty-state">
             <bell-slash-icon class="w-12 h-12 text-gray-300 mx-auto" />
-            <p class="text-gray-500 text-center text-sm mt-2">暂无通知</p>
+            <p class="text-gray-500 dark:text-gray-400 text-center text-sm mt-2">{{ t('notifications.empty') }}</p>
           </div>
 
           <div v-else class="space-y-2">
             <div
               v-for="notification in recentNotifications"
               :key="notification.id"
-              class="notification-item"
+              class="notification-item rounded-md px-2 py-2 transition-colors hover:bg-gray-100 dark:hover:bg-slate-700"
               :class="{ 'notification-unread': !notification.isRead }"
               @click="handleNotificationClick(notification)"
             >
@@ -85,10 +77,18 @@
                 />
                 
                 <div class="flex-1 min-w-0">
-                  <!-- 标题 -->
-                  <p class="notification-title">
-                    {{ notification.title }}
-                  </p>
+                  <!-- 标题 + 优先级徽章 -->
+                  <div class="flex items-center space-x-2">
+                    <p class="notification-title dark:text-white font-semibold">
+                      {{ getLocalizedTitle(notification) }}
+                    </p>
+                    <span
+                      class="priority-badge"
+                      :class="getPriorityClass(notification.priority)"
+                    >
+                      {{ getPriorityText(notification.priority) }}
+                    </span>
+                  </div>
                   
                   <!-- 内容预览 -->
                   <p class="notification-preview">
@@ -115,9 +115,9 @@
         <div class="dropdown-footer">
           <button
             @click="openNotificationCenter"
-            class="w-full py-2 text-sm text-center text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded-md transition-colors"
+            class="w-full py-4 text-sm text-center text-blue-600 hover:text-blue-700 hover:bg-blue-50 dark:text-blue-300 dark:hover:text-blue-200 dark:hover:bg-slate-700 rounded-md transition-colors"
           >
-            查看所有通知
+            {{ t('notifications.actions.viewAll') }}
           </button>
         </div>
       </div>
@@ -127,6 +127,7 @@
 
 <script setup lang="ts">
 import { computed, onMounted, ref, onBeforeUnmount } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { useRouter } from 'vue-router'
 import { useNotificationsStore } from '@/stores/notifications'
 import { storeToRefs } from 'pinia'
@@ -138,6 +139,8 @@ import {
   AcademicCapIcon,
   ChatBubbleLeftRightIcon
 } from '@heroicons/vue/24/outline'
+// i18n
+const { t } = useI18n()
 
 // Props
 interface Props {
@@ -175,10 +178,8 @@ const toggleDropdown = async () => {
   if (isDropdownOpen.value) {
     // 打开下拉框时刷新未读数量
     await notificationsStore.fetchUnreadCount()
-    // 如果没有通知数据，则获取最新通知
-    if (notifications.value.length === 0) {
-      await notificationsStore.fetchNotifications(true)
-    }
+    // 始终获取最新通知，避免后台注入后前端不更新
+    await notificationsStore.fetchNotifications(true)
   }
 }
 
@@ -205,32 +206,15 @@ const handleNotificationClick = async (notification: any) => {
     }
   }
 
-  // 根据通知类型跳转到相应页面
-  if (notification.relatedType && notification.relatedId) {
-    switch (notification.relatedType) {
-      case 'assignment':
-        await router.push(`/assignments/${notification.relatedId}`)
-        break
-      case 'course':
-        await router.push(`/courses/${notification.relatedId}`)
-        break
-      case 'grade':
-        await router.push('/grades')
-        break
-      default:
-        // 跳转到通知中心
-        openNotificationCenter()
-        break
-    }
-  } else {
-    openNotificationCenter()
-  }
-
+  // 统一先进入详情页
+  const prefix = window.location.pathname.startsWith('/student') ? '/student' : '/teacher'
+  await router.push(`${prefix}/notifications/${notification.id}`)
   closeDropdown()
 }
 
 const openNotificationCenter = () => {
-  router.push('/notifications')
+  const prefix = window.location.pathname.startsWith('/student') ? '/student' : '/teacher'
+  router.push(`${prefix}/notifications`)
   closeDropdown()
 }
 
@@ -282,6 +266,61 @@ const formatTime = (timestamp: string) => {
   // 超过1天
   const days = Math.floor(diff / 86400000)
   return `${days}天前`
+}
+
+// 本地化系统类标题（含通用回退）
+const getLocalizedTitle = (notification: any) => {
+  const rt = String(notification?.relatedType || '').toLowerCase()
+  if (rt) {
+    const keyByRelated: Record<string, string> = {
+      'system_announcement': 'notifications.categoryTitles.systemAnnouncement',
+      'course_update': 'notifications.categoryTitles.courseUpdate',
+      'assignment_deadline': 'notifications.categoryTitles.assignmentDeadline',
+      'grade_posted': 'notifications.categoryTitles.gradePosted',
+      'message': 'notifications.categoryTitles.message'
+    }
+    if (keyByRelated[rt]) return t(keyByRelated[rt]) as string
+  }
+  const type = String(notification?.type || '').toLowerCase()
+  const keyByType: Record<string, string> = {
+    system: 'notifications.categoryTitles.systemGeneral',
+    course: 'notifications.categoryTitles.courseUpdate',
+    assignment: 'notifications.categoryTitles.assignmentGeneral',
+    grade: 'notifications.categoryTitles.gradePosted',
+    message: 'notifications.categoryTitles.message'
+  }
+  if (keyByType[type]) return t(keyByType[type]) as string
+  return String(notification?.title || '')
+}
+
+// 优先级：缺省或非法值回退为 low，文案使用 i18n
+const normalizePriority = (priority?: string): 'urgent'|'high'|'normal'|'low' => {
+  const p = String(priority || '').toLowerCase()
+  if (p === 'urgent' || p === 'high' || p === 'normal' || p === 'low') return p as any
+  return 'low'
+}
+
+const getPriorityClass = (priority?: string) => {
+  const p = normalizePriority(priority)
+  const classes = {
+    urgent: 'priority-urgent',
+    high: 'priority-high',
+    normal: 'priority-normal',
+    low: 'priority-low'
+  }
+  return classes[p as keyof typeof classes] || 'priority-normal'
+}
+
+const getPriorityText = (priority?: string) => {
+  const p = normalizePriority(priority)
+  const keyMap: Record<string, string> = {
+    urgent: 'notifications.priority.urgent',
+    high: 'notifications.priority.high',
+    normal: 'notifications.priority.normal',
+    low: 'notifications.priority.low'
+  }
+  const key = keyMap[p] || keyMap.normal
+  return t(key) as string
 }
 
 // 定期刷新未读数量
@@ -356,6 +395,12 @@ const vClickOutside = {
   z-index: 50;
 }
 
+:global(.dark) .notification-dropdown {
+  background-color: rgb(31 41 55 / 0.98); /* slate-800 */
+  border-color: rgb(255 255 255 / 0.1);
+  box-shadow: 0 10px 20px -5px rgb(0 0 0 / 0.4);
+}
+
 .dropdown-header {
   display: flex;
   align-items: center;
@@ -364,39 +409,21 @@ const vClickOutside = {
   border-bottom: 1px solid rgb(229 231 235);
 }
 
+:global(.dark) .dropdown-header { border-bottom-color: rgb(55 65 81); }
+
 .dropdown-content {
   max-height: 20rem;
   overflow-y: auto;
-  padding: 0.5rem;
-}
-
-.dropdown-footer {
-  padding: 0.5rem;
-  border-top: 1px solid rgb(229 231 235);
-}
-
-.loading-state,
-.empty-state {
-  padding: 1.5rem 0;
-}
-
-.notification-item {
   padding: 0.75rem;
-  border-radius: 0.5rem;
-  cursor: pointer;
-  transition: background-color 0.2s;
+  /* Hide scrollbars but keep scroll (Firefox/IE/Edge legacy) */
+  -ms-overflow-style: none; /* IE 10+ */
+  scrollbar-width: none; /* Firefox */
 }
 
-.notification-item:hover {
-  background-color: rgb(249 250 251);
-}
-
-.notification-unread {
-  background-color: rgb(239 246 255);
-}
-
-.notification-unread:hover {
-  background-color: rgb(219 234 254);
+/* Hide scrollbars but keep scroll (WebKit) */
+:deep(.dropdown-content::-webkit-scrollbar) {
+  width: 0px;
+  height: 0px;
 }
 
 .notification-title {
@@ -407,6 +434,8 @@ const vClickOutside = {
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+
+:global(.dark) .notification-title { color: rgba(255, 255, 255, 0.95); }
 
 .notification-preview {
   font-size: 0.75rem;
@@ -419,9 +448,79 @@ const vClickOutside = {
   overflow: hidden;
 }
 
+:global(.dark) .notification-preview { color: rgba(229, 231, 235, 0.9); }
+
 .notification-time {
   font-size: 0.75rem;
   color: rgb(107 114 128);
   margin-top: 0.25rem;
 }
+
+:global(.dark) .notification-time { color: rgb(156 163 175); }
+
+/* Dark mode hover feedback only inside bell dropdown */
+:global(html.dark) .notification-bell .dropdown-content .notification-item { background-color: transparent; }
+:global(html.dark) .notification-bell .dropdown-content .notification-item:hover {
+  background-color: rgb(71 85 105);
+  box-shadow: inset 0 0 0 1px rgba(148, 163, 184, 0.18);
+}
+
+/* Bell dropdown item spacing and hover (light) */
+.notification-bell .dropdown-content .notification-item {
+  border-radius: 0.5rem;
+  padding: 0.5rem 0.625rem;
+  cursor: pointer;
+  transition: background-color 0.2s ease, box-shadow 0.2s ease, color 0.2s ease;
+}
+/* Light mode only: avoid overriding dark hover */
+html:not(.dark) .notification-bell .dropdown-content .notification-item:hover {
+  background-color: rgb(243, 244, 246);
+}
+/* Dark mode hover text highlights */
+::global(.dark) .notification-bell .dropdown-content .notification-item:hover .notification-title { color: rgba(255, 255, 255, 0.98); }
+::global(.dark) .notification-bell .dropdown-content .notification-item:hover .notification-preview { color: rgba(229, 231, 235, 0.95); }
+::global(.dark) .notification-bell .dropdown-content .notification-item:hover .notification-time { color: rgb(203, 213, 225); }
+
+/* 提升 bell 暗黑模式标题可读性 */
+html:not(.dark) .notification-bell .notification-title { color: rgb(17 24 39); }
+::global(.dark) .notification-bell .notification-title { color: rgb(255 255 255); font-weight: 600; }
+
+/* 优先级徽章样式（与通知中心保持一致） */
+.priority-badge {
+  padding: 0.125rem 0.5rem;
+  font-size: 0.75rem;
+  font-weight: 500;
+  border-radius: 9999px;
+  border: 1px solid transparent;
+  display: inline-flex;
+  align-items: center;
+}
+.priority-urgent {
+  background-color: rgb(254 226 226);
+  color: rgb(153 27 27);
+  border-color: rgb(248 113 113);
+}
+.priority-high {
+  background-color: rgb(255 237 213);
+  color: rgb(154 52 18);
+  border-color: rgb(251 146 60);
+}
+.priority-normal {
+  background-color: rgb(219 234 254);
+  color: rgb(30 64 175);
+  border-color: rgb(96 165 250);
+}
+.priority-low {
+  background-color: rgb(243 244 246);
+  color: rgb(2 132 199);
+  border-color: rgb(103 232 249);
+}
+
+/* Force title colors to override any prior rules */
+::global(.dark) .notification-bell .notification-title { color: rgb(255 255 255) !important; font-weight: 600; }
+html:not(.dark) .notification-bell .notification-title { color: rgb(17 24 39) !important; }
+
+/* Ensure title colors within scoped styles using :deep to bypass hashing */
+.dark :deep(.notification-bell .notification-title) { color: rgb(255 255 255) !important; font-weight: 600; }
+:root:not(.dark) :deep(.notification-bell .notification-title), html:not(.dark) :deep(.notification-bell .notification-title) { color: rgb(17 24 39) !important; }
 </style> 

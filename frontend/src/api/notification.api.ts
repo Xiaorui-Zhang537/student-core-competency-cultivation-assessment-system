@@ -82,7 +82,7 @@ export const notificationAPI = {
   },
 
   // 获取未读通知数量
-  getUnreadCount: (): Promise<ApiResponse<{ count: number }>> => {
+  getUnreadCount: (): Promise<ApiResponse<{ unreadCount: number }>> => {
     return api.get('/notifications/unread/count')
   },
 

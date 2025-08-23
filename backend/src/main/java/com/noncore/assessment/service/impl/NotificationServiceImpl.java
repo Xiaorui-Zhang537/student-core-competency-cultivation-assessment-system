@@ -36,6 +36,8 @@ public class NotificationServiceImpl implements NotificationService {
     private final AssignmentMapper assignmentMapper;
     private final GradeMapper gradeMapper;
     private final CacheService cacheService;
+    @org.springframework.beans.factory.annotation.Autowired(required = false)
+    private com.noncore.assessment.realtime.NotificationSseService sseService;
     private static final String UNREAD_COUNT_CACHE_PREFIX = "notification:unread_count:";
 
 
@@ -74,6 +76,13 @@ public class NotificationServiceImpl implements NotificationService {
         int result = notificationMapper.insertNotification(notification);
         if (result > 0) {
             logger.info("通知发送成功，通知ID: {}", notification.getId());
+            // SSE 推送新通知与统计刷新
+            if (sseService != null && recipientId != null) {
+                try {
+                    sseService.sendToUser(recipientId, "new", notification);
+                    sseService.sendToUser(recipientId, "stats", "refresh");
+                } catch (Exception ignore) {}
+            }
             return notification;
         } else {
             throw new BusinessException(ErrorCode.OPERATION_FAILED, "发送通知失败");
@@ -114,6 +123,15 @@ public class NotificationServiceImpl implements NotificationService {
         // Invalidate cache for all affected users
         recipientIds.forEach(id -> cacheService.delete(UNREAD_COUNT_CACHE_PREFIX + id));
 
+        if (successCount > 0 && sseService != null) {
+            for (Notification n : notifications) {
+                try {
+                    sseService.sendToUser(n.getRecipientId(), "new", n);
+                    sseService.sendToUser(n.getRecipientId(), "stats", "refresh");
+                } catch (Exception ignore) {}
+            }
+        }
+
         return Map.of("successCount", successCount, "failCount", recipientIds.size() - successCount);
     }
 
@@ -151,6 +169,12 @@ public class NotificationServiceImpl implements NotificationService {
         int result = notificationMapper.markAsRead(notificationId);
         if (result > 0) {
             cacheService.delete(UNREAD_COUNT_CACHE_PREFIX + userId);
+            if (sseService != null) {
+                try {
+                    sseService.sendToUser(userId, "update", java.util.Map.of("id", notificationId, "isRead", true));
+                    sseService.sendToUser(userId, "stats", "refresh");
+                } catch (Exception ignore) {}
+            }
         }
         return result > 0;
     }
@@ -166,6 +190,12 @@ public class NotificationServiceImpl implements NotificationService {
         int successCount = notificationMapper.batchMarkAsRead(notificationIds, userId);
         if (successCount > 0) {
             cacheService.delete(UNREAD_COUNT_CACHE_PREFIX + userId);
+            if (sseService != null) {
+                try {
+                    sseService.sendToUser(userId, "update", java.util.Map.of("ids", notificationIds, "isRead", true));
+                    sseService.sendToUser(userId, "stats", "refresh");
+                } catch (Exception ignore) {}
+            }
         }
 
         return Map.of("successCount", successCount, "failCount", notificationIds.size() - successCount);
@@ -174,7 +204,17 @@ public class NotificationServiceImpl implements NotificationService {
     @Override
     public int markAllAsRead(Long userId) {
         logger.info("标记所有通知为已读，用户ID: {}", userId);
-        return notificationMapper.markAllAsReadByRecipient(userId);
+        int updated = notificationMapper.markAllAsReadByRecipient(userId);
+        if (updated > 0) {
+            cacheService.delete(UNREAD_COUNT_CACHE_PREFIX + userId);
+            if (sseService != null) {
+                try {
+                    sseService.sendToUser(userId, "update", java.util.Map.of("allRead", true));
+                    sseService.sendToUser(userId, "stats", "refresh");
+                } catch (Exception ignore) {}
+            }
+        }
+        return updated;
     }
 
     @Override
@@ -190,6 +230,12 @@ public class NotificationServiceImpl implements NotificationService {
         int result = notificationMapper.deleteNotification(notificationId);
         if (result > 0) {
             cacheService.delete(UNREAD_COUNT_CACHE_PREFIX + userId);
+            if (sseService != null) {
+                try {
+                    sseService.sendToUser(userId, "delete", java.util.Map.of("id", notificationId));
+                    sseService.sendToUser(userId, "stats", "refresh");
+                } catch (Exception ignore) {}
+            }
         }
         return result > 0;
     }
@@ -417,8 +463,18 @@ public class NotificationServiceImpl implements NotificationService {
         stats.put("unread", unreadCount);
         stats.put("read", total - unreadCount);
         
-        // 按类型统计
-        Map<String, Long> typeStats = notificationMapper.countByRecipientGroupByType(userId);
+        // 按类型统计（XML 返回多行 map：{type, count}）
+        java.util.List<java.util.Map<String, Object>> rows = notificationMapper.countByRecipientGroupByType(userId);
+        java.util.Map<String, Long> typeStats = new java.util.HashMap<>();
+        if (rows != null) {
+            for (java.util.Map<String, Object> row : rows) {
+                Object t = row.get("type");
+                Object c = row.get("count");
+                if (t != null && c instanceof Number num) {
+                    typeStats.put(String.valueOf(t), num.longValue());
+                }
+            }
+        }
         stats.put("byType", typeStats);
         
         return stats;
@@ -463,6 +519,15 @@ public class NotificationServiceImpl implements NotificationService {
         for (Notification n : mine) {
             if (Boolean.FALSE.equals(n.getIsRead()) && userId.equals(n.getRecipientId())) {
                 count += notificationMapper.markAsRead(n.getId());
+            }
+        }
+        if (count > 0) {
+            cacheService.delete(UNREAD_COUNT_CACHE_PREFIX + userId);
+            if (sseService != null) {
+                try {
+                    sseService.sendToUser(userId, "update", java.util.Map.of("peerId", peerId, "conversationRead", true));
+                    sseService.sendToUser(userId, "stats", "refresh");
+                } catch (Exception ignore) {}
             }
         }
         return count;

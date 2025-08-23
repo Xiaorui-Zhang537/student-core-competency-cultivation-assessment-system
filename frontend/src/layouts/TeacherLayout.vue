@@ -23,7 +23,7 @@
           <!-- 中间区域移除搜索框（预留占位以保持两侧布局） -->
           <div class="flex-1"></div>
 
-          <!-- 右侧：主题切换、用户菜单 -->
+          <!-- 右侧：主题切换、通知铃铛、用户菜单 -->
           <div class="ml-4 flex items-center md:ml-6 space-x-3">
             <!-- 主题切换 -->
             <button
@@ -35,6 +35,9 @@
             </button>
 
             <language-switcher />
+
+            <!-- 通知铃铛 -->
+            <NotificationBell />
 
             <!-- 用户菜单 -->
             <div class="relative">
@@ -167,6 +170,16 @@
           <router-view />
         </div>
       </main>
+      
+      <!-- 全局聊天抽屉：在布局层挂载，保证任意页面都能打开 -->
+      <ChatDrawer
+        v-if="chat.isOpen"
+        :open="chat.isOpen"
+        :peer-id="chat.peerId as any"
+        :peer-name="chat.peerName as any"
+        :course-id="chat.courseId as any"
+        @close="chat.closeChat()"
+      />
     </div>
   </div>
 </template>
@@ -179,6 +192,9 @@ import { useAuthStore } from '@/stores/auth'
 import AnimatedBackground from '@/components/ui/AnimatedBackground.vue'
 import UserAvatar from '@/components/ui/UserAvatar.vue'
 import LanguageSwitcher from '@/components/ui/LanguageSwitcher.vue'
+import NotificationBell from '@/components/notifications/NotificationBell.vue'
+import ChatDrawer from '@/features/teacher/components/ChatDrawer.vue'
+import { useChatStore } from '@/stores/chat'
 import { useI18n } from 'vue-i18n'
 import {
   Bars3Icon,
@@ -198,6 +214,7 @@ import {
 const router = useRouter()
 const uiStore = useUIStore()
 const authStore = useAuthStore()
+const chat = useChatStore()
 const { t } = useI18n()
 
 // 状态

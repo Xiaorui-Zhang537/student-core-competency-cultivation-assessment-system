@@ -11,6 +11,76 @@
     "unpin": "取消置顶",
     "delete": "删除",
     "uploadImage": "上传图片"
+  },
+  "notifications": {
+    "title": "通知",
+    "subtitle": "及时了解系统提醒与课程动态",
+    "unreadSuffix": "条未读",
+    "loading": "加载中...",
+    "empty": "暂无通知",
+    "status": {
+      "read": "已读",
+      "unread": "未读"
+    },
+    "actions": {
+      "markAll": "全部已读",
+      "viewAll": "查看全部",
+      "markRead": "标记已读",
+      "goRelated": "前往处理",
+      "backToCenter": "返回通知中心",
+      "clearFilters": "清除筛选",
+      "loadMore": "加载更多",
+      "refresh": "刷新"
+    },
+    "filters": {
+      "type": "类型",
+      "status": "状态",
+      "priority": "优先级",
+      "all": "全部"
+    },
+    "types": {
+      "system": "系统",
+      "assignment": "作业",
+      "grade": "成绩",
+      "course": "课程",
+      "message": "消息"
+    },
+    "priority": {
+      "urgent": "紧急",
+      "high": "高",
+      "normal": "普通",
+      "low": "低"
+    },
+    "categoryTitles": {
+      "systemAnnouncement": "系统公告",
+      "courseUpdate": "课程更新",
+      "assignmentDeadline": "作业截止提醒",
+      "gradePosted": "成绩发布",
+      "message": "消息",
+      "systemGeneral": "系统通知",
+      "assignmentGeneral": "作业通知"
+    },
+    "time": {
+      "justNow": "刚刚",
+      "minutesAgo": "{count}分钟前",
+      "hoursAgo": "{count}小时前",
+      "daysAgo": "{count}天前"
+    },
+    "confirm": {
+      "delete": "确定要删除这条通知吗？"
+    },
+    "notify": {
+      "deletedTitle": "通知已删除",
+      "deletedMsg": "通知已成功删除。",
+      "errorTitle": "操作失败",
+      "markAllReadTitle": "全部已读",
+      "markAllReadMsg": "所有通知已标记为已读。",
+      "markAllReadError": "标记全部已读失败。",
+      "markReadTitle": "已标记已读",
+      "markReadMsg": "通知已标记为已读。",
+      "markReadError": "标记已读失败。",
+      "deleteError": "删除通知失败。"
+    }
   }
 }
 
