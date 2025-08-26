@@ -304,18 +304,35 @@ const handleLoadMore = () => {
 }
 
 const openDetail = async (id: string) => {
+  const found = notifications.value.find(n => n.id === id)
   try {
-    const found = notifications.value.find(n => n.id === id)
-    if (found && !found.isRead) {
-      await notificationsStore.markAsRead(id)
-    }
+    if (found && !found.isRead) await notificationsStore.markAsRead(id)
   } catch (e) {
-    // 忽略标记失败，继续导航
     console.error('进入详情前标记已读失败:', e)
-  } finally {
-    const prefix = window.location.pathname.startsWith('/student') ? '/student' : '/teacher'
-    router.push(`${prefix}/notifications/${id}`)
   }
+
+  const prefix = window.location.pathname.startsWith('/student') ? '/student' : '/teacher'
+
+  // 帖子/评论通知：跳帖子详情
+  if (found?.type === 'post') {
+    const postId = found.relatedId || (() => { try { const d = typeof found.data === 'string' ? JSON.parse(found.data) : found.data; return d?.postId } catch { return undefined } })()
+    if (postId) {
+      router.push(`${prefix}/community/post/${postId}`)
+      return
+    }
+  }
+
+  // 聊天通知：打开聊天抽屉，复用会话
+  if (found?.type === 'message') {
+    const mod = await import('@/stores/chat')
+    const chat = (mod as any).useChatStore()
+    const cid = (found.relatedType === 'course') ? found.relatedId : undefined
+    chat.openChat(found.senderId, (found as any).senderName || found.title || '', cid)
+    return
+  }
+
+  // 其他：进入通知详情
+  router.push(`${prefix}/notifications/${id}`)
 }
 
 // 工具方法

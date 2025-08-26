@@ -8,13 +8,20 @@ export interface Notification {
   id: string
   title: string
   content: string
-  type: 'system' | 'assignment' | 'grade' | 'course' | 'message'
+  // add 'post' to align with backend enum and UI routing
+  type: 'system' | 'assignment' | 'grade' | 'course' | 'message' | 'post'
   priority: 'low' | 'normal' | 'high' | 'urgent'
   isRead: boolean
   relatedType?: string
-  relatedId?: string
+  relatedId?: string | number
   expiredAt?: string
   createdAt: string
+  // optional fields used by UI
+  senderId?: string | number
+  senderName?: string
+  category?: string
+  actionUrl?: string
+  data?: any
 }
 
 export interface NotificationStats {

@@ -439,16 +439,7 @@
         </div>
       </teleport>
 
-      <!-- 联系学生聊天抽屉 -->
-      <teleport to="body">
-        <ChatDrawer
-          :open="chattingOpen"
-          :peer-id="String(submission.studentId || '')"
-          :course-id="String(assignment.courseId || '')"
-          :peer-name="String(submission.studentName || '')"
-          @close="chattingOpen=false"
-        />
-      </teleport>
+      <!-- 改为调用全局抽屉：删除本地 Teleport -->
     </div>
   </div>
 </template>
@@ -553,7 +544,7 @@ import { gradeApi } from '@/api/grade.api'
 import { baseURL } from '@/api/config'
 import { teacherStudentApi } from '@/api/teacher-student.api'
 import { reportApi } from '@/api/report.api'
-import ChatDrawer from '@/features/teacher/components/ChatDrawer.vue'
+import { useChatStore } from '@/stores/chat'
 import { submissionApi } from '@/api/submission.api'
 
 const loadSubmission = async () => {
@@ -818,10 +809,10 @@ const viewStudentProfile = () => {
   router.push(`/teacher/students/${submission.studentId}`)
 }
 
-const chattingOpen = ref(false)
+const chat = useChatStore()
 const contactStudent = () => {
   if (!submission.studentId) return
-  chattingOpen.value = true
+  chat.openChat(String(submission.studentId), String(submission.studentName || ''), String(assignment.courseId || ''))
 }
 
 const viewOtherSubmissions = () => {

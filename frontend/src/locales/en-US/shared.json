@@ -1,5 +1,17 @@
 {
   "shared": {
+    "chat": {
+      "open": "Chat",
+      "recent": "Recent",
+      "contacts": "Contacts",
+      "system": "System",
+      "searchPlaceholder": "Search contacts…",
+      "emptyList": "No conversations/contacts",
+      "pickSomeone": "Pick someone on the left to start chatting",
+      "pin": "Pin",
+      "unpin": "Unpin",
+      "delete": "Delete"
+    },
     "upload": {
       "uploading": "Uploading...",
       "dragTip": "Drag files here or click to upload",
@@ -198,6 +210,7 @@
     "emojiPicker": {
       "button": "Emoji"
     },
+    "loading": "Loading...",
     "file": {
       "unknownSize": "Unknown"
     }

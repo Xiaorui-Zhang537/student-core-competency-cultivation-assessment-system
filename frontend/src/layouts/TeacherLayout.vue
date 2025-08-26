@@ -39,6 +39,15 @@
             <!-- 通知铃铛 -->
             <NotificationBell />
 
+            <!-- 全局聊天按钮：打开聊天抽屉（无选中人时显示列表） -->
+            <button
+              @click="chat.isOpen ? chat.closeChat() : chat.openChat()"
+              class="p-1 rounded-full text-gray-400 hover:text-gray-500 dark:hover:text-gray-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500"
+              :title="t('shared.chat.open') as string || '聊天'"
+            >
+              <chat-bubble-left-right-icon class="h-6 w-6" />
+            </button>
+
             <!-- 用户菜单 -->
             <div class="relative">
               <button

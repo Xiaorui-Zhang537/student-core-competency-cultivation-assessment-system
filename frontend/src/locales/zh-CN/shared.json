@@ -1,5 +1,17 @@
 {
   "shared": {
+    "chat": {
+      "open": "聊天",
+      "recent": "最近",
+      "contacts": "联系人",
+      "system": "系统消息",
+      "searchPlaceholder": "搜索联系人…",
+      "emptyList": "暂无会话/联系人",
+      "pickSomeone": "从左侧选择一位联系人开始聊天",
+      "pin": "置顶",
+      "unpin": "取消置顶",
+      "delete": "删除"
+    },
     "upload": {
       "uploading": "正在上传...",
       "dragTip": "拖拽文件到此处或点击上传",
@@ -198,6 +210,7 @@
     "emojiPicker": {
       "button": "表情"
     },
+    "loading": "加载中...",
     "file": {
       "unknownSize": "未知"
     }

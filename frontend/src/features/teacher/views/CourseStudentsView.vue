@@ -354,15 +354,7 @@
 
       <!-- 已移除卡片视图 -->
 
-      <teleport to="body">
-        <ChatDrawer
-          :open="chattingOpen"
-          :peer-id="chattingPeerId || ''"
-          :course-id="courseId"
-          :peer-name="chattingPeerName"
-          @close="chattingOpen=false"
-        />
-      </teleport>
+      <!-- 改为调用全局抽屉：删除本地 Teleport -->
     </div>
   </div>
 </template>
@@ -397,7 +389,7 @@ import {
   ArrowPathIcon
 } from '@heroicons/vue/24/outline'
 import UserAvatar from '@/components/ui/UserAvatar.vue'
-import ChatDrawer from '@/features/teacher/components/ChatDrawer.vue'
+import { useChatStore } from '@/stores/chat'
 // @ts-ignore shim for vue-i18n types in this project
 import { useI18n } from 'vue-i18n'
 
@@ -420,13 +412,7 @@ const selectedStudents = ref<string[]>([])
 const showStudentMenu = ref<string | null>(null)
 const currentPage = ref(1)
 const pageSize = ref(20)
-const chattingPeerId = ref<string | null>(null)
-const chattingOpen = ref(false)
-const chattingPeerName = computed(() => {
-  const pid = chattingPeerId.value
-  const stu = students.value.find((s: any) => s.id === pid)
-  return (stu && stu.name) ? stu.name : ''
-})
+const chat = useChatStore()
 
 // 统计数据（占位：后续可接入专用统计端点）
 const stats = reactive({
@@ -641,8 +627,8 @@ const viewStudentDetail = (studentId: string) => {
 }
 
 const sendMessage = async (studentId: string) => {
-  chattingPeerId.value = studentId
-  chattingOpen.value = true
+  const stu = students.value.find((s: any) => s.id === studentId)
+  chat.openChat(studentId, stu?.name || '', courseId)
 }
 
 const viewGrades = (studentId: string) => {

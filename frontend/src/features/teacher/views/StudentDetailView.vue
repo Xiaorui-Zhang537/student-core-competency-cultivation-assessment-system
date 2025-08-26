@@ -152,16 +152,7 @@
           </div>
       </div>
 
-      <!-- 聊天抽屉，与学生管理页保持一致的聊天体验 -->
-      <teleport to="body">
-        <ChatDrawer
-          :open="chattingOpen"
-          :peer-id="chattingPeerId || ''"
-          :course-id="String(route.query.courseId || '')"
-          :peer-name="chattingPeerName"
-          @close="chattingOpen=false"
-        />
-      </teleport>
+      <!-- 改为调用全局抽屉：删除本地 Teleport -->
     </div>
   </div>
 </template>
@@ -176,7 +167,7 @@ import { useAuthStore } from '@/stores/auth';
 import { useI18n } from 'vue-i18n'
 import Button from '@/components/ui/Button.vue'
 import { ChatBubbleLeftRightIcon, ChartPieIcon, ArrowDownTrayIcon, DocumentTextIcon, PencilSquareIcon, ChevronRightIcon, AcademicCapIcon } from '@heroicons/vue/24/outline'
-import ChatDrawer from '@/features/teacher/components/ChatDrawer.vue'
+import { useChatStore } from '@/stores/chat'
 import { teacherStudentApi } from '@/api/teacher-student.api'
 const route = useRoute();
 const router = useRouter();
@@ -186,9 +177,7 @@ const authStore = useAuthStore();
 const { t } = useI18n()
 
 const studentId = ref<string | null>(null);
-const chattingOpen = ref(false)
-const chattingPeerId = ref<string | null>(null)
-const chattingPeerName = ref('')
+const chat = useChatStore()
 // keep single t from useI18n to avoid redeclare
 const studentName = ref(route.query.name as string || (t('teacher.students.table.student') as string));
 
@@ -229,9 +218,7 @@ function onCourseChange() {
 
 function contactStudent() {
   if (!studentId.value) return
-  chattingPeerId.value = studentId.value
-  chattingPeerName.value = String(studentName.value || '')
-  chattingOpen.value = true
+  chat.openChat(String(studentId.value), String(studentName.value || ''), String(route.query.courseId || ''))
 }
 
 function viewOverview() {

@@ -398,7 +398,7 @@ CREATE TABLE `notifications` (
                                  `user_id` bigint NOT NULL COMMENT '用户ID',
                                  `title` varchar(200) COLLATE utf8mb4_unicode_ci NOT NULL COMMENT '通知标题',
                                  `content` text COLLATE utf8mb4_unicode_ci COMMENT '通知内容',
-                                 `type` enum('system','assignment','grade','course','message') COLLATE utf8mb4_unicode_ci DEFAULT 'system' COMMENT '通知类型',
+                                 `type` enum('system','assignment','grade','course','message','post') COLLATE utf8mb4_unicode_ci DEFAULT 'system' COMMENT '通知类型',
                                  `category` varchar(50) COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT '通知分类，如学术/系统/活动',
                                  `priority` enum('low','normal','high','urgent') COLLATE utf8mb4_unicode_ci DEFAULT 'normal' COMMENT '优先级',
                                  `is_read` tinyint(1) DEFAULT '0' COMMENT '是否已读',
