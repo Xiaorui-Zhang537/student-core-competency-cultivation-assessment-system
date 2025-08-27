@@ -72,15 +72,13 @@ export const useAuthStore = defineStore('auth', () => {
   const register = async (details: RegisterRequest) => {
     const response = await handleApiCall(() => authApi.register(details));
     if (!response) return;
-    const data = unwrap<AuthResponse>(response);
-    setAuthData(data);
     uiStore.showNotification({
       type: 'success',
       title: i18n.global.t('app.auth.registerSuccess.title') as string,
       message: i18n.global.t('app.auth.registerSuccess.msg') as string
     });
     await nextTick();
-    await router.push(data.user.role === 'TEACHER' ? '/teacher/dashboard' : '/student/dashboard');
+    await router.push('/auth/check-email');
   };
 
   const logout = async () => {

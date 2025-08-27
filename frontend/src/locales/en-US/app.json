@@ -1,5 +1,6 @@
 {
 	"app": {
+		"title": "Student Core Competency Development Assessment System",
 		"loading": {
 			"title": "Loading",
 			"subtitle": "Please wait..."

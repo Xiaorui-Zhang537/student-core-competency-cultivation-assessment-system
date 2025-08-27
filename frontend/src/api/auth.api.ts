@@ -6,7 +6,7 @@ export const authApi = {
   login: (data: LoginRequest): Promise<ApiResponse<AuthResponse>> => {
     return api.post('/auth/login', data);
   },
-  register: (data: RegisterRequest): Promise<ApiResponse<AuthResponse>> => {
+  register: (data: RegisterRequest): Promise<ApiResponse<void>> => {
     return api.post('/auth/register', data);
   },
   refreshToken: (refreshToken: string): Promise<ApiResponse<AuthResponse>> => {

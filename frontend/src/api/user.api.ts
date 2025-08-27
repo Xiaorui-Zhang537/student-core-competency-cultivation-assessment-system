@@ -23,9 +23,9 @@ export const userApi = {
     return api.post('/users/reset-password', data);
   },
   verifyEmail: (token: string): Promise<ApiResponse<void>> => {
-    return api.post('/users/verify-email', null, { params: { token } });
+    return api.post('/auth/verify-email', null, { params: { token } });
   },
   resendVerification: (): Promise<ApiResponse<void>> => {
-    return api.post('/users/resend-verification');
+    return api.post('/auth/resend-verification');
   },
 };

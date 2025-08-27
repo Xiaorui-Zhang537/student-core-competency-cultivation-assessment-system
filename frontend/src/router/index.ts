@@ -32,6 +32,24 @@ const routes = [
         component: () => import('@/features/auth/views/ForgotPasswordView.vue'),
         meta: { requiresGuest: true }
       },
+      {
+        path: 'reset-password',
+        name: 'ResetPassword',
+        component: () => import('@/features/auth/views/ResetPasswordView.vue'),
+        meta: { requiresGuest: true }
+      },
+      {
+        path: 'verify-email',
+        name: 'VerifyEmail',
+        component: () => import('@/features/auth/views/VerifyEmailView.vue'),
+        meta: { requiresGuest: true }
+      },
+      {
+        path: 'check-email',
+        name: 'CheckEmail',
+        component: () => import('@/features/auth/views/CheckEmailView.vue'),
+        meta: { requiresGuest: true }
+      },
     ]
   },
   {
@@ -217,6 +235,22 @@ const routes = [
       return { name: 'Login', query: { redirect: to.fullPath, ...to.query } };
     }
   },
+  // 顶层兼容：邮件链接 /reset-password?token=xxx → 重定向到 /auth/reset-password 保留查询参数
+  {
+    path: '/reset-password',
+    name: 'ResetPasswordAlias',
+    redirect: (to: any) => ({ path: '/auth/reset-password', query: to.query })
+  },
+  {
+    path: '/verify-email',
+    name: 'VerifyEmailAlias',
+    redirect: (to: any) => ({ path: '/auth/verify-email', query: to.query })
+  },
+  {
+    path: '/check-email',
+    name: 'CheckEmailAlias',
+    redirect: (to: any) => ({ path: '/auth/check-email', query: to.query })
+  },
   {
     path: '/:pathMatch(.*)*',
     name: 'NotFound',
@@ -230,6 +264,27 @@ const router = createRouter({
 });
 
 router.beforeEach((to, from, next) => {
+  // 一次性硬刷新 mail-check 页面，避免 SPA 首跳白屏
+  if (to.path === '/auth/check-email') {
+    const rf = (to.query as any)?._rf
+    const already = Array.isArray(rf) ? rf[0] === '1' : rf === '1'
+    if (!already) {
+      try {
+        const base = (import.meta as any).env.BASE_URL || '/'
+        const url = new URL(window.location.href)
+        url.pathname = base.replace(/\/$/, '/') + 'auth/check-email'
+        url.searchParams.set('_rf', '1')
+        const lang = (to.query as any)?.lang
+        if (lang) url.searchParams.set('lang', String(lang))
+        window.location.replace(url.toString())
+        return
+      } catch {
+        // 兜底：若构造 URL 失败，回退到前端路由 replace，再由页面内逻辑刷新
+        return next({ path: '/auth/check-email', query: { ...to.query, _rf: '1' }, replace: true })
+      }
+    }
+  }
+
   const authStore = useAuthStore();
   const isAuthenticated = authStore.isAuthenticated;
   const userRole = authStore.userRole;

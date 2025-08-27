@@ -101,7 +101,8 @@ public class AuthServiceImpl implements AuthService {
         user.setUsername(registerRequest.getUsername());
         user.setEmail(registerRequest.getEmail());
         user.setPassword(passwordEncoder.encode(registerRequest.getPassword()));
-        user.setRole("student".equals(role) ? "ROLE_STUDENT" : "ROLE_TEACHER");
+        // 与数据库列约束和前端保持一致：存储为 STUDENT / TEACHER
+        user.setRole("student".equals(role) ? "STUDENT" : "TEACHER");
         if (StringUtils.hasText(registerRequest.getNickname())) {
             user.setNickname(registerRequest.getNickname());
         }
@@ -120,8 +121,18 @@ public class AuthServiceImpl implements AuthService {
 
         // 生成并发送邮箱验证
         // 复用 UserServiceImpl 的逻辑：生成 token -> Redis 保存 -> 发送验证邮件
-        // 这里直接调用 resendVerification(userId) 以复用发送逻辑
-        userService.resendVerification(user.getId());
+        // 优先使用注册请求中的语言，如果未提供则由 UserServiceImpl 使用默认语言
+        try {
+            String reqLang = null;
+            try { reqLang = registerRequest.getLang(); } catch (Exception ignored) {}
+            if (reqLang != null && !reqLang.isBlank()) {
+                userService.resendVerificationByEmail(user.getEmail(), reqLang);
+            } else {
+                userService.resendVerification(user.getId());
+            }
+        } catch (Exception e) {
+            logger.warn("发送验证邮件时出现非致命错误: {}", e.getMessage());
+        }
 
         user.setPassword(null);
         // 注册后不返回令牌

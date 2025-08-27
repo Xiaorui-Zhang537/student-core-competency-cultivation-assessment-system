@@ -67,6 +67,11 @@ public class RegisterRequest {
     @Size(max = 200, message = "个人简介长度不能超过200个字符")
     private String bio;
 
+    /**
+     * 首选语言（可选），例如 zh-CN / en-US
+     */
+    private String lang;
+
     // 默认构造方法
     public RegisterRequest() {}
 
@@ -95,6 +100,7 @@ public class RegisterRequest {
                 ", role='" + role + '\'' +
                 ", nickname='" + nickname + '\'' +
                 ", avatar='" + avatar + '\'' +
+                ", lang='" + lang + '\'' +
                 '}';
     }
 } 

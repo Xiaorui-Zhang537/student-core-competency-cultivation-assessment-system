@@ -8,8 +8,11 @@ export interface LoginRequest {
 export interface RegisterRequest {
   username: string;
   email: string;
-  password?: string;
-  role: 'STUDENT' | 'TEACHER';
+  password: string;
+  confirmPassword: string;
+  role: 'student' | 'teacher';
+  avatar?: string;
+  lang?: 'zh-CN' | 'en-US' | string;
 }
 
 export interface User {

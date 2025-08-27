@@ -71,6 +71,11 @@ public class SecurityConfig {
                             // allow all auth endpoints under /auth (login/register/verify/resend)
                             .requestMatchers("/auth/**")
                                 .permitAll()
+                            // allow forgot/reset password endpoints
+                            .requestMatchers("/users/forgot-password")
+                                .permitAll()
+                            .requestMatchers("/users/reset-password")
+                                .permitAll()
                             // allow public confirm email change endpoint
                             .requestMatchers("/users/email/change/confirm")
                                 .permitAll()

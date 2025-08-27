@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
@@ -16,10 +16,10 @@
   </head>
   <body>
     <div class="card">
-      <div class="title">{{appName}} - Email Verification</div>
-      <div class="desc">Click the button below to verify your email. The link is valid for {{expireHours}} hours.</div>
-      <a class="btn" href="{{actionUrl}}" target="_blank" rel="noopener">Verify now</a>
-      <div class="footer">&copy; {{year}} {{appName}}</div>
+      <div class="title" th:text="${appName} + ' - Email Verification'">Email Verification</div>
+      <div class="desc" th:text="'Click the button below to verify your email. The link is valid for ' + ${expireHours} + ' hours.'">Click the button below to verify your email.</div>
+      <a class="btn" th:href="${actionUrl}" target="_blank" rel="noopener">Verify now</a>
+      <div class="footer">&copy; <span th:text="${year}">2025</span> <span th:text="${appName}">App</span></div>
     </div>
   </body>
 </html>

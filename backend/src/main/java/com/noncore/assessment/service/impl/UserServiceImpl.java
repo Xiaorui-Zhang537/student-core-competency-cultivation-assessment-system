@@ -33,6 +33,9 @@ public class UserServiceImpl implements UserService {
     @Value("${application.base-url:http://localhost:5173}")
     private String applicationBaseUrl;
 
+    @Value("${application.email.default-language:zh-CN}")
+    private String defaultEmailLanguage;
+
     private final com.noncore.assessment.mapper.FileRecordMapper fileRecordMapper;
     private final com.noncore.assessment.service.FileStorageService fileStorageService;
 
@@ -177,7 +180,7 @@ public class UserServiceImpl implements UserService {
         String resetKey = "password_reset:" + resetToken;
         redisTemplate.opsForValue().set(resetKey, user.getId(), 15, TimeUnit.MINUTES);
 
-        sendPasswordResetEmail(user.getEmail(), resetToken);
+        sendPasswordResetEmail(user.getEmail(), resetToken, defaultEmailLanguage);
         logger.info("密码重置邮件已发送至: {}", email);
     }
 
@@ -228,7 +231,7 @@ public class UserServiceImpl implements UserService {
         String verifyToken = generateVerifyToken(user.getId());
         String verifyKey = "email_verify:" + verifyToken;
         redisTemplate.opsForValue().set(verifyKey, user.getId(), 24, TimeUnit.HOURS);
-        sendVerificationEmail(user.getEmail(), verifyToken);
+        sendVerificationEmail(user.getEmail(), verifyToken, defaultEmailLanguage);
         logger.info("验证邮件已重新发送至: {}", user.getEmail());
     }
 
@@ -246,7 +249,8 @@ public class UserServiceImpl implements UserService {
         String verifyToken = generateVerifyToken(user.getId());
         String verifyKey = "email_verify:" + verifyToken;
         redisTemplate.opsForValue().set(verifyKey, user.getId(), 24, TimeUnit.HOURS);
-        sendVerificationEmail(user.getEmail(), verifyToken);
+        String langToUse = (lang != null && !lang.isBlank()) ? lang : defaultEmailLanguage;
+        sendVerificationEmail(user.getEmail(), verifyToken, langToUse);
         logger.info("验证邮件已发送至: {}", email);
     }
 
@@ -337,24 +341,30 @@ public class UserServiceImpl implements UserService {
         return UUID.randomUUID().toString().replace("-", "") + "_verify_" + userId;
     }
 
-    private void sendPasswordResetEmail(String email, String resetToken) {
-        String resetUrl = applicationBaseUrl + "/reset-password?token=" + resetToken;
+    private void sendPasswordResetEmail(String email, String resetToken, String lang) {
+        String language = (lang != null && lang.toLowerCase().startsWith("en")) ? "en-US" : "zh-CN";
+        String resetUrl = applicationBaseUrl + "/reset-password?token=" + resetToken + "&lang=" + language;
         java.util.Map<String, Object> vars = new java.util.HashMap<>();
         vars.put("appName", "学生核心能力培养系统");
         vars.put("actionUrl", resetUrl);
         vars.put("expireHours", 0.25);
         vars.put("year", java.time.Year.now().getValue());
-        emailService.sendTemplate(email, "【学生核心能力培养系统】重置密码", "password_reset_zh", vars, "zh-CN");
+        String template = language.equals("en-US") ? "password_reset_en" : "password_reset_zh";
+        String subject = language.equals("en-US") ? "[Student Core Competence System] Reset Password" : "【学生核心能力培养系统】重置密码";
+        emailService.sendTemplate(email, subject, template, vars, language);
     }
 
-    private void sendVerificationEmail(String email, String verifyToken) {
-        String verifyUrl = applicationBaseUrl + "/verify-email?token=" + verifyToken;
+    private void sendVerificationEmail(String email, String verifyToken, String lang) {
+        String language = (lang != null && lang.toLowerCase().startsWith("en")) ? "en-US" : "zh-CN";
+        String verifyUrl = applicationBaseUrl + "/verify-email?token=" + verifyToken + "&lang=" + language;
         java.util.Map<String, Object> vars = new java.util.HashMap<>();
         vars.put("appName", "学生核心能力培养系统");
         vars.put("actionUrl", verifyUrl);
         vars.put("expireHours", 24);
         vars.put("year", java.time.Year.now().getValue());
-        emailService.sendTemplate(email, "【学生核心能力培养系统】邮箱验证", "verify_email_zh", vars, "zh-CN");
+        String template = language.equals("en-US") ? "verify_email_en" : "verify_email_zh";
+        String subject = language.equals("en-US") ? "[Student Core Competence System] Email Verification" : "【学生核心能力培养系统】邮箱验证";
+        emailService.sendTemplate(email, subject, template, vars, language);
     }
 
     private void sendChangeEmailConfirm(String email, String token) {

@@ -61,37 +61,7 @@
           </button>
 
           <!-- 语言切换 -->
-          <div class="relative">
-            <button
-              @click="showLanguageMenu = !showLanguageMenu"
-              class="p-2 rounded-lg bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm border border-gray-200/50 dark:border-gray-700/50 hover:bg-white dark:hover:bg-gray-800 transition-all duration-200 flex items-center space-x-2"
-            >
-              <globe-alt-icon class="w-5 h-5 text-gray-600 dark:text-gray-400" />
-              <span class="text-sm font-medium text-gray-700 dark:text-gray-300">{{ currentLanguage.label }}</span>
-              <chevron-down-icon class="w-4 h-4 text-gray-500 transition-transform duration-200" 
-                :class="{ 'rotate-180': showLanguageMenu }" />
-            </button>
-            
-            <!-- 语言菜单 -->
-            <div
-              v-if="showLanguageMenu"
-              class="absolute right-0 mt-2 w-32 bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm rounded-lg shadow-lg border border-gray-200/50 dark:border-gray-700/50 py-1 z-50"
-              @click.stop
-            >
-              <button
-                v-for="lang in languages"
-                :key="lang.code"
-                @click="setLanguage(lang.code)"
-                class="w-full px-3 py-2 text-left text-sm hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-150"
-                :class="{
-                  'text-primary-600 dark:text-primary-400 bg-primary-50 dark:bg-primary-900/20': currentLanguage.code === lang.code,
-                  'text-gray-700 dark:text-gray-300': currentLanguage.code !== lang.code
-                }"
-              >
-                {{ lang.label }}
-              </button>
-            </div>
-          </div>
+          <LanguageSwitcher />
         </div>
 
         <!-- Logo 和标题区域 -->
@@ -117,7 +87,7 @@
           <!-- 系统标题 -->
           <div class="space-y-2">
             <h1 class="text-3xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 dark:from-white dark:to-gray-300 bg-clip-text text-transparent leading-tight">
-              学生非核心能力发展评估系统
+              {{ t('app.title') }}
             </h1>
             <div class="flex items-center justify-center space-x-2 text-gray-600 dark:text-gray-400">
               <sparkles-icon class="w-4 h-4 text-primary-500 animate-pulse" />
@@ -126,10 +96,16 @@
             </div>
           </div>
 
-          <!-- 版本信息 -->
-          <div class="mt-4 inline-flex items-center px-3 py-1 rounded-full bg-primary-100 dark:bg-primary-900/30 text-xs font-medium text-primary-700 dark:text-primary-300">
-            <span class="w-2 h-2 bg-green-500 rounded-full mr-2 animate-pulse"></span>
-            v2.0.1 正式版
+          <!-- 版本与时间信息 -->
+          <div class="mt-4 flex items-center justify-center space-x-3 text-xs">
+            <div class="inline-flex items-center px-3 py-1 rounded-full bg-primary-100 dark:bg-primary-900/30 font-medium text-primary-700 dark:text-primary-300">
+              <span class="w-2 h-2 bg-green-500 rounded-full mr-2 animate-pulse"></span>
+              {{ `v${version}` }}
+            </div>
+            <div class="inline-flex items-center px-3 py-1 rounded-full bg-white/70 dark:bg-gray-800/70 border border-gray-200/50 dark:border-gray-700/50 text-gray-700 dark:text-gray-300">
+              <span class="w-2 h-2 bg-blue-500 rounded-full mr-2"></span>
+              {{ formattedTime }}
+            </div>
           </div>
         </div>
 
@@ -201,7 +177,7 @@
 
           <!-- 版权信息 -->
           <div class="text-xs text-gray-500 dark:text-gray-400 space-y-1">
-            <p>&copy; 2024 学生非核心能力发展评估系统. 保留所有权利.</p>
+            <p>&copy; 2024 学生核心能力发展评估系统. 保留所有权利.</p>
             <div class="flex items-center justify-center space-x-4">
               <a href="#" class="hover:text-primary-600 dark:hover:text-primary-400 transition-colors duration-200">隐私政策</a>
               <span>•</span>
@@ -214,12 +190,7 @@
       </div>
     </div>
 
-    <!-- 点击外部关闭语言菜单 -->
-    <div
-      v-if="showLanguageMenu"
-      @click="showLanguageMenu = false"
-      class="fixed inset-0 z-40"
-    ></div>
+    
   </div>
 </template>
 
@@ -227,11 +198,12 @@
 import { ref, computed, onMounted, onUnmounted, nextTick } from 'vue'
 import { useRoute } from 'vue-router'
 import { useUIStore } from '@/stores/ui'
+import { useLocale } from '@/i18n/useLocale'
+import { loadLocaleMessages, REQUIRED_NAMESPACES } from '@/i18n'
+import { useI18n } from 'vue-i18n'
 import {
   SunIcon,
   MoonIcon,
-  GlobeAltIcon,
-  ChevronDownIcon,
   AcademicCapIcon,
   SparklesIcon,
   ShieldCheckIcon,
@@ -241,6 +213,7 @@ import {
   CloudIcon,
   CpuChipIcon
 } from '@heroicons/vue/24/outline'
+import LanguageSwitcher from '@/components/ui/LanguageSwitcher.vue'
 
 // 组合式API
 const route = useRoute()
@@ -251,6 +224,12 @@ const isLoading = ref(false)
 const loadingText = ref('加载中...')
 const showLanguageMenu = ref(false)
 const currentLanguage = ref({ code: 'zh-CN', label: '中文' })
+const version = import.meta.env.VITE_APP_VERSION || '1.0.0'
+const currentTime = ref(new Date())
+let timer: number | null = null
+const { locale, setLocale } = useLocale()
+const { t, d } = useI18n()
+const formattedTime = computed(() => d(currentTime.value, 'medium'))
 
 // 主题相关
 const isDark = computed(() => uiStore.isDarkMode)
@@ -258,8 +237,7 @@ const isDark = computed(() => uiStore.isDarkMode)
 // 语言选项
 const languages = [
   { code: 'zh-CN', label: '中文' },
-  { code: 'en-US', label: 'English' },
-  { code: 'ja-JP', label: '日本語' }
+  { code: 'en-US', label: 'English' }
 ]
 
 // 浮动装饰形状
@@ -364,15 +342,14 @@ const toggleTheme = () => {
   uiStore.toggleDarkMode()
 }
 
-const setLanguage = (langCode: string) => {
+const setLanguage = async (langCode: string) => {
+  if (langCode !== 'zh-CN' && langCode !== 'en-US') return
   const lang = languages.find(l => l.code === langCode)
-  if (lang) {
-    currentLanguage.value = lang
-    showLanguageMenu.value = false
-    
-    // 这里可以集成国际化库
-    console.log('切换语言到:', lang.label)
-  }
+  if (!lang) return
+  await loadLocaleMessages(langCode, [...REQUIRED_NAMESPACES])
+  await setLocale(langCode)
+  currentLanguage.value = lang
+  showLanguageMenu.value = false
 }
 
 const simulateLoading = (text: string, duration: number = 1000) => {
@@ -425,6 +402,15 @@ const handleKeydown = (event: KeyboardEvent) => {
 onMounted(() => {
   // 监听键盘事件
   document.addEventListener('keydown', handleKeydown)
+
+  // 实时时间更新
+  timer = window.setInterval(() => {
+    currentTime.value = new Date()
+  }, 1000)
+  
+  // 初始化语言标签
+  const init = languages.find(l => l.code === locale.value)
+  if (init) currentLanguage.value = init
   
   // 初始加载动画
   nextTick(() => {
@@ -434,6 +420,7 @@ onMounted(() => {
 
 onUnmounted(() => {
   document.removeEventListener('keydown', handleKeydown)
+  if (timer) window.clearInterval(timer)
 })
 
 // 监听路由变化

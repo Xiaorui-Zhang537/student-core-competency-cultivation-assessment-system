@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="zh-CN" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
@@ -16,10 +16,10 @@
   </head>
   <body>
     <div class="card">
-      <div class="title">{{appName}} - 邮箱验证</div>
-      <div class="desc">请点击下面的按钮以完成邮箱验证。该链接在 {{expireHours}} 小时内有效。</div>
-      <a class="btn" href="{{actionUrl}}" target="_blank" rel="noopener">立即验证</a>
-      <div class="footer">&copy; {{year}} {{appName}}</div>
+      <div class="title" th:text="${appName} + ' - 邮箱验证'">邮箱验证</div>
+      <div class="desc" th:text="'请点击下面的按钮以完成邮箱验证。该链接在 ' + ${expireHours} + ' 小时内有效。'">请点击下面的按钮以完成邮箱验证。该链接在 X 小时内有效。</div>
+      <a class="btn" th:href="${actionUrl}" target="_blank" rel="noopener">立即验证</a>
+      <div class="footer">&copy; <span th:text="${year}">2025</span> <span th:text="${appName}">应用名称</span></div>
     </div>
   </body>
 </html>
