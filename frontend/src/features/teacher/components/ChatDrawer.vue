@@ -67,11 +67,12 @@
               <div v-if="chat.loadingLists" class="text-xs text-gray-500 px-2 py-2">{{ t('shared.loading') || '加载中...' }}</div>
               <div v-for="g in chat.contactGroups" :key="g.courseId" class="px-2">
                 <button type="button" class="w-full flex items-center justify-between px-2 py-1 rounded hover:bg-gray-100 dark:hover:bg-gray-700"
-                        @click="chat.toggleContactGroup(g.courseId)">
+                        @click="onToggleGroup(g)">
                   <div class="text-sm font-semibold text-gray-800 dark:text-gray-100 truncate">{{ g.courseName }}</div>
                   <svg :class="['w-4 h-4 transition-transform', g.expanded ? 'rotate-90' : '']" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M6 6L14 10L6 14V6Z" clip-rule="evenodd"/></svg>
                 </button>
                 <div v-show="g.expanded" class="mt-1 space-y-1">
+                  <div v-if="g.loading" class="text-xs text-gray-500 dark:text-gray-300 px-3 py-2">{{ t('shared.loading') || '加载中...' }}</div>
                   <button
                     v-for="p in g.students"
                     :key="p.id"
@@ -118,14 +119,49 @@
         <!-- 右侧：会话区或占位 -->
         <div class="flex-1 flex flex-col min-w-0">
           <div v-if="hasActivePeer && activeTab!=='system'" class="flex-1 overflow-y-auto p-4 space-y-3" ref="scrollContainer">
-        <div v-for="m in messages" :key="m.id" :class="m.isMine ? 'text-right' : 'text-left'">
-          <div :class="['inline-block px-3 py-2 rounded-lg', m.isMine ? 'bg-blue-600 text-white' : 'bg-gray-100 dark:bg-gray-700 dark:text-gray-100']">
-            <div class="whitespace-pre-wrap break-words">{{ m.content }}</div>
-            <div class="text-[10px] opacity-70 mt-1">{{ formatTime(m.createdAt) }}</div>
+            <template v-for="item in renderedItems" :key="item.type==='message' ? item.data.id : item.key">
+              <!-- 时间分隔条 -->
+              <div v-if="item.type==='time-divider'" class="text-center my-2 text-xs text-gray-400 select-none">{{ item.timeText }}</div>
+
+              <!-- 消息条目 -->
+              <div v-else class="flex items-end gap-2" :class="item.data.isMine ? 'justify-end' : 'justify-start'">
+                <!-- 对方头像（左） -->
+                <UserAvatar v-if="!item.data.isMine" :avatar="item.data.avatarUrl" :size="28">
+                  <div class="w-7 h-7 rounded-full bg-gray-200 dark:bg-gray-700"></div>
+                </UserAvatar>
+
+                <!-- 气泡与尾巴 -->
+                <div class="relative max-w-[70%]">
+                  <div :class="[
+                      item.data.isMine
+                        ? 'bg-blue-600 text-white bubble-mine'
+                        : 'bg-gray-100 dark:bg-gray-700 dark:text-gray-100 bubble-peer',
+                      'rounded-2xl px-3 py-2 whitespace-pre-wrap break-words'
+                    ]">
+                    {{ item.data.content }}
+                  </div>
+                  <span v-if="!item.data.isMine" class="tail tail-left bg-gray-100 dark:bg-gray-700"></span>
+                  <span v-else class="tail tail-right bg-blue-600"></span>
+                </div>
+
+                <!-- 发送状态（仅我方） -->
+                <div v-if="item.data.isMine" class="ml-1 text-[10px] flex items-center gap-1">
+                  <span v-if="item.data.status==='pending'" class="text-gray-400">{{ t('shared.chat.sending') || '发送中' }}</span>
+                  <span v-else-if="item.data.status==='failed'" class="text-red-500">
+                    {{ t('shared.chat.failed') || '发送失败' }}
+                    <button class="underline ml-1" @click="retrySend(item.data)">{{ t('shared.chat.retry') || '重试' }}</button>
+                  </span>
+                </div>
+
+                <!-- 我方头像（右） -->
+                <UserAvatar v-if="item.data.isMine" :avatar="item.data.avatarUrl" :size="28">
+                  <div class="w-7 h-7 rounded-full bg-gray-200 dark:bg-gray-700"></div>
+                </UserAvatar>
+              </div>
+            </template>
+
+            <div v-if="renderedItems.length === 0" class="text-center text-gray-500 dark:text-gray-400 py-10">{{ emptyText }}</div>
           </div>
-        </div>
-        <div v-if="messages.length === 0" class="text-center text-gray-500 dark:text-gray-400 py-10">{{ emptyText }}</div>
-      </div>
           <div v-else-if="activeTab==='system' && selectedSystem" class="flex-1 overflow-y-auto p-4 space-y-3">
             <div class="space-y-2">
               <div class="text-base font-semibold text-gray-900 dark:text-white truncate">{{ selectedSystem.title || (t('shared.chat.system')||'系统消息') }}</div>
@@ -143,8 +179,8 @@
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-5 h-5 mr-1"><path d="M12 2a10 10 0 100 20 10 10 0 000-20zm0 2a8 8 0 110 16A8 8 0 0112 4zm-3 7a1 1 0 100-2 1 1 0 000 2zm8 0a1 1 0 100-2 1 1 0 000 2zm-8.536 3.464a1 1 0 011.414 0A4 4 0 0012 16a4 4 0 002.121-.536 1 1 0 011.05 1.7A6 6 0 0112 18a6 6 0 01-3.172-.836 1 1 0 01-.364-1.7z"/></svg>
           {{ t('shared.emojiPicker.button') }}
         </button>
-            <input ref="draftInput" v-model="draft" class="input flex-1" :disabled="!hasActivePeer" :placeholder="t('teacher.students.chat.placeholder') as string" @keydown.enter.prevent="send" />
-            <button class="btn btn-primary" :disabled="sending || !draft || !hasActivePeer" @click="send">{{ t('teacher.ai.send') }}</button>
+            <input ref="draftInput" v-model="draft" class="input flex-1" :disabled="!hasActivePeer" :placeholder="t('teacher.students.chat.placeholder') as string" @keydown.enter.prevent="send()" />
+            <button class="btn btn-primary" :disabled="sending || !draft || !hasActivePeer" @click="send()">{{ t('teacher.ai.send') }}</button>
 
         <div v-if="showEmoji" class="absolute bottom-12 left-2 z-50 p-2 w-60 max-h-56 overflow-auto bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded shadow grid grid-cols-8 gap-1">
           <button v-for="(e, idx) in emojiList" :key="idx" type="button" class="text-xl hover:bg-gray-100 dark:hover:bg-gray-700 rounded" @click="pickEmoji(e)">{{ e }}</button>
@@ -171,7 +207,9 @@ const props = defineProps<{
 }>()
 import { computed } from 'vue'
 import { useChatStore } from '@/stores/chat'
+import { useAuthStore } from '@/stores/auth'
 const chat = useChatStore()
+const auth = useAuthStore()
 const emit = defineEmits<{
   (e: 'close'): void
 }>()
@@ -255,6 +293,125 @@ const formatTime = (ts: string) => {
   return isNaN(d.getTime()) ? '' : d.toLocaleString()
 }
 
+// 我的用户ID（字符串）
+const getMyIdString = (): string => {
+  try {
+    // @ts-ignore
+    const aId = auth.user?.id != null ? String(auth.user.id) : null
+    if (aId) return aId
+  } catch {}
+  try {
+    const ls = localStorage.getItem('userId')
+    if (ls) return String(ls)
+  } catch {}
+  return ''
+}
+
+const extractId = (obj: any, keys: string[]): string | null => {
+  for (const k of keys) {
+    const v = obj?.[k]
+    if (v != null && v !== '') return String(v)
+  }
+  return null
+}
+
+const messageIsMine = (n: any): boolean => {
+  const myId = getMyIdString()
+  const sender = extractId(n, ['senderId','sender_id','fromUserId','from_user_id','fromId','from_id','userId','user_id'])
+  if (sender) return String(sender) === myId
+  const recipient = extractId(n, ['recipientId','recipient_id','toUserId','to_user_id','toId','to_id'])
+  // 若仅有 recipientId，则当其等于当前会话对端，推断为我发出
+  if (recipient) return String(recipient) === String(props.peerId || '')
+  return false
+}
+
+// 头像与渲染辅助
+type MessageItem = { id: string | number; content: string; createdAt: string; isMine: boolean; status?: 'sent' | 'pending' | 'failed' }
+type RenderMessage = { type: 'message'; data: MessageItem & { avatarUrl: string | null } }
+type RenderDivider = { type: 'time-divider'; key: string; timeText: string }
+type RenderItem = RenderMessage | RenderDivider
+
+// 对端头像缓存，避免联系人未加载时消息区头像缺失
+const peerAvatarMap = ref<Record<string, string>>({})
+
+const getPeerAvatar = (pid: string | number | undefined | null): string => {
+  if (!pid) return ''
+  const cached = peerAvatarMap.value[String(pid)]
+  if (cached) return cached
+  // 1) 联系人
+  const fromContacts = (() => {
+    const found = (chat.contacts as any[] || []).find((c: any) => String(c.id) === String(pid))
+    return found?.avatar || ''
+  })()
+  if (fromContacts) return fromContacts
+  // 2) 最近会话
+  const fromRecent = (() => {
+    const found = (chat.recentConversations as any[] || []).find((c: any) => String(c.peerId) === String(pid))
+    return found?.avatar || ''
+  })()
+  if (fromRecent) return fromRecent
+  // 3) 占位
+  return ''
+}
+
+const ensurePeerAvatar = async (pid: string | number) => {
+  const idStr = String(pid)
+  if (peerAvatarMap.value[idStr]) return
+  const existing = getPeerAvatar(idStr)
+  if (existing) { peerAvatarMap.value[idStr] = existing; return }
+  try {
+    const { teacherStudentApi } = await import('@/api/teacher-student.api')
+    const profile: any = await teacherStudentApi.getStudentProfile(idStr)
+    const avatar = profile?.avatar || profile?.avatarUrl || profile?.avatar_url || profile?.studentAvatar || profile?.student_avatar || profile?.photo || profile?.image || ''
+    if (avatar) peerAvatarMap.value[idStr] = String(avatar)
+  } catch { /* ignore */ }
+}
+
+const getMyAvatar = (): string => {
+  // @ts-ignore
+  return (auth.user as any)?.avatar || ''
+}
+
+const formatTimeDivider = (ts: string) => {
+  const d = new Date(ts)
+  if (isNaN(d.getTime())) return ''
+  const now = new Date()
+  const sameDay = d.toDateString() === now.toDateString()
+  const yest = new Date(now)
+  yest.setDate(now.getDate() - 1)
+  const isYesterday = d.toDateString() === yest.toDateString()
+  const hm = d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+  if (sameDay) return `今天 ${hm}`
+  if (isYesterday) return `昨天 ${hm}`
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')} ${hm}`
+}
+
+const buildRenderedItems = (list: MessageItem[]): RenderItem[] => {
+  const items: RenderItem[] = []
+  if (!list || list.length === 0) return items
+  const sorted = list.slice().sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime())
+  const THRESHOLD = 5 * 60 * 1000 // 5分钟
+  let lastTs = 0
+  for (const m of sorted) {
+    const curTs = new Date(m.createdAt).getTime() || 0
+    if (lastTs === 0 || Math.abs(curTs - lastTs) > THRESHOLD || new Date(curTs).toDateString() !== new Date(lastTs).toDateString()) {
+      items.push({ type: 'time-divider', key: `t-${m.id}-${curTs}`, timeText: formatTimeDivider(m.createdAt) })
+    }
+    lastTs = curTs
+    items.push({
+      type: 'message',
+      data: {
+        ...m,
+        status: m.status || 'sent',
+        avatarUrl: m.isMine ? getMyAvatar() : getPeerAvatar(peerActiveId.value)
+      }
+    })
+  }
+  return items
+}
+
+const renderedItems = computed<RenderItem[]>(() => { void peerAvatarMap.value; return buildRenderedItems(messages.value as MessageItem[]) })
+
 const scrollToBottom = async () => {
   await nextTick()
   if (scrollContainer.value) {
@@ -270,17 +427,57 @@ const load = async () => {
     id: n.id,
     content: n.content,
     createdAt: n.createdAt || n.created_at || new Date().toISOString(),
-    isMine: n.senderId ? String(n.senderId) === String(localStorage.getItem('userId')) : false
+    isMine: messageIsMine(n),
+    status: 'sent'
   }))
   messages.value = list
   total.value = res?.total || list.length
   // 标记为已读
   try { await notificationAPI.readConversation(props.peerId) } catch {}
   await scrollToBottom()
+  try { if (props.peerId) await ensurePeerAvatar(String(props.peerId)) } catch {}
 }
 
-const send = async () => {
-  if (!draft.value) return
+const createLocalPendingMessage = (content: string): MessageItem => {
+  const id = `local-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
+  return { id, content, createdAt: new Date().toISOString(), isMine: true, status: 'pending' }
+}
+
+const markMessageStatus = (id: string | number, status: 'sent' | 'failed' | 'pending') => {
+  const idx = (messages.value as MessageItem[]).findIndex(m => String(m.id) === String(id))
+  if (idx >= 0) {
+    const cloned = (messages.value as MessageItem[]).slice()
+    cloned[idx] = { ...cloned[idx], status }
+    messages.value = cloned
+  }
+}
+
+const send = async (contentOverride?: string | unknown, tempIdToResolve?: string | number) => {
+  const raw = (typeof contentOverride === 'string' ? contentOverride : draft.value)
+  const content = ((raw ?? '') as any).toString().trim()
+  if (!content) return
+  // 插入或复用本地 pending 消息
+  let localMsg: MessageItem
+  if (tempIdToResolve != null) {
+    const idx = (messages.value as MessageItem[]).findIndex(m => String(m.id) === String(tempIdToResolve))
+    if (idx >= 0) {
+      const cloned = (messages.value as MessageItem[]).slice()
+      const updated = { ...cloned[idx], status: 'pending' as const }
+      cloned[idx] = updated
+      messages.value = cloned
+      localMsg = updated
+    } else {
+      localMsg = createLocalPendingMessage(content)
+      ;(messages.value as MessageItem[]).push(localMsg)
+    }
+  } else {
+    localMsg = createLocalPendingMessage(content)
+    ;(messages.value as MessageItem[]).push(localMsg)
+  }
+  await nextTick()
+  await scrollToBottom()
+  draft.value = ''
+
   try {
     sending.value = true
     const { notificationAPI } = await import('@/api/notification.api')
@@ -288,7 +485,7 @@ const send = async () => {
       // @ts-ignore
       recipientId: Number(props.peerId),
       title: '',
-      content: draft.value,
+      content: content,
       type: 'message',
       category: 'course',
       relatedType: props.courseId ? 'course' : undefined,
@@ -300,11 +497,19 @@ const send = async () => {
     const latestPreview = payload.content
     // 即时更新左侧最近会话顺序与预览
     chat.upsertRecentAfterSend(String(props.peerId || ''), String(props.courseId || ''), latestContent, latestPreview, props.peerName ?? undefined)
-    draft.value = ''
+    // 标记本地消息为 sent，并刷新真实记录
+    markMessageStatus(localMsg.id, 'sent')
     await load()
+  } catch (e) {
+    markMessageStatus(localMsg.id, 'failed')
   } finally {
     sending.value = false
   }
+}
+
+const retrySend = async (msg: MessageItem) => {
+  if (!msg || msg.status !== 'failed') return
+  await send(msg.content, msg.id)
 }
 
 const onEmoji = async (emoji: string) => {
@@ -318,6 +523,11 @@ const pickEmoji = async (e: string) => { await onEmoji(e); showEmoji.value = fal
 
 const choosePeer = async (id: string | number, name?: string | null, cId?: string | number | null) => {
   chat.setPeer(id, name ?? null, (cId ?? props.courseId) ?? null)
+  try { await ensurePeerAvatar(String(id)) } catch {}
+}
+
+const onToggleGroup = async (g: any) => {
+  chat.toggleContactGroup(g.courseId)
 }
 
 const selectedSystem = ref<any | null>(null)
@@ -382,6 +592,14 @@ watch(() => props.peerId, async () => { await load() })
 .input { @apply border rounded px-3 py-2 text-sm bg-white dark:bg-gray-900 border-gray-300 dark:border-gray-700 text-gray-900 dark:text-gray-100; }
 .btn { @apply inline-flex items-center justify-center rounded px-3 py-2 text-sm font-medium; }
 .btn-primary { @apply bg-blue-600 text-white hover:bg-blue-700; }
+
+/* 气泡尾巴：使用额外元素实现，保证与暗黑模式背景一致 */
+.tail { position: absolute; width: 10px; height: 10px; }
+.tail-left { left: -4px; bottom: 10px; clip-path: polygon(0 50%, 100% 0, 100% 100%); }
+.tail-right { right: -4px; bottom: 10px; clip-path: polygon(0 0, 100% 50%, 0 100%); }
+
+.bubble-peer { position: relative; }
+.bubble-mine { position: relative; }
 </style>
 
 

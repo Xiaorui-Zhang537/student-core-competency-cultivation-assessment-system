@@ -241,6 +241,7 @@ export const useChatStore = defineStore('chat', () => {
               name: s.username || s.nickname || s.name || s.studentName || s.realName || '',
               avatar: s.avatar || ''
             }))
+            if (students.length === 0) continue
             groups.push({ courseId: cId, courseName: cName, expanded: true, students })
             contacts.value.push(...students)
           } catch { /* ignore one course */ }

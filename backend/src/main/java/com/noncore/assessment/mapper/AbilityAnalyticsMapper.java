@@ -53,5 +53,32 @@ public interface AbilityAnalyticsMapper {
     int upsertCourseWeight(@Param("courseId") Long courseId,
                            @Param("dimensionCode") String dimensionCode,
                            @Param("weight") Double weight);
+
+    // 带作业集合过滤的扩展查询
+    List<Map<String, Object>> selectStudentDimensionAvgWithAssignments(
+            @Param("studentId") Long studentId,
+            @Param("courseId") Long courseId,
+            @Param("classId") Long classId,
+            @Param("start") LocalDateTime start,
+            @Param("end") LocalDateTime end,
+            @Param("assignmentIds") List<Long> assignmentIds
+    );
+
+    List<Map<String, Object>> selectClassOrCourseDimensionAvgWithAssignments(
+            @Param("courseId") Long courseId,
+            @Param("classId") Long classId,
+            @Param("start") LocalDateTime start,
+            @Param("end") LocalDateTime end,
+            @Param("assignmentIds") List<Long> assignmentIds
+    );
+
+    Map<String, Object> selectCourseGradeAvgWithAssignments(
+            @Param("courseId") Long courseId,
+            @Param("classId") Long classId,
+            @Param("studentId") Long studentId,
+            @Param("start") LocalDateTime start,
+            @Param("end") LocalDateTime end,
+            @Param("assignmentIds") List<Long> assignmentIds
+    );
 }
 

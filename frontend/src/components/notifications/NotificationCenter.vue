@@ -165,7 +165,7 @@
 
             <!-- 内容 -->
             <p class="notification-content dark:text-gray-200">
-              {{ notification.content }}
+              {{ getLocalizedContent(notification) }}
             </p>
 
             <!-- 时间和状态 -->
@@ -409,11 +409,23 @@ const getLocalizedTitle = (notification: any) => {
     course: 'notifications.categoryTitles.courseUpdate',
     assignment: 'notifications.categoryTitles.assignmentGeneral',
     grade: 'notifications.categoryTitles.gradePosted',
-    message: 'notifications.categoryTitles.message'
+    message: 'notifications.categoryTitles.message',
+    post: 'notifications.categoryTitles.postReply'
   }
   if (keyByType[type]) return t(keyByType[type]) as string
   // 最后回退原始标题
   return String(notification?.title || '')
+}
+
+// 本地化内容（支持 post 类型）
+const getLocalizedContent = (notification: any) => {
+  const type = (notification?.type || '').toLowerCase()
+  if (type === 'post') {
+    // 对于帖子回复，直接使用后端内容（可能为中文），不强制英文文案
+    return String(notification?.content || '')
+  }
+  // 其他类型沿用后端 content
+  return String(notification?.content || '')
 }
 
 const formatTime = (timestamp: string) => {

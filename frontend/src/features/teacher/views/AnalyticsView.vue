@@ -61,64 +61,23 @@
     </div>
 
     <!-- 图表区域 -->
-    <div class="grid grid-cols-1 xl:grid-cols-2 gap-8 mb-8">
-      <!-- 成绩分布图 -->
-      <card padding="lg">
+    <div class="grid grid-cols-12 gap-6 mb-2 items-start w-full">
+      <!-- 左列包裹：成绩分布 + 学生表现排行（同一列内堆叠，避免被右列拉高后产生空白） -->
+      <div class="col-span-12 lg:col-span-6 min-w-0 flex flex-col gap-4 self-start w-full">
+        <card padding="lg" class="self-start w-full">
         <template #header>
-          <div class="flex items-center justify-between h-11">
+            <div class="flex items-center justify-between h-11 overflow-hidden">
             <h3 class="text-lg font-semibold text-gray-900 dark:text-white">{{ t('teacher.analytics.charts.scoreDistribution') }}</h3>
-            <!-- 保持左右卡片header高度一致（右侧有按钮），这里用占位 -->
-            <div class="invisible flex items-center gap-2">
-              <button class="btn">1</button>
-              <button class="btn">2</button>
-            </div>
+              <div class="invisible flex items-center gap-2"><button class="btn">1</button><button class="btn">2</button></div>
           </div>
         </template>
-        <!-- 对齐工具栏占位，使左右两图表起始Y对齐 -->
         <div class="mb-3 min-h-[44px]"></div>
-        <div class="w-full flex justify-center">
-          <div ref="scoreDistributionRef" class="h-80 w-full max-w-[520px]"></div>
-        </div>
-      </card>
-
-      <!-- 五维能力雷达图 -->
-      <card padding="lg">
-        <template #header>
-          <div class="flex items-center justify-between h-11 relative z-10">
-            <h3 class="text-lg font-semibold text-gray-900 dark:text-white">{{ t('teacher.analytics.charts.radar') }}</h3>
-            <div class="flex items-center gap-2">
-              <Button size="sm" variant="indigo" @click="openWeights = true" :disabled="!selectedCourseId">
-                {{ t('teacher.analytics.charts.setWeights') }}
-              </Button>
-              <Button size="sm" variant="outline" :title="t('teacher.analytics.charts.refresh')" @click="loadRadar" :disabled="!selectedCourseId">
-                <ArrowPathIcon class="w-4 h-4" />
-              </Button>
-              <Button size="sm" variant="outline" @click="exportRadar" :disabled="!selectedCourseId">
-                <DocumentArrowDownIcon class="w-4 h-4 mr-1" />
-                {{ t('teacher.analytics.charts.exportCsv') }}
-              </Button>
-            </div>
+          <div class="w-full">
+            <div ref="scoreDistributionRef" class="h-80 w-full"></div>
           </div>
-        </template>
-        <div class="flex flex-nowrap items-center gap-2 mb-3 overflow-x-auto min-h-[44px]">
-          <select v-model="selectedStudentId" class="input w-44" :disabled="!selectedCourseId">
-            <option :value="null">{{ t('teacher.analytics.charts.selectStudent') }}</option>
-            <option v-for="s in topStudents" :key="s.studentId" :value="String(s.studentId)">{{ s.studentName }}</option>
-          </select>
-          <input type="date" v-model="startDate" class="input w-36" />
-          <input type="date" v-model="endDate" class="input w-36" />
-        </div>
-        <div v-if="radarIndicators.length" class="w-full flex justify-center">
-          <radar-chart :indicators="radarIndicators" :series="radarSeries" width="520px" height="320px" />
-        </div>
-        <div v-else class="text-sm text-gray-500 text-center">{{ t('teacher.analytics.charts.noRadar') }}</div>
       </card>
-    </div>
 
-    <!-- 详细数据表格 -->
-    <div class="grid grid-cols-1 xl:grid-cols-2 gap-8">
-      <!-- 学生表现排行 -->
-      <card padding="lg">
+        <card padding="lg" class="self-start w-full">
         <template #header>
           <h3 class="text-lg font-semibold text-gray-900 dark:text-white">{{ t('teacher.analytics.tables.studentRanking') }}</h3>
         </template>
@@ -135,7 +94,127 @@
             </li>
           </ul>
       </card>
+      </div>
 
+      <!-- 五维能力雷达图 -->
+      <div class="col-span-12 lg:col-span-6 min-w-0 flex flex-col gap-4 w-full">
+        <!-- 控制面板 -->
+        <card padding="lg" class="w-full">
+          <template #header>
+            <div class="flex items-center justify-between h-11">
+              <h3 class="text-lg font-semibold text-gray-900 dark:text-white">{{ t('teacher.analytics.settings.title') }}</h3>
+              <div class="flex items-center gap-3">
+                <div class="flex flex-col items-center mr-1">
+                  <span class="text-xs font-medium leading-tight text-gray-700 dark:text-gray-300">{{ t('teacher.analytics.charts.enableCompare') }}</span>
+                  <button type="button" @click="compareEnabled = !compareEnabled" :aria-pressed="compareEnabled"
+                          class="relative mt-1 inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                          :class="compareEnabled ? 'bg-indigo-600' : 'bg-gray-200 dark:bg-gray-700'">
+                    <span class="sr-only">{{ t('teacher.analytics.charts.enableCompare') }}</span>
+                    <span aria-hidden="true" class="pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200" :class="compareEnabled ? 'translate-x-5' : 'translate-x-0'"></span>
+                  </button>
+                </div>
+                <Button size="sm" variant="indigo" @click="openWeights = true" :disabled="!selectedCourseId" class="shadow-sm">
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-4 h-4 mr-1">
+                    <path d="M11.25 3.5a.75.75 0 0 1 .75-.75h1.5a.75.75 0 0 1 .75.75v1.19a5.25 5.25 0 0 1 2.56 1.06l.84-.84a.75.75 0 0 1 1.06 0l1.06 1.06a.75.75 0 0 1 0 1.06l-.84.84a5.25 5.25 0 0 1 1.06 2.56h1.19a.75.75 0 0 1 .75.75v1.5a.75.75 0 0 1-.75.75h-1.19a5.25 5.25 0 0 1-1.06 2.56l.84.84a.75.75 0 0 1 0 1.06l-1.06 1.06a.75.75 0 0 1-1.06 0l-.84-.84a5.25 5.25 0 0 1-2.56 1.06v1.19a.75.75 0 0 1-.75.75h-1.5a.75.75 0 0 1-.75-.75v-1.19a5.25 5.25 0 0 1-2.56-1.06l-.84.84a.75.75 0 0 1-1.06 0L5.27 17a.75.75 0 0 1 0-1.06l.84-.84a5.25 5.25 0 0 1-1.06-2.56H3.86a.75.75 0 0 1-.75-.75v-1.5c0-.414.336-.75.75-.75h1.19a5.25 5.25 0 0 1 1.06-2.56l-.84-.84a.75.75 0 0 1 0-1.06l1.06-1.06a.75.75 0 0 1 1.06 0l.84.84a5.25 5.25 0 0 1 2.56-1.06V3.5Z"/>
+                    <path d="M12 8.75a3.25 3.25 0 1 0 0 6.5 3.25 3.25 0 0 0 0-6.5Z"/>
+                  </svg>
+                  {{ t('teacher.analytics.charts.setWeights') }}
+                </Button>
+                <Button size="sm" variant="teal" :title="t('teacher.analytics.charts.refresh')" @click="onRefreshAnalytics" :disabled="!selectedCourseId" class="shadow-sm">
+                  <ArrowPathIcon class="w-4 h-4 mr-1" />
+                  {{ t('teacher.analytics.charts.refresh') }}
+                </Button>
+                <Button size="sm" variant="purple" @click="exportAnalytics" :disabled="!selectedCourseId" class="shadow-sm">
+                  <DocumentArrowDownIcon class="w-4 h-4 mr-1" />
+                  {{ t('teacher.analytics.charts.exportCsv') }}
+                </Button>
+              </div>
+            </div>
+          </template>
+          <div class="flex flex-col gap-3">
+            <p class="text-xs text-gray-600 dark:text-gray-400 leading-relaxed">{{ t('teacher.analytics.settings.compareNote') }}</p>
+            <div class="flex flex-nowrap items-center gap-2 overflow-x-auto min-h-[44px]">
+              <span class="text-sm text-gray-700 dark:text-gray-300">{{ t('teacher.analytics.settings.studentLabel') }}</span>
+              <select v-model="selectedStudentId" class="input w-40" :disabled="!selectedCourseId">
+                <option :value="null">{{ t('teacher.analytics.charts.selectStudent') }}</option>
+                <option v-for="s in topStudents" :key="s.studentId" :value="String(s.studentId)">{{ s.studentName }}</option>
+              </select>
+              <span class="text-sm text-gray-700 dark:text-gray-300">{{ t('teacher.analytics.settings.classAvgLabel') }}</span>
+              <select v-model="includeClassAvg" class="input w-[168px]" :disabled="!compareEnabled">
+                <option value="both">{{ t('teacher.analytics.charts.classAvgBoth') || '班级均值: A与B' }}</option>
+                <option value="A">{{ t('teacher.analytics.charts.classAvgA') || '班级均值: 仅A' }}</option>
+                <option value="B">{{ t('teacher.analytics.charts.classAvgB') || '班级均值: 仅B' }}</option>
+                <option value="none">{{ t('teacher.analytics.charts.classAvgNone') || '班级均值: 关闭' }}</option>
+              </select>
+            </div>
+            <div v-if="!compareEnabled" class="flex flex-nowrap items-center gap-2 overflow-x-auto">
+              <span class="text-sm text-gray-700 dark:text-gray-300">{{ t('teacher.analytics.settings.timeFilter') }}</span>
+              <input type="date" v-model="startDate" class="input w-40" />
+              <span class="px-1 text-gray-400">-</span>
+              <input type="date" v-model="endDate" class="input w-40" />
+            </div>
+            <div v-else class="flex flex-col gap-2">
+              <div class="flex flex-wrap items-center gap-2">
+                <span class="text-sm text-gray-700 dark:text-gray-300">{{ t('teacher.analytics.settings.setA') }}</span>
+                <select multiple size="6" v-model="assignmentIdsA" class="input min-w-[260px]">
+                  <option v-for="a in assignmentOptions" :key="a.id" :value="String(a.id)">{{ a.title }}</option>
+                  <option v-if="!assignmentOptions.length" disabled>暂无作业</option>
+                </select>
+                <span class="text-xs text-gray-500 dark:text-gray-400">{{ t('teacher.analytics.settings.multiSelectHint') }}</span>
+              </div>
+              <div class="flex flex-wrap items-center gap-2">
+                <span class="text-sm text-gray-700 dark:text-gray-300">{{ t('teacher.analytics.settings.setB') }}</span>
+                <select multiple size="6" v-model="assignmentIdsB" class="input min-w-[260px]">
+                  <option v-for="a in assignmentOptions" :key="a.id" :value="String(a.id)">{{ a.title }}</option>
+                  <option v-if="!assignmentOptions.length" disabled>暂无作业</option>
+                </select>
+                <span class="text-xs text-gray-500 dark:text-gray-400">{{ t('teacher.analytics.settings.multiSelectHint') }}</span>
+              </div>
+            </div>
+          </div>
+        </card>
+
+        <!-- 雷达图展示 -->
+        <card padding="lg">
+          <template #header>
+            <div class="flex items-center justify-between h-11 relative z-10 overflow-hidden">
+              <h3 class="text-lg font-semibold text-gray-900 dark:text-white">{{ t('teacher.analytics.charts.radar') }}</h3>
+              <div class="flex items-center gap-2"></div>
+            </div>
+          </template>
+          <div v-if="radarIndicators.length" class="w-full">
+            <radar-chart :indicators="radarIndicators" :series="radarSeries" height="320px" />
+          </div>
+          <div v-else class="text-sm text-gray-500 text-center">{{ t('teacher.analytics.charts.noRadar') }}</div>
+        </card>
+
+        <!-- 维度解析卡片（右列堆叠） -->
+        <card padding="lg" v-if="compareEnabled || (!!selectedStudentId)" class="self-start w-full">
+          <template #header>
+            <div class="flex items-center justify-between h-11">
+              <h3 class="text-lg font-semibold text-gray-900 dark:text-white">{{ t('teacher.analytics.charts.dimensionInsights') || '维度解析' }}</h3>
+              <Button size="sm" variant="outline" @click="loadInsights" :disabled="!selectedCourseId">{{ t('teacher.analytics.charts.refresh') || '刷新' }}</Button>
+            </div>
+          </template>
+          <div v-if="insightsItems.length === 0" class="text-sm text-gray-500">{{ t('teacher.analytics.charts.noInsights') || '暂无解析' }}</div>
+          <div v-else class="divide-y divide-gray-200 dark:divide-gray-700">
+            <div v-for="(it, idx) in insightsItems" :key="idx" class="py-3">
+              <div class="flex items-center justify-between">
+                <div class="text-sm font-medium text-gray-900 dark:text-gray-100">{{ localizeDimensionName(it.name) }}</div>
+                <div class="text-sm text-gray-600 dark:text-gray-300">
+                  <span class="mr-2">A: {{ (it.scoreA ?? 0).toFixed(1) }}</span>
+                  <span v-if="compareEnabled" class="mr-2">B: {{ (it.scoreB ?? 0).toFixed(1) }}</span>
+                  <span v-if="compareEnabled && it.delta != null" :class="(it.delta ?? 0) >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'">
+                    Δ {{ (it.delta ?? 0).toFixed(1) }}
+                  </span>
+                </div>
+              </div>
+              <div class="mt-1 text-sm text-gray-700 dark:text-gray-300">{{ it.analysis }}</div>
+              <div class="mt-1 text-sm text-gray-700 dark:text-gray-300">{{ it.suggestion }}</div>
+            </div>
+          </div>
+        </card>
+      </div>
     
     </div>
     <!-- 权重设置弹窗（保持在同一 <template> 内） -->
@@ -151,6 +230,7 @@ import { useCourseStore } from '@/stores/course'
 import { useAuthStore } from '@/stores/auth'
 import { useUIStore } from '@/stores/ui'
 import { teacherApi } from '@/api/teacher.api'
+import { assignmentApi } from '@/api/assignment.api'
 import type { CourseStudentPerformanceItem } from '@/types/teacher'
 import Card from '@/components/ui/Card.vue'
 import Button from '@/components/ui/Button.vue'
@@ -186,6 +266,17 @@ const start30 = new Date(today)
 start30.setDate(start30.getDate() - 29)
 const startDate = ref<string>(fmt(start30))
 const endDate = ref<string>(fmt(today))
+// Compare mode states
+const compareEnabled = ref<boolean>(false)
+const includeClassAvg = ref<'none'|'A'|'B'|'both'>('both')
+const startDateA = ref<string>(fmt(start30))
+const endDateA = ref<string>(fmt(today))
+const startDateB = ref<string>(fmt(start30))
+const endDateB = ref<string>(fmt(today))
+const assignmentOptions = ref<{ id: string; title: string }[]>([])
+const assignmentIdsA = ref<string[]>([])
+const assignmentIdsB = ref<string[]>([])
+const insightsItems = ref<any[]>([])
 const openWeights = ref(false)
 const weights = ref<Record<string, number> | null>(null)
 const radarIndicators = ref<{ name: string; max: number }[]>([])
@@ -297,8 +388,9 @@ const initScoreDistributionChart = () => {
       {
         name: t('teacher.analytics.charts.series.distribution'),
         type: 'pie',
-        radius: ['50%', '70%'],
-        center: ['50%', '48%'],
+        // 扩大半径并居中，使其尽量填充卡片
+        radius: ['40%', '78%'],
+        center: ['50%', '50%'],
         data: pieData,
       }
     ]
@@ -336,6 +428,16 @@ const onCourseChange = () => {
     initCharts()
     loadRadar()
   })
+  // 若开启对比，切课时同步加载作业列表，避免选项为空
+  if (compareEnabled.value && selectedCourseId.value) {
+    assignmentOptions.value = []
+    assignmentApi.getAssignmentsByCourse(selectedCourseId.value, { page: 1, size: 1000 } as any)
+      .then((res: any) => {
+        const items = res?.data?.items?.items || res?.data?.items || res?.items || []
+        assignmentOptions.value = (items || []).map((it: any) => ({ id: String(it.id), title: it.title || (`#${it.id}`) }))
+      })
+      .catch(() => { assignmentOptions.value = [] })
+  }
 }
 
 // 当路由中的 courseId 改变（例如从其它页面跳转）时，自动同步当前课程并刷新数据
@@ -361,6 +463,25 @@ watch(() => teacherStore.classPerformance, () => {
 
 // 学生切换时自动刷新雷达图
 watch(selectedStudentId, () => {
+  loadRadar()
+  // 学生选择变化时，自动刷新维度解析
+  loadInsights()
+})
+
+watch(compareEnabled, () => {
+  if (compareEnabled.value) {
+    // 加载课程作业
+    if (selectedCourseId.value) {
+      assignmentOptions.value = []
+      assignmentApi.getAssignmentsByCourse(selectedCourseId.value, { page: 1, size: 1000 } as any)
+        .then((res: any) => {
+          const items = res?.data?.items?.items || res?.data?.items || res?.items || []
+          assignmentOptions.value = (items || []).map((it: any) => ({ id: String(it.id), title: it.title || (`#${it.id}`) }))
+        })
+        .catch(() => { assignmentOptions.value = [] })
+    }
+    loadInsights()
+  }
   loadRadar()
 })
 
@@ -439,7 +560,9 @@ const askAiForAnalytics = () => {
 
 const loadRadar = async () => {
   try {
-    if (!selectedCourseId.value || !startDate.value || !endDate.value) return
+    if (!selectedCourseId.value) return
+    if (!compareEnabled.value) {
+      if (!startDate.value || !endDate.value) return
     if (new Date(startDate.value) > new Date(endDate.value)) {
       return uiStore.showNotification({ type: 'warning', title: t('teacher.analytics.messages.timeRangeError'), message: t('teacher.analytics.messages.timeRangeMsg') })
     }
@@ -456,6 +579,35 @@ const loadRadar = async () => {
       { name: t('teacher.analytics.charts.series.student'), values: student },
       { name: t('teacher.analytics.charts.series.class'), values: clazz },
     ]
+    } else {
+      if (!selectedStudentId.value) {
+        return uiStore.showNotification({ type: 'warning', title: t('teacher.analytics.messages.chooseStudent') || '请选择学生', message: t('teacher.analytics.messages.chooseStudentMsg') || '在对比模式下需先选择学生' })
+      }
+      const body: any = {
+        courseId: selectedCourseId.value,
+        studentId: selectedStudentId.value,
+        includeClassAvg: includeClassAvg.value,
+      }
+      if (startDateA.value && endDateA.value) { body.startDateA = startDateA.value; body.endDateA = endDateA.value }
+      if (startDateB.value && endDateB.value) { body.startDateB = startDateB.value; body.endDateB = endDateB.value }
+      if (assignmentIdsA.value?.length) body.assignmentIdsA = assignmentIdsA.value
+      if (assignmentIdsB.value?.length) body.assignmentIdsB = assignmentIdsB.value
+      const r: any = await teacherApi.postAbilityRadarCompare(body)
+      const data: any = r?.data?.data ?? r?.data ?? r
+      const dims: string[] = data?.dimensions || []
+      rawRadarDimensions.value = [...dims]
+      radarIndicators.value = dims.map(n => ({ name: localizeDimensionName(n), max: 100 }))
+      const series: { name: string; values: number[] }[] = []
+      const aStu = (data?.seriesA?.studentScores || []) as number[]
+      const aCls = (data?.seriesA?.classAvgScores || []) as number[]
+      const bStu = (data?.seriesB?.studentScores || []) as number[]
+      const bCls = (data?.seriesB?.classAvgScores || []) as number[]
+      series.push({ name: 'A - ' + (t('teacher.analytics.charts.series.student') || '学生'), values: aStu })
+      if (Array.isArray(aCls) && aCls.length) series.push({ name: 'A - ' + (t('teacher.analytics.charts.series.class') || '班级'), values: aCls })
+      series.push({ name: 'B - ' + (t('teacher.analytics.charts.series.student') || '学生'), values: bStu })
+      if (Array.isArray(bCls) && bCls.length) series.push({ name: 'B - ' + (t('teacher.analytics.charts.series.class') || '班级'), values: bCls })
+      radarSeries.value = series
+    }
   } catch (e: any) {
     uiStore.showNotification({ type: 'error', title: t('teacher.analytics.messages.refreshFailed'), message: e?.message || t('teacher.analytics.messages.refreshFailedMsg') })
   }
@@ -475,6 +627,67 @@ const exportRadar = async () => {
   window.URL.revokeObjectURL(url)
 }
 
+const onRefreshAnalytics = async () => {
+  await loadRadar()
+  await loadInsights()
+}
+
+const exportAnalytics = async () => {
+  if (!selectedCourseId.value) return
+  if (compareEnabled.value) {
+    if (!selectedStudentId.value) return
+    const body: any = {
+      courseId: selectedCourseId.value,
+      studentId: selectedStudentId.value,
+      includeClassAvg: includeClassAvg.value,
+    }
+    if (assignmentIdsA.value?.length) body.assignmentIdsA = assignmentIdsA.value
+    if (assignmentIdsB.value?.length) body.assignmentIdsB = assignmentIdsB.value
+    const res = await teacherApi.exportAbilityRadarCompareCsv(body)
+    const blob = new Blob([res as any], { type: 'text/csv;charset=utf-8;' })
+    const url = window.URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `radar_compare_${selectedCourseId.value}_${selectedStudentId.value}.csv`
+    a.click()
+    window.URL.revokeObjectURL(url)
+  } else {
+    const params: any = { courseId: selectedCourseId.value, startDate: startDate.value, endDate: endDate.value }
+    if (selectedStudentId.value) params.studentId = selectedStudentId.value
+    const res = await teacherApi.exportAbilityRadarCsv(params)
+    const blob = new Blob([res as any], { type: 'text/csv;charset=utf-8;' })
+    const url = window.URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `radar_${selectedCourseId.value}.csv`
+    a.click()
+    window.URL.revokeObjectURL(url)
+  }
+}
+
+const loadInsights = async () => {
+  try {
+    if (!selectedCourseId.value || !selectedStudentId.value) return
+    const body: any = {
+      courseId: selectedCourseId.value,
+      studentId: selectedStudentId.value,
+      includeClassAvg: includeClassAvg.value,
+    }
+    // compare 开启：带上A/B作业集；未开启：仅用A作业集或留空（后端将用同组对比）
+    if (compareEnabled.value) {
+      if (assignmentIdsA.value?.length) body.assignmentIdsA = assignmentIdsA.value
+      if (assignmentIdsB.value?.length) body.assignmentIdsB = assignmentIdsB.value
+    } else {
+      if (assignmentIdsA.value?.length) body.assignmentIdsA = assignmentIdsA.value
+      body.assignmentIdsB = assignmentIdsA.value && assignmentIdsA.value.length ? assignmentIdsA.value : undefined
+    }
+    const r: any = await teacherApi.postAbilityDimensionInsights(body)
+    insightsItems.value = (r?.data?.data?.items ?? r?.data?.items ?? r?.items ?? []) as any[]
+  } catch (e: any) {
+    insightsItems.value = []
+  }
+}
+
 const onWeightsSaved = async (w: Record<string, number>) => {
   if (!selectedCourseId.value) return
   weights.value = { ...w }
@@ -487,12 +700,15 @@ function refreshRadarLocalization() {
   if (rawRadarDimensions.value.length) {
     radarIndicators.value = rawRadarDimensions.value.map(n => ({ name: localizeDimensionName(n), max: 100 }))
   }
-  const studentValues = radarSeries.value[0]?.values || []
-  const classValues = radarSeries.value[1]?.values || []
-  radarSeries.value = [
-    { name: t('teacher.analytics.charts.series.student'), values: studentValues },
-    { name: t('teacher.analytics.charts.series.class'), values: classValues },
-  ]
+  const studentLabel = t('teacher.analytics.charts.series.student')
+  const classLabel = t('teacher.analytics.charts.series.class')
+  radarSeries.value = radarSeries.value.map(s => {
+    let newName = s.name
+    // 替换常见标签为当前语言
+    newName = newName.replace(/学生|Student/gi, studentLabel)
+    newName = newName.replace(/班级|Class/gi, classLabel)
+    return { name: newName, values: s.values }
+  })
 }
 
 watch(locale, () => {

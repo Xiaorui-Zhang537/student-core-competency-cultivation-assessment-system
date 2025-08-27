@@ -336,9 +336,18 @@
             "charts": {
 				"scoreDistribution": "Score Distribution",
 				"radar": "Capability Radar",
-				"setWeights": "Set Weights",
+				"setWeights": "Weights",
 				"refresh": "Refresh",
-				"exportCsv": "Export CSV",
+				"exportCsv": "Export",
+				"enableCompare": "Enable Compare",
+				"classAvgBoth": "Class Avg: A & B",
+				"classAvgA": "Class Avg: A only",
+				"classAvgB": "Class Avg: B only",
+				"classAvgNone": "Class Avg: Off",
+				"refreshCompare": "Refresh Compare",
+				"exportCompareCsv": "Export Compare CSV",
+				"dimensionInsights": "Dimension Insights",
+				"noInsights": "No insights yet",
 				"selectStudent": "Select Student",
 				"noRadar": "No radar data",
 				"unknown": "Unknown",
@@ -347,6 +356,20 @@
 					"student": "Student",
 					"class": "Class"
 				}
+            },
+            "chartsExtra": {
+                "dimensionInsights": "Dimension Insights",
+                "noInsights": "No insights yet"
+            },
+            "settings": {
+              "title": "Settings",
+              "compareNote": "Comparison is always for the same student. Two assignment sets (A & B) for this student are compared. Class average is optional for reference.",
+              "studentLabel": "Student",
+              "classAvgLabel": "Class Average",
+              "timeFilter": "Time Filter",
+              "setA": "A (Student's set)",
+              "setB": "B (Student's baseline set)",
+              "multiSelectHint": "Hold Ctrl/Cmd to multi-select; choose at least one assignment"
             },
             "weights": {
               "title": "Set capability weights",
@@ -367,6 +390,8 @@
 			"messages": {
 				"chooseCourse": "Please select a course",
 				"chooseCourseMsg": "Select a course to export",
+				"chooseStudent": "Please select a student",
+				"chooseStudentMsg": "Please choose a student to run comparison or insights",
 				"exportFailed": "Export failed",
 				"exportFailedMsg": "Please try again later",
 				"timeRangeError": "Invalid time range",

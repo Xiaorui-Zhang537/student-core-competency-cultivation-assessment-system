@@ -11,14 +11,14 @@
       </div>
       <div class="flex justify-end gap-3 mt-6">
         <button class="btn btn-secondary" @click="$emit('close')">{{ t('teacher.analytics.weights.cancel') }}</button>
-        <button class="btn btn-primary" @click="save" :disabled="saving">{{ t('teacher.analytics.weights.save') }}</button>
+        <button class="btn btn-primary" @click="save" :disabled="!valid || saving">{{ t('teacher.analytics.weights.save') }}</button>
       </div>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { reactive, watch, computed } from 'vue'
+import { reactive, ref, watch, computed } from 'vue'
 // @ts-ignore shim for vue-i18n types in this project
 import { useI18n } from 'vue-i18n'
 
@@ -36,7 +36,7 @@ const dims = [
 ]
 
 const localWeights = reactive<Record<string, number>>({})
-const saving = reactive({ v: false })
+const saving = ref(false)
 
 watch(() => props.weights, (w) => {
   Object.assign(localWeights, w || {})
@@ -46,11 +46,11 @@ const valid = computed(() => Object.values(localWeights).every(v => typeof v ===
 
 const save = async () => {
   if (!valid.value) return
-  saving.v = true
+  saving.value = true
   try {
     emit('saved', { ...localWeights })
   } finally {
-    saving.v = false
+    saving.value = false
     emit('close')
   }
 }

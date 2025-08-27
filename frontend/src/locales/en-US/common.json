@@ -10,7 +10,8 @@
     "pin": "Pin",
     "unpin": "Unpin",
     "delete": "Delete",
-    "uploadImage": "Upload Image"
+    "uploadImage": "Upload Image",
+    "refresh": "Refresh"
   },
   "notifications": {
     "title": "Notifications",
@@ -58,7 +59,8 @@
       "gradePosted": "Grade Posted",
       "message": "Message",
       "systemGeneral": "System",
-      "assignmentGeneral": "Assignment"
+      "assignmentGeneral": "Assignment",
+      "postReply": "Post Reply"
     },
     "time": {
       "justNow": "Just now",

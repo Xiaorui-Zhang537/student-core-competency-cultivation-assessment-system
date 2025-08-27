@@ -92,7 +92,7 @@
                   
                   <!-- 内容预览 -->
                   <p class="notification-preview">
-                    {{ notification.content }}
+                    {{ getLocalizedContent(notification) }}
                   </p>
                   
                   <!-- 时间 -->
@@ -230,6 +230,16 @@ const getNotificationIcon = (type: string) => {
   return icons[type as keyof typeof icons] || BellIcon
 }
 
+// 内容本地化（含 post 类型）
+const getLocalizedContent = (notification: any) => {
+  const type = (notification?.type || '').toLowerCase()
+  if (type === 'post') {
+    // 直接显示后端内容（可为中文），避免与“消息”类型混淆
+    return String(notification?.content || '')
+  }
+  return String(notification?.content || '')
+}
+
 const getNotificationIconColor = (type: string) => {
   const colors = {
     system: 'text-blue-500',
@@ -287,7 +297,8 @@ const getLocalizedTitle = (notification: any) => {
     course: 'notifications.categoryTitles.courseUpdate',
     assignment: 'notifications.categoryTitles.assignmentGeneral',
     grade: 'notifications.categoryTitles.gradePosted',
-    message: 'notifications.categoryTitles.message'
+    message: 'notifications.categoryTitles.message',
+    post: 'notifications.categoryTitles.postReply'
   }
   if (keyByType[type]) return t(keyByType[type]) as string
   return String(notification?.title || '')

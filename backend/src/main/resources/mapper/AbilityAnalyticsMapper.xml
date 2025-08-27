@@ -74,5 +74,71 @@
         ON DUPLICATE KEY UPDATE weight = VALUES(weight), updated_at = NOW()
     </insert>
 
+    <!-- ===== 扩展：带作业集合过滤 ===== -->
+    <select id="selectStudentDimensionAvgWithAssignments" resultType="map">
+        SELECT ad.name AS dimensionName,
+               COALESCE(AVG(aa.score), 0) AS avgScore,
+               COALESCE(MAX(aa.max_score), 100) AS maxScore
+        FROM ability_assessments aa
+                 JOIN ability_dimensions ad ON aa.dimension_id = ad.id
+                 LEFT JOIN assignments a ON aa.related_id = a.id
+        WHERE aa.student_id = #{studentId}
+          <if test="courseId != null">
+              AND a.course_id = #{courseId}
+          </if>
+          <if test="start != null and end != null">
+              AND aa.assessed_at BETWEEN #{start} AND #{end}
+          </if>
+          <if test="assignmentIds != null and assignmentIds.size > 0">
+              AND aa.related_id IN
+              <foreach collection="assignmentIds" item="id" open="(" separator="," close=")">#{id}</foreach>
+          </if>
+        GROUP BY ad.name
+    </select>
+
+    <select id="selectClassOrCourseDimensionAvgWithAssignments" resultType="map">
+        SELECT ad.name AS dimensionName,
+               COALESCE(AVG(aa.score), 0) AS avgScore,
+               COALESCE(MAX(aa.max_score), 100) AS maxScore
+        FROM ability_assessments aa
+                 JOIN ability_dimensions ad ON aa.dimension_id = ad.id
+                 LEFT JOIN assignments a ON aa.related_id = a.id
+                 <if test="classId != null">
+                     JOIN enrollments e ON e.student_id = aa.student_id AND e.course_id = a.course_id
+                 </if>
+        WHERE 1=1
+          <if test="courseId != null">AND a.course_id = #{courseId}</if>
+          <if test="classId != null">AND e.status = 'active'</if>
+          <if test="start != null and end != null">
+              AND aa.assessed_at BETWEEN #{start} AND #{end}
+          </if>
+          <if test="assignmentIds != null and assignmentIds.size > 0">
+              AND aa.related_id IN
+              <foreach collection="assignmentIds" item="id" open="(" separator="," close=")">#{id}</foreach>
+          </if>
+        GROUP BY ad.name
+    </select>
+
+    <select id="selectCourseGradeAvgWithAssignments" resultType="map">
+        SELECT COALESCE(AVG(g.score), 0) AS avgScore,
+               COALESCE(MAX(g.max_score), 100) AS maxScore
+        FROM grades g
+                 JOIN assignments a ON g.assignment_id = a.id
+                 <if test="classId != null">
+                     JOIN enrollments e ON e.student_id = g.student_id AND e.course_id = a.course_id
+                 </if>
+        WHERE 1=1
+          <if test="courseId != null">AND a.course_id = #{courseId}</if>
+          <if test="studentId != null">AND g.student_id = #{studentId}</if>
+          <if test="classId != null">AND (e.status = 'active' OR e.status = 1)</if>
+          <if test="start != null and end != null">AND g.created_at BETWEEN #{start} AND #{end}</if>
+          <if test="assignmentIds != null and assignmentIds.size > 0">
+              AND g.assignment_id IN
+              <foreach collection="assignmentIds" item="id" open="(" separator="," close=")">#{id}</foreach>
+          </if>
+          AND (g.deleted = false OR g.deleted = 0)
+          AND (g.status = 'published' OR g.status = 'PUBLISHED' OR g.status = 1)
+    </select>
+
 </mapper>
 

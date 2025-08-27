@@ -339,6 +339,15 @@
 				"setWeights": "设置权重",
 				"refresh": "刷新",
 				"exportCsv": "导出CSV",
+				"enableCompare": "开启对比",
+				"classAvgBoth": "班级均值: A与B",
+				"classAvgA": "班级均值: 仅A",
+				"classAvgB": "班级均值: 仅B",
+				"classAvgNone": "班级均值: 关闭",
+				"refreshCompare": "刷新对比",
+				"exportCompareCsv": "导出对比CSV",
+				"dimensionInsights": "维度解析",
+				"noInsights": "暂无解析",
 				"selectStudent": "请选择学生",
 				"noRadar": "暂无雷达数据",
 				"unknown": "未知",
@@ -347,6 +356,20 @@
 					"student": "学生",
 					"class": "班级"
 				}
+            },
+            "chartsExtra": {
+                "dimensionInsights": "维度解析",
+                "noInsights": "暂无解析"
+            },
+            "settings": {
+              "title": "设置",
+              "compareNote": "对比对象始终为同一名学生，将该生的两组作业集合（A 与 B）进行对比；班级均值仅作参考。",
+              "studentLabel": "学生",
+              "classAvgLabel": "班级均值",
+              "timeFilter": "时间筛选",
+              "setA": "A（该生作业集）",
+              "setB": "B（该生对照作业集）",
+              "multiSelectHint": "按住 Ctrl/Cmd 多选；至少选择一个作业"
             },
             "weights": {
               "title": "设置五维权重",
@@ -367,6 +390,8 @@
 			"messages": {
 				"chooseCourse": "请选择课程",
 				"chooseCourseMsg": "请先选择要导出的课程",
+				"chooseStudent": "请选择学生",
+				"chooseStudentMsg": "对比模式下需先选择学生",
 				"exportFailed": "导出失败",
 				"exportFailedMsg": "请稍后重试",
 				"timeRangeError": "时间范围错误",

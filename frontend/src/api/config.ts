@@ -62,6 +62,8 @@ apiClient.interceptors.response.use(
   (error) => {
     if (error.response) {
       const { status, data } = error.response;
+      const cfg: any = (error.config || error.response?.config) as any;
+      const suppressLog = cfg && cfg.suppressLog === true;
       switch (status) {
         case 401:
           if (window.location.pathname !== '/auth/login') {
@@ -70,11 +72,14 @@ apiClient.interceptors.response.use(
           }
           break;
         default:
-          console.error(`API error with status ${status}:`, data.message);
+          if (!suppressLog) {
+            // eslint-disable-next-line no-console
+            console.error(`API error with status ${status}:`, data?.message || data);
+          }
       }
       const apiError: ApiError = {
         code: status,
-        message: data.message || 'An error occurred',
+        message: (data && (data.message || data.error || data.msg)) || 'An error occurred',
       };
       return Promise.reject(apiError);
     } else if (error.request) {

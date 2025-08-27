@@ -23,6 +23,14 @@ export const teacherStudentApi = {
   getCourseStudentsBasic(courseId: string, page = 1, size = 10000, keyword?: string) {
     const params: any = { courseId, page, size }
     if (keyword) params.keyword = keyword
-    return api.get(`/teachers/students/basic`, { params })
+    // 抑制控制台错误打印 + 将 400/403 视作空列表返回，避免在控制台产生噪音
+    return api
+      .get(`/teachers/students/basic`, { params, suppressLog: true })
+      .catch((e: any) => {
+        if (e && (e.code === 400 || e.code === 403)) {
+          return { items: [] } as any
+        }
+        throw e
+      })
   }
 };

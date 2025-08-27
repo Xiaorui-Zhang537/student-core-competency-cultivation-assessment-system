@@ -21,6 +21,21 @@
   }
 }
 
+/* 分栏严格对半布局（用于分析页） */
+@layer components {
+  .analytics-grid {
+    @apply grid grid-cols-12 gap-x-6 gap-y-4 items-start;
+  }
+  .analytics-col-left {
+    grid-column: span 6 / span 6;
+    min-width: 0;
+  }
+  .analytics-col-right {
+    grid-column: span 6 / span 6;
+    min-width: 0;
+  }
+}
+
 /* 组件样式 */
 @layer components {
   /* 暗黑主题变量（可根据需要调整） */

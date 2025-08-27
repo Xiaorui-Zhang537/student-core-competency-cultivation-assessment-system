@@ -57,4 +57,29 @@ export const teacherApi = {
   exportAbilityRadarCsv: (params: { courseId: string; classId?: string; studentId?: string; startDate: string; endDate: string }) => {
     return api.get('/teachers/ability/radar/export', { params, responseType: 'blob' as any });
   },
+  // Compare APIs (POST)
+  postAbilityRadarCompare: (body: {
+    courseId: string; studentId: string; classId?: string;
+    startDateA?: string; endDateA?: string; assignmentIdsA?: string[];
+    startDateB?: string; endDateB?: string; assignmentIdsB?: string[];
+    includeClassAvg?: 'none'|'A'|'B'|'both';
+  }) => {
+    return api.post('/teachers/ability/radar/compare', body);
+  },
+  exportAbilityRadarCompareCsv: (body: {
+    courseId: string; studentId: string; classId?: string;
+    startDateA?: string; endDateA?: string; assignmentIdsA?: string[];
+    startDateB?: string; endDateB?: string; assignmentIdsB?: string[];
+    includeClassAvg?: 'none'|'A'|'B'|'both';
+  }) => {
+    return api.post('/teachers/ability/radar/compare/export', body, { responseType: 'blob' as any });
+  },
+  postAbilityDimensionInsights: (body: {
+    courseId: string; studentId: string; classId?: string;
+    startDateA?: string; endDateA?: string; assignmentIdsA?: string[];
+    startDateB?: string; endDateB?: string; assignmentIdsB?: string[];
+    includeClassAvg?: 'none'|'A'|'B'|'both';
+  }) => {
+    return api.post('/teachers/ability/dimension-insights', body);
+  },
 };
