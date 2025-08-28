@@ -1,5 +1,6 @@
 <template>
-  <div class="min-h-screen bg-gray-50 dark:bg-gray-900">
+  <div class="min-h-screen relative bg-gray-50 dark:bg-gray-900">
+    <FuturisticBackground class="fixed inset-0 z-0 pointer-events-none" theme="auto" :intensity="0.18" :bits-density="0.8" :sweep-frequency="7" :parallax="true" :enable3D="true" :logo-glow="true" :emphasis="false" :interactions="{ mouseTrail: true, clickRipples: true }" :enabled="uiStore.bgEnabled" :respect-reduced-motion="true" />
     <nav class="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-600 sticky top-0 z-40">
       <div class="px-4 sm:px-6 lg:px-8">
         <div class="flex justify-between h-14">
@@ -40,6 +41,15 @@
             >
               <sun-icon v-if="uiStore.isDarkMode" class="h-6 w-6" />
               <moon-icon v-else class="h-6 w-6" />
+            </button>
+
+            <button
+              @click="uiStore.toggleBackground()"
+              class="p-1 rounded-full text-gray-400 hover:text-gray-500 dark:hover:text-gray-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500"
+              :title="uiStore.bgEnabled ? '关闭背景' : '开启背景'"
+            >
+              <eye-slash-icon v-if="uiStore.bgEnabled" class="h-6 w-6" />
+              <eye-icon v-else class="h-6 w-6" />
             </button>
 
             <!-- 通知铃铛 -->
@@ -156,6 +166,7 @@ import { useRouter } from 'vue-router'
 import { useUIStore } from '@/stores/ui'
 import { useAuthStore } from '@/stores/auth'
 import NotificationBell from '@/components/notifications/NotificationBell.vue'
+import FuturisticBackground from '@/components/ui/FuturisticBackground.vue'
 import ChatDrawer from '@/features/teacher/components/ChatDrawer.vue'
 import { useChatStore } from '@/stores/chat'
 import {
@@ -169,6 +180,8 @@ import {
   HomeIcon,
   AcademicCapIcon,
   ClipboardDocumentListIcon,
+  EyeIcon,
+  EyeSlashIcon,
 } from '@heroicons/vue/24/outline'
 import UserAvatar from '@/components/ui/UserAvatar.vue'
 
@@ -191,6 +204,6 @@ const handleClickOutside = (event: MouseEvent) => {
   if (!target || !target.closest('.relative')) showUserMenu.value = false
 }
 
-onMounted(() => document.addEventListener('click', handleClickOutside))
+onMounted(() => { document.addEventListener('click', handleClickOutside); uiStore.initBackgroundEnabled() })
 onUnmounted(() => document.removeEventListener('click', handleClickOutside))
 </script>

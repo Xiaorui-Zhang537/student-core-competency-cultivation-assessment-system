@@ -178,3 +178,76 @@ Pinia stores 是应用的“大脑”，负责处理业务逻辑、调用API和�
 -   **Prettier**: 用于代码格式化，确保整个项目代码风格的一致性。配置文件为 `.prettierrc.json`。
 -   **TypeScript**: 项目完全使用TypeScript编写，并在`tsconfig.json`中开启了严格模式，以获得最强的类型检查。
 -   **Husky & lint-staged** (推荐配置): 可以在`package.json`中配置`pre-commit`钩子，在每次提交前自动运行 `lint` 和 `type-check`，从源头保证入库代码的质量。
+
+---
+
+## 🎆 背景组件 FuturisticBackground 使用
+
+FuturisticBackground 是统一的动态背景组件，默认在三大布局中启用：
+- AuthLayout：默认开启强调模式（emphasis=true）、交互（拖影/涟漪）。
+- StudentLayout / TeacherLayout：默认关闭强调，启用轻量交互。
+
+基础用法：
+
+```vue
+<FuturisticBackground
+  class="absolute inset-0"
+  theme="auto"
+  :intensity="0.18"
+  :parallax="true"
+  :enable3D="true"
+  :logo-glow="true"
+  :emphasis="false"                
+  :interactions="{ mouseTrail: true, clickRipples: true }"
+  :enabled="true"                  
+  :respect-reduced-motion="true"   
+/>
+```
+
+关键 props：
+- theme: 'auto' | 'light' | 'dark'（自动跟随页面主题）
+- emphasis: boolean（强调模式，粒子数=1700；否则=1000）
+- interactions: { mouseTrail?: boolean; clickRipples?: boolean }（是否显示鼠标拖影与点击涟漪）
+- enabled: boolean（全局开关，可通过 UI 顶栏“眼睛”按钮控制）
+- respectReducedMotion: boolean（遵从系统“减少动画”偏好；true 时仅绘制静态背景）
+
+说明：
+- 浅/深色模式自动切换，浅色下拖影与涟漪颜色更柔和；深色下使用更显性的发光混合。
+- 鼠标移动会产生漩涡与散开，按住左键则强化漩涡；点击触发涟漪。
+- 粒子支持多形状（圆、三角、正方、六边、五角星）并随速度方向旋转，带流星尾迹。
+
+在三大布局中集成（示例）：
+
+```vue
+<!-- AuthLayout.vue（强调开启） -->
+<FuturisticBackground
+  class="absolute inset-0"
+  theme="auto"
+  :intensity="0.18"
+  :parallax="true"
+  :enable3D="true"
+  :logo-glow="true"
+  :emphasis="true"
+  :interactions="{ mouseTrail: true, clickRipples: true }"
+  :enabled="uiStore.bgEnabled"
+  :respect-reduced-motion="true"
+/>
+
+<!-- StudentLayout.vue / TeacherLayout.vue（强调关闭） -->
+<FuturisticBackground
+  class="fixed inset-0 z-0 pointer-events-none"
+  theme="auto"
+  :intensity="0.18"
+  :parallax="true"
+  :enable3D="true"
+  :logo-glow="true"
+  :emphasis="false"
+  :interactions="{ mouseTrail: true, clickRipples: true }"
+  :enabled="uiStore.bgEnabled"
+  :respect-reduced-motion="true"
+/>
+```
+
+UI 全局开关（已内置）：
+- 顶栏“眼睛”按钮切换背景开关（持久化到 localStorage）。
+- 主题切换按钮切换浅/深色主题（持久化到 localStorage）。

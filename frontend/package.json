@@ -17,16 +17,19 @@
     "@vueuse/motion": "^2.0.0",
     "axios": "^1.6.2",
     "echarts": "^5.4.3",
+    "gsap": "^3.13.0",
     "pinia": "^2.1.7",
+    "three": "^0.179.1",
     "vue": "^3.5.18",
-    "vue-router": "^4.2.5",
-    "vue-i18n": "^9.10.2"
+    "vue-i18n": "^9.10.2",
+    "vue-router": "^4.2.5"
   },
   "devDependencies": {
     "@rushstack/eslint-patch": "^1.5.1",
     "@tailwindcss/typography": "^0.5.10",
     "@tsconfig/node18": "^18.2.2",
     "@types/node": "^20.9.0",
+    "@types/three": "^0.179.0",
     "@vitejs/plugin-vue": "^5.0.0",
     "@vue/eslint-config-prettier": "^8.0.0",
     "@vue/eslint-config-typescript": "^12.0.0",

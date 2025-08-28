@@ -1,5 +1,26 @@
 {
 	"layout": {
+		"auth": {
+			"theme": {
+				"switchToLight": "Switch to Light Mode",
+				"switchToDark": "Switch to Dark Mode"
+			},
+			"subtitle": "AI-powered Intelligent Learning & Assessment Platform",
+			"features": {
+				"secure": { "title": "Secure & Reliable", "desc": "Enterprise-grade security" },
+				"analytics": { "title": "Intelligent Analytics", "desc": "AI-driven insights" },
+				"collab": { "title": "Collaborative Learning", "desc": "Community interactions" },
+				"mobile": { "title": "Mobile First", "desc": "Responsive across devices" },
+				"cloud": { "title": "Cloud Sync", "desc": "Real-time data syncing" },
+				"performance": { "title": "High Performance", "desc": "Blazing fast experience" }
+			},
+			"footer": {
+				"copyright": "Student Competency Assessment System. All rights reserved.",
+				"privacy": "Privacy Policy",
+				"terms": "Terms of Service",
+				"help": "Help Center"
+			}
+		},
 		"teacher": {
 			"title": "Student Non-Core Competence Assessment",
 			"role": "Teacher",

@@ -13,6 +13,7 @@ export const useUIStore = defineStore('ui', () => {
     message: string
     timeout?: number
   }>>([])
+  const bgEnabled = ref(true)
 
   // 初始化暗黑模式
   const initDarkMode = () => {
@@ -24,6 +25,16 @@ export const useUIStore = defineStore('ui', () => {
       isDarkMode.value = window.matchMedia('(prefers-color-scheme: dark)').matches
     }
     updateDarkModeClass()
+  }
+
+  // 初始化背景开关
+  const initBackgroundEnabled = () => {
+    const stored = localStorage.getItem('bgEnabled')
+    if (stored != null) {
+      bgEnabled.value = JSON.parse(stored)
+    } else {
+      bgEnabled.value = true
+    }
   }
 
   // 更新暗黑模式类
@@ -40,6 +51,10 @@ export const useUIStore = defineStore('ui', () => {
     localStorage.setItem('darkMode', JSON.stringify(newValue))
     updateDarkModeClass()
   })
+  // 监听背景开关变化
+  watch(bgEnabled, (newValue) => {
+    localStorage.setItem('bgEnabled', JSON.stringify(newValue))
+  })
 
   // 方法
   const toggleDarkMode = () => {
@@ -52,6 +67,10 @@ export const useUIStore = defineStore('ui', () => {
   
   const closeSidebar = () => {
       sidebarOpen.value = false
+  }
+
+  const toggleBackground = () => {
+    bgEnabled.value = !bgEnabled.value
   }
 
   const showNotification = (notification: {
@@ -93,11 +112,14 @@ export const useUIStore = defineStore('ui', () => {
     sidebarOpen,
     loading,
     notifications,
+    bgEnabled,
     // 方法
     initDarkMode,
+    initBackgroundEnabled,
     toggleDarkMode,
     toggleSidebar,
     closeSidebar,
+    toggleBackground,
     showNotification,
     removeNotification,
     clearNotifications,

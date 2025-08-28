@@ -1,5 +1,26 @@
 {
 	"layout": {
+		"auth": {
+			"theme": {
+				"switchToLight": "切换到浅色模式",
+				"switchToDark": "切换到深色模式"
+			},
+			"subtitle": "基于AI的智能学习与评估平台",
+			"features": {
+				"secure": { "title": "安全可靠", "desc": "企业级安全保障" },
+				"analytics": { "title": "智能分析", "desc": "AI驱动的数据洞察" },
+				"collab": { "title": "协作学习", "desc": "社区互动学习" },
+				"mobile": { "title": "移动优先", "desc": "跨平台响应式" },
+				"cloud": { "title": "云端同步", "desc": "数据实时同步" },
+				"performance": { "title": "高性能", "desc": "极速响应体验" }
+			},
+			"footer": {
+				"copyright": "学生核心能力发展评估系统，保留所有权利",
+				"privacy": "隐私政策",
+				"terms": "服务条款",
+				"help": "帮助中心"
+			}
+		},
 		"teacher": {
 			"title": "学生核心能力培养评估系统",
 			"role": "教师",

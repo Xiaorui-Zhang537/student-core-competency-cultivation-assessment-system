@@ -1,6 +1,6 @@
 <template>
   <div class="min-h-screen relative">
-    <animated-background class="fixed inset-0 z-0 pointer-events-none" :particle-count="80" :connect-distance="120" :max-speed="0.4" :opacity="0.5" />
+    <FuturisticBackground class="fixed inset-0 z-0 pointer-events-none" theme="auto" :intensity="0.18" :bits-density="0.8" :sweep-frequency="7" :parallax="true" :enable3D="true" :logo-glow="true" :emphasis="false" :interactions="{ mouseTrail: true, clickRipples: true }" :enabled="uiStore.bgEnabled" :respect-reduced-motion="true" />
     <!-- 顶部导航栏 -->
     <nav class="bg-white/90 dark:bg-gray-800/80 backdrop-blur-md border-b border-gray-200 dark:border-gray-600 shadow-sm sticky top-0 z-20">
       <div class="px-4 sm:px-6 lg:px-12">
@@ -35,6 +35,15 @@
             </button>
 
             <language-switcher />
+
+            <button
+              @click="uiStore.toggleBackground()"
+              class="p-1 rounded-full text-gray-400 hover:text-gray-500 dark:hover:text-gray-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500"
+              :title="uiStore.bgEnabled ? '关闭背景' : '开启背景'"
+            >
+              <eye-slash-icon v-if="uiStore.bgEnabled" class="h-6 w-6" />
+              <eye-icon v-else class="h-6 w-6" />
+            </button>
 
             <!-- 通知铃铛 -->
             <NotificationBell />
@@ -198,7 +207,7 @@ import { ref, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useUIStore } from '@/stores/ui'
 import { useAuthStore } from '@/stores/auth'
-import AnimatedBackground from '@/components/ui/AnimatedBackground.vue'
+import FuturisticBackground from '@/components/ui/FuturisticBackground.vue'
 import UserAvatar from '@/components/ui/UserAvatar.vue'
 import LanguageSwitcher from '@/components/ui/LanguageSwitcher.vue'
 import NotificationBell from '@/components/notifications/NotificationBell.vue'
@@ -217,6 +226,8 @@ import {
   ChartBarIcon,
   UsersIcon,
   ChatBubbleLeftRightIcon,
+  EyeIcon,
+  EyeSlashIcon,
 } from '@heroicons/vue/24/outline'
 
 // Stores & Router
@@ -246,6 +257,7 @@ const handleClickOutside = (event: MouseEvent) => {
 // 生命周期
 onMounted(() => {
   document.addEventListener('click', handleClickOutside)
+  uiStore.initBackgroundEnabled()
 })
 
 onUnmounted(() => {

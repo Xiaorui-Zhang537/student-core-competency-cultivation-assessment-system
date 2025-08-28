@@ -3,46 +3,20 @@
   <div class="min-h-screen relative overflow-hidden">
     <!-- 动态背景 -->
     <div class="absolute inset-0 bg-gradient-to-br from-primary-50 via-blue-50 to-accent-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
-      <!-- 背景装饰图案 -->
-      <div class="absolute inset-0 opacity-30 dark:opacity-20">
-        <svg class="absolute top-0 left-0 w-full h-full" viewBox="0 0 1000 1000" preserveAspectRatio="xMidYMid slice">
-          <defs>
-            <linearGradient id="grid-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
-              <stop offset="0%" style="stop-color:#3b82f6;stop-opacity:0.1" />
-              <stop offset="50%" style="stop-color:#8b5cf6;stop-opacity:0.05" />
-              <stop offset="100%" style="stop-color:#f97316;stop-opacity:0.1" />
-            </linearGradient>
-          </defs>
-          <g stroke="url(#grid-gradient)" stroke-width="1" fill="none">
-            <g v-for="i in 20" :key="`h-${i}`">
-              <line :x1="0" :y1="i * 50" :x2="1000" :y2="i * 50" />
-            </g>
-            <g v-for="i in 20" :key="`v-${i}`">
-              <line :x1="i * 50" :y1="0" :x2="i * 50" :y2="1000" />
-            </g>
-          </g>
-        </svg>
-      </div>
-
-      <!-- 浮动装饰元素 -->
-      <div class="absolute inset-0 overflow-hidden pointer-events-none">
-        <div
-          v-for="(shape, index) in floatingShapes"
-          :key="index"
-          :class="[
-            'absolute rounded-full bg-gradient-to-br opacity-20 dark:opacity-10',
-            shape.color,
-            shape.size,
-            'animate-float'
-          ]"
-          :style="{
-            left: shape.left,
-            top: shape.top,
-            animationDelay: shape.delay,
-            animationDuration: shape.duration
-          }"
-        ></div>
-      </div>
+      <FuturisticBackground
+        class="absolute inset-0"
+        theme="auto"
+        :intensity="0.18"
+        :bits-density="0.8"
+        :sweep-frequency="7"
+        :parallax="true"
+        :enable3D="true"
+        :logo-glow="true"
+        :emphasis="true"
+        :interactions="{ mouseTrail: true, clickRipples: true }"
+        :enabled="uiStore.bgEnabled"
+        :respect-reduced-motion="true"
+      />
     </div>
 
     <!-- 主容器 -->
@@ -54,10 +28,19 @@
           <button
             @click="toggleTheme"
             class="p-2 rounded-lg bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm border border-gray-200/50 dark:border-gray-700/50 hover:bg-white dark:hover:bg-gray-800 transition-all duration-200 group"
-            :title="isDark ? '切换到浅色模式' : '切换到深色模式'"
+            :title="isDark ? t('layout.auth.theme.switchToLight') : t('layout.auth.theme.switchToDark')"
           >
             <sun-icon v-if="isDark" class="w-5 h-5 text-yellow-500 group-hover:rotate-180 transition-transform duration-300" />
             <moon-icon v-else class="w-5 h-5 text-gray-600 group-hover:-rotate-12 transition-transform duration-300" />
+          </button>
+
+          <!-- 背景开关 -->
+          <button
+            @click="uiStore.toggleBackground()"
+            class="p-2 rounded-lg bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm border border-gray-200/50 dark:border-gray-700/50 hover:bg-white dark:hover:bg-gray-800 transition-all duration-200"
+            :title="uiStore.bgEnabled ? '关闭背景' : '开启背景'"
+          >
+            <component :is="uiStore.bgEnabled ? 'EyeSlashIcon' : 'EyeIcon'" class="w-5 h-5 text-gray-600 dark:text-gray-300" />
           </button>
 
           <!-- 语言切换 -->
@@ -91,7 +74,7 @@
             </h1>
             <div class="flex items-center justify-center space-x-2 text-gray-600 dark:text-gray-400">
               <sparkles-icon class="w-4 h-4 text-primary-500 animate-pulse" />
-              <p class="text-sm font-medium">基于AI的智能学习与评估平台</p>
+              <p class="text-sm font-medium">{{ t('layout.auth.subtitle') }}</p>
               <sparkles-icon class="w-4 h-4 text-accent-500 animate-pulse" />
             </div>
           </div>
@@ -155,8 +138,8 @@
               :is="feature.icon"
               class="w-6 h-6 mx-auto mb-2 text-primary-600 dark:text-primary-400 group-hover:scale-110 transition-transform duration-300"
             />
-            <h3 class="text-xs font-medium text-gray-900 dark:text-white mb-1">{{ feature.title }}</h3>
-            <p class="text-xs text-gray-600 dark:text-gray-400">{{ feature.description }}</p>
+            <h3 class="text-xs font-medium text-gray-900 dark:text-white mb-1">{{ t(feature.titleKey) }}</h3>
+            <p class="text-xs text-gray-600 dark:text-gray-400">{{ t(feature.descKey) }}</p>
           </div>
         </div>
 
@@ -177,13 +160,13 @@
 
           <!-- 版权信息 -->
           <div class="text-xs text-gray-500 dark:text-gray-400 space-y-1">
-            <p>&copy; 2024 学生核心能力发展评估系统. 保留所有权利.</p>
+            <p>&copy; 2024 {{ t('layout.auth.footer.copyright') }}</p>
             <div class="flex items-center justify-center space-x-4">
-              <a href="#" class="hover:text-primary-600 dark:hover:text-primary-400 transition-colors duration-200">隐私政策</a>
+              <a href="#" class="hover:text-primary-600 dark:hover:text-primary-400 transition-colors duration-200">{{ t('layout.auth.footer.privacy') }}</a>
               <span>•</span>
-              <a href="#" class="hover:text-primary-600 dark:hover:text-primary-400 transition-colors duration-200">服务条款</a>
+              <a href="#" class="hover:text-primary-600 dark:hover:text-primary-400 transition-colors duration-200">{{ t('layout.auth.footer.terms') }}</a>
               <span>•</span>
-              <a href="#" class="hover:text-primary-600 dark:hover:text-primary-400 transition-colors duration-200">帮助中心</a>
+              <a href="#" class="hover:text-primary-600 dark:hover:text-primary-400 transition-colors duration-200">{{ t('layout.auth.footer.help') }}</a>
             </div>
           </div>
         </div>
@@ -211,9 +194,12 @@ import {
   UserGroupIcon,
   DevicePhoneMobileIcon,
   CloudIcon,
-  CpuChipIcon
+  CpuChipIcon,
+  EyeIcon,
+  EyeSlashIcon
 } from '@heroicons/vue/24/outline'
 import LanguageSwitcher from '@/components/ui/LanguageSwitcher.vue'
+import FuturisticBackground from '@/components/ui/FuturisticBackground.vue'
 
 // 组合式API
 const route = useRoute()
@@ -233,6 +219,8 @@ const formattedTime = computed(() => d(currentTime.value, 'medium'))
 
 // 主题相关
 const isDark = computed(() => uiStore.isDarkMode)
+
+// 动画偏好与设备能力（背景组件内部已做处理，此处无需额外逻辑）
 
 // 语言选项
 const languages = [
@@ -286,36 +274,12 @@ const floatingShapes = ref([
 
 // 功能特性
 const features = [
-  {
-    icon: ShieldCheckIcon,
-    title: '安全可靠',
-    description: '企业级安全保障'
-  },
-  {
-    icon: ChartBarIcon,
-    title: '智能分析',
-    description: 'AI驱动的数据洞察'
-  },
-  {
-    icon: UserGroupIcon,
-    title: '协作学习',
-    description: '社区互动学习'
-  },
-  {
-    icon: DevicePhoneMobileIcon,
-    title: '移动优先',
-    description: '跨平台响应式'
-  },
-  {
-    icon: CloudIcon,
-    title: '云端同步',
-    description: '数据实时同步'
-  },
-  {
-    icon: CpuChipIcon,
-    title: '高性能',
-    description: '极速响应体验'
-  }
+  { icon: ShieldCheckIcon, titleKey: 'layout.auth.features.secure.title', descKey: 'layout.auth.features.secure.desc' },
+  { icon: ChartBarIcon, titleKey: 'layout.auth.features.analytics.title', descKey: 'layout.auth.features.analytics.desc' },
+  { icon: UserGroupIcon, titleKey: 'layout.auth.features.collab.title', descKey: 'layout.auth.features.collab.desc' },
+  { icon: DevicePhoneMobileIcon, titleKey: 'layout.auth.features.mobile.title', descKey: 'layout.auth.features.mobile.desc' },
+  { icon: CloudIcon, titleKey: 'layout.auth.features.cloud.title', descKey: 'layout.auth.features.cloud.desc' },
+  { icon: CpuChipIcon, titleKey: 'layout.auth.features.performance.title', descKey: 'layout.auth.features.performance.desc' }
 ]
 
 // 社交链接
@@ -398,6 +362,8 @@ const handleKeydown = (event: KeyboardEvent) => {
   }
 }
 
+// 视差已在 FuturisticBackground 内部处理，这里不再重复实现
+
 // 生命周期
 onMounted(() => {
   // 监听键盘事件
@@ -416,6 +382,7 @@ onMounted(() => {
   nextTick(() => {
     handleRouteChange()
   })
+  uiStore.initBackgroundEnabled()
 })
 
 onUnmounted(() => {
