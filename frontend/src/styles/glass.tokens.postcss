@@ -9,25 +9,25 @@
   --glass-bg-rgb: 255 255 255; /* white */
 
   /* Blur radii (px) */
-  --glass-blur-ultraThin: 8px;
-  --glass-blur-thin: 12px;
-  --glass-blur-regular: 16px;
-  --glass-blur-thick: 22px;
-  --glass-blur-ultraThick: 30px;
+  --glass-blur-ultraThin: 10px;
+  --glass-blur-thin: 14px;
+  --glass-blur-regular: 18px;
+  --glass-blur-thick: 24px;
+  --glass-blur-ultraThick: 32px;
 
   /* Background alpha per strength */
-  --glass-alpha-ultraThin: 0.22;
-  --glass-alpha-thin: 0.26;
-  --glass-alpha-regular: 0.30;
-  --glass-alpha-thick: 0.38;
-  --glass-alpha-ultraThick: 0.46;
+  --glass-alpha-ultraThin: 0.12;
+  --glass-alpha-thin: 0.16;
+  --glass-alpha-regular: 0.20;
+  --glass-alpha-thick: 0.26;
+  --glass-alpha-ultraThick: 0.32;
 
   /* Backdrop adjustments */
-  --glass-saturate-ultraThin: 1.35;
-  --glass-saturate-thin: 1.60;
-  --glass-saturate-regular: 1.70;
-  --glass-saturate-thick: 1.80;
-  --glass-saturate-ultraThick: 1.90;
+  --glass-saturate-ultraThin: 1.45;
+  --glass-saturate-thin: 1.70;
+  --glass-saturate-regular: 1.80;
+  --glass-saturate-thick: 1.90;
+  --glass-saturate-ultraThick: 2.00;
 
   --glass-contrast-ultraThin: 1.06;
   --glass-contrast-thin: 1.10;
@@ -36,8 +36,8 @@
   --glass-contrast-ultraThick: 1.16;
 
   /* Borders and highlights */
-  --glass-border-color: rgba(255, 255, 255, 0.45);
-  --glass-inner-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.35);
+  --glass-border-color: rgba(255, 255, 255, 0.30);
+  --glass-inner-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.25);
   --glass-outer-shadow: 0 8px 30px rgba(0, 0, 0, 0.08);
 }
 
@@ -47,25 +47,25 @@
   --glass-bg-rgb: 31 41 55; /* gray-800 like */
 
   /* Blur radii (px) — keep the same for parity */
-  --glass-blur-ultraThin: 6px;
-  --glass-blur-thin: 10px;
-  --glass-blur-regular: 14px;
-  --glass-blur-thick: 20px;
-  --glass-blur-ultraThick: 28px;
+  --glass-blur-ultraThin: 8px;
+  --glass-blur-thin: 12px;
+  --glass-blur-regular: 16px;
+  --glass-blur-thick: 22px;
+  --glass-blur-ultraThick: 30px;
 
   /* Background alpha slightly lower to maintain contrast in dark */
-  --glass-alpha-ultraThin: 0.22;
-  --glass-alpha-thin: 0.26;
-  --glass-alpha-regular: 0.30;
-  --glass-alpha-thick: 0.38;
-  --glass-alpha-ultraThick: 0.46;
+  --glass-alpha-ultraThin: 0.12;
+  --glass-alpha-thin: 0.16;
+  --glass-alpha-regular: 0.20;
+  --glass-alpha-thick: 0.26;
+  --glass-alpha-ultraThick: 0.32;
 
   /* Backdrop adjustments tuned for dark surfaces */
-  --glass-saturate-ultraThin: 1.20;
-  --glass-saturate-thin: 1.35;
-  --glass-saturate-regular: 1.45;
-  --glass-saturate-thick: 1.55;
-  --glass-saturate-ultraThick: 1.65;
+  --glass-saturate-ultraThin: 1.30;
+  --glass-saturate-thin: 1.45;
+  --glass-saturate-regular: 1.55;
+  --glass-saturate-thick: 1.65;
+  --glass-saturate-ultraThick: 1.75;
 
   --glass-contrast-ultraThin: 1.04;
   --glass-contrast-thin: 1.06;
@@ -74,9 +74,9 @@
   --glass-contrast-ultraThick: 1.12;
 
   /* Borders and highlights (lower intensity to avoid halos) */
-  --glass-border-color: rgba(255, 255, 255, 0.16);
-  --glass-inner-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
-  --glass-outer-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+  --glass-border-color: rgba(255, 255, 255, 0.12);
+  --glass-inner-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  --glass-outer-shadow: 0 10px 30px rgba(0, 0, 0, 0.30);
 }
 
 /* Mobile weakening: reduce blur/contrast/saturate for performance */
@@ -107,6 +107,53 @@
   :root, .dark {
     /* Placeholder for motion-related tokens if needed later */
   }
+}
+
+/* Glass intensity presets: add class to <html> to switch presets */
+/* Normal: less transparent (raise alpha a bit) */
+:root.glass-intensity-normal {
+  --glass-alpha-ultraThin: 0.18;
+  --glass-alpha-thin: 0.22;
+  --glass-alpha-regular: 0.26;
+  --glass-alpha-thick: 0.32;
+  --glass-alpha-ultraThick: 0.40;
+}
+
+.dark.glass-intensity-normal {
+  --glass-alpha-ultraThin: 0.18;
+  --glass-alpha-thin: 0.22;
+  --glass-alpha-regular: 0.26;
+  --glass-alpha-thick: 0.32;
+  --glass-alpha-ultraThick: 0.40;
+}
+
+/* More transparent: keep current lowered values but allow explicit class too */
+:root.glass-intensity-more {
+  /* Slightly roll back transparency/blur for better readability */
+  --glass-alpha-ultraThin: 0.08;
+  --glass-alpha-thin: 0.11;
+  --glass-alpha-regular: 0.15;
+  --glass-alpha-thick: 0.19;
+  --glass-alpha-ultraThick: 0.24;
+  /* Moderate blur so background is visible but softer */
+  --glass-blur-ultraThin: 4px;
+  --glass-blur-thin: 6px;
+  --glass-blur-regular: 8px;
+  --glass-blur-thick: 12px;
+  --glass-blur-ultraThick: 16px;
+}
+
+.dark.glass-intensity-more {
+  --glass-alpha-ultraThin: 0.08;
+  --glass-alpha-thin: 0.11;
+  --glass-alpha-regular: 0.15;
+  --glass-alpha-thick: 0.19;
+  --glass-alpha-ultraThick: 0.24;
+  --glass-blur-ultraThin: 4px;
+  --glass-blur-thin: 6px;
+  --glass-blur-regular: 8px;
+  --glass-blur-thick: 12px;
+  --glass-blur-ultraThick: 16px;
 }
 
 

@@ -173,15 +173,15 @@
 
   /* Glassy input variant for chat panes */
   .input--glass {
-    background-color: rgb(255 255 255 / 0.3);
-    border-color: rgba(255, 255, 255, 0.4);
-    backdrop-filter: blur(6px) saturate(120%);
-    -webkit-backdrop-filter: blur(6px) saturate(120%);
+    background-color: rgb(var(--glass-bg-rgb) / var(--glass-alpha-thin));
+    border-color: var(--glass-border-color);
+    backdrop-filter: blur(var(--glass-blur-thin)) saturate(var(--glass-saturate-thin));
+    -webkit-backdrop-filter: blur(var(--glass-blur-thin)) saturate(var(--glass-saturate-thin));
   }
 
   .dark .input--glass {
-    background-color: rgb(255 255 255 / 0.06);
-    border-color: rgba(255, 255, 255, 0.12);
+    background-color: rgb(var(--glass-bg-rgb) / var(--glass-alpha-thin));
+    border-color: var(--glass-border-color);
   }
 
   /* 统一弹窗容器（给所有弹窗根节点添加 .modal 类） */

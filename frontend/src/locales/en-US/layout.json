@@ -24,6 +24,21 @@
 		"teacher": {
 			"title": "Student Non-Core Competence Assessment",
 			"role": "Teacher",
+			"glass": {
+				"title": "Glass Intensity",
+				"more": "More Transparent",
+				"normal": "Standard",
+				"info": {
+					"more": "More Transparent: lower opacity and lighter blur for clearer background.",
+					"normal": "Standard: balanced readability and transparency."
+				}
+			},
+			"bg": {
+				"title": "Background Effects",
+				"info": "Toggle animated background with smooth fade.",
+				"on": "Enabled",
+				"off": "Disabled"
+			},
 			"sidebar": {
 				"dashboard": "Dashboard",
 				"courses": "Courses",

@@ -64,8 +64,8 @@ const variantClasses = computed(() => {
     'glass-ghost': 'glass-ultraThin glass-interactive text-gray-800 dark:text-gray-200 hover:shadow-md',
     primary: 'glass-regular glass-interactive text-white bg-primary-600/30 hover:bg-primary-600/40 focus:ring-primary-500',
     secondary: 'glass-regular glass-interactive text-gray-900 dark:text-gray-100 bg-gray-400/20 hover:bg-gray-400/30 focus:ring-gray-500',
-    outline: 'glass-ultraThin glass-interactive border border-white/40 text-gray-800 dark:text-gray-200 hover:bg-white/10 focus:ring-indigo-500',
-    ghost: 'glass-ultraThin glass-interactive text-gray-700 dark:text-gray-300 hover:bg-gray-500/10 focus:ring-gray-500',
+    outline: 'glass-ultraThin glass-interactive border border-white/30 text-gray-800 dark:text-gray-200 hover:bg-white/10 focus:ring-indigo-500',
+    ghost: 'glass-ultraThin glass-interactive text-gray-700 dark:text-gray-300 hover:bg-white/10 focus:ring-gray-500',
     danger: 'glass-regular glass-interactive text-white bg-red-600/30 hover:bg-red-600/40 focus:ring-red-500',
     success: 'glass-regular glass-interactive text-white bg-green-600/30 hover:bg-green-600/40 focus:ring-green-500',
     warning: 'glass-regular glass-interactive text-white bg-amber-500/30 hover:bg-amber-500/40 focus:ring-amber-500',
@@ -75,7 +75,7 @@ const variantClasses = computed(() => {
     purple: 'glass-regular glass-interactive text-white bg-purple-600/30 hover:bg-purple-600/40 focus:ring-purple-500',
     teal: 'glass-regular glass-interactive text-white bg-teal-600/30 hover:bg-teal-600/40 focus:ring-teal-500',
     // Menu-specific: left-aligned content, higher text contrast in light mode
-    menu: 'glass-ultraThin glass-interactive text-gray-800 dark:text-gray-200 hover:bg-gray-500/10 focus:ring-indigo-500 justify-start'
+    menu: 'glass-ultraThin glass-interactive text-gray-800 dark:text-gray-200 hover:bg-white/10 focus:ring-indigo-500 justify-start'
   }
   return variants[props.variant]
 })

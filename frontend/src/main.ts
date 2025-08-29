@@ -7,6 +7,7 @@ import { useUIStore } from '@/stores/ui'
 import { createNotificationStream } from '@/composables/useNotificationStream'
 import '@/styles/main.postcss'
 import GlassDirective from '@/directives/glass'
+import ClickOutsideDirective from '@/directives/clickOutside'
 import { i18n, loadLocaleMessages, REQUIRED_NAMESPACES } from '@/i18n'
 
 async function initializeApp() {
@@ -16,6 +17,7 @@ async function initializeApp() {
   app.use(pinia)
   app.use(i18n)
   app.directive('glass', GlassDirective)
+  app.directive('click-outside', ClickOutsideDirective)
 
   const authStore = useAuthStore()
   const uiStore = useUIStore()

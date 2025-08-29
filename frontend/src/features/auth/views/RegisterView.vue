@@ -9,7 +9,7 @@
       <!-- 默认头像选择 -->
       <div>
         <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{{ t('auth.register.form.avatar') || '选择头像（可选）' }}</label>
-        <div class="grid grid-cols-5 gap-2">
+        <div v-glass="{ strength: 'ultraThin' }" class="grid grid-cols-5 gap-2 rounded-lg p-2">
           <button
             v-for="(url, idx) in defaultAvatars"
             :key="idx"
@@ -32,7 +32,7 @@
         <div class="grid grid-cols-2 gap-4">
           <label class="relative" v-for="roleOption in roles" :key="roleOption.value">
             <input v-model="form.role" type="radio" :value="roleOption.value" class="sr-only peer" />
-            <div class="p-4 border-2 rounded-lg cursor-pointer peer-checked:border-primary-500">
+            <div v-glass="{ strength: 'regular', interactive: true }" class="p-4 border-2 rounded-lg cursor-pointer peer-checked:border-primary-500">
               <div class="text-center">
                 {{ roleOption.value === 'student' ? t('auth.register.form.role.student') : t('auth.register.form.role.teacher') }}
               </div>
@@ -43,25 +43,33 @@
 
       <div>
         <label for="username" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{{ t('auth.register.form.username.label') }}</label>
-        <input id="username" v-model="form.username" type="text" required class="input" :disabled="authStore.loading" />
+        <div v-glass="{ strength: 'ultraThin' }" class="rounded-lg">
+          <input id="username" v-model="form.username" type="text" required class="input" :disabled="authStore.loading" />
+        </div>
         <p v-if="form.username && !isUsernameValid" class="mt-1 text-xs text-red-600">{{ t('auth.register.error.usernameInvalid') }}</p>
       </div>
 
       <div>
         <label for="email" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{{ t('auth.register.form.email.label') }}</label>
-        <input id="email" v-model="form.email" type="email" required class="input" :disabled="authStore.loading" />
+        <div v-glass="{ strength: 'ultraThin' }" class="rounded-lg">
+          <input id="email" v-model="form.email" type="email" required class="input" :disabled="authStore.loading" />
+        </div>
         <p v-if="form.email && !isEmailValid" class="mt-1 text-xs text-red-600">{{ t('auth.register.error.emailInvalid') }}</p>
       </div>
 
       <div>
         <label for="password" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{{ t('auth.register.form.password.label') }}</label>
-        <input id="password" v-model="form.password" type="password" required class="input" :disabled="authStore.loading" />
+        <div v-glass="{ strength: 'ultraThin' }" class="rounded-lg">
+          <input id="password" v-model="form.password" type="password" required class="input" :disabled="authStore.loading" />
+        </div>
         <p v-if="form.password && !isPasswordValid" class="mt-1 text-xs text-red-600">{{ t('auth.register.error.passwordInvalid') }}</p>
       </div>
 
       <div>
         <label for="confirmPassword" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{{ t('auth.register.form.confirmPassword.label') }}</label>
-        <input id="confirmPassword" v-model="confirmPassword" type="password" required class="input" :disabled="authStore.loading" />
+        <div v-glass="{ strength: 'ultraThin' }" class="rounded-lg">
+          <input id="confirmPassword" v-model="confirmPassword" type="password" required class="input" :disabled="authStore.loading" />
+        </div>
       </div>
 
       <div>

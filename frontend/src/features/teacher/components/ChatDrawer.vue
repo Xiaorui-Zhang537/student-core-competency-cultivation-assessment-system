@@ -1,5 +1,6 @@
 <template>
-  <div v-if="open" class="fixed inset-0 z-[90]">
+  <teleport to="body">
+  <div v-if="open" class="fixed inset-0 z-[2000]">
     <div class="absolute inset-0 bg-black/30" @click="emit('close')"></div>
     <div class="absolute right-0 top-0 h-full w-full sm:w-[820px] glass-thick glass-interactive border-l border-gray-200/40 dark:border-gray-700/40 flex flex-col" v-glass="{ strength: 'thick', interactive: true }">
       <!-- 顶部标题栏 -->
@@ -190,6 +191,7 @@
       </div>
     </div>
   </div>
+  </teleport>
   </template>
 
 <script setup lang="ts">

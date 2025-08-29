@@ -3,9 +3,10 @@
     <!-- 铃铛图标 -->
     <button
       @click="toggleDropdown"
-      class="relative p-2 text-gray-600 hover:text-gray-800 focus:ring-2 focus:ring-blue-500 rounded-lg"
-      :class="{ 'text-blue-600': hasUnread }"
+      class="relative p-1 rounded-full text-gray-400 hover:text-gray-500 dark:hover:text-gray-300 focus:ring-2 focus:ring-offset-2 focus:ring-primary-500"
+      :class="{ 'text-primary-500': hasUnread }"
       ref="btnRef"
+      :title="t('notifications.title')"
     >
       <bell-icon class="w-6 h-6" />
       

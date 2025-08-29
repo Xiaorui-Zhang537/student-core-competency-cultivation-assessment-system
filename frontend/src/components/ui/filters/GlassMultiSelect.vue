@@ -17,7 +17,7 @@
     </div>
   </div>
   <teleport to="body">
-    <div v-if="open" ref="menuRef" class="fixed z-[9999] popover-glass border border-white/25 dark:border-white/10 shadow p-2 max-h-48 overflow-y-auto no-scrollbar" :style="{ left: pos.left+'px', top: pos.top+'px', width: pos.width+'px' }" @click.stop>
+    <div v-if="open" ref="menuRef" class="fixed z-[9999] popover-glass border border-white/20 dark:border-white/12 shadow-md p-2 max-h-48 overflow-y-auto no-scrollbar" :style="{ left: pos.left+'px', top: pos.top+'px', width: pos.width+'px' }" @click.stop>
       <div class="space-y-1">
         <label v-for="opt in options" :key="String(opt.value)" class="flex items-center gap-2 px-2 py-1 rounded hover:bg-white/10">
           <input type="checkbox" :checked="checkedMap.get(String(opt.value))===true" :disabled="!!opt.disabled" @change="toggleValue(opt.value)" />

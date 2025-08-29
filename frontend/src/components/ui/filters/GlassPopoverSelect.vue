@@ -16,7 +16,7 @@
   </div>
   <teleport to="body">
     <div v-if="open"
-         class="fixed z-[9999] popover-glass border border-white/25 dark:border-white/10 shadow p-1 max-h-64 overflow-y-auto no-scrollbar"
+         class="fixed z-[9999] popover-glass border border-white/20 dark:border-white/12 shadow-md p-1 max-h-48 overflow-y-auto no-scrollbar"
          :style="{ left: pos.left + 'px', top: pos.top + 'px', width: pos.width + 'px' }"
          @keydown.stop.prevent="onKeydown"
     >

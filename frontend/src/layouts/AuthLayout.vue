@@ -27,7 +27,8 @@
           <!-- 主题切换按钮 -->
           <button
             @click="toggleTheme"
-            class="p-2 rounded-lg bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm border border-gray-200/50 dark:border-gray-700/50 hover:bg-white dark:hover:bg-gray-800 transition-all duration-200 group"
+            v-glass="{ strength: 'thin', interactive: true }"
+            class="p-2 rounded-lg transition-all duration-200 group"
             :title="isDark ? t('layout.auth.theme.switchToLight') : t('layout.auth.theme.switchToDark')"
           >
             <sun-icon v-if="isDark" class="w-5 h-5 text-yellow-500 group-hover:rotate-180 transition-transform duration-300" />
@@ -37,7 +38,8 @@
           <!-- 背景开关 -->
           <button
             @click="uiStore.toggleBackground()"
-            class="p-2 rounded-lg bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm border border-gray-200/50 dark:border-gray-700/50 hover:bg-white dark:hover:bg-gray-800 transition-all duration-200"
+            v-glass="{ strength: 'thin', interactive: true }"
+            class="p-2 rounded-lg transition-all duration-200"
             :title="uiStore.bgEnabled ? '关闭背景' : '开启背景'"
           >
             <component :is="uiStore.bgEnabled ? 'EyeSlashIcon' : 'EyeIcon'" class="w-5 h-5 text-gray-600 dark:text-gray-300" />
@@ -81,58 +83,53 @@
 
           <!-- 版本与时间信息 -->
           <div class="mt-4 flex items-center justify-center space-x-3 text-xs">
-            <div class="inline-flex items-center px-3 py-1 rounded-full bg-primary-100 dark:bg-primary-900/30 font-medium text-primary-700 dark:text-primary-300">
+            <div v-glass="{ strength: 'thin' }" class="inline-flex items-center px-3 py-1 rounded-full font-medium text-primary-700 dark:text-primary-300">
               <span class="w-2 h-2 bg-green-500 rounded-full mr-2 animate-pulse"></span>
               {{ `v${version}` }}
             </div>
-            <div class="inline-flex items-center px-3 py-1 rounded-full bg-white/70 dark:bg-gray-800/70 border border-gray-200/50 dark:border-gray-700/50 text-gray-700 dark:text-gray-300">
+            <div v-glass="{ strength: 'thin' }" class="inline-flex items-center px-3 py-1 rounded-full text-gray-700 dark:text-gray-300">
               <span class="w-2 h-2 bg-blue-500 rounded-full mr-2"></span>
               {{ formattedTime }}
             </div>
           </div>
         </div>
 
-        <!-- 内容卡片区域 -->
-        <div class="relative">
-          <!-- 卡片背景 -->
-          <div class="absolute inset-0 bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-2xl shadow-2xl border border-gray-200/50 dark:border-gray-700/50"></div>
-          
-          <!-- 内容区域 -->
-          <div class="relative z-10 p-8">
-            <!-- 加载状态覆盖 -->
-            <div v-if="isLoading" class="absolute inset-0 bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm rounded-2xl flex items-center justify-center z-20">
-              <div class="text-center">
-                <div class="inline-flex items-center justify-center w-12 h-12 bg-primary-100 dark:bg-primary-900/30 rounded-xl mb-3">
-                  <div class="w-6 h-6 border-2 border-primary-600 border-t-transparent rounded-full animate-spin"></div>
-                </div>
-                <p class="text-sm text-gray-600 dark:text-gray-400">{{ loadingText }}</p>
+        <!-- 内容卡片区域（改为复用 Card 玻璃组件） -->
+        <Card :hoverable="false" padding="lg" class="relative">
+          <!-- 加载状态覆盖 -->
+          <div v-if="isLoading" class="absolute inset-0 bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm rounded-2xl flex items-center justify-center z-20">
+            <div class="text-center">
+              <div class="inline-flex items-center justify-center w-12 h-12 bg-primary-100 dark:bg-primary-900/30 rounded-xl mb-3">
+                <div class="w-6 h-6 border-2 border-primary-600 border-t-transparent rounded-full animate-spin"></div>
               </div>
+              <p class="text-sm text-gray-600 dark:text-gray-400">{{ loadingText }}</p>
             </div>
-
-                          <!-- 路由内容 -->
-              <div class="transition-all duration-300" :class="{ 'opacity-30 pointer-events-none': isLoading }">
-                <router-view>
-                  <template #default="{ Component, route }">
-                    <transition
-                      name="page"
-                      mode="out-in"
-                      @before-enter="onBeforeEnter"
-                      @after-enter="onAfterEnter"
-                    >
-                      <component :is="Component" :key="route.path" />
-                    </transition>
-                  </template>
-                </router-view>
-              </div>
           </div>
-        </div>
+
+          <!-- 路由内容 -->
+          <div class="transition-all duration-300" :class="{ 'opacity-30 pointer-events-none': isLoading }">
+            <router-view>
+              <template #default="{ Component, route }">
+                <transition
+                  name="page"
+                  mode="out-in"
+                  @before-enter="onBeforeEnter"
+                  @after-enter="onAfterEnter"
+                >
+                  <component :is="Component" :key="route.path" />
+                </transition>
+              </template>
+            </router-view>
+          </div>
+        </Card>
 
         <!-- 功能特性展示 -->
         <div class="mt-8 grid grid-cols-3 gap-4">
           <div
             v-for="(feature, index) in features"
             :key="index"
-            class="text-center p-4 rounded-xl bg-white/60 dark:bg-gray-800/60 backdrop-blur-sm border border-gray-200/30 dark:border-gray-700/30 hover:bg-white/80 dark:hover:bg-gray-800/80 transition-all duration-300 hover:scale-105 group"
+            v-glass="{ strength: 'regular', interactive: true }"
+            class="text-center p-4 rounded-xl transition-all duration-300 hover:scale-105 group"
           >
             <component
               :is="feature.icon"
@@ -151,7 +148,8 @@
               v-for="social in socialLinks"
               :key="social.name"
               :href="social.url"
-              class="p-2 rounded-lg bg-white/60 dark:bg-gray-800/60 backdrop-blur-sm border border-gray-200/30 dark:border-gray-700/30 hover:bg-white dark:hover:bg-gray-800 transition-all duration-200 hover:scale-110"
+              v-glass="{ strength: 'thin', interactive: true }"
+              class="p-2 rounded-lg transition-all duration-200 hover:scale-110"
               :title="social.name"
             >
               <component :is="social.icon" class="w-4 h-4 text-gray-600 dark:text-gray-400" />
@@ -200,6 +198,7 @@ import {
 } from '@heroicons/vue/24/outline'
 import LanguageSwitcher from '@/components/ui/LanguageSwitcher.vue'
 import FuturisticBackground from '@/components/ui/FuturisticBackground.vue'
+import Card from '@/components/ui/Card.vue'
 
 // 组合式API
 const route = useRoute()

@@ -51,6 +51,8 @@
 			}
 		},
 		"language": {
+			"title": "语言",
+			"note": "支持中英文切换",
 			"zhCN": "中文（简体）",
 			"enUS": "English",
 			"short": {

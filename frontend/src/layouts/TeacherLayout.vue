@@ -36,14 +36,70 @@
 
             <language-switcher />
 
-            <button
-              @click="uiStore.toggleBackground()"
-              class="p-1 rounded-full text-gray-400 hover:text-gray-500 dark:hover:text-gray-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500"
-              :title="uiStore.bgEnabled ? '关闭背景' : '开启背景'"
-            >
-              <eye-slash-icon v-if="uiStore.bgEnabled" class="h-6 w-6" />
-              <eye-icon v-else class="h-6 w-6" />
-            </button>
+            <!-- 玻璃强度切换 -->
+            <div class="relative" @click.stop v-click-outside="() => (showGlassMenu=false)">
+              <button
+                class="p-1 rounded-full text-gray-400 hover:text-gray-500 dark:hover:text-gray-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500"
+                :title="t('layout.teacher.glass.title') || 'Glass Intensity'"
+                @click="showGlassMenu = !showGlassMenu"
+                ref="glassBtnRef"
+              >
+                <paint-brush-icon class="h-6 w-6" />
+              </button>
+              <teleport to="body">
+                <div v-if="showGlassMenu" class="fixed z-[1000] popover-glass border border-white/20 dark:border-white/12 shadow-md p-1 rounded-lg"
+                     :style="glassMenuStyle" @click.stop>
+                  <div class="px-3 py-2 text-xs text-gray-600 dark:text-gray-300">
+                    <div class="font-medium mb-1">{{ t('layout.teacher.glass.title') || 'Glass Intensity' }}</div>
+                    <div class="opacity-90">{{ t('layout.teacher.glass.info.more') || 'More Transparent: lower opacity and lighter blur.' }}</div>
+                    <div class="opacity-90">{{ t('layout.teacher.glass.info.normal') || 'Standard: balanced readability.' }}</div>
+                  </div>
+                  <div class="border-t border-white/10 my-1"></div>
+                  <button class="w-full text-left px-3 py-2 rounded hover:bg-white/10 text-sm flex items-center justify-between"
+                          @click="setGlass('more')">
+                    <span>{{ t('layout.teacher.glass.more') || 'More Transparent' }}</span>
+                    <span v-if="uiStore.glassIntensity==='more'" class="text-primary-500">✓</span>
+                  </button>
+                  <button class="w-full text-left px-3 py-2 rounded hover:bg-white/10 text-sm flex items-center justify-between"
+                          @click="setGlass('normal')">
+                    <span>{{ t('layout.teacher.glass.normal') || 'Standard' }}</span>
+                    <span v-if="uiStore.glassIntensity==='normal'" class="text-primary-500">✓</span>
+                  </button>
+                </div>
+              </teleport>
+            </div>
+
+            <div class="relative" @click.stop v-click-outside="() => (showBgMenu=false)">
+              <button
+                class="p-1 rounded-full text-gray-400 hover:text-gray-500 dark:hover:text-gray-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500"
+                :title="t('layout.teacher.bg.title') || 'Background Effects'"
+                @click="showBgMenu = !showBgMenu"
+                ref="bgBtnRef"
+              >
+                <eye-icon v-if="uiStore.bgEnabled" class="h-6 w-6" />
+                <eye-slash-icon v-else class="h-6 w-6" />
+              </button>
+              <teleport to="body">
+                <div v-if="showBgMenu" class="fixed z-[1000] popover-glass border border-white/20 dark:border-white/12 shadow-md p-1 rounded-lg"
+                     :style="bgMenuStyle" @click.stop>
+                  <div class="px-3 py-2 text-xs text-gray-600 dark:text-gray-300">
+                    <div class="font-medium mb-1">{{ t('layout.teacher.bg.title') || 'Background Effects' }}</div>
+                    <div class="opacity-90">{{ t('layout.teacher.bg.info') || 'Toggle animated background and effects (smooth fade).' }}</div>
+                  </div>
+                  <div class="border-t border-white/10 my-1"></div>
+                  <button class="w-full text-left px-3 py-2 rounded hover:bg-white/10 text-sm flex items-center justify-between"
+                          @click="setBg(true)">
+                    <span>{{ t('layout.teacher.bg.on') || 'Enabled' }}</span>
+                    <span v-if="uiStore.bgEnabled" class="text-primary-500">✓</span>
+                  </button>
+                  <button class="w-full text-left px-3 py-2 rounded hover:bg-white/10 text-sm flex items-center justify-between"
+                          @click="setBg(false)">
+                    <span>{{ t('layout.teacher.bg.off') || 'Disabled' }}</span>
+                    <span v-if="!uiStore.bgEnabled" class="text-primary-500">✓</span>
+                  </button>
+                </div>
+              </teleport>
+            </div>
 
             <!-- 通知铃铛 -->
             <NotificationBell />
@@ -58,7 +114,7 @@
             </button>
 
             <!-- 用户菜单 -->
-            <div class="relative">
+            <div class="relative" v-click-outside="() => (showUserMenu=false)">
               <button
                 @click="showUserMenu = !showUserMenu"
                 class="flex items-center text-sm rounded-full focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500"
@@ -225,6 +281,7 @@ import {
   SunIcon,
   MoonIcon,
   ChevronDownIcon,
+  PaintBrushIcon,
   UserIcon,
   ArrowRightOnRectangleIcon,
   HomeIcon,
@@ -247,6 +304,12 @@ const { t } = useI18n()
 const showUserMenu = ref(false)
 const userMenuBtn = ref<HTMLElement | null>(null)
 const userMenuStyle = ref<Record<string, string>>({})
+const showGlassMenu = ref(false)
+const glassBtnRef = ref<HTMLElement | null>(null)
+const glassMenuStyle = ref<Record<string, string>>({})
+const showBgMenu = ref(false)
+const bgBtnRef = ref<HTMLElement | null>(null)
+const bgMenuStyle = ref<Record<string, string>>({})
 
 const handleLogout = async () => {
   showUserMenu.value = false
@@ -254,22 +317,10 @@ const handleLogout = async () => {
   router.push('/auth/login')
 }
 
-// 点击外部关闭下拉菜单
-const handleClickOutside = (event: MouseEvent) => {
-  const target = event.target as HTMLElement
-  if (!target.closest('.relative')) {
-    showUserMenu.value = false
-  }
-}
-
 // 生命周期
 onMounted(() => {
-  document.addEventListener('click', handleClickOutside)
   uiStore.initBackgroundEnabled()
-})
-
-onUnmounted(() => {
-  document.removeEventListener('click', handleClickOutside)
+  uiStore.initGlassIntensity()
 })
 
 watch(showUserMenu, async (v: boolean) => {
@@ -287,4 +338,46 @@ watch(showUserMenu, async (v: boolean) => {
     }
   } catch {}
 })
+
+watch(showGlassMenu, async (v: boolean) => {
+  if (!v) return
+  await nextTick()
+  try {
+    const el = glassBtnRef.value as HTMLElement
+    const rect = el.getBoundingClientRect()
+    glassMenuStyle.value = {
+      position: 'fixed',
+      top: `${rect.bottom + 6}px`,
+      left: `${Math.max(8, rect.right - 220)}px`,
+      width: '14rem',
+      zIndex: '1000'
+    }
+  } catch {}
+})
+
+function setGlass(v: 'normal' | 'more') {
+  uiStore.setGlassIntensity(v)
+  showGlassMenu.value = false
+}
+
+watch(showBgMenu, async (v: boolean) => {
+  if (!v) return
+  await nextTick()
+  try {
+    const el = bgBtnRef.value as HTMLElement
+    const rect = el.getBoundingClientRect()
+    bgMenuStyle.value = {
+      position: 'fixed',
+      top: `${rect.bottom + 6}px`,
+      left: `${Math.max(8, rect.right - 240)}px`,
+      width: '15rem',
+      zIndex: '1000'
+    }
+  } catch {}
+})
+
+function setBg(v: boolean) {
+  uiStore.bgEnabled = v
+  showBgMenu.value = false
+}
 </script>

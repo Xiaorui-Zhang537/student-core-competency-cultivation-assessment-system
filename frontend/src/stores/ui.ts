@@ -14,6 +14,7 @@ export const useUIStore = defineStore('ui', () => {
     timeout?: number
   }>>([])
   const bgEnabled = ref(true)
+  const glassIntensity = ref<'normal' | 'more'>('more')
 
   // 初始化暗黑模式
   const initDarkMode = () => {
@@ -37,6 +38,13 @@ export const useUIStore = defineStore('ui', () => {
     }
   }
 
+  // 初始化玻璃强度
+  const initGlassIntensity = () => {
+    const stored = localStorage.getItem('glassIntensity') as 'normal' | 'more' | null
+    if (stored === 'normal' || stored === 'more') glassIntensity.value = stored
+    updateGlassIntensityClass()
+  }
+
   // 更新暗黑模式类
   const updateDarkModeClass = () => {
     if (isDarkMode.value) {
@@ -44,6 +52,12 @@ export const useUIStore = defineStore('ui', () => {
     } else {
       document.documentElement.classList.remove('dark')
     }
+  }
+
+  const updateGlassIntensityClass = () => {
+    const root = document.documentElement
+    root.classList.remove('glass-intensity-normal', 'glass-intensity-more')
+    root.classList.add(glassIntensity.value === 'normal' ? 'glass-intensity-normal' : 'glass-intensity-more')
   }
 
   // 监听暗黑模式变化
@@ -54,6 +68,11 @@ export const useUIStore = defineStore('ui', () => {
   // 监听背景开关变化
   watch(bgEnabled, (newValue) => {
     localStorage.setItem('bgEnabled', JSON.stringify(newValue))
+  })
+  // 监听玻璃强度变化
+  watch(glassIntensity, (v) => {
+    localStorage.setItem('glassIntensity', v)
+    updateGlassIntensityClass()
   })
 
   // 方法
@@ -79,6 +98,10 @@ export const useUIStore = defineStore('ui', () => {
 
   const toggleBackground = () => {
     bgEnabled.value = !bgEnabled.value
+  }
+
+  const setGlassIntensity = (v: 'normal' | 'more') => {
+    glassIntensity.value = v
   }
 
   const showNotification = (notification: {
@@ -121,13 +144,16 @@ export const useUIStore = defineStore('ui', () => {
     loading,
     notifications,
     bgEnabled,
+    glassIntensity,
     // 方法
     initDarkMode,
     initBackgroundEnabled,
+    initGlassIntensity,
     toggleDarkMode,
     toggleSidebar,
     closeSidebar,
     toggleBackground,
+    setGlassIntensity,
     showNotification,
     removeNotification,
     clearNotifications,

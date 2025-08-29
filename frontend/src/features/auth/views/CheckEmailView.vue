@@ -5,7 +5,7 @@
       <p class="mt-2 text-sm text-gray-500">{{ t('auth.checkEmail.subtitle') }}</p>
     </div>
 
-    <div class="bg-blue-50 border border-blue-200 text-blue-800 rounded-lg p-4 mb-6">
+    <div v-glass="{ strength: 'regular' }" class="rounded-lg p-4 mb-6">
       {{ t('auth.checkEmail.tip') }}
     </div>
 

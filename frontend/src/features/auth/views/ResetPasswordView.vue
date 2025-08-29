@@ -8,11 +8,15 @@
     <form @submit.prevent="handleReset" class="space-y-6">
       <div>
         <label for="password" class="block text-sm font-medium mb-2">新密码</label>
-        <input id="password" v-model="password" type="password" required class="input" :disabled="uiStore.loading" placeholder="请输入新密码（至少6位）" />
+        <div v-glass="{ strength: 'ultraThin' }" class="rounded-lg">
+          <input id="password" v-model="password" type="password" required class="input" :disabled="uiStore.loading" placeholder="请输入新密码（至少6位）" />
+        </div>
       </div>
       <div>
         <label for="confirm" class="block text-sm font-medium mb-2">确认新密码</label>
-        <input id="confirm" v-model="confirm" type="password" required class="input" :disabled="uiStore.loading" placeholder="请再次输入新密码" />
+        <div v-glass="{ strength: 'ultraThin' }" class="rounded-lg">
+          <input id="confirm" v-model="confirm" type="password" required class="input" :disabled="uiStore.loading" placeholder="请再次输入新密码" />
+        </div>
       </div>
 
       <div>

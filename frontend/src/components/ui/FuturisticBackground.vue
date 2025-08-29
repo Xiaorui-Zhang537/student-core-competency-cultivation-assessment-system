@@ -36,7 +36,7 @@
     <canvas v-if="false" ref="noiseCanvas" class="absolute inset-0" style="z-index:4"></canvas>
 
     <!-- Unified 2D canvas (background + particles + lines) -->
-    <canvas v-if="useLegacyFlow" ref="flowCanvas" class="absolute inset-0" style="position:fixed;left:0;top:0;width:100vw;height:100vh;z-index:2;opacity:1"></canvas>
+    <canvas v-if="useLegacyFlow" ref="flowCanvas" class="absolute inset-0" :style="{position:'fixed',left:'0',top:'0',width:'100vw',height:'100vh',zIndex:2,opacity:fade}"></canvas>
 
     <!-- Bits matrix (disabled) -->
     <canvas ref="bitsCanvas" class="absolute inset-0" v-if="false"></canvas>
@@ -44,7 +44,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted, computed } from 'vue'
+import { ref, onMounted, onUnmounted, computed, watch } from 'vue'
 import { getPalette, getBackgroundGradient } from './background/palettes'
 import { detectTier, getCapabilities } from './background/perf-tier'
 import * as MetaballsLayer from './background/MetaballsLayer'
@@ -160,12 +160,20 @@ const palette = computed<string[]>(() => {
   return p
 })
 
+const fade = ref(props.enabled ? 1 : 0)
+
 const rootStyle = computed(() => {
   const grad = getBackgroundGradient(dark.value ? 'dark' : 'light')
   // Light mode: 明亮渐变；Dark mode: 深靛蓝渐变，不是纯黑
-  return dark.value
-    ? ({ background: `linear-gradient(160deg, #0A132A 0%, #0E1A39 60%, #0A132A 100%)` } as any)
-    : ({ background: `linear-gradient(140deg, ${grad.from} 0%, ${grad.via} 45%, ${grad.to} 100%)` } as any)
+  const base = dark.value
+    ? { background: `linear-gradient(160deg, #0A132A 0%, #0E1A39 60%, #0A132A 100%)` }
+    : { background: `linear-gradient(140deg, ${grad.from} 0%, ${grad.via} 45%, ${grad.to} 100%)` }
+  return Object.assign(base, { opacity: fade.value, transition: 'opacity 600ms ease' }) as any
+})
+
+watch(() => props.enabled, (v) => {
+  // Smooth fade in/out; keep animation loop running for responsiveness
+  fade.value = v ? 1 : 0
 })
 
 const neonColors = computed(() => palette.value)

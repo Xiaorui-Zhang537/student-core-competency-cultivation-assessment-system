@@ -6,11 +6,15 @@
     </div>
 
     <div class="text-center" v-if="verifying">
-      <span class="text-gray-500">{{ t('auth.verify.inProgress') }}</span>
+      <div v-glass="{ strength: 'ultraThin' }" class="inline-block px-4 py-2 rounded-lg">
+        <span class="text-gray-700 dark:text-gray-200">{{ t('auth.verify.inProgress') }}</span>
+      </div>
     </div>
 
     <div class="text-center" v-else>
-      <button class="btn btn-primary" @click="goLogin">{{ t('auth.verify.toLogin') }}</button>
+      <div v-glass="{ strength: 'ultraThin' }" class="inline-block p-3 rounded-lg">
+        <button class="btn btn-primary" @click="goLogin">{{ t('auth.verify.toLogin') }}</button>
+      </div>
     </div>
   </div>
 </template>

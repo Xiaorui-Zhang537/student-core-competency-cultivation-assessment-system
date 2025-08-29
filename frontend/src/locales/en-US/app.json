@@ -51,6 +51,8 @@
 			}
 		},
 		"language": {
+			"title": "Language",
+			"note": "Supports Chinese and English switching",
 			"zhCN": "中文（简体）",
 			"enUS": "English",
 			"short": {

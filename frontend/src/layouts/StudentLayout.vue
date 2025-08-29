@@ -19,7 +19,7 @@
           <div class="flex-1 flex items-center justify-center px-2 lg:ml-6 lg:justify-start">
             <div class="max-w-lg w-full lg:max-w-xs">
               <label for="search" class="sr-only">搜索</label>
-              <div class="relative">
+              <div class="relative" v-click-outside="() => (showUserMenu=false)">
                 <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                   <magnifying-glass-icon class="h-5 w-5 text-gray-400" />
                 </div>
@@ -42,6 +42,40 @@
               <sun-icon v-if="uiStore.isDarkMode" class="h-6 w-6" />
               <moon-icon v-else class="h-6 w-6" />
             </button>
+
+            <language-switcher />
+
+            <div class="relative" @click.stop v-click-outside="() => (showGlassMenu=false)">
+              <button
+                class="p-1 rounded-full text-gray-400 hover:text-gray-500 dark:hover:text-gray-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500"
+                :title="t('layout.teacher.glass.title') || 'Glass Intensity'"
+                @click="showGlassMenu = !showGlassMenu"
+                ref="glassBtnRef"
+              >
+                <paint-brush-icon class="h-6 w-6" />
+              </button>
+              <teleport to="body">
+                <div v-if="showGlassMenu" class="fixed z-[1000] popover-glass border border-white/20 dark:border-white/12 shadow-md p-1 rounded-lg"
+                     :style="glassMenuStyle" @click.stop>
+                  <div class="px-3 py-2 text-xs text-gray-600 dark:text-gray-300">
+                    <div class="font-medium mb-1">{{ t('layout.teacher.glass.title') || 'Glass Intensity' }}</div>
+                    <div class="opacity-90">{{ t('layout.teacher.glass.info.more') || 'More Transparent: lower opacity and lighter blur.' }}</div>
+                    <div class="opacity-90">{{ t('layout.teacher.glass.info.normal') || 'Standard: balanced readability.' }}</div>
+                  </div>
+                  <div class="border-t border-white/10 my-1"></div>
+                  <button class="w-full text-left px-3 py-2 rounded hover:bg-white/10 text-sm flex items-center justify-between"
+                          @click="setGlass('more')">
+                    <span>{{ t('layout.teacher.glass.more') || 'More Transparent' }}</span>
+                    <span v-if="uiStore.glassIntensity==='more'" class="text-primary-500">✓</span>
+                  </button>
+                  <button class="w-full text-left px-3 py-2 rounded hover:bg-white/10 text-sm flex items-center justify-between"
+                          @click="setGlass('normal')">
+                    <span>{{ t('layout.teacher.glass.normal') || 'Standard' }}</span>
+                    <span v-if="uiStore.glassIntensity==='normal'" class="text-primary-500">✓</span>
+                  </button>
+                </div>
+              </teleport>
+            </div>
 
             <button
               @click="uiStore.toggleBackground()"
@@ -163,7 +197,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted } from 'vue'
+import { ref, onMounted, onUnmounted, watch, nextTick } from 'vue'
 import { useRouter } from 'vue-router'
 import { useUIStore } from '@/stores/ui'
 import { useAuthStore } from '@/stores/auth'
@@ -171,6 +205,7 @@ import NotificationBell from '@/components/notifications/NotificationBell.vue'
 import FuturisticBackground from '@/components/ui/FuturisticBackground.vue'
 import ChatDrawer from '@/features/teacher/components/ChatDrawer.vue'
 import { useChatStore } from '@/stores/chat'
+import LanguageSwitcher from '@/components/ui/LanguageSwitcher.vue'
 import {
   Bars3Icon,
   MagnifyingGlassIcon,
@@ -184,15 +219,21 @@ import {
   ClipboardDocumentListIcon,
   EyeIcon,
   EyeSlashIcon,
+  PaintBrushIcon,
 } from '@heroicons/vue/24/outline'
 import UserAvatar from '@/components/ui/UserAvatar.vue'
+import { useI18n } from 'vue-i18n'
 
 const router = useRouter()
 const uiStore = useUIStore()
 const authStore = useAuthStore()
 const chat = useChatStore()
+const { t } = useI18n()
 
 const showUserMenu = ref(false)
+const showGlassMenu = ref(false)
+const glassBtnRef = ref<HTMLElement | null>(null)
+const glassMenuStyle = ref<Record<string, string>>({})
 const searchQuery = ref('')
 
 const handleLogout = async () => {
@@ -201,11 +242,29 @@ const handleLogout = async () => {
   router.push('/auth/login')
 }
 
-const handleClickOutside = (event: MouseEvent) => {
-  const target = event.target as HTMLElement | null
-  if (!target || !target.closest('.relative')) showUserMenu.value = false
-}
+onMounted(() => {
+  uiStore.initBackgroundEnabled()
+  uiStore.initGlassIntensity()
+})
 
-onMounted(() => { document.addEventListener('click', handleClickOutside); uiStore.initBackgroundEnabled() })
-onUnmounted(() => document.removeEventListener('click', handleClickOutside))
+watch(showGlassMenu, async (v: boolean) => {
+  if (!v) return
+  await nextTick()
+  try {
+    const el = glassBtnRef.value as HTMLElement
+    const rect = el.getBoundingClientRect()
+    glassMenuStyle.value = {
+      position: 'fixed',
+      top: `${rect.bottom + 6}px`,
+      left: `${Math.max(8, rect.right - 220)}px`,
+      width: '14rem',
+      zIndex: '1000'
+    }
+  } catch {}
+})
+
+function setGlass(v: 'normal' | 'more') {
+  uiStore.setGlassIntensity(v)
+  showGlassMenu.value = false
+}
 </script>

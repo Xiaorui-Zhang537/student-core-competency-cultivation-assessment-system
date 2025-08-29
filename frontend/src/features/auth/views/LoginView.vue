@@ -8,30 +8,34 @@
     <form @submit.prevent="handleLogin(form)" class="space-y-6">
       <div>
         <label for="username" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{{ t('auth.login.form.username.label') }}</label>
-        <input
-          id="username"
-          v-model="form.username"
-          type="text"
-          autocomplete="username"
-          required
-          class="input"
-          :disabled="authStore.loading"
-          :placeholder="t('auth.login.form.username.placeholder')"
-        />
+        <div v-glass="{ strength: 'ultraThin' }" class="rounded-lg">
+          <input
+            id="username"
+            v-model="form.username"
+            type="text"
+            autocomplete="username"
+            required
+            class="input"
+            :disabled="authStore.loading"
+            :placeholder="t('auth.login.form.username.placeholder')"
+          />
+        </div>
       </div>
 
       <div>
         <label for="password" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{{ t('auth.login.form.password.label') }}</label>
-        <input
-          id="password"
-          v-model="form.password"
-          type="password"
-          autocomplete="current-password"
-          required
-          class="input"
-          :disabled="authStore.loading"
-          :placeholder="t('auth.login.form.password.placeholder')"
-        />
+        <div v-glass="{ strength: 'ultraThin' }" class="rounded-lg">
+          <input
+            id="password"
+            v-model="form.password"
+            type="password"
+            autocomplete="current-password"
+            required
+            class="input"
+            :disabled="authStore.loading"
+            :placeholder="t('auth.login.form.password.placeholder')"
+          />
+        </div>
       </div>
 
       <div class="flex items-center justify-between">

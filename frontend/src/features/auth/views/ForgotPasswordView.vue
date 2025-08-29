@@ -10,7 +10,9 @@
     <form @submit.prevent="handleForgotPassword" class="space-y-6">
       <div>
         <label for="email" class="block text-sm font-medium mb-2">邮箱地址</label>
-        <input id="email" v-model="email" type="email" required class="input" :disabled="uiStore.loading" placeholder="请输入您的邮箱地址" />
+        <div v-glass="{ strength: 'ultraThin' }" class="rounded-lg">
+          <input id="email" v-model="email" type="email" required class="input" :disabled="uiStore.loading" placeholder="请输入您的邮箱地址" />
+        </div>
       </div>
 
       <div>
