@@ -20,11 +20,11 @@
             <p class="text-gray-600 dark:text-gray-400">{{ t('teacher.students.subtitle') }}</p>
           </div>
           <div class="flex items-center space-x-3">
-            <Button variant="indigo" @click="openInviteModal">
+            <Button variant="primary" @click="openInviteModal">
               <UserPlusIcon class="w-4 h-4 mr-2" />
               {{ t('teacher.students.actions.invite') }}
             </Button>
-            <Button variant="teal" @click="exportData">
+            <Button variant="success" @click="exportData">
               <ArrowDownTrayIcon class="w-4 h-4 mr-2" />
               {{ t('teacher.students.actions.export') }}
             </Button>
@@ -121,7 +121,7 @@
                <span class="text-sm text-gray-600 dark:text-gray-400">
                  {{ t('teacher.students.batch.selectedCount', { count: selectedStudents.length }) }}
                </span>
-               <Button variant="teal" size="sm" @click="batchExport">
+               <Button variant="success" size="sm" @click="batchExport">
                  <arrow-down-tray-icon class="w-4 h-4 mr-1" />
                  {{ t('teacher.students.batch.export') }}
                </Button>
@@ -306,23 +306,23 @@
                         class="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-800 rounded-md shadow-lg z-10 border border-gray-200 dark:border-gray-600"
                       >
                         <div class="py-1">
-                          <button @click="viewGrades(student.id)" class="flex items-center gap-2 w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700">
+                          <Button variant="menu" size="sm" @click="viewGrades(student.id)">
                              <AcademicCapIcon class="w-4 h-4" />
                            {{ t('teacher.students.table.viewGrades') }}
-                          </button>
-                          <button @click="resetProgress(student.id)" class="flex items-center gap-2 w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700">
+                          </Button>
+                          <Button variant="menu" size="sm" @click="resetProgress(student.id)">
                              <ArrowPathIcon class="w-4 h-4" />
                              {{ t('teacher.students.table.reset') }}
-                          </button>
-                          <button @click="exportStudentData(student.id)" class="flex items-center gap-2 w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700">
+                          </Button>
+                          <Button variant="menu" size="sm" @click="exportStudentData(student.id)">
                              <ArrowDownTrayIcon class="w-4 h-4" />
                              {{ t('teacher.students.table.export') }}
-                          </button>
+                          </Button>
                           <hr class="my-1 border-gray-200 dark:border-gray-600" />
-                          <button @click="removeStudent(student.id)" class="flex items-center gap-2 w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-gray-100 dark:hover:bg-gray-700">
+                          <Button variant="danger" size="sm" @click="removeStudent(student.id)">
                              <UserMinusIcon class="w-4 h-4" />
                              {{ t('teacher.students.table.remove') }}
-                          </button>
+                          </Button>
                         </div>
                       </div>
                     </div>

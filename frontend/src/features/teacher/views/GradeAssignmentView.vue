@@ -385,7 +385,7 @@
                 </div>
               </div>
               
-              <Button variant="indigo" size="lg" class="w-full justify-center" @click="viewStudentProfile">
+              <Button variant="primary" size="lg" class="justify-center" @click="viewStudentProfile">
                 <UserIcon class="w-4 h-4 mr-2" />
                 {{ t('teacher.grading.student.viewProfile') }}
               </Button>
@@ -423,7 +423,7 @@
       <teleport to="body">
         <div v-if="showReport" class="fixed inset-0 z-50">
           <div class="absolute inset-0 bg-black/30" @click="showReport=false"></div>
-          <div class="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-md bg-white dark:bg-gray-800 rounded shadow p-5 space-y-4">
+          <div class="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-md modal glass-thick p-5 space-y-4" v-glass="{ strength: 'thick', interactive: true }">
             <div class="text-lg font-semibold">{{ t('teacher.grading.quick.report') }}</div>
             <div class="space-y-2">
               <label class="text-sm">{{ t('teacher.studentDetail.table.reason') || '原因' }}</label>
@@ -433,7 +433,7 @@
             </div>
             <div class="flex items-center justify-end gap-2">
               <Button variant="secondary" size="sm" @click="showReport=false">{{ t('common.cancel') || '取消' }}</Button>
-              <Button variant="indigo" size="sm" @click="submitReport">{{ t('common.submit') || '提交' }}</Button>
+              <Button variant="primary" size="sm" @click="submitReport">{{ t('common.submit') || '提交' }}</Button>
             </div>
           </div>
         </div>

@@ -58,7 +58,15 @@ export const useUIStore = defineStore('ui', () => {
 
   // 方法
   const toggleDarkMode = () => {
-    isDarkMode.value = !isDarkMode.value
+    try {
+      const root = document.documentElement
+      root.classList.add('theme-switching')
+      isDarkMode.value = !isDarkMode.value
+      // 移除过渡类（与 CSS 的 450ms 保持一致，稍加余量）
+      window.setTimeout(() => root.classList.remove('theme-switching'), 520)
+    } catch {
+      isDarkMode.value = !isDarkMode.value
+    }
   }
 
   const toggleSidebar = () => {

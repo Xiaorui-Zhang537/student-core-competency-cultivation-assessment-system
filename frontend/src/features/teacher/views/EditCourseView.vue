@@ -39,12 +39,12 @@
 
         <!-- Actions -->
         <div class="flex justify-end gap-4 pt-4">
-            <router-link :to="'/teacher/courses/' + courseForm.id" class="btn btn-secondary">
-                {{ t('teacher.courseEdit.actions.cancel') }}
+            <router-link :to="'/teacher/courses/' + courseForm.id">
+              <Button variant="secondary">{{ t('teacher.courseEdit.actions.cancel') }}</Button>
             </router-link>
-            <button type="submit" class="btn btn-primary" :disabled="courseStore.loading">
+            <Button type="submit" variant="primary" :disabled="courseStore.loading">
                 {{ courseStore.loading ? t('teacher.courseEdit.actions.saving') : t('teacher.courseEdit.actions.save') }}
-              </button>
+            </Button>
         </div>
       </form>
       
@@ -63,6 +63,7 @@ import { useRoute, useRouter } from 'vue-router';
 import { useCourseStore } from '@/stores/course';
 import type { CourseUpdateRequest } from '@/types/course';
 import { useI18n } from 'vue-i18n'
+import Button from '@/components/ui/Button.vue'
 
 const route = useRoute();
 const router = useRouter();

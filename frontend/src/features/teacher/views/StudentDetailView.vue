@@ -34,11 +34,11 @@
               </div>
             </div>
             <div class="flex items-center gap-2">
-              <Button variant="indigo" size="sm" @click="contactStudent">
+              <Button variant="primary" size="sm" @click="contactStudent">
                 <ChatBubbleLeftRightIcon class="w-4 h-4 mr-1" />
                 {{ t('teacher.studentDetail.actions.contact') }}
               </Button>
-              <Button variant="purple" size="sm" @click="viewOverview">
+              <Button variant="info" size="sm" @click="viewOverview">
                 <ChartPieIcon class="w-4 h-4 mr-1" />
                 {{ t('teacher.studentDetail.actions.overview') }}
               </Button>

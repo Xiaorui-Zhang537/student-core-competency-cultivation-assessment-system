@@ -1,6 +1,6 @@
 <template>
-  <div v-if="open" class="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-    <div class="bg-white dark:bg-gray-800 rounded-lg w-full max-w-md p-5">
+  <div v-if="open" class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" @click.self="$emit('close')">
+    <div class="modal glass-thick w-full max-w-md max-h-[85vh] overflow-y-auto p-5" v-glass="{ strength: 'thick' }">
       <h3 class="text-lg font-semibold mb-4">{{ t('teacher.analytics.weights.title') }}</h3>
       <div class="space-y-3">
         <div v-for="d in dims" :key="d.code" class="flex items-center justify-between">
@@ -10,8 +10,8 @@
         </div>
       </div>
       <div class="flex justify-end gap-3 mt-6">
-        <button class="btn btn-secondary" @click="$emit('close')">{{ t('teacher.analytics.weights.cancel') }}</button>
-        <button class="btn btn-primary" @click="save" :disabled="!valid || saving">{{ t('teacher.analytics.weights.save') }}</button>
+        <Button variant="secondary" @click="$emit('close')">{{ t('teacher.analytics.weights.cancel') }}</Button>
+        <Button variant="primary" @click="save" :disabled="!valid || saving">{{ t('teacher.analytics.weights.save') }}</Button>
       </div>
     </div>
   </div>
@@ -21,6 +21,7 @@
 import { reactive, ref, watch, computed } from 'vue'
 // @ts-ignore shim for vue-i18n types in this project
 import { useI18n } from 'vue-i18n'
+import Button from '@/components/ui/Button.vue'
 
 const props = defineProps<{ open: boolean; weights: Record<string, number> | null }>()
 const emit = defineEmits<{ (e: 'close'): void; (e: 'saved', weights: Record<string, number>): void }>()

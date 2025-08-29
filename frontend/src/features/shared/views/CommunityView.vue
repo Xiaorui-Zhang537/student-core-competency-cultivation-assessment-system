@@ -9,39 +9,27 @@
             <p class="text-gray-600 dark:text-gray-400">{{ t('shared.community.subtitle') }}</p>
           </div>
            <div class="flex items-center space-x-3">
-              <button @click="showCreatePostModal = true" class="btn btn-primary inline-flex items-center whitespace-nowrap px-4">
+             <Button variant="primary" class="whitespace-nowrap" @click="showCreatePostModal = true">
                <PlusIcon class="w-4 h-4 mr-2" />
-              {{ t('shared.community.createPost') }}
-             </button>
+               {{ t('shared.community.createPost') }}
+             </Button>
            </div>
         </div>
       </div>
 
-      <!-- Community Stats -->
-      <div v-if="stats" class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-          <div class="text-center p-4 bg-white dark:bg-gray-800 rounded-lg shadow">
-          <div class="text-2xl font-bold text-blue-600 dark:text-blue-400 mb-1">{{ stats.totalPosts }}</div>
-           <p class="text-sm text-gray-600 dark:text-gray-400">{{ t('shared.community.stats.posts') }}</p>
-        </div>
-          <div class="text-center p-4 bg-white dark:bg-gray-800 rounded-lg shadow">
-          <div class="text-2xl font-bold text-green-600 dark:text-green-400 mb-1">{{ stats.totalUsers }}</div>
-           <p class="text-sm text-gray-600 dark:text-gray-400">{{ t('shared.community.stats.users') }}</p>
-        </div>
-          <div class="text-center p-4 bg-white dark:bg-gray-800 rounded-lg shadow">
-          <div class="text-2xl font-bold text-purple-600 dark:text-purple-400 mb-1">{{ stats.totalComments }}</div>
-           <p class="text-sm text-gray-600 dark:text-gray-400">{{ t('shared.community.stats.comments') }}</p>
-        </div>
-          <div class="text-center p-4 bg-white dark:bg-gray-800 rounded-lg shadow">
-          <div class="text-2xl font-bold text-yellow-600 dark:text-yellow-400 mb-1">{{ stats.activeUsersToday }}</div>
-           <p class="text-sm text-gray-600 dark:text-gray-400">{{ t('shared.community.stats.activeToday') }}</p>
-        </div>
+      <!-- Community Stats (统一为工作台小卡片样式) -->
+      <div v-if="stats" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6 mb-8">
+        <StatCard :label="t('shared.community.stats.posts') as string" :value="stats.totalPosts" tone="blue" :icon="DocumentTextIcon" />
+        <StatCard :label="t('shared.community.stats.users') as string" :value="stats.totalUsers" tone="emerald" :icon="UserGroupIcon" />
+        <StatCard :label="t('shared.community.stats.comments') as string" :value="stats.totalComments" tone="violet" :icon="ChatBubbleLeftRightIcon" />
+        <StatCard :label="t('shared.community.stats.activeToday') as string" :value="stats.activeUsersToday" tone="amber" :icon="BoltIcon" />
       </div>
 
       <div class="grid grid-cols-1 lg:grid-cols-4 gap-8">
         <!-- Left Sidebar -->
         <div class="lg:col-span-1 space-y-6">
           <!-- Categories -->
-          <div class="p-4 bg-white dark:bg-gray-800 rounded-lg shadow">
+          <div class="p-4 filter-container rounded-lg shadow" v-glass="{ strength: 'thin', interactive: false }">
              <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">{{ t('shared.community.categories.title') }}</h2>
             <div class="space-y-2">
               <button
@@ -60,7 +48,7 @@
           </div>
 
           <!-- Hot Topics -->
-          <div v-if="hotTopics.length" class="p-4 bg-white dark:bg-gray-800 rounded-lg shadow">
+          <div v-if="hotTopics.length" class="p-4 filter-container rounded-lg shadow" v-glass="{ strength: 'thin', interactive: false }">
             <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">{{ t('shared.community.hotTopics') }}</h3>
             <div class="space-y-3">
               <div
@@ -79,7 +67,7 @@
           </div>
 
           <!-- Active Users -->
-          <div v-if="activeUsers.length" class="p-4 bg-white dark:bg-gray-800 rounded-lg shadow">
+          <div v-if="activeUsers.length" class="p-4 filter-container rounded-lg shadow" v-glass="{ strength: 'thin', interactive: false }">
             <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">{{ t('shared.community.activeUsers') }}</h3>
             <div class="space-y-3">
               <div v-for="user in activeUsers" :key="user.userId" class="flex items-center space-x-3">
@@ -100,7 +88,7 @@
 
         <!-- Main Content: Posts List -->
         <div class="lg:col-span-3">
-          <div class="p-4 bg-white dark:bg-gray-800 rounded-lg shadow">
+          <div class="p-4 glass-regular rounded-lg shadow" v-glass="{ strength: 'regular', interactive: true }">
             <div class="flex justify-between items-center mb-4">
               <h2 class="text-lg font-semibold text-gray-900 dark:text-white">
                 {{ categories.find((c: { id: string; name: string; icon: any; }) => c.id === filterOptions.category)?.name || '全部帖子' }}
@@ -161,9 +149,9 @@
                     </div>
                   </div>
                   <div class="flex-shrink-0 space-x-2">
-                    <button v-if="post.attachments?.length" class="btn btn-ghost btn-sm" @click.stop="downloadFirstAttachment(post)">下载附件</button>
-                    <button v-if="authStore.user?.id && String(authStore.user.id) === String(post.author?.id || post.authorId)" class="btn btn-ghost btn-sm" @click.stop="onEditPost(post)">{{ t('shared.community.list.edit') }}</button>
-                    <button v-if="authStore.user?.id && String(authStore.user.id) === String(post.author?.id || post.authorId)" class="btn btn-ghost btn-sm" @click.stop="onDeletePost(post.id)">{{ t('shared.community.list.delete') }}</button>
+                    <Button v-if="post.attachments?.length" variant="ghost" size="sm" @click.stop="downloadFirstAttachment(post)">下载附件</Button>
+                    <Button v-if="authStore.user?.id && String(authStore.user.id) === String(post.author?.id || post.authorId)" variant="ghost" size="sm" @click.stop="onEditPost(post)">{{ t('shared.community.list.edit') }}</Button>
+                    <Button v-if="authStore.user?.id && String(authStore.user.id) === String(post.author?.id || post.authorId)" variant="danger" size="sm" @click.stop="onDeletePost(post.id)">{{ t('shared.community.list.delete') }}</Button>
                   </div>
                 </div>
               </div>
@@ -181,18 +169,18 @@
               <p class="text-gray-600 dark:text-gray-400 mb-4">
                 {{ filterOptions.keyword ? t('shared.community.list.emptyDescKeyword') : t('shared.community.list.emptyDescCategory') }}
               </p>
-              <button @click="showCreatePostModal = true" class="btn btn-primary inline-flex items-center whitespace-nowrap px-4">
+              <Button variant="primary" class="whitespace-nowrap" @click="showCreatePostModal = true">
                 <PlusIcon class="w-4 h-4 mr-2" />
                 {{ t('shared.community.list.publishFirst') }}
-              </button>
+              </Button>
             </div>
 
             <!-- Pagination -->
             <div v-if="!loading && totalPosts > filterOptions.size" class="mt-6 flex justify-between items-center">
                <span class="text-sm text-gray-500">{{ t('shared.community.list.total', { count: totalPosts }) }}</span>
               <div class="flex space-x-1">
-                <button @click="changePage(filterOptions.page - 1)" :disabled="filterOptions.page === 1" class="btn btn-ghost">{{ t('shared.community.list.prev') }}</button>
-                <button @click="changePage(filterOptions.page + 1)" :disabled="filterOptions.page * filterOptions.size >= totalPosts" class="btn btn-ghost">{{ t('shared.community.list.next') }}</button>
+                <Button size="sm" variant="outline" @click="changePage(filterOptions.page - 1)" :disabled="filterOptions.page === 1">{{ t('shared.community.list.prev') }}</Button>
+                <Button size="sm" variant="outline" @click="changePage(filterOptions.page + 1)" :disabled="filterOptions.page * filterOptions.size >= totalPosts">{{ t('shared.community.list.next') }}</Button>
               </div>
             </div>
           </div>
@@ -201,7 +189,7 @@
 
       <!-- Create Post Modal -->
       <div v-if="showCreatePostModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-        <div class="bg-white dark:bg-gray-800 rounded-lg p-6 max-w-2xl w-full mx-4 max-h-[80vh] overflow-y-auto">
+        <div class="modal glass-thick p-6 max-w-2xl w-full mx-4 max-h-[80vh] overflow-y-auto" v-glass="{ strength: 'thick', interactive: true }">
            <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-4">{{ t('shared.community.modal.createTitle') }}</h3>
           <form @submit.prevent="handleCreatePost" class="space-y-4">
             <div>
@@ -253,8 +241,8 @@
               />
             </div>
             <div class="flex justify-end space-x-3 pt-4">
-              <button type="button" @click="showCreatePostModal = false" class="btn btn-secondary">{{ t('shared.community.modal.cancel') }}</button>
-              <button type="submit" :disabled="loading" class="btn btn-primary">{{ t('shared.community.modal.publish') }}</button>
+              <Button type="button" variant="secondary" @click="showCreatePostModal = false">{{ t('shared.community.modal.cancel') }}</Button>
+              <Button type="submit" variant="primary" :disabled="loading">{{ t('shared.community.modal.publish') }}</Button>
             </div>
           </form>
         </div>
@@ -262,7 +250,7 @@
 
       <!-- Edit Post Modal -->
       <div v-if="editModal.visible" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-        <div class="bg-white dark:bg-gray-800 rounded-lg p-6 max-w-2xl w-full mx-4 max-h-[80vh] overflow-y-auto">
+        <div class="modal glass-thick p-6 max-w-2xl w-full mx-4 max-h-[80vh] overflow-y-auto" v-glass="{ strength: 'thick', interactive: true }">
           <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-4">{{ t('shared.community.modal.editTitle') }}</h3>
           <form @submit.prevent="handleUpdatePost" class="space-y-4">
             <div>
@@ -305,16 +293,16 @@
                       <div class="text-xs text-gray-500">{{ (f.fileSize ? (f.fileSize/1024/1024).toFixed(1)+' MB' : '') }}</div>
                     </div>
                     <div class="flex items-center gap-2">
-                      <button type="button" class="btn btn-sm btn-outline" @click="downloadEditAttachment(f)">{{ t('shared.community.modal.download') }}</button>
-                      <button type="button" class="btn btn-sm btn-danger-outline" @click="deleteEditAttachment(f.id)">{{ t('shared.community.modal.delete') }}</button>
+                      <Button size="sm" variant="outline" type="button" @click="downloadEditAttachment(f)">{{ t('shared.community.modal.download') }}</Button>
+                      <Button size="sm" variant="danger" type="button" @click="deleteEditAttachment(f.id)">{{ t('shared.community.modal.delete') }}</Button>
                     </div>
                   </li>
                 </ul>
               </div>
             </div>
             <div class="flex justify-end space-x-3 pt-4">
-              <button type="button" @click="editModal.visible = false" class="btn btn-secondary">{{ t('shared.community.modal.cancel') }}</button>
-              <button type="submit" :disabled="loading" class="btn btn-primary">{{ t('shared.community.modal.save') }}</button>
+              <Button type="button" variant="secondary" @click="editModal.visible = false">{{ t('shared.community.modal.cancel') }}</Button>
+              <Button type="submit" :disabled="loading" variant="primary">{{ t('shared.community.modal.save') }}</Button>
             </div>
           </form>
         </div>
@@ -331,9 +319,12 @@ import { useCommunityStore } from '@/stores/community';
 import {
   UserIcon, PlusIcon, MagnifyingGlassIcon, ChatBubbleLeftIcon,
   EyeIcon, HandThumbUpIcon, BookOpenIcon, QuestionMarkCircleIcon,
-  LightBulbIcon, AcademicCapIcon, ChatBubbleOvalLeftEllipsisIcon
+  LightBulbIcon, AcademicCapIcon, ChatBubbleOvalLeftEllipsisIcon,
+  DocumentTextIcon, ChatBubbleLeftRightIcon, BoltIcon, UserGroupIcon
 } from '@heroicons/vue/24/outline';
 import UserAvatar from '@/components/ui/UserAvatar.vue'
+import Button from '@/components/ui/Button.vue'
+import StatCard from '@/components/ui/StatCard.vue'
 
 import { useAuthStore } from '@/stores/auth';
 import FileUpload from '@/components/forms/FileUpload.vue';

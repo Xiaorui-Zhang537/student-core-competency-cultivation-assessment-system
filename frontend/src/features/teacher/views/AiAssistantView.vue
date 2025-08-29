@@ -10,8 +10,8 @@
 
       <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <!-- Chat Panel -->
-        <div class="lg:col-span-2 card p-0 overflow-hidden">
-          <div class="h-[60vh] overflow-y-auto p-4 space-y-4 bg-white dark:bg-gray-800">
+        <div class="lg:col-span-2 glass-thick glass-interactive rounded-2xl border border-gray-200/40 dark:border-gray-700/40 p-0 overflow-hidden" v-glass="{ strength: 'thick', interactive: true }">
+          <div class="h-[60vh] overflow-y-auto p-4 space-y-4 bg-transparent">
             <div v-for="(m, idx) in messages" :key="idx" class="flex" :class="m.role === 'user' ? 'justify-end' : 'justify-start'">
               <div class="max-w-[80%] rounded-2xl px-4 py-2 text-sm"
                    :class="m.role === 'user' ? 'bg-primary-600 text-white rounded-br-none' : 'bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-bl-none'">
@@ -20,16 +20,16 @@
             </div>
             <div v-if="loading" class="text-center text-sm text-gray-500">{{ t('teacher.ai.thinking') }}</div>
           </div>
-          <div class="border-t border-gray-200 dark:border-gray-700 p-3 bg-gray-50 dark:bg-gray-900 flex items-end gap-2">
+          <div class="border-t border-white/25 dark:border-white/10 p-3 bg-transparent flex items-end gap-2">
             <textarea v-model="input" @keydown.enter.prevent="send" rows="1" :placeholder="t('teacher.ai.placeholder')"
-                      class="flex-1 input resize-none" />
-            <button class="btn btn-primary" :disabled="!input.trim() || loading" @click="send">{{ t('teacher.ai.send') }}</button>
+                      class="flex-1 input input--glass resize-none" />
+            <Button variant="primary" :disabled="!input.trim() || loading" @click="send">{{ t('teacher.ai.send') }}</Button>
           </div>
         </div>
 
         <!-- Context Panel -->
         <div class="space-y-4">
-          <div class="card p-4">
+          <div class="filter-container p-4 rounded-xl" v-glass="{ strength: 'thin', interactive: false }">
             <h3 class="font-semibold mb-2">{{ t('teacher.ai.context.title') }}</h3>
             <p class="text-sm text-gray-600 dark:text-gray-400">{{ t('teacher.ai.context.desc') }}</p>
             <select v-model="selectedCourseId" class="input mt-3">
@@ -45,19 +45,19 @@
                     {{ s.nickname || s.username || (t('teacher.students.table.list') + ' #' + s.id) }}
                   </option>
                 </select>
-                <button class="btn btn-primary" :disabled="!studentToAdd || selectedStudentIds.length>=5 || selectedStudentIds.includes(studentToAdd)" @click="addStudent">{{ t('teacher.ai.context.add') }}</button>
+                <Button variant="primary" :disabled="!studentToAdd || selectedStudentIds.length>=5 || selectedStudentIds.includes(studentToAdd)" @click="addStudent">{{ t('teacher.ai.context.add') }}</Button>
               </div>
               <div v-if="selectedStudentIds.length" class="flex flex-wrap gap-2 mt-2">
                 <span v-for="sid in selectedStudentIds" :key="sid" class="px-2 py-1 rounded-full text-xs bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200">
                   {{ studentLabel(sid) }}
                   <button class="ml-1" @click="removeStudent(sid)">×</button>
                 </span>
-                <button class="btn" @click="clearStudents">{{ t('teacher.ai.context.clear') }}</button>
+                <Button variant="outline" size="sm" @click="clearStudents">{{ t('teacher.ai.context.clear') }}</Button>
               </div>
               <p class="text-xs text-gray-500" v-if="selectedStudentIds.length">{{ t('teacher.ai.context.applied', { course: courseTitle, count: selectedStudentIds.length }) }}</p>
             </div>
           </div>
-          <div class="card p-4">
+          <div class="filter-container p-4 rounded-xl" v-glass="{ strength: 'thin', interactive: false }">
             <h3 class="font-semibold mb-2">{{ t('teacher.ai.model.title') }}</h3>
             <div class="space-y-2">
               <label class="text-xs text-gray-500">{{ t('teacher.ai.model.label') }}</label>
@@ -79,6 +79,7 @@ import { useCourseStore } from '@/stores/course'
 import { useAuthStore } from '@/stores/auth'
 import { aiApi } from '@/api/ai.api'
 import { courseApi } from '@/api/course.api'
+import Button from '@/components/ui/Button.vue'
 
 type ChatMessage = { role: 'user' | 'assistant'; content: string }
 

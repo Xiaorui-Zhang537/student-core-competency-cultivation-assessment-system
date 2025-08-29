@@ -1,5 +1,5 @@
 <template>
-  <div class="p-6 bg-gray-50 dark:bg-gray-900 min-h-screen">
+  <div class="p-6 min-h-screen">
     <div v-if="loading && !currentPost" class="text-center">{{ t('shared.community.detail.loading') }}</div>
     <div v-if="!loading && !currentPost" class="text-center">{{ t('shared.community.detail.notFound') }}</div>
     
@@ -11,7 +11,7 @@
       </router-link>
 
       <!-- Post Header -->
-      <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6 mb-6">
+      <div class="glass-regular rounded-xl p-6 mb-6" v-glass="{ strength: 'regular', interactive: true }">
         <h1 class="text-3xl font-bold text-gray-900 dark:text-white mb-2">{{ currentPost.title }}</h1>
         <div class="flex items-center space-x-4 text-sm text-gray-500 dark:text-gray-400">
           <div class="flex items-center space-x-2">
@@ -30,10 +30,10 @@
       </div>
 
       <!-- Post Content -->
-      <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6 mb-6">
+      <div class="glass-regular rounded-xl p-6 mb-6" v-glass="{ strength: 'regular', interactive: true }">
         <div class="prose dark:prose-invert max-w-none" v-html="currentPost.content"></div>
         <div v-if="attachments.length" class="mt-6 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
-          <div v-for="f in attachments" :key="f.id" class="border border-gray-200 dark:border-gray-700 rounded overflow-hidden">
+          <div v-for="f in attachments" :key="f.id" class="rounded overflow-hidden glass-ultraThin" v-glass="{ strength: 'ultraThin', interactive: false }">
             <img v-if="isImageAttachment(f)" :src="f._previewUrl || ''" class="w-full h-32 object-cover" @error="loadPreview(f)" />
             <div class="p-2 text-xs flex items-center justify-between">
               <span class="truncate" :title="f.originalName || f.fileName">{{ f.originalName || f.fileName || ('#' + f.id) }}</span>
@@ -42,28 +42,28 @@
           </div>
         </div>
          <div class="mt-6 pt-4 border-t border-gray-200 dark:border-gray-700 flex items-center space-x-4">
-           <button @click="communityStore.toggleLikePost(currentPost.id)" :class="currentPost.isLiked ? 'text-red-500' : 'text-gray-600 dark:text-gray-400'" class="flex items-center space-x-2 btn btn-ghost">
+           <Button size="sm" variant="ghost" @click="communityStore.toggleLikePost(currentPost.id)" :class="currentPost.isLiked ? (isDark ? 'text-red-400' : 'text-red-500') : (isDark ? 'text-gray-300' : 'text-gray-600')" class="flex items-center space-x-2">
             <hand-thumb-up-icon class="w-5 h-5" />
             <span>{{ t('shared.community.detail.like', { count: currentPost.likeCount }) }}</span>
-          </button>
-            <button class="btn inline-flex items-center justify-center px-6 w-36 bg-indigo-600 hover:bg-indigo-700 text-white dark:text-white" @click="askAiForCurrentPost">
+          </Button>
+            <Button variant="primary" size="sm" @click="askAiForCurrentPost">
               <sparkles-icon class="w-4 h-4 mr-2" />{{ t('shared.community.detail.askAi') }}
-            </button>
-            <button v-if="authStore.user?.id && String(authStore.user.id) === String(currentPost.author?.id || currentPost.authorId)" class="btn btn-ghost" @click="openEditCurrentPost">{{ t('shared.community.detail.edit') }}</button>
-            <button v-if="authStore.user?.id && String(authStore.user.id) === String(currentPost.author?.id || currentPost.authorId)" class="btn btn-ghost text-red-600" @click="onDeleteCurrentPost">{{ t('shared.community.detail.delete') }}</button>
+            </Button>
+            <Button v-if="authStore.user?.id && String(authStore.user.id) === String(currentPost.author?.id || currentPost.authorId)" size="sm" variant="ghost" @click="openEditCurrentPost">{{ t('shared.community.detail.edit') }}</Button>
+            <Button v-if="authStore.user?.id && String(authStore.user.id) === String(currentPost.author?.id || currentPost.authorId)" size="sm" variant="danger" @click="onDeleteCurrentPost">{{ t('shared.community.detail.delete') }}</Button>
         </div>
       </div>
 
       <!-- Comments Section -->
-      <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
+      <div class="glass-regular rounded-xl p-6" v-glass="{ strength: 'regular', interactive: true }">
         <h2 class="text-xl font-bold text-gray-900 dark:text-white mb-4">{{ t('shared.community.detail.comments', { count: totalComments }) }}</h2>
         
         <!-- Post Comment Form -->
         <div class="mb-6">
             <textarea v-model="newComment" rows="3" :placeholder="t('shared.community.detail.writeComment')" class="input w-full"></textarea>
             <div class="mt-2 flex items-center gap-2">
-              <emoji-picker @select="onEmojiSelect" />
-              <button @click="handlePostComment" :disabled="!newComment.trim() || loading" class="btn btn-primary">{{ t('shared.community.detail.postComment') }}</button>
+              <emoji-picker size="sm" variant="ghost" @select="onEmojiSelect" />
+              <Button size="sm" variant="primary" @click="handlePostComment" :disabled="!newComment.trim() || loading">{{ t('shared.community.detail.postComment') }}</Button>
             </div>
         </div>
 
@@ -72,8 +72,8 @@
             <div class="flex items-center justify-between mb-2">
             <div class="text-xs text-gray-500">{{ t('shared.community.detail.order') }}</div>
             <div class="space-x-2">
-              <button class="btn btn-ghost btn-sm" :class="commentOrderBy==='time' ? 'text-primary-600' : ''" @click="setOrder('time')">{{ t('shared.community.detail.orderTime') }}</button>
-              <button class="btn btn-ghost btn-sm" :class="commentOrderBy==='hot' ? 'text-primary-600' : ''" @click="setOrder('hot')">{{ t('shared.community.detail.orderHot') }}</button>
+              <Button size="xs" variant="ghost" :class="commentOrderBy==='time' ? (isDark ? 'text-blue-300' : 'text-primary-600') : (isDark ? 'text-gray-400' : '')" @click="setOrder('time')">{{ t('shared.community.detail.orderTime') }}</Button>
+              <Button size="xs" variant="ghost" :class="commentOrderBy==='hot' ? (isDark ? 'text-blue-300' : 'text-primary-600') : (isDark ? 'text-gray-400' : '')" @click="setOrder('hot')">{{ t('shared.community.detail.orderHot') }}</Button>
             </div>
           </div>
           <comment-thread v-for="comment in localComments" :key="comment.id" :comment="comment" :post-id="currentPost.id" @deleted="onTopDeleted" />
@@ -82,7 +82,7 @@
             <span class="text-xs text-gray-500">{{ t('shared.community.detail.total', { count: totalComments }) }}</span>
             <div class="flex items-center space-x-2">
               <span class="text-xs text-gray-500">{{ t('shared.community.detail.page', { page: commentsPage }) }}</span>
-              <button class="btn btn-ghost btn-sm" :disabled="commentsPage * commentsSize >= totalComments" @click="loadMoreComments">{{ t('shared.community.detail.more') }}</button>
+              <Button size="sm" variant="outline" :disabled="commentsPage * commentsSize >= totalComments" @click="loadMoreComments">{{ t('shared.community.detail.more') }}</Button>
             </div>
           </div>
         </div>
@@ -90,7 +90,7 @@
 
       <!-- Edit Current Post Modal -->
       <div v-if="editCurrent.visible" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-        <div class="bg-white dark:bg-gray-800 rounded-lg p-6 max-w-2xl w-full mx-4 max-h-[80vh] overflow-y-auto">
+        <div class="modal glass-thick p-6 max-w-2xl w-full mx-4 max-h-[80vh] overflow-y-auto" v-glass="{ strength: 'thick', interactive: true }">
           <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-4">{{ t('shared.community.modal.editTitle') }}</h3>
           <form @submit.prevent="handleUpdateCurrentPost" class="space-y-4">
             <div>
@@ -141,8 +141,8 @@
               </div>
             </div>
             <div class="flex justify-end space-x-3 pt-4">
-              <button type="button" @click="editCurrent.visible = false" class="btn btn-secondary">{{ t('shared.community.modal.cancel') }}</button>
-              <button type="submit" :disabled="loading" class="btn btn-primary">{{ t('shared.community.modal.save') }}</button>
+              <Button type="button" variant="secondary" @click="editCurrent.visible = false">{{ t('shared.community.modal.cancel') }}</Button>
+              <Button type="submit" variant="indigo" :disabled="loading">{{ t('shared.community.modal.save') }}</Button>
             </div>
           </form>
         </div>
@@ -158,6 +158,7 @@ import { storeToRefs } from 'pinia';
 import { useCommunityStore } from '@/stores/community';
 import { useAuthStore } from '@/stores/auth';
 import { UserIcon, EyeIcon, HandThumbUpIcon, ChatBubbleLeftIcon, SparklesIcon } from '@heroicons/vue/24/outline';
+import Button from '@/components/ui/Button.vue'
 import CommentThread from '@/components/comments/CommentThread.vue'
 import EmojiPicker from '@/components/ui/EmojiPicker.vue'
 import UserAvatar from '@/components/ui/UserAvatar.vue'
@@ -171,6 +172,7 @@ const router = useRouter();
 const authStore = useAuthStore();
 const communityStore = useCommunityStore();
 const { t } = useI18n()
+const isDark = computed(() => document.documentElement.classList.contains('dark'))
 
 // 分类映射：保持前端选项值使用稳定 id，提交与回显时与后端中文互转
 const categoryIdToLabel: Record<string, string> = {

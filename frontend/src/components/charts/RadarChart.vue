@@ -30,13 +30,15 @@ const props = withDefaults(defineProps<Props>(), {
 const chartRef = ref<HTMLElement>()
 let inst: echarts.ECharts | null = null
 let darkObserver: MutationObserver | null = null
+let reRenderScheduled = false
 
 const buildOption = () => {
   const theme = props.theme === 'auto'
     ? (document.documentElement.classList.contains('dark') ? 'dark' : 'light')
     : props.theme
   const palette = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444']
-  const bg = theme === 'dark' ? '#0b0f1a' : '#ffffff'
+  // Use transparent background to preserve glass effect behind the chart
+  const bg = 'transparent'
   return {
     backgroundColor: bg,
     title: props.title ? { text: props.title, left: 'center', textStyle: { color: theme === 'dark' ? '#e5e7eb' : '#111827' } } : undefined,
@@ -50,19 +52,25 @@ const buildOption = () => {
     radar: {
       indicator: props.indicators,
       axisName: { color: theme === 'dark' ? '#e5e7eb' : '#374151' },
-      splitLine: { lineStyle: { color: theme === 'dark' ? ['#4b5563'] : ['#e5e7eb'] } },
-      splitArea: { areaStyle: { color: theme === 'dark' ? ['#111827', '#0f172a'] : ['#ffffff', '#f9fafb'] } },
+      // 提高浅色模式下网格线可读性
+      splitLine: { lineStyle: { color: theme === 'dark' ? ['#4b5563'] : ['#cbd5e1'] } },
+      // Make split areas transparent so chart does not cover glass
+      splitArea: { areaStyle: { color: 'transparent' } },
       axisLine: { lineStyle: { color: theme === 'dark' ? '#6b7280' : '#d1d5db' } }
     },
     series: [
       {
         type: 'radar',
-        lineStyle: { width: theme === 'dark' ? 3 : 2 },
+        // 增强浅色模式折线可读性
+        lineStyle: { width: 3, opacity: 1 },
+        symbol: 'circle',
+        symbolSize: 3,
         data: props.series.map((s, i) => ({
           value: s.values,
           name: s.name,
           itemStyle: { color: s.color || palette[i % palette.length] },
-          areaStyle: { opacity: theme === 'dark' ? 0.25 : 0.15 }
+          lineStyle: { color: s.color || palette[i % palette.length], width: 3, opacity: 1 },
+          areaStyle: { opacity: theme === 'dark' ? 0.25 : 0.22 }
         }))
       }
     ]
@@ -71,13 +79,27 @@ const buildOption = () => {
 
 const render = async () => {
   if (!chartRef.value) return
-  if (inst) inst.dispose()
+  // 确保无论内部引用或 DOM 上缓存的实例都被正确释放
+  try { inst?.dispose() } catch {}
+  const existing = echarts.getInstanceByDom(chartRef.value)
+  if (existing) {
+    try { existing.dispose() } catch {}
+  }
   await nextTick()
   const theme = props.theme === 'auto'
     ? (document.documentElement.classList.contains('dark') ? 'dark' : 'light')
     : props.theme
   inst = echarts.init(chartRef.value, theme)
   inst.setOption(buildOption())
+}
+
+const scheduleRender = () => {
+  if (reRenderScheduled) return
+  reRenderScheduled = true
+  window.setTimeout(() => {
+    reRenderScheduled = false
+    render()
+  }, 60)
 }
 
   let resizeHandler: (() => void) | null = null
@@ -90,7 +112,8 @@ const render = async () => {
     if (!darkObserver) {
       darkObserver = new MutationObserver(() => {
         if (props.theme === 'auto') {
-          render()
+          // 在主题切换动画期间可能会触发多次 class 变更，这里合并重渲染
+          scheduleRender()
         }
       })
       darkObserver.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] })
@@ -112,8 +135,8 @@ const render = async () => {
 watch(
   () => [props.indicators, props.series, props.theme],
   () => {
-    // 主题或数据变化，重新初始化以应用 ECharts 主题
-    render()
+    // 主题或数据变化，重新初始化以应用 ECharts 主题（合并频繁更新）
+    scheduleRender()
   },
   { deep: true }
 )

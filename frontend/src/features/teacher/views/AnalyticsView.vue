@@ -16,48 +16,25 @@
             </option>
           </select>
           <div class="flex items-center gap-3">
-            <button class="btn inline-flex items-center justify-center px-6 w-36 bg-indigo-600 hover:bg-indigo-700 text-white dark:text-white whitespace-nowrap" :disabled="!selectedCourseId" @click="askAiForAnalytics">
+            <Button variant="primary" class="whitespace-nowrap" :disabled="!selectedCourseId" @click="askAiForAnalytics">
               <SparklesIcon class="w-4 h-4 mr-2" />
               {{ t('teacher.analytics.askAi') }}
-            </button>
-            <button class="btn btn-primary inline-flex items-center justify-center px-6 w-36 whitespace-nowrap" @click="exportReport">
+            </Button>
+            <Button variant="secondary" class="whitespace-nowrap" @click="exportReport">
               <DocumentArrowDownIcon class="w-4 h-4 mr-2 flex-shrink-0" />
               {{ t('teacher.analytics.exportReport') }}
-            </button>
+            </Button>
           </div>
         </div>
       </div>
     </div>
 
-    <!-- 核心指标卡片 -->
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-      <card padding="lg" class="text-center">
-        <div class="text-3xl font-bold text-blue-600 dark:text-blue-400 mb-2">
-          {{ safeCourseAnalytics.totalStudents }}
-        </div>
-        <p class="text-sm text-gray-600 dark:text-gray-400">{{ t('teacher.analytics.cards.totalStudents') }}</p>
-      </card>
-
-      <card padding="lg" class="text-center">
-        <div class="text-3xl font-bold text-green-600 dark:text-green-400 mb-2">
-          {{ (safeCourseAnalytics.averageScore || 0).toFixed(1) }}
-        </div>
-        <p class="text-sm text-gray-600 dark:text-gray-400">{{ t('teacher.analytics.cards.averageScore') }}</p>
-      </card>
-
-      <card padding="lg" class="text-center">
-        <div class="text-3xl font-bold text-yellow-600 dark:text-yellow-400 mb-2">
-          {{ (safeCourseAnalytics.completionRate || 0) }}%
-        </div>
-        <p class="text-sm text-gray-600 dark:text-gray-400">{{ t('teacher.analytics.cards.completionRate') }}</p>
-      </card>
-
-      <card padding="lg" class="text-center">
-        <div class="text-3xl font-bold text-purple-600 dark:text-purple-400 mb-2">
-          {{ safeCourseAnalytics.totalAssignments }}
-        </div>
-        <p class="text-sm text-gray-600 dark:text-gray-400">{{ t('teacher.analytics.cards.totalAssignments') }}</p>
-      </card>
+    <!-- 核心指标卡片（统一为工作台小卡片样式） -->
+    <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6 mb-8">
+      <StatCard :label="t('teacher.analytics.cards.totalStudents') as string" :value="n(safeCourseAnalytics.totalStudents, 'integer')" tone="blue" :icon="UserGroupIcon" />
+      <StatCard :label="t('teacher.analytics.cards.completionRate') as string" :value="n((safeCourseAnalytics.completionRate || 0) / 100, 'percent')" tone="emerald" :icon="CheckCircleIcon" />
+      <StatCard :label="t('teacher.analytics.cards.averageScore') as string" :value="(safeCourseAnalytics.averageScore || 0).toFixed(1)" tone="violet" :icon="StarIcon" />
+      <StatCard :label="t('teacher.analytics.cards.totalAssignments') as string" :value="n(safeCourseAnalytics.totalAssignments, 'integer')" tone="amber" :icon="ClipboardDocumentListIcon" />
     </div>
 
     <!-- 图表区域 -->
@@ -68,7 +45,7 @@
         <template #header>
             <div class="flex items-center justify-between h-11 overflow-hidden">
             <h3 class="text-lg font-semibold text-gray-900 dark:text-white">{{ t('teacher.analytics.charts.scoreDistribution') }}</h3>
-              <div class="invisible flex items-center gap-2"><button class="btn">1</button><button class="btn">2</button></div>
+              <div class="invisible flex items-center gap-2"><Button size="sm" variant="ghost">1</Button><Button size="sm" variant="ghost">2</Button></div>
           </div>
         </template>
         <div class="mb-3 min-h-[44px]"></div>
@@ -113,18 +90,18 @@
                     <span aria-hidden="true" class="pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200" :class="compareEnabled ? 'translate-x-5' : 'translate-x-0'"></span>
                   </button>
                 </div>
-                <Button size="sm" variant="indigo" @click="openWeights = true" :disabled="!selectedCourseId" class="shadow-sm">
+                <Button size="sm" variant="info" @click="openWeights = true" :disabled="!selectedCourseId" class="shadow-sm">
                   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-4 h-4 mr-1">
                     <path d="M11.25 3.5a.75.75 0 0 1 .75-.75h1.5a.75.75 0 0 1 .75.75v1.19a5.25 5.25 0 0 1 2.56 1.06l.84-.84a.75.75 0 0 1 1.06 0l1.06 1.06a.75.75 0 0 1 0 1.06l-.84.84a5.25 5.25 0 0 1 1.06 2.56h1.19a.75.75 0 0 1 .75.75v1.5a.75.75 0 0 1-.75.75h-1.19a5.25 5.25 0 0 1-1.06 2.56l.84.84a.75.75 0 0 1 0 1.06l-1.06 1.06a.75.75 0 0 1-1.06 0l-.84-.84a5.25 5.25 0 0 1-2.56 1.06v1.19a.75.75 0 0 1-.75.75h-1.5a.75.75 0 0 1-.75-.75v-1.19a5.25 5.25 0 0 1-2.56-1.06l-.84.84a.75.75 0 0 1-1.06 0L5.27 17a.75.75 0 0 1 0-1.06l.84-.84a5.25 5.25 0 0 1-1.06-2.56H3.86a.75.75 0 0 1-.75-.75v-1.5c0-.414.336-.75.75-.75h1.19a5.25 5.25 0 0 1 1.06-2.56l-.84-.84a.75.75 0 0 1 0-1.06l1.06-1.06a.75.75 0 0 1 1.06 0l.84.84a5.25 5.25 0 0 1 2.56-1.06V3.5Z"/>
                     <path d="M12 8.75a3.25 3.25 0 1 0 0 6.5 3.25 3.25 0 0 0 0-6.5Z"/>
                   </svg>
                   {{ t('teacher.analytics.charts.setWeights') }}
                 </Button>
-                <Button size="sm" variant="teal" :title="t('teacher.analytics.charts.refresh')" @click="onRefreshAnalytics" :disabled="!selectedCourseId" class="shadow-sm">
+                <Button size="sm" variant="info" :title="t('teacher.analytics.charts.refresh')" @click="onRefreshAnalytics" :disabled="!selectedCourseId" class="shadow-sm">
                   <ArrowPathIcon class="w-4 h-4 mr-1" />
                   {{ t('teacher.analytics.charts.refresh') }}
                 </Button>
-                <Button size="sm" variant="purple" @click="exportAnalytics" :disabled="!selectedCourseId" class="shadow-sm">
+                <Button size="sm" variant="secondary" @click="exportAnalytics" :disabled="!selectedCourseId" class="shadow-sm">
                   <DocumentArrowDownIcon class="w-4 h-4 mr-1" />
                   {{ t('teacher.analytics.charts.exportCsv') }}
                 </Button>
@@ -133,7 +110,7 @@
           </template>
           <div class="flex flex-col gap-3">
             <p class="text-xs text-gray-600 dark:text-gray-400 leading-relaxed">{{ t('teacher.analytics.settings.compareNote') }}</p>
-            <div class="flex flex-nowrap items-center gap-2 overflow-x-auto min-h-[44px]">
+            <div class="flex flex-nowrap items-center gap-2 overflow-x-auto min-h-[44px] no-scrollbar">
               <span class="text-sm text-gray-700 dark:text-gray-300">{{ t('teacher.analytics.settings.studentLabel') }}</span>
               <select v-model="selectedStudentId" class="input w-40" :disabled="!selectedCourseId">
                 <option :value="null">{{ t('teacher.analytics.charts.selectStudent') }}</option>
@@ -156,7 +133,7 @@
             <div v-else class="flex flex-col gap-2">
               <div class="flex flex-wrap items-center gap-2">
                 <span class="text-sm text-gray-700 dark:text-gray-300">{{ t('teacher.analytics.settings.setA') }}</span>
-                <select multiple size="6" v-model="assignmentIdsA" class="input min-w-[260px]">
+                <select multiple size="6" v-model="assignmentIdsA" class="input min-w-[260px] no-scrollbar">
                   <option v-for="a in assignmentOptions" :key="a.id" :value="String(a.id)">{{ a.title }}</option>
                   <option v-if="!assignmentOptions.length" disabled>暂无作业</option>
                 </select>
@@ -164,7 +141,7 @@
               </div>
               <div class="flex flex-wrap items-center gap-2">
                 <span class="text-sm text-gray-700 dark:text-gray-300">{{ t('teacher.analytics.settings.setB') }}</span>
-                <select multiple size="6" v-model="assignmentIdsB" class="input min-w-[260px]">
+                <select multiple size="6" v-model="assignmentIdsB" class="input min-w-[260px] no-scrollbar">
                   <option v-for="a in assignmentOptions" :key="a.id" :value="String(a.id)">{{ a.title }}</option>
                   <option v-if="!assignmentOptions.length" disabled>暂无作业</option>
                 </select>
@@ -233,13 +210,14 @@ import { teacherApi } from '@/api/teacher.api'
 import { assignmentApi } from '@/api/assignment.api'
 import type { CourseStudentPerformanceItem } from '@/types/teacher'
 import Card from '@/components/ui/Card.vue'
+import StatCard from '@/components/ui/StatCard.vue'
 import Button from '@/components/ui/Button.vue'
 import Badge from '@/components/ui/Badge.vue'
 import Progress from '@/components/ui/Progress.vue'
 import * as echarts from 'echarts'
 import RadarChart from '@/components/charts/RadarChart.vue'
 import AbilityWeightsDialog from '@/features/teacher/components/AbilityWeightsDialog.vue'
-import { DocumentArrowDownIcon, SparklesIcon, ArrowPathIcon } from '@heroicons/vue/24/outline'
+import { DocumentArrowDownIcon, SparklesIcon, ArrowPathIcon, UserGroupIcon, CheckCircleIcon, StarIcon, ClipboardDocumentListIcon } from '@heroicons/vue/24/outline'
 // @ts-ignore shim for vue-i18n types in this project
 import { useI18n } from 'vue-i18n'
 
@@ -248,7 +226,7 @@ const teacherStore = useTeacherStore()
 const courseStore = useCourseStore()
 const authStore = useAuthStore()
 const uiStore = useUIStore()
-const { t, locale } = useI18n()
+const { t, n, locale } = useI18n()
 
 // 状态
 const selectedCourseId = ref<string | null>(null)
@@ -715,3 +693,8 @@ watch(locale, () => {
   nextTick(() => refreshRadarLocalization())
 })
 </script> 
+
+<style scoped>
+.no-scrollbar::-webkit-scrollbar { display: none; }
+.no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+</style>

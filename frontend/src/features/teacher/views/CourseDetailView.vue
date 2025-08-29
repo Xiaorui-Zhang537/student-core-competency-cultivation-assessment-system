@@ -27,7 +27,7 @@
             <ClipboardDocumentListIcon class="w-4 h-4 mr-2" />
             {{ t('teacher.courseDetail.buttons.assignments') }}
           </Button>
-          <Button variant="indigo" @click="router.push(`/teacher/analytics?courseId=${course.id}`)">
+          <Button variant="primary" @click="router.push(`/teacher/analytics?courseId=${course.id}`)">
             <PresentationChartBarIcon class="w-4 h-4 mr-2" />
             {{ t('teacher.courseDetail.buttons.analytics') }}
           </Button>
@@ -74,16 +74,16 @@
                 </div>
               </div>
               <div class="flex items-center gap-2">
-                <a class="btn btn-sm btn-outline" :href="`${baseURL}/files/${f.id}/download`">{{ t('teacher.courseDetail.sections.download') }}</a>
-                <button class="btn btn-sm btn-danger-outline" @click="confirmDelete(f.id, 'material')">{{ t('teacher.courseDetail.sections.delete') }}</button>
+                <Button size="sm" variant="outline" as="a" :href="`${baseURL}/files/${f.id}/download`">{{ t('teacher.courseDetail.sections.download') }}</Button>
+                <Button size="sm" variant="danger" @click="confirmDelete(f.id, 'material')">{{ t('teacher.courseDetail.sections.delete') }}</Button>
               </div>
             </li>
             <li v-if="!materials.length" class="py-6 text-center text-sm text-gray-500">{{ t('teacher.courseDetail.sections.noMaterials') }}</li>
           </ul>
           <div v-if="materials.length > pageSize" class="mt-3 flex items-center justify-end gap-2">
-            <button class="btn btn-sm btn-outline" :disabled="materialsPage===1" @click="materialsPage--">{{ t('teacher.courseDetail.sections.prev') }}</button>
+            <Button size="sm" variant="outline" :disabled="materialsPage===1" @click="materialsPage--">{{ t('teacher.courseDetail.sections.prev') }}</Button>
             <span class="text-xs text-gray-500">{{ materialsPage }} / {{ materialsTotalPages }}</span>
-            <button class="btn btn-sm btn-outline" :disabled="materialsPage===materialsTotalPages" @click="materialsPage++">{{ t('teacher.courseDetail.sections.next') }}</button>
+            <Button size="sm" variant="outline" :disabled="materialsPage===materialsTotalPages" @click="materialsPage++">{{ t('teacher.courseDetail.sections.next') }}</Button>
           </div>
         </div>
         <div class="card p-6 order-1 sm:order-2 h-full">
@@ -115,16 +115,16 @@
                 </div>
               </div>
               <div class="flex items-center gap-2">
-                <a class="btn btn-sm btn-outline" :href="`${baseURL}/files/${f.id}/download`">{{ t('teacher.courseDetail.sections.download') }}</a>
-                <button class="btn btn-sm btn-danger-outline" @click="confirmDelete(f.id, 'video')">{{ t('teacher.courseDetail.sections.delete') }}</button>
+                <Button size="sm" variant="outline" as="a" :href="`${baseURL}/files/${f.id}/download`">{{ t('teacher.courseDetail.sections.download') }}</Button>
+                <Button size="sm" variant="danger" @click="confirmDelete(f.id, 'video')">{{ t('teacher.courseDetail.sections.delete') }}</Button>
               </div>
             </li>
             <li v-if="!videos.length" class="py-6 text-center text-sm text-gray-500">{{ t('teacher.courseDetail.sections.noVideos') }}</li>
           </ul>
           <div v-if="videos.length > pageSize" class="mt-3 flex items-center justify-end gap-2">
-            <button class="btn btn-sm btn-outline" :disabled="videosPage===1" @click="videosPage--">{{ t('teacher.courseDetail.sections.prev') }}</button>
+            <Button size="sm" variant="outline" :disabled="videosPage===1" @click="videosPage--">{{ t('teacher.courseDetail.sections.prev') }}</Button>
             <span class="text-xs text-gray-500">{{ videosPage }} / {{ videosTotalPages }}</span>
-            <button class="btn btn-sm btn-outline" :disabled="videosPage===videosTotalPages" @click="videosPage++">{{ t('teacher.courseDetail.sections.next') }}</button>
+            <Button size="sm" variant="outline" :disabled="videosPage===videosTotalPages" @click="videosPage++">{{ t('teacher.courseDetail.sections.next') }}</Button>
           </div>
         </div>
       </div>

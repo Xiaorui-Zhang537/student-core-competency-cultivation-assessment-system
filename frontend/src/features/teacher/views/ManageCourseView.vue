@@ -10,14 +10,14 @@
           <h1 class="text-3xl font-bold text-gray-900 dark:text-white">{{ t('teacher.courses.title') }}</h1>
           <p class="text-gray-600 dark:text-gray-400">{{ t('teacher.courses.subtitle') }}</p>
         </div>
-        <Button variant="indigo" @click="openCreateModal">
+        <Button variant="primary" @click="openCreateModal">
           <PlusIcon class="w-4 h-4 mr-2" />
           {{ t('teacher.courses.actions.create') }}
         </Button>
       </div>
 
       <!-- Filters -->
-      <div class="mb-6 card p-4">
+      <div class="mb-6 filter-container p-4 rounded-xl" v-glass="{ strength: 'thin', interactive: false }">
       <div class="grid grid-cols-1 md:grid-cols-2 gap-4 items-center">
         <!-- 搜索框 with 图标 -->
         <div class="relative">
@@ -34,7 +34,7 @@
         </div>
         <!-- 状态分段按钮组 + 清空按钮（同列左右分布，消除右侧空白） -->
         <div class="flex items-center justify-between gap-4">
-          <div class="inline-flex whitespace-nowrap rounded-lg overflow-hidden border border-gray-300 dark:border-gray-600">
+          <div class="inline-flex whitespace-nowrap rounded-xl overflow-hidden border border-gray-300/50 dark:border-gray-600/40 glass-ultraThin" v-glass="{ strength: 'ultraThin', interactive: false }">
             <button type="button" @click="setStatus('')" :class="segClass('')">{{ t('teacher.courses.filters.status.all') }}</button>
             <button type="button" @click="setStatus('DRAFT')" :class="segClass('DRAFT')">{{ t('teacher.courses.filters.status.draft') }}</button>
             <button type="button" @click="setStatus('PUBLISHED')" :class="segClass('PUBLISHED')">{{ t('teacher.courses.filters.status.published') }}</button>
@@ -104,7 +104,7 @@
       <div v-if="!courseStore.loading && courseStore.courses.length === 0" class="text-center py-12 card">
         <h3 class="text-lg font-medium">{{ t('teacher.courses.empty.title') }}</h3>
         <p class="text-gray-500 mb-4">{{ t('teacher.courses.empty.description') }}</p>
-        <Button variant="indigo" @click="openCreateModal">
+        <Button variant="primary" @click="openCreateModal">
           <PlusIcon class="w-4 h-4 mr-2" />
           {{ t('teacher.courses.actions.create') }}
         </Button>
@@ -112,7 +112,7 @@
 
       <!-- Create/Edit Modal -->
       <div v-if="showModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div class="bg-white dark:bg-gray-800 rounded-xl shadow-xl w-full max-w-2xl max-h-[85vh] overflow-y-auto">
+      <div class="modal glass-thick w-full max-w-2xl max-h-[85vh] overflow-y-auto" v-glass="{ strength: 'thick', interactive: true }">
         <div class="p-6">
         <h2 class="text-xl font-bold mb-4">{{ isEditing ? t('teacher.courses.modal.editTitle') : t('teacher.courses.modal.createTitle') }}</h2>
         <form @submit.prevent="handleSubmit" class="space-y-4">
@@ -153,7 +153,7 @@
           </div>
           <div class="flex justify-end space-x-3 mt-6">
             <Button type="button" variant="secondary" @click="closeModal">{{ t('teacher.courses.modal.cancel') }}</Button>
-            <Button type="submit" :disabled="courseStore.loading" variant="indigo">
+            <Button type="submit" :disabled="courseStore.loading" variant="primary">
               {{ isEditing ? t('teacher.courses.actions.save') : t('teacher.courses.actions.create') }}
             </Button>
           </div>

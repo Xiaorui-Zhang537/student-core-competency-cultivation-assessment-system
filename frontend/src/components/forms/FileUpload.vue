@@ -7,14 +7,15 @@
     <!-- 拖拽上传区域 -->
     <div
       ref="dropZoneRef"
+      v-glass="{ strength: 'regular', interactive: true }"
       :class="[
-        'border-2 border-dashed rounded-xl transition-all duration-300 cursor-pointer bg-white/60 dark:bg-gray-800/40 hover:bg-gray-50 dark:hover:bg-gray-700 hover:border-primary-400 shadow-sm',
+        'rounded-xl transition-all duration-300 cursor-pointer glass-regular glass-interactive',
         dense ? 'p-2' : (compact ? 'p-3' : 'p-6'),
         dense ? 'inline-block w-[280px] sm:w-[300px] md:w-[340px] lg:w-[380px]' : '',
         {
-          'border-primary-400 bg-primary-50 dark:bg-primary-900/20': isDragOver,
-          'border-gray-300 dark:border-gray-600': !isDragOver && !error,
-          'border-red-400 bg-red-50 dark:bg-red-900/20': error
+          'ring-1 ring-primary-300': isDragOver,
+          'ring-1 ring-gray-300/50': !isDragOver && !error,
+          'ring-1 ring-red-400': error
         }
       ]"
       role="button"
@@ -107,7 +108,8 @@
         <div
           v-for="(file, index) in files"
           :key="index"
-          class="flex items-center justify-between p-3 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700"
+          v-glass="{ strength: 'ultraThin', interactive: false }"
+          class="flex items-center justify-between p-3 rounded-lg glass-ultraThin"
         >
           <div class="flex items-center space-x-3 flex-1 min-w-0">
             <!-- 文件图标 -->

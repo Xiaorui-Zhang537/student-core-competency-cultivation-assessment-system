@@ -20,7 +20,7 @@
         <h1 class="text-3xl font-bold">{{ t('teacher.assignments.title') }}</h1>
         <p class="text-gray-500">{{ t('teacher.assignments.subtitle') }}</p>
       </div>
-        <Button variant="purple" @click="openCreateModal" :disabled="!courseStore.courses.length">
+        <Button variant="primary" @click="openCreateModal" :disabled="!courseStore.courses.length">
           <PlusIcon class="w-4 h-4 mr-2" />
           {{ t('teacher.assignments.actions.create') }}
         </Button>
@@ -56,7 +56,7 @@
           </div>
         </div>
         <div>
-          <Button size="sm" variant="teal" class="mr-2" @click="() => viewSubmissions(assignment)">
+          <Button size="sm" variant="success" class="mr-2" @click="() => viewSubmissions(assignment)">
             <InboxArrowDownIcon class="w-4 h-4 mr-1" />
             {{ t('teacher.assignments.actions.viewSubmissions') }}
           </Button>
@@ -64,7 +64,7 @@
             <PencilSquareIcon class="w-4 h-4 mr-1" />
             {{ t('teacher.assignments.actions.edit') }}
           </Button>
-          <Button size="sm" variant="outline" @click="handleDeleteAssignment(assignment)">
+          <Button size="sm" variant="danger" @click="handleDeleteAssignment(assignment)">
             <TrashIcon class="w-4 h-4 mr-1" />
             {{ t('teacher.assignments.actions.delete') }}
           </Button>
@@ -96,7 +96,7 @@
 
     <!-- Create/Edit Modal -->
     <div v-if="showModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div class="bg-white dark:bg-gray-800 rounded-lg p-6 w-full max-w-lg max-h-[80vh] overflow-y-auto">
+      <div class="modal glass-thick p-6 w-full max-w-lg max-h-[80vh] overflow-y-auto" v-glass="{ strength: 'thick', interactive: true }">
         <h2 class="text-xl font-bold mb-4">{{ isEditing ? t('teacher.assignments.modal.editTitle') : t('teacher.assignments.modal.createTitle') }}</h2>
         <form @submit.prevent="handleSubmit" class="space-y-4">
            <div>

@@ -28,14 +28,14 @@
 import { computed } from 'vue'
 
 interface Props {
-  variant?: 'primary' | 'secondary' | 'outline' | 'ghost' | 'danger' | 'success' | 'warning' | 'indigo' | 'purple' | 'teal'
+  variant?: 'glass' | 'glass-ghost' | 'primary' | 'secondary' | 'outline' | 'ghost' | 'danger' | 'success' | 'warning' | 'indigo' | 'purple' | 'teal'
   size?: 'xs' | 'sm' | 'md' | 'lg' | 'xl'
   loading?: boolean
   disabled?: boolean
 }
 
 const props = withDefaults(defineProps<Props>(), {
-  variant: 'primary',
+  variant: 'glass',
   size: 'md',
   loading: false,
   disabled: false
@@ -46,28 +46,36 @@ const emit = defineEmits<{
 }>()
 
 const sizeClasses = computed(() => {
+  // Unified fixed-height system (width grows with content)
   const sizes = {
-    xs: 'px-2 py-1 text-xs',
-    sm: 'px-3 py-1.5 text-sm',
-    md: 'px-4 py-2 text-sm',
-    lg: 'px-6 py-3 text-base',
-    xl: 'px-8 py-4 text-lg'
+    xs: 'h-7 px-2 text-xs',      // ~28px
+    sm: 'h-8 px-3 text-sm',      // ~32px
+    md: 'h-9 px-4 text-sm',      // ~36px (default)
+    lg: 'h-11 px-5 text-base',   // ~44px
+    xl: 'h-12 px-6 text-lg'      // ~48px
   }
   return sizes[props.size]
 })
 
 const variantClasses = computed(() => {
+  // Light-mode readability enhancements are encoded here (button-only), dark remains as before
   const variants = {
-    primary: 'bg-primary-600 text-white hover:bg-primary-700 focus:ring-primary-500',
-    secondary: 'bg-gray-200 text-gray-900 hover:bg-gray-300 focus:ring-gray-500 dark:bg-gray-700 dark:text-gray-100 dark:hover:bg-gray-600',
-    outline: 'border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 focus:ring-indigo-500 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-200 dark:hover:bg-gray-700',
-    ghost: 'text-gray-600 hover:bg-gray-100 focus:ring-gray-500 dark:text-gray-300 dark:hover:bg-gray-800',
-    danger: 'bg-red-600 text-white hover:bg-red-700 focus:ring-red-500',
-    success: 'bg-green-600 text-white hover:bg-green-700 focus:ring-green-500',
-    warning: 'bg-amber-500 text-white hover:bg-amber-600 focus:ring-amber-500',
-    indigo: 'bg-indigo-600 text-white hover:bg-indigo-700 focus:ring-indigo-500',
-    purple: 'bg-purple-600 text-white hover:bg-purple-700 focus:ring-purple-500',
-    teal: 'bg-teal-600 text-white hover:bg-teal-700 focus:ring-teal-500'
+    glass: 'glass-thin glass-interactive text-gray-900 dark:text-gray-100 hover:shadow-md',
+    'glass-ghost': 'glass-ultraThin glass-interactive text-gray-800 dark:text-gray-200 hover:shadow-md',
+    primary: 'glass-regular glass-interactive text-white bg-primary-600/30 hover:bg-primary-600/40 focus:ring-primary-500',
+    secondary: 'glass-regular glass-interactive text-gray-900 dark:text-gray-100 bg-gray-400/20 hover:bg-gray-400/30 focus:ring-gray-500',
+    outline: 'glass-ultraThin glass-interactive border border-white/40 text-gray-800 dark:text-gray-200 hover:bg-white/10 focus:ring-indigo-500',
+    ghost: 'glass-ultraThin glass-interactive text-gray-700 dark:text-gray-300 hover:bg-gray-500/10 focus:ring-gray-500',
+    danger: 'glass-regular glass-interactive text-white bg-red-600/30 hover:bg-red-600/40 focus:ring-red-500',
+    success: 'glass-regular glass-interactive text-white bg-green-600/30 hover:bg-green-600/40 focus:ring-green-500',
+    warning: 'glass-regular glass-interactive text-white bg-amber-500/30 hover:bg-amber-500/40 focus:ring-amber-500',
+    info: 'glass-regular glass-interactive text-white bg-indigo-600/30 hover:bg-indigo-600/40 focus:ring-indigo-500',
+    // Temporary aliases kept for compatibility during migration (will be removed after replacements)
+    indigo: 'glass-regular glass-interactive text-white bg-indigo-600/30 hover:bg-indigo-600/40 focus:ring-indigo-500',
+    purple: 'glass-regular glass-interactive text-white bg-purple-600/30 hover:bg-purple-600/40 focus:ring-purple-500',
+    teal: 'glass-regular glass-interactive text-white bg-teal-600/30 hover:bg-teal-600/40 focus:ring-teal-500',
+    // Menu-specific: left-aligned content, higher text contrast in light mode
+    menu: 'glass-ultraThin glass-interactive text-gray-800 dark:text-gray-200 hover:bg-gray-500/10 focus:ring-indigo-500 justify-start'
   }
   return variants[props.variant]
 })

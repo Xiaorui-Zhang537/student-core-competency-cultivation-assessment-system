@@ -2,7 +2,7 @@
   <div class="min-h-screen relative">
     <FuturisticBackground class="fixed inset-0 z-0 pointer-events-none" theme="auto" :intensity="0.18" :bits-density="0.8" :sweep-frequency="7" :parallax="true" :enable3D="true" :logo-glow="true" :emphasis="false" :interactions="{ mouseTrail: true, clickRipples: true }" :enabled="uiStore.bgEnabled" :respect-reduced-motion="true" />
     <!-- 顶部导航栏 -->
-    <nav class="bg-white/90 dark:bg-gray-800/80 backdrop-blur-md border-b border-gray-200 dark:border-gray-600 shadow-sm sticky top-0 z-20">
+    <nav class="border-b border-gray-200 dark:border-gray-600 shadow-sm sticky top-0 z-40 glass-thin glass-interactive" v-glass="{ strength: 'thin', interactive: true }">
       <div class="px-4 sm:px-6 lg:px-12">
         <div class="flex justify-between h-14">
           <!-- 左侧：Logo和菜单切换 -->
@@ -62,6 +62,7 @@
               <button
                 @click="showUserMenu = !showUserMenu"
                 class="flex items-center text-sm rounded-full focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500"
+                ref="userMenuBtn"
               >
                 <div class="flex items-center space-x-2">
                   <user-avatar :avatar="(authStore.user as any)?.avatar" :size="28">
@@ -80,34 +81,38 @@
               </button>
 
               <!-- 用户下拉菜单 -->
-              <div
-                v-if="showUserMenu"
-                class="origin-top-right absolute right-0 mt-2 w-48 rounded-md shadow-lg bg-white dark:bg-gray-800 ring-1 ring-black ring-opacity-5 focus:outline-none z-50"
-                @click.stop
-              >
-                <div class="py-1">
-                  <router-link
-                    to="/teacher/profile"
-                    class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
-                    @click="showUserMenu = false"
-                  >
-                    <div class="flex items-center space-x-2">
-                      <user-icon class="h-4 w-4" />
-                      <span>{{ t('layout.teacher.user.profile') }}</span>
-                    </div>
-                  </router-link>
-                  <div class="border-t border-gray-100 dark:border-gray-600"></div>
-                  <button
-                    @click="handleLogout"
-                    class="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-gray-100 dark:hover:bg-gray-700"
-                  >
-                    <div class="flex items-center space-x-2">
-                      <arrow-right-on-rectangle-icon class="h-4 w-4" />
-                      <span>{{ t('layout.teacher.user.logout') }}</span>
-                    </div>
-                  </button>
+              <teleport to="body">
+                <div
+                  v-if="showUserMenu"
+                  class="rounded-xl shadow-lg glass-thin"
+                  v-glass="{ strength: 'thin', interactive: false }"
+                  :style="userMenuStyle"
+                  @click.stop
+                >
+                  <div class="py-1">
+                    <router-link
+                      to="/teacher/profile"
+                      class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100/50 dark:hover:bg-gray-700/50 rounded-lg"
+                      @click="showUserMenu = false"
+                    >
+                      <div class="flex items-center space-x-2">
+                        <user-icon class="h-4 w-4" />
+                        <span>{{ t('layout.teacher.user.profile') }}</span>
+                      </div>
+                    </router-link>
+                    <div class="border-t border-gray-100 dark:border-gray-600"></div>
+                    <button
+                      @click="handleLogout"
+                      class="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-gray-100/50 dark:hover:bg-gray-700/50 rounded-lg"
+                    >
+                      <div class="flex items-center space-x-2">
+                        <arrow-right-on-rectangle-icon class="h-4 w-4" />
+                        <span>{{ t('layout.teacher.user.logout') }}</span>
+                      </div>
+                    </button>
+                  </div>
                 </div>
-              </div>
+              </teleport>
             </div>
           </div>
         </div>
@@ -118,8 +123,9 @@
     <div class="flex pt-14 relative z-10">
       <!-- 侧边栏 -->
       <aside
+        v-glass="{ strength: 'regular', interactive: true }"
         :class="[
-          'fixed inset-y-0 left-0 z-30 w-64 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-600 transform transition-transform duration-300 ease-in-out',
+          'fixed inset-y-0 left-0 z-30 w-64 glass-regular glass-interactive border-r border-gray-200/40 dark:border-gray-600/40 transform transition-transform duration-300 ease-in-out',
           uiStore.sidebarOpen ? 'translate-x-0' : '-translate-x-full'
         ]"
         style="top: 3.5rem;"
@@ -203,7 +209,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted } from 'vue'
+import { ref, onMounted, onUnmounted, nextTick, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useUIStore } from '@/stores/ui'
 import { useAuthStore } from '@/stores/auth'
@@ -239,6 +245,8 @@ const { t } = useI18n()
 
 // 状态
 const showUserMenu = ref(false)
+const userMenuBtn = ref<HTMLElement | null>(null)
+const userMenuStyle = ref<Record<string, string>>({})
 
 const handleLogout = async () => {
   showUserMenu.value = false
@@ -262,5 +270,21 @@ onMounted(() => {
 
 onUnmounted(() => {
   document.removeEventListener('click', handleClickOutside)
+})
+
+watch(showUserMenu, async (v: boolean) => {
+  if (!v) return
+  await nextTick()
+  try {
+    const el = userMenuBtn.value as HTMLElement
+    const rect = el.getBoundingClientRect()
+    userMenuStyle.value = {
+      position: 'fixed',
+      top: `${rect.bottom + 8}px`,
+      left: `${Math.max(8, rect.right - 192)}px`,
+      width: '12rem',
+      zIndex: '1000'
+    }
+  } catch {}
 })
 </script>

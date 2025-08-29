@@ -1,5 +1,5 @@
 <template>
-  <div id="app" class="min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors duration-300">
+  <div id="app" class="min-h-screen transition-colors duration-300">
     <!-- 全局加载状态 -->
     <div 
       v-if="globalLoading" 
@@ -36,13 +36,14 @@
       </template>
     </router-view>
 
-    <!-- 全局通知系统 -->
+    <!-- 全局通知系统（玻璃） -->
     <div class="fixed top-4 right-4 z-50 space-y-2">
       <div class="space-y-2">
         <div
           v-for="notification in notifications"
           :key="notification.id"
-          class="w-auto max-w-[90vw] sm:max-w-[560px] bg-white dark:bg-gray-800 shadow-lg rounded-lg pointer-events-auto ring-1 ring-black ring-opacity-5 overflow-hidden transform transition-all duration-300 ease-in-out"
+          class="w-auto max-w-[90vw] sm:max-w-[560px] rounded-xl pointer-events-auto overflow-hidden transform transition-all duration-300 ease-in-out glass-regular"
+          v-glass="{ strength: 'regular', interactive: true }"
         >
           <div class="p-4">
             <div class="flex items-start">
@@ -68,14 +69,14 @@
                 <p class="text-sm font-medium text-gray-900 dark:text-white break-words whitespace-normal">
                   {{ notification.title }}
                 </p>
-                <p v-if="notification.message" class="mt-1 text-sm text-gray-500 dark:text-gray-400 break-words whitespace-normal">
+                <p v-if="notification.message" class="mt-1 text-sm text-gray-700 dark:text-gray-300 break-words whitespace-normal">
                   {{ notification.message }}
                 </p>
               </div>
               <div class="ml-4 flex-shrink-0 flex">
                 <button
                   @click="uiStore.removeNotification(notification.id)"
-                  class="bg-white dark:bg-gray-800 rounded-md inline-flex text-gray-400 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500"
+                  class="rounded-md inline-flex text-gray-400 hover:text-gray-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500"
                 >
                   <x-mark-icon class="h-5 w-5" />
                 </button>
@@ -89,10 +90,10 @@
     <!-- 全局错误边界弹窗 -->
     <div
       v-if="showErrorModal"
-      class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
+      class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
       @click.self="showErrorModal = false"
     >
-      <div class="bg-white dark:bg-gray-800 rounded-lg max-w-md w-full p-6">
+      <div class="modal glass-thick max-w-md w-full p-6" v-glass="{ strength: 'thick' }">
         <div class="flex items-center mb-4">
           <x-circle-icon class="w-8 h-8 text-red-500 mr-3" />
           <h3 class="text-lg font-semibold text-gray-900 dark:text-white">{{ t('app.error.title') }}</h3>
@@ -103,13 +104,13 @@
         <div class="flex space-x-3">
           <button
             @click="reloadPage"
-            class="flex-1 bg-primary-600 text-white px-4 py-2 rounded-lg hover:bg-primary-700 transition-colors"
+            class="flex-1 btn btn-primary"
           >
             {{ t('app.error.button.reload') }}
           </button>
           <button
             @click="showErrorModal = false"
-            class="flex-1 bg-gray-200 dark:bg-gray-600 text-gray-900 dark:text-white px-4 py-2 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-500 transition-colors"
+            class="flex-1 btn btn-ghost"
           >
             {{ t('app.error.button.close') }}
           </button>

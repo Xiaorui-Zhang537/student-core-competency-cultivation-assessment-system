@@ -1,6 +1,7 @@
 @import 'tailwindcss/base';
 @import 'tailwindcss/components';
 @import 'tailwindcss/utilities';
+@import './glass.tokens.postcss';
 
 /* 全局基础样式 */
 @layer base {
@@ -21,6 +22,19 @@
   }
 }
 
+/* 主题切换时的全局过渡（短暂） */
+@layer base {
+  .theme-switching, .theme-switching * {
+    transition-property: background-color, color, border-color, fill, stroke, box-shadow, filter, backdrop-filter;
+    transition-duration: 450ms;
+    transition-timing-function: ease;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .theme-switching, .theme-switching * { transition: none !important; }
+}
+
 /* 分栏严格对半布局（用于分析页） */
 @layer components {
   .analytics-grid {
@@ -38,6 +52,66 @@
 
 /* 组件样式 */
 @layer components {
+  /* Glass utilities (neutral, strength-graded) */
+  .glass-base {
+    background-color: rgb(var(--glass-bg-rgb) / 0.001); /* actual alpha via layer below */
+    border: 1px solid var(--glass-border-color);
+    box-shadow: var(--glass-inner-shadow), var(--glass-outer-shadow);
+    will-change: transform, backdrop-filter, filter;
+  }
+
+  .glass-ultraThin { @apply glass-base; }
+  .glass-thin { @apply glass-base; }
+  .glass-regular { @apply glass-base; }
+  .glass-thick { @apply glass-base; }
+  .glass-ultraThick { @apply glass-base; }
+
+  .glass-ultraThin {
+    background-color: rgb(var(--glass-bg-rgb) / var(--glass-alpha-ultraThin));
+    backdrop-filter: blur(var(--glass-blur-ultraThin)) saturate(var(--glass-saturate-ultraThin)) contrast(var(--glass-contrast-ultraThin));
+    -webkit-backdrop-filter: blur(var(--glass-blur-ultraThin)) saturate(var(--glass-saturate-ultraThin)) contrast(var(--glass-contrast-ultraThin));
+  }
+  .glass-thin {
+    background-color: rgb(var(--glass-bg-rgb) / var(--glass-alpha-thin));
+    backdrop-filter: blur(var(--glass-blur-thin)) saturate(var(--glass-saturate-thin)) contrast(var(--glass-contrast-thin));
+    -webkit-backdrop-filter: blur(var(--glass-blur-thin)) saturate(var(--glass-saturate-thin)) contrast(var(--glass-contrast-thin));
+  }
+  .glass-regular {
+    background-color: rgb(var(--glass-bg-rgb) / var(--glass-alpha-regular));
+    backdrop-filter: blur(var(--glass-blur-regular)) saturate(var(--glass-saturate-regular)) contrast(var(--glass-contrast-regular));
+    -webkit-backdrop-filter: blur(var(--glass-blur-regular)) saturate(var(--glass-saturate-regular)) contrast(var(--glass-contrast-regular));
+  }
+  .glass-thick {
+    background-color: rgb(var(--glass-bg-rgb) / var(--glass-alpha-thick));
+    backdrop-filter: blur(var(--glass-blur-thick)) saturate(var(--glass-saturate-thick)) contrast(var(--glass-contrast-thick));
+    -webkit-backdrop-filter: blur(var(--glass-blur-thick)) saturate(var(--glass-saturate-thick)) contrast(var(--glass-contrast-thick));
+  }
+  .glass-ultraThick {
+    background-color: rgb(var(--glass-bg-rgb) / var(--glass-alpha-ultraThick));
+    backdrop-filter: blur(var(--glass-blur-ultraThick)) saturate(var(--glass-saturate-ultraThick)) contrast(var(--glass-contrast-ultraThick));
+    -webkit-backdrop-filter: blur(var(--glass-blur-ultraThick)) saturate(var(--glass-saturate-ultraThick)) contrast(var(--glass-contrast-ultraThick));
+  }
+
+  .glass-interactive { position: relative; overflow: hidden; }
+  .glass-interactive::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(120deg, transparent 25%, rgba(255,255,255,0.08) 50%, transparent 75%);
+    opacity: 0;
+    transition: opacity 200ms ease, transform 400ms ease;
+    transform: translateX(-15%);
+    pointer-events: none;
+  }
+  .glass-interactive:hover::after { opacity: 1; transform: translateX(0%); }
+  .glass-interactive:active { box-shadow: var(--glass-inner-shadow), 0 6px 22px rgba(0,0,0,0.12); }
+
+  @media (prefers-reduced-motion: reduce) {
+    .glass-interactive::after { display: none; }
+  }
+  @media (max-width: 640px) {
+    .glass-interactive::after { display: none; }
+  }
   /* 暗黑主题变量（可根据需要调整） */
   :root {
     --color-surface: #ffffff;
@@ -63,22 +137,16 @@
 
   .btn {
     @apply px-4 py-2 rounded-lg font-medium transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2;
+    @apply glass-thin glass-interactive;
   }
 
   .btn-primary {
     @apply bg-primary-600 text-white hover:bg-primary-700 focus:ring-primary-500;
   }
 
-  .btn-secondary {
-    @apply bg-gray-200 text-gray-900 hover:bg-gray-300 focus:ring-gray-500 dark:bg-gray-700 dark:text-gray-100 dark:hover:bg-gray-600;
-  }
+  .btn-secondary { @apply glass-regular glass-interactive text-gray-900 dark:text-gray-100; }
 
-  .card {
-    @apply rounded-xl shadow-sm border;
-    background-color: var(--color-surface-2);
-    border-color: var(--color-border);
-    color: var(--color-text-primary);
-  }
+  .card { @apply rounded-xl shadow-sm border glass-regular; }
 
   .input {
     @apply w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2;
@@ -103,13 +171,41 @@
     box-shadow: 0 0 0 2px rgba(var(--ring-primary), 0.35);
   }
 
+  /* Glassy input variant for chat panes */
+  .input--glass {
+    background-color: rgb(255 255 255 / 0.3);
+    border-color: rgba(255, 255, 255, 0.4);
+    backdrop-filter: blur(6px) saturate(120%);
+    -webkit-backdrop-filter: blur(6px) saturate(120%);
+  }
+
+  .dark .input--glass {
+    background-color: rgb(255 255 255 / 0.06);
+    border-color: rgba(255, 255, 255, 0.12);
+  }
+
   /* 统一弹窗容器（给所有弹窗根节点添加 .modal 类） */
   .modal {
-    background-color: var(--color-surface);
-    color: var(--color-text-primary);
-    border: 1px solid var(--color-border);
     @apply rounded-xl shadow-xl;
+    /* Use thick glass by default */
+    border: 1px solid var(--glass-border-color);
+    background-color: rgb(var(--glass-bg-rgb) / var(--glass-alpha-thick));
+    backdrop-filter: blur(var(--glass-blur-thick)) saturate(var(--glass-saturate-thick)) contrast(var(--glass-contrast-thick));
+    -webkit-backdrop-filter: blur(var(--glass-blur-thick)) saturate(var(--glass-saturate-thick)) contrast(var(--glass-contrast-thick));
+    box-shadow: var(--glass-inner-shadow), var(--glass-outer-shadow);
+    /* Hide scrollbars but keep scroll */
+    scrollbar-width: none; /* Firefox */
+    -ms-overflow-style: none; /* IE 10+ */
   }
+
+  /* Hide scrollbars (WebKit) */
+  .modal::-webkit-scrollbar { width: 0px; height: 0px; }
+
+  /* Generic popover/dropdown glass */
+  .popover-glass { @apply rounded-xl glass-regular; }
+
+  /* 通用过滤容器（为各页面过滤/工具栏区域统一玻璃化） */
+  .filter-container { @apply glass-thin; }
 
   .modal .modal-header {
     color: var(--color-text-primary);
@@ -179,3 +275,10 @@
     line-clamp: none;
   }
 } 
+
+@layer components {
+  /* Button-only readability tweaks (light mode defaults) */
+  .btn-glass-outline-light { @apply border border-white/40 text-gray-800; }
+  .btn-glass-ghost-light { @apply text-gray-700; }
+  .btn-glass-menu { @apply justify-start; }
+}

@@ -1,5 +1,5 @@
 <template>
-  <div ref="rootRef" class="absolute inset-0 pointer-events-none select-none" :style="rootStyle" style="z-index:1">
+  <div ref="rootRef" class="fixed inset-0 pointer-events-none select-none" :style="rootStyle">
     <!-- Disable extra layers during diagnostics -->
     <div v-if="false" ref="metaRef" class="absolute inset-0" style="z-index:5"></div>
     <div v-if="false" ref="particleRef" class="absolute inset-0" style="position:absolute;left:0;top:0;width:100%;height:100%;z-index:999;pointer-events:none"></div>
@@ -36,7 +36,7 @@
     <canvas v-if="false" ref="noiseCanvas" class="absolute inset-0" style="z-index:4"></canvas>
 
     <!-- Unified 2D canvas (background + particles + lines) -->
-    <canvas v-if="useLegacyFlow" ref="flowCanvas" class="absolute inset-0" style="z-index:2;opacity:1"></canvas>
+    <canvas v-if="useLegacyFlow" ref="flowCanvas" class="absolute inset-0" style="position:fixed;left:0;top:0;width:100vw;height:100vh;z-index:2;opacity:1"></canvas>
 
     <!-- Bits matrix (disabled) -->
     <canvas ref="bitsCanvas" class="absolute inset-0" v-if="false"></canvas>
@@ -210,25 +210,27 @@ function gridSetup() {
 }
 
 function resizeCanvas() {
-  const target = rootRef.value || flowCanvas.value || noiseCanvas.value
-  if (!target) return
-  const rect = (target as HTMLDivElement).getBoundingClientRect?.() || { width: window.innerWidth, height: window.innerHeight }
-  W = Math.max(1, Math.floor(rect?.width || window.innerWidth))
-  H = Math.max(1, Math.floor(rect?.height || window.innerHeight))
+  // Always draw in viewport coordinate space to avoid stretching
+  const vw = window.innerWidth
+  const vh = window.innerHeight
+  W = Math.max(1, Math.floor(vw))
+  H = Math.max(1, Math.floor(vh))
   DPR = Math.min(window.devicePixelRatio || 1, 2)
   if (noiseCanvas.value) {
     noiseCanvas.value.width = Math.floor(W * DPR)
     noiseCanvas.value.height = Math.floor(H * DPR)
-    noiseCanvas.value.style.width = W + 'px'
-    noiseCanvas.value.style.height = H + 'px'
+    noiseCanvas.value.style.position = 'fixed'
+    noiseCanvas.value.style.width = '100vw'
+    noiseCanvas.value.style.height = '100vh'
     nctx = noiseCanvas.value.getContext('2d')
     if (nctx) nctx.setTransform(DPR, 0, 0, DPR, 0, 0)
   }
   if (flowCanvas.value) {
     flowCanvas.value.width = Math.floor(W * DPR)
     flowCanvas.value.height = Math.floor(H * DPR)
-    flowCanvas.value.style.width = W + 'px'
-    flowCanvas.value.style.height = H + 'px'
+    flowCanvas.value.style.position = 'fixed'
+    flowCanvas.value.style.width = '100vw'
+    flowCanvas.value.style.height = '100vh'
     fctx = flowCanvas.value.getContext('2d')
     if (fctx) fctx.setTransform(DPR, 0, 0, DPR, 0, 0)
   }
@@ -834,6 +836,27 @@ function drawNeonLines(t: number) {
   }
 
   fctx.restore()
+
+  // Tile the viewport-sized canvas over the page scroll area to avoid blank zones while keeping aspect ratio
+  const scrollH = Math.max(document.documentElement.scrollHeight, document.body.scrollHeight, window.innerHeight)
+  const scrollW = Math.max(document.documentElement.scrollWidth, document.body.scrollWidth, window.innerWidth)
+  const tilesX = Math.ceil(scrollW / W)
+  const tilesY = Math.ceil(scrollH / H)
+  // For particles we already draw in the viewport; here we duplicate the frame subtly to fill below folds
+  // This is a cheap fallback to avoid stretched visuals.
+  if (tilesX > 1 || tilesY > 1) {
+    try {
+      const frame = (flowCanvas.value as HTMLCanvasElement)
+      if (frame) {
+        for (let ty = 0; ty < tilesY; ty++) {
+          for (let tx = 0; tx < tilesX; tx++) {
+            if (tx === 0 && ty === 0) continue
+            fctx.drawImage(frame, tx * W, ty * H)
+          }
+        }
+      }
+    } catch {}
+  }
 }
 
 async function setup3D() {
@@ -1118,6 +1141,7 @@ onMounted(async () => {
   }
 
   window.addEventListener('resize', handleResize)
+  window.addEventListener('scroll', handleResize, { passive: true })
   visHandler = () => handleVisibility()
   document.addEventListener('visibilitychange', visHandler)
   // Observe <html> class changes to update dark mode reactively
@@ -1171,6 +1195,7 @@ onUnmounted(() => {
   if (tlGrid) tlGrid.kill()
   window.removeEventListener('resize', handleResize)
   if (visHandler) document.removeEventListener('visibilitychange', visHandler)
+  window.removeEventListener('scroll', handleResize)
   if (mouseHandler) window.removeEventListener('mousemove', mouseHandler)
   if (clickHandler) window.removeEventListener('mousedown', clickHandler)
   if (mouseUpHandler) window.removeEventListener('mouseup', mouseUpHandler)

@@ -1,7 +1,7 @@
 <template>
   <div class="min-h-screen relative bg-gray-50 dark:bg-gray-900">
     <FuturisticBackground class="fixed inset-0 z-0 pointer-events-none" theme="auto" :intensity="0.18" :bits-density="0.8" :sweep-frequency="7" :parallax="true" :enable3D="true" :logo-glow="true" :emphasis="false" :interactions="{ mouseTrail: true, clickRipples: true }" :enabled="uiStore.bgEnabled" :respect-reduced-motion="true" />
-    <nav class="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-600 sticky top-0 z-40">
+    <nav class="sticky top-0 z-40 glass-thin glass-interactive" v-glass="{ strength: 'thin', interactive: true }">
       <div class="px-4 sm:px-6 lg:px-8">
         <div class="flex justify-between h-14">
           <div class="flex items-center">
@@ -102,8 +102,9 @@
 
     <div class="flex pt-14">
       <aside
+        v-glass="{ strength: 'regular', interactive: true }"
         :class="[
-          'fixed inset-y-0 left-0 z-30 w-64 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-600 transform transition-transform duration-300 ease-in-out',
+          'fixed inset-y-0 left-0 z-30 w-64 glass-regular glass-interactive transform transition-transform duration-300 ease-in-out',
           uiStore.sidebarOpen ? 'translate-x-0' : '-translate-x-full'
         ]"
         style="top: 3.5rem;"
@@ -137,7 +138,8 @@
 
       <div
         v-if="uiStore.sidebarOpen"
-        class="fixed inset-0 z-20 bg-gray-600 bg-opacity-75 lg:hidden"
+        class="fixed inset-0 z-20 lg:hidden"
+        v-glass="{ strength: 'thick', interactive: false }"
         @click="uiStore.closeSidebar()"
       ></div>
 

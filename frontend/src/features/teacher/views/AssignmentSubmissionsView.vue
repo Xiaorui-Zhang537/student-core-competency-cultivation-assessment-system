@@ -25,7 +25,7 @@
             <div>{{ t('teacher.submissions.stats.submitted') }}: <span class="font-semibold">{{ stats.submittedCount }}</span></div>
             <div>{{ t('teacher.submissions.stats.unsubmitted') }}: <span class="font-semibold">{{ stats.unsubmittedCount }}</span></div>
           </div>
-          <Button variant="indigo" @click="remindUnsubmitted" :loading="reminding" :disabled="reminding || stats.unsubmittedCount === 0">
+          <Button variant="primary" @click="remindUnsubmitted" :loading="reminding" :disabled="reminding || stats.unsubmittedCount === 0">
             {{ t('teacher.submissions.actions.remindUnsubmitted') }}
           </Button>
         </div>
@@ -35,14 +35,14 @@
     <div v-else>
       <div v-if="errorMessage" class="card p-6 text-center text-red-600">
         <p class="mb-3">{{ errorMessage }}</p>
-         <Button variant="indigo" @click="fetch()">
+         <Button variant="info" @click="fetch()">
            <arrow-path-icon class="w-4 h-4 mr-2" />
            {{ t('teacher.submissions.retry') }}
          </Button>
       </div>
       <div v-else-if="submissions.length === 0" class="card p-6 text-center text-gray-500">{{ t('teacher.submissions.empty') }}</div>
       <div v-else class="space-y-3">
-        <div v-for="s in submissions" :key="s.id" class="card p-4 flex items-center justify-between">
+        <div v-for="s in submissions" :key="s.id" class="glass-regular glass-interactive border border-gray-200/40 dark:border-gray-700/40 rounded-xl p-4 flex items-center justify-between" v-glass="{ strength: 'regular', interactive: true }">
           <div class="flex items-center gap-3">
             <div class="w-9 h-9">
               <user-avatar :avatar="s.avatar" :size="36">

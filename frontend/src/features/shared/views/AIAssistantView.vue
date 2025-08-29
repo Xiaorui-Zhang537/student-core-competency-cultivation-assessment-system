@@ -13,12 +13,12 @@
 
     <div class="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-12 gap-4">
       <!-- Sidebar -->
-      <aside class="md:col-span-4 lg:col-span-4 xl:col-span-3 card p-4 space-y-4">
+      <aside class="md:col-span-4 lg:col-span-4 xl:col-span-3 filter-container p-4 space-y-4 rounded-xl" v-glass="{ strength: 'thin', interactive: false }">
         <div>
           <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">{{ t('common.search') || '搜索' }}</label>
           <div class="flex items-center gap-2">
             <input v-model="q" type="text" :placeholder="t('common.search') || '搜索会话'" class="input flex-1" @keyup.enter="search" />
-            <button class="btn btn-primary" @click="newConv">{{ t('common.new') || '新建' }}</button>
+            <Button size="sm" variant="primary" @click="newConv">{{ t('common.new') || '新建' }}</Button>
           </div>
         </div>
 
@@ -37,24 +37,24 @@
                   <div class="truncate font-medium">{{ c.title || (t('teacher.ai.untitled') || '未命名会话') }}</div>
                 </div>
                 <div class="flex items-center gap-2 shrink-0">
-                  <button class="icon-btn" :title="t('common.rename') || '重命名'" @click.stop="rename(c)">
+                  <Button variant="ghost" size="xs" :title="t('common.rename') || '重命名'" @click.stop="rename(c)">
                     <svg class="w-4 h-4 text-gray-600 dark:text-gray-300" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
                       <path d="M12 20h9"/>
                       <path d="M16.5 3.5l4 4-11 11H5.5v-4.5l11-10.5z"/>
                     </svg>
-                  </button>
-                  <button class="icon-btn" :title="c.pinned ? (t('common.unpin') || '取消置顶') : (t('common.pin') || '置顶')" @click.stop="pin(c, !c.pinned)">
+                  </Button>
+                  <Button variant="ghost" size="xs" :title="c.pinned ? (t('common.unpin') || '取消置顶') : (t('common.pin') || '置顶')" @click.stop="pin(c, !c.pinned)">
                     <svg class="w-4 h-4" :class="c.pinned ? 'text-primary-600' : 'text-gray-500 dark:text-gray-400'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
                       <path :fill="c.pinned ? 'currentColor' : 'none'" d="M12 17l-5.878 3.09 1.123-6.545L2.49 8.91l6.561-.953L12 2l2.949 5.957 6.561.953-4.755 4.635 1.123 6.545z"/>
                     </svg>
-                  </button>
-                  <button class="icon-btn text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20" :title="t('common.delete') || '删除'" @click.stop="remove(c.id)">
+                  </Button>
+                  <Button variant="danger" size="xs" :title="t('common.delete') || '删除'" @click.stop="remove(c.id)">
                     <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
                       <polyline points="3 6 5 6 21 6"/>
                       <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>
                       <path d="M10 11v6M14 11v6M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/>
                     </svg>
-                  </button>
+                  </Button>
                 </div>
               </div>
             </button>
@@ -79,9 +79,9 @@
       </aside>
 
       <!-- Chat Pane -->
-      <section class="md:col-span-8 lg:col-span-8 xl:col-span-9 card p-0 overflow-hidden">
+      <section class="md:col-span-8 lg:col-span-8 xl:col-span-9 glass-thick glass-interactive rounded-2xl border border-gray-200/40 dark:border-gray-700/40 overflow-hidden" v-glass="{ strength: 'thick', interactive: true }">
         <!-- Chat header -->
-        <div class="px-4 py-3 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900">
+        <div class="px-4 py-3 border-b border-white/25 dark:border-white/10 bg-transparent">
           <div class="flex items-center justify-between">
             <div class="min-w-0">
               <div class="font-semibold text-gray-800 dark:text-gray-100 truncate">{{ activeTitle }}</div>
@@ -89,7 +89,7 @@
           </div>
         </div>
 
-        <div class="h-[60vh] overflow-y-auto p-4 space-y-4 bg-white dark:bg-gray-800">
+        <div class="h-[60vh] overflow-y-auto p-4 space-y-4 bg-transparent">
           <div v-for="m in currentMessages" :key="m.id" class="flex" :class="m.role === 'user' ? 'justify-end' : 'justify-start'">
             <div class="max-w-[80%] rounded-2xl px-4 py-2 text-sm"
                  :class="m.role === 'user' ? 'bg-primary-600 text-white rounded-br-none' : 'bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-bl-none'">
@@ -97,7 +97,7 @@
             </div>
           </div>
         </div>
-        <div class="border-t border-gray-200 dark:border-gray-700 p-3 bg-gray-50 dark:bg-gray-900 flex items-center gap-3">
+        <div class="border-t border-white/25 dark:border-white/10 p-3 bg-transparent flex items-center gap-3">
           <textarea
             ref="textareaRef"
             v-model="draft"
@@ -106,21 +106,21 @@
             rows="2"
             :style="{ height: textareaHeight }"
             :placeholder="t('teacher.ai.placeholder') || '输入问题...'"
-            class="flex-1 input resize-none overflow-auto"
+            class="flex-1 input input--glass resize-none overflow-auto"
           />
           <div v-if="showUpload" class="flex items-center gap-2">
             <!-- Icon-only image picker -->
             <input ref="fileInput" type="file" class="hidden" accept="image/*" multiple @change="handlePickFiles" />
-            <button class="icon-btn" :title="t('common.uploadImage') || '上传图片'" @click.prevent="triggerPick">
+            <Button variant="ghost" size="sm" :title="t('common.uploadImage') || '上传图片'" @click.prevent="triggerPick">
               <svg class="w-5 h-5 text-gray-700 dark:text-gray-200" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
                 <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
                 <circle cx="8.5" cy="8.5" r="1.5"/>
                 <path d="M21 15l-4.5-4.5L9 18"/>
               </svg>
-            </button>
+            </Button>
             <span v-if="pendingCount>0" class="text-xs px-2 py-0.5 rounded bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300">已选 {{ pendingCount }} 项</span>
           </div>
-          <button class="btn btn-primary" :disabled="!canSend" @click="send">{{ t('teacher.ai.send') || '发送' }}</button>
+          <Button variant="primary" :disabled="!canSend" @click="send">{{ t('teacher.ai.send') || '发送' }}</Button>
         </div>
       </section>
     </div>
@@ -132,8 +132,8 @@
       <h3 class="text-base font-semibold mb-3">{{ t('teacher.ai.renameTitle') || '重命名对话' }}</h3>
       <input v-model="renameTitle" type="text" class="input mb-4" placeholder="请输入新的标题" />
       <div class="flex justify-end gap-2">
-        <button class="btn btn-secondary" @click="showRename=false">{{ t('common.cancel') || '取消' }}</button>
-        <button class="btn btn-primary" @click="confirmRename">{{ t('teacher.courses.actions.save') || '保存' }}</button>
+        <Button size="sm" variant="secondary" @click="showRename=false">{{ t('common.cancel') || '取消' }}</Button>
+        <Button size="sm" variant="primary" @click="confirmRename">{{ t('teacher.courses.actions.save') || '保存' }}</Button>
       </div>
     </div>
   </div>
@@ -147,6 +147,7 @@ import { useAIStore } from '@/stores/ai'
 import { baseURL } from '@/api/config'
 import { useI18n } from 'vue-i18n'
 import { fileApi } from '@/api/file.api'
+import Button from '@/components/ui/Button.vue'
 
 const { t } = useI18n()
 const route = useRoute()

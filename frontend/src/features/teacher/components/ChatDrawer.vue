@@ -1,21 +1,21 @@
 <template>
-  <div v-if="open" class="fixed inset-0 z-50">
+  <div v-if="open" class="fixed inset-0 z-[90]">
     <div class="absolute inset-0 bg-black/30" @click="emit('close')"></div>
-    <div class="absolute right-0 top-0 h-full w-full sm:w-[820px] bg-white dark:bg-gray-800 shadow-xl flex flex-col">
+    <div class="absolute right-0 top-0 h-full w-full sm:w-[820px] glass-thick glass-interactive border-l border-gray-200/40 dark:border-gray-700/40 flex flex-col" v-glass="{ strength: 'thick', interactive: true }">
       <!-- 顶部标题栏 -->
-      <div class="p-4 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
+      <div class="p-4 border-b border-gray-200/40 dark:border-gray-700/40 flex items-center justify-between" style="box-shadow: inset 0 -1px 0 rgba(255,255,255,0.12)">
         <div class="font-semibold text-gray-900 dark:text-white">{{ headerTitle }}</div>
-        <button class="text-gray-500 hover:text-gray-700" @click="emit('close')">✕</button>
+        <Button variant="ghost" size="sm" @click="emit('close')">✕</Button>
       </div>
 
       <!-- 主体：左侧列表 + 右侧会话 -->
       <div class="flex flex-1 min-h-0">
         <!-- 左侧：最近/联系人 列表 -->
-        <div class="hidden sm:flex sm:flex-col w-64 border-r border-gray-200 dark:border-gray-700">
+        <div class="hidden sm:flex sm:flex-col w-64 border-r border-gray-200/40 dark:border-gray-700/40">
           <div class="px-3 pt-3 pb-2 flex items-center gap-2">
-            <button :class="['px-3 py-1 rounded text-sm', activeTab==='recent' ? 'bg-blue-600 text-white' : 'bg-gray-100 dark:bg-gray-700 dark:text-gray-100']" @click="activeTab='recent'">{{ t('shared.chat.recent') || '最近' }}</button>
-            <button :class="['px-3 py-1 rounded text-sm', activeTab==='contacts' ? 'bg-blue-600 text-white' : 'bg-gray-100 dark:bg-gray-700 dark:text-gray-100']" @click="activeTab='contacts'">{{ t('shared.chat.contacts') || '联系人' }}</button>
-            <button :class="['px-3 py-1 rounded text-sm', activeTab==='system' ? 'bg-blue-600 text-white' : 'bg-gray-100 dark:bg-gray-700 dark:text-gray-100']" @click="activeTab='system'">{{ t('shared.chat.system') || '系统消息' }}</button>
+            <Button size="sm" :variant="activeTab==='recent' ? 'primary' : 'menu'" @click="activeTab='recent'">{{ t('shared.chat.recent') || '最近' }}</Button>
+            <Button size="sm" :variant="activeTab==='contacts' ? 'primary' : 'menu'" @click="activeTab='contacts'">{{ t('shared.chat.contacts') || '联系人' }}</Button>
+            <Button size="sm" :variant="activeTab==='system' ? 'primary' : 'menu'" @click="activeTab='system'">{{ t('shared.chat.system') || '系统消息' }}</Button>
           </div>
           <div class="px-3 pb-2">
             <input v-model="keyword" :placeholder="t('shared.chat.searchPlaceholder') as string || '搜索联系人'" class="input w-full" />
@@ -42,20 +42,20 @@
                     <div class="text-xs text-gray-500 dark:text-gray-300 truncate">{{ c.content || c.preview }}</div>
                   </div>
                   <div class="flex items-center gap-1 ml-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                    <button
+                    <Button
                       :title="(chat.isPinned(c.peerId, props.courseId||null) ? t('shared.chat.unpin') : t('shared.chat.pin')) as string"
-                      class="p-1 rounded-full hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-500 dark:text-gray-400"
+                      size="xs" variant="ghost"
                       @click.stop="togglePinAction(c.peerId)"
                     >
                       <component :is="chat.isPinned(c.peerId, props.courseId||null) ? BookmarkIcon : BookmarkSlashIcon" class="w-4 h-4" />
-                    </button>
-                    <button
+                    </Button>
+                    <Button
                       :title="t('shared.chat.delete') as string"
-                      class="p-1 rounded-full hover:bg-red-100 dark:hover:bg-red-900/30 text-red-500 dark:text-red-400"
+                      size="xs" variant="danger"
                       @click.stop="deleteRecent(c.peerId)"
                     >
                       <XMarkIcon class="w-4 h-4" />
-                    </button>
+                    </Button>
                   </div>
                 </div>
               </button>
@@ -175,12 +175,12 @@
 
           <!-- 输入区 -->
       <div v-if="activeTab!=='system'" class="p-3 border-t border-gray-200 dark:border-gray-700 flex items-center gap-2 relative">
-            <button type="button" class="btn btn-ghost btn-sm flex items-center" :disabled="!hasActivePeer" @click="toggleEmoji">
+            <Button type="button" variant="ghost" size="sm" class="flex items-center" :disabled="!hasActivePeer" @click="toggleEmoji">
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-5 h-5 mr-1"><path d="M12 2a10 10 0 100 20 10 10 0 000-20zm0 2a8 8 0 110 16A8 8 0 0112 4zm-3 7a1 1 0 100-2 1 1 0 000 2zm8 0a1 1 0 100-2 1 1 0 000 2zm-8.536 3.464a1 1 0 011.414 0A4 4 0 0012 16a4 4 0 002.121-.536 1 1 0 011.05 1.7A6 6 0 0112 18a6 6 0 01-3.172-.836 1 1 0 01-.364-1.7z"/></svg>
           {{ t('shared.emojiPicker.button') }}
-        </button>
+        </Button>
             <input ref="draftInput" v-model="draft" class="input flex-1" :disabled="!hasActivePeer" :placeholder="t('teacher.students.chat.placeholder') as string" @keydown.enter.prevent="send()" />
-            <button class="btn btn-primary" :disabled="sending || !draft || !hasActivePeer" @click="send()">{{ t('teacher.ai.send') }}</button>
+            <Button variant="primary" :disabled="sending || !draft || !hasActivePeer" @click="send()">{{ t('teacher.ai.send') }}</Button>
 
         <div v-if="showEmoji" class="absolute bottom-12 left-2 z-50 p-2 w-60 max-h-56 overflow-auto bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded shadow grid grid-cols-8 gap-1">
           <button v-for="(e, idx) in emojiList" :key="idx" type="button" class="text-xl hover:bg-gray-100 dark:hover:bg-gray-700 rounded" @click="pickEmoji(e)">{{ e }}</button>
@@ -198,6 +198,7 @@ import { ref, onMounted, watch, nextTick } from 'vue'
 import { useI18n } from 'vue-i18n'
 import UserAvatar from '@/components/ui/UserAvatar.vue'
 import { XMarkIcon, BookmarkIcon, BookmarkSlashIcon } from '@heroicons/vue/24/outline'
+import Button from '@/components/ui/Button.vue'
 
 const props = defineProps<{
   open: boolean

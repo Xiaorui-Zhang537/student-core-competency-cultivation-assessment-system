@@ -5,6 +5,7 @@
       @click="toggleDropdown"
       class="relative p-2 text-gray-600 hover:text-gray-800 focus:ring-2 focus:ring-blue-500 rounded-lg"
       :class="{ 'text-blue-600': hasUnread }"
+      ref="btnRef"
     >
       <bell-icon class="w-6 h-6" />
       
@@ -26,12 +27,15 @@
       leave-from-class="opacity-100 translate-y-0"
       leave-to-class="opacity-0 translate-y-1"
     >
-      <div
-        v-if="isDropdownOpen"
-        class="notification-dropdown dark:bg-gray-800 dark:border-gray-700"
-      >
+      <teleport to="body">
+        <div
+          v-if="isDropdownOpen"
+          class="notification-dropdown rounded-xl"
+          v-glass="{ strength: 'regular', interactive: true }"
+          :style="dropdownStyle"
+        >
         <!-- 下拉面板头部 -->
-        <div class="dropdown-header dark:border-gray-700">
+        <div class="dropdown-header" style="box-shadow: inset 0 -1px 0 rgba(255,255,255,0.14);">
           <h3 class="text-lg font-semibold text-gray-900 dark:text-white flex items-center">
             <span>{{ t('notifications.title') }}</span>
             <span v-if="unreadCount > 0" class="text-sm font-normal text-gray-500 dark:text-gray-400 ml-2">
@@ -112,7 +116,7 @@
         </div>
 
         <!-- 下拉面板底部 -->
-        <div class="dropdown-footer">
+        <div class="dropdown-footer" style="box-shadow: inset 0 1px 0 rgba(255,255,255,0.14);">
           <button
             @click="openNotificationCenter"
             class="w-full py-4 text-sm text-center text-blue-600 hover:text-blue-700 hover:bg-blue-50 dark:text-blue-300 dark:hover:text-blue-200 dark:hover:bg-slate-700 rounded-md transition-colors"
@@ -120,13 +124,14 @@
             {{ t('notifications.actions.viewAll') }}
           </button>
         </div>
-      </div>
+        </div>
+      </teleport>
     </Transition>
   </div>
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, ref, onBeforeUnmount } from 'vue'
+import { computed, onMounted, ref, onBeforeUnmount, nextTick } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRouter } from 'vue-router'
 import { useNotificationsStore } from '@/stores/notifications'
@@ -165,6 +170,8 @@ const {
 
 // 本地状态
 const isDropdownOpen = ref(false)
+const btnRef = ref<HTMLElement | null>(null)
+const dropdownStyle = ref<Record<string, string>>({})
 
 // 计算属性
 const recentNotifications = computed(() => {
@@ -180,6 +187,19 @@ const toggleDropdown = async () => {
     await notificationsStore.fetchUnreadCount()
     // 始终获取最新通知，避免后台注入后前端不更新
     await notificationsStore.fetchNotifications(true)
+    await nextTick()
+    // 计算按钮位置，将下拉绝对定位到 body，避免被父元素 overflow/transform 影响
+    try {
+      const el = btnRef.value as HTMLElement
+      const rect = el.getBoundingClientRect()
+      dropdownStyle.value = {
+        position: 'fixed',
+        top: `${rect.bottom + 8}px`,
+        left: `${Math.max(8, rect.left - 240 + rect.width)}px`,
+        width: '20rem',
+        zIndex: '1000'
+      }
+    } catch {}
   }
 }
 
@@ -393,23 +413,20 @@ const vClickOutside = {
   position: relative;
 }
 
+
 .notification-dropdown {
-  position: absolute;
-  right: 0;
-  top: 100%;
-  margin-top: 0.5rem;
+  /* now positioned with fixed via inline style; make it glass-friendly */
   width: 20rem;
-  background-color: white;
-  border-radius: 0.5rem;
-  box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -2px rgb(0 0 0 / 0.05);
-  border: 1px solid rgb(229 231 235);
-  z-index: 50;
+  border-radius: 0.75rem; /* rounded-xl */
+  background-color: transparent;
+  border: 1px solid transparent;
+  box-shadow: var(--glass-inner-shadow, inset 0 1px 0 rgba(255,255,255,0.16)), 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -2px rgb(0 0 0 / 0.05);
 }
 
 :global(.dark) .notification-dropdown {
-  background-color: rgb(31 41 55 / 0.98); /* slate-800 */
-  border-color: rgb(255 255 255 / 0.1);
-  box-shadow: 0 10px 20px -5px rgb(0 0 0 / 0.4);
+  background-color: transparent;
+  border-color: transparent;
+  box-shadow: var(--glass-inner-shadow, inset 0 1px 0 rgba(255,255,255,0.10)), 0 10px 20px -5px rgb(0 0 0 / 0.4);
 }
 
 .dropdown-header {

@@ -15,19 +15,19 @@
       
       <!-- Submission Form -->
       <div class="space-y-6">
-        <div class="card p-6">
+        <div class="card p-6 glass-regular glass-interactive" v-glass="{ strength: 'regular', interactive: true }">
           <h2 class="text-xl font-semibold mb-4">提交内容</h2>
           <textarea v-model="form.content" rows="10" class="input w-full" placeholder="在此输入您的作业内容..."></textarea>
         </div>
         
-        <div class="card p-6">
+        <div class="card p-6 glass-regular glass-interactive" v-glass="{ strength: 'regular', interactive: true }">
           <h2 class="text-xl font-semibold mb-4">上传附件</h2>
           <input type="file" @change="handleFileUpload" :disabled="isUploading" class="input" />
           <div v-if="isUploading" class="mt-2 text-sm text-gray-500">正在上传...</div>
           
           <div v-if="uploadedFiles.length > 0" class="mt-4 space-y-2">
             <h3 class="text-sm font-medium">已上传文件:</h3>
-            <div v-for="file in uploadedFiles" :key="file.id" class="flex justify-between items-center p-2 bg-gray-100 rounded">
+            <div v-for="file in uploadedFiles" :key="file.id" class="flex justify-between items-center p-2 rounded glass-ultraThin" v-glass="{ strength: 'ultraThin', interactive: false }">
               <span>{{ (file as any).originalName || file.fileName }}</span>
               <button @click="removeFile(file.id)" class="btn btn-sm btn-danger-outline">删除</button>
             </div>

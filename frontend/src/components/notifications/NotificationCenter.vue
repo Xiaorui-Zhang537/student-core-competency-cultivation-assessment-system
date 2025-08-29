@@ -11,24 +11,19 @@
         </h3>
         <div class="flex items-center gap-2 flex-nowrap justify-end">
           <!-- 顶部：全部已读 + 刷新（遵循仪表盘按钮主题样式） -->
-          <button
+          <Button size="sm" variant="primary"
             @click="handleMarkAllAsRead"
-            class="btn btn-primary inline-flex items-center"
             :disabled="loading || !hasUnread"
             :title="t('notifications.actions.markAll') as string"
           >
             <check-icon class="w-4 h-4 mr-2" />
             {{ t('notifications.actions.markAll') }}
-          </button>
+          </Button>
 
-          <button
-            @click="handleRefresh"
-            class="btn inline-flex items-center bg-purple-600 hover:bg-purple-700 text-white focus:ring-purple-500 disabled:opacity-50 disabled:cursor-not-allowed"
-            :disabled="loading"
-          >
+          <Button size="sm" variant="secondary" @click="handleRefresh" :disabled="loading">
             <arrow-path-icon class="w-4 h-4 mr-2" :class="{ 'animate-spin': loading }" />
             {{ t('notifications.actions.refresh') }}
-          </button>
+          </Button>
         </div>
       </div>
 
@@ -36,7 +31,7 @@
       <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">{{ t('notifications.subtitle') }}</p>
 
       <!-- 过滤器容器：保留下方三个过滤器，横向一排 -->
-      <div class="mt-4 rounded-lg border border-gray-200 dark:border-gray-700 bg-white/70 dark:bg-slate-900/60 p-3">
+      <div class="mt-4 rounded-lg p-3 glass-thin" v-glass="{ strength: 'thin', interactive: false }">
         <div class="flex flex-wrap items-end gap-3">
           <div>
             <label class="block text-sm font-medium text-gray-700 dark:text-gray-200">{{ t('notifications.filters.type') }}</label>
@@ -117,13 +112,9 @@
         <div
           v-for="notification in notifications"
           :key="notification.id"
-          class="notification-item p-3 rounded-lg shadow-sm hover:shadow-md transition cursor-pointer"
-          :class="[
-            !notification.isRead
-              ? 'bg-sky-50 dark:bg-slate-800 ring-1 ring-sky-200 dark:ring-slate-600'
-              : 'bg-white dark:bg-slate-800',
-            `type-${notification.type}`
-          ]"
+          class="notification-item p-3 rounded-lg transition cursor-pointer glass-regular glass-interactive"
+          v-glass="{ strength: 'regular', interactive: true }"
+          :class="[`type-${notification.type}`]"
           @click="openDetail(notification.id)"
         >
           <!-- 通知内容 -->
@@ -228,6 +219,7 @@ import {
   ChatBubbleLeftRightIcon,
   ChevronDownIcon
 } from '@heroicons/vue/24/outline'
+import Button from '@/components/ui/Button.vue'
 
 // Store
 const notificationsStore = useNotificationsStore()

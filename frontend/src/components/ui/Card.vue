@@ -1,7 +1,8 @@
 <template>
   <div
+    v-glass="{ strength: 'regular', interactive: true }"
     :class="[
-      'bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 transition-all duration-200',
+      'rounded-xl transition-all duration-200 glass-regular glass-interactive',
       {
         'hover:shadow-md hover:scale-[1.02]': hoverable,
         'p-0': !padding,
@@ -13,7 +14,7 @@
     ]"
     v-bind="$attrs"
   >
-    <header v-if="$slots.header" class="border-b border-gray-200 dark:border-gray-700 pb-4 mb-4">
+    <header v-if="$slots.header" class="pb-4 mb-4" style="box-shadow: inset 0 -1px 0 rgba(255,255,255,0.18);">
       <slot name="header" />
     </header>
     
@@ -21,7 +22,7 @@
       <slot />
     </main>
     
-    <footer v-if="$slots.footer" class="border-t border-gray-200 dark:border-gray-700 pt-4 mt-4">
+    <footer v-if="$slots.footer" class="pt-4 mt-4" style="box-shadow: inset 0 1px 0 rgba(255,255,255,0.18);">
       <slot name="footer" />
     </footer>
   </div>

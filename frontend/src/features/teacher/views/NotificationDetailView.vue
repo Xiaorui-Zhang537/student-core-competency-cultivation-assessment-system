@@ -30,18 +30,18 @@
       </div>
 
       <div class="mt-6 flex flex-wrap gap-3">
-        <button v-if="!notification.isRead" @click="markRead" class="inline-flex items-center gap-2 px-3 py-1.5 rounded-md bg-primary-600 text-white hover:bg-primary-700">
+        <Button v-if="!notification.isRead" variant="primary" size="sm" @click="markRead">
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-4 h-4"><path d="M9 12l2 2 4-4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
           {{ t('notifications.actions.markRead') }}
-        </button>
-        <button @click="goRelated" class="inline-flex items-center gap-2 px-3 py-1.5 rounded-md bg-emerald-600 text-white hover:bg-emerald-700">
+        </Button>
+        <Button variant="success" size="sm" @click="goRelated">
           <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-4 h-4"><path stroke-linecap="round" stroke-linejoin="round" d="M13 7l5 5-5 5M6 12h12" /></svg>
           {{ t('notifications.actions.goRelated') }}
-        </button>
-        <button @click="goCenter" class="inline-flex items-center gap-2 px-3 py-1.5 rounded-md bg-gray-100 text-gray-800 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-100 dark:hover:bg-gray-700 border border-gray-300 dark:border-gray-700">
+        </Button>
+        <Button variant="outline" size="sm" @click="goCenter">
           <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-4 h-4"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7" /></svg>
           {{ t('notifications.actions.backToCenter') }}
-        </button>
+        </Button>
       </div>
     </div>
   </div>
@@ -56,6 +56,7 @@ import { storeToRefs } from 'pinia'
 // @ts-ignore
 import { useI18n } from 'vue-i18n'
 import UserAvatar from '@/components/ui/UserAvatar.vue'
+import Button from '@/components/ui/Button.vue'
 
 const route = useRoute()
 const router = useRouter()

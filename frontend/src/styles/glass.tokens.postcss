@@ -1,0 +1,112 @@
+/*
+  Glass material tokens: strength levels, light/dark tracks, and mobile weakening rules
+  These tokens are neutral (no brand hue), focused on readability and depth.
+*/
+
+/* Light mode tokens */
+:root {
+  /* Base RGB for neutral glass background in light mode */
+  --glass-bg-rgb: 255 255 255; /* white */
+
+  /* Blur radii (px) */
+  --glass-blur-ultraThin: 8px;
+  --glass-blur-thin: 12px;
+  --glass-blur-regular: 16px;
+  --glass-blur-thick: 22px;
+  --glass-blur-ultraThick: 30px;
+
+  /* Background alpha per strength */
+  --glass-alpha-ultraThin: 0.22;
+  --glass-alpha-thin: 0.26;
+  --glass-alpha-regular: 0.30;
+  --glass-alpha-thick: 0.38;
+  --glass-alpha-ultraThick: 0.46;
+
+  /* Backdrop adjustments */
+  --glass-saturate-ultraThin: 1.35;
+  --glass-saturate-thin: 1.60;
+  --glass-saturate-regular: 1.70;
+  --glass-saturate-thick: 1.80;
+  --glass-saturate-ultraThick: 1.90;
+
+  --glass-contrast-ultraThin: 1.06;
+  --glass-contrast-thin: 1.10;
+  --glass-contrast-regular: 1.12;
+  --glass-contrast-thick: 1.14;
+  --glass-contrast-ultraThick: 1.16;
+
+  /* Borders and highlights */
+  --glass-border-color: rgba(255, 255, 255, 0.45);
+  --glass-inner-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.35);
+  --glass-outer-shadow: 0 8px 30px rgba(0, 0, 0, 0.08);
+}
+
+/* Dark mode tokens */
+.dark {
+  /* Base RGB for neutral glass background in dark mode */
+  --glass-bg-rgb: 31 41 55; /* gray-800 like */
+
+  /* Blur radii (px) — keep the same for parity */
+  --glass-blur-ultraThin: 6px;
+  --glass-blur-thin: 10px;
+  --glass-blur-regular: 14px;
+  --glass-blur-thick: 20px;
+  --glass-blur-ultraThick: 28px;
+
+  /* Background alpha slightly lower to maintain contrast in dark */
+  --glass-alpha-ultraThin: 0.22;
+  --glass-alpha-thin: 0.26;
+  --glass-alpha-regular: 0.30;
+  --glass-alpha-thick: 0.38;
+  --glass-alpha-ultraThick: 0.46;
+
+  /* Backdrop adjustments tuned for dark surfaces */
+  --glass-saturate-ultraThin: 1.20;
+  --glass-saturate-thin: 1.35;
+  --glass-saturate-regular: 1.45;
+  --glass-saturate-thick: 1.55;
+  --glass-saturate-ultraThick: 1.65;
+
+  --glass-contrast-ultraThin: 1.04;
+  --glass-contrast-thin: 1.06;
+  --glass-contrast-regular: 1.08;
+  --glass-contrast-thick: 1.10;
+  --glass-contrast-ultraThick: 1.12;
+
+  /* Borders and highlights (lower intensity to avoid halos) */
+  --glass-border-color: rgba(255, 255, 255, 0.16);
+  --glass-inner-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  --glass-outer-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+}
+
+/* Mobile weakening: reduce blur/contrast/saturate for performance */
+@media (max-width: 640px) {
+  :root, .dark {
+    --glass-blur-ultraThin: 4px;
+    --glass-blur-thin: 7px;
+    --glass-blur-regular: 10px;
+    --glass-blur-thick: 14px;
+    --glass-blur-ultraThick: 20px;
+
+    --glass-saturate-ultraThin: 1.15;
+    --glass-saturate-thin: 1.25;
+    --glass-saturate-regular: 1.35;
+    --glass-saturate-thick: 1.45;
+    --glass-saturate-ultraThick: 1.55;
+
+    --glass-contrast-ultraThin: 1.02;
+    --glass-contrast-thin: 1.04;
+    --glass-contrast-regular: 1.06;
+    --glass-contrast-thick: 1.08;
+    --glass-contrast-ultraThick: 1.10;
+  }
+}
+
+/* Reduced motion: suppress any highlight sweeps (if added elsewhere) */
+@media (prefers-reduced-motion: reduce) {
+  :root, .dark {
+    /* Placeholder for motion-related tokens if needed later */
+  }
+}
+
+
