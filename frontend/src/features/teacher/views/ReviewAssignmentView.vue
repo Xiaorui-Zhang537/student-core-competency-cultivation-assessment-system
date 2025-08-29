@@ -31,12 +31,14 @@
       <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
           <label for="course-filter" class="block text-sm font-medium mb-1">{{ t('teacher.assignments.filters.byCourse') }}</label>
-          <select id="course-filter" v-model="selectedCourseId" @change="handleCourseFilterChange" class="input">
-            <option :value="null">{{ t('teacher.assignments.filters.selectCourse') }}</option>
-            <option v-for="course in teacherCourses" :key="course.id" :value="String(course.id)">
-              {{ course.title }}
-            </option>
-          </select>
+          <GlassPopoverSelect
+            :label="t('teacher.assignments.filters.byCourse') as string"
+            v-model="selectedCourseId"
+            :options="[{label: t('teacher.assignments.filters.selectCourse') as string, value: null as any}, ...teacherCourses.map(c => ({ label: c.title, value: String(c.id) }))]"
+            size="md"
+            stacked
+            @change="handleCourseFilterChange"
+          />
         </div>
       </div>
     </div>
@@ -176,6 +178,7 @@ import { baseURL } from '@/api/config';
 import { fileApi } from '@/api/file.api';
 // @ts-ignore shim for vue-i18n types in this project
 import { useI18n } from 'vue-i18n'
+import GlassPopoverSelect from '@/components/ui/filters/GlassPopoverSelect.vue'
 
 const assignmentStore = useAssignmentStore();
 const courseStore = useCourseStore();

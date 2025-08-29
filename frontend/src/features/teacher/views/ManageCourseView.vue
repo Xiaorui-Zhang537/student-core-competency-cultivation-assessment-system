@@ -4,9 +4,6 @@
       <!-- Header -->
       <div class="mb-8 flex items-center justify-between">
         <div class="flex-1">
-          <nav class="flex items-center space-x-2 text-sm text-gray-500 dark:text-gray-400 mb-2">
-            <span>{{ t('teacher.courses.breadcrumb') }}</span>
-          </nav>
           <h1 class="text-3xl font-bold text-gray-900 dark:text-white">{{ t('teacher.courses.title') }}</h1>
           <p class="text-gray-600 dark:text-gray-400">{{ t('teacher.courses.subtitle') }}</p>
         </div>

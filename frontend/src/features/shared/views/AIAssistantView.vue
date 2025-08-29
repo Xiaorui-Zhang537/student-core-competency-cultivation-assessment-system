@@ -63,9 +63,11 @@
 
         <div class="space-y-2">
           <h3 class="text-sm font-semibold text-gray-700 dark:text-gray-200">{{ t('teacher.ai.model.title') || '模型' }}</h3>
-          <select v-model="model" class="input">
-            <option value="openai/gpt-4o-mini">gpt-4o-mini</option>
-          </select>
+          <GlassPopoverSelect
+            v-model="model"
+            :options="[{ label: 'gpt-4o-mini', value: 'openai/gpt-4o-mini' }]"
+            size="sm"
+          />
         </div>
 
         <div class="space-y-2">
@@ -148,6 +150,7 @@ import { baseURL } from '@/api/config'
 import { useI18n } from 'vue-i18n'
 import { fileApi } from '@/api/file.api'
 import Button from '@/components/ui/Button.vue'
+import GlassPopoverSelect from '@/components/ui/filters/GlassPopoverSelect.vue'
 
 const { t } = useI18n()
 const route = useRoute()

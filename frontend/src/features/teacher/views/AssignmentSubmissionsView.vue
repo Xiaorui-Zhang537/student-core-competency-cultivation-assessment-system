@@ -71,11 +71,14 @@
       <div class="mt-6 flex items-center justify-between">
         <div class="flex items-center space-x-2">
           <span class="text-sm text-gray-700">{{ t('teacher.assignments.pagination.perPagePrefix') }}</span>
-          <select class="input input-sm w-20" v-model.number="pageSize" :disabled="loading" @change="changePageSize">
-            <option :value="10">10</option>
-            <option :value="20">20</option>
-            <option :value="50">50</option>
-          </select>
+          <div class="w-24">
+            <GlassPopoverSelect
+              :options="[{label:'10', value:10},{label:'20', value:20},{label:'50', value:50}]"
+              :model-value="pageSize"
+              @update:modelValue="(v:any)=>{ pageSize = Number(v||10); changePageSize() }"
+              size="sm"
+            />
+          </div>
           <span class="text-sm text-gray-700">{{ t('teacher.assignments.pagination.perPageSuffix') }}</span>
         </div>
         <div class="flex items-center space-x-2">
@@ -101,6 +104,7 @@ import { ArrowPathIcon, CheckBadgeIcon, UserIcon } from '@heroicons/vue/24/outli
 import { ChevronRightIcon } from '@heroicons/vue/24/outline';
 // @ts-ignore shim for vue-i18n types in this project
 import { useI18n } from 'vue-i18n'
+import GlassPopoverSelect from '@/components/ui/filters/GlassPopoverSelect.vue'
 
 const route = useRoute();
 const router = useRouter();

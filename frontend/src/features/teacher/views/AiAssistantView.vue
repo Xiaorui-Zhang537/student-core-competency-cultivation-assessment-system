@@ -61,9 +61,11 @@
             <h3 class="font-semibold mb-2">{{ t('teacher.ai.model.title') }}</h3>
             <div class="space-y-2">
               <label class="text-xs text-gray-500">{{ t('teacher.ai.model.label') }}</label>
-              <select v-model="model" class="input">
-                <option value="openai/gpt-4o-mini">{{ t('teacher.ai.model.default') }}</option>
-              </select>
+              <GlassPopoverSelect
+                v-model="model"
+                :options="[{ label: (t('teacher.ai.model.default') as string) || 'gpt-4o-mini', value: 'openai/gpt-4o-mini' }]"
+                size="sm"
+              />
             </div>
           </div>
         </div>
@@ -80,6 +82,7 @@ import { useAuthStore } from '@/stores/auth'
 import { aiApi } from '@/api/ai.api'
 import { courseApi } from '@/api/course.api'
 import Button from '@/components/ui/Button.vue'
+import GlassPopoverSelect from '@/components/ui/filters/GlassPopoverSelect.vue'
 
 type ChatMessage = { role: 'user' | 'assistant'; content: string }
 

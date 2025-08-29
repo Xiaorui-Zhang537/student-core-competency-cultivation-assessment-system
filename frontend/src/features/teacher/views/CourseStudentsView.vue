@@ -79,41 +79,43 @@
       <!-- 筛选和操作栏 -->
       <card padding="lg" class="mb-8">
         <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between space-y-4 lg:space-y-0">
-          <!-- 搜索和筛选 -->
-          <div class="flex flex-col sm:flex-row space-y-3 sm:space-y-0 sm:space-x-4">
+          <!-- 搜索和筛选（玻璃风格） -->
+          <FilterBar :dense="false" :wrap="false">
             <!-- 搜索框 -->
-             <div class="relative">
+            <div class="relative">
               <MagnifyingGlassIcon class="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
               <input
                 v-model="searchQuery"
                 type="text"
                 :placeholder="t('teacher.students.filters.searchPlaceholder')"
-                class="input pl-10 w-64"
+                class="input input--glass pl-10 w-64"
               />
             </div>
 
-            <!-- 筛选项：后续后端支持后开启提交查询参数（当前保留UI与本地过滤） -->
-            <select v-model="progressFilter" class="input w-40">
-              <option value="">{{ t('teacher.students.filters.progress.all') }}</option>
-              <option value="not-started">{{ t('teacher.students.filters.progress.notStarted') }}</option>
-              <option value="in-progress">{{ t('teacher.students.filters.progress.inProgress') }}</option>
-              <option value="completed">{{ t('teacher.students.filters.progress.completed') }}</option>
-            </select>
-            <select v-model="gradeFilter" class="input w-40">
-              <option value="">{{ t('teacher.students.filters.grade.all') }}</option>
-              <option value="excellent">{{ t('teacher.students.filters.grade.excellent') }}</option>
-              <option value="good">{{ t('teacher.students.filters.grade.good') }}</option>
-              <option value="average">{{ t('teacher.students.filters.grade.average') }}</option>
-              <option value="below">{{ t('teacher.students.filters.grade.below') }}</option>
-            </select>
-            <select v-model="activityFilter" class="input w-40">
-              <option value="">{{ t('teacher.students.filters.activity.all') }}</option>
-              <option value="high">{{ t('teacher.students.filters.activity.high') }}</option>
-              <option value="medium">{{ t('teacher.students.filters.activity.medium') }}</option>
-              <option value="low">{{ t('teacher.students.filters.activity.low') }}</option>
-              <option value="inactive">{{ t('teacher.students.filters.activity.inactive') }}</option>
-            </select>
-          </div>
+            <!-- 进度筛选 -->
+            <GlassPopoverSelect
+              v-model="progressFilter"
+              :options="progressOptions"
+              size="sm"
+              width="10rem"
+            />
+
+            <!-- 成绩筛选 -->
+            <GlassPopoverSelect
+              v-model="gradeFilter"
+              :options="gradeOptions"
+              size="sm"
+              width="12rem"
+            />
+
+            <!-- 活跃度筛选 -->
+            <GlassPopoverSelect
+              v-model="activityFilter"
+              :options="activityOptions"
+              size="sm"
+              width="10rem"
+            />
+          </FilterBar>
 
           <!-- 批量操作 -->
           <div class="flex items-center space-x-3">
@@ -131,14 +133,14 @@
                </Button>
              </div>
             
-            <!-- 排序 -->
-            <select v-if="selectedStudents.length === 0" v-model="sortBy" class="input input-sm">
-              <option value="name">{{ t('teacher.students.filters.sort.name') }}</option>
-              <option value="progress">{{ t('teacher.students.filters.sort.progress') }}</option>
-              <option value="grade">{{ t('teacher.students.filters.sort.grade') }}</option>
-              <option value="lastActive">{{ t('teacher.students.filters.sort.lastActive') }}</option>
-              <option value="joinDate">{{ t('teacher.students.filters.sort.joinDate') }}</option>
-            </select>
+            <!-- 排序（玻璃风格） -->
+            <GlassPopoverSelect
+              v-if="selectedStudents.length === 0"
+              v-model="sortBy"
+              :options="sortOptions"
+              size="sm"
+              width="12rem"
+            />
 
             <!-- 已移除视图切换按钮，固定为表格视图 -->
           </div>
@@ -176,9 +178,9 @@
           </div>
         </template>
 
-        <div class="overflow-x-auto">
-          <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-600">
-            <thead class="bg-gray-50 dark:bg-gray-700">
+        <div class="overflow-x-auto no-scrollbar rounded-xl overflow-hidden glass-regular glass-interactive border border-gray-200/40 dark:border-gray-700/40">
+          <table class="min-w-full divide-y divide-white/10">
+            <thead class="bg-white/5 dark:bg-white/5 backdrop-blur-sm">
               <tr>
                 <th class="px-6 py-3 text-left">
                   <input
@@ -188,28 +190,28 @@
                     class="rounded border-gray-300 text-primary-600 focus:ring-primary-500"
                   />
                 </th>
-                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                <th class="px-6 py-3 text-left text-xs font-semibold text-gray-700 dark:text-gray-200 tracking-wide">
                   {{ t('teacher.students.table.student') }}
                 </th>
-                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                <th class="px-6 py-3 text-left text-xs font-semibold text-gray-700 dark:text-gray-200 tracking-wide">
                   {{ t('teacher.students.table.progress') }}
                 </th>
-                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                <th class="px-6 py-3 text-left text-xs font-semibold text-gray-700 dark:text-gray-200 tracking-wide">
                   {{ t('teacher.students.table.grade') }}
                 </th>
-                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                <th class="px-6 py-3 text-left text-xs font-semibold text-gray-700 dark:text-gray-200 tracking-wide">
                   {{ t('teacher.students.table.activity') }}
                 </th>
-                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                <th class="px-6 py-3 text-left text-xs font-semibold text-gray-700 dark:text-gray-200 tracking-wide">
                   {{ t('teacher.students.table.lastActive') }}
                 </th>
-                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                <th class="px-6 py-3 text-left text-xs font-semibold text-gray-700 dark:text-gray-200 tracking-wide">
                   {{ t('teacher.students.table.actions') }}
                 </th>
               </tr>
             </thead>
-            <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-600">
-              <tr v-for="student in paginatedStudents" :key="student.id" class="hover:bg-gray-50 dark:hover:bg-gray-700">
+            <tbody class="bg-transparent divide-y divide-white/10">
+              <tr v-for="student in paginatedStudents" :key="student.id" class="hover:bg-white/10 transition-colors duration-150">
                 <td class="px-6 py-4">
                   <input
                     type="checkbox"
@@ -222,7 +224,7 @@
                   <div class="flex items-center">
                     <div class="flex-shrink-0 w-10 h-10">
                       <UserAvatar :avatar="student.avatar" :size="40">
-                        <div class="w-10 h-10 rounded-full bg-gray-200 dark:bg-gray-600 flex items-center justify-center">
+                        <div class="w-10 h-10 rounded-full bg-gray-200 dark:bg-gray-600 ring-1 ring-white/20 flex items-center justify-center">
                           <UserIcon class="w-5 h-5 text-gray-400" />
                         </div>
                       </UserAvatar>
@@ -253,7 +255,7 @@
                   </div>
                 </td>
                 <td class="px-6 py-4">
-                  <div class="flex items-center space-x-2">
+                  <div class="flex items-center">
                     <span class="text-sm font-medium text-gray-900 dark:text-white">
                       {{ student.averageGrade || '--' }}
                     </span>
@@ -287,44 +289,53 @@
                 <td class="px-6 py-4 text-sm text-gray-500 dark:text-gray-400">
                   {{ formatRelativeTime(student.lastActiveAt) }}
                 </td>
-                <td class="px-6 py-4">
-                  <div class="flex items-center space-x-2">
-                    <Button variant="outline" size="sm" @click="viewStudentDetail(student.id)">
+                <td class="px-6 py-4 text-right">
+                  <div class="inline-flex items-center gap-2 justify-end">
+                    <Button variant="outline" size="sm" class="whitespace-nowrap" @click="viewStudentDetail(student.id)">
                       <EyeIcon class="w-4 h-4 mr-1" />
                       {{ t('teacher.students.table.view') }}
                     </Button>
-                    <Button variant="purple" size="sm" @click="sendMessage(student.id)">
+                    <Button variant="info" size="sm" class="whitespace-nowrap" @click="sendMessage(student.id)">
                       <ChatBubbleLeftIcon class="w-4 h-4 mr-1" />
                       {{ t('teacher.students.table.message') }}
                     </Button>
-                    <div class="relative" @click.stop>
-                      <Button variant="ghost" size="sm" @click="toggleStudentMenu(student.id)">
+                    <div class="relative" @click.stop :ref="(el: Element | ComponentPublicInstance | null) => setMenuButtonRef((el as HTMLElement) ?? null, student.id)">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        @click="toggleStudentMenu(student.id)"
+                      >
                         <EllipsisVerticalIcon class="w-4 h-4" />
                       </Button>
-                      <div
-                        v-if="showStudentMenu === student.id"
-                        class="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-800 rounded-md shadow-lg z-10 border border-gray-200 dark:border-gray-600"
-                      >
-                        <div class="py-1">
-                          <Button variant="menu" size="sm" @click="viewGrades(student.id)">
-                             <AcademicCapIcon class="w-4 h-4" />
-                           {{ t('teacher.students.table.viewGrades') }}
-                          </Button>
-                          <Button variant="menu" size="sm" @click="resetProgress(student.id)">
-                             <ArrowPathIcon class="w-4 h-4" />
-                             {{ t('teacher.students.table.reset') }}
-                          </Button>
-                          <Button variant="menu" size="sm" @click="exportStudentData(student.id)">
-                             <ArrowDownTrayIcon class="w-4 h-4" />
-                             {{ t('teacher.students.table.export') }}
-                          </Button>
-                          <hr class="my-1 border-gray-200 dark:border-gray-600" />
-                          <Button variant="danger" size="sm" @click="removeStudent(student.id)">
-                             <UserMinusIcon class="w-4 h-4" />
-                             {{ t('teacher.students.table.remove') }}
-                          </Button>
+                      <teleport to="body">
+                        <div
+                          v-if="showStudentMenu === student.id"
+                          ref="menuRef"
+                          class="fixed z-[9999] rounded-lg shadow-lg popover-glass border border-white/25 dark:border-white/10 overflow-y-auto no-scrollbar p-1"
+                          :style="{ left: menuPos.left + 'px', top: menuPos.top + 'px', width: menuPos.width + 'px', maxHeight: '180px' }"
+                          @click.stop
+                        >
+                          <div class="py-1">
+                            <Button variant="menu" size="sm" class="w-full justify-start" @click="viewGrades(student.id)">
+                               <AcademicCapIcon class="w-4 h-4" />
+                               {{ t('teacher.students.table.viewGrades') }}
+                            </Button>
+                            <Button variant="menu" size="sm" class="w-full justify-start" @click="resetProgress(student.id)">
+                               <ArrowPathIcon class="w-4 h-4" />
+                               {{ t('teacher.students.table.reset') }}
+                            </Button>
+                            <Button variant="menu" size="sm" class="w-full justify-start" @click="exportStudentData(student.id)">
+                               <ArrowDownTrayIcon class="w-4 h-4" />
+                               {{ t('teacher.students.table.export') }}
+                            </Button>
+                            <hr class="my-1 border-white/10" />
+                            <Button variant="danger" size="sm" class="w-full justify-start" @click="removeStudent(student.id)">
+                               <UserMinusIcon class="w-4 h-4" />
+                               {{ t('teacher.students.table.remove') }}
+                            </Button>
+                          </div>
                         </div>
-                      </div>
+                      </teleport>
                     </div>
                   </div>
                 </td>
@@ -333,11 +344,11 @@
           </table>
         </div>
 
-        <!-- 分页（统一为作业管理样式） -->
-          <div class="mt-6 flex items-center justify-between">
+        <!-- 分页（统一玻璃风格） -->
+          <div class="mt-6 flex items-center justify-between rounded-xl glass-regular glass-interactive border border-gray-200/40 dark:border-gray-700/40 px-4 py-3">
             <div class="flex items-center space-x-2">
               <span class="text-sm text-gray-700 dark:text-gray-300">{{ t('teacher.assignments.pagination.perPagePrefix') }}</span>
-              <select v-model.number="pageSize" class="input input-sm w-20">
+              <select v-model.number="pageSize" class="input input--glass input-sm w-20">
                 <option :value="10">10</option>
                 <option :value="20">20</option>
                 <option :value="50">50</option>
@@ -345,9 +356,9 @@
               <span class="text-sm text-gray-700 dark:text-gray-300">{{ t('teacher.assignments.pagination.perPageSuffix') }}</span>
             </div>
             <div class="flex items-center space-x-2">
-              <Button variant="outline" size="sm" @click="currentPage = Math.max(1, currentPage - 1)" :disabled="currentPage === 1">{{ t('teacher.assignments.pagination.prev') }}</Button>
+              <Button variant="outline" size="sm" class="whitespace-nowrap" @click="currentPage = Math.max(1, currentPage - 1)" :disabled="currentPage === 1">{{ t('teacher.assignments.pagination.prev') }}</Button>
               <span class="text-sm">{{ t('teacher.assignments.pagination.page', { page: currentPage }) }}</span>
-              <Button variant="outline" size="sm" @click="currentPage = Math.min(totalPages, currentPage + 1)" :disabled="currentPage >= totalPages">{{ t('teacher.assignments.pagination.next') }}</Button>
+              <Button variant="outline" size="sm" class="whitespace-nowrap" @click="currentPage = Math.min(totalPages, currentPage + 1)" :disabled="currentPage >= totalPages">{{ t('teacher.assignments.pagination.next') }}</Button>
             </div>
         </div>
       </card>
@@ -360,7 +371,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, computed, onMounted, onUnmounted, watch } from 'vue'
+import { ref, reactive, computed, onMounted, onUnmounted, watch, nextTick, type ComponentPublicInstance } from 'vue'
 import apiClient, { baseURL } from '@/api/config'
 import { useRoute, useRouter } from 'vue-router'
 import { useUIStore } from '@/stores/ui'
@@ -368,6 +379,8 @@ import Card from '@/components/ui/Card.vue'
 import Button from '@/components/ui/Button.vue'
 import Badge from '@/components/ui/Badge.vue'
 import Progress from '@/components/ui/Progress.vue'
+import FilterBar from '@/components/ui/filters/FilterBar.vue'
+import GlassPopoverSelect from '@/components/ui/filters/GlassPopoverSelect.vue'
 import {
   ChevronRightIcon,
   DocumentArrowDownIcon,
@@ -413,6 +426,44 @@ const showStudentMenu = ref<string | null>(null)
 const currentPage = ref(1)
 const pageSize = ref(20)
 const chat = useChatStore()
+
+// 三点菜单定位
+const menuButtonMap = new Map<string, HTMLElement>()
+const menuPos = ref({ left: 0, top: 0, width: 160 })
+let scrollListenerBound = false
+const menuRef = ref<HTMLElement | null>(null)
+
+// Glass 选项
+const progressOptions = computed(() => ([
+  { label: t('teacher.students.filters.progress.all') as string, value: '' },
+  { label: t('teacher.students.filters.progress.notStarted') as string, value: 'not-started' },
+  { label: t('teacher.students.filters.progress.inProgress') as string, value: 'in-progress' },
+  { label: t('teacher.students.filters.progress.completed') as string, value: 'completed' },
+]))
+
+const gradeOptions = computed(() => ([
+  { label: t('teacher.students.filters.grade.all') as string, value: '' },
+  { label: t('teacher.students.filters.grade.excellent') as string, value: 'excellent' },
+  { label: t('teacher.students.filters.grade.good') as string, value: 'good' },
+  { label: t('teacher.students.filters.grade.average') as string, value: 'average' },
+  { label: t('teacher.students.filters.grade.below') as string, value: 'below' },
+]))
+
+const activityOptions = computed(() => ([
+  { label: t('teacher.students.filters.activity.all') as string, value: '' },
+  { label: t('teacher.students.filters.activity.high') as string, value: 'high' },
+  { label: t('teacher.students.filters.activity.medium') as string, value: 'medium' },
+  { label: t('teacher.students.filters.activity.low') as string, value: 'low' },
+  { label: t('teacher.students.filters.activity.inactive') as string, value: 'inactive' },
+]))
+
+const sortOptions = computed(() => ([
+  { label: t('teacher.students.filters.sort.name') as string, value: 'name' },
+  { label: t('teacher.students.filters.sort.progress') as string, value: 'progress' },
+  { label: t('teacher.students.filters.sort.grade') as string, value: 'grade' },
+  { label: t('teacher.students.filters.sort.lastActive') as string, value: 'lastActive' },
+  { label: t('teacher.students.filters.sort.joinDate') as string, value: 'joinDate' },
+]))
 
 // 统计数据（占位：后续可接入专用统计端点）
 const stats = reactive({
@@ -611,7 +662,12 @@ const toggleSelectAll = (event: Event) => {
 }
 
 const toggleStudentMenu = (studentId: string) => {
-  showStudentMenu.value = showStudentMenu.value === studentId ? null : studentId
+  if (showStudentMenu.value === studentId) {
+    showStudentMenu.value = null
+    return
+  }
+  showStudentMenu.value = studentId
+  nextTick(() => { computeMenuPos(studentId); ensureFollowHandler() })
 }
 
 const viewStudentDetail = (studentId: string) => {
@@ -838,6 +894,19 @@ const submitInvite = async () => {
 
 // 生命周期
 const handleDocClick = () => { showStudentMenu.value = null }
+let followHandlerBound = false
+function ensureFollowHandler() {
+  if (followHandlerBound) return
+  const handler = () => {
+    if (!showStudentMenu.value) return
+    const curId = showStudentMenu.value
+    if (!curId) return
+    computeMenuPos(curId)
+  }
+  window.addEventListener('scroll', handler, { passive: true })
+  window.addEventListener('resize', handler, { passive: true })
+  followHandlerBound = true
+}
 
 onMounted(async () => {
   document.addEventListener('click', handleDocClick)
@@ -856,4 +925,29 @@ watch(searchQuery, () => {
 onUnmounted(() => {
   document.removeEventListener('click', handleDocClick)
 })
+
+function setMenuButtonRef(el: HTMLElement | null, id: string) {
+  if (!id) return
+  if (el) menuButtonMap.set(id, el)
+  else menuButtonMap.delete(id)
+}
+
+function computeMenuPos(id: string) {
+  const btn = menuButtonMap.get(id)
+  if (!btn) return
+  const rect = (btn as HTMLElement).getBoundingClientRect()
+  const margin = 6
+  const viewportW = window.innerWidth
+  const viewportH = window.innerHeight
+  const minWidthPx = 160
+  const preferredWidth = Math.max(minWidthPx, rect.width)
+  let left = rect.right - preferredWidth
+  left = Math.max(8, Math.min(left, viewportW - preferredWidth - 8))
+  let top = rect.bottom + margin
+  const estimatedMenuH = 176 // 预估高度，避免过长
+  if (top + estimatedMenuH > viewportH - 8) {
+    top = Math.max(8, rect.top - margin - estimatedMenuH)
+  }
+  menuPos.value = { left, top, width: preferredWidth }
+}
  </script> 

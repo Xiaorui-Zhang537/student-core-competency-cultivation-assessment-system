@@ -96,21 +96,28 @@
               <div class="flex items-center space-x-3">
                 <div class="relative">
                   <MagnifyingGlassIcon class="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
-                   <input
+                  <input
                     v-model="filterOptions.keyword"
                     @keyup.enter="applyFilters"
                     type="text"
                     :placeholder="t('shared.community.list.searchPlaceholder')"
-                    class="input pl-10 pr-4 py-2"
+                    class="input input--glass pl-10 pr-4 py-2"
                   />
                 </div>
-                <select v-model="filterOptions.orderBy" @change="applyFilters" class="input input-sm">
-                  <option value="latest">{{ t('shared.community.list.order.latest') }}</option>
-                  <option value="hot">{{ t('shared.community.list.order.hot') }}</option>
-                  <option value="comments">{{ t('shared.community.list.order.comments') }}</option>
-                  <option value="likes">{{ t('shared.community.list.order.likes') }}</option>
-                  <option value="views">{{ t('shared.community.list.order.views') }}</option>
-                </select>
+                <div class="w-36">
+                  <GlassPopoverSelect
+                    v-model="filterOptions.orderBy"
+                    :options="[
+                      {label: t('shared.community.list.order.latest') as string, value: 'latest'},
+                      {label: t('shared.community.list.order.hot') as string, value: 'hot'},
+                      {label: t('shared.community.list.order.comments') as string, value: 'comments'},
+                      {label: t('shared.community.list.order.likes') as string, value: 'likes'},
+                      {label: t('shared.community.list.order.views') as string, value: 'views'}
+                    ]"
+                    size="sm"
+                    @change="applyFilters"
+                  />
+                </div>
               </div>
             </div>
 
@@ -324,6 +331,7 @@ import {
 } from '@heroicons/vue/24/outline';
 import UserAvatar from '@/components/ui/UserAvatar.vue'
 import Button from '@/components/ui/Button.vue'
+import GlassPopoverSelect from '@/components/ui/filters/GlassPopoverSelect.vue'
 import StatCard from '@/components/ui/StatCard.vue'
 
 import { useAuthStore } from '@/stores/auth';

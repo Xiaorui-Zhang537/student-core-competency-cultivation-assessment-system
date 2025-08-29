@@ -33,57 +33,54 @@
       <!-- 过滤器容器：保留下方三个过滤器，横向一排 -->
       <div class="mt-4 rounded-lg p-3 glass-thin" v-glass="{ strength: 'thin', interactive: false }">
         <div class="flex flex-wrap items-end gap-3">
-          <div>
-            <label class="block text-sm font-medium text-gray-700 dark:text-gray-200">{{ t('notifications.filters.type') }}</label>
-            <div class="mt-1 inline-flex relative items-center">
-              <select
-                v-model="filters.type"
-                @change="handleFilterChange"
-                class="input h-9 w-36 pr-8 pl-2 text-sm appearance-none"
-              >
-                <option value="">{{ t('notifications.filters.all') }}</option>
-                <option value="system">{{ t('notifications.types.system') }}</option>
-                <option value="assignment">{{ t('notifications.types.assignment') }}</option>
-                <option value="grade">{{ t('notifications.types.grade') }}</option>
-                <option value="course">{{ t('notifications.types.course') }}</option>
-                <option value="message">{{ t('notifications.types.message') }}</option>
-              </select>
-              <chevron-down-icon class="w-4 h-4 absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
-            </div>
+          <div class="w-36">
+            <GlassPopoverSelect
+              :label="t('notifications.filters.type') as string"
+              v-model="filters.type"
+              :options="[
+                { label: t('notifications.filters.all') as string, value: '' },
+                { label: t('notifications.types.system') as string, value: 'system' },
+                { label: t('notifications.types.assignment') as string, value: 'assignment' },
+                { label: t('notifications.types.grade') as string, value: 'grade' },
+                { label: t('notifications.types.course') as string, value: 'course' },
+                { label: t('notifications.types.message') as string, value: 'message' }
+              ]"
+              size="sm"
+              stacked
+              @change="handleFilterChange"
+            />
           </div>
 
-          <div>
-            <label class="block text-sm font-medium text-gray-700 dark:text-gray-200">{{ t('notifications.filters.status') }}</label>
-            <div class="mt-1 inline-flex relative items-center">
-              <select
-                v-model="filters.isRead"
-                @change="handleFilterChange"
-                class="input h-9 w-32 pr-8 pl-2 text-sm appearance-none"
-              >
-                <option :value="undefined">{{ t('notifications.filters.all') }}</option>
-                <option :value="false">{{ t('notifications.status.unread') }}</option>
-                <option :value="true">{{ t('notifications.status.read') }}</option>
-              </select>
-              <chevron-down-icon class="w-4 h-4 absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
-            </div>
+          <div class="w-32">
+            <GlassPopoverSelect
+              :label="t('notifications.filters.status') as string"
+              :options="[
+                { label: t('notifications.filters.all') as string, value: 'all' },
+                { label: t('notifications.status.unread') as string, value: 'unread' },
+                { label: t('notifications.status.read') as string, value: 'read' }
+              ]"
+              :model-value="filters.isRead===undefined ? 'all' : (filters.isRead ? 'read' : 'unread')"
+              @update:modelValue="(v:any)=>{ filters.isRead = (v==='all') ? undefined : (v==='read'); handleFilterChange() }"
+              size="sm"
+              stacked
+            />
           </div>
 
-          <div>
-            <label class="block text-sm font-medium text-gray-700 dark:text-gray-200">{{ t('notifications.filters.priority') }}</label>
-            <div class="mt-1 inline-flex relative items-center">
-              <select
-                v-model="filters.priority"
-                @change="handleFilterChange"
-                class="input h-9 w-28 pr-8 pl-2 text-sm appearance-none"
-              >
-                <option value="">{{ t('notifications.filters.all') }}</option>
-                <option value="urgent">{{ t('notifications.priority.urgent') }}</option>
-                <option value="high">{{ t('notifications.priority.high') }}</option>
-                <option value="normal">{{ t('notifications.priority.normal') }}</option>
-                <option value="low">{{ t('notifications.priority.low') }}</option>
-              </select>
-              <chevron-down-icon class="w-4 h-4 absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
-            </div>
+          <div class="w-28">
+            <GlassPopoverSelect
+              :label="t('notifications.filters.priority') as string"
+              v-model="filters.priority"
+              :options="[
+                { label: t('notifications.filters.all') as string, value: '' },
+                { label: t('notifications.priority.urgent') as string, value: 'urgent' },
+                { label: t('notifications.priority.high') as string, value: 'high' },
+                { label: t('notifications.priority.normal') as string, value: 'normal' },
+                { label: t('notifications.priority.low') as string, value: 'low' }
+              ]"
+              size="sm"
+              stacked
+              @change="handleFilterChange"
+            />
           </div>
 
           <div v-if="hasActiveFilters" class="ml-auto">
@@ -219,6 +216,7 @@ import {
   ChatBubbleLeftRightIcon,
   ChevronDownIcon
 } from '@heroicons/vue/24/outline'
+import GlassPopoverSelect from '@/components/ui/filters/GlassPopoverSelect.vue'
 import Button from '@/components/ui/Button.vue'
 
 // Store

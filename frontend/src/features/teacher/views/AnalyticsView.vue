@@ -9,12 +9,13 @@
           <p class="text-gray-600 dark:text-gray-400">{{ t('teacher.analytics.subtitle') }}</p>
         </div>
       <div class="flex items-center space-x-4">
-        <select v-model="selectedCourseId" @change="onCourseChange" class="input">
-            <option :value="null">{{ t('teacher.analytics.selectCourse') }}</option>
-            <option v-for="course in teacherCourses" :key="course.id" :value="String(course.id)">
-              {{ course.title }}
-            </option>
-          </select>
+        <GlassPopoverSelect
+          v-model="selectedCourseId"
+          :options="courseSelectOptions"
+          :placeholder="t('teacher.analytics.selectCourse') as string"
+          size="md"
+          @change="onCourseChange"
+        />
           <div class="flex items-center gap-3">
             <Button variant="primary" class="whitespace-nowrap" :disabled="!selectedCourseId" @click="askAiForAnalytics">
               <SparklesIcon class="w-4 h-4 mr-2" />
@@ -112,17 +113,26 @@
             <p class="text-xs text-gray-600 dark:text-gray-400 leading-relaxed">{{ t('teacher.analytics.settings.compareNote') }}</p>
             <div class="flex flex-nowrap items-center gap-2 overflow-x-auto min-h-[44px] no-scrollbar">
               <span class="text-sm text-gray-700 dark:text-gray-300">{{ t('teacher.analytics.settings.studentLabel') }}</span>
-              <select v-model="selectedStudentId" class="input w-40" :disabled="!selectedCourseId">
-                <option :value="null">{{ t('teacher.analytics.charts.selectStudent') }}</option>
-                <option v-for="s in topStudents" :key="s.studentId" :value="String(s.studentId)">{{ s.studentName }}</option>
-              </select>
+              <GlassPopoverSelect
+                v-model="selectedStudentId"
+                :options="studentSelectOptions"
+                :placeholder="t('teacher.analytics.charts.selectStudent') as string"
+                size="sm"
+                @change="loadRadar"
+              />
               <span class="text-sm text-gray-700 dark:text-gray-300">{{ t('teacher.analytics.settings.classAvgLabel') }}</span>
-              <select v-model="includeClassAvg" class="input w-[168px]" :disabled="!compareEnabled">
-                <option value="both">{{ t('teacher.analytics.charts.classAvgBoth') || '班级均值: A与B' }}</option>
-                <option value="A">{{ t('teacher.analytics.charts.classAvgA') || '班级均值: 仅A' }}</option>
-                <option value="B">{{ t('teacher.analytics.charts.classAvgB') || '班级均值: 仅B' }}</option>
-                <option value="none">{{ t('teacher.analytics.charts.classAvgNone') || '班级均值: 关闭' }}</option>
-              </select>
+              <GlassPopoverSelect
+                v-model="includeClassAvg"
+                :options="[
+                  { label: t('teacher.analytics.charts.classAvgBoth') as string || '班级均值: A与B', value: 'both' },
+                  { label: t('teacher.analytics.charts.classAvgA') as string || '班级均值: 仅A', value: 'A' },
+                  { label: t('teacher.analytics.charts.classAvgB') as string || '班级均值: 仅B', value: 'B' },
+                  { label: t('teacher.analytics.charts.classAvgNone') as string || '班级均值: 关闭', value: 'none' }
+                ]"
+                size="sm"
+                @change="loadRadar"
+                :disabled="!compareEnabled"
+              />
             </div>
             <div v-if="!compareEnabled" class="flex flex-nowrap items-center gap-2 overflow-x-auto">
               <span class="text-sm text-gray-700 dark:text-gray-300">{{ t('teacher.analytics.settings.timeFilter') }}</span>
@@ -133,19 +143,11 @@
             <div v-else class="flex flex-col gap-2">
               <div class="flex flex-wrap items-center gap-2">
                 <span class="text-sm text-gray-700 dark:text-gray-300">{{ t('teacher.analytics.settings.setA') }}</span>
-                <select multiple size="6" v-model="assignmentIdsA" class="input min-w-[260px] no-scrollbar">
-                  <option v-for="a in assignmentOptions" :key="a.id" :value="String(a.id)">{{ a.title }}</option>
-                  <option v-if="!assignmentOptions.length" disabled>暂无作业</option>
-                </select>
-                <span class="text-xs text-gray-500 dark:text-gray-400">{{ t('teacher.analytics.settings.multiSelectHint') }}</span>
+                <GlassMultiSelect v-model="assignmentIdsA" :options="assignmentSelectOptions" />
               </div>
               <div class="flex flex-wrap items-center gap-2">
                 <span class="text-sm text-gray-700 dark:text-gray-300">{{ t('teacher.analytics.settings.setB') }}</span>
-                <select multiple size="6" v-model="assignmentIdsB" class="input min-w-[260px] no-scrollbar">
-                  <option v-for="a in assignmentOptions" :key="a.id" :value="String(a.id)">{{ a.title }}</option>
-                  <option v-if="!assignmentOptions.length" disabled>暂无作业</option>
-                </select>
-                <span class="text-xs text-gray-500 dark:text-gray-400">{{ t('teacher.analytics.settings.multiSelectHint') }}</span>
+                <GlassMultiSelect v-model="assignmentIdsB" :options="assignmentSelectOptions" />
               </div>
             </div>
           </div>
@@ -220,6 +222,9 @@ import AbilityWeightsDialog from '@/features/teacher/components/AbilityWeightsDi
 import { DocumentArrowDownIcon, SparklesIcon, ArrowPathIcon, UserGroupIcon, CheckCircleIcon, StarIcon, ClipboardDocumentListIcon } from '@heroicons/vue/24/outline'
 // @ts-ignore shim for vue-i18n types in this project
 import { useI18n } from 'vue-i18n'
+import GlassSelect from '@/components/ui/filters/GlassSelect.vue'
+import GlassPopoverSelect from '@/components/ui/filters/GlassPopoverSelect.vue'
+import GlassMultiSelect from '@/components/ui/filters/GlassMultiSelect.vue'
 
 // Stores
 const teacherStore = useTeacherStore()
@@ -290,6 +295,10 @@ const teacherCourses = computed(() => {
   if (!authStore.user?.id) return []
   return courseStore.courses.filter(c => String(c.teacherId) === String(authStore.user?.id))
 })
+
+const courseSelectOptions = computed(() => teacherCourses.value.map((c: any) => ({ label: String(c.title || ''), value: String(c.id) })))
+const studentSelectOptions = computed(() => [{ label: t('teacher.analytics.charts.selectStudent') as string, value: null as any }, ...topStudents.value.map((s: CourseStudentPerformanceItem) => ({ label: s.studentName, value: String(s.studentId) }))])
+const assignmentSelectOptions = computed(() => assignmentOptions.value.map((a: { id: string; title: string }) => ({ label: a.title, value: String(a.id) })))
 
 const route = useRoute()
 const router = useRouter()

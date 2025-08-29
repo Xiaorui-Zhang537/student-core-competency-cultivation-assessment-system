@@ -8,13 +8,15 @@
       </div>
       <div class="flex items-end gap-4 w-full sm:w-auto">
         <div class="w-full sm:w-64">
-          <label for="course-select" class="block text-xs font-medium mb-1 text-gray-500 dark:text-gray-400">{{ t('teacher.dashboard.course.select.label') }}</label>
-          <select id="course-select" v-model="selectedCourseId" @change="onCourseSelect" class="input">
-            <option :value="null" disabled>{{ t('teacher.dashboard.course.select.placeholder') }}</option>
-            <option v-for="course in teacherCourses" :key="course.id" :value="String(course.id)">
-              {{ course.title }}
-            </option>
-          </select>
+          <GlassPopoverSelect
+            :label="t('teacher.dashboard.course.select.label') as string"
+            v-model="selectedCourseId"
+            :options="teacherCourses.map(c => ({ label: c.title, value: String(c.id) }))"
+            :placeholder="t('teacher.dashboard.course.select.placeholder') as string"
+            size="md"
+            stacked
+            @change="onCourseSelect"
+          />
         </div>
         <div class="hidden sm:flex items-center gap-2">
           <Button variant="primary" @click="goPublishAssignment">
@@ -77,6 +79,8 @@ import { loadLocaleMessages } from '@/i18n'
 import { PlusIcon, CheckBadgeIcon, UserGroupIcon, CheckCircleIcon, StarIcon, ClipboardDocumentListIcon } from '@heroicons/vue/24/outline'
 import Button from '@/components/ui/Button.vue'
 import StatCard from '@/components/ui/StatCard.vue'
+import GlassSelect from '@/components/ui/filters/GlassSelect.vue'
+import GlassPopoverSelect from '@/components/ui/filters/GlassPopoverSelect.vue'
 
 const uiStore = useUIStore()
 const router = useRouter()
