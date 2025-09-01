@@ -3,8 +3,7 @@
 本节列出各控制器的端点导航，详细内容在各子页。
 
 - 认证与用户：`/backend/api/auth.md`
-- 课程：`/backend/api/course.md`
-- 课时：`/backend/api/lesson.md`
+- 课程/课时：`/backend/api/course.md`
 - 作业：`/backend/api/assignment.md`
 - 提交：`/backend/api/submission.md`
 - 评分：`/backend/api/grade.md`

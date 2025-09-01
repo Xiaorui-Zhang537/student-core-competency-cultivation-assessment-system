@@ -81,7 +81,7 @@ store.setSession(res.data.token, res.data.refreshToken, res.data.user)
 - `LoginView.vue`：表单提交 → 调用 `authApi.login` → 保存会话 → 跳转首页
 - 路由守卫：401 时自动跳登录页（见 `src/api/config.ts`）
 
-## 8. 标准响应包装（ApiResponse<T>）
+## 8. 标准响应包装（`ApiResponse<T>`）
 所有接口返回统一包装：
 ```json
 { "code": 200, "message": "OK", "data": { /* 具体业务数据 */ } }

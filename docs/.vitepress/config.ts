@@ -10,6 +10,14 @@ export default defineConfig({
       { text: '入门', link: '/quickstart-beginner' },
       { text: '架构', link: '/architecture-overview' },
       { text: '逐文件', link: '/file-walkthrough' },
+      {
+        text: 'API',
+        items: [
+          { text: '后端 API', link: '/backend/api/index' },
+          { text: '前端 API', link: '/frontend/api/index' }
+        ]
+      },
+      { text: '模型', link: '/models/index' },
       { text: '端到端', link: '/e2e-examples' },
       { text: 'Cookbook', link: '/cookbook' },
       { text: 'FAQ', link: '/faq' }
