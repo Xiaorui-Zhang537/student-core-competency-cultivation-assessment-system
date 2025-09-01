@@ -67,6 +67,8 @@ interface Props {
 }
 
 const props = withDefaults(defineProps<Props>(), {
+  data: () => [],
+  xAxisData: () => [],
   width: '100%',
   height: '400px',
   theme: 'auto',
@@ -81,9 +83,20 @@ const chartRef = ref<HTMLElement>()
 const chartInstance = ref<echarts.ECharts>()
 const error = ref(false)
 
+// 等待容器可用且有尺寸
+const waitForContainer = async (maxTries = 10): Promise<boolean> => {
+  for (let i = 0; i < maxTries; i++) {
+    await nextTick()
+    if (chartRef.value && chartRef.value.offsetWidth > 0 && chartRef.value.offsetHeight > 0) return true
+    await new Promise(r => requestAnimationFrame(() => r(null)))
+  }
+  return !!chartRef.value
+}
+
 // 初始化图表
 const initChart = async () => {
-  if (!chartRef.value) return
+  const ok = await waitForContainer()
+  if (!ok || !chartRef.value) return
   
   try {
     error.value = false
@@ -101,16 +114,17 @@ const initChart = async () => {
       : props.theme
     
     // 创建图表实例
-    chartInstance.value = echarts.init(chartRef.value, theme)
+    chartInstance.value = echarts.init(chartRef.value as HTMLDivElement, theme)
     
     // 配置选项
     const palette = theme === 'dark'
       ? ['#93c5fd', '#22d3ee', '#f472b6', '#f59e0b', '#34d399']
       : ['#3b82f6', '#06b6d4', '#ec4899', '#f59e0b', '#10b981']
 
-    const hasBar = (props.data || []).some(s => (s.type || 'line') === 'bar')
+    const normalizedSeries = (props.data || []).filter((s: any) => s && Array.isArray(s.data))
+    const hasBar = normalizedSeries.some(s => (s.type || 'line') === 'bar')
 
-    const option = {
+    const option: any = {
       backgroundColor: theme === 'dark' ? '#0b0f1a' : '#ffffff',
       title: props.title ? {
         text: props.title,
@@ -157,7 +171,7 @@ const initChart = async () => {
       xAxis: {
         type: 'category',
         boundaryGap: hasBar ? true : false,
-        data: props.xAxisData,
+        data: Array.isArray(props.xAxisData) ? props.xAxisData : [],
         axisLine: {
           lineStyle: {
             color: theme === 'dark' ? '#4b5563' : '#d1d5db'
@@ -185,14 +199,14 @@ const initChart = async () => {
         }
       },
       
-      series: props.data.map((item, idx) => {
+      series: normalizedSeries.map((item, idx) => {
         const isBar = (item.type || 'line') === 'bar'
         const baseColor = item.color || palette[idx % palette.length]
         return {
           name: item.name,
-          type: item.type || 'line',
+          type: (item.type || 'line') as 'line' | 'bar',
           smooth: item.smooth !== false,
-          data: item.data,
+          data: Array.isArray(item.data) ? item.data : [],
           symbol: 'circle',
           symbolSize: theme === 'dark' ? 5 : 4,
           // 为柱状图设置每个柱子不同颜色；折线图保持系列颜色
@@ -225,13 +239,19 @@ const initChart = async () => {
         }
       })
     }
+    if (normalizedSeries.length === 0 || !Array.isArray(props.xAxisData)) {
+      option.series = []
+      option.xAxis.data = []
+    }
     
-    // 设置选项
-    chartInstance.value.setOption(option)
+    // 设置选项（完全替换以避免保留无效旧系列）
+    chartInstance.value.clear()
+    chartInstance.value.setOption(option, true)
     
     // 响应式处理
     const resizeObserver = new ResizeObserver(() => {
-      chartInstance.value?.resize()
+      if (!chartInstance.value) return
+      requestAnimationFrame(() => chartInstance.value && chartInstance.value.resize())
     })
     resizeObserver.observe(chartRef.value)
     
@@ -252,20 +272,21 @@ const updateChart = () => {
     ? ['#93c5fd', '#22d3ee', '#f472b6', '#f59e0b', '#34d399']
     : ['#3b82f6', '#06b6d4', '#ec4899', '#f59e0b', '#10b981']
 
-  const hasBar = (props.data || []).some(s => (s.type || 'line') === 'bar')
+  const normalizedSeries = (props.data || []).filter((s: any) => s && Array.isArray(s.data))
+  const hasBar = normalizedSeries.some(s => (s.type || 'line') === 'bar')
 
-  const option = {
+  const option: any = {
     xAxis: {
-      data: props.xAxisData,
+      data: Array.isArray(props.xAxisData) ? props.xAxisData : [],
       boundaryGap: hasBar ? true : false
     },
-    series: props.data.map((item, idx) => {
+    series: normalizedSeries.map((item, idx) => {
       const isBar = (item.type || 'line') === 'bar'
       const baseColor = item.color || palette[idx % palette.length]
       return {
         name: item.name,
-        type: item.type || 'line',
-        data: item.data,
+        type: (item.type || 'line') as 'line' | 'bar',
+        data: Array.isArray(item.data) ? item.data : [],
         smooth: item.smooth !== false,
         symbol: 'circle',
         symbolSize: isDark ? 5 : 4,
@@ -283,8 +304,12 @@ const updateChart = () => {
       }
     })
   }
+  if (normalizedSeries.length === 0) {
+    option.series = []
+  }
 
-  chartInstance.value.setOption(option)
+  chartInstance.value.clear()
+  chartInstance.value.setOption(option, true)
 }
 
 // 监听数据变化

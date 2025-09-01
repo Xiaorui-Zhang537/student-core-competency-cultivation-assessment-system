@@ -8,6 +8,7 @@ import com.noncore.assessment.service.LessonService;
 import com.noncore.assessment.service.UserService;
 import com.noncore.assessment.util.ApiResponse;
 import com.noncore.assessment.util.PageResult;
+import com.noncore.assessment.service.FileStorageService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -36,10 +37,12 @@ import java.util.Map;
 public class LessonController extends BaseController {
 
     private final LessonService lessonService;
+    private final FileStorageService fileStorageService;
 
-    public LessonController(LessonService lessonService, UserService userService) {
+    public LessonController(LessonService lessonService, UserService userService, FileStorageService fileStorageService) {
         super(userService);
         this.lessonService = lessonService;
+        this.fileStorageService = fileStorageService;
     }
 
     /**
@@ -72,6 +75,41 @@ public class LessonController extends BaseController {
     public ResponseEntity<ApiResponse<Lesson>> updateLesson(@PathVariable Long id, @Valid @RequestBody Lesson lesson) {
         Lesson updatedLesson = lessonService.updateLesson(id, lesson);
         return ResponseEntity.ok(ApiResponse.success(updatedLesson));
+    }
+
+    /**
+     * 设置章节内容（视频URL与资料绑定）
+     */
+    @PutMapping("/{id}/content")
+    @PreAuthorize("hasRole('TEACHER') or hasRole('ADMIN')")
+    @Operation(summary = "设置章节内容", description = "更新视频URL并绑定资料文件（传 fileIds）")
+    public ResponseEntity<ApiResponse<Map<String, Object>>> updateLessonContent(
+            @PathVariable Long id,
+            @RequestBody Map<String, Object> body) {
+        String videoUrl = body.get("videoUrl") == null ? null : String.valueOf(body.get("videoUrl"));
+        java.util.List<Long> fileIds = null;
+        Object files = body.get("materialFileIds");
+        if (files instanceof java.util.List<?> list) {
+            fileIds = new java.util.ArrayList<>();
+            for (Object o : list) { if (o != null) fileIds.add(Long.valueOf(String.valueOf(o))); }
+        }
+
+        // 更新视频 URL
+        if (videoUrl != null) {
+            Lesson l = new Lesson();
+            l.setVideoUrl(videoUrl);
+            lessonService.updateLesson(id, l);
+        }
+
+        // 绑定资料文件（related_type = 'lesson_material'）
+        if (fileIds != null && !fileIds.isEmpty()) {
+            fileStorageService.relinkFilesTo(fileIds, "lesson_material", id, getCurrentUserId());
+        }
+        Map<String, Object> resp = new java.util.HashMap<>();
+        resp.put("lessonId", id);
+        resp.put("videoUrl", videoUrl);
+        resp.put("materialFileIds", fileIds == null ? java.util.Collections.emptyList() : fileIds);
+        return ResponseEntity.ok(ApiResponse.success(resp));
     }
 
     /**

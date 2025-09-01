@@ -1,8 +1,7 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
 import notificationAPI from '@/api/notification.api'
-import { teacherStudentApi } from '@/api/teacher-student.api'
-import { courseApi } from '@/api/course.api'
+import { studentApi } from '@/api/student.api'
 
 export const useChatStore = defineStore('chat', () => {
   const isOpen = ref(false)
@@ -222,28 +221,26 @@ export const useChatStore = defineStore('chat', () => {
         systemMessages.value = all.filter((n: any) => toLower(n.type) !== 'message')
       } catch { systemMessages.value = [] }
 
-      // 联系人：按课程分组，加载教师教授的所有课程下的学生
+      // 联系人分支：学生端仅显示“我加入的课程”的参与者（任课教师 + 同班同学）
       contacts.value = []
       contactGroups.value = []
       try {
-        const teacherId = String(localStorage.getItem('userId') || '')
-        const resCourses: any = await (courseApi as any).getCourses({ page: 1, size: 1000, teacherId })
-        const courses = (resCourses?.data?.items?.items) || (resCourses?.data?.items) || (resCourses?.items) || []
+        // 获取我加入的课程（学生端接口）
+        const resMyCourses: any = await (studentApi as any).getMyCourses({ page: 1, size: 1000 })
+        const myCourses = (resMyCourses?.data?.items?.items) || (resMyCourses?.data?.items) || (resMyCourses?.items) || resMyCourses || []
         const groups: any[] = []
-        for (const c of courses) {
+        for (const c of myCourses) {
           const cId = String(c.id || c.courseId || '')
-          const cName = c.name || c.title || `Course ${cId}`
+          const cName = c.title || c.name || `Course ${cId}`
           try {
-            const payload: any = await (teacherStudentApi as any).getCourseStudentsBasic(cId, 1, 10000, opts?.keyword)
-            const list = (payload?.data?.items) || (payload?.items) || payload || []
-            const students = list.map((s: any) => ({
-              id: String(s.id || s.studentId || ''),
-              name: s.username || s.nickname || s.name || s.studentName || s.realName || '',
-              avatar: s.avatar || ''
-            }))
-            if (students.length === 0) continue
-            groups.push({ courseId: cId, courseName: cName, expanded: true, students })
-            contacts.value.push(...students)
+            // 从学生端统一接口获取课程参与者
+            const participantsRes: any = await (studentApi as any).getCourseParticipants(cId, opts?.keyword)
+            const teachers = ((participantsRes?.data?.teachers) || (participantsRes?.teachers) || []).map((t: any) => ({ id: String(t.id), name: t.name, avatar: t.avatar }))
+            const classmates = ((participantsRes?.data?.classmates) || (participantsRes?.classmates) || []).map((s: any) => ({ id: String(s.id), name: s.name, avatar: s.avatar }))
+            const members = [...teachers, ...classmates].filter((m: any) => String(m.id) !== String(localStorage.getItem('userId') || ''))
+            if (members.length === 0) continue
+            groups.push({ courseId: cId, courseName: cName, expanded: true, students: members })
+            contacts.value.push(...members)
           } catch { /* ignore one course */ }
         }
         contactGroups.value = groups

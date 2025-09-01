@@ -1,8 +1,20 @@
 <template>
   <div class="max-w-3xl mx-auto py-6">
     <div v-if="loading" class="text-center text-gray-500 dark:text-gray-400">{{ t('notifications.loading') }}</div>
-    <div v-else-if="!notification" class="text-center text-gray-500 dark:text-gray-400">{{ t('notifications.empty') }}</div>
-    <div class="bg-white dark:bg-gray-800 shadow rounded-xl p-6 border border-gray-100 dark:border-gray-700">
+    <div v-else-if="!notification" class="text-center text-gray-500 dark:text-gray-400">
+      {{ t('notifications.empty') }}
+      <div class="mt-4">
+        <button @click="goCenter" class="inline-flex items-center gap-2 px-3 py-1.5 rounded-md bg-gray-100 text-gray-800 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-100 dark:hover:bg-gray-700 border border-gray-300 dark:border-gray-700">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-4 h-4"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7" /></svg>
+          {{ t('notifications.actions.backToCenter') }}
+        </button>
+        <button @click="retry" class="ml-3 inline-flex items-center gap-2 px-3 py-1.5 rounded-md bg-primary-600 text-white hover:bg-primary-700">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-4 h-4"><path stroke-linecap="round" stroke-linejoin="round" d="M4 4v6h6M20 20v-6h-6M20 4l-6 6M4 20l6-6" /></svg>
+          {{ t('common.refresh') || '重试' }}
+        </button>
+      </div>
+    </div>
+    <div v-else class="bg-white dark:bg-gray-800 shadow rounded-xl p-6 border border-gray-100 dark:border-gray-700">
       <div class="flex items-start justify-between">
         <div class="flex items-center gap-2">
           <div class="h-9 w-9">
@@ -61,14 +73,29 @@ const route = useRoute()
 const router = useRouter()
 const { t } = useI18n()
 const notificationsStore = useNotificationsStore()
-const { currentNotification: notification, loading } = storeToRefs(notificationsStore)
+const { currentNotification: notification, loading, notifications } = storeToRefs(notificationsStore)
 const chatStore = useChatStore()
 
 const id = route.params.id as string
 
 onMounted(async () => {
-  await notificationsStore.fetchNotificationDetail(id)
+  try {
+    // 先用列表中的已有项回填，避免详情加载失败时空白
+    if (!notification.value && Array.isArray(notifications.value)) {
+      const found = (notifications.value as any[]).find((n) => String((n as any)?.id) === String(id))
+      if (found) {
+        notification.value = found as any
+      }
+    }
+    await notificationsStore.fetchNotificationDetail(id)
+  } catch (e) {
+    // 吞掉错误，展示空态并允许返回或重试
+  }
 })
+
+const retry = async () => {
+  await notificationsStore.fetchNotificationDetail(id)
+}
 
 const markRead = async () => { await notificationsStore.markAsRead(id) }
 const goCenter = () => { router.push('/student/notifications') }
@@ -89,7 +116,7 @@ const goRelated = async () => {
         return `/student/courses/${n.relatedId}`
       case 'grade':
       case 'grade_posted':
-        return '/student/grades'
+        return '/student/analysis'
       case 'community_post':
         return `/student/community/post/${n.relatedId}`
       case 'message':

@@ -4,6 +4,7 @@ import com.github.pagehelper.PageHelper;
 import com.github.pagehelper.PageInfo;
 import com.noncore.assessment.entity.Course;
 import com.noncore.assessment.entity.User;
+import com.noncore.assessment.dto.response.StudentCourseResponse;
 import com.noncore.assessment.exception.BusinessException;
 import com.noncore.assessment.exception.ErrorCode;
 import com.noncore.assessment.mapper.CourseMapper;
@@ -157,6 +158,49 @@ public class EnrollmentServiceImpl implements EnrollmentService {
     public List<Course> getEnrolledCourses(Long studentId) {
         logger.info("获取学生已选课程列表: studentId={}", studentId);
         return courseMapper.selectCoursesByStudentId(studentId);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public PageResult<StudentCourseResponse> getStudentCoursesPaged(Long studentId, Integer page, Integer size, String keyword) {
+        logger.info("分页获取学生课程: studentId={}, page={}, size={}, q={}", studentId, page, size, keyword);
+        PageHelper.startPage(page != null ? page : 1, size != null ? size : 12);
+        String kw = (keyword != null && !keyword.isBlank()) ? keyword.trim() : null;
+        List<java.util.Map<String, Object>> rows = enrollmentMapper.selectStudentCoursesPaged(studentId, kw);
+        // PageInfo 需要以列表构造
+        PageInfo<java.util.Map<String, Object>> pageInfo = new PageInfo<>(rows);
+
+        List<StudentCourseResponse> items = rows.stream().map(m -> StudentCourseResponse.builder()
+                .id(castLong(m.get("id")))
+                .title((String) m.get("title"))
+                .description((String) m.get("description"))
+                .category((String) m.get("category"))
+                .coverImageUrl((String) m.get("coverImageUrl"))
+                .teacherName((String) m.get("teacherName"))
+                .progress(castDouble(m.get("progress")))
+                .enrolledAt(castDateTime(m.get("enrolledAt")))
+                .build()).toList();
+
+        return PageResult.of(items, pageInfo.getPageNum(), pageInfo.getPageSize(), pageInfo.getTotal(), pageInfo.getPages());
+    }
+
+    private static Long castLong(Object v) {
+        if (v == null) return null;
+        if (v instanceof Number) return ((Number) v).longValue();
+        return Long.valueOf(v.toString());
+    }
+
+    private static Double castDouble(Object v) {
+        if (v == null) return 0.0;
+        if (v instanceof Number) return ((Number) v).doubleValue();
+        return Double.valueOf(v.toString());
+    }
+
+    private static java.time.LocalDateTime castDateTime(Object v) {
+        if (v == null) return null;
+        if (v instanceof java.time.LocalDateTime) return (java.time.LocalDateTime) v;
+        if (v instanceof java.sql.Timestamp ts) return ts.toLocalDateTime();
+        return java.time.LocalDateTime.parse(v.toString().replace(" ", "T"));
     }
 
     @Override

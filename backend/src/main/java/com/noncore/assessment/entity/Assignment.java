@@ -26,6 +26,7 @@ public class Assignment {
     private Long id;
     private Long courseId;
     private Long teacherId;
+    private Long lessonId;
     private String title;
     private String description;
     private String requirements; // 作业要求

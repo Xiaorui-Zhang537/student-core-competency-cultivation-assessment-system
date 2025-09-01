@@ -1,6 +1,10 @@
 # 学生非核心能力发展评估系统 – 后端服务
 
+<<<<<<< HEAD
 本仓库 **backend** 子模块基于 **Java 17** 与 **Spring Boot 3.5.4** 构建，为前端应用提供稳定、安全、易扩展的 RESTful API。系统聚焦学生非核心能力（沟通协作、创新思维、问题解决等）的量化评估与发展，囊括课程/作业管理、社区互动、个性化推荐、实时教学分析、邮件通知等子功能。
+=======
+本模块基于 **Java 17** 与 **Spring Boot 3.5.4** 构建，为前端提供稳定、安全、易扩展的 RESTful API。功能涵盖：认证与授权、课程/作业、能力评估、社区通知、AI 助手等。
+>>>>>>> fd13d2c (ver 1.7 实现学生端工作台的互联，同时重构了进度的实现逻辑，现在教师可以设置每一节课的视频资料还有作业，只有当学生完成后，进度条才会增加。同时新增/docx目录用于让小白能够学习同时由浅入深的理解该项目。)
 
 ---
 
@@ -15,12 +19,20 @@
 
 ---
 
+<<<<<<< HEAD
 ## 2 技术栈
+=======
+## 2 技术栈（以代码为准）
+>>>>>>> fd13d2c (ver 1.7 实现学生端工作台的互联，同时重构了进度的实现逻辑，现在教师可以设置每一节课的视频资料还有作业，只有当学生完成后，进度条才会增加。同时新增/docx目录用于让小白能够学习同时由浅入深的理解该项目。)
 
 | 类别   | 组件                                | 版本         | 说明                     |
 |------|-----------------------------------|------------|------------------------|
 | 核心框架 | Spring Boot                       | **3.5.4**  | 自动装配、Actuator 监控       |
+<<<<<<< HEAD
 | 语言   | Java                              | 17 (兼容 21) | LTS 支持                 |
+=======
+| 语言   | Java                              | 17           | LTS 支持                 |
+>>>>>>> fd13d2c (ver 1.7 实现学生端工作台的互联，同时重构了进度的实现逻辑，现在教师可以设置每一节课的视频资料还有作业，只有当学生完成后，进度条才会增加。同时新增/docx目录用于让小白能够学习同时由浅入深的理解该项目。)
 | 构建   | Maven                             | 3.9+       | 生命周期管理                 |
 | Web  | Spring MVC                        | 6.x        | REST/Validation        |
 | 安全   | Spring Security                   | 6.5        | JWT/CORS/方法级授权         |
@@ -37,7 +49,11 @@
 
 ---
 
+<<<<<<< HEAD
 ## 3 架构设计与目录结构
+=======
+## 3 架构与目录结构
+>>>>>>> fd13d2c (ver 1.7 实现学生端工作台的互联，同时重构了进度的实现逻辑，现在教师可以设置每一节课的视频资料还有作业，只有当学生完成后，进度条才会增加。同时新增/docx目录用于让小白能够学习同时由浅入深的理解该项目。)
 
 ```
 Controller → Service → Mapper → Entity → Database
@@ -63,25 +79,43 @@ backend/
 │   └── validation/                # 自定义校验注解与校验器
 ├── src/main/resources
 │   ├── mapper/                    # MyBatis XML
+<<<<<<< HEAD
 │   ├── application.yml            # 公共配置
 │   ├── application-dev.yml        # 开发配置
 │   ├── application-prod.yml       # 生产配置
+=======
+│   ├── application.yml            # 公共配置（含 server.context-path=/api）
+│   ├── application-dev.yml        # 开发配置（可选）
+│   ├── application-prod.yml       # 生产配置（可选）
+>>>>>>> fd13d2c (ver 1.7 实现学生端工作台的互联，同时重构了进度的实现逻辑，现在教师可以设置每一节课的视频资料还有作业，只有当学生完成后，进度条才会增加。同时新增/docx目录用于让小白能够学习同时由浅入深的理解该项目。)
 │   ├── schema.sql                 # 主表结构 DDL
 │   ├── ability_schema.sql         # 能力评估表结构 DDL
 │   └── data.sql                   # 初始数据
 └── src/test/java/com/noncore/assessment
+<<<<<<< HEAD
     └── controller/ApiIntegrationTest.java  # MockMvc 集成测试
+=======
+    └── controller/ApiIntegrationTest.java  # MockMvc 集成测试（如已添加）
+>>>>>>> fd13d2c (ver 1.7 实现学生端工作台的互联，同时重构了进度的实现逻辑，现在教师可以设置每一节课的视频资料还有作业，只有当学生完成后，进度条才会增加。同时新增/docx目录用于让小白能够学习同时由浅入深的理解该项目。)
 ```
 
 ---
 
+<<<<<<< HEAD
 ## 4 文件详解（自顶向下）
+=======
+## 4 文件索引（自顶向下）
+>>>>>>> fd13d2c (ver 1.7 实现学生端工作台的互联，同时重构了进度的实现逻辑，现在教师可以设置每一节课的视频资料还有作业，只有当学生完成后，进度条才会增加。同时新增/docx目录用于让小白能够学习同时由浅入深的理解该项目。)
 
 | 路径                                                 | 类型    | 主要职责                                                    |
 |----------------------------------------------------|-------|---------------------------------------------------------|
 | `pom.xml`                                          | Build | 定义依赖与插件；Profile：`dev`、`prod`                            |
 | `src/main/java/com/.../AssessmentApplication.java` | 启动类   | `@SpringBootApplication`、`@EnableCaching`、`@MapperScan` |
+<<<<<<< HEAD
 | `config/SecurityConfig.java`                       | 配置    | 密码编码器、CORS、静态资源放行、`JwtAuthenticationFilter`、DPoP 支持     |
+=======
+| `config/SecurityConfig.java`                       | 配置    | 密码编码器、CORS、静态资源放行、`JwtAuthenticationFilter`               |
+>>>>>>> fd13d2c (ver 1.7 实现学生端工作台的互联，同时重构了进度的实现逻辑，现在教师可以设置每一节课的视频资料还有作业，只有当学生完成后，进度条才会增加。同时新增/docx目录用于让小白能够学习同时由浅入深的理解该项目。)
 | `config/JwtAuthenticationFilter.java`              | 过滤器   | 解析/校验 JWT + DPoP；设置 `SecurityContext`                   |
 | `config/RedisConfig.java`                          | 配置    | `RedisTemplate` 序列化、缓存失效策略                              |
 | `controller/AuthController.java`                   | 控制器   | 注册、登录、刷新令牌、登出                                           |
@@ -97,7 +131,11 @@ backend/
 | `schema.sql`                                       | DDL   | `user`、`course`、`assignment` 等核心表                       |
 | `ability_schema.sql`                               | DDL   | `ability_dimension`、`ability_record` 表                  |
 | `data.sql`                                         | 初始化   | 角色、默认能力维度、示例课程                                          |
+<<<<<<< HEAD
 | `infra/docker-compose.yml`                         | 运维    | 启动 MySQL 8 + Redis 6 + 后端                               |
+=======
+| （无）                                             | 运维    | 当前仓库未提供 Docker/Compose 文件                         |
+>>>>>>> fd13d2c (ver 1.7 实现学生端工作台的互联，同时重构了进度的实现逻辑，现在教师可以设置每一节课的视频资料还有作业，只有当学生完成后，进度条才会增加。同时新增/docx目录用于让小白能够学习同时由浅入深的理解该项目。)
 
 ---
 
@@ -105,7 +143,11 @@ backend/
 
 ### 5.1 认证与授权
 
+<<<<<<< HEAD
 * **功能**：JWT + DPoP 双重防护；刷新令牌；设备管理
+=======
+* **功能**：JWT 鉴权；刷新令牌；权限校验
+>>>>>>> fd13d2c (ver 1.7 实现学生端工作台的互联，同时重构了进度的实现逻辑，现在教师可以设置每一节课的视频资料还有作业，只有当学生完成后，进度条才会增加。同时新增/docx目录用于让小白能够学习同时由浅入深的理解该项目。)
 * **实现**：`SecurityConfig`, `JwtAuthenticationFilter`, `AuthController`, `JwtUtil`, `RedisConfig`
 
 ### 5.2 课程与作业管理
@@ -126,12 +168,20 @@ backend/
 ### 5.5 实时教学分析
 
 * **功能**：Micrometer → Prometheus → Grafana 仪表盘；班级能力、成绩分布、RPS
+<<<<<<< HEAD
 * **实现**：`AnalyticsQueryService`, `application-prod.yml` (Actuator 端点), `infra/grafana_dashboard.json`
 
 ### 5.6 CI/CD & 容器化
 
 * **功能**：GitHub Actions 自动测试 → Buildx 构建并推送多架构镜像
 * **实现**：`.github/workflows/ci.yml`, `Dockerfile`, `infra/docker-compose.yml`
+=======
+* **实现**：`AnalyticsQueryService`, `application-prod.yml` (Actuator 端点)
+
+### 5.6 运维说明
+
+* 当前仓库未纳入 Docker/Compose 与 CI 配置，按需自行添加。
+>>>>>>> fd13d2c (ver 1.7 实现学生端工作台的互联，同时重构了进度的实现逻辑，现在教师可以设置每一节课的视频资料还有作业，只有当学生完成后，进度条才会增加。同时新增/docx目录用于让小白能够学习同时由浅入深的理解该项目。)
 
 ---
 
@@ -140,16 +190,23 @@ backend/
 ### 6.1 本地开发
 
 ```bash
+<<<<<<< HEAD
 # 启动后端
 mvn spring-boot:run
 
 # Swagger UI
 open http://localhost:8080/swagger-ui/index.html
+=======
+mvn spring-boot:run
+# Swagger UI（注意 context-path=/api）
+open http://localhost:8080/api/swagger-ui.html
+>>>>>>> fd13d2c (ver 1.7 实现学生端工作台的互联，同时重构了进度的实现逻辑，现在教师可以设置每一节课的视频资料还有作业，只有当学生完成后，进度条才会增加。同时新增/docx目录用于让小白能够学习同时由浅入深的理解该项目。)
 ```
 
 ### 6.2 生产部署
 
 ```bash
+<<<<<<< HEAD
 # 克隆项目
 git clone https://github.com/Xiaorui-Zhang537/student-assessment-system.git
 cd student-assessment-system/backend
@@ -158,13 +215,44 @@ cd student-assessment-system/backend
 mvn spring-boot:run
 
 # 生产打包
+=======
+>>>>>>> fd13d2c (ver 1.7 实现学生端工作台的互联，同时重构了进度的实现逻辑，现在教师可以设置每一节课的视频资料还有作业，只有当学生完成后，进度条才会增加。同时新增/docx目录用于让小白能够学习同时由浅入深的理解该项目。)
 mvn clean package -DskipTests
 java -jar target/student-assessment-system-1.0.0.jar --spring.profiles.active=prod
 ```
 
 ---
 
+<<<<<<< HEAD
 ## 7 测试与质量保障
+=======
+## 7 配置与环境变量（关键项）
+
+来自 `application.yml`（可通过环境变量覆盖）：
+- 端口/上下文：`server.port=8080`、`server.servlet.context-path=/api`
+- 数据源：`DB_HOST`、`DB_PORT`、`DB_NAME`、`DB_USERNAME`、`DB_PASSWORD`
+- Redis：`REDIS_HOST`、`REDIS_PORT`、`REDIS_PASSWORD`（可选）
+- JWT：`JWT_SECRET`、`JWT_EXPIRATION`、`JWT_REFRESH_EXPIRATION`
+- SpringDoc：`/v3/api-docs`、`/swagger-ui.html`
+- 上传：`file.upload-dir`、大小与扩展名限制
+- 日志：控制台与文件输出
+- AI：`AI_DEFAULT_PROVIDER`、`OPENROUTER_API_KEY` 或 `DEEPSEEK_API_KEY`、`DEEPSEEK_MODEL`
+
+---
+
+## 8 数据库初始化
+```bash
+mysql -u root -p
+CREATE DATABASE student_assessment_system CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+mysql -u root -p student_assessment_system < src/main/resources/schema.sql
+# 可选：初始数据（当前非最新）
+mysql -u root -p student_assessment_system < src/main/resources/data.sql
+```
+
+---
+
+## 9 测试与质量
+>>>>>>> fd13d2c (ver 1.7 实现学生端工作台的互联，同时重构了进度的实现逻辑，现在教师可以设置每一节课的视频资料还有作业，只有当学生完成后，进度条才会增加。同时新增/docx目录用于让小白能够学习同时由浅入深的理解该项目。)
 
 | 类型   | 工具                | 范围             |
 |------|-------------------|----------------|
@@ -175,7 +263,28 @@ java -jar target/student-assessment-system-1.0.0.jar --spring.profiles.active=pr
 
 ---
 
+<<<<<<< HEAD
 ## 8 测试与质量保障
+=======
+## 10 关键用例导航
+
+- 分页查询：`PageHelper` 使用与 `PageResult<T>` 返回体（见 docs/cookbook 与 Backend Deep Dive）
+- 统一返回体：`ApiResponse<T>` 格式与错误码约定（见 docs/backend-deep-dive）
+- 文件上传：`/api/files/upload` 配置（白名单、大小、目录），前端 `FileUpload.vue` 对接（见 docs/e2e-examples）
+- 鉴权与放行：`JwtAuthenticationFilter` 与 `security.jwt.public-urls` 列表（见 docs/security-config）
+
+---
+
+## 11 排错指南（常见问题）
+
+- Swagger 404：确认 `http://localhost:8080/api/swagger-ui.html`（含 `/api` 前缀）
+- 401：检查登录与 `Authorization: Bearer <token>`，公共 URL 是否在放行清单
+- 403：方法级权限不足，检查角色/注解与业务条件
+- 500：查看 `logs/application.log`，关注 Mapper SQL 与空指针
+- DB 连接：库已创建且导入 `schema.sql`；`DB_*` 环境变量正确
+
+## 12 推荐阅读
+>>>>>>> fd13d2c (ver 1.7 实现学生端工作台的互联，同时重构了进度的实现逻辑，现在教师可以设置每一节课的视频资料还有作业，只有当学生完成后，进度条才会增加。同时新增/docx目录用于让小白能够学习同时由浅入深的理解该项目。)
 
 | 类型   | 覆盖范围             | 工具                         |
 |------|------------------|----------------------------|
@@ -185,6 +294,7 @@ java -jar target/student-assessment-system-1.0.0.jar --spring.profiles.active=pr
 
 ---
 
+<<<<<<< HEAD
 ## 9 后续扩展
 
 1. **微服务化**：拆分课程、能力、社区服务；Spring Cloud & K8s。
@@ -197,3 +307,7 @@ java -jar target/student-assessment-system-1.0.0.jar --spring.profiles.active=pr
 ## 10 许可证
 
 本仓库遵循 **Apache License 2.0**。如需商用，请遵守条款并保留版权声明。
+=======
+## 13 许可证
+本模块遵循 **MIT License**（与仓库一致）。
+>>>>>>> fd13d2c (ver 1.7 实现学生端工作台的互联，同时重构了进度的实现逻辑，现在教师可以设置每一节课的视频资料还有作业，只有当学生完成后，进度条才会增加。同时新增/docx目录用于让小白能够学习同时由浅入深的理解该项目。)

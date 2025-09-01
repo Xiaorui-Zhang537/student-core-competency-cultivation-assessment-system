@@ -90,6 +90,20 @@ public class AssignmentController extends BaseController {
     }
 
     /**
+     * 仅绑定作业到节次（不改其他字段）
+     */
+    @PutMapping("/{id}/lesson")
+    @PreAuthorize("hasRole('TEACHER') or hasRole('ADMIN')")
+    @Operation(summary = "绑定作业到节次", description = "仅更新 lessonId，不校验标题等必填字段")
+    public ResponseEntity<ApiResponse<Void>> bindAssignmentToLesson(@PathVariable Long id, @RequestBody Map<String, Object> body) {
+        Long lessonId = null;
+        Object v = body.get("lessonId");
+        if (v != null) lessonId = Long.valueOf(String.valueOf(v));
+        assignmentService.bindAssignmentToLesson(id, lessonId);
+        return ResponseEntity.ok(ApiResponse.success());
+    }
+
+    /**
      * 删除作业
      */
     @DeleteMapping("/{id}")

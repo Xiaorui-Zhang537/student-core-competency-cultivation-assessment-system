@@ -10,6 +10,11 @@ const routes = [
     path: '/',
     redirect: '/auth/login'
   },
+  // 兼容旧地址 /student/analytics → 新的 /student/analysis
+  {
+    path: '/student/analytics',
+    redirect: '/student/analysis'
+  },
   {
     path: '/auth',
     component: AuthLayout,
@@ -67,6 +72,34 @@ const routes = [
         component: () => import('@/features/student/views/DashboardView.vue')
       },
       {
+        path: 'courses',
+        name: 'StudentCourses',
+        component: () => import('@/features/student/views/CoursesView.vue')
+      },
+      {
+        path: 'courses/:id',
+        name: 'StudentCourseDetail',
+        component: () => import('@/features/student/views/CourseDetailView.vue'),
+        props: true
+      },
+      {
+        path: 'assignments',
+        name: 'StudentAssignments',
+        component: () => import('@/features/student/views/AssignmentsView.vue')
+      },
+      {
+        path: 'assignments/:id/submit',
+        name: 'StudentAssignmentSubmit',
+        component: () => import('@/features/student/views/AssignmentSubmitView.vue'),
+        props: true
+      },
+      // 合并为成绩分析
+      {
+        path: 'analysis',
+        name: 'StudentAnalysis',
+        component: () => import('@/features/student/views/AnalysisView.vue')
+      },
+      {
         path: 'profile',
         name: 'StudentProfile',
         component: () => import('@/features/shared/views/ProfileView.vue')
@@ -102,6 +135,13 @@ const routes = [
       }
       // ... 其他学生路由
     ]
+  },
+  // 学生首页独立：不走 StudentLayout 左侧菜单
+  {
+    path: '/student/home',
+    name: 'StudentHome',
+    component: () => import('@/features/student/views/HomeView.vue'),
+    meta: { requiresAuth: true, role: 'STUDENT' }
   },
   {
     path: '/teacher',
@@ -294,13 +334,13 @@ router.beforeEach((to, from, next) => {
       return next({ name: 'Login', query: { redirect: to.fullPath } });
     }
     if (to.meta.role && to.meta.role !== userRole) {
-      const dashboard = userRole === 'TEACHER' ? '/teacher/dashboard' : '/student/dashboard';
+      const dashboard = userRole === 'TEACHER' ? '/teacher/dashboard' : '/student/home';
       return next(dashboard);
     }
   }
 
   if (to.meta.requiresGuest && isAuthenticated) {
-    const dashboard = userRole === 'TEACHER' ? '/teacher/dashboard' : '/student/dashboard';
+    const dashboard = userRole === 'TEACHER' ? '/teacher/dashboard' : '/student/home';
     return next(dashboard);
   }
 

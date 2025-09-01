@@ -49,6 +49,11 @@ export const assignmentApi = {
     return api.put(`/assignments/${id}`, payload);
   },
 
+  // bind only lessonId without touching title/desc validations
+  bindLesson: (id: string, lessonId: string): Promise<ApiResponse<void>> => {
+    return api.put(`/assignments/${id}/lesson`, { lessonId });
+  },
+
   deleteAssignment: (id: string): Promise<ApiResponse<void>> => {
     return api.delete(`/assignments/${id}`);
   },

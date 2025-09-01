@@ -52,8 +52,14 @@ public class Lesson {
     @Builder.Default
     private Boolean isFree = false;
 
+    @Schema(description = "所属章节ID", example = "10")
+    private Long chapterId;
+
     @Schema(description = "排序顺序", example = "1")
     private Integer sortOrder;
+
+    @Schema(description = "章节权重（用于课程加权进度）", example = "1.00")
+    private Double weight;
 
     @Schema(description = "状态", example = "draft")
     private String status;

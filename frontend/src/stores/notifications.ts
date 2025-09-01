@@ -272,6 +272,57 @@ export const useNotificationsStore = defineStore('notifications', () => {
     ])
   }
 
+  // --- SSE helpers ---
+  const toId = (v: any) => String(v)
+
+  const insertOrUpdateFromSse = (incoming: Notification) => {
+    if (!incoming || !(incoming as any).id) return
+    const id = toId((incoming as any).id)
+    const idx = notifications.value.findIndex(n => toId(n.id) === id)
+    if (idx >= 0) {
+      notifications.value[idx] = { ...notifications.value[idx], ...incoming, id }
+    } else {
+      notifications.value.unshift({ ...incoming, id } as Notification)
+      const max = pagination.value.page * pagination.value.size
+      if (notifications.value.length > max) notifications.value.length = max
+    }
+  }
+
+  const applyReadUpdateFromSse = async (payload: { id?: string | number; ids?: Array<string | number>; peerId?: string | number; conversationRead?: boolean; isRead?: boolean }) => {
+    try {
+      const markIds: string[] = []
+      if (payload?.id != null) markIds.push(toId(payload.id))
+      if (Array.isArray(payload?.ids)) markIds.push(...(payload.ids as any[]).map(toId))
+      if (markIds.length) {
+        for (const nid of markIds) {
+          const item = notifications.value.find(n => toId(n.id) === nid)
+          if (item) item.isRead = payload?.isRead ?? true
+        }
+      }
+      if (payload?.peerId != null && payload?.conversationRead) {
+        await fetchNotifications(true)
+      }
+      await fetchUnreadCount()
+      await fetchStats()
+    } catch (e) {
+      await refresh()
+    }
+  }
+
+  const removeByIdFromSse = (idLike: string | number) => {
+    const id = toId(idLike)
+    const idx = notifications.value.findIndex(n => toId(n.id) === id)
+    if (idx >= 0) notifications.value.splice(idx, 1)
+    if (currentNotification.value && toId(currentNotification.value.id) === id) {
+      currentNotification.value = null
+    }
+  }
+
+  const refreshStatsFromSse = async () => {
+    await fetchUnreadCount()
+    await fetchStats()
+  }
+
   // 重置状态
   const reset = () => {
     notifications.value = []
@@ -323,6 +374,11 @@ export const useNotificationsStore = defineStore('notifications', () => {
     clearFilters,
     loadMore,
     refresh,
+    // SSE helpers
+    insertOrUpdateFromSse,
+    applyReadUpdateFromSse,
+    removeByIdFromSse,
+    refreshStatsFromSse,
     reset
   }
 }) 

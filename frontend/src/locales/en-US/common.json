@@ -11,7 +11,30 @@
     "unpin": "Unpin",
     "delete": "Delete",
     "uploadImage": "Upload Image",
+<<<<<<< HEAD
     "refresh": "Refresh"
+=======
+    "refresh": "Refresh",
+    "student": {
+      "home": {
+        "sections": { "quickEntries": "Quick Entries" },
+        "carousel": {
+          "1": { "title": "Welcome to the Learning Space", "subtitle": "Manage courses and assignments efficiently" },
+          "2": { "title": "AI Assistant at Your Side", "subtitle": "Get help anytime" },
+          "3": { "title": "Learning Community", "subtitle": "Share and discuss with peers" }
+        },
+        "cards": {
+          "enter": "Enter",
+          "dashboard": { "title": "Dashboard", "desc": "View tasks and progress" },
+          "courses": { "title": "My Courses", "desc": "Browse courses and materials" },
+          "assignments": { "title": "Assignments", "desc": "Submit and view grades" },
+          "analytics": { "title": "Analytics", "desc": "Insights into your learning" },
+          "assistant": { "title": "AI Assistant", "desc": "Boost productivity with AI" },
+          "community": { "title": "Community", "desc": "Discuss and share" }
+        }
+      }
+    }
+>>>>>>> fd13d2c (ver 1.7 实现学生端工作台的互联，同时重构了进度的实现逻辑，现在教师可以设置每一节课的视频资料还有作业，只有当学生完成后，进度条才会增加。同时新增/docx目录用于让小白能够学习同时由浅入深的理解该项目。)
   },
   "notifications": {
     "title": "Notifications",

@@ -1,6 +1,6 @@
 import type { Lesson } from '@/types/lesson';
 import type { ApiResponse } from '@/types/api';
-import api from './axios';
+import { api } from './config';
 
 export const lessonApi = {
   getLessonsByCourse(courseId: string): Promise<ApiResponse<Lesson[]>> {
@@ -22,6 +22,15 @@ export const lessonApi = {
 
   deleteLesson(lessonId: string): Promise<ApiResponse<void>> {
     return api.delete(`/lessons/${lessonId}`);
+  },
+
+  // 设置章节内容（视频URL与资料文件绑定）
+  updateLessonContent(lessonId: string, payload: { videoUrl?: string; materialFileIds?: number[] }): Promise<ApiResponse<any>> {
+    return api.put(`/lessons/${lessonId}/content`, payload);
+  },
+
+  updateLessonOrder(lessonId: string, order: number): Promise<ApiResponse<void>> {
+    return api.put(`/lessons/${lessonId}/order`, { order });
   },
 
   // Student actions

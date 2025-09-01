@@ -144,6 +144,14 @@ public interface AssignmentMapper {
     List<Assignment> selectAssignmentsForStudent(@Param("courseId") Long courseId, @Param("studentId") Long studentId);
 
     /**
+     * 分页查询学生可见作业（仅限其已选课程），支持课程/状态/关键词过滤
+     */
+    List<Assignment> selectAssignmentsForEnrolledStudent(@Param("studentId") Long studentId,
+                                                        @Param("courseId") Long courseId,
+                                                        @Param("status") String status,
+                                                        @Param("keyword") String keyword);
+
+    /**
      * 获取作业统计信息
      *
      * @param teacherId 教师ID（可选）
@@ -167,4 +175,7 @@ public interface AssignmentMapper {
     List<Assignment> findPendingAssignmentsForStudent(@Param("studentId") Long studentId);
 
     long countMonthlyByTeacher(@Param("teacherId") Long teacherId);
+
+    /** 仅更新 lesson_id 绑定 */
+    int updateLessonId(@Param("id") Long id, @Param("lessonId") Long lessonId);
 } 

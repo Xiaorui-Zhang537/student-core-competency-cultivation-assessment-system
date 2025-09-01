@@ -8,6 +8,8 @@ import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 import java.util.Optional;
 
 @Service
@@ -64,8 +66,23 @@ public class DashboardServiceImpl implements DashboardService {
                 .build();
 
         List<StudentDashboardResponse.RecentCourseDto> recentCourses = courseMapper.findRecentCoursesByStudent(studentId, 5);
+        // Fallback：若基于学习进度的最近课程为空，则退回到基于选课记录的最近课程
+        if (recentCourses == null || recentCourses.isEmpty()) {
+            List<Map<String, Object>> fallback = enrollmentMapper.selectStudentCoursesPaged(studentId, null);
+            if (fallback != null && !fallback.isEmpty()) {
+                recentCourses = fallback.stream().limit(5).map(m -> StudentDashboardResponse.RecentCourseDto.builder()
+                        .id(m.get("id") != null ? Long.valueOf(String.valueOf(m.get("id"))) : null)
+                        .title(String.valueOf(m.getOrDefault("title", "")))
+                        .teacherName(String.valueOf(m.getOrDefault("teacherName", "")))
+                        .progress(m.get("progress") instanceof Number ? ((Number) m.get("progress")).doubleValue() : 0.0)
+                        .coverImage(m.get("coverImage") != null ? String.valueOf(m.get("coverImage")) : (m.get("coverImageUrl") != null ? String.valueOf(m.get("coverImageUrl")) : null))
+                        .lastStudied(null)
+                        .build()).collect(Collectors.toList());
+            }
+        }
         List<StudentDashboardResponse.PendingAssignmentDto> pendingAssignments = assignmentMapper.findPendingAssignments(studentId, 5);
         List<StudentDashboardResponse.RecentNotificationDto> recentNotifications = notificationMapper.findRecentNotifications(studentId, 5);
+        List<StudentDashboardResponse.RecentGradeDto> recentGrades = gradeMapper.findRecentGradesByStudent(studentId, 5);
         Double abilityOverallScore = Optional.ofNullable(studentAbilityMapper.selectOverallScoreByStudentId(studentId)).map(java.math.BigDecimal::doubleValue).orElse(0.0);
 
         return StudentDashboardResponse.builder()
@@ -73,6 +90,7 @@ public class DashboardServiceImpl implements DashboardService {
                 .recentCourses(recentCourses)
                 .pendingAssignments(pendingAssignments)
                 .recentNotifications(recentNotifications)
+                .recentGrades(recentGrades)
                 .abilityOverallScore(abilityOverallScore)
                 .build();
     }

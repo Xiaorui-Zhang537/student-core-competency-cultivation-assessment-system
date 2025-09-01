@@ -610,6 +610,10 @@
 				"analytics": "课程分析"
 			},
 			"sections": {
+<<<<<<< HEAD
+=======
+				"lessons": "课程节次",
+>>>>>>> fd13d2c (ver 1.7 实现学生端工作台的互联，同时重构了进度的实现逻辑，现在教师可以设置每一节课的视频资料还有作业，只有当学生完成后，进度条才会增加。同时新增/docx目录用于让小白能够学习同时由浅入深的理解该项目。)
 				"description": "课程描述",
 				"content": "课程内容",
 				"materials": "课程资料",
@@ -623,7 +627,44 @@
 				"noMaterials": "暂无资料",
 				"noVideos": "暂无视频",
 				"prev": "上一页",
+<<<<<<< HEAD
 				"next": "下一页"
+=======
+				"next": "下一页",
+				"newChapterTitle": "新章节标题",
+				"newChapterTitlePh": "如：第一章 基础",
+				"chapterDesc": "章节简介（可选）",
+				"chapterDescPh": "本章将介绍...",
+				"chapterList": "章节列表（可拖拽排序）",
+				"noChapters": "暂无章节",
+				"newLessonTitle": "新节标题",
+				"newLessonTitlePh": "如：第1节 导论",
+				"lessonDesc": "简介（可选）",
+				"lessonDescPh": "本节将介绍...",
+				"chapterSelect": "所属章节",
+				"unset": "未设置",
+				"weight": "权重",
+				"video": "视频",
+				"videoUrlPh": "输入外链URL（可选）",
+				"lessonIntro": "本节说明",
+				"lessonIntroPh": "输入该节的简介或说明...",
+				"bindAssignment": "绑定作业",
+				"unbound": "未绑定",
+				"noLessons": "暂无章节"
+			},
+			"actions": {
+				"reloadLessons": "刷新",
+				"addChapter": "新增章节",
+				"reloadChapters": "刷新章节",
+				"addLesson": "新增节次",
+				"saveWeight": "保存权重",
+				"selectVideoShort": "选视频",
+				"selectVideoTitle": "选择视频",
+				"useThisVideo": "使用此视频",
+				"close": "关闭",
+				"saveContent": "保存内容",
+				"saveBinding": "保存绑定"
+>>>>>>> fd13d2c (ver 1.7 实现学生端工作台的互联，同时重构了进度的实现逻辑，现在教师可以设置每一节课的视频资料还有作业，只有当学生完成后，进度条才会增加。同时新增/docx目录用于让小白能够学习同时由浅入深的理解该项目。)
 			},
 			"notFound": {
 				"title": "未找到课程",

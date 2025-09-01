@@ -12,21 +12,23 @@
         <result column="duration" property="duration"/>
         <result column="order_index" property="orderIndex"/>
         <result column="is_free" property="isFree"/>
+        <result column="chapter_id" property="chapterId"/>
+        <result column="weight" property="weight"/>
         <result column="created_at" property="createdAt"/>
         <result column="updated_at" property="updatedAt"/>
         <result column="deleted" property="deleted"/>
     </resultMap>
 
     <sql id="Base_Column_List">
-        id, course_id, title, description, content, video_url, duration, order_index, is_free, created_at, updated_at, deleted
+        id, course_id, title, description, content, video_url, duration, order_index, is_free, chapter_id, weight, created_at, updated_at, deleted
     </sql>
 
     <!-- 插入课时 -->
     <insert id="insertLesson" parameterType="com.noncore.assessment.entity.Lesson" useGeneratedKeys="true" keyProperty="id">
         INSERT INTO lessons (
-            course_id, title, description, content, video_url, duration, order_index, is_free, created_at, updated_at, deleted
+            course_id, title, description, content, video_url, duration, order_index, is_free, chapter_id, weight, created_at, updated_at, deleted
         ) VALUES (
-                     #{courseId}, #{title}, #{description}, #{content}, #{videoUrl}, #{duration}, #{orderIndex}, #{isFree}, #{createdAt}, #{updatedAt}, #{deleted}
+                     #{courseId}, #{title}, #{description}, #{content}, #{videoUrl}, #{duration}, #{orderIndex}, #{isFree}, #{chapterId}, COALESCE(#{weight}, 1.00), #{createdAt}, #{updatedAt}, #{deleted}
                  )
     </insert>
 
@@ -47,15 +49,19 @@
 
     <!-- 更新课时 -->
     <update id="updateLesson" parameterType="com.noncore.assessment.entity.Lesson">
-        UPDATE lessons SET
-                           title = #{title},
-                           description = #{description},
-                           content = #{content},
-                           video_url = #{videoUrl},
-                           duration = #{duration},
-                           order_index = #{orderIndex},
-                           is_free = #{isFree},
-                           updated_at = #{updatedAt}
+        UPDATE lessons
+        <set>
+            <if test="title != null">title = #{title},</if>
+            <if test="description != null">description = #{description},</if>
+            <if test="content != null">content = #{content},</if>
+            <if test="videoUrl != null">video_url = #{videoUrl},</if>
+            <if test="duration != null">duration = #{duration},</if>
+            <if test="orderIndex != null">order_index = #{orderIndex},</if>
+            <if test="isFree != null">is_free = #{isFree},</if>
+            <if test="chapterId != null">chapter_id = #{chapterId},</if>
+            <if test="weight != null">weight = #{weight},</if>
+            updated_at = #{updatedAt}
+        </set>
         WHERE id = #{id} AND deleted = false
     </update>
 
@@ -78,5 +84,12 @@
         FROM lessons
         WHERE course_id = #{courseId} AND deleted = false
     </select>
+
+    <!-- 更新课时排序（仅根据 id 设置新的 order_index） -->
+    <update id="updateLessonOrder">
+        UPDATE lessons
+        SET order_index = #{newOrder}, updated_at = NOW()
+        WHERE id = #{id} AND deleted = false
+    </update>
 
 </mapper>

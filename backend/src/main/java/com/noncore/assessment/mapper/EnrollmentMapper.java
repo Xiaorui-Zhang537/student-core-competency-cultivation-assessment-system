@@ -216,4 +216,10 @@ public interface EnrollmentMapper {
 
     /** 查询课程在读（active）学生ID列表 */
     List<Long> findActiveStudentIdsByCourse(@Param("courseId") Long courseId);
+
+    /**
+     * 分页查询学生的课程（含教师名、报名时间、进度），支持课程标题关键字
+     */
+    List<java.util.Map<String, Object>> selectStudentCoursesPaged(@Param("studentId") Long studentId,
+                                                                 @Param("keyword") String keyword);
 } 

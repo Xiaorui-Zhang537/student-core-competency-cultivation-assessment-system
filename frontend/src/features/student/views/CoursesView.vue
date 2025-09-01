@@ -69,23 +69,23 @@
         @click="enterCourse(course)"
       >
         <div class="relative h-48">
-          <img v-if="course.coverImageUrl" :src="course.coverImageUrl" :alt="course.title" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"/>
+          <img v-if="course.coverImageUrl" :src="course.coverImageUrl" :alt="course.title || ''" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"/>
           <div v-else class="w-full h-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center">
-            <span class="text-4xl font-bold text-white">{{ course.title.charAt(0) }}</span>
+            <span class="text-4xl font-bold text-white">{{ (course.title || '').charAt(0) }}</span>
           </div>
           <div class="absolute bottom-0 left-0 right-0 bg-black bg-opacity-50 p-4">
             <div class="flex items-center justify-between text-white text-sm mb-2">
               <span>学习进度</span>
-              <span>{{ course.progress.toFixed(0) }}%</span>
+              <span>{{ (Number(course.progress) || 0).toFixed(0) }}%</span>
             </div>
-            <div class="w-full bg-gray-200 rounded-full h-1.5"><div class="bg-blue-600 h-1.5 rounded-full" :style="{ width: `${course.progress}%` }"></div></div>
+            <div class="w-full bg-gray-200 rounded-full h-1.5"><div class="bg-blue-600 h-1.5 rounded-full" :style="{ width: `${Number(course.progress || 0)}%` }"></div></div>
           </div>
         </div>
         <div class="p-6">
           <h3 class="text-lg font-semibold line-clamp-2 mb-2">{{ course.title }}</h3>
           <p class="text-gray-600 text-sm mb-4 line-clamp-2">{{ course.description }}</p>
           <div class="flex items-center justify-between text-sm">
-            <span class="text-gray-500">讲师: {{ course.instructorName }}</span>
+            <span class="text-gray-500">讲师: {{ course.teacherName }}</span>
             <span class="font-medium" :class="course.progress === 100 ? 'text-green-600' : 'text-blue-600'">
               {{ course.progress === 100 ? '已完成' : '进行中' }}
             </span>
@@ -145,25 +145,31 @@ const searchQuery = ref('');
 const selectedCategory = ref('');
 
 // Computed Properties
-const myCourses = computed(() => studentStore.myCourses);
+// 直接使用 store 的 ref，避免 Ref 的 Ref 导致运行时 filter 报错
+const myCourses = studentStore.myCourses;
+// 兜底：确保所有计算均基于数组
+const coursesSafe = computed(() => Array.isArray(myCourses.value) ? myCourses.value : []);
 
-const activeCoursesCount = computed(() => myCourses.value.filter((c: StudentCourse) => c.progress < 100).length);
-const completedCoursesCount = computed(() => myCourses.value.filter((c: StudentCourse) => c.progress === 100).length);
+const activeCoursesCount = computed(() => coursesSafe.value.filter((c: StudentCourse) => Number(c.progress || 0) < 100).length);
+const completedCoursesCount = computed(() => coursesSafe.value.filter((c: StudentCourse) => Number(c.progress || 0) === 100).length);
 const averageProgress = computed(() => {
-  if (myCourses.value.length === 0) return 0;
-  const total = myCourses.value.reduce((sum: number, course: StudentCourse) => sum + course.progress, 0);
-  return total / myCourses.value.length;
+  if (coursesSafe.value.length === 0) return 0;
+  const total = coursesSafe.value.reduce((sum: number, course: StudentCourse) => sum + Number(course.progress || 0), 0);
+  return total / coursesSafe.value.length;
 });
 
 const categories = computed(() => {
-  const cats = new Set(myCourses.value.map((c: StudentCourse) => c.category));
+  const cats = new Set(coursesSafe.value.map((c: StudentCourse) => c.category).filter(Boolean));
   return Array.from(cats).sort();
 });
 
 const filteredCourses = computed(() => {
-  return myCourses.value.filter((course: StudentCourse) => {
-    const searchMatch = searchQuery.value.toLowerCase() === '' || course.title.toLowerCase().includes(searchQuery.value.toLowerCase());
-    const categoryMatch = selectedCategory.value === '' || course.category === selectedCategory.value;
+  const q = (searchQuery.value || '').toLowerCase();
+  const cat = selectedCategory.value || '';
+  return coursesSafe.value.filter((course: StudentCourse) => {
+    const title = (course.title || '').toLowerCase();
+    const searchMatch = q === '' || title.includes(q);
+    const categoryMatch = cat === '' || course.category === cat;
     return searchMatch && categoryMatch;
   });
 });
@@ -183,12 +189,12 @@ const handleEnroll = async (courseId: string) => {
 
 const isEnrolled = (courseId: string) => {
   // Assuming myCourses contains course objects with string IDs
-  return myCourses.value.some((c: StudentCourse) => String(c.id) === courseId);
+  return coursesSafe.value.some((c: StudentCourse) => String(c.id) === courseId);
 };
 
 // Lifecycle Hooks
 onMounted(() => {
-  studentStore.fetchMyCourses();
+  studentStore.fetchMyCourses({ page: 1, size: 12, q: '' });
   courseStore.fetchCourses({ page: 1, size: 20 }); // For the course store modal
 });
 </script>

@@ -4,7 +4,7 @@
     :class="[
       'rounded-xl transition-all duration-200 glass-regular glass-interactive',
       {
-        'hover:shadow-md hover:scale-[1.02]': hoverable,
+        'hover:shadow-md hover:scale-[1.005]': hoverable,
         'p-0': !padding,
         'p-4': padding === 'sm',
         'p-6': padding === 'md',

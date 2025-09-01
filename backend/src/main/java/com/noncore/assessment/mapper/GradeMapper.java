@@ -1,6 +1,7 @@
 package com.noncore.assessment.mapper;
 
 import com.noncore.assessment.entity.Grade;
+import com.noncore.assessment.dto.response.StudentDashboardResponse;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
@@ -158,8 +159,21 @@ public interface GradeMapper {
     List<Map<String, Object>> selectGradeTrendByStudentAndCourse(@Param("studentId") Long studentId, @Param("courseId") Long courseId, @Param("startDate") LocalDateTime startDate, @Param("endDate") LocalDateTime endDate);
 
     /**
+     * 按天统计学生平均分（用于趋势图）
+     */
+    List<Map<String, Object>> selectDailyAvgScore(@Param("studentId") Long studentId,
+                                                  @Param("start") LocalDateTime start,
+                                                  @Param("end") LocalDateTime end);
+
+    /**
      * 查询单条成绩的历史记录（简化版）
      */
     List<Map<String, Object>> selectGradeHistoryByGradeId(@Param("gradeId") Long gradeId);
+    
+    /**
+     * 学生近期成绩（用于仪表盘）
+     */
+    List<StudentDashboardResponse.RecentGradeDto> findRecentGradesByStudent(@Param("studentId") Long studentId,
+                                                                            @Param("limit") int limit);
     
 } 

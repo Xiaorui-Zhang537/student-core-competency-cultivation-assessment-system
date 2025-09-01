@@ -213,4 +213,14 @@ public interface LessonService {
      * @return 操作结果
      */
     boolean rateLessons(Long studentId, Long lessonId, Integer rating);
+
+    // ---- 学生进度聚合补充 ----
+    /** 课程整体进度（0-100） */
+    Double getOverallProgress(Long studentId, Long courseId);
+    /** 总学习时长（分钟） */
+    Long getTotalStudyMinutes(Long studentId, Long courseId);
+    /** 本周学习时长（分钟） */
+    Long getWeeklyStudyMinutes(Long studentId);
+    /** 最近学习章节标题 */
+    String getLastStudiedLessonTitle(Long studentId);
 } 

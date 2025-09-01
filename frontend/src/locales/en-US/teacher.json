@@ -607,6 +607,10 @@
 				"analytics": "Analytics"
 			},
 			"sections": {
+<<<<<<< HEAD
+=======
+				"lessons": "Lessons",
+>>>>>>> fd13d2c (ver 1.7 实现学生端工作台的互联，同时重构了进度的实现逻辑，现在教师可以设置每一节课的视频资料还有作业，只有当学生完成后，进度条才会增加。同时新增/docx目录用于让小白能够学习同时由浅入深的理解该项目。)
 				"description": "Description",
 				"content": "Content",
 				"materials": "Materials",
@@ -620,7 +624,44 @@
 				"noMaterials": "No materials",
 				"noVideos": "No videos",
 				"prev": "Prev",
+<<<<<<< HEAD
 				"next": "Next"
+=======
+				"next": "Next",
+				"newChapterTitle": "New chapter title",
+				"newChapterTitlePh": "e.g., Chapter 1 Basics",
+				"chapterDesc": "Chapter description (optional)",
+				"chapterDescPh": "This chapter covers...",
+				"chapterList": "Chapters (drag to reorder)",
+				"noChapters": "No chapters",
+				"newLessonTitle": "New lesson title",
+				"newLessonTitlePh": "e.g., Lesson 1 Introduction",
+				"lessonDesc": "Description (optional)",
+				"lessonDescPh": "This lesson covers...",
+				"chapterSelect": "Chapter",
+				"unset": "Unset",
+				"weight": "Weight",
+				"video": "Video",
+				"videoUrlPh": "Enter external video URL (optional)",
+				"lessonIntro": "Lesson notes",
+				"lessonIntroPh": "Enter a short intro for this lesson...",
+				"bindAssignment": "Bind assignment",
+				"unbound": "Unbound",
+				"noLessons": "No lessons"
+			},
+			"actions": {
+				"reloadLessons": "Reload",
+				"addChapter": "Add Chapter",
+				"reloadChapters": "Reload Chapters",
+				"addLesson": "Add Lesson",
+				"saveWeight": "Save",
+				"selectVideoShort": "Pick",
+				"selectVideoTitle": "Select Video",
+				"useThisVideo": "Use this Video",
+				"close": "Close",
+				"saveContent": "Save Content",
+				"saveBinding": "Save Binding"
+>>>>>>> fd13d2c (ver 1.7 实现学生端工作台的互联，同时重构了进度的实现逻辑，现在教师可以设置每一节课的视频资料还有作业，只有当学生完成后，进度条才会增加。同时新增/docx目录用于让小白能够学习同时由浅入深的理解该项目。)
 			},
 			"notFound": {
 				"title": "Course not found",

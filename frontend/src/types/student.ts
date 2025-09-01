@@ -6,7 +6,7 @@ export interface StudentCourse {
   id: string; // Course ID
   title: string;
   description: string;
-  instructorName: string;
+  teacherName: string;
   category: string;
   coverImageUrl?: string;
   progress: number; // Student's progress in this course
@@ -15,12 +15,8 @@ export interface StudentCourse {
 
 // Based on data returned from /api/students/dashboard
 export interface StudentDashboardData {
-  upcomingAssignments: Assignment[];
-  activeCourses: Course[]; // This might be a summary, StudentCourse provides more detail
-  recentGrades: {
-    assignmentTitle: string;
-    courseTitle: string;
-    score: number;
-  }[];
+  upcomingAssignments: Array<{ id: string; title: string; courseTitle: string; dueDate: string }>;
+  activeCourses: Array<{ id: string; title: string; teacherName: string; progress: number; coverImage?: string }>;
+  recentGrades: Array<{ assignmentTitle: string; courseTitle: string; score: number; gradedAt?: string }>;
   overallProgress: number;
 }

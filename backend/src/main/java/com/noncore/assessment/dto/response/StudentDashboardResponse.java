@@ -16,6 +16,7 @@ public class StudentDashboardResponse {
     private List<RecentCourseDto> recentCourses;
     private List<PendingAssignmentDto> pendingAssignments;
     private List<RecentNotificationDto> recentNotifications;
+    private List<RecentGradeDto> recentGrades;
     private Double abilityOverallScore;
 
     @Data
@@ -67,5 +68,16 @@ public class StudentDashboardResponse {
         private String type;
         private boolean isRead;
         private String createdAt;
+    }
+
+    @Data
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class RecentGradeDto {
+        private String assignmentTitle;
+        private String courseTitle;
+        private Double score;
+        private String gradedAt;
     }
 } 

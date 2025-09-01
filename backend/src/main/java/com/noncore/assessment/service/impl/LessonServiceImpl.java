@@ -19,13 +19,6 @@ import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
-/**
- * 课程章节服务实现类
- *
- * @author System
- * @version 1.0.0
- * @since 2024-12-28
- */
 @Service
 @Transactional
 public class LessonServiceImpl implements LessonService {
@@ -43,23 +36,16 @@ public class LessonServiceImpl implements LessonService {
     @Override
     public Lesson createLesson(Lesson lesson) {
         logger.info("创建新章节: {}", lesson.getTitle());
-        
-        // 设置创建时间和默认值
         lesson.setCreatedAt(LocalDateTime.now());
         lesson.setUpdatedAt(LocalDateTime.now());
         lesson.setDeleted(false);
-        
-        // 设置默认状态为草稿
         if (lesson.getStatus() == null) {
             lesson.setStatus("draft");
         }
-        
-        // 设置默认排序号
         if (lesson.getSortOrder() == null) {
             Integer maxOrder = lessonMapper.getMaxSortOrderByCourse(lesson.getCourseId());
             lesson.setSortOrder(maxOrder != null ? maxOrder + 1 : 1);
         }
-        
         int result = lessonMapper.insertLesson(lesson);
         if (result > 0) {
             logger.info("章节创建成功，ID: {}", lesson.getId());
@@ -73,28 +59,21 @@ public class LessonServiceImpl implements LessonService {
     public Lesson getLessonById(Long lessonId) {
         logger.info("获取章节详情，ID: {}", lessonId);
         Lesson lesson = lessonMapper.selectLessonById(lessonId);
-        
         if (lesson == null) {
             throw new BusinessException(ErrorCode.LESSON_NOT_FOUND);
         }
-        
         return lesson;
     }
 
     @Override
     public Lesson updateLesson(Long lessonId, Lesson lesson) {
         logger.info("更新章节信息，ID: {}", lessonId);
-        
-        // 检查章节是否存在
         Lesson existingLesson = lessonMapper.selectLessonById(lessonId);
         if (existingLesson == null) {
             throw new BusinessException(ErrorCode.LESSON_NOT_FOUND);
         }
-        
-        // 更新字段
         lesson.setId(lessonId);
         lesson.setUpdatedAt(LocalDateTime.now());
-        
         int result = lessonMapper.updateLesson(lesson);
         if (result > 0) {
             logger.info("章节更新成功，ID: {}", lessonId);
@@ -107,18 +86,12 @@ public class LessonServiceImpl implements LessonService {
     @Override
     public void deleteLesson(Long lessonId) {
         logger.info("删除章节，ID: {}", lessonId);
-        
-        // 检查章节是否存在
         Lesson lesson = lessonMapper.selectLessonById(lessonId);
         if (lesson == null) {
             throw new BusinessException(ErrorCode.LESSON_NOT_FOUND);
         }
-        
-        // 软删除
         int result = lessonMapper.deleteLesson(lessonId);
-        if (result > 0) {
-            logger.info("章节删除成功，ID: {}", lessonId);
-        } else {
+        if (result <= 0) {
             throw new BusinessException(ErrorCode.OPERATION_FAILED, "删除章节失败");
         }
     }
@@ -132,11 +105,9 @@ public class LessonServiceImpl implements LessonService {
     @Override
     public PageResult<Lesson> getLessonsWithPagination(Long courseId, Integer page, Integer size) {
         logger.info("分页获取章节列表，课程ID: {}, 页码: {}, 每页大小: {}", courseId, page, size);
-        
         int offset = (page - 1) * size;
         List<Lesson> lessons = lessonMapper.selectLessonsWithPagination(courseId, offset, size);
         Integer total = lessonMapper.countLessonsByCourse(courseId);
-        
         return PageResult.of(lessons, page, size, total.longValue(), (total + size - 1) / size);
     }
 
@@ -147,48 +118,36 @@ public class LessonServiceImpl implements LessonService {
     }
 
     @Override
-    public boolean updateStudentProgress(Long studentId, Long lessonId, BigDecimal progress, 
-                                       Integer studyTime, Integer lastPosition) {
+    public boolean updateStudentProgress(Long studentId, Long lessonId, BigDecimal progress, Integer studyTime, Integer lastPosition) {
         logger.info("更新学生章节进度，学生ID: {}, 章节ID: {}, 进度: {}%", studentId, lessonId, progress);
-        
-        // 查找现有进度记录
         LessonProgress existingProgress = lessonProgressMapper.selectByStudentAndLesson(studentId, lessonId);
-
-        boolean b = progress != null && progress.compareTo(new BigDecimal("100")) >= 0;
+        boolean completed = progress != null && progress.compareTo(new BigDecimal("100")) >= 0;
         if (existingProgress != null) {
-            // 更新现有记录
             existingProgress.setProgress(progress);
-            existingProgress.setStudyTime((existingProgress.getStudyTime() != null ? 
-                existingProgress.getStudyTime() : 0) + (studyTime != null ? studyTime : 0));
+            existingProgress.setStudyTime((existingProgress.getStudyTime() != null ? existingProgress.getStudyTime() : 0) + (studyTime != null ? studyTime : 0));
             existingProgress.setLastPosition(lastPosition);
             existingProgress.setLastStudiedAt(LocalDateTime.now());
             existingProgress.setUpdatedAt(LocalDateTime.now());
-            
-            // 如果进度达到100%，标记为完成
-            if (b) {
+            if (completed) {
                 existingProgress.setCompleted(true);
                 existingProgress.setCompletedAt(LocalDateTime.now());
             }
-            
             return lessonProgressMapper.updateLessonProgress(existingProgress) > 0;
         } else {
-            // 创建新记录
-            LessonProgress newProgress = new LessonProgress();
-            newProgress.setStudentId(studentId);
-            newProgress.setLessonId(lessonId);
-            newProgress.setProgress(progress != null ? progress : BigDecimal.ZERO);
-            newProgress.setStudyTime(studyTime != null ? studyTime : 0);
-            newProgress.setLastPosition(lastPosition);
-            newProgress.setCompleted(b);
-            newProgress.setLastStudiedAt(LocalDateTime.now());
-            newProgress.setCreatedAt(LocalDateTime.now());
-            newProgress.setUpdatedAt(LocalDateTime.now());
-            
-            if (newProgress.getCompleted()) {
-                newProgress.setCompletedAt(LocalDateTime.now());
+            LessonProgress np = new LessonProgress();
+            np.setStudentId(studentId);
+            np.setLessonId(lessonId);
+            np.setProgress(progress != null ? progress : BigDecimal.ZERO);
+            np.setStudyTime(studyTime != null ? studyTime : 0);
+            np.setLastPosition(lastPosition);
+            np.setCompleted(completed);
+            np.setLastStudiedAt(LocalDateTime.now());
+            np.setCreatedAt(LocalDateTime.now());
+            np.setUpdatedAt(LocalDateTime.now());
+            if (np.getCompleted()) {
+                np.setCompletedAt(LocalDateTime.now());
             }
-            
-            return lessonProgressMapper.insertLessonProgress(newProgress) > 0;
+            return lessonProgressMapper.insertLessonProgress(np) > 0;
         }
     }
 
@@ -206,29 +165,9 @@ public class LessonServiceImpl implements LessonService {
 
     @Override
     public BigDecimal calculateCourseProgress(Long studentId, Long courseId) {
-        logger.info("计算学生课程整体进度，学生ID: {}, 课程ID: {}", studentId, courseId);
-        
-        // 获取课程所有章节
-        List<Lesson> lessons = lessonMapper.selectLessonsByCourseId(courseId);
-        if (lessons.isEmpty()) {
-            return BigDecimal.ZERO;
-        }
-        
-        // 获取学生进度
-        List<LessonProgress> progressList = lessonProgressMapper.selectByStudentAndCourse(studentId, courseId);
-        Map<Long, LessonProgress> progressMap = progressList.stream()
-            .collect(Collectors.toMap(LessonProgress::getLessonId, p -> p));
-        
-        // 计算平均进度
-        BigDecimal totalProgress = BigDecimal.ZERO;
-        for (Lesson lesson : lessons) {
-            LessonProgress progress = progressMap.get(lesson.getId());
-            if (progress != null && progress.getProgress() != null) {
-                totalProgress = totalProgress.add(progress.getProgress());
-            }
-        }
-        
-        return totalProgress.divide(new BigDecimal(lessons.size()), 2, RoundingMode.HALF_UP);
+        logger.info("计算学生课程整体进度(加权)，学生ID: {}, 课程ID: {}", studentId, courseId);
+        java.math.BigDecimal weighted = lessonProgressMapper.calculateCourseOverallProgress(studentId, courseId);
+        return weighted == null ? BigDecimal.ZERO : weighted.setScale(2, RoundingMode.HALF_UP);
     }
 
     @Override
@@ -247,9 +186,7 @@ public class LessonServiceImpl implements LessonService {
     public boolean publishLesson(Long lessonId) {
         logger.info("发布章节，ID: {}", lessonId);
         int result = lessonMapper.updateLessonStatus(lessonId, "published");
-        if (result > 0) {
-            return true;
-        }
+        if (result > 0) return true;
         throw new BusinessException(ErrorCode.OPERATION_FAILED, "发布章节失败");
     }
 
@@ -257,113 +194,78 @@ public class LessonServiceImpl implements LessonService {
     public boolean unpublishLesson(Long lessonId) {
         logger.info("取消发布章节，ID: {}", lessonId);
         int result = lessonMapper.updateLessonStatus(lessonId, "draft");
-        if (result > 0) {
-            return true;
-        }
+        if (result > 0) return true;
         throw new BusinessException(ErrorCode.OPERATION_FAILED, "取消发布章节失败");
     }
 
     @Override
     public boolean updateLessonOrder(Long lessonId, Integer newOrder) {
         logger.info("调整章节顺序，ID: {}, 新顺序: {}", lessonId, newOrder);
-        int result = lessonMapper.updateLessonOrder(lessonId, 0, newOrder); // 传递旧顺序为0作为占位符
-        if (result > 0) {
-            return true;
-        }
+        int result = lessonMapper.updateLessonOrder(lessonId, 0, newOrder);
+        if (result > 0) return true;
         throw new BusinessException(ErrorCode.OPERATION_FAILED, "调整章节顺序失败");
     }
 
     @Override
     public Map<String, Object> getLessonStatistics(Long courseId) {
         logger.info("获取章节统计信息，课程ID: {}", courseId);
-        
         Map<String, Object> stats = new HashMap<>();
-        
-        // 总章节数
         Integer totalLessons = lessonMapper.countLessonsByCourse(courseId);
         stats.put("totalLessons", totalLessons);
-        
-        // 已发布章节数
         Integer publishedLessons = lessonMapper.countLessonsByCourseAndStatus(courseId, "published");
         stats.put("publishedLessons", publishedLessons);
-        
-        // 草稿章节数
         Integer draftLessons = lessonMapper.countLessonsByCourseAndStatus(courseId, "draft");
         stats.put("draftLessons", draftLessons);
-        
-        // 总观看次数（模拟数据）
         stats.put("totalViews", totalLessons * 150);
-        
-        // 平均完成率（模拟数据）
         stats.put("averageCompletionRate", 75.5);
-        
         return stats;
     }
 
     @Override
     public Map<String, Object> batchUpdateLessonStatus(List<Long> lessonIds, String status) {
         logger.info("批量更新章节状态，章节数量: {}, 新状态: {}", lessonIds.size(), status);
-        
         Map<String, Object> result = new HashMap<>();
         int successCount = 0;
         int failCount = 0;
         List<String> errors = new ArrayList<>();
-        
         for (Long lessonId : lessonIds) {
             try {
                 int updateResult = lessonMapper.updateLessonStatus(lessonId, status);
-                if (updateResult > 0) {
-                    successCount++;
-                } else {
-                    failCount++;
-                    errors.add("更新章节ID " + lessonId + " 失败");
-                }
+                if (updateResult > 0) successCount++; else { failCount++; errors.add("更新章节ID " + lessonId + " 失败"); }
             } catch (Exception e) {
                 failCount++;
                 errors.add("更新章节ID " + lessonId + " 失败: " + e.getMessage());
-                logger.error("批量更新章节状态失败", e);
             }
         }
-        
         result.put("successCount", successCount);
         result.put("failCount", failCount);
         result.put("errors", errors);
-        
         return result;
     }
 
     @Override
     public Lesson copyLessonToCourse(Long lessonId, Long targetCourseId) {
         logger.info("复制章节到其他课程，源章节ID: {}, 目标课程ID: {}", lessonId, targetCourseId);
-        
-        // 获取源章节
         Lesson sourceLesson = lessonMapper.selectLessonById(lessonId);
         if (sourceLesson == null) {
             throw new BusinessException(ErrorCode.LESSON_NOT_FOUND);
         }
-        
-        // 创建新章节
         Lesson newLesson = new Lesson();
         newLesson.setCourseId(targetCourseId);
         newLesson.setTitle(sourceLesson.getTitle() + " (复制)");
         newLesson.setContent(sourceLesson.getContent());
         newLesson.setVideoUrl(sourceLesson.getVideoUrl());
         newLesson.setDuration(sourceLesson.getDuration());
-        newLesson.setStatus("draft"); // 复制的章节默认为草稿状态
-        
+        newLesson.setStatus("draft");
         return createLesson(newLesson);
     }
 
     @Override
     public List<Map<String, Object>> getRecentStudiedLessons(Long studentId, Integer limit) {
         logger.info("获取学生最近学习章节，学生ID: {}, 限制数量: {}", studentId, limit);
-        
-        // 由于selectRecentStudiedLessons返回的是List<Map<String, Object>>，直接使用
         try {
             return lessonProgressMapper.selectRecentStudiedLessons(studentId, limit != null ? limit : 5);
         } catch (Exception e) {
-            logger.error("获取最近学习章节失败", e);
-            // 返回空列表作为fallback
             return new ArrayList<>();
         }
     }
@@ -371,41 +273,57 @@ public class LessonServiceImpl implements LessonService {
     @Override
     public boolean addLessonNotes(Long studentId, Long lessonId, String notes) {
         logger.info("添加章节笔记，学生ID: {}, 章节ID: {}", studentId, lessonId);
-        
-        // 查找或创建进度记录
         LessonProgress progress = lessonProgressMapper.selectByStudentAndLesson(studentId, lessonId);
         if (progress == null) {
-            // 创建新的进度记录
             updateStudentProgress(studentId, lessonId, BigDecimal.ZERO, null, null);
             progress = lessonProgressMapper.selectByStudentAndLesson(studentId, lessonId);
         }
-        
-        // 更新笔记
         progress.setNotes(notes);
         progress.setUpdatedAt(LocalDateTime.now());
-        
         return lessonProgressMapper.updateLessonProgress(progress) > 0;
     }
 
     @Override
     public boolean rateLessons(Long studentId, Long lessonId, Integer rating) {
         logger.info("为章节评分，学生ID: {}, 章节ID: {}, 评分: {}", studentId, lessonId, rating);
-        
         if (rating < 1 || rating > 5) {
             throw new BusinessException(ErrorCode.RATING_OUT_OF_RANGE);
         }
-        
-        // 查找或创建进度记录
         LessonProgress progress = lessonProgressMapper.selectByStudentAndLesson(studentId, lessonId);
         if (progress == null) {
             updateStudentProgress(studentId, lessonId, BigDecimal.ZERO, null, null);
             progress = lessonProgressMapper.selectByStudentAndLesson(studentId, lessonId);
         }
-        
-        // 更新评分
         progress.setRating(rating);
         progress.setUpdatedAt(LocalDateTime.now());
-        
         return lessonProgressMapper.updateLessonProgress(progress) > 0;
+    }
+
+    // ---- 学生进度聚合补充 ----
+    @Override
+    public Double getOverallProgress(Long studentId, Long courseId) {
+        return Optional.ofNullable(calculateCourseProgress(studentId, courseId))
+                .map(BigDecimal::doubleValue)
+                .orElse(0.0);
+    }
+
+    @Override
+    public Long getTotalStudyMinutes(Long studentId, Long courseId) {
+        return Optional.ofNullable(lessonProgressMapper.calculateTotalStudyTime(studentId, courseId))
+                .map(Integer::longValue)
+                .orElse(0L);
+    }
+
+    @Override
+    public Long getWeeklyStudyMinutes(Long studentId) {
+        return Optional.ofNullable(lessonProgressMapper.calculateWeeklyStudyTime(studentId)).orElse(0L);
+    }
+
+    @Override
+    public String getLastStudiedLessonTitle(Long studentId) {
+        List<Map<String, Object>> recent = lessonProgressMapper.selectRecentStudiedLessons(studentId, 1);
+        if (recent == null || recent.isEmpty()) return "";
+        Object t = recent.get(0).get("lesson_title");
+        return t == null ? "" : String.valueOf(t);
     }
 } 

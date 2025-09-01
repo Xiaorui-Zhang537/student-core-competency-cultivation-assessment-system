@@ -50,6 +50,22 @@
 				"profile": "Profile",
 				"logout": "Log out"
 			}
+<<<<<<< HEAD
+=======
+		},
+		"student": {
+			"title": "Student Workspace",
+			"role": "Student",
+			"sidebar": {
+				"home": "Home",
+				"dashboard": "Dashboard",
+				"assignments": "Assignments",
+				"courses": "My Courses",
+				"analysis": "Performance",
+				"ai": "AI Assistant",
+				"community": "Community"
+			}
+>>>>>>> fd13d2c (ver 1.7 实现学生端工作台的互联，同时重构了进度的实现逻辑，现在教师可以设置每一节课的视频资料还有作业，只有当学生完成后，进度条才会增加。同时新增/docx目录用于让小白能够学习同时由浅入深的理解该项目。)
 		}
 	}
 }

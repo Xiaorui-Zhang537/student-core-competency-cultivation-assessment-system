@@ -1,0 +1,119 @@
+{
+  "student": {
+    "dashboard": {
+      "title": "Student Dashboard",
+      "subtitle": "Overview of your learning progress and tasks",
+      "loading": "Loading dashboard...",
+      "upcomingAssignments": "Upcoming Assignments",
+      "noUpcoming": "No upcoming assignments.",
+      "activeCourses": "Active Courses",
+      "noCourses": "You haven't joined any course yet.",
+      "overallProgress": "Overall Progress",
+      "recentGrades": "Recent Grades",
+      "noRecentGrades": "No recent grades.",
+      "errorTitle": "Failed to load dashboard",
+      "errorDesc": "Please try again later.",
+      "goDo": "Start",
+      "continue": "Continue"
+    },
+    "courses": {
+      "title": "My Courses",
+      "subtitle": "Browse and manage your learning courses",
+      "browse": "Browse Courses",
+      "active": "Active",
+      "completed": "Completed",
+      "avgProgress": "Average Progress",
+      "searchPlaceholder": "Search my courses...",
+      "allCategories": "All Categories",
+      "loading": "Loading my courses...",
+      "emptyTitle": "No courses found",
+      "emptyDesc": "You haven't enrolled in any course or none matches the filters.",
+      "goStore": "Go to Course Store",
+      "instructor": "Instructor",
+      "statusCompleted": "Completed",
+      "statusOngoing": "Ongoing"
+    },
+    "analysis": {
+      "title": "Learning Analytics",
+      "subtitle": "Understand your learning performance and trends",
+      "kpiAvgScore": "Avg Score",
+      "kpiCompletion": "Completion",
+      "kpiHours": "Study Hours",
+      "kpiActiveDays": "Active Days",
+      "radarTitle": "Ability Radar",
+      "trendScore": "Score Trend",
+      "trendCompletion": "Completion Trend",
+      "trendHours": "Hours Trend",
+      "loading": "Loading analytics...",
+      "empty": "No data to display"
+    },
+    "home": {
+      "sections": { "quickEntries": "Quick Entries" },
+      "carousel": {
+        "1": { "title": "Welcome to the Learning Space", "subtitle": "Manage courses and assignments efficiently" },
+        "2": { "title": "AI Assistant at Your Side", "subtitle": "Get help anytime" },
+        "3": { "title": "Learning Community", "subtitle": "Share and discuss with peers" }
+      },
+      "cards": {
+        "enter": "Enter",
+        "dashboard": { "title": "Dashboard", "desc": "View tasks and progress" },
+        "courses": { "title": "My Courses", "desc": "Browse courses and materials" },
+        "assignments": { "title": "Assignments", "desc": "Submit and view grades" },
+        "analytics": { "title": "Analytics", "desc": "Insights into your learning" },
+        "assistant": { "title": "AI Assistant", "desc": "Boost productivity with AI" },
+        "community": { "title": "Community", "desc": "Discuss and share" }
+      }
+    },
+    "assignments": {
+      "title": "Assignments",
+      "subtitle": "View and submit assignments",
+      "search": "Search assignments",
+      "filters": {
+        "all": "All",
+        "pending": "Pending",
+        "submitted": "Submitted",
+        "graded": "Graded",
+        "courseAll": "All Courses"
+      },
+      "status": {
+        "pending": "Pending",
+        "submitted": "Submitted",
+        "graded": "Graded",
+        "unknown": "Unknown"
+      },
+      "actions": {
+        "submit": "Submit",
+        "view": "View",
+        "review": "View Grade"
+      },
+      "due": "Due: ",
+      "empty": "No assignments"
+    },
+    "analytics": {
+      "title": "Performance",
+      "subtitle": "Your personal learning data only",
+      "range": { "7d": "Last 7 days", "30d": "Last 30 days", "term": "This term" },
+      "radar": { "title": "Ability Radar" },
+      "dimensions": {
+        "invest": "Investment",
+        "quality": "Quality",
+        "mastery": "Mastery",
+        "stability": "Stability",
+        "growth": "Growth"
+      },
+      "kpi": {
+        "avgScore": "Avg. Score",
+        "completion": "Completion Rate",
+        "studyHours": "Study Hours",
+        "activeDays": "Active Days"
+      },
+      "trends": {
+        "score": "Score Trend",
+        "completion": "Completion Trend",
+        "hours": "Hours Trend"
+      }
+    }
+  }
+}
+
+

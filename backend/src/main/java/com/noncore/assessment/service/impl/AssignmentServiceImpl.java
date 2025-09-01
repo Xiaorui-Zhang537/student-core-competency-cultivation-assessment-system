@@ -108,6 +108,15 @@ public class AssignmentServiceImpl implements AssignmentService {
     }
 
     @Override
+    public boolean bindAssignmentToLesson(Long assignmentId, Long lessonId) {
+        logger.info("仅绑定作业到章节: assignmentId={}, lessonId={}", assignmentId, lessonId);
+        if (assignmentMapper.checkAssignmentExists(assignmentId) == 0) {
+            throw new com.noncore.assessment.exception.BusinessException(com.noncore.assessment.exception.ErrorCode.ASSIGNMENT_NOT_FOUND);
+        }
+        return assignmentMapper.updateLessonId(assignmentId, lessonId) > 0;
+    }
+
+    @Override
     public void deleteAssignment(Long assignmentId) {
         logger.info("删除作业: ID={}", assignmentId);
 
@@ -187,6 +196,16 @@ public class AssignmentServiceImpl implements AssignmentService {
     @Transactional(readOnly = true)
     public List<Assignment> getAssignmentsForStudent(Long studentId, Long courseId) {
         return assignmentMapper.selectAssignmentsForStudent(courseId, studentId);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public PageResult<Assignment> getAssignmentsForStudent(Long studentId, Integer page, Integer size, Long courseId, String status, String keyword) {
+        PageHelper.startPage(page != null ? page : 1, size != null ? size : 10);
+        // 仅查询学生已选课程内的作业
+        List<Assignment> list = assignmentMapper.selectAssignmentsForEnrolledStudent(studentId, courseId, status, keyword);
+        PageInfo<Assignment> pageInfo = new PageInfo<>(list);
+        return PageResult.of(pageInfo.getList(), pageInfo.getPageNum(), pageInfo.getPageSize(), pageInfo.getTotal(), pageInfo.getPages());
     }
 
     @Override

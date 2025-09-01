@@ -116,7 +116,23 @@
 
     <!-- 计算整体进度 -->
     <select id="calculateOverallProgress" resultType="java.math.BigDecimal">
-        SELECT COALESCE(AVG(progress), 0) FROM lesson_progress WHERE student_id = #{studentId}
+        SELECT COALESCE(
+                       SUM(lp.progress * COALESCE(l.weight, 1.00)) / NULLIF(SUM(COALESCE(l.weight, 1.00)), 0)
+                   , 0)
+        FROM lesson_progress lp
+                 JOIN lessons l ON lp.lesson_id = l.id
+        WHERE lp.student_id = #{studentId}
+    </select>
+
+    <!-- 计算学生在某课程的整体加权进度（0-100） -->
+    <select id="calculateCourseOverallProgress" resultType="java.math.BigDecimal">
+        SELECT COALESCE(
+                       SUM(lp.progress * COALESCE(l.weight, 1.00)) / NULLIF(SUM(COALESCE(l.weight, 1.00)), 0)
+                   , 0)
+        FROM lesson_progress lp
+                 JOIN lessons l ON lp.lesson_id = l.id
+        WHERE lp.student_id = #{studentId}
+          AND l.course_id = #{courseId}
     </select>
 
     <!-- 获取学生学习统计 -->

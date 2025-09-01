@@ -19,30 +19,43 @@ export function createNotificationStream() {
 
     source.addEventListener('connected', async () => {
       connected.value = true
-      await notificationsStore.fetchUnreadCount()
-      await notificationsStore.fetchStats()
+      await notificationsStore.refreshStatsFromSse()
     })
 
-    source.addEventListener('new', async () => {
-      await notificationsStore.fetchNotifications(true)
+    source.addEventListener('new', async (ev: MessageEvent) => {
+      try {
+        const payload = ev?.data ? JSON.parse(ev.data) : null
+        if (payload && typeof payload === 'object') {
+          notificationsStore.insertOrUpdateFromSse(payload)
+        }
+      } catch {}
       await notificationsStore.fetchUnreadCount()
-      await notificationsStore.fetchStats()
     })
 
-    source.addEventListener('update', async () => {
-      await notificationsStore.fetchUnreadCount()
-      await notificationsStore.fetchStats()
+    source.addEventListener('update', async (ev: MessageEvent) => {
+      try {
+        const payload = ev?.data ? JSON.parse(ev.data) : null
+        if (payload && typeof payload === 'object') {
+          await notificationsStore.applyReadUpdateFromSse(payload)
+          return
+        }
+      } catch {}
+      await notificationsStore.refresh()
     })
 
-    source.addEventListener('delete', async () => {
-      await notificationsStore.fetchNotifications(true)
-      await notificationsStore.fetchUnreadCount()
-      await notificationsStore.fetchStats()
+    source.addEventListener('delete', async (ev: MessageEvent) => {
+      try {
+        const payload = ev?.data ? JSON.parse(ev.data) : null
+        const id = payload?.id ?? payload?.notificationId
+        if (id != null) {
+          notificationsStore.removeByIdFromSse(id)
+        }
+      } catch {}
+      await notificationsStore.refreshStatsFromSse()
     })
 
     source.addEventListener('stats', async () => {
-      await notificationsStore.fetchUnreadCount()
-      await notificationsStore.fetchStats()
+      await notificationsStore.refreshStatsFromSse()
     })
 
     source.onerror = () => {

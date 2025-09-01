@@ -39,18 +39,18 @@
 
 ### 环境配置
 
-在开始之前，您需要在 `frontend` 目录下创建一个本地环境变量文件 `.env.development`。
+在开始之前，建议在 `frontend` 目录下创建 `.env.development` 并设置后端基础地址（不含 `/api`）。
 
-1.  **创建文件**:
+1.  创建文件：
     ```bash
     touch .env.development
     ```
 
-2.  **配置API基地址**:
-    在 `.env.development` 文件中，添加以下内容，将其指向您本地运行的后端服务地址：
+2.  配置 API 基地址：
     ```
     VITE_API_BASE_URL=http://localhost:8080
     ```
+    说明：`src/api/config.ts` 会自动在末尾追加 `/api`；若未设置，则默认走本地代理 `/api`。
 
 ### 快速开始
 
@@ -100,6 +100,51 @@ frontend/
     ├── types/        # 类型定义层：与后端DTO严格对齐的TypeScript接口。
     └── utils/        # 通用工具函数 (例如 api-handler)。
 ```
+
+---
+
+## 📚 页面地图（角色 → 视图 → Store → API → 类型）
+
+```
+Teacher（教师端）
+  DashboardView.vue         -> useTeacherStore / useCourseStore -> teacher.api.ts / course.api.ts -> types/teacher.ts, types/course.ts
+  ManageCourseView.vue      -> useCourseStore                   -> course.api.ts                  -> types/course.ts
+  GradeAssignmentView.vue   -> useGradeStore                    -> grade.api.ts                   -> types/grade.ts
+
+Student（学生端，Beta）
+  DashboardView.vue         -> useStudentStore / useAbilityStore -> student.api.ts / ability.api.ts -> types/student.ts, types/ability.ts
+  CourseDetailView.vue      -> useCourseStore                   -> course.api.ts                  -> types/course.ts
+  AssignmentSubmitView.vue  -> useSubmissionStore               -> submission.api.ts              -> types/submission.ts
+
+Shared（通用）
+  CommunityView.vue         -> useCommunityStore                -> community.api.ts               -> types/community.ts
+  PostDetailView.vue        -> useCommunityStore                -> community.api.ts               -> types/community.ts
+```
+
+---
+
+## 🔄 数据流与错误处理（简图）
+
+表单/交互 → Store action → API（Axios）→ 统一响应处理（`ApiResponse`）→
+映射到本地状态 → 组件渲染（含加载/空态/异常态）
+
+- Axios 请求：除登录/注册外自动附带 `Authorization: Bearer <token>`（见 `src/api/config.ts`）
+- 401：清理 token 并跳转登录页
+- 其它错误：按 `ApiResponse.code/message` 提示；控制台在开发模式打印错误
+
+---
+
+## 🧪 联调与排错（三步）
+
+1) baseURL：控制台打印 `Axios baseURL` 是否为 `http://localhost:8080/api`
+2) 代理：开发模式访问 `/api/...` 是否正确代理到后端 8080
+3) 后端：`/api/swagger-ui.html` 可打开；端点可在 Swagger 中直接成功
+
+---
+
+## 🧭 项目状态
+- 教师端：已完成
+- 学生端：开发中（Beta）
 
 ---
 
@@ -169,6 +214,16 @@ Pinia stores 是应用的“大脑”，负责处理业务逻辑、调用API和�
 
 ### 通用工具 (`src/utils`)
 -   `api-handler.ts`: 提供了一个名为 `handleApiCall` 的封装函数。它统一处理了API请求中的 `loading` 状态管理、成功/错误通知的显示，简化了Store中的异步操作代码，避免了大量的重复 `try...catch` 块。
+
+---
+
+## 🔧 调试与常见问题
+- 开发模式会在控制台打印 `Axios baseURL`，用于确认请求根路径。
+- 若出现 401，将自动清理本地 token 并跳转到登录页（见 `src/api/config.ts`）。
+- 若跨域或接口 404，请检查：
+  - 后端是否运行在 `http://localhost:8080` 且 `server.servlet.context-path=/api`
+  - `.env.development` 中 `VITE_API_BASE_URL` 是否正确
+  - `vite.config.ts` 的 `/api` 代理是否生效
 
 ---
 ## ✅ 代码质量与规范

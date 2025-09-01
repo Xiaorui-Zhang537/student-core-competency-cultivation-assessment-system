@@ -283,24 +283,18 @@
         WHERE e.student_id = #{studentId} AND e.status IN ('active','completed') AND c.deleted = false
     </select>
 
-    <!-- 获取学生最近活跃的课程列表 (DTO) -->
+    <!-- 获取学生最近活跃的课程列表 (DTO) - 以选课为基础，辅以学习进度排序，更稳健 -->
     <select id="findRecentCoursesByStudent" resultType="com.noncore.assessment.dto.response.StudentDashboardResponse$RecentCourseDto">
         SELECT
             c.id,
             c.title,
-        COALESCE(u.nickname, u.username) AS teacherName,
+            COALESCE(u.nickname, u.username) AS teacherName,
             COALESCE(cp.avg_progress, 0) AS progress,
             c.cover_image AS coverImage,
             cp.last_studied AS lastStudied
-        FROM (
-                 SELECT c_inner.*
-                 FROM courses c_inner
-                          JOIN enrollments e_inner ON c_inner.id = e_inner.course_id
-                 WHERE e_inner.student_id = #{studentId}
-                 ORDER BY (SELECT MAX(lp_inner.last_studied_at) FROM lesson_progress lp_inner WHERE lp_inner.lesson_id IN (SELECT id FROM lessons l_find WHERE l_find.course_id = c_inner.id) AND lp_inner.student_id = #{studentId}) DESC
-                 LIMIT #{limit}
-             ) c
-                 JOIN users u ON c.teacher_id = u.id
+        FROM enrollments e
+                 JOIN courses c ON e.course_id = c.id
+                 LEFT JOIN users u ON c.teacher_id = u.id
                  LEFT JOIN (
             SELECT
                 l.course_id,
@@ -311,6 +305,9 @@
             WHERE lp.student_id = #{studentId}
             GROUP BY l.course_id
         ) cp ON c.id = cp.course_id
+        WHERE e.student_id = #{studentId}
+        ORDER BY COALESCE(cp.last_studied, e.enrolled_at) DESC
+        LIMIT #{limit}
     </select>
 
     <!-- 根据学生ID查询课程列表 -->

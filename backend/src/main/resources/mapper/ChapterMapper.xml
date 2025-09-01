@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.noncore.assessment.mapper.ChapterMapper">
+
+    <resultMap id="ChapterResultMap" type="com.noncore.assessment.entity.Chapter">
+        <id column="id" property="id"/>
+        <result column="course_id" property="courseId"/>
+        <result column="title" property="title"/>
+        <result column="description" property="description"/>
+        <result column="order_index" property="orderIndex"/>
+        <result column="deleted" property="deleted"/>
+        <result column="created_at" property="createdAt"/>
+        <result column="updated_at" property="updatedAt"/>
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        id, course_id, title, description, order_index, deleted, created_at, updated_at
+    </sql>
+
+    <insert id="insertChapter" parameterType="com.noncore.assessment.entity.Chapter" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO chapters (course_id, title, description, order_index, deleted, created_at, updated_at)
+        VALUES (#{courseId}, #{title}, #{description}, #{orderIndex}, #{deleted}, #{createdAt}, #{updatedAt})
+    </insert>
+
+    <select id="selectChaptersByCourse" parameterType="java.lang.Long" resultMap="ChapterResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM chapters
+        WHERE course_id = #{courseId} AND deleted = false
+        ORDER BY order_index
+    </select>
+
+    <update id="updateChapter" parameterType="com.noncore.assessment.entity.Chapter">
+        UPDATE chapters
+        <set>
+            <if test="title != null">title = #{title},</if>
+            <if test="description != null">description = #{description},</if>
+            <if test="orderIndex != null">order_index = #{orderIndex},</if>
+            updated_at = NOW()
+        </set>
+        WHERE id = #{id} AND deleted = false
+    </update>
+
+    <update id="deleteChapter" parameterType="java.lang.Long">
+        UPDATE chapters SET deleted = true, updated_at = NOW()
+        WHERE id = #{id}
+    </update>
+
+</mapper>
+
+

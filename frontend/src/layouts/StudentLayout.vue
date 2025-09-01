@@ -19,7 +19,11 @@
           <div class="flex-1 flex items-center justify-center px-2 lg:ml-6 lg:justify-start">
             <div class="max-w-lg w-full lg:max-w-xs">
               <label for="search" class="sr-only">搜索</label>
+<<<<<<< HEAD
               <div class="relative" v-click-outside="() => (showUserMenu=false)">
+=======
+              <div class="relative">
+>>>>>>> fd13d2c (ver 1.7 实现学生端工作台的互联，同时重构了进度的实现逻辑，现在教师可以设置每一节课的视频资料还有作业，只有当学生完成后，进度条才会增加。同时新增/docx目录用于让小白能够学习同时由浅入深的理解该项目。)
                 <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                   <magnifying-glass-icon class="h-5 w-5 text-gray-400" />
                 </div>
@@ -77,6 +81,7 @@
               </teleport>
             </div>
 
+<<<<<<< HEAD
             <button
               @click="uiStore.toggleBackground()"
               class="p-1 rounded-full text-gray-400 hover:text-gray-500 dark:hover:text-gray-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500"
@@ -85,14 +90,64 @@
               <eye-slash-icon v-if="uiStore.bgEnabled" class="h-6 w-6" />
               <eye-icon v-else class="h-6 w-6" />
             </button>
+=======
+            <div class="relative" @click.stop v-click-outside="() => (showBgMenu=false)">
+              <button
+                class="p-1 rounded-full text-gray-400 hover:text-gray-500 dark:hover:text-gray-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500"
+                :title="t('layout.teacher.bg.title') || 'Background Effects'"
+                @click="showBgMenu = !showBgMenu"
+                ref="bgBtnRef"
+              >
+                <eye-icon v-if="uiStore.bgEnabled" class="h-6 w-6" />
+                <eye-slash-icon v-else class="h-6 w-6" />
+              </button>
+              <teleport to="body">
+                <div v-if="showBgMenu" class="fixed z-[1000] popover-glass border border-white/20 dark:border-white/12 shadow-md p-1 rounded-lg"
+                     :style="bgMenuStyle" @click.stop>
+                  <div class="px-3 py-2 text-xs text-gray-600 dark:text-gray-300">
+                    <div class="font-medium mb-1">{{ t('layout.teacher.bg.title') || 'Background Effects' }}</div>
+                    <div class="opacity-90">{{ t('layout.teacher.bg.info') || 'Toggle animated background and effects (smooth fade).' }}</div>
+                  </div>
+                  <div class="border-t border-white/10 my-1"></div>
+                  <button class="w-full text-left px-3 py-2 rounded hover:bg-white/10 text-sm flex items-center justify-between"
+                          @click="setBg(true)">
+                    <span>{{ t('layout.teacher.bg.on') || 'Enabled' }}</span>
+                    <span v-if="uiStore.bgEnabled" class="text-primary-500">✓</span>
+                  </button>
+                  <button class="w-full text-left px-3 py-2 rounded hover:bg-white/10 text-sm flex items-center justify-between"
+                          @click="setBg(false)">
+                    <span>{{ t('layout.teacher.bg.off') || 'Disabled' }}</span>
+                    <span v-if="!uiStore.bgEnabled" class="text-primary-500">✓</span>
+                  </button>
+                </div>
+              </teleport>
+            </div>
+>>>>>>> fd13d2c (ver 1.7 实现学生端工作台的互联，同时重构了进度的实现逻辑，现在教师可以设置每一节课的视频资料还有作业，只有当学生完成后，进度条才会增加。同时新增/docx目录用于让小白能够学习同时由浅入深的理解该项目。)
 
             <!-- 通知铃铛 -->
             <notification-bell />
 
+<<<<<<< HEAD
               <div class="relative">
               <button
                 @click="showUserMenu = !showUserMenu"
                 class="flex items-center text-sm rounded-full focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500"
+=======
+            <!-- 聊天开关按钮（学生端与教师端一致） -->
+            <button
+              @click="chat.isOpen ? chat.closeChat() : chat.openChat()"
+              class="p-1 rounded-full text-gray-400 hover:text-gray-500 dark:hover:text-gray-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500"
+              :title="t('shared.chat.open') as string || '聊天'"
+            >
+              <ChatBubbleLeftRightIcon class="h-6 w-6" />
+            </button>
+
+              <div class="relative" v-click-outside="() => (showUserMenu=false)">
+              <button
+                @click="showUserMenu = !showUserMenu"
+                class="flex items-center text-sm rounded-full focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500"
+                ref="userMenuBtn"
+>>>>>>> fd13d2c (ver 1.7 实现学生端工作台的互联，同时重构了进度的实现逻辑，现在教师可以设置每一节课的视频资料还有作业，只有当学生完成后，进度条才会增加。同时新增/docx目录用于让小白能够学习同时由浅入深的理解该项目。)
               >
                 <user-avatar :avatar="(authStore.user as any)?.avatar" :size="32">
                   <div class="h-8 w-8 rounded-full bg-gradient-to-r from-primary-500 to-purple-600 flex items-center justify-center text-white font-medium text-sm">
@@ -106,6 +161,7 @@
                 <chevron-down-icon class="h-4 w-4 text-gray-400 ml-1" />
               </button>
 
+<<<<<<< HEAD
               <div
                 v-if="showUserMenu"
                 class="origin-top-right absolute right-0 mt-2 w-48 rounded-md shadow-lg bg-white dark:bg-gray-800 ring-1 ring-black ring-opacity-5 focus:outline-none z-50"
@@ -128,6 +184,34 @@
                   </button>
                 </div>
               </div>
+=======
+              <teleport to="body">
+                <div
+                  v-if="showUserMenu"
+                  class="origin-top-right w-48 rounded-xl shadow-lg glass-thin focus:outline-none"
+                  v-glass="{ strength: 'thin', interactive: false }"
+                  :style="userMenuStyle"
+                  @click.stop
+                >
+                  <div class="py-1">
+                    <router-link
+                      to="/student/profile"
+                      class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100/50 dark:hover:bg-gray-700/50 rounded-lg"
+                      @click="showUserMenu = false"
+                    >
+                      <user-icon class="h-4 w-4 inline-block mr-2" /> 个人资料
+                    </router-link>
+                    <div class="border-t border-gray-100 dark:border-gray-600"></div>
+                    <button
+                      @click="handleLogout"
+                      class="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-gray-100/50 dark:hover:bg-gray-700/50 rounded-lg"
+                    >
+                      <arrow-right-on-rectangle-icon class="h-4 w-4 inline-block mr-2" /> 退出登录
+                    </button>
+                  </div>
+                </div>
+              </teleport>
+>>>>>>> fd13d2c (ver 1.7 实现学生端工作台的互联，同时重构了进度的实现逻辑，现在教师可以设置每一节课的视频资料还有作业，只有当学生完成后，进度条才会增加。同时新增/docx目录用于让小白能够学习同时由浅入深的理解该项目。)
             </div>
           </div>
         </div>
@@ -145,27 +229,66 @@
       >
         <div class="h-full px-3 py-4 overflow-y-auto">
           <nav class="space-y-2">
+<<<<<<< HEAD
+=======
+            <!-- 主页从侧边栏移除：独立顶层页面，不显示在左菜单 -->
+>>>>>>> fd13d2c (ver 1.7 实现学生端工作台的互联，同时重构了进度的实现逻辑，现在教师可以设置每一节课的视频资料还有作业，只有当学生完成后，进度条才会增加。同时新增/docx目录用于让小白能够学习同时由浅入深的理解该项目。)
             <router-link
               to="/student/dashboard"
               exact-active-class="bg-primary-50 border-primary-500 text-primary-700 dark:bg-primary-900 dark:text-primary-300"
               class="group flex items-center px-2 py-2 text-sm font-medium rounded-md text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-white border-l-4 border-transparent"
             >
+<<<<<<< HEAD
               <home-icon class="mr-3 h-5 w-5" /> 仪表盘
+=======
+              <home-icon class="mr-3 h-5 w-5" /> {{ t('layout.student.sidebar.dashboard') || '工作台' }}
+>>>>>>> fd13d2c (ver 1.7 实现学生端工作台的互联，同时重构了进度的实现逻辑，现在教师可以设置每一节课的视频资料还有作业，只有当学生完成后，进度条才会增加。同时新增/docx目录用于让小白能够学习同时由浅入深的理解该项目。)
             </router-link>
             <router-link
               to="/student/assignments"
               active-class="bg-primary-50 border-primary-500 text-primary-700 dark:bg-primary-900 dark:text-primary-300"
               class="group flex items-center px-2 py-2 text-sm font-medium rounded-md text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-white border-l-4 border-transparent"
             >
+<<<<<<< HEAD
               <clipboard-document-list-icon class="mr-3 h-5 w-5" /> 作业
+=======
+              <clipboard-document-list-icon class="mr-3 h-5 w-5" /> {{ t('layout.student.sidebar.assignments') || '我的作业' }}
+>>>>>>> fd13d2c (ver 1.7 实现学生端工作台的互联，同时重构了进度的实现逻辑，现在教师可以设置每一节课的视频资料还有作业，只有当学生完成后，进度条才会增加。同时新增/docx目录用于让小白能够学习同时由浅入深的理解该项目。)
             </router-link>
             <router-link
               to="/student/courses"
               active-class="bg-primary-50 border-primary-500 text-primary-700 dark:bg-primary-900 dark:text-primary-300"
               class="group flex items-center px-2 py-2 text-sm font-medium rounded-md text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-white border-l-4 border-transparent"
             >
+<<<<<<< HEAD
               <academic-cap-icon class="mr-3 h-5 w-5" /> 课程
             </router-link>
+=======
+              <academic-cap-icon class="mr-3 h-5 w-5" /> {{ t('layout.student.sidebar.courses') || '我的课程' }}
+            </router-link>
+            <router-link
+              to="/student/analysis"
+              active-class="bg-primary-50 border-primary-500 text-primary-700 dark:bg-primary-900 dark:text-primary-300"
+              class="group flex items-center px-2 py-2 text-sm font-medium rounded-md text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-white border-l-4 border-transparent"
+            >
+              <ChartBarIcon class="mr-3 h-5 w-5" /> {{ t('layout.student.sidebar.analysis') || '成绩分析' }}
+            </router-link>
+            <router-link
+              to="/student/assistant"
+              active-class="bg-primary-50 border-primary-500 text-primary-700 dark:bg-primary-900 dark:text-primary-300"
+              class="group flex items-center px-2 py-2 text-sm font-medium rounded-md text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-white border-l-4 border-transparent"
+            >
+              <SparklesIcon class="mr-3 h-5 w-5" /> {{ t('layout.student.sidebar.ai') || 'AI 助手' }}
+            </router-link>
+            <router-link
+              to="/student/community"
+              active-class="bg-primary-50 border-primary-500 text-primary-700 dark:bg-primary-900 dark:text-primary-300"
+              class="group flex items-center px-2 py-2 text-sm font-medium rounded-md text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-white border-l-4 border-transparent"
+            >
+              <ChatBubbleLeftRightIcon class="mr-3 h-5 w-5" /> {{ t('layout.student.sidebar.community') || '学习社区' }}
+            </router-link>
+            <!-- 成绩菜单合并到成绩分析页，移除此项 -->
+>>>>>>> fd13d2c (ver 1.7 实现学生端工作台的互联，同时重构了进度的实现逻辑，现在教师可以设置每一节课的视频资料还有作业，只有当学生完成后，进度条才会增加。同时新增/docx目录用于让小白能够学习同时由浅入深的理解该项目。)
           </nav>
         </div>
       </aside>
@@ -217,6 +340,13 @@ import {
   HomeIcon,
   AcademicCapIcon,
   ClipboardDocumentListIcon,
+<<<<<<< HEAD
+=======
+  ClipboardDocumentCheckIcon,
+  ChartBarIcon,
+  ChatBubbleLeftRightIcon,
+  SparklesIcon,
+>>>>>>> fd13d2c (ver 1.7 实现学生端工作台的互联，同时重构了进度的实现逻辑，现在教师可以设置每一节课的视频资料还有作业，只有当学生完成后，进度条才会增加。同时新增/docx目录用于让小白能够学习同时由浅入深的理解该项目。)
   EyeIcon,
   EyeSlashIcon,
   PaintBrushIcon,
@@ -235,6 +365,14 @@ const showGlassMenu = ref(false)
 const glassBtnRef = ref<HTMLElement | null>(null)
 const glassMenuStyle = ref<Record<string, string>>({})
 const searchQuery = ref('')
+<<<<<<< HEAD
+=======
+const userMenuBtn = ref<HTMLElement | null>(null)
+const userMenuStyle = ref<Record<string, string>>({})
+const showBgMenu = ref(false)
+const bgBtnRef = ref<HTMLElement | null>(null)
+const bgMenuStyle = ref<Record<string, string>>({})
+>>>>>>> fd13d2c (ver 1.7 实现学生端工作台的互联，同时重构了进度的实现逻辑，现在教师可以设置每一节课的视频资料还有作业，只有当学生完成后，进度条才会增加。同时新增/docx目录用于让小白能够学习同时由浅入深的理解该项目。)
 
 const handleLogout = async () => {
   showUserMenu.value = false
@@ -246,6 +384,24 @@ onMounted(() => {
   uiStore.initBackgroundEnabled()
   uiStore.initGlassIntensity()
 })
+<<<<<<< HEAD
+=======
+watch(showUserMenu, async (v: boolean) => {
+  if (!v) return
+  await nextTick()
+  try {
+    const el = userMenuBtn.value as HTMLElement
+    const rect = el.getBoundingClientRect()
+    userMenuStyle.value = {
+      position: 'fixed',
+      top: `${rect.bottom + 8}px`,
+      left: `${Math.max(8, rect.right - 192)}px`,
+      width: '12rem',
+      zIndex: '1100'
+    }
+  } catch {}
+})
+>>>>>>> fd13d2c (ver 1.7 实现学生端工作台的互联，同时重构了进度的实现逻辑，现在教师可以设置每一节课的视频资料还有作业，只有当学生完成后，进度条才会增加。同时新增/docx目录用于让小白能够学习同时由浅入深的理解该项目。)
 
 watch(showGlassMenu, async (v: boolean) => {
   if (!v) return
@@ -262,9 +418,39 @@ watch(showGlassMenu, async (v: boolean) => {
     }
   } catch {}
 })
+<<<<<<< HEAD
+=======
+watch(showBgMenu, async (v: boolean) => {
+  if (!v) return
+  await nextTick()
+  try {
+    const el = bgBtnRef.value as HTMLElement
+    const rect = el.getBoundingClientRect()
+    bgMenuStyle.value = {
+      position: 'fixed',
+      top: `${rect.bottom + 6}px`,
+      left: `${Math.max(8, rect.right - 240)}px`,
+      width: '15rem',
+      zIndex: '1000'
+    }
+  } catch {}
+})
+
+function setBg(v: boolean) {
+  uiStore.bgEnabled = v
+  showBgMenu.value = false
+}
+>>>>>>> fd13d2c (ver 1.7 实现学生端工作台的互联，同时重构了进度的实现逻辑，现在教师可以设置每一节课的视频资料还有作业，只有当学生完成后，进度条才会增加。同时新增/docx目录用于让小白能够学习同时由浅入深的理解该项目。)
 
 function setGlass(v: 'normal' | 'more') {
   uiStore.setGlassIntensity(v)
   showGlassMenu.value = false
 }
+<<<<<<< HEAD
+=======
+
+function toggleUserMenu() {
+  showUserMenu.value = !showUserMenu.value
+}
+>>>>>>> fd13d2c (ver 1.7 实现学生端工作台的互联，同时重构了进度的实现逻辑，现在教师可以设置每一节课的视频资料还有作业，只有当学生完成后，进度条才会增加。同时新增/docx目录用于让小白能够学习同时由浅入深的理解该项目。)
 </script>

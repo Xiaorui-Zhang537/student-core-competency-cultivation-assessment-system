@@ -379,4 +379,34 @@
         WHERE g.id = #{gradeId}
     </select>
 
+    <!-- 按天统计学生平均分（用于趋势图） -->
+    <select id="selectDailyAvgScore" resultType="map">
+        SELECT DATE(g.created_at) AS x,
+               ROUND(AVG(g.score), 2) AS y
+        FROM grades g
+        WHERE g.student_id = #{studentId}
+          AND g.status = 'published'
+          AND g.deleted = false
+          AND g.created_at BETWEEN #{start} AND #{end}
+        GROUP BY DATE(g.created_at)
+        ORDER BY DATE(g.created_at)
+    </select>
+
+    <!-- 学生近期成绩（用于仪表盘） -->
+    <select id="findRecentGradesByStudent" resultType="com.noncore.assessment.dto.response.StudentDashboardResponse$RecentGradeDto">
+        SELECT
+            a.title AS assignmentTitle,
+            c.title AS courseTitle,
+            g.score AS score,
+            DATE_FORMAT(COALESCE(g.published_at, g.updated_at, g.created_at), '%Y-%m-%d %H:%i:%s') AS gradedAt
+        FROM grades g
+                 JOIN assignments a ON g.assignment_id = a.id
+                 JOIN courses c ON a.course_id = c.id
+        WHERE g.student_id = #{studentId}
+          AND g.status = 'published'
+          AND g.deleted = false
+        ORDER BY COALESCE(g.published_at, g.updated_at, g.created_at) DESC
+        LIMIT #{limit}
+    </select>
+
 </mapper>

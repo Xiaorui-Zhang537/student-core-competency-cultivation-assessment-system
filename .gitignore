@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 .DS_Store
 .cursor/
 .idea/
@@ -13,3 +14,25 @@ node_modules/
 *.log
 *.gz
 backend/logs/
+=======
+# macOS
+.DS_Store
+
+# Node
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+dist/
+build/
+
+# Java / Maven
+target/
+*.iml
+.idea/
+
+# Logs
+*.log
+logs/
+>>>>>>> fd13d2c (ver 1.7 实现学生端工作台的互联，同时重构了进度的实现逻辑，现在教师可以设置每一节课的视频资料还有作业，只有当学生完成后，进度条才会增加。同时新增/docx目录用于让小白能够学习同时由浅入深的理解该项目。)

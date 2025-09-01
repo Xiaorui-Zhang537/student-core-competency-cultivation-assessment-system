@@ -33,6 +33,9 @@ public interface AssignmentService {
      */
     Assignment updateAssignment(Long assignmentId, Assignment assignment);
 
+    /** 仅绑定作业到某节课（不触发完整字段校验） */
+    boolean bindAssignmentToLesson(Long assignmentId, Long lessonId);
+
     /**
      * 删除作业
      *
@@ -86,6 +89,11 @@ public interface AssignmentService {
      * @return 作业列表
      */
     List<Assignment> getAssignmentsForStudent(Long studentId, Long courseId);
+
+    /**
+     * 学生端分页获取作业（DB侧过滤，含关键词/状态/课程筛选）
+     */
+    PageResult<Assignment> getAssignmentsForStudent(Long studentId, Integer page, Integer size, Long courseId, String status, String keyword);
 
     /**
      * 发布作业

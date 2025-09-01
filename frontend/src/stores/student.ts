@@ -31,19 +31,70 @@ export const useStudentStore = defineStore('student', () => {
       '获取仪表盘数据失败'
     );
     if (response) {
-      // 用后端返回的数据覆盖默认占位，缺失字段仍保持安全默认值
-      dashboardData.value = { ...defaultDashboardData, ...response };
+      // 适配后端 StudentDashboardResponse 到前端期望结构
+      const stats = (response as any)?.stats || {};
+      const recentCourses = (response as any)?.recentCourses || [];
+      const pendingAssignments = (response as any)?.pendingAssignments || [];
+      const recentNotifications = (response as any)?.recentNotifications || [];
+
+      let mapped: StudentDashboardData = {
+        overallProgress: Number(stats.overallProgress || 0),
+        activeCourses: recentCourses.map((c: any) => ({
+          id: String(c.id),
+          title: c.title,
+          teacherName: c.teacherName,
+          progress: Number(c.progress || 0),
+          coverImage: c.coverImage || c.coverImageUrl,
+        })),
+        upcomingAssignments: pendingAssignments.map((a: any) => ({
+          id: String(a.id),
+          title: a.title,
+          courseTitle: a.courseTitle,
+          dueDate: a.dueDate,
+        })),
+        recentGrades: ((response as any)?.recentGrades || []).map((g: any) => ({
+          assignmentTitle: g.assignmentTitle,
+          courseTitle: g.courseTitle,
+          score: Number(g.score || 0),
+          gradedAt: g.gradedAt,
+        })),
+      } as StudentDashboardData;
+
+      // Fallback：若后端 recentCourses 为空，则回退到分页我的课程接口
+      if (!mapped.activeCourses || mapped.activeCourses.length === 0) {
+        const paged = await handleApiCall(
+          () => studentApi.getMyCourses({ page: 1, size: 5 }),
+          uiStore,
+          '获取我的课程失败'
+        );
+        if (paged) {
+          const items = (paged as any)?.items ?? (Array.isArray(paged) ? paged : []);
+          const fallbackCourses = (items || []).slice(0, 5).map((c: any) => ({
+            id: String(c.id),
+            title: c.title,
+            teacherName: c.teacherName,
+            progress: Number(c.progress || 0),
+            coverImage: c.coverImage || c.coverImageUrl,
+          }));
+          if (fallbackCourses.length > 0) {
+            mapped = { ...mapped, activeCourses: fallbackCourses };
+          }
+        }
+      }
+
+      dashboardData.value = { ...defaultDashboardData, ...mapped };
     }
   };
 
-  const fetchMyCourses = async () => {
+  const fetchMyCourses = async (params?: { page?: number; size?: number; q?: string }) => {
     const response = await handleApiCall(
-      () => studentApi.getMyCourses(),
+      () => studentApi.getMyCourses(params),
       uiStore,
       '获取我的课程失败'
     );
     if (response) {
-      myCourses.value = response.items;
+      const items = (response as any)?.items ?? (Array.isArray(response) ? response : []);
+      myCourses.value = items || [];
     }
   };
 

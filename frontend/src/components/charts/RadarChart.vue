@@ -77,8 +77,18 @@ const buildOption = () => {
   }
 }
 
+const waitForContainer = async (maxTries = 10): Promise<boolean> => {
+  for (let i = 0; i < maxTries; i++) {
+    await nextTick()
+    if (chartRef.value && chartRef.value.offsetWidth > 0 && chartRef.value.offsetHeight > 0) return true
+    await new Promise(r => requestAnimationFrame(() => r(null)))
+  }
+  return !!chartRef.value
+}
+
 const render = async () => {
-  if (!chartRef.value) return
+  const ok = await waitForContainer()
+  if (!ok || !chartRef.value) return
   // 确保无论内部引用或 DOM 上缓存的实例都被正确释放
   try { inst?.dispose() } catch {}
   const existing = echarts.getInstanceByDom(chartRef.value)
@@ -89,7 +99,7 @@ const render = async () => {
   const theme = props.theme === 'auto'
     ? (document.documentElement.classList.contains('dark') ? 'dark' : 'light')
     : props.theme
-  inst = echarts.init(chartRef.value, theme)
+  inst = echarts.init(chartRef.value as HTMLDivElement, theme)
   inst.setOption(buildOption())
 }
 

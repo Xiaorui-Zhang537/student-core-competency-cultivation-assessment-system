@@ -66,6 +66,10 @@ public interface LessonProgressMapper {
      */
     java.math.BigDecimal calculateOverallProgress(@Param("studentId") Long studentId);
 
+    /** 计算学生在某课程的整体加权进度 */
+    java.math.BigDecimal calculateCourseOverallProgress(@Param("studentId") Long studentId,
+                                                       @Param("courseId") Long courseId);
+
     /**
      * 获取学生学习统计
      */

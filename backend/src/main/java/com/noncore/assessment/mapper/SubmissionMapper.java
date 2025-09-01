@@ -116,4 +116,11 @@ public interface SubmissionMapper {
 
     /** 统计作业提交（排除软删除） */
     long countByAssignment(@Param("assignmentId") Long assignmentId);
+
+    /**
+     * 按天统计学生提交数量（用于完成率趋势的分子）
+     */
+    java.util.List<java.util.Map<String, Object>> selectDailySubmissionCount(@Param("studentId") Long studentId,
+                                                                            @Param("start") java.time.LocalDateTime start,
+                                                                            @Param("end") java.time.LocalDateTime end);
 } 

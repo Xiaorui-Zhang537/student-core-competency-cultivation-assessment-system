@@ -17,12 +17,12 @@
         </div>
       </div>
 
-      <!-- Community Stats (统一为工作台小卡片样式) -->
-      <div v-if="stats" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6 mb-8">
-        <StatCard :label="t('shared.community.stats.posts') as string" :value="stats.totalPosts" tone="blue" :icon="DocumentTextIcon" />
-        <StatCard :label="t('shared.community.stats.users') as string" :value="stats.totalUsers" tone="emerald" :icon="UserGroupIcon" />
-        <StatCard :label="t('shared.community.stats.comments') as string" :value="stats.totalComments" tone="violet" :icon="ChatBubbleLeftRightIcon" />
-        <StatCard :label="t('shared.community.stats.activeToday') as string" :value="stats.activeUsersToday" tone="amber" :icon="BoltIcon" />
+      <!-- Community Stats (与教师端一致：无外框，仅网格排列的 StatCard) -->
+      <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6 mb-8">
+        <StatCard class="relative z-10" :hoverable="false" :label="t('shared.community.stats.posts') as string" :value="safeStats.totalPosts" tone="blue" :icon="DocumentTextIcon" />
+        <StatCard class="relative z-10" :hoverable="false" :label="t('shared.community.stats.users') as string" :value="safeStats.totalUsers" tone="emerald" :icon="UserGroupIcon" />
+        <StatCard class="relative z-10" :hoverable="false" :label="t('shared.community.stats.comments') as string" :value="safeStats.totalComments" tone="violet" :icon="ChatBubbleLeftRightIcon" />
+        <StatCard class="relative z-10" :hoverable="false" :label="t('shared.community.stats.activeToday') as string" :value="safeStats.activeUsersToday" tone="amber" :icon="BoltIcon" />
       </div>
 
       <div class="grid grid-cols-1 lg:grid-cols-4 gap-8">
@@ -348,6 +348,12 @@ const { t } = useI18n()
 
 
 const { posts, totalPosts, stats, hotTopics, activeUsers, loading } = storeToRefs(communityStore);
+const safeStats = computed(() => ({
+  totalPosts: stats.value?.totalPosts ?? 0,
+  totalUsers: stats.value?.totalUsers ?? 0,
+  totalComments: stats.value?.totalComments ?? 0,
+  activeUsersToday: stats.value?.activeUsersToday ?? 0,
+}))
 
 const showCreatePostModal = ref(false);
 const filterOptions = reactive<{ page: number; size: number; category: string; keyword: string; orderBy: 'latest' | 'hot' | 'comments' | 'likes' | 'views' }>({

@@ -1,0 +1,119 @@
+{
+  "student": {
+    "dashboard": {
+      "title": "学生仪表盘",
+      "subtitle": "总览您的学习进度和任务",
+      "loading": "正在加载仪表盘数据...",
+      "upcomingAssignments": "即将到期的作业",
+      "noUpcoming": "暂无即将到期的作业。",
+      "activeCourses": "进行中的课程",
+      "noCourses": "您还没有加入任何课程。",
+      "overallProgress": "总学习进度",
+      "recentGrades": "最近成绩",
+      "noRecentGrades": "暂无最近的成绩记录。",
+      "errorTitle": "无法加载仪表盘数据",
+      "errorDesc": "请稍后再试。",
+      "goDo": "去完成",
+      "continue": "继续学习"
+    },
+    "courses": {
+      "title": "我的课程",
+      "subtitle": "浏览和管理您的学习课程",
+      "browse": "浏览课程",
+      "active": "进行中",
+      "completed": "已完成",
+      "avgProgress": "平均进度",
+      "searchPlaceholder": "搜索我的课程...",
+      "allCategories": "全部分类",
+      "loading": "正在加载我的课程...",
+      "emptyTitle": "没有找到课程",
+      "emptyDesc": "您还没有报名任何课程，或者没有匹配筛选条件的课程。",
+      "goStore": "去课程商店看看",
+      "instructor": "讲师",
+      "statusCompleted": "已完成",
+      "statusOngoing": "进行中"
+    },
+    "analysis": {
+      "title": "学习分析",
+      "subtitle": "了解您的学习表现与趋势",
+      "kpiAvgScore": "平均分",
+      "kpiCompletion": "完成率",
+      "kpiHours": "学习时长(小时)",
+      "kpiActiveDays": "活跃天数",
+      "radarTitle": "能力雷达",
+      "trendScore": "成绩趋势",
+      "trendCompletion": "完成率趋势",
+      "trendHours": "学习时长趋势",
+      "loading": "正在加载分析数据...",
+      "empty": "暂无可展示的数据"
+    },
+    "home": {
+      "sections": { "quickEntries": "快速入口" },
+      "carousel": {
+        "1": { "title": "欢迎来到学习空间", "subtitle": "高效管理课程与作业" },
+        "2": { "title": "AI 助手相伴", "subtitle": "随时解答学习疑问" },
+        "3": { "title": "学习社区", "subtitle": "与同学交流分享" }
+      },
+      "cards": {
+        "enter": "进入",
+        "dashboard": { "title": "工作台", "desc": "查看待办与进度" },
+        "courses": { "title": "我的课程", "desc": "浏览课程与资料" },
+        "assignments": { "title": "我的作业", "desc": "提交作业与查看评分" },
+        "analytics": { "title": "数据分析", "desc": "个人学习表现洞察" },
+        "assistant": { "title": "AI 助手", "desc": "用智能工具提升效率" },
+        "community": { "title": "学习社区", "desc": "参与讨论与分享" }
+      }
+    },
+    "assignments": {
+      "title": "我的作业",
+      "subtitle": "查看与提交作业",
+      "search": "搜索作业",
+      "filters": {
+        "all": "全部",
+        "pending": "待提交",
+        "submitted": "已提交",
+        "graded": "已评分",
+        "courseAll": "全部课程"
+      },
+      "status": {
+        "pending": "待提交",
+        "submitted": "已提交",
+        "graded": "已评分",
+        "unknown": "未知"
+      },
+      "actions": {
+        "submit": "提交",
+        "view": "查看",
+        "review": "查看评分"
+      },
+      "due": "截止：",
+      "empty": "暂无作业"
+    },
+    "analytics": {
+      "title": "成绩分析",
+      "subtitle": "仅展示你的个人学习数据",
+      "range": { "7d": "近7天", "30d": "近30天", "term": "本学期" },
+      "radar": { "title": "能力雷达" },
+      "dimensions": {
+        "invest": "投入",
+        "quality": "质量",
+        "mastery": "掌握",
+        "stability": "稳定",
+        "growth": "成长"
+      },
+      "kpi": {
+        "avgScore": "平均成绩",
+        "completion": "作业完成率",
+        "studyHours": "学习时长(h)",
+        "activeDays": "活跃天数"
+      },
+      "trends": {
+        "score": "成绩走势",
+        "completion": "完成率趋势",
+        "hours": "时长趋势"
+      }
+    }
+  }
+}
+
+

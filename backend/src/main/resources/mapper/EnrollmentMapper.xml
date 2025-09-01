@@ -229,6 +229,24 @@
         ORDER BY e.enrolled_at DESC
     </select>
 
+    <!-- 分页查询学生课程信息（标题、类别、封面、教师名、进度、报名时间） -->
+    <select id="selectStudentCoursesPaged" resultType="map">
+        SELECT c.id               AS id,
+               c.title            AS title,
+               c.description      AS description,
+               c.category         AS category,
+               c.cover_image      AS coverImageUrl,
+               COALESCE(t.nickname, t.username) AS teacherName,
+               e.progress         AS progress,
+               e.enrolled_at      AS enrolledAt
+        FROM enrollments e
+                 JOIN courses c ON e.course_id = c.id
+                 LEFT JOIN users t ON c.teacher_id = t.id
+        WHERE e.student_id = #{studentId}
+          AND (#{keyword} IS NULL OR #{keyword} = '' OR c.title LIKE CONCAT('%', #{keyword}, '%'))
+        ORDER BY e.enrolled_at DESC
+    </select>
+
     <!-- 统计教师的总学生数 -->
     <select id="countStudentsByTeacher" resultType="long">
         SELECT COUNT(DISTINCT e.student_id)

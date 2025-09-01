@@ -206,6 +206,27 @@
         ORDER BY a.due_date , a.created_at DESC
     </select>
 
+    <!-- 分页：学生可见作业，仅限其已选课程，可按课程/状态/关键词过滤 -->
+    <select id="selectAssignmentsForEnrolledStudent" resultMap="AssignmentResultMap">
+        SELECT <include refid="assignmentWithDetailsColumns"/>
+        FROM assignments a
+        LEFT JOIN courses c ON a.course_id = c.id
+        LEFT JOIN users u ON a.teacher_id = u.id
+        INNER JOIN enrollments e ON a.course_id = e.course_id AND e.status = 'active'
+        WHERE a.deleted = false
+          AND e.student_id = #{studentId}
+        <if test="courseId != null">
+            AND a.course_id = #{courseId}
+        </if>
+        <if test="status != null and status != ''">
+            AND a.status = #{status}
+        </if>
+        <if test="keyword != null and keyword != ''">
+            AND (a.title LIKE CONCAT('%', #{keyword}, '%') OR a.description LIKE CONCAT('%', #{keyword}, '%'))
+        </if>
+        ORDER BY a.created_at DESC
+    </select>
+
     <!-- 获取作业统计信息 -->
     <select id="getAssignmentStatistics" resultType="map">
         SELECT
@@ -284,5 +305,12 @@
         AND (s.id IS NULL OR s.status != 'submitted')
         ORDER BY a.due_date
     </select>
+
+    <!-- 仅更新作业 lesson_id -->
+    <update id="updateLessonId">
+        UPDATE assignments
+        SET lesson_id = #{lessonId}, updated_at = NOW()
+        WHERE id = #{id} AND deleted = false
+    </update>
 
 </mapper>
