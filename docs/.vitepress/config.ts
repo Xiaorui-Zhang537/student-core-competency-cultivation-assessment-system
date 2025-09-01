@@ -107,6 +107,8 @@ export default defineConfig({
         text: '参考',
         items: [
           { text: '实战食谱', link: '/cookbook' },
+          { text: '图表主题与统一配色', link: '/ui-chart-theme' },
+          { text: '错误码映射表', link: '/error-codes-mapping' },
           { text: '错误码与空态展示规范', link: '/ui-error-empty-spec' },
           { text: 'FAQ', link: '/faq' },
           { text: 'i18n 文案示例集', link: '/i18n-examples' },
