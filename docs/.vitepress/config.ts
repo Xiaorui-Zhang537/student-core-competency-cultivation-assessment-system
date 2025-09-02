@@ -2,7 +2,7 @@ import { defineConfig } from 'vitepress'
 
 export default defineConfig({
   lang: 'zh-CN',
-  title: '学生非核心能力发展评估系统',
+  title: '学生核心能力培养评估系统',
   description: '从0开始的完整上手与参考文档',
   base: '/',
   themeConfig: {

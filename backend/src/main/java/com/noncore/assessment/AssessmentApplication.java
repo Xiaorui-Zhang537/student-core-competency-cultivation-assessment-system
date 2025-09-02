@@ -22,7 +22,7 @@ public class AssessmentApplication {
     public static void main(String[] args) {
         SpringApplication.run(AssessmentApplication.class, args);
         System.out.println("========================================");
-        System.out.println("学生非核心能力发展评估系统后端启动成功！");
+        System.out.println("学生核心能力培养评估系统后端启动成功！");
         System.out.println("API文档地址: http://localhost:8080/api/swagger-ui.html");
         System.out.println("健康检查: http://localhost:8080/api/actuator/health");
         System.out.println("========================================");

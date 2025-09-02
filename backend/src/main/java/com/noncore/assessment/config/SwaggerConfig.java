@@ -42,8 +42,8 @@ public class SwaggerConfig {
 
     private Info apiInfo() {
         return new Info()
-                .title("学生非核心能力发展评估系统 API")
-                .description("为学生非核心能力发展评估系统提供后端API服务，支持用户认证、课程管理、作业系统、教师功能等完整业务流程。")
+                .title("学生核心能力培养评估系统 API")
+                .description("为学生核心能力培养评估系统提供后端API服务，支持用户认证、课程管理、作业系统、教师功能等完整业务流程。")
                 .version("1.0.0")
                 .contact(new Contact()
                         .name("系统开发团队")

@@ -285,7 +285,7 @@ const features = [
 const socialLinks = [
   {
     name: 'GitHub',
-    url: 'https://github.com',
+    url: 'https://github.com/Xiaorui-Zhang537/',
     icon: DevicePhoneMobileIcon // 实际项目中应该使用专门的社交图标
   },
   {
@@ -295,7 +295,7 @@ const socialLinks = [
   },
   {
     name: '邮箱',
-    url: 'mailto:support@example.com',
+    url: '1519939545@qq.com',
     icon: CpuChipIcon
   }
 ]
