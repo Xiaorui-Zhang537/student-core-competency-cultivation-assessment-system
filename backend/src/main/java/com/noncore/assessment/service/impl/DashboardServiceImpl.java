@@ -15,6 +15,8 @@ import java.util.Optional;
 @Service
 public class DashboardServiceImpl implements DashboardService {
 
+    private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(DashboardServiceImpl.class);
+
     private final CourseMapper courseMapper;
     private final AssignmentMapper assignmentMapper;
     private final GradeMapper gradeMapper;
@@ -48,12 +50,27 @@ public class DashboardServiceImpl implements DashboardService {
     @Override
     public StudentDashboardResponse getStudentDashboardData(Long studentId) {
         long activeCourses = courseMapper.countActiveCoursesByStudent(studentId);
+        if (activeCourses == 0L) {
+            try {
+                // 兼容兜底：若按课程联表统计为0，则按选课记录数量兜底
+                long enrolled = enrollmentMapper.countEnrollments(studentId, null, null);
+                if (enrolled > 0L) {
+                    activeCourses = enrolled;
+                }
+            } catch (Exception ignore) {}
+        }
         long pendingAssignmentsCount = assignmentMapper.countPendingAssignments(studentId);
         BigDecimal averageScore = Optional.ofNullable(gradeMapper.calculateAverageScore(studentId)).orElse(BigDecimal.ZERO);
         long totalStudyTime = Optional.ofNullable(lessonProgressMapper.calculateTotalStudyTime(studentId, null)).orElse(0);
         long weeklyStudyTime = Optional.ofNullable(lessonProgressMapper.calculateWeeklyStudyTime(studentId)).orElse(0L);
         Double overallProgress = Optional.ofNullable(lessonProgressMapper.calculateOverallProgress(studentId)).map(java.math.BigDecimal::doubleValue).orElse(0.0);
-        long unreadNotifications = notificationMapper.countUnreadByRecipient(studentId);
+        long unreadNotifications = Optional.ofNullable(notificationMapper.countUnreadByRecipient(studentId))
+                .map(Long::valueOf).orElse(0L);
+
+        if (log.isDebugEnabled()) {
+            log.debug("StudentDashboard stats studentId={}, activeCourses={}, pendingAssignments={}, avgScore={}, totalStudyTime(min)={}, weeklyStudyTime(min)={}, overallProgress={}, unreadNoti={}",
+                    studentId, activeCourses, pendingAssignmentsCount, averageScore, totalStudyTime, weeklyStudyTime, overallProgress, unreadNotifications);
+        }
 
         StudentDashboardResponse.Stats stats = StudentDashboardResponse.Stats.builder()
                 .activeCourses(activeCourses)

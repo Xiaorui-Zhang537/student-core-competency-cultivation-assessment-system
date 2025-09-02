@@ -66,4 +66,4 @@ ai:
       base-url: https://openrouter.ai/api
       # api-key 走环境变量 OPENROUTER_API_KEY
   deepseek:
-    model: deepseek/deepseek-reasoner
+    model: deepseek/deepseek-chat-v3.1

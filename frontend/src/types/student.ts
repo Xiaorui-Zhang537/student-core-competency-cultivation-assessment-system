@@ -19,4 +19,14 @@ export interface StudentDashboardData {
   activeCourses: Array<{ id: string; title: string; teacherName: string; progress: number; coverImage?: string }>;
   recentGrades: Array<{ assignmentTitle: string; courseTitle: string; score: number; gradedAt?: string }>;
   overallProgress: number;
+  stats: StudentDashboardStats;
+}
+
+export interface StudentDashboardStats {
+  activeCourses: number;
+  pendingAssignments: number;
+  averageScore: number;
+  totalStudyTime?: number; // minutes
+  weeklyStudyTime: number; // minutes
+  unreadNotifications?: number;
 }

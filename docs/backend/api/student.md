@@ -2,6 +2,11 @@
 
 > 以 Swagger 为准：`http://localhost:8080/api/swagger-ui.html`
 
+## Axios 前缀与响应解包
+- 前端 Axios 基础前缀：`/api`（见 `frontend/src/api/config.ts`，会将 `VITE_API_BASE_URL` 与 `/api` 规范化拼接）。
+- 统一返回格式：后端使用 `{ code, message, data }`，Axios 响应拦截器已自动解包为 `data`，调用侧直接获取业务数据。
+- 认证：除登录/注册外，请求会自动附带 `Authorization: Bearer <token>` 头。
+
 ## 1. 仪表盘与学习进度
 - `GET /api/students/dashboard`：学生仪表盘数据
 请求：
@@ -62,14 +67,13 @@ Authorization: Bearer <token>
 ---
 
 # 前端对接（student.api.ts）
-
 - `getDashboardData()` ↔ `GET /api/students/dashboard`
 - `getMyCourses(params)` ↔ `GET /api/students/my-courses/paged`
 - `getCourseProgress(courseId)` ↔ `GET /api/students/courses/{courseId}/progress`
-- `getLessonDetails(lessonId)` / `markLessonAsCompleted(lessonId)` / `markLessonAsIncomplete(lessonId)`
+- `getLessonDetails(lessonId)` / `markLessonAsCompleted(lessonId)` / `markLessonAsIncomplete(lessonId)` ↔ `/api/students/lessons/*`
 - `getMySubmissions(params)` ↔ `GET /api/students/my-submissions`
 - `getAnalysis(params)` ↔ `GET /api/students/analysis`
-- `getCourseParticipants(courseId, keyword?)`
+- `getCourseParticipants(courseId, keyword?)` ↔ `GET /api/students/courses/{courseId}/participants`
 - `getAssignments(params)` ↔ `GET /api/students/assignments`
 
 ## 时序图：课时完成与进度

@@ -78,9 +78,15 @@ const { t } = useI18n()
 const form = ref<LoginRequest>({ username: '', password: '' })
 
 const handleLogin = async (credentials: LoginRequest) => {
+  const before = router.currentRoute.value.fullPath
   await authStore.login(credentials)
-  await router.push('/student/dashboard')
-  window.location.reload()
+  // 登录后由 store 触发路由跳转；此处等待下一帧确保路由完成后强制刷新
+  requestAnimationFrame(() => {
+    const after = router.currentRoute.value.fullPath
+    if (before !== after) {
+      window.location.reload()
+    }
+  })
 }
 
 const goRegister = async () => {

@@ -253,8 +253,9 @@
                  LEFT JOIN submissions s ON a.id = s.assignment_id AND s.student_id = e.student_id
         WHERE e.student_id = #{studentId}
           AND a.deleted = false
-          AND a.due_date > NOW()
-          AND (s.id IS NULL OR s.status != 'submitted')
+          AND (a.status = 'published' OR a.status = 'PUBLISHED' OR a.status = 1)
+          AND (a.due_date IS NULL OR a.due_date > NOW())
+          AND (s.id IS NULL OR s.status NOT IN ('submitted','SUBMITTED',1))
     </select>
 
     <!-- 获取待处理作业列表 (DTO) -->

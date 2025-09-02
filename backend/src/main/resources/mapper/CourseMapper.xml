@@ -280,7 +280,13 @@
         SELECT COUNT(DISTINCT c.id)
         FROM courses c
                  JOIN enrollments e ON c.id = e.course_id
-        WHERE e.student_id = #{studentId} AND e.status IN ('active','completed') AND c.deleted = false
+        WHERE e.student_id = #{studentId}
+          AND c.deleted = false
+          AND (
+              e.status IN ('active','completed','ACTIVE','COMPLETED','enrolled','ENROLLED')
+              OR e.status IN ('1','2')
+              OR e.status IS NULL
+          )
     </select>
 
     <!-- 获取学生最近活跃的课程列表 (DTO) - 以选课为基础，辅以学习进度排序，更稳健 -->

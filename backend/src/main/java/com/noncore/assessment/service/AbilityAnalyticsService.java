@@ -14,5 +14,10 @@ public interface AbilityAnalyticsService {
     AbilityWeightsResponse updateWeights(UpdateAbilityWeightsRequest request, Long teacherId);
     AbilityCompareResponse getRadarCompare(AbilityCompareQuery query, Long teacherId);
     AbilityDimensionInsightsResponse getDimensionInsights(AbilityCompareQuery query, Long teacherId);
+
+    // Student-facing variants (no teacher ownership check; restricted to current student)
+    AbilityRadarResponse getRadarForStudent(AbilityRadarQuery query, Long studentId);
+    AbilityCompareResponse getRadarCompareForStudent(AbilityCompareQuery query, Long studentId);
+    AbilityDimensionInsightsResponse getDimensionInsightsForStudent(AbilityCompareQuery query, Long studentId);
 }
 

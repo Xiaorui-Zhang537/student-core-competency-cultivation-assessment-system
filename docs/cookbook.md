@@ -140,7 +140,7 @@ sequenceDiagram
 ### 请求示例
 ```bash
 curl -H "Authorization: Bearer $TOKEN" -H "Content-Type: application/json" \
-  -d '{"messages":[{"role":"user","content":"请点评作业3001"}],"model":"deepseek-chat"}' \
+  -d '{"messages":[{"role":"user","content":"请点评作业3001"}],"model":"deepseek/deepseek-chat-v3.1"}' \
   http://localhost:8080/api/ai/chat
 ```
 

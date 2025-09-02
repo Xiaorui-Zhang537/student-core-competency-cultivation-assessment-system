@@ -16,16 +16,6 @@
         <StatCard :label="t('student.analysis.kpiActiveDays')" :value="String(kpi.activeDays)" tone="amber" />
       </div>
 
-      <!-- Radar -->
-      <div class="p-6 glass-regular rounded-lg shadow" v-glass="{ strength: 'regular', interactive: true }">
-        <h2 class="text-xl font-semibold mb-4">{{ t('student.analysis.radarTitle') }}</h2>
-        <RadarChart
-          :indicators="radarIndicators"
-          :series="[{ name: 'Me', values: radarValues }]"
-          height="360px"
-        />
-      </div>
-
       <!-- Trends -->
       <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div class="p-6 glass-regular rounded-lg shadow" v-glass="{ strength: 'regular', interactive: true }">
@@ -51,8 +41,8 @@
 import { ref, onMounted, computed } from 'vue'
 import { studentApi } from '@/api/student.api'
 import { useI18n } from 'vue-i18n'
+import { i18n, loadLocaleMessages } from '@/i18n'
 import StatCard from '@/components/ui/StatCard.vue'
-import RadarChart from '@/components/charts/RadarChart.vue'
 import TrendAreaChart from '@/components/charts/TrendAreaChart.vue'
 
 const { t } = useI18n()
@@ -61,24 +51,10 @@ type Point = { x: string; y: number }
 
 const loading = ref(false)
 const kpi = ref<{ avgScore: number; completionRate: number; studyHours: number; activeDays: number }>({ avgScore: 0, completionRate: 0, studyHours: 0, activeDays: 0 })
-const radar = ref<{ invest: number; quality: number; mastery: number; stability: number; growth: number }>({ invest: 0, quality: 0, mastery: 0, stability: 0, growth: 0 })
+// Removed radar from AnalysisView to avoid duplication with AbilityView
 const trends = ref<{ score: Point[]; completion: Point[]; hours: Point[] }>({ score: [], completion: [], hours: [] })
 
-const radarIndicators = computed(() => [
-  { name: 'Invest', max: 100 },
-  { name: 'Quality', max: 100 },
-  { name: 'Mastery', max: 100 },
-  { name: 'Stability', max: 100 },
-  { name: 'Growth', max: 100 }
-])
-
-const radarValues = computed(() => [
-  radar.value.invest || 0,
-  radar.value.quality || 0,
-  radar.value.mastery || 0,
-  radar.value.stability || 0,
-  radar.value.growth || 0
-])
+// no radar indicators/values in this view
 
 const empty = computed(() =>
   (trends.value.score.length + trends.value.completion.length + trends.value.hours.length) === 0
@@ -87,11 +63,11 @@ const empty = computed(() =>
 const toSeriesPoints = (name: string, arr: Point[]) => [{ name, data: Array.isArray(arr) ? arr.map(p => ({ x: String(p?.x ?? ''), y: Number(p?.y) || 0 })) : [] }]
 const toXAxis = (arr: Point[]) => (Array.isArray(arr) ? arr.map(p => String(p?.x ?? '')) : [])
 
-const scoreSeriesPoints = computed(() => toSeriesPoints('Score', trends.value.score))
+const scoreSeriesPoints = computed(() => toSeriesPoints(t('student.analysis.series.score') as string, trends.value.score))
 const scoreXAxis = computed(() => toXAxis(trends.value.score))
-const completionSeriesPoints = computed(() => toSeriesPoints('Completion', trends.value.completion))
+const completionSeriesPoints = computed(() => toSeriesPoints(t('student.analysis.series.completion') as string, trends.value.completion))
 const completionXAxis = computed(() => toXAxis(trends.value.completion))
-const hoursSeriesPoints = computed(() => toSeriesPoints('Hours', trends.value.hours))
+const hoursSeriesPoints = computed(() => toSeriesPoints(t('student.analysis.series.hours') as string, trends.value.hours))
 const hoursXAxis = computed(() => toXAxis(trends.value.hours))
 
 const load = async () => {
@@ -101,14 +77,18 @@ const load = async () => {
   if (!res) return
   const data = res
   kpi.value = data.kpi || kpi.value
-  radar.value = data.radar || radar.value
+  // radar removed here; ability radar lives in AbilityView
   trends.value = data.trends || trends.value
 }
 
 const formatScore = (v: number) => `${Math.round(Number(v || 0))}`
 const formatPercent = (v: number) => `${Math.round(Number(v || 0))}%`
 
-onMounted(() => {
+onMounted(async () => {
+  // 防御：确保当前 locale 的 student 命名空间已加载
+  const locRaw = String(i18n.global.locale.value)
+  const loc = (locRaw === 'zh' ? 'zh-CN' : (locRaw === 'en' ? 'en-US' : (locRaw as 'zh-CN' | 'en-US')))
+  await loadLocaleMessages(loc, ['student'])
   load()
 })
 </script>

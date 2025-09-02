@@ -2,6 +2,12 @@ package com.noncore.assessment.controller;
 
 import com.noncore.assessment.entity.*;
 import com.noncore.assessment.service.AbilityService;
+import com.noncore.assessment.service.AbilityAnalyticsService;
+import com.noncore.assessment.dto.request.AbilityRadarQuery;
+import com.noncore.assessment.dto.request.AbilityCompareQuery;
+import com.noncore.assessment.dto.response.AbilityRadarResponse;
+import com.noncore.assessment.dto.response.AbilityCompareResponse;
+import com.noncore.assessment.dto.response.AbilityDimensionInsightsResponse;
 import com.noncore.assessment.service.UserService;
 import com.noncore.assessment.util.ApiResponse;
 import com.noncore.assessment.util.PageResult;
@@ -32,10 +38,12 @@ import java.util.Map;
 public class AbilityController extends BaseController {
 
     private final AbilityService abilityService;
+    private final AbilityAnalyticsService abilityAnalyticsService;
 
-    public AbilityController(AbilityService abilityService, UserService userService) {
+    public AbilityController(AbilityService abilityService, AbilityAnalyticsService abilityAnalyticsService, UserService userService) {
         super(userService);
         this.abilityService = abilityService;
+        this.abilityAnalyticsService = abilityAnalyticsService;
     }
 
     /**
@@ -70,6 +78,52 @@ public class AbilityController extends BaseController {
             @Parameter(description = "时间范围（月数）", example = "6") @RequestParam(defaultValue = "6") Integer timeRange) {
         List<Map<String, Object>> trends = abilityService.getStudentAbilityTrends(getCurrentUserId(), dimensionId, timeRange);
         return ResponseEntity.ok(ApiResponse.success(trends));
+    }
+
+    // ===== 学生端五维雷达（与教师端一致的5维，来源相同计算逻辑） =====
+    @GetMapping("/student/radar")
+    @Operation(summary = "学生五维能力雷达（学生 vs 班级/课程均值）", description = "courseId 必填；可选 classId、startDate、endDate；若缺失则按最近30天")
+    @PreAuthorize("hasRole('STUDENT')")
+    public ResponseEntity<ApiResponse<AbilityRadarResponse>> getStudentRadar(
+            @RequestParam Long courseId,
+            @RequestParam(required = false) Long classId,
+            @RequestParam(required = false) java.time.LocalDate startDate,
+            @RequestParam(required = false) java.time.LocalDate endDate
+    ) {
+        Long studentId = getCurrentUserId();
+        if (startDate == null || endDate == null) {
+            java.time.LocalDate end = java.time.LocalDate.now();
+            java.time.LocalDate start = end.minusDays(29);
+            startDate = start;
+            endDate = end;
+        }
+        AbilityRadarQuery q = new AbilityRadarQuery();
+        q.setCourseId(courseId);
+        q.setClassId(classId);
+        q.setStartDate(startDate);
+        q.setEndDate(endDate);
+        AbilityRadarResponse resp = abilityAnalyticsService.getRadarForStudent(q, studentId);
+        return ResponseEntity.ok(ApiResponse.success(resp));
+    }
+
+    @PostMapping("/student/radar/compare")
+    @Operation(summary = "学生五维能力对比（A/B区间或作业集）", description = "必填：courseId；studentId 自动取当前用户；可选：A/B 日期区间、作业集合、是否包含班级均值")
+    @PreAuthorize("hasRole('STUDENT')")
+    public ResponseEntity<ApiResponse<AbilityCompareResponse>> compareStudentRadar(@RequestBody AbilityCompareQuery body) {
+        Long studentId = getCurrentUserId();
+        body.setStudentId(studentId);
+        AbilityCompareResponse resp = abilityAnalyticsService.getRadarCompareForStudent(body, studentId);
+        return ResponseEntity.ok(ApiResponse.success(resp));
+    }
+
+    @PostMapping("/student/dimension-insights")
+    @Operation(summary = "学生维度解析/文字分析", description = "在 A/B 条件下生成每个维度的对比分析与建议；未提供B则与自身A对比")
+    @PreAuthorize("hasRole('STUDENT')")
+    public ResponseEntity<ApiResponse<AbilityDimensionInsightsResponse>> studentDimensionInsights(@RequestBody AbilityCompareQuery body) {
+        Long studentId = getCurrentUserId();
+        body.setStudentId(studentId);
+        AbilityDimensionInsightsResponse resp = abilityAnalyticsService.getDimensionInsightsForStudent(body, studentId);
+        return ResponseEntity.ok(ApiResponse.success(resp));
     }
 
     /**

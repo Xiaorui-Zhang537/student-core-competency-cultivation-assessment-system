@@ -13,6 +13,16 @@
 
     <!-- Main Content -->
     <div v-else-if="dashboardReady && !studentStore.loading" class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+      <!-- Top KPI Cards (full width) -->
+      <div class="lg:col-span-3">
+        <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4 mb-2">
+          <StatCard :label="t('student.dashboard.cards.activeCourses') as string" :value="stats.activeCourses" tone="blue" :icon="AcademicCapIcon" />
+          <StatCard :label="t('student.dashboard.cards.pendingAssignments') as string" :value="stats.pendingAssignments" tone="amber" :icon="ClipboardDocumentListIcon" />
+          <StatCard :label="t('student.dashboard.cards.averageScore') as string" :value="Number(stats.averageScore || 0).toFixed(1)" tone="violet" :icon="StarIcon" />
+          <StatCard :label="t('student.dashboard.cards.weeklyStudyHours') as string" :value="weeklyStudyHours" tone="emerald" :icon="ClockIcon" />
+          <StatCard v-if="abilityOverallScore>0" :label="t('student.ability.radar') as string" :value="abilityOverallScore.toFixed(1)" tone="indigo" :icon="StarIcon" />
+        </div>
+      </div>
       <!-- Left Column: Assignments and Courses -->
       <div class="lg:col-span-2 space-y-8">
         <!-- Upcoming Assignments -->
@@ -83,6 +93,8 @@ import { onMounted, computed } from 'vue'
 import { useUIStore } from '@/stores/ui'
 import { useStudentStore } from '@/stores/student'
 import { useI18n } from 'vue-i18n'
+import StatCard from '@/components/ui/StatCard.vue'
+import { AcademicCapIcon, ClipboardDocumentListIcon, StarIcon, ClockIcon } from '@heroicons/vue/24/outline'
 
 const uiStore = useUIStore()
 const studentStore = useStudentStore()
@@ -94,6 +106,13 @@ const upcomingAssignments = computed(() => (studentStore.dashboardData?.upcoming
 const activeCourses = computed(() => (studentStore.dashboardData?.activeCourses) || [])
 const recentGrades = computed(() => (studentStore.dashboardData?.recentGrades) || [])
 const overallProgress = computed(() => Number(studentStore.dashboardData?.overallProgress || 0))
+const stats = computed(() => (studentStore.dashboardData as any)?.stats || { activeCourses: 0, pendingAssignments: 0, averageScore: 0, weeklyStudyTime: 0 })
+const abilityOverallScore = computed(() => Number((studentStore.dashboardData as any)?.abilityOverallScore || 0))
+const weeklyStudyHours = computed(() => {
+  const minutes = Number((stats.value as any)?.weeklyStudyTime || 0)
+  const hours = minutes / 60
+  return Math.round(hours * 10) / 10
+})
 
 const getScoreColor = (score: number) => {
   const s = Number(score || 0)

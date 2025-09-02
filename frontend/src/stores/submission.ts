@@ -29,7 +29,7 @@ export const useSubmissionStore = defineStore('submission', () => {
       () => submissionApi.submitAssignment(assignmentId, data),
       uiStore,
       '提交作业失败',
-      { successMessage: '作业已成功提交' }
+      { successMessage: (window as any).$i18n?.t?.('student.assignments.submit.success') || '作业已成功提交' }
     );
     if (response) {
       submissions.value.set(assignmentId, response);

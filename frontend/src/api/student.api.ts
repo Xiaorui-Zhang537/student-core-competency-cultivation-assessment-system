@@ -49,8 +49,8 @@ export const studentApi = {
     return api.get(`/students/courses/${courseId}/participants`, { params: { keyword } });
   },
 
-  // 新增：学生端获取作业列表（过滤）
-  getAssignments: (params?: { courseId?: string; status?: string; q?: string }): Promise<ApiResponse<any>> => {
+  // 新增：学生端获取作业列表（过滤 + 分页）
+  getAssignments: (params?: { courseId?: string; status?: string; q?: string; page?: number; size?: number }): Promise<ApiResponse<any>> => {
     return api.get('/students/assignments', { params });
   },
 };

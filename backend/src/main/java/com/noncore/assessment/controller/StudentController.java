@@ -82,28 +82,9 @@ public class StudentController extends BaseController {
     @Operation(summary = "获取学生仪表盘数据")
     @PreAuthorize("hasRole('STUDENT')")
     public ResponseEntity<ApiResponse<StudentDashboardResponse>> getStudentDashboard() {
-        try {
-            StudentDashboardResponse dashboardData = dashboardService.getStudentDashboardData(getCurrentUserId());
-            return ResponseEntity.ok(ApiResponse.success(dashboardData));
-        } catch (Exception ex) {
-            // 兜底：避免前端崩溃，返回空数据占位（请后续排查具体数据库错误）
-            StudentDashboardResponse empty = StudentDashboardResponse.builder()
-                    .stats(StudentDashboardResponse.Stats.builder()
-                            .activeCourses(0)
-                            .pendingAssignments(0)
-                            .averageScore(0)
-                            .totalStudyTime(0)
-                            .weeklyStudyTime(0)
-                            .overallProgress(0)
-                            .unreadNotifications(0)
-                            .build())
-                    .recentCourses(java.util.Collections.emptyList())
-                    .pendingAssignments(java.util.Collections.emptyList())
-                    .recentNotifications(java.util.Collections.emptyList())
-                    .abilityOverallScore(0.0)
-                    .build();
-            return ResponseEntity.ok(ApiResponse.success(empty));
-        }
+        Long studentId = getCurrentUserId();
+        StudentDashboardResponse dashboardData = dashboardService.getStudentDashboardData(studentId);
+        return ResponseEntity.ok(ApiResponse.success(dashboardData));
     }
 
     @GetMapping("/courses/{id}/progress")

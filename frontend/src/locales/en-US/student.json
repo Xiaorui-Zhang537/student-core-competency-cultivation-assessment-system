@@ -14,7 +14,13 @@
       "errorTitle": "Failed to load dashboard",
       "errorDesc": "Please try again later.",
       "goDo": "Start",
-      "continue": "Continue"
+      "continue": "Continue",
+      "cards": {
+        "activeCourses": "Active Courses",
+        "pendingAssignments": "Pending Assignments",
+        "averageScore": "Average Score",
+        "weeklyStudyHours": "Weekly Study Hours"
+      }
     },
     "courses": {
       "title": "My Courses",
@@ -31,7 +37,28 @@
       "goStore": "Go to Course Store",
       "instructor": "Instructor",
       "statusCompleted": "Completed",
-      "statusOngoing": "Ongoing"
+      "statusOngoing": "Ongoing",
+      "progressLabel": "Progress",
+      "storeTitle": "Course Store",
+      "processing": "Processing...",
+      "enrolled": "Enrolled",
+      "enroll": "Enroll"
+    },
+    "courses.detail": {
+      "contents": "Course Contents",
+      "completed": "Completed",
+      "markCompleted": "Mark as Completed",
+      "collapse": "Collapse",
+      "expand": "Expand",
+      "materials": "Materials",
+      "noMaterials": "No materials",
+      "sectionAssignments": "Section Assignments",
+      "noSectionAssignments": "No assignments in this section",
+      "instructorInfo": "Instructor Info",
+      "contactTeacher": "Contact Teacher",
+      "notFoundTitle": "Course Not Found",
+      "notFoundDesc": "Sorry, the course you visited does not exist or has been removed.",
+      "backToList": "Back to Courses"
     },
     "analysis": {
       "title": "Learning Analytics",
@@ -45,7 +72,13 @@
       "trendCompletion": "Completion Trend",
       "trendHours": "Hours Trend",
       "loading": "Loading analytics...",
-      "empty": "No data to display"
+      "empty": "No data to display",
+      "series": {
+        "me": "Me",
+        "score": "Score",
+        "completion": "Completion",
+        "hours": "Hours"
+      }
     },
     "home": {
       "sections": { "quickEntries": "Quick Entries" },
@@ -87,7 +120,35 @@
         "review": "View Grade"
       },
       "due": "Due: ",
-      "empty": "No assignments"
+      "empty": "No assignments",
+      "pagination": {
+        "perPagePrefix": "Per page",
+        "perPageSuffix": "items",
+        "prev": "Previous",
+        "next": "Next",
+        "page": "Page {page}"
+      },
+      "submit": {
+        "status": "Status:",
+        "contentTitle": "Submission Content",
+        "contentPlaceholder": "Enter your assignment content here...",
+        "uploadTitle": "Upload Attachments",
+        "uploading": "Uploading...",
+        "uploadedList": "Uploaded files:",
+        "delete": "Delete",
+        "saveDraft": "Save Draft",
+        "submit": "Submit Assignment",
+        "success": "Assignment submitted successfully",
+        "loading": "Loading assignment details...",
+        "errors": {
+          "uploadFailedTitle": "Upload Failed",
+          "uploadFailedMsg": "File upload failed, please try again.",
+          "deleteFailedTitle": "Delete Failed",
+          "deleteFailedMsg": "File deletion failed, please try again.",
+          "contentEmptyTitle": "Content Empty",
+          "contentEmptyMsg": "Please enter content before submitting."
+        }
+      }
     },
     "analytics": {
       "title": "Performance",
@@ -112,6 +173,27 @@
         "completion": "Completion Trend",
         "hours": "Hours Trend"
       }
+    }
+    ,
+    "ability": {
+      "title": "Ability Growth Analysis",
+      "subtitle": "Visualize your ability development",
+      "loading": "Loading ability data...",
+      "radar": "Ability Radar",
+      "recommendations": "Recommendations",
+      "noRecommendations": "No recommendations.",
+      "trend": "Ability Trend"
+    },
+    
+    "grades": {
+      "title": "My Grades",
+      "subtitle": "View all your assignment scores and feedback",
+      "loading": "Loading grades...",
+      "assignmentId": "Assignment ID",
+      "gradedAt": "Graded on",
+      "outOf": " / 100",
+      "emptyTitle": "No graded assignments yet",
+      "emptyDesc": "After you submit assignments, you will see your grades here."
     }
   }
 }

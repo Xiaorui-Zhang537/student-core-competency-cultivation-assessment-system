@@ -67,7 +67,7 @@ npm run dev
 - AI：
   - `AI_DEFAULT_PROVIDER`（默认 `openrouter`）
   - `OPENROUTER_API_KEY` 或 `DEEPSEEK_API_KEY`
-  - `DEEPSEEK_MODEL`（默认 `deepseek/deepseek-reasoner`）
+  - `DEEPSEEK_MODEL`（默认 `deepseek/deepseek-chat-v3.1`）
 
 前端：
 - 统一使用 `VITE_API_BASE_URL` 指向后端基础地址（不含 `/api`），例如：
@@ -116,6 +116,15 @@ server {
 - `backend/`：Spring Boot 后端
 - `frontend/`：Vue 3 前端
 - `docs/`：新手手册与深入文档（见下文）
+
+---
+
+## 更新日志（学生端改造）
+- 国际化：学生端主要页面已统一采用 i18n，无中文兜底硬编码（`frontend/src/features/student/views/AnalyticsView.vue`、`AssignmentsView.vue`、`CourseDetailView.vue`、`GradesView.vue`）。
+- 语言包：补充 `student.grades.*` 文案键（中英双语）。
+- 品牌统一：统一采用玻璃拟态样式（`glass-*` 与 `v-glass`）、并复用 `components/ui` 组件。
+- 接口对齐：前端 `studentApi` 与后端 `/api/students/*` 路由逐项核对；`CourseDetailView` 的课程进度改用 `studentApi.getCourseProgress`。
+- 文档：更新 `docs/backend/api/student.md` 与 `docs/i18n-examples.md`。
 
 ---
 
@@ -188,8 +197,8 @@ server {
 ---
 
 ## 支持与联系
-- Issues: https://github.com/Xiaorui-Zhang537/student-assessment-system/issues
-- Discussions: https://github.com/Xiaorui-Zhang537/student-assessment-system/discussions
+- Issues: https://github.com/Xiaorui-Zhang537/student-core-competency-cultivation-assessment-system/issues
+- Discussions: https://github.com/Xiaorui-Zhang537/student-core-competency-cultivation-assessment-system/discussions
 - 邮箱: xiaorui537537@Gmail.com
 
 > Made with ❤️ by Student Assessment Development Team

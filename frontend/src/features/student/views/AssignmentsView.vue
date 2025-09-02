@@ -2,8 +2,8 @@
   <div class="space-y-5">
     <header class="flex items-center justify-between">
       <div>
-        <h1 class="text-2xl font-bold text-gray-900 dark:text-white">{{ t('student.assignments.title') || '我的作业' }}</h1>
-        <p class="text-gray-600 dark:text-gray-400">{{ t('student.assignments.subtitle') || '查看与提交作业' }}</p>
+        <h1 class="text-2xl font-bold text-gray-900 dark:text-white">{{ t('student.assignments.title') }}</h1>
+        <p class="text-gray-600 dark:text-gray-400">{{ t('student.assignments.subtitle') }}</p>
       </div>
     </header>
 
@@ -14,7 +14,7 @@
         <GlassSelect v-model="filters.courseId" :options="courseOptions" class="w-56 ml-2"/>
       </template>
       <template #right>
-        <input v-model="filters.keyword" :placeholder="t('student.assignments.search') || '搜索作业'" class="input" />
+        <input v-model="filters.keyword" :placeholder="t('student.assignments.search')" class="input" />
       </template>
     </FilterBar>
 
@@ -29,17 +29,38 @@
             </div>
             <div class="text-sm text-gray-600 dark:text-gray-300 mt-1 truncate">{{ a.courseTitle || a.courseName || a.course?.title }}</div>
             <div class="text-xs text-gray-500 dark:text-gray-400 mt-1">
-              {{ t('student.assignments.due') || '截止：' }}{{ formatTime(a.dueDate || a.dueAt) }}
+              {{ t('student.assignments.due') }}{{ formatTime(a.dueDate || a.dueAt) }}
             </div>
           </div>
           <div class="flex items-center gap-2">
-            <Button v-if="normalizedStatus(a.status)==='PENDING'" variant="primary" size="sm" @click="submit(a.id)">{{ t('student.assignments.actions.submit') || '提交' }}</Button>
-            <Button v-else-if="normalizedStatus(a.status)==='SUBMITTED'" variant="menu" size="sm" @click="view(a.id)">{{ t('student.assignments.actions.view') || '查看' }}</Button>
-            <Button v-else variant="menu" size="sm" @click="view(a.id)">{{ t('student.assignments.actions.review') || '查看评分' }}</Button>
+            <Button v-if="normalizedStatus(a.status)==='PENDING'" variant="primary" size="sm" @click="submit(a.id)">{{ t('student.assignments.actions.submit') }}</Button>
+            <Button v-else-if="normalizedStatus(a.status)==='SUBMITTED'" variant="menu" size="sm" @click="view(a.id)">{{ t('student.assignments.actions.view') }}</Button>
+            <Button v-else variant="menu" size="sm" @click="view(a.id)">{{ t('student.assignments.actions.review') }}</Button>
           </div>
         </div>
-        <div v-if="!loading && list.length===0" class="p-8 text-center text-gray-500 dark:text-gray-400">{{ t('student.assignments.empty') || '暂无作业' }}</div>
-        <div v-if="loading" class="p-8 text-center text-gray-500 dark:text-gray-400">{{ t('shared.loading') || '加载中...' }}</div>
+        <div v-if="!loading && list.length===0" class="p-8 text-center text-gray-500 dark:text-gray-400">{{ t('student.assignments.empty') }}</div>
+        <div v-if="loading" class="p-8 text-center text-gray-500 dark:text-gray-400">{{ t('shared.loading') }}</div>
+      </div>
+    </div>
+
+    <!-- 分页控制 -->
+    <div class="mt-6 flex items-center justify-between">
+      <div class="flex items-center space-x-2">
+        <span class="text-sm text-gray-700">{{ t('student.assignments.pagination.perPagePrefix') }}</span>
+        <div class="w-24">
+          <GlassPopoverSelect
+            :options="[{label:'10', value:10},{label:'20', value:20},{label:'50', value:50}]"
+            :model-value="pageSize"
+            @update:modelValue="(v:any)=>{ pageSize = Number(v||10); changePageSize() }"
+            size="sm"
+          />
+        </div>
+        <span class="text-sm text-gray-700">{{ t('student.assignments.pagination.perPageSuffix') }}</span>
+      </div>
+      <div class="flex items-center space-x-2">
+        <Button variant="outline" size="sm" :disabled="loading || currentPage===1" @click="prevPage">{{ t('student.assignments.pagination.prev') }}</Button>
+        <span class="text-sm">{{ t('student.assignments.pagination.page', { page: currentPage }) }}</span>
+        <Button variant="outline" size="sm" :disabled="loading || currentPage>=totalPages" @click="nextPage">{{ t('student.assignments.pagination.next') }}</Button>
       </div>
     </div>
   </div>
@@ -53,6 +74,7 @@ import Button from '@/components/ui/Button.vue'
 import GlassSelect from '@/components/ui/filters/GlassSelect.vue'
 import FilterBar from '@/components/ui/filters/FilterBar.vue'
 import { studentApi } from '@/api/student.api'
+import GlassPopoverSelect from '@/components/ui/filters/GlassPopoverSelect.vue'
 
 const { t } = useI18n()
 const router = useRouter()
@@ -60,15 +82,19 @@ const router = useRouter()
 const loading = ref(false)
 const list = ref<any[]>([])
 const filters = ref<{ status: string, courseId: string | number | null, keyword: string }>({ status: 'ALL', courseId: null, keyword: '' })
+const currentPage = ref(1)
+const pageSize = ref(10)
+const total = ref(0)
+const totalPages = ref(1)
 
 const statusOptions = computed(() => [
-  { label: t('student.assignments.filters.all') || '全部', value: 'ALL' },
-  { label: t('student.assignments.filters.pending') || '待提交', value: 'PENDING' },
-  { label: t('student.assignments.filters.submitted') || '已提交', value: 'SUBMITTED' },
-  { label: t('student.assignments.filters.graded') || '已评分', value: 'GRADED' }
+  { label: t('student.assignments.filters.all'), value: 'ALL' },
+  { label: t('student.assignments.filters.pending'), value: 'PENDING' },
+  { label: t('student.assignments.filters.submitted'), value: 'SUBMITTED' },
+  { label: t('student.assignments.filters.graded'), value: 'GRADED' }
 ])
 
-const courseOptions = ref<Array<{ label: string, value: string }>>([{ label: t('student.assignments.filters.courseAll') || '全部课程', value: '' }])
+const courseOptions = ref<Array<{ label: string, value: string }>>([{ label: t('student.assignments.filters.courseAll'), value: '' }])
 
 function statusBadgeClass(s: string) {
   if (s === 'PENDING') return 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-300'
@@ -77,10 +103,10 @@ function statusBadgeClass(s: string) {
   return 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300'
 }
 function statusText(s: string) {
-  if (s === 'PENDING') return t('student.assignments.status.pending') || '待提交'
-  if (s === 'SUBMITTED') return t('student.assignments.status.submitted') || '已提交'
-  if (s === 'GRADED') return t('student.assignments.status.graded') || '已评分'
-  return t('student.assignments.status.unknown') || '未知'
+  if (s === 'PENDING') return t('student.assignments.status.pending')
+  if (s === 'SUBMITTED') return t('student.assignments.status.submitted')
+  if (s === 'GRADED') return t('student.assignments.status.graded')
+  return t('student.assignments.status.unknown')
 }
 function formatTime(ts: string) {
   const d = new Date(ts)
@@ -92,9 +118,9 @@ async function loadCourses() {
     const res: any = await studentApi.getMyCourses({ page: 1, size: 200 })
     const items = res?.data?.items?.items || res?.data?.items || res?.items || []
     const opts = items.map((c: any) => ({ label: c.title || c.name || `#${c.id}`, value: String(c.id) }))
-    courseOptions.value = [{ label: t('student.assignments.filters.courseAll') || '全部课程', value: '' }, ...opts]
+    courseOptions.value = [{ label: t('student.assignments.filters.courseAll'), value: '' }, ...opts]
   } catch {
-    courseOptions.value = [{ label: t('student.assignments.filters.courseAll') || '全部课程', value: '' }]
+    courseOptions.value = [{ label: t('student.assignments.filters.courseAll'), value: '' }]
   }
 }
 
@@ -122,9 +148,14 @@ async function loadList() {
     const st = mapToBackendStatus(filters.value.status)
     if (st) params.status = st
     if (filters.value.keyword) params.q = filters.value.keyword
+    params.page = currentPage.value
+    params.size = pageSize.value
     const res: any = await studentApi.getAssignments(params)
-    const items = res?.data?.items || res?.items || res || []
+    const items = res?.items || res?.data?.items || res || []
     list.value = Array.isArray(items) ? items : (items.items || [])
+    total.value = Number(res?.total ?? (Array.isArray(list.value) ? list.value.length : 0))
+    const tp = Number(res?.totalPages)
+    totalPages.value = Number.isFinite(tp) && tp > 0 ? tp : Math.max(1, Math.ceil((total.value || 0) / pageSize.value))
   } finally {
     loading.value = false
   }
@@ -138,10 +169,27 @@ function view(id: number | string) {
 }
 
 watch(filters, loadList, { deep: true })
+watch([currentPage, pageSize], () => loadList())
 onMounted(async () => {
   await loadCourses()
   await loadList()
 })
+
+function prevPage() {
+  if (currentPage.value > 1) {
+    currentPage.value -= 1
+  }
+}
+
+function nextPage() {
+  if (currentPage.value < totalPages.value) {
+    currentPage.value += 1
+  }
+}
+
+function changePageSize() {
+  currentPage.value = 1
+}
 </script>
 
 <style scoped>

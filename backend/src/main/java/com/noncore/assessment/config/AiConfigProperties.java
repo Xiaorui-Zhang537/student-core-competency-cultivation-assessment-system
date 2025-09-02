@@ -28,7 +28,7 @@ public class AiConfigProperties {
 
     @Data
     public static class Deepseek {
-        private String model = "deepseek/deepseek-chat-v3-0324:free";
+        private String model = "deepseek/deepseek-chat-v3.1";
     }
 }
 

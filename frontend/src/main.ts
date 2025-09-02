@@ -8,7 +8,7 @@ import { createNotificationStream } from '@/composables/useNotificationStream'
 import '@/styles/main.postcss'
 import GlassDirective from '@/directives/glass'
 import ClickOutsideDirective from '@/directives/clickOutside'
-import { i18n, loadLocaleMessages, REQUIRED_NAMESPACES } from '@/i18n'
+import { i18n, loadLocaleMessages, REQUIRED_NAMESPACES, setLocale } from '@/i18n'
 
 async function initializeApp() {
   const app = createApp(App)
@@ -39,9 +39,14 @@ async function initializeApp() {
   // 初始化UI相关的store
   uiStore.initDarkMode()
 
-  // 初始化国际化：统一加载所需命名空间，避免初次渲染缺键
-  const locale = (i18n.global.locale.value as 'zh-CN' | 'en-US')
-  await loadLocaleMessages(locale, [...REQUIRED_NAMESPACES])
+  // 初始化国际化：归一化语言代码并加载命名空间，避免出现 zh/en 缺键
+  const raw = String(i18n.global.locale.value)
+  const normalized = raw === 'zh' ? 'zh-CN' : raw === 'en' ? 'en-US' : (raw as 'zh-CN' | 'en-US')
+  if (normalized !== raw) {
+    await setLocale(normalized)
+  } else {
+    await loadLocaleMessages(normalized, [...REQUIRED_NAMESPACES])
+  }
   
   // 最后挂载应用
   app.mount('#app')

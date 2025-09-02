@@ -14,6 +14,14 @@ export const useStudentStore = defineStore('student', () => {
     activeCourses: [],
     recentGrades: [],
     overallProgress: 0,
+    stats: {
+      activeCourses: 0,
+      pendingAssignments: 0,
+      averageScore: 0,
+      totalStudyTime: 0,
+      weeklyStudyTime: 0,
+      unreadNotifications: 0,
+    },
   };
 
   const dashboardData = ref<StudentDashboardData>(defaultDashboardData);
@@ -58,6 +66,14 @@ export const useStudentStore = defineStore('student', () => {
           score: Number(g.score || 0),
           gradedAt: g.gradedAt,
         })),
+        stats: {
+          activeCourses: Number(stats.activeCourses || 0),
+          pendingAssignments: Number(stats.pendingAssignments || 0),
+          averageScore: Number(stats.averageScore || 0),
+          totalStudyTime: Number(stats.totalStudyTime || 0),
+          weeklyStudyTime: Number(stats.weeklyStudyTime || 0),
+          unreadNotifications: Number(stats.unreadNotifications || 0),
+        },
       } as StudentDashboardData;
 
       // Fallback：若后端 recentCourses 为空，则回退到分页我的课程接口

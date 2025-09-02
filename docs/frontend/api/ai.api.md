@@ -22,7 +22,7 @@
 const { answer } = await aiApi.chat({ messages: [{ role: 'user', content: '你好' }] })
 
 // 会话流
-const conv = await aiApi.createConversation({ title: '课程问答', model: 'deepseek-r1' })
+const conv = await aiApi.createConversation({ title: '课程问答', model: 'deepseek/deepseek-chat-v3.1' })
 await aiApi.listMessages(conv.id, { page: 1, size: 50 })
 await aiApi.updateConversation(conv.id, { pinned: true })
 await aiApi.removeConversation(conv.id)

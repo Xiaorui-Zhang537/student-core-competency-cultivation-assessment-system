@@ -33,6 +33,13 @@ Authorization: Bearer <token>
 ```
 
 - `POST /api/assignments/{id}/remind-unsubmitted`：提醒未交（可携带 `message`）
+## 5. 学生提交接口（位于 SubmissionController）
+- `GET /api/assignments/{assignmentId}/submission`：获取当前学生对该作业的提交详情
+- `POST /api/assignments/{assignmentId}/submit`：提交作业（JSON）
+  - 请求体：`{ content: string, fileIds?: number[] }`
+- `POST /api/assignments/{assignmentId}/draft`：保存草稿（表单）
+  - 参数：`content`（表单字段）
+
 请求：
 ```json
 { "message": "请尽快提交作业，截止今晚23:59" }

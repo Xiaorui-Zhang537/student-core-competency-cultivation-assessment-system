@@ -14,8 +14,15 @@
       "errorTitle": "无法加载仪表盘数据",
       "errorDesc": "请稍后再试。",
       "goDo": "去完成",
-      "continue": "继续学习"
+      "continue": "继续学习",
+      "cards": {
+        "activeCourses": "进行中课程",
+        "pendingAssignments": "待完成作业",
+        "averageScore": "平均分",
+        "weeklyStudyHours": "本周学习时长(小时)"
+      }
     },
+    
     "courses": {
       "title": "我的课程",
       "subtitle": "浏览和管理您的学习课程",
@@ -31,7 +38,28 @@
       "goStore": "去课程商店看看",
       "instructor": "讲师",
       "statusCompleted": "已完成",
-      "statusOngoing": "进行中"
+      "statusOngoing": "进行中",
+      "progressLabel": "学习进度",
+      "storeTitle": "课程商店",
+      "processing": "处理中...",
+      "enrolled": "已报名",
+      "enroll": "加入课程"
+    },
+    "courses.detail": {
+      "contents": "课程内容",
+      "completed": "已完成",
+      "markCompleted": "标记完成",
+      "collapse": "收起",
+      "expand": "展开",
+      "materials": "资料",
+      "noMaterials": "暂无资料",
+      "sectionAssignments": "本节作业",
+      "noSectionAssignments": "本节暂无作业",
+      "instructorInfo": "讲师信息",
+      "contactTeacher": "联系老师",
+      "notFoundTitle": "课程不存在",
+      "notFoundDesc": "抱歉，您访问的课程不存在或已被删除。",
+      "backToList": "返回课程列表"
     },
     "analysis": {
       "title": "学习分析",
@@ -45,7 +73,13 @@
       "trendCompletion": "完成率趋势",
       "trendHours": "学习时长趋势",
       "loading": "正在加载分析数据...",
-      "empty": "暂无可展示的数据"
+      "empty": "暂无可展示的数据",
+      "series": {
+        "me": "我",
+        "score": "成绩",
+        "completion": "完成率",
+        "hours": "时长"
+      }
     },
     "home": {
       "sections": { "quickEntries": "快速入口" },
@@ -87,7 +121,35 @@
         "review": "查看评分"
       },
       "due": "截止：",
-      "empty": "暂无作业"
+      "empty": "暂无作业",
+      "pagination": {
+        "perPagePrefix": "每页",
+        "perPageSuffix": "条",
+        "prev": "上一页",
+        "next": "下一页",
+        "page": "第 {page} 页"
+      },
+      "submit": {
+        "status": "状态:",
+        "contentTitle": "提交内容",
+        "contentPlaceholder": "在此输入您的作业内容...",
+        "uploadTitle": "上传附件",
+        "uploading": "正在上传...",
+        "uploadedList": "已上传文件:",
+        "delete": "删除",
+        "saveDraft": "保存草稿",
+        "submit": "提交作业",
+        "success": "作业已成功提交",
+        "loading": "正在加载作业详情...",
+        "errors": {
+          "uploadFailedTitle": "上传失败",
+          "uploadFailedMsg": "文件上传失败，请重试。",
+          "deleteFailedTitle": "删除失败",
+          "deleteFailedMsg": "文件删除失败，请重试。",
+          "contentEmptyTitle": "内容为空",
+          "contentEmptyMsg": "请输入作业内容后再提交。"
+        }
+      }
     },
     "analytics": {
       "title": "成绩分析",
@@ -112,6 +174,26 @@
         "completion": "完成率趋势",
         "hours": "时长趋势"
       }
+    }
+    ,
+    "ability": {
+      "title": "能力成长分析",
+      "subtitle": "可视化您的能力发展轨迹",
+      "loading": "正在加载能力数据...",
+      "radar": "能力雷达图",
+      "recommendations": "提升建议",
+      "noRecommendations": "暂无建议。",
+      "trend": "能力发展趋势"
+    },
+    "grades": {
+      "title": "我的成绩",
+      "subtitle": "查看您所有作业的评分和反馈",
+      "loading": "正在加载成绩...",
+      "assignmentId": "作业 ID",
+      "gradedAt": "评分于",
+      "outOf": " / 100",
+      "emptyTitle": "暂无已评分的作业",
+      "emptyDesc": "完成并提交作业后，您可以在此处查看您的成绩。"
     }
   }
 }

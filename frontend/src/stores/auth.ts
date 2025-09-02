@@ -66,7 +66,14 @@ export const useAuthStore = defineStore('auth', () => {
       message: i18n.global.t('app.auth.loginSuccess.msg', { name: data.user.username }) as string
     });
     await nextTick();
-    await router.push(data.user.role === 'TEACHER' ? '/teacher/dashboard' : '/student/dashboard');
+    // 支持 redirect 参数，默认学生到 /student/home，教师到 /teacher/dashboard
+    const queryRedirect = (router.currentRoute.value.query?.redirect as string) || '';
+    if (queryRedirect) {
+      await router.push(queryRedirect);
+      return;
+    }
+    const target = data.user.role === 'TEACHER' ? '/teacher/dashboard' : '/student/home';
+    await router.push(target);
   };
 
   const register = async (details: RegisterRequest) => {

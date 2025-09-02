@@ -1,7 +1,7 @@
 <template>
   <div
     :class="[
-      'rounded-2xl border bg-gradient-to-br shadow-sm transition-all duration-200',
+      'rounded-2xl border bg-gradient-to-br shadow-sm transition-all duration-200 relative z-10 opacity-100',
       toneClasses,
       hoverable ? 'hover:shadow-md hover:scale-[1.02]' : '',
       dense ? 'p-4' : 'p-6'

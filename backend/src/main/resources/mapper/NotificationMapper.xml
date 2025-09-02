@@ -238,11 +238,17 @@
         LIMIT #{limit}
     </select>
 
-    <!-- 获取最近通知（兼容旧调用） -->
-    <select id="findRecentNotifications" resultMap="NotificationResultMap">
-        SELECT <include refid="Base_Column_List"/>
+    <!-- 获取最近通知（学生仪表盘DTO） -->
+    <select id="findRecentNotifications" resultType="com.noncore.assessment.dto.response.StudentDashboardResponse$RecentNotificationDto">
+        SELECT 
+            id,
+            title,
+            content,
+            type,
+            is_read AS isRead,
+            DATE_FORMAT(created_at, '%Y-%m-%d %H:%i:%s') AS createdAt
         FROM notifications
-        WHERE user_id = #{userId} AND deleted = 0
+        WHERE user_id = #{recipientId} AND deleted = 0
         ORDER BY created_at DESC
         LIMIT #{limit}
     </select>

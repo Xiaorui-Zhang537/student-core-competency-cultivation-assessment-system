@@ -11,6 +11,7 @@
 
 ## 参数与返回
 - 分页：`{ page?: number; size?: number; q?: string }`
+- 学生作业筛选：`getAssignments({ courseId?: string; status?: string; q?: string; page?: number; size?: number })`
 - `StudentDashboardData`/`StudentCourse`/`StudentLesson`/`StudentSubmission` 见 `@/types/student`
 - `getAnalysis`：`{ range?: '7d'|'30d'|'term' }`，返回包含 KPI/雷达/趋势/近期成绩
 
@@ -30,7 +31,10 @@ const lesson = await studentApi.getLessonDetails('3001')
 await studentApi.markLessonAsCompleted('3001')
 await studentApi.markLessonAsIncomplete('3001')
 
-// 我的作业与成绩
+// 我的作业（分页/筛选）
+const myAssignments = await studentApi.getAssignments({ courseId: '1001', status: 'pending', page: 1, size: 10 })
+
+// 我的提交与成绩
 const subs = await studentApi.getMySubmissions({ courseId: '1001' })
 
 // 学业分析

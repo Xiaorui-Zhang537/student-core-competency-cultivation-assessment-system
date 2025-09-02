@@ -22,8 +22,29 @@ curl -H "Authorization: Bearer $TOKEN" -H "Content-Type: application/json" \
     "messages": [ { "role": "user", "content": "请按作业 3001 的评分标准给出建议" } ],
     "courseId": 2001,
     "studentIds": [1001],
-    "model": "deepseek-chat",
-    "provider": "deepseek"
+    "model": "deepseek/deepseek-chat-v3.1",
+    "provider": "openrouter"
+  }' \
+  http://localhost:8080/api/ai/chat
+```
+### 多模态示例（图片输入：Gemini）
+```bash
+curl -H "Authorization: Bearer $TOKEN" -H "Content-Type: application/json" \
+  -d '{
+    "messages": [ { "role": "user", "content": "请描述图片" } ],
+    "model": "google/gemini-2.5-flash-image-preview:free",
+    "attachmentFileIds": [12345]
+  }' \
+  http://localhost:8080/api/ai/chat
+```
+说明：后端会将 `attachmentFileIds` 转换为 OpenAI 兼容消息结构中的 `image_url`，通过统一下载接口注入到最后一条用户消息。
+
+### 其他模型示例（OpenAI: gpt-oss-120b）
+```bash
+curl -H "Authorization: Bearer $TOKEN" -H "Content-Type: application/json" \
+  -d '{
+    "messages": [ { "role": "user", "content": "请总结这段文本的要点" } ],
+    "model": "openai/gpt-oss-120b:free"
   }' \
   http://localhost:8080/api/ai/chat
 ```
@@ -46,7 +67,7 @@ curl -H "Authorization: Bearer $TOKEN" -H "Content-Type: application/json" \
 - 创建会话：
 ```bash
 curl -H "Authorization: Bearer $TOKEN" -H "Content-Type: application/json" \
-  -d '{ "title": "班级分析", "model": "deepseek-chat", "provider": "deepseek" }' \
+  -d '{ "title": "班级分析", "model": "deepseek/deepseek-chat-v3.1", "provider": "openrouter" }' \
   http://localhost:8080/api/ai/conversations
 ```
 - 会话列表：

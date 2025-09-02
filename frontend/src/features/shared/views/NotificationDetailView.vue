@@ -1,7 +1,9 @@
 <template>
   <div class="max-w-3xl mx-auto py-6">
     <div v-if="loading" class="text-center text-gray-500 dark:text-gray-400">{{ t('notifications.loading') }}</div>
-    <div v-else-if="!notification" class="text-center text-gray-500 dark:text-gray-400">{{ t('notifications.empty') }}</div>
+    <div v-else-if="!notification" class="text-center text-gray-500 dark:text-gray-400">
+      {{ t('notifications.empty') }}
+    </div>
     <div v-else class="bg-white dark:bg-gray-800 shadow rounded-xl p-6 border border-gray-100 dark:border-gray-700">
       <div class="flex items-start justify-between">
         <div class="flex items-center gap-2">
@@ -66,13 +68,15 @@ const { currentNotification: notification, loading } = storeToRefs(notifications
 const chatStore = useChatStore()
 
 const id = route.params.id as string
+const isTeacher = computed(() => String(route.path || '').startsWith('/teacher'))
+const base = computed(() => (isTeacher.value ? '/teacher' : '/student'))
 
 onMounted(async () => {
   await notificationsStore.fetchNotificationDetail(id)
 })
 
 const markRead = async () => { await notificationsStore.markAsRead(id) }
-const goCenter = () => { router.push('/teacher/notifications') }
+const goCenter = () => { router.push(`${base.value}/notifications`) }
 
 const goRelated = async () => {
   const n: any = notification.value
@@ -84,17 +88,17 @@ const goRelated = async () => {
     switch (rt || t) {
       case 'assignment':
       case 'assignment_deadline':
-        return `/teacher/assignments/${n.relatedId}/submissions`
+        return isTeacher.value ? `${base.value}/assignments/${n.relatedId}/submissions` : `${base.value}/assignments/${n.relatedId}`
       case 'course':
       case 'course_update':
-        return `/teacher/courses/${n.relatedId}`
+        return `${base.value}/courses/${n.relatedId}`
       case 'grade':
       case 'grade_posted':
-        return '/teacher/analytics'
+        return isTeacher.value ? `${base.value}/analytics` : `${base.value}/analysis`
       case 'community_post':
-        return `/teacher/community/post/${n.relatedId}`
+        return `${base.value}/community/post/${n.relatedId}`
       case 'message':
-        return '/teacher/notifications'
+        return `${base.value}/notifications`
       default:
         return ''
     }

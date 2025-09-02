@@ -131,6 +131,79 @@ public class AbilityAnalyticsServiceImpl implements AbilityAnalyticsService {
         return resp;
     }
 
+    // ==== Student-facing variants ====
+    @Override
+    public AbilityRadarResponse getRadarForStudent(AbilityRadarQuery query, Long studentId) {
+        // 学生态不校验课程归属教师，但要求 studentId 不为空
+        Objects.requireNonNull(studentId, "studentId required");
+        validateDates(query.getStartDate(), query.getEndDate());
+
+        LocalDateTime start = query.getStartDate().atStartOfDay();
+        LocalDateTime end = query.getEndDate().atTime(LocalTime.MAX);
+
+        Map<String, Double> classAvg = aggregateDimensions(null, query.getCourseId(), query.getClassId(), start, end);
+        Map<String, Double> student = aggregateDimensions(studentId, query.getCourseId(), query.getClassId(), start, end);
+        double classGrade = normalizeGradeAvg(query.getCourseId(), query.getClassId(), null, start, end);
+        double studentGrade = normalizeGradeAvg(query.getCourseId(), query.getClassId(), studentId, start, end);
+
+        List<Double> classScores = new ArrayList<>();
+        List<Double> studentScores = new ArrayList<>();
+        for (String name : DIMENSIONS) {
+            if ("学习成绩".equals(name)) {
+                classScores.add(classGrade);
+                studentScores.add(studentGrade);
+            } else {
+                classScores.add(classAvg.getOrDefault(name, 0.0));
+                studentScores.add(student.getOrDefault(name, 0.0));
+            }
+        }
+        List<Double> deltas = new ArrayList<>();
+        for (int i = 0; i < DIMENSIONS.size(); i++) {
+            deltas.add(round(studentScores.get(i) - classScores.get(i)));
+        }
+        Map<String, Double> weights = loadWeightsOrDefault(query.getCourseId());
+        double studentComposite = round(weightedComposite(studentScores, weights));
+        double classComposite = round(weightedComposite(classScores, weights));
+
+        AbilityRadarResponse.PreviousPeriod prev = buildPreviousPeriod(query);
+
+        List<String> weak = new ArrayList<>();
+        for (int i = 0; i < DIMENSIONS.size(); i++) {
+            double s = studentScores.get(i);
+            double d = deltas.get(i);
+            if (s < 60 || d < -10) {
+                weak.add(DIMENSIONS.get(i));
+            }
+        }
+
+        return AbilityRadarResponse.builder()
+                .dimensions(DIMENSIONS)
+                .studentScores(studentScores)
+                .classAvgScores(classScores)
+                .deltas(deltas)
+                .weights(weights)
+                .studentComposite(studentComposite)
+                .classComposite(classComposite)
+                .compositeDelta(round(studentComposite - classComposite))
+                .prevPeriod(prev)
+                .weakDimensions(weak)
+                .build();
+    }
+
+    @Override
+    public AbilityCompareResponse getRadarCompareForStudent(AbilityCompareQuery query, Long studentId) {
+        Objects.requireNonNull(studentId, "studentId required");
+        query.setStudentId(studentId);
+        return getRadarCompare(query, null);
+    }
+
+    @Override
+    public AbilityDimensionInsightsResponse getDimensionInsightsForStudent(AbilityCompareQuery query, Long studentId) {
+        Objects.requireNonNull(studentId, "studentId required");
+        query.setStudentId(studentId);
+        return getDimensionInsights(query, null);
+    }
+
     @Override
     public AbilityWeightsResponse getWeights(Long courseId, Long teacherId) {
         Course course = courseMapper.selectCourseById(courseId);

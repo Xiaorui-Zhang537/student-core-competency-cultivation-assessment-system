@@ -64,7 +64,7 @@ const routes = [
     children: [
       {
         path: '',
-        redirect: 'dashboard'
+        redirect: '/student/home'
       },
       {
         path: 'dashboard',
@@ -118,12 +118,12 @@ const routes = [
       {
         path: 'notifications',
         name: 'StudentNotifications',
-        component: () => import('@/features/student/views/NotificationsView.vue')
+        component: () => import('@/features/shared/views/NotificationsView.vue')
       },
       {
         path: 'notifications/:id',
         name: 'StudentNotificationDetail',
-        component: () => import('@/features/student/views/NotificationDetailView.vue'),
+        component: () => import('@/features/shared/views/NotificationDetailView.vue'),
         props: true
       }
       ,
@@ -213,12 +213,6 @@ const routes = [
       },
       
       {
-        path: 'ai',
-        name: 'TeacherAI',
-        component: () => import('@/features/shared/views/AIAssistantView.vue'),
-        meta: { requiresAuth: true, role: 'TEACHER' }
-      },
-      {
         path: 'assistant',
         name: 'TeacherAssistant',
         component: () => import('@/features/shared/views/AIAssistantView.vue'),
@@ -247,12 +241,12 @@ const routes = [
       {
         path: 'notifications',
         name: 'TeacherNotifications',
-        component: () => import('@/features/teacher/views/NotificationsView.vue')
+        component: () => import('@/features/shared/views/NotificationsView.vue')
       },
       {
         path: 'notifications/:id',
         name: 'TeacherNotificationDetail',
-        component: () => import('@/features/teacher/views/NotificationDetailView.vue'),
+        component: () => import('@/features/shared/views/NotificationDetailView.vue'),
         props: true
       }
       // ... 其他教师路由

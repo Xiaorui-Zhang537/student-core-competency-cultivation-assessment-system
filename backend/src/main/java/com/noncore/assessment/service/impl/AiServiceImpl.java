@@ -7,9 +7,12 @@ import com.noncore.assessment.entity.User;
 import com.noncore.assessment.exception.BusinessException;
 import com.noncore.assessment.exception.ErrorCode;
 import com.noncore.assessment.service.AiService;
+import com.noncore.assessment.service.AiConversationService;
+import com.noncore.assessment.entity.AiConversation;
 import com.noncore.assessment.service.CourseService;
 import com.noncore.assessment.service.EnrollmentService;
-import com.noncore.assessment.service.llm.DeepseekClient;
+import com.noncore.assessment.service.FileStorageService;
+import com.noncore.assessment.service.llm.LlmClient;
 import com.noncore.assessment.service.llm.PromptBuilder;
 import com.noncore.assessment.config.AiConfigProperties;
 import lombok.RequiredArgsConstructor;
@@ -21,6 +24,8 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.Map;
+import java.util.Base64;
 
 @Service
 @RequiredArgsConstructor
@@ -28,9 +33,11 @@ public class AiServiceImpl implements AiService {
 
     private final EnrollmentService enrollmentService;
     private final CourseService courseService;
-    private final DeepseekClient deepseekClient;
+    private final LlmClient deepseekClient;
     private final PromptBuilder promptBuilder;
     private final AiConfigProperties aiConfigProperties;
+    private final FileStorageService fileStorageService;
+    private final AiConversationService conversationService;
 
     @Override
     public String generateAnswer(AiChatRequest request, Long teacherId) {
@@ -68,12 +75,65 @@ public class AiServiceImpl implements AiService {
             }
         }
 
-        // 画像与提示词构建
+        // 画像与提示词构建（文本）
         List<Message> built = promptBuilder.buildMessages(messages, course, students);
 
-        String model = (request.getModel() == null || request.getModel().isBlank())
-                ? aiConfigProperties.getDeepseek().getModel()
-                : request.getModel();
+        // 将附件（如有）注入多模态消息结构：将最近一条 user 消息的 content 替换为 content[]，附加 image_url
+        List<Map<String, Object>> payloadMessages = new java.util.ArrayList<>();
+        for (Message m : built) {
+            payloadMessages.add(java.util.Map.of(
+                    "role", m.getRole(),
+                    "content", m.getContent()
+            ));
+        }
+        List<Long> attachments = request.getAttachmentFileIds();
+        if (attachments != null && !attachments.isEmpty()) {
+            // 找到最后一条 user 消息
+            for (int i = payloadMessages.size() - 1; i >= 0; i--) {
+                Object role = payloadMessages.get(i).get("role");
+                if ("user".equals(String.valueOf(role))) {
+                    Object content = payloadMessages.get(i).get("content");
+                    java.util.List<Object> contentList = new java.util.ArrayList<>();
+                    if (content != null && !String.valueOf(content).isBlank()) {
+                        contentList.add(java.util.Map.of("type", "text", "text", String.valueOf(content)));
+                    }
+                    // 将图片以 data URL 内联，避免外网不可达与鉴权问题
+                    for (Long fid : attachments) {
+                        try {
+                            var info = fileStorageService.getFileInfo(fid);
+                            if (info == null || info.getMimeType() == null || !info.getMimeType().startsWith("image/")) {
+                                continue;
+                            }
+                            byte[] bytes = fileStorageService.downloadFile(fid, teacherId);
+                            String b64 = Base64.getEncoder().encodeToString(bytes);
+                            String dataUrl = "data:" + info.getMimeType() + ";base64," + b64;
+                            contentList.add(java.util.Map.of(
+                                    "type", "image_url",
+                                    "image_url", java.util.Map.of("url", dataUrl)
+                            ));
+                        } catch (Exception ignored) { }
+                    }
+                    payloadMessages.set(i, new java.util.HashMap<>(java.util.Map.of(
+                            "role", "user",
+                            "content", contentList
+                    )));
+                    break;
+                }
+            }
+        }
+
+        String model;
+        Long convId = request.getConversationId();
+        if (convId != null) {
+            // 强制单会话单模型：读取会话模型并忽略请求中的 model
+            AiConversation conv = conversationService.getConversation(teacherId, convId);
+            String m = conv != null ? conv.getModel() : null;
+            model = (m == null || m.isBlank()) ? aiConfigProperties.getDeepseek().getModel() : m;
+        } else {
+            model = (request.getModel() == null || request.getModel().isBlank())
+                    ? aiConfigProperties.getDeepseek().getModel()
+                    : request.getModel();
+        }
 
         String baseUrl;
         String apiKey;
@@ -83,7 +143,16 @@ public class AiServiceImpl implements AiService {
         if (baseUrl == null || baseUrl.isBlank()) {
             throw new BusinessException(ErrorCode.INVALID_PARAMETER, "LLM base-url 未配置");
         }
-        return deepseekClient.createChatCompletion(built, model, false, baseUrl, apiKey);
+        try {
+            return deepseekClient.createChatCompletionRaw(payloadMessages, model, false, baseUrl, apiKey);
+        } catch (BusinessException ex) {
+            // 自动降级到 :free 变体（兼容只开通免费模型的环境），不改变前端显示
+            if (!model.endsWith(":free")) {
+                String fallbackModel = model + ":free";
+                return deepseekClient.createChatCompletionRaw(payloadMessages, fallbackModel, false, baseUrl, apiKey);
+            }
+            throw ex;
+        }
     }
 }
 

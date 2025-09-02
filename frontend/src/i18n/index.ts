@@ -54,7 +54,7 @@ const datetimeFormats = {
 export const i18n = createI18n({
   legacy: false,
   locale: getInitialLocale(),
-  fallbackLocale: false,
+  fallbackLocale: 'zh-CN',
   messages: {},
   numberFormats,
   datetimeFormats
@@ -93,21 +93,25 @@ export const REQUIRED_NAMESPACES = ['common', 'app', 'layout', 'teacher', 'share
 
 export async function loadLocaleMessages(locale: SupportedLocale, namespaces: string[]): Promise<void> {
   const loaded: Record<string, boolean> = (i18n.global as any).__loaded || {}
+  // 同步合并到别名（防止外部将 locale 设为 zh/en 而非标准码）
+  const aliasLocales: string[] = locale === 'zh-CN' ? ['zh-CN', 'zh'] : locale === 'en-US' ? ['en-US', 'en'] : [locale]
   for (const ns of namespaces) {
-    const key = `${locale}:${ns}`
-    if (loaded[key]) continue
-    try {
-      const path = `../locales/${locale}/${ns}.json`
-      const mod = localeModules[path]
-      if (!mod) {
-        console.warn(`[i18n] Missing locale module: ${path}`)
-        continue
+    for (const loc of aliasLocales) {
+      const key = `${loc}:${ns}`
+      if (loaded[key]) continue
+      try {
+        const path = `../locales/${locale}/${ns}.json`
+        const mod = localeModules[path]
+        if (!mod) {
+          console.warn(`[i18n] Missing locale module: ${path}`)
+          continue
+        }
+        const messages = (mod as any).default || mod
+        ;(i18n.global as any).mergeLocaleMessage(loc, messages)
+        loaded[key] = true
+      } catch (e) {
+        console.error(`[i18n] Failed to merge namespace "${ns}" for locale "${loc}":`, e)
       }
-      const messages = (mod as any).default || mod
-      ;(i18n.global as any).mergeLocaleMessage(locale, messages)
-      loaded[key] = true
-    } catch (e) {
-      console.error(`[i18n] Failed to merge namespace "${ns}" for locale "${locale}":`, e)
     }
   }
   ;(i18n.global as any).__loaded = loaded

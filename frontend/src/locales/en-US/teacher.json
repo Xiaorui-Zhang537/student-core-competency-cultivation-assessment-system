@@ -424,11 +424,17 @@
 			"model": {
 				"title": "Model Settings",
 				"label": "Model",
-				"default": "OpenAI GPT-4o-mini"
+				"default": "DeepSeek V3.1"
 			},
 			"greeting": "Hello, I'm the AI assistant. Ask me about course analytics, assignment design, and learning recommendations.",
 			"sendFailed": "Send failed. Please try again.",
-			"untitled": "Untitled conversation"
+			"untitled": "Untitled conversation",
+			"modelsInfo": {
+				"title": "Models Info",
+				"deepseek": "DeepSeek V3.1: Hybrid reasoning model supporting both thinking and non-thinking modes; controllable via the 'reasoning' parameter. Long context (up to 128K), strong tool use, code generation, and structured calling.",
+				"gemini": "Gemini 2.5 Flash Image Preview: State-of-the-art multimodal model for image input, generation and edits, with multi-turn conversations—ideal for image-centric tasks.",
+				"gptoss": "OpenAI gpt-oss-120b: 117B-parameter open-weight MoE model focused on high reasoning and agentic use cases; supports configurable reasoning depth, function calling, browsing, and structured outputs."
+			}
 		},
 		"students": {
 			"breadcrumb": {

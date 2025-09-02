@@ -120,3 +120,9 @@ i18n.global.locale.value = 'en-US'
 - 错误提示对齐后端错误码语义
 - 默认中文、回退英文（可配置）
 - 页面空态、按钮文本与通知消息全部可本地化
+
+## 8. 学生端使用规范补充（本次改造）
+- 页面使用 `useI18n` 获取 `t`，移除 `|| '中文兜底'` 这类本地硬编码回退。
+- 新增 `student.grades.*` 键：标题、副标题、加载态、空态、分数字样（outOf）。
+- `AssignmentsView`、`AnalyticsView`、`CourseDetailView` 已统一移除兜底并走 i18n。
+- 统一品牌样式：优先使用 `glass-*` 类与 `v-glass` 指令，按钮/卡片用 `/components/ui` 目录组件。

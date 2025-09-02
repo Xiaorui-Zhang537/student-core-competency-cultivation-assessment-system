@@ -19,11 +19,21 @@ export const submissionApi = {
   },
 
   submitAssignment: (assignmentId: string, data: SubmissionRequest): Promise<ApiResponse<Submission>> => {
-    return api.post(`/assignments/${assignmentId}/submit`, data);
+    const payload = {
+      ...data,
+      fileIds: Array.isArray(data?.fileIds)
+        ? (data.fileIds as any[]).map((v) => {
+            const n = Number(v as any);
+            return Number.isFinite(n) ? n : undefined;
+          }).filter((v) => typeof v === 'number')
+        : undefined,
+    } as any;
+    return api.post(`/assignments/${assignmentId}/submit`, payload);
   },
 
   saveDraft: (assignmentId: string, data: DraftRequest): Promise<ApiResponse<void>> => {
-    return api.post(`/assignments/${assignmentId}/draft`, data);
+    // 后端使用 @RequestParam String content，需以表单/查询参数传递
+    return api.post(`/assignments/${assignmentId}/draft`, undefined as any, { params: { content: data.content } });
   },
 
   // Get grade summary for a submission (map with grade_id etc.)

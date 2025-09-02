@@ -135,7 +135,7 @@ ai:
       base-url: ${OPENROUTER_BASE_URL:https://openrouter.ai/api}
       api-key: ${OPENROUTER_API_KEY:${DEEPSEEK_API_KEY:}}
   deepseek:
-    model: ${DEEPSEEK_MODEL:deepseek/deepseek-reasoner}
+    model: ${DEEPSEEK_MODEL:deepseek/deepseek-chat-v3.1}
 
 # 安全配置
 security:

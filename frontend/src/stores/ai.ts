@@ -30,7 +30,7 @@ export const useAIStore = defineStore('ai', () => {
   const draftsByConvId = reactive<Record<string, string>>({})
   const pendingAttachmentIds = reactive<Record<string, number[]>>({})
   const searchQuery = ref('')
-  const model = ref('openai/gpt-4o-mini')
+  const model = ref('deepseek/deepseek-chat-v3.1')
 
   const fetchConversations = async (params?: { q?: string; pinned?: boolean; archived?: boolean; page?: number; size?: number }) => {
     const res: any = await handleApiCall(() => aiApi.listConversations(params), ui, '加载会话失败')
@@ -102,6 +102,8 @@ export const useAIStore = defineStore('ai', () => {
     if (!messagesByConvId[String(id)]) {
       await fetchMessages(id)
     }
+    // 不再强制覆盖左侧选择器（过滤器）模型，避免右上角模型显示随切换改变
+    // 左侧选择器仅用于“新建会话”的初始模型；已存在会话固定自己的模型
   }
 
   const renameConversation = async (id: number, title: string) => {
@@ -154,6 +156,15 @@ export const useAIStore = defineStore('ai', () => {
 
   const sendMessage = async (payload: { conversationId?: number; content: string; courseId?: number; studentIds?: number[] }) => {
     let convId = payload.conversationId || activeConversationId.value
+    // 若存在激活会话但其模型与当前选择不一致，则新建会话（单会话单模型）
+    if (convId) {
+      const curr = conversations.value.find(c => c.id === convId)
+      const currModel = curr?.model || ''
+      if (currModel && currModel !== model.value) {
+        const created = await createConversation({ title: payload.content?.slice(0, 20) || '新对话', model: model.value })
+        convId = created?.id
+      }
+    }
     if (!convId) {
       const created = await createConversation({ title: payload.content?.slice(0, 20) || '新对话', model: model.value })
       convId = created?.id
@@ -162,6 +173,11 @@ export const useAIStore = defineStore('ai', () => {
     const key = String(convId)
     messagesByConvId[key] = messagesByConvId[key] || []
     messagesByConvId[key].push({ id: Date.now(), role: 'user', content: payload.content })
+    // 首次用户发言即锁定会话模型（即使请求失败也固定显示）
+    const idxBefore = conversations.value.findIndex(c => c.id === convId)
+    if (idxBefore >= 0 && !conversations.value[idxBefore].model) {
+      conversations.value[idxBefore].model = model.value
+    }
 
     const attachments = (pendingAttachmentIds[key] || []).slice()
 
@@ -169,13 +185,18 @@ export const useAIStore = defineStore('ai', () => {
       messages: [{ role: 'user', content: payload.content }],
       courseId: payload.courseId,
       studentIds: payload.studentIds,
-      model: model.value,
+      // 单会话单模型：后端按会话模型执行
       ...(convId ? { conversationId: convId } : {}),
       ...(attachments.length ? { attachmentFileIds: attachments } : {})
     }), ui, '发送失败')
 
     const answer = resp?.answer || (resp?.data?.answer)
     messagesByConvId[key].push({ id: Date.now() + 1, role: 'assistant', content: String(answer || '...') })
+    // 一旦该会话产生（即使失败也已入列用户消息），锁定其模型显示：若会话对象缺少模型信息，则补齐为当前选择模型
+    const idx = conversations.value.findIndex(c => c.id === convId)
+    if (idx >= 0 && !conversations.value[idx].model) {
+      conversations.value[idx].model = model.value
+    }
     draftsByConvId[key] = ''
     clearPendingAttachments(convId)
     return resp

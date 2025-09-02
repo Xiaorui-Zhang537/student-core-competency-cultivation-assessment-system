@@ -1,14 +1,14 @@
 <template>
   <div class="p-6">
     <div v-if="courseStore.loading || lessonStore.loading" class="text-center py-12">
-      <p>正在加载课程详情...</p>
+      <p>{{ t('student.courses.loading') }}</p>
     </div>
 
     <div v-else-if="course" class="max-w-7xl mx-auto">
       <!-- Breadcrumbs -->
       <nav class="mb-6">
         <ol class="flex items-center space-x-2 text-sm">
-          <li><router-link to="/student/courses" class="text-gray-500 hover:text-blue-600">我的课程</router-link></li>
+          <li><router-link to="/student/courses" class="text-gray-500 hover:text-blue-600">{{ t('student.courses.title') }}</router-link></li>
           <li><span class="text-gray-400">/</span></li>
           <li class="font-medium text-gray-700">{{ course.title }}</li>
         </ol>
@@ -22,7 +22,7 @@
             <h1 class="text-3xl font-bold mb-2">{{ course.title }}</h1>
             <p class="text-lg text-gray-600">{{ course.description }}</p>
             <div class="mt-4 p-4 rounded border inline-flex items-center gap-3">
-              <span class="text-sm text-gray-600">课程总体进度</span>
+              <span class="text-sm text-gray-600">{{ t('student.courses.progressLabel') }}</span>
               <div class="font-semibold">{{ courseProgress }}%</div>
             </div>
           </div>
@@ -30,8 +30,8 @@
           <!-- Lesson List -->
           <div class="card">
             <div class="card-header">
-                <h2 class="text-xl font-semibold">课程内容</h2>
-                <span class="text-sm text-gray-500">{{ completedLessonsCount }} / {{ lessons.length }} 已完成</span>
+                <h2 class="text-xl font-semibold">{{ t('student.courses.detail.contents') }}</h2>
+                <span class="text-sm text-gray-500">{{ completedLessonsCount }} / {{ lessons.length }} {{ t('student.courses.detail.completed') }}</span>
             </div>
             <div class="space-y-3 p-4">
               <div
@@ -58,9 +58,9 @@
                           @click="handleCompleteLesson(lesson.id)"
                           :disabled="completingId === lesson.id"
                         >
-                          {{ completingId === lesson.id ? '处理中...' : '标记完成' }}
+                          {{ completingId === lesson.id ? (t('student.courses.processing') as string) : (t('student.courses.detail.markCompleted') as string) }}
                         </button>
-                        <button class="btn btn-sm" @click="toggleLesson(lesson)">{{ expanded.has(lesson.id) ? '收起' : '展开' }}</button>
+                        <button class="btn btn-sm" @click="toggleLesson(lesson)">{{ expanded.has(lesson.id) ? (t('student.courses.detail.collapse') as string) : (t('student.courses.detail.expand') as string) }}</button>
                       </div>
                     </div>
 
@@ -72,23 +72,23 @@
                       </div>
 
                       <div>
-                        <h4 class="font-medium mb-2">资料</h4>
+                        <h4 class="font-medium mb-2">{{ t('student.courses.detail.materials') }}</h4>
                         <ul class="list-disc pl-5 space-y-1">
                           <li v-for="f in (lessonMaterials[lesson.id]||[])" :key="f.id">
-                            <a class="text-blue-600 hover:underline" :href="`${baseURL}/files/${f.id}/download`">{{ f.originalName || f.fileName || `文件#${f.id}` }}</a>
+                            <a class="text-blue-600 hover:underline" :href="`${baseURL}/files/${f.id}/download`">{{ f.originalName || f.fileName || `#${f.id}` }}</a>
                           </li>
-                          <li v-if="!(lessonMaterials[lesson.id]||[]).length" class="text-sm text-gray-500">暂无资料</li>
+                          <li v-if="!(lessonMaterials[lesson.id]||[]).length" class="text-sm text-gray-500">{{ t('student.courses.detail.noMaterials') }}</li>
                         </ul>
                       </div>
 
                       <div>
-                        <h4 class="font-medium mb-2">本节作业</h4>
+                        <h4 class="font-medium mb-2">{{ t('student.courses.detail.sectionAssignments') }}</h4>
                         <ul class="list-disc pl-5 space-y-1">
                           <li v-for="a in lessonAssignments(lesson.id)" :key="a.id">
                             <router-link class="text-blue-600 hover:underline" :to="`/student/assignments/${a.id}/submit`">{{ a.title }}</router-link>
-                            <span class="text-xs text-gray-500 ml-2" v-if="a.dueDate">截止：{{ formatDate(a.dueDate) }}</span>
+                            <span class="text-xs text-gray-500 ml-2" v-if="a.dueDate">{{ t('student.assignments.due') }}{{ formatDate(a.dueDate) }}</span>
                           </li>
-                          <li v-if="lessonAssignments(lesson.id).length === 0" class="text-sm text-gray-500">本节暂无作业</li>
+                          <li v-if="lessonAssignments(lesson.id).length === 0" class="text-sm text-gray-500">{{ t('student.courses.detail.noSectionAssignments') }}</li>
                         </ul>
                       </div>
                     </div>
@@ -103,7 +103,7 @@
         <div class="lg:col-span-1">
           <div class="card">
             <div class="card-header">
-              <h3 class="text-lg font-semibold">讲师信息</h3>
+              <h3 class="text-lg font-semibold">{{ t('student.courses.detail.instructorInfo') }}</h3>
             </div>
             <div class="p-4 text-center">
               <div class="w-16 h-16 bg-gray-200 rounded-full mx-auto mb-4 flex items-center justify-center">
@@ -111,7 +111,7 @@
               </div>
               <h4 class="font-medium">{{ course.teacherName }}</h4>
               <div class="mt-4 flex justify-center">
-                <button class="btn btn-sm btn-primary" @click="contactTeacher">联系老师</button>
+                <button class="btn btn-sm btn-primary" @click="contactTeacher">{{ t('student.courses.detail.contactTeacher') }}</button>
               </div>
             </div>
           </div>
@@ -120,9 +120,9 @@
     </div>
 
     <div v-else class="text-center py-12 card">
-      <h3 class="text-lg font-medium">课程不存在</h3>
-      <p class="text-gray-500 mt-2">抱歉，您访问的课程不存在或已被删除。</p>
-      <router-link to="/student/courses" class="btn btn-primary mt-4">返回课程列表</router-link>
+      <h3 class="text-lg font-medium">{{ t('student.courses.detail.notFoundTitle') }}</h3>
+      <p class="text-gray-500 mt-2">{{ t('student.courses.detail.notFoundDesc') }}</p>
+      <router-link to="/student/courses" class="btn btn-primary mt-4">{{ t('student.courses.detail.backToList') }}</router-link>
     </div>
   </div>
 </template>
@@ -134,15 +134,18 @@ import { useCourseStore } from '@/stores/course';
 import { useLessonStore } from '@/stores/lesson';
 import type { StudentLesson } from '@/types/lesson';
 import { useChatStore } from '@/stores/chat'
-import { lessonApi } from '@/api/lesson.api'
+import { studentApi } from '@/api/student.api'
 import { assignmentApi } from '@/api/assignment.api'
 import { baseURL } from '@/api/config'
 import { fileApi } from '@/api/file.api'
+// @ts-ignore
+import { useI18n } from 'vue-i18n'
 
 const route = useRoute();
 const courseStore = useCourseStore();
 const lessonStore = useLessonStore();
 const chat = useChatStore();
+const { t } = useI18n();
 
 // State
 const completingId = ref<string | null>(null);
@@ -194,7 +197,7 @@ onMounted(async () => {
 
 const fetchCourseProgress = async (courseId: string) => {
   try {
-    const res: any = await lessonApi.getCourseProgress(courseId as any);
+    const res: any = await studentApi.getCourseProgress(courseId as any);
     const v = res?.progress ?? res?.data ?? res;
     courseProgress.value = Number(v || 0).toFixed ? Number(Number(v).toFixed(0)) : Number(v || 0);
   } catch {

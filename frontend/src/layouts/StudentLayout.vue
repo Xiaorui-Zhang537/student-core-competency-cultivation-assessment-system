@@ -4,35 +4,19 @@
     <nav class="sticky top-0 z-40 glass-thin glass-interactive" v-glass="{ strength: 'thin', interactive: true }">
       <div class="px-4 sm:px-6 lg:px-8">
         <div class="flex justify-between h-14">
-          <div class="flex items-center">
+          <div class="flex items-center space-x-6">
             <button
               @click="uiStore.toggleSidebar()"
-              class="p-2 rounded-md text-gray-400 hover:text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-primary-500"
+              class="p-2 -ml-2 rounded-md text-gray-400 hover:text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-primary-500"
             >
               <bars3-icon class="h-6 w-6" />
             </button>
-            <div class="flex-shrink-0 flex items-center ml-4 lg:ml-0">
+            <div class="flex-shrink-0 flex items-center">
               <h1 class="text-xl font-bold text-gray-900 dark:text-white">{{ t('app.title') }}</h1>
             </div>
           </div>
 
-          <div class="flex-1 flex items-center justify-center px-2 lg:ml-6 lg:justify-start">
-            <div class="max-w-lg w-full lg:max-w-xs">
-              <label for="search" class="sr-only">搜索</label>
-              <div class="relative">
-                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <magnifying-glass-icon class="h-5 w-5 text-gray-400" />
-                </div>
-                <input
-                  id="search"
-                  v-model="searchQuery"
-                  class="block w-full pl-10 pr-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md leading-5 bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-primary-500 focus:border-primary-500 sm:text-sm"
-                  placeholder="搜索课程、作业..."
-                  type="search"
-                />
-              </div>
-            </div>
-          </div>
+          
 
           <div class="ml-4 flex items-center md:ml-6 space-x-3">
             <button
@@ -268,7 +252,6 @@ import { useChatStore } from '@/stores/chat'
 import LanguageSwitcher from '@/components/ui/LanguageSwitcher.vue'
 import {
   Bars3Icon,
-  MagnifyingGlassIcon,
   SunIcon,
   MoonIcon,
   ChevronDownIcon,
@@ -298,7 +281,6 @@ const showUserMenu = ref(false)
 const showGlassMenu = ref(false)
 const glassBtnRef = ref<HTMLElement | null>(null)
 const glassMenuStyle = ref<Record<string, string>>({})
-const searchQuery = ref('')
 const userMenuBtn = ref<HTMLElement | null>(null)
 const userMenuStyle = ref<Record<string, string>>({})
 const showBgMenu = ref(false)

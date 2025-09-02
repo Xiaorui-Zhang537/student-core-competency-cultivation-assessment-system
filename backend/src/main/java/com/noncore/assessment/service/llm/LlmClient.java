@@ -17,40 +17,58 @@ import java.util.Map;
 
 @Slf4j
 @Component
-public class DeepseekClient {
+public class LlmClient {
 
     private final RestTemplate restTemplate = new RestTemplate();
 
     public String createChatCompletion(List<Message> messages, String model, boolean stream, String baseUrl, String apiKey) {
+        // 向后兼容：仅字符串 content 的简单消息
+        List<Map<String, Object>> payloadMessages = messages.stream().map(m -> Map.<String, Object>of(
+                "role", m.getRole(),
+                "content", m.getContent()
+        )).toList();
+        return createChatCompletionRaw(payloadMessages, model, stream, baseUrl, apiKey);
+    }
+
+    /**
+     * 直接发送 OpenAI 兼容的消息结构。支持 content 为字符串或数组（image_url 等多模态）。
+     */
+    public String createChatCompletionRaw(List<Map<String, Object>> payloadMessages, String model, boolean stream, String baseUrl, String apiKey) {
+        String url = normalizeBaseUrl(baseUrl) + "/v1/chat/completions";
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        if (apiKey != null && !apiKey.isBlank()) {
+            headers.set("Authorization", "Bearer " + apiKey);
+        }
+
+        // 不启用 reasoning，确保广泛兼容
+        RequestBody body = buildBody(payloadMessages, model, false);
+        return doRequest(url, headers, body);
+    }
+
+    private RequestBody buildBody(List<Map<String, Object>> payloadMessages, String model, boolean includeReasoning) {
+        RequestBody body = new RequestBody();
+        body.setModel(model);
+        body.setMessages(payloadMessages);
+        body.setStream(false);
+        body.setTemperature(0.3);
+        body.setMaxTokens(1024);
+        // 不附带 reasoning，避免通道不兼容
+        return body;
+    }
+
+    private String doRequest(String url, HttpHeaders headers, RequestBody body) {
         try {
-            String url = normalizeBaseUrl(baseUrl) + "/v1/chat/completions";
-
-            HttpHeaders headers = new HttpHeaders();
-            headers.setContentType(MediaType.APPLICATION_JSON);
-            if (apiKey != null && !apiKey.isBlank()) {
-                headers.set("Authorization", "Bearer " + apiKey);
-            }
-
-            RequestBody body = new RequestBody();
-            body.setModel(model);
-            body.setMessages(messages.stream().map(m -> Map.<String, Object>of(
-                    "role", m.getRole(),
-                    "content", m.getContent()
-            )).toList());
-            body.setStream(false);
-            body.setTemperature(0.3);
-            body.setMaxTokens(1024);
-
             HttpEntity<RequestBody> entity = new HttpEntity<>(body, headers);
             @SuppressWarnings("unchecked")
             ResponseEntity<Map<String, Object>> resp = (ResponseEntity<Map<String, Object>>) (ResponseEntity<?>) restTemplate.exchange(url, HttpMethod.POST, entity, Map.class);
 
             if (!resp.getStatusCode().is2xxSuccessful() || resp.getBody() == null) {
-                log.warn("Deepseek non-2xx or empty body: status={}, bodyLen={}", resp.getStatusCode(), resp.getBody());
+                log.warn("LLM non-2xx or empty body: status={}, body={}", resp.getStatusCode(), resp.getBody());
                 throw new BusinessException(ErrorCode.SYSTEM_ERROR, "大模型返回异常");
             }
 
-            // 解析 OpenAI 兼容响应：choices[0].message.content
             Map<String, Object> respBody = resp.getBody();
             Object choices = respBody != null ? respBody.get("choices") : null;
             if (choices instanceof List<?> list && !list.isEmpty()) {
@@ -65,7 +83,7 @@ public class DeepseekClient {
             }
             throw new BusinessException(ErrorCode.SYSTEM_ERROR, "无法解析大模型返回");
         } catch (RestClientException e) {
-            log.error("Deepseek request error: {}", e.getMessage());
+            log.error("LLM request error: {}", e.getMessage());
             throw new BusinessException(ErrorCode.SYSTEM_ERROR, "大模型请求失败，请稍后重试");
         }
     }
@@ -84,6 +102,6 @@ public class DeepseekClient {
         @JsonProperty("max_tokens")
         private Integer maxTokens;
         private Double temperature;
+        private Map<String, Object> reasoning;
     }
 }
-
