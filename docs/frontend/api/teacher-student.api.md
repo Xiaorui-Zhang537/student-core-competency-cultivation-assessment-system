@@ -41,3 +41,16 @@ const basic = await teacherStudentApi.getCourseStudentsBasic('2001', 1, 10000, '
 ## 注意事项
 - 接口面向教师端，权限与可见性取决于后端鉴权
 - `getCourseStudentsBasic` 默认返回大页（1万）以满足联系人侧栏场景，如需更小分页可自行调整参数
+
+## 参数与返回
+- `TeacherStudentProfileDto` 见上节
+- `getCourseStudentsBasic` 额外特性：当后端返回 400/403 时，文档实现将返回空列表 `{ items: [] }` 并抑制控制台报错（`suppressLog: true`）
+
+## 示例
+```ts
+// 头像+昵称+班级
+const profile = await teacherStudentApi.getStudentProfile('2001')
+
+// 联系人侧边栏（大页取数）
+const basic = await teacherStudentApi.getCourseStudentsBasic('1001', 1, 10000)
+```

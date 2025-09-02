@@ -39,3 +39,25 @@ await lessonApi.updateLessonProgress('3001', 80)
 - 资料文件由 `file.api.ts` 上传，获得 `fileId` 后通过 `materialFileIds` 绑定
 - 进度上报频率建议节流，避免产生大量请求
 - 敏感操作需教师角色，具体以后端鉴权为准
+
+## 参数与返回
+- `Lesson` 字段参见 `@/types/lesson`
+- `updateLessonContent` 载荷：`{ videoUrl?: string; materialFileIds?: number[] }`
+
+## 进阶示例
+```ts
+// 排序
+await lessonApi.updateLessonOrder('3001', 2)
+
+// 局部更新课时
+await lessonApi.updateLesson('3001', { title: '新标题' })
+
+// 学生端进度上报（节流）
+import throttle from 'lodash.throttle'
+const report = throttle((progress:number)=> lessonApi.updateLessonProgress('3001', progress), 1500)
+```
+
+## 错误处理
+- 400：参数校验失败（顺序/进度范围 0-100）
+- 401：未登录；
+- 403：非教师更新/删除课时
