@@ -2,7 +2,7 @@
   <div class="min-h-screen p-6">
     <div class="max-w-7xl mx-auto">
     <!-- Header -->
-      <div class="mb-8 flex items-center justify-between">
+      <div class="mb-8">
       <div class="flex-1">
         <nav class="flex items-center space-x-2 text-sm text-gray-500 dark:text-gray-400 mb-2">
           <span class="hover:text-gray-700 dark:hover:text-gray-200 cursor-pointer" @click="router.push('/teacher/courses')">
@@ -17,13 +17,15 @@
           </template>
           <span>{{ t('teacher.assignments.breadcrumb.self') }}</span>
         </nav>
-        <h1 class="text-3xl font-bold">{{ t('teacher.assignments.title') }}</h1>
-        <p class="text-gray-500">{{ t('teacher.assignments.subtitle') }}</p>
+        <PageHeader :title="t('teacher.assignments.title')" :subtitle="t('teacher.assignments.subtitle')">
+          <template #actions>
+            <Button variant="primary" @click="openCreateModal" :disabled="!courseStore.courses.length">
+              <PlusIcon class="w-4 h-4 mr-2" />
+              {{ t('teacher.assignments.actions.create') }}
+            </Button>
+          </template>
+        </PageHeader>
       </div>
-        <Button variant="primary" @click="openCreateModal" :disabled="!courseStore.courses.length">
-          <PlusIcon class="w-4 h-4 mr-2" />
-          {{ t('teacher.assignments.actions.create') }}
-        </Button>
     </div>
 
     <!-- Filters -->
@@ -179,6 +181,7 @@ import { fileApi } from '@/api/file.api';
 // @ts-ignore shim for vue-i18n types in this project
 import { useI18n } from 'vue-i18n'
 import GlassPopoverSelect from '@/components/ui/filters/GlassPopoverSelect.vue'
+import PageHeader from '@/components/ui/PageHeader.vue'
 
 const assignmentStore = useAssignmentStore();
 const courseStore = useCourseStore();

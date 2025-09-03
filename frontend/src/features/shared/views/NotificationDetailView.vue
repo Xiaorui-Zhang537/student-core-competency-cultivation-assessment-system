@@ -1,5 +1,6 @@
 <template>
   <div class="max-w-3xl mx-auto py-6">
+    <PageHeader :title="t('shared.notifications.title') || t('layout.notifications') || '通知详情'" :subtitle="t('shared.notifications.subtitle') || ''" />
     <div v-if="loading" class="text-center text-gray-500 dark:text-gray-400">{{ t('notifications.loading') }}</div>
     <div v-else-if="!notification" class="text-center text-gray-500 dark:text-gray-400">
       {{ t('notifications.empty') }}
@@ -59,6 +60,7 @@ import { storeToRefs } from 'pinia'
 import { useI18n } from 'vue-i18n'
 import UserAvatar from '@/components/ui/UserAvatar.vue'
 import Button from '@/components/ui/Button.vue'
+import PageHeader from '@/components/ui/PageHeader.vue'
 
 const route = useRoute()
 const router = useRouter()

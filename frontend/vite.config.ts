@@ -4,13 +4,7 @@ import { fileURLToPath, URL } from 'node:url'
 
 // https://vitejs.dev/config/
 export default defineConfig({
-  plugins: [vue({
-    template: {
-      compilerOptions: {
-        isCustomElement: (tag) => tag.includes('-')
-      }
-    }
-  })],
+  plugins: [vue()],
   resolve: {
     alias: {
       '@': fileURLToPath(new URL('./src', import.meta.url))
@@ -32,6 +26,12 @@ export default defineConfig({
         secure: false,
         rewrite: (path) => path,
       },
+      '/docs': {
+        target: 'http://localhost:4174',
+        changeOrigin: true,
+        secure: false,
+        rewrite: (path) => path.replace(/^\/docs/, ''),
+      }
     },
   }
 })

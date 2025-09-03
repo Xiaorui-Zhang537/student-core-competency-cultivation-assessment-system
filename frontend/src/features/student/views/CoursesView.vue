@@ -1,75 +1,76 @@
 <template>
   <div class="p-6 bg-gray-50">
-    <!-- Header -->
-    <div class="mb-8">
-      <div class="flex items-center justify-between">
-        <div>
-          <h1 class="text-3xl font-bold">{{ t('student.courses.title') }}</h1>
-          <p class="text-gray-500">{{ t('student.courses.subtitle') }}</p>
-        </div>
-        <button class="btn btn-primary" @click="showCourseStore = true">
+    <PageHeader :title="t('student.courses.title')" :subtitle="t('student.courses.subtitle')">
+      <template #actions>
+        <Button variant="glass" @click="showCourseStore = true">
           <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" /></svg>
           {{ t('student.courses.browse') }}
-        </button>
-      </div>
-    </div>
+        </Button>
+      </template>
+    </PageHeader>
 
     <!-- Stats -->
     <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-      <div class="card p-4 text-center">
+      <Card class="text-center">
         <div class="text-2xl font-bold text-blue-600">{{ activeCoursesCount }}</div>
         <p class="text-sm text-gray-500">{{ t('student.courses.active') }}</p>
-      </div>
-      <div class="card p-4 text-center">
+      </Card>
+      <Card class="text-center">
         <div class="text-2xl font-bold text-green-600">{{ completedCoursesCount }}</div>
         <p class="text-sm text-gray-500">{{ t('student.courses.completed') }}</p>
-      </div>
-      <div class="card p-4 text-center">
+      </Card>
+      <Card class="text-center">
         <div class="text-2xl font-bold text-purple-600">{{ averageProgress.toFixed(1) }}%</div>
         <p class="text-sm text-gray-500">{{ t('student.courses.avgProgress') }}</p>
-      </div>
+      </Card>
     </div>
 
     <!-- Search and Filter -->
-    <div class="card p-4 mb-8">
+    <Card class="mb-8">
       <div class="flex flex-col md:flex-row gap-4">
         <div class="flex-grow">
           <input
             v-model="searchQuery"
             type="text"
             :placeholder="t('student.courses.searchPlaceholder') as string"
-            class="input w-full"
+            class="input input--glass w-full h-10"
+            @keyup.enter="applyImmediateSearch()"
           />
         </div>
-        <select v-model="selectedCategory" class="input md:w-48">
-          <option value="">{{ t('student.courses.allCategories') }}</option>
-          <option v-for="category in categories" :key="category" :value="category">
-            {{ category }}
-          </option>
-        </select>
+        <GlassPopoverSelect
+          v-model="selectedCategory"
+          :options="[{ label: t('student.courses.allCategories') as string, value: '' }, ...categoryOptions]"
+          :placeholder="t('student.courses.allCategories') as string"
+          width="220px"
+        />
       </div>
-    </div>
+    </Card>
     
     <!-- Loading or Empty State -->
-    <div v-if="studentStore.loading" class="text-center py-12">
+    <div v-if="!pageLoaded" class="text-center py-12">
       <p>{{ t('student.courses.loading') }}</p>
     </div>
-    <div v-else-if="filteredCourses.length === 0" class="text-center py-12 card">
+    <Card v-else-if="filteredCourses.length === 0" class="text-center py-12">
       <h3 class="text-lg font-medium">{{ t('student.courses.emptyTitle') }}</h3>
       <p class="text-gray-500 mt-2">{{ t('student.courses.emptyDesc') }}</p>
-      <button class="btn btn-primary mt-4" @click="showCourseStore = true">{{ t('student.courses.goStore') }}</button>
-    </div>
-
-    <!-- Courses Grid -->
+      <Button class="mt-4" variant="glass" @click="showCourseStore = true">{{ t('student.courses.goStore') }}</Button>
+    </Card>
     <div v-else class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-      <div
+      <Card
         v-for="course in filteredCourses"
         :key="course.id"
-        class="card overflow-hidden cursor-pointer group"
+        class="overflow-hidden cursor-pointer group"
+        padding="none"
+        :hoverable="true"
         @click="enterCourse(course)"
       >
         <div class="relative h-48">
-          <img v-if="course.coverImageUrl" :src="course.coverImageUrl" :alt="course.title || ''" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"/>
+          <img v-if="course.coverImageUrl && !coverErrorMap[String(course.id)] && isAllowedImage(course.coverImageUrl)"
+               :src="course.coverImageUrl"
+               :alt="course.title || ''"
+               class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+               @error="coverErrorMap[String(course.id)] = true"
+          />
           <div v-else class="w-full h-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center">
             <span class="text-4xl font-bold text-white">{{ (course.title || '').charAt(0) }}</span>
           </div>
@@ -91,48 +92,55 @@
             </span>
           </div>
         </div>
-      </div>
+      </Card>
     </div>
 
     <!-- Course Store Modal -->
     <div v-if="showCourseStore" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" @click.self="showCourseStore = false">
-      <div class="bg-white rounded-lg w-full max-w-4xl max-h-[90vh] flex flex-col">
+      <Card class="w-full max-w-4xl max-h-[90vh] flex flex-col">
         <div class="p-6 border-b flex justify-between items-center">
           <h3 class="text-lg font-semibold">{{ t('student.courses.storeTitle') }}</h3>
-          <button @click="showCourseStore = false">&times;</button>
+          <Button variant="glass-ghost" @click="showCourseStore = false">&times;</Button>
         </div>
         <div class="p-6 overflow-y-auto">
-           <div v-if="courseStore.loading" class="text-center"><p>{{ t('student.courses.loading') }}</p></div>
-           <div v-else class="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div v-for="course in courseStore.courses" :key="course.id" class="border rounded-lg p-4">
+          <div v-if="courseStore.loading" class="text-center"><p>{{ t('student.courses.loading') }}</p></div>
+          <div v-else class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <Card v-for="course in courseStore.courses" :key="course.id">
               <h4 class="font-medium mb-2">{{ course.title }}</h4>
               <p class="text-sm text-gray-600 mb-3">{{ course.description }}</p>
               <div class="flex justify-between items-center">
                 <span class="text-sm text-gray-500">{{ t('student.courses.instructor') }}: {{ course.teacherName }}</span>
-                <button
-                  class="btn btn-sm btn-primary"
+                <Button
+                  size="sm"
+                  variant="primary"
+                  :loading="enrollingId === String(course.id)"
                   :disabled="isEnrolled(String(course.id)) || enrollingId === String(course.id)"
                   @click="handleEnroll(String(course.id))"
                 >
-                  <span v-if="enrollingId === String(course.id)">{{ t('student.courses.processing') }}</span>
-                  <span v-else-if="isEnrolled(String(course.id))">{{ t('student.courses.enrolled') }}</span>
+                  <span v-if="isEnrolled(String(course.id))">{{ t('student.courses.enrolled') }}</span>
                   <span v-else>{{ t('student.courses.enroll') }}</span>
-                </button>
+                </Button>
               </div>
-            </div>
+            </Card>
           </div>
         </div>
-      </div>
+      </Card>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue';
+import { ref, computed, onMounted, watch } from 'vue';
+import { storeToRefs } from 'pinia'
 import { useRouter } from 'vue-router';
 import { useStudentStore } from '@/stores/student';
 import { useCourseStore } from '@/stores/course';
 import type { StudentCourse } from '@/types/student';
+import { t } from '@/i18n';
+import Button from '@/components/ui/Button.vue'
+import Card from '@/components/ui/Card.vue'
+import GlassPopoverSelect from '@/components/ui/filters/GlassPopoverSelect.vue'
+import PageHeader from '@/components/ui/PageHeader.vue'
 
 const router = useRouter();
 const studentStore = useStudentStore();
@@ -142,11 +150,32 @@ const courseStore = useCourseStore();
 const showCourseStore = ref(false);
 const enrollingId = ref<string | null>(null);
 const searchQuery = ref('');
+const debouncedQuery = ref('');
+const pageLoaded = ref(false);
+const coverErrorMap = ref<Record<string, boolean>>({});
+const debounced = (fn: Function, wait = 300) => {
+  let timer: number | undefined
+  return (...args: any[]) => {
+    if (timer) window.clearTimeout(timer)
+    timer = window.setTimeout(() => fn(...args), wait)
+  }
+}
+
+const applyImmediateSearch = () => {
+  // 这里实际只影响本地 computed 过滤，无需额外动作；预留 hooks 便于后续接入后端搜索
+}
+
+// 当输入变化时，延迟更新用于过滤的关键字，提升性能与体验
+const updateDebounced = debounced((val: string) => { debouncedQuery.value = val }, 250)
+watch(searchQuery, (val) => updateDebounced(String(val || '')))
+// 初始化
+debouncedQuery.value = ''
+
 const selectedCategory = ref('');
 
 // Computed Properties
-// 直接使用 store 的 ref，避免 Ref 的 Ref 导致运行时 filter 报错
-const myCourses = studentStore.myCourses;
+// 使用 storeToRefs 保证解构后仍保留响应性
+const { myCourses } = storeToRefs(studentStore);
 // 兜底：确保所有计算均基于数组
 const coursesSafe = computed(() => Array.isArray(myCourses.value) ? myCourses.value : []);
 
@@ -163,10 +192,13 @@ const categories = computed(() => {
   return Array.from(cats).sort();
 });
 
+const categoryOptions = computed(() => (categories.value as string[]).map((name) => ({ label: name, value: name })))
+
 const filteredCourses = computed(() => {
-  const q = (searchQuery.value || '').toLowerCase();
+  const list = Array.isArray(coursesSafe.value) ? coursesSafe.value : []
+  const q = (debouncedQuery.value || '').toLowerCase();
   const cat = selectedCategory.value || '';
-  return coursesSafe.value.filter((course: StudentCourse) => {
+  return list.filter((course: StudentCourse) => {
     const title = (course.title || '').toLowerCase();
     const searchMatch = q === '' || title.includes(q);
     const categoryMatch = cat === '' || course.category === cat;
@@ -178,6 +210,7 @@ const filteredCourses = computed(() => {
 const enterCourse = (course: StudentCourse) => {
   router.push(`/student/courses/${course.id}`);
 };
+
 
 const handleEnroll = async (courseId: string) => {
   enrollingId.value = courseId;
@@ -192,10 +225,24 @@ const isEnrolled = (courseId: string) => {
   return coursesSafe.value.some((c: StudentCourse) => String(c.id) === courseId);
 };
 
+function isAllowedImage(url: string): boolean {
+  try {
+    const u = new URL(url)
+    // 仅允许与站点同源的图片，或 http(s) 且非已知失败域
+    const sameOrigin = u.origin === window.location.origin
+    const blockedHosts = ['via.placeholder.com']
+    return sameOrigin || (!blockedHosts.includes(u.hostname) && /^https?:$/.test(u.protocol))
+  } catch {
+    return false
+  }
+}
+
 // Lifecycle Hooks
-onMounted(() => {
-  studentStore.fetchMyCourses({ page: 1, size: 12, q: '' });
-  courseStore.fetchCourses({ page: 1, size: 20 }); // For the course store modal
+onMounted(async () => {
+  await studentStore.fetchMyCourses({ page: 1, size: 12, q: '' });
+  pageLoaded.value = true;
+  // 课程商店数据异步加载，不影响我的课程首屏
+  void courseStore.fetchCourses({ page: 1, size: 20 });
 });
 </script>
 

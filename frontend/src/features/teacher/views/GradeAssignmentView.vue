@@ -3,32 +3,24 @@
     <div class="max-w-7xl mx-auto">
       <!-- 页面标题 -->
       <div class="mb-8">
-        <div class="flex items-center justify-between">
-          <div>
-            <nav class="flex items-center space-x-2 text-sm text-gray-500 dark:text-gray-400 mb-2">
-              <span class="hover:text-gray-700 dark:hover:text-gray-200 cursor-pointer" @click="router.push('/teacher/courses')">{{ t('teacher.courses.breadcrumb') }}</span>
-              <ChevronRightIcon class="w-4 h-4" />
-              <span v-if="assignment.courseName || assignmentCourseId" class="hover:text-gray-700 dark:hover:text-gray-200 cursor-pointer" @click="goCourse()">{{ assignment.courseName || `#${assignmentCourseId}` }}</span>
-              <ChevronRightIcon class="w-4 h-4" />
-              <span class="hover:text-gray-700 dark:hover:text-gray-200 cursor-pointer" @click="router.push('/teacher/assignments')">{{ t('teacher.submissions.breadcrumb.assignments') }}</span>
-              <ChevronRightIcon class="w-4 h-4" />
-              <span class="hover:text-gray-700 dark:hover:text-gray-200 cursor-pointer" @click="router.push(`/teacher/assignments/${assignment.id}/submissions`)">{{ t('teacher.submissions.breadcrumb.self') }}</span>
-              <ChevronRightIcon class="w-4 h-4" />
-              <span>{{ submission.studentName || submission.studentId }}</span>
-            </nav>
-            <h1 class="text-3xl font-bold text-gray-900 dark:text-white mb-2">
-              {{ t('teacher.grading.title', { name: submission.studentName }) }}
-            </h1>
-            <p class="text-gray-600 dark:text-gray-400">
-              {{ t('teacher.submissions.submittedAt', { time: formatDate(submission.submittedAt) }) }}
-            </p>
-          </div>
-          <div class="flex items-center space-x-3">
+        <nav class="flex items-center space-x-2 text-sm text-gray-500 dark:text-gray-400 mb-2">
+          <span class="hover:text-gray-700 dark:hover:text-gray-200 cursor-pointer" @click="router.push('/teacher/courses')">{{ t('teacher.courses.breadcrumb') }}</span>
+          <ChevronRightIcon class="w-4 h-4" />
+          <span v-if="assignment.courseName || assignmentCourseId" class="hover:text-gray-700 dark:hover:text-gray-200 cursor-pointer" @click="goCourse()">{{ assignment.courseName || `#${assignmentCourseId}` }}</span>
+          <ChevronRightIcon class="w-4 h-4" />
+          <span class="hover:text-gray-700 dark:hover:text-gray-200 cursor-pointer" @click="router.push('/teacher/assignments')">{{ t('teacher.submissions.breadcrumb.assignments') }}</span>
+          <ChevronRightIcon class="w-4 h-4" />
+          <span class="hover:text-gray-700 dark:hover:text-gray-200 cursor-pointer" @click="router.push(`/teacher/assignments/${assignment.id}/submissions`)">{{ t('teacher.submissions.breadcrumb.self') }}</span>
+          <ChevronRightIcon class="w-4 h-4" />
+          <span>{{ submission.studentName || submission.studentId }}</span>
+        </nav>
+        <PageHeader :title="t('teacher.grading.title', { name: submission.studentName })" :subtitle="t('teacher.submissions.submittedAt', { time: formatDate(submission.submittedAt) })">
+          <template #actions>
             <badge :variant="getSubmissionStatusVariant(submission.status)">
               {{ getSubmissionStatusText(submission.status) }}
             </badge>
-          </div>
-        </div>
+          </template>
+        </PageHeader>
       </div>
 
       <!-- 加载状态 -->
@@ -469,6 +461,7 @@ import {
 } from '@heroicons/vue/24/outline'
 import UserAvatar from '@/components/ui/UserAvatar.vue'
 import { useLocale } from '@/i18n/useLocale'
+import PageHeader from '@/components/ui/PageHeader.vue'
 
 // Router and Stores
 const route = useRoute()

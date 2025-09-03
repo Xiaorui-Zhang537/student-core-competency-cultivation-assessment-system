@@ -1,9 +1,6 @@
 <template>
   <div class="p-6">
-    <div class="mb-8">
-      <h1 class="text-3xl font-bold">{{ t('student.analysis.title') }}</h1>
-      <p class="text-gray-500">{{ t('student.analysis.subtitle') }}</p>
-    </div>
+    <PageHeader :title="t('student.analysis.title')" :subtitle="t('student.analysis.subtitle')" />
 
     <div v-if="loading" class="text-center py-12">{{ t('student.analysis.loading') }}</div>
 
@@ -44,6 +41,7 @@ import { useI18n } from 'vue-i18n'
 import { i18n, loadLocaleMessages } from '@/i18n'
 import StatCard from '@/components/ui/StatCard.vue'
 import TrendAreaChart from '@/components/charts/TrendAreaChart.vue'
+import PageHeader from '@/components/ui/PageHeader.vue'
 
 const { t } = useI18n()
 

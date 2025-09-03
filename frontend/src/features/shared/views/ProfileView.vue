@@ -1,10 +1,7 @@
 <template>
   <div class="p-6">
     <div class="max-w-4xl mx-auto">
-      <div class="mb-8">
-        <h1 class="text-3xl font-bold">{{ t('shared.profile.title') }}</h1>
-        <p class="text-gray-500">{{ t('shared.profile.subtitle') }}</p>
-      </div>
+      <PageHeader :title="t('shared.profile.title')" :subtitle="t('shared.profile.subtitle')" />
 
       <div v-if="authStore.loading && !userProfile" class="text-center py-12">
         <p>{{ t('shared.profile.messages.loadUser') }}</p>
@@ -287,6 +284,7 @@ import { baseURL } from '@/api/config';
 import UserAvatar from '@/components/ui/UserAvatar.vue';
 import Button from '@/components/ui/Button.vue'
 import { useI18n } from 'vue-i18n'
+import PageHeader from '@/components/ui/PageHeader.vue'
 
 const authStore = useAuthStore();
 const uiStore = useUIStore();

@@ -51,3 +51,25 @@
 > 提示：本手册中的命令默认在 macOS / Linux 环境下执行；Windows 可用 PowerShell 等价命令。
 
 
+## 变更记录（Changelog）
+
+### 界面标题与简介统一组件（PageHeader）（2025-09-03）
+- 统一前台页面的标题与简介展示，采用 `components/ui/PageHeader.vue` 复用组件；支持 actions 插槽放置筛选器与操作按钮；组件在 `main.ts` 已全局注册。
+- 学生端：Dashboard、Assignments、AssignmentSubmit、Courses、CourseDetail、Analysis、Analytics、Grades、Community、Ability（本次新增）、AIAssistant（共享）。
+- 教师端：Dashboard、ManageCourse、CourseDetail、CourseStudents、Analytics、ReviewAssignment、AssignmentSubmissions、GradeAssignment、StudentDetail、EditCourse。
+- 共享：Community、AIAssistant、Notifications、NotificationDetail、PostDetail、CourseDiscovery、Help。
+- 使用方式示例：
+  - 基础用法：`<PageHeader :title="t('xxx.title')" :subtitle="t('xxx.subtitle')" />`
+  - 携带操作区：
+    ```vue
+    <PageHeader :title="pageTitle" :subtitle="pageSubtitle">
+      <template #actions>
+        <Button variant="primary">操作</Button>
+      </template>
+    </PageHeader>
+    ```
+
+### 学生端 - 我的作业（2025-09-02）
+- 列表页（AssignmentsView）：对齐筛选/搜索/分页与状态映射；新增错误提示与重试按钮；样式统一为玻璃风格。
+- 提交页（AssignmentSubmitView）：统一标题+描述与状态徽章；支持草稿与提交按钮禁用逻辑；上传/删除附件流程完善；已评分时按需拉取并展示分数与教师反馈；补齐 i18n 文案（中英）。
+- 文档：补充交互案例、页面时序与 `students/assignments` 参数说明。

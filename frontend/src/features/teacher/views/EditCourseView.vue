@@ -3,8 +3,7 @@
     <div class="max-w-4xl mx-auto">
       <!-- Header -->
       <div class="mb-8">
-        <h1 class="text-3xl font-bold">{{ t('teacher.courseEdit.title') }}</h1>
-        <p class="text-gray-500">{{ t('teacher.courseEdit.subtitle') }}</p>
+        <PageHeader :title="t('teacher.courseEdit.title')" :subtitle="t('teacher.courseEdit.subtitle')" />
       </div>
 
       <!-- Loading State -->
@@ -64,6 +63,7 @@ import { useCourseStore } from '@/stores/course';
 import type { CourseUpdateRequest } from '@/types/course';
 import { useI18n } from 'vue-i18n'
 import Button from '@/components/ui/Button.vue'
+import PageHeader from '@/components/ui/PageHeader.vue'
 
 const route = useRoute();
 const router = useRouter();

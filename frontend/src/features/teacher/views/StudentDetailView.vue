@@ -14,7 +14,7 @@
           </template>
           <span class="font-medium text-gray-900 dark:text-white">{{ studentName }}</span>
         </nav>
-        <h1 class="text-3xl font-bold">{{ t('teacher.studentDetail.title', { name: studentName }) }}</h1>
+        <PageHeader :title="t('teacher.studentDetail.title', { name: studentName })" :subtitle="''" />
       </div>
 
       <div v-if="gradeStore.loading" class="text-center card p-8">
@@ -169,6 +169,7 @@ import Button from '@/components/ui/Button.vue'
 import { ChatBubbleLeftRightIcon, ChartPieIcon, ArrowDownTrayIcon, DocumentTextIcon, PencilSquareIcon, ChevronRightIcon, AcademicCapIcon } from '@heroicons/vue/24/outline'
 import { useChatStore } from '@/stores/chat'
 import { teacherStudentApi } from '@/api/teacher-student.api'
+import PageHeader from '@/components/ui/PageHeader.vue'
 const route = useRoute();
 const router = useRouter();
 const gradeStore = useGradeStore();

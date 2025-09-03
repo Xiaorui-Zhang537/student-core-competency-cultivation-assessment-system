@@ -54,6 +54,10 @@
 		"student": {
 			"title": "Student Workspace",
 			"role": "Student",
+			"user": {
+				"profile": "Profile",
+				"logout": "Log out"
+			},
 			"sidebar": {
 				"home": "Home",
 				"dashboard": "Dashboard",

@@ -1,21 +1,15 @@
 <template>
   <div class="min-h-screen p-6">
-    <!-- 页面标题 -->
-    <div class="mb-8">
-      <div class="flex items-center justify-between">
-        <div>
-          
-          <h1 class="text-3xl font-bold text-gray-900 dark:text-white mb-2">{{ t('teacher.analytics.title') }}</h1>
-          <p class="text-gray-600 dark:text-gray-400">{{ t('teacher.analytics.subtitle') }}</p>
-        </div>
-      <div class="flex items-center space-x-4">
-        <GlassPopoverSelect
-          v-model="selectedCourseId"
-          :options="courseSelectOptions"
-          :placeholder="t('teacher.analytics.selectCourse') as string"
-          size="md"
-          @change="onCourseChange"
-        />
+    <PageHeader :title="t('teacher.analytics.title')" :subtitle="t('teacher.analytics.subtitle')">
+      <template #actions>
+        <div class="flex items-center space-x-4">
+          <GlassPopoverSelect
+            v-model="selectedCourseId"
+            :options="courseSelectOptions"
+            :placeholder="t('teacher.analytics.selectCourse') as string"
+            size="md"
+            @change="onCourseChange"
+          />
           <div class="flex items-center gap-3">
             <Button variant="primary" class="whitespace-nowrap" :disabled="!selectedCourseId" @click="askAiForAnalytics">
               <SparklesIcon class="w-4 h-4 mr-2" />
@@ -27,8 +21,8 @@
             </Button>
           </div>
         </div>
-      </div>
-    </div>
+      </template>
+    </PageHeader>
 
     <!-- 核心指标卡片（统一为工作台小卡片样式） -->
     <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6 mb-8">
@@ -224,6 +218,7 @@ import { DocumentArrowDownIcon, SparklesIcon, ArrowPathIcon, UserGroupIcon, Chec
 import { useI18n } from 'vue-i18n'
 import GlassSelect from '@/components/ui/filters/GlassSelect.vue'
 import GlassPopoverSelect from '@/components/ui/filters/GlassPopoverSelect.vue'
+import PageHeader from '@/components/ui/PageHeader.vue'
 import GlassMultiSelect from '@/components/ui/filters/GlassMultiSelect.vue'
 
 // Stores

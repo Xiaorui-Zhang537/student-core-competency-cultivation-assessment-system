@@ -1,21 +1,16 @@
 <template>
   <div class="min-h-screen p-6">
     <div class="max-w-7xl mx-auto">
-      <!-- Page Header -->
-      <div class="mb-8">
-            <div class="flex items-center justify-between">
-          <div>
-            <h1 class="text-3xl font-bold text-gray-900 dark:text-white mb-2">{{ t('shared.community.title') }}</h1>
-            <p class="text-gray-600 dark:text-gray-400">{{ t('shared.community.subtitle') }}</p>
+      <PageHeader :title="t('shared.community.title')" :subtitle="t('shared.community.subtitle')">
+        <template #actions>
+          <div class="flex items-center space-x-3">
+            <Button variant="primary" class="whitespace-nowrap" @click="showCreatePostModal = true">
+              <PlusIcon class="w-4 h-4 mr-2" />
+              {{ t('shared.community.createPost') }}
+            </Button>
           </div>
-           <div class="flex items-center space-x-3">
-             <Button variant="primary" class="whitespace-nowrap" @click="showCreatePostModal = true">
-               <PlusIcon class="w-4 h-4 mr-2" />
-               {{ t('shared.community.createPost') }}
-             </Button>
-           </div>
-        </div>
-      </div>
+        </template>
+      </PageHeader>
 
       <!-- Community Stats (与教师端一致：无外框，仅网格排列的 StatCard) -->
       <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6 mb-8">
@@ -338,6 +333,7 @@ import { useAuthStore } from '@/stores/auth';
 import FileUpload from '@/components/forms/FileUpload.vue';
 import { baseURL } from '@/api/config';
 import { fileApi } from '@/api/file.api';
+import PageHeader from '@/components/ui/PageHeader.vue'
 
 const router = useRouter();
 const communityStore = useCommunityStore();

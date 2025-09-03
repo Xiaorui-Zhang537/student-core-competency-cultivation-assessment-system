@@ -103,14 +103,27 @@ export const useStudentStore = defineStore('student', () => {
   };
 
   const fetchMyCourses = async (params?: { page?: number; size?: number; q?: string }) => {
+    // 仅在 q 为非空字符串时传递，避免后端将空串当作过滤条件
+    const p: { page?: number; size?: number; q?: string } = { page: params?.page, size: params?.size }
+    if (params?.q && params.q.trim().length > 0) p.q = params.q.trim()
+
     const response = await handleApiCall(
-      () => studentApi.getMyCourses(params),
+      () => studentApi.getMyCourses(p),
       uiStore,
       '获取我的课程失败'
     );
     if (response) {
       const items = (response as any)?.items ?? (Array.isArray(response) ? response : []);
-      myCourses.value = items || [];
+      myCourses.value = (items || []).map((c: any) => ({
+        id: String(c.id),
+        title: c.title || '',
+        description: c.description || '',
+        teacherName: c.teacherName || '',
+        category: c.category || '',
+        coverImageUrl: c.coverImageUrl || c.coverImage || '',
+        progress: Number(c.progress ?? 0),
+        enrolledAt: c.enrolledAt || ''
+      })) as any;
     }
   };
 

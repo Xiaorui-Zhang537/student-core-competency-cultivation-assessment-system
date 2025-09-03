@@ -117,8 +117,8 @@
                   </div>
                 </user-avatar>
                 <div class="hidden md:block text-left ml-2">
-                  <p class="text-sm font-medium text-gray-900 dark:text-white">{{ (authStore.user as any)?.nickname || authStore.user?.username || '学生' }}</p>
-                  <p class="text-xs text-gray-500 dark:text-gray-400">学生</p>
+                  <p class="text-sm font-medium text-gray-900 dark:text-white">{{ (authStore.user as any)?.nickname || authStore.user?.username || (t('layout.student.title') as string || '学生') }}</p>
+                  <p class="text-xs text-gray-500 dark:text-gray-400">{{ t('layout.student.role') || '学生' }}</p>
                 </div>
                 <chevron-down-icon class="h-4 w-4 text-gray-400 ml-1" />
               </button>
@@ -137,14 +137,14 @@
                       class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100/50 dark:hover:bg-gray-700/50 rounded-lg"
                       @click="showUserMenu = false"
                     >
-                      <user-icon class="h-4 w-4 inline-block mr-2" /> 个人资料
+                      <user-icon class="h-4 w-4 inline-block mr-2" /> {{ t('layout.student.user.profile') || '个人资料' }}
                     </router-link>
                     <div class="border-t border-gray-100 dark:border-gray-600"></div>
                     <button
                       @click="handleLogout"
                       class="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-gray-100/50 dark:hover:bg-gray-700/50 rounded-lg"
                     >
-                      <arrow-right-on-rectangle-icon class="h-4 w-4 inline-block mr-2" /> 退出登录
+                      <arrow-right-on-rectangle-icon class="h-4 w-4 inline-block mr-2" /> {{ t('layout.student.user.logout') || '退出登录' }}
                     </button>
                   </div>
                 </div>

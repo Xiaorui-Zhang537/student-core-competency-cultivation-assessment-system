@@ -1,10 +1,6 @@
 <template>
   <div class="p-6">
-    <!-- Header -->
-    <div class="mb-8">
-      <h1 class="text-3xl font-bold">{{ t('student.dashboard.title') }}</h1>
-      <p class="text-gray-500">{{ t('student.dashboard.subtitle') }}</p>
-    </div>
+    <PageHeader :title="t('student.dashboard.title')" :subtitle="t('student.dashboard.subtitle')" />
 
     <!-- Loading State -->
     <div v-if="studentStore.loading" class="text-center py-12">
@@ -95,6 +91,7 @@ import { useStudentStore } from '@/stores/student'
 import { useI18n } from 'vue-i18n'
 import StatCard from '@/components/ui/StatCard.vue'
 import { AcademicCapIcon, ClipboardDocumentListIcon, StarIcon, ClockIcon } from '@heroicons/vue/24/outline'
+import PageHeader from '@/components/ui/PageHeader.vue'
 
 const uiStore = useUIStore()
 const studentStore = useStudentStore()

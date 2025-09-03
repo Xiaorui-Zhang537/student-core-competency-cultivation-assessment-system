@@ -1,24 +1,35 @@
 <template>
   <div class="min-h-screen p-6">
     <div class="max-w-7xl mx-auto">
-      <div class="mb-6 flex items-center justify-between">
-        <div>
-          <nav class="flex items-center space-x-2 text-sm text-gray-500 dark:text-gray-400 mb-2">
-            <!-- 新增: 课程管理 -->
-            <span class="hover:text-gray-700 dark:hover:text-gray-200 cursor-pointer" @click="router.push('/teacher/courses')">{{ t('teacher.courses.breadcrumb') }}</span>
-            <ChevronRightIcon class="w-4 h-4" />
-            <!-- 新增: 对应课程ID，可点击返回课程页 -->
-            <span v-if="courseId" class="hover:text-gray-700 dark:hover:text-gray-200 cursor-pointer" @click="goCourse()">{{ courseTitle || `#${courseId}` }}</span>
-            <ChevronRightIcon v-if="courseId" class="w-4 h-4" />
-            <!-- 原有: 作业管理 -> 提交列表 -->
-            <span class="hover:text-gray-700 dark:hover:text-gray-200 cursor-pointer" @click="router.push('/teacher/assignments')">{{ t('teacher.submissions.breadcrumb.assignments') }}</span>
-            <ChevronRightIcon class="w-4 h-4" />
-            <span>{{ t('teacher.submissions.breadcrumb.self') }}</span>
-          </nav>
-          <h1 class="text-2xl font-bold text-gray-900 dark:text-white">{{ t('teacher.submissions.title') }}</h1>
-          <p class="text-gray-600 dark:text-gray-400">{{ t('teacher.submissions.subtitle') }}</p>
-        </div>
-        <div class="flex items-center gap-4">
+      <div class="mb-6">
+        <nav class="flex items-center space-x-2 text-sm text-gray-500 dark:text-gray-400 mb-2">
+          <!-- 新增: 课程管理 -->
+          <span class="hover:text-gray-700 dark:hover:text-gray-200 cursor-pointer" @click="router.push('/teacher/courses')">{{ t('teacher.courses.breadcrumb') }}</span>
+          <ChevronRightIcon class="w-4 h-4" />
+          <!-- 新增: 对应课程ID，可点击返回课程页 -->
+          <span v-if="courseId" class="hover:text-gray-700 dark:hover:text-gray-200 cursor-pointer" @click="goCourse()">{{ courseTitle || `#${courseId}` }}</span>
+          <ChevronRightIcon v-if="courseId" class="w-4 h-4" />
+          <!-- 原有: 作业管理 -> 提交列表 -->
+          <span class="hover:text-gray-700 dark:hover:text-gray-200 cursor-pointer" @click="router.push('/teacher/assignments')">{{ t('teacher.submissions.breadcrumb.assignments') }}</span>
+          <ChevronRightIcon class="w-4 h-4" />
+          <span>{{ t('teacher.submissions.breadcrumb.self') }}</span>
+        </nav>
+        <PageHeader :title="t('teacher.submissions.title')" :subtitle="t('teacher.submissions.subtitle')">
+          <template #actions>
+            <div class="flex items-center gap-4">
+              <!-- 统计摘要 -->
+              <div class="hidden md:flex items-center gap-4 text-sm text-gray-600 dark:text-gray-300">
+                <div>{{ t('teacher.submissions.stats.totalEnrolled') }}: <span class="font-semibold">{{ stats.totalEnrolled }}</span></div>
+                <div>{{ t('teacher.submissions.stats.submitted') }}: <span class="font-semibold">{{ stats.submittedCount }}</span></div>
+                <div>{{ t('teacher.submissions.stats.unsubmitted') }}: <span class="font-semibold">{{ stats.unsubmittedCount }}</span></div>
+              </div>
+              <Button variant="primary" @click="remindUnsubmitted" :loading="reminding" :disabled="reminding || stats.unsubmittedCount === 0">
+                {{ t('teacher.submissions.actions.remindUnsubmitted') }}
+              </Button>
+            </div>
+          </template>
+        </PageHeader>
+      </div>
           <!-- 统计摘要 -->
           <div class="hidden md:flex items-center gap-4 text-sm text-gray-600 dark:text-gray-300">
             <div>{{ t('teacher.submissions.stats.totalEnrolled') }}: <span class="font-semibold">{{ stats.totalEnrolled }}</span></div>
@@ -105,6 +116,7 @@ import { ChevronRightIcon } from '@heroicons/vue/24/outline';
 // @ts-ignore shim for vue-i18n types in this project
 import { useI18n } from 'vue-i18n'
 import GlassPopoverSelect from '@/components/ui/filters/GlassPopoverSelect.vue'
+import PageHeader from '@/components/ui/PageHeader.vue'
 
 const route = useRoute();
 const router = useRouter();

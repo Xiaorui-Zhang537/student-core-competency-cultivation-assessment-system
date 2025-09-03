@@ -199,6 +199,8 @@
       }
     },
     "notifications": {
+      "title": "Notifications",
+      "subtitle": "View and manage system notifications",
       "confirm": {
         "delete": "Delete this notification?"
       },
@@ -206,6 +208,14 @@
         "deletedTitle": "Notification deleted",
         "deletedMsg": "The notification has been deleted."
       }
+    },
+    "help": {
+      "title": "Help Center",
+      "subtitle": "Find FAQs, user guides, or contact support"
+    },
+    "discovery": {
+      "title": "Course Discovery",
+      "subtitle": "Discover quality courses and start learning"
     },
     "emojiPicker": {
       "button": "Emoji"

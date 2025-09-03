@@ -2,8 +2,7 @@
   <div class="p-6">
     <!-- Header -->
     <div class="mb-8">
-      <h1 class="text-3xl font-bold">{{ t('student.ability.title') }}</h1>
-      <p class="text-gray-500">{{ t('student.ability.subtitle') }}</p>
+      <PageHeader :title="t('student.ability.title')" :subtitle="t('student.ability.subtitle')" />
     </div>
 
     <!-- Loading State -->
@@ -102,7 +101,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted, watch, nextTick } from 'vue';
+import { ref, onMounted, onUnmounted, watch, nextTick, computed } from 'vue';
 import { useAbilityStore } from '@/stores/ability';
 import { abilityApi } from '@/api/ability.api';
 import { useCourseStore } from '@/stores/course';
@@ -111,6 +110,7 @@ import * as echarts from 'echarts';
 import { useI18n } from 'vue-i18n'
 import GlassMultiSelect from '@/components/ui/filters/GlassMultiSelect.vue'
 import GlassPopoverSelect from '@/components/ui/filters/GlassPopoverSelect.vue'
+import PageHeader from '@/components/ui/PageHeader.vue'
 
 const abilityStore = useAbilityStore();
 const courseStore = useCourseStore();

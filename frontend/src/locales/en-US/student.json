@@ -42,23 +42,23 @@
       "storeTitle": "Course Store",
       "processing": "Processing...",
       "enrolled": "Enrolled",
-      "enroll": "Enroll"
-    },
-    "courses.detail": {
-      "contents": "Course Contents",
-      "completed": "Completed",
-      "markCompleted": "Mark as Completed",
-      "collapse": "Collapse",
-      "expand": "Expand",
-      "materials": "Materials",
-      "noMaterials": "No materials",
-      "sectionAssignments": "Section Assignments",
-      "noSectionAssignments": "No assignments in this section",
-      "instructorInfo": "Instructor Info",
-      "contactTeacher": "Contact Teacher",
-      "notFoundTitle": "Course Not Found",
-      "notFoundDesc": "Sorry, the course you visited does not exist or has been removed.",
-      "backToList": "Back to Courses"
+      "enroll": "Enroll",
+      "detail": {
+        "contents": "Course Contents",
+        "completed": "Completed",
+        "markCompleted": "Mark as Completed",
+        "collapse": "Collapse",
+        "expand": "Expand",
+        "materials": "Materials",
+        "noMaterials": "No materials",
+        "sectionAssignments": "Section Assignments",
+        "noSectionAssignments": "No assignments in this section",
+        "instructorInfo": "Instructor Info",
+        "contactTeacher": "Contact Teacher",
+        "notFoundTitle": "Course Not Found",
+        "notFoundDesc": "Sorry, the course you visited does not exist or has been removed.",
+        "backToList": "Back to Courses"
+      }
     },
     "analysis": {
       "title": "Learning Analytics",
@@ -106,7 +106,9 @@
         "pending": "Pending",
         "submitted": "Submitted",
         "graded": "Graded",
-        "courseAll": "All Courses"
+        "courseAll": "All Courses",
+        "statusLabel": "Status",
+        "courseLabel": "Course"
       },
       "status": {
         "pending": "Pending",
@@ -123,6 +125,7 @@
       "empty": "No assignments",
       "pagination": {
         "perPagePrefix": "Per page",
+        "perPageLabel": "Per page:",
         "perPageSuffix": "items",
         "prev": "Previous",
         "next": "Next",
@@ -140,6 +143,8 @@
         "submit": "Submit Assignment",
         "success": "Assignment submitted successfully",
         "loading": "Loading assignment details...",
+        "readOnlyBannerDue": "Past due. Editing and submission are disabled.",
+        "readOnlyBannerSubmitted": "Already submitted or graded. View only.",
         "errors": {
           "uploadFailedTitle": "Upload Failed",
           "uploadFailedMsg": "File upload failed, please try again.",
@@ -192,6 +197,8 @@
       "assignmentId": "Assignment ID",
       "gradedAt": "Graded on",
       "outOf": " / 100",
+      "score": "Score",
+      "feedback": "Feedback",
       "emptyTitle": "No graded assignments yet",
       "emptyDesc": "After you submit assignments, you will see your grades here."
     }

@@ -1,9 +1,6 @@
 <template>
   <div class="space-y-6">
-    <header>
-      <h1 class="text-2xl font-bold text-gray-900 dark:text-white">{{ t('student.analytics.title') }}</h1>
-      <p class="text-gray-600 dark:text-gray-400">{{ t('student.analytics.subtitle') }}</p>
-    </header>
+    <PageHeader :title="t('student.analytics.title')" :subtitle="t('student.analytics.subtitle')" />
 
     <FilterBar>
       <template #left>
@@ -45,6 +42,7 @@ import { useI18n } from 'vue-i18n'
 import FilterBar from '@/components/ui/filters/FilterBar.vue'
 import GlassSelect from '@/components/ui/filters/GlassSelect.vue'
 import { studentApi } from '@/api/student.api'
+import PageHeader from '@/components/ui/PageHeader.vue'
 
 // 简化为占位，不做动态导入，避免 Vite 加载失败
 

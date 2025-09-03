@@ -4,6 +4,7 @@
     <div v-if="!loading && !currentPost" class="text-center">{{ t('shared.community.detail.notFound') }}</div>
     
     <div v-if="currentPost" class="max-w-4xl mx-auto">
+      <PageHeader :title="currentPost.title" :subtitle="t('shared.community.detail.postedAt', { datetime: formatDate(currentPost.createdAt) })" />
       <!-- Back Button -->
       <router-link :to="backToCommunity" class="inline-flex items-center text-sm text-gray-600 dark:text-gray-400 hover:text-primary-600 mb-4">
         <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
@@ -12,7 +13,6 @@
 
       <!-- Post Header -->
       <div class="glass-regular rounded-xl p-6 mb-6" v-glass="{ strength: 'regular', interactive: true }">
-        <h1 class="text-3xl font-bold text-gray-900 dark:text-white mb-2">{{ currentPost.title }}</h1>
         <div class="flex items-center space-x-4 text-sm text-gray-500 dark:text-gray-400">
           <div class="flex items-center space-x-2">
             <user-avatar :avatar="currentPost.author?.avatar" :size="20">
@@ -166,6 +166,7 @@ import { baseURL } from '@/api/config';
 import { fileApi } from '@/api/file.api';
 import FileUpload from '@/components/forms/FileUpload.vue';
 import { useI18n } from 'vue-i18n'
+import PageHeader from '@/components/ui/PageHeader.vue'
 
 const route = useRoute();
 const router = useRouter();

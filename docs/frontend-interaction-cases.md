@@ -2,6 +2,28 @@
 
 > 面向新手：用最小可运行的片段展示“组件 → Store → API → 后端”的完整闭环。
 
+## 0. 页面标题统一组件（PageHeader）
+
+- 目的：统一各页面标题与简介的展示，保证中英文一致、布局规范、便于在右上角放置筛选器/操作按钮。
+- 组件：`components/ui/PageHeader.vue`（已在 `main.ts` 全局注册）。
+- 基础用法：
+```vue
+<PageHeader :title="t('student.courses.title')" :subtitle="t('student.courses.subtitle')" />
+```
+- 携带操作区（actions 插槽）：
+```vue
+<PageHeader :title="t('teacher.analytics.title')" :subtitle="t('teacher.analytics.subtitle')">
+  <template #actions>
+    <GlassPopoverSelect v-model="selectedCourseId" :options="courseSelectOptions" size="md" />
+    <Button variant="primary" @click="onExport">{{ t('teacher.analytics.exportReport') }}</Button>
+  </template>
+</PageHeader>
+```
+- 已应用页面（节选）：
+  - 学生端：Dashboard、Assignments、AssignmentSubmit、Courses、CourseDetail、Analysis、Analytics、Grades、Community、Ability
+  - 教师端：Dashboard、ManageCourse、CourseDetail、CourseStudents、Analytics、ReviewAssignment、AssignmentSubmissions、GradeAssignment、StudentDetail、EditCourse
+  - 共享：Community、AIAssistant、Notifications、NotificationDetail、PostDetail、CourseDiscovery、Help
+
 ## 1. 登录表单（LoginView → useAuthStore → auth.api.ts）
 
 最小组件片段：
@@ -78,6 +100,83 @@ export const useCourseStore = defineStore('course', {
 })
 ```
 
+### 2.1 学生端-我的课程（CoursesView → useStudentStore → student.api.ts）
+
+要点：
+- 顶部统一用 `PageHeader` 展示标题与简介，右上角可放操作按钮（如“浏览课程”）。
+- 拉取接口：`GET /api/students/my-courses/paged`；仅当搜索词非空时传 `q`，避免空串被后端当过滤导致结果为空。
+- Pinia 使用 `storeToRefs` 解构，保证响应性；映射后端 `StudentCourseResponse` 字段到前端 `StudentCourse`。
+- 封面图加载失败时回退为首字母彩色块，避免空白卡片。
+- 分类筛选仅基于已报名课程的本地字段（遵循“无后端，不开发”）。
+
+组件片段（精简）：
+```ts
+<script setup lang="ts">
+import { ref, computed, onMounted, watch } from 'vue'
+import { storeToRefs } from 'pinia'
+import PageHeader from '@/components/ui/PageHeader.vue'
+import Button from '@/components/ui/Button.vue'
+import GlassPopoverSelect from '@/components/ui/filters/GlassPopoverSelect.vue'
+import { useStudentStore } from '@/stores/student'
+
+const studentStore = useStudentStore()
+const { myCourses } = storeToRefs(studentStore)
+
+const pageLoaded = ref(false)
+const searchQuery = ref('')
+const selectedCategory = ref('')
+
+// 仅在 q 非空时传参
+onMounted(async () => {
+  await studentStore.fetchMyCourses({ page: 1, size: 12 })
+  pageLoaded.value = true
+})
+
+// 过滤
+const debouncedQuery = ref('')
+const debounce = (fn: Function, wait = 250) => { let t: any; return (...a: any[]) => { clearTimeout(t); t = setTimeout(() => fn(...a), wait) } }
+watch(searchQuery, debounce((v: string) => { debouncedQuery.value = v || '' }, 250))
+
+const coursesSafe = computed(() => Array.isArray(myCourses.value) ? myCourses.value : [])
+const categories = computed(() => Array.from(new Set(coursesSafe.value.map(c => c.category).filter(Boolean))).sort())
+const categoryOptions = computed(() => (categories.value as string[]).map(name => ({ label: name, value: name })))
+
+const filteredCourses = computed(() => {
+  const q = (debouncedQuery.value || '').toLowerCase()
+  const cat = selectedCategory.value || ''
+  return coursesSafe.value.filter(c => {
+    const title = (c.title || '').toLowerCase()
+    const okQ = !q || title.includes(q)
+    const okCat = !cat || c.category === cat
+    return okQ && okCat
+  })
+})
+</script>
+```
+
+Store 片段（字段映射与 q 处理）：
+```ts
+// stores/student.ts（节选）
+const fetchMyCourses = async (params?: { page?: number; size?: number; q?: string }) => {
+  const p: any = { page: params?.page, size: params?.size }
+  if (params?.q && params.q.trim()) p.q = params.q.trim()
+  const response = await handleApiCall(() => studentApi.getMyCourses(p), uiStore, '获取我的课程失败')
+  if (response) {
+    const items = (response as any)?.items ?? (Array.isArray(response) ? response : [])
+    myCourses.value = (items || []).map((c: any) => ({
+      id: String(c.id),
+      title: c.title || '',
+      description: c.description || '',
+      teacherName: c.teacherName || '',
+      category: c.category || '',
+      coverImageUrl: c.coverImageUrl || c.coverImage || '',
+      progress: Number(c.progress ?? 0),
+      enrolledAt: c.enrolledAt || ''
+    }))
+  }
+}
+```
+
 ## 3. 作业提交与草稿（AssignmentSubmitView → useSubmissionStore → submission.api.ts）
 
 组件片段：
@@ -112,6 +211,67 @@ export const useSubmissionStore = defineStore('submission', {
   }
 })
 ```
+
+## 3.1 学生作业列表筛选/搜索/分页（AssignmentsView → student.api.ts）
+
+组件片段（精简）：
+```ts
+<script setup lang="ts">
+import { ref, onMounted, watch } from 'vue'
+import { studentApi } from '@/api/student.api'
+
+const list = ref<any[]>([])
+const page = ref(1)
+const size = ref(10)
+const status = ref<'ALL'|'PENDING'|'SUBMITTED'|'GRADED'>('ALL')
+const courseId = ref<string>('')
+const keyword = ref('')
+
+const fetch = async () => {
+  const params: any = { page: page.value, size: size.value }
+  if (courseId.value) params.courseId = courseId.value
+  if (status.value !== 'ALL') params.status = status.value.toLowerCase()
+  if (keyword.value) params.q = keyword.value
+  const res: any = await studentApi.getAssignments(params)
+  list.value = res?.items || res?.data?.items || []
+}
+
+onMounted(fetch)
+watch([page, size, status, courseId, keyword], fetch)
+</script>
+```
+
+要点：
+- `status` 映射后端小写 submitted/graded；待提交对应 published 或空，由后端聚合返回。
+- 搜索键为 `q`，与 `/students/my-courses/paged` 保持一致。
+
+## 3.2 学生提交后成绩展示（AssignmentSubmitView → grade.api.ts）
+
+组件片段（仅评分展示相关）：
+```ts
+<script setup lang="ts">
+import { ref, onMounted, computed } from 'vue'
+import { useRoute } from 'vue-router'
+import { useAuthStore } from '@/stores/auth'
+import { gradeApi } from '@/api/grade.api'
+
+const route = useRoute()
+const auth = useAuthStore()
+const grade = ref<any | null>(null)
+const displayStatus = computed(() => 'GRADED') // 示例：实际由提交状态归一化得到
+
+onMounted(async () => {
+  if (displayStatus.value === 'GRADED' && auth.user?.id) {
+    const res: any = await gradeApi.getGradeForStudentAssignment(String(auth.user.id), String(route.params.id))
+    grade.value = res?.data ?? res
+  }
+})
+</script>
+```
+
+要点：
+- 仅在已评分时按需拉取成绩，避免列表页 N+1。
+- 国际化键补充：`student.grades.score / student.grades.feedback`。
 
 ## 4. SSE 通知订阅（NotificationBell → useNotificationStream → notification.api.ts）
 

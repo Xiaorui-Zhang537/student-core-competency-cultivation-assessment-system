@@ -14,10 +14,10 @@ Authorization: Bearer <token>
 { "code": 200, "message": "OK", "data": { "items": [{"id":1,"title":"AI"}], "total": 100, "page":1, "size":10 }}
 ```
 
-- `GET /api/courses/search`：关键词搜索（`query/page/size`）
+- `GET /api/courses/search`：关键词搜索（`keyword`）
 - `GET /api/courses/popular`：热门课程
 - `GET /api/courses/recommended`：推荐课程
-- `GET /api/courses/category/{category}`：按分类
+- `GET /api/courses/category/{category}`：按分类（简单列表）；如需分页按分类，请用 `GET /api/courses?category=xxx&page=1&size=10`
 
 ## 2. 课程 CRUD
 - `GET /api/courses/{id}`：详情
@@ -67,10 +67,10 @@ Authorization: Bearer <token>
 - `createCourse(data)` ↔ `POST /api/courses`
 - `updateCourse(id, data)` ↔ `PUT /api/courses/{id}`
 - `deleteCourse(id)` ↔ `DELETE /api/courses/{id}`
-- `searchCourses(params)` ↔ `GET /api/courses/search`
-- `getPopularCourses()` ↔ `GET /api/courses/popular`
-- `getRecommendedCourses()` ↔ `GET /api/courses/recommended`
-- `getCoursesByCategory(category, params)` ↔ `GET /api/courses/category/{category}`
+- `searchCourses({ keyword })` ↔ `GET /api/courses/search?keyword=AI`
+- `getPopularCourses({ limit })` ↔ `GET /api/courses/popular?limit=8`
+- `getRecommendedCourses({ limit })` ↔ `GET /api/courses/recommended?limit=6`
+- `getCoursesByCategory(category, params)` ↔ `GET /api/courses?category=xxx&page=1&size=10`
 - `enrollInCourse(id)` / `unenrollFromCourse(id)` ↔ 选课/退课
 - `getCourseStudents(courseId, params)` ↔ 学生名单
 - `inviteStudents(courseId, studentIds)` / `removeStudent(courseId, studentId)`

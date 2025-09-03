@@ -120,10 +120,17 @@ export const useCourseStore = defineStore('course', {
     },
 
     async fetchCategories() {
+        // 后端暂无分类列表端点，临时从课程列表聚合生成（遵循“无后端，不开发”：仅用于发现页展示）
         const uiStore = useUIStore();
-        const response = await handleApiCall(() => courseApi.getCategories(), uiStore, '获取课程分类失败', { loadingRef: ref(this.discoveryLoading.categories) });
-        if(response) {
-            this.categories = unwrap<CourseCategory[]>(response);
+        const response = await handleApiCall(() => courseApi.getCourses({ page: 1, size: 200 }), uiStore, '获取课程分类失败', { loadingRef: ref(this.discoveryLoading.categories) });
+        if (response) {
+            const data = unwrap<PaginatedResponse<Course>>(response);
+            const set = new Map<string, number>();
+            for (const c of data.items || []) {
+                const key = c.category || '其他';
+                set.set(key, (set.get(key) || 0) + 1);
+            }
+            this.categories = Array.from(set.entries()).map(([name, count]) => ({ id: name, name, courseCount: count }));
         }
     },
     

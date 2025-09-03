@@ -1,33 +1,30 @@
 <template>
   <div class="p-6 min-h-screen">
-    <!-- Header -->
-    <div class="mb-8 flex items-center justify-between">
-      <div>
-        <h1 class="text-3xl font-bold text-gray-900 dark:text-white">{{ t('teacher.dashboard.header.title') }}</h1>
-        <p class="text-gray-600 dark:text-gray-400">{{ t('teacher.dashboard.header.subtitle') }}</p>
-      </div>
-      <div class="flex items-end gap-4 w-full sm:w-auto">
-        <div class="w-full sm:w-64">
-          <GlassPopoverSelect
-            :label="t('teacher.dashboard.course.select.label') as string"
-            v-model="selectedCourseId"
-            :options="teacherCourses.map(c => ({ label: c.title, value: String(c.id) }))"
-            :placeholder="t('teacher.dashboard.course.select.placeholder') as string"
-            size="md"
-            stacked
-            @change="onCourseSelect"
-          />
+    <PageHeader :title="t('teacher.dashboard.header.title')" :subtitle="t('teacher.dashboard.header.subtitle')">
+      <template #actions>
+        <div class="flex items-end gap-4 w-full sm:w-auto">
+          <div class="w-full sm:w-64">
+            <GlassPopoverSelect
+              :label="t('teacher.dashboard.course.select.label') as string"
+              v-model="selectedCourseId"
+              :options="teacherCourses.map(c => ({ label: c.title, value: String(c.id) }))"
+              :placeholder="t('teacher.dashboard.course.select.placeholder') as string"
+              size="md"
+              stacked
+              @change="onCourseSelect"
+            />
+          </div>
+          <div class="hidden sm:flex items-center gap-2">
+            <Button variant="primary" @click="goPublishAssignment">
+              <PlusIcon class="w-4 h-4 mr-2" />{{ t('teacher.dashboard.actions.publish') }}
+            </Button>
+            <Button variant="success" @click="goGradeAssignments">
+              <CheckBadgeIcon class="w-4 h-4 mr-2" />{{ t('teacher.dashboard.actions.grade') }}
+            </Button>
+          </div>
         </div>
-        <div class="hidden sm:flex items-center gap-2">
-          <Button variant="primary" @click="goPublishAssignment">
-            <PlusIcon class="w-4 h-4 mr-2" />{{ t('teacher.dashboard.actions.publish') }}
-          </Button>
-          <Button variant="success" @click="goGradeAssignments">
-            <CheckBadgeIcon class="w-4 h-4 mr-2" />{{ t('teacher.dashboard.actions.grade') }}
-          </Button>
-        </div>
-      </div>
-    </div>
+      </template>
+    </PageHeader>
 
     <!-- Course Selector -->
     
@@ -81,6 +78,7 @@ import Button from '@/components/ui/Button.vue'
 import StatCard from '@/components/ui/StatCard.vue'
 import GlassSelect from '@/components/ui/filters/GlassSelect.vue'
 import GlassPopoverSelect from '@/components/ui/filters/GlassPopoverSelect.vue'
+import PageHeader from '@/components/ui/PageHeader.vue'
 
 const uiStore = useUIStore()
 const router = useRouter()

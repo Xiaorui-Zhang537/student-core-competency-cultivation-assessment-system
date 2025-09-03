@@ -5,7 +5,7 @@ import type { User } from '@/types/auth';
 
 export const courseApi = {
   // CRUD operations
-  getCourses: (params: { page?: number; size?: number; sort?: string; query?: string; status?: string; teacherId?: string; }): Promise<ApiResponse<PaginatedResponse<Course>>> => {
+  getCourses: (params: { page?: number; size?: number; sort?: string; query?: string; status?: string; teacherId?: string; category?: string; difficulty?: string; }): Promise<ApiResponse<PaginatedResponse<Course>>> => {
     return api.get('/courses', { params });
   },
 
@@ -26,15 +26,15 @@ export const courseApi = {
   },
 
   // Enrollment management
-  enrollInCourse: (courseId: number): Promise<ApiResponse<void>> => {
+  enrollInCourse: (courseId: number | string): Promise<ApiResponse<void>> => {
     return api.post(`/courses/${courseId}/enroll`);
   },
 
-  unenrollFromCourse: (courseId: number): Promise<ApiResponse<void>> => {
+  unenrollFromCourse: (courseId: number | string): Promise<ApiResponse<void>> => {
     return api.delete(`/courses/${courseId}/enroll`);
   },
 
-  getEnrollmentStatus: (courseId: number): Promise<ApiResponse<{ isEnrolled: boolean }>> => {
+  getEnrollmentStatus: (courseId: number | string): Promise<ApiResponse<{ isEnrolled: boolean }>> => {
     return api.get(`/courses/${courseId}/enrollment-status`);
   },
 
@@ -52,20 +52,21 @@ export const courseApi = {
   },
 
   // Search and discovery
-  searchCourses: (params: { query: string; page?: number; size?: number }): Promise<ApiResponse<PaginatedResponse<Course>>> => {
+  searchCourses: (params: { keyword: string }): Promise<ApiResponse<Course[]>> => {
     return api.get('/courses/search', { params });
   },
 
-  getPopularCourses: (): Promise<ApiResponse<Course[]>> => {
-    return api.get('/courses/popular');
+  getPopularCourses: (params?: { limit?: number }): Promise<ApiResponse<Course[]>> => {
+    return api.get('/courses/popular', { params });
   },
 
-  getRecommendedCourses: (): Promise<ApiResponse<Course[]>> => {
-    return api.get('/courses/recommended');
+  getRecommendedCourses: (params?: { limit?: number }): Promise<ApiResponse<Course[]>> => {
+    return api.get('/courses/recommended', { params });
   },
 
   getCoursesByCategory: (category: string, params: { page?: number; size?: number }): Promise<ApiResponse<PaginatedResponse<Course>>> => {
-    return api.get(`/courses/category/${category}`, { params });
+    // 与后端对齐：使用 /courses?category=xxx 获取分页结果
+    return api.get('/courses', { params: { category, ...params } });
   },
 
   // Statistics

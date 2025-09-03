@@ -2,6 +2,10 @@
 
 > 用于快速理解关键页面从组件到后端的完整调用链。
 
+## PageHeader 渲染时机
+- 所有采用 PageHeader 的页面，会在组件模板初始化阶段立即渲染标题与副标题；右上角 actions 插槽里的筛选/按钮与后续数据加载并行。
+- 建议：不要将需要后端返回的数据作为标题文本来源，标题文案走 i18n；动态数据只放在 actions 或主体区。
+
 ## 登录页（LoginView）
 ```mermaid
 sequenceDiagram
@@ -105,6 +109,53 @@ sequenceDiagram
     S-->>V: 指示“尝试重连”
     V->>S: 重连逻辑（指数退避）
   end
+```
+
+## 学生作业列表（AssignmentsView）
+```mermaid
+sequenceDiagram
+  participant V as Vue(AssignmentsView)
+  participant A as student.api.ts
+  participant B as StudentController
+
+  V->>A: getAssignments({ courseId?, status?, q?, page, size })
+  A->>B: GET /students/assignments
+  alt 成功
+    B-->>A: PageResult<Assignment>
+    A-->>V: 渲染列表/分页
+  else 空列表
+    B-->>A: { items:[], total:0 }
+    A-->>V: 显示空状态
+  else 401/403
+    B-->>A: error
+    A-->>V: 跳登录/无权限提示
+  end
+```
+
+## 学生提交-草稿-评分展示（AssignmentSubmitView）
+```mermaid
+sequenceDiagram
+  participant V as Vue(AssignmentSubmitView)
+  participant SA as submission.api.ts
+  participant GA as grade.api.ts
+  participant SC as SubmissionController
+  participant GC as GradeController
+
+  V->>SA: POST /assignments/{id}/draft { content, fileIds }
+  SA->>SC: 保存草稿
+  SC-->>SA: OK
+  SA-->>V: 通知“草稿已保存”
+
+  V->>SA: POST /assignments/{id}/submit { content, fileIds }
+  SA->>SC: 提交作业
+  SC-->>SA: { id, status: SUBMITTED }
+  SA-->>V: 更新状态为 SUBMITTED
+
+  Note over V,GA: 当状态为 GRADED 时
+  V->>GA: GET /grades/student/{sid}/assignment/{id}
+  GA->>GC: 查询成绩
+  GC-->>GA: { score, feedback, gradedAt }
+  GA-->>V: 渲染成绩块
 ```
 
 ## AI 聊天（AiChatView）

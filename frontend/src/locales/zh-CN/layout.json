@@ -54,6 +54,10 @@
 		"student": {
 			"title": "学生工作区",
 			"role": "学生",
+			"user": {
+				"profile": "个人资料",
+				"logout": "退出登录"
+			},
 			"sidebar": {
 				"home": "主页",
 				"dashboard": "工作台",

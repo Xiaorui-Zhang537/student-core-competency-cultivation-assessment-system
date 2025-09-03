@@ -45,21 +45,43 @@
       "enrolled": "已报名",
       "enroll": "加入课程"
     },
-    "courses.detail": {
-      "contents": "课程内容",
+    "courses": {
+      "title": "我的课程",
+      "subtitle": "浏览和管理您的学习课程",
+      "browse": "浏览课程",
+      "active": "进行中",
       "completed": "已完成",
-      "markCompleted": "标记完成",
-      "collapse": "收起",
-      "expand": "展开",
-      "materials": "资料",
-      "noMaterials": "暂无资料",
-      "sectionAssignments": "本节作业",
-      "noSectionAssignments": "本节暂无作业",
-      "instructorInfo": "讲师信息",
-      "contactTeacher": "联系老师",
-      "notFoundTitle": "课程不存在",
-      "notFoundDesc": "抱歉，您访问的课程不存在或已被删除。",
-      "backToList": "返回课程列表"
+      "avgProgress": "平均进度",
+      "searchPlaceholder": "搜索我的课程...",
+      "allCategories": "全部分类",
+      "loading": "正在加载我的课程...",
+      "emptyTitle": "没有找到课程",
+      "emptyDesc": "您还没有报名任何课程，或者没有匹配筛选条件的课程。",
+      "goStore": "去课程商店看看",
+      "instructor": "讲师",
+      "statusCompleted": "已完成",
+      "statusOngoing": "进行中",
+      "progressLabel": "学习进度",
+      "storeTitle": "课程商店",
+      "processing": "处理中...",
+      "enrolled": "已报名",
+      "enroll": "加入课程",
+      "detail": {
+        "contents": "课程内容",
+        "completed": "已完成",
+        "markCompleted": "标记完成",
+        "collapse": "收起",
+        "expand": "展开",
+        "materials": "资料",
+        "noMaterials": "暂无资料",
+        "sectionAssignments": "本节作业",
+        "noSectionAssignments": "本节暂无作业",
+        "instructorInfo": "讲师信息",
+        "contactTeacher": "联系老师",
+        "notFoundTitle": "课程不存在",
+        "notFoundDesc": "抱歉，您访问的课程不存在或已被删除。",
+        "backToList": "返回课程列表"
+      }
     },
     "analysis": {
       "title": "学习分析",
@@ -107,7 +129,9 @@
         "pending": "待提交",
         "submitted": "已提交",
         "graded": "已评分",
-        "courseAll": "全部课程"
+        "courseAll": "全部课程",
+        "statusLabel": "状态",
+        "courseLabel": "课程"
       },
       "status": {
         "pending": "待提交",
@@ -124,6 +148,7 @@
       "empty": "暂无作业",
       "pagination": {
         "perPagePrefix": "每页",
+        "perPageLabel": "每页显示：",
         "perPageSuffix": "条",
         "prev": "上一页",
         "next": "下一页",
@@ -141,6 +166,8 @@
         "submit": "提交作业",
         "success": "作业已成功提交",
         "loading": "正在加载作业详情...",
+        "readOnlyBannerDue": "已超过截止时间，无法继续编辑或提交。",
+        "readOnlyBannerSubmitted": "已提交或已评分，仅可查看。",
         "errors": {
           "uploadFailedTitle": "上传失败",
           "uploadFailedMsg": "文件上传失败，请重试。",
@@ -192,6 +219,8 @@
       "assignmentId": "作业 ID",
       "gradedAt": "评分于",
       "outOf": " / 100",
+      "score": "得分",
+      "feedback": "教师反馈",
       "emptyTitle": "暂无已评分的作业",
       "emptyDesc": "完成并提交作业后，您可以在此处查看您的成绩。"
     }

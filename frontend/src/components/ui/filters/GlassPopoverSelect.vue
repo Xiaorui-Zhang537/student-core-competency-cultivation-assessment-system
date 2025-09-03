@@ -16,7 +16,7 @@
   </div>
   <teleport to="body">
     <div v-if="open"
-         class="fixed z-[9999] popover-glass border border-white/20 dark:border-white/12 shadow-md p-1 max-h-48 overflow-y-auto no-scrollbar"
+         class="fixed z-[9999] popover-glass border border-white/20 dark:border-white/12 shadow-md p-1 max-h-80 overflow-y-auto overscroll-contain"
          :style="{ left: pos.left + 'px', top: pos.top + 'px', width: pos.width + 'px' }"
          @keydown.stop.prevent="onKeydown"
     >
@@ -65,6 +65,7 @@ const emit = defineEmits<{ (e:'update:modelValue', v:string|number|null):void; (
 const rootRef = ref<HTMLElement | null>(null)
 const open = ref(false)
 const pos = ref({ left: 0, top: 0, width: 280 })
+const PANEL_MAX_HEIGHT = 320 // px (matches max-h-80)
 const activeIndex = ref(0)
 
 const selectedLabel = computed(() => {
@@ -80,7 +81,12 @@ function computePos() {
   const el = rootRef.value
   if (!el) return
   const rect = el.getBoundingClientRect()
-  pos.value = { left: rect.left, top: rect.bottom + 6, width: rect.width }
+  const viewportH = window.innerHeight || document.documentElement.clientHeight || 0
+  // Prefer opening downward; if not enough room (below), place upward with a safe margin
+  const downTop = rect.bottom + 6
+  const upTop = Math.max(8, rect.top - PANEL_MAX_HEIGHT - 6)
+  const top = (downTop + PANEL_MAX_HEIGHT + 8 <= viewportH) ? downTop : upTop
+  pos.value = { left: rect.left, top, width: rect.width }
 }
 
 function openMenu() {

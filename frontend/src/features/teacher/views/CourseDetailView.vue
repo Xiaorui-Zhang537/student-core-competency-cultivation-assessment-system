@@ -13,26 +13,24 @@
         <span>{{ course.title }}</span>
       </nav>
 
-      <div class="flex items-start justify-between">
-        <div>
-          <h1 class="text-3xl font-bold">{{ course.title }}</h1>
-          <p class="text-gray-500">{{ course.category }}</p>
-        </div>
-        <div class="flex items-center gap-2">
-          <Button variant="teal" @click="router.push(`/teacher/courses/${course.id}/students`)">
-            <UserGroupIcon class="w-4 h-4 mr-2" />
-            {{ t('teacher.courseDetail.buttons.students') }}
-          </Button>
-          <Button variant="purple" @click="router.push({ name: 'TeacherAssignments' })">
-            <ClipboardDocumentListIcon class="w-4 h-4 mr-2" />
-            {{ t('teacher.courseDetail.buttons.assignments') }}
-          </Button>
-          <Button variant="primary" @click="router.push(`/teacher/analytics?courseId=${course.id}`)">
-            <PresentationChartBarIcon class="w-4 h-4 mr-2" />
-            {{ t('teacher.courseDetail.buttons.analytics') }}
-          </Button>
-        </div>
-      </div>
+      <PageHeader :title="course.title" :subtitle="course.category">
+        <template #actions>
+          <div class="flex items-center gap-2">
+            <Button variant="teal" @click="router.push(`/teacher/courses/${course.id}/students`)">
+              <UserGroupIcon class="w-4 h-4 mr-2" />
+              {{ t('teacher.courseDetail.buttons.students') }}
+            </Button>
+            <Button variant="purple" @click="router.push({ name: 'TeacherAssignments' })">
+              <ClipboardDocumentListIcon class="w-4 h-4 mr-2" />
+              {{ t('teacher.courseDetail.buttons.assignments') }}
+            </Button>
+            <Button variant="primary" @click="router.push(`/teacher/analytics?courseId=${course.id}`)">
+              <PresentationChartBarIcon class="w-4 h-4 mr-2" />
+              {{ t('teacher.courseDetail.buttons.analytics') }}
+            </Button>
+          </div>
+        </template>
+      </PageHeader>
       <div class="w-full h-56 bg-gray-200 rounded overflow-hidden" v-if="course.coverImage">
         <img v-if="coverSrc" :src="coverSrc" :alt="t('teacher.courses.card.coverAlt')" class="w-full h-full object-cover" @error="coverSrc='';" />
       </div>
@@ -311,6 +309,7 @@ import { DocumentIcon, PhotoIcon, FilmIcon, ArchiveBoxIcon, ChevronRightIcon, Us
 // @ts-ignore shim for vue-i18n types in this project
 import { useI18n } from 'vue-i18n'
 import GlassPopoverSelect from '@/components/ui/filters/GlassPopoverSelect.vue'
+import PageHeader from '@/components/ui/PageHeader.vue'
 
 const courseStore = useCourseStore();
 const route = useRoute();

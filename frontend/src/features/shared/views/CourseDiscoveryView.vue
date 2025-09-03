@@ -4,9 +4,8 @@
     <div class="bg-white dark:bg-gray-800 shadow-sm">
       <div class="max-w-7xl mx-auto px-4 py-6">
         <div class="flex flex-col md:flex-row md:items-center md:justify-between">
-          <div>
-            <h1 class="text-3xl font-bold text-gray-900 dark:text-white">课程发现</h1>
-            <p class="mt-2 text-gray-600 dark:text-gray-400">发现优质课程，开启学习之旅</p>
+          <div class="w-full">
+            <PageHeader :title="t('shared.discovery.title') || '课程发现'" :subtitle="t('shared.discovery.subtitle') || '发现优质课程，开启学习之旅'" />
           </div>
           
           <!-- 搜索框 -->
@@ -302,6 +301,8 @@ import { useRouter } from 'vue-router'
 import { storeToRefs } from 'pinia';
 import { useCourseStore } from '@/stores/course';
 import type { Course, CourseCategory } from '@/types/course'
+import PageHeader from '@/components/ui/PageHeader.vue'
+import { useI18n } from 'vue-i18n'
 import {
   MagnifyingGlassIcon,
   ChevronRightIcon,

@@ -2,16 +2,14 @@
   <div class="min-h-screen p-6">
     <div class="max-w-7xl mx-auto">
       <!-- Header -->
-      <div class="mb-8 flex items-center justify-between">
-        <div class="flex-1">
-          <h1 class="text-3xl font-bold text-gray-900 dark:text-white">{{ t('teacher.courses.title') }}</h1>
-          <p class="text-gray-600 dark:text-gray-400">{{ t('teacher.courses.subtitle') }}</p>
-        </div>
-        <Button variant="primary" @click="openCreateModal">
-          <PlusIcon class="w-4 h-4 mr-2" />
-          {{ t('teacher.courses.actions.create') }}
-        </Button>
-      </div>
+      <PageHeader :title="t('teacher.courses.title')" :subtitle="t('teacher.courses.subtitle')">
+        <template #actions>
+          <Button variant="primary" @click="openCreateModal">
+            <PlusIcon class="w-4 h-4 mr-2" />
+            {{ t('teacher.courses.actions.create') }}
+          </Button>
+        </template>
+      </PageHeader>
 
       <!-- Filters -->
       <div class="mb-6 filter-container p-4 rounded-xl" v-glass="{ strength: 'thin', interactive: false }">
@@ -184,6 +182,7 @@ import Button from '@/components/ui/Button.vue'
 import { MagnifyingGlassIcon, PlusIcon, XMarkIcon, PencilSquareIcon, TrashIcon } from '@heroicons/vue/24/outline'
 // @ts-ignore - vue-i18n runtime is available at build time; type may be resolved via shim
 import { useI18n } from 'vue-i18n'
+import PageHeader from '@/components/ui/PageHeader.vue'
 
 const courseStore = useCourseStore();
 const authStore = useAuthStore();

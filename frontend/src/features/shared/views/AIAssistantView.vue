@@ -2,12 +2,7 @@
   <div class="relative">
     <div class="min-h-screen p-4 md:p-6">
       <div class="max-w-6xl mx-auto mb-4 md:mb-6">
-        <div class="flex items-center justify-between">
-          <div>
-            <h1 class="text-2xl md:text-3xl font-bold text-gray-900 dark:text-white">{{ t('teacher.ai.title') || 'AI 助手' }}</h1>
-            <p class="text-gray-600 dark:text-gray-400 mt-1">{{ t('teacher.ai.subtitle') || '多会话、记忆与文件附加' }}</p>
-          </div>
-        </div>
+        <PageHeader :title="t('teacher.ai.title')" :subtitle="t('teacher.ai.subtitle')" />
       </div>
 
       <div class="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-12 gap-4">
@@ -164,6 +159,7 @@ import { useI18n } from 'vue-i18n'
 import { fileApi } from '@/api/file.api'
 import Button from '@/components/ui/Button.vue'
 import GlassPopoverSelect from '@/components/ui/filters/GlassPopoverSelect.vue'
+import PageHeader from '@/components/ui/PageHeader.vue'
 
 const { t } = useI18n()
 const ai = useAIStore()

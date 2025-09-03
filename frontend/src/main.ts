@@ -9,6 +9,7 @@ import '@/styles/main.postcss'
 import GlassDirective from '@/directives/glass'
 import ClickOutsideDirective from '@/directives/clickOutside'
 import { i18n, loadLocaleMessages, REQUIRED_NAMESPACES, setLocale } from '@/i18n'
+import PageHeader from '@/components/ui/PageHeader.vue'
 
 async function initializeApp() {
   const app = createApp(App)
@@ -18,6 +19,8 @@ async function initializeApp() {
   app.use(i18n)
   app.directive('glass', GlassDirective)
   app.directive('click-outside', ClickOutsideDirective)
+  // 全局注册常用 UI 组件，避免各页面重复导入遗漏
+  app.component('PageHeader', PageHeader)
 
   const authStore = useAuthStore()
   const uiStore = useUIStore()

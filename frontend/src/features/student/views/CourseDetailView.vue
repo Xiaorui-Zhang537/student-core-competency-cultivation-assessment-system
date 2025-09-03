@@ -18,10 +18,9 @@
         <!-- Main Content -->
         <div class="lg:col-span-2">
           <!-- Course Header -->
-          <div class="mb-8">
-            <h1 class="text-3xl font-bold mb-2">{{ course.title }}</h1>
-            <p class="text-lg text-gray-600">{{ course.description }}</p>
-            <div class="mt-4 p-4 rounded border inline-flex items-center gap-3">
+          <div class="mb-6">
+            <PageHeader :title="course.title" :subtitle="course.description" />
+            <div class="mt-2 p-4 rounded border inline-flex items-center gap-3">
               <span class="text-sm text-gray-600">{{ t('student.courses.progressLabel') }}</span>
               <div class="font-semibold">{{ courseProgress }}%</div>
             </div>
@@ -140,6 +139,7 @@ import { baseURL } from '@/api/config'
 import { fileApi } from '@/api/file.api'
 // @ts-ignore
 import { useI18n } from 'vue-i18n'
+import PageHeader from '@/components/ui/PageHeader.vue'
 
 const route = useRoute();
 const courseStore = useCourseStore();

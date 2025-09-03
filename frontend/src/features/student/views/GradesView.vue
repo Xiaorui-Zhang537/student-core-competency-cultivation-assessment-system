@@ -1,10 +1,6 @@
 <template>
   <div class="p-6">
-    <!-- Header -->
-    <div class="mb-8">
-      <h1 class="text-3xl font-bold">{{ t('student.grades.title') }}</h1>
-      <p class="text-gray-500">{{ t('student.grades.subtitle') }}</p>
-    </div>
+    <PageHeader :title="t('student.grades.title')" :subtitle="t('student.grades.subtitle')" />
 
     <!-- Loading State -->
     <div v-if="gradeStore.loading" class="text-center py-12">
@@ -42,6 +38,7 @@ import { onMounted } from 'vue';
 import { useI18n } from 'vue-i18n'
 import { useGradeStore } from '@/stores/grade';
 import { useAuthStore } from '@/stores/auth';
+import PageHeader from '@/components/ui/PageHeader.vue'
 
 const gradeStore = useGradeStore();
 const authStore = useAuthStore();

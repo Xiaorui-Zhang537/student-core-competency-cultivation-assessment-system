@@ -199,6 +199,8 @@
       }
     },
     "notifications": {
+      "title": "通知中心",
+      "subtitle": "查看与管理系统通知",
       "confirm": {
         "delete": "确定要删除这条通知吗？"
       },
@@ -206,6 +208,14 @@
         "deletedTitle": "通知已删除",
         "deletedMsg": "该通知已删除。"
       }
+    },
+    "help": {
+      "title": "帮助中心",
+      "subtitle": "查找常见问题、查看使用指南或联系技术支持"
+    },
+    "discovery": {
+      "title": "课程发现",
+      "subtitle": "发现优质课程，开启学习之旅"
     },
     "emojiPicker": {
       "button": "表情"

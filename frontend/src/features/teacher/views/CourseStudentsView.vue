@@ -3,34 +3,31 @@
     <div class="max-w-7xl mx-auto">
       <!-- 页面标题 -->
       <div class="mb-8">
-        <div class="flex items-center justify-between">
-          <div>
-            <nav class="flex items-center space-x-2 text-sm text-gray-500 dark:text-gray-400 mb-2">
-              <router-link to="/teacher/courses" class="hover:text-gray-700 dark:hover:text-gray-200">
-                {{ t('teacher.students.breadcrumb.courses') }}
-              </router-link>
-              <chevron-right-icon class="w-4 h-4" />
-              <router-link :to="`/teacher/courses/${courseId}`" class="hover:text-gray-700 dark:hover:text-gray-200">
-                {{ courseName }}
-              </router-link>
-              <chevron-right-icon class="w-4 h-4" />
-              <span>{{ t('teacher.students.breadcrumb.self') }}</span>
-            </nav>
-            <h1 class="text-3xl font-bold text-gray-900 dark:text-white mb-2">{{ t('teacher.students.title') }}</h1>
-            <p class="text-gray-600 dark:text-gray-400">{{ t('teacher.students.subtitle') }}</p>
-          </div>
-          <div class="flex items-center space-x-3">
-            <Button variant="primary" @click="openInviteModal">
-              <UserPlusIcon class="w-4 h-4 mr-2" />
-              {{ t('teacher.students.actions.invite') }}
-            </Button>
-            <Button variant="success" @click="exportData">
-              <ArrowDownTrayIcon class="w-4 h-4 mr-2" />
-              {{ t('teacher.students.actions.export') }}
-            </Button>
-            <!-- 去除模拟邀请功能，后续有真实接口再恢复 -->
-          </div>
-        </div>
+        <nav class="flex items-center space-x-2 text-sm text-gray-500 dark:text-gray-400 mb-2">
+          <router-link to="/teacher/courses" class="hover:text-gray-700 dark:hover:text-gray-200">
+            {{ t('teacher.students.breadcrumb.courses') }}
+          </router-link>
+          <chevron-right-icon class="w-4 h-4" />
+          <router-link :to="`/teacher/courses/${courseId}`" class="hover:text-gray-700 dark:hover:text-gray-200">
+            {{ courseName }}
+          </router-link>
+          <chevron-right-icon class="w-4 h-4" />
+          <span>{{ t('teacher.students.breadcrumb.self') }}</span>
+        </nav>
+        <PageHeader :title="t('teacher.students.title')" :subtitle="t('teacher.students.subtitle')">
+          <template #actions>
+            <div class="flex items-center space-x-3">
+              <Button variant="primary" @click="openInviteModal">
+                <UserPlusIcon class="w-4 h-4 mr-2" />
+                {{ t('teacher.students.actions.invite') }}
+              </Button>
+              <Button variant="success" @click="exportData">
+                <ArrowDownTrayIcon class="w-4 h-4 mr-2" />
+                {{ t('teacher.students.actions.export') }}
+              </Button>
+            </div>
+          </template>
+        </PageHeader>
       </div>
 
       <!-- 统计卡片（基于接口数据汇总） -->
@@ -381,6 +378,7 @@ import Badge from '@/components/ui/Badge.vue'
 import Progress from '@/components/ui/Progress.vue'
 import FilterBar from '@/components/ui/filters/FilterBar.vue'
 import GlassPopoverSelect from '@/components/ui/filters/GlassPopoverSelect.vue'
+import PageHeader from '@/components/ui/PageHeader.vue'
 import {
   ChevronRightIcon,
   DocumentArrowDownIcon,

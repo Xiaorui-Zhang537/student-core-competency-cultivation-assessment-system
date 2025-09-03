@@ -2,11 +2,8 @@
   <div class="min-h-screen bg-gray-50 dark:bg-gray-900 p-6">
     <div class="max-w-6xl mx-auto">
       <!-- 页面标题 -->
-      <div class="mb-8 text-center">
-        <h1 class="text-3xl font-bold text-gray-900 dark:text-white mb-2">帮助中心</h1>
-        <p class="text-gray-600 dark:text-gray-400 max-w-2xl mx-auto">
-          在这里找到常见问题的答案，查看使用指南，或联系技术支持获得帮助
-        </p>
+      <div class="mb-8">
+        <PageHeader :title="t('shared.help.title') || '帮助中心'" :subtitle="t('shared.help.subtitle') || '在这里找到常见问题的答案，查看使用指南，或联系技术支持获得帮助'" />
       </div>
 
       <!-- 搜索框 -->
@@ -430,6 +427,9 @@ import { ref, reactive, onMounted } from 'vue'
 import { useUIStore } from '@/stores/ui'
 import Card from '@/components/ui/Card.vue'
 import Button from '@/components/ui/Button.vue'
+import PageHeader from '@/components/ui/PageHeader.vue'
+import { useI18n } from 'vue-i18n'
+const { t } = useI18n()
 import {
   MagnifyingGlassIcon,
   QuestionMarkCircleIcon,
