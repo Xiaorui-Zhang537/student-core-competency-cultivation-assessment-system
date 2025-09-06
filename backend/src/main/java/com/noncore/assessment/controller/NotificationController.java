@@ -224,4 +224,16 @@ public class NotificationController extends BaseController {
         Map<String, Object> result = notificationService.sendCourseNotification(courseId, type, customMessage);
         return ResponseEntity.ok(ApiResponse.success(result));
     }
+
+    /**
+     * 学生/教师互发聊天消息（课程上下文可选）
+     */
+    @PostMapping("/message")
+    @Operation(summary = "发送聊天消息", description = "学生或教师均可发送消息；如提供 relatedType=course 且 relatedId，则要求双方均为该课程参与者")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<ApiResponse<Notification>> sendMessage(@RequestBody NotificationRequest request) {
+        Long senderId = getCurrentUserId();
+        Notification n = notificationService.sendMessage(senderId, request.getRecipientId(), request.getContent(), request.getRelatedType(), request.getRelatedId());
+        return ResponseEntity.ok(ApiResponse.success(n));
+    }
 } 

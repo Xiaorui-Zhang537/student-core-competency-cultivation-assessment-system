@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.noncore.assessment.mapper.ChatMapper">
+
+  <!-- 最近会话列表：基于 chat_conversations / chat_conversation_members / notifications / users -->
+  <select id="listConversations" resultType="map">
+    SELECT
+      c.id                  AS id,
+      c.course_id           AS courseId,
+      c.last_message_id     AS lastMessageId,
+      c.last_message_at     AS lastMessageAt,
+      m.unread_count        AS unread,
+      m.pinned              AS pinned,
+      m.archived            AS archived,
+      -- 对端用户（peer）
+      CASE WHEN c.peer_a_id = #{userId} THEN c.peer_b_id ELSE c.peer_a_id END AS peerId,
+      u.username            AS peerUsername,
+      u.avatar              AS peerAvatar,
+      -- 最近一条消息内容
+      n.content             AS lastContent
+    FROM chat_conversations c
+    JOIN chat_conversation_members m ON m.conversation_id = c.id AND m.user_id = #{userId}
+    LEFT JOIN notifications n ON n.id = c.last_message_id
+    LEFT JOIN users u ON u.id = (CASE WHEN c.peer_a_id = #{userId} THEN c.peer_b_id ELSE c.peer_a_id END)
+    <where>
+      <if test="pinned != null"> AND m.pinned = #{pinned} </if>
+      <if test="archived != null"> AND m.archived = #{archived} </if>
+    </where>
+    ORDER BY m.pinned DESC, c.last_message_at DESC
+    LIMIT #{offset}, #{size}
+  </select>
+
+  <select id="countConversations" resultType="long">
+    SELECT COUNT(*)
+    FROM chat_conversations c
+    JOIN chat_conversation_members m ON m.conversation_id = c.id AND m.user_id = #{userId}
+    <where>
+      <if test="pinned != null"> AND m.pinned = #{pinned} </if>
+      <if test="archived != null"> AND m.archived = #{archived} </if>
+    </where>
+  </select>
+
+  <!-- 标记会话为已读：将我为接收者的未读消息标记为已读 -->
+  <update id="markConversationRead">
+    UPDATE notifications
+    SET is_read = 1,
+        read_at = NOW(),
+        updated_at = NOW()
+    WHERE conversation_id = #{conversationId}
+      AND user_id = #{userId}
+      AND type = 'message'
+      AND (is_read = 0 OR is_read IS NULL)
+  </update>
+
+  <!-- 重新计算未读数（返回剩余未读） -->
+  <select id="recalcUnread" resultType="int">
+    SELECT COUNT(*)
+    FROM notifications
+    WHERE conversation_id = #{conversationId}
+      AND user_id = #{userId}
+      AND type = 'message'
+      AND (is_read = 0 OR is_read IS NULL)
+  </select>
+
+</mapper>
+
+

@@ -44,6 +44,16 @@ export const teacherApi = {
     return api.post(`/teachers/courses/${courseId}/students/${studentId}/progress/reset`);
   },
 
+  // 教师：我的课程
+  getMyCourses: () => {
+    return api.get('/teachers/my-courses');
+  },
+
+  // 教师：联系人聚合（可选，用于一次性拉全通讯录）
+  getContacts: (params?: { keyword?: string }) => {
+    return api.get('/teachers/contacts', { params });
+  },
+
   // Ability radar & weights
   getAbilityRadar: (params: { courseId: string; classId?: string; studentId?: string; startDate: string; endDate: string }) => {
     return api.get('/teachers/ability/radar', { params });

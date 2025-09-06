@@ -203,4 +203,10 @@ public interface NotificationService {
      * 将与某人的会话全部标记为已读
      */
     int markConversationAsRead(Long userId, Long peerId);
+
+    /**
+     * 发送聊天消息（面向双方：教师或学生）。
+     * 若为课程上下文，需校验发送者与接收者皆为该课程的参与者（教师或学生）。
+     */
+    Notification sendMessage(Long senderId, Long recipientId, String content, String relatedType, Long relatedId);
 } 

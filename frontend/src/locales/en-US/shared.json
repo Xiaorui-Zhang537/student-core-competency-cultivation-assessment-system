@@ -25,7 +25,10 @@
       "pickSomeone": "Pick someone on the left to start chatting",
       "pin": "Pin",
       "unpin": "Unpin",
-      "delete": "Delete"
+      "delete": "Delete",
+      "sending": "Sending",
+      "failed": "Send failed",
+      "retry": "Retry"
     },
     "upload": {
       "uploading": "Uploading...",

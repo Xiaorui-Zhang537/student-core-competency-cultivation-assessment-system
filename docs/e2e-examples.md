@@ -423,6 +423,25 @@ sequenceDiagram
 
 ---
 
+## 示例 13X：聊天/通知/联系人一致性验证
+
+- 学生进入聊天：
+  1) 学生A登录 → 打开通知详情 → 点击“前往处理” → 打开聊天抽屉且定位老师T
+  2) 抽屉左侧“最近”不因通知内容覆盖预览，仅显示 username + 最近聊天消息
+  3) 学生A发送消息 → 最近列表显示 username 与最新消息；刷新后仍保持
+  4) 同一老师在多个课程对话，学生端“最近”不出现重复联系人（按 peerId 去重，忽略 courseId）
+
+- 教师联系人：
+  1) 教师T登录 → 联系人列表使用 `/teachers/contacts` 按课程分组展示学生（username、avatar）
+  2) 支持搜索 keyword 过滤联系人；若接口失败，回退“我的课程 + 逐课学生”
+
+- 最近会话（统一服务端）：
+  1) `/chat/conversations/my` 返回最近会话，前端按置顶优先 + 时间倒序
+  2) 通知详情打开聊天不改变最近预览文案
+  3) 置顶与最近持久化按 `role + userId` 隔离
+
+---
+
 ## 示例 13：社区发帖与评论（POST /api/community/posts, POST /api/community/posts/{id}/comments）
 
 - 前端：`CommunityView.vue` → `useCommunityStore` → `community.api.ts`

@@ -25,7 +25,10 @@
       "pickSomeone": "从左侧选择一位联系人开始聊天",
       "pin": "置顶",
       "unpin": "取消置顶",
-      "delete": "删除"
+      "delete": "删除",
+      "sending": "发送中",
+      "failed": "发送失败",
+      "retry": "重试"
     },
     "upload": {
       "uploading": "正在上传...",

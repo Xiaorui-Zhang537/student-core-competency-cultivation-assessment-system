@@ -218,10 +218,14 @@ export const useNotificationsStore = defineStore('notifications', () => {
   const fetchStats = async () => {
     try {
       const response: any = await notificationAPI.getNotificationStats()
-      stats.value.totalCount = Number(response?.total || 0)
-      stats.value.unreadCount = Number(response?.unread || 0)
-      stats.value.todayCount = Number(response?.today || 0)
-      stats.value.typeDistribution = (response?.byType || {}) as Record<string, number>
+      const total = (response?.totalCount ?? response?.total ?? response?.count ?? 0)
+      const unread = (response?.unreadCount ?? response?.unread ?? response?.unread_count ?? 0)
+      const today = (response?.todayCount ?? response?.today ?? 0)
+      const dist = (response?.byType ?? response?.typeDistribution ?? {}) as Record<string, number>
+      stats.value.totalCount = Number(total)
+      stats.value.unreadCount = Number(unread)
+      stats.value.todayCount = Number(today)
+      stats.value.typeDistribution = dist
     } catch (err: any) {
       console.error('获取通知统计失败:', err)
     }
@@ -231,7 +235,8 @@ export const useNotificationsStore = defineStore('notifications', () => {
   const fetchUnreadCount = async () => {
     try {
       const response: any = await notificationAPI.getUnreadCount()
-      stats.value.unreadCount = Number(response?.unreadCount || 0)
+      const unread = (response?.unreadCount ?? response?.unread ?? response?.count ?? 0)
+      stats.value.unreadCount = Number(unread)
     } catch (err: any) {
       console.error('获取未读数量失败:', err)
     }

@@ -119,7 +119,7 @@
 
         <!-- 右侧：会话区或占位 -->
         <div class="flex-1 flex flex-col min-w-0">
-          <div v-if="hasActivePeer && activeTab!=='system'" class="flex-1 overflow-y-auto p-4 space-y-3" ref="scrollContainer">
+          <div v-if="hasActivePeer && activeTab!=='system'" class="flex-1 overflow-y-auto p-4 space-y-3 no-scrollbar" ref="scrollContainer">
             <template v-for="item in renderedItems" :key="item.type==='message' ? item.data.id : item.key">
               <!-- 时间分隔条 -->
               <div v-if="item.type==='time-divider'" class="text-center my-2 text-xs text-gray-400 select-none">{{ item.timeText }}</div>
@@ -180,11 +180,11 @@
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-5 h-5 mr-1"><path d="M12 2a10 10 0 100 20 10 10 0 000-20zm0 2a8 8 0 110 16A8 8 0 0112 4zm-3 7a1 1 0 100-2 1 1 0 000 2zm8 0a1 1 0 100-2 1 1 0 000 2zm-8.536 3.464a1 1 0 011.414 0A4 4 0 0012 16a4 4 0 002.121-.536 1 1 0 011.05 1.7A6 6 0 0112 18a6 6 0 01-3.172-.836 1 1 0 01-.364-1.7z"/></svg>
           {{ t('shared.emojiPicker.button') }}
         </Button>
-            <input ref="draftInput" v-model="draft" class="input flex-1" :disabled="!hasActivePeer" :placeholder="t('teacher.students.chat.placeholder') as string" @keydown.enter.prevent="send()" />
-            <Button variant="primary" :disabled="sending || !draft || !hasActivePeer" @click="send()">{{ t('teacher.ai.send') }}</Button>
+            <input ref="draftInput" v-model="draft" class="input flex-1" :placeholder="t('teacher.students.chat.placeholder') as string" @keydown.enter.prevent="send()" />
+            <Button variant="primary" :disabled="sending || !draft" @click="send()">{{ t('teacher.ai.send') }}</Button>
 
-        <div v-if="showEmoji" class="absolute bottom-12 left-2 z-50 p-2 w-60 max-h-56 overflow-auto bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded shadow grid grid-cols-8 gap-1">
-          <button v-for="(e, idx) in emojiList" :key="idx" type="button" class="text-xl hover:bg-gray-100 dark:hover:bg-gray-700 rounded" @click="pickEmoji(e)">{{ e }}</button>
+        <div v-if="showEmoji" class="absolute bottom-12 left-2 z-50 p-2 w-60 max-h-56 overflow-auto rounded-xl grid grid-cols-8 gap-1 no-scrollbar" v-glass="{ strength: 'regular', interactive: true }">
+          <button v-for="(e, idx) in emojiList" :key="idx" type="button" class="text-xl rounded hover:bg-white/40 dark:hover:bg-slate-700/50 transition-colors" @click="pickEmoji(e)">{{ e }}</button>
             </div>
           </div>
         </div>
@@ -243,6 +243,7 @@ const activeTab = ref<'recent' | 'contacts' | 'system'>('recent')
 const keyword = ref('')
 const hasActivePeer = computed(() => !!props.peerId)
 const peerActiveId = computed(() => props.peerId ? String(props.peerId) : '')
+// 发送不再受角色或会话激活限制
 
 const headerTitle = computed(() => {
   if (hasActivePeer.value) return (t('teacher.students.chat.title', { name: props.peerName || title.value }) as string)
@@ -261,17 +262,9 @@ const recentList = computed(() => {
     unread: Number(n.unread || 0),
     lastAt: n.lastAt || 0
   }))
-  // 确保当前会话在列表中（从学生管理/详情直达时）
+  // 不再强行插入当前会话的占位项，避免空白记录
   const activeId = props.peerId ? String(props.peerId) : ''
   const list = base.slice()
-  if (activeId && !list.some((x: any) => String(x.peerId) === activeId)) {
-    let displayName = props.peerName || ''
-    if (!displayName && chat.contacts && activeId) {
-      const found = (chat.contacts as any[]).find((c: any) => String(c.id) === activeId)
-      if (found) displayName = found.name
-    }
-    list.push({ _k: -1, peerId: activeId, courseId: props.courseId || '', displayName, avatar: '', content: '', preview: '', unread: 0, lastAt: 0 })
-  }
   // 排序：置顶优先 + 按最近时间倒序
   list.sort((a: any, b: any) => {
     const ap = chat.isPinned(a.peerId, a.courseId)
@@ -363,6 +356,9 @@ const ensurePeerAvatar = async (pid: string | number) => {
   const existing = getPeerAvatar(idStr)
   if (existing) { peerAvatarMap.value[idStr] = existing; return }
   try {
+    // 教师端直接拉取学生资料可能因权限返回 400/403；此处对教师角色跳过远程获取
+    const role = String((auth.user as any)?.role || '').toUpperCase()
+    if (role === 'TEACHER') return
     const { teacherStudentApi } = await import('@/api/teacher-student.api')
     const profile: any = await teacherStudentApi.getStudentProfile(idStr)
     const avatar = profile?.avatar || profile?.avatarUrl || profile?.avatar_url || profile?.studentAvatar || profile?.student_avatar || profile?.photo || profile?.image || ''
@@ -456,6 +452,7 @@ const markMessageStatus = (id: string | number, status: 'sent' | 'failed' | 'pen
 }
 
 const send = async (contentOverride?: string | unknown, tempIdToResolve?: string | number) => {
+  // 允许任何登录用户发送（权限由后端控制）
   const raw = (typeof contentOverride === 'string' ? contentOverride : draft.value)
   const content = ((raw ?? '') as any).toString().trim()
   if (!content) return
@@ -487,15 +484,12 @@ const send = async (contentOverride?: string | unknown, tempIdToResolve?: string
     const payload: any = {
       // @ts-ignore
       recipientId: Number(props.peerId),
-      title: '',
       content: content,
-      type: 'message',
-      category: 'course',
       relatedType: props.courseId ? 'course' : undefined,
       // @ts-ignore
       relatedId: props.courseId ? Number(props.courseId) : undefined
     }
-    const sent: any = await notificationAPI.sendNotification(payload)
+    const sent: any = await notificationAPI.sendMessage(payload)
     const latestContent = payload.content
     const latestPreview = payload.content
     // 即时更新左侧最近会话顺序与预览
@@ -571,7 +565,12 @@ onMounted(async () => {
   title.value = props.peerName ? `${props.peerName}` : (t('teacher.students.table.message') as string)
   // 始终加载列表，保证左侧数据完整
   // 优先从当前上下文（props.courseId 或最近持久化）加载联系人，避免切入口不同导致联系人为空
-  const persisted = (() => { try { return JSON.parse(localStorage.getItem('chat:recent')||'[]') } catch { return [] } })()
+  const persisted = (() => { try {
+    const uid = String(localStorage.getItem('userId') || '')
+    const role = (() => { try { return (auth.user as any)?.role || '' } catch { return '' } })()
+    const key = `chat:${String(role||'GUEST').toUpperCase()}:${uid||'anon'}:recent`
+    return JSON.parse(localStorage.getItem(key) || '[]')
+  } catch { return [] } })()
   const last = persisted && persisted[0]
   const cid = props.courseId || chat.courseId || (last?.courseId || undefined)
   await chat.loadLists({ courseId: cid })
@@ -581,7 +580,12 @@ onMounted(async () => {
 
 watch(() => props.open, async (v) => {
   if (v) {
-    const persisted = (() => { try { return JSON.parse(localStorage.getItem('chat:recent')||'[]') } catch { return [] } })()
+    const persisted = (() => { try {
+      const uid = String(localStorage.getItem('userId') || '')
+      const role = (() => { try { return (auth.user as any)?.role || '' } catch { return '' } })()
+      const key = `chat:${String(role||'GUEST').toUpperCase()}:${uid||'anon'}:recent`
+      return JSON.parse(localStorage.getItem(key) || '[]')
+    } catch { return [] } })()
     const last = persisted && persisted[0]
     const cid = props.courseId || chat.courseId || (last?.courseId || undefined)
     await chat.loadLists({ courseId: cid })
@@ -603,6 +607,10 @@ watch(() => props.peerId, async () => { await load() })
 
 .bubble-peer { position: relative; }
 .bubble-mine { position: relative; }
+
+/* 隐藏滚动条（仍可滚动） */
+.no-scrollbar::-webkit-scrollbar { display: none; }
+.no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
 </style>
 
 

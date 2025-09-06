@@ -99,6 +99,11 @@ public interface UserMapper {
     );
 
     /**
+     * 判定用户是否为课程的在读学生（active/completed）
+     */
+    int isStudentInCourse(@Param("userId") Long userId, @Param("courseId") Long courseId);
+
+    /**
      * 分页查询用户列表
      *
      * @param role 角色筛选（可选）

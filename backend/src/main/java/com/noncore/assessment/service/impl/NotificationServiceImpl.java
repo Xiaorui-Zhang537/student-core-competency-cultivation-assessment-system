@@ -532,4 +532,40 @@ public class NotificationServiceImpl implements NotificationService {
         }
         return count;
     }
+
+    @Override
+    public Notification sendMessage(Long senderId, Long recipientId, String content, String relatedType, Long relatedId) {
+        if (senderId == null || recipientId == null) {
+            throw new BusinessException(ErrorCode.INVALID_PARAMETER, "发送者或接收者不能为空");
+        }
+        if (Objects.equals(senderId, recipientId)) {
+            throw new BusinessException(ErrorCode.INVALID_PARAMETER, "不能给自己发送消息");
+        }
+        // 若在课程上下文中，校验双方均属于该课程（教师或学生）
+        if ("course".equalsIgnoreCase(relatedType) && relatedId != null) {
+            Course c = courseMapper.selectCourseById(relatedId);
+            if (c == null) throw new BusinessException(ErrorCode.COURSE_NOT_FOUND, "课程不存在");
+            boolean senderOk = Objects.equals(c.getTeacherId(), senderId) || userMapper.isStudentInCourse(senderId, relatedId) > 0;
+            boolean recipientOk = Objects.equals(c.getTeacherId(), recipientId) || userMapper.isStudentInCourse(recipientId, relatedId) > 0;
+            if (!senderOk || !recipientOk) throw new BusinessException(ErrorCode.PERMISSION_DENIED, "非课程成员无法发送消息");
+        }
+        // 附带基础元数据，便于前端显示用户名（避免仅凭最近消息反推）
+        com.noncore.assessment.entity.User sender = userMapper.selectUserById(senderId);
+        String meta = null;
+        try {
+            if (sender != null) {
+                meta = new com.fasterxml.jackson.databind.ObjectMapper().writeValueAsString(
+                    java.util.Map.of(
+                        "username", sender.getUsername(),
+                        "senderName", (sender.getNickname() != null && !sender.getNickname().isBlank()) ? sender.getNickname() : (sender.getFirstName() != null ? sender.getFirstName() : sender.getUsername())
+                    )
+                );
+            }
+        } catch (Exception ignore) {}
+        Notification n = sendNotification(recipientId, senderId, "", content, "message", "chat", "low", relatedType, relatedId);
+        if (meta != null) {
+            n.setData(meta);
+        }
+        return n;
+    }
 } 

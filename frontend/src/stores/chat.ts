@@ -2,6 +2,10 @@ import { defineStore } from 'pinia'
 import { ref } from 'vue'
 import notificationAPI from '@/api/notification.api'
 import { studentApi } from '@/api/student.api'
+import { teacherStudentApi } from '@/api/teacher-student.api'
+import { teacherApi } from '@/api/teacher.api'
+import { useAuthStore } from '@/stores/auth'
+import chatApi from '@/api/chat.api'
 
 export const useChatStore = defineStore('chat', () => {
   const isOpen = ref(false)
@@ -14,6 +18,20 @@ export const useChatStore = defineStore('chat', () => {
   const loadingLists = ref(false)
   const systemMessages = ref<any[]>([])
   const pinned = ref<Array<{ peerId: string, courseId?: string }>>([])
+  const suppressPreviewOnce = ref(false)
+  // 用户隔离的本地存储键：chat:ROLE:USERID:name
+  const getStorageKey = (name: 'recent' | 'pinned') => {
+    try {
+      const uid = String(localStorage.getItem('userId') || '')
+      const auth = useAuthStore()
+      const role = String(auth.userRole || '').toUpperCase()
+      const roleTag = role ? role : 'GUEST'
+      const idTag = uid || 'anon'
+      return `chat:${roleTag}:${idTag}:${name}`
+    } catch {
+      return `chat:GUEST:anon:${name}`
+    }
+  }
 
   function openChat(id?: string | number | null, name: string | null = null, cId: string | number | null = null) {
     // 支持无参：仅打开抽屉，停留在列表态
@@ -23,21 +41,6 @@ export const useChatStore = defineStore('chat', () => {
       courseId.value = cId
     }
     isOpen.value = true
-    // 记录到本地最近会话（轻量缓存）
-    try {
-      const key = 'chat:recent'
-      const raw = localStorage.getItem(key)
-      let arr: any[] = []
-      try { arr = raw ? JSON.parse(raw) : [] } catch { arr = [] }
-      const pid = id != null ? String(id) : ''
-      if (pid) {
-        const existingIdx = arr.findIndex((x: any) => String(x.peerId) === pid && String(x.courseId||'') === String(cId||''))
-        const item = { peerId: pid, peerName: name || '', courseId: cId ? String(cId) : '' }
-        if (existingIdx >= 0) arr.splice(existingIdx, 1)
-        arr.unshift(item)
-        localStorage.setItem(key, JSON.stringify(arr.slice(0, 50)))
-      }
-    } catch { /* ignore */ }
   }
 
   function setPeer(id: string | number, name: string | null = null, cId: string | number | null = null) {
@@ -65,7 +68,7 @@ export const useChatStore = defineStore('chat', () => {
     })
     // 更新本地持久化
     try {
-      const key = 'chat:recent'
+      const key = getStorageKey('recent')
       const raw = localStorage.getItem(key)
       const arr: any[] = raw ? JSON.parse(raw) : []
       const next = arr.filter((x: any) => !(String(x.peerId) === pid && (cid ? String(x.courseId||'') === cid : true)))
@@ -76,140 +79,53 @@ export const useChatStore = defineStore('chat', () => {
   async function loadLists(opts?: { courseId?: string | number; keyword?: string }) {
     try {
       loadingLists.value = true
-      // 最近会话：复用我的消息通知（message 类型），前端可二次聚合
+      // 最近会话：改为服务端统一接口
       try {
-        // 仅获取聊天消息，不包含帖子评论等
-        const res: any = await notificationAPI.getMyNotifications({ page: 1, size: 500, type: 'message' })
-        const items = (res as any)?.items || (res?.data?.items) || []
-        let merged = items.slice()
-
-        // 合并本地最近，以保证从其他入口打开的会话也能出现
-        try {
-          const raw = localStorage.getItem('chat:recent')
-          const localArr: any[] = raw ? JSON.parse(raw) : []
-          for (const r of localArr) {
-            const exists = merged.some((n: any) => (
-              String(n.senderId) === String(r.peerId) || String(n.recipientId) === String(r.peerId)
-            ) && (String(r.courseId||'') === '' || String(r.courseId||'') === String(n.relatedId || n.courseId || '')))
-            if (!exists) {
-              merged.unshift({
-                senderId: r.peerId,
-                recipientId: null,
-                relatedId: r.courseId || null,
-                type: 'message',
-                category: 'chat',
-                title: r.peerName || '',
-                content: '',
-                data: null,
-                createdAt: '1970-01-01T00:00:00.000Z'
-              })
-            }
-          }
-        } catch { /* ignore */ }
-
-        // 仅保留聊天项，过滤帖子/社区/评论等
-        const toLower = (v: any) => String(v || '').toLowerCase()
-        merged = merged.filter((n: any) => {
-          const typeOk = toLower(n.type) === 'message'
-          const hasPeer = n.senderId != null || n.recipientId != null
-          const related = toLower(n.relatedType)
-          const category = toLower(n.category)
-          const title = toLower(n.title)
-          const content = toLower(n.content)
-          const actionUrl = toLower((n as any).actionUrl)
-          const isForum = ['post','community','comment','reply','forum','discussion'].some(k => related.includes(k) || category.includes(k))
-            || ['post','comment','reply','discussion','论坛','帖子','回复','评论','社区'].some(k => title.includes(k) || content.includes(k))
-            || actionUrl.includes('/community') || actionUrl.includes('/posts')
-          return typeOk && hasPeer && !isForum
-        })
-
-        // 聚合为“会话”，并计算最新时间与未读
-        const myId = String(localStorage.getItem('userId') || '')
-        const convMap = new Map<string, any>()
-        for (const n of merged) {
-          const createdAt = n.createdAt || n.created_at || n.createdTime || n.created_time || 0
-          const createdTs = createdAt ? new Date(createdAt).getTime() : 0
-          const peer = String(n.senderId) === myId ? n.recipientId : n.senderId
-          const pid = peer != null ? String(peer) : ''
-          if (!pid) continue
-          const cid = n.relatedId || n.courseId || ''
-          const key = `${pid}|${String(cid||'')}`
-          const data = (() => { try { return typeof n.data === 'string' ? JSON.parse(n.data) : (n.data || null) } catch { return null } })()
-          const avatar = (data && (data.avatar || data.studentAvatar || data.student_avatar)) || ''
-          const name = n.senderName || n.peerName || (data && (data.senderName || data.studentName || data.name || data.sender_name || data.student_name)) || n.title || ''
-          const unreadInc = (n.isRead === false && String(n.recipientId) === myId) ? 1 : 0
-          const content = n.content || ''
-          const preview = n.title || n.content || ''
-          const exist = convMap.get(key)
+        const resp: any = await chatApi.getMyConversations({ page: 1, size: 200 })
+        const items: any[] = (resp?.data?.items) || resp?.items || []
+        const mapped = items.map((x: any) => ({
+          peerId: String(x.peerId),
+          peerName: String(x.peerUsername || ''),
+          courseId: x.courseId ? String(x.courseId) : '',
+          avatar: x.peerAvatar || '',
+          content: x.lastContent || '',
+          preview: x.lastContent || '',
+          lastAt: x.lastMessageAt ? new Date(x.lastMessageAt).getTime() : 0,
+          unread: Number(x.unread || 0)
+        }))
+        // 去重：同一 username 只显示一条（选取最近一条，未读累加）
+        const byUser = new Map<string, any>()
+        for (const c of mapped) {
+          const key = (c.peerName || String(c.peerId)).toLowerCase()
+          const exist = byUser.get(key)
           if (!exist) {
-            convMap.set(key, {
-              peerId: pid,
-              peerName: name,
-              courseId: cid ? String(cid) : '',
-              avatar,
-              content,
-              preview,
-              lastAt: createdTs,
-              unread: unreadInc
-            })
+            byUser.set(key, { ...c })
           } else {
-            // 更新最新消息与未读计数
-            exist.unread += unreadInc
-            if (createdTs > exist.lastAt) {
-              exist.lastAt = createdTs
-              exist.content = content
-              exist.preview = preview
-              if (name) exist.peerName = exist.peerName || name
-              if (avatar) exist.avatar = exist.avatar || avatar
+            exist.unread = Number(exist.unread || 0) + Number(c.unread || 0)
+            if ((c.lastAt || 0) > (exist.lastAt || 0)) {
+              exist.lastAt = c.lastAt
+              exist.content = c.content
+              exist.preview = c.preview
+              if (c.avatar) exist.avatar = c.avatar
+              exist.courseId = c.courseId
+              exist.peerId = c.peerId
+              if (c.peerName) exist.peerName = c.peerName
             }
           }
         }
-
-        // 合并本地最近持久化（保留最新的 lastAt/content/preview）
-        try {
-          const rawLocal = localStorage.getItem('chat:recent')
-          const localArr: any[] = rawLocal ? JSON.parse(rawLocal) : []
-          for (const lr of localArr) {
-            const pid = String(lr.peerId || '')
-            const cid = String(lr.courseId || '')
-            if (!pid) continue
-            const key = `${pid}|${cid}`
-            const exist = convMap.get(key)
-            const lrLastAt = Number(lr.lastAt || 0)
-            if (exist) {
-              if (lrLastAt && lrLastAt > (exist.lastAt || 0)) {
-                exist.lastAt = lrLastAt
-                if (lr.content) exist.content = lr.content
-                if (lr.preview) exist.preview = lr.preview
-              }
-              if (lr.peerName && !exist.peerName) exist.peerName = lr.peerName
-            } else {
-              convMap.set(key, {
-                peerId: pid,
-                courseId: cid,
-                peerName: lr.peerName || '',
-                avatar: '',
-                content: lr.content || lr.preview || '',
-                preview: lr.preview || lr.content || '',
-                lastAt: lrLastAt || 0,
-                unread: 0
-              })
-            }
-          }
-        } catch { /* ignore */ }
-
+        const deduped = Array.from(byUser.values())
         // 置顶与时间排序
         try {
-          const rawPinned = localStorage.getItem('chat:pinned')
+          const rawPinned = localStorage.getItem(getStorageKey('pinned'))
           pinned.value = rawPinned ? JSON.parse(rawPinned) : []
         } catch { pinned.value = [] }
-        const keyOf = (id: any, cid: any) => `${String(id)}|${String(cid||'')}`
-        const pinnedSet = new Set((pinned.value||[]).map(x => keyOf(x.peerId, x.courseId)))
-        const allConvs = Array.from(convMap.values())
-        allConvs.sort((a: any, b: any) => (b.lastAt || 0) - (a.lastAt || 0))
-        const pinnedConvs = allConvs.filter(c => pinnedSet.has(keyOf(c.peerId, c.courseId)))
-        const normalConvs = allConvs.filter(c => !pinnedSet.has(keyOf(c.peerId, c.courseId)))
+        // 置顶按 peerId 维度判断（与去重一致）
+        const pinnedPeerIds = new Set((pinned.value || []).map((x: any) => String(x.peerId)))
+        deduped.sort((a: any, b: any) => (b.lastAt || 0) - (a.lastAt || 0))
+        const pinnedConvs = deduped.filter(c => pinnedPeerIds.has(String(c.peerId)))
+        const normalConvs = deduped.filter(c => !pinnedPeerIds.has(String(c.peerId)))
         recentConversations.value = [...pinnedConvs, ...normalConvs]
+        suppressPreviewOnce.value = false
       } catch {
         recentConversations.value = []
       }
@@ -221,27 +137,71 @@ export const useChatStore = defineStore('chat', () => {
         systemMessages.value = all.filter((n: any) => toLower(n.type) !== 'message')
       } catch { systemMessages.value = [] }
 
-      // 联系人分支：学生端仅显示“我加入的课程”的参与者（任课教师 + 同班同学）
+      // 联系人分支：按角色加载
       contacts.value = []
       contactGroups.value = []
       try {
-        // 获取我加入的课程（学生端接口）
-        const resMyCourses: any = await (studentApi as any).getMyCourses({ page: 1, size: 1000 })
-        const myCourses = (resMyCourses?.data?.items?.items) || (resMyCourses?.data?.items) || (resMyCourses?.items) || resMyCourses || []
+        const auth = useAuthStore()
+        const role = String(auth.userRole || '').toUpperCase()
         const groups: any[] = []
-        for (const c of myCourses) {
-          const cId = String(c.id || c.courseId || '')
-          const cName = c.title || c.name || `Course ${cId}`
+        if (role === 'STUDENT') {
+          const resMyCourses: any = await (studentApi as any).getMyCourses({ page: 1, size: 1000 })
+          const myCourses = (resMyCourses?.data?.items?.items) || (resMyCourses?.data?.items) || (resMyCourses?.items) || resMyCourses || []
+          for (const c of myCourses) {
+            const cId = String(c.id || c.courseId || '')
+            const cName = c.title || c.name || `Course ${cId}`
+            try {
+              const participantsRes: any = await (studentApi as any).getCourseParticipants(cId, opts?.keyword)
+              const teachers = ((participantsRes?.data?.teachers) || (participantsRes?.teachers) || []).map((t: any) => ({ id: String(t.id), name: (t.username || t.userName || t.name), avatar: t.avatar }))
+              const classmates = ((participantsRes?.data?.classmates) || (participantsRes?.classmates) || []).map((s: any) => ({ id: String(s.id), name: (s.username || s.userName || s.name), avatar: s.avatar }))
+              const members = [...teachers, ...classmates].filter((m: any) => String(m.id) !== String(localStorage.getItem('userId') || ''))
+              if (members.length === 0) continue
+              groups.push({ courseId: cId, courseName: cName, expanded: true, students: members })
+              contacts.value.push(...members)
+            } catch { /* ignore one course */ }
+          }
+        } else {
+          // 教师端：优先一次性聚合接口 /teachers/contacts；失败则回退“我的课程+逐课学生”
+          const assignedCourseId = String(opts?.courseId || courseId.value || '')
+          let usedAggregate = false
           try {
-            // 从学生端统一接口获取课程参与者
-            const participantsRes: any = await (studentApi as any).getCourseParticipants(cId, opts?.keyword)
-            const teachers = ((participantsRes?.data?.teachers) || (participantsRes?.teachers) || []).map((t: any) => ({ id: String(t.id), name: t.name, avatar: t.avatar }))
-            const classmates = ((participantsRes?.data?.classmates) || (participantsRes?.classmates) || []).map((s: any) => ({ id: String(s.id), name: s.name, avatar: s.avatar }))
-            const members = [...teachers, ...classmates].filter((m: any) => String(m.id) !== String(localStorage.getItem('userId') || ''))
-            if (members.length === 0) continue
-            groups.push({ courseId: cId, courseName: cName, expanded: true, students: members })
-            contacts.value.push(...members)
-          } catch { /* ignore one course */ }
+            const resp: any = await (teacherApi as any).getContacts({ keyword: opts?.keyword })
+            const aggGroups = (resp?.data?.groups) || (resp?.groups) || []
+            const filtered = assignedCourseId ? aggGroups.filter((g: any) => String(g.courseId) === assignedCourseId) : aggGroups
+            for (const g of filtered) {
+              const students = ((g?.students) || []).map((s: any) => ({ id: String(s.id), name: s.username || `#${s.id}` , avatar: s.avatar }))
+              if (students.length === 0) continue
+              groups.push({ courseId: String(g.courseId), courseName: g.courseTitle || `Course ${g.courseId}`, expanded: !!assignedCourseId || groups.length === 0, students })
+              contacts.value.push(...students)
+            }
+            usedAggregate = groups.length > 0
+          } catch { /* fall back */ }
+
+          if (!usedAggregate) {
+            // 回退方案：我的课程→逐课学生
+            let teacherCourses: any[] = []
+            try {
+              if (assignedCourseId) {
+                teacherCourses = [{ id: assignedCourseId, title: `Course ${assignedCourseId}` }]
+              } else {
+                const myCoursesRes: any = await (teacherApi as any).getMyCourses()
+                teacherCourses = (myCoursesRes?.data) || (myCoursesRes?.items) || []
+              }
+            } catch { teacherCourses = [] }
+
+            for (const c of teacherCourses) {
+              const cId = String(c.id || c.courseId || '')
+              if (!cId) continue
+              const cName = c.title || c.name || `Course ${cId}`
+              try {
+                const basicRes: any = await (teacherStudentApi as any).getCourseStudentsBasic(cId, 1, 10000, opts?.keyword)
+                const students = ((basicRes?.items) || (basicRes?.data?.items) || []).map((s: any) => ({ id: String(s.id || s.studentId || s.student_id), name: s.username || s.userName || s.name || s.nickname || `#${s.id}`, avatar: s.avatar }))
+                if (students.length === 0) continue
+                groups.push({ courseId: cId, courseName: cName, expanded: !!assignedCourseId || groups.length === 0, students })
+                contacts.value.push(...students)
+              } catch { /* per-course ignore */ }
+            }
+          }
         }
         contactGroups.value = groups
       } catch { /* ignore all */ }
@@ -254,11 +214,11 @@ export const useChatStore = defineStore('chat', () => {
     const pid = String(targetPeerId)
     const cid = targetCourseId != null ? String(targetCourseId) : ''
     try {
-      const raw = localStorage.getItem('chat:pinned')
+      const raw = localStorage.getItem(getStorageKey('pinned'))
       const arr: any[] = raw ? JSON.parse(raw) : []
       const idx = arr.findIndex((x: any) => String(x.peerId) === pid && String(x.courseId||'') === cid)
       if (idx >= 0) { arr.splice(idx, 1) } else { arr.unshift({ peerId: pid, courseId: cid }) }
-      localStorage.setItem('chat:pinned', JSON.stringify(arr.slice(0, 100)))
+      localStorage.setItem(getStorageKey('pinned'), JSON.stringify(arr.slice(0, 100)))
       pinned.value = arr
       // 前端重排（新结构）
       const keyOf = (id: any, c: any) => `${String(id)}|${String(c||'')}`
@@ -285,9 +245,10 @@ export const useChatStore = defineStore('chat', () => {
     const cid = targetCourseId != null ? String(targetCourseId) : ''
     const now = Date.now()
     const list = (recentConversations.value || []).slice()
-    let item = list.find((n: any) => String(n.peerId) === pid && String(n.courseId || '') === cid)
+    const isStudent = (() => { try { return window.location.pathname.startsWith('/student') } catch { return false } })()
+    let item = list.find((n: any) => String(n.peerId) === pid && (isStudent ? true : String(n.courseId || '') === cid))
     if (!item) {
-      item = { peerId: pid, courseId: cid, peerName: targetPeerName || '', avatar: '', unread: 0, content: '', preview: '', lastAt: 0 }
+      item = { peerId: pid, courseId: isStudent ? '' : cid, peerName: targetPeerName || '', avatar: '', unread: 0, content: '', preview: '', lastAt: 0 }
       list.push(item)
     }
     if (latestContent) item.content = latestContent
@@ -296,17 +257,20 @@ export const useChatStore = defineStore('chat', () => {
     item.unread = 0
     // 持久化到本地，便于重新打开抽屉时恢复
     try {
-      const key = 'chat:recent'
+      const key = getStorageKey('recent')
       const raw = localStorage.getItem(key)
       const arr: any[] = raw ? JSON.parse(raw) : []
-      const idx = arr.findIndex((x: any) => String(x.peerId) === pid && String(x.courseId||'') === cid)
-      const rec = { peerId: pid, courseId: cid, peerName: item.peerName || targetPeerName || '', content: item.content, preview: item.preview, lastAt: now }
+      const idx = arr.findIndex((x: any) => String(x.peerId) === pid && (isStudent ? true : String(x.courseId||'') === cid))
+      const rec = { peerId: pid, courseId: isStudent ? '' : cid, peerName: item.peerName || targetPeerName || '', content: item.content, preview: item.preview, lastAt: now }
       if (idx >= 0) arr.splice(idx, 1)
       arr.unshift(rec)
       localStorage.setItem(key, JSON.stringify(arr.slice(0, 100)))
     } catch { /* ignore */ }
     // 排序：置顶优先 + 最近时间倒序
-    const keyOf = (id: any, c: any) => `${String(id)}|${String(c||'')}`
+    const keyOf = (id: any, c: any) => {
+      const studentMode = (() => { try { return window.location.pathname.startsWith('/student') } catch { return false } })()
+      return `${String(id)}|${studentMode ? '' : String(c||'')}`
+    }
     const set = new Set((pinned.value || []).map((x: any) => keyOf(x.peerId, x.courseId)))
     list.sort((a: any, b: any) => {
       const ap = set.has(keyOf(a.peerId, a.courseId))
@@ -323,7 +287,11 @@ export const useChatStore = defineStore('chat', () => {
     if (grp) grp.expanded = !grp.expanded
   }
 
-  return { isOpen, peerId, peerName, courseId, recentConversations, contacts, contactGroups, systemMessages, loadingLists, openChat, setPeer, closeChat, loadLists, removeRecent, togglePin, isPinned, upsertRecentAfterSend, toggleContactGroup }
+  function suppressNextPreviewUpdateOnce() {
+    suppressPreviewOnce.value = true
+  }
+
+  return { isOpen, peerId, peerName, courseId, recentConversations, contacts, contactGroups, systemMessages, loadingLists, openChat, setPeer, closeChat, loadLists, removeRecent, togglePin, isPinned, upsertRecentAfterSend, toggleContactGroup, suppressNextPreviewUpdateOnce }
 })
 
 

@@ -98,3 +98,65 @@ sequenceDiagram
   A-->>V: 重新拉取 GET /api/teachers/ability/radar
   V-->>T: 雷达图更新
 ```
+
+## 7. 我的课程（教师）
+- `GET /api/teachers/my-courses`
+
+请求示例：
+```
+GET /api/teachers/my-courses
+Authorization: Bearer <token>
+```
+
+响应示例：
+```json
+{
+  "code": 200,
+  "data": [
+    { "id": 101, "title": "高等数学", "teacherId": 9, "status": "published" },
+    { "id": 102, "title": "线性代数", "teacherId": 9, "status": "published" }
+  ]
+}
+```
+
+说明：返回当前登录教师所授课程列表，用于联系人聚合/聊天联系人分组等。
+
+## 8. 教师联系人聚合（按课程）
+- `GET /api/teachers/contacts`
+
+Query 参数：
+- `keyword`（可选）：按 `username` 或相关字段过滤学生。
+
+请求示例：
+```
+GET /api/teachers/contacts?keyword=tom
+Authorization: Bearer <token>
+```
+
+响应示例：
+```json
+{
+  "code": 200,
+  "data": {
+    "groups": [
+      {
+        "courseId": 101,
+        "courseTitle": "高等数学",
+        "students": [
+          { "id": 2001, "username": "tom", "avatar": "/u/2001.png" },
+          { "id": 2002, "username": "jerry", "avatar": "/u/2002.png" }
+        ]
+      },
+      {
+        "courseId": 102,
+        "courseTitle": "线性代数",
+        "students": [
+          { "id": 2003, "username": "alice", "avatar": null }
+        ]
+      }
+    ]
+  }
+}
+```
+
+说明：服务端按课程返回学生通讯录，每个学生包含 `username` 与 `avatar`，前端可直接渲染为联系人分组列表。

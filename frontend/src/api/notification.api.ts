@@ -103,6 +103,16 @@ export const notificationAPI = {
     return api.post('/notifications/send', data)
   },
 
+  // 发送聊天消息（双方可发，课程上下文可选）
+  sendMessage: (data: {
+    recipientId: string|number
+    content: string
+    relatedType?: string
+    relatedId?: string|number
+  }): Promise<ApiResponse<Notification>> => {
+    return api.post('/notifications/message', data)
+  },
+
   // 批量发送通知（管理员/教师功能）
   batchSend: (data: {
     recipientIds: (string|number)[]

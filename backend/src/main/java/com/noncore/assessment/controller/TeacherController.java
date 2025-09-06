@@ -6,6 +6,9 @@ import org.springframework.http.MediaType;
 import com.noncore.assessment.service.AnalyticsQueryService;
 import com.noncore.assessment.service.EnrollmentService;
 import com.noncore.assessment.service.UserService;
+import com.noncore.assessment.service.CourseService;
+import com.noncore.assessment.service.TeacherContactsService;
+import com.noncore.assessment.dto.response.TeacherContactsResponse;
 import com.noncore.assessment.util.ApiResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -22,11 +25,15 @@ public class TeacherController extends BaseController {
 
     private final AnalyticsQueryService analyticsQueryService;
     private final EnrollmentService enrollmentService;
+    private final CourseService courseService;
+    private final TeacherContactsService teacherContactsService;
 
-    public TeacherController(AnalyticsQueryService analyticsQueryService, UserService userService, EnrollmentService enrollmentService) {
+    public TeacherController(AnalyticsQueryService analyticsQueryService, UserService userService, EnrollmentService enrollmentService, CourseService courseService, TeacherContactsService teacherContactsService) {
         super(userService);
         this.analyticsQueryService = analyticsQueryService;
         this.enrollmentService = enrollmentService;
+        this.courseService = courseService;
+        this.teacherContactsService = teacherContactsService;
     }
 
     // Removed legacy single-student progress endpoint; analytics now uses course-scoped student performance APIs
@@ -126,5 +133,23 @@ public class TeacherController extends BaseController {
         Long teacherId = getCurrentUserId();
         enrollmentService.resetStudentCourseProgress(teacherId, courseId, studentId);
         return ResponseEntity.ok(ApiResponse.success());
+    }
+
+    @GetMapping("/my-courses")
+    @Operation(summary = "获取我的课程（教师）")
+    public ResponseEntity<ApiResponse<java.util.List<com.noncore.assessment.entity.Course>>> getMyCourses() {
+        Long teacherId = getCurrentUserId();
+        java.util.List<com.noncore.assessment.entity.Course> list = courseService.getCoursesByTeacher(teacherId);
+        return ResponseEntity.ok(ApiResponse.success(list));
+    }
+
+    @GetMapping("/contacts")
+    @Operation(summary = "教师联系人聚合：按课程返回学生（username, avatar）")
+    public ResponseEntity<ApiResponse<TeacherContactsResponse>> getContacts(
+            @io.swagger.v3.oas.annotations.Parameter(description = "搜索关键字") @RequestParam(value = "keyword", required = false) String keyword
+    ) {
+        Long teacherId = getCurrentUserId();
+        TeacherContactsResponse resp = teacherContactsService.listContactsByCourses(teacherId, keyword);
+        return ResponseEntity.ok(ApiResponse.success(resp));
     }
 }

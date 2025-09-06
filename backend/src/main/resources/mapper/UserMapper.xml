@@ -229,6 +229,15 @@
         ORDER BY e.enrolled_at DESC
     </select>
 
+    <!-- 判定是否为课程学生（active/completed 状态） -->
+    <select id="isStudentInCourse" resultType="int">
+        SELECT COUNT(1)
+        FROM enrollments e
+        WHERE e.course_id = #{courseId}
+          AND e.student_id = #{userId}
+          AND e.status IN ('active','completed')
+    </select>
+
     <!-- 根据课程ID查询学生（带搜索：昵称/用户名/学号/工号） -->
     <select id="selectStudentsByCourseIdWithSearch" resultMap="UserResultMap">
         SELECT <include refid="aliasedUserColumns"/>

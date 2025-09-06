@@ -8,10 +8,11 @@
   <teleport to="body">
     <div
       v-if="open"
-      class="fixed z-[9999] p-2 w-60 max-h-56 overflow-auto bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded shadow grid grid-cols-8 gap-1 no-scrollbar"
+      class="fixed z-[9999] p-2 w-60 max-h-56 overflow-auto rounded-xl grid grid-cols-8 gap-1 no-scrollbar"
+      v-glass="{ strength: 'regular', interactive: true }"
       :style="{ left: `${pos.left}px`, top: `${pos.top}px` }"
     >
-      <button v-for="(e, idx) in emojis" :key="idx" type="button" class="text-xl hover:bg-gray-100 dark:hover:bg-gray-700 rounded" @click="pick(e)">{{ e }}</button>
+      <button v-for="(e, idx) in emojis" :key="idx" type="button" class="text-xl rounded hover:bg-white/40 dark:hover:bg-slate-700/50 transition-colors" @click="pick(e)">{{ e }}</button>
     </div>
   </teleport>
 </template>

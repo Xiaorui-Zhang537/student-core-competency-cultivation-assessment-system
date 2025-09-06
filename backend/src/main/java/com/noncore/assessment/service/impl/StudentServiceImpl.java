@@ -80,7 +80,7 @@ public class StudentServiceImpl implements StudentService {
         CourseParticipantsResponse.Person teacherDto = (teacher == null) ? null :
                 CourseParticipantsResponse.Person.builder()
                         .id(teacher.getId())
-                        .name(Objects.toString(teacher.getNickname(), teacher.getUsername()))
+                        .name(teacher.getUsername())
                         .avatar(teacher.getAvatar())
                         .role("teacher")
                         .build();
@@ -95,7 +95,7 @@ public class StudentServiceImpl implements StudentService {
                 .filter(u -> !u.getId().equals(currentStudentId))
                 .map(u -> CourseParticipantsResponse.Person.builder()
                         .id(u.getId())
-                        .name(Objects.toString(u.getNickname(), u.getUsername()))
+                        .name(u.getUsername())
                         .avatar(u.getAvatar())
                         .role("student")
                         .build())

@@ -312,16 +312,7 @@ const openDetail = async (id: string) => {
     }
   }
 
-  // 聊天通知：打开聊天抽屉，复用会话
-  if (found?.type === 'message') {
-    const mod = await import('@/stores/chat')
-    const chat = (mod as any).useChatStore()
-    const cid = (found.relatedType === 'course') ? found.relatedId : undefined
-    chat.openChat(found.senderId, (found as any).senderName || found.title || '', cid)
-    return
-  }
-
-  // 其他：进入通知详情
+  // 进入通知详情（消息类也进入详情，由详情页的“处理”触发抽屉）
   router.push(`${prefix}/notifications/${id}`)
 }
 
