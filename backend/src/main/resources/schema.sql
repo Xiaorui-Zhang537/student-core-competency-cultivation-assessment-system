@@ -1,4 +1,4 @@
-<<<<<<< HEAD
+-- RESOLVED: merge artifact start removed
 -- MySQL dump 10.13  Distrib 9.0.1, for macos15.1 (arm64)
 --
 -- Host: 127.0.0.1    Database: student_assessment_system
@@ -622,7 +622,7 @@ CREATE TABLE `users` (
   UNIQUE KEY `uk_teacher_no` (`teacher_no`),
   KEY `idx_role` (`role`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='用户表';
-=======
+-- RESOLVED: merge artifact separator removed
 create table abilities
 (
     id          bigint auto_increment comment '能力ID'
@@ -1640,4 +1640,67 @@ BEGIN
 END;
 
 
->>>>>>> fd13d2c (ver 1.7 实现学生端工作台的互联，同时重构了进度的实现逻辑，现在教师可以设置每一节课的视频资料还有作业，只有当学生完成后，进度条才会增加。同时新增/docx目录用于让小白能够学习同时由浅入深的理解该项目。)
+-- RESOLVED: merge artifact end removed
+
+-- ================== help_category：帮助分类表 ==================
+CREATE TABLE IF NOT EXISTS `help_category` (
+  `id` bigint NOT NULL AUTO_INCREMENT COMMENT '分类ID',
+  `name` varchar(100) COLLATE utf8mb4_unicode_ci NOT NULL COMMENT '分类名称',
+  `slug` varchar(100) COLLATE utf8mb4_unicode_ci NOT NULL COMMENT '分类标识',
+  `sort` int DEFAULT 0 COMMENT '排序',
+  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+  `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uk_help_category_slug` (`slug`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='帮助中心分类表';
+
+-- ================== help_article：帮助文章表 ==================
+CREATE TABLE IF NOT EXISTS `help_article` (
+  `id` bigint NOT NULL AUTO_INCREMENT COMMENT '文章ID',
+  `category_id` bigint NOT NULL COMMENT '分类ID',
+  `title` varchar(200) COLLATE utf8mb4_unicode_ci NOT NULL COMMENT '标题',
+  `slug` varchar(200) COLLATE utf8mb4_unicode_ci NOT NULL COMMENT '标识',
+  `content_md` mediumtext COLLATE utf8mb4_unicode_ci COMMENT 'Markdown内容',
+  `content_html` mediumtext COLLATE utf8mb4_unicode_ci COMMENT '渲染HTML',
+  `tags` varchar(500) COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT '标签(逗号分隔)',
+  `views` int DEFAULT 0 COMMENT '浏览数',
+  `up_votes` int DEFAULT 0 COMMENT '有用票',
+  `down_votes` int DEFAULT 0 COMMENT '无用票',
+  `published` tinyint(1) DEFAULT 1 COMMENT '是否发布',
+  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+  `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uk_help_article_slug` (`slug`),
+  KEY `idx_help_article_cat` (`category_id`),
+  CONSTRAINT `fk_help_article_category` FOREIGN KEY (`category_id`) REFERENCES `help_category` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='帮助中心文章表';
+
+-- ================== help_article_feedback：文章反馈/有用性投票 ==================
+CREATE TABLE IF NOT EXISTS `help_article_feedback` (
+  `id` bigint NOT NULL AUTO_INCREMENT COMMENT '主键',
+  `article_id` bigint NOT NULL COMMENT '文章ID',
+  `user_id` bigint DEFAULT NULL COMMENT '用户ID(可空表示匿名)',
+  `helpful` tinyint(1) DEFAULT NULL COMMENT '是否有帮助(可空表示仅文本反馈)',
+  `content` text COLLATE utf8mb4_unicode_ci COMMENT '反馈内容',
+  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+  PRIMARY KEY (`id`),
+  KEY `idx_help_article_feedback_article` (`article_id`),
+  KEY `idx_help_article_feedback_user` (`user_id`),
+  CONSTRAINT `fk_help_feedback_article` FOREIGN KEY (`article_id`) REFERENCES `help_article` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `fk_help_feedback_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='帮助文章反馈/投票表';
+
+-- ================== help_ticket：技术支持工单 ==================
+CREATE TABLE IF NOT EXISTS `help_ticket` (
+  `id` bigint NOT NULL AUTO_INCREMENT COMMENT '工单ID',
+  `user_id` bigint NOT NULL COMMENT '提交用户ID',
+  `title` varchar(200) COLLATE utf8mb4_unicode_ci NOT NULL COMMENT '标题',
+  `description` text COLLATE utf8mb4_unicode_ci NOT NULL COMMENT '描述',
+  `status` enum('open','in_progress','resolved','closed') COLLATE utf8mb4_unicode_ci DEFAULT 'open' COMMENT '状态',
+  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+  `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+  PRIMARY KEY (`id`),
+  KEY `idx_help_ticket_user` (`user_id`),
+  KEY `idx_help_ticket_status` (`status`),
+  CONSTRAINT `fk_help_ticket_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='技术支持工单表';

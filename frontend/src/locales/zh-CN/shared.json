@@ -1,5 +1,20 @@
 {
   "shared": {
+    "common": {
+      "latest": "最新",
+      "hot": "最热",
+      "all": "全部",
+      "views": "浏览",
+      "score": "评分",
+      "empty": "暂无内容",
+      "back": "返回",
+      "tip": "提示",
+      "edit": "编辑",
+      "delete": "删除",
+      "saved": "已保存",
+      "deleted": "已删除",
+      "confirm": "确认操作？"
+    },
     "chat": {
       "open": "聊天",
       "recent": "最近",
@@ -211,7 +226,94 @@
     },
     "help": {
       "title": "帮助中心",
-      "subtitle": "查找常见问题、查看使用指南或联系技术支持"
+      "subtitle": "查找常见问题、查看使用指南或联系技术支持",
+      "searchPlaceholder": "搜索帮助内容...",
+      "nav": "导航",
+      "sections": {
+        "faq": "常见问题",
+        "articles": "帮助文章",
+        "guide": "使用指南",
+        "tutorials": "视频教程",
+        "support": "技术支持",
+        "ticket": "提交工单",
+        "myTickets": "我的工单",
+        "docs": "文档",
+        "status": "系统状态",
+        "feedback": "意见反馈"
+      },
+      "actions": {
+        "watch": "观看",
+        "useful": "有帮助",
+        "notUseful": "没帮助",
+        "submitTicket": "提交工单",
+        "submitFeedback": "提交反馈"
+      },
+      "feedback": {
+        "thanks": "感谢反馈"
+      },
+      "quick": {
+        "faqDesc": "查找常见问题的解答",
+        "guideDesc": "学习如何使用系统",
+        "supportDesc": "联系我们获得帮助",
+        "feedbackDesc": "告诉我们您的想法"
+      },
+      "status": {
+        "allOk": "所有系统运行正常",
+        "lastCheck": "最后检查: {when} 分钟前",
+        "operational": "正常运行",
+        "degraded": "性能下降",
+        "outage": "服务中断",
+        "unknown": "未知状态"
+      },
+      "ticket": {
+        "open": "已创建",
+        "inProgress": "处理中",
+        "resolved": "已解决",
+        "closed": "已关闭"
+      },
+      "maintenance": {
+        "title": "系统维护通知",
+        "desc": "我们将在本周日凌晨 2:00–4:00 进行系统维护，期间可能影响部分功能使用。"
+      },
+      "notify": {
+        "videoWip": "视频播放功能开发中...",
+        "ticketSuccessTitle": "工单提交成功",
+        "ticketSuccessMsg": "我们会尽快处理您的问题并与您联系",
+        "ticketFailMsg": "提交工单时发生错误，请稍后重试",
+        "feedbackSuccessTitle": "反馈提交成功",
+        "feedbackSuccessMsg": "感谢您的反馈，我们会认真考虑您的建议",
+        "feedbackFailMsg": "提交反馈时发生错误，请稍后重试",
+        "submitFailTitle": "提交失败"
+      },
+      "validation": {
+        "incomplete": "表单不完整",
+        "fillRequired": "请填写所有必填字段",
+        "pickTypeAndFill": "请选择反馈类型并填写反馈内容"
+      },
+      "form": {
+        "type": "问题类型",
+        "selectType": "选择问题类型",
+        "typeTechnical": "技术问题",
+        "typeAccount": "账户问题",
+        "typeFeature": "功能建议",
+        "typeBug": "错误报告",
+        "typeOther": "其他",
+        "title": "问题标题",
+        "titlePh": "简要描述您的问题",
+        "description": "问题详情",
+        "descriptionPh": "请详细描述您遇到的问题...",
+        "priority": "优先级",
+        "priLow": "低",
+        "priMedium": "中",
+        "priHigh": "高",
+        "priUrgent": "紧急",
+        "feedback": "反馈内容",
+        "contact": "联系方式（可选）",
+        "anonymous": "匿名反馈",
+        "typeExperience": "用户体验",
+        "feedbackPh": "请详细描述您的反馈意见...",
+        "contactPh": "如需回复，请留下您的邮箱或电话"
+      }
     },
     "discovery": {
       "title": "课程发现",

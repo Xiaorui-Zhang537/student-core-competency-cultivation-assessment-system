@@ -1,28 +1,17 @@
 <template>
-  <div class="min-h-screen bg-gray-50 dark:bg-gray-900 p-6">
-    <div class="max-w-6xl mx-auto">
+  <div class="min-h-screen relative">
+    <FuturisticBackground class="fixed inset-0 z-0 pointer-events-none" theme="auto" :intensity="0.16" :bits-density="0.8" :sweep-frequency="7" :parallax="true" :enable3D="true" :logo-glow="true" :emphasis="false" :interactions="{ mouseTrail: true, clickRipples: true }" />
+    <div class="relative z-10 max-w-6xl mx-auto p-6">
       <!-- 页面标题 -->
       <div class="mb-8">
         <PageHeader :title="t('shared.help.title') || '帮助中心'" :subtitle="t('shared.help.subtitle') || '在这里找到常见问题的答案，查看使用指南，或联系技术支持获得帮助'" />
       </div>
 
-      <!-- 搜索框 -->
-      <div class="mb-8">
-        <div class="max-w-2xl mx-auto relative">
-          <magnifying-glass-icon class="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
-          <input
-            v-model="searchQuery"
-            type="text"
-            placeholder="搜索帮助内容..."
-            class="w-full pl-12 pr-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
-            @input="searchHelp"
-          />
-        </div>
-      </div>
+      
 
       <!-- 快速入口 -->
       <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
-        <card
+        <Card
           v-for="item in quickAccess"
           :key="item.id"
           padding="lg"
@@ -38,16 +27,16 @@
             <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-2">{{ item.title }}</h3>
             <p class="text-sm text-gray-600 dark:text-gray-400">{{ item.description }}</p>
           </div>
-        </card>
+        </Card>
       </div>
 
       <!-- 主要内容区域 -->
       <div class="grid grid-cols-1 lg:grid-cols-4 gap-8">
         <!-- 左侧导航 -->
         <div class="lg:col-span-1">
-          <card padding="lg" class="sticky top-6">
+          <Card padding="lg" class="sticky top-6 glass-thin" v-glass>
             <template #header>
-              <h2 class="text-lg font-semibold text-gray-900 dark:text-white">导航</h2>
+              <h2 class="text-lg font-semibold text-gray-900 dark:text-white">{{ t('shared.help.nav') || '导航' }}</h2>
             </template>
             <nav class="space-y-2">
               <button
@@ -61,17 +50,89 @@
               >
                 {{ section.title }}
               </button>
+              <router-link
+                to="/docs"
+                class="block w-full text-left px-3 py-2 rounded-lg text-sm transition-colors text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700"
+              >
+                {{ t('shared.help.sections.docs') || '文档' }}
+              </router-link>
             </nav>
-          </card>
+          </Card>
         </div>
 
         <!-- 右侧内容 -->
         <div class="lg:col-span-3 space-y-8">
+          <!-- 文章列表 -->
+          <section v-if="activeSection === 'articles'" id="articles">
+            <Card padding="lg" class="glass" v-glass>
+              <template #header>
+                <div class="flex items-center justify-between gap-3 flex-wrap">
+                  <h2 class="text-xl font-semibold text-gray-900 dark:text-white">{{ t('shared.help.sections.articles') || '帮助文章' }}</h2>
+                  <div class="flex items-center gap-2">
+                    <Button size="sm" :variant="sortMode==='latest' ? 'primary' : 'outline'" @click="changeSort('latest')">{{ t('shared.common.latest') || '最新' }}</Button>
+                    <Button size="sm" :variant="sortMode==='hot' ? 'primary' : 'outline'" @click="changeSort('hot')">{{ t('shared.common.hot') || '最热' }}</Button>
+                  </div>
+                </div>
+              </template>
+
+              <!-- 分类筛选 -->
+              <div class="flex flex-wrap gap-2 mb-4">
+                <Button
+                  size="sm"
+                  :variant="selectedCategoryId===null ? 'primary' : 'outline'"
+                  @click="pickCategory(null)">
+                  {{ t('shared.common.all') || '全部' }}
+                </Button>
+                <Button
+                  v-for="c in helpStore.categories"
+                  :key="c.id"
+                  size="sm"
+                  :variant="selectedCategoryId===c.id ? 'primary' : 'outline'"
+                  @click="pickCategory(c.id)">
+                  {{ c.name }}
+                </Button>
+              </div>
+
+              <!-- 文章卡片列表 -->
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <Card v-for="a in helpStore.articles" :key="a.id" padding="lg" hoverable class="cursor-pointer" @click="openArticle(a.slug)">
+                  <h3 class="font-medium text-gray-900 dark:text-white mb-2">{{ a.title }}</h3>
+                  <p class="text-sm text-gray-600 dark:text-gray-400 line-clamp-3" v-if="a.contentMd">{{ a.contentMd.slice(0, 120) }}...</p>
+                  <div class="mt-3 text-xs text-gray-500 flex items-center justify-between">
+                    <span>{{ (a.views || 0) }} {{ t('shared.common.views') || '浏览' }}</span>
+                    <span>{{ (a.upVotes || 0) - (a.downVotes || 0) }} {{ t('shared.common.score') || '评分' }}</span>
+                  </div>
+                </Card>
+              </div>
+
+              <div v-if="!helpStore.loading && helpStore.articles.length===0" class="text-sm text-gray-500 py-6 text-center">
+                {{ t('shared.common.empty') || '暂无内容' }}
+              </div>
+            </Card>
+          </section>
+
+          <!-- 文章详情 -->
+          <section v-if="activeSection === 'articleDetail' && helpStore.article" id="articleDetail">
+            <Card padding="lg" class="glass" v-glass>
+              <template #header>
+                <div class="flex items-center gap-3 flex-wrap">
+                  <h2 class="text-xl font-semibold text-gray-900 dark:text-white">{{ helpStore.article?.title }}</h2>
+                  <div class="inline-flex items-center gap-2 flex-nowrap whitespace-nowrap">
+                    <Button size="sm" variant="outline" @click="activeSection='articles'">{{ t('shared.common.back') || '返回' }}</Button>
+                    <Button size="sm" :loading="isVoting" @click="voteArticle(true)">{{ t('shared.help.actions.useful') || '有帮助' }}</Button>
+                    <Button size="sm" variant="outline" :loading="isVoting" @click="voteArticle(false)">{{ t('shared.help.actions.notUseful') || '没帮助' }}</Button>
+                  </div>
+                </div>
+              </template>
+
+              <div class="prose dark:prose-invert max-w-none" v-html="helpStore.article?.contentHtml || ''"></div>
+            </Card>
+          </section>
           <!-- 常见问题 -->
           <section v-if="activeSection === 'faq'" id="faq">
-            <card padding="lg">
+            <Card padding="lg" class="glass" v-glass>
               <template #header>
-                <h2 class="text-xl font-semibold text-gray-900 dark:text-white">常见问题</h2>
+                <h2 class="text-xl font-semibold text-gray-900 dark:text-white">{{ t('shared.help.sections.faq') || '常见问题' }}</h2>
               </template>
               
               <div class="space-y-6">
@@ -107,14 +168,14 @@
                   </div>
                 </div>
               </div>
-            </card>
+            </Card>
           </section>
 
           <!-- 使用指南 -->
           <section v-if="activeSection === 'guide'" id="guide">
-            <card padding="lg">
+            <Card padding="lg" class="glass" v-glass>
               <template #header>
-                <h2 class="text-xl font-semibold text-gray-900 dark:text-white">使用指南</h2>
+                <h2 class="text-xl font-semibold text-gray-900 dark:text-white">{{ t('shared.help.sections.guide') || '使用指南' }}</h2>
               </template>
               
               <div class="space-y-8">
@@ -136,7 +197,7 @@
                         <h4 class="font-medium text-gray-900 dark:text-white">{{ step.title }}</h4>
                       </div>
                       <p class="text-sm text-gray-600 dark:text-gray-400">{{ step.description }}</p>
-                      <button
+                      <Button
                         v-if="step.action"
                         variant="outline"
                         size="sm"
@@ -144,19 +205,19 @@
                         @click="step.action"
                       >
                         {{ step.actionText }}
-                      </button>
+                      </Button>
                     </div>
                   </div>
                 </div>
               </div>
-            </card>
+            </Card>
           </section>
 
           <!-- 视频教程 -->
           <section v-if="activeSection === 'tutorials'" id="tutorials">
-            <card padding="lg">
+            <Card padding="lg" class="glass" v-glass>
               <template #header>
-                <h2 class="text-xl font-semibold text-gray-900 dark:text-white">视频教程</h2>
+                <h2 class="text-xl font-semibold text-gray-900 dark:text-white">{{ t('shared.help.sections.tutorials') || '视频教程' }}</h2>
               </template>
               
               <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -173,23 +234,23 @@
                     <p class="text-sm text-gray-600 dark:text-gray-400 mb-3">{{ tutorial.description }}</p>
                     <div class="flex items-center justify-between">
                       <span class="text-xs text-gray-500">{{ tutorial.duration }}</span>
-                      <button variant="outline" size="sm" @click="playTutorial(tutorial.id)">
-                        观看
-                      </button>
+                      <Button variant="outline" size="sm" @click="playTutorial(tutorial.id)">
+                        {{ t('shared.help.actions.watch') || '观看' }}
+                      </Button>
                     </div>
                   </div>
                 </div>
               </div>
-            </card>
+            </Card>
           </section>
 
           <!-- 技术支持 -->
           <section v-if="activeSection === 'support'" id="support">
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
               <!-- 联系方式 -->
-              <card padding="lg">
+              <Card padding="lg" class="glass" v-glass>
                 <template #header>
-                  <h2 class="text-xl font-semibold text-gray-900 dark:text-white">联系技术支持</h2>
+                  <h2 class="text-xl font-semibold text-gray-900 dark:text-white">{{ t('shared.help.sections.support') || '联系技术支持' }}</h2>
                 </template>
                 
                 <div class="space-y-6">
@@ -212,99 +273,125 @@
                     </div>
                   </div>
                 </div>
-              </card>
+              </Card>
 
               <!-- 提交工单 -->
-              <card padding="lg">
+              <Card padding="lg" class="glass" v-glass>
                 <template #header>
-                  <h2 class="text-xl font-semibold text-gray-900 dark:text-white">提交技术工单</h2>
+                  <h2 class="text-xl font-semibold text-gray-900 dark:text-white">{{ t('shared.help.sections.ticket') || '提交技术工单' }}</h2>
                 </template>
                 
                 <form @submit.prevent="submitTicket" class="space-y-4">
                   <div>
-                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                      问题类型
-                    </label>
-                    <select v-model="ticketForm.type" class="input">
-                      <option value="">选择问题类型</option>
-                      <option value="technical">技术问题</option>
-                      <option value="account">账户问题</option>
-                      <option value="feature">功能建议</option>
-                      <option value="bug">错误报告</option>
-                      <option value="other">其他</option>
-                    </select>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{{ t('shared.help.form.type') || '问题类型' }}</label>
+                    <GlassPopoverSelect
+                      v-model="ticketForm.type as any"
+                      :options="[
+                        { label: t('shared.help.form.selectType') || '选择问题类型', value: '', disabled: true },
+                        { label: t('shared.help.form.typeTechnical') || '技术问题', value: 'technical' },
+                        { label: t('shared.help.form.typeAccount') || '账户问题', value: 'account' },
+                        { label: t('shared.help.form.typeFeature') || '功能建议', value: 'feature' },
+                        { label: t('shared.help.form.typeBug') || '错误报告', value: 'bug' },
+                        { label: t('shared.help.form.typeOther') || '其他', value: 'other' }
+                      ]"
+                      :placeholder="t('shared.help.form.selectType') || '选择问题类型'"
+                      stacked
+                    />
                   </div>
                   
                   <div>
-                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                      问题标题
-                    </label>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{{ t('shared.help.form.title') || '问题标题' }}</label>
                     <input
                       v-model="ticketForm.title"
                       type="text"
-                      placeholder="简要描述您的问题"
+                      :placeholder="t('shared.help.form.titlePh') || '简要描述您的问题'"
                       class="input"
                     />
                   </div>
                   
                   <div>
-                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                      问题详情
-                    </label>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{{ t('shared.help.form.description') || '问题详情' }}</label>
                     <textarea
                       v-model="ticketForm.description"
                       rows="4"
-                      placeholder="请详细描述您遇到的问题..."
+                      :placeholder="t('shared.help.form.descriptionPh') || '请详细描述您遇到的问题...'"
                       class="input"
                     ></textarea>
                   </div>
                   
                   <div>
-                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                      优先级
-                    </label>
-                    <select v-model="ticketForm.priority" class="input">
-                      <option value="low">低</option>
-                      <option value="medium">中</option>
-                      <option value="high">高</option>
-                      <option value="urgent">紧急</option>
-                    </select>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{{ t('shared.help.form.priority') || '优先级' }}</label>
+                    <GlassPopoverSelect
+                      v-model="ticketForm.priority as any"
+                      :options="[
+                        { label: t('shared.help.form.priLow') || '低', value: 'low' },
+                        { label: t('shared.help.form.priMedium') || '中', value: 'medium' },
+                        { label: t('shared.help.form.priHigh') || '高', value: 'high' },
+                        { label: t('shared.help.form.priUrgent') || '紧急', value: 'urgent' }
+                      ]"
+                      stacked
+                    />
                   </div>
                   
-                  <button
+                  <Button
                     type="submit"
                     variant="primary"
                     class="w-full"
                     :loading="isSubmittingTicket"
                   >
-                    提交工单
-                  </button>
+                    {{ t('shared.help.actions.submitTicket') || '提交工单' }}
+                  </Button>
                 </form>
-              </card>
+              </Card>
+              
+              <!-- 我的工单（仅登录后显示） -->
+              <Card v-if="authStore.isAuthenticated" padding="lg" class="glass md:col-span-2" v-glass>
+                <template #header>
+                  <div class="flex items-center justify-between">
+                    <h2 class="text-xl font-semibold text-gray-900 dark:text-white">{{ t('shared.help.sections.myTickets') || '我的工单' }}</h2>
+                    <Button size="sm" variant="outline" @click="helpStore.fetchMyTickets()">{{ t('shared.common.latest') || '最新' }}</Button>
+                  </div>
+                </template>
+                <div v-if="helpStore.tickets.length === 0" class="text-sm text-gray-500">
+                  {{ t('shared.common.empty') || '暂无内容' }}
+                </div>
+                <div v-else class="divide-y divide-gray-200/60 dark:divide-gray-700/60">
+                  <div v-for="ticket in helpStore.tickets" :key="ticket.id" class="py-3 flex items-start justify-between">
+                    <div class="pr-3 w-full">
+                      <div class="font-medium text-gray-900 dark:text-white">{{ ticket.title }}</div>
+                      <div class="text-xs text-gray-500 mt-1">#{{ ticket.id }} · {{ ticket.createdAt }}</div>
+                    </div>
+                    <div class="inline-flex items-center gap-2 flex-nowrap whitespace-nowrap">
+                      <Button size="sm" variant="outline" class="whitespace-nowrap" @click="editTicket(ticket)">{{ t('shared.common.edit') || '编辑' }}</Button>
+                      <Button size="sm" variant="outline" class="whitespace-nowrap" @click="deleteTicket(ticket.id)">{{ t('shared.common.delete') || '删除' }}</Button>
+                    </div>
+                  </div>
+                </div>
+              </Card>
             </div>
           </section>
 
           <!-- 系统状态 -->
           <section v-if="activeSection === 'status'" id="status">
-            <card padding="lg">
+            <Card padding="lg" class="glass" v-glass>
               <template #header>
-                <h2 class="text-xl font-semibold text-gray-900 dark:text-white">系统状态</h2>
+                <h2 class="text-xl font-semibold text-gray-900 dark:text-white">{{ t('shared.help.sections.status') || '系统状态' }}</h2>
               </template>
               
               <div class="space-y-6">
                 <!-- 总体状态 -->
-                <div class="flex items-center justify-between p-4 bg-green-50 dark:bg-green-900/20 rounded-lg">
+                <div class="flex items-center justify-between p-4 glass-thin rounded-lg" v-glass>
                   <div class="flex items-center space-x-3">
                     <div class="w-3 h-3 bg-green-500 rounded-full"></div>
-                    <span class="font-medium text-green-800 dark:text-green-200">所有系统运行正常</span>
+                    <span class="font-medium text-green-800 dark:text-green-200">{{ t('shared.help.status.allOk') || '所有系统运行正常' }}</span>
                   </div>
-                  <span class="text-sm text-green-600 dark:text-green-400">最后检查: 2分钟前</span>
+                  <span class="text-sm text-green-600 dark:text-green-400">{{ t('shared.help.status.lastCheck', { when: '2' }) || '最后检查: 2分钟前' }}</span>
                 </div>
 
                 <!-- 各系统状态 -->
                 <div class="space-y-4">
                   <div v-for="service in systemServices" :key="service.name" 
-                       class="flex items-center justify-between p-4 border border-gray-200 dark:border-gray-600 rounded-lg">
+                       class="flex items-center justify-between p-4 glass-thin rounded-lg" v-glass>
                     <div class="flex items-center space-x-3">
                       <div class="w-3 h-3 rounded-full"
                            :class="service.status === 'operational' ? 'bg-green-500' : 
@@ -337,14 +424,14 @@
                   </div>
                 </div>
               </div>
-            </card>
+            </Card>
           </section>
 
           <!-- 反馈 -->
           <section v-if="activeSection === 'feedback'" id="feedback">
-            <card padding="lg">
+            <Card padding="lg" class="glass" v-glass>
               <template #header>
-                <h2 class="text-xl font-semibold text-gray-900 dark:text-white">意见反馈</h2>
+                <h2 class="text-xl font-semibold text-gray-900 dark:text-white">{{ t('shared.help.sections.feedback') || '意见反馈' }}</h2>
               </template>
               
               <form @submit.prevent="submitFeedback" class="space-y-6">
@@ -354,7 +441,7 @@
                   </label>
                   <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
                     <label
-                      v-for="type in feedbackTypes"
+                      v-for="type in feedbackTypeOptions"
                       :key="type.value"
                       class="flex items-center p-3 border border-gray-200 dark:border-gray-600 rounded-lg cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700"
                       :class="{ 'border-primary-500 bg-primary-50 dark:bg-primary-900/20': feedbackForm.type === type.value }"
@@ -372,25 +459,21 @@
                 </div>
 
                 <div>
-                  <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                    反馈内容
-                  </label>
+                  <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{{ t('shared.help.form.feedback') || '反馈内容' }}</label>
                   <textarea
                     v-model="feedbackForm.content"
                     rows="6"
-                    placeholder="请详细描述您的反馈意见..."
+                    :placeholder="t('shared.help.form.feedbackPh') || '请详细描述您的反馈意见...'"
                     class="input"
                   ></textarea>
                 </div>
 
                 <div>
-                  <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                    联系方式 (可选)
-                  </label>
+                  <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{{ t('shared.help.form.contact') || '联系方式 (可选)' }}</label>
                   <input
                     v-model="feedbackForm.contact"
                     type="text"
-                    placeholder="如需回复，请留下您的邮箱或电话"
+                    :placeholder="t('shared.help.form.contactPh') || '如需回复，请留下您的邮箱或电话'"
                     class="input"
                   />
                 </div>
@@ -402,19 +485,19 @@
                       type="checkbox"
                       class="rounded border-gray-300 text-primary-600 focus:ring-primary-500"
                     />
-                    <span class="ml-2 text-sm text-gray-700 dark:text-gray-300">匿名反馈</span>
+                    <span class="ml-2 text-sm text-gray-700 dark:text-gray-300">{{ t('shared.help.form.anonymous') || '匿名反馈' }}</span>
                   </label>
 
-                  <button
+                  <Button
                     type="submit"
                     variant="primary"
                     :loading="isSubmittingFeedback"
                   >
-                    提交反馈
-                  </button>
+                    {{ t('shared.help.actions.submitFeedback') || '提交反馈' }}
+                  </Button>
                 </div>
               </form>
-            </card>
+            </Card>
           </section>
         </div>
       </div>
@@ -423,13 +506,20 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, onMounted } from 'vue'
+import { ref, reactive, onMounted, computed } from 'vue'
 import { useUIStore } from '@/stores/ui'
 import Card from '@/components/ui/Card.vue'
 import Button from '@/components/ui/Button.vue'
 import PageHeader from '@/components/ui/PageHeader.vue'
+import FuturisticBackground from '@/components/ui/FuturisticBackground.vue'
+import GlassDirective from '@/directives/glass'
 import { useI18n } from 'vue-i18n'
 const { t } = useI18n()
+import { useHelpStore } from '@/stores/help'
+import { useAuthStore } from '@/stores/auth'
+import GlassSelect from '@/components/ui/filters/GlassSelect.vue'
+import GlassPopoverSelect from '@/components/ui/filters/GlassPopoverSelect.vue'
+import { useRouter } from 'vue-router'
 import {
   MagnifyingGlassIcon,
   QuestionMarkCircleIcon,
@@ -450,8 +540,14 @@ import {
   ChartBarIcon
 } from '@heroicons/vue/24/outline'
 
+// 注册指令（局部）
+const vGlass = GlassDirective
+
 // Stores
 const uiStore = useUIStore()
+const helpStore = useHelpStore()
+const authStore = useAuthStore()
+const router = useRouter()
 
 // 状态
 const activeSection = ref('faq')
@@ -459,6 +555,9 @@ const searchQuery = ref('')
 const expandedFaqs = ref<string[]>([])
 const isSubmittingTicket = ref(false)
 const isSubmittingFeedback = ref(false)
+const selectedCategoryId = ref<number | null>(null)
+const sortMode = ref<'latest' | 'hot'>('hot')
+const isVoting = ref(false)
 
 // 表单数据
 const ticketForm = reactive({
@@ -479,32 +578,32 @@ const feedbackForm = reactive({
 const quickAccess = [
   {
     id: 'faq',
-    title: '常见问题',
-    description: '查找常见问题的解答',
+    title: t('shared.help.sections.faq') || '常见问题',
+    description: t('shared.help.quick.faqDesc') || '查找常见问题的解答',
     icon: QuestionMarkCircleIcon,
     iconBg: 'bg-blue-500',
     target: 'faq'
   },
   {
     id: 'guide',
-    title: '使用指南',
-    description: '学习如何使用系统',
+    title: t('shared.help.sections.guide') || '使用指南',
+    description: t('shared.help.quick.guideDesc') || '学习如何使用系统',
     icon: BookOpenIcon,
     iconBg: 'bg-green-500',
     target: 'guide'
   },
   {
     id: 'support',
-    title: '技术支持',
-    description: '联系我们获得帮助',
+    title: t('shared.help.sections.support') || '技术支持',
+    description: t('shared.help.quick.supportDesc') || '联系我们获得帮助',
     icon: ChatBubbleLeftIcon,
     iconBg: 'bg-purple-500',
     target: 'support'
   },
   {
     id: 'feedback',
-    title: '意见反馈',
-    description: '告诉我们您的想法',
+    title: t('shared.help.sections.feedback') || '意见反馈',
+    description: t('shared.help.quick.feedbackDesc') || '告诉我们您的想法',
     icon: HeartIcon,
     iconBg: 'bg-pink-500',
     target: 'feedback'
@@ -513,12 +612,13 @@ const quickAccess = [
 
 // 导航菜单
 const sections = [
-  { id: 'faq', title: '常见问题' },
-  { id: 'guide', title: '使用指南' },
-  { id: 'tutorials', title: '视频教程' },
-  { id: 'support', title: '技术支持' },
-  { id: 'status', title: '系统状态' },
-  { id: 'feedback', title: '意见反馈' }
+  { id: 'faq', title: t('shared.help.sections.faq') || '常见问题' },
+  { id: 'articles', title: t('shared.help.sections.articles') || '帮助文章' },
+  { id: 'guide', title: t('shared.help.sections.guide') || '使用指南' },
+  { id: 'tutorials', title: t('shared.help.sections.tutorials') || '视频教程' },
+  { id: 'support', title: t('shared.help.sections.support') || '技术支持' },
+  { id: 'status', title: t('shared.help.sections.status') || '系统状态' },
+  { id: 'feedback', title: t('shared.help.sections.feedback') || '意见反馈' }
 ]
 
 // FAQ数据
@@ -730,28 +830,67 @@ const systemServices = [
 const maintenanceNotices = [
   {
     id: 1,
-    title: '系统维护通知',
-    description: '我们将在本周日凌晨2:00-4:00进行系统维护，期间可能影响部分功能使用。',
-    scheduledTime: '2024年1月21日 02:00 - 04:00'
+    title: t('shared.help.maintenance.title') || '系统维护通知',
+    description: t('shared.help.maintenance.desc') || '我们将在本周日凌晨2:00-4:00进行系统维护，期间可能影响部分功能使用。',
+    scheduledTime: '2024-01-21 02:00 - 04:00'
   }
 ]
 
-// 反馈类型
-const feedbackTypes = [
-  { value: 'bug', label: '错误报告', icon: BugAntIcon },
-  { value: 'feature', label: '功能建议', icon: LightBulbIcon },
-  { value: 'experience', label: '用户体验', icon: HeartIcon },
-  { value: 'other', label: '其他反馈', icon: ChatBubbleLeftIcon }
-]
+// 反馈类型（随语言切换动态更新）
+const feedbackTypeOptions = computed(() => ([
+  { value: 'bug', label: t('shared.help.form.typeBug') || '错误报告', icon: BugAntIcon },
+  { value: 'feature', label: t('shared.help.form.typeFeature') || '功能建议', icon: LightBulbIcon },
+  { value: 'experience', label: t('shared.help.form.typeExperience') || '用户体验', icon: HeartIcon },
+  { value: 'other', label: t('shared.help.form.typeOther') || '其他反馈', icon: ChatBubbleLeftIcon }
+]))
 
 // 方法
 const scrollToSection = (sectionId: string) => {
   activeSection.value = sectionId
 }
+function pickCategory(id: number | null) {
+  selectedCategoryId.value = id
+  helpStore.searchArticles(searchQuery.value || undefined, id === null ? undefined : id, undefined, sortMode.value)
+}
+
+function changeSort(s: 'latest' | 'hot') {
+  sortMode.value = s
+  helpStore.searchArticles(searchQuery.value || undefined, selectedCategoryId.value === null ? undefined : selectedCategoryId.value, undefined, sortMode.value)
+}
+
+async function openArticle(slug: string) {
+  await helpStore.fetchArticle(slug, true)
+  activeSection.value = 'articleDetail'
+}
+
+async function voteArticle(helpful: boolean) {
+  if (!helpStore.article) return
+  isVoting.value = true
+  try {
+    await helpStore.voteOrFeedback(helpStore.article.id, { helpful })
+    uiStore.showNotification({ type: 'success', title: t('shared.help.feedback.thanks') || '感谢反馈', message: '' })
+  } finally {
+    isVoting.value = false
+  }
+}
+
+async function editTicket(t: any) {
+  const title = prompt(t('shared.common.edit') || '编辑标题', t.title)
+  if (title === null) return
+  const desc = prompt(t('shared.common.edit') || '编辑描述', t.description || '')
+  if (desc === null) return
+  await helpStore.updateTicket(t.id, title, desc)
+  uiStore.showNotification({ type: 'success', title: t('shared.common.saved') || '已保存', message: '' })
+}
+
+async function deleteTicket(id: number) {
+  if (!confirm(t('shared.common.confirm') || '确认删除？')) return
+  await helpStore.deleteTicket(id)
+  uiStore.showNotification({ type: 'success', title: t('shared.common.deleted') || '已删除', message: '' })
+}
 
 const searchHelp = () => {
-  // 实现搜索功能
-  console.log('搜索:', searchQuery.value)
+  helpStore.searchArticles(searchQuery.value || undefined)
 }
 
 const toggleFaq = (faqId: string) => {
@@ -766,39 +905,53 @@ const toggleFaq = (faqId: string) => {
 const playTutorial = (tutorialId: number) => {
   uiStore.showNotification({
     type: 'info',
-    title: '视频教程',
-    message: '视频播放功能开发中...'
+    title: t('shared.help.sections.tutorials') || '视频教程',
+    message: t('shared.help.notify.videoWip') || '视频播放功能开发中...'
   })
 }
 
 const getStatusText = (status: string) => {
   switch (status) {
-    case 'operational': return '正常运行'
-    case 'degraded': return '性能下降'
-    case 'outage': return '服务中断'
-    default: return '未知状态'
+    case 'operational': return t('shared.help.status.operational') || '正常运行'
+    case 'degraded': return t('shared.help.status.degraded') || '性能下降'
+    case 'outage': return t('shared.help.status.outage') || '服务中断'
+    default: return t('shared.help.status.unknown') || '未知状态'
+  }
+}
+
+const ticketStatusText = (s: string) => {
+  switch (s) {
+    case 'open': return t('shared.help.ticket.open') || '已创建'
+    case 'in_progress': return t('shared.help.ticket.inProgress') || '处理中'
+    case 'resolved': return t('shared.help.ticket.resolved') || '已解决'
+    case 'closed': return t('shared.help.ticket.closed') || '已关闭'
+    default: return s
   }
 }
 
 const submitTicket = async () => {
+  if (!authStore.isAuthenticated) {
+    uiStore.showNotification({ type: 'warning', title: t('shared.common.tip') || '提示', message: t('auth.loginRequired') || '请先登录再提交工单' })
+    return router.push({ name: 'Login', query: { redirect: router.currentRoute.value.fullPath } })
+  }
   if (!ticketForm.type || !ticketForm.title || !ticketForm.description) {
     uiStore.showNotification({
       type: 'warning',
-      title: '表单不完整',
-      message: '请填写所有必填字段'
+      title: t('shared.help.validation.incomplete') || '表单不完整',
+      message: t('shared.help.validation.fillRequired') || '请填写所有必填字段'
     })
     return
   }
 
   isSubmittingTicket.value = true
   try {
-    // 模拟提交延迟
-    await new Promise(resolve => setTimeout(resolve, 2000))
-    
+    const composedTitle = `${ticketForm.title}`
+    const composedDesc = `[${ticketForm.type.toUpperCase()} | ${ticketForm.priority}]\n${ticketForm.description}`
+    await helpStore.submitTicket(composedTitle, composedDesc)
     uiStore.showNotification({
       type: 'success',
-      title: '工单提交成功',
-      message: '我们会尽快处理您的问题并与您联系'
+      title: t('shared.help.notify.ticketSuccessTitle') || '工单提交成功',
+      message: t('shared.help.notify.ticketSuccessMsg') || '我们会尽快处理您的问题并与您联系'
     })
 
     // 重置表单
@@ -811,8 +964,8 @@ const submitTicket = async () => {
   } catch (error) {
     uiStore.showNotification({
       type: 'error',
-      title: '提交失败',
-      message: '提交工单时发生错误，请稍后重试'
+      title: t('shared.help.notify.submitFailTitle') || '提交失败',
+      message: t('shared.help.notify.ticketFailMsg') || '提交工单时发生错误，请稍后重试'
     })
   } finally {
     isSubmittingTicket.value = false
@@ -820,24 +973,28 @@ const submitTicket = async () => {
 }
 
 const submitFeedback = async () => {
+  if (!authStore.isAuthenticated) {
+    uiStore.showNotification({ type: 'warning', title: t('shared.common.tip') || '提示', message: t('auth.loginRequired') || '请先登录再提交反馈' })
+    return router.push({ name: 'Login', query: { redirect: router.currentRoute.value.fullPath } })
+  }
   if (!feedbackForm.type || !feedbackForm.content) {
     uiStore.showNotification({
       type: 'warning',
-      title: '表单不完整',
-      message: '请选择反馈类型并填写反馈内容'
+      title: t('shared.help.validation.incomplete') || '表单不完整',
+      message: t('shared.help.validation.pickTypeAndFill') || '请选择反馈类型并填写反馈内容'
     })
     return
   }
 
   isSubmittingFeedback.value = true
   try {
-    // 模拟提交延迟
-    await new Promise(resolve => setTimeout(resolve, 1500))
-    
+    const title = `[Feedback] ${feedbackForm.type}`
+    const desc = `${feedbackForm.content}${feedbackForm.contact ? `\nContact: ${feedbackForm.contact}` : ''}`
+    await helpStore.submitTicket(title, desc)
     uiStore.showNotification({
       type: 'success',
-      title: '反馈提交成功',
-      message: '感谢您的反馈，我们会认真考虑您的建议'
+      title: t('shared.help.notify.feedbackSuccessTitle') || '反馈提交成功',
+      message: t('shared.help.notify.feedbackSuccessMsg') || '感谢您的反馈，我们会认真考虑您的建议'
     })
 
     // 重置表单
@@ -850,8 +1007,8 @@ const submitFeedback = async () => {
   } catch (error) {
     uiStore.showNotification({
       type: 'error',
-      title: '提交失败',
-      message: '提交反馈时发生错误，请稍后重试'
+      title: t('shared.help.notify.submitFailTitle') || '提交失败',
+      message: t('shared.help.notify.feedbackFailMsg') || '提交反馈时发生错误，请稍后重试'
     })
   } finally {
     isSubmittingFeedback.value = false
@@ -860,6 +1017,11 @@ const submitFeedback = async () => {
 
 // 生命周期
 onMounted(() => {
-  // 可以根据URL参数设置默认打开的部分
+  helpStore.fetchCategories().catch(() => {})
+  // 初始加载热门文章
+  helpStore.searchArticles(undefined, undefined, undefined, 'hot').catch(() => {})
+  if (authStore.isAuthenticated) {
+    helpStore.fetchMyTickets().catch(() => {})
+  }
 })
 </script> 

@@ -21,6 +21,9 @@
 				"help": "Help Center"
 			}
 		},
+		"common": {
+			"help": "Help"
+		},
 		"teacher": {
 			"title": "Student Core Competency Cultivation Assessment System",
 			"role": "Teacher",

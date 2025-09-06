@@ -144,16 +144,27 @@
         <div class="mt-8 text-center space-y-3">
           <!-- 社交链接 -->
           <div class="flex justify-center space-x-4">
-            <a
-              v-for="social in socialLinks"
-              :key="social.name"
-              :href="social.url"
-              v-glass="{ strength: 'thin', interactive: true }"
-              class="p-2 rounded-lg transition-all duration-200 hover:scale-110"
-              :title="social.name"
-            >
-              <component :is="social.icon" class="w-4 h-4 text-gray-600 dark:text-gray-400" />
-            </a>
+            <template v-for="social in socialLinks" :key="social.name">
+              <button
+                v-if="social.route"
+                type="button"
+                @click="goAndReload(social.url)"
+                v-glass="{ strength: 'thin', interactive: true }"
+                class="p-2 rounded-lg transition-all duration-200 hover:scale-110"
+                :title="social.name"
+              >
+                <component :is="social.icon" class="w-4 h-4 text-gray-600 dark:text-gray-400" />
+              </button>
+              <a
+                v-else
+                :href="social.url"
+                v-glass="{ strength: 'thin', interactive: true }"
+                class="p-2 rounded-lg transition-all duration-200 hover:scale-110"
+                :title="social.name"
+              >
+                <component :is="social.icon" class="w-4 h-4 text-gray-600 dark:text-gray-400" />
+              </a>
+            </template>
           </div>
 
           <!-- 版权信息 -->
@@ -164,7 +175,7 @@
               <span>•</span>
               <a href="#" class="hover:text-primary-600 dark:hover:text-primary-400 transition-colors duration-200">{{ t('layout.auth.footer.terms') }}</a>
               <span>•</span>
-              <a href="#" class="hover:text-primary-600 dark:hover:text-primary-400 transition-colors duration-200">{{ t('layout.auth.footer.help') }}</a>
+              <button type="button" @click="goAndReload('/help')" class="hover:text-primary-600 dark:hover:text-primary-400 transition-colors duration-200">{{ t('layout.auth.footer.help') }}</button>
             </div>
           </div>
         </div>
@@ -177,7 +188,7 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted, nextTick } from 'vue'
-import { useRoute } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import { useUIStore } from '@/stores/ui'
 import { useLocale } from '@/i18n/useLocale'
 import { loadLocaleMessages, REQUIRED_NAMESPACES } from '@/i18n'
@@ -194,7 +205,8 @@ import {
   CloudIcon,
   CpuChipIcon,
   EyeIcon,
-  EyeSlashIcon
+  EyeSlashIcon,
+  QuestionMarkCircleIcon
 } from '@heroicons/vue/24/outline'
 import LanguageSwitcher from '@/components/ui/LanguageSwitcher.vue'
 import FuturisticBackground from '@/components/ui/FuturisticBackground.vue'
@@ -202,6 +214,7 @@ import Card from '@/components/ui/Card.vue'
 
 // 组合式API
 const route = useRoute()
+const router = useRouter()
 const uiStore = useUIStore()
 
 // 响应式状态
@@ -297,6 +310,12 @@ const socialLinks = [
     name: '邮箱',
     url: '1519939545@qq.com',
     icon: CpuChipIcon
+  },
+  {
+    name: '帮助中心',
+    url: '/help',
+    route: true,
+    icon: QuestionMarkCircleIcon
   }
 ]
 
@@ -304,6 +323,14 @@ const socialLinks = [
 const toggleTheme = () => {
   uiStore.toggleDarkMode()
 }
+const goAndReload = async (path: string) => {
+  try {
+    await router.push(path)
+  } finally {
+    requestAnimationFrame(() => window.location.reload())
+  }
+}
+
 
 const setLanguage = async (langCode: string) => {
   if (langCode !== 'zh-CN' && langCode !== 'en-US') return

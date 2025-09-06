@@ -1,7 +1,7 @@
 <template>
   <div :class="stacked ? 'flex flex-col gap-1 w-full' : 'inline-flex items-center gap-2 w-full'">
     <span v-if="label" class="text-xs text-gray-500 dark:text-gray-400">{{ label }}</span>
-    <div class="relative w-full">
+    <div class="relative w-full glass-thin glass-interactive" v-glass>
       <select
         class="input input--glass w-full pr-8"
         :class="size==='sm' ? 'h-9 text-sm' : 'h-10'"
@@ -21,6 +21,7 @@
 </template>
 
 <script setup lang="ts">
+import GlassDirective from '@/directives/glass'
 interface Option { label: string; value: string | number; disabled?: boolean }
 interface Props {
   modelValue: string | number | null
@@ -46,6 +47,8 @@ function onChange(e: Event) {
   emit('update:modelValue', v)
   emit('change', v)
 }
+const vGlass = GlassDirective
+
 </script>
 
 

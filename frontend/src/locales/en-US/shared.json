@@ -1,5 +1,20 @@
 {
   "shared": {
+    "common": {
+      "latest": "Latest",
+      "hot": "Hottest",
+      "all": "All",
+      "views": "views",
+      "score": "score",
+      "empty": "No content",
+      "back": "Back",
+      "tip": "Tip",
+      "edit": "Edit",
+      "delete": "Delete",
+      "saved": "Saved",
+      "deleted": "Deleted",
+      "confirm": "Are you sure?"
+    },
     "chat": {
       "open": "Chat",
       "recent": "Recent",
@@ -211,7 +226,94 @@
     },
     "help": {
       "title": "Help Center",
-      "subtitle": "Find FAQs, user guides, or contact support"
+      "subtitle": "Find FAQs, user guides, or contact support",
+      "searchPlaceholder": "Search help content...",
+      "nav": "Navigation",
+      "sections": {
+        "faq": "FAQs",
+        "articles": "Articles",
+        "guide": "User Guides",
+        "tutorials": "Video Tutorials",
+        "support": "Support",
+        "ticket": "Submit Ticket",
+        "myTickets": "My Tickets",
+        "docs": "Docs",
+        "status": "System Status",
+        "feedback": "Feedback"
+      },
+      "actions": {
+        "watch": "Watch",
+        "useful": "Helpful",
+        "notUseful": "Not Helpful",
+        "submitTicket": "Submit Ticket",
+        "submitFeedback": "Submit Feedback"
+      },
+      "feedback": {
+        "thanks": "Thanks for your feedback"
+      },
+      "quick": {
+        "faqDesc": "Find answers to common questions",
+        "guideDesc": "Learn how to use the system",
+        "supportDesc": "Contact us for help",
+        "feedbackDesc": "Tell us what you think"
+      },
+      "status": {
+        "allOk": "All systems operational",
+        "lastCheck": "Last check: {when} minutes ago",
+        "operational": "Operational",
+        "degraded": "Degraded",
+        "outage": "Outage",
+        "unknown": "Unknown"
+      },
+      "ticket": {
+        "open": "Open",
+        "inProgress": "In Progress",
+        "resolved": "Resolved",
+        "closed": "Closed"
+      },
+      "maintenance": {
+        "title": "Maintenance Notice",
+        "desc": "We will perform system maintenance this Sunday 2:00–4:00 AM; some features may be affected."
+      },
+      "notify": {
+        "videoWip": "Video playback is under development...",
+        "ticketSuccessTitle": "Ticket submitted",
+        "ticketSuccessMsg": "We will handle your issue as soon as possible.",
+        "ticketFailMsg": "An error occurred while submitting the ticket. Please try again later.",
+        "feedbackSuccessTitle": "Feedback sent",
+        "feedbackSuccessMsg": "Thank you for your feedback.",
+        "feedbackFailMsg": "An error occurred while submitting feedback.",
+        "submitFailTitle": "Submission failed"
+      },
+      "validation": {
+        "incomplete": "Form incomplete",
+        "fillRequired": "Please fill in all required fields",
+        "pickTypeAndFill": "Please select a type and fill in the content"
+      },
+      "form": {
+        "type": "Issue Type",
+        "selectType": "Select an issue type",
+        "typeTechnical": "Technical",
+        "typeAccount": "Account",
+        "typeFeature": "Feature Suggestion",
+        "typeBug": "Bug Report",
+        "typeOther": "Other",
+        "title": "Title",
+        "titlePh": "Briefly describe your issue",
+        "description": "Description",
+        "descriptionPh": "Describe the issue in detail...",
+        "priority": "Priority",
+        "priLow": "Low",
+        "priMedium": "Medium",
+        "priHigh": "High",
+        "priUrgent": "Urgent",
+        "feedback": "Feedback Content",
+        "contact": "Contact (optional)",
+        "anonymous": "Anonymous",
+        "typeExperience": "User Experience",
+        "feedbackPh": "Describe your feedback in detail...",
+        "contactPh": "Leave your email or phone if you want a reply"
+      }
     },
     "discovery": {
       "title": "Course Discovery",

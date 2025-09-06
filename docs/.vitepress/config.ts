@@ -1,5 +1,7 @@
 import { defineConfig } from 'vitepress'
 
+const appUrl = process.env.VITE_APP_URL || 'http://localhost:5173'
+
 export default defineConfig({
   lang: 'zh-CN',
   title: '学生核心能力培养评估系统',
@@ -7,6 +9,7 @@ export default defineConfig({
   base: '/',
   themeConfig: {
     nav: [
+      { text: '返回系统', link: appUrl },
       { text: '入门', link: '/quickstart-beginner' },
       { text: '架构', link: '/architecture-overview' },
       { text: '逐文件', link: '/file-walkthrough' },
@@ -128,7 +131,7 @@ export default defineConfig({
     ],
     outline: [2, 3],
     socialLinks: [
-      { icon: 'github', link: 'https://github.com/Xiaorui-Zhang537/student-assessment-system' }
+      { icon: 'github', link: 'https://github.com/Xiaorui-Zhang537/student-core-competency-cultivation-assessment-system' }
     ]
   }
 })

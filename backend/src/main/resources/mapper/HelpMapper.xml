@@ -1,0 +1,113 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.noncore.assessment.mapper.HelpMapper">
+
+  <resultMap id="HelpCategoryMap" type="com.noncore.assessment.entity.HelpCategory">
+    <id column="id" property="id"/>
+    <result column="name" property="name"/>
+    <result column="slug" property="slug"/>
+    <result column="sort" property="sort"/>
+    <result column="created_at" property="createdAt"/>
+    <result column="updated_at" property="updatedAt"/>
+  </resultMap>
+
+  <resultMap id="HelpArticleMap" type="com.noncore.assessment.entity.HelpArticle">
+    <id column="id" property="id"/>
+    <result column="category_id" property="categoryId"/>
+    <result column="title" property="title"/>
+    <result column="slug" property="slug"/>
+    <result column="content_md" property="contentMd"/>
+    <result column="content_html" property="contentHtml"/>
+    <result column="tags" property="tags"/>
+    <result column="views" property="views"/>
+    <result column="up_votes" property="upVotes"/>
+    <result column="down_votes" property="downVotes"/>
+    <result column="published" property="published"/>
+    <result column="created_at" property="createdAt"/>
+    <result column="updated_at" property="updatedAt"/>
+  </resultMap>
+
+  <resultMap id="HelpTicketMap" type="com.noncore.assessment.entity.HelpTicket">
+    <id column="id" property="id"/>
+    <result column="user_id" property="userId"/>
+    <result column="title" property="title"/>
+    <result column="description" property="description"/>
+    <result column="status" property="status"/>
+    <result column="created_at" property="createdAt"/>
+    <result column="updated_at" property="updatedAt"/>
+  </resultMap>
+
+  <select id="listCategories" resultMap="HelpCategoryMap">
+    SELECT id, name, slug, sort, created_at, updated_at
+    FROM help_category
+    ORDER BY sort ASC, id ASC
+  </select>
+
+  <select id="listArticles" resultMap="HelpArticleMap">
+    SELECT id, category_id, title, slug, content_md, content_html, tags, views, up_votes, down_votes, published, created_at, updated_at
+    FROM help_article
+    <where>
+      <if test="q != null and q != ''">
+        (title LIKE CONCAT('%', #{q}, '%') OR content_md LIKE CONCAT('%', #{q}, '%'))
+      </if>
+      <if test="categoryId != null">
+        AND category_id = #{categoryId}
+      </if>
+      <if test="tag != null and tag != ''">
+        AND FIND_IN_SET(#{tag}, tags)
+      </if>
+      AND published = 1
+    </where>
+    <choose>
+      <when test="sort == 'hot'">ORDER BY up_votes - down_votes DESC, views DESC, updated_at DESC</when>
+      <otherwise>ORDER BY updated_at DESC</otherwise>
+    </choose>
+  </select>
+
+  <select id="getArticleBySlug" resultMap="HelpArticleMap">
+    SELECT id, category_id, title, slug, content_md, content_html, tags, views, up_votes, down_votes, published, created_at, updated_at
+    FROM help_article WHERE slug = #{slug} AND published = 1
+  </select>
+
+  <select id="getArticleById" resultMap="HelpArticleMap">
+    SELECT id, category_id, title, slug, content_md, content_html, tags, views, up_votes, down_votes, published, created_at, updated_at
+    FROM help_article WHERE id = #{id}
+  </select>
+
+  <update id="incrementArticleViews">
+    UPDATE help_article SET views = views + 1 WHERE id = #{id}
+  </update>
+
+  <insert id="insertArticleFeedback" parameterType="com.noncore.assessment.entity.HelpArticleFeedback">
+    INSERT INTO help_article_feedback (article_id, user_id, helpful, content, created_at)
+    VALUES (#{articleId}, #{userId}, #{helpful}, #{content}, NOW())
+  </insert>
+
+  <insert id="insertTicket" parameterType="com.noncore.assessment.entity.HelpTicket" useGeneratedKeys="true" keyProperty="id">
+    INSERT INTO help_ticket (user_id, title, description, status, created_at, updated_at)
+    VALUES (#{userId}, #{title}, #{description}, #{status}, NOW(), NOW())
+  </insert>
+
+  <select id="listTicketsByUser" resultMap="HelpTicketMap">
+    SELECT id, user_id, title, description, status, created_at, updated_at
+    FROM help_ticket WHERE user_id = #{userId}
+    ORDER BY created_at DESC
+  </select>
+
+  <update id="updateTicket">
+    UPDATE help_ticket
+    <set>
+      <if test="title != null">title = #{title},</if>
+      <if test="description != null">description = #{description},</if>
+      updated_at = NOW()
+    </set>
+    WHERE id = #{id}
+  </update>
+
+  <delete id="deleteTicket">
+    DELETE FROM help_ticket WHERE id = #{id} AND user_id = #{userId}
+  </delete>
+
+</mapper>
+
+

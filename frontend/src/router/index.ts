@@ -133,6 +133,13 @@ const routes = [
         component: () => import('@/features/shared/views/AIAssistantView.vue'),
         meta: { requiresAuth: true }
       }
+      ,
+      {
+        path: 'help',
+        name: 'StudentHelp',
+        component: () => import('@/features/shared/views/HelpView.vue'),
+        meta: { requiresAuth: true }
+      }
       // ... 其他学生路由
     ]
   },
@@ -249,6 +256,13 @@ const routes = [
         component: () => import('@/features/shared/views/NotificationDetailView.vue'),
         props: true
       }
+      ,
+      {
+        path: 'help',
+        name: 'TeacherHelp',
+        component: () => import('@/features/shared/views/HelpView.vue'),
+        meta: { requiresAuth: true, role: 'TEACHER' }
+      }
       // ... 其他教师路由
     ]
   },
@@ -268,6 +282,29 @@ const routes = [
       }
       return { name: 'Login', query: { redirect: to.fullPath, ...to.query } };
     }
+  },
+  // 帮助页兼容路由：根据角色/登录态重定向到嵌套路由
+  {
+    path: '/help',
+    name: 'HelpCompat',
+    redirect: (to: any) => {
+      const authStore = useAuthStore();
+      const isAuthed = authStore.isAuthenticated;
+      const role = authStore.userRole;
+      if (isAuthed && role === 'TEACHER') {
+        return { path: '/teacher/help', query: to.query };
+      }
+      if (isAuthed) {
+        return { path: '/student/help', query: to.query };
+      }
+      return { name: 'Login', query: { redirect: to.fullPath, ...to.query } };
+    }
+  },
+  // 文档站路由：跳转到外部 docs（由 VITE_DOCS_URL 控制）
+  {
+    path: '/docs',
+    name: 'Docs',
+    component: () => import('@/features/shared/views/DocsRedirectView.vue')
   },
   // 顶层兼容：邮件链接 /reset-password?token=xxx → 重定向到 /auth/reset-password 保留查询参数
   {

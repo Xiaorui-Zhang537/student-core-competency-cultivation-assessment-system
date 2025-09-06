@@ -156,6 +156,16 @@
                         <span>{{ t('layout.teacher.user.profile') }}</span>
                       </div>
                     </router-link>
+                    <router-link
+                      to="/teacher/help"
+                      class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100/50 dark:hover:bg-gray-700/50 rounded-lg"
+                      @click="showUserMenu = false"
+                    >
+                      <div class="flex items-center space-x-2">
+                        <question-mark-circle-icon class="h-4 w-4" />
+                        <span>{{ t('layout.common.help') || '帮助' }}</span>
+                      </div>
+                    </router-link>
                     <div class="border-t border-gray-100 dark:border-gray-600"></div>
                     <button
                       @click="handleLogout"
@@ -291,6 +301,7 @@ import {
   ChatBubbleLeftRightIcon,
   EyeIcon,
   EyeSlashIcon,
+  QuestionMarkCircleIcon,
 } from '@heroicons/vue/24/outline'
 
 // Stores & Router

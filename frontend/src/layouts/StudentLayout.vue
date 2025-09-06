@@ -139,6 +139,13 @@
                     >
                       <user-icon class="h-4 w-4 inline-block mr-2" /> {{ t('layout.student.user.profile') || '个人资料' }}
                     </router-link>
+                    <router-link
+                      to="/student/help"
+                      class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100/50 dark:hover:bg-gray-700/50 rounded-lg"
+                      @click="showUserMenu = false"
+                    >
+                      <question-mark-circle-icon class="h-4 w-4 inline-block mr-2" /> {{ t('layout.common.help') || '帮助' }}
+                    </router-link>
                     <div class="border-t border-gray-100 dark:border-gray-600"></div>
                     <button
                       @click="handleLogout"
@@ -267,6 +274,7 @@ import {
   EyeIcon,
   EyeSlashIcon,
   PaintBrushIcon,
+  QuestionMarkCircleIcon,
 } from '@heroicons/vue/24/outline'
 import UserAvatar from '@/components/ui/UserAvatar.vue'
 import { useI18n } from 'vue-i18n'
