@@ -24,12 +24,13 @@
             type="text"
             :placeholder="t('teacher.courses.filters.searchPlaceholder')"
             @input="applyFilters"
-            class="input pl-10"
+            class="input input--glass pl-10 bg-transparent glass-regular glass-interactive rounded-xl border border-white/30 dark:border-white/10"
+            v-glass="{ strength: 'regular', interactive: true }"
           />
         </div>
         <!-- 状态分段按钮组 + 清空按钮（同列左右分布，消除右侧空白） -->
         <div class="flex items-center justify-between gap-4">
-          <div class="inline-flex whitespace-nowrap rounded-xl overflow-hidden border border-gray-300/50 dark:border-gray-600/40 glass-ultraThin" v-glass="{ strength: 'ultraThin', interactive: false }">
+          <div class="inline-flex whitespace-nowrap rounded-xl overflow-hidden border border-white/30 dark:border-white/10 glass-ultraThin" v-glass="{ strength: 'ultraThin', interactive: false }">
             <button type="button" @click="setStatus('')" :class="segClass('')">{{ t('teacher.courses.filters.status.all') }}</button>
             <button type="button" @click="setStatus('DRAFT')" :class="segClass('DRAFT')">{{ t('teacher.courses.filters.status.draft') }}</button>
             <button type="button" @click="setStatus('PUBLISHED')" :class="segClass('PUBLISHED')">{{ t('teacher.courses.filters.status.published') }}</button>
@@ -113,23 +114,23 @@
         <form @submit.prevent="handleSubmit" class="space-y-4">
           <div>
             <label for="title" class="block text-sm font-medium mb-1">{{ t('teacher.courses.modal.title') }}</label>
-            <input id="title" v-model="form.title" type="text" required class="input" />
+            <GlassInput id="title" v-model="form.title" type="text" />
           </div>
           <div>
             <label for="description" class="block text-sm font-medium mb-1">{{ t('teacher.courses.modal.description') }}</label>
-            <textarea id="description" v-model="form.description" rows="3" class="input"></textarea>
+            <GlassTextarea id="description" v-model="form.description" :rows="3" />
           </div>
           <div>
             <label for="content" class="block text-sm font-medium mb-1">{{ t('teacher.courses.modal.content') }}</label>
-            <textarea id="content" v-model="form.content" rows="6" class="input" placeholder=""></textarea>
+            <GlassTextarea id="content" v-model="form.content" :rows="6" />
           </div>
           <div>
             <label for="category" class="block text-sm font-medium mb-1">{{ t('teacher.courses.modal.category') }}</label>
-            <input id="category" v-model="form.category" type="text" required class="input" />
+            <GlassInput id="category" v-model="form.category" type="text" />
           </div>
           <div>
             <label for="tags" class="block text-sm font-medium mb-1">{{ t('teacher.courses.modal.tags') }}</label>
-            <input id="tags" v-model="tagsInput" type="text" class="input" />
+            <GlassInput id="tags" v-model="tagsInput" type="text" />
           </div>
           <div>
             <label class="block text-sm font-medium mb-1">{{ t('teacher.courses.modal.cover') }}</label>
@@ -183,6 +184,8 @@ import { MagnifyingGlassIcon, PlusIcon, XMarkIcon, PencilSquareIcon, TrashIcon }
 // @ts-ignore - vue-i18n runtime is available at build time; type may be resolved via shim
 import { useI18n } from 'vue-i18n'
 import PageHeader from '@/components/ui/PageHeader.vue'
+import GlassInput from '@/components/ui/inputs/GlassInput.vue'
+import GlassTextarea from '@/components/ui/inputs/GlassTextarea.vue'
 
 const courseStore = useCourseStore();
 const authStore = useAuthStore();
@@ -272,7 +275,7 @@ const segClass = (val: string) => {
     'px-3 py-2 text-sm transition-colors focus:outline-none',
     isActive
       ? 'bg-primary-600 text-white'
-      : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'
+      : 'bg-white/10 dark:bg-white/10 text-gray-800 dark:text-gray-200 hover:bg-white/20 dark:hover:bg-white/20'
   ]
 }
 

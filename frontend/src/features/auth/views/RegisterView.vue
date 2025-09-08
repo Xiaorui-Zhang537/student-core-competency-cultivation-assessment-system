@@ -43,32 +43,32 @@
 
       <div>
         <label for="username" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{{ t('auth.register.form.username.label') }}</label>
-        <div v-glass="{ strength: 'ultraThin' }" class="rounded-lg">
-          <input id="username" v-model="form.username" type="text" required class="input" :disabled="authStore.loading" />
+        <div class="rounded-lg">
+          <GlassInput id="username" v-model="form.username" type="text" :disabled="authStore.loading" />
         </div>
         <p v-if="form.username && !isUsernameValid" class="mt-1 text-xs text-red-600">{{ t('auth.register.error.usernameInvalid') }}</p>
       </div>
 
       <div>
         <label for="email" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{{ t('auth.register.form.email.label') }}</label>
-        <div v-glass="{ strength: 'ultraThin' }" class="rounded-lg">
-          <input id="email" v-model="form.email" type="email" required class="input" :disabled="authStore.loading" />
+        <div class="rounded-lg">
+          <GlassInput id="email" v-model="form.email" type="email" :disabled="authStore.loading" />
         </div>
         <p v-if="form.email && !isEmailValid" class="mt-1 text-xs text-red-600">{{ t('auth.register.error.emailInvalid') }}</p>
       </div>
 
       <div>
         <label for="password" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{{ t('auth.register.form.password.label') }}</label>
-        <div v-glass="{ strength: 'ultraThin' }" class="rounded-lg">
-          <input id="password" v-model="form.password" type="password" required class="input" :disabled="authStore.loading" />
+        <div class="rounded-lg">
+          <GlassInput id="password" v-model="form.password" type="password" :disabled="authStore.loading" />
         </div>
         <p v-if="form.password && !isPasswordValid" class="mt-1 text-xs text-red-600">{{ t('auth.register.error.passwordInvalid') }}</p>
       </div>
 
       <div>
         <label for="confirmPassword" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{{ t('auth.register.form.confirmPassword.label') }}</label>
-        <div v-glass="{ strength: 'ultraThin' }" class="rounded-lg">
-          <input id="confirmPassword" v-model="confirmPassword" type="password" required class="input" :disabled="authStore.loading" />
+        <div class="rounded-lg">
+          <GlassInput id="confirmPassword" v-model="confirmPassword" type="password" :disabled="authStore.loading" />
         </div>
       </div>
 
@@ -98,6 +98,7 @@ import type { RegisterRequest } from '@/types/auth';
 import { useI18n } from 'vue-i18n'
 import { i18n } from '@/i18n'
 import { useRouter } from 'vue-router'
+import GlassInput from '@/components/ui/inputs/GlassInput.vue'
 
 const authStore = useAuthStore();
 const uiStore = useUIStore();

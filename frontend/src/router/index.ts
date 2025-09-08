@@ -100,6 +100,11 @@ const routes = [
         component: () => import('@/features/student/views/AnalysisView.vue')
       },
       {
+        path: 'grades',
+        name: 'StudentGrades',
+        component: () => import('@/features/student/views/GradesView.vue')
+      },
+      {
         path: 'profile',
         name: 'StudentProfile',
         component: () => import('@/features/shared/views/ProfileView.vue')

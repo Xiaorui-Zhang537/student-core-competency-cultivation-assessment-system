@@ -137,24 +137,28 @@ export const notificationAPI = {
     return api.post('/notifications/conversation/read', undefined, { params: { peerId } })
   },
 
-  // 发送作业通知（教师功能）
-  sendAssignmentNotification: (assignmentId: string, data: {
-    title: string
-    content: string
-    type: 'assignment' | 'grade'
-    priority?: string
-  }): Promise<ApiResponse<void>> => {
-    return api.post(`/notifications/assignment/${assignmentId}`, data)
+  // 发送作业通知（教师功能）——后端为 Query 方式：/notifications/assignment/{id}?type=xxx&customMessage=xxx
+  sendAssignmentNotification: (
+    assignmentId: string | number,
+    params: { type: string; customMessage?: string }
+  ): Promise<ApiResponse<any>> => {
+    return api.post(`/notifications/assignment/${assignmentId}`, undefined as any, { params })
   },
 
-  // 发送课程通知（教师功能）
-  sendCourseNotification: (courseId: string, data: {
-    title: string
-    content: string
-    type: 'course' | 'system'
-    priority?: string
-  }): Promise<ApiResponse<void>> => {
-    return api.post(`/notifications/course/${courseId}`, data)
+  // 发送课程通知（教师功能）——后端为 Query 方式
+  sendCourseNotification: (
+    courseId: string | number,
+    params: { type: string; customMessage?: string }
+  ): Promise<ApiResponse<any>> => {
+    return api.post(`/notifications/course/${courseId}`, undefined as any, { params })
+  },
+
+  // 发送成绩通知（教师功能）——新增，与后端控制器 /notifications/grade/{gradeId} 对齐
+  sendGradeNotification: (
+    gradeId: string | number,
+    params: { type: string; customMessage?: string }
+  ): Promise<ApiResponse<any>> => {
+    return api.post(`/notifications/grade/${gradeId}`, undefined as any, { params })
   }
 }
 

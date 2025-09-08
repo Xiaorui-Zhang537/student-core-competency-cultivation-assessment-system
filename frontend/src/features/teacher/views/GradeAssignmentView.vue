@@ -73,7 +73,7 @@
               <!-- 文字内容 -->
               <div v-if="submission.content">
                 <h3 class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{{ t('teacher.grading.submission.answer') }}</h3>
-                <div class="bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
+                <div class="rounded-xl glass-ultraThin p-4" v-glass="{ strength: 'ultraThin', interactive: false }">
                   <div class="prose max-w-none dark:prose-invert">
                     <p class="whitespace-pre-line">{{ submission.content }}</p>
                   </div>
@@ -83,7 +83,7 @@
               <!-- 附件（单文件） -->
               <div v-if="submission.fileName">
                 <h3 class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">{{ t('teacher.grading.submission.attachment') }}</h3>
-                <div class="flex items-center justify-between p-3 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 rounded-lg">
+                <div class="flex items-center justify-between p-3 rounded-xl glass-ultraThin border border-white/20 dark:border-white/10" v-glass="{ strength: 'ultraThin', interactive: true }">
                   <div class="flex items-center space-x-3">
                     <div class="flex-shrink-0">
                       <document-icon class="w-6 h-6 text-gray-400" />
@@ -105,8 +105,8 @@
 
               <!-- 学生自评 -->
               <div v-if="submission.selfEvaluation">
-              <h3 class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{{ t('teacher.grading.submission.selfEvaluation') }}</h3>
-                <div class="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-4">
+                <h3 class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{{ t('teacher.grading.submission.selfEvaluation') }}</h3>
+                <div class="rounded-xl glass-ultraThin p-4" v-glass="{ strength: 'ultraThin', interactive: false }">
                   <p class="text-sm text-gray-700 dark:text-gray-300">{{ submission.selfEvaluation }}</p>
                 </div>
               </div>
@@ -180,9 +180,9 @@
             <div class="space-y-4">
               <div v-for="history in gradingHistory" 
                    :key="history.id"
-                   class="flex items-start space-x-4 p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
+                   class="flex items-start space-x-4 p-4 rounded-xl glass-ultraThin" v-glass="{ strength: 'ultraThin', interactive: false }">
                 <div class="flex-shrink-0">
-                  <div class="w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-900 flex items-center justify-center">
+                  <div class="w-8 h-8 rounded-full glass-ultraThin flex items-center justify-center" v-glass="{ strength: 'ultraThin', interactive: false }">
                     <academic-cap-icon class="w-4 h-4 text-blue-600 dark:text-blue-400" />
                   </div>
                 </div>
@@ -214,40 +214,44 @@
                   {{ t('teacher.grading.form.score') }} <span class="text-red-500">*</span>
                 </label>
                 <div class="flex items-center space-x-2">
-                  <input
-                    v-model.number="gradeForm.score"
+                  <GlassInput
+                    v-model="gradeForm.score as any"
                     type="number"
                     :min="0"
                     :max="assignment.totalScore"
                     step="0.5"
-                    class="input flex-1"
+                    class="flex-1"
                     :class="{ 'border-red-500': errors.score }"
-                    @blur="validateScore"
+                    @blur="() => { validateScore(); validateGrade(); }"
                   />
                   <span class="text-sm text-gray-500 dark:text-gray-400">{{ t('teacher.grading.form.ofTotal', { total: assignment.totalScore }) }}</span>
                 </div>
                 <p v-if="errors.score" class="mt-1 text-sm text-red-600">{{ errors.score }}</p>
-                <div class="mt-2">
-                  <progress :value="gradeForm.score" :max="assignment.totalScore" size="sm" color="primary" />
+                
+                <!-- 动画分数展示（玻璃超薄风格） -->
+                <div class="mt-4 glass-ultraThin rounded-xl p-4" v-glass="{ strength: 'ultraThin', interactive: true }">
+                  <div class="flex items-center justify-between">
+                    <div class="text-2xl font-bold text-gray-900 dark:text-gray-100">{{ animatedScore.toFixed(1) }}</div>
+                    <div class="text-sm text-gray-500 dark:text-gray-400">/ {{ assignment.totalScore }}{{ t('teacher.grading.history.scoreSuffix') }}</div>
+                  </div>
+                  <div class="mt-2 h-2 rounded-full bg-gray-200/60 dark:bg-gray-700/60 overflow-hidden">
+                    <div class="h-full rounded-full bg-primary-500/70 backdrop-blur-sm transition-all duration-300" :style="{ width: scorePercent + '%' }"></div>
+                  </div>
                 </div>
               </div>
 
               <!-- 等级评定 -->
               <div>
                 <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  {{ t('teacher.grading.form.grade') }}
+                  {{ t('teacher.grading.form.grade') }} <span class="text-red-500">*</span>
                 </label>
-                <select v-model="gradeForm.grade" class="input">
-                  <option value="">{{ t('teacher.grading.form.selectGrade') }}</option>
-                  <option value="A+">A+ (优秀+)</option>
-                  <option value="A">A (优秀)</option>
-                  <option value="B+">B+ (良好+)</option>
-                  <option value="B">B (良好)</option>
-                  <option value="C+">C+ (中等+)</option>
-                  <option value="C">C (中等)</option>
-                  <option value="D">D (及格)</option>
-                  <option value="F">F (不及格)</option>
-                </select>
+                <GlassPopoverSelect
+                  v-model="gradeForm.grade"
+                  :options="gradeOptions"
+                  size="md"
+                  :disabled="true"
+                />
+                <p v-if="errors.grade" class="mt-1 text-sm text-red-600">{{ errors.grade }}</p>
               </div>
 
               <!-- 反馈内容 -->
@@ -255,14 +259,13 @@
                 <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                   {{ t('teacher.grading.form.feedback') }} <span class="text-red-500">*</span>
                 </label>
-                <textarea
+                <GlassTextarea
                   v-model="gradeForm.feedback"
-                  rows="6"
-                  :placeholder="t('teacher.grading.form.feedbackPlaceholder')"
-                  class="input"
+                  :rows="6"
+                  :placeholder="t('teacher.grading.form.feedbackPlaceholder') as string"
                   :class="{ 'border-red-500': errors.feedback }"
                   @blur="validateFeedback"
-                ></textarea>
+                />
                 <p v-if="errors.feedback" class="mt-1 text-sm text-red-600">{{ errors.feedback }}</p>
               </div>
 
@@ -272,23 +275,21 @@
                   <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                     {{ t('teacher.grading.form.strengths') }}
                   </label>
-                  <textarea
+                  <GlassTextarea
                     v-model="gradeForm.strengths"
-                    rows="3"
-                    :placeholder="t('teacher.grading.form.strengthsPlaceholder')"
-                    class="input"
-                  ></textarea>
+                    :rows="3"
+                    :placeholder="t('teacher.grading.form.strengthsPlaceholder') as string"
+                  />
                 </div>
                 <div>
                   <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                     {{ t('teacher.grading.form.improvements') }}
                   </label>
-                  <textarea
+                  <GlassTextarea
                     v-model="gradeForm.improvements"
-                    rows="3"
-                    :placeholder="t('teacher.grading.form.improvementsPlaceholder')"
-                    class="input"
-                  ></textarea>
+                    :rows="3"
+                    :placeholder="t('teacher.grading.form.improvementsPlaceholder') as string"
+                  />
                 </div>
               </div>
 
@@ -377,10 +378,12 @@
                 </div>
               </div>
               
-              <Button variant="primary" size="lg" class="justify-center" @click="viewStudentProfile">
-                <UserIcon class="w-4 h-4 mr-2" />
-                {{ t('teacher.grading.student.viewProfile') }}
-              </Button>
+              <div class="flex justify-center">
+                <Button variant="primary" size="lg" @click="viewStudentProfile">
+                  <UserIcon class="w-4 h-4 mr-2" />
+                  {{ t('teacher.grading.student.viewProfile') }}
+                </Button>
+              </div>
             </div>
           </card>
 
@@ -437,7 +440,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, computed, onMounted } from 'vue'
+import { ref, reactive, computed, onMounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useUIStore } from '@/stores/ui'
 import Card from '@/components/ui/Card.vue'
@@ -462,6 +465,9 @@ import {
 import UserAvatar from '@/components/ui/UserAvatar.vue'
 import { useLocale } from '@/i18n/useLocale'
 import PageHeader from '@/components/ui/PageHeader.vue'
+import GlassPopoverSelect from '@/components/ui/filters/GlassPopoverSelect.vue'
+import GlassInput from '@/components/ui/inputs/GlassInput.vue'
+import GlassTextarea from '@/components/ui/inputs/GlassTextarea.vue'
 
 // Router and Stores
 const route = useRoute()
@@ -520,13 +526,15 @@ const gradeForm = reactive({
 // 错误状态
 const errors = reactive({
   score: '',
-  feedback: ''
+  feedback: '',
+  grade: ''
 })
 
 // 计算属性
 const isFormValid = computed(() => {
   return gradeForm.score >= 0 &&
     gradeForm.score <= assignment.totalScore &&
+    gradeForm.grade.trim() !== '' &&
     gradeForm.feedback.trim() !== '' &&
     Object.values(errors).every(error => error === '')
 })
@@ -539,6 +547,8 @@ import { teacherStudentApi } from '@/api/teacher-student.api'
 import { reportApi } from '@/api/report.api'
 import { useChatStore } from '@/stores/chat'
 import { submissionApi } from '@/api/submission.api'
+import { notificationAPI } from '@/api/notification.api'
+import { onMounted as vueOnMounted } from 'vue'
 
 const loadSubmission = async () => {
   try {
@@ -654,6 +664,14 @@ const validateScore = () => {
   }
 }
 
+const validateGrade = () => {
+  if (!gradeForm.grade || gradeForm.grade.trim() === '') {
+    errors.grade = t('teacher.grading.errors.gradeRequired') as string
+  } else {
+    errors.grade = ''
+  }
+}
+
 const validateFeedback = () => {
   if (gradeForm.feedback.trim() === '') {
     errors.feedback = t('teacher.grading.errors.feedbackRequired')
@@ -674,6 +692,37 @@ const applyAiSuggestion = () => {
     message: t('teacher.grading.notify.aiAppliedMsg')
   })
 }
+
+// 根据分数自动选择等级（百分制区间，可按需调整）
+const pickGradeByScore = (score: number, max: number) => {
+  const pct = max > 0 ? (score / max) * 100 : 0
+  if (pct >= 95) return 'A+'
+  if (pct >= 90) return 'A'
+  if (pct >= 85) return 'B+'
+  if (pct >= 80) return 'B'
+  if (pct >= 70) return 'C+'
+  if (pct >= 60) return 'C'
+  if (pct >= 50) return 'D'
+  return 'F'
+}
+
+// 监听分数变动自动同步等级
+watch(() => gradeForm.score, (val) => {
+  const s = Number(val || 0)
+  gradeForm.grade = pickGradeByScore(s, Number(assignment.totalScore || 100))
+  validateGrade()
+})
+
+const gradeOptions = [
+  { label: 'A+ (优秀+)', value: 'A+' },
+  { label: 'A (优秀)', value: 'A' },
+  { label: 'B+ (良好+)', value: 'B+' },
+  { label: 'B (良好)', value: 'B' },
+  { label: 'C+ (中等+)', value: 'C+' },
+  { label: 'C (中等)', value: 'C' },
+  { label: 'D (及格)', value: 'D' },
+  { label: 'F (不及格)', value: 'F' },
+]
 
 const previewFile = (file: any) => {
   // 实现文件预览
@@ -711,6 +760,32 @@ const downloadSingleFile = () => {
   a.click()
   a.remove()
 }
+
+// 动画分数：在分数变化时平滑过渡
+const animatedScore = ref(0)
+const scorePercent = computed(() => {
+  const max = Number(assignment.totalScore || 100)
+  const val = Math.max(0, Math.min(max, Number(animatedScore.value || 0)))
+  return max > 0 ? (val / max) * 100 : 0
+})
+
+let animRaf: number | null = null
+watch(() => gradeForm.score, (target) => {
+  const start = Number(animatedScore.value || 0)
+  const end = Number(target || 0)
+  const duration = 300
+  const startTs = performance.now()
+  if (animRaf) cancelAnimationFrame(animRaf)
+  const tick = (now: number) => {
+    const p = Math.min(1, (now - startTs) / duration)
+    animatedScore.value = start + (end - start) * p
+    if (p < 1) animRaf = requestAnimationFrame(tick)
+  }
+  animRaf = requestAnimationFrame(tick)
+})
+
+// 初始化 animatedScore
+onMounted(() => { animatedScore.value = Number(gradeForm.score || 0) })
 
 const saveDraft = async () => {
   isDraftSaving.value = true
@@ -776,6 +851,7 @@ const submitGrade = async () => {
     const gr = await gradeApi.gradeSubmission(payload)
     const gradeId = (gr as any)?.id
     if (gradeForm.publishImmediately && gradeId) {
+      // 仅调用发布接口，通知改为由后端自动触发
       await gradeApi.publishGrade(String(gradeId))
     }
     

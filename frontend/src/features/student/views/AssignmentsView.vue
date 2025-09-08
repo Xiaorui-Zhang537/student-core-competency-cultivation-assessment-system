@@ -3,84 +3,89 @@
     <div class="max-w-7xl mx-auto">
       <PageHeader :title="t('student.assignments.title') || '我的作业'" :subtitle="t('student.assignments.subtitle') || '查看与提交作业'" />
 
-      <!-- 过滤条（玻璃样式、紧凑） -->
-      <div class="p-3 rounded-lg glass-thin mb-5" v-glass="{ strength: 'thin', interactive: true }">
-        <FilterBar>
-          <template #left>
-            <div class="flex items-center gap-2 w-40">
-              <span class="text-sm text-gray-700">{{ t('student.assignments.filters.statusLabel') || '状态' }}</span>
-              <div class="w-28">
-                <GlassPopoverSelect v-model="filters.status" :options="statusOptions" size="sm" />
-              </div>
-            </div>
-            <div class="flex items-center gap-2 w-56 ml-2">
-              <span class="text-sm text-gray-700">{{ t('student.assignments.filters.courseLabel') || '课程' }}</span>
-              <div class="w-40">
-                <GlassPopoverSelect v-model="filters.courseId" :options="courseOptions" size="sm" />
-              </div>
-            </div>
-          </template>
-          <template #right>
-            <input v-model="filters.keyword" :placeholder="(t('student.assignments.search') as string) || '搜索作业'" class="input" />
-          </template>
-        </FilterBar>
-      </div>
-
-      <!-- 列表 -->
-      <div class="glass-thick glass-interactive rounded-2xl border border-gray-200/40 dark:border-gray-700/40 overflow-hidden" v-glass="{ strength: 'thick', interactive: true }">
-        <div class="divide-y divide-gray-200/40 dark:divide-gray-700/40">
-          <div v-if="errorMessage" class="p-6 text-center text-red-600">
-            <p class="mb-3">{{ errorMessage }}</p>
-            <Button variant="info" @click="loadList">{{ t('teacher.submissions.retry') }}</Button>
+      <!-- 过滤条（取消外层嵌套容器，仅保留 FilterBar） -->
+      <FilterBar class="mb-6">
+        <template #left>
+          <div class="w-48">
+            <GlassPopoverSelect
+              :label="(t('student.assignments.filters.statusLabel') as string) || '状态'"
+              v-model="filters.status"
+              :options="statusOptions"
+              size="sm"
+              stacked
+            />
           </div>
-          <div v-for="a in list" :key="a.id" class="p-4 flex items-center justify-between">
+          <div class="w-56 ml-2">
+            <GlassPopoverSelect
+              :label="(t('student.assignments.filters.courseLabel') as string) || '课程'"
+              v-model="filters.courseId"
+              :options="courseOptions"
+              size="sm"
+              stacked
+            />
+          </div>
+        </template>
+        <template #right>
+          <div class="w-64">
+            <div class="glass-thin rounded-lg px-3 py-2 flex items-center gap-2" v-glass="{ strength: 'thin', interactive: true }">
+              <MagnifyingGlassIcon class="w-4 h-4 text-gray-500" />
+              <input
+                v-model="searchText"
+                :placeholder="(t('student.assignments.searchPlaceholder') as string) || (t('student.assignments.search') as string) || '搜索作业'"
+                class="bg-transparent outline-none w-full text-sm placeholder-gray-400"
+                aria-label="Search assignments"
+              />
+            </div>
+          </div>
+        </template>
+      </FilterBar>
+
+      <!-- 列表（每行一个卡片） -->
+      <div class="grid grid-cols-1 gap-4">
+        <div v-if="errorMessage" class="col-span-full p-6 text-center text-red-600 glass-thin rounded-xl" v-glass="{ strength: 'thin', interactive: true }">
+          <p class="mb-3">{{ errorMessage }}</p>
+          <Button variant="info" @click="loadList">{{ t('teacher.submissions.retry') }}</Button>
+        </div>
+
+        <div v-for="a in list" :key="a.id" class="glass-thin rounded-xl p-4 shadow-sm" v-glass="{ strength: 'thin', interactive: true }">
+          <div class="flex items-start justify-between gap-3">
             <div class="min-w-0">
               <div class="flex items-center gap-2">
                 <span class="text-base font-semibold text-gray-900 dark:text-white truncate">{{ a.title }}</span>
-                <span class="text-xs px-2 py-0.5 rounded-full" :class="statusBadgeClass(normalizedStatus(a.status))">{{ statusText(normalizedStatus(a.status)) }}</span>
+                <span class="text-xs px-2 py-0.5 rounded-full" :class="statusBadgeClass(displayStatus(a))">{{ statusText(displayStatus(a)) }}</span>
               </div>
               <div class="text-sm text-gray-600 dark:text-gray-300 mt-1 truncate">{{ a.courseTitle || a.courseName || a.course?.title }}</div>
-              <div class="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                {{ t('student.assignments.due') }}{{ formatTime(a.dueDate || a.dueAt) }}
-              </div>
+              <div class="text-xs text-gray-500 dark:text-gray-400 mt-1">{{ t('student.assignments.due') }}{{ formatTime(a.dueDate || a.dueAt) }}</div>
             </div>
-            <div class="flex items-center gap-2">
-              <Button
-                v-if="normalizedStatus(a.status)==='PENDING' && !isPastDue(a.dueDate || a.dueAt)"
-                variant="primary" size="sm" @click="submit(a.id)"
-              >{{ t('student.assignments.actions.submit') }}</Button>
-              <Button
-                v-else-if="normalizedStatus(a.status)==='SUBMITTED' || isPastDue(a.dueDate || a.dueAt)"
-                variant="menu" size="sm" @click="view(a.id)"
-              >{{ t('student.assignments.actions.view') }}</Button>
-              <Button
-                v-else
-                variant="menu" size="sm" @click="view(a.id)"
-              >{{ t('student.assignments.actions.review') }}</Button>
+            <div class="flex items-center gap-2 shrink-0">
+              <Button v-if="displayStatus(a)==='PENDING' && !isPastDue(a.dueDate || a.dueAt)" variant="primary" size="sm" @click="submit(a.id)">{{ t('student.assignments.actions.submit') }}</Button>
+              <Button v-else-if="displayStatus(a)==='SUBMITTED' || isPastDue(a.dueDate || a.dueAt)" variant="menu" size="sm" @click="view(a.id)">{{ t('student.assignments.actions.view') }}</Button>
+              <Button v-else variant="menu" size="sm" @click="view(a.id)">{{ t('student.assignments.actions.review') }}</Button>
             </div>
           </div>
-          <div v-if="!loading && !errorMessage && list.length===0" class="p-8 text-center text-gray-500 dark:text-gray-400">{{ t('student.assignments.empty') }}</div>
-          <div v-if="loading" class="p-8 text-center text-gray-500 dark:text-gray-400">{{ t('shared.loading') }}</div>
         </div>
+
+        <div v-if="!loading && !errorMessage && list.length===0" class="col-span-full p-8 text-center text-gray-500 dark:text-gray-400 glass-thin rounded-xl" v-glass="{ strength: 'thin', interactive: true }">{{ t('student.assignments.empty') }}</div>
+        <div v-if="loading" class="col-span-full p-8 text-center text-gray-500 dark:text-gray-400 glass-thin rounded-xl" v-glass="{ strength: 'thin', interactive: true }">{{ t('shared.loading') }}</div>
       </div>
 
-      <!-- 分页控制 -->
-      <div class="mt-6 flex items-center justify-between">
+      <!-- 分页控制（文案与布局对齐教师端） -->
+      <div class="mt-6 flex items-center justify-between relative z-10">
         <div class="flex items-center space-x-2">
-          <span class="text-sm text-gray-700">{{ t('student.assignments.pagination.perPageLabel') || '每页显示：' }}</span>
+          <span class="text-sm text-gray-900 dark:text-gray-100">{{ perPagePrefixText }}</span>
           <div class="w-28">
             <GlassPopoverSelect
-              :options="[{label:'10', value:10},{label:'20', value:20},{label:'50', value:50}]"
-              :model-value="pageSize"
-              @update:modelValue="(v:any)=>{ pageSize = Number(v||10); changePageSize() }"
+              v-model="pageSize"
+              :options="[{label: '10', value: 10}, {label: '20', value: 20}, {label: '50', value: 50}]"
               size="sm"
+              @change="(v:any)=>{ pageSize = Number(v||10); changePageSize() }"
             />
           </div>
-          <span class="text-sm text-gray-700">{{ t('student.assignments.pagination.perPageSuffix') || '条' }}</span>
+          <span class="text-sm text-gray-900 dark:text-gray-100">{{ perPageSuffixText }}</span>
         </div>
         <div class="flex items-center space-x-2">
           <Button variant="outline" size="sm" :disabled="loading || currentPage===1" @click="prevPage">{{ t('student.assignments.pagination.prev') || '上一页' }}</Button>
-          <span class="text-sm">{{ t('student.assignments.pagination.page', { page: currentPage }) || (`第 ${currentPage} 页`) }}</span>
+          <span class="text-sm text-gray-900 dark:text-gray-100">{{ pageText }}</span>
           <Button variant="outline" size="sm" :disabled="loading || currentPage>=totalPages" @click="nextPage">{{ t('student.assignments.pagination.next') || '下一页' }}</Button>
         </div>
       </div>
@@ -97,18 +102,26 @@ import FilterBar from '@/components/ui/filters/FilterBar.vue'
 import { studentApi } from '@/api/student.api'
 import GlassPopoverSelect from '@/components/ui/filters/GlassPopoverSelect.vue'
 import PageHeader from '@/components/ui/PageHeader.vue'
+import { MagnifyingGlassIcon } from '@heroicons/vue/24/outline'
+import { useSubmissionStore } from '@/stores/submission'
 
 const { t } = useI18n()
 const router = useRouter()
+const submissionStore = useSubmissionStore()
 
 const loading = ref(false)
 const list = ref<any[]>([])
 const errorMessage = ref('')
 const filters = ref<{ status: string, courseId: string | number | null, keyword: string }>({ status: 'ALL', courseId: null, keyword: '' })
+const searchText = ref('')
 const currentPage = ref(1)
 const pageSize = ref(10)
 const total = ref(0)
 const totalPages = ref(1)
+
+const perPagePrefixText = computed(() => (t('student.assignments.pagination.perPagePrefix') as string) || '每页显示')
+const perPageSuffixText = computed(() => (t('student.assignments.pagination.perPageSuffix') as string) || '条')
+const pageText = computed(() => (t('student.assignments.pagination.page', { page: currentPage.value }) as string) || (`第 ${currentPage.value} 页`))
 
 const statusOptions = computed(() => [
   { label: t('student.assignments.filters.all'), value: 'ALL' },
@@ -122,14 +135,36 @@ const courseOptions = ref<Array<{ label: string, value: string }>>([{ label: t('
 function statusBadgeClass(s: string) {
   if (s === 'PENDING') return 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-300'
   if (s === 'SUBMITTED') return 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300'
+  if (s === 'LATE') return 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300'
   if (s === 'GRADED') return 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300'
   return 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300'
 }
 function statusText(s: string) {
   if (s === 'PENDING') return t('student.assignments.status.pending')
   if (s === 'SUBMITTED') return t('student.assignments.status.submitted')
+  if (s === 'LATE') return t('student.assignments.status.late')
   if (s === 'GRADED') return t('student.assignments.status.graded')
   return t('student.assignments.status.unknown')
+}
+function displayStatus(a: any) {
+  // 优先使用后端提交记录（Pinia）覆盖列表状态
+  try {
+    const sub = submissionStore.submissions.get(String(a?.id || '')) as any
+    const s = String(sub?.status || '').toUpperCase()
+    const hasContent = !!String(sub?.content || '').trim()
+    const hasFiles = Array.isArray(sub?.fileIds) && sub.fileIds.length > 0
+    const actuallySubmitted = (s === 'SUBMITTED' || s === 'GRADED' || s === 'LATE') && (hasContent || hasFiles || !!sub?.submittedAt)
+    if (actuallySubmitted) return s === 'GRADED' ? 'GRADED' : 'SUBMITTED'
+  } catch {}
+  // 其次尝试读取后端返回在作业列表项上的提交状态字段（若存在）
+  try {
+    const s2 = String(a?.submissionStatus || a?.submission_status || '').toUpperCase()
+    if (s2 === 'SUBMITTED' || s2 === 'GRADED') return s2
+  } catch {}
+  // 未提交情况下，若已过截止时间显示 LATE
+  const due = a?.dueDate || a?.dueAt
+  if (isPastDue(due)) return 'LATE'
+  return normalizedStatus(a?.status)
 }
 function formatTime(ts: string) {
   const d = new Date(ts)
@@ -167,6 +202,7 @@ function normalizedStatus(s: string) {
   if (lower === 'published') return 'PENDING'
   if (lower === 'submitted') return 'SUBMITTED'
   if (lower === 'graded') return 'GRADED'
+  if (lower === 'crafted' || lower === 'draft') return 'DRAFT'
   return s.toUpperCase()
 }
 
@@ -183,8 +219,26 @@ async function loadList() {
     params.size = pageSize.value
     const res: any = await studentApi.getAssignments(params)
     const items = res?.items || res?.data?.items || res || []
-    list.value = Array.isArray(items) ? items : (items.items || [])
-    total.value = Number(res?.total ?? (Array.isArray(list.value) ? list.value.length : 0))
+    const rawList = Array.isArray(items) ? items : (items.items || [])
+    // 仅展示已发布/可见的作业；草稿/定时未到(CRAFTED/DRAFT/SCHEDULED future)不显示
+    const visible = (rawList || []).filter((a: any) => {
+      const st = String(a?.status || '').toLowerCase()
+      if (!st) return true
+      if (st === 'crafted' || st === 'draft') return false
+      if (st === 'scheduled') {
+        const ts = a?.publishAt || a?.publish_at
+        if (!ts) return false
+        try { return Date.now() >= new Date(ts).getTime() } catch { return false }
+      }
+      return true
+    })
+    list.value = visible
+    // 自动拉取当前页每条作业的提交记录，确保徽章无需进入详情也能刷新
+    try {
+      const ids: string[] = (visible || []).map((a: any) => String(a.id))
+      await Promise.allSettled(ids.map((id: string) => submissionStore.fetchSubmissionForAssignment(id)))
+    } catch {}
+    total.value = Number(res?.total ?? visible.length)
     const tp = Number(res?.totalPages)
     totalPages.value = Number.isFinite(tp) && tp > 0 ? tp : Math.max(1, Math.ceil((total.value || 0) / pageSize.value))
   } catch (e: any) {
@@ -200,6 +254,15 @@ function submit(id: number | string) {
 function view(id: number | string) {
   router.push(`/student/assignments/${id}/submit`)
 }
+
+// 搜索框防抖：将输入绑定到 searchText，经300ms后同步到 filters.keyword
+let searchDebounceTimer: any
+watch(searchText, (val) => {
+  if (searchDebounceTimer) clearTimeout(searchDebounceTimer)
+  searchDebounceTimer = setTimeout(() => {
+    filters.value.keyword = val || ''
+  }, 300)
+})
 
 watch(filters, loadList, { deep: true })
 watch([currentPage, pageSize], () => loadList())
@@ -227,7 +290,21 @@ function changePageSize() {
 </script>
 
 <style scoped>
-.input { @apply border rounded px-3 py-2 text-sm bg-white dark:bg-gray-900 border-gray-300 dark:border-gray-700 text-gray-900 dark:text-gray-100; }
+.input {
+  border: 1px solid var(--tw-border-opacity, rgba(209,213,219,1));
+  border-radius: 0.25rem;
+  padding-left: 0.75rem;
+  padding-right: 0.75rem;
+  padding-top: 0.5rem;
+  padding-bottom: 0.5rem;
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+  background: white;
+  color: #111827;
+}
+@media (prefers-color-scheme: dark) {
+  .input { background: #111827; color: #f9fafb; border-color: #374151; }
+}
 </style>
 
 

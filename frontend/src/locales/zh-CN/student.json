@@ -124,6 +124,7 @@
       "title": "我的作业",
       "subtitle": "查看与提交作业",
       "search": "搜索作业",
+      "searchPlaceholder": "搜索作业标题、课程或状态…",
       "filters": {
         "all": "全部",
         "pending": "待提交",
@@ -136,6 +137,7 @@
       "status": {
         "pending": "待提交",
         "submitted": "已提交",
+        "late": "未提交",
         "graded": "已评分",
         "unknown": "未知"
       },
@@ -147,7 +149,7 @@
       "due": "截止：",
       "empty": "暂无作业",
       "pagination": {
-        "perPagePrefix": "每页",
+        "perPagePrefix": "每页显示",
         "perPageLabel": "每页显示：",
         "perPageSuffix": "条",
         "prev": "上一页",
@@ -176,6 +178,14 @@
           "contentEmptyTitle": "内容为空",
           "contentEmptyMsg": "请输入作业内容后再提交。"
         }
+      },
+      "detail": {
+        "attachmentsTitle": "附件",
+        "noAttachments": "暂无附件",
+        "download": "下载",
+        "ungradedHint": "作业已提交，等待老师评分。",
+        "notFoundTitle": "作业不存在",
+        "notFoundMsg": "该作业可能已被删除或不可访问。"
       }
     },
     "analytics": {
@@ -221,6 +231,9 @@
       "outOf": " / 100",
       "score": "得分",
       "feedback": "教师反馈",
+      "level": "等级",
+      "strengths": "优点",
+      "improvements": "可改进之处",
       "emptyTitle": "暂无已评分的作业",
       "emptyDesc": "完成并提交作业后，您可以在此处查看您的成绩。"
     }

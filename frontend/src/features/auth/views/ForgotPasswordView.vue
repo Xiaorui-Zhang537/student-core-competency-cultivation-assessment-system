@@ -10,8 +10,8 @@
     <form @submit.prevent="handleForgotPassword" class="space-y-6">
       <div>
         <label for="email" class="block text-sm font-medium mb-2">邮箱地址</label>
-        <div v-glass="{ strength: 'ultraThin' }" class="rounded-lg">
-          <input id="email" v-model="email" type="email" required class="input" :disabled="uiStore.loading" placeholder="请输入您的邮箱地址" />
+        <div class="rounded-lg">
+          <GlassInput id="email" v-model="email" type="email" :disabled="uiStore.loading" placeholder="请输入您的邮箱地址" />
         </div>
       </div>
 
@@ -38,6 +38,7 @@ import { ref } from 'vue';
 import { useUIStore } from '@/stores/ui';
 import { userApi } from '@/api/user.api';
 import { useI18n } from 'vue-i18n'
+import GlassInput from '@/components/ui/inputs/GlassInput.vue'
 
 const uiStore = useUIStore();
 const { t } = useI18n()

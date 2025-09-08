@@ -21,6 +21,8 @@ export const useSubmissionStore = defineStore('submission', () => {
     );
     if (response) {
       submissions.value.set(assignmentId, response);
+      // 触发依赖组件的响应式更新（Map 原地修改不触发）
+      submissions.value = new Map(submissions.value);
     }
   };
 
@@ -33,6 +35,8 @@ export const useSubmissionStore = defineStore('submission', () => {
     );
     if (response) {
       submissions.value.set(assignmentId, response);
+      // 触发依赖组件的响应式更新
+      submissions.value = new Map(submissions.value);
       return response;
     }
     return null;

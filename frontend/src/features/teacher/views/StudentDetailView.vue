@@ -49,13 +49,16 @@
             </div>
           </div>
           
-          <!-- Course Filter -->
-          <div class="card p-4 flex items-center space-x-3">
-            <label class="text-sm text-gray-600">{{ t('teacher.studentDetail.filter.label') }}</label>
-            <select class="input input-sm w-72" v-model="selectedCourseId" @change="onCourseChange">
-              <option :value="''">{{ t('teacher.studentDetail.filter.all') }}</option>
-              <option v-for="c in studentCourses" :key="c.id" :value="String(c.id)">{{ c.title }}</option>
-            </select>
+          <!-- Course Filter (glass, keep original position) -->
+          <div class="card p-4 flex items-center gap-3 whitespace-nowrap">
+            <label class="text-sm text-gray-600 whitespace-nowrap">{{ t('teacher.studentDetail.filter.label') }}</label>
+            <GlassPopoverSelect
+              v-model="selectedCourseId"
+              :options="[{ label: t('teacher.studentDetail.filter.all') as string, value: '' }, ...studentCourses.map((c:any)=>({ label: String(c.title||c.id), value: String(c.id) }))]"
+              size="sm"
+              width="18rem"
+              @change="onCourseChange"
+            />
           </div>
           <!-- Stats -->
           <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -74,7 +77,7 @@
             </div>
           
           <!-- Grades Table (aligned with students management table style) -->
-          <div class="card overflow-x-auto">
+          <div class="card overflow-x-auto glass-regular glass-interactive">
             <div class="card-header py-5 px-6 flex items-center justify-between">
               <div class="flex items-center gap-2">
                 <AcademicCapIcon class="w-5 h-5 text-indigo-600" />
@@ -83,14 +86,14 @@
                   {{ t('teacher.studentDetail.stats.graded') }}: {{ gradedAssignmentsCount }} · {{ t('teacher.studentDetail.stats.average') }}: {{ averageScore.toFixed(1) }}
                 </span>
               </div>
-              <div class="flex items-center space-x-2">
+              <div class="flex items-center gap-3">
                 <span class="text-sm text-gray-500 dark:text-gray-400">{{ t('teacher.students.table.total', { count: total }) }}</span>
               </div>
             </div>
             <div class="border-b border-gray-200 dark:border-gray-700 mx-6"></div>
             <div class="pt-5 px-6 pb-4">
-            <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-600 text-left">
-              <thead class="bg-gray-50 dark:bg-gray-700">
+            <table class="min-w-full divide-y divide-white/10 text-left">
+              <thead class="bg-transparent">
                 <tr>
                   <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">{{ t('teacher.studentDetail.table.assignment') }}</th>
                   <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">{{ t('teacher.studentDetail.table.course') }}</th>
@@ -101,8 +104,8 @@
                   <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">{{ t('teacher.studentDetail.table.actions') }}</th>
                 </tr>
               </thead>
-              <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-600">
-                <tr v-for="grade in grades" :key="grade.id" class="hover:bg-gray-50 dark:hover:bg-gray-700">
+              <tbody class="bg-transparent divide-y divide-white/10">
+                <tr v-for="grade in grades" :key="grade.id" class="hover:bg-white/10 transition-colors duration-150">
                   <td class="px-6 py-4 font-medium">{{ grade.assignmentTitle }}</td>
                   <td class="px-6 py-4">{{ grade.courseTitle }}</td>
                   <td class="px-6 py-4 font-bold">{{ grade.score }}</td>
@@ -132,24 +135,30 @@
               <p>{{ t('teacher.studentDetail.table.empty') }}</p>
             </div>
             <!-- Pagination aligned with students management -->
-            <div class="mt-6 flex items-center justify-between">
-              <div class="flex items-center space-x-2">
-                <span class="text-sm text-gray-700 dark:text-gray-300">{{ t('teacher.assignments.pagination.perPagePrefix') }}</span>
-                <select class="input input-sm w-20" v-model.number="pageSize" @change="fetchPage(1)">
-                  <option :value="10">10</option>
-                  <option :value="20">20</option>
-                  <option :value="50">50</option>
-                </select>
-                <span class="text-sm text-gray-700 dark:text-gray-300">{{ t('teacher.assignments.pagination.perPageSuffix') }}</span>
-              </div>
-              <div class="flex items-center space-x-2">
-                <Button variant="outline" size="sm" :disabled="currentPage===1" @click="fetchPage(Math.max(1, currentPage-1))">{{ t('teacher.assignments.pagination.prev') }}</Button>
-                <span class="text-sm">{{ t('teacher.assignments.pagination.page', { page: currentPage }) }}</span>
-                <Button variant="outline" size="sm" :disabled="currentPage>=totalPages" @click="fetchPage(Math.min(totalPages, currentPage+1))">{{ t('teacher.assignments.pagination.next') }}</Button>
-              </div>
-            </div>
+            <div class="mt-6"></div>
             </div>
           </div>
+      </div>
+
+      <!-- 独立分页行（在卡片外，且不额外包容器） -->
+      <div class="px-6 py-3 flex items-center justify-between whitespace-nowrap">
+        <div class="flex items-center gap-2 whitespace-nowrap">
+          <span class="text-sm text-gray-700 dark:text-gray-300 whitespace-nowrap">{{ t('teacher.assignments.pagination.perPagePrefix') }}</span>
+          <GlassPopoverSelect
+            v-model="pageSize as any"
+            :options="[{label:'10',value:10},{label:'20',value:20},{label:'50',value:50}]"
+            size="sm"
+            width="5rem"
+            :teleport="false"
+            @change="fetchPage(1)"
+          />
+          <span class="text-sm text-gray-700 dark:text-gray-300 whitespace-nowrap">{{ t('teacher.assignments.pagination.perPageSuffix') }}</span>
+        </div>
+        <div class="flex items-center space-x-2">
+          <Button variant="outline" size="sm" :disabled="currentPage===1" @click="fetchPage(Math.max(1, currentPage-1))">{{ t('teacher.assignments.pagination.prev') }}</Button>
+          <span class="text-sm">{{ t('teacher.assignments.pagination.page', { page: currentPage }) }}</span>
+          <Button variant="outline" size="sm" :disabled="currentPage>=totalPages" @click="fetchPage(Math.min(totalPages, currentPage+1))">{{ t('teacher.assignments.pagination.next') }}</Button>
+        </div>
       </div>
 
       <!-- 改为调用全局抽屉：删除本地 Teleport -->
@@ -170,6 +179,7 @@ import { ChatBubbleLeftRightIcon, ChartPieIcon, ArrowDownTrayIcon, DocumentTextI
 import { useChatStore } from '@/stores/chat'
 import { teacherStudentApi } from '@/api/teacher-student.api'
 import PageHeader from '@/components/ui/PageHeader.vue'
+import GlassPopoverSelect from '@/components/ui/filters/GlassPopoverSelect.vue'
 const route = useRoute();
 const router = useRouter();
 const gradeStore = useGradeStore();

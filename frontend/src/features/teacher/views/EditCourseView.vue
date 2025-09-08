@@ -15,22 +15,22 @@
       <form v-else-if="courseForm.id" @submit.prevent="handleUpdateCourse" class="card p-8 space-y-6">
                 <div>
           <label for="title" class="label">{{ t('teacher.courseEdit.form.title') }} <span class="text-red-500">*</span></label>
-          <input id="title" v-model="courseForm.title" type="text" class="input" required />
+          <GlassInput id="title" v-model="courseForm.title" type="text" required />
                 </div>
 
                 <div>
           <label for="description" class="label">{{ t('teacher.courseEdit.form.description') }} <span class="text-red-500">*</span></label>
-          <textarea id="description" v-model="courseForm.description" rows="3" class="input" required></textarea>
+          <GlassTextarea id="description" v-model="courseForm.description" :rows="3" required />
                 </div>
 
                 <div>
           <label for="content" class="label">{{ t('teacher.courseEdit.form.content') }}</label>
-          <textarea id="content" v-model="courseForm.content" rows="6" class="input"></textarea>
+          <GlassTextarea id="content" v-model="courseForm.content" :rows="6" />
                   </div>
 
                   <div>
           <label for="category" class="label">{{ t('teacher.courseEdit.form.category') }} <span class="text-red-500">*</span></label>
-          <select id="category" v-model="courseForm.category" class="input" required>
+          <select id="category" v-model="courseForm.category" class="input input--glass glass-regular glass-interactive rounded-xl border border-white/30 dark:border-white/10" required>
             <option disabled value="">{{ t('teacher.courseEdit.form.selectCategory') }}</option>
             <option v-for="cat in categories" :key="cat" :value="cat">{{ cat }}</option>
                     </select>
@@ -64,6 +64,8 @@ import type { CourseUpdateRequest } from '@/types/course';
 import { useI18n } from 'vue-i18n'
 import Button from '@/components/ui/Button.vue'
 import PageHeader from '@/components/ui/PageHeader.vue'
+import GlassInput from '@/components/ui/inputs/GlassInput.vue'
+import GlassTextarea from '@/components/ui/inputs/GlassTextarea.vue'
 
 const route = useRoute();
 const router = useRouter();

@@ -219,6 +219,26 @@
     "notifications": {
       "title": "通知中心",
       "subtitle": "查看与管理系统通知",
+      "badge": {
+        "published": "发布",
+        "reminder": "提醒"
+      },
+      "categoryTitles": {
+        "systemAnnouncement": "系统公告",
+        "systemGeneral": "系统通知",
+        "courseUpdate": "课程更新",
+        "assignmentGeneral": "作业通知",
+        "assignmentPublished": "作业已发布",
+        "assignmentReminder": "作业提醒",
+        "assignmentDeadline": "作业截止提醒",
+        "gradePosted": "成绩发布",
+        "message": "消息",
+        "postReply": "帖子回复"
+      },
+      "content": {
+        "assignmentPublished": "新作业发布：{title}，请按时完成（截止：{due}）",
+        "assignmentReminder": "提醒：请尽快完成作业 {title}（截止：{due}）"
+      },
       "confirm": {
         "delete": "确定要删除这条通知吗？"
       },
@@ -325,6 +345,13 @@
     "emojiPicker": {
       "button": "表情"
     },
+    "datetime": {
+      "hint": "选择日期时间，支持分钟级"
+    },
+    "time": "时间",
+    "now": "此刻",
+    "clear": "清除",
+    "confirm": "确定",
     "loading": "加载中...",
     "file": {
       "unknownSize": "未知"

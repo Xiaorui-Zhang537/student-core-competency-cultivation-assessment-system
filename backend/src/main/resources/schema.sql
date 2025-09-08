@@ -179,7 +179,8 @@ CREATE TABLE `assignments` (
                                `max_attempts` int DEFAULT '1' COMMENT '最大提交次数',
                                `file_types` varchar(200) COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT '允许的文件类型',
                                `max_file_size` int DEFAULT '10' COMMENT '最大文件大小（MB）',
-                               `status` enum('draft','published','closed') COLLATE utf8mb4_unicode_ci DEFAULT 'draft' COMMENT '作业状态',
+                               `status` enum('draft','scheduled','published','closed') COLLATE utf8mb4_unicode_ci DEFAULT 'draft' COMMENT '作业状态',
+                               `publish_at` timestamp NULL DEFAULT NULL COMMENT '定时发布时间（为空表示不定时）',
                                `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
                                `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
                                `deleted` tinyint(1) DEFAULT '0' COMMENT '是否删除',
@@ -189,6 +190,7 @@ CREATE TABLE `assignments` (
                                KEY `idx_teacher_id` (`teacher_id`),
                                KEY `idx_due_date` (`due_date`),
                                KEY `idx_status` (`status`),
+                               KEY `idx_publish_at` (`publish_at`),
                                KEY `idx_deleted` (`deleted`),
                                CONSTRAINT `assignments_ibfk_1` FOREIGN KEY (`course_id`) REFERENCES `courses` (`id`) ON DELETE CASCADE,
                                CONSTRAINT `assignments_ibfk_2` FOREIGN KEY (`teacher_id`) REFERENCES `users` (`id`) ON DELETE CASCADE
@@ -1704,3 +1706,223 @@ CREATE TABLE IF NOT EXISTS `help_ticket` (
   KEY `idx_help_ticket_status` (`status`),
   CONSTRAINT `fk_help_ticket_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='技术支持工单表';
+
+/* ================================
+   Chat Conversations Schema & Data Backfill
+   ================================ */
+
+-- A) 会话表（服务端统一“最近会话”）
+CREATE TABLE IF NOT EXISTS chat_conversations (
+  id BIGINT PRIMARY KEY AUTO_INCREMENT COMMENT '会话ID',
+  type VARCHAR(20) NOT NULL DEFAULT 'direct' COMMENT '会话类型：direct(点对点)；预留群聊',
+  peer_a_id BIGINT NOT NULL COMMENT '成员A（较小的用户ID）',
+  peer_b_id BIGINT NOT NULL COMMENT '成员B（较大的用户ID）',
+  course_id BIGINT NOT NULL DEFAULT 0 COMMENT '课程ID（0表示无课程上下文）',
+  last_message_id BIGINT NULL COMMENT '最后一条消息ID（notifications.id）',
+  last_message_at DATETIME NULL COMMENT '最后一条消息时间',
+  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+  updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+  UNIQUE KEY uk_conv_direct (peer_a_id, peer_b_id, course_id),
+  KEY idx_conv_last (last_message_at),
+  KEY idx_conv_peers (peer_a_id, peer_b_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='聊天会话表';
+
+CREATE TABLE IF NOT EXISTS chat_conversation_members (
+  id BIGINT PRIMARY KEY AUTO_INCREMENT COMMENT '主键',
+  conversation_id BIGINT NOT NULL COMMENT '会话ID',
+  user_id BIGINT NOT NULL COMMENT '成员用户ID',
+  unread_count INT NOT NULL DEFAULT 0 COMMENT '未读数',
+  pinned TINYINT(1) NOT NULL DEFAULT 0 COMMENT '是否置顶',
+  archived TINYINT(1) NOT NULL DEFAULT 0 COMMENT '是否归档',
+  last_read_message_id BIGINT NULL COMMENT '最后已读消息ID',
+  last_read_at DATETIME NULL COMMENT '最后已读时间',
+  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+  updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+  UNIQUE KEY uk_conv_member (conversation_id, user_id),
+  KEY idx_member_user (user_id, pinned, archived),
+  KEY idx_member_conv (conversation_id),
+  CONSTRAINT fk_members_conv FOREIGN KEY (conversation_id) REFERENCES chat_conversations(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='聊天会话成员表';
+
+-- B) notifications 新增列与索引（兼容写法：信息模式判断后动态执行）
+-- 添加 conversation_id 列（若不存在）
+SET @col_exists := (
+  SELECT COUNT(*)
+  FROM information_schema.COLUMNS
+  WHERE TABLE_SCHEMA = DATABASE()
+    AND TABLE_NAME = 'notifications'
+    AND COLUMN_NAME = 'conversation_id'
+);
+
+SET @has_related := (
+  SELECT COUNT(*)
+  FROM information_schema.COLUMNS
+  WHERE TABLE_SCHEMA = DATABASE()
+    AND TABLE_NAME = 'notifications'
+    AND COLUMN_NAME = 'related_id'
+);
+
+SET @ddl := IF(@col_exists = 0,
+  IF(@has_related = 1,
+    'ALTER TABLE notifications ADD COLUMN conversation_id BIGINT NULL AFTER related_id',
+    'ALTER TABLE notifications ADD COLUMN conversation_id BIGINT NULL'
+  ),
+  'SELECT 1'
+);
+PREPARE stmt FROM @ddl; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+
+-- 添加索引 idx_notifications_conv（若不存在）
+SET @idx_exists := (
+  SELECT COUNT(*)
+  FROM information_schema.STATISTICS
+  WHERE TABLE_SCHEMA = DATABASE()
+    AND TABLE_NAME = 'notifications'
+    AND INDEX_NAME = 'idx_notifications_conv'
+);
+SET @ddl := IF(@idx_exists = 0,
+  'ALTER TABLE notifications ADD INDEX idx_notifications_conv (conversation_id, created_at)',
+  'SELECT 1'
+);
+PREPARE stmt FROM @ddl; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+
+-- C) 历史消息回填（健壮版；仅首次部署需要）
+-- 说明：
+-- - 仅处理 type='message' 的记录
+-- - user_id 为接收者列，sender_id 为发送者列
+-- - 会话键 = (LEAST(sender_id,user_id), GREATEST(sender_id,user_id), COALESCE(related_id,0))
+
+-- C.1 有效消息明细（过滤 sender/user 为空或相等）
+DROP TEMPORARY TABLE IF EXISTS tmp_chat_msgs;
+CREATE TEMPORARY TABLE tmp_chat_msgs
+SELECT
+  n.id,
+  LEAST(n.sender_id, n.user_id)       AS peer_a_id,
+  GREATEST(n.sender_id, n.user_id)    AS peer_b_id,
+  COALESCE(n.related_id, 0)           AS course_id,
+  n.sender_id,
+  n.user_id,
+  n.created_at
+FROM notifications n
+WHERE n.type = 'message'
+  AND n.sender_id IS NOT NULL
+  AND n.user_id   IS NOT NULL
+  AND n.sender_id <> n.user_id;
+
+ALTER TABLE tmp_chat_msgs
+  ADD INDEX idx_tmm_key (peer_a_id, peer_b_id, course_id),
+  ADD INDEX idx_tmm_created (created_at);
+
+-- C.2 每个会话键的最后时间
+DROP TEMPORARY TABLE IF EXISTS tmp_conv_keys;
+CREATE TEMPORARY TABLE tmp_conv_keys
+SELECT
+  t.peer_a_id,
+  t.peer_b_id,
+  t.course_id,
+  MAX(t.created_at) AS max_created
+FROM tmp_chat_msgs t
+GROUP BY t.peer_a_id, t.peer_b_id, t.course_id;
+
+ALTER TABLE tmp_conv_keys
+  ADD INDEX idx_tck_key (peer_a_id, peer_b_id, course_id),
+  ADD INDEX idx_tck_created (max_created);
+
+-- C.3 插入/更新 chat_conversations（last_message_at）
+INSERT INTO chat_conversations (
+  peer_a_id, peer_b_id, course_id, last_message_at, created_at, updated_at
+)
+SELECT
+  k.peer_a_id,
+  k.peer_b_id,
+  k.course_id,
+  k.max_created AS last_message_at,
+  NOW(), NOW()
+FROM tmp_conv_keys k
+ON DUPLICATE KEY UPDATE
+  last_message_at = GREATEST(VALUES(last_message_at), chat_conversations.last_message_at),
+  updated_at      = NOW();
+
+-- C.4 每个会话键的最后一条消息ID
+DROP TEMPORARY TABLE IF EXISTS tmp_last_ids;
+CREATE TEMPORARY TABLE tmp_last_ids
+SELECT
+  k.peer_a_id,
+  k.peer_b_id,
+  k.course_id,
+  n1.id AS last_id
+FROM tmp_conv_keys k
+JOIN notifications n1
+  ON LEAST(n1.sender_id, n1.user_id) = k.peer_a_id
+ AND GREATEST(n1.sender_id, n1.user_id) = k.peer_b_id
+ AND COALESCE(n1.related_id, 0) = k.course_id
+ AND n1.type = 'message'
+ AND n1.created_at = k.max_created;
+
+ALTER TABLE tmp_last_ids
+  ADD INDEX idx_tli_key (peer_a_id, peer_b_id, course_id);
+
+-- C.5 回填 chat_conversations.last_message_id
+UPDATE chat_conversations c
+JOIN tmp_last_ids tl
+  ON tl.peer_a_id = c.peer_a_id
+ AND tl.peer_b_id = c.peer_b_id
+ AND tl.course_id = c.course_id
+SET c.last_message_id = tl.last_id,
+    c.updated_at      = NOW();
+
+-- C.6 回写 notifications.conversation_id（建立消息与会话关系）
+UPDATE notifications n
+JOIN tmp_chat_msgs m
+  ON m.id = n.id
+JOIN chat_conversations c
+  ON c.peer_a_id = m.peer_a_id
+ AND c.peer_b_id = m.peer_b_id
+ AND c.course_id = m.course_id
+SET n.conversation_id = c.id
+WHERE n.type = 'message';
+
+-- C.7 创建/更新会话成员（两个成员），计算未读（接收者 user_id）
+INSERT INTO chat_conversation_members (
+  conversation_id, user_id, unread_count, pinned, archived, last_read_message_id, last_read_at, created_at, updated_at
+)
+SELECT
+  c.id AS conversation_id,
+  c.peer_a_id AS user_id,
+  (
+    SELECT COUNT(*)
+    FROM notifications n
+    WHERE n.conversation_id = c.id
+      AND n.type = 'message'
+      AND n.user_id = c.peer_a_id
+      AND (n.is_read = 0 OR n.is_read IS NULL)
+  ) AS unread_count,
+  0, 0, NULL, NULL, NOW(), NOW()
+FROM chat_conversations c
+ON DUPLICATE KEY UPDATE
+  unread_count = VALUES(unread_count),
+  updated_at   = NOW();
+
+INSERT INTO chat_conversation_members (
+  conversation_id, user_id, unread_count, pinned, archived, last_read_message_id, last_read_at, created_at, updated_at
+)
+SELECT
+  c.id AS conversation_id,
+  c.peer_b_id AS user_id,
+  (
+    SELECT COUNT(*)
+    FROM notifications n
+    WHERE n.conversation_id = c.id
+      AND n.type = 'message'
+      AND n.user_id = c.peer_b_id
+      AND (n.is_read = 0 OR n.is_read IS NULL)
+  ) AS unread_count,
+  0, 0, NULL, NULL, NOW(), NOW()
+FROM chat_conversations c
+ON DUPLICATE KEY UPDATE
+  unread_count = VALUES(unread_count),
+  updated_at   = NOW();
+
+-- C.8 清理临时表
+DROP TEMPORARY TABLE IF EXISTS tmp_last_ids;
+DROP TEMPORARY TABLE IF EXISTS tmp_conv_keys;
+DROP TEMPORARY TABLE IF EXISTS tmp_chat_msgs;

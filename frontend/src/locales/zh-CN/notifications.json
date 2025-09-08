@@ -1,0 +1,69 @@
+{
+  "notifications": {
+    "title": "通知中心",
+    "subtitle": "查看与管理系统通知",
+    "actions": {
+      "markAll": "全部标记已读",
+      "refresh": "刷新",
+      "loadMore": "加载更多",
+      "clearFilters": "清空筛选"
+    },
+    "filters": {
+      "type": "类型",
+      "status": "状态",
+      "priority": "优先级",
+      "all": "全部"
+    },
+    "types": {
+      "system": "系统",
+      "assignment": "作业",
+      "grade": "成绩",
+      "course": "课程",
+      "message": "消息",
+      "post": "帖子"
+    },
+    "status": {
+      "read": "已读",
+      "unread": "未读"
+    },
+    "priority": {
+      "urgent": "紧急",
+      "high": "高",
+      "normal": "普通",
+      "low": "低"
+    },
+    "badge": {
+      "published": "发布",
+      "reminder": "提醒"
+    },
+    "categoryTitles": {
+      "systemAnnouncement": "系统公告",
+      "systemGeneral": "系统通知",
+      "courseUpdate": "课程更新",
+      "assignmentGeneral": "作业通知",
+      "assignmentPublished": "作业已发布",
+      "assignmentReminder": "作业提醒",
+      "assignmentDeadline": "作业截止提醒",
+      "gradePosted": "成绩发布",
+      "message": "消息",
+      "postReply": "帖子回复"
+    },
+    "content": {
+      "assignmentPublished": "新作业发布：{title}，请按时完成（截止：{due}）",
+      "assignmentReminder": "提醒：请尽快完成作业 {title}（截止：{due}）"
+    },
+    "time": {
+      "justNow": "刚刚",
+      "minutesAgo": "{count} 分钟前",
+      "hoursAgo": "{count} 小时前",
+      "daysAgo": "{count} 天前"
+    },
+    "confirm": {
+      "delete": "确定要删除这条通知吗？"
+    },
+    "notify": {
+      "deletedTitle": "通知已删除",
+      "deletedMsg": "该通知已删除。"
+    }
+  }
+}

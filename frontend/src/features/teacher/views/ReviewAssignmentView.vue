@@ -36,7 +36,7 @@
           <GlassPopoverSelect
             :label="t('teacher.assignments.filters.byCourse') as string"
             v-model="selectedCourseId"
-            :options="[{label: t('teacher.assignments.filters.selectCourse') as string, value: null as any}, ...teacherCourses.map(c => ({ label: c.title, value: String(c.id) }))]"
+            :options="[{label: t('teacher.assignments.filters.selectCourse') as string, value: null as any}, ...teacherCourses.map((c: any) => ({ label: c.title, value: String(c.id) }))]"
             size="md"
             stacked
             @change="handleCourseFilterChange"
@@ -55,8 +55,11 @@
           <h3 class="font-bold text-lg">{{ assignment.title }}</h3>
           <p class="text-sm text-gray-600">{{ assignment.description }}</p>
           <div class="text-sm text-gray-500 mt-2">
-            {{ t('teacher.assignments.list.dueDate') }}: {{ new Date(assignment.dueDate).toLocaleDateString() }}
-            <span class="ml-4 badge" :class="statusClass(assignment.status)">{{ assignment.status }}</span>
+            {{ t('teacher.assignments.list.dueDate') }}: {{ formatMinute(assignment.dueDate) }}
+            <span class="ml-4 inline-flex items-center text-xs px-2 py-0.5 rounded-full" :class="statusClass(String(assignment.status).toUpperCase())">{{ renderStatus(assignment) }}</span>
+          </div>
+          <div v-if="String(assignment.status).toLowerCase()==='scheduled' && assignment.publishAt" class="text-xs text-gray-500 mt-1">
+            {{ (t('teacher.assignments.modal.publishAt') as string) }}: {{ formatMinute(assignment.publishAt) }}
           </div>
         </div>
         <div>
@@ -82,11 +85,14 @@
       <div class="mt-6 flex items-center justify-between">
         <div class="flex items-center space-x-2">
           <span class="text-sm text-gray-700">{{ t('teacher.assignments.pagination.perPagePrefix') }}</span>
-          <select class="input input-sm w-20" @change="handleCourseFilterChange" v-model.number="pageSize">
-            <option :value="10">10</option>
-            <option :value="20">20</option>
-            <option :value="50">50</option>
-          </select>
+          <div class="w-24">
+            <GlassPopoverSelect
+              :model-value="pageSize"
+              :options="[{label:'10', value:10}, {label:'20', value:20}, {label:'50', value:50}]"
+              size="sm"
+              @update:modelValue="(v:any)=>{ pageSize = Number(v||10); handleCourseFilterChange() }"
+            />
+          </div>
           <span class="text-sm text-gray-700">{{ t('teacher.assignments.pagination.perPageSuffix') }}</span>
         </div>
 
@@ -102,10 +108,28 @@
     <div v-if="showModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
       <div class="modal glass-thick p-6 w-full max-w-lg max-h-[80vh] overflow-y-auto" v-glass="{ strength: 'thick', interactive: true }">
         <h2 class="text-xl font-bold mb-4">{{ isEditing ? t('teacher.assignments.modal.editTitle') : t('teacher.assignments.modal.createTitle') }}</h2>
+        <div class="mb-3">
+          <label class="block text-sm font-medium mb-1">{{ t('teacher.assignments.modal.visibility') || '可见性' }}</label>
+          <div class="flex items-center gap-4 text-sm">
+            <label class="inline-flex items-center gap-2">
+              <input type="radio" value="draft" v-model="publishMode" />
+              <span>{{ t('teacher.assignments.modal.draft') || '保存为草稿' }}</span>
+            </label>
+            <label class="inline-flex items-center gap-2">
+              <input type="radio" value="publish" v-model="publishMode" />
+              <span>{{ t('teacher.assignments.modal.publishNow') || '立即发布' }}</span>
+            </label>
+            <label class="inline-flex items-center gap-2">
+              <input type="radio" value="scheduled" v-model="publishMode" />
+              <span>{{ t('teacher.assignments.modal.schedule') || '定时发布' }}</span>
+            </label>
+          </div>
+          <p class="mt-1 text-xs text-gray-500">{{ t('teacher.assignments.modal.visibilityHint') || '草稿不会对学生可见；仅发布后学生才能看到并提交。' }}</p>
+        </div>
         <form @submit.prevent="handleSubmit" class="space-y-4">
            <div>
             <label for="courseId" class="block text-sm font-medium mb-1">{{ t('teacher.assignments.modal.course') }}</label>
-            <select id="courseId" v-model="form.courseId" required class="input" :disabled="isEditing">
+            <select id="courseId" v-model="form.courseId" required class="input input--glass glass-regular glass-interactive rounded-xl border border-white/30 dark:border-white/10" :disabled="isEditing">
               <option v-for="course in courseStore.courses" :key="course.id" :value="course.id">
                 {{ course.title }}
               </option>
@@ -113,15 +137,26 @@
           </div>
           <div>
             <label for="title" class="block text-sm font-medium mb-1">{{ t('teacher.assignments.modal.title') }}</label>
-            <input id="title" v-model="form.title" type="text" required class="input" />
+            <GlassInput id="title" v-model="form.title" type="text" required />
           </div>
           <div>
             <label for="description" class="block text-sm font-medium mb-1">{{ t('teacher.assignments.modal.description') }}</label>
-            <textarea id="description" v-model="form.description" rows="3" class="input"></textarea>
+            <GlassTextarea id="description" v-model="form.description" :rows="3" />
           </div>
-          <div>
-            <label for="dueDate" class="block text-sm font-medium mb-1">{{ t('teacher.assignments.modal.dueDate') }}</label>
-            <input id="dueDate" v-model="form.dueDate" type="date" required class="input" />
+          <div class="grid grid-cols-1 gap-3">
+            <div v-if="publishMode==='scheduled'" class="glass-thin rounded-lg p-3" v-glass="{ strength: 'thin', interactive: true }">
+              <GlassDateTimePicker :label="(t('teacher.assignments.modal.publishAt') as string) || '发布时间'" v-model="form.publishAt" />
+            </div>
+            <div class="glass-thin rounded-lg p-3" v-glass="{ strength: 'thin', interactive: true }">
+              <GlassDateTimePicker :label="(t('teacher.assignments.modal.dueAt') as string) || (t('teacher.assignments.modal.dueDate') as string)" v-model="form.dueDate" />
+              <div class="mt-2 flex flex-wrap items-center gap-2 text-xs text-gray-600 dark:text-gray-300">
+                <span>{{ t('teacher.assignments.modal.quickHint') || '快捷设置：' }}</span>
+                <button type="button" class="btn btn-xs btn-outline glass-thin" @click="quickSetDue(1)">{{ t('teacher.assignments.modal.quickRanges.1d') || '+1 天' }}</button>
+                <button type="button" class="btn btn-xs btn-outline glass-thin" @click="quickSetDue(7)">{{ t('teacher.assignments.modal.quickRanges.7d') || '+7 天' }}</button>
+                <button type="button" class="btn btn-xs btn-outline glass-thin" @click="quickSetDue(14)">{{ t('teacher.assignments.modal.quickRanges.14d') || '+14 天' }}</button>
+                <button type="button" class="btn btn-xs btn-outline glass-thin" @click="quickSetDue(30)">{{ t('teacher.assignments.modal.quickRanges.30d') || '+30 天' }}</button>
+              </div>
+            </div>
           </div>
           <div>
             <label class="block text-sm font-medium mb-1">{{ t('teacher.assignments.modal.attachments') }}</label>
@@ -182,6 +217,9 @@ import { fileApi } from '@/api/file.api';
 import { useI18n } from 'vue-i18n'
 import GlassPopoverSelect from '@/components/ui/filters/GlassPopoverSelect.vue'
 import PageHeader from '@/components/ui/PageHeader.vue'
+import GlassDateTimePicker from '@/components/ui/inputs/GlassDateTimePicker.vue'
+import GlassInput from '@/components/ui/inputs/GlassInput.vue'
+import GlassTextarea from '@/components/ui/inputs/GlassTextarea.vue'
 
 const assignmentStore = useAssignmentStore();
 const courseStore = useCourseStore();
@@ -193,15 +231,18 @@ const { t } = useI18n()
 const showModal = ref(false);
 const isEditing = ref(false);
 const editingAssignmentId = ref<string | null>(null);
+const publishMode = ref<'draft' | 'publish' | 'scheduled'>('draft')
+const originalStatus = ref<string>('draft')
 const selectedCourseId = ref<string | null>(null);
 const currentPage = ref(1);
 const pageSize = ref(10);
 
-const form = reactive<AssignmentCreationRequest & { id?: string }>({
+const form = reactive<AssignmentCreationRequest & { id?: string; publishAt?: string }>({
   courseId: '',
   title: '',
   description: '',
   dueDate: '',
+  publishAt: '',
 });
 const assignmentUploader = ref();
 const assignmentUploadData = reactive<{ purpose: string; relatedId?: string | number }>({ purpose: 'assignment_attachment' });
@@ -251,14 +292,29 @@ const effectiveCourseId = computed(() => {
 const hasCourseContext = computed(() => effectiveCourseId.value !== '')
 
 
-const statusClass = (status: string) => ({
-  'bg-green-100 text-green-800': status === 'PUBLISHED',
-  'bg-yellow-100 text-yellow-800': status === 'DRAFT',
-  'bg-gray-100 text-gray-800': status === 'CLOSED',
-});
+const statusClass = (status: string) => {
+  const base = 'glass-ultraThin rounded-full' // 与学生端一致的玻璃圆润风格
+  if (status === 'PUBLISHED') return `${base} bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300`
+  if (status === 'DRAFT' || status === 'SCHEDULED') return `${base} bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300`
+  if (status === 'CLOSED') return `${base} bg-gray-100 text-gray-800 dark:bg-gray-800/60 dark:text-gray-200`
+  return `${base} bg-gray-100 text-gray-800 dark:bg-gray-800/60 dark:text-gray-200`
+}
+
+function renderStatus(a: any) {
+  const s = String(a?.status || '').toLowerCase()
+  if (s === 'scheduled') return (t('teacher.assignments.modal.schedule') as string) || '定时发布'
+  if (s === 'draft') return (t('teacher.courses.status.draft') as string) || '草稿'
+  if (s === 'published') return (t('teacher.courses.status.published') as string) || '已发布'
+  if (s === 'closed') return (t('teacher.courses.status.archived') as string) || '已关闭'
+  return s
+}
+
+function formatMinute(v: any) {
+  try { const d = new Date(v); if (isNaN(d.getTime())) return ''; return d.toLocaleString() } catch { return '' }
+}
 
 const resetForm = () => {
-    Object.assign(form, { courseId: selectedCourseId.value || '', title: '', description: '', dueDate: '' });
+    Object.assign(form, { courseId: selectedCourseId.value || '', title: '', description: '', dueDate: '', publishAt: '' });
 };
 
 const openCreateModal = () => {
@@ -272,17 +328,45 @@ const openCreateModal = () => {
   if (!form.courseId && courseStore.courses.length > 0) {
       form.courseId = String(courseStore.courses[0].id);
   }
+  publishMode.value = 'draft'
   showModal.value = true;
 };
 
 const openEditModal = (assignment: Assignment) => {
   isEditing.value = true;
   editingAssignmentId.value = assignment.id;
-  const dueDate = new Date(assignment.dueDate).toISOString().split('T')[0];
-  Object.assign(form, { ...assignment, courseId: String(assignment.courseId), dueDate });
+  const toLocalInput = (d: any) => {
+    if (!d) return ''
+    try {
+      const s = String(d)
+      // 后端通常返回 "YYYY-MM-DD HH:mm:ss" -> 直接转为 datetime-local
+      if (s.includes(' ')) {
+        const [date, time] = s.split(' ')
+        const [hh='00', mm='00'] = (time || '').split(':')
+        return `${date}T${hh}:${mm}`
+      }
+      // 兜底：Date 可解析时，用本地时间格式化
+      const dt = new Date(s)
+      if (isNaN(dt.getTime())) return ''
+      const pad = (n:number)=>String(n).padStart(2,'0')
+      return `${dt.getFullYear()}-${pad(dt.getMonth()+1)}-${pad(dt.getDate())}T${pad(dt.getHours())}:${pad(dt.getMinutes())}`
+    } catch { return '' }
+  }
+  Object.assign(form, {
+    courseId: String(assignment.courseId),
+    title: assignment.title,
+    description: (assignment as any).description || '',
+    dueDate: toLocalInput((assignment as any).dueDate),
+    publishAt: toLocalInput((assignment as any).publishAt)
+  });
+  originalStatus.value = String((assignment as any)?.status || 'draft').toLowerCase()
   showModal.value = true;
   // 加载已有附件
   refreshAttachments(assignment.id);
+  const stLower = originalStatus.value
+  if (stLower === 'published') publishMode.value = 'publish'
+  else if (stLower === 'scheduled') publishMode.value = 'scheduled'
+  else publishMode.value = 'draft'
 };
 
 const closeModal = () => {
@@ -290,14 +374,31 @@ const closeModal = () => {
 };
 
 const handleSubmit = async () => {
-  const normalize = (v: string) => (/^\d{4}-\d{2}-\d{2}$/.test(v) ? `${v} 23:59:59` : v)
+  const toServerTime = (v?: string) => {
+    if (!v) return ''
+    // datetime-local: YYYY-MM-DDTHH:mm → YYYY-MM-DD HH:mm:00
+    return String(v).replace('T', ' ') + ':00'
+  }
+  // 校验：截止必须晚于发布时间/当前时间
+  const baseTime = publishMode.value === 'scheduled' && form.publishAt ? new Date(form.publishAt).getTime() : Date.now()
+  const due = form.dueDate ? new Date(form.dueDate).getTime() : 0
+  if (!due || due <= baseTime) {
+    alert(String(t('teacher.assignments.modal.validation.publishBeforeDue') || '截止时间必须晚于发布时间/当前时间'))
+    return
+  }
   if (isEditing.value && editingAssignmentId.value) {
-    const { title, description, dueDate } = form;
-    const updateData: AssignmentUpdateRequest = { title, description, dueDate: normalize(dueDate) } as any;
+    const { title, description, dueDate, publishAt } = form;
+    const updateData: AssignmentUpdateRequest = { title, description, dueDate: toServerTime(dueDate) } as any;
     // 确保 courseId 传回后端，避免“课程ID不能为空”
     (updateData as any).courseId = form.courseId;
     // 提供默认满分，避免后端校验失败（若后端允许不更新可移除）
     (updateData as any).maxScore = (updateData as any).maxScore || 100;
+    if (publishMode.value === 'scheduled') {
+      (updateData as any).status = 'scheduled'
+      ;(updateData as any).publishAt = toServerTime(publishAt)
+    } else if (publishMode.value === 'draft') {
+      (updateData as any).status = 'draft'
+    }
     const updated = await assignmentStore.updateAssignment(editingAssignmentId.value, updateData);
     // 编辑时，如有新文件被选择，则上传
     if (updated && assignmentUploader.value) {
@@ -305,12 +406,30 @@ const handleSubmit = async () => {
       await assignmentUploader.value.uploadFiles?.();
       await refreshAttachments(editingAssignmentId.value);
     }
+    // 若选择立即发布且之前不是已发布，则调用发布接口
+    if (publishMode.value === 'publish' && originalStatus.value !== 'published') {
+      try { await assignmentStore.publishAssignment(String(editingAssignmentId.value)) } catch {}
+    }
+    // 强制刷新列表以获取后端归一化后的时间
+    try {
+      if (selectedCourseId.value) {
+        await assignmentStore.fetchAssignments({ courseId: selectedCourseId.value, page: currentPage.value, size: pageSize.value })
+      } else {
+        await assignmentStore.fetchAssignments({ page: currentPage.value, size: pageSize.value })
+      }
+    } catch {}
   } else {
-    const createData: AssignmentCreationRequest = { ...form, dueDate: normalize(form.dueDate) } as any;
+    const createData: AssignmentCreationRequest = { ...form, dueDate: toServerTime(form.dueDate) } as any;
     // 默认满分 100 分
     (createData as any).maxScore = 100;
+    if (publishMode.value === 'scheduled') {
+      (createData as any).status = 'scheduled'
+      ;(createData as any).publishAt = toServerTime(form.publishAt)
+    } else {
+      (createData as any).status = 'draft'
+    }
     // 先创建作业，但不立即弹出成功提示，待附件上传完成后再关闭弹窗
-    const created = await assignmentStore.createAssignment(createData);
+    const created = await assignmentStore.createAssignment(createData, { suppressNotify: true });
     if (created) {
       const assignmentId = (created as any)?.id || (created as any)?.data?.id;
       if (assignmentId && assignmentUploader.value) {
@@ -321,6 +440,10 @@ const handleSubmit = async () => {
           // FileUpload 内部已处理错误提示，这里不打断流程
         }
       }
+      // 若选择立即发布，则在附件上传完成后发布
+      if (assignmentId && publishMode.value === 'publish') {
+        try { await assignmentStore.publishAssignment(String(assignmentId)) } catch {}
+      }
     }
   }
   if (!assignmentStore.loading) {
@@ -328,6 +451,14 @@ const handleSubmit = async () => {
     closeModal();
   }
 };
+
+function quickSetDue(days: number) {
+  const base = (publishMode.value === 'scheduled' && form.publishAt) ? new Date(form.publishAt) : new Date()
+  const dt = new Date(base.getTime() + days * 24 * 60 * 60 * 1000)
+  dt.setSeconds(0, 0)
+  const iso = new Date(dt.getTime() - dt.getTimezoneOffset() * 60000).toISOString().slice(0,16)
+  form.dueDate = iso
+}
 
 const uploadFailed = ref(false);
 const onAssignmentUploadError = (msg: string) => {

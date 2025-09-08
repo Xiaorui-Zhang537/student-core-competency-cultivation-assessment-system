@@ -207,6 +207,18 @@
   /* 通用过滤容器（为各页面过滤/工具栏区域统一玻璃化） */
   .filter-container { @apply glass-thin; }
 
+  /* 过滤容器内的输入统一玻璃化（覆盖基础 input 白底） */
+  .filter-container .input {
+    background-color: transparent;
+    border-color: var(--glass-border-color);
+    color: var(--color-text-primary);
+  }
+  .dark .filter-container .input {
+    background-color: transparent;
+    border-color: var(--glass-border-color);
+    color: var(--color-text-primary);
+  }
+
   .modal .modal-header {
     color: var(--color-text-primary);
     @apply text-lg font-semibold;

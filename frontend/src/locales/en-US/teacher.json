@@ -132,6 +132,16 @@
 			"modal": {
 				"editTitle": "Edit Assignment",
 				"createTitle": "Create Assignment",
+				"visibility": "Visibility",
+				"draft": "Save as Draft",
+				"publishNow": "Publish Now",
+				"schedule": "Schedule",
+				"publishAt": "Publish At",
+				"dueAt": "Due At",
+				"quickHint": "Quick set:",
+				"quickRanges": {"1d": "+1 day", "7d": "+7 days", "14d": "+14 days", "30d": "+30 days"},
+				"validation": {"publishBeforeDue": "Due time must be after publish time/now"},
+				"visibilityHint": "Drafts are hidden from students; only published assignments are visible.",
 				"course": "Course",
 				"title": "Title",
 				"description": "Description",
@@ -371,6 +381,7 @@
               "setB": "B (Student's baseline set)",
               "multiSelectHint": "Hold Ctrl/Cmd to multi-select; choose at least one assignment"
             },
+            "filters": { "start": "Start", "end": "End" },
             "weights": {
               "title": "Set capability weights",
               "cancel": "Cancel",

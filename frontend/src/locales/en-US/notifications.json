@@ -1,0 +1,71 @@
+{
+  "notifications": {
+    "title": "Notifications",
+    "subtitle": "View and manage system notifications",
+    "actions": {
+      "markAll": "Mark all as read",
+      "refresh": "Refresh",
+      "loadMore": "Load more",
+      "clearFilters": "Clear filters"
+    },
+    "filters": {
+      "type": "Type",
+      "status": "Status",
+      "priority": "Priority",
+      "all": "All"
+    },
+    "types": {
+      "system": "System",
+      "assignment": "Assignment",
+      "grade": "Grade",
+      "course": "Course",
+      "message": "Message",
+      "post": "Post"
+    },
+    "status": {
+      "read": "Read",
+      "unread": "Unread"
+    },
+    "priority": {
+      "urgent": "Urgent",
+      "high": "High",
+      "normal": "Normal",
+      "low": "Low"
+    },
+    "badge": {
+      "published": "Published",
+      "reminder": "Reminder"
+    },
+    "categoryTitles": {
+      "systemAnnouncement": "System Announcement",
+      "systemGeneral": "System",
+      "courseUpdate": "Course Update",
+      "assignmentGeneral": "Assignment",
+      "assignmentPublished": "Assignment Published",
+      "assignmentReminder": "Assignment Reminder",
+      "assignmentDeadline": "Assignment Deadline",
+      "gradePosted": "Grade Posted",
+      "message": "Message",
+      "postReply": "Post Reply"
+    },
+    "content": {
+      "assignmentPublished": "New assignment published: {title}. Please submit before {due}.",
+      "assignmentReminder": "Reminder: Please complete assignment {title} before {due}."
+    },
+    "time": {
+      "justNow": "just now",
+      "minutesAgo": "{count} minutes ago",
+      "hoursAgo": "{count} hours ago",
+      "daysAgo": "{count} days ago"
+    },
+    "confirm": {
+      "delete": "Delete this notification?"
+    },
+    "notify": {
+      "deletedTitle": "Notification deleted",
+      "deletedMsg": "The notification has been deleted."
+    }
+  }
+}
+
+

@@ -132,6 +132,16 @@
 			"modal": {
 				"editTitle": "编辑作业",
 				"createTitle": "创建新作业",
+				"visibility": "可见性",
+				"draft": "保存为草稿",
+				"publishNow": "立即发布",
+				"schedule": "定时发布",
+				"publishAt": "发布时间",
+				"dueAt": "截止时间",
+				"quickHint": "快捷设置：",
+				"quickRanges": {"1d": "+1 天", "7d": "+7 天", "14d": "+14 天", "30d": "+30 天"},
+				"validation": {"publishBeforeDue": "截止时间必须晚于发布时间/当前时间"},
+				"visibilityHint": "草稿不会对学生可见；仅发布后学生才能看到并提交。",
 				"course": "课程",
 				"title": "标题",
 				"description": "描述",
@@ -310,7 +320,8 @@
 			"errors": {
 				"scoreTooLow": "分数不能小于0",
 				"scoreTooHigh": "分数不能大于{max}",
-				"feedbackRequired": "请输入反馈意见"
+				"feedbackRequired": "请输入反馈意见",
+				"gradeRequired": "请选择等级"
 			}
 		},
         "actions": {
@@ -371,6 +382,7 @@
               "setB": "B（该生对照作业集）",
               "multiSelectHint": "按住 Ctrl/Cmd 多选；至少选择一个作业"
             },
+            "filters": { "start": "开始时间", "end": "结束时间" },
             "weights": {
               "title": "设置五维权重",
               "cancel": "取消",

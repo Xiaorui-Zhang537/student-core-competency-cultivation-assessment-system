@@ -89,7 +89,7 @@ function getInitialLocale(): SupportedLocale {
 const localeModules: Record<string, any> = import.meta.glob('../locales/*/*.json', { eager: true }) as Record<string, any>
 
 // Namespaces required across the app (ensure consistent loading on init and language switch)
-export const REQUIRED_NAMESPACES = ['common', 'app', 'layout', 'teacher', 'shared', 'auth', 'student'] as const
+export const REQUIRED_NAMESPACES = ['common', 'app', 'layout', 'teacher', 'shared', 'auth', 'student', 'notifications'] as const
 
 export async function loadLocaleMessages(locale: SupportedLocale, namespaces: string[]): Promise<void> {
   const loaded: Record<string, boolean> = (i18n.global as any).__loaded || {}

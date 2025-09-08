@@ -219,6 +219,26 @@
     "notifications": {
       "title": "Notifications",
       "subtitle": "View and manage system notifications",
+      "badge": {
+        "published": "Published",
+        "reminder": "Reminder"
+      },
+      "categoryTitles": {
+        "systemAnnouncement": "System Announcement",
+        "systemGeneral": "System",
+        "courseUpdate": "Course Update",
+        "assignmentGeneral": "Assignment",
+        "assignmentPublished": "Assignment Published",
+        "assignmentReminder": "Assignment Reminder",
+        "assignmentDeadline": "Assignment Deadline",
+        "gradePosted": "Grade Posted",
+        "message": "Message",
+        "postReply": "Post Reply"
+      },
+      "content": {
+        "assignmentPublished": "New assignment published: {title}. Please submit before {due}.",
+        "assignmentReminder": "Reminder: Please complete assignment {title} before {due}."
+      },
       "confirm": {
         "delete": "Delete this notification?"
       },
@@ -325,6 +345,13 @@
     "emojiPicker": {
       "button": "Emoji"
     },
+    "datetime": {
+      "hint": "Pick date & time (minute precision)"
+    },
+    "time": "Time",
+    "now": "Now",
+    "clear": "Clear",
+    "confirm": "Confirm",
     "loading": "Loading...",
     "file": {
       "unknownSize": "Unknown"

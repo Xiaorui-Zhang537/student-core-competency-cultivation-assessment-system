@@ -30,17 +30,6 @@
           </template>
         </PageHeader>
       </div>
-          <!-- 统计摘要 -->
-          <div class="hidden md:flex items-center gap-4 text-sm text-gray-600 dark:text-gray-300">
-            <div>{{ t('teacher.submissions.stats.totalEnrolled') }}: <span class="font-semibold">{{ stats.totalEnrolled }}</span></div>
-            <div>{{ t('teacher.submissions.stats.submitted') }}: <span class="font-semibold">{{ stats.submittedCount }}</span></div>
-            <div>{{ t('teacher.submissions.stats.unsubmitted') }}: <span class="font-semibold">{{ stats.unsubmittedCount }}</span></div>
-          </div>
-          <Button variant="primary" @click="remindUnsubmitted" :loading="reminding" :disabled="reminding || stats.unsubmittedCount === 0">
-            {{ t('teacher.submissions.actions.remindUnsubmitted') }}
-          </Button>
-        </div>
-      </div>
 
     <div v-if="loading" class="text-center py-12">{{ t('teacher.submissions.loading') }}</div>
     <div v-else>
@@ -152,10 +141,12 @@ function statusText(s?: string) {
 }
 function badgeClass(s?: string) {
   const t = (s||'').toLowerCase();
-  if (t==='submitted') return 'badge bg-blue-100 text-blue-800';
-  if (t==='graded') return 'badge bg-green-100 text-green-800';
-  if (t==='returned') return 'badge bg-yellow-100 text-yellow-800';
-  return 'badge bg-gray-100 text-gray-800';
+  const base = 'inline-flex items-center text-xs px-2 py-0.5 rounded-full glass-ultraThin'
+  if (t==='submitted') return `${base} bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300`;
+  if (t==='graded') return `${base} bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300`;
+  if (t==='returned') return `${base} bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300`;
+  if (t==='late') return `${base} bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300`;
+  return `${base} bg-gray-100 text-gray-800 dark:bg-gray-800/60 dark:text-gray-200`;
 }
 
 async function fetch() {

@@ -130,6 +130,14 @@
                   {{ getLocalizedTitle(notification) }}
                 </h4>
 
+                <!-- 发布/提醒区分徽章 -->
+                <span v-if="(notification.relatedType||'').toLowerCase()==='assignment_reminder'" class="inline-flex items-center text-xs px-2 py-0.5 rounded-full glass-ultraThin ml-1" v-glass="{ strength: 'ultraThin', interactive: false }">
+                  {{ t('notifications.badge.reminder') }}
+                </span>
+                <span v-else-if="(notification.relatedType||'').toLowerCase().startsWith('assignment') && notification.type==='assignment'" class="inline-flex items-center text-xs px-2 py-0.5 rounded-full glass-ultraThin ml-1" v-glass="{ strength: 'ultraThin', interactive: false }">
+                  {{ t('notifications.badge.published') }}
+                </span>
+
                 <!-- 优先级标签（所有通知均显示） -->
                 <span
                   class="priority-badge"
@@ -378,6 +386,8 @@ const getLocalizedTitle = (notification: any) => {
       'system_announcement': 'notifications.categoryTitles.systemAnnouncement',
       'course_update': 'notifications.categoryTitles.courseUpdate',
       'assignment_deadline': 'notifications.categoryTitles.assignmentDeadline',
+      'assignment_reminder': 'notifications.categoryTitles.assignmentReminder',
+      'assignment': 'notifications.categoryTitles.assignmentPublished',
       'grade_posted': 'notifications.categoryTitles.gradePosted',
       'message': 'notifications.categoryTitles.message'
     }
@@ -405,6 +415,19 @@ const getLocalizedContent = (notification: any) => {
     // 对于帖子回复，直接使用后端内容（可能为中文），不强制英文文案
     return String(notification?.content || '')
   }
+  // assignment: 若提供 relatedType 区分，使用本地化文案
+  const rt = (notification?.relatedType || '').toLowerCase()
+  try {
+    const data: any = typeof notification?.data === 'string' ? JSON.parse(notification.data) : (notification?.data || {})
+    const title = data?.assignmentTitle || notification?.title || ''
+    const due = data?.dueDate || data?.dueAt || ''
+    if (rt === 'assignment_reminder') {
+      return t('notifications.content.assignmentReminder', { title, due }) as string
+    }
+    if (rt === 'assignment' || rt === 'assignment_deadline') {
+      return t('notifications.content.assignmentPublished', { title, due }) as string
+    }
+  } catch {}
   // 其他类型沿用后端 content
   return String(notification?.content || '')
 }

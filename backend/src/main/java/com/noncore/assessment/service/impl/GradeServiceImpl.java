@@ -40,12 +40,15 @@ public class GradeServiceImpl implements GradeService {
     private final GradeMapper gradeMapper;
     private final AssignmentMapper assignmentMapper;
     private final com.noncore.assessment.service.SubmissionService submissionService;
+    private final com.noncore.assessment.service.NotificationService notificationService;
 
     public GradeServiceImpl(GradeMapper gradeMapper, AssignmentMapper assignmentMapper,
-                            com.noncore.assessment.service.SubmissionService submissionService) {
+                            com.noncore.assessment.service.SubmissionService submissionService,
+                            com.noncore.assessment.service.NotificationService notificationService) {
         this.gradeMapper = gradeMapper;
         this.assignmentMapper = assignmentMapper;
         this.submissionService = submissionService;
+        this.notificationService = notificationService;
     }
 
     @Override
@@ -366,6 +369,12 @@ public class GradeServiceImpl implements GradeService {
                 } catch (Exception e) {
                     logger.warn("发布成绩成功但同步提交状态失败，submissionId={}", existing.getSubmissionId(), e);
                 }
+            }
+            try {
+                // 自动发送成绩发布通知（使用后端统一服务，type=grade_published）
+                notificationService.sendGradeNotification(existing.getId(), "grade_published", null);
+            } catch (Exception e) {
+                logger.warn("成绩已发布，但发送通知失败，gradeId={}", existing.getId(), e);
             }
             return true;
         }

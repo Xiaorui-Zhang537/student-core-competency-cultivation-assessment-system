@@ -442,9 +442,9 @@ public class NotificationServiceImpl implements NotificationService {
             }
         };
 
-        // 发送通知给学生
+        // 发送通知给学生：一律关联到“作业”，前端可直接使用 assignmentId 跳转
         sendNotification(grade.getStudentId(), assignment.getTeacherId(), title, content,
-                       "grade", "academic", "normal", "grade", gradeId);
+                       "grade", "academic", "normal", "assignment", assignment.getId());
 
         return Map.of("successCount", 1, "failCount", 0, "errors", new ArrayList<>());
     }

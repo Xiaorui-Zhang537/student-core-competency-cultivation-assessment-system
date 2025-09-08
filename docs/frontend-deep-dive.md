@@ -83,3 +83,69 @@ graph LR
 - 若 404：检查后端 context-path `/api` 与前端环境变量
 - 若跨域：开发模式应使用 Vite 代理 `/api` 到 `8080`
 - 若样式异常：检查 Tailwind 与自定义样式作用域
+
+---
+
+## 11. 本次作业与通知重构要点
+
+### 作业列表与详情（学生端）
+- 视图：`features/student/views/AssignmentsView.vue`、`AssignmentSubmitView.vue`
+- 列表：
+  - 过滤区玻璃化（`GlassPopoverSelect`、搜索输入防抖 300ms）
+  - 卡片化显示作业，多状态徽标，分页显示文案与下拉玻璃化
+  - 逻辑：`scheduled`（未来 `publishAt`）不展示；未提交过期显示 `LATE`
+- 详情：
+  - 教师附件（可下载）
+  - 已评分显示“动态分数+进度条+等级+评分时间”玻璃卡
+  - “教师评语/优点/可改进之处”按块级文本展示
+  - 容错：当路由 `:id` 不是作业ID时，依次按“成绩ID→提交ID”反查 `assignmentId` 并重定向
+
+### 通知详情跳转
+- 视图：`features/shared/views/NotificationDetailView.vue`
+- 解析顺序：
+  1) `data.assignmentId`
+  2) 若为成绩通知（grade/grade_posted）：使用 `gradeId` 请求成绩详情取 `assignmentId`
+  3) `submissionId` → 调 `submissionApi.getSubmissionById` 反查 `assignmentId`
+  4) 当且仅当 `relatedType=assignment` 时使用 `relatedId`
+- 跳转：
+  - 学生：`/student/assignments/:id/submit`
+  - 教师：`/teacher/assignments/:id/submissions`
+
+### 时间管理（教师端）
+- 视图：`features/teacher/views/ReviewAssignmentView.vue`
+- 支持 `draft/publish/scheduled`，使用 `GlassDateTimePicker` 选择精确到分钟，提供 +1d、+7d 等快捷按钮
+
+### UI 组件标准化与玻璃化
+- 新增：`GlassInput`、`GlassTextarea`、`GlassSearchInput`、`GlassDateTimePicker`
+- 下拉：`GlassPopoverSelect` 修复定位（fixed + 监听滚动父元素 + 边界处理 + 可选 `teleport=false`）
+
+### i18n 键新增/调整
+- `student.assignments.detail.{attachmentsTitle,noAttachments,download,ungradedHint,notFoundTitle,notFoundMsg}`
+- `student.grades.{level,strengths,improvements}`
+- `student.assignments.status.late`
+
+### 后端 Schema 与服务
+- `schema.sql`：`assignments.status` 增 `'scheduled'`；新增 `publish_at timestamp NULL`；索引 `idx_publish_at`
+- `GradeServiceImpl`：发布成绩自动触发 `NotificationServiceImpl.sendGradeNotification`
+- `NotificationServiceImpl`：成绩通知的 `relatedType='assignment'`、`relatedId=assignmentId`，消息仅含“作业名+分数”
+
+### 聊天抽屉与通知联动（历史条目）
+
+- 最近会话改为服务端统一接口：`GET /api/chat/conversations/my`
+  - `stores/chat.ts` 映射 `peerId/peerName/avatar/lastContent/unread/lastAt`
+  - 学生端“最近”按 username 去重；置顶规则保持不变；本地缓存按用户隔离
+- 通知详情页（`features/shared/views/NotificationDetailView.vue`）
+  - 消息类通知点击“前往处理”打开聊天抽屉，且不改左侧最近预览
+- 联系人加载
+  - 学生端：`/students/courses/{id}/participants`（显示 username）
+  - 教师端：优先 `/teachers/contacts`（分课程聚合），失败回退“我的课程 + 逐课学生”
+- 表情选择器统一玻璃样式
+  - `components/ui/EmojiPicker.vue` 与聊天抽屉内置选择器均为 v-glass，隐藏滚动条
+- 通知铃未读数修复
+  - `stores/notifications.ts` 兼容后端键名：`unreadCount/unread/count`、`totalCount/total/count`、`byType/typeDistribution`
+
+### 个人档案页玻璃样式（最新）
+
+- 页面：`features/shared/views/ProfileView.vue`
+  - 个人信息、编辑资料、账号安全、修改密码四块大卡片改用 v-glass（rounded-xl）
+  - 账号安全内两块小卡片（修改密码、邮箱验证）去掉纯色背景，改用 v-glass（thin）

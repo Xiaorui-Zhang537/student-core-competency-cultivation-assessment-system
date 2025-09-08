@@ -226,6 +226,20 @@ public class NotificationController extends BaseController {
     }
 
     /**
+     * 发送成绩相关通知（教师专用）
+     */
+    @PostMapping("/grade/{gradeId}")
+    @Operation(summary = "发送成绩相关通知", description = "向成绩对应的学生发送通知，如成绩发布或反馈可用")
+    @PreAuthorize("hasRole('TEACHER')")
+    public ResponseEntity<ApiResponse<Map<String, Object>>> sendGradeNotification(
+            @PathVariable Long gradeId,
+            @RequestParam("type") String type,
+            @RequestParam(value = "customMessage", required = false) String customMessage) {
+        Map<String, Object> result = notificationService.sendGradeNotification(gradeId, type, customMessage);
+        return ResponseEntity.ok(ApiResponse.success(result));
+    }
+
+    /**
      * 学生/教师互发聊天消息（课程上下文可选）
      */
     @PostMapping("/message")

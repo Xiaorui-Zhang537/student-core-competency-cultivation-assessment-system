@@ -54,11 +54,11 @@
           <div class="grid grid-cols-1 md:grid-cols-3 gap-3 items-end">
             <div>
               <label class="block text-sm mb-1">{{ t('teacher.courseDetail.sections.newChapterTitle') }}</label>
-              <input class="input input-sm w-full" v-model="newChapterTitle" :placeholder="t('teacher.courseDetail.sections.newChapterTitlePh')" />
+              <GlassInput class="input-sm w-full" v-model="newChapterTitle" :placeholder="t('teacher.courseDetail.sections.newChapterTitlePh') as string" />
             </div>
             <div class="md:col-span-2">
               <label class="block text-sm mb-1">{{ t('teacher.courseDetail.sections.chapterDesc') }}</label>
-              <input class="input input-sm w-full" v-model="newChapterDesc" :placeholder="t('teacher.courseDetail.sections.chapterDescPh')" />
+              <GlassInput class="input-sm w-full" v-model="newChapterDesc" :placeholder="t('teacher.courseDetail.sections.chapterDescPh') as string" />
             </div>
           </div>
           <div class="mt-3 flex items-center gap-2">
@@ -88,11 +88,11 @@
             <div class="grid grid-cols-1 md:grid-cols-3 gap-3 items-end">
               <div>
                 <label class="block text-sm mb-1">{{ t('teacher.courseDetail.sections.newLessonTitle') }}</label>
-                <input class="input input-sm w-full" v-model="newLessonTitle" :placeholder="t('teacher.courseDetail.sections.newLessonTitlePh')" />
+                <GlassInput class="input-sm w-full" v-model="newLessonTitle" :placeholder="t('teacher.courseDetail.sections.newLessonTitlePh') as string" />
               </div>
               <div class="md:col-span-2">
                 <label class="block text-sm mb-1">{{ t('teacher.courseDetail.sections.lessonDesc') }}</label>
-                <input class="input input-sm w-full" v-model="newLessonDesc" :placeholder="t('teacher.courseDetail.sections.lessonDescPh')" />
+                <GlassInput class="input-sm w-full" v-model="newLessonDesc" :placeholder="t('teacher.courseDetail.sections.lessonDescPh') as string" />
               </div>
             </div>
             <div class="mt-3">
@@ -103,8 +103,8 @@
             <div class="flex items-center gap-3">
               <div class="font-medium flex-1 truncate">{{ l.title }}</div>
               <div class="w-full md:w-1/2 flex items-center justify-end gap-3">
-                <div class="flex items-center gap-2">
-                  <label class="text-sm">{{ t('teacher.courseDetail.sections.chapterSelect') }}</label>
+                <div class="flex items-center gap-2 whitespace-nowrap">
+                  <label class="text-sm whitespace-nowrap">{{ t('teacher.courseDetail.sections.chapterSelect') }}</label>
                   <div class="w-56">
                     <GlassPopoverSelect
                       :options="chapterOptions"
@@ -115,18 +115,18 @@
                     />
                   </div>
                 </div>
-                <div class="flex items-center gap-2">
-                  <label class="text-sm">{{ t('teacher.courseDetail.sections.weight') }}</label>
-                  <input class="input input-sm w-20" type="number" step="0.1" v-model.number="l._weight" />
+                <div class="flex items-center gap-2 whitespace-nowrap">
+                  <label class="text-sm whitespace-nowrap">{{ t('teacher.courseDetail.sections.weight') }}</label>
+                  <GlassInput class="input-sm w-20" :fullWidth="false" type="number" step="0.1" v-model="(l._weight as any)" />
                 </div>
                 <Button size="sm" variant="primary" @click="saveWeight(l)">{{ t('teacher.courseDetail.actions.saveWeight') }}</Button>
               </div>
             </div>
             <div class="mt-3 grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <div class="flex items-center gap-2">
-                  <label class="text-sm">{{ t('teacher.courseDetail.sections.video') }}</label>
-                  <input class="input input--glass input-sm w-80 md:w-96 flex-1 min-w-0" v-model="l._videoUrl" :placeholder="t('teacher.courseDetail.sections.videoUrlPh')" />
+                <div class="flex items-center gap-2 whitespace-nowrap">
+                  <label class="text-sm whitespace-nowrap">{{ t('teacher.courseDetail.sections.video') }}</label>
+                  <GlassInput class="input-sm w-80 md:w-96 flex-1 min-w-0" :fullWidth="false" v-model="l._videoUrl" :placeholder="t('teacher.courseDetail.sections.videoUrlPh') as string" />
                   <Button size="sm" variant="outline" class="whitespace-nowrap" @click="openVideoPicker(l)">{{ t('teacher.courseDetail.actions.selectVideoShort') }}</Button>
                 </div>
               </div>
@@ -147,7 +147,7 @@
               <div class="md:col-span-2">
                 <div class="mt-2">
                   <label class="block text-sm mb-1">{{ t('teacher.courseDetail.sections.lessonIntro') }}</label>
-                  <textarea class="input w-full" rows="2" v-model="l._content" :placeholder="t('teacher.courseDetail.sections.lessonIntroPh')" />
+                  <GlassTextarea class="w-full" :rows="2" v-model="l._content" :placeholder="t('teacher.courseDetail.sections.lessonIntroPh') as string" />
                 </div>
                 <div class="mt-2 flex items-center gap-2">
                   <Button size="sm" variant="primary" @click="saveContent(l)">{{ t('teacher.courseDetail.actions.saveContent') }}</Button>
@@ -176,7 +176,7 @@
             />
           </div>
           <div class="mb-3">
-            <input v-model="materialQuery" :placeholder="t('teacher.courseDetail.sections.searchMaterial')" class="input input-sm w-full" />
+            <GlassSearchInput v-model="materialQuery" :placeholder="t('teacher.courseDetail.sections.searchMaterial') as string" size="sm" />
           </div>
           <ul class="divide-y divide-gray-200">
             <li v-for="f in paginatedMaterials" :key="f.id" class="py-2 flex items-center justify-between">
@@ -217,7 +217,7 @@
             />
           </div>
           <div class="mb-3">
-            <input v-model="videoQuery" :placeholder="t('teacher.courseDetail.sections.searchVideo')" class="input input-sm w-full" />
+            <GlassSearchInput v-model="videoQuery" :placeholder="t('teacher.courseDetail.sections.searchVideo') as string" size="sm" />
           </div>
           <ul class="divide-y divide-gray-200">
             <li v-for="f in paginatedVideos" :key="f.id" class="py-2 flex items-center justify-between">
@@ -262,7 +262,7 @@
           <button class="text-sm text-gray-500 hover:text-gray-700" @click="videoPickerVisible = false">×</button>
         </div>
         <div class="p-4">
-          <input v-model="videoQuery" :placeholder="t('teacher.courseDetail.sections.searchVideo')" class="input input-sm w-full mb-3" />
+          <GlassSearchInput v-model="videoQuery" :placeholder="t('teacher.courseDetail.sections.searchVideo') as string" size="sm" />
           <ul class="divide-y divide-gray-200 overflow-y-auto" style="max-height: 55vh;">
             <li v-for="f in paginatedVideos" :key="f.id" class="py-2 flex items-center justify-between">
               <div class="flex items-center min-w-0 mr-3 gap-2">
@@ -310,6 +310,9 @@ import { DocumentIcon, PhotoIcon, FilmIcon, ArchiveBoxIcon, ChevronRightIcon, Us
 import { useI18n } from 'vue-i18n'
 import GlassPopoverSelect from '@/components/ui/filters/GlassPopoverSelect.vue'
 import PageHeader from '@/components/ui/PageHeader.vue'
+import GlassInput from '@/components/ui/inputs/GlassInput.vue'
+import GlassTextarea from '@/components/ui/inputs/GlassTextarea.vue'
+import GlassSearchInput from '@/components/ui/inputs/GlassSearchInput.vue'
 
 const courseStore = useCourseStore();
 const route = useRoute();

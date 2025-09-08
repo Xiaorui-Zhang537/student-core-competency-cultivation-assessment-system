@@ -138,11 +138,11 @@
               <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
                   <label for="nickname" class="block text-sm font-medium mb-2">{{ t('shared.profile.fields.nickname') }}</label>
-                <input id="nickname" v-model="profileForm.nickname" type="text" class="input" />
+                <GlassInput id="nickname" v-model="profileForm.nickname" type="text" />
               </div>
               <div>
                   <label for="gender" class="block text-sm font-medium mb-2">{{ t('shared.profile.fields.gender') }}</label>
-                <select id="gender" v-model="profileForm.gender" class="input">
+                <select id="gender" v-model="profileForm.gender" class="input input--glass glass-regular glass-interactive rounded-xl border border-white/30 dark:border-white/10">
                   <option value="">{{ t('common.select') || '请选择' }}</option>
                   <option value="MALE">{{ t('shared.profile.genders.male') }}</option>
                   <option value="FEMALE">{{ t('shared.profile.genders.female') }}</option>
@@ -151,52 +151,52 @@
               </div>
                 <div>
                   <label for="birthday" class="block text-sm font-medium mb-2">{{ t('shared.profile.fields.birthday') }}</label>
-                  <input id="birthday" v-model="profileForm.birthday" type="date" class="input" />
+                  <GlassDateTimePicker id="birthday" v-model="profileForm.birthday" :label="t('profile.birthday') as any || '生日'" />
                 </div>
                 <div>
                   <label for="firstName" class="block text-sm font-medium mb-2">{{ t('shared.profile.fields.firstName') }}</label>
-                  <input id="firstName" v-model="profileForm.firstName" type="text" class="input" />
+                  <GlassInput id="firstName" v-model="profileForm.firstName" type="text" />
                 </div>
                 <div>
                   <label for="lastName" class="block text-sm font-medium mb-2">{{ t('shared.profile.fields.lastName') }}</label>
-                  <input id="lastName" v-model="profileForm.lastName" type="text" class="input" />
+                  <GlassInput id="lastName" v-model="profileForm.lastName" type="text" />
                 </div>
                 <div>
                   <label for="phone" class="block text-sm font-medium mb-2">{{ t('shared.profile.fields.phone') }}</label>
-                  <input id="phone" v-model="profileForm.phone" type="tel" class="input" placeholder="请输入手机号" />
+                  <GlassInput id="phone" v-model="profileForm.phone" type="tel" placeholder="请输入手机号" />
                 </div>
                 <div>
                   <label for="school" class="block text-sm font-medium mb-2">{{ t('shared.profile.fields.school') }}</label>
-                  <input id="school" v-model="profileForm.school" type="text" class="input" placeholder="学校名称" />
+                  <GlassInput id="school" v-model="profileForm.school" type="text" placeholder="学校名称" />
                 </div>
                 <div>
                   <label for="subject" class="block text-sm font-medium mb-2">{{ t('shared.profile.fields.subject') }}</label>
-                  <input id="subject" v-model="profileForm.subject" type="text" class="input" placeholder="专业/科目" />
+                  <GlassInput id="subject" v-model="profileForm.subject" type="text" placeholder="专业/科目" />
                 </div>
                 <div v-if="authStore.userRole === 'STUDENT'">
                   <label for="studentNo" class="block text-sm font-medium mb-2">{{ t('shared.profile.fields.studentNo') }}</label>
-                  <input id="studentNo" v-model="profileForm.studentNo" type="text" class="input" placeholder="学号" />
+                  <GlassInput id="studentNo" v-model="profileForm.studentNo" type="text" placeholder="学号" />
                 </div>
                 <div v-if="authStore.userRole === 'TEACHER'">
                   <label for="teacherNo" class="block text-sm font-medium mb-2">{{ t('shared.profile.fields.teacherNo') }}</label>
-                  <input id="teacherNo" v-model="profileForm.teacherNo" type="text" class="input" placeholder="工号" />
+                  <GlassInput id="teacherNo" v-model="profileForm.teacherNo" type="text" placeholder="工号" />
                 </div>
                 <div>
                   <label for="country" class="block text-sm font-medium mb-2">{{ t('shared.profile.fields.country') }}</label>
-                  <input id="country" v-model="profileForm.country" type="text" class="input" placeholder="中国" />
+                  <GlassInput id="country" v-model="profileForm.country" type="text" placeholder="中国" />
                 </div>
                 <div>
                   <label for="province" class="block text-sm font-medium mb-2">{{ t('shared.profile.fields.province') }}</label>
-                  <input id="province" v-model="profileForm.province" type="text" class="input" placeholder="" />
+                  <GlassInput id="province" v-model="profileForm.province" type="text" placeholder="" />
                 </div>
                 <div>
                   <label for="city" class="block text-sm font-medium mb-2">{{ t('shared.profile.fields.city') }}</label>
-                  <input id="city" v-model="profileForm.city" type="text" class="input" placeholder="" />
+                  <GlassInput id="city" v-model="profileForm.city" type="text" placeholder="" />
                 </div>
             </div>
             <div>
               <label for="bio" class="block text-sm font-medium mb-2">{{ t('shared.profile.fields.bio') }}</label>
-              <textarea id="bio" v-model="profileForm.bio" rows="4" class="input"></textarea>
+              <GlassTextarea id="bio" v-model="profileForm.bio" :rows="4" />
             </div>
             <div class="flex justify-end space-x-3">
               <Button type="button" variant="secondary" @click="cancelEdit">
@@ -273,6 +273,7 @@
 </template>
 
 <script setup lang="ts">
+import GlassDateTimePicker from '@/components/ui/inputs/GlassDateTimePicker.vue'
 import { ref, reactive, onMounted, computed } from 'vue';
 import { useAuthStore } from '@/stores/auth';
 import { useUIStore } from '@/stores/ui';
@@ -285,6 +286,8 @@ import UserAvatar from '@/components/ui/UserAvatar.vue';
 import Button from '@/components/ui/Button.vue'
 import { useI18n } from 'vue-i18n'
 import PageHeader from '@/components/ui/PageHeader.vue'
+import GlassInput from '@/components/ui/inputs/GlassInput.vue'
+import GlassTextarea from '@/components/ui/inputs/GlassTextarea.vue'
 
 const authStore = useAuthStore();
 const uiStore = useUIStore();

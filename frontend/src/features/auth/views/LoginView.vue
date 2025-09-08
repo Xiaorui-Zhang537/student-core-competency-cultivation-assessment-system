@@ -8,32 +8,26 @@
     <form @submit.prevent="handleLogin(form)" class="space-y-6">
       <div>
         <label for="username" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{{ t('auth.login.form.username.label') }}</label>
-        <div v-glass="{ strength: 'ultraThin' }" class="rounded-lg">
-          <input
+        <div class="rounded-lg">
+          <GlassInput
             id="username"
             v-model="form.username"
             type="text"
-            autocomplete="username"
-            required
-            class="input"
             :disabled="authStore.loading"
-            :placeholder="t('auth.login.form.username.placeholder')"
+            :placeholder="t('auth.login.form.username.placeholder') as string"
           />
         </div>
       </div>
 
       <div>
         <label for="password" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{{ t('auth.login.form.password.label') }}</label>
-        <div v-glass="{ strength: 'ultraThin' }" class="rounded-lg">
-          <input
+        <div class="rounded-lg">
+          <GlassInput
             id="password"
             v-model="form.password"
             type="password"
-            autocomplete="current-password"
-            required
-            class="input"
             :disabled="authStore.loading"
-            :placeholder="t('auth.login.form.password.placeholder')"
+            :placeholder="t('auth.login.form.password.placeholder') as string"
           />
         </div>
       </div>
@@ -70,6 +64,7 @@ import { useAuthStore } from '@/stores/auth'
 import type { LoginRequest } from '@/types/auth'
 import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
+import GlassInput from '@/components/ui/inputs/GlassInput.vue'
 
 const authStore = useAuthStore()
 const router = useRouter()

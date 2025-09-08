@@ -126,6 +126,44 @@ server {
 - 接口对齐：前端 `studentApi` 与后端 `/api/students/*` 路由逐项核对；`CourseDetailView` 的课程进度改用 `studentApi.getCourseProgress`。
 - 文档：更新 `docs/backend/api/student.md` 与 `docs/i18n-examples.md`。
 
+### 本次（作业与通知重构，UI 玻璃风统一）
+- 学生端「我的作业」列表（`features/student/views/AssignmentsView.vue`）
+  - 过滤区：移除多余容器；状态/课程改用 `GlassPopoverSelect`（带 label/stacked）；搜索框玻璃化，内置放大镜；300ms 防抖
+  - 列表展示：改为独立玻璃卡片（`glass-thin rounded-xl p-4`），提升分隔与可读性
+  - 分页：分页处使用玻璃下拉，显示“每页显示”和“第 X 页”等文案，与教师端对齐
+  - 状态：归一化 `crafted/draft → DRAFT`；未提交且已过期显示 `LATE`（红色徽标）；过滤未来 `scheduled`（基于 `publishAt`）
+  - 响应性：加载列表时逐条拉取提交记录并 `new Map(...)` 强制触发 Pinia 响应
+- 学生端「作业详情/提交」页（`features/student/views/AssignmentSubmitView.vue`）
+  - 面包屑与分块采用玻璃样式与统一间距
+  - 教师附件区：显示教师上传附件列表与下载链接
+  - 评分卡：已评分时展示动态分数字动画+进度条、等级、评分时间；“教师评语/优点/可改进之处”三块按块级排版
+  - 容错导航：当路由 `:id` 非作业ID时，依次尝试按“成绩ID→提交ID”反查 `assignmentId` 并重定向到 `/student/assignments/:id/submit`
+  - 未找到：提示 i18n 文案后跳回“我的作业”而非“成绩页”
+- 通知详情「前往处理」跳转（`features/shared/views/NotificationDetailView.vue`）
+  - 解析顺序：`data.assignmentId` →（若为成绩）用 `gradeId` 查成绩取 `assignmentId` → `submissionId` 反查 → 当且仅当 `relatedType=assignment` 才用 `relatedId`
+  - 跳转：学生 → `/student/assignments/:id/submit`；教师 → `/teacher/assignments/:id/submissions`
+- 时间管理（教师端）
+  - 新增“定时发布”：表单支持 `draft/publish/scheduled` 三种模式
+  - 使用 `GlassDateTimePicker` 替代原生日期时间；新增 +1 天、+7 天等快捷设置；所有弹层玻璃化
+- 表单标准化
+  - 新增 `GlassInput`、`GlassTextarea`、`GlassSearchInput` 并在教师/学生相关页面替换原生 `input/textarea`
+- 玻璃下拉（`GlassPopoverSelect`）体验改进
+  - 使用 fixed 定位并监听滚动父元素，实时重算位置；必要时追加临时“底部占位”以保证选项可见；特定场景使用 `teleport=false` 保持本地定位
+- i18n
+  - 新增/补齐：`student.assignments.detail.{attachmentsTitle,noAttachments,download,ungradedHint,notFoundTitle,notFoundMsg}`、`student.grades.{level,strengths,improvements}`、`student.assignments.status.late`
+- 路由
+  - 学生：新增 `/student/grades`；通知跳转至 `/student/assignments/:id/submit`
+- 后端 Schema 与服务
+  - 数据库：`assignments.status` 增加 `'scheduled'`；新增列 `publish_at timestamp NULL`；新增索引 `idx_publish_at`
+  - 成绩发布：`GradeServiceImpl.publishGrade` 自动触发通知
+  - 通知内容：`NotificationServiceImpl` 以 `relatedType='assignment'`、`relatedId=assignmentId` 发送成绩通知，并格式化内容仅含“作业名+分数”
+
+### 本次（聊天/通知/玻璃样式统一）
+- 聊天：最近会话改为服务端统一接口 `/api/chat/conversations/my`；学生端“最近”按 username 去重；联系人来源按角色区分（教师端优先 `/teachers/contacts`）。
+- 通知：通知详情“前往处理”打开聊天抽屉，铃铛未读数兼容多键名；通知详情卡片玻璃化。
+- UI：Emoji 选择弹窗与聊天抽屉内联表情选择器统一玻璃样式；个人档案页四块大卡片与内部两块小卡片（修改密码/邮箱验证）玻璃化。
+- 详情见：`docs/frontend-deep-dive.md` 第 11 节。
+
 ---
 
 ## 全量功能矩阵（按域）
@@ -201,4 +239,4 @@ server {
 - Discussions: https://github.com/Xiaorui-Zhang537/student-core-competency-cultivation-assessment-system/discussions
 - 邮箱: xiaorui537537@Gmail.com
 
-> Made with ❤️ by Student Assessment Development Team
+> Made with ❤️ by Student Core Competency Cultivation Assessment System Development Team

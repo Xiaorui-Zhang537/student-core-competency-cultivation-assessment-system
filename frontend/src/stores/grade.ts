@@ -3,6 +3,7 @@ import { ref, computed } from 'vue';
 import { gradeApi } from '@/api/grade.api';
 import type { Grade, GradeRequest } from '@/types/grade';
 import { useUIStore } from './ui';
+import { notificationAPI } from '@/api/notification.api'
 import { i18n } from '@/i18n'
 import { handleApiCall } from '@/utils/api-handler';
 
@@ -53,6 +54,8 @@ export const useGradeStore = defineStore('grade', () => {
     );
     if (response) {
       uiStore.showNotification({ type: 'success', title: i18n.global.t('teacher.grading.notify.gradeSuccess') as string });
+      // 自动通知学生：作业已批改
+      // 通知交由后端在发布阶段自动触发；此处不再重复发送
       // Optionally refresh the list or update the specific grade
       return response;
     }

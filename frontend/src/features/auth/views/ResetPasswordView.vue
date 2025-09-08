@@ -8,14 +8,14 @@
     <form @submit.prevent="handleReset" class="space-y-6">
       <div>
         <label for="password" class="block text-sm font-medium mb-2">新密码</label>
-        <div v-glass="{ strength: 'ultraThin' }" class="rounded-lg">
-          <input id="password" v-model="password" type="password" required class="input" :disabled="uiStore.loading" placeholder="请输入新密码（至少6位）" />
+        <div class="rounded-lg">
+          <GlassInput id="password" v-model="password" type="password" :disabled="uiStore.loading" placeholder="请输入新密码（至少6位）" />
         </div>
       </div>
       <div>
         <label for="confirm" class="block text-sm font-medium mb-2">确认新密码</label>
-        <div v-glass="{ strength: 'ultraThin' }" class="rounded-lg">
-          <input id="confirm" v-model="confirm" type="password" required class="input" :disabled="uiStore.loading" placeholder="请再次输入新密码" />
+        <div class="rounded-lg">
+          <GlassInput id="confirm" v-model="confirm" type="password" :disabled="uiStore.loading" placeholder="请再次输入新密码" />
         </div>
       </div>
 
@@ -33,6 +33,7 @@ import { ref, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useUIStore } from '@/stores/ui'
 import { userApi } from '@/api/user.api'
+import GlassInput from '@/components/ui/inputs/GlassInput.vue'
 
 const route = useRoute()
 const router = useRouter()

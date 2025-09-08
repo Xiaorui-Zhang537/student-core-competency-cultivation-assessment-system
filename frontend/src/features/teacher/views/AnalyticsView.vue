@@ -105,34 +105,43 @@
           </template>
           <div class="flex flex-col gap-3">
             <p class="text-xs text-gray-600 dark:text-gray-400 leading-relaxed">{{ t('teacher.analytics.settings.compareNote') }}</p>
-            <div class="flex flex-nowrap items-center gap-2 overflow-x-auto min-h-[44px] no-scrollbar">
-              <span class="text-sm text-gray-700 dark:text-gray-300">{{ t('teacher.analytics.settings.studentLabel') }}</span>
-              <GlassPopoverSelect
-                v-model="selectedStudentId"
-                :options="studentSelectOptions"
-                :placeholder="t('teacher.analytics.charts.selectStudent') as string"
-                size="sm"
-                @change="loadRadar"
-              />
-              <span class="text-sm text-gray-700 dark:text-gray-300">{{ t('teacher.analytics.settings.classAvgLabel') }}</span>
-              <GlassPopoverSelect
-                v-model="includeClassAvg"
-                :options="[
-                  { label: t('teacher.analytics.charts.classAvgBoth') as string || '班级均值: A与B', value: 'both' },
-                  { label: t('teacher.analytics.charts.classAvgA') as string || '班级均值: 仅A', value: 'A' },
-                  { label: t('teacher.analytics.charts.classAvgB') as string || '班级均值: 仅B', value: 'B' },
-                  { label: t('teacher.analytics.charts.classAvgNone') as string || '班级均值: 关闭', value: 'none' }
-                ]"
-                size="sm"
-                @change="loadRadar"
-                :disabled="!compareEnabled"
-              />
+            <div class="flex flex-nowrap items-center gap-3 overflow-x-auto min-h-[44px] no-scrollbar whitespace-nowrap">
+              <div class="flex items-center gap-2">
+                <span class="text-xs font-medium leading-tight text-gray-700 dark:text-gray-300">{{ t('teacher.analytics.settings.studentLabel') }}</span>
+                <GlassPopoverSelect
+                  v-model="selectedStudentId"
+                  :options="studentSelectOptions"
+                  :placeholder="t('teacher.analytics.charts.selectStudent') as string"
+                  size="sm"
+                  width="160px"
+                  @change="loadRadar"
+                />
+              </div>
+              <div class="flex items-center gap-2">
+                <span class="text-xs font-medium leading-tight text-gray-700 dark:text-gray-300">{{ t('teacher.analytics.settings.classAvgLabel') }}</span>
+                <GlassPopoverSelect
+                  v-model="includeClassAvg"
+                  :options="[
+                    { label: t('teacher.analytics.charts.classAvgBoth') as string || '班级均值: A与B', value: 'both' },
+                    { label: t('teacher.analytics.charts.classAvgA') as string || '班级均值: 仅A', value: 'A' },
+                    { label: t('teacher.analytics.charts.classAvgB') as string || '班级均值: 仅B', value: 'B' },
+                    { label: t('teacher.analytics.charts.classAvgNone') as string || '班级均值: 关闭', value: 'none' }
+                  ]"
+                  size="sm"
+                  width="180px"
+                  @change="loadRadar"
+                  :disabled="!compareEnabled"
+                />
+              </div>
             </div>
-            <div v-if="!compareEnabled" class="flex flex-nowrap items-center gap-2 overflow-x-auto">
-              <span class="text-sm text-gray-700 dark:text-gray-300">{{ t('teacher.analytics.settings.timeFilter') }}</span>
-              <input type="date" v-model="startDate" class="input w-40" />
-              <span class="px-1 text-gray-400">-</span>
-              <input type="date" v-model="endDate" class="input w-40" />
+            <div v-if="!compareEnabled" class="flex flex-nowrap items-center gap-3 whitespace-nowrap overflow-hidden mt-2">
+              <span class="text-sm text-gray-700 dark:text-gray-300 mt-6">{{ t('teacher.analytics.settings.timeFilter') }}</span>
+              <div class="w-[200px]">
+                <GlassDateTimePicker v-model="startDate" :label="t('teacher.analytics.filters.start') as any || '开始时间'" />
+              </div>
+              <div class="w-[200px]">
+                <GlassDateTimePicker v-model="endDate" :label="t('teacher.analytics.filters.end') as any || '结束时间'" />
+              </div>
             </div>
             <div v-else class="flex flex-col gap-2">
               <div class="flex flex-wrap items-center gap-2">
@@ -219,6 +228,7 @@ import { useI18n } from 'vue-i18n'
 import GlassSelect from '@/components/ui/filters/GlassSelect.vue'
 import GlassPopoverSelect from '@/components/ui/filters/GlassPopoverSelect.vue'
 import PageHeader from '@/components/ui/PageHeader.vue'
+import GlassDateTimePicker from '@/components/ui/inputs/GlassDateTimePicker.vue'
 import GlassMultiSelect from '@/components/ui/filters/GlassMultiSelect.vue'
 
 // Stores

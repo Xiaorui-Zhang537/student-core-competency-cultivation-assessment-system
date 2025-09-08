@@ -12,11 +12,29 @@
         <span class="truncate">{{ selectedLabel || placeholder || '' }}</span>
         <svg class="pointer-events-none w-4 h-4 text-gray-400 absolute right-2 top-1/2 -translate-y-1/2" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.24 4.5a.75.75 0 01-1.08 0l-4.24-4.5a.75.75 0 01.02-1.06z" clip-rule="evenodd"/></svg>
       </button>
+      <!-- local (non-teleport) dropdown -->
+      <div v-if="open && !teleport"
+           class="absolute z-[9999] popover-glass glass-thin glass-interactive border border-white/20 dark:border-white/12 shadow-md p-1 max-h-80 overflow-y-auto overscroll-contain no-scrollbar left-0 w-full top-full mt-1">
+        <button v-for="(opt, idx) in options"
+                :key="String(opt.value)"
+                type="button"
+                class="w-full text-left px-3 py-2 rounded transition-colors"
+                :class="[
+                  idx===activeIndex ? 'bg-white/10 dark:bg-white/10' : 'hover:bg-white/10',
+                  isSelected(opt.value) ? 'text-primary-600 dark:text-primary-300' : 'text-gray-700 dark:text-gray-200'
+                ]"
+                :disabled="!!opt.disabled"
+                @click="choose(opt.value)"
+                @mousemove="activeIndex = idx"
+        >
+          {{ opt.label }}
+        </button>
+      </div>
     </div>
   </div>
-  <teleport to="body">
+  <teleport to="body" v-if="teleport">
     <div v-if="open"
-         class="fixed z-[9999] popover-glass glass-thin glass-interactive border border-white/20 dark:border-white/12 shadow-md p-1 max-h-80 overflow-y-auto overscroll-contain"
+         class="fixed z-[9999] popover-glass glass-thin glass-interactive border border-white/20 dark:border-white/12 shadow-md p-1 max-h-80 overflow-y-auto overscroll-contain no-scrollbar"
          :style="{ left: pos.left + 'px', top: pos.top + 'px', width: pos.width + 'px' }"
          @keydown.stop.prevent="onKeydown"
     >
@@ -51,13 +69,15 @@ interface Props {
   disabled?: boolean
   stacked?: boolean
   width?: string
+  teleport?: boolean
 }
 
 const props = withDefaults(defineProps<Props>(), {
   size: 'md',
   disabled: false,
   stacked: false,
-  width: undefined
+  width: undefined,
+  teleport: true
 })
 
 const emit = defineEmits<{ (e:'update:modelValue', v:string|number|null):void; (e:'change', v:string|number|null):void; (e:'open'):void; (e:'close'):void }>()
@@ -67,6 +87,7 @@ const open = ref(false)
 const pos = ref({ left: 0, top: 0, width: 280 })
 const PANEL_MAX_HEIGHT = 320 // px (matches max-h-80)
 const activeIndex = ref(0)
+let scrollParents: HTMLElement[] = []
 
 const selectedLabel = computed(() => {
   const cur = props.options.find(o => String(o.value) === String(props.modelValue ?? ''))
@@ -82,11 +103,17 @@ function computePos() {
   if (!el) return
   const rect = el.getBoundingClientRect()
   const viewportH = window.innerHeight || document.documentElement.clientHeight || 0
+  const viewportW = window.innerWidth || document.documentElement.clientWidth || 0
   // Prefer opening downward; if not enough room (below), place upward with a safe margin
   const downTop = rect.bottom + 6
   const upTop = Math.max(8, rect.top - PANEL_MAX_HEIGHT - 6)
-  const top = (downTop + PANEL_MAX_HEIGHT + 8 <= viewportH) ? downTop : upTop
-  pos.value = { left: rect.left, top, width: rect.width }
+  const openDown = true
+  const top = downTop
+  // clamp left within viewport
+  const desiredLeft = rect.left
+  const maxLeft = Math.max(8, viewportW - rect.width - 8)
+  const left = Math.min(Math.max(8, desiredLeft), maxLeft)
+  pos.value = { left, top, width: rect.width }
 }
 
 function openMenu() {
@@ -96,11 +123,14 @@ function openMenu() {
   // set active index to current selected
   const i = props.options.findIndex(o => isSelected(o.value))
   activeIndex.value = i >= 0 ? i : 0
+  // attach scroll listeners to scrollable ancestors so popover follows within scrollable containers
+  attachScrollParents()
 }
 
 function closeMenu() {
   open.value = false
   emit('close')
+  detachScrollParents()
 }
 
 function toggle() {
@@ -143,15 +173,51 @@ onMounted(() => {
   window.addEventListener('resize', onWindow, { passive: true })
   window.addEventListener('scroll', onWindow, { passive: true })
   document.addEventListener('click', onDocClick)
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeMenu() })
 })
 
 onBeforeUnmount(() => {
   window.removeEventListener('resize', onWindow)
   window.removeEventListener('scroll', onWindow)
   document.removeEventListener('click', onDocClick)
+  detachScrollParents()
 })
 
 watch(() => props.modelValue, () => { /* keep */ })
+
+function attachScrollParents() {
+  detachScrollParents()
+  const el = rootRef.value
+  if (!el) return
+  const parents: HTMLElement[] = []
+  let cur: HTMLElement | null = el as HTMLElement
+  while (cur && cur !== document.body) {
+    const style = window.getComputedStyle(cur)
+    const oy = style.overflowY
+    const ox = style.overflowX
+    const isScrollable = (v: string) => v === 'auto' || v === 'scroll'
+    if (isScrollable(oy) || isScrollable(ox)) {
+      parents.push(cur)
+    }
+    cur = cur.parentElement
+  }
+  // Also include document.scrollingElement as fallback
+  const docEl = (document.scrollingElement || document.documentElement) as HTMLElement
+  if (docEl && !parents.includes(docEl)) parents.push(docEl)
+  scrollParents = parents
+  scrollParents.forEach(p => p.addEventListener('scroll', onWindow, { passive: true }))
+}
+
+function detachScrollParents() {
+  if (!scrollParents || !scrollParents.length) return
+  scrollParents.forEach(p => p.removeEventListener('scroll', onWindow))
+  scrollParents = []
+}
 </script>
+
+<style scoped>
+.no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+.no-scrollbar::-webkit-scrollbar { display: none; width: 0; height: 0; }
+</style>
 
 

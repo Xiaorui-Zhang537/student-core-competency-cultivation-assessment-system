@@ -61,6 +61,8 @@ import { useI18n } from 'vue-i18n'
 import UserAvatar from '@/components/ui/UserAvatar.vue'
 import Button from '@/components/ui/Button.vue'
 import PageHeader from '@/components/ui/PageHeader.vue'
+import { submissionApi } from '@/api/submission.api'
+import { gradeApi } from '@/api/grade.api'
 
 const route = useRoute()
 const router = useRouter()
@@ -105,17 +107,69 @@ const goRelated = async () => {
     return goCenter()
   }
 
-  const to = () => {
+  async function resolveRelatedAssignmentId(n: any): Promise<string> {
+    try {
+      const meta: any = parseMeta()
+      const directAid = String(meta?.assignmentId || '')
+      if (directAid) return directAid
+      const kind = String(n.relatedType || '').toLowerCase()
+      const ntype = String(n.type || '').toLowerCase()
+      // 若为成绩通知，尝试用 gradeId 反查 assignmentId
+      const maybeGradeId = String((ntype === 'grade' || ntype === 'grade_posted') ? (n.relatedId || meta?.gradeId || meta?.id || '') : '')
+      if (maybeGradeId) {
+        try {
+          const gres: any = await gradeApi.getGradeById(maybeGradeId)
+          const g = (gres && gres.data !== undefined) ? gres.data : gres
+          const gaid = String((g as any)?.assignmentId || (g as any)?.assignment_id || '')
+          if (gaid) return gaid
+        } catch {}
+      }
+      const maybeSubmissionId = String(meta?.submissionId || (kind === 'submission' ? n.relatedId : ''))
+      if (maybeSubmissionId) {
+        const aid = await resolveAssignmentIdFromSubmission(maybeSubmissionId)
+        if (aid) return aid
+      }
+      if (kind === 'assignment' && n.relatedId) return String(n.relatedId)
+      const fallbackAid = String(n.relatedId || meta?.id || '')
+      return fallbackAid
+    } catch { return '' }
+  }
+
+  const to = async () => {
     switch (rt || t) {
       case 'assignment':
       case 'assignment_deadline':
-        return isTeacher.value ? `${base.value}/assignments/${n.relatedId}/submissions` : `${base.value}/assignments/${n.relatedId}`
+        try {
+          const aid = await resolveRelatedAssignmentId(n)
+          if (!aid) return ''
+          return isTeacher.value ? `${base.value}/assignments/${aid}/submissions` : `${base.value}/assignments/${aid}/submit`
+        } catch { return '' }
+      case 'submission': {
+        try {
+          const meta: any = parseMeta()
+          const sid = String(n.relatedId || meta?.submissionId || meta?.id || '')
+          if (!sid) return ''
+          const aid = await resolveAssignmentIdFromSubmission(sid)
+          if (!aid) return ''
+          return isTeacher.value ? `${base.value}/assignments/${aid}/submissions` : `${base.value}/assignments/${aid}/submit`
+        } catch { return '' }
+      }
       case 'course':
       case 'course_update':
         return `${base.value}/courses/${n.relatedId}`
       case 'grade':
-      case 'grade_posted':
-        return isTeacher.value ? `${base.value}/analytics` : `${base.value}/analysis`
+      case 'grade_posted': {
+        if (!isTeacher.value) {
+          const aid = await resolveRelatedAssignmentId(n)
+          if (aid) return `${base.value}/assignments/${aid}/submit`
+        }
+        // 教师端：优先跳到该作业的提交列表
+        {
+          const aid = await resolveRelatedAssignmentId(n)
+          if (aid) return `${base.value}/assignments/${aid}/submissions`
+        }
+        return `${base.value}/assignments`
+      }
       case 'community_post':
         return `${base.value}/community/post/${n.relatedId}`
       default:
@@ -123,7 +177,7 @@ const goRelated = async () => {
     }
   }
 
-  const target = to()
+  const target = await to()
   if (target) return router.push(target)
   return goCenter()
 }
@@ -138,6 +192,17 @@ const parseMeta = () => {
     if (typeof raw === 'object') return raw
   } catch {}
   return {}
+}
+
+async function resolveAssignmentIdFromSubmission(submissionId: string): Promise<string> {
+  try {
+    const res: any = await submissionApi.getSubmissionById(submissionId)
+    const s = (res && res.data !== undefined) ? res.data : res
+    const aid = String((s as any)?.assignmentId || (s as any)?.assignment_id || '')
+    return aid || ''
+  } catch {
+    return ''
+  }
 }
 const avatarUrl = computed(() => {
   const m: any = parseMeta()
