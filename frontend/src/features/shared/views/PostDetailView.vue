@@ -60,7 +60,7 @@
         
         <!-- Post Comment Form -->
         <div class="mb-6">
-            <textarea v-model="newComment" rows="3" :placeholder="t('shared.community.detail.writeComment')" class="input w-full"></textarea>
+            <GlassTextarea v-model="newComment" :rows="3" :placeholder="t('shared.community.detail.writeComment') as string" class="w-full" />
             <div class="mt-2 flex items-center gap-2">
               <emoji-picker size="sm" variant="ghost" @select="onEmojiSelect" />
               <Button size="sm" variant="primary" @click="handlePostComment" :disabled="!newComment.trim() || loading">{{ t('shared.community.detail.postComment') }}</Button>
@@ -95,21 +95,15 @@
           <form @submit.prevent="handleUpdateCurrentPost" class="space-y-4">
             <div>
               <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{{ t('shared.community.modal.title') }}</label>
-              <input v-model="editCurrent.form.title" type="text" class="input" required />
+              <GlassInput v-model="editCurrent.form.title" />
             </div>
             <div>
               <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{{ t('shared.community.modal.category') }}</label>
-              <select v-model="editCurrent.form.category" class="input">
-                <option value="study">{{ t('shared.community.categories.study') }}</option>
-                <option value="help">{{ t('shared.community.categories.help') }}</option>
-                <option value="share">{{ t('shared.community.categories.share') }}</option>
-                <option value="qa">{{ t('shared.community.categories.qa') }}</option>
-                <option value="chat">{{ t('shared.community.categories.chat') }}</option>
-              </select>
+              <GlassPopoverSelect v-model="editCurrent.form.category" :options="categoryOptions" />
             </div>
             <div>
               <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{{ t('shared.community.modal.content') }}</label>
-              <textarea v-model="editCurrent.form.content" rows="6" class="input" required></textarea>
+              <GlassTextarea v-model="editCurrent.form.content" :rows="6" />
             </div>
             <div>
               <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{{ t('shared.community.modal.attachment') }}</label>
@@ -167,6 +161,9 @@ import { fileApi } from '@/api/file.api';
 import FileUpload from '@/components/forms/FileUpload.vue';
 import { useI18n } from 'vue-i18n'
 import PageHeader from '@/components/ui/PageHeader.vue'
+import GlassTextarea from '@/components/ui/inputs/GlassTextarea.vue'
+import GlassInput from '@/components/ui/inputs/GlassInput.vue'
+import GlassPopoverSelect from '@/components/ui/filters/GlassPopoverSelect.vue'
 
 const route = useRoute();
 const router = useRouter();
@@ -202,6 +199,13 @@ const commentsPage = ref(1);
 const commentsSize = ref(20);
 const commentOrderBy = ref<'time' | 'hot'>('time')
 const backToCommunity = computed(() => authStore.userRole === 'TEACHER' ? '/teacher/community' : '/student/community');
+const categoryOptions = computed(() => [
+  { label: t('shared.community.categories.study') as string, value: 'study' },
+  { label: t('shared.community.categories.help') as string, value: 'help' },
+  { label: t('shared.community.categories.share') as string, value: 'share' },
+  { label: t('shared.community.categories.qa') as string, value: 'qa' },
+  { label: t('shared.community.categories.chat') as string, value: 'chat' },
+])
 // 改为递归组件内部管理回复，无需本地 replyBoxFor/commentReplies
 
 const handlePostComment = async () => {

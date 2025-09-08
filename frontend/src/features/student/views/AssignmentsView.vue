@@ -4,7 +4,7 @@
       <PageHeader :title="t('student.assignments.title') || '我的作业'" :subtitle="t('student.assignments.subtitle') || '查看与提交作业'" />
 
       <!-- 过滤条（取消外层嵌套容器，仅保留 FilterBar） -->
-      <FilterBar class="mb-6">
+      <FilterBar class="mb-6 glass-thin rounded-full">
         <template #left>
           <div class="w-48">
             <GlassPopoverSelect
@@ -27,7 +27,7 @@
         </template>
         <template #right>
           <div class="w-64">
-            <div class="glass-thin rounded-lg px-3 py-2 flex items-center gap-2" v-glass="{ strength: 'thin', interactive: true }">
+            <div class="glass-thin rounded-full px-3 py-2 flex items-center gap-2" v-glass="{ strength: 'thin', interactive: true }">
               <MagnifyingGlassIcon class="w-4 h-4 text-gray-500" />
               <input
                 v-model="searchText"
@@ -290,6 +290,9 @@ function changePageSize() {
 </script>
 
 <style scoped>
+:deep(.pill.filter-container[class*="rounded"]) {
+  border-radius: 9999px !important;
+}
 .input {
   border: 1px solid var(--tw-border-opacity, rgba(209,213,219,1));
   border-radius: 0.25rem;

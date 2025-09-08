@@ -196,6 +196,7 @@
     /* Hide scrollbars but keep scroll */
     scrollbar-width: none; /* Firefox */
     -ms-overflow-style: none; /* IE 10+ */
+    color: var(--color-text-primary);
   }
 
   /* Hide scrollbars (WebKit) */
@@ -227,6 +228,12 @@
   .modal .modal-subtitle, .modal .muted {
     color: var(--color-text-secondary);
   }
+
+  /* 对话框内表单的文本与占位符对比度提升 */
+  .modal input, .modal textarea, .modal select { color: var(--color-text-primary); }
+  .modal .input, .modal .input--glass { color: var(--color-text-primary); }
+  .modal input::placeholder, .modal textarea::placeholder { color: rgba(17, 24, 39, 0.70); }
+  .dark .modal input::placeholder, .dark .modal textarea::placeholder { color: rgba(243, 244, 246, 0.72); }
 
   /* 按钮在暗黑下的可读性（Button.vue 已覆盖大部分，这里兜底） */
   .dark .btn-primary { @apply bg-indigo-600 hover:bg-indigo-700 text-white; }

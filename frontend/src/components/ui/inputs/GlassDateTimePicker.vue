@@ -33,7 +33,7 @@
             </div>
           </div>
           <!-- Time selectors -->
-          <div class="px-4 py-2 border-t border-white/10 flex items-center gap-3">
+          <div v-if="!dateOnly" class="px-4 py-2 border-t border-white/10 flex items-center gap-3">
             <div class="flex items-center gap-2">
               <span class="text-xs text-gray-500 dark:text-gray-400">{{ t('shared.time') || '时间' }}</span>
               <div class="w-20">
@@ -68,11 +68,13 @@ interface Props {
   id?: string
   hint?: string
   minuteStep?: number
+  dateOnly?: boolean
 }
 
 const props = withDefaults(defineProps<Props>(), {
   modelValue: '',
   minuteStep: 5,
+  dateOnly: false,
 })
 const emit = defineEmits<{ (e:'update:modelValue', v:string): void }>()
 const { t } = useI18n()
@@ -92,7 +94,7 @@ const minute = ref<number>(roundToStep((internal.value || new Date()).getMinutes
 const weekdays = ['日','一','二','三','四','五','六']
 
 const valueText = computed(() => formatDisplay(internal.value))
-const placeholderText = computed(() => t('shared.datetime.hint') as string || '选择日期时间')
+const placeholderText = computed(() => (props.dateOnly ? (t('shared.date') as string || '选择日期') : (t('shared.datetime.hint') as string || '选择日期时间')))
 
 const minuteSelectOptions = computed(() => {
   const arr:number[] = []
@@ -122,13 +124,19 @@ function parseFromModel(v?: string | null): Date | null {
 
 function formatModel(d: Date | null): string {
   if (!d) return ''
+  if (props.dateOnly) {
+    const y = d.getFullYear()
+    const m = String(d.getMonth() + 1).padStart(2, '0')
+    const day = String(d.getDate()).padStart(2, '0')
+    return `${y}-${m}-${day}`
+  }
   const dt = new Date(d.getTime() - d.getTimezoneOffset()*60000)
   return dt.toISOString().slice(0,16) // YYYY-MM-DDTHH:mm
 }
 
 function formatDisplay(d: Date | null): string {
   if (!d) return ''
-  return d.toLocaleString()
+  return props.dateOnly ? d.toLocaleDateString() : d.toLocaleString()
 }
 
 function startOfMonth(y:number, m:number) { return new Date(y, m, 1) }
@@ -172,7 +180,11 @@ function sameDate(a:Date|null, b:Date|null) {
 
 function pickDate(cell:any) {
   const base = new Date(cell.date)
-  base.setHours(hour.value, minute.value, 0, 0)
+  if (props.dateOnly) {
+    base.setHours(0, 0, 0, 0)
+  } else {
+    base.setHours(hour.value, minute.value, 0, 0)
+  }
   internal.value = base
 }
 

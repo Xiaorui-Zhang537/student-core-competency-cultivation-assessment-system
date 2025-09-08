@@ -142,16 +142,15 @@
               </div>
               <div>
                   <label for="gender" class="block text-sm font-medium mb-2">{{ t('shared.profile.fields.gender') }}</label>
-                <select id="gender" v-model="profileForm.gender" class="input input--glass glass-regular glass-interactive rounded-xl border border-white/30 dark:border-white/10">
-                  <option value="">{{ t('common.select') || '请选择' }}</option>
-                  <option value="MALE">{{ t('shared.profile.genders.male') }}</option>
-                  <option value="FEMALE">{{ t('shared.profile.genders.female') }}</option>
-                  <option value="OTHER">{{ t('shared.profile.genders.other') }}</option>
-                </select>
+                <GlassPopoverSelect
+                  v-model="profileForm.gender"
+                  :options="genderOptions"
+                  size="md"
+                />
               </div>
                 <div>
                   <label for="birthday" class="block text-sm font-medium mb-2">{{ t('shared.profile.fields.birthday') }}</label>
-                  <GlassDateTimePicker id="birthday" v-model="profileForm.birthday" :label="t('profile.birthday') as any || '生日'" />
+                  <GlassDateTimePicker id="birthday" v-model="profileForm.birthday" :label="'' as any" :date-only="true" />
                 </div>
                 <div>
                   <label for="firstName" class="block text-sm font-medium mb-2">{{ t('shared.profile.fields.firstName') }}</label>
@@ -288,12 +287,18 @@ import { useI18n } from 'vue-i18n'
 import PageHeader from '@/components/ui/PageHeader.vue'
 import GlassInput from '@/components/ui/inputs/GlassInput.vue'
 import GlassTextarea from '@/components/ui/inputs/GlassTextarea.vue'
+import GlassPopoverSelect from '@/components/ui/filters/GlassPopoverSelect.vue'
 
 const authStore = useAuthStore();
 const uiStore = useUIStore();
 const { t } = useI18n()
 
 const userProfile = ref<UserProfileResponse | null>(null);
+const genderOptions = computed(() => [
+  { label: t('shared.profile.genders.male') as string, value: 'MALE' },
+  { label: t('shared.profile.genders.female') as string, value: 'FEMALE' },
+  { label: t('shared.profile.genders.other') as string, value: 'OTHER' },
+])
 const showEditProfile = ref(false);
 const showChangePassword = ref(false);
 const uploadHeaders = { Authorization: localStorage.getItem('token') ? `Bearer ${localStorage.getItem('token')}` : '' } as Record<string, string>;

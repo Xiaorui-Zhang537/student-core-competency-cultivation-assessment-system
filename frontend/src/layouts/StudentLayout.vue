@@ -368,3 +368,16 @@ function toggleUserMenu() {
   showUserMenu.value = !showUserMenu.value
 }
 </script>
+
+<style scoped>
+/* 仅在学生端提高玻璃卡片的圆角，避免影响顶部导航与侧边栏等容器 */
+:deep(.glass-ultraThin[class*="rounded"]),
+:deep(.glass-thin[class*="rounded"]),
+:deep(.glass-regular[class*="rounded"]),
+:deep(.glass-thick[class*="rounded"]),
+:deep(.glass-ultraThick[class*="rounded"]),
+:deep(.popover-glass[class*="rounded"]),
+:deep(.card) {
+  border-radius: 20px !important;
+}
+</style>

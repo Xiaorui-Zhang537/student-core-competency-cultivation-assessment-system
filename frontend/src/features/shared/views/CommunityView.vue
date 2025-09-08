@@ -196,23 +196,21 @@
           <form @submit.prevent="handleCreatePost" class="space-y-4">
             <div>
               <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{{ t('shared.community.modal.title') }}</label>
-              <input v-model="newPost.title" type="text" :placeholder="t('shared.community.modal.title')" class="input" required />
+              <GlassInput v-model="newPost.title" :placeholder="t('shared.community.modal.title') as string" />
             </div>
             <div>
               <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{{ t('shared.community.modal.category') }}</label>
-              <select v-model="newPost.category" class="input">
-                <option value="study">{{ t('shared.community.categories.study') }}</option>
-                <option value="help">{{ t('shared.community.categories.help') }}</option>
-                <option value="share">{{ t('shared.community.categories.share') }}</option>
-                <option value="qa">{{ t('shared.community.categories.qa') }}</option>
-                <option value="chat">{{ t('shared.community.categories.chat') }}</option>
-              </select>
+              <GlassPopoverSelect
+                v-model="newPost.category"
+                :options="categoryOptions"
+                size="md"
+              />
             </div>
             <div>
               <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{{ t('shared.community.modal.tags') }}</label>
-              <input v-model="newPost.tagsInput" type="text" :placeholder="t('shared.community.modal.tags')" class="input mb-2" />
+              <GlassInput v-model="newPost.tagsInput" :placeholder="t('shared.community.modal.tags') as string" class="mb-2" />
               <div class="mb-2">
-                <input v-model="newPost.tagSearch" @input="searchTags" type="text" :placeholder="t('shared.community.modal.tagSearch')" class="input" />
+                <GlassInput v-model="newPost.tagSearch" @input="searchTags" :placeholder="t('shared.community.modal.tagSearch') as string" />
                 <div v-if="newPost.tagOptions.length" class="mt-2 border border-gray-200 dark:border-gray-700 rounded-md divide-y divide-gray-100 dark:divide-gray-700">
                   <button v-for="opt in newPost.tagOptions" :key="opt.id" type="button" class="w-full text-left px-3 py-2 text-sm hover:bg-gray-50 dark:hover:bg-gray-700" @click="addTag(opt.name)">#{{ opt.name }}</button>
                 </div>
@@ -226,7 +224,7 @@
             </div>
             <div>
               <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{{ t('shared.community.modal.content') }}</label>
-              <textarea v-model="newPost.content" rows="6" :placeholder="t('shared.community.modal.contentPlaceholder')" class="input" required></textarea>
+              <GlassTextarea v-model="newPost.content" :rows="6" :placeholder="t('shared.community.modal.contentPlaceholder') as string" />
             </div>
             <div>
               <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">附件</label>
@@ -257,21 +255,19 @@
           <form @submit.prevent="handleUpdatePost" class="space-y-4">
             <div>
               <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{{ t('shared.community.modal.title') }}</label>
-              <input v-model="editModal.form.title" type="text" class="input" required />
+              <GlassInput v-model="editModal.form.title" />
             </div>
             <div>
               <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{{ t('shared.community.modal.category') }}</label>
-              <select v-model="editModal.form.category" class="input">
-                <option value="study">{{ t('shared.community.categories.study') }}</option>
-                <option value="help">{{ t('shared.community.categories.help') }}</option>
-                <option value="share">{{ t('shared.community.categories.share') }}</option>
-                <option value="qa">{{ t('shared.community.categories.qa') }}</option>
-                <option value="chat">{{ t('shared.community.categories.chat') }}</option>
-              </select>
+              <GlassPopoverSelect
+                v-model="editModal.form.category"
+                :options="categoryOptions"
+                size="md"
+              />
             </div>
             <div>
               <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{{ t('shared.community.modal.content') }}</label>
-              <textarea v-model="editModal.form.content" rows="6" class="input" required></textarea>
+              <GlassTextarea v-model="editModal.form.content" :rows="6" />
             </div>
             <div>
               <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{{ t('shared.community.modal.attachment') }}</label>
@@ -328,6 +324,8 @@ import UserAvatar from '@/components/ui/UserAvatar.vue'
 import Button from '@/components/ui/Button.vue'
 import GlassPopoverSelect from '@/components/ui/filters/GlassPopoverSelect.vue'
 import StatCard from '@/components/ui/StatCard.vue'
+import GlassInput from '@/components/ui/inputs/GlassInput.vue'
+import GlassTextarea from '@/components/ui/inputs/GlassTextarea.vue'
 
 import { useAuthStore } from '@/stores/auth';
 import FileUpload from '@/components/forms/FileUpload.vue';
@@ -381,6 +379,14 @@ const editAttachments = ref<any[]>([]);
 const uploadHeaders = {
   Authorization: localStorage.getItem('token') ? `Bearer ${localStorage.getItem('token')}` : ''
 };
+
+const categoryOptions = computed(() => [
+  { label: t('shared.community.categories.study') as string, value: 'study' },
+  { label: t('shared.community.categories.help') as string, value: 'help' },
+  { label: t('shared.community.categories.share') as string, value: 'share' },
+  { label: t('shared.community.categories.qa') as string, value: 'qa' },
+  { label: t('shared.community.categories.chat') as string, value: 'chat' },
+])
 
 const categories = computed(() => ([
   { id: 'all', name: t('shared.community.categories.all') as string, icon: ChatBubbleLeftIcon },

@@ -10,8 +10,9 @@
           <div>
             <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">{{ t('common.search') || '搜索' }}</label>
             <div class="flex items-center gap-2">
-              <input v-model="q" type="text" :placeholder="t('common.search') || '搜索会话'" class="input flex-1" @keyup.enter="search" />
-              <Button size="sm" variant="primary" @click="newConv">{{ t('common.new') || '新建' }}</Button>
+              <GlassSearchInput v-model="q" :placeholder="t('common.search') || '搜索会话'" />
+              <Button size="sm" variant="secondary" class="whitespace-nowrap shrink-0" @click="search">{{ t('common.search') || '搜索' }}</Button>
+              <Button size="sm" variant="primary" class="whitespace-nowrap shrink-0" @click="newConv">{{ t('common.new') || '新建' }}</Button>
             </div>
           </div>
 
@@ -74,7 +75,7 @@
               <label class="text-xs text-gray-500">{{ t('common.enable') || '启用' }}</label>
               <input type="checkbox" v-model="memory.enabled" @change="saveMemory" />
             </div>
-            <textarea v-model="memory.content" rows="4" class="input" :placeholder="t('teacher.ai.memoryPlaceholder') || '个性化偏好、口吻等...'" @blur="saveMemory"></textarea>
+            <GlassTextarea v-model="memory.content" :rows="4" :placeholder="t('teacher.ai.memoryPlaceholder') || '个性化偏好、口吻等...'" @blur="saveMemory" />
           </div>
 
           <div class="text-xs text-gray-600 dark:text-gray-300 rounded-lg p-3 border border-gray-100 dark:border-gray-700/60" v-glass="{ strength: 'ultraThin', interactive: false }">
@@ -108,15 +109,12 @@
             </div>
           </div>
           <div class="border-t border-white/25 dark:border-white/10 p-3 bg-transparent flex items-center gap-3">
-            <textarea
-              ref="textareaRef"
+            <GlassTextarea
               v-model="draft"
               @keydown.enter.exact.prevent="send"
-              @input="onTextareaInput"
-              rows="2"
-              :style="{ height: textareaHeight }"
+              :rows="3"
               :placeholder="t('teacher.ai.placeholder') || '输入问题...'"
-              class="flex-1 input input--glass resize-none overflow-auto"
+              class="flex-1"
               :disabled="sending"
             />
             <div v-if="showUpload" class="flex items-center gap-2">
@@ -141,7 +139,7 @@
       <div v-if="showRename" class="fixed inset-0 z-50 flex items-center justify-center bg-black/30">
         <div class="w-full max-w-sm card p-4">
           <h3 class="text-base font-semibold mb-3">{{ t('teacher.ai.renameTitle') || '重命名对话' }}</h3>
-          <input v-model="renameTitle" type="text" class="input mb-4" :placeholder="t('common.rename') || '请输入新的标题'" />
+          <GlassInput v-model="renameTitle" class="mb-4" :placeholder="t('common.rename') || '请输入新的标题'" />
           <div class="flex justify-end gap-2">
             <Button size="sm" variant="secondary" @click="showRename=false">{{ t('common.cancel') || '取消' }}</Button>
             <Button size="sm" variant="primary" @click="confirmRename">{{ t('teacher.courses.actions.save') || '保存' }}</Button>
@@ -157,17 +155,20 @@ import { computed, onMounted, ref } from 'vue'
 import { useAIStore } from '@/stores/ai'
 import { useI18n } from 'vue-i18n'
 import { fileApi } from '@/api/file.api'
+import { aiApi } from '@/api/ai.api'
 import Button from '@/components/ui/Button.vue'
 import GlassPopoverSelect from '@/components/ui/filters/GlassPopoverSelect.vue'
 import PageHeader from '@/components/ui/PageHeader.vue'
+import GlassSearchInput from '@/components/ui/inputs/GlassSearchInput.vue'
+import GlassTextarea from '@/components/ui/inputs/GlassTextarea.vue'
+import GlassInput from '@/components/ui/inputs/GlassInput.vue'
 
 const { t } = useI18n()
 const ai = useAIStore()
 const q = ref('')
 const showUpload = ref(true)
 const fileInput = ref<HTMLInputElement | null>(null)
-const textareaRef = ref<HTMLTextAreaElement | null>(null)
-const textareaHeight = ref<string>('auto')
+// 采用 GlassTextarea 自适应，不再手动高度控制
 
 const conversations = computed(() => {
   const list = [...ai.conversations]
@@ -201,6 +202,11 @@ const draft = computed({
   }
 })
 const memory = ref<{ enabled: boolean; content: string }>({ enabled: true, content: '' })
+const saveMemory = async () => {
+  try {
+    await aiApi.updateMemory({ enabled: !!memory.value.enabled, content: memory.value.content || '' })
+  } catch {}
+}
 const canSend = computed(() => {
   const v = draft.value || ''
   return typeof v === 'string' && v.trim().length > 0
@@ -235,7 +241,6 @@ const send = async () => {
   }
   if (activeConversationId.value) ai.saveDraft(activeConversationId.value, '')
   else newDraft.value = ''
-  textareaHeight.value = 'auto'
 }
 const triggerPick = () => fileInput.value?.click()
 const handlePickFiles = async (e: Event) => {
@@ -258,18 +263,18 @@ const handlePickFiles = async (e: Event) => {
   if (fileInput.value) fileInput.value.value = ''
 }
 
-onMounted(async () => { await ai.fetchConversations({ page: 1, size: 50 }) })
+onMounted(async () => {
+  await ai.fetchConversations({ page: 1, size: 50 })
+  try {
+    const res: any = await aiApi.getMemory()
+    const data = res?.data ?? res
+    if (data) {
+      memory.value = { enabled: !!data.enabled, content: String(data.content || '') }
+    }
+  } catch {}
+})
 
-const onTextareaInput = () => {
-  const el = textareaRef.value
-  if (!el) return
-  el.style.height = 'auto'
-  const lineHeight = parseFloat(getComputedStyle(el).lineHeight || '20')
-  const min = lineHeight * 2
-  const max = lineHeight * 10
-  const next = Math.min(Math.max(el.scrollHeight, min), max)
-  textareaHeight.value = `${next}px`
-}
+const onTextareaInput = () => {}
 </script>
 
 <style lang="postcss" scoped>

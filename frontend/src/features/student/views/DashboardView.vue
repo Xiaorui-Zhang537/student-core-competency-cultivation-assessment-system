@@ -85,21 +85,59 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, computed } from 'vue'
+import { onMounted, computed, watch } from 'vue'
 import { useUIStore } from '@/stores/ui'
 import { useStudentStore } from '@/stores/student'
 import { useI18n } from 'vue-i18n'
 import StatCard from '@/components/ui/StatCard.vue'
 import { AcademicCapIcon, ClipboardDocumentListIcon, StarIcon, ClockIcon } from '@heroicons/vue/24/outline'
 import PageHeader from '@/components/ui/PageHeader.vue'
+import { useSubmissionStore } from '@/stores/submission'
 
 const uiStore = useUIStore()
 const studentStore = useStudentStore()
+const submissionStore = useSubmissionStore()
 const { t } = useI18n()
 
 // 渲染所需派生状态，避免模板直接访问未定义属性
 const dashboardReady = computed(() => !studentStore.loading)
-const upcomingAssignments = computed(() => (studentStore.dashboardData?.upcomingAssignments) || [])
+
+// 工具函数：是否已过期（截至时间已到或已过）
+const isOverdue = (dueDate?: string) => {
+  if (!dueDate) return false
+  const d = new Date(dueDate)
+  if (isNaN(d.getTime())) return false
+  return Date.now() >= d.getTime()
+}
+
+// 工具函数：是否已提交或已评分
+const isSubmittedOrGraded = (assignmentId: string) => {
+  try {
+    const sub = submissionStore.submissions.get(String(assignmentId)) as any
+    if (!sub) return false
+    const status = String(sub.status || '').toUpperCase()
+    const hasContent = !!String(sub.content || '').trim()
+    const hasFiles = Array.isArray(sub.fileIds) && sub.fileIds.length > 0
+    const hasSubmittedAt = !!sub.submittedAt
+    // 认为有任何有效提交内容即为已提交；评分状态直接排除
+    if (status === 'GRADED') return true
+    if (status === 'SUBMITTED' || status === 'LATE') return true
+    return hasContent || hasFiles || hasSubmittedAt
+  } catch {
+    return false
+  }
+}
+
+// 过滤：仅显示未提交且未过期的作业
+const upcomingAssignments = computed(() => {
+  const base = (studentStore.dashboardData?.upcomingAssignments) || []
+  return base.filter((a: any) => {
+    const due = a?.dueDate
+    if (isOverdue(due)) return false
+    if (isSubmittedOrGraded(String(a?.id))) return false
+    return true
+  })
+})
 const activeCourses = computed(() => (studentStore.dashboardData?.activeCourses) || [])
 const recentGrades = computed(() => (studentStore.dashboardData?.recentGrades) || [])
 const overallProgress = computed(() => Number(studentStore.dashboardData?.overallProgress || 0))
@@ -121,4 +159,22 @@ const getScoreColor = (score: number) => {
 onMounted(() => {
   studentStore.fetchDashboardData()
 })
+
+// 拉取即将到期作业对应的提交记录，便于准确过滤（避免显示已提交或已评分）
+const fetchedSubmissionIds = new Set<string>()
+watch(
+  () => studentStore.dashboardData?.upcomingAssignments,
+  async (list) => {
+    try {
+      const items = Array.isArray(list) ? list : []
+      const ids = items.map((x: any) => String(x?.id)).filter(Boolean)
+      const toFetch = ids.filter(id => !fetchedSubmissionIds.has(id))
+      if (toFetch.length > 0) {
+        await Promise.allSettled(toFetch.map(id => submissionStore.fetchSubmissionForAssignment(id)))
+        toFetch.forEach(id => fetchedSubmissionIds.add(id))
+      }
+    } catch {}
+  },
+  { immediate: true, deep: false }
+)
 </script>

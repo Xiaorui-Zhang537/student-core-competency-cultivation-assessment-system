@@ -8,7 +8,7 @@
       </user-avatar>
     </div>
     <div class="flex-1">
-      <div class="bg-gray-100 dark:bg-gray-700 rounded-lg p-3">
+      <div class="glass-regular glass-interactive rounded-xl p-3" v-glass="{ strength: 'regular', interactive: true }">
         <p class="text-sm font-semibold text-gray-900 dark:text-white">{{ comment.author?.nickname || comment.author?.username || t('shared.community.list.anonymous') }}</p>
         <p class="text-sm text-gray-700 dark:text-gray-200 mt-1">{{ comment.content }}</p>
       </div>
@@ -26,7 +26,7 @@
       </div>
       <!-- 回复输入框 -->
       <div v-if="showReplyBox" class="mt-2">
-        <textarea v-model="replyContent" rows="2" class="input w-full" :placeholder="t('shared.community.detail.writeComment')" />
+        <GlassTextarea v-model="replyContent" :rows="2" class="w-full" :placeholder="t('shared.community.detail.writeComment') as string" />
         <div class="mt-1 flex items-center gap-2">
           <emoji-picker @select="(e) => replyContent = (replyContent || '') + e" />
           <button class="btn btn-primary btn-sm" :disabled="!replyContent.trim()" @click="submitReply">{{ t('shared.community.detail.postComment') }}</button>
@@ -59,6 +59,7 @@ import EmojiPicker from '@/components/ui/EmojiPicker.vue'
 import { useRouter } from 'vue-router'
 // @ts-ignore shim for vue-i18n types in this project
 import { useI18n } from 'vue-i18n'
+import GlassTextarea from '@/components/ui/inputs/GlassTextarea.vue'
 
 defineOptions({ name: 'CommentThread' })
 
