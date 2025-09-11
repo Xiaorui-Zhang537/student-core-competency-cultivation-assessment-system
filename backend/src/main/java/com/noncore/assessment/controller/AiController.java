@@ -66,13 +66,10 @@ public class AiController extends BaseController {
             conversationService.getConversation(userId, convId);
         }
 
-        // 记录用户消息（取最后一条用户输入）
-        Long userMsgId = null;
         if (request.getMessages() != null && !request.getMessages().isEmpty()) {
             var last = request.getMessages().get(request.getMessages().size() - 1);
             if (last != null && last.getContent() != null) {
                 var m = conversationService.appendMessage(userId, convId, last.getRole(), last.getContent(), request.getAttachmentFileIds());
-                userMsgId = m.getId();
             }
         }
 

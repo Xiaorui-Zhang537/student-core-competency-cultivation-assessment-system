@@ -12,6 +12,7 @@ import com.noncore.assessment.exception.BusinessException;
 import com.noncore.assessment.exception.ErrorCode;
 import com.noncore.assessment.mapper.AbilityAnalyticsMapper;
 import com.noncore.assessment.mapper.CourseMapper;
+import com.noncore.assessment.mapper.EnrollmentMapper;
 import com.noncore.assessment.service.AbilityAnalyticsService;
 import com.noncore.assessment.service.CacheService;
 import org.springframework.stereotype.Service;
@@ -41,13 +42,16 @@ public class AbilityAnalyticsServiceImpl implements AbilityAnalyticsService {
     private final AbilityAnalyticsMapper analyticsMapper;
     private final CourseMapper courseMapper;
     private final CacheService cacheService;
+    private final EnrollmentMapper enrollmentMapper;
 
     public AbilityAnalyticsServiceImpl(AbilityAnalyticsMapper analyticsMapper,
                                        CourseMapper courseMapper,
-                                       CacheService cacheService) {
+                                       CacheService cacheService,
+                                       EnrollmentMapper enrollmentMapper) {
         this.analyticsMapper = analyticsMapper;
         this.courseMapper = courseMapper;
         this.cacheService = cacheService;
+        this.enrollmentMapper = enrollmentMapper;
     }
 
     @Override
@@ -224,8 +228,20 @@ public class AbilityAnalyticsServiceImpl implements AbilityAnalyticsService {
         Objects.requireNonNull(query.getStudentId(), "studentId required");
 
         Course course = courseMapper.selectCourseById(query.getCourseId());
-        if (course == null || !Objects.equals(course.getTeacherId(), teacherId)) {
+        if (course == null) {
             throw new BusinessException(ErrorCode.COURSE_ACCESS_DENIED);
+        }
+        // 教师侧：必须为课程任课老师；学生侧：必须为该课程已报名学生
+        if (teacherId != null) {
+            if (!Objects.equals(course.getTeacherId(), teacherId)) {
+                throw new BusinessException(ErrorCode.COURSE_ACCESS_DENIED);
+            }
+        } else {
+            // student context
+            int exists = enrollmentMapper.checkEnrollmentExists(query.getStudentId(), query.getCourseId());
+            if (exists <= 0) {
+                throw new BusinessException(ErrorCode.COURSE_ACCESS_DENIED);
+            }
         }
 
         // 校验日期跨度与区间合法性（允许为空；若存在则<=365天，end>=start）

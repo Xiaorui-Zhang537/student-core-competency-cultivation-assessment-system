@@ -12,6 +12,11 @@
     "delete": "Delete",
     "uploadImage": "Upload Image",
     "refresh": "Refresh",
+    "exportCsv": "Export CSV",
+    "exportPng": "Export PNG",
+    "askAi": "Ask AI",
+    "pleaseSelect": "Please select…",
+    "total": "Total",
     "student": {
       "home": {
         "sections": { "quickEntries": "Quick Entries" },

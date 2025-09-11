@@ -5,7 +5,6 @@ import com.noncore.assessment.dto.response.ClassPerformanceResponse;
 import com.noncore.assessment.dto.response.CourseAnalyticsResponse;
 import com.noncore.assessment.dto.response.CourseStudentPerformanceItem;
 import com.noncore.assessment.dto.response.CourseStudentPerformanceResponse;
-import com.noncore.assessment.dto.response.StudentProgressReportResponse;
 import com.noncore.assessment.entity.Assignment;
 import com.noncore.assessment.entity.Course;
 import com.noncore.assessment.entity.Grade;

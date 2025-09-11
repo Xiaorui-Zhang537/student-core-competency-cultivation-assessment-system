@@ -61,7 +61,7 @@
       }
     },
     "analysis": {
-      "title": "Learning Analytics",
+      "title": "Performance Analysis",
       "subtitle": "Understand your learning performance and trends",
       "kpiAvgScore": "Avg Score",
       "kpiCompletion": "Completion",
@@ -188,8 +188,7 @@
         "completion": "Completion Trend",
         "hours": "Hours Trend"
       }
-    }
-    ,
+    },
     "ability": {
       "title": "Ability Growth Analysis",
       "subtitle": "Visualize your ability development",
@@ -197,7 +196,16 @@
       "radar": "Ability Radar",
       "recommendations": "Recommendations",
       "noRecommendations": "No recommendations.",
-      "trend": "Ability Trend"
+      "trend": "Ability Trend",
+      "insights": {
+        "title": "Dimension Insights",
+        "empty": "No insights"
+      },
+      "course": "Course",
+      "selectCourse": "Select a course",
+      "compare": "Compare",
+      "compareSetA": "Set A",
+      "compareSetB": "Set B"
     },
     
     "grades": {
@@ -213,7 +221,9 @@
       "strengths": "Strengths",
       "improvements": "Improvements",
       "emptyTitle": "No graded assignments yet",
-      "emptyDesc": "After you submit assignments, you will see your grades here."
+      "emptyDesc": "After you submit assignments, you will see your grades here.",
+      "ungraded": "Ungraded",
+      "total": "Total"
     }
   }
 }

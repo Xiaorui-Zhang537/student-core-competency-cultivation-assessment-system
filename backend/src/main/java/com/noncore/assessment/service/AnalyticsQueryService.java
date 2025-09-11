@@ -4,8 +4,6 @@ import com.noncore.assessment.dto.response.AssignmentAnalyticsResponse;
 import com.noncore.assessment.dto.response.ClassPerformanceResponse;
 import com.noncore.assessment.dto.response.CourseAnalyticsResponse;
 import com.noncore.assessment.dto.response.CourseStudentPerformanceResponse;
-import com.noncore.assessment.dto.response.StudentProgressReportResponse;
-import java.util.Map;
 
 public interface AnalyticsQueryService {
 
