@@ -2,6 +2,14 @@
   <div class="min-h-screen p-6">
     <!-- Breadcrumb -->
     <nav class="text-sm text-gray-600 dark:text-gray-300 mb-2 flex items-center gap-1">
+      <a href="javascript:void(0)" class="hover:underline" @click.prevent="goCourses">{{ t('teacher.courses.breadcrumb') || '课程管理' }}</a>
+      <template v-if="courseTitle">
+        <ChevronRightIcon class="w-4 h-4 opacity-70" />
+        <a href="javascript:void(0)" class="hover:underline" @click.prevent="goCourseDetail">{{ courseTitle }}</a>
+      </template>
+      <ChevronRightIcon class="w-4 h-4 opacity-70" />
+      <a href="javascript:void(0)" class="hover:underline" @click.prevent="goAssignments">{{ t('teacher.assignments.breadcrumb.self') || '作业管理' }}</a>
+      <ChevronRightIcon class="w-4 h-4 opacity-70" />
       <a href="javascript:void(0)" class="hover:underline" @click.prevent="goBack">{{ t('teacher.aiGrading.title') || 'AI 批改作业' }}</a>
       <ChevronRightIcon class="w-4 h-4 opacity-70" />
       <span class="opacity-80">{{ t('teacher.aiGrading.historyTitle') || 'AI 批改历史' }}</span>
@@ -21,7 +29,6 @@
           <table class="min-w-full text-sm glass-interactive bg-white/15 dark:bg-gray-800/15 rounded-lg">
             <thead>
               <tr class="text-left text-gray-600 dark:text-gray-300">
-                <th class="py-2 pr-4">ID</th>
                 <th class="py-2 pr-4">文件名</th>
                 <th class="py-2 pr-4">模型</th>
                 <th class="py-2 pr-4">最终分</th>
@@ -31,7 +38,6 @@
             </thead>
             <tbody>
               <tr v-for="it in items" :key="it.id" class="border-t border-white/10">
-                <td class="py-2 pr-4">{{ it.id }}</td>
                 <td class="py-2 pr-4 truncate max-w-[240px]" :title="it.fileName">{{ it.fileName || '-' }}</td>
                 <td class="py-2 pr-4">{{ it.model || '-' }}</td>
                 <td class="py-2 pr-4">
@@ -45,34 +51,46 @@
                 </td>
                 <td class="py-2 pr-4">{{ formatTime(it.createdAt) }}</td>
                 <td class="py-2 pr-4">
-                  <Button size="xs" variant="indigo" @click="openDetail(it)"><EyeIcon class="w-4 h-4 mr-1" />查看</Button>
+                  <div class="flex items-center gap-2">
+                    <Button size="xs" variant="indigo" @click="openDetail(it)"><EyeIcon class="w-4 h-4 mr-1" />{{ t('common.view') || t('teacher.aiGrading.view') || '查看' }}</Button>
+                    <Button size="xs" variant="danger" @click="confirmDelete(it)"><TrashIcon class="w-4 h-4 mr-1" />{{ t('teacher.aiGrading.delete') || '删除' }}</Button>
+                  </div>
                 </td>
               </tr>
             </tbody>
           </table>
         </div>
         <div class="flex items-center justify-between mt-3 text-xs text-gray-500">
-          <div>{{ pageInfo }}</div>
+          <div class="flex items-center gap-3 whitespace-nowrap">
+            <span class="whitespace-nowrap">{{ t('teacher.assignments.pagination.perPagePrefix') || '每页显示' }}</span>
+            <div class="page-size-select rounded-md border border-white/20 bg-white/40 dark:bg-gray-800/40 backdrop-blur-sm px-1 py-0" v-glass="{ strength: 'ultraThin', interactive: true }">
+              <GlassPopoverSelect v-model="sizeStr" :options="pageSizeOptions" size="sm" width="80px" />
+            </div>
+            <span class="whitespace-nowrap">{{ t('teacher.assignments.pagination.perPageSuffix') || '条' }}</span>
+          </div>
           <div class="flex items-center gap-2">
-            <Button size="xs" variant="ghost" @click="prev" :disabled="page<=1">上一页</Button>
-            <Button size="xs" variant="ghost" @click="next" :disabled="page*size>=total">下一页</Button>
+            <Button size="xs" variant="ghost" @click="prev" :disabled="page<=1">{{ t('teacher.assignments.pagination.prev') || '上一页' }}</Button>
+            <span>{{ t('teacher.assignments.pagination.page', { page }) || `第 ${page} 页` }}</span>
+            <Button size="xs" variant="ghost" @click="next" :disabled="page*size>=total">{{ t('teacher.assignments.pagination.next') || '下一页' }}</Button>
           </div>
         </div>
       </div>
     </div>
 
     <div v-if="detail" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-      <div class="card p-4 w-full max-w-5xl max-h-[85vh] md:max-h-[80vh] overflow-y-auto overscroll-contain no-scrollbar" v-glass="{ strength: 'ultraThin', interactive: true }">
+      <div class="card p-4 w-full max-w-5xl max-h-[85vh] md:max-h-[80vh] overflow-y-auto overscroll-contain no-scrollbar" v-glass="{ strength: 'ultraThin', interactive: true }" data-export-scroll="1">
         <div class="flex items-center justify-between mb-3">
-          <h4 class="font-semibold">记录 #{{ detail.id }}</h4>
+          <h4 class="font-semibold">{{ detail.fileName || '记录' }}</h4>
           <div class="flex items-center gap-2">
             <Button size="sm" variant="primary" @click="exportDetailAsText" :disabled="!parsed"><ArrowDownTrayIcon class="w-4 h-4 mr-2" />{{ t('teacher.aiGrading.exportText') || '导出文本' }}</Button>
+            <Button size="sm" variant="success" @click="exportDetailAsPng" :disabled="!parsed"><ArrowDownTrayIcon class="w-4 h-4 mr-2" />{{ t('teacher.aiGrading.exportPng') || '导出 PNG' }}</Button>
+            <Button size="sm" variant="purple" @click="exportDetailAsPdf" :disabled="!parsed"><ArrowDownTrayIcon class="w-4 h-4 mr-2" />{{ t('teacher.aiGrading.exportPdf') || '导出 PDF' }}</Button>
             <button @click="detail=null" class="inline-flex items-center justify-center h-8 w-8 rounded-full hover:bg-black/10 dark:hover:bg-white/10 focus:outline-none" aria-label="Close">
               <XMarkIcon class="w-5 h-5" />
             </button>
           </div>
         </div>
-        <div v-if="parsed" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div v-if="parsed" ref="detailRef" class="grid grid-cols-1 md:grid-cols-2 gap-4" data-export-root="1">
           <div class="card p-3 md:col-span-2">
             <h4 class="font-semibold mb-2">{{ t('teacher.aiGrading.render.overall') }}</h4>
             <div>
@@ -119,17 +137,23 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
+import html2canvas from 'html2canvas'
+import jsPDF from 'jspdf'
 import { useI18n } from 'vue-i18n'
 import PageHeader from '@/components/ui/PageHeader.vue'
 import Button from '@/components/ui/Button.vue'
 import GlassInput from '@/components/ui/inputs/GlassInput.vue'
+import GlassPopoverSelect from '@/components/ui/filters/GlassPopoverSelect.vue'
 import { aiGradingApi } from '@/api/aiGrading.api'
 // 引入批改页的归一化与渲染逻辑（直接内嵌一份必要函数，避免循环依赖）
-import { XMarkIcon, ArrowDownTrayIcon, MagnifyingGlassIcon, EyeIcon, ChevronLeftIcon, ChevronRightIcon } from '@heroicons/vue/24/outline'
+import { XMarkIcon, ArrowDownTrayIcon, MagnifyingGlassIcon, EyeIcon, ChevronLeftIcon, ChevronRightIcon, TrashIcon } from '@heroicons/vue/24/outline'
 import { useRouter } from 'vue-router'
+import { courseApi } from '@/api/course.api'
 
 const { t } = useI18n()
 const router = useRouter()
+const courseId = ref<string>('')
+const courseTitle = ref<string>('')
 
 const q = ref('')
 const page = ref(1)
@@ -137,6 +161,8 @@ const size = ref(20)
 const total = ref(0)
 const items = ref<any[]>([])
 const detail = ref<any|null>(null)
+const deleting = ref(false)
+const detailRef = ref<HTMLElement | null>(null)
 const parsed = computed(() => {
   try {
     if (!detail.value?.rawJson) return null
@@ -156,12 +182,54 @@ const load = async () => {
 }
 const prev = async () => { if (page.value>1){ page.value--; await load() } }
 const next = async () => { if (page.value*size.value < total.value){ page.value++; await load() } }
+const onSizeChange = async () => { page.value = 1; await load() }
+
+// 玻璃选择器：每页大小
+const pageSizeOptions = [
+  { label: '10', value: '10' },
+  { label: '20', value: '20' },
+  { label: '50', value: '50' }
+]
+const sizeStr = computed({
+  get: () => String(size.value),
+  set: (v: string) => { size.value = Number(v || 20); onSizeChange() }
+})
 const openDetail = async (it: any) => {
   const resp: any = await aiGradingApi.getHistoryDetail(it.id)
   detail.value = (resp?.data ?? resp) || it
 }
-function goBack(){ router.push({ name: 'TeacherAIGrading' }) }
+function goBack(){
+  const q: any = {}
+  if (courseId.value) q.courseId = String(courseId.value)
+  router.push({ name: 'TeacherAIGrading', query: q })
+}
+function goCourses(){ router.push({ name: 'TeacherCourseManagement' }) }
+function goAssignments(){
+  const q: any = {}
+  if (courseId.value) q.courseId = String(courseId.value)
+  router.push({ name: 'TeacherAssignments', query: q })
+}
+function goCourseDetail(){
+  if (courseId.value) router.push({ name: 'TeacherCourseDetail', params: { id: courseId.value } })
+  else router.push({ name: 'TeacherCourseManagement' })
+}
 const pretty = (v: any) => { try { return JSON.stringify(JSON.parse(String(v||'')), null, 2) } catch { return String(v||'') } }
+
+async function confirmDelete(it: any) {
+  if (deleting.value) return
+  const ok = window.confirm((t('teacher.aiGrading.confirmDelete') as string) || '确认删除该记录？此操作不可恢复。')
+  if (!ok) return
+  try {
+    deleting.value = true
+    await aiGradingApi.deleteHistory(it.id)
+    // 删除本地列表项
+    items.value = items.value.filter(x => x.id !== it.id)
+  } catch (e) {
+    alert((t('teacher.aiGrading.deleteFailed') as string) || '删除失败，请稍后重试')
+  } finally {
+    deleting.value = false
+  }
+}
 
 function hasScore(row: any): boolean {
   if (typeof row?.finalScore === 'number') return true
@@ -228,6 +296,66 @@ function exportDetailAsText() {
   a.download = `${(it.fileName || 'grading').toString().replace(/\s+/g,'_')}.txt`
   a.click()
   URL.revokeObjectURL(a.href)
+}
+
+async function exportDetailAsPng() {
+  if (!detailRef.value) return
+  const node = detailRef.value
+  const it = detail.value
+  const fileBase = (it?.fileName || 'grading').toString().replace(/\s+/g, '_')
+  const canvas = await html2canvas(node as HTMLElement, { backgroundColor: null, scale: 2, useCORS: true })
+  const url = canvas.toDataURL('image/png')
+  const a = document.createElement('a')
+  a.href = url
+  a.download = `${fileBase}.png`
+  a.click()
+}
+
+async function exportDetailAsPdf() {
+  if (!detailRef.value) return
+  const node = detailRef.value
+  const it = detail.value
+  const fileBase = (it?.fileName || 'grading').toString().replace(/\s+/g, '_')
+
+  // 1) 克隆一个无滚动限制的容器，保证渲染完整高度
+  const cloned = node.cloneNode(true) as HTMLElement
+  const wrapper = document.createElement('div')
+  wrapper.style.position = 'fixed'
+  wrapper.style.left = '-99999px'
+  wrapper.style.top = '0'
+  wrapper.style.width = `${node.clientWidth}px`
+  wrapper.style.background = '#ffffff'
+  cloned.style.maxHeight = 'none'
+  cloned.style.overflow = 'visible'
+  wrapper.appendChild(cloned)
+  document.body.appendChild(wrapper)
+
+  // 2) 用 html2canvas 渲染整块内容（高分辨率）
+  const canvas = await html2canvas(cloned as HTMLElement, {
+    backgroundColor: '#ffffff',
+    scale: 2,
+    useCORS: true,
+    logging: false,
+    onclone: (doc) => {
+      const root = doc.querySelector('[data-export-root="1"]') as HTMLElement
+      if (root) {
+        root.style.maxHeight = 'none'
+        root.style.overflow = 'visible'
+      }
+      const scroller = doc.querySelector('[data-export-scroll="1"]') as HTMLElement
+      if (scroller) {
+        scroller.style.maxHeight = 'none'
+        scroller.style.overflow = 'visible'
+      }
+    }
+  })
+
+  // 3) 单页长图 PDF：使用画布像素尺寸作为 PDF 页面尺寸
+  const pdf = new jsPDF({ orientation: 'p', unit: 'px', format: [canvas.width, canvas.height], compress: true })
+  const imgData = canvas.toDataURL('image/png')
+  pdf.addImage(imgData, 'PNG', 0, 0, canvas.width, canvas.height, undefined, 'FAST')
+  pdf.save(`${fileBase}.pdf`)
+  document.body.removeChild(wrapper)
 }
 
 // 解析/归一化/渲染函数（与批改页一致的精简版）
@@ -551,12 +679,24 @@ function buildHolisticFeedback(out: any): string {
 }
 
 onMounted(load)
+onMounted(async () => {
+  const q = router.currentRoute.value.query as any
+  if (q?.courseId) {
+    courseId.value = String(q.courseId)
+    try {
+      const one: any = await courseApi.getCourseById(Number(courseId.value))
+      courseTitle.value = String(one?.data?.title || one?.title || '')
+    } catch {}
+  }
+})
 </script>
 
 <style scoped lang="postcss">
 .card { @apply bg-white/70 dark:bg-gray-800/70 rounded-xl border border-gray-200 dark:border-gray-700; }
 .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
 .no-scrollbar::-webkit-scrollbar { display: none; }
+.page-size-select :deep(.input) { height: 28px; padding-top: 0; padding-bottom: 0; }
+.page-size-select :deep(button.input) { height: 28px; }
 </style>
 
 

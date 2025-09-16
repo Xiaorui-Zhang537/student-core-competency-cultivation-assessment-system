@@ -35,6 +35,11 @@ public class AiGradingHistoryServiceImpl implements AiGradingHistoryService {
     public AiGradingHistory get(Long teacherId, Long id) {
         return mapper.getById(id, teacherId);
     }
+
+    @Override
+    public void delete(Long teacherId, Long id) {
+        mapper.deleteById(id, teacherId);
+    }
 }
 
 

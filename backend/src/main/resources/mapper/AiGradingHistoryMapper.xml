@@ -38,6 +38,10 @@
     <select id="getById" resultMap="BaseMap">
         SELECT * FROM ai_grading_history WHERE id = #{id} AND teacher_id = #{teacherId}
     </select>
+
+    <delete id="deleteById">
+        DELETE FROM ai_grading_history WHERE id = #{id} AND teacher_id = #{teacherId}
+    </delete>
 </mapper>
 
 

@@ -348,9 +348,15 @@
 			"exportJson": "Export JSON",
 			"exportCsv": "Export CSV",
 			"exportText": "Export Text",
+			"exportPng": "Export PNG",
+			"exportPdf": "Export PDF",
 			"history": "History",
 			"historyTitle": "AI Grading History",
 			"historySubtitle": "Browse past grading records",
+			"view": "View",
+			"delete": "Delete",
+			"confirmDelete": "Delete this record? This cannot be undone.",
+			"deleteFailed": "Delete failed. Please try again later.",
 			"retry": "Retry",
 			"remove": "Remove",
 			"empty": "Select a file on the left to view results",
@@ -729,14 +735,16 @@
 				"saveBinding": "Save Binding",
 				"selectMaterialShort": "Pick material",
 				"saveMaterials": "Save Materials",
-				"savePlayback": "Save Playback Settings"
+				"savePlayback": "Save Playback Settings",
+				"deleteLesson": "Delete Lesson"
 			},
 			"notFound": {
 				"title": "Course not found",
 				"desc": "Failed to load course details."
 			},
 			"confirm": {
-				"deleteFile": "Delete this file? This cannot be undone."
+				"deleteFile": "Delete this file? This cannot be undone.",
+				"deleteLesson": "Are you sure to delete this lesson? This action cannot be undone."
 			}
 			,
 			"notify": {

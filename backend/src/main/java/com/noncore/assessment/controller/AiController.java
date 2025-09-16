@@ -241,6 +241,23 @@ public class AiController extends BaseController {
         return ResponseEntity.ok(ApiResponse.success(rec));
     }
 
+    @DeleteMapping("/grade/history/{id}")
+    @PreAuthorize("hasRole('TEACHER')")
+    @Operation(summary = "AI 批改历史-删除")
+    public ResponseEntity<ApiResponse<Void>> deleteHistory(@PathVariable Long id) {
+        historyService.delete(getCurrentUserId(), id);
+        return ResponseEntity.ok(ApiResponse.success());
+    }
+
+    // 兼容某些环境禁用 DELETE 的情况，提供 POST 兜底
+    @PostMapping("/grade/history/{id}/delete")
+    @PreAuthorize("hasRole('TEACHER')")
+    @Operation(summary = "AI 批改历史-删除(POST 兼容)")
+    public ResponseEntity<ApiResponse<Void>> deleteHistoryPost(@PathVariable Long id) {
+        historyService.delete(getCurrentUserId(), id);
+        return ResponseEntity.ok(ApiResponse.success());
+    }
+
     // 会话管理
     @PostMapping("/conversations")
     @PreAuthorize("isAuthenticated()")

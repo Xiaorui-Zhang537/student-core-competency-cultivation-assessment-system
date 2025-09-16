@@ -104,7 +104,7 @@
         {{ t('shared.upload.selectedCount', { count: files.length }) }}
       </h4>
       
-      <div class="space-y-2 max-h-48 overflow-y-auto">
+      <div class="space-y-2 max-h-48 overflow-y-auto no-scrollbar pr-1">
         <div
           v-for="(file, index) in files"
           :key="index"
@@ -574,4 +574,7 @@ watch(files, (newFiles) => {
   white-space: nowrap;
   border: 0;
 }
+
+.no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+.no-scrollbar::-webkit-scrollbar { width: 0 !important; height: 0 !important; }
 </style> 

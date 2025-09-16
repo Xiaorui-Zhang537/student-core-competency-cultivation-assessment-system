@@ -7,6 +7,7 @@ public interface AiGradingHistoryService {
     void save(AiGradingHistory rec);
     PageResult<AiGradingHistory> list(Long teacherId, String q, int page, int size);
     AiGradingHistory get(Long teacherId, Long id);
+    void delete(Long teacherId, Long id);
 }
 
 

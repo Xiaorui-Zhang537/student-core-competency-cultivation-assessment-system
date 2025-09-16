@@ -17,6 +17,8 @@ public interface AiGradingHistoryMapper {
                         @Param("q") String q);
     AiGradingHistory getById(@Param("id") Long id,
                              @Param("teacherId") Long teacherId);
+    int deleteById(@Param("id") Long id,
+                   @Param("teacherId") Long teacherId);
 }
 
 

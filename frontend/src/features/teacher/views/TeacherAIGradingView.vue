@@ -1,6 +1,18 @@
 <template>
   <div class="min-h-screen p-6">
     <div class="max-w-7xl mx-auto">
+      <!-- Breadcrumb -->
+      <nav class="text-sm text-gray-600 dark:text-gray-300 mb-2 flex items-center gap-1">
+        <a href="javascript:void(0)" class="hover:underline" @click.prevent="goCourses">{{ t('teacher.courses.breadcrumb') || '课程管理' }}</a>
+        <template v-if="courseTitle">
+          <ChevronRightIcon class="w-4 h-4 opacity-70" />
+          <a href="javascript:void(0)" class="hover:underline" @click.prevent="goCourseDetail">{{ courseTitle }}</a>
+        </template>
+        <ChevronRightIcon class="w-4 h-4 opacity-70" />
+        <a href="javascript:void(0)" class="hover:underline" @click.prevent="goAssignments">{{ t('teacher.assignments.breadcrumb.self') || '作业管理' }}</a>
+        <ChevronRightIcon class="w-4 h-4 opacity-70" />
+        <span class="opacity-80">{{ t('teacher.aiGrading.title') || 'AI 批改作业' }}</span>
+      </nav>
       <PageHeader :title="t('teacher.aiGrading.title')" :subtitle="t('teacher.aiGrading.subtitle')">
         <template #actions>
           <div class="flex items-center gap-3 flex-wrap">
@@ -33,13 +45,13 @@
               <Button variant="teal" class="whitespace-nowrap" @click="openPicker"><InboxArrowDownIcon class="w-4 h-4 mr-2" />{{ t('teacher.aiGrading.pickFromSubmissions') }}</Button>
               <Button variant="danger" class="whitespace-nowrap" @click="clearAll" :disabled="files.length===0"><XMarkIcon class="w-4 h-4 mr-2" />{{ t('teacher.aiGrading.clearAll') }}</Button>
             </div>
-            <ul class="divide-y divide-gray-200">
-              <li v-for="(f, idx) in files" :key="f.id" class="py-2 flex items-center justify-between cursor-pointer hover:bg-white/5 rounded px-2"
-                  :class="idx===activeIndex ? 'ring-1 ring-primary-400/40' : ''"
+            <ul class="divide-y divide-white/10 dark:divide-white/10 max-h-60 overflow-auto no-scrollbar pr-1">
+              <li v-for="(f, idx) in files" :key="f.id" class="py-2 flex items-center justify-between cursor-pointer rounded-md px-2 transition-colors"
+                  :class="idx===activeIndex ? 'bg-primary-500/10 dark:bg-primary-400/15 border border-primary-400/60 dark:border-primary-300/60 shadow-sm' : 'border border-transparent hover:bg-white/5 dark:hover:bg-white/5'"
                   @click="activeIndex = idx">
                 <div class="min-w-0 flex-1 pr-3">
                   <div class="text-sm truncate" :title="f.name">{{ f.name }}</div>
-                  <div class="text-xs text-gray-500">{{ renderStatus(f) }}</div>
+                  <div class="text-xs text-gray-600 dark:text-gray-300">{{ renderStatus(f) }}</div>
                 </div>
                 <div class="flex items-center gap-2">
                   <Button size="sm" variant="ghost" class="whitespace-nowrap" @click.stop="retryOne(f)" v-if="f.error"><ArrowPathIcon class="w-4 h-4 mr-1" />{{ t('teacher.aiGrading.retry') }}</Button>
@@ -106,7 +118,7 @@
             <div v-else-if="activeItem.status==='pending'" class="p-4 rounded border border-gray-300/70 dark:border-white/10 bg-gray-50/60 dark:bg-white/5 text-sm text-gray-600 dark:text-gray-300">
               {{ t('teacher.aiGrading.picker.hint') || '已添加到队列，请点击开始批改。' }}
             </div>
-            <pre v-else class="card p-3 overflow-auto text-xs">{{ pretty(activeItem.result?.text || activeItem.result || '') }}</pre>
+            <pre v-else class="card p-3 overflow-auto no-scrollbar text-xs">{{ pretty(activeItem.result?.text || activeItem.result || '') }}</pre>
           </div>
           <div v-else class="card p-8 text-center text-gray-500">{{ t('teacher.aiGrading.empty') }}</div>
         </div>
@@ -154,11 +166,14 @@ import { aiApi } from '@/api/ai.api'
 import { fileApi } from '@/api/file.api'
 import GlassPopoverSelect from '@/components/ui/filters/GlassPopoverSelect.vue'
 import GlassTextarea from '@/components/ui/inputs/GlassTextarea.vue'
-import { PlayIcon, PlusIcon, InboxArrowDownIcon, XMarkIcon, ArrowPathIcon, TrashIcon, ArrowDownTrayIcon, ClockIcon } from '@heroicons/vue/24/outline'
+import { PlayIcon, PlusIcon, InboxArrowDownIcon, XMarkIcon, ArrowPathIcon, TrashIcon, ArrowDownTrayIcon, ClockIcon, ChevronRightIcon } from '@heroicons/vue/24/outline'
 import { useRouter } from 'vue-router'
+import { courseApi } from '@/api/course.api'
 
 const { t } = useI18n()
 const router = useRouter()
+const courseId = ref<string>('')
+const courseTitle = ref<string>('')
 
 type GradingItem = { id: number; name: string; status: 'pending'|'extracting'|'grading'|'done'|'error'; error?: string; result?: any; text?: string }
 const files = ref<GradingItem[]>([])
@@ -284,6 +299,9 @@ function openPicker() { modalOpen.value = true }
 
 const showPicker = ref(false) // legacy flag, not used but retained for minimal diff
 const picker = ref({ courseId: '', assignmentId: '', items: [] as any[], selected: [] as any[] })
+// 默认将弹窗选择器的课程与面包屑同步
+watch(courseId, (cid) => { if (cid) picker.value.courseId = String(cid) }, { immediate: true })
+watch(courseId, (cid) => { if (cid) picker.value.courseId = String(cid) }, { immediate: true })
 const loadSubmissions = async () => {
   if (!picker.value.assignmentId) return
   try {
@@ -388,7 +406,14 @@ function exportActiveAsText() {
   URL.revokeObjectURL(a.href)
 }
 
-function goHistory(){ router.push({ name: 'TeacherAIGradingHistory' }) }
+function goHistory(){
+  const q: any = {}
+  if (courseId.value) q.courseId = String(courseId.value)
+  router.push({ name: 'TeacherAIGradingHistory', query: q })
+}
+function goCourses(){ router.push({ name: 'TeacherCourseManagement' }) }
+function goAssignments(){ router.push({ name: 'TeacherAssignments' }) }
+function goCourseDetail(){ router.push({ name: 'TeacherCourseManagement' }) }
 
 function isJson(v: any) { return v && typeof v === 'object' && !Array.isArray(v) }
 function pretty(v: any) { try { return JSON.stringify(v, null, 2) } catch { return String(v) } }
@@ -439,7 +464,7 @@ function renderCriterion(block: any) {
       const score = sec?.score
       const ev = Array.isArray(sec?.evidence) ? sec.evidence : []
       const sug = Array.isArray(sec?.suggestions) ? sec.suggestions : []
-      const bar = typeof score === 'number' ? `<div class=\"h-2 w-40 rounded-md overflow-hidden border border-gray-300/70 dark:border-white/10 bg-gray-200/60 dark:bg-white/10 shadow-inner\"><div class=\"h-full bg-gradient-to-r from-sky-400 to-blue-500 dark:from-sky-400 dark:to-blue-500\" style=\"width:${score*20}%\"></div></div>` : ''
+      const bar = typeof score === 'number' ? `<div class=\"h-2 w-40 rounded-md overflow-hidden border border-gray-300/70 dark:border-white/10 bg-gray-200/60 dark:bg-white/10 shadow-inner\"><div class=\"h-full bg-gradient-to-r from-sky-400 to-blue-500\" style=\"width:${score*20}%\"></div></div>` : ''
       const evid = ev
         .filter((e: any) => (e && (e.quote || e.reasoning || e.conclusion)))
         .map((e: any) => `<li class="mb-1"><div class="text-xs text-gray-600 dark:text-gray-300">${e.quote ? '“'+escapeHtml(e.quote)+'”' : ''}</div><div class="text-xs">${escapeHtml(e.reasoning || '')}</div>${e.conclusion?`<div class=\"text-xs italic text-gray-500\">${escapeHtml(e.conclusion)}</div>`:''}</li>`) 
@@ -468,12 +493,35 @@ const gradingModelOptions = [
 ]
 onMounted(async () => {
   try {
-    const courseApi = (await import('@/api/course.api')).courseApi
+    const q = router.currentRoute.value.query as any
+    if (q?.courseId) {
+      courseId.value = String(q.courseId)
+      try {
+        const one: any = await courseApi.getCourseById(Number(courseId.value))
+        courseTitle.value = String(one?.data?.title || one?.title || '')
+      } catch {}
+    }
+    // 保持原有课程列表加载逻辑
+    const courseApiDynamic = (await import('@/api/course.api')).courseApi
     // 教师端应过滤只显示当前教师课程，若后端需要 teacherId 则在此补传
-    const coursesResp: any = await courseApi.getCourses({ page: 1, size: 200 })
+    const coursesResp: any = await courseApiDynamic.getCourses({ page: 1, size: 200 })
     const courses = coursesResp?.data?.items || coursesResp?.data?.list || []
     courseOptions.value = courses.map((c: any) => ({ label: c.title || c.name || `课程#${c.id}` , value: String(c.id) }))
   } catch {}
+})
+
+// 根据 courseId 与课程列表，回填课程标题
+watch([courseId, courseOptions], async () => {
+  if (!courseId.value) return
+  const hit = courseOptions.value.find(o => String(o.value) === String(courseId.value))
+  if (hit && hit.label) {
+    courseTitle.value = String(hit.label)
+  } else {
+    try {
+      const one: any = await courseApi.getCourseById(Number(courseId.value))
+      courseTitle.value = String(one?.data?.title || one?.title || '')
+    } catch {}
+  }
 })
 
 watch(() => picker.value.courseId, async (cid) => {
@@ -1112,6 +1160,8 @@ function safeJsonParse(raw: string): any {
 </script>
 
 <style scoped>
+.no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+.no-scrollbar::-webkit-scrollbar { width: 0 !important; height: 0 !important; }
 /* Neo glassy progress bar */
 .progress {
   height: 10px;

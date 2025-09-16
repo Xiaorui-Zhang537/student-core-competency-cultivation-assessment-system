@@ -185,9 +185,15 @@
 			"exportJson": "导出 JSON",
 			"exportCsv": "导出 CSV",
 			"exportText": "导出文本",
+			"exportPng": "导出 PNG",
+			"exportPdf": "导出 PDF",
 			"history": "历史记录",
 			"historyTitle": "AI 批改历史",
 			"historySubtitle": "查看过往批改记录",
+			"view": "查看",
+			"delete": "删除",
+			"confirmDelete": "确认删除该记录？此操作不可恢复。",
+			"deleteFailed": "删除失败，请稍后重试",
 			"retry": "重试",
 			"remove": "移除",
 			"empty": "请选择左侧文件或来源以查看结果",
@@ -741,14 +747,16 @@
 				"saveBinding": "保存绑定",
 				"selectMaterialShort": "选资料",
 				"saveMaterials": "保存资料绑定",
-				"savePlayback": "保存播放设置"
+				"savePlayback": "保存播放设置",
+				"deleteLesson": "删除节次"
 			},
 			"notFound": {
 				"title": "未找到课程",
 				"desc": "无法加载所请求的课程详情。"
 			},
 			"confirm": {
-				"deleteFile": "确认删除该文件？此操作不可撤销。"
+				"deleteFile": "确认删除该文件？此操作不可撤销。",
+				"deleteLesson": "确认删除该节次？此操作不可撤销。"
 			}
 			,
 			"notify": {

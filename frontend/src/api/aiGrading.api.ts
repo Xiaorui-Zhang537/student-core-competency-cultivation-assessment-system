@@ -16,7 +16,11 @@ export const aiGradingApi = {
     return api.post('/ai/grade/files', payload, { timeout: 180000 })
   },
   listHistory: (params?: { q?: string; page?: number; size?: number }) => api.get('/ai/grade/history', { params }),
-  getHistoryDetail: (id: number | string) => api.get(`/ai/grade/history/${id}`)
+  getHistoryDetail: (id: number | string) => api.get(`/ai/grade/history/${id}`),
+  deleteHistory: (id: number | string) => api.delete(`/ai/grade/history/${id}`).catch((err: any) => {
+    // 兜底走 POST 兼容路径
+    return api.post(`/ai/grade/history/${id}/delete`)
+  })
 }
 
 

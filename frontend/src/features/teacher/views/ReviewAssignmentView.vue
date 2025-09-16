@@ -23,7 +23,7 @@
               <PlusIcon class="w-4 h-4 mr-2" />
               {{ t('teacher.assignments.actions.create') }}
             </Button>
-            <Button variant="success" class="ml-2" @click="router.push({ name: 'TeacherAIGrading' })">
+            <Button variant="success" class="ml-2" @click="goAiGrading()">
               <InboxArrowDownIcon class="w-4 h-4 mr-1" />
               {{ t('teacher.aiGrading.entry') }}
             </Button>
@@ -506,6 +506,15 @@ const nextPage = () => {
   currentPage.value++;
   handleCourseFilterChange();
 };
+
+function goAiGrading() {
+  const cid = effectiveCourseId.value
+  if (cid) {
+    router.push({ name: 'TeacherAIGrading', query: { courseId: String(cid) } })
+  } else {
+    router.push({ name: 'TeacherAIGrading' })
+  }
+}
 
 onMounted(async () => {
   if (!authStore.user) {
