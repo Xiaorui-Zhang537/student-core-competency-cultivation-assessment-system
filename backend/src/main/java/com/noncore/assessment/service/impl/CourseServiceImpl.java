@@ -9,6 +9,7 @@ import com.noncore.assessment.service.CourseService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
@@ -36,17 +37,20 @@ public class CourseServiceImpl implements CourseService {
     private final com.noncore.assessment.mapper.AssignmentMapper assignmentMapper;
     private final com.noncore.assessment.mapper.SubmissionMapper submissionMapper;
     private final com.noncore.assessment.service.FileStorageService fileStorageService;
+    private final PasswordEncoder passwordEncoder;
 
     public CourseServiceImpl(CourseMapper courseMapper,
                              EnrollmentMapper enrollmentMapper,
                              com.noncore.assessment.mapper.AssignmentMapper assignmentMapper,
                              com.noncore.assessment.mapper.SubmissionMapper submissionMapper,
-                             com.noncore.assessment.service.FileStorageService fileStorageService) {
+                             com.noncore.assessment.service.FileStorageService fileStorageService,
+                             PasswordEncoder passwordEncoder) {
         this.courseMapper = courseMapper;
         this.enrollmentMapper = enrollmentMapper;
         this.assignmentMapper = assignmentMapper;
         this.submissionMapper = submissionMapper;
         this.fileStorageService = fileStorageService;
+        this.passwordEncoder = passwordEncoder;
     }
 
     @Override
@@ -286,6 +290,27 @@ public class CourseServiceImpl implements CourseService {
         }
 
         logger.info("批量更新课程状态成功: 影响{}条记录", result);
+    }
+
+    @Override
+    public void setCourseEnrollKey(Long courseId, Long teacherId, boolean require, String plaintextKey) {
+        logger.info("设置课程入课密钥: courseId={}, teacherId={}, require={}", courseId, teacherId, require);
+        Course course = checkCourseOwnership(courseId, teacherId);
+        course.setRequireEnrollKey(require);
+        if (require) {
+            if (plaintextKey != null && !plaintextKey.isBlank()) {
+                String hash = passwordEncoder.encode(plaintextKey);
+                course.setEnrollKeyHash(hash);
+            } else if (course.getEnrollKeyHash() == null || course.getEnrollKeyHash().isBlank()) {
+                throw new com.noncore.assessment.exception.BusinessException(com.noncore.assessment.exception.ErrorCode.INVALID_PARAMETER, "需要提供入课密钥");
+            }
+        } else {
+            course.setEnrollKeyHash(null);
+        }
+        course.setUpdatedAt(LocalDateTime.now());
+        if (courseMapper.updateCourse(course) <= 0) {
+            throw new com.noncore.assessment.exception.BusinessException(com.noncore.assessment.exception.ErrorCode.OPERATION_FAILED, "更新课程入课密钥失败");
+        }
     }
 
     /**

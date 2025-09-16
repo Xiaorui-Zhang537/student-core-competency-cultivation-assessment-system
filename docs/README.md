@@ -53,6 +53,19 @@
 
 ## 变更记录（Changelog）
 
+### 学生端 - 我的课程/课程详情/节次详情 + 入课密钥与播放控制（2025-09-11）
+- 新功能：
+  - 教师端“学生管理”支持设置课程入课密钥（是否需要密钥、密钥哈希保存）
+  - 学生端“我的课程”统计卡（StartCard）与 FilterBar 筛选对齐“我的作业”
+  - 课程详情：展示描述与进度、右侧课程资料下载、节次按钮统一“查看详情”
+  - 节次详情页：左侧目录、遵循教师设置的播放限制（拖动/倍速）、每 5 秒自动进度上报、学习笔记
+- 端点同步：
+  - `PUT /api/courses/{id}/enroll-key`（教师设置密钥）
+  - `POST /api/courses/{id}/enroll`（学生选课，Body 可带 `{ enrollKey }`）
+  - `PUT /lessons/{id}/content` 载荷新增 `allowScrubbing/allowSpeedChange`
+  - `POST /lessons/{id}/progress`、`POST /lessons/{id}/notes`
+- 文档：已更新 `docs/backend/api/course.md` 与 `docs/frontend/api/lesson.api.md`
+
 ### 界面标题与简介统一组件（PageHeader）（2025-09-03）
 - 统一前台页面的标题与简介展示，采用 `components/ui/PageHeader.vue` 复用组件；支持 actions 插槽放置筛选器与操作按钮；组件在 `main.ts` 已全局注册。
 - 学生端：Dashboard、Assignments、AssignmentSubmit、Courses、CourseDetail、Analysis、Analytics、Grades、Community、Ability（本次新增）、AIAssistant（共享）。

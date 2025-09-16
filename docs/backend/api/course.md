@@ -36,12 +36,17 @@ Authorization: Bearer <token>
 - 发布/下线：`POST /api/courses/{id}/publish`、`POST /api/courses/{id}/unpublish`
 
 ## 3. 选课与名单
-- `POST /api/courses/{id}/enroll`：选课
+- `POST /api/courses/{id}/enroll`：选课（如课程需要密钥，Body 传：`{ "enrollKey": "xxxx" }`）
 - `DELETE /api/courses/{id}/enroll`：退课
 - `GET /api/courses/{id}/enrollment-status`：我的选课状态
 - `GET /api/courses/{id}/students`：课程学生（教师）
 - `POST /api/courses/{id}/students/invite`：邀请学生加入
 - `DELETE /api/courses/{id}/students/{studentId}`：移除学生
+
+### 教师设置入课密钥
+- `PUT /api/courses/{id}/enroll-key`
+  - Body: `{ "require": true|false, "key": "明文密钥(可选)" }`
+  - 说明：开启后选课必须提供正确密钥；密钥仅保存哈希
 
 ## 4. 课时（示例端点，具体以 Swagger 为准）
 - `GET /api/lessons?courseId=...`：课程下课时列表

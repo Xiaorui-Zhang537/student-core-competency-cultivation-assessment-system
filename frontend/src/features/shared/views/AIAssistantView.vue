@@ -78,7 +78,7 @@
             <GlassTextarea v-model="memory.content" :rows="4" :placeholder="t('teacher.ai.memoryPlaceholder') || '个性化偏好、口吻等...'" @blur="saveMemory" />
           </div>
 
-          <div class="text-xs text-gray-600 dark:text-gray-300 rounded-lg p-3 border border-gray-100 dark:border-gray-700/60" v-glass="{ strength: 'ultraThin', interactive: false }">
+          <div class="space-y-3 text-xs text-gray-600 dark:text-gray-300 rounded-lg p-3 border border-gray-100 dark:border-gray-700/60" v-glass="{ strength: 'ultraThin', interactive: false }">
             <div class="font-semibold mb-1">{{ t('teacher.ai.modelsInfo.title') || '模型说明' }}</div>
             <ul class="list-disc pl-4 space-y-1">
               <li>{{ t('teacher.ai.modelsInfo.deepseek') }}</li>
@@ -218,6 +218,7 @@ const pendingCount = computed(() => {
   return list.length
 })
 const sending = ref(false)
+// 已移除 JSON 输出与批改 Prompt 开关
 
 const search = async () => { await ai.fetchConversations({ q: q.value }) }
 const newConv = async () => { await ai.createConversation({ title: '新对话', model: model.value }) }

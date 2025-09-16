@@ -22,6 +22,8 @@
         <result column="requirements" property="requirements"/>
         <result column="price" property="price"/>
         <result column="tags" property="tags"/>
+        <result column="require_enroll_key" property="requireEnrollKey"/>
+        <result column="enroll_key_hash" property="enrollKeyHash"/>
         <result column="enrollment_count" property="enrollmentCount"/>
         <result column="rating" property="rating"/>
         <result column="review_count" property="reviewCount"/>
@@ -49,12 +51,12 @@
         INSERT INTO courses (
             title, description, content, cover_image, teacher_id, category, difficulty, duration,
             max_students, status, start_date, end_date, objectives, requirements,
-            price, tags, enrollment_count, rating, review_count,
+            price, tags, require_enroll_key, enroll_key_hash, enrollment_count, rating, review_count,
             created_at, updated_at, deleted
         ) VALUES (
                       #{title}, #{description}, #{content}, #{coverImage}, #{teacherId}, #{category}, #{difficulty}, #{duration},
                      #{maxStudents}, #{status}, #{startDate}, #{endDate}, #{objectives}, #{requirements},
-                     #{price}, #{tags}, #{enrollmentCount}, #{rating}, #{reviewCount},
+                     #{price}, #{tags}, #{requireEnrollKey}, #{enrollKeyHash}, #{enrollmentCount}, #{rating}, #{reviewCount},
                      #{createdAt}, #{updatedAt}, #{deleted}
                  )
     </insert>
@@ -85,6 +87,8 @@
                            requirements = #{requirements},
                            price = #{price},
                            tags = #{tags},
+                           require_enroll_key = #{requireEnrollKey},
+                           enroll_key_hash = #{enrollKeyHash},
                            enrollment_count = #{enrollmentCount},
                            rating = #{rating},
                            review_count = #{reviewCount},

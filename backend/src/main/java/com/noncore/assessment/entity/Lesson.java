@@ -42,6 +42,14 @@ public class Lesson {
     @Schema(description = "视频URL", example = "https://example.com/videos/lesson1.mp4")
     private String videoUrl;
 
+    @Schema(description = "允许拖动进度条", example = "true")
+    @Builder.Default
+    private Boolean allowScrubbing = true;
+
+    @Schema(description = "允许倍速播放", example = "true")
+    @Builder.Default
+    private Boolean allowSpeedChange = true;
+
     @Schema(description = "章节时长（分钟）", example = "45")
     private Integer duration;
 

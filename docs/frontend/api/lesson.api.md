@@ -7,10 +7,12 @@
 - `updateLesson(lessonId, data)` → `PUT /lessons/{lessonId}`
 - `deleteLesson(lessonId)` → `DELETE /lessons/{lessonId}`
 - `updateLessonContent(lessonId, payload)` → `PUT /lessons/{lessonId}/content`
-  - `payload: { videoUrl?: string; materialFileIds?: number[] }`
+  - `payload: { videoUrl?: string; materialFileIds?: number[]; allowScrubbing?: boolean; allowSpeedChange?: boolean }`
 - `updateLessonOrder(lessonId, order)` → `PUT /lessons/{lessonId}/order`
 - `completeLesson(lessonId)` → `POST /lessons/{lessonId}/complete`
-- `updateLessonProgress(lessonId, progress)` → `POST /lessons/{lessonId}/progress`
+- `updateLessonProgress(lessonId, payload)` → `POST /lessons/{lessonId}/progress`（学生）
+  - `payload: { progress?: number; studyTime?: number; lastPosition?: number }`
+- `addLessonNotes(lessonId, notes)` → `POST /lessons/{lessonId}/notes`（学生）
 
 ## 最小示例
 ```ts
@@ -32,7 +34,10 @@ await lessonApi.updateLessonContent(String(created.data.id), {
 await lessonApi.completeLesson('3001')
 
 // 更新学习进度（0-100）
-await lessonApi.updateLessonProgress('3001', 80)
+await lessonApi.updateLessonProgress('3001', { progress: 80, lastPosition: 120, studyTime: 30 })
+
+// 保存笔记
+await lessonApi.addLessonNotes('3001', '本节重点：……')
 ```
 
 ## 注意事项

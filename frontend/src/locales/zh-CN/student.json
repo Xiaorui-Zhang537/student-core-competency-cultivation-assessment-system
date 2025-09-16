@@ -42,6 +42,9 @@
       "progressLabel": "学习进度",
       "storeTitle": "课程商店",
       "processing": "处理中...",
+      "note": "学习笔记",
+      "notePh": "记录你的要点...",
+      "save": "保存",
       "enrolled": "已报名",
       "enroll": "加入课程",
       "detail": {
@@ -50,6 +53,7 @@
         "markCompleted": "标记完成",
         "collapse": "收起",
         "expand": "展开",
+        "viewDetail": "查看详情",
         "materials": "资料",
         "noMaterials": "暂无资料",
         "sectionAssignments": "本节作业",
@@ -58,7 +62,10 @@
         "contactTeacher": "联系老师",
         "notFoundTitle": "课程不存在",
         "notFoundDesc": "抱歉，您访问的课程不存在或已被删除。",
-        "backToList": "返回课程列表"
+        "backToList": "返回课程列表",
+        "download": "下载",
+        "fullscreen": "全屏",
+        "noInlinePreview": "该文件不支持在线预览，请下载查看。"
       }
     },
     "analysis": {

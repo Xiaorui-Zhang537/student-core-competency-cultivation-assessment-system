@@ -1,3 +1,35 @@
+
+-- AI 批改历史表
+CREATE TABLE ai_grading_history (
+  id BIGINT PRIMARY KEY AUTO_INCREMENT,
+  teacher_id BIGINT NOT NULL,
+  file_id BIGINT NULL,
+  file_name VARCHAR(255) NULL,
+  model VARCHAR(128) NULL,
+  final_score DOUBLE NULL,
+  raw_json LONGTEXT NOT NULL,
+  created_at DATETIME NOT NULL
+);
+CREATE INDEX idx_ai_grading_history_teacher ON ai_grading_history(teacher_id, created_at);
+-- -----------------------------------------------------
+-- 节次-资料 关联表（方案A）：资料不再移动，仅建立引用关系
+-- -----------------------------------------------------
+CREATE TABLE lesson_materials (
+  lesson_id BIGINT NOT NULL,
+  file_id BIGINT NOT NULL,
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (lesson_id, file_id),
+  KEY idx_lm_file (file_id),
+  CONSTRAINT fk_lm_lesson FOREIGN KEY (lesson_id) REFERENCES lessons(id),
+  CONSTRAINT fk_lm_file FOREIGN KEY (file_id) REFERENCES file_records(id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='节次-资料 关联表';
+
+-- 迁移历史数据：把已标记为 lesson_material 的文件记录建立关联（不改变原记录）
+INSERT INTO lesson_materials (lesson_id, file_id, created_at)
+SELECT fr.related_id, fr.id, NOW()
+FROM file_records fr
+WHERE fr.related_type = 'lesson_material';
+
 -- RESOLVED: merge artifact start removed
 -- MySQL dump 10.13  Distrib 9.0.1, for macos15.1 (arm64)
 --
@@ -217,6 +249,7 @@ CREATE TABLE `courses` (
                            `id` bigint NOT NULL AUTO_INCREMENT COMMENT '课程ID',
                            `title` varchar(200) COLLATE utf8mb4_unicode_ci NOT NULL COMMENT '课程标题',
                            `description` text COLLATE utf8mb4_unicode_ci COMMENT '课程描述',
+                           `content` text COLLATE utf8mb4_unicode_ci COMMENT '课程内容',
                            `cover_image` varchar(500) COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT '课程封面图',
                            `teacher_id` bigint NOT NULL COMMENT '授课教师ID',
                            `category` varchar(100) COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT '课程分类',
@@ -230,6 +263,8 @@ CREATE TABLE `courses` (
                            `tags` varchar(500) COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT '课程标签（JSON格式）',
                            `objectives` text COLLATE utf8mb4_unicode_ci COMMENT '学习目标',
                            `requirements` text COLLATE utf8mb4_unicode_ci COMMENT '先修要求',
+                           `require_enroll_key` tinyint(1) DEFAULT '0' COMMENT '是否需要入课密钥',
+                           `enroll_key_hash` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT '入课密钥哈希',
                            `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
                            `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
                            `deleted` tinyint(1) DEFAULT '0' COMMENT '是否删除',
@@ -381,6 +416,8 @@ CREATE TABLE `lessons` (
                            `description` text COLLATE utf8mb4_unicode_ci COMMENT '章节描述',
                            `content` text COLLATE utf8mb4_unicode_ci COMMENT '章节内容',
                            `video_url` varchar(500) COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT '视频URL',
+                           `allow_scrubbing` tinyint(1) DEFAULT '1' COMMENT '允许拖动进度条',
+                           `allow_speed_change` tinyint(1) DEFAULT '1' COMMENT '允许倍速',
                            `duration` int DEFAULT NULL COMMENT '章节时长（分钟）',
                            `order_index` int NOT NULL COMMENT '排序索引',
                            `is_free` tinyint(1) DEFAULT '0' COMMENT '是否免费',
@@ -957,6 +994,8 @@ create table courses
     tags             varchar(500)                                                            null comment '课程标签（JSON格式）',
     objectives       text                                                                    null comment '学习目标',
     requirements     text                                                                    null comment '先修要求',
+    require_enroll_key tinyint(1) default 0                 null comment '是否需要入课密钥',
+    enroll_key_hash   varchar(255)                               null comment '入课密钥哈希',
     created_at       timestamp                                     default CURRENT_TIMESTAMP null comment '创建时间',
     updated_at       timestamp                                     default CURRENT_TIMESTAMP null on update CURRENT_TIMESTAMP comment '更新时间',
     deleted          tinyint(1)                                    default 0                 null comment '是否删除',
@@ -1235,9 +1274,13 @@ create table lessons
     description text                                 null comment '章节描述',
     content     text                                 null comment '章节内容',
     video_url   varchar(500)                         null comment '视频URL',
+    allow_scrubbing tinyint(1) default 1             null comment '允许拖动进度条',
+    allow_speed_change tinyint(1) default 1          null comment '允许倍速',
     duration    int                                  null comment '章节时长（分钟）',
     order_index int                                  not null comment '排序索引',
     is_free     tinyint(1) default 0                 null comment '是否免费',
+    chapter_id  bigint                               null comment '所属章节ID',
+    weight      decimal(4, 2) default 1.00           null comment '章节权重',
     created_at  timestamp  default CURRENT_TIMESTAMP null comment '创建时间',
     updated_at  timestamp  default CURRENT_TIMESTAMP null on update CURRENT_TIMESTAMP comment '更新时间',
     deleted     tinyint(1) default 0                 null comment '是否删除',

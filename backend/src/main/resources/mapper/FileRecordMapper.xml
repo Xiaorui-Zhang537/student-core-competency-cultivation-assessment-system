@@ -84,6 +84,34 @@
         WHERE id = #{id}
     </update>
 
+    <!-- 通过关联表查询某节次的资料文件 -->
+    <select id="selectByLessonId" parameterType="java.lang.Long" resultMap="FileRecordResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM file_records fr
+        INNER JOIN lesson_materials lm ON lm.file_id = fr.id
+        WHERE lm.lesson_id = #{lessonId}
+        ORDER BY fr.created_at DESC
+    </select>
+
+    <!-- 清空某节次的资料关联 -->
+    <delete id="deleteLessonMaterialsByLessonId" parameterType="java.lang.Long">
+        DELETE FROM lesson_materials WHERE lesson_id = #{lessonId}
+    </delete>
+
+    <!-- 批量建立资料关联 -->
+    <insert id="insertLessonMaterials">
+        INSERT INTO lesson_materials (lesson_id, file_id, created_at)
+        VALUES
+        <foreach collection="fileIds" item="fid" separator=",">
+            (#{lessonId}, #{fid}, NOW())
+        </foreach>
+    </insert>
+
+    <!-- 按文件ID清理关联 -->
+    <delete id="deleteLessonMaterialsByFileId" parameterType="java.lang.Long">
+        DELETE FROM lesson_materials WHERE file_id = #{fileId}
+    </delete>
+
     <!-- 删除文件记录（软删除，只做物理删除时这样写，逻辑删除需有deleted字段） -->
     <delete id="deleteFileRecord" parameterType="java.lang.Long">
         DELETE FROM file_records

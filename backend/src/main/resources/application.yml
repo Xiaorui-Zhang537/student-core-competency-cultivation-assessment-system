@@ -130,10 +130,27 @@ springdoc:
 # AI 集成配置（DeepSeek/OpenAI 兼容）
 ai:
   default-provider: ${AI_DEFAULT_PROVIDER:openrouter}
+  system-prompt-path: ${AI_SYSTEM_PROMPT_PATH:classpath:/prompts/essay_evaluation_system_prompt.txt}
+  proxy:
+    enabled: ${AI_PROXY_ENABLED:true}
+    always-use-proxy: ${AI_ALWAYS_USE_PROXY:false}
+    auto-retry-with-proxy: ${AI_AUTO_RETRY_WITH_PROXY:true}
+    host: ${AI_PROXY_HOST:127.0.0.1}
+    port: ${AI_PROXY_PORT:7897}
+    type: ${AI_PROXY_TYPE:HTTP}
+    connect-timeout-ms: ${AI_PROXY_CONNECT_TIMEOUT_MS:10000}
+    read-timeout-ms: ${AI_PROXY_READ_TIMEOUT_MS:120000}
+  retry:
+    max-attempts: ${AI_RETRY_MAX_ATTEMPTS:3}
+    backoff-ms: ${AI_RETRY_BACKOFF_MS:800}
+    jitter-ms: ${AI_RETRY_JITTER_MS:200}
   providers:
     openrouter:
       base-url: ${OPENROUTER_BASE_URL:https://openrouter.ai/api}
       api-key: ${OPENROUTER_API_KEY:${DEEPSEEK_API_KEY:}}
+    google:
+      base-url: ${GOOGLE_API_BASE_URL:https://generativelanguage.googleapis.com}
+      api-key: ${GOOGLE_API_KEY:}
   deepseek:
     model: ${DEEPSEEK_MODEL:deepseek/deepseek-chat-v3.1}
 

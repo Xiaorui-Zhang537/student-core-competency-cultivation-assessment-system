@@ -112,4 +112,24 @@ public interface FileRecordMapper {
     int updateRelatedByIds(@Param("ids") java.util.List<Long> ids,
                            @Param("newPurpose") String newPurpose,
                            @Param("newRelatedId") Long newRelatedId);
+
+    /**
+     * 通过关联表 lesson_materials 查询某节次的资料文件
+     */
+    List<FileRecord> selectByLessonId(@Param("lessonId") Long lessonId);
+
+    /**
+     * 清空某节次的资料关联
+     */
+    int deleteLessonMaterialsByLessonId(@Param("lessonId") Long lessonId);
+
+    /**
+     * 为某节次批量建立资料关联
+     */
+    int insertLessonMaterials(@Param("lessonId") Long lessonId, @Param("fileIds") java.util.List<Long> fileIds);
+
+    /**
+     * 按文件ID清理在关联表中的引用
+     */
+    int deleteLessonMaterialsByFileId(@Param("fileId") Long fileId);
 } 

@@ -10,6 +10,12 @@ public interface EnrollmentService {
     
     void enrollCourse(Long courseId, Long studentId);
 
+    /**
+     * 带入课密钥的选课。
+     * 若课程设置 requireEnrollKey=true，则必须提供正确密钥才能加入。
+     */
+    void enrollCourseWithKey(Long courseId, Long studentId, String enrollKeyPlaintext);
+
     void unenrollCourse(Long courseId, Long studentId);
 
     boolean isStudentEnrolled(Long courseId, Long studentId);

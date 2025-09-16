@@ -5,6 +5,7 @@ import com.noncore.assessment.entity.LessonProgress;
 import com.noncore.assessment.exception.BusinessException;
 import com.noncore.assessment.exception.ErrorCode;
 import com.noncore.assessment.mapper.LessonMapper;
+import com.noncore.assessment.mapper.FileRecordMapper;
 import com.noncore.assessment.mapper.LessonProgressMapper;
 import com.noncore.assessment.service.LessonService;
 import com.noncore.assessment.util.PageResult;
@@ -26,11 +27,13 @@ public class LessonServiceImpl implements LessonService {
     private static final Logger logger = LoggerFactory.getLogger(LessonServiceImpl.class);
 
     private final LessonMapper lessonMapper;
+    private final FileRecordMapper fileRecordMapper;
     private final LessonProgressMapper lessonProgressMapper;
 
-    public LessonServiceImpl(LessonMapper lessonMapper, LessonProgressMapper lessonProgressMapper) {
+    public LessonServiceImpl(LessonMapper lessonMapper, LessonProgressMapper lessonProgressMapper, FileRecordMapper fileRecordMapper) {
         this.lessonMapper = lessonMapper;
         this.lessonProgressMapper = lessonProgressMapper;
+        this.fileRecordMapper = fileRecordMapper;
     }
 
     @Override
@@ -89,6 +92,12 @@ public class LessonServiceImpl implements LessonService {
         Lesson lesson = lessonMapper.selectLessonById(lessonId);
         if (lesson == null) {
             throw new BusinessException(ErrorCode.LESSON_NOT_FOUND);
+        }
+        // 先清理 lesson_materials 关联，避免残留引用
+        try {
+            fileRecordMapper.deleteLessonMaterialsByLessonId(lessonId);
+        } catch (Exception e) {
+            logger.warn("清理 lesson_materials 关联失败(lessonId={})，继续删除章节", lessonId, e);
         }
         int result = lessonMapper.deleteLesson(lessonId);
         if (result <= 0) {
@@ -325,5 +334,34 @@ public class LessonServiceImpl implements LessonService {
         if (recent == null || recent.isEmpty()) return "";
         Object t = recent.get(0).get("lesson_title");
         return t == null ? "" : String.valueOf(t);
+    }
+
+    // ---- 资料关联（方案A）----
+    @Override
+    public void replaceLessonMaterials(Long lessonId, java.util.List<Long> fileIds, Long operatorId) {
+        logger.info("替换节次资料，lessonId={}, files={}", lessonId, fileIds);
+        // 简单安全校验：文件必须存在
+        if (fileIds != null && !fileIds.isEmpty()) {
+            java.util.List<com.noncore.assessment.entity.FileRecord> records = fileRecordMapper.selectByIds(fileIds);
+            if (records.size() != fileIds.size()) {
+                throw new BusinessException(ErrorCode.INVALID_PARAMETER, "存在无效的文件ID");
+            }
+        }
+        // 清空并重建关联
+        fileRecordMapper.deleteLessonMaterialsByLessonId(lessonId);
+        if (fileIds != null && !fileIds.isEmpty()) {
+            fileRecordMapper.insertLessonMaterials(lessonId, fileIds);
+        }
+    }
+
+    @Override
+    public java.util.List<com.noncore.assessment.entity.FileRecord> getLessonMaterials(Long lessonId) {
+        try {
+            return fileRecordMapper.selectByLessonId(lessonId);
+        } catch (Exception e) {
+            // 兼容回退：如果关联表不存在或执行异常，回退到旧查询方式
+            logger.warn("lesson_materials 查询失败，回退到 file_records.related_type=lesson_material，lessonId={}", lessonId, e);
+            return fileRecordMapper.selectByPurposeAndRelatedId("lesson_material", lessonId);
+        }
     }
 } 

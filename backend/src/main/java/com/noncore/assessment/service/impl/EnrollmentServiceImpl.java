@@ -18,6 +18,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import com.noncore.assessment.entity.Enrollment;
+import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -33,12 +34,14 @@ public class EnrollmentServiceImpl implements EnrollmentService {
     private final CourseMapper courseMapper;
     private final UserMapper userMapper;
     private final LessonProgressMapper lessonProgressMapper;
+    private final PasswordEncoder passwordEncoder;
 
-    public EnrollmentServiceImpl(EnrollmentMapper enrollmentMapper, CourseMapper courseMapper, UserMapper userMapper, LessonProgressMapper lessonProgressMapper) {
+    public EnrollmentServiceImpl(EnrollmentMapper enrollmentMapper, CourseMapper courseMapper, UserMapper userMapper, LessonProgressMapper lessonProgressMapper, PasswordEncoder passwordEncoder) {
         this.enrollmentMapper = enrollmentMapper;
         this.courseMapper = courseMapper;
         this.userMapper = userMapper;
         this.lessonProgressMapper = lessonProgressMapper;
+        this.passwordEncoder = passwordEncoder;
     }
 
     @Override
@@ -50,6 +53,9 @@ public class EnrollmentServiceImpl implements EnrollmentService {
         }
         if (!"published".equals(course.getStatus())) {
             throw new BusinessException(ErrorCode.COURSE_NOT_PUBLISHED);
+        }
+        if (Boolean.TRUE.equals(course.getRequireEnrollKey())) {
+            throw new BusinessException(ErrorCode.PERMISSION_DENIED, "该课程需要入课密钥");
         }
         if (course.getMaxStudents() != null && course.getEnrollmentCount() >= course.getMaxStudents()) {
             throw new BusinessException(ErrorCode.COURSE_FULL);
@@ -63,6 +69,42 @@ public class EnrollmentServiceImpl implements EnrollmentService {
         }
         courseMapper.updateEnrollmentCount(courseId, 1);
         logger.info("选课成功: courseId={}, studentId={}", courseId, studentId);
+    }
+
+    @Override
+    public void enrollCourseWithKey(Long courseId, Long studentId, String enrollKeyPlaintext) {
+        logger.info("学生选课(密钥): courseId={}, studentId={}", courseId, studentId);
+        Course course = courseMapper.selectCourseById(courseId);
+        if (course == null) {
+            throw new BusinessException(ErrorCode.COURSE_NOT_FOUND);
+        }
+        if (!"published".equals(course.getStatus())) {
+            throw new BusinessException(ErrorCode.COURSE_NOT_PUBLISHED);
+        }
+        if (course.getMaxStudents() != null && course.getEnrollmentCount() >= course.getMaxStudents()) {
+            throw new BusinessException(ErrorCode.COURSE_FULL);
+        }
+        if (isStudentEnrolled(courseId, studentId)) {
+            throw new BusinessException(ErrorCode.STUDENT_ALREADY_ENROLLED);
+        }
+        if (!Boolean.TRUE.equals(course.getRequireEnrollKey())) {
+            // 不需要密钥时，允许走无密钥流程
+            enrollCourse(courseId, studentId);
+            return;
+        }
+        String storedHash = course.getEnrollKeyHash();
+        if (storedHash == null || storedHash.isBlank() || enrollKeyPlaintext == null || enrollKeyPlaintext.isBlank()) {
+            throw new BusinessException(ErrorCode.PERMISSION_DENIED, "入课密钥不正确");
+        }
+        if (!passwordEncoder.matches(enrollKeyPlaintext, storedHash)) {
+            throw new BusinessException(ErrorCode.PERMISSION_DENIED, "入课密钥不正确");
+        }
+        int result = enrollmentMapper.insertEnrollment(studentId, courseId, "active", LocalDateTime.now());
+        if (result <= 0) {
+            throw new BusinessException(ErrorCode.OPERATION_FAILED, "选课失败");
+        }
+        courseMapper.updateEnrollmentCount(courseId, 1);
+        logger.info("选课成功(密钥): courseId={}, studentId={}", courseId, studentId);
     }
 
     @Override

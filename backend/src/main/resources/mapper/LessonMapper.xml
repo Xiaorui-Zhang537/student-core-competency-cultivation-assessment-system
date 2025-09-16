@@ -9,6 +9,8 @@
         <result column="description" property="description"/>
         <result column="content" property="content"/>
         <result column="video_url" property="videoUrl"/>
+        <result column="allow_scrubbing" property="allowScrubbing"/>
+        <result column="allow_speed_change" property="allowSpeedChange"/>
         <result column="duration" property="duration"/>
         <result column="order_index" property="orderIndex"/>
         <result column="is_free" property="isFree"/>
@@ -20,15 +22,15 @@
     </resultMap>
 
     <sql id="Base_Column_List">
-        id, course_id, title, description, content, video_url, duration, order_index, is_free, chapter_id, weight, created_at, updated_at, deleted
+        id, course_id, title, description, content, video_url, allow_scrubbing, allow_speed_change, duration, order_index, is_free, chapter_id, weight, created_at, updated_at, deleted
     </sql>
 
     <!-- 插入课时 -->
     <insert id="insertLesson" parameterType="com.noncore.assessment.entity.Lesson" useGeneratedKeys="true" keyProperty="id">
         INSERT INTO lessons (
-            course_id, title, description, content, video_url, duration, order_index, is_free, chapter_id, weight, created_at, updated_at, deleted
+            course_id, title, description, content, video_url, allow_scrubbing, allow_speed_change, duration, order_index, is_free, chapter_id, weight, created_at, updated_at, deleted
         ) VALUES (
-                     #{courseId}, #{title}, #{description}, #{content}, #{videoUrl}, #{duration}, #{orderIndex}, #{isFree}, #{chapterId}, COALESCE(#{weight}, 1.00), #{createdAt}, #{updatedAt}, #{deleted}
+                     #{courseId}, #{title}, #{description}, #{content}, #{videoUrl}, #{allowScrubbing}, #{allowSpeedChange}, #{duration}, #{orderIndex}, #{isFree}, #{chapterId}, COALESCE(#{weight}, 1.00), #{createdAt}, #{updatedAt}, #{deleted}
                  )
     </insert>
 
@@ -55,6 +57,8 @@
             <if test="description != null">description = #{description},</if>
             <if test="content != null">content = #{content},</if>
             <if test="videoUrl != null">video_url = #{videoUrl},</if>
+            <if test="allowScrubbing != null">allow_scrubbing = #{allowScrubbing},</if>
+            <if test="allowSpeedChange != null">allow_speed_change = #{allowSpeedChange},</if>
             <if test="duration != null">duration = #{duration},</if>
             <if test="orderIndex != null">order_index = #{orderIndex},</if>
             <if test="isFree != null">is_free = #{isFree},</if>

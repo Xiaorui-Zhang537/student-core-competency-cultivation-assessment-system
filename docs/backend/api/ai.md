@@ -131,6 +131,46 @@ curl -X PUT -H "Authorization: Bearer $TOKEN" -H "Content-Type: application/json
 ## 配置
 - `AI_DEFAULT_PROVIDER`、`OPENROUTER_API_KEY`、`DEEPSEEK_API_KEY`、`DEEPSEEK_MODEL`（见 `application.yml`）
 
+### 系统 Prompt 来源与覆盖
+- 后端每次调用大模型前，会自动从 `ai.system-prompt-path` 指定的位置读取系统 Prompt 并作为 `system` 消息注入。
+- 默认路径：`classpath:/prompts/essay_evaluation_system_prompt.txt`，可通过环境变量 `AI_SYSTEM_PROMPT_PATH` 覆盖为任意文件路径或类路径资源（支持 `classpath:` 前缀）。
+- 要求：Prompt 请使用英文维护；文件使用 UTF-8 编码；修改后无需重启即可生效（每次调用即时读取）。
+
+### AI 批改接口
+
+- 单篇文本批改（强制 JSON 输出）
+  - `POST /api/ai/grade/essay`
+  - 入参示例：
+  ```json
+  { "messages": [ { "role": "user", "content": "<essay text>" } ], "model": "deepseek/deepseek-chat-v3.1", "jsonOnly": true, "useGradingPrompt": true }
+  ```
+  - 返回：JSON 对象（按作文批改 schema）。
+
+- 批量文本批改（强制 JSON 输出）
+  - `POST /api/ai/grade/essay/batch`
+  - 入参：同上数组形式；返回：JSON 对象数组。
+
+- 按文件ID批量批改（自动抽取文档文本）
+  - `POST /api/ai/grade/files`
+  - 入参：
+  ```json
+  { "fileIds": [1,2,3], "model": "deepseek/deepseek-chat-v3.1", "jsonOnly": true, "useGradingPrompt": true }
+  ```
+  - 返回：
+  ```json
+  { "results": [ { "fileId": 1, "fileName": "essayA.docx", "result": { /* JSON 或 {text:"..."} */ }, "error": null } ] }
+  ```
+  - 说明：支持 txt/doc/docx/pdf（基于 Apache Tika），若抽取失败或上游返回非 JSON，将在对应项的 `error` 字段说明。
+
+### 通用聊天（AI 助手）扩展参数
+
+- `POST /api/ai/chat`
+- 扩展参数：
+  - `jsonOnly`（可选，布尔）：为 true 时请求上游以 `response_format=json_object` 返回结构化 JSON；失败时返回文本。
+  - `useGradingPrompt`（可选，布尔）：为 true 时在会话前注入“作文批改”系统 Prompt；为 false 时不注入。
+- 说明：
+  - 在“AI 助手”页面，这两个参数由前端开关控制；在“AI 批改作业”页面默认强制 `jsonOnly=true`、`useGradingPrompt=true`。
+
 ---
 
 ## 时序图：AI 聊天（自动建会话 + 记录消息）

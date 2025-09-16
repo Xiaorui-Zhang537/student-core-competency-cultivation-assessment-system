@@ -4,7 +4,7 @@
 
 ### 项目状态
 - 教师端：已完成
-- 学生端：开发中（Beta）
+- 学生端：已完成本次迭代（课程密钥、课程/节次、进度与笔记）
 
 ---
 
@@ -120,6 +120,52 @@ server {
 ---
 
 ## 更新日志（学生端改造）
+### 本次迭代（我的课程/课程详情/节次详情 + 入课密钥与播放控制）
+
+- 教师端
+  - 入课密钥：在“学生管理”新增“设置入课密钥”弹窗；支持开启/关闭是否需要密钥，并设置新密钥（仅保存哈希）
+    - API：`PUT /api/courses/{id}/enroll-key`（Body: `{ require: boolean, key?: string }`）
+  - 节次编辑：新增“允许拖动进度条/允许倍速”两个设置
+    - API：`PUT /api/lessons/{id}/content`（载荷新增 `allowScrubbing`、`allowSpeedChange`）
+  - 课程详情：移除冗余“课程内容”卡片，仅保留“课程描述”与“节次编辑”
+
+- 学生端
+  - 我的课程：三张统计卡替换为 `StartCard`；筛选区改为与“我的作业”一致的 `FilterBar`（关键词 + 分类）
+  - 课程详情：展示课程描述与进度；右侧显示课程资料（可下载）；节次按钮统一为“查看详情”
+  - 节次详情（新页 `/student/lessons/:id`）：
+    - 左侧目录显示同课程全部节次，支持跳转
+    - 视频播放遵循教师端设置（禁用进度拖动/禁用倍速时通过控件限制）
+    - 自动进度上报：每 5 秒上报 `{ progress, studyTime, lastPosition }`
+    - 学习笔记：底部输入框可保存
+    - API：
+      - `GET /lessons/{id}` 课节详情
+      - `POST /lessons/{id}/progress` 进度上报
+      - `POST /lessons/{id}/notes` 保存笔记
+
+- 课程选课（含密钥）
+  - 学生选课：`POST /api/courses/{id}/enroll`；当课程开启密钥，Body 传 `{ enrollKey: 'xxxx' }`
+
+- 数据库（MySQL）
+  - `courses`：新增 `require_enroll_key TINYINT(1)`、`enroll_key_hash VARCHAR(255)`
+  - `lessons`：新增 `allow_scrubbing TINYINT(1)`、`allow_speed_change TINYINT(1)`（如已存在则跳过）
+
+> 文档：
+> - Backend: `docs/backend/api/course.md`（入课密钥与选课说明已补充）
+> - Frontend: `docs/frontend/api/lesson.api.md`（播放控制/进度/笔记已补充）
+
+---
+
+### 团队公告（可复制）
+
+本次学生端功能已上线：
+- 我的课程：全新统计卡与筛选条，课程商店支持密钥选课
+- 课程详情：保留课程描述与资料下载，节次统一“查看详情”
+- 节次详情：目录导航、受限播放（拖动/倍速由教师控制）、每 5 秒自动进度上报、学习笔记
+- 教师端：
+  - 可在“学生管理”设置课程入课密钥（仅保存哈希）
+  - 可为节次设置“允许拖动/允许倍速”
+
+请老师在发布前设置好密钥策略与节次播放策略；学生若遇到选课提示“需要密钥”，请联系任课老师获取。
 - 国际化：学生端主要页面已统一采用 i18n，无中文兜底硬编码（`frontend/src/features/student/views/AnalyticsView.vue`、`AssignmentsView.vue`、`CourseDetailView.vue`、`GradesView.vue`）。
 - 语言包：补充 `student.grades.*` 文案键（中英双语）。
 - 品牌统一：统一采用玻璃拟态样式（`glass-*` 与 `v-glass`）、并复用 `components/ui` 组件。

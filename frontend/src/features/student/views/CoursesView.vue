@@ -9,42 +9,32 @@
       </template>
     </PageHeader>
 
-    <!-- Stats -->
+    <!-- Stats (StartCard) -->
     <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-      <Card class="text-center">
-        <div class="text-2xl font-bold text-blue-600">{{ activeCoursesCount }}</div>
-        <p class="text-sm text-gray-500">{{ t('student.courses.active') }}</p>
-      </Card>
-      <Card class="text-center">
-        <div class="text-2xl font-bold text-green-600">{{ completedCoursesCount }}</div>
-        <p class="text-sm text-gray-500">{{ t('student.courses.completed') }}</p>
-      </Card>
-      <Card class="text-center">
-        <div class="text-2xl font-bold text-purple-600">{{ averageProgress.toFixed(1) }}%</div>
-        <p class="text-sm text-gray-500">{{ t('student.courses.avgProgress') }}</p>
-      </Card>
+      <StartCard :value="activeCoursesCount" :label="t('student.courses.active') as string" color="blue" />
+      <StartCard :value="completedCoursesCount" :label="t('student.courses.completed') as string" color="green" />
+      <StartCard :value="`${averageProgress.toFixed(1)}%`" :label="t('student.courses.avgProgress') as string" color="purple" />
     </div>
 
-    <!-- Search and Filter -->
-    <Card class="mb-8">
-      <div class="flex flex-col md:flex-row gap-4">
-        <div class="flex-grow">
-          <input
-            v-model="searchQuery"
-            type="text"
-            :placeholder="t('student.courses.searchPlaceholder') as string"
-            class="input input--glass w-full h-10"
-            @keyup.enter="applyImmediateSearch()"
-          />
-        </div>
-        <GlassPopoverSelect
-          v-model="selectedCategory"
-          :options="[{ label: t('student.courses.allCategories') as string, value: '' }, ...categoryOptions]"
-          :placeholder="t('student.courses.allCategories') as string"
-          width="220px"
-        />
-      </div>
-    </Card>
+    <!-- Search and Filter (aligned with Assignments FilterBar) -->
+    <div class="mb-8">
+      <FilterBar class="glass-thin rounded-full">
+        <template #left>
+          <div class="relative w-80">
+            <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M9 3.5a5.5 5.5 0 100 11 5.5 5.5 0 000-11zM2 9a7 7 0 1112.452 4.391l3.328 3.329a.75.75 0 11-1.06 1.06l-3.329-3.328A7 7 0 012 9z" clip-rule="evenodd"/></svg>
+            <input v-model="searchQuery" type="text" :placeholder="t('student.courses.searchPlaceholder') as string" class="input input--glass pl-9 w-full h-10" @keyup.enter="applyImmediateSearch()" />
+          </div>
+          <div class="w-56 ml-2">
+            <GlassPopoverSelect
+              v-model="selectedCategory"
+              :options="[{ label: t('student.courses.allCategories') as string, value: '' }, ...categoryOptions]"
+              size="sm"
+              :placeholder="t('student.courses.allCategories') as string"
+            />
+          </div>
+        </template>
+      </FilterBar>
+    </div>
     
     <!-- Loading or Empty State -->
     <div v-if="!pageLoaded" class="text-center py-12">
@@ -139,8 +129,10 @@ import type { StudentCourse } from '@/types/student';
 import { t } from '@/i18n';
 import Button from '@/components/ui/Button.vue'
 import Card from '@/components/ui/Card.vue'
+import StartCard from '@/components/ui/StartCard.vue'
 import GlassPopoverSelect from '@/components/ui/filters/GlassPopoverSelect.vue'
 import PageHeader from '@/components/ui/PageHeader.vue'
+import FilterBar from '@/components/ui/filters/FilterBar.vue'
 
 const router = useRouter();
 const studentStore = useStudentStore();

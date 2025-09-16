@@ -172,6 +172,56 @@
 				"publishedMsg": "学生现在可以查看并提交此作业。"
 			}
 		},
+		"aiGrading": {
+			"pastePlaceholder": "粘贴作文文本（支持直接文本批改，无需上传文件）",
+			"addText": "添加为待批改文本",
+			"entry": "AI批改作业",
+			"title": "AI 批改作业",
+			"subtitle": "批量上传文档或从提交列表选择，自动生成结构化反馈",
+			"inputTitle": "选择批改来源",
+			"pickFromSubmissions": "从提交列表选择",
+			"clearAll": "清空",
+			"start": "开始批改",
+			"exportJson": "导出 JSON",
+			"exportCsv": "导出 CSV",
+			"exportText": "导出文本",
+			"history": "历史记录",
+			"historyTitle": "AI 批改历史",
+			"historySubtitle": "查看过往批改记录",
+			"retry": "重试",
+			"remove": "移除",
+			"empty": "请选择左侧文件或来源以查看结果",
+			"picker": {
+				"title": "选择作业提交",
+				"assignmentId": "作业ID",
+				"load": "加载提交",
+				"selectAll": "全选",
+				"addSelected": "添加已选",
+				"close": "关闭",
+				"hint": "已添加到队列，请点击开始批改。"
+			},
+			"render": {
+				"overall": "总体评价",
+				"moral_reasoning": "道德推理成熟度",
+				"attitude_development": "学习态度发展",
+				"ability_growth": "学习能力增长",
+				"strategy_optimization": "学习策略优化",
+				"dimension_averages": "维度均分",
+				"final_score": "最终得分",
+				"holistic_feedback": "总体反馈"
+			},
+			"status": {
+				"pending": "待处理",
+				"extracting": "提取文本中",
+				"grading": "批改中",
+				"done": "完成",
+				"error": "出错"
+			}
+			,
+			"progress": {
+				"label": "进度"
+			}
+		},
 		"submissions": {
 			"breadcrumb": {
 				"assignments": "作业管理",
@@ -457,7 +507,8 @@
 			"subtitle": "管理课程学生的学习进度和成绩",
 			"actions": {
 				"invite": "邀请学生",
-				"export": "导出数据"
+				"export": "导出数据",
+				"setEnrollKey": "设置入课密钥"
 			},
 			"cards": {
 				"total": "总学生数",
@@ -574,6 +625,16 @@
 				"failMsg": "获取课程学生失败"
 			}
 		},
+		"enrollKey": {
+			"title": "课程入课密钥",
+			"require": "加入课程需要密钥",
+			"keyLabel": "入课密钥",
+			"placeholder": "请输入新密钥（仅保存哈希）",
+			"tip": "若仅勾选开关不输入密钥且历史无密钥，将提示需要提供密钥。",
+			"save": "保存",
+			"saved": "入课密钥设置成功",
+			"failed": "入课密钥设置失败"
+		},
 		"studentDetail": {
 			"breadcrumb": {
 				"overview": "学生进度概览"
@@ -662,7 +723,9 @@
 				"lessonIntroPh": "输入该节的简介或说明...",
 				"bindAssignment": "绑定作业",
 				"unbound": "未绑定",
-				"noLessons": "暂无章节"
+				"noLessons": "暂无章节",
+				"allowScrubbing": "允许拖动进度条",
+				"allowSpeed": "允许倍速"
 			},
 			"actions": {
 				"reloadLessons": "刷新",
@@ -675,7 +738,10 @@
 				"useThisVideo": "使用此视频",
 				"close": "关闭",
 				"saveContent": "保存内容",
-				"saveBinding": "保存绑定"
+				"saveBinding": "保存绑定",
+				"selectMaterialShort": "选资料",
+				"saveMaterials": "保存资料绑定",
+				"savePlayback": "保存播放设置"
 			},
 			"notFound": {
 				"title": "未找到课程",

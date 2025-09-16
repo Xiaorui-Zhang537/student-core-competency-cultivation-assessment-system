@@ -52,6 +52,11 @@ public class Course {
     private Boolean deleted = false;
     private BigDecimal price;
     private String tags;
+    // 是否需要入课密钥
+    @Builder.Default
+    private Boolean requireEnrollKey = false;
+    // 入课密钥哈希（不保存明文）
+    private String enrollKeyHash;
     
     /**
      * 检查课程是否已发布

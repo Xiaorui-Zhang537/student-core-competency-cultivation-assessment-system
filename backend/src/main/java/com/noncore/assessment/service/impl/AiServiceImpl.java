@@ -15,6 +15,7 @@ import com.noncore.assessment.service.FileStorageService;
 import com.noncore.assessment.service.llm.LlmClient;
 import com.noncore.assessment.service.llm.PromptBuilder;
 import com.noncore.assessment.config.AiConfigProperties;
+import com.noncore.assessment.service.llm.PromptLoader;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
@@ -34,8 +35,10 @@ public class AiServiceImpl implements AiService {
     private final EnrollmentService enrollmentService;
     private final CourseService courseService;
     private final LlmClient deepseekClient;
+    private final com.noncore.assessment.service.llm.GeminiClient geminiClient;
     private final PromptBuilder promptBuilder;
     private final AiConfigProperties aiConfigProperties;
+    private final PromptLoader promptLoader;
     private final FileStorageService fileStorageService;
     private final AiConversationService conversationService;
 
@@ -75,8 +78,12 @@ public class AiServiceImpl implements AiService {
             }
         }
 
-        // 画像与提示词构建（文本）
-        List<Message> built = promptBuilder.buildMessages(messages, course, students);
+        // 根据请求参数决定是否注入“作文批改”系统 Prompt
+        String systemPrompt = null;
+        if (Boolean.TRUE.equals(request.getUseGradingPrompt())) {
+            systemPrompt = promptLoader.loadSystemPrompt(request.getSystemPromptPath());
+        }
+        List<Message> built = promptBuilder.buildMessages(messages, systemPrompt);
 
         // 将附件（如有）注入多模态消息结构：将最近一条 user 消息的 content 替换为 content[]，附加 image_url
         List<Map<String, Object>> payloadMessages = new java.util.ArrayList<>();
@@ -137,22 +144,98 @@ public class AiServiceImpl implements AiService {
 
         String baseUrl;
         String apiKey;
-        baseUrl = aiConfigProperties.getProviders().getOpenrouter().getBaseUrl();
-        apiKey = aiConfigProperties.getProviders().getOpenrouter().getApiKey();
+        boolean useGoogle = model != null && model.startsWith("google/");
+        if (useGoogle) {
+            baseUrl = aiConfigProperties.getProviders().getGoogle().getBaseUrl();
+            apiKey = aiConfigProperties.getProviders().getGoogle().getApiKey();
+        } else {
+            baseUrl = aiConfigProperties.getProviders().getOpenrouter().getBaseUrl();
+            apiKey = aiConfigProperties.getProviders().getOpenrouter().getApiKey();
+        }
 
         if (baseUrl == null || baseUrl.isBlank()) {
             throw new BusinessException(ErrorCode.INVALID_PARAMETER, "LLM base-url 未配置");
         }
-        try {
-            return deepseekClient.createChatCompletionRaw(payloadMessages, model, false, baseUrl, apiKey);
-        } catch (BusinessException ex) {
-            // 自动降级到 :free 变体（兼容只开通免费模型的环境），不改变前端显示
-            if (!model.endsWith(":free")) {
-                String fallbackModel = model + ":free";
-                return deepseekClient.createChatCompletionRaw(payloadMessages, fallbackModel, false, baseUrl, apiKey);
-            }
-            throw ex;
+        if (useGoogle) {
+            return geminiClient.generate(payloadMessages, model.replaceFirst("^google/", ""), Boolean.TRUE.equals(request.getJsonOnly()), baseUrl, apiKey);
         }
+        if (Boolean.TRUE.equals(request.getJsonOnly())) {
+            return deepseekClient.createChatCompletionJsonOnly(payloadMessages, model, false, baseUrl, apiKey);
+        }
+        return deepseekClient.createChatCompletionRaw(payloadMessages, model, false, baseUrl, apiKey);
+    }
+
+    @Override
+    public String generateAnswerJsonOnly(AiChatRequest request, Long teacherId) {
+        List<Message> messages = request.getMessages();
+        if (org.springframework.util.CollectionUtils.isEmpty(messages)) {
+            throw new BusinessException(ErrorCode.INVALID_PARAMETER, "messages 不能为空");
+        }
+
+        // 默认使用“作文批改”系统 Prompt
+        List<Message> built = promptBuilder.buildWithDefaultSystemPrompt(messages);
+
+        List<Map<String, Object>> payloadMessages = new java.util.ArrayList<>();
+        for (Message m : built) {
+            payloadMessages.add(java.util.Map.of(
+                    "role", m.getRole(),
+                    "content", m.getContent()
+            ));
+        }
+
+        // 多模态附件处理（若有）
+        List<Long> attachments = request.getAttachmentFileIds();
+        if (attachments != null && !attachments.isEmpty()) {
+            for (int i = payloadMessages.size() - 1; i >= 0; i--) {
+                Object role = payloadMessages.get(i).get("role");
+                if ("user".equals(String.valueOf(role))) {
+                    Object content = payloadMessages.get(i).get("content");
+                    java.util.List<Object> contentList = new java.util.ArrayList<>();
+                    if (content != null && !String.valueOf(content).isBlank()) {
+                        contentList.add(java.util.Map.of("type", "text", "text", String.valueOf(content)));
+                    }
+                    for (Long fid : attachments) {
+                        try {
+                            var info = fileStorageService.getFileInfo(fid);
+                            if (info == null || info.getMimeType() == null || !info.getMimeType().startsWith("image/")) {
+                                continue;
+                            }
+                            byte[] bytes = fileStorageService.downloadFile(fid, teacherId);
+                            String b64 = Base64.getEncoder().encodeToString(bytes);
+                            String dataUrl = "data:" + info.getMimeType() + ";base64," + b64;
+                            contentList.add(java.util.Map.of(
+                                    "type", "image_url",
+                                    "image_url", java.util.Map.of("url", dataUrl)
+                            ));
+                        } catch (Exception ignored) { }
+                    }
+                    payloadMessages.set(i, new java.util.HashMap<>(java.util.Map.of(
+                            "role", "user",
+                            "content", contentList
+                    )));
+                    break;
+                }
+            }
+        }
+
+        String model = (request.getModel() == null || request.getModel().isBlank())
+                ? aiConfigProperties.getDeepseek().getModel()
+                : request.getModel();
+
+        String baseUrl = aiConfigProperties.getProviders().getOpenrouter().getBaseUrl();
+        String apiKey = aiConfigProperties.getProviders().getOpenrouter().getApiKey();
+        boolean useGoogle2 = model != null && model.startsWith("google/");
+        if (useGoogle2) {
+            baseUrl = aiConfigProperties.getProviders().getGoogle().getBaseUrl();
+            apiKey = aiConfigProperties.getProviders().getGoogle().getApiKey();
+        }
+        if (baseUrl == null || baseUrl.isBlank()) {
+            throw new BusinessException(ErrorCode.INVALID_PARAMETER, "LLM base-url 未配置");
+        }
+        if (useGoogle2) {
+            return geminiClient.generate(payloadMessages, model.replaceFirst("^google/", ""), true, baseUrl, apiKey);
+        }
+        return deepseekClient.createChatCompletionJsonOnly(payloadMessages, model, false, baseUrl, apiKey);
     }
 }
 

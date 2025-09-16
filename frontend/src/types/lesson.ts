@@ -3,9 +3,12 @@ export interface Lesson {
   title: string;
   description: string;
   courseId: string;
-  order: number;
+  order?: number;
+  orderIndex?: number;
   videoUrl?: string;
   content?: string;
+  allowScrubbing?: boolean;
+  allowSpeedChange?: boolean;
   isPublished: boolean;
   createdAt: string;
   updatedAt: string;

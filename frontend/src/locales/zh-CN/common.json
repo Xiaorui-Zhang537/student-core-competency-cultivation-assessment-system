@@ -1,5 +1,7 @@
 {
   "common": {
+    "error": "错误",
+    "empty": "无内容",
     "cancel": "取消",
     "submit": "提交",
     "select": "选择",

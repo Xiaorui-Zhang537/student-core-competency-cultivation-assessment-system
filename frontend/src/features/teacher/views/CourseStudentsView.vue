@@ -21,6 +21,10 @@
                 <UserPlusIcon class="w-4 h-4 mr-2" />
                 {{ t('teacher.students.actions.invite') }}
               </Button>
+              <Button variant="purple" @click="openKeyModal">
+                <LockClosedIcon class="w-4 h-4 mr-2" />
+                {{ t('teacher.students.actions.setEnrollKey') }}
+              </Button>
               <Button variant="success" @click="exportData">
                 <ArrowDownTrayIcon class="w-4 h-4 mr-2" />
                 {{ t('teacher.students.actions.export') }}
@@ -360,6 +364,30 @@
         </div>
       </card>
 
+      <!-- 课程入课密钥设置弹窗 -->
+      <div v-if="showKeyModal" class="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+        <div class="bg-white dark:bg-gray-800 w-full max-w-md rounded-xl shadow-xl border border-gray-200 dark:border-gray-700">
+          <div class="p-4 border-b border-gray-200 dark:border-gray-700">
+            <h3 class="text-lg font-semibold text-gray-900 dark:text-white">{{ t('teacher.students.enrollKey.title') }}</h3>
+          </div>
+          <div class="p-4 space-y-4">
+            <label class="inline-flex items-center gap-2">
+              <input type="checkbox" v-model="requireKey" class="rounded border-gray-300 text-primary-600 focus:ring-primary-500" />
+              <span class="text-sm text-gray-700 dark:text-gray-300">{{ t('teacher.students.enrollKey.require') }}</span>
+            </label>
+            <div>
+              <label class="block text-sm mb-1">{{ t('teacher.students.enrollKey.keyLabel') }}</label>
+              <input v-model="inputKey" :disabled="!requireKey" type="password" class="input w-full" :placeholder="t('teacher.students.enrollKey.placeholder') as string" />
+              <div class="text-xs text-gray-500 mt-1">{{ t('teacher.students.enrollKey.tip') }}</div>
+            </div>
+          </div>
+          <div class="p-4 flex justify-end gap-2 border-t border-gray-200 dark:border-gray-700">
+            <Button variant="secondary" @click="closeKeyModal">{{ t('teacher.students.invite.cancel') }}</Button>
+            <Button variant="teal" :loading="savingKey" @click="saveEnrollKey">{{ t('teacher.students.enrollKey.save') }}</Button>
+          </div>
+        </div>
+      </div>
+
       <!-- 已移除卡片视图 -->
 
       <!-- 改为调用全局抽屉：删除本地 Teleport -->
@@ -379,7 +407,7 @@ import Progress from '@/components/ui/Progress.vue'
 import FilterBar from '@/components/ui/filters/FilterBar.vue'
 import GlassPopoverSelect from '@/components/ui/filters/GlassPopoverSelect.vue'
 import PageHeader from '@/components/ui/PageHeader.vue'
-import {
+import { 
   ChevronRightIcon,
   DocumentArrowDownIcon,
   UserPlusIcon,
@@ -399,6 +427,7 @@ import {
   AcademicCapIcon,
   ArrowPathIcon
 } from '@heroicons/vue/24/outline'
+import { LockClosedIcon } from '@heroicons/vue/24/outline'
 import UserAvatar from '@/components/ui/UserAvatar.vue'
 import { useChatStore } from '@/stores/chat'
 // @ts-ignore shim for vue-i18n types in this project
@@ -858,6 +887,40 @@ const exportData = async () => {
 const showInviteModal = ref(false)
 const inviteRaw = ref('')
 const inviting = ref(false)
+// 入课密钥设置
+const showKeyModal = ref(false)
+const requireKey = ref(false)
+const inputKey = ref('')
+const savingKey = ref(false)
+
+function openKeyModal() {
+  showKeyModal.value = true
+  // 预加载课程配置
+  import('@/api/course.api').then(async ({ courseApi }) => {
+    try {
+      const res: any = await courseApi.getCourseById(Number(courseId))
+      requireKey.value = Boolean((res as any)?.requireEnrollKey)
+    } catch {}
+  })
+}
+function closeKeyModal() {
+  showKeyModal.value = false
+  inputKey.value = ''
+}
+async function saveEnrollKey() {
+  if (savingKey.value) return
+  savingKey.value = true
+  try {
+    const { courseApi } = await import('@/api/course.api')
+    await courseApi.setCourseEnrollKey(courseId, requireKey.value, inputKey.value || undefined)
+    uiStore.showNotification({ type: 'success', title: t('app.notifications.success.title') as string, message: t('teacher.students.enrollKey.saved') as string })
+    closeKeyModal()
+  } catch (e: any) {
+    uiStore.showNotification({ type: 'error', title: t('app.notifications.error.title') as string, message: e?.message || t('teacher.students.enrollKey.failed') as string })
+  } finally {
+    savingKey.value = false
+  }
+}
 const parsedInviteIds = computed(() => {
   const tokens = inviteRaw.value.split(/[^0-9]+/).filter(Boolean)
   const nums = Array.from(new Set(tokens.map((t) => Number(t)).filter((n) => Number.isFinite(n))))

@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.noncore.assessment.mapper.AiGradingHistoryMapper">
+    <resultMap id="BaseMap" type="com.noncore.assessment.entity.AiGradingHistory">
+        <id column="id" property="id"/>
+        <result column="teacher_id" property="teacherId"/>
+        <result column="file_id" property="fileId"/>
+        <result column="file_name" property="fileName"/>
+        <result column="model" property="model"/>
+        <result column="final_score" property="finalScore"/>
+        <result column="raw_json" property="rawJson"/>
+        <result column="created_at" property="createdAt"/>
+    </resultMap>
+
+    <insert id="insert" parameterType="com.noncore.assessment.entity.AiGradingHistory" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO ai_grading_history(teacher_id, file_id, file_name, model, final_score, raw_json, created_at)
+        VALUES(#{teacherId}, #{fileId}, #{fileName}, #{model}, #{finalScore}, #{rawJson}, #{createdAt})
+    </insert>
+
+    <select id="listByTeacher" resultMap="BaseMap">
+        SELECT * FROM ai_grading_history
+        WHERE teacher_id = #{teacherId}
+        <if test="q != null and q != ''">
+            AND (file_name LIKE CONCAT('%', #{q}, '%') OR model LIKE CONCAT('%', #{q}, '%'))
+        </if>
+        ORDER BY id DESC
+        LIMIT #{offset}, #{size}
+    </select>
+
+    <select id="countByTeacher" resultType="long">
+        SELECT COUNT(1) FROM ai_grading_history
+        WHERE teacher_id = #{teacherId}
+        <if test="q != null and q != ''">
+            AND (file_name LIKE CONCAT('%', #{q}, '%') OR model LIKE CONCAT('%', #{q}, '%'))
+        </if>
+    </select>
+
+    <select id="getById" resultMap="BaseMap">
+        SELECT * FROM ai_grading_history WHERE id = #{id} AND teacher_id = #{teacherId}
+    </select>
+</mapper>
+
+

@@ -3,7 +3,7 @@ import { api } from './config'
 type ChatRole = 'user' | 'assistant' | 'system'
 
 export const aiApi = {
-  chat: (data: { messages: { role: ChatRole; content: string }[]; courseId?: number; studentIds?: number[]; model?: string }): Promise<{ answer: string }> => {
+  chat: (data: { messages: { role: ChatRole; content: string }[]; courseId?: number; studentIds?: number[]; model?: string; conversationId?: number; attachmentFileIds?: number[]; jsonOnly?: boolean; useGradingPrompt?: boolean }): Promise<{ answer: string }> => {
     return api.post('/ai/chat', data)
   },
   // Conversations

@@ -87,6 +87,8 @@ public class LessonController extends BaseController {
             @PathVariable Long id,
             @RequestBody Map<String, Object> body) {
         String videoUrl = body.get("videoUrl") == null ? null : String.valueOf(body.get("videoUrl"));
+        Boolean allowScrubbing = body.get("allowScrubbing") == null ? null : Boolean.valueOf(String.valueOf(body.get("allowScrubbing")));
+        Boolean allowSpeedChange = body.get("allowSpeedChange") == null ? null : Boolean.valueOf(String.valueOf(body.get("allowSpeedChange")));
         java.util.List<Long> fileIds = null;
         Object files = body.get("materialFileIds");
         if (files instanceof java.util.List<?> list) {
@@ -94,22 +96,39 @@ public class LessonController extends BaseController {
             for (Object o : list) { if (o != null) fileIds.add(Long.valueOf(String.valueOf(o))); }
         }
 
-        // 更新视频 URL
-        if (videoUrl != null) {
+        // 更新视频 URL/播放控制
+        if (videoUrl != null || allowScrubbing != null || allowSpeedChange != null) {
             Lesson l = new Lesson();
             l.setVideoUrl(videoUrl);
+            l.setAllowScrubbing(allowScrubbing);
+            l.setAllowSpeedChange(allowSpeedChange);
             lessonService.updateLesson(id, l);
         }
 
-        // 绑定资料文件（related_type = 'lesson_material'）
-        if (fileIds != null && !fileIds.isEmpty()) {
-            fileStorageService.relinkFilesTo(fileIds, "lesson_material", id, getCurrentUserId());
+        // 绑定资料文件（方案A：通过关联表 lesson_materials，不移动原文件记录）
+        if (fileIds != null) {
+            // 去重并保证为正整数
+            java.util.LinkedHashSet<Long> uniq = new java.util.LinkedHashSet<>();
+            for (Long fid : fileIds) { if (fid != null && fid > 0) uniq.add(fid); }
+            lessonService.replaceLessonMaterials(id, new java.util.ArrayList<>(uniq), getCurrentUserId());
         }
         Map<String, Object> resp = new java.util.HashMap<>();
         resp.put("lessonId", id);
         resp.put("videoUrl", videoUrl);
         resp.put("materialFileIds", fileIds == null ? java.util.Collections.emptyList() : fileIds);
+        resp.put("allowScrubbing", allowScrubbing);
+        resp.put("allowSpeedChange", allowSpeedChange);
         return ResponseEntity.ok(ApiResponse.success(resp));
+    }
+
+    /**
+     * 获取节次资料（通过关联表）
+     */
+    @GetMapping("/{id}/materials")
+    @Operation(summary = "获取节次资料", description = "返回该节次关联的所有资料文件")
+    public ResponseEntity<ApiResponse<List<com.noncore.assessment.entity.FileRecord>>> getLessonMaterials(@PathVariable Long id) {
+        List<com.noncore.assessment.entity.FileRecord> files = lessonService.getLessonMaterials(id);
+        return ResponseEntity.ok(ApiResponse.success(files));
     }
 
     /**

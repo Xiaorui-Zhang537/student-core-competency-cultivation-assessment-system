@@ -49,6 +49,7 @@
         "markCompleted": "Mark as Completed",
         "collapse": "Collapse",
         "expand": "Expand",
+        "viewDetail": "View Details",
         "materials": "Materials",
         "noMaterials": "No materials",
         "sectionAssignments": "Section Assignments",
@@ -57,7 +58,10 @@
         "contactTeacher": "Contact Teacher",
         "notFoundTitle": "Course Not Found",
         "notFoundDesc": "Sorry, the course you visited does not exist or has been removed.",
-        "backToList": "Back to Courses"
+        "backToList": "Back to Courses",
+        "download": "Download",
+        "fullscreen": "Fullscreen",
+        "noInlinePreview": "This file type cannot be previewed inline. Please download it."
       }
     },
     "analysis": {

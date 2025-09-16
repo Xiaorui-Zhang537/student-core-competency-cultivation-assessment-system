@@ -85,8 +85,16 @@ public class CourseController extends BaseController {
     @PostMapping("/{id}/enroll")
     @PreAuthorize("hasRole('STUDENT') or hasRole('ADMIN')")
     @Operation(summary = "学生选课", description = "学生报名参加课程")
-    public ResponseEntity<ApiResponse<Void>> enrollCourse(@PathVariable Long id) {
-        enrollmentService.enrollCourse(id, getCurrentUserId());
+    public ResponseEntity<ApiResponse<Void>> enrollCourse(@PathVariable Long id, @RequestBody(required = false) java.util.Map<String, Object> body) {
+        String key = null;
+        if (body != null && body.get("enrollKey") != null) {
+            key = String.valueOf(body.get("enrollKey"));
+        }
+        if (key != null && !key.isBlank()) {
+            enrollmentService.enrollCourseWithKey(id, getCurrentUserId(), key);
+        } else {
+            enrollmentService.enrollCourse(id, getCurrentUserId());
+        }
         return ResponseEntity.ok(ApiResponse.success());
     }
 
@@ -170,6 +178,22 @@ public class CourseController extends BaseController {
     @Operation(summary = "批量更新状态", description = "批量更新多个课程的状态")
     public ResponseEntity<ApiResponse<Void>> batchUpdateStatus(@RequestBody BatchCourseStatusRequest request) {
         courseService.batchUpdateStatus(request.getCourseIds(), request.getStatus());
+        return ResponseEntity.ok(ApiResponse.success());
+    }
+
+    /**
+     * 设置课程入课密钥与开关（教师）
+     */
+    @PutMapping("/{id}/enroll-key")
+    @PreAuthorize("hasRole('TEACHER') or hasRole('ADMIN')")
+    @Operation(summary = "设置课程入课密钥", description = "教师可设置是否需要入课密钥及密钥内容（仅存储哈希）")
+    public ResponseEntity<ApiResponse<Void>> setCourseEnrollKey(
+            @PathVariable("id") Long courseId,
+            @RequestBody java.util.Map<String, Object> body
+    ) {
+        boolean require = Boolean.TRUE.equals(body.get("require"));
+        String key = body.get("key") != null ? String.valueOf(body.get("key")) : null;
+        courseService.setCourseEnrollKey(courseId, getCurrentUserId(), require, key);
         return ResponseEntity.ok(ApiResponse.success());
     }
 

@@ -10,5 +10,10 @@ public interface AiService {
      * @return 模型回答
      */
     String generateAnswer(AiChatRequest request, Long teacherId);
+
+    /**
+     * 与 generateAnswer 类似，但强制模型以 JSON 对象输出（用于作文批改）。
+     */
+    String generateAnswerJsonOnly(AiChatRequest request, Long teacherId);
 }
 

@@ -111,4 +111,13 @@ public interface CourseService {
      * @param status 新状态
      */
     void batchUpdateStatus(List<Long> courseIds, String status);
+
+    /**
+     * 教师设置课程入课密钥与开关。仅课程教师可设置。
+     * @param courseId 课程ID
+     * @param teacherId 教师ID
+     * @param require 是否需要密钥
+     * @param plaintextKey 明文密钥（可为空；为空时仅关闭开关或清空密钥）
+     */
+    void setCourseEnrollKey(Long courseId, Long teacherId, boolean require, String plaintextKey);
 } 

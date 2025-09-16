@@ -23,6 +23,10 @@
               <PlusIcon class="w-4 h-4 mr-2" />
               {{ t('teacher.assignments.actions.create') }}
             </Button>
+            <Button variant="success" class="ml-2" @click="router.push({ name: 'TeacherAIGrading' })">
+              <InboxArrowDownIcon class="w-4 h-4 mr-1" />
+              {{ t('teacher.aiGrading.entry') }}
+            </Button>
           </template>
         </PageHeader>
       </div>

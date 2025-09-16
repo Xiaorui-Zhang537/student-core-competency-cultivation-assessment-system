@@ -26,8 +26,9 @@ export const courseApi = {
   },
 
   // Enrollment management
-  enrollInCourse: (courseId: number | string): Promise<ApiResponse<void>> => {
-    return api.post(`/courses/${courseId}/enroll`);
+  enrollInCourse: (courseId: number | string, enrollKey?: string): Promise<ApiResponse<void>> => {
+    const payload = enrollKey ? { enrollKey } : undefined as any
+    return api.post(`/courses/${courseId}/enroll`, payload);
   },
 
   unenrollFromCourse: (courseId: number | string): Promise<ApiResponse<void>> => {
@@ -88,5 +89,10 @@ export const courseApi = {
   // Teacher remove a student from a course
   removeStudent: (courseId: string | number, studentId: string | number): Promise<ApiResponse<void>> => {
     return api.delete(`/courses/${courseId}/students/${studentId}`);
+  },
+
+  // Teacher: set course enroll key & toggle
+  setCourseEnrollKey: (courseId: string | number, require: boolean, key?: string): Promise<ApiResponse<void>> => {
+    return api.put(`/courses/${courseId}/enroll-key`, { require, key });
   }
 };

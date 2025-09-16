@@ -51,46 +51,10 @@
                         <p class="text-sm text-gray-600">{{ lesson.description }}</p>
                       </div>
                       <div class="flex items-center gap-2">
-                        <button
-                          v-if="!lesson.isCompleted"
-                          class="btn btn-sm btn-outline-primary"
-                          @click="handleCompleteLesson(lesson.id)"
-                          :disabled="completingId === lesson.id"
-                        >
-                          {{ completingId === lesson.id ? (t('student.courses.processing') as string) : (t('student.courses.detail.markCompleted') as string) }}
-                        </button>
-                        <button class="btn btn-sm" @click="toggleLesson(lesson)">{{ expanded.has(lesson.id) ? (t('student.courses.detail.collapse') as string) : (t('student.courses.detail.expand') as string) }}</button>
+                        <button class="btn btn-sm" @click="goLessonDetail(lesson.id)">{{ t('student.courses.detail.viewDetail') }}</button>
                       </div>
                     </div>
-
-                    <div v-if="expanded.has(lesson.id)" class="mt-4 space-y-4">
-                      <div v-if="lesson.videoUrl" class="w-full">
-                        <video controls class="w-full max-h-72 rounded">
-                          <source :src="resolveVideoSrc(lesson.videoUrl)" type="video/mp4" />
-                        </video>
-                      </div>
-
-                      <div>
-                        <h4 class="font-medium mb-2">{{ t('student.courses.detail.materials') }}</h4>
-                        <ul class="list-disc pl-5 space-y-1">
-                          <li v-for="f in (lessonMaterials[lesson.id]||[])" :key="f.id">
-                            <a class="text-blue-600 hover:underline" :href="`${baseURL}/files/${f.id}/download`">{{ f.originalName || f.fileName || `#${f.id}` }}</a>
-                          </li>
-                          <li v-if="!(lessonMaterials[lesson.id]||[]).length" class="text-sm text-gray-500">{{ t('student.courses.detail.noMaterials') }}</li>
-                        </ul>
-                      </div>
-
-                      <div>
-                        <h4 class="font-medium mb-2">{{ t('student.courses.detail.sectionAssignments') }}</h4>
-                        <ul class="list-disc pl-5 space-y-1">
-                          <li v-for="a in lessonAssignments(lesson.id)" :key="a.id">
-                            <router-link class="text-blue-600 hover:underline" :to="`/student/assignments/${a.id}/submit`">{{ a.title }}</router-link>
-                            <span class="text-xs text-gray-500 ml-2" v-if="a.dueDate">{{ t('student.assignments.due') }}{{ formatDate(a.dueDate) }}</span>
-                          </li>
-                          <li v-if="lessonAssignments(lesson.id).length === 0" class="text-sm text-gray-500">{{ t('student.courses.detail.noSectionAssignments') }}</li>
-                        </ul>
-                      </div>
-                    </div>
+                    
                   </div>
                 </div>
               </div>
@@ -114,6 +78,20 @@
               </div>
             </div>
           </div>
+
+          <div class="card mt-6">
+            <div class="card-header">
+              <h3 class="text-lg font-semibold">{{ t('student.courses.detail.materials') }}</h3>
+            </div>
+            <div class="p-4">
+              <ul class="list-disc pl-5 space-y-1">
+                <li v-for="f in courseMaterials" :key="f.id">
+                  <a class="text-blue-600 hover:underline" :href="`${baseURL}/files/${f.id}/download`">{{ f.originalName || f.fileName || `#${f.id}` }}</a>
+                </li>
+                <li v-if="!courseMaterials.length" class="text-sm text-gray-500">{{ t('student.courses.detail.noMaterials') }}</li>
+              </ul>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -128,7 +106,7 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue';
-import { useRoute } from 'vue-router';
+import { useRoute, useRouter } from 'vue-router';
 import { useCourseStore } from '@/stores/course';
 import { useLessonStore } from '@/stores/lesson';
 import type { StudentLesson } from '@/types/lesson';
@@ -142,6 +120,7 @@ import { useI18n } from 'vue-i18n'
 import PageHeader from '@/components/ui/PageHeader.vue'
 
 const route = useRoute();
+const router = useRouter();
 const courseStore = useCourseStore();
 const lessonStore = useLessonStore();
 const chat = useChatStore();
@@ -152,6 +131,7 @@ const completingId = ref<string | null>(null);
 const courseProgress = ref<number>(0);
 const expanded = ref<Set<string>>(new Set());
 const lessonMaterials = ref<Record<string, any[]>>({});
+const courseMaterials = ref<any[]>([]);
 const assignments = ref<any[]>([]);
 
 // Computed Properties
@@ -160,14 +140,9 @@ const lessons = computed(() => lessonStore.lessons as StudentLesson[]);
 const completedLessonsCount = computed(() => lessons.value.filter(l => l.isCompleted).length);
 
 // Methods
-const handleCompleteLesson = async (lessonId: string) => {
-  completingId.value = lessonId;
-  const success = await lessonStore.completeLesson(lessonId);
-  if (success && course.value) {
-    await fetchCourseProgress(String(course.value.id));
-  }
-  completingId.value = null;
-};
+function goLessonDetail(lessonId: string) {
+  router.push(`/student/lessons/${lessonId}`)
+}
 
 function contactTeacher() {
   const c = course.value
@@ -192,6 +167,13 @@ onMounted(async () => {
       fetchCourseProgress(courseId),
       loadAssignments(courseId)
     ]);
+    // 加载课程资料（学生可下载）
+    try {
+      const res: any = await fileApi.getRelatedFiles('course_material', Number(courseId))
+      courseMaterials.value = res?.data || res || []
+    } catch {
+      courseMaterials.value = []
+    }
   }
 });
 

@@ -96,6 +96,10 @@
 				"deletedTitle": "Course deleted",
 				"deletedMsg": "The course has been deleted."
 			}
+			,
+			"progress": {
+				"label": "Progress"
+			}
 		},
 		"assignments": {
 			"breadcrumb": {
@@ -329,6 +333,55 @@
 				"totalEnrolled": "Total",
 				"submitted": "Submitted",
 				"unsubmitted": "Unsubmitted"
+			}
+		},
+		"aiGrading": {
+			"pastePlaceholder": "Paste essay text (grade directly without uploading file)",
+			"addText": "Add as text item",
+			"entry": "AI Grading",
+			"title": "AI Essay Grading",
+			"subtitle": "Batch upload documents or pick from submissions to generate structured feedback",
+			"inputTitle": "Choose sources",
+			"pickFromSubmissions": "Pick from submissions",
+			"clearAll": "Clear all",
+			"start": "Start grading",
+			"exportJson": "Export JSON",
+			"exportCsv": "Export CSV",
+			"exportText": "Export Text",
+			"history": "History",
+			"historyTitle": "AI Grading History",
+			"historySubtitle": "Browse past grading records",
+			"retry": "Retry",
+			"remove": "Remove",
+			"empty": "Select a file on the left to view results",
+			"picker": {
+				"title": "Select assignment submissions",
+				"assignmentId": "Assignment ID",
+				"load": "Load submissions",
+				"selectAll": "Select all",
+				"addSelected": "Add selected",
+				"close": "Close",
+				"hint": "Added to queue. Click Start grading."
+			},
+			"render": {
+				"overall": "Overall",
+				"moral_reasoning": "Moral Reasoning Maturity",
+				"attitude_development": "Learning Attitude Development",
+				"ability_growth": "Learning Ability Growth",
+				"strategy_optimization": "Learning Strategy Optimization",
+				"dimension_averages": "Dimension Averages",
+				"final_score": "Final Score",
+				"holistic_feedback": "Holistic Feedback"
+			},
+			"status": {
+				"pending": "Pending",
+				"extracting": "Extracting",
+				"grading": "Grading",
+				"done": "Done",
+				"error": "Error"
+			},
+			"progress": {
+				"label": "Progress"
 			}
 		},
 		"analytics": {
@@ -658,7 +711,9 @@
 				"lessonIntroPh": "Enter a short intro for this lesson...",
 				"bindAssignment": "Bind assignment",
 				"unbound": "Unbound",
-				"noLessons": "No lessons"
+				"noLessons": "No lessons",
+				"allowScrubbing": "Allow seeking",
+				"allowSpeed": "Allow playback speed"
 			},
 			"actions": {
 				"reloadLessons": "Reload",
@@ -671,7 +726,10 @@
 				"useThisVideo": "Use this Video",
 				"close": "Close",
 				"saveContent": "Save Content",
-				"saveBinding": "Save Binding"
+				"saveBinding": "Save Binding",
+				"selectMaterialShort": "Pick material",
+				"saveMaterials": "Save Materials",
+				"savePlayback": "Save Playback Settings"
 			},
 			"notFound": {
 				"title": "Course not found",

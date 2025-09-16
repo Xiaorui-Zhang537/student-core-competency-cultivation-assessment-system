@@ -1,5 +1,7 @@
 {
   "common": {
+    "error": "Error",
+    "empty": "Empty",
     "cancel": "Cancel",
     "submit": "Submit",
     "select": "Select",

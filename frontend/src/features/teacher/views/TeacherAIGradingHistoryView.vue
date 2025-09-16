@@ -1,0 +1,562 @@
+<template>
+  <div class="min-h-screen p-6">
+    <!-- Breadcrumb -->
+    <nav class="text-sm text-gray-600 dark:text-gray-300 mb-2 flex items-center gap-1">
+      <a href="javascript:void(0)" class="hover:underline" @click.prevent="goBack">{{ t('teacher.aiGrading.title') || 'AI 批改作业' }}</a>
+      <ChevronRightIcon class="w-4 h-4 opacity-70" />
+      <span class="opacity-80">{{ t('teacher.aiGrading.historyTitle') || 'AI 批改历史' }}</span>
+    </nav>
+    <div class="max-w-7xl mx-auto">
+      <PageHeader :title="t('teacher.aiGrading.historyTitle') || 'AI 批改历史'" :subtitle="t('teacher.aiGrading.historySubtitle') || '查看过往批改记录'">
+        <template #actions>
+          <div class="flex items-center gap-2">
+            <GlassInput v-model="q" :placeholder="t('common.search') || '搜索文件/模型'" class="w-64 h-8" />
+            <Button size="sm" variant="primary" class="h-8" @click="load"><MagnifyingGlassIcon class="w-4 h-4 mr-1" />{{ t('common.search') || '搜索' }}</Button>
+          </div>
+        </template>
+      </PageHeader>
+
+      <div class="card p-4" v-glass="{ strength: 'ultraThin', interactive: true }">
+        <div class="overflow-x-auto">
+          <table class="min-w-full text-sm glass-interactive bg-white/15 dark:bg-gray-800/15 rounded-lg">
+            <thead>
+              <tr class="text-left text-gray-600 dark:text-gray-300">
+                <th class="py-2 pr-4">ID</th>
+                <th class="py-2 pr-4">文件名</th>
+                <th class="py-2 pr-4">模型</th>
+                <th class="py-2 pr-4">最终分</th>
+                <th class="py-2 pr-4">时间</th>
+                <th class="py-2 pr-4">操作</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="it in items" :key="it.id" class="border-t border-white/10">
+                <td class="py-2 pr-4">{{ it.id }}</td>
+                <td class="py-2 pr-4 truncate max-w-[240px]" :title="it.fileName">{{ it.fileName || '-' }}</td>
+                <td class="py-2 pr-4">{{ it.model || '-' }}</td>
+                <td class="py-2 pr-4">
+                  <div v-if="hasScore(it)" class="flex items-center gap-2 w-40">
+                    <div class="h-2 flex-1 rounded-md overflow-hidden border border-gray-300/70 dark:border-white/10 bg-gray-200/60 dark:bg-white/10 shadow-inner">
+                      <div class="h-full bg-gradient-to-r from-emerald-400 to-emerald-500" :style="{ width: (resolveFinalScore(it)*20)+'%' }"></div>
+                    </div>
+                    <span class="text-xs text-gray-700 dark:text-gray-300">{{ resolveFinalScore(it).toFixed(1) }}</span>
+                  </div>
+                  <span v-else>-</span>
+                </td>
+                <td class="py-2 pr-4">{{ formatTime(it.createdAt) }}</td>
+                <td class="py-2 pr-4">
+                  <Button size="xs" variant="indigo" @click="openDetail(it)"><EyeIcon class="w-4 h-4 mr-1" />查看</Button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="flex items-center justify-between mt-3 text-xs text-gray-500">
+          <div>{{ pageInfo }}</div>
+          <div class="flex items-center gap-2">
+            <Button size="xs" variant="ghost" @click="prev" :disabled="page<=1">上一页</Button>
+            <Button size="xs" variant="ghost" @click="next" :disabled="page*size>=total">下一页</Button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div v-if="detail" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+      <div class="card p-4 w-full max-w-5xl max-h-[85vh] md:max-h-[80vh] overflow-y-auto overscroll-contain no-scrollbar" v-glass="{ strength: 'ultraThin', interactive: true }">
+        <div class="flex items-center justify-between mb-3">
+          <h4 class="font-semibold">记录 #{{ detail.id }}</h4>
+          <div class="flex items-center gap-2">
+            <Button size="sm" variant="primary" @click="exportDetailAsText" :disabled="!parsed"><ArrowDownTrayIcon class="w-4 h-4 mr-2" />{{ t('teacher.aiGrading.exportText') || '导出文本' }}</Button>
+            <button @click="detail=null" class="inline-flex items-center justify-center h-8 w-8 rounded-full hover:bg-black/10 dark:hover:bg-white/10 focus:outline-none" aria-label="Close">
+              <XMarkIcon class="w-5 h-5" />
+            </button>
+          </div>
+        </div>
+        <div v-if="parsed" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div class="card p-3 md:col-span-2">
+            <h4 class="font-semibold mb-2">{{ t('teacher.aiGrading.render.overall') }}</h4>
+            <div>
+              <div class="text-sm mb-2 flex items-center gap-3" v-if="getOverall(parsed)?.final_score != null">
+                <span>{{ t('teacher.aiGrading.render.final_score') }}: {{ overallScore(parsed) }}</span>
+                <div class="h-2 w-64 rounded-md overflow-hidden border border-gray-300/70 dark:border-white/10 bg-gray-200/60 dark:bg-white/10 shadow-inner">
+                  <div class="h-full bg-gradient-to-r from-emerald-400 to-emerald-500" :style="{ width: (Number(overallScore(parsed))*20 || 0) + '%' }"></div>
+                </div>
+              </div>
+              <div class="space-y-2 mb-2" v-if="dimensionBars(parsed)">
+                <div class="text-sm font-medium">{{ t('teacher.aiGrading.render.dimension_averages') }}</div>
+                <div v-for="row in dimensionBars(parsed)" :key="row.key" class="flex items-center gap-3">
+                  <div class="w-40 text-xs text-gray-700 dark:text-gray-300">{{ row.label }}: {{ row.value }}</div>
+                  <div class="h-2 flex-1 rounded-md overflow-hidden border border-gray-300/70 dark:border-white/10 bg-gray-200/60 dark:bg-white/10 shadow-inner">
+                    <div class="h-full bg-gradient-to-r from-indigo-400 to-indigo-500" :style="{ width: (row.value*20 || 0) + '%' }"></div>
+                  </div>
+                </div>
+              </div>
+              <div class="text-sm whitespace-pre-wrap">{{ t('teacher.aiGrading.render.holistic_feedback') }}: {{ overallFeedback(parsed) || (t('common.empty') || '无内容') }}</div>
+            </div>
+          </div>
+          <div class="card p-3" v-if="parsed?.moral_reasoning">
+            <h4 class="font-semibold mb-2">{{ t('teacher.aiGrading.render.moral_reasoning') }}</h4>
+            <div v-html="renderCriterion(parsed.moral_reasoning)"></div>
+          </div>
+          <div class="card p-3" v-if="parsed?.attitude_development">
+            <h4 class="font-semibold mb-2">{{ t('teacher.aiGrading.render.attitude_development') }}</h4>
+            <div v-html="renderCriterion(parsed.attitude_development)"></div>
+          </div>
+          <div class="card p-3" v-if="parsed?.ability_growth">
+            <h4 class="font-semibold mb-2">{{ t('teacher.aiGrading.render.ability_growth') }}</h4>
+            <div v-html="renderCriterion(parsed.ability_growth)"></div>
+          </div>
+          <div class="card p-3" v-if="parsed?.strategy_optimization">
+            <h4 class="font-semibold mb-2">{{ t('teacher.aiGrading.render.strategy_optimization') }}</h4>
+            <div v-html="renderCriterion(parsed.strategy_optimization)"></div>
+          </div>
+        </div>
+        <pre v-else class="bg-black/70 text-green-100 p-3 rounded overflow-auto text-xs max-h-[60vh]">{{ pretty(detail?.rawJson) }}</pre>
+      </div>
+    </div>
+  </div>
+</template>
+
+<script setup lang="ts">
+import { ref, computed, onMounted } from 'vue'
+import { useI18n } from 'vue-i18n'
+import PageHeader from '@/components/ui/PageHeader.vue'
+import Button from '@/components/ui/Button.vue'
+import GlassInput from '@/components/ui/inputs/GlassInput.vue'
+import { aiGradingApi } from '@/api/aiGrading.api'
+// 引入批改页的归一化与渲染逻辑（直接内嵌一份必要函数，避免循环依赖）
+import { XMarkIcon, ArrowDownTrayIcon, MagnifyingGlassIcon, EyeIcon, ChevronLeftIcon, ChevronRightIcon } from '@heroicons/vue/24/outline'
+import { useRouter } from 'vue-router'
+
+const { t } = useI18n()
+const router = useRouter()
+
+const q = ref('')
+const page = ref(1)
+const size = ref(20)
+const total = ref(0)
+const items = ref<any[]>([])
+const detail = ref<any|null>(null)
+const parsed = computed(() => {
+  try {
+    if (!detail.value?.rawJson) return null
+    const raw = String(detail.value.rawJson)
+    const obj = safeJsonParseLoose(raw)
+    return normalizeAssessment(obj)
+  } catch { return null }
+})
+
+const pageInfo = computed(() => `第 ${page.value} 页 / 共 ${Math.ceil(total.value/size.value)||1} 页`)
+
+const load = async () => {
+  const resp: any = await aiGradingApi.listHistory({ q: q.value, page: page.value, size: size.value })
+  const data = resp?.data ?? resp
+  total.value = Number(data?.total || 0)
+  items.value = data?.items || data?.list || []
+}
+const prev = async () => { if (page.value>1){ page.value--; await load() } }
+const next = async () => { if (page.value*size.value < total.value){ page.value++; await load() } }
+const openDetail = async (it: any) => {
+  const resp: any = await aiGradingApi.getHistoryDetail(it.id)
+  detail.value = (resp?.data ?? resp) || it
+}
+function goBack(){ router.push({ name: 'TeacherAIGrading' }) }
+const pretty = (v: any) => { try { return JSON.stringify(JSON.parse(String(v||'')), null, 2) } catch { return String(v||'') } }
+
+function hasScore(row: any): boolean {
+  if (typeof row?.finalScore === 'number') return true
+  // 尝试从 rawJson 中解析 overall.final_score
+  try {
+    const obj = row?.rawJson ? normalizeAssessment(safeJsonParseLoose(String(row.rawJson))) : null
+    const s = overallScore(obj)
+    return Number.isFinite(s)
+  } catch { return false }
+}
+function resolveFinalScore(row: any): number {
+  if (typeof row?.finalScore === 'number') return Number(row.finalScore)
+  try {
+    const obj = row?.rawJson ? normalizeAssessment(safeJsonParseLoose(String(row.rawJson))) : null
+    return overallScore(obj)
+  } catch { return 0 }
+}
+
+function formatTime(v: any): string {
+  const s = String(v || '')
+  return s.replace('T', ' ')
+}
+
+function exportDetailAsText() {
+  const it = detail.value
+  if (!it || !parsed.value) return
+  const res: any = parsed.value
+  const lines: string[] = []
+  const pushSec = (title: string, sec: any) => {
+    if (!sec) return
+    for (const [k, v] of Object.entries(sec)) {
+      const s = v as any
+      lines.push(`${title} - ${String(k)}: ${Number(s?.score ?? 0)}/5`)
+      const ev = Array.isArray(s?.evidence) ? s.evidence : []
+      if (ev.length) {
+        const e0 = ev[0] as any
+        if (e0?.quote) lines.push(`证据: ${String(e0.quote)}`)
+        if (e0?.reasoning) lines.push(`推理: ${String(e0.reasoning)}`)
+        if (e0?.conclusion) lines.push(`结论: ${String(e0.conclusion)}`)
+      }
+      const sug = Array.isArray(s?.suggestions) ? s.suggestions : []
+      if (sug.length) {
+        lines.push('建议:')
+        sug.forEach((x: any, idx: number) => lines.push(`${idx + 1}. ${String(x)}`))
+      }
+      lines.push('')
+    }
+  }
+  lines.push(`文件: ${it.fileName || ''}`)
+  const ov = getOverall(res) as any
+  if (ov) {
+    lines.push(`总体评分: ${Number(ov?.final_score ?? 0)}/5`)
+    if (ov?.holistic_feedback) lines.push(`总体评价: ${String(ov.holistic_feedback)}`)
+    lines.push('')
+  }
+  pushSec('道德推理', res?.moral_reasoning)
+  pushSec('学习态度', res?.attitude_development)
+  pushSec('学习能力', res?.ability_growth)
+  pushSec('学习策略', res?.strategy_optimization)
+
+  const blob = new Blob([lines.join('\n')], { type: 'text/plain;charset=utf-8' })
+  const a = document.createElement('a')
+  a.href = URL.createObjectURL(blob)
+  a.download = `${(it.fileName || 'grading').toString().replace(/\s+/g,'_')}.txt`
+  a.click()
+  URL.revokeObjectURL(a.href)
+}
+
+// 解析/归一化/渲染函数（与批改页一致的精简版）
+function safeJsonParseLoose(raw: any): any {
+  if (raw && typeof raw === 'object') return raw
+  let s = String(raw || '')
+  s = s.replace(/^\uFEFF/, '').trim()
+  const fence = /```(?:json)?\s*([\s\S]*?)```/i
+  const m = s.match(fence)
+  if (m && m[1]) s = m[1].trim()
+  const first = s.indexOf('{')
+  const last = s.lastIndexOf('}')
+  if (first >= 0 && last > first) s = s.substring(first, last + 1)
+  s = s.replace(/,\s*}/g, '}').replace(/,\s*]/g, ']')
+  return JSON.parse(s)
+}
+
+function getOverall(obj: any): any {
+  if (!obj || typeof obj !== 'object') return null
+  if ((obj as any).overall) return (obj as any).overall
+  if ((obj as any).final_score || (obj as any).holistic_feedback || (obj as any).dimension_averages) return obj
+  return null
+}
+function overallScore(obj: any): number {
+  const ov = getOverall(obj)
+  const n = Number(ov?.final_score)
+  return Number.isFinite(n) ? n : 0
+}
+function overallFeedback(obj: any): string {
+  const ov = getOverall(obj)
+  return String(ov?.holistic_feedback || '')
+}
+function dimensionBars(obj: any): Array<{ key: string; label: string; value: number }> | null {
+  try {
+    const ov = getOverall(obj)
+    const dm = ov?.dimension_averages
+    if (!dm) return null
+    return [
+      { key: 'moral_reasoning', label: t('teacher.aiGrading.render.moral_reasoning') as string, value: Number(dm.moral_reasoning ?? 0) },
+      { key: 'attitude', label: t('teacher.aiGrading.render.attitude_development') as string, value: Number(dm.attitude ?? 0) },
+      { key: 'ability', label: t('teacher.aiGrading.render.ability_growth') as string, value: Number(dm.ability ?? 0) },
+      { key: 'strategy', label: t('teacher.aiGrading.render.strategy_optimization') as string, value: Number(dm.strategy ?? 0) }
+    ]
+  } catch { return null }
+}
+function renderCriterion(block: any) {
+  try {
+    const sections: string[] = []
+    for (const [k, v] of Object.entries(block || {})) {
+      const sec = v as any
+      const score = sec?.score
+      const ev = Array.isArray(sec?.evidence) ? sec.evidence : []
+      const sug = Array.isArray(sec?.suggestions) ? sec.suggestions : []
+      const bar = typeof score === 'number' ? `<div class="h-2 w-40 rounded-md overflow-hidden border border-gray-300/70 dark:border-white/10 bg-gray-200/60 dark:bg-white/10 shadow-inner"><div class=\"h-full bg-gradient-to-r from-sky-400 to-blue-500 dark:from-sky-400 dark:to-blue-500\" style=\"width:${score*20}%\"></div></div>` : ''
+      const evid = ev
+        .filter((e: any) => (e && (e.quote || e.reasoning || e.conclusion)))
+        .map((e: any) => `<li class="mb-1"><div class="text-xs text-gray-600 dark:text-gray-300">${e.quote ? '“'+escapeHtml(e.quote)+'”' : ''}</div><div class="text-xs">${escapeHtml(e.reasoning || '')}</div>${e.conclusion?`<div class=\"text-xs italic text-gray-500\">${escapeHtml(e.conclusion)}</div>`:''}</li>`) 
+        .join('')
+      const sugg = sug.map((s: any) => `<li class="mb-1 text-xs">${escapeHtml(String(s))}</li>`).join('')
+      sections.push(`<div class="space-y-2"><div class="text-sm font-medium">${escapeHtml(String(k))} ${score!=null?`(${score}/5)`:''}</div>${bar}<div><div class="text-xs font-semibold mt-2">Evidence</div><ul>${evid}</ul></div><div><div class="text-xs font-semibold mt-2">Suggestions</div><ul>${sugg}</ul></div></div>`)
+    }
+    return sections.join('')
+  } catch { return `<pre class="text-xs">${escapeHtml(pretty(block))}</pre>` }
+}
+function escapeHtml(s: string) {
+  return String(s)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/\"/g, '&quot;')
+    .replace(/'/g, '&#39;')
+}
+
+function normalizeAssessment(obj: any) {
+  try {
+    if (obj == null) return obj
+    if (typeof obj === 'string') return obj
+    if (Array.isArray((obj as any).evaluation_result)) {
+      return normalizeFromEvaluationArray((obj as any).evaluation_result)
+    }
+    if ((obj as any).evaluation && typeof (obj as any).evaluation === 'object') {
+      // 宽松与对象两种
+      const ev = (obj as any).evaluation
+      if (ev?.dimensions) return normalizeFromEvaluationDimensions(ev)
+      return normalizeFromEvaluationObject(ev)
+    }
+    if ((obj as any).evaluation_results && typeof (obj as any).evaluation_results === 'object') {
+      return normalizeFromEvaluationResults((obj as any).evaluation_results)
+    }
+    if ((obj as any).moral_reasoning_maturity || (obj as any).learning_attitude_development || (obj as any).learning_ability_growth || (obj as any).learning_strategy_optimization) {
+      return normalizeFromSnakeDimensions(obj)
+    }
+    const hasCore = (o: any) => !!(o && (o.moral_reasoning || o.attitude_development || o.ability_growth || o.strategy_optimization || o.overall))
+    if (hasCore(obj)) return obj
+    return obj
+  } catch { return obj }
+}
+
+function normalizeFromEvaluationArray(arr: any[]) {
+  const out: any = { moral_reasoning: {}, attitude_development: {}, ability_growth: {}, strategy_optimization: {} }
+  const getSec = (raw: any) => {
+    const score = Number(raw?.score ?? 0)
+    const ev = raw?.evidence
+    const evidence = Array.isArray(ev?.quotes)
+      ? ev.quotes.map((q: any) => ({ quote: String(q), reasoning: String(ev?.reasoning || ''), conclusion: String(ev?.conclusion || '') }))
+      : [{ quote: '', reasoning: String(typeof ev === 'string' ? ev : ''), conclusion: '' }]
+    const sraw = raw?.suggestions
+    const suggestions = Array.isArray(sraw) ? sraw : (sraw ? [String(sraw)] : [])
+    return { score, evidence, suggestions }
+  }
+  const mapDim = (name: string) => {
+    const n = (name || '').toLowerCase()
+    if (n.includes('moral')) return 'moral_reasoning'
+    if (n.includes('attitude')) return 'attitude_development'
+    if (n.includes('ability')) return 'ability_growth'
+    if (n.includes('strategy')) return 'strategy_optimization'
+    return ''
+  }
+  const mapId = (dimKey: string, id: string) => {
+    const i = (id || '').toUpperCase()
+    const tbl: Record<string, Record<string, string>> = {
+      moral_reasoning: { '1A': 'stage_level', '1B': 'foundations_balance', '1C': 'argument_chain' },
+      attitude_development: { '2A': 'emotional_engagement', '2B': 'resilience', '2C': 'focus_flow' },
+      ability_growth: { '3A': 'blooms_level', '3B': 'metacognition', '3C': 'transfer' },
+      strategy_optimization: { '4A': 'diversity', '4B': 'depth', '4C': 'self_regulation' }
+    }
+    return tbl[dimKey]?.[i] || ''
+  }
+  for (const g of (arr || [])) {
+    const dimKey = mapDim(g?.dimension || '')
+    if (!dimKey) continue
+    const bucket: any = out[dimKey]
+    const items = Array.isArray(g?.sub_criteria) ? g.sub_criteria : []
+    for (const it of items) {
+      const secKey = mapId(dimKey, String(it?.id || ''))
+      if (!secKey) continue
+      bucket[secKey] = getSec(it)
+    }
+  }
+  const avg = (nums: number[]) => { const arrv = nums.filter(n => Number.isFinite(n)); if (!arrv.length) return 0; return Math.round((arrv.reduce((a, b) => a + b, 0) / arrv.length) * 10) / 10 }
+  const mrAvg = avg([ Number(out.moral_reasoning?.stage_level?.score), Number(out.moral_reasoning?.foundations_balance?.score), Number(out.moral_reasoning?.argument_chain?.score) ])
+  const adAvg = avg([ Number(out.attitude_development?.emotional_engagement?.score), Number(out.attitude_development?.resilience?.score), Number(out.attitude_development?.focus_flow?.score) ])
+  const agAvg = avg([ Number(out.ability_growth?.blooms_level?.score), Number(out.ability_growth?.metacognition?.score), Number(out.ability_growth?.transfer?.score) ])
+  const soAvg = avg([ Number(out.strategy_optimization?.diversity?.score), Number(out.strategy_optimization?.depth?.score), Number(out.strategy_optimization?.self_regulation?.score) ])
+  const finalScore = avg([mrAvg, adAvg, agAvg, soAvg])
+  out.overall = { dimension_averages: { moral_reasoning: mrAvg, attitude: adAvg, ability: agAvg, strategy: soAvg }, final_score: finalScore, holistic_feedback: '' }
+  out.overall.holistic_feedback = buildHolisticFeedback(out)
+  return out
+}
+
+function normalizeFromEvaluationObject(evaluation: any) {
+  const toSec = (raw: any) => {
+    const score = Number(raw?.score ?? 0)
+    const ev = raw?.evidence
+    const evidence = Array.isArray(ev?.quotes)
+      ? ev.quotes.map((q: any) => ({ quote: String(q), reasoning: String(ev?.reasoning || ''), conclusion: String(ev?.conclusion || '') }))
+      : [{ quote: '', reasoning: String(typeof ev === 'string' ? ev : ''), conclusion: '' }]
+    const sraw = raw?.suggestions
+    const suggestions = Array.isArray(sraw) ? sraw : (sraw ? [String(sraw)] : [])
+    return { score, evidence, suggestions }
+  }
+  const findGroup = (obj: any, hint: string) => { const k = Object.keys(obj || {}).find(k => k.toLowerCase().includes(hint)); return k ? obj[k] : undefined }
+  const moral = evaluation["1) Moral Reasoning Maturity"] || findGroup(evaluation, 'moral reasoning') || {}
+  const attitude = evaluation["2) Learning Attitude Development"] || findGroup(evaluation, 'attitude') || {}
+  const ability = evaluation["3) Learning Ability Growth"] || findGroup(evaluation, 'ability') || {}
+  const strategy = evaluation["4) Learning Strategy Optimization"] || findGroup(evaluation, 'strategy') || {}
+  const out: any = {}
+  out.moral_reasoning = { stage_level: toSec(moral['1A. Stage Level Identification'] || moral['1A']), foundations_balance: toSec(moral['1B. Breadth of Moral Foundations'] || moral['1B']), argument_chain: toSec(moral['1C. Argument Chains and Counter-arguments'] || moral['1C']) }
+  out.attitude_development = { emotional_engagement: toSec(attitude['2A. Emotional Engagement'] || attitude['2A']), resilience: toSec(attitude['2B. Persistence/Resilience'] || attitude['2B']), focus_flow: toSec(attitude['2C. Task Focus / Flow'] || attitude['2C']) }
+  out.ability_growth = { blooms_level: toSec(ability['3A. Bloom’s Taxonomy Progression'] || ability['3A']), metacognition: toSec(ability['3B. Metacognition (Plan–Monitor–Revise)'] || ability['3B']), transfer: toSec(ability['3C. Knowledge Transfer'] || ability['3C']) }
+  out.strategy_optimization = { diversity: toSec(strategy['4A. Strategy Diversity'] || strategy['4A']), depth: toSec(strategy['4B. Depth of Processing'] || strategy['4B']), self_regulation: toSec(strategy['4C. Self-Regulation'] || strategy['4C']) }
+  const avg = (nums: number[]) => { const arr = nums.filter(n => Number.isFinite(n)); if (!arr.length) return 0; return Math.round((arr.reduce((a, b) => a + b, 0) / arr.length) * 10) / 10 }
+  const mrAvg = avg([ Number(out.moral_reasoning?.stage_level?.score), Number(out.moral_reasoning?.foundations_balance?.score), Number(out.moral_reasoning?.argument_chain?.score) ])
+  const adAvg = avg([ Number(out.attitude_development?.emotional_engagement?.score), Number(out.attitude_development?.resilience?.score), Number(out.attitude_development?.focus_flow?.score) ])
+  const agAvg = avg([ Number(out.ability_growth?.blooms_level?.score), Number(out.ability_growth?.metacognition?.score), Number(out.ability_growth?.transfer?.score) ])
+  const soAvg = avg([ Number(out.strategy_optimization?.diversity?.score), Number(out.strategy_optimization?.depth?.score), Number(out.strategy_optimization?.self_regulation?.score) ])
+  const finalScore = avg([mrAvg, adAvg, agAvg, soAvg])
+  out.overall = { dimension_averages: { moral_reasoning: mrAvg, attitude: adAvg, ability: agAvg, strategy: soAvg }, final_score: finalScore, holistic_feedback: '' }
+  out.overall.holistic_feedback = buildHolisticFeedback(out)
+  return out
+}
+
+function normalizeFromEvaluationResults(er: any) {
+  const lcKeys = Object.keys(er || {})
+  const findKey = (includes: string[]) => { const inc = includes.map(s => s.toLowerCase()); return lcKeys.find(k => inc.every(t => k.toLowerCase().includes(t))) }
+  const getSec = (group: any, hints: string[]) => {
+    if (!group || typeof group !== 'object') return undefined
+    const keys = Object.keys(group)
+    const target = keys.find(k => hints.every(h => k.toLowerCase().includes(h)))
+    const sec = target ? group[target] : undefined
+    if (!sec || typeof sec !== 'object') return undefined
+    const score = Number((sec as any).score ?? 0)
+    const rawEv = (sec as any).evidence
+    const evArr = Array.isArray(rawEv) ? rawEv : (rawEv ? [rawEv] : [])
+    const evidence = evArr.map((e: any) => { if (e && typeof e === 'object') return e; return { quote: '', reasoning: String(e ?? ''), conclusion: '' } })
+    const rawSug = (sec as any).suggestions
+    const suggestions = Array.isArray(rawSug) ? rawSug : (rawSug ? [rawSug] : [])
+    return { score, evidence, suggestions }
+  }
+  const pickGroup = (tokens: string[]) => { const k = findKey(tokens); return k ? er[k] : undefined }
+  const moral = pickGroup(['moral', 'reasoning'])
+  const attitude = pickGroup(['attitude']) || pickGroup(['learning', 'attitude']) || pickGroup(['attitude', 'development'])
+  const ability = pickGroup(['ability', 'growth']) || pickGroup(['learning', 'ability'])
+  const strategy = pickGroup(['strategy']) || pickGroup(['strategy', 'optimization'])
+  const out: any = {}
+  out.moral_reasoning = { stage_level: getSec(moral, ['stage', 'level']) || { score: 0, evidence: [], suggestions: [] }, foundations_balance: getSec(moral, ['foundation']) || { score: 0, evidence: [], suggestions: [] }, argument_chain: getSec(moral, ['argument']) || getSec(moral, ['counter']) || { score: 0, evidence: [], suggestions: [] } }
+  out.attitude_development = { emotional_engagement: getSec(attitude, ['emotional']) || { score: 0, evidence: [], suggestions: [] }, resilience: getSec(attitude, ['resilience']) || getSec(attitude, ['persistence']) || { score: 0, evidence: [], suggestions: [] }, focus_flow: getSec(attitude, ['flow']) || getSec(attitude, ['focus']) || getSec(attitude, ['task']) || { score: 0, evidence: [], suggestions: [] } }
+  out.ability_growth = { blooms_level: getSec(ability, ['bloom']) || getSec(ability, ['taxonomy']) || { score: 0, evidence: [], suggestions: [] }, metacognition: getSec(ability, ['metacognition']) || { score: 0, evidence: [], suggestions: [] }, transfer: getSec(ability, ['transfer']) || { score: 0, evidence: [], suggestions: [] } }
+  out.strategy_optimization = { diversity: getSec(strategy, ['diversity']) || { score: 0, evidence: [], suggestions: [] }, depth: getSec(strategy, ['depth']) || { score: 0, evidence: [], suggestions: [] }, self_regulation: getSec(strategy, ['self', 'regulation']) || { score: 0, evidence: [], suggestions: [] } }
+  const avg = (nums: number[]) => { const arr = nums.filter(n => Number.isFinite(n)); if (!arr.length) return 0; return Math.round((arr.reduce((a, b) => a + b, 0) / arr.length) * 10) / 10 }
+  const mrAvg = avg([ Number(out.moral_reasoning.stage_level.score), Number(out.moral_reasoning.foundations_balance.score), Number(out.moral_reasoning.argument_chain.score) ])
+  const adAvg = avg([ Number(out.attitude_development.emotional_engagement.score), Number(out.attitude_development.resilience.score), Number(out.attitude_development.focus_flow.score) ])
+  const agAvg = avg([ Number(out.ability_growth.blooms_level.score), Number(out.ability_growth.metacognition.score), Number(out.ability_growth.transfer.score) ])
+  const soAvg = avg([ Number(out.strategy_optimization.diversity.score), Number(out.strategy_optimization.depth.score), Number(out.strategy_optimization.self_regulation.score) ])
+  const finalScore = avg([mrAvg, adAvg, agAvg, soAvg])
+  out.overall = { dimension_averages: { moral_reasoning: mrAvg, attitude: adAvg, ability: agAvg, strategy: soAvg }, final_score: finalScore, holistic_feedback: '' }
+  if (!out.overall.holistic_feedback) out.overall.holistic_feedback = buildHolisticFeedback(out)
+  return out
+}
+
+function normalizeFromEvaluationDimensions(evaluation: any) {
+  const dims = evaluation?.dimensions || {}
+  const findDim = (names: string[]) => { const keys = Object.keys(dims); for (const k of keys) { const kl = k.toLowerCase(); for (const n of names) { if (kl.includes(n.toLowerCase())) return dims[k] } } return undefined }
+  const toSec = (raw: any) => {
+    const score = Number(raw?.score ?? 0)
+    const quotes = Array.isArray(raw?.evidence?.quotes) ? raw.evidence.quotes : []
+    const reasoning = String(raw?.reasoning || '')
+    const conclusion = String(raw?.conclusion || '')
+    const evidence = quotes.length ? quotes.map((q: any) => ({ quote: String(q), reasoning, conclusion })) : [{ quote: '', reasoning, conclusion }]
+    const sraw = (raw?.suggestions)
+    const suggestions = Array.isArray(sraw) ? sraw : (sraw ? [sraw] : [])
+    return { score, evidence, suggestions }
+  }
+  const moral = findDim(['moral reasoning'])
+  const attitude = findDim(['learning attitude'])
+  const ability = findDim(['learning ability'])
+  const strategy = findDim(['strategy'])
+  const out: any = {}
+  out.moral_reasoning = { stage_level: toSec(moral?.['1A']), foundations_balance: toSec(moral?.['1B']), argument_chain: toSec(moral?.['1C']) }
+  out.attitude_development = { emotional_engagement: toSec(attitude?.['2A']), resilience: toSec(attitude?.['2B']), focus_flow: toSec(attitude?.['2C']) }
+  out.ability_growth = { blooms_level: toSec(ability?.['3A']), metacognition: toSec(ability?.['3B']), transfer: toSec(ability?.['3C']) }
+  out.strategy_optimization = { diversity: toSec(strategy?.['4A']), depth: toSec(strategy?.['4B']), self_regulation: toSec(strategy?.['4C']) }
+  const avg = (nums: number[]) => { const arr = nums.filter(n => Number.isFinite(n)); if (!arr.length) return 0; return Math.round((arr.reduce((a, b) => a + b, 0) / arr.length) * 10) / 10 }
+  const mrAvg = avg([ Number(out.moral_reasoning.stage_level?.score), Number(out.moral_reasoning.foundations_balance?.score), Number(out.moral_reasoning.argument_chain?.score) ])
+  const adAvg = avg([ Number(out.attitude_development.emotional_engagement?.score), Number(out.attitude_development.resilience?.score), Number(out.attitude_development.focus_flow?.score) ])
+  const agAvg = avg([ Number(out.ability_growth.blooms_level?.score), Number(out.ability_growth.metacognition?.score), Number(out.ability_growth.transfer?.score) ])
+  const soAvg = avg([ Number(out.strategy_optimization.diversity?.score), Number(out.strategy_optimization.depth?.score), Number(out.strategy_optimization.self_regulation?.score) ])
+  const finalScore = avg([mrAvg, adAvg, agAvg, soAvg])
+  out.overall = { dimension_averages: { moral_reasoning: mrAvg, attitude: adAvg, ability: agAvg, strategy: soAvg }, final_score: finalScore, holistic_feedback: '' }
+  out.overall.holistic_feedback = buildHolisticFeedback(out)
+  return out
+}
+
+function normalizeFromSnakeDimensions(obj: any) {
+  const toSec = (raw: any) => {
+    const score = Number(raw?.score ?? 0)
+    const ev = raw?.evidence
+    let evidence: any[] = []
+    if (Array.isArray(ev)) evidence = ev
+    else if (ev) { const parsed = parseEvidenceString(String(ev)); evidence = parsed.length ? parsed : [{ quote: '', reasoning: String(ev), conclusion: '' }] }
+    const sraw = (raw?.suggestions)
+    const suggestions = Array.isArray(sraw) ? sraw : (sraw ? [sraw] : [])
+    return { score, evidence, suggestions }
+  }
+  const mr = obj.moral_reasoning_maturity || {}
+  const ad = obj.learning_attitude_development || {}
+  const ag = obj.learning_ability_growth || {}
+  const so = obj.learning_strategy_optimization || {}
+  const out: any = {}
+  out.moral_reasoning = { stage_level: toSec(mr['1A_stage_level_identification'] || mr['1a'] || {}), foundations_balance: toSec(mr['1B_breadth_of_moral_foundations'] || mr['1b'] || {}), argument_chain: toSec(mr['1C_argument_chains_and_counter_arguments'] || mr['1c'] || {}) }
+  out.attitude_development = { emotional_engagement: toSec(ad['2A_emotional_engagement'] || ad['2a'] || {}), resilience: toSec(ad['2B_persistence_resilience'] || ad['2b'] || {}), focus_flow: toSec(ad['2C_task_focus_flow'] || ad['2c'] || {}) }
+  out.ability_growth = { blooms_level: toSec(ag['3A_bloom_s_taxonomy_progression'] || ag['3a'] || {}), metacognition: toSec(ag['3B_metacognition_plan_monitor_revise'] || ag['3b'] || {}), transfer: toSec(ag['3C_knowledge_transfer'] || ag['3c'] || {}) }
+  out.strategy_optimization = { diversity: toSec(so['4A_strategy_diversity'] || so['4a'] || {}), depth: toSec(so['4B_depth_of_processing'] || so['4b'] || {}), self_regulation: toSec(so['4C_self_regulation'] || so['4c'] || {}) }
+  const avg = (nums: number[]) => { const arr = nums.filter(n => Number.isFinite(n)); if (!arr.length) return 0; return Math.round((arr.reduce((a, b) => a + b, 0) / arr.length) * 10) / 10 }
+  const mrAvg = avg([ Number(out.moral_reasoning.stage_level?.score), Number(out.moral_reasoning.foundations_balance?.score), Number(out.moral_reasoning.argument_chain?.score) ])
+  const adAvg = avg([ Number(out.attitude_development.emotional_engagement?.score), Number(out.attitude_development.resilience?.score), Number(out.attitude_development.focus_flow?.score) ])
+  const agAvg = avg([ Number(out.ability_growth.blooms_level?.score), Number(out.ability_growth.metacognition?.score), Number(out.ability_growth.transfer?.score) ])
+  const soAvg = avg([ Number(out.strategy_optimization.diversity?.score), Number(out.strategy_optimization.depth?.score), Number(out.strategy_optimization.self_regulation?.score) ])
+  const finalScore = avg([mrAvg, adAvg, agAvg, soAvg])
+  out.overall = { dimension_averages: { moral_reasoning: mrAvg, attitude: adAvg, ability: agAvg, strategy: soAvg }, final_score: finalScore, holistic_feedback: '' }
+  out.overall.holistic_feedback = buildHolisticFeedback(out)
+  return out
+}
+
+function parseEvidenceString(s: string): any[] {
+  const text = String(s || '')
+  const m = text.match(/Quote:\s*([\s\S]*?)\n\s*Reasoning:\s*([\s\S]*?)\n\s*Conclusion:\s*([\s\S]*)/i)
+  if (m) return [{ quote: m[1]?.trim() || '', reasoning: m[2]?.trim() || '', conclusion: m[3]?.trim() || '' }]
+  const mq = text.match(/Quote:\s*([\s\S]*)/i)
+  if (mq) return [{ quote: mq[1]?.trim() || '', reasoning: '', conclusion: '' }]
+  return []
+}
+
+function buildHolisticFeedback(out: any): string {
+  try {
+    const parts: string[] = []
+    const avg = out?.overall?.dimension_averages || {}
+    const finalScore = Number(out?.overall?.final_score ?? 0)
+    const avgLine = `Averages — Moral: ${avg.moral_reasoning ?? 0}, Attitude: ${avg.attitude ?? 0}, Ability: ${avg.ability ?? 0}, Strategy: ${avg.strategy ?? 0}. Final: ${finalScore}/5.`
+    parts.push(avgLine)
+    const pickSuggestions = (sec: any) => Array.isArray(sec?.suggestions) ? sec.suggestions : []
+    const allSuggestions: string[] = []
+    const pushFromGroup = (grp: any) => {
+      if (!grp) return
+      for (const key of Object.keys(grp)) {
+        const sec = (grp as any)[key]
+        const arr = pickSuggestions(sec).map((s: any) => String(s))
+        for (const s of arr) { if (s && allSuggestions.length < 6) allSuggestions.push(s) }
+      }
+    }
+    pushFromGroup(out.moral_reasoning)
+    pushFromGroup(out.attitude_development)
+    pushFromGroup(out.ability_growth)
+    pushFromGroup(out.strategy_optimization)
+    if (allSuggestions.length) {
+      parts.push('Key suggestions:')
+      for (const s of allSuggestions) parts.push(`- ${s}`)
+    }
+    return parts.join('\n')
+  } catch { return '' }
+}
+
+onMounted(load)
+</script>
+
+<style scoped lang="postcss">
+.card { @apply bg-white/70 dark:bg-gray-800/70 rounded-xl border border-gray-200 dark:border-gray-700; }
+.no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+.no-scrollbar::-webkit-scrollbar { display: none; }
+</style>
+
+

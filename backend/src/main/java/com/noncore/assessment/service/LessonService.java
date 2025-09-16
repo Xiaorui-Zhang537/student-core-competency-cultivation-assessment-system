@@ -223,4 +223,14 @@ public interface LessonService {
     Long getWeeklyStudyMinutes(Long studentId);
     /** 最近学习章节标题 */
     String getLastStudiedLessonTitle(Long studentId);
+
+    /**
+     * 用关联表替换某节次的资料集合
+     */
+    void replaceLessonMaterials(Long lessonId, java.util.List<Long> fileIds, Long operatorId);
+
+    /**
+     * 获取某节次的资料（通过关联表）
+     */
+    java.util.List<com.noncore.assessment.entity.FileRecord> getLessonMaterials(Long lessonId);
 } 

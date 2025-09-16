@@ -189,6 +189,13 @@ public class FileStorageServiceImpl implements FileStorageService {
             return true; // 文件不存在，视为删除成功
         }
 
+        // 先清理 lesson_materials 关联，避免删除记录时触发约束或脏引用
+        try {
+            fileRecordMapper.deleteLessonMaterialsByFileId(fileId);
+        } catch (Exception e) {
+            logger.warn("清理 lesson_materials 关联失败(fileId={})，继续删除文件记录", fileId, e);
+        }
+
         // 删除物理文件
         try {
             Path filePath = Paths.get(fileRecord.getFilePath());
@@ -285,12 +292,17 @@ public class FileStorageServiceImpl implements FileStorageService {
 
         // 根据文件用途检查权限
         String purpose = fileRecord.getUploadPurpose();
+        if (purpose == null) {
+            // 兼容旧数据：回退使用 related_type
+            purpose = fileRecord.getRelatedType();
+        }
         return switch (purpose) {
             case "avatar", "assignment" ->
                 // 只有上传者可以访问
                     false;
-            case "course", "lesson", "community_post" ->
-                // 课程/章节/社区帖子附件：已登录即允许（更精细的校验可后续补充）
+            case "course", "lesson", "community_post",
+                 "lesson_material", "course_material", "course_video" ->
+                // 课程/节次/社区附件与教学资料、课程视频：登录后允许访问（后续可细化为选课校验）
                     true;
             default -> false;
         };

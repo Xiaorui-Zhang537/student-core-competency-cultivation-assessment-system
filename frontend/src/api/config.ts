@@ -9,7 +9,7 @@ const apiClient = axios.create({
   // 主机地址（如需切换生产，只改环境变量即可）
   // 若未指定则默认走本地代理 /api
   baseURL,
-  timeout: 10000,
+  timeout: 30000,
   withCredentials: true,
   headers: {
     'Content-Type': 'application/json'
@@ -83,9 +83,12 @@ apiClient.interceptors.response.use(
       };
       return Promise.reject(apiError);
     } else if (error.request) {
+      // eslint-disable-next-line no-console
+      console.error('API network error:', error?.message || error);
+      const isTimeout = String(error?.code || '').toUpperCase() === 'ECONNABORTED' || /timeout/i.test(String(error?.message || ''));
       const networkError: ApiError = {
         code: 0,
-        message: 'Network error. Please check your connection.',
+        message: isTimeout ? 'Request timeout. Please retry.' : 'Network error. Please check your connection.',
       };
       return Promise.reject(networkError);
     } else {

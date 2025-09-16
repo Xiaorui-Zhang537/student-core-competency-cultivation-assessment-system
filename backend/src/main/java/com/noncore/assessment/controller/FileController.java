@@ -69,11 +69,13 @@ public class FileController extends BaseController {
         byte[] fileBytes = fileStorageService.downloadFile(fileId, userId);
 
         HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.parseMediaType(fileRecord.getMimeType()));
+        String mime = safeMimeType(fileRecord);
+        headers.setContentType(MediaType.parseMediaType(mime));
         headers.setContentLength(fileBytes.length);
 
         String encodedFilename = URLEncoder.encode(fileRecord.getOriginalName(), StandardCharsets.UTF_8);
-        headers.set(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename*=UTF-8''" + encodedFilename);
+        // 浏览器PDF工具栏显示文件名依赖 Content-Disposition: inline; filename
+        headers.set(HttpHeaders.CONTENT_DISPOSITION, "inline; filename=\"" + fileRecord.getOriginalName() + "\"; filename*=UTF-8''" + encodedFilename);
 
         return ResponseEntity.ok()
                 .headers(headers)
@@ -156,10 +158,10 @@ public class FileController extends BaseController {
     }
 
     /**
-     * 图片预览
+     * 预览文件（支持图片与 PDF 内嵌预览）
      */
     @GetMapping("/{fileId}/preview")
-    @Operation(summary = "图片预览", description = "预览图片文件")
+    @Operation(summary = "文件预览", description = "预览图片与 PDF 文件（inline）")
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<byte[]> previewImage(@PathVariable Long fileId) {
         Long userId = getCurrentUserId();
@@ -169,20 +171,54 @@ public class FileController extends BaseController {
             return ResponseEntity.notFound().build();
         }
 
-        String mimeType = fileRecord.getMimeType();
-        if (mimeType == null || !mimeType.startsWith("image/")) {
-            return ResponseEntity.badRequest().build();
-        }
+        String mimeType = safeMimeType(fileRecord);
+        String mt = mimeType == null ? "" : mimeType.toLowerCase();
+        boolean previewable = mt.startsWith("image/") || mt.startsWith("application/pdf");
+        if (!previewable) return ResponseEntity.badRequest().build();
 
         byte[] fileBytes = fileStorageService.downloadFile(fileId, userId);
 
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.parseMediaType(mimeType));
         headers.setContentLength(fileBytes.length);
+        // 对 PDF 设置 inline filename，确保浏览器 PDF 查看器显示原始文件名
+        if (mt.startsWith("application/pdf")) {
+            String original = fileRecord.getOriginalName();
+            String encodedFilename = URLEncoder.encode(original, StandardCharsets.UTF_8);
+            headers.set(HttpHeaders.CONTENT_DISPOSITION,
+                    "inline; filename=\"" + original + "\"; filename*=UTF-8''" + encodedFilename);
+        }
 
         return ResponseEntity.ok()
                 .headers(headers)
                 .body(fileBytes);
+    }
+
+    private String safeMimeType(FileRecord f) {
+        String mt = f.getMimeType();
+        if (mt != null && !mt.isBlank()) return mt;
+        String name = f.getOriginalName();
+        String ext = null;
+        if (name != null && name.contains(".")) {
+            ext = name.substring(name.lastIndexOf('.') + 1).toLowerCase();
+        }
+        if (ext == null || ext.isBlank()) return MediaType.APPLICATION_OCTET_STREAM_VALUE;
+        return switch (ext) {
+            case "png" -> MediaType.IMAGE_PNG_VALUE;
+            case "jpg", "jpeg" -> MediaType.IMAGE_JPEG_VALUE;
+            case "gif" -> MediaType.IMAGE_GIF_VALUE;
+            case "pdf" -> MediaType.APPLICATION_PDF_VALUE;
+            case "mp4" -> "video/mp4";
+            case "mov" -> "video/quicktime";
+            case "avi" -> "video/x-msvideo";
+            case "mkv" -> "video/x-matroska";
+            case "webm" -> "video/webm";
+            case "doc" -> "application/msword";
+            case "docx" -> "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
+            case "ppt" -> "application/vnd.ms-powerpoint";
+            case "pptx" -> "application/vnd.openxmlformats-officedocument.presentationml.presentation";
+            default -> MediaType.APPLICATION_OCTET_STREAM_VALUE;
+        };
     }
 
     // 私有辅助方法

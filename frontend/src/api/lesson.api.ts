@@ -11,6 +11,11 @@ export const lessonApi = {
     return api.get(`/lessons/${lessonId}`);
   },
 
+  // New: get lesson materials via association table (方案A)
+  getLessonMaterials(lessonId: string): Promise<ApiResponse<any[]>> {
+    return api.get(`/lessons/${lessonId}/materials`);
+  },
+
   // Teacher actions
   createLesson(data: Partial<Lesson>): Promise<ApiResponse<Lesson>> {
     return api.post('/lessons', data);
@@ -25,7 +30,7 @@ export const lessonApi = {
   },
 
   // 设置章节内容（视频URL与资料文件绑定）
-  updateLessonContent(lessonId: string, payload: { videoUrl?: string; materialFileIds?: number[] }): Promise<ApiResponse<any>> {
+  updateLessonContent(lessonId: string, payload: { videoUrl?: string; materialFileIds?: number[]; allowScrubbing?: boolean; allowSpeedChange?: boolean }): Promise<ApiResponse<any>> {
     return api.put(`/lessons/${lessonId}/content`, payload);
   },
 
@@ -38,7 +43,11 @@ export const lessonApi = {
     return api.post(`/lessons/${lessonId}/complete`, {});
   },
 
-  updateLessonProgress(lessonId: string, progress: number): Promise<ApiResponse<void>> {
-    return api.post(`/lessons/${lessonId}/progress`, { progress });
+  updateLessonProgress(lessonId: string, payload: { progress?: number; studyTime?: number; lastPosition?: number }): Promise<ApiResponse<void>> {
+    return api.post(`/lessons/${lessonId}/progress`, payload);
+  },
+
+  addLessonNotes(lessonId: string, notes: string): Promise<ApiResponse<void>> {
+    return api.post(`/lessons/${lessonId}/notes`, { notes });
   }
 };

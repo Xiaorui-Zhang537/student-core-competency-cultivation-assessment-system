@@ -8,7 +8,13 @@
       <button type="button" class="input input--glass w-full min-h-[2.5rem] text-left pr-8" @click="toggle">
         <div class="flex flex-wrap gap-1">
           <span v-if="!modelValue.length" class="text-gray-400">{{ placeholder }}</span>
-          <span v-for="v in displayValues" :key="String(v.value)" class="px-2 py-0.5 rounded-full text-xs bg-white/30 dark:bg-white/10 border border-white/40 dark:border-white/10">
+          <span
+            v-for="v in displayValues"
+            :key="String(v.value)"
+            class="px-2 py-0.5 rounded-full text-xs bg-white/30 dark:bg-white/10 border border-white/40 dark:border-white/10 cursor-pointer hover:bg-white/40 dark:hover:bg-white/20"
+            @click.stop="toggleValue(v.value)"
+            :title="'点击移除: ' + v.label"
+          >
             {{ v.label }}
           </span>
         </div>

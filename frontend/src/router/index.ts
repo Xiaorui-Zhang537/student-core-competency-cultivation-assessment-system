@@ -83,6 +83,12 @@ const routes = [
         props: true
       },
       {
+        path: 'lessons/:id',
+        name: 'StudentLessonDetail',
+        component: () => import('@/features/student/views/LessonDetailView.vue'),
+        props: true
+      },
+      {
         path: 'assignments',
         name: 'StudentAssignments',
         component: () => import('@/features/student/views/AssignmentsView.vue')
@@ -194,6 +200,18 @@ const routes = [
         path: 'assignments',
         name: 'TeacherAssignments',
         component: () => import('@/features/teacher/views/ReviewAssignmentView.vue'),
+        meta: { requiresAuth: true, role: 'TEACHER' }
+      },
+      {
+        path: 'ai-grading',
+        name: 'TeacherAIGrading',
+        component: () => import('@/features/teacher/views/TeacherAIGradingView.vue'),
+        meta: { requiresAuth: true, role: 'TEACHER' }
+      },
+      {
+        path: 'ai-grading/history',
+        name: 'TeacherAIGradingHistory',
+        component: () => import('@/features/teacher/views/TeacherAIGradingHistoryView.vue'),
         meta: { requiresAuth: true, role: 'TEACHER' }
       },
       {

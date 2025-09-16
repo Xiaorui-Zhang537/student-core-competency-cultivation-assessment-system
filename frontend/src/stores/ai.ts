@@ -187,7 +187,8 @@ export const useAIStore = defineStore('ai', () => {
       studentIds: payload.studentIds,
       // 单会话单模型：后端按会话模型执行
       ...(convId ? { conversationId: convId } : {}),
-      ...(attachments.length ? { attachmentFileIds: attachments } : {})
+      ...(attachments.length ? { attachmentFileIds: attachments } : {}),
+      
     }), ui, '发送失败')
 
     const answer = resp?.answer || (resp?.data?.answer)
