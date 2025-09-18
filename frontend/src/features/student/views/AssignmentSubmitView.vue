@@ -33,7 +33,12 @@
                 <div class="text-sm truncate">{{ (f as any).originalName || (f as any).fileName || ('附件#' + (f as any).id) }}</div>
                 <div class="text-xs text-gray-500">{{ formatSize((f as any).fileSize) }}</div>
               </div>
-              <a class="btn btn-sm btn-outline" :href="`${baseURL}/files/${(f as any).id}/download`">{{ i18nText('student.assignments.detail.download', '下载') }}</a>
+              <Button as="a" :href="`${baseURL}/files/${(f as any).id}/download`" size="sm" variant="outline">
+                <template #icon>
+                  <svg class="w-4 h-4" viewBox="0 0 20 20" fill="currentColor"><path d="M10 3v8l3-3 1.5 1.5L10 15l-4.5-5.5L7 8l3 3V3h0zM4 17h12v-2H4v2z"/></svg>
+                </template>
+                {{ i18nText('student.assignments.detail.download', '下载') }}
+              </Button>
             </li>
           </ul>
         </div>
@@ -103,15 +108,30 @@
             <h3 class="text-sm font-medium">{{ t('student.assignments.submit.uploadedList') }}</h3>
             <div v-for="file in uploadedFiles" :key="file.id" class="flex justify-between items-center p-2 rounded glass-ultraThin" v-glass="{ strength: 'ultraThin', interactive: false }">
               <span>{{ (file as any).originalName || file.fileName }}</span>
-              <button @click="removeFile(file.id)" class="btn btn-sm btn-danger-outline">{{ t('student.assignments.submit.delete') }}</button>
+              <Button size="sm" variant="danger" @click="removeFile(file.id)">
+                <template #icon>
+                  <svg class="w-4 h-4" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M6 6h8v10a2 2 0 01-2 2H8a2 2 0 01-2-2V6zm9-3a1 1 0 00-1-1h-3l-1-1H8L7 2H4a1 1 0 000 2h11a1 1 0 000-2z" clip-rule="evenodd"/></svg>
+                </template>
+                {{ t('student.assignments.submit.delete') }}
+              </Button>
             </div>
           </div>
         </div>
         
         <!-- Actions -->
         <div v-if="!readOnly" class="flex justify-end space-x-4">
-          <button @click="handleSaveDraft" :disabled="disableActions || pastDue" class="btn btn-outline">{{ t('student.assignments.submit.saveDraft') }}</button>
-          <button @click="handleSubmit" :disabled="disableActions || pastDue || !form.content" class="btn btn-primary">{{ t('student.assignments.submit.submit') }}</button>
+          <Button variant="outline" @click="handleSaveDraft" :disabled="disableActions || pastDue">
+            <template #icon>
+              <svg class="w-4 h-4" viewBox="0 0 20 20" fill="currentColor"><path d="M17 3H3v14h14V3zM5 5h10v10H5V5zm2 2h6v2H7V7z"/></svg>
+            </template>
+            {{ t('student.assignments.submit.saveDraft') }}
+          </Button>
+          <Button variant="primary" @click="handleSubmit" :disabled="disableActions || pastDue || !form.content">
+            <template #icon>
+              <svg class="w-4 h-4" viewBox="0 0 20 20" fill="currentColor"><path d="M2.94 2.34l14.72 5.89a1 1 0 010 1.86L2.94 15.98a1 1 0 01-1.36-1.16l1.58-5.67-1.58-5.67a1 1 0 011.36-1.16zM8 11l-1 3 7-3-7-3 1 3z"/></svg>
+            </template>
+            {{ t('student.assignments.submit.submit') }}
+          </Button>
         </div>
       </div>
 
@@ -140,6 +160,7 @@ import PageHeader from '@/components/ui/PageHeader.vue'
 import { baseURL } from '@/api/config'
 import { ChevronRightIcon } from '@heroicons/vue/24/outline'
 import GlassTextarea from '@/components/ui/inputs/GlassTextarea.vue'
+import Button from '@/components/ui/Button.vue'
 
 const route = useRoute();
 const router = useRouter();

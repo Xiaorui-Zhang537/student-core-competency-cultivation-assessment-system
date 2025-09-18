@@ -12,11 +12,11 @@
       <!-- Top KPI Cards (full width) -->
       <div class="lg:col-span-3">
         <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4 mb-2">
-          <StatCard :label="t('student.dashboard.cards.activeCourses') as string" :value="stats.activeCourses" tone="blue" :icon="AcademicCapIcon" />
-          <StatCard :label="t('student.dashboard.cards.pendingAssignments') as string" :value="stats.pendingAssignments" tone="amber" :icon="ClipboardDocumentListIcon" />
-          <StatCard :label="t('student.dashboard.cards.averageScore') as string" :value="Number(stats.averageScore || 0).toFixed(1)" tone="violet" :icon="StarIcon" />
-          <StatCard :label="t('student.dashboard.cards.weeklyStudyHours') as string" :value="weeklyStudyHours" tone="emerald" :icon="ClockIcon" />
-          <StatCard v-if="abilityOverallScore>0" :label="t('student.ability.radar') as string" :value="abilityOverallScore.toFixed(1)" tone="indigo" :icon="StarIcon" />
+          <StartCard :label="t('student.dashboard.cards.activeCourses') as string" :value="stats.activeCourses" tone="blue" :icon="AcademicCapIcon" />
+          <StartCard :label="t('student.dashboard.cards.pendingAssignments') as string" :value="stats.pendingAssignments" tone="amber" :icon="ClipboardDocumentListIcon" />
+          <StartCard :label="t('student.dashboard.cards.averageScore') as string" :value="Number(stats.averageScore || 0).toFixed(1)" tone="violet" :icon="StarIcon" />
+          <StartCard :label="t('student.dashboard.cards.weeklyStudyHours') as string" :value="weeklyStudyHours" tone="emerald" :icon="ClockIcon" />
+          <StartCard v-if="abilityOverallScore>0" :label="t('student.ability.radar') as string" :value="abilityOverallScore.toFixed(1)" tone="indigo" :icon="StarIcon" />
         </div>
       </div>
       <!-- Left Column: Assignments and Courses -->
@@ -30,7 +30,7 @@
                 <h4 class="font-medium">{{ assignment.title }}</h4>
                 <p class="text-sm text-gray-500">{{ new Date(assignment.dueDate).toLocaleDateString() }}</p>
               </div>
-              <router-link :to="`/student/assignments/${assignment.id}/submit`" class="btn btn-sm btn-outline">{{ t('student.dashboard.goDo') }}</router-link>
+              <Button size="sm" variant="outline" @click="router.push(`/student/assignments/${assignment.id}/submit`)">{{ t('student.dashboard.goDo') }}</Button>
             </div>
           </div>
           <p v-else class="text-gray-500">{{ t('student.dashboard.noUpcoming') }}</p>
@@ -45,7 +45,7 @@
                 <h4 class="font-medium">{{ course.title }}</h4>
                 <p class="text-sm text-gray-500">{{ course.teacherName }}</p>
               </div>
-              <router-link :to="`/student/courses/${course.id}`" class="btn btn-sm btn-outline">{{ t('student.dashboard.continue') }}</router-link>
+              <Button size="sm" variant="outline" @click="router.push(`/student/courses/${course.id}`)">{{ t('student.dashboard.continue') }}</Button>
             </div>
           </div>
           <p v-else class="text-gray-500">{{ t('student.dashboard.noCourses') }}</p>
@@ -89,10 +89,11 @@ import { onMounted, computed, watch } from 'vue'
 import { useUIStore } from '@/stores/ui'
 import { useStudentStore } from '@/stores/student'
 import { useI18n } from 'vue-i18n'
-import StatCard from '@/components/ui/StatCard.vue'
+import StartCard from '@/components/ui/StartCard.vue'
 import { AcademicCapIcon, ClipboardDocumentListIcon, StarIcon, ClockIcon } from '@heroicons/vue/24/outline'
 import PageHeader from '@/components/ui/PageHeader.vue'
 import { useSubmissionStore } from '@/stores/submission'
+import Button from '@/components/ui/Button.vue'
 
 const uiStore = useUIStore()
 const studentStore = useStudentStore()

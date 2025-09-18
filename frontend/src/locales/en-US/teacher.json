@@ -57,11 +57,30 @@
 				"archived": "Archived",
 				"unknown": "Unknown"
 			},
+			"difficulty": "Difficulty",
+			"duration": "Duration (hours)",
+			"maxStudents": "Max Students",
+			"startDate": "Start Date",
+			"endDate": "End Date",
+			"category": {
+				"liberalArts": "Liberal Arts",
+				"engineering": "Engineering",
+				"science": "Science",
+				"other": "Other"
+			},
 			"card": {
 				"coverAlt": "Course cover",
 				"tags": "Tags:",
 				"none": "None"
 			},
+			"tagOptions": {
+				"beginner": "Beginner",
+				"intermediate": "Intermediate",
+				"advanced": "Advanced",
+				"examPrep": "Exam Prep",
+				"practice": "Practical"
+			},
+			"tagsPlaceholder": "Select tags",
 			"actions": {
 				"create": "Create Course",
 				"edit": "Edit",
@@ -79,6 +98,7 @@
 				"description": "Description",
 				"content": "Course Content",
 				"category": "Category",
+				"status": "Status",
 				"tags": "Tags (comma-separated)",
 				"cover": "Course Cover",
 				"coverPicked": "Cover selected (ID: {id})",
@@ -367,7 +387,16 @@
 				"selectAll": "Select all",
 				"addSelected": "Add selected",
 				"close": "Close",
-				"hint": "Added to queue. Click Start grading."
+				"hint": "Added to queue. Click Start grading.",
+				"student": "Student",
+				"assignment": "Assignment",
+				"preview": "Submission Preview",
+				"useText": "Use text content",
+				"attachments": "Attachments",
+				"selectAllFiles": "Select all attachments",
+				"clearFiles": "Clear selection",
+				"text": "Text",
+				"reload": "Reload"
 			},
 			"render": {
 				"overall": "Overall",
@@ -515,7 +544,8 @@
 			"subtitle": "Manage student progress and grades",
 			"actions": {
 				"invite": "Invite Students",
-				"export": "Export Data"
+				"export": "Export Data",
+				"setEnrollKey": "Set Enroll Key"
 			},
 			"cards": {
 				"total": "Total Students",
@@ -628,6 +658,17 @@
 				"failTitle": "Load failed",
 				"failMsg": "Failed to fetch course students"
 			}
+		,
+		"enrollKey": {
+			"title": "Course Enroll Key",
+			"require": "Enroll requires a key",
+			"keyLabel": "Enroll key",
+			"placeholder": "Enter a new key (hash only)",
+			"tip": "If toggled without a key and no previous key exists, a key is required.",
+			"save": "Save",
+			"saved": "Enroll key saved",
+			"failed": "Failed to save enroll key"
+		}
 		},
 		"studentDetail": {
 			"breadcrumb": {

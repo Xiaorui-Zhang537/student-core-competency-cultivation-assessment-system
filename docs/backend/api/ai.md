@@ -162,6 +162,91 @@ curl -X PUT -H "Authorization: Bearer $TOKEN" -H "Content-Type: application/json
   ```
   - 说明：支持 txt/doc/docx/pdf（基于 Apache Tika），若抽取失败或上游返回非 JSON，将在对应项的 `error` 字段说明。
 
+---
+
+## 6. AI 批改历史（History）
+
+> 教师可分页查看批改历史、查看详情并删除记录。与前端 `aiGradingApi` 一致。
+
+- 列表（分页）：
+  - `GET /api/ai/grade/history?q=&page=&size=`
+  - 参数：
+    - `q` 可选：按文件名/模型等模糊匹配
+    - `page` 可选，默认 1
+    - `size` 可选，默认 20，最大 100
+  - 响应：`PageResult<AiGradingHistory>`（包含 `items`, `page`, `size`, `total`, `pages`）
+
+- 详情：
+  - `GET /api/ai/grade/history/{id}`
+  - 响应：`AiGradingHistory`，含 `fileId`、`fileName`、`model`、`finalScore`、`rawJson` 等
+
+- 删除：
+  - `DELETE /api/ai/grade/history/{id}`
+  - 兼容（部分环境禁用 DELETE）：`POST /api/ai/grade/history/{id}/delete`
+  - 权限：`hasRole('TEACHER')`
+
+### 返回示例（列表）
+```json
+{
+  "code": 200,
+  "data": {
+    "items": [
+      {
+        "id": 101,
+        "teacherId": 11,
+        "fileId": 8888,
+        "fileName": "essayA.docx",
+        "model": "google/gemini-2.5-pro",
+        "finalScore": 87.5,
+        "createdAt": "2025-09-16T09:12:33"
+      }
+    ],
+    "page": 1,
+    "size": 20,
+    "total": 32,
+    "pages": 2
+  }
+}
+```
+
+### 返回示例（详情）
+```json
+{
+  "code": 200,
+  "data": {
+    "id": 101,
+    "teacherId": 11,
+    "fileId": 8888,
+    "fileName": "essayA.docx",
+    "model": "google/gemini-2.5-pro",
+    "finalScore": 87.5,
+    "rawJson": "{\n  \"overall\": { \"final_score\": 87.5, ... },\n  \"dimensions\": [ ... ]\n}",
+    "createdAt": "2025-09-16T09:12:33"
+  }
+}
+```
+
+---
+
+## 7. 配置：Gemini（Google）
+
+> 见 `application.yml` → `ai.providers.google`。生产环境请用环境变量注入。
+
+- 关键键：
+  - `GOOGLE_API_BASE_URL`（默认 `https://generativelanguage.googleapis.com`）
+  - `GOOGLE_API_KEY`（必填）
+- 建议模型：`google/gemini-2.5-pro`（与后端默认保持一致；也可由前端传入 `model` 覆盖）
+- 代理/重试：参见 `ai.proxy.*` 与 `ai.retry.*`
+
+示例（application.yml 片段）：
+```yaml
+ai:
+  providers:
+    google:
+      base-url: ${GOOGLE_API_BASE_URL:https://generativelanguage.googleapis.com}
+      api-key: ${GOOGLE_API_KEY:}
+```
+
 ### 通用聊天（AI 助手）扩展参数
 
 - `POST /api/ai/chat`

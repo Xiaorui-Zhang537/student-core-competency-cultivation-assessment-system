@@ -295,18 +295,18 @@
 
               <!-- 评分选项 -->
               <div class="space-y-3">
-                <label class="flex items-center">
-                  <input v-model="gradeForm.allowResubmit" type="checkbox" class="rounded border-gray-300 text-primary-600 focus:ring-primary-500" />
-                  <span class="ml-2 text-sm text-gray-700 dark:text-gray-300">{{ t('teacher.grading.form.allowResubmit') }}</span>
-                </label>
-                <label class="flex items-center">
-                  <input v-model="gradeForm.sendNotification" type="checkbox" class="rounded border-gray-300 text-primary-600 focus:ring-primary-500" />
-                  <span class="ml-2 text-sm text-gray-700 dark:text-gray-300">{{ t('teacher.grading.form.sendNotification') }}</span>
-                </label>
-                <label class="flex items-center">
-                  <input v-model="gradeForm.publishImmediately" type="checkbox" class="rounded border-gray-300 text-primary-600 focus:ring-primary-500" />
-                  <span class="ml-2 text-sm text-gray-700 dark:text-gray-300">{{ t('teacher.grading.form.publishImmediately') }}</span>
-                </label>
+                <div class="flex items-center justify-between">
+                  <span class="text-sm text-gray-700 dark:text-gray-300">{{ t('teacher.grading.form.allowResubmit') }}</span>
+                  <GlassSwitch v-model="(gradeForm.allowResubmit as any)" size="sm" />
+                </div>
+                <div class="flex items-center justify-between">
+                  <span class="text-sm text-gray-700 dark:text-gray-300">{{ t('teacher.grading.form.sendNotification') }}</span>
+                  <GlassSwitch v-model="(gradeForm.sendNotification as any)" size="sm" />
+                </div>
+                <div class="flex items-center justify-between">
+                  <span class="text-sm text-gray-700 dark:text-gray-300">{{ t('teacher.grading.form.publishImmediately') }}</span>
+                  <GlassSwitch v-model="(gradeForm.publishImmediately as any)" size="sm" />
+                </div>
               </div>
 
               <!-- 提交按钮 -->
@@ -414,25 +414,19 @@
           </card>
         </div>
       </div>
-      <!-- 举报弹窗 -->
-      <teleport to="body">
-        <div v-if="showReport" class="fixed inset-0 z-50">
-          <div class="absolute inset-0 bg-black/30" @click="showReport=false"></div>
-          <div class="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-md modal glass-thick p-5 space-y-4" v-glass="{ strength: 'thick', interactive: true }">
-            <div class="text-lg font-semibold">{{ t('teacher.grading.quick.report') }}</div>
-            <div class="space-y-2">
-              <label class="text-sm">{{ t('teacher.studentDetail.table.reason') || '原因' }}</label>
-              <input v-model="reportForm.reason" class="input w-full" />
-              <label class="text-sm">{{ t('teacher.studentDetail.table.details') || '详情' }}</label>
-              <textarea v-model="reportForm.details" class="input w-full" rows="4"></textarea>
-            </div>
-            <div class="flex items-center justify-end gap-2">
-              <Button variant="secondary" size="sm" @click="showReport=false">{{ t('common.cancel') || '取消' }}</Button>
-              <Button variant="primary" size="sm" @click="submitReport">{{ t('common.submit') || '提交' }}</Button>
-            </div>
-          </div>
+      <!-- 举报弹窗 (GlassModal) -->
+      <GlassModal v-if="showReport" :title="t('teacher.grading.quick.report') as string" maxWidth="max-w-md" heightVariant="compact" @close="showReport=false">
+        <div class="space-y-2">
+          <label class="text-sm">{{ t('teacher.studentDetail.table.reason') || '原因' }}</label>
+          <GlassInput v-model="reportForm.reason" />
+          <label class="text-sm">{{ t('teacher.studentDetail.table.details') || '详情' }}</label>
+          <GlassTextarea v-model="reportForm.details" :rows="4" />
         </div>
-      </teleport>
+        <template #footer>
+          <Button variant="secondary" size="sm" @click="showReport=false">{{ t('common.cancel') || '取消' }}</Button>
+          <Button variant="primary" size="sm" @click="submitReport">{{ t('common.submit') || '提交' }}</Button>
+        </template>
+      </GlassModal>
 
       <!-- 改为调用全局抽屉：删除本地 Teleport -->
     </div>
@@ -468,6 +462,8 @@ import PageHeader from '@/components/ui/PageHeader.vue'
 import GlassPopoverSelect from '@/components/ui/filters/GlassPopoverSelect.vue'
 import GlassInput from '@/components/ui/inputs/GlassInput.vue'
 import GlassTextarea from '@/components/ui/inputs/GlassTextarea.vue'
+import GlassModal from '@/components/ui/GlassModal.vue'
+import GlassSwitch from '@/components/ui/inputs/GlassSwitch.vue'
 
 // Router and Stores
 const route = useRoute()

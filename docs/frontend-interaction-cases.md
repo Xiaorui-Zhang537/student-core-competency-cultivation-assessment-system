@@ -177,6 +177,28 @@ const fetchMyCourses = async (params?: { page?: number; size?: number; q?: strin
 }
 ```
 
+## 14. 教师端 AI 批改弹窗（TeacherAIGradingView → aiGrading.api.ts）
+
+要点：
+- 弹窗入口：教师端“AI 批改作业”页（`TeacherAIGradingView.vue`）点击“从提交列表选择”。
+- 选择器：
+  - 仅展示“作业选择”“学生”，不再展示课程选择；作业列表基于页面的 `courseId` 自动加载（无 `courseId` 时兜底为教师全部作业）。
+  - 选择器标题不换行，宽度自适应（`clamp(240px, 36vw, 420px)`），小号尺寸 `size="sm"`。
+  - 支持 i18n：`teacher.aiGrading.picker.assignment`、`teacher.aiGrading.picker.student` 和占位 `common.pleaseSelect`。
+- 路由预选：
+  - 支持 `courseId`、`assignmentId`、`studentId`、`openPicker`，例如：`/teacher/ai-grading?courseId=1&assignmentId=25&studentId=1001&openPicker=1`。
+- 预览与加入队列：
+  - 学生选择后展示提交文本与附件；可勾选“使用文本内容”，或多选附件（支持全选、清空）。
+  - 点击“添加已选”把勾选内容加入左侧队列（去重）。
+- API 复用：
+  - 作业：`assignmentApi.getAssignmentsByCourse(courseId)` 或 `assignmentApi.getAssignments({ page,size })`
+  - 提交：`submissionApi.getSubmissionsByAssignment(assignmentId)`
+  - 附件：`fileApi.getRelatedFiles('submission', submissionId)`
+  - 批改：`aiGradingApi.gradeFiles({ fileIds, model, jsonOnly, useGradingPrompt })`、`aiGradingApi.gradeEssay({ messages, model, jsonOnly, useGradingPrompt })`
+- UI 与可用性：
+  - `GlassPopoverSelect` 增加 `truncateLabel`（默认 true），该弹窗设置为 false 避免文字被省略。
+  - 按钮统一玻璃风格与主题色（主色/靛蓝/蓝绿/红色），所有按钮带图标。
+
 ## 3. 作业提交与草稿（AssignmentSubmitView → useSubmissionStore → submission.api.ts）
 
 组件片段：

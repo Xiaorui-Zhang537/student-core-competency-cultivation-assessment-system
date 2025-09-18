@@ -73,9 +73,9 @@
       </div>
 
       <div>
-        <button type="submit" :disabled="authStore.loading || (form.username && !isUsernameValid) || (form.email && !isEmailValid) || (form.password && !isPasswordValid)" class="w-full btn btn-primary">
+        <Button class="w-full" variant="primary" icon="confirm" type="submit" :disabled="authStore.loading || (form.username && !isUsernameValid) || (form.email && !isEmailValid) || (form.password && !isPasswordValid)">
           {{ authStore.loading ? t('auth.register.action.submitting') : t('auth.register.action.submit') }}
-        </button>
+        </Button>
       </div>
     </form>
 
@@ -99,6 +99,7 @@ import { useI18n } from 'vue-i18n'
 import { i18n } from '@/i18n'
 import { useRouter } from 'vue-router'
 import GlassInput from '@/components/ui/inputs/GlassInput.vue'
+import Button from '@/components/ui/Button.vue'
 
 const authStore = useAuthStore();
 const uiStore = useUIStore();

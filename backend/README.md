@@ -163,7 +163,42 @@ java -jar target/student-assessment-system-1.0.0.jar --spring.profiles.active=pr
 - SpringDoc：`/v3/api-docs`、`/swagger-ui.html`
 - 上传：`file.upload-dir`、大小与扩展名限制
 - 日志：控制台与文件输出
-- AI：`AI_DEFAULT_PROVIDER`、`OPENROUTER_API_KEY` 或 `DEEPSEEK_API_KEY`、`DEEPSEEK_MODEL`
+- AI：`AI_DEFAULT_PROVIDER`、`OPENROUTER_API_KEY` 或 `DEEPSEEK_API_KEY`、`DEEPSEEK_MODEL`、`GOOGLE_API_KEY`
+
+### 7.1 Gemini（Google）配置
+
+后端通过 `ai.providers.google` 节点对接 Gemini。建议仅通过环境变量注入密钥：
+
+```bash
+# 必填：Google Generative Language API Key
+export GOOGLE_API_KEY="xxxx"
+
+# 可选：自定义 Base URL（默认 https://generativelanguage.googleapis.com）
+export GOOGLE_API_BASE_URL="https://generativelanguage.googleapis.com"
+
+# 设置默认 Provider 为 Google（可选；也可在前端按需传入 model 覆盖）
+export AI_DEFAULT_PROVIDER="google"
+
+# 代理（如需）：
+export AI_PROXY_ENABLED=true
+export AI_PROXY_HOST=127.0.0.1
+export AI_PROXY_PORT=7897
+export AI_PROXY_TYPE=HTTP
+```
+
+`application.yml` 片段（已内置占位）：
+
+```yaml
+ai:
+  providers:
+    google:
+      base-url: ${GOOGLE_API_BASE_URL:https://generativelanguage.googleapis.com}
+      api-key: ${GOOGLE_API_KEY:}
+```
+
+说明：
+- AI 批改接口默认强制结构化 JSON 输出（`jsonOnly=true`），推荐模型 `google/gemini-2.5-pro`。
+- 若环境禁用 DELETE，历史删除提供 POST 兼容路径 `/api/ai/grade/history/{id}/delete`。
 
 ---
 

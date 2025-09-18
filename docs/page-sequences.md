@@ -264,3 +264,66 @@ sequenceDiagram
     S-->>V: 暂存本地并提示“稍后重传”
   end
 ```
+
+## 教师端：从提交选择 → AI 批改（TeacherAIGradingView）
+```mermaid
+sequenceDiagram
+  participant V as Vue(TeacherAIGradingView)
+  participant AA as assignment.api.ts
+  participant SA as submission.api.ts
+  participant AG as aiGrading.api.ts
+  participant C as AiController
+
+  Note over V: 读取路由中的 courseId（面包屑保持上下文）
+
+  V->>AA: getAssignmentsByCourse(courseId, { page, size })
+  AA->>C: GET /assignments?courseId={courseId}
+  C-->>AA: PageResult<Assignment>
+  AA-->>V: 渲染“作业选择”（GlassPopoverSelect）
+
+  V->>SA: getSubmissionsByAssignment(assignmentId, { page, size })
+  SA->>C: GET /assignments/{assignmentId}/submissions
+  C-->>SA: PageResult<Submission>
+  SA-->>V: 渲染“提交选择”（GlassPopoverSelect，可预览）
+
+  alt 以文本内容加入队列
+    Note over V: 从 Submission 读取 content 作为作文文本
+    V->>AG: gradeEssay({ messages:[{role:'user', content:text}], model:'google/gemini-2.5-pro' })
+    AG->>C: POST /ai/grade/essay
+    C->>C: 调用 Gemini(JSON-only)，解析结构化结果
+    C-->>AG: { overall, dimensions, suggestions, ... }
+    AG-->>V: 入队并在顶部动态进度条反映 completed/total
+  else 以提交文件加入队列
+    Note over V: 读取 Submission.fileIds 作为输入
+    V->>AG: gradeFiles({ fileIds, model:'google/gemini-2.5-pro' })
+    AG->>C: POST /ai/grade/files
+    C->>C: 下载文件→抽取文本→Gemini(JSON-only)→保存历史
+    C-->>AG: { results:[{ fileId, fileName, result|error }] }
+    AG-->>V: 入队并更新顶部动态进度条
+  end
+
+  Note over V: 历史入口（带 courseId 上下文）
+  V->>AG: listHistory({ q, page, size })
+  AG->>C: GET /ai/grade/history
+  C-->>AG: PageResult<AiGradingHistory>
+  AG-->>V: 列表（移除ID列，左侧 page-size 玻璃选择器，右侧 Prev/Next + Page N 文案 i18n）
+
+  V->>AG: getHistoryDetail(id)
+  AG->>C: GET /ai/grade/history/{id}
+  C-->>AG: AiGradingHistory(rawJson...)
+  AG-->>V: 详情弹窗（标题为文件名，内部滚动隐藏滚动条，可导出 Text/PNG/PDF[单页]）
+
+  V->>AG: deleteHistory(id)
+  AG->>C: DELETE /ai/grade/history/{id}
+  alt 环境禁用 DELETE
+    AG->>C: POST /ai/grade/history/{id}/delete
+  end
+  C-->>AG: ok
+  AG-->>V: 刷新列表
+```
+
+### UI 与 i18n 约定
+- 作业选择器标签：`teacher.aiGrading.picker.assignment`
+- 学生/提交选择器标签：`teacher.aiGrading.picker.submission`（或 `...student`，与实现保持一致）
+- 请选择占位：`common.pleaseSelect`
+- 分页“Page N”文本需 i18n：`common.pageX`（或项目已存在键）

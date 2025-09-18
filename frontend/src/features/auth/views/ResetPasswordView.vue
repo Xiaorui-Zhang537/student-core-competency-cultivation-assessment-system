@@ -20,9 +20,9 @@
       </div>
 
       <div>
-        <button type="submit" :disabled="uiStore.loading" class="w-full btn btn-primary">
+        <Button class="w-full" variant="primary" type="submit" :disabled="uiStore.loading">
           {{ uiStore.loading ? '提交中...' : '重置密码' }}
-        </button>
+        </Button>
       </div>
     </form>
   </div>
@@ -34,6 +34,7 @@ import { useRoute, useRouter } from 'vue-router'
 import { useUIStore } from '@/stores/ui'
 import { userApi } from '@/api/user.api'
 import GlassInput from '@/components/ui/inputs/GlassInput.vue'
+import Button from '@/components/ui/Button.vue'
 
 const route = useRoute()
 const router = useRouter()

@@ -13,7 +13,7 @@
     <!-- Main Content -->
     <div v-else class="space-y-8">
       <!-- Controls: Course Select + Compare & Assignment Sets -->
-      <div class="card p-6" v-glass="{ strength: 'regular', interactive: true }">
+      <Card padding="md" class="p-6">
         <div class="flex flex-col lg:flex-row lg:items-center gap-4">
           <div class="flex items-center gap-3">
             <span class="text-sm text-gray-700 dark:text-gray-300">{{ t('student.ability.course') }}</span>
@@ -27,12 +27,7 @@
           </div>
           <div class="flex items-center gap-3">
             <span class="text-sm text-gray-700 dark:text-gray-300">{{ t('student.ability.compare.title') }}</span>
-            <button type="button" @click="compareEnabled = !compareEnabled" :aria-pressed="compareEnabled"
-              class="relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-              :class="compareEnabled ? 'bg-indigo-600' : 'bg-gray-200 dark:bg-gray-700'">
-              <span class="sr-only">toggle</span>
-              <span aria-hidden="true" class="pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200" :class="compareEnabled ? 'translate-x-5' : 'translate-x-0'"></span>
-            </button>
+            <GlassSwitch v-model="compareEnabled" size="sm" />
           </div>
           <div v-if="compareEnabled" class="flex-1 grid grid-cols-1 md:grid-cols-2 gap-4">
             <div class="flex flex-col gap-2">
@@ -44,20 +39,30 @@
               <GlassMultiSelect v-model="assignmentIdsB" :options="assignmentSelectOptions" />
             </div>
             <div class="md:col-span-2 flex items-center gap-3">
-              <button class="btn btn-primary" @click="applyCompare" :disabled="applyLoading">{{ applyLoading ? t('student.ability.compare.applying') : t('student.ability.compare.apply') }}</button>
-              <button class="btn btn-outline" @click="resetCompare" :disabled="applyLoading">{{ t('student.ability.compare.reset') }}</button>
+              <Button variant="primary" @click="applyCompare" :disabled="applyLoading">
+                <template #icon>
+                  <svg class="w-4 h-4" viewBox="0 0 20 20" fill="currentColor"><path d="M10 3a1 1 0 01.894.553l5 10A1 1 0 0115 15H5a1 1 0 01-.894-1.447l5-10A1 1 0 0110 3z"/></svg>
+                </template>
+                {{ applyLoading ? t('student.ability.compare.applying') : t('student.ability.compare.apply') }}
+              </Button>
+              <Button variant="outline" @click="resetCompare" :disabled="applyLoading">
+                <template #icon>
+                  <svg class="w-4 h-4" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M4 4a1 1 0 011-1h2a1 1 0 110 2H6v2a1 1 0 11-2 0V4zm12 12a1 1 0 01-1 1h-2a1 1 0 110-2h1v-2a1 1 0 112 0v3zM5 13a1 1 0 100-2h10a1 1 0 100 2H5z" clip-rule="evenodd"/></svg>
+                </template>
+                {{ t('student.ability.compare.reset') }}
+              </Button>
             </div>
           </div>
         </div>
-      </div>
+      </Card>
 
       <!-- Radar Chart & Recommendations -->
       <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        <div class="lg:col-span-2 card p-6" v-glass="{ strength: 'regular', interactive: true }">
+        <Card class="lg:col-span-2 p-6">
           <h2 class="text-xl font-semibold mb-4">{{ t('student.ability.radar') }}</h2>
           <div ref="radarChartRef" class="h-96 w-full"></div>
-        </div>
-        <div class="card p-6" v-glass="{ strength: 'regular', interactive: true }">
+        </Card>
+        <Card class="p-6">
           <h2 class="text-xl font-semibold mb-4">{{ t('student.ability.recommendations') }}</h2>
           <div v-if="abilityStore.recommendations.length > 0" class="space-y-3 max-h-96 overflow-y-auto">
             <div v-for="rec in abilityStore.recommendations" :key="rec.id" class="p-3 bg-gray-50 rounded">
@@ -66,14 +71,14 @@
             </div>
           </div>
           <p v-else class="text-gray-500">{{ t('student.ability.noRecommendations') }}</p>
-        </div>
+        </Card>
       </div>
 
       <!-- Trends Chart -->
-      <div class="card p-6" v-glass="{ strength: 'regular', interactive: true }">
+      <Card class="p-6">
         <h2 class="text-xl font-semibold mb-4">{{ t('student.ability.trend') }}</h2>
         <div ref="trendChartRef" class="h-96 w-full"></div>
-      </div>
+      </Card>
 
       <!-- Dimension Insights -->
       <div v-if="compareEnabled" class="card p-6" v-glass="{ strength: 'regular', interactive: true }">
@@ -111,6 +116,9 @@ import { useI18n } from 'vue-i18n'
 import GlassMultiSelect from '@/components/ui/filters/GlassMultiSelect.vue'
 import GlassPopoverSelect from '@/components/ui/filters/GlassPopoverSelect.vue'
 import PageHeader from '@/components/ui/PageHeader.vue'
+import GlassSwitch from '@/components/ui/inputs/GlassSwitch.vue'
+import Card from '@/components/ui/Card.vue'
+import Button from '@/components/ui/Button.vue'
 
 const abilityStore = useAbilityStore();
 const courseStore = useCourseStore();

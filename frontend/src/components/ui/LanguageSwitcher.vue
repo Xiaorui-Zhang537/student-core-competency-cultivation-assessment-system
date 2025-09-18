@@ -1,12 +1,8 @@
 <template>
   <div class="relative z-[60]" ref="host" v-click-outside="() => (open=false)">
-    <button
-      class="p-1 rounded-full text-gray-400 hover:text-gray-500 dark:hover:text-gray-300 focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 inline-flex items-center justify-center"
-      @click="open = !open"
-      :title="t('app.language.title') || 'Language'"
-    >
-      <span class="inline-flex h-6 items-center px-1 text-sm leading-none">{{ currentShortLabel }}</span>
-    </button>
+    <Button variant="glass" size="sm" icon="arrow-right" @click="open = !open" :title="t('app.language.title') || 'Language'">
+      {{ currentShortLabel }}
+    </Button>
     <teleport to="body">
       <div v-if="open" class="glass-regular rounded-xl shadow-lg" v-glass="{ strength: 'regular', interactive: true }" :style="styleObj" @click.stop>
         <div class="px-3 py-2 text-xs text-gray-600 dark:text-gray-300">
@@ -14,11 +10,11 @@
           <div class="opacity-90">{{ t('app.language.note') }}</div>
         </div>
         <div class="border-t border-white/10 my-1"></div>
-        <button class="w-full text-left px-3 py-2 rounded hover:bg-white/10 text-sm flex items-center justify-between" @click="change('zh-CN')">
+        <button class="w-full text-left px-3 py-2 rounded-2xl hover:bg-white/10 text-sm flex items-center justify-between" @click="change('zh-CN')">
           <span>{{ t('app.language.zhCN') }}</span>
           <span v-if="locale.value==='zh-CN'" class="text-primary-500">✓</span>
         </button>
-        <button class="w-full text-left px-3 py-2 rounded hover:bg-white/10 text-sm flex items-center justify-between" @click="change('en-US')">
+        <button class="w-full text-left px-3 py-2 rounded-2xl hover:bg-white/10 text-sm flex items-center justify-between" @click="change('en-US')">
           <span>{{ t('app.language.enUS') }}</span>
           <span v-if="locale.value==='en-US'" class="text-primary-500">✓</span>
         </button>
@@ -32,6 +28,7 @@ import { ref, computed, nextTick, watchEffect } from 'vue'
 import { useLocale } from '@/i18n/useLocale'
 import { loadLocaleMessages, REQUIRED_NAMESPACES } from '@/i18n'
 import { useI18n } from 'vue-i18n'
+import Button from '@/components/ui/Button.vue'
 
 const open = ref(false)
 const host = ref<HTMLElement | null>(null)

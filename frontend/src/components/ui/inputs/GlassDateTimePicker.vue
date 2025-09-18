@@ -2,7 +2,14 @@
   <div class="w-full">
     <label v-if="label" class="block text-sm font-medium mb-1">{{ label }}</label>
     <div class="relative">
-      <button :id="idAttr" ref="anchor" type="button" class="picker-input w-full" @click="toggle">
+      <button
+        :id="idAttr"
+        ref="anchor"
+        type="button"
+        class="ui-pill--select ui-pill--pr-select w-full"
+        :class="size==='sm' ? 'ui-pill--sm ui-pill--pl' : 'ui-pill--md ui-pill--pl'"
+        @click="toggle"
+      >
         <span class="truncate" :class="valueText ? 'text-gray-900 dark:text-gray-100' : 'text-gray-400'">
           {{ valueText || placeholderText }}
         </span>
@@ -57,7 +64,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 // @ts-ignore
 import { useI18n } from 'vue-i18n'
 import GlassPopoverSelect from '@/components/ui/filters/GlassPopoverSelect.vue'
@@ -69,19 +76,21 @@ interface Props {
   hint?: string
   minuteStep?: number
   dateOnly?: boolean
+  size?: 'sm' | 'md'
 }
 
 const props = withDefaults(defineProps<Props>(), {
   modelValue: '',
   minuteStep: 5,
   dateOnly: false,
+  size: 'sm',
 })
 const emit = defineEmits<{ (e:'update:modelValue', v:string): void }>()
 const { t } = useI18n()
 
 const anchor = ref<HTMLElement | null>(null)
 const open = ref(false)
-let prevBodyOverflow = ''
+const positionTick = ref(0)
 
 const internal = ref<Date | null>(parseFromModel(props.modelValue))
 watch(() => props.modelValue, v => internal.value = parseFromModel(v))
@@ -104,10 +113,17 @@ const minuteSelectOptions = computed(() => {
 
 const hourOptions = computed(() => Array.from({length:24}, (_,i) => ({ label: pad(i), value: i })))
 
-const panelStyle = computed(() => positionPanel())
+const panelStyle = computed(() => {
+  // 依赖 open 与 positionTick，确保在打开/滚动/缩放时重新计算定位
+  void open.value
+  void positionTick.value
+  return positionPanel()
+})
 
-function toggle() { open.value = !open.value }
+function toggle() { open.value = !open.value; if (open.value) nudge() }
 function close() { open.value = false }
+
+function nudge() { positionTick.value++ }
 
 function pad(n:number) { return String(n).padStart(2,'0') }
 
@@ -166,7 +182,7 @@ const calendarCells = computed(() => {
 })
 
 function dayClasses(cell:any) {
-  const classes = ['text-sm','py-1.5','rounded','transition','hover:bg-white/10']
+  const classes = ['text-sm','py-1.5','rounded','transition','hover:bg-white/10','text-gray-900','dark:text-gray-100']
   if (!cell.current) classes.push('text-gray-400')
   const sameDay = internal.value && sameDate(internal.value, cell.date)
   if (sameDay) classes.push('bg-white/15')
@@ -186,6 +202,11 @@ function pickDate(cell:any) {
     base.setHours(hour.value, minute.value, 0, 0)
   }
   internal.value = base
+  // 仅日期模式：点击即选并关闭，无需确认按钮
+  if (props.dateOnly) {
+    emit('update:modelValue', formatModel(internal.value))
+    close()
+  }
 }
 
 function prevMonth(){
@@ -224,20 +245,20 @@ const idAttr = computed(() => props.id || `gdtp-${Math.random().toString(36).sli
 
 onMounted(() => {
   anchor.value = document.getElementById(idAttr.value)
-  window.addEventListener('resize', () => { if (open.value) open.value = true })
-  window.addEventListener('scroll', () => { if (open.value) open.value = true }, { passive: true })
+  const onResize = () => { if (open.value) nudge() }
+  const onScroll = () => { if (open.value) nudge() }
+  window.addEventListener('resize', onResize)
+  window.addEventListener('scroll', onScroll, { passive: true, capture: true })
+  // 记录移除（简单做法）：在组件卸载前移除侦听
+  cleanupFns.push(() => {
+    window.removeEventListener('resize', onResize)
+    window.removeEventListener('scroll', onScroll, { capture: true } as any)
+  })
 })
 
-watch(open, (v) => {
-  try {
-    if (v) { prevBodyOverflow = document.body.style.overflow; document.body.style.overflow = 'hidden' }
-    else { document.body.style.overflow = prevBodyOverflow }
-  } catch {}
-})
+const cleanupFns: Array<() => void> = []
 
-onUnmounted(() => {
-  try { document.body.style.overflow = prevBodyOverflow } catch {}
-})
+// 保持页面滚动不被锁定；仅在选择器内部控制滚动条样式
 
 // 当用户调整小时/分钟时，实时同步到内部日期并更新展示
 watch([hour, minute], ([h, m]) => {
@@ -257,7 +278,7 @@ watch([hour, minute], ([h, m]) => {
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
   color: #111827;
-  border-radius: 12px;
+  border-radius: 9999px;
   padding: 8px 28px 8px 12px;
   text-align: left;
 }
@@ -285,6 +306,10 @@ watch([hour, minute], ([h, m]) => {
 @media (prefers-color-scheme: dark) {
   .day-btn { color: #f3f4f6; }
 }
+
+/* 强制覆盖父级可能设置的浅色字体，确保明亮模式下日历数字为深色，暗黑为浅色 */
+.popover-glass .day-btn { color: #111827 !important; }
+.dark .popover-glass .day-btn { color: #f3f4f6 !important; }
 
 .glass-select {
   background: rgba(255,255,255,0.10);

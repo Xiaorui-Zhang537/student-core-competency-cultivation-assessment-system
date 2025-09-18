@@ -26,10 +26,10 @@
 
     <!-- 核心指标卡片（统一为工作台小卡片样式） -->
     <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6 mb-8">
-      <StatCard :label="t('teacher.analytics.cards.totalStudents') as string" :value="n(safeCourseAnalytics.totalStudents, 'integer')" tone="blue" :icon="UserGroupIcon" />
-      <StatCard :label="t('teacher.analytics.cards.completionRate') as string" :value="n((safeCourseAnalytics.completionRate || 0) / 100, 'percent')" tone="emerald" :icon="CheckCircleIcon" />
-      <StatCard :label="t('teacher.analytics.cards.averageScore') as string" :value="(safeCourseAnalytics.averageScore || 0).toFixed(1)" tone="violet" :icon="StarIcon" />
-      <StatCard :label="t('teacher.analytics.cards.totalAssignments') as string" :value="n(safeCourseAnalytics.totalAssignments, 'integer')" tone="amber" :icon="ClipboardDocumentListIcon" />
+      <StartCard :label="t('teacher.analytics.cards.totalStudents') as string" :value="n(safeCourseAnalytics.totalStudents, 'integer')" tone="blue" :icon="UserGroupIcon" />
+      <StartCard :label="t('teacher.analytics.cards.completionRate') as string" :value="n((safeCourseAnalytics.completionRate || 0) / 100, 'percent')" tone="emerald" :icon="CheckCircleIcon" />
+      <StartCard :label="t('teacher.analytics.cards.averageScore') as string" :value="(safeCourseAnalytics.averageScore || 0).toFixed(1)" tone="violet" :icon="StarIcon" />
+      <StartCard :label="t('teacher.analytics.cards.totalAssignments') as string" :value="n(safeCourseAnalytics.totalAssignments, 'integer')" tone="amber" :icon="ClipboardDocumentListIcon" />
     </div>
 
     <!-- 图表区域 -->
@@ -76,14 +76,9 @@
             <div class="flex items-center justify-between h-11">
               <h3 class="text-lg font-semibold text-gray-900 dark:text-white">{{ t('teacher.analytics.settings.title') }}</h3>
               <div class="flex items-center gap-3">
-                <div class="flex flex-col items-center mr-1">
-                  <span class="text-xs font-medium leading-tight text-gray-700 dark:text-gray-300">{{ t('teacher.analytics.charts.enableCompare') }}</span>
-                  <button type="button" @click="compareEnabled = !compareEnabled" :aria-pressed="compareEnabled"
-                          class="relative mt-1 inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-                          :class="compareEnabled ? 'bg-indigo-600' : 'bg-gray-200 dark:bg-gray-700'">
-                    <span class="sr-only">{{ t('teacher.analytics.charts.enableCompare') }}</span>
-                    <span aria-hidden="true" class="pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200" :class="compareEnabled ? 'translate-x-5' : 'translate-x-0'"></span>
-                  </button>
+                <div class="flex items-center gap-2 mr-1">
+                  <span class="text-sm text-gray-700 dark:text-gray-300">{{ t('teacher.analytics.charts.enableCompare') }}</span>
+                  <GlassSwitch v-model="compareEnabled" size="sm" />
                 </div>
                 <Button size="sm" variant="info" @click="openWeights = true" :disabled="!selectedCourseId" class="shadow-sm">
                   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-4 h-4 mr-1">
@@ -105,7 +100,7 @@
           </template>
           <div class="flex flex-col gap-3">
             <p class="text-xs text-gray-600 dark:text-gray-400 leading-relaxed">{{ t('teacher.analytics.settings.compareNote') }}</p>
-            <div class="flex flex-nowrap items-center gap-3 overflow-x-auto min-h-[44px] no-scrollbar whitespace-nowrap">
+            <div class="flex flex-wrap items-center gap-4 whitespace-nowrap">
               <div class="flex items-center gap-2">
                 <span class="text-xs font-medium leading-tight text-gray-700 dark:text-gray-300">{{ t('teacher.analytics.settings.studentLabel') }}</span>
                 <GlassPopoverSelect
@@ -133,17 +128,14 @@
                   :disabled="!compareEnabled"
                 />
               </div>
-            </div>
-            <div v-if="!compareEnabled" class="flex flex-nowrap items-center gap-3 whitespace-nowrap overflow-hidden mt-2">
-              <span class="text-sm text-gray-700 dark:text-gray-300 mt-6">{{ t('teacher.analytics.settings.timeFilter') }}</span>
-              <div class="w-[200px]">
-                <GlassDateTimePicker v-model="startDate" :label="t('teacher.analytics.filters.start') as any || '开始时间'" />
-              </div>
-              <div class="w-[200px]">
-                <GlassDateTimePicker v-model="endDate" :label="t('teacher.analytics.filters.end') as any || '结束时间'" />
+              <div v-if="!compareEnabled" class="flex items-center gap-2">
+                <span class="text-xs font-medium leading-tight text-gray-700 dark:text-gray-300">{{ t('teacher.analytics.settings.timeFilter') }}</span>
+                <GlassDateTimePicker v-model="startDate" :dateOnly="true" size="sm" />
+                <span class="text-xs text-gray-500">-</span>
+                <GlassDateTimePicker v-model="endDate" :dateOnly="true" size="sm" />
               </div>
             </div>
-            <div v-else class="flex flex-col gap-2">
+            <div v-if="compareEnabled" class="flex flex-col gap-2">
               <div class="flex flex-wrap items-center gap-2">
                 <span class="text-sm text-gray-700 dark:text-gray-300">{{ t('teacher.analytics.settings.setA') }}</span>
                 <GlassMultiSelect v-model="assignmentIdsA" :options="assignmentSelectOptions" />
@@ -215,7 +207,7 @@ import { teacherApi } from '@/api/teacher.api'
 import { assignmentApi } from '@/api/assignment.api'
 import type { CourseStudentPerformanceItem } from '@/types/teacher'
 import Card from '@/components/ui/Card.vue'
-import StatCard from '@/components/ui/StatCard.vue'
+import StartCard from '@/components/ui/StartCard.vue'
 import Button from '@/components/ui/Button.vue'
 import Badge from '@/components/ui/Badge.vue'
 import Progress from '@/components/ui/Progress.vue'
@@ -230,6 +222,7 @@ import GlassPopoverSelect from '@/components/ui/filters/GlassPopoverSelect.vue'
 import PageHeader from '@/components/ui/PageHeader.vue'
 import GlassDateTimePicker from '@/components/ui/inputs/GlassDateTimePicker.vue'
 import GlassMultiSelect from '@/components/ui/filters/GlassMultiSelect.vue'
+import GlassSwitch from '@/components/ui/inputs/GlassSwitch.vue'
 
 // Stores
 const teacherStore = useTeacherStore()

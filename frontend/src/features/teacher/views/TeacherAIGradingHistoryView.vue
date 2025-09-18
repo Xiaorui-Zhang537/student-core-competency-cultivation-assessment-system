@@ -18,8 +18,8 @@
       <PageHeader :title="t('teacher.aiGrading.historyTitle') || 'AI 批改历史'" :subtitle="t('teacher.aiGrading.historySubtitle') || '查看过往批改记录'">
         <template #actions>
           <div class="flex items-center gap-2">
-            <GlassInput v-model="q" :placeholder="t('common.search') || '搜索文件/模型'" class="w-64 h-8" />
-            <Button size="sm" variant="primary" class="h-8" @click="load"><MagnifyingGlassIcon class="w-4 h-4 mr-1" />{{ t('common.search') || '搜索' }}</Button>
+            <GlassSearchInput v-model="q" :placeholder="t('common.search') || '搜索文件/模型'" size="sm" class="w-64" />
+            <Button size="sm" variant="primary" class="w-auto px-3 whitespace-nowrap shrink-0" @click="load"><MagnifyingGlassIcon class="w-4 h-4 mr-1" />{{ t('common.search') || '搜索' }}</Button>
           </div>
         </template>
       </PageHeader>
@@ -43,7 +43,7 @@
                 <td class="py-2 pr-4">
                   <div v-if="hasScore(it)" class="flex items-center gap-2 w-40">
                     <div class="h-2 flex-1 rounded-md overflow-hidden border border-gray-300/70 dark:border-white/10 bg-gray-200/60 dark:bg-white/10 shadow-inner">
-                      <div class="h-full bg-gradient-to-r from-emerald-400 to-emerald-500" :style="{ width: (resolveFinalScore(it)*20)+'%' }"></div>
+                    <div class="h-full bg-gradient-to-r from-emerald-400 to-emerald-500" :style="{ width: (resolveFinalScore(it)*20)+'%' }"></div>
                     </div>
                     <span class="text-xs text-gray-700 dark:text-gray-300">{{ resolveFinalScore(it).toFixed(1) }}</span>
                   </div>
@@ -63,9 +63,7 @@
         <div class="flex items-center justify-between mt-3 text-xs text-gray-500">
           <div class="flex items-center gap-3 whitespace-nowrap">
             <span class="whitespace-nowrap">{{ t('teacher.assignments.pagination.perPagePrefix') || '每页显示' }}</span>
-            <div class="page-size-select rounded-md border border-white/20 bg-white/40 dark:bg-gray-800/40 backdrop-blur-sm px-1 py-0" v-glass="{ strength: 'ultraThin', interactive: true }">
-              <GlassPopoverSelect v-model="sizeStr" :options="pageSizeOptions" size="sm" width="80px" />
-            </div>
+            <GlassPopoverSelect v-model="sizeStr" :options="pageSizeOptions" size="sm" width="80px" />
             <span class="whitespace-nowrap">{{ t('teacher.assignments.pagination.perPageSuffix') || '条' }}</span>
           </div>
           <div class="flex items-center gap-2">
@@ -77,61 +75,54 @@
       </div>
     </div>
 
-    <div v-if="detail" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-      <div class="card p-4 w-full max-w-5xl max-h-[85vh] md:max-h-[80vh] overflow-y-auto overscroll-contain no-scrollbar" v-glass="{ strength: 'ultraThin', interactive: true }" data-export-scroll="1">
-        <div class="flex items-center justify-between mb-3">
-          <h4 class="font-semibold">{{ detail.fileName || '记录' }}</h4>
-          <div class="flex items-center gap-2">
-            <Button size="sm" variant="primary" @click="exportDetailAsText" :disabled="!parsed"><ArrowDownTrayIcon class="w-4 h-4 mr-2" />{{ t('teacher.aiGrading.exportText') || '导出文本' }}</Button>
-            <Button size="sm" variant="success" @click="exportDetailAsPng" :disabled="!parsed"><ArrowDownTrayIcon class="w-4 h-4 mr-2" />{{ t('teacher.aiGrading.exportPng') || '导出 PNG' }}</Button>
-            <Button size="sm" variant="purple" @click="exportDetailAsPdf" :disabled="!parsed"><ArrowDownTrayIcon class="w-4 h-4 mr-2" />{{ t('teacher.aiGrading.exportPdf') || '导出 PDF' }}</Button>
-            <button @click="detail=null" class="inline-flex items-center justify-center h-8 w-8 rounded-full hover:bg-black/10 dark:hover:bg-white/10 focus:outline-none" aria-label="Close">
-              <XMarkIcon class="w-5 h-5" />
-            </button>
-          </div>
-        </div>
-        <div v-if="parsed" ref="detailRef" class="grid grid-cols-1 md:grid-cols-2 gap-4" data-export-root="1">
-          <div class="card p-3 md:col-span-2">
-            <h4 class="font-semibold mb-2">{{ t('teacher.aiGrading.render.overall') }}</h4>
-            <div>
-              <div class="text-sm mb-2 flex items-center gap-3" v-if="getOverall(parsed)?.final_score != null">
-                <span>{{ t('teacher.aiGrading.render.final_score') }}: {{ overallScore(parsed) }}</span>
-                <div class="h-2 w-64 rounded-md overflow-hidden border border-gray-300/70 dark:border-white/10 bg-gray-200/60 dark:bg-white/10 shadow-inner">
-                  <div class="h-full bg-gradient-to-r from-emerald-400 to-emerald-500" :style="{ width: (Number(overallScore(parsed))*20 || 0) + '%' }"></div>
-                </div>
+    <GlassModal v-if="detail" :title="detail.fileName || '记录'" maxWidth="max-w-5xl" :hideScrollbar="true" heightVariant="max" @close="detail=null">
+      <div v-if="parsed" ref="detailRef" class="grid grid-cols-1 md:grid-cols-2 gap-4" data-export-root="1">
+        <div class="card p-3 md:col-span-2">
+          <h4 class="font-semibold mb-2">{{ t('teacher.aiGrading.render.overall') }}</h4>
+          <div>
+            <div class="text-sm mb-2 flex items-center gap-3" v-if="getOverall(parsed)?.final_score != null">
+              <span>{{ t('teacher.aiGrading.render.final_score') }}: {{ overallScore(parsed) }}</span>
+              <div class="h-2 w-64 rounded-md overflow-hidden border border-gray-300/70 dark:border-white/10 bg-gray-200/60 dark:bg-white/10 shadow-inner">
+                <div class="h-full bg-gradient-to-r from-emerald-400 to-emerald-500" :style="{ width: (Number(overallScore(parsed))*20 || 0) + '%' }"></div>
               </div>
-              <div class="space-y-2 mb-2" v-if="dimensionBars(parsed)">
-                <div class="text-sm font-medium">{{ t('teacher.aiGrading.render.dimension_averages') }}</div>
-                <div v-for="row in dimensionBars(parsed)" :key="row.key" class="flex items-center gap-3">
-                  <div class="w-40 text-xs text-gray-700 dark:text-gray-300">{{ row.label }}: {{ row.value }}</div>
-                  <div class="h-2 flex-1 rounded-md overflow-hidden border border-gray-300/70 dark:border-white/10 bg-gray-200/60 dark:bg-white/10 shadow-inner">
-                    <div class="h-full bg-gradient-to-r from-indigo-400 to-indigo-500" :style="{ width: (row.value*20 || 0) + '%' }"></div>
-                  </div>
-                </div>
-              </div>
-              <div class="text-sm whitespace-pre-wrap">{{ t('teacher.aiGrading.render.holistic_feedback') }}: {{ overallFeedback(parsed) || (t('common.empty') || '无内容') }}</div>
             </div>
-          </div>
-          <div class="card p-3" v-if="parsed?.moral_reasoning">
-            <h4 class="font-semibold mb-2">{{ t('teacher.aiGrading.render.moral_reasoning') }}</h4>
-            <div v-html="renderCriterion(parsed.moral_reasoning)"></div>
-          </div>
-          <div class="card p-3" v-if="parsed?.attitude_development">
-            <h4 class="font-semibold mb-2">{{ t('teacher.aiGrading.render.attitude_development') }}</h4>
-            <div v-html="renderCriterion(parsed.attitude_development)"></div>
-          </div>
-          <div class="card p-3" v-if="parsed?.ability_growth">
-            <h4 class="font-semibold mb-2">{{ t('teacher.aiGrading.render.ability_growth') }}</h4>
-            <div v-html="renderCriterion(parsed.ability_growth)"></div>
-          </div>
-          <div class="card p-3" v-if="parsed?.strategy_optimization">
-            <h4 class="font-semibold mb-2">{{ t('teacher.aiGrading.render.strategy_optimization') }}</h4>
-            <div v-html="renderCriterion(parsed.strategy_optimization)"></div>
+            <div class="space-y-2 mb-2" v-if="dimensionBars(parsed)">
+              <div class="text-sm font-medium">{{ t('teacher.aiGrading.render.dimension_averages') }}</div>
+              <div v-for="row in dimensionBars(parsed)" :key="row.key" class="flex items-center gap-3">
+                <div class="w-40 text-xs text-gray-700 dark:text-gray-300">{{ row.label }}: {{ row.value }}</div>
+                <div class="h-2 flex-1 rounded-md overflow-hidden border border-gray-300/70 dark:border白色/10 bg-gray-200/60 dark:bg白色/10 shadow-inner">
+                  <div class="h-full bg-gradient-to-r from-indigo-400 to-indigo-500" :style="{ width: (row.value*20 || 0) + '%' }"></div>
+                </div>
+              </div>
+            </div>
+            <div class="text-sm whitespace-pre-wrap">{{ t('teacher.aiGrading.render.holistic_feedback') }}: {{ overallFeedback(parsed) || (t('common.empty') || '无内容') }}</div>
           </div>
         </div>
-        <pre v-else class="bg-black/70 text-green-100 p-3 rounded overflow-auto text-xs max-h-[60vh]">{{ pretty(detail?.rawJson) }}</pre>
+        <div class="card p-3" v-if="parsed?.moral_reasoning">
+          <h4 class="font-semibold mb-2">{{ t('teacher.aiGrading.render.moral_reasoning') }}</h4>
+          <div v-html="renderCriterion(parsed.moral_reasoning)"></div>
+        </div>
+        <div class="card p-3" v-if="parsed?.attitude_development">
+          <h4 class="font-semibold mb-2">{{ t('teacher.aiGrading.render.attitude_development') }}</h4>
+          <div v-html="renderCriterion(parsed.attitude_development)"></div>
+        </div>
+        <div class="card p-3" v-if="parsed?.ability_growth">
+          <h4 class="font-semibold mb-2">{{ t('teacher.aiGrading.render.ability_growth') }}</h4>
+          <div v-html="renderCriterion(parsed.ability_growth)"></div>
+        </div>
+        <div class="card p-3" v-if="parsed?.strategy_optimization">
+          <h4 class="font-semibold mb-2">{{ t('teacher.aiGrading.render.strategy_optimization') }}</h4>
+          <div v-html="renderCriterion(parsed.strategy_optimization)"></div>
+        </div>
       </div>
-    </div>
+      <pre v-else class="bg-black/70 text-green-100 p-3 rounded overflow-auto text-xs max-h-[60vh]">{{ pretty(detail?.rawJson) }}</pre>
+      <template #footer>
+        <Button size="sm" variant="primary" @click="exportDetailAsText" :disabled="!parsed"><ArrowDownTrayIcon class="w-4 h-4 mr-2" />{{ t('teacher.aiGrading.exportText') || '导出文本' }}</Button>
+        <Button size="sm" variant="success" @click="exportDetailAsPng" :disabled="!parsed"><ArrowDownTrayIcon class="w-4 h-4 mr-2" />{{ t('teacher.aiGrading.exportPng') || '导出 PNG' }}</Button>
+        <Button size="sm" variant="purple" @click="exportDetailAsPdf" :disabled="!parsed"><ArrowDownTrayIcon class="w-4 h-4 mr-2" />{{ t('teacher.aiGrading.exportPdf') || '导出 PDF' }}</Button>
+        <Button size="sm" variant="secondary" @click="detail=null"><XMarkIcon class="w-4 h-4 mr-1" />{{ t('teacher.aiGrading.picker.close') || '关闭' }}</Button>
+      </template>
+    </GlassModal>
   </div>
 </template>
 
@@ -142,11 +133,12 @@ import jsPDF from 'jspdf'
 import { useI18n } from 'vue-i18n'
 import PageHeader from '@/components/ui/PageHeader.vue'
 import Button from '@/components/ui/Button.vue'
-import GlassInput from '@/components/ui/inputs/GlassInput.vue'
+import GlassSearchInput from '@/components/ui/inputs/GlassSearchInput.vue'
 import GlassPopoverSelect from '@/components/ui/filters/GlassPopoverSelect.vue'
 import { aiGradingApi } from '@/api/aiGrading.api'
 // 引入批改页的归一化与渲染逻辑（直接内嵌一份必要函数，避免循环依赖）
 import { XMarkIcon, ArrowDownTrayIcon, MagnifyingGlassIcon, EyeIcon, ChevronLeftIcon, ChevronRightIcon, TrashIcon } from '@heroicons/vue/24/outline'
+import GlassModal from '@/components/ui/GlassModal.vue'
 import { useRouter } from 'vue-router'
 import { courseApi } from '@/api/course.api'
 
@@ -692,7 +684,6 @@ onMounted(async () => {
 </script>
 
 <style scoped lang="postcss">
-.card { @apply bg-white/70 dark:bg-gray-800/70 rounded-xl border border-gray-200 dark:border-gray-700; }
 .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
 .no-scrollbar::-webkit-scrollbar { display: none; }
 .page-size-select :deep(.input) { height: 28px; padding-top: 0; padding-bottom: 0; }

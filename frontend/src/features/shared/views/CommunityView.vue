@@ -14,17 +14,17 @@
 
       <!-- Community Stats (与教师端一致：无外框，仅网格排列的 StatCard) -->
       <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6 mb-8">
-        <StatCard class="relative z-10" :hoverable="false" :label="t('shared.community.stats.posts') as string" :value="safeStats.totalPosts" tone="blue" :icon="DocumentTextIcon" />
-        <StatCard class="relative z-10" :hoverable="false" :label="t('shared.community.stats.users') as string" :value="safeStats.totalUsers" tone="emerald" :icon="UserGroupIcon" />
-        <StatCard class="relative z-10" :hoverable="false" :label="t('shared.community.stats.comments') as string" :value="safeStats.totalComments" tone="violet" :icon="ChatBubbleLeftRightIcon" />
-        <StatCard class="relative z-10" :hoverable="false" :label="t('shared.community.stats.activeToday') as string" :value="safeStats.activeUsersToday" tone="amber" :icon="BoltIcon" />
+        <StartCard class="relative z-10" :hoverable="false" :label="t('shared.community.stats.posts') as string" :value="safeStats.totalPosts" tone="blue" :icon="DocumentTextIcon" />
+        <StartCard class="relative z-10" :hoverable="false" :label="t('shared.community.stats.users') as string" :value="safeStats.totalUsers" tone="emerald" :icon="UserGroupIcon" />
+        <StartCard class="relative z-10" :hoverable="false" :label="t('shared.community.stats.comments') as string" :value="safeStats.totalComments" tone="violet" :icon="ChatBubbleLeftRightIcon" />
+        <StartCard class="relative z-10" :hoverable="false" :label="t('shared.community.stats.activeToday') as string" :value="safeStats.activeUsersToday" tone="amber" :icon="BoltIcon" />
       </div>
 
       <div class="grid grid-cols-1 lg:grid-cols-4 gap-8">
         <!-- Left Sidebar -->
         <div class="lg:col-span-1 space-y-6">
           <!-- Categories -->
-          <div class="p-4 filter-container rounded-lg shadow" v-glass="{ strength: 'thin', interactive: false }">
+          <div class="p-4 filter-container rounded-2xl shadow" v-glass="{ strength: 'thin', interactive: false }">
              <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">{{ t('shared.community.categories.title') }}</h2>
             <div class="space-y-2">
               <button
@@ -43,7 +43,7 @@
           </div>
 
           <!-- Hot Topics -->
-          <div v-if="hotTopics.length" class="p-4 filter-container rounded-lg shadow" v-glass="{ strength: 'thin', interactive: false }">
+          <div v-if="hotTopics.length" class="p-4 filter-container rounded-2xl shadow" v-glass="{ strength: 'thin', interactive: false }">
             <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">{{ t('shared.community.hotTopics') }}</h3>
             <div class="space-y-3">
               <div
@@ -62,7 +62,7 @@
           </div>
 
           <!-- Active Users -->
-          <div v-if="activeUsers.length" class="p-4 filter-container rounded-lg shadow" v-glass="{ strength: 'thin', interactive: false }">
+          <div v-if="activeUsers.length" class="p-4 filter-container rounded-2xl shadow" v-glass="{ strength: 'thin', interactive: false }">
             <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">{{ t('shared.community.activeUsers') }}</h3>
             <div class="space-y-3">
               <div v-for="user in activeUsers" :key="user.userId" class="flex items-center space-x-3">
@@ -83,20 +83,18 @@
 
         <!-- Main Content: Posts List -->
         <div class="lg:col-span-3">
-          <div class="p-4 glass-regular rounded-lg shadow" v-glass="{ strength: 'regular', interactive: true }">
+          <div class="p-4 glass-regular rounded-2xl shadow" v-glass="{ strength: 'regular', interactive: true }">
             <div class="flex justify-between items-center mb-4">
               <h2 class="text-lg font-semibold text-gray-900 dark:text-white">
                 {{ categories.find((c: { id: string; name: string; icon: any; }) => c.id === filterOptions.category)?.name || '全部帖子' }}
               </h2>
               <div class="flex items-center space-x-3">
-                <div class="relative">
-                  <MagnifyingGlassIcon class="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
-                  <input
+                <div class="relative w-64">
+                  <GlassSearchInput
                     v-model="filterOptions.keyword"
+                    :placeholder="t('shared.community.list.searchPlaceholder') as string"
+                    size="sm"
                     @keyup.enter="applyFilters"
-                    type="text"
-                    :placeholder="t('shared.community.list.searchPlaceholder')"
-                    class="input input--glass pl-10 pr-4 py-2"
                   />
                 </div>
                 <div class="w-36">
@@ -133,7 +131,7 @@
                   <div class="flex-1 min-w-0" @click="viewPost(post.id)">
                    <div class="flex items-center space-x-2 mb-1">
                       <h3 class="text-sm font-medium text-gray-900 dark:text-white">{{ post.title }}</h3>
-                       <div class="text-xs px-2 py-0.5 rounded-full" :class="getCategoryClass(post.category)">{{ displayCategory(post.category) }}</div>
+                      <Badge size="sm" :variant="categoryVariant(post.category)">{{ displayCategory(post.category) }}</Badge>
                     </div>
                    <p class="text-sm text-gray-600 dark:text-gray-400 line-clamp-2 mb-2" v-html="post.content"></p>
                     <div class="flex items-center space-x-4 text-xs text-gray-500">
@@ -141,19 +139,19 @@
                       <span>{{ formatDate(post.createdAt) }}</span>
                        <div class="flex items-center space-x-1"><EyeIcon class="w-3 h-3" /><span>{{ post.viewCount }}</span></div>
                       <div class="flex items-center space-x-1"><ChatBubbleLeftIcon class="w-3 h-3" /><span>{{ post.commentCount }}</span></div>
-                      <button @click.stop="communityStore.toggleLikePost(post.id)" :class="post.isLiked ? 'text-red-500' : ''" class="flex items-center space-x-1">
-                        <HandThumbUpIcon class="w-3 h-3" />
+                      <Button size="xs" variant="secondary" @click.stop="communityStore.toggleLikePost(post.id)" :class="post.isLiked ? 'text-red-500' : ''">
+                        <HandThumbUpIcon class="w-3 h-3 mr-1" />
                         <span>{{ post.likeCount }}</span>
-                      </button>
+                      </Button>
                     </div>
-                    <div v-if="post.tags?.length" class="flex items-center space-x-2 mt-2">
-                      <span v-for="tag in post.tags" :key="tag.id" class="text-xs text-primary-600 dark:text-primary-400">#{{ tag.name }}</span>
+                    <div v-if="post.tags?.length" class="flex items-center flex-wrap gap-2 mt-2">
+                      <Badge v-for="tag in post.tags" :key="tag.id" size="sm" :variant="tagVariantByName(tag.name)">#{{ tag.name }}</Badge>
                     </div>
                   </div>
                   <div class="flex-shrink-0 space-x-2">
-                    <Button v-if="post.attachments?.length" variant="ghost" size="sm" @click.stop="downloadFirstAttachment(post)">下载附件</Button>
-                    <Button v-if="authStore.user?.id && String(authStore.user.id) === String(post.author?.id || post.authorId)" variant="ghost" size="sm" @click.stop="onEditPost(post)">{{ t('shared.community.list.edit') }}</Button>
-                    <Button v-if="authStore.user?.id && String(authStore.user.id) === String(post.author?.id || post.authorId)" variant="danger" size="sm" @click.stop="onDeletePost(post.id)">{{ t('shared.community.list.delete') }}</Button>
+                    <Button v-if="post.attachments?.length" variant="secondary" size="sm" icon="download" @click.stop="downloadFirstAttachment(post)">下载附件</Button>
+                    <Button v-if="authStore.user?.id && String(authStore.user.id) === String(post.author?.id || post.authorId)" variant="secondary" size="sm" icon="edit" @click.stop="onEditPost(post)">{{ t('shared.community.list.edit') }}</Button>
+                    <Button v-if="authStore.user?.id && String(authStore.user.id) === String(post.author?.id || post.authorId)" variant="danger" size="sm" icon="delete" @click.stop="onDeletePost(post.id)">{{ t('shared.community.list.delete') }}</Button>
                   </div>
                 </div>
               </div>
@@ -189,11 +187,9 @@
         </div>
       </div>
 
-      <!-- Create Post Modal -->
-      <div v-if="showCreatePostModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-        <div class="modal glass-thick p-6 max-w-2xl w-full mx-4 max-h-[80vh] overflow-y-auto" v-glass="{ strength: 'thick', interactive: true }">
-           <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-4">{{ t('shared.community.modal.createTitle') }}</h3>
-          <form @submit.prevent="handleCreatePost" class="space-y-4">
+      <!-- Create Post Modal (GlassModal) -->
+      <GlassModal v-if="showCreatePostModal" :title="t('shared.community.modal.createTitle') as string" maxWidth="max-w-xl" heightVariant="tall" @close="showCreatePostModal=false">
+        <form @submit.prevent="handleCreatePost" class="space-y-4">
             <div>
               <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{{ t('shared.community.modal.title') }}</label>
               <GlassInput v-model="newPost.title" :placeholder="t('shared.community.modal.title') as string" />
@@ -208,19 +204,7 @@
             </div>
             <div>
               <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{{ t('shared.community.modal.tags') }}</label>
-              <GlassInput v-model="newPost.tagsInput" :placeholder="t('shared.community.modal.tags') as string" class="mb-2" />
-              <div class="mb-2">
-                <GlassInput v-model="newPost.tagSearch" @input="searchTags" :placeholder="t('shared.community.modal.tagSearch') as string" />
-                <div v-if="newPost.tagOptions.length" class="mt-2 border border-gray-200 dark:border-gray-700 rounded-md divide-y divide-gray-100 dark:divide-gray-700">
-                  <button v-for="opt in newPost.tagOptions" :key="opt.id" type="button" class="w-full text-left px-3 py-2 text-sm hover:bg-gray-50 dark:hover:bg-gray-700" @click="addTag(opt.name)">#{{ opt.name }}</button>
-                </div>
-              </div>
-              <div v-if="newPost.selectedTags.length" class="flex flex-wrap gap-2">
-                <span v-for="t in newPost.selectedTags" :key="t" class="text-xs px-2 py-1 rounded-full bg-primary-50 text-primary-700 dark:bg-primary-900 dark:text-primary-300">
-                  #{{ t }}
-                  <button type="button" class="ml-1" @click="removeTag(t)">×</button>
-                </span>
-              </div>
+              <GlassTagsInput v-model="newPost.selectedTags" :placeholder="t('shared.community.modal.addTags') as string || '添加标签（回车确认）'" />
             </div>
             <div>
               <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{{ t('shared.community.modal.content') }}</label>
@@ -240,19 +224,16 @@
                 @upload-error="onPostUploadError"
               />
             </div>
-            <div class="flex justify-end space-x-3 pt-4">
-              <Button type="button" variant="secondary" @click="showCreatePostModal = false">{{ t('shared.community.modal.cancel') }}</Button>
-              <Button type="submit" variant="primary" :disabled="loading">{{ t('shared.community.modal.publish') }}</Button>
-            </div>
-          </form>
-        </div>
-      </div>
+          <div class="flex justify-end space-x-3 pt-4">
+            <Button type="button" variant="secondary" @click="showCreatePostModal = false">{{ t('shared.community.modal.cancel') }}</Button>
+            <Button type="submit" variant="primary" :disabled="loading">{{ t('shared.community.modal.publish') }}</Button>
+          </div>
+        </form>
+      </GlassModal>
 
-      <!-- Edit Post Modal -->
-      <div v-if="editModal.visible" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-        <div class="modal glass-thick p-6 max-w-2xl w-full mx-4 max-h-[80vh] overflow-y-auto" v-glass="{ strength: 'thick', interactive: true }">
-          <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-4">{{ t('shared.community.modal.editTitle') }}</h3>
-          <form @submit.prevent="handleUpdatePost" class="space-y-4">
+      <!-- Edit Post Modal (GlassModal) -->
+      <GlassModal v-if="editModal.visible" :title="t('shared.community.modal.editTitle') as string" maxWidth="max-w-xl" heightVariant="tall" @close="editModal.visible=false">
+        <form @submit.prevent="handleUpdatePost" class="space-y-4">
             <div>
               <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{{ t('shared.community.modal.title') }}</label>
               <GlassInput v-model="editModal.form.title" />
@@ -264,6 +245,10 @@
                 :options="categoryOptions"
                 size="md"
               />
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{{ t('shared.community.modal.tags') }}</label>
+              <GlassTagsInput v-model="editModal.form.tags" :placeholder="t('shared.community.modal.addTags') as string || '添加标签（回车确认）'" />
             </div>
             <div>
               <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{{ t('shared.community.modal.content') }}</label>
@@ -298,13 +283,12 @@
                 </ul>
               </div>
             </div>
-            <div class="flex justify-end space-x-3 pt-4">
-              <Button type="button" variant="secondary" @click="editModal.visible = false">{{ t('shared.community.modal.cancel') }}</Button>
-              <Button type="submit" :disabled="loading" variant="primary">{{ t('shared.community.modal.save') }}</Button>
-            </div>
-          </form>
-        </div>
-      </div>
+          <div class="flex justify-end space-x-3 pt-4">
+            <Button type="button" variant="secondary" @click="editModal.visible = false">{{ t('shared.community.modal.cancel') }}</Button>
+            <Button type="submit" :disabled="loading" variant="primary">{{ t('shared.community.modal.save') }}</Button>
+          </div>
+        </form>
+      </GlassModal>
     </div>
   </div>
 </template>
@@ -323,15 +307,19 @@ import {
 import UserAvatar from '@/components/ui/UserAvatar.vue'
 import Button from '@/components/ui/Button.vue'
 import GlassPopoverSelect from '@/components/ui/filters/GlassPopoverSelect.vue'
-import StatCard from '@/components/ui/StatCard.vue'
+import StartCard from '@/components/ui/StartCard.vue'
 import GlassInput from '@/components/ui/inputs/GlassInput.vue'
 import GlassTextarea from '@/components/ui/inputs/GlassTextarea.vue'
+import Badge from '@/components/ui/Badge.vue'
+import GlassSearchInput from '@/components/ui/inputs/GlassSearchInput.vue'
+import GlassTagsInput from '@/components/ui/inputs/GlassTagsInput.vue'
 
 import { useAuthStore } from '@/stores/auth';
 import FileUpload from '@/components/forms/FileUpload.vue';
 import { baseURL } from '@/api/config';
 import { fileApi } from '@/api/file.api';
 import PageHeader from '@/components/ui/PageHeader.vue'
+import GlassModal from '@/components/ui/GlassModal.vue'
 
 const router = useRouter();
 const communityStore = useCommunityStore();
@@ -367,9 +355,9 @@ const newPost = reactive({
   tagOptions: [] as { id: number; name: string }[],
   selectedTags: [] as string[],
 });
-const editModal = reactive<{ visible: boolean; form: { id?: number; title: string; category: string; content: string } }>({
+const editModal = reactive<{ visible: boolean; form: { id?: number; title: string; category: string; content: string; tags: string[] } }>({
   visible: false,
-  form: { id: undefined, title: '', category: 'study', content: '' }
+  form: { id: undefined, title: '', category: 'study', content: '', tags: [] }
 })
 const postUploader = ref();
 const postEditUploader = ref();
@@ -457,6 +445,7 @@ const onEditPost = (post: any) => {
   // 将后端中文分类转换为前端英文 id（保持选项值稳定）
   editModal.form.category = labelToCategoryId[post.category] || post.category
   editModal.form.content = post.content
+  editModal.form.tags = Array.isArray(post.tags) ? post.tags.map((t:any)=> String(t.name || t)) : []
   editUploadData.relatedId = post.id
   refreshEditAttachments(post.id)
 }
@@ -468,6 +457,7 @@ const handleUpdatePost = async () => {
     // 提交给后端中文分类（由稳定 id -> 中文标签）
     category: categoryIdToLabel[editModal.form.category] || editModal.form.category,
     content: editModal.form.content,
+    tags: Array.isArray(editModal.form.tags) ? editModal.form.tags : [],
   })
   {
     const { useUIStore } = await import('@/stores/ui')
@@ -484,7 +474,7 @@ const handleCreatePost = async () => {
     content: newPost.content,
     // 提交给后端中文分类（由稳定 id -> 中文标签）
     category: categoryIdToLabel[newPost.category] || newPost.category,
-    tags: Array.from(new Set([...(newPost.tagsInput.split(' ').filter(t => t)), ...newPost.selectedTags])),
+    tags: Array.from(new Set([...(newPost.selectedTags || [])])),
   };
   
   const created = await communityStore.createPost(postData);
@@ -607,6 +597,34 @@ const displayCategory = (category: string) => {
   // 兼容可能的 'study' | 'help' | 'share' | 'qa' | 'chat'
   return mapEnToKey[category] || category;
 };
+
+// 将后端分类映射到 Badge 语义色，保证不同分类颜色区分
+const categoryVariant = (category: string) => {
+  const key = (labelToCategoryId[category] || category).toString().toLowerCase()
+  if (key === 'study') return 'primary'
+  if (key === 'help') return 'warning'
+  if (key === 'share') return 'success'
+  if (key === 'qa') return 'info'
+  if (key === 'chat') return 'secondary'
+  return 'secondary'
+}
+
+// 为标签随机分配玻璃色系（稳定映射）
+const tagColorMap = new Map<string, string>()
+const tagVariants = ['primary','secondary','success','warning','info','purple','teal']
+function tagVariantByName(name: string): string {
+  const key = String(name || '').toLowerCase()
+  if (tagColorMap.has(key)) return tagColorMap.get(key) as string
+  const idx = Math.abs(hashCode(key)) % tagVariants.length
+  const variant = tagVariants[idx]
+  tagColorMap.set(key, variant)
+  return variant
+}
+function hashCode(s: string): number {
+  let h = 0
+  for (let i=0;i<s.length;i++) { h = ((h<<5)-h) + s.charCodeAt(i); h |= 0 }
+  return h
+}
 
 
 onMounted(() => {

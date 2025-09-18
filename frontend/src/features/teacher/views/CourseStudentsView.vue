@@ -34,137 +34,85 @@
         </PageHeader>
       </div>
 
-      <!-- 统计卡片（基于接口数据汇总） -->
+      <!-- 统计卡片（复用 /ui/StatCard 彩色卡片 + 图标） -->
       <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-        <card padding="lg" class="text-center">
-          <div class="text-3xl font-bold text-blue-600 dark:text-blue-400 mb-2">
-            {{ stats.totalStudents }}
-          </div>
-          <p class="text-sm text-gray-600 dark:text-gray-400">{{ t('teacher.students.cards.total') }}</p>
-          <div class="mt-2 flex items-center justify-center space-x-1">
-             <ArrowTrendingUpIcon class="w-4 h-4 text-green-500" />
-            <span class="text-xs text-green-600">{{ t('teacher.students.cards.newThisWeek', { count: stats.newStudentsThisWeek }) }}</span>
-          </div>
-        </card>
-        <card padding="lg" class="text-center">
-          <div class="text-3xl font-bold text-green-600 dark:text-green-400 mb-2">
-            {{ stats.averageProgress }}%
-          </div>
-          <p class="text-sm text-gray-600 dark:text-gray-400">{{ t('teacher.students.cards.avgProgress') }}</p>
-          <div class="mt-2">
-             <Progress :value="stats.averageProgress" :max="100" size="sm" color="primary" />
-          </div>
-        </card>
-        <card padding="lg" class="text-center">
-          <div class="text-3xl font-bold text-yellow-600 dark:text-yellow-400 mb-2">
-            {{ Number(stats.averageGrade || 0).toFixed(1) }}
-          </div>
-          <p class="text-sm text-gray-600 dark:text-gray-400">{{ t('teacher.students.cards.avgGrade') }}</p>
-          <div class="mt-2 flex items-center justify-center space-x-1">
-             <StarIcon class="w-4 h-4 text-yellow-500" />
-            <span class="text-xs text-gray-600">{{ t('teacher.students.cards.passRate', { rate: stats.passRate }) }}</span>
-          </div>
-        </card>
-        <card padding="lg" class="text-center">
-          <div class="text-3xl font-bold text-purple-600 dark:text-purple-400 mb-2">
-            {{ stats.activeStudents }}
-          </div>
-          <p class="text-sm text-gray-600 dark:text-gray-400">{{ t('teacher.students.cards.active') }}</p>
-          <div class="mt-2 flex items-center justify-center space-x-1">
-             <ClockIcon class="w-4 h-4 text-blue-500" />
-            <span class="text-xs text-blue-600">{{ t('teacher.students.cards.activeThisWeek') }}</span>
-          </div>
-        </card>
+        <StartCard :label="t('teacher.students.cards.total') as string" :value="stats.totalStudents" tone="blue" :icon="UserGroupIcon" />
+        <StartCard :label="t('teacher.students.cards.avgProgress') as string" :value="`${stats.averageProgress}%`" tone="emerald" :icon="ArrowTrendingUpIcon" />
+        <StartCard :label="t('teacher.students.cards.avgGrade') as string" :value="Number(stats.averageGrade || 0).toFixed(1)" tone="amber" :icon="StarIcon" />
+        <StartCard :label="t('teacher.students.cards.active') as string" :value="stats.activeStudents" tone="violet" :icon="ClockIcon" />
       </div>
 
-      <!-- 筛选和操作栏 -->
+      <!-- 筛选与操作（仅保留外层玻璃容器，内部单行排布） -->
       <card padding="lg" class="mb-8">
-        <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between space-y-4 lg:space-y-0">
-          <!-- 搜索和筛选（玻璃风格） -->
-          <FilterBar :dense="false" :wrap="false">
-            <!-- 搜索框 -->
-            <div class="relative">
-              <MagnifyingGlassIcon class="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
-              <input
-                v-model="searchQuery"
-                type="text"
-                :placeholder="t('teacher.students.filters.searchPlaceholder')"
-                class="input input--glass pl-10 w-64"
-              />
-            </div>
+        <div class="flex items-center flex-nowrap gap-2 overflow-x-auto whitespace-nowrap">
+          <!-- 三个过滤器（横向排列） -->
+          <GlassPopoverSelect
+            v-model="progressFilter"
+            :options="progressOptions"
+            size="sm"
+            width="9rem"
+            :fullWidth="false"
+          />
+          <GlassPopoverSelect
+            v-model="gradeFilter"
+            :options="gradeOptions"
+            size="sm"
+            width="10rem"
+            :fullWidth="false"
+          />
+          <GlassPopoverSelect
+            v-model="activityFilter"
+            :options="activityOptions"
+            size="sm"
+            width="9rem"
+            :fullWidth="false"
+          />
 
-            <!-- 进度筛选 -->
-            <GlassPopoverSelect
-              v-model="progressFilter"
-              :options="progressOptions"
-              size="sm"
-              width="10rem"
-            />
+          <!-- 搜索框（紧随其后） -->
+          <div class="relative">
+            <GlassSearchInput v-model="searchQuery" :placeholder="t('teacher.students.filters.searchPlaceholder')" size="sm" class="w-56" />
+          </div>
 
-            <!-- 成绩筛选 -->
+          <!-- 排序选择器（与前面控件保持相同间距与高度） / 批量操作互斥 -->
+          <div v-if="selectedStudents.length === 0" class="ml-auto">
             <GlassPopoverSelect
-              v-model="gradeFilter"
-              :options="gradeOptions"
-              size="sm"
-              width="12rem"
-            />
-
-            <!-- 活跃度筛选 -->
-            <GlassPopoverSelect
-              v-model="activityFilter"
-              :options="activityOptions"
-              size="sm"
-              width="10rem"
-            />
-          </FilterBar>
-
-          <!-- 批量操作 -->
-          <div class="flex items-center space-x-3">
-             <div v-if="selectedStudents.length > 0" class="flex items-center space-x-2">
-               <span class="text-sm text-gray-600 dark:text-gray-400">
-                 {{ t('teacher.students.batch.selectedCount', { count: selectedStudents.length }) }}
-               </span>
-               <Button variant="success" size="sm" @click="batchExport">
-                 <arrow-down-tray-icon class="w-4 h-4 mr-1" />
-                 {{ t('teacher.students.batch.export') }}
-               </Button>
-               <Button variant="outline" size="sm" @click="batchRemove">
-                 <user-minus-icon class="w-4 h-4 mr-1" />
-                 {{ t('teacher.students.batch.remove') }}
-               </Button>
-             </div>
-            
-            <!-- 排序（玻璃风格） -->
-            <GlassPopoverSelect
-              v-if="selectedStudents.length === 0"
               v-model="sortBy"
               :options="sortOptions"
               size="sm"
               width="12rem"
+              :fullWidth="false"
             />
+          </div>
 
-            <!-- 已移除视图切换按钮，固定为表格视图 -->
+          <!-- 批量操作（出现时替代排序，并右对齐） -->
+          <div v-else class="ml-auto flex items-center gap-2">
+            <span class="text-sm text-gray-600 dark:text-gray-400">
+              {{ t('teacher.students.batch.selectedCount', { count: selectedStudents.length }) }}
+            </span>
+            <Button variant="success" size="sm" @click="batchExport">
+              <arrow-down-tray-icon class="w-4 h-4 mr-1" />
+              {{ t('teacher.students.batch.export') }}
+            </Button>
+            <Button variant="outline" size="sm" @click="batchRemove">
+              <user-minus-icon class="w-4 h-4 mr-1" />
+              {{ t('teacher.students.batch.remove') }}
+            </Button>
           </div>
         </div>
       </card>
 
-      <!-- 邀请学生弹窗 -->
-      <div v-if="showInviteModal" class="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-        <div class="bg-white dark:bg-gray-800 w-full max-w-lg rounded-xl shadow-xl border border-gray-200 dark:border-gray-700">
-          <div class="p-4 border-b border-gray-200 dark:border-gray-700">
-            <h3 class="text-lg font-semibold text-gray-900 dark:text-white">{{ t('teacher.students.invite.title') }}</h3>
-          </div>
-          <div class="p-4 space-y-4">
-            <p class="text-sm text-gray-600 dark:text-gray-400">{{ t('teacher.students.invite.desc') }}</p>
-            <textarea v-model="inviteRaw" rows="6" class="input w-full" :placeholder="t('teacher.students.invite.placeholder')"></textarea>
-            <div class="text-xs text-gray-500">{{ t('teacher.students.invite.parsed', { count: parsedInviteIds.length }) }}</div>
-          </div>
-          <div class="p-4 flex justify-end gap-2 border-t border-gray-200 dark:border-gray-700">
-            <Button variant="secondary" @click="closeInviteModal">{{ t('teacher.students.invite.cancel') }}</Button>
-            <Button variant="teal" :disabled="parsedInviteIds.length===0 || inviting" :loading="inviting" @click="submitInvite">{{ t('teacher.students.invite.confirm') }}</Button>
-          </div>
+      <!-- 邀请学生弹窗（复用 GlassModal） -->
+      <GlassModal v-if="showInviteModal" :title="t('teacher.students.invite.title') as string" maxWidth="max-w-lg" heightVariant="compact" @close="closeInviteModal">
+        <div class="space-y-4">
+          <p class="text-sm text-gray-600 dark:text-gray-400">{{ t('teacher.students.invite.desc') }}</p>
+          <GlassTextarea v-model="inviteRaw" :rows="6" :placeholder="t('teacher.students.invite.placeholder') as string" />
+          <div class="text-xs text-gray-500">{{ t('teacher.students.invite.parsed', { count: parsedInviteIds.length }) }}</div>
         </div>
-      </div>
+        <template #footer>
+          <Button variant="secondary" @click="closeInviteModal">{{ t('teacher.students.invite.cancel') }}</Button>
+          <Button variant="teal" :disabled="parsedInviteIds.length===0 || inviting" :loading="inviting" @click="submitInvite">{{ t('teacher.students.invite.confirm') }}</Button>
+        </template>
+      </GlassModal>
 
       <!-- 学生列表 - 表格视图 -->
       <card padding="lg">
@@ -316,7 +264,7 @@
                           :style="{ left: menuPos.left + 'px', top: menuPos.top + 'px', width: menuPos.width + 'px', maxHeight: '180px' }"
                           @click.stop
                         >
-                          <div class="py-1">
+                          <div class="py-1 space-y-1">
                             <Button variant="menu" size="sm" class="w-full justify-start" @click="viewGrades(student.id)">
                                <AcademicCapIcon class="w-4 h-4" />
                                {{ t('teacher.students.table.viewGrades') }}
@@ -345,48 +293,44 @@
           </table>
         </div>
 
-        <!-- 分页（统一玻璃风格） -->
-          <div class="mt-6 flex items-center justify-between rounded-xl glass-regular glass-interactive border border-gray-200/40 dark:border-gray-700/40 px-4 py-3">
-            <div class="flex items-center space-x-2">
-              <span class="text-sm text-gray-700 dark:text-gray-300">{{ t('teacher.assignments.pagination.perPagePrefix') }}</span>
-              <select v-model.number="pageSize" class="input input--glass input-sm w-20">
-                <option :value="10">10</option>
-                <option :value="20">20</option>
-                <option :value="50">50</option>
-              </select>
-              <span class="text-sm text-gray-700 dark:text-gray-300">{{ t('teacher.assignments.pagination.perPageSuffix') }}</span>
-            </div>
-            <div class="flex items-center space-x-2">
-              <Button variant="outline" size="sm" class="whitespace-nowrap" @click="currentPage = Math.max(1, currentPage - 1)" :disabled="currentPage === 1">{{ t('teacher.assignments.pagination.prev') }}</Button>
-              <span class="text-sm">{{ t('teacher.assignments.pagination.page', { page: currentPage }) }}</span>
-              <Button variant="outline" size="sm" class="whitespace-nowrap" @click="currentPage = Math.min(totalPages, currentPage + 1)" :disabled="currentPage >= totalPages">{{ t('teacher.assignments.pagination.next') }}</Button>
-            </div>
+        <!-- 分页（移除额外容器样式，保留简洁行） -->
+        <div class="mt-6 px-4 py-3 flex items-center justify-between">
+          <div class="flex items-center gap-2">
+            <span class="text-sm text-gray-700 dark:text-gray-300">{{ t('teacher.assignments.pagination.perPagePrefix') }}</span>
+            <GlassPopoverSelect
+              :model-value="pageSize"
+              :options="[{label:'10',value:10},{label:'20',value:20},{label:'50',value:50}]"
+              size="sm"
+              width="80px"
+              @update:modelValue="(v:any)=>{ pageSize = Number(v||10) }"
+            />
+            <span class="text-sm text-gray-700 dark:text-gray-300">{{ t('teacher.assignments.pagination.perPageSuffix') }}</span>
+          </div>
+          <div class="flex items-center gap-2">
+            <Button variant="outline" size="sm" class="whitespace-nowrap" @click="currentPage = Math.max(1, currentPage - 1)" :disabled="currentPage === 1">{{ t('teacher.assignments.pagination.prev') }}</Button>
+            <span class="text-sm">{{ t('teacher.assignments.pagination.page', { page: currentPage }) }}</span>
+            <Button variant="outline" size="sm" class="whitespace-nowrap" @click="currentPage = Math.min(totalPages, currentPage + 1)" :disabled="currentPage >= totalPages">{{ t('teacher.assignments.pagination.next') }}</Button>
+          </div>
         </div>
       </card>
 
-      <!-- 课程入课密钥设置弹窗 -->
-      <div v-if="showKeyModal" class="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-        <div class="bg-white dark:bg-gray-800 w-full max-w-md rounded-xl shadow-xl border border-gray-200 dark:border-gray-700">
-          <div class="p-4 border-b border-gray-200 dark:border-gray-700">
-            <h3 class="text-lg font-semibold text-gray-900 dark:text-white">{{ t('teacher.students.enrollKey.title') }}</h3>
+      <!-- 课程入课密钥设置弹窗（复用 GlassModal） -->
+      <GlassModal v-if="showKeyModal" :title="t('teacher.students.enrollKey.title') as string" maxWidth="max-w-md" heightVariant="compact" @close="closeKeyModal">
+        <div class="space-y-4">
+          <div class="flex items-center gap-3">
+            <span class="text-sm text-gray-700 dark:text-gray-300">{{ t('teacher.students.enrollKey.require') }}</span>
+            <GlassSwitch v-model="requireKey" size="md" />
           </div>
-          <div class="p-4 space-y-4">
-            <label class="inline-flex items-center gap-2">
-              <input type="checkbox" v-model="requireKey" class="rounded border-gray-300 text-primary-600 focus:ring-primary-500" />
-              <span class="text-sm text-gray-700 dark:text-gray-300">{{ t('teacher.students.enrollKey.require') }}</span>
-            </label>
-            <div>
-              <label class="block text-sm mb-1">{{ t('teacher.students.enrollKey.keyLabel') }}</label>
-              <input v-model="inputKey" :disabled="!requireKey" type="password" class="input w-full" :placeholder="t('teacher.students.enrollKey.placeholder') as string" />
-              <div class="text-xs text-gray-500 mt-1">{{ t('teacher.students.enrollKey.tip') }}</div>
-            </div>
-          </div>
-          <div class="p-4 flex justify-end gap-2 border-t border-gray-200 dark:border-gray-700">
-            <Button variant="secondary" @click="closeKeyModal">{{ t('teacher.students.invite.cancel') }}</Button>
-            <Button variant="teal" :loading="savingKey" @click="saveEnrollKey">{{ t('teacher.students.enrollKey.save') }}</Button>
+          <div>
+            <label class="block text-sm mb-1">{{ t('teacher.students.enrollKey.keyLabel') }}</label>
+            <GlassInput v-model="inputKey" :disabled="!requireKey" type="password" :placeholder="t('teacher.students.enrollKey.placeholder') as string" />
           </div>
         </div>
-      </div>
+        <template #footer>
+          <Button variant="secondary" @click="closeKeyModal">{{ t('teacher.students.invite.cancel') }}</Button>
+          <Button variant="teal" :loading="savingKey" @click="saveEnrollKey">{{ t('teacher.students.enrollKey.save') }}</Button>
+        </template>
+      </GlassModal>
 
       <!-- 已移除卡片视图 -->
 
@@ -404,9 +348,11 @@ import Card from '@/components/ui/Card.vue'
 import Button from '@/components/ui/Button.vue'
 import Badge from '@/components/ui/Badge.vue'
 import Progress from '@/components/ui/Progress.vue'
-import FilterBar from '@/components/ui/filters/FilterBar.vue'
+// StartCard 不再使用，改用彩色 StatCard
+import StartCard from '@/components/ui/StartCard.vue'
 import GlassPopoverSelect from '@/components/ui/filters/GlassPopoverSelect.vue'
 import PageHeader from '@/components/ui/PageHeader.vue'
+import GlassModal from '@/components/ui/GlassModal.vue'
 import { 
   ChevronRightIcon,
   DocumentArrowDownIcon,
@@ -414,6 +360,7 @@ import {
   ArrowTrendingUpIcon,
   StarIcon,
   ClockIcon,
+  UserGroupIcon,
   MagnifyingGlassIcon,
   UserIcon,
   EyeIcon,
@@ -427,7 +374,11 @@ import {
   AcademicCapIcon,
   ArrowPathIcon
 } from '@heroicons/vue/24/outline'
+import GlassSearchInput from '@/components/ui/inputs/GlassSearchInput.vue'
 import { LockClosedIcon } from '@heroicons/vue/24/outline'
+import GlassSwitch from '@/components/ui/inputs/GlassSwitch.vue'
+import GlassInput from '@/components/ui/inputs/GlassInput.vue'
+import GlassTextarea from '@/components/ui/inputs/GlassTextarea.vue'
 import UserAvatar from '@/components/ui/UserAvatar.vue'
 import { useChatStore } from '@/stores/chat'
 // @ts-ignore shim for vue-i18n types in this project
@@ -892,6 +843,7 @@ const showKeyModal = ref(false)
 const requireKey = ref(false)
 const inputKey = ref('')
 const savingKey = ref(false)
+const hasExistingEnrollKey = ref(false)
 
 function openKeyModal() {
   showKeyModal.value = true
@@ -900,6 +852,8 @@ function openKeyModal() {
     try {
       const res: any = await courseApi.getCourseById(Number(courseId))
       requireKey.value = Boolean((res as any)?.requireEnrollKey)
+      // 以当前课程设置是否需要密钥作为是否已有历史密钥的近似判断
+      hasExistingEnrollKey.value = requireKey.value === true
     } catch {}
   })
 }
@@ -911,6 +865,12 @@ async function saveEnrollKey() {
   if (savingKey.value) return
   savingKey.value = true
   try {
+    if (requireKey.value && !inputKey.value && !hasExistingEnrollKey.value) {
+      // 没有历史密钥时需校验输入，这里简单前端校验：若无输入则提示
+      uiStore.showNotification({ type: 'warning', title: t('app.notifications.warning.title') as string, message: t('teacher.students.enrollKey.placeholder') as string })
+      savingKey.value = false
+      return
+    }
     const { courseApi } = await import('@/api/course.api')
     await courseApi.setCourseEnrollKey(courseId, requireKey.value, inputKey.value || undefined)
     uiStore.showNotification({ type: 'success', title: t('app.notifications.success.title') as string, message: t('teacher.students.enrollKey.saved') as string })

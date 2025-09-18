@@ -14,23 +14,43 @@
       </div>
       <div class="text-xs text-gray-500 mt-1 flex items-center space-x-3">
         <span>{{ formatDate(comment.createdAt) }}</span>
-        <button class="flex items-center space-x-1" :class="comment.isLiked ? 'text-red-500' : ''" @click="onLikeComment" :disabled="likeBusy">
-          <hand-thumb-up-icon class="w-3.5 h-3.5" />
+        <Button size="xs" variant="ghost" class="!px-1 !py-0.5" :class="comment.isLiked ? 'text-red-500' : ''" @click="onLikeComment" :disabled="likeBusy">
+          <template #icon>
+            <HandThumbUpIcon class="w-3.5 h-3.5" />
+          </template>
           <span>{{ safeLikeCount }}</span>
-        </button>
-        <button class="inline-flex items-center px-2 text-indigo-600 hover:underline" @click="askAiForComment">
-          <SparklesIcon class="w-3.5 h-3.5 mr-1" />{{ t('teacher.analytics.askAi') }}
-        </button>
-        <button class="hover:underline" @click="toggleReply">{{ t('shared.community.detail.postComment') }}</button>
-        <button v-if="authStore.user?.id && String(authStore.user.id) === String(comment.authorId)" class="text-red-500 hover:underline" @click="handleDeleteSelf">{{ t('shared.community.list.delete') }}</button>
+        </Button>
+        <Button size="xs" variant="primary" class="!px-1.5 !py-0.5" @click="askAiForComment">
+          <template #icon>
+            <SparklesIcon class="w-3.5 h-3.5" />
+          </template>
+          {{ t('shared.community.detail.askAi') }}
+        </Button>
+        <Button size="xs" variant="success" class="!px-1.5 !py-0.5" @click="toggleReply">
+          <template #icon>
+            <ChatBubbleLeftIcon class="w-3.5 h-3.5" />
+          </template>
+          {{ t('shared.community.detail.reply') }}
+        </Button>
+        <Button v-if="authStore.user?.id && String(authStore.user.id) === String(comment.authorId)" size="xs" variant="danger" class="!px-1.5 !py-0.5" @click="handleDeleteSelf">
+          <template #icon>
+            <TrashIcon class="w-3.5 h-3.5" />
+          </template>
+          {{ t('shared.community.list.delete') }}
+        </Button>
       </div>
       <!-- 回复输入框 -->
       <div v-if="showReplyBox" class="mt-2">
         <GlassTextarea v-model="replyContent" :rows="2" class="w-full" :placeholder="t('shared.community.detail.writeComment') as string" />
         <div class="mt-1 flex items-center gap-2">
-          <emoji-picker @select="(e) => replyContent = (replyContent || '') + e" />
-          <button class="btn btn-primary btn-sm" :disabled="!replyContent.trim()" @click="submitReply">{{ t('shared.community.detail.postComment') }}</button>
-          <button class="btn btn-ghost btn-sm" @click="toggleReply">{{ t('shared.community.modal.cancel') }}</button>
+          <emoji-picker @select="(e: string) => { replyContent = (replyContent || '') + e }" />
+          <Button variant="primary" size="sm" :disabled="!replyContent.trim()" @click="submitReply">
+            <template #icon>
+              <PaperAirplaneIcon class="w-4 h-4" />
+            </template>
+            {{ t('shared.community.detail.postComment') }}
+          </Button>
+          <Button variant="ghost" size="sm" @click="toggleReply">{{ t('shared.community.modal.cancel') }}</Button>
         </div>
       </div>
 
@@ -43,7 +63,7 @@
           :post-id="postId"
           @deleted="handleChildDeleted"
         />
-        <button v-if="replies.items.length < replies.total" class="btn btn-ghost btn-sm mt-1" @click="loadMoreReplies">{{ t('shared.community.detail.more') }}</button>
+        <Button v-if="replies.items.length < replies.total" variant="ghost" size="sm" class="mt-1" @click="loadMoreReplies">{{ t('shared.community.detail.more') }}</Button>
       </div>
     </div>
   </div>
@@ -53,13 +73,14 @@
 import { ref, onMounted, computed } from 'vue'
 import { useAuthStore } from '@/stores/auth'
 import { useCommunityStore } from '@/stores/community'
-import { UserIcon, HandThumbUpIcon, SparklesIcon } from '@heroicons/vue/24/outline'
+import { UserIcon, HandThumbUpIcon, SparklesIcon, ChatBubbleLeftIcon, TrashIcon, PaperAirplaneIcon } from '@heroicons/vue/24/outline'
 import UserAvatar from '@/components/ui/UserAvatar.vue'
 import EmojiPicker from '@/components/ui/EmojiPicker.vue'
 import { useRouter } from 'vue-router'
 // @ts-ignore shim for vue-i18n types in this project
 import { useI18n } from 'vue-i18n'
 import GlassTextarea from '@/components/ui/inputs/GlassTextarea.vue'
+import Button from '@/components/ui/Button.vue'
 
 defineOptions({ name: 'CommentThread' })
 
@@ -94,12 +115,10 @@ const toggleReply = () => {
 
 const submitReply = async () => {
   if (!replyContent.value.trim()) return
-  const ok = await communityStore.postComment(props.postId, replyContent.value, props.comment.id)
-  if (ok !== false) {
-    const { useUIStore } = await import('@/stores/ui')
-    const ui = useUIStore()
-    ui.showNotification({ type: 'success', title: t('shared.community.notify.commentPostedTitle') as string, message: t('shared.community.notify.commentPostedMsg') as string })
-  }
+  await communityStore.postComment(props.postId, replyContent.value, props.comment.id)
+  const { useUIStore } = await import('@/stores/ui')
+  const ui = useUIStore()
+  ui.showNotification({ type: 'success', title: t('shared.community.notify.commentPostedTitle') as string, message: t('shared.community.notify.commentPostedMsg') as string })
   replyContent.value = ''
   showReplyBox.value = false
   // 直接刷新该节点的子回复，并确保最新在顶部
@@ -141,12 +160,10 @@ const handleChildDeleted = async (id: number) => {
 
 const handleDeleteSelf = async () => {
   if (!confirm(t('shared.community.confirm.deleteComment') as string)) return
-  const ok = await communityStore.deleteComment(props.comment.id, props.postId)
-  if (ok !== false) {
-    const { useUIStore } = await import('@/stores/ui')
-    const ui = useUIStore()
-    ui.showNotification({ type: 'success', title: t('shared.community.notify.commentDeletedTitle') as string, message: t('shared.community.notify.commentDeletedMsg') as string })
-  }
+  await communityStore.deleteComment(props.comment.id, props.postId)
+  const { useUIStore } = await import('@/stores/ui')
+  const ui = useUIStore()
+  ui.showNotification({ type: 'success', title: t('shared.community.notify.commentDeletedTitle') as string, message: t('shared.community.notify.commentDeletedMsg') as string })
   emit('deleted', props.comment.id)
 }
 

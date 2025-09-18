@@ -45,9 +45,19 @@ public class LessonServiceImpl implements LessonService {
         if (lesson.getStatus() == null) {
             lesson.setStatus("draft");
         }
-        if (lesson.getSortOrder() == null) {
+        // 统一默认排序：数据库使用 order_index，实体存在 orderIndex 与 sortOrder
+        Integer nextOrder = null;
+        if (lesson.getOrderIndex() == null && lesson.getSortOrder() == null) {
             Integer maxOrder = lessonMapper.getMaxSortOrderByCourse(lesson.getCourseId());
-            lesson.setSortOrder(maxOrder != null ? maxOrder + 1 : 1);
+            nextOrder = (maxOrder != null ? maxOrder + 1 : 1);
+        }
+        if (lesson.getOrderIndex() == null) {
+            // 优先用计算值，否则继承已有 sortOrder，否则置 1
+            lesson.setOrderIndex(nextOrder != null ? nextOrder : (lesson.getSortOrder() != null ? lesson.getSortOrder() : 1));
+        }
+        if (lesson.getSortOrder() == null) {
+            // 双字段保持一致，便于向后兼容
+            lesson.setSortOrder(lesson.getOrderIndex());
         }
         int result = lessonMapper.insertLesson(lesson);
         if (result > 0) {

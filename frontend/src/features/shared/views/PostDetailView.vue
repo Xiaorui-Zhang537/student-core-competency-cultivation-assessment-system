@@ -12,7 +12,7 @@
       </router-link>
 
       <!-- Post Header -->
-      <div class="glass-regular rounded-xl p-6 mb-6" v-glass="{ strength: 'regular', interactive: true }">
+      <div class="glass-regular rounded-2xl p-6 mb-6" v-glass="{ strength: 'regular', interactive: true }">
         <div class="flex items-center space-x-4 text-sm text-gray-500 dark:text-gray-400">
           <div class="flex items-center space-x-2">
             <user-avatar :avatar="currentPost.author?.avatar" :size="20">
@@ -25,37 +25,37 @@
            <div class="flex items-center space-x-1"><chat-bubble-left-icon class="w-4 h-4" /><span>{{ currentPost.commentCount }}</span></div>
         </div>
          <div v-if="currentPost.tags?.length" class="flex items-center space-x-2 mt-4">
-            <span v-for="tag in currentPost.tags" :key="tag.id" class="text-xs px-2 py-1 rounded-full bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300">#{{ tag.name }}</span>
+            <Badge v-for="tag in currentPost.tags" :key="tag.id" size="sm" variant="secondary">#{{ tag.name }}</Badge>
         </div>
       </div>
 
       <!-- Post Content -->
-      <div class="glass-regular rounded-xl p-6 mb-6" v-glass="{ strength: 'regular', interactive: true }">
+      <div class="glass-regular rounded-2xl p-6 mb-6" v-glass="{ strength: 'regular', interactive: true }">
         <div class="prose dark:prose-invert max-w-none" v-html="currentPost.content"></div>
         <div v-if="attachments.length" class="mt-6 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
           <div v-for="f in attachments" :key="f.id" class="rounded overflow-hidden glass-ultraThin" v-glass="{ strength: 'ultraThin', interactive: false }">
             <img v-if="isImageAttachment(f)" :src="f._previewUrl || ''" class="w-full h-32 object-cover" @error="loadPreview(f)" />
             <div class="p-2 text-xs flex items-center justify-between">
               <span class="truncate" :title="f.originalName || f.fileName">{{ f.originalName || f.fileName || ('#' + f.id) }}</span>
-              <button type="button" class="text-primary-600" @click="downloadAttachment(f)">{{ t('shared.community.detail.download') }}</button>
+              <Button size="xs" variant="secondary" icon="download" @click="downloadAttachment(f)">{{ t('shared.community.detail.download') }}</Button>
             </div>
           </div>
         </div>
          <div class="mt-6 pt-4 border-t border-gray-200 dark:border-gray-700 flex items-center space-x-4">
-           <Button size="sm" variant="ghost" @click="communityStore.toggleLikePost(currentPost.id)" :class="currentPost.isLiked ? (isDark ? 'text-red-400' : 'text-red-500') : (isDark ? 'text-gray-300' : 'text-gray-600')" class="flex items-center space-x-2">
+           <Button size="sm" variant="secondary" @click="communityStore.toggleLikePost(currentPost.id)" :class="currentPost.isLiked ? (isDark ? 'text-red-400' : 'text-red-500') : (isDark ? 'text-gray-300' : 'text-gray-600')" class="flex items-center space-x-2">
             <hand-thumb-up-icon class="w-5 h-5" />
             <span>{{ t('shared.community.detail.like', { count: currentPost.likeCount }) }}</span>
           </Button>
             <Button variant="primary" size="sm" @click="askAiForCurrentPost">
               <sparkles-icon class="w-4 h-4 mr-2" />{{ t('shared.community.detail.askAi') }}
             </Button>
-            <Button v-if="authStore.user?.id && String(authStore.user.id) === String(currentPost.author?.id || currentPost.authorId)" size="sm" variant="ghost" @click="openEditCurrentPost">{{ t('shared.community.detail.edit') }}</Button>
-            <Button v-if="authStore.user?.id && String(authStore.user.id) === String(currentPost.author?.id || currentPost.authorId)" size="sm" variant="danger" @click="onDeleteCurrentPost">{{ t('shared.community.detail.delete') }}</Button>
+            <Button v-if="authStore.user?.id && String(authStore.user.id) === String(currentPost.author?.id || currentPost.authorId)" size="sm" variant="secondary" icon="edit" @click="openEditCurrentPost">{{ t('shared.community.detail.edit') }}</Button>
+            <Button v-if="authStore.user?.id && String(authStore.user.id) === String(currentPost.author?.id || currentPost.authorId)" size="sm" variant="danger" icon="delete" @click="onDeleteCurrentPost">{{ t('shared.community.detail.delete') }}</Button>
         </div>
       </div>
 
       <!-- Comments Section -->
-      <div class="glass-regular rounded-xl p-6" v-glass="{ strength: 'regular', interactive: true }">
+      <div class="glass-regular rounded-2xl p-6" v-glass="{ strength: 'regular', interactive: true }">
         <h2 class="text-xl font-bold text-gray-900 dark:text-white mb-4">{{ t('shared.community.detail.comments', { count: totalComments }) }}</h2>
         
         <!-- Post Comment Form -->
@@ -72,8 +72,18 @@
             <div class="flex items-center justify-between mb-2">
             <div class="text-xs text-gray-500">{{ t('shared.community.detail.order') }}</div>
             <div class="space-x-2">
-              <Button size="xs" variant="ghost" :class="commentOrderBy==='time' ? (isDark ? 'text-blue-300' : 'text-primary-600') : (isDark ? 'text-gray-400' : '')" @click="setOrder('time')">{{ t('shared.community.detail.orderTime') }}</Button>
-              <Button size="xs" variant="ghost" :class="commentOrderBy==='hot' ? (isDark ? 'text-blue-300' : 'text-primary-600') : (isDark ? 'text-gray-400' : '')" @click="setOrder('hot')">{{ t('shared.community.detail.orderHot') }}</Button>
+              <Button size="xs" variant="ghost" :class="commentOrderBy==='time' ? (isDark ? 'text-blue-300' : 'text-primary-600') : (isDark ? 'text-gray-400' : '')" @click="setOrder('time')">
+                <template #icon>
+                  <ClockIcon class="w-3.5 h-3.5" />
+                </template>
+                {{ t('shared.community.detail.orderTime') }}
+              </Button>
+              <Button size="xs" variant="ghost" :class="commentOrderBy==='hot' ? (isDark ? 'text-blue-300' : 'text-primary-600') : (isDark ? 'text-gray-400' : '')" @click="setOrder('hot')">
+                <template #icon>
+                  <FireIcon class="w-3.5 h-3.5" />
+                </template>
+                {{ t('shared.community.detail.orderHot') }}
+              </Button>
             </div>
           </div>
           <comment-thread v-for="comment in localComments" :key="comment.id" :comment="comment" :post-id="currentPost.id" @deleted="onTopDeleted" />
@@ -127,8 +137,8 @@
                       <div class="text-xs text-gray-500">{{ (f.fileSize ? (f.fileSize/1024/1024).toFixed(1)+' MB' : '') }}</div>
                     </div>
                     <div class="flex items-center gap-2">
-                      <button type="button" class="btn btn-sm btn-outline" @click="downloadDetailEditAttachment(f)">{{ t('shared.community.modal.download') }}</button>
-                      <button type="button" class="btn btn-sm btn-danger-outline" @click="deleteDetailEditAttachment(f.id)">{{ t('shared.community.modal.delete') }}</button>
+                      <Button size="sm" variant="outline" type="button" @click="downloadDetailEditAttachment(f)">{{ t('shared.community.modal.download') }}</Button>
+                      <Button size="sm" variant="danger" type="button" @click="deleteDetailEditAttachment(f.id)">{{ t('shared.community.modal.delete') }}</Button>
                     </div>
                   </li>
                 </ul>
@@ -151,7 +161,7 @@ import { useRoute, useRouter } from 'vue-router';
 import { storeToRefs } from 'pinia';
 import { useCommunityStore } from '@/stores/community';
 import { useAuthStore } from '@/stores/auth';
-import { UserIcon, EyeIcon, HandThumbUpIcon, ChatBubbleLeftIcon, SparklesIcon } from '@heroicons/vue/24/outline';
+import { UserIcon, EyeIcon, HandThumbUpIcon, ChatBubbleLeftIcon, SparklesIcon, ClockIcon, FireIcon } from '@heroicons/vue/24/outline';
 import Button from '@/components/ui/Button.vue'
 import CommentThread from '@/components/comments/CommentThread.vue'
 import EmojiPicker from '@/components/ui/EmojiPicker.vue'
@@ -164,12 +174,13 @@ import PageHeader from '@/components/ui/PageHeader.vue'
 import GlassTextarea from '@/components/ui/inputs/GlassTextarea.vue'
 import GlassInput from '@/components/ui/inputs/GlassInput.vue'
 import GlassPopoverSelect from '@/components/ui/filters/GlassPopoverSelect.vue'
+import Badge from '@/components/ui/Badge.vue'
 
 const route = useRoute();
 const router = useRouter();
 const authStore = useAuthStore();
 const communityStore = useCommunityStore();
-const { t } = useI18n()
+const { t, locale } = useI18n()
 const isDark = computed(() => document.documentElement.classList.contains('dark'))
 
 // 分类映射：保持前端选项值使用稳定 id，提交与回显时与后端中文互转
@@ -270,11 +281,20 @@ const handleUpdateCurrentPost = async () => {
   editCurrent.visible = false
 }
 
+function pad2(n: number) { return String(n).padStart(2, '0') }
 const formatDate = (dateString: string) => {
-  if (!dateString) return '';
-  const date = new Date(dateString);
-  return date.toLocaleString();
-};
+  if (!dateString) return ''
+  const d = new Date(dateString)
+  if (isNaN(d.getTime())) return ''
+  const h = pad2(d.getHours())
+  const m = pad2(d.getMinutes())
+  const loc = String(locale.value || 'zh-CN')
+  if (loc.startsWith('zh')) {
+    return `${d.getFullYear()}年${d.getMonth() + 1}月${d.getDate()}日 ${h}:${m}`
+  }
+  const month = d.toLocaleString('en-US', { month: 'short' })
+  return `${month} ${d.getDate()}, ${d.getFullYear()} ${h}:${m}`
+}
 
 onMounted(async () => {
   const postId = Number(route.params.id);

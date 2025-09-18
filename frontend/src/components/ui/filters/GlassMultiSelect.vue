@@ -5,25 +5,25 @@
       <button v-if="clearable && modelValue.length" type="button" class="text-xs text-primary-600 dark:text-primary-300" @click="$emit('update:modelValue', [])">{{ clearText }}</button>
     </div>
     <div ref="rootRef" class="relative w-full">
-      <button type="button" class="input input--glass w-full min-h-[2.5rem] text-left pr-8" @click="toggle">
+      <button type="button" class="ui-pill--select ui-pill--pl ui-pill--pr-select" @click="toggle">
         <div class="flex flex-wrap gap-1">
           <span v-if="!modelValue.length" class="text-gray-400">{{ placeholder }}</span>
           <span
             v-for="v in displayValues"
             :key="String(v.value)"
-            class="px-2 py-0.5 rounded-full text-xs bg-white/30 dark:bg-white/10 border border-white/40 dark:border-white/10 cursor-pointer hover:bg-white/40 dark:hover:bg-white/20"
+            class="ui-chip"
             @click.stop="toggleValue(v.value)"
             :title="'点击移除: ' + v.label"
           >
             {{ v.label }}
           </span>
         </div>
-        <svg class="pointer-events-none w-4 h-4 text-gray-400 absolute right-2 top-1/2 -translate-y-1/2" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.24 4.5a.75.75 0 01-1.08 0l-4.24-4.5a.75.75 0 01.02-1.06z" clip-rule="evenodd"/></svg>
+        <svg class="pointer-events-none w-4 h-4 text-gray-400 absolute right-3 top-1/2 -translate-y-1/2" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.24 4.5a.75.75 0 01-1.08 0l-4.24-4.5a.75.75 0 01.02-1.06z" clip-rule="evenodd"/></svg>
       </button>
     </div>
   </div>
   <teleport to="body">
-    <div v-if="open" ref="menuRef" class="fixed z-[9999] popover-glass border border-white/20 dark:border-white/12 shadow-md p-2 max-h-48 overflow-y-auto no-scrollbar" :style="{ left: pos.left+'px', top: pos.top+'px', width: pos.width+'px' }" @click.stop>
+    <div v-if="open" ref="menuRef" class="fixed z-[9999] ui-popover-menu p-2 max-h-48 overflow-y-auto" :style="{ left: pos.left+'px', top: pos.top+'px', width: pos.width+'px' }" @click.stop>
       <div class="space-y-1">
         <label v-for="opt in options" :key="String(opt.value)" class="flex items-center gap-2 px-2 py-1 rounded hover:bg-white/10">
           <input type="checkbox" :checked="checkedMap.get(String(opt.value))===true" :disabled="!!opt.disabled" @change="toggleValue(opt.value)" />

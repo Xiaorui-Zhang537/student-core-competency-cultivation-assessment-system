@@ -2,7 +2,7 @@
   <div
     v-glass="{ strength: 'regular', interactive: true }"
     :class="[
-      'rounded-xl transition-all duration-200 glass-regular glass-interactive',
+      'rounded-2xl transition-all duration-200 glass-regular glass-interactive',
       {
         'hover:shadow-md hover:scale-[1.005]': hoverable,
         'p-0': !padding,

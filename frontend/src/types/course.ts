@@ -7,14 +7,19 @@ export interface Course {
   teacherId: number;
   teacherName: string; // Denormalized for convenience
   category: string;
-  tags: string[];
+  tags: string | string[];
+  difficulty?: 'beginner' | 'intermediate' | 'advanced' | string;
+  duration?: number;
+  maxStudents?: number;
+  startDate?: string; // YYYY-MM-DD
+  endDate?: string;   // YYYY-MM-DD
   coverImage: string;
-  status: 'DRAFT' | 'PUBLISHED' | 'ARCHIVED';
+  status: 'draft' | 'published' | 'archived' | 'DRAFT' | 'PUBLISHED' | 'ARCHIVED';
   createdAt: string;
   updatedAt: string;
-  studentCount: number;
-  averageRating: number;
-  isPublished: boolean; // Added based on CourseController logic
+  studentCount?: number;
+  averageRating?: number;
+  isPublished?: boolean; // Added based on CourseController logic
 }
 
 export interface CourseDetailed extends Course {
@@ -31,6 +36,12 @@ export interface CourseCreationRequest {
   category: string;
   tags: string[] | string;
   coverImage?: string;
+  status?: 'draft' | 'published' | 'archived';
+  difficulty?: 'beginner' | 'intermediate' | 'advanced' | string;
+  duration?: number;
+  maxStudents?: number;
+  startDate?: string;
+  endDate?: string;
 }
 
 export interface CourseUpdateRequest {
@@ -40,6 +51,12 @@ export interface CourseUpdateRequest {
   category?: string;
   tags?: string[] | string;
   coverImage?: string;
+  status?: 'draft' | 'published' | 'archived';
+  difficulty?: 'beginner' | 'intermediate' | 'advanced' | string;
+  duration?: number;
+  maxStudents?: number;
+  startDate?: string;
+  endDate?: string;
 }
 
 export interface BatchStatusUpdateRequest {

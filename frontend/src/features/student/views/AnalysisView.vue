@@ -7,10 +7,10 @@
     <div v-else class="space-y-8">
       <!-- KPIs -->
       <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-        <StatCard :label="t('student.analysis.kpiAvgScore')" :value="formatScore(kpi.avgScore)" tone="blue" />
-        <StatCard :label="t('student.analysis.kpiCompletion')" :value="formatPercent(kpi.completionRate)" tone="emerald" />
-        <StatCard :label="t('student.analysis.kpiHours')" :value="String(kpi.studyHours)" tone="violet" />
-        <StatCard :label="t('student.analysis.kpiActiveDays')" :value="String(kpi.activeDays)" tone="amber" />
+        <StartCard :label="t('student.analysis.kpiAvgScore')" :value="formatScore(kpi.avgScore)" tone="blue" :icon="StarIcon" />
+        <StartCard :label="t('student.analysis.kpiCompletion')" :value="formatPercent(kpi.completionRate)" tone="emerald" :icon="CheckCircleIcon" />
+        <StartCard :label="t('student.analysis.kpiHours')" :value="String(kpi.studyHours)" tone="violet" :icon="ClockIcon" />
+        <StartCard :label="t('student.analysis.kpiActiveDays')" :value="String(kpi.activeDays)" tone="amber" :icon="BoltIcon" />
       </div>
 
       <!-- Controls: 课程选择（仅查看本人参与课程）+ 对比开关 同行显示 -->
@@ -28,12 +28,7 @@
         </div>
         <div class="flex items-center gap-2">
           <span class="text-sm text-gray-700 dark:text-gray-300">{{ t('student.ability.compare') || '对比模式' }}</span>
-          <button type="button" @click="toggleCompare" :aria-pressed="compareEnabled"
-            class="relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-            :class="compareEnabled ? 'bg-indigo-600' : 'bg-gray-200 dark:bg-gray-700'">
-            <span class="sr-only">toggle</span>
-            <span aria-hidden="true" class="pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200" :class="compareEnabled ? 'translate-x-5' : 'translate-x-0'"></span>
-          </button>
+          <GlassSwitch v-model="compareEnabled" size="sm" />
         </div>
         <div class="flex items-center gap-2" v-if="compareEnabled">
           <span class="whitespace-nowrap text-xs font-medium leading-tight text-gray-700 dark:text-gray-300">{{ t('teacher.analytics.settings.classAvgLabel') || '班级均值' }}</span>
@@ -189,7 +184,7 @@ import * as echarts from 'echarts'
 import { studentApi } from '@/api/student.api'
 import { useI18n } from 'vue-i18n'
 import { i18n, loadLocaleMessages } from '@/i18n'
-import StatCard from '@/components/ui/StatCard.vue'
+import StartCard from '@/components/ui/StartCard.vue'
 import TrendAreaChart from '@/components/charts/TrendAreaChart.vue'
 import PageHeader from '@/components/ui/PageHeader.vue'
 import RadarChart from '@/components/charts/RadarChart.vue'
@@ -201,9 +196,11 @@ import { useRouter } from 'vue-router'
 import { useAIStore } from '@/stores/ai'
 import Button from '@/components/ui/Button.vue'
 import { DocumentArrowDownIcon, ArrowDownTrayIcon, SparklesIcon } from '@heroicons/vue/24/outline'
+import { StarIcon, CheckCircleIcon, ClockIcon, BoltIcon } from '@heroicons/vue/24/outline'
 import { gradeApi } from '@/api/grade.api'
 import { useAuthStore } from '@/stores/auth'
 import { api as http } from '@/api/config'
+import GlassSwitch from '@/components/ui/inputs/GlassSwitch.vue'
 
 const { t } = useI18n()
 const router = useRouter()

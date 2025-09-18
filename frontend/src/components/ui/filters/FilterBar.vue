@@ -1,7 +1,7 @@
 <template>
   <div
     :class="[
-      'filter-container rounded-lg',
+      'ui-filter-bar',
       dense ? 'p-2' : 'p-3',
       wrap ? 'flex flex-wrap items-end gap-2' : 'flex items-end gap-2 overflow-x-auto no-scrollbar'
     ]"

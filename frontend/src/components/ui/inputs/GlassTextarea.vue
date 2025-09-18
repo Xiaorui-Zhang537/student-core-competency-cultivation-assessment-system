@@ -3,7 +3,7 @@
     <textarea
       :id="id"
       :rows="rows"
-      class="input input--glass glass-regular glass-interactive rounded-xl border border-white/30 dark:border-white/10 placeholder-muted w-full"
+      class="input input--glass glass-regular glass-interactive rounded-2xl border border-white/30 dark:border-white/10 placeholder-muted w-full"
       :placeholder="placeholder"
       :disabled="disabled"
       :value="modelValue as any"

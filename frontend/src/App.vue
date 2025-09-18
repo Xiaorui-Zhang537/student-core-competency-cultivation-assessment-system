@@ -42,11 +42,10 @@
         <div
           v-for="notification in notifications"
           :key="notification.id"
-          class="w-auto max-w-[90vw] sm:max-w-[560px] rounded-xl pointer-events-auto overflow-hidden transform transition-all duration-300 ease-in-out glass-regular"
-          v-glass="{ strength: 'regular', interactive: true }"
+          class="w-auto max-w-[90vw] sm:max-w-[560px] rounded-full pointer-events-auto overflow-hidden transform transition-all duration-300 ease-in-out glass-thin glass-interactive border border-white/20 dark:border-white/12 shadow-md"
+          v-glass="{ strength: 'thin', interactive: true }"
         >
-          <div class="p-4">
-            <div class="flex items-start">
+          <div class="p-3 sm:p-4 flex items-start">
               <div class="flex-shrink-0">
                 <CheckCircleIcon 
                   v-if="notification.type === 'success'" 
@@ -73,15 +72,9 @@
                   {{ notification.message }}
                 </p>
               </div>
-              <div class="ml-4 flex-shrink-0 flex">
-                <button
-                  @click="uiStore.removeNotification(notification.id)"
-                  class="rounded-md inline-flex text-gray-400 hover:text-gray-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500"
-                >
-                  <x-mark-icon class="h-5 w-5" />
-                </button>
+              <div class="ml-3 flex-shrink-0 flex">
+                <Button size="xs" variant="glass" icon="close" @click="uiStore.removeNotification(notification.id)" />
               </div>
-            </div>
           </div>
         </div>
       </div>
@@ -102,18 +95,8 @@
           {{ t('app.error.description') }}
         </p>
         <div class="flex space-x-3">
-          <button
-            @click="reloadPage"
-            class="flex-1 btn btn-primary"
-          >
-            {{ t('app.error.button.reload') }}
-          </button>
-          <button
-            @click="showErrorModal = false"
-            class="flex-1 btn btn-ghost"
-          >
-            {{ t('app.error.button.close') }}
-          </button>
+          <Button class="flex-1" variant="primary" icon="confirm" @click="reloadPage">{{ t('app.error.button.reload') }}</Button>
+          <Button class="flex-1" variant="secondary" icon="close" @click="showErrorModal = false">{{ t('app.error.button.close') }}</Button>
         </div>
       </div>
     </div>
@@ -149,6 +132,7 @@ import { useUIStore } from '@/stores/ui'
 import { useAuthStore } from '@/stores/auth'
 import { storeToRefs } from 'pinia'
 import { useI18n } from 'vue-i18n'
+import Button from '@/components/ui/Button.vue'
 import {
   CheckCircleIcon,
   ExclamationTriangleIcon,

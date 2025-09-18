@@ -13,7 +13,7 @@
 
     <div class="text-center" v-else>
       <div v-glass="{ strength: 'ultraThin' }" class="inline-block p-3 rounded-lg">
-        <button class="btn btn-primary" @click="goLogin">{{ t('auth.verify.toLogin') }}</button>
+        <Button variant="primary" icon="arrow-right" @click="goLogin">{{ t('auth.verify.toLogin') }}</Button>
       </div>
     </div>
   </div>
@@ -25,6 +25,7 @@ import { useRoute, useRouter } from 'vue-router'
 import { useUIStore } from '@/stores/ui'
 import { userApi } from '@/api/user.api'
 import { setLocale, i18n } from '@/i18n'
+import Button from '@/components/ui/Button.vue'
 
 const route = useRoute()
 const router = useRouter()

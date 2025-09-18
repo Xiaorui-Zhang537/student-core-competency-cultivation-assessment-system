@@ -38,10 +38,10 @@
     <div v-else-if="selectedCourseId && courseAnalytics" class="space-y-8">
         <!-- Stats Cards (统一为工作台小卡片组件) -->
         <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
-          <StatCard :label="t('teacher.dashboard.cards.totalStudents') as string" :value="n(safeAnalytics.totalStudents, 'integer')" tone="blue" :icon="UserGroupIcon" />
-          <StatCard :label="t('teacher.dashboard.cards.completionRate') as string" :value="n((safeAnalytics.completionRate || 0) / 100, 'percent')" tone="emerald" :icon="CheckCircleIcon" />
-          <StatCard :label="t('teacher.dashboard.cards.averageScore') as string" :value="(safeAnalytics.averageScore || 0).toFixed(1)" tone="violet" :icon="StarIcon" />
-          <StatCard :label="t('teacher.dashboard.cards.totalAssignments') as string" :value="n(safeAnalytics.totalAssignments, 'integer')" tone="amber" :icon="ClipboardDocumentListIcon" />
+          <StartCard :label="t('teacher.dashboard.cards.totalStudents') as string" :value="n(safeAnalytics.totalStudents, 'integer')" tone="blue" :icon="UserGroupIcon" />
+          <StartCard :label="t('teacher.dashboard.cards.completionRate') as string" :value="n((safeAnalytics.completionRate || 0) / 100, 'percent')" tone="emerald" :icon="CheckCircleIcon" />
+          <StartCard :label="t('teacher.dashboard.cards.averageScore') as string" :value="(safeAnalytics.averageScore || 0).toFixed(1)" tone="violet" :icon="StarIcon" />
+          <StartCard :label="t('teacher.dashboard.cards.totalAssignments') as string" :value="n(safeAnalytics.totalAssignments, 'integer')" tone="amber" :icon="ClipboardDocumentListIcon" />
         </div>
 
         <!-- Class Performance Chart -->
@@ -75,7 +75,7 @@ import { useI18n } from 'vue-i18n'
 import { loadLocaleMessages } from '@/i18n'
 import { PlusIcon, CheckBadgeIcon, UserGroupIcon, CheckCircleIcon, StarIcon, ClipboardDocumentListIcon } from '@heroicons/vue/24/outline'
 import Button from '@/components/ui/Button.vue'
-import StatCard from '@/components/ui/StatCard.vue'
+import StartCard from '@/components/ui/StartCard.vue'
 import GlassSelect from '@/components/ui/filters/GlassSelect.vue'
 import GlassPopoverSelect from '@/components/ui/filters/GlassPopoverSelect.vue'
 import PageHeader from '@/components/ui/PageHeader.vue'

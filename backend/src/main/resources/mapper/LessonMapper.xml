@@ -82,6 +82,13 @@
         WHERE course_id = #{courseId} AND deleted = false
     </select>
 
+    <!-- 获取课程内最大的排序号（基于 order_index） -->
+    <select id="getMaxSortOrderByCourse" parameterType="java.lang.Long" resultType="java.lang.Integer">
+        SELECT COALESCE(MAX(order_index), 0)
+        FROM lessons
+        WHERE course_id = #{courseId} AND deleted = false
+    </select>
+
     <!-- 获取课程总时长 -->
     <select id="getTotalDurationByCourse" parameterType="java.lang.Long" resultType="java.lang.Integer">
         SELECT COALESCE(SUM(duration), 0)

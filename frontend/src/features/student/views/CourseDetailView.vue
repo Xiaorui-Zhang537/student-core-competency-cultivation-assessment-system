@@ -51,7 +51,12 @@
                         <p class="text-sm text-gray-600">{{ lesson.description }}</p>
                       </div>
                       <div class="flex items-center gap-2">
-                        <button class="btn btn-sm" @click="goLessonDetail(lesson.id)">{{ t('student.courses.detail.viewDetail') }}</button>
+                        <Button size="sm" variant="outline" @click="goLessonDetail(lesson.id)">
+                          <template #icon>
+                            <svg class="w-4 h-4" viewBox="0 0 20 20" fill="currentColor"><path d="M10 3l7 7-7 7-1.5-1.5L13 11H3V9h10L8.5 4.5 10 3z"/></svg>
+                          </template>
+                          {{ t('student.courses.detail.viewDetail') }}
+                        </Button>
                       </div>
                     </div>
                     
@@ -74,7 +79,12 @@
               </div>
               <h4 class="font-medium">{{ course.teacherName }}</h4>
               <div class="mt-4 flex justify-center">
-                <button class="btn btn-sm btn-primary" @click="contactTeacher">{{ t('student.courses.detail.contactTeacher') }}</button>
+                <Button size="sm" variant="primary" @click="contactTeacher">
+                  <template #icon>
+                    <svg class="w-4 h-4" viewBox="0 0 20 20" fill="currentColor"><path d="M2 5a2 2 0 012-2h3l2 3H5v8h10V9l3 2v5a2 2 0 01-2 2H4a2 2 0 01-2-2V5z"/></svg>
+                  </template>
+                  {{ t('student.courses.detail.contactTeacher') }}
+                </Button>
               </div>
             </div>
           </div>
@@ -99,7 +109,12 @@
     <div v-else class="text-center py-12 card">
       <h3 class="text-lg font-medium">{{ t('student.courses.detail.notFoundTitle') }}</h3>
       <p class="text-gray-500 mt-2">{{ t('student.courses.detail.notFoundDesc') }}</p>
-      <router-link to="/student/courses" class="btn btn-primary mt-4">{{ t('student.courses.detail.backToList') }}</router-link>
+      <Button as="a" href="/student/courses" class="mt-4" variant="primary">
+        <template #icon>
+          <svg class="w-4 h-4" viewBox="0 0 20 20" fill="currentColor"><path d="M7 10l5 5V5l-5 5z"/></svg>
+        </template>
+        {{ t('student.courses.detail.backToList') }}
+      </Button>
     </div>
   </div>
 </template>
@@ -118,6 +133,7 @@ import { fileApi } from '@/api/file.api'
 // @ts-ignore
 import { useI18n } from 'vue-i18n'
 import PageHeader from '@/components/ui/PageHeader.vue'
+import Button from '@/components/ui/Button.vue'
 
 const route = useRoute();
 const router = useRouter();

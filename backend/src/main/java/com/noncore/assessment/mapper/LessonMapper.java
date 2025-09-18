@@ -62,7 +62,7 @@ public interface LessonMapper {
     /**
      * 获取课程中最大排序号
      */
-    Integer getMaxSortOrderByCourse(Long courseId);
+    Integer getMaxSortOrderByCourse(@Param("courseId") Long courseId);
 
     /**
      * 更新章节状态

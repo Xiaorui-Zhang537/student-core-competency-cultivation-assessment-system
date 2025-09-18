@@ -12,7 +12,7 @@
         <div v-for="g in grades" :key="g.id" class="rounded-xl glass-ultraThin p-5" v-glass="{ strength: 'ultraThin', interactive: true }">
           <div class="flex items-center justify-between mb-2">
             <div class="text-base font-medium text-gray-900 dark:text-white truncate">{{ g.assignmentTitle || ('#' + g.assignmentId) }}</div>
-            <badge variant="secondary">{{ formatDate(g.updatedAt || g.publishedAt || g.createdAt) }}</badge>
+            <Badge variant="secondary">{{ formatDate(g.updatedAt || g.publishedAt || g.createdAt) }}</Badge>
           </div>
 
           <div class="flex items-center justify-between mb-2">
@@ -27,7 +27,7 @@
           <div class="mt-3 flex items-center justify-between">
             <div class="flex items-center gap-2">
               <span class="text-sm text-gray-600 dark:text-gray-300">{{ t('student.grades.level') || '等级' }}</span>
-              <badge>{{ g.gradeLevel || autoLevel(g) }}</badge>
+              <Badge size="sm">{{ g.gradeLevel || autoLevel(g) }}</Badge>
             </div>
             <div class="text-sm text-gray-500">{{ t('student.grades.status.' + (g.status || 'published')) || g.status }}</div>
           </div>

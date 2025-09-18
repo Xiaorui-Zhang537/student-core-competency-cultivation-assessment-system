@@ -1,23 +1,14 @@
 <template>
   <div class="notification-bell" v-click-outside="closeDropdown">
     <!-- 铃铛图标 -->
-    <button
-      @click="toggleDropdown"
-      class="relative p-1 rounded-full text-gray-400 hover:text-gray-500 dark:hover:text-gray-300 focus:ring-2 focus:ring-offset-2 focus:ring-primary-500"
-      :class="{ 'text-primary-500': hasUnread }"
-      ref="btnRef"
-      :title="t('notifications.title')"
-    >
-      <bell-icon class="w-6 h-6" />
-      
-      <!-- 未读数量徽章 -->
-      <span
-        v-if="unreadCount > 0"
-        class="absolute -top-1 -right-1 inline-flex items-center justify-center w-5 h-5 text-xs font-bold text-white bg-red-500 rounded-full animate-pulse"
-      >
-        {{ unreadCount > 99 ? '99+' : unreadCount }}
-      </span>
-    </button>
+    <span ref="btnRef">
+      <Button variant="glass" size="sm" @click="toggleDropdown" :title="t('notifications.title')">
+        <template #icon>
+          <BellIcon class="w-5 h-5" />
+        </template>
+        <span v-if="unreadCount > 0" class="ml-1 text-xs font-bold text-red-500">{{ unreadCount > 99 ? '99+' : unreadCount }}</span>
+      </Button>
+    </span>
 
     <!-- 下拉通知面板 -->
     <Transition
@@ -31,8 +22,8 @@
       <teleport to="body">
         <div
           v-if="isDropdownOpen"
-          class="notification-dropdown rounded-xl"
-          v-glass="{ strength: 'regular', interactive: true }"
+          class="notification-dropdown rounded-2xl glass-thin glass-interactive border border-white/20 overflow-hidden"
+          v-glass="{ strength: 'thin', interactive: true }"
           :style="dropdownStyle"
         >
         <!-- 下拉面板头部 -->
@@ -42,14 +33,7 @@
             <span v-if="unreadCount > 0" class="text-sm font-normal text-gray-500 dark:text-gray-400 ml-2">
               ({{ unreadCount }}{{ t('notifications.unreadSuffix') }})
             </span>
-            <button
-              v-if="hasUnread"
-              @click="handleMarkAllAsRead"
-              class="ml-3 text-xs px-2 py-1 rounded-md text-blue-600 hover:text-blue-700 hover:bg-blue-50 dark:text-blue-300 dark:hover:text-blue-200 dark:hover:bg-slate-700 disabled:opacity-50 disabled:cursor-not-allowed"
-              :disabled="loading"
-            >
-              {{ t('notifications.actions.markAll') }}
-            </button>
+            <Button v-if="hasUnread" size="xs" variant="glass" icon="confirm" class="ml-3" :disabled="loading" @click="handleMarkAllAsRead">{{ t('notifications.actions.markAll') }}</Button>
           </h3>
         </div>
 
@@ -118,12 +102,9 @@
 
         <!-- 下拉面板底部 -->
         <div class="dropdown-footer" style="box-shadow: inset 0 1px 0 rgba(255,255,255,0.14);">
-          <button
-            @click="openNotificationCenter"
-            class="w-full py-4 text-sm text-center text-blue-600 hover:text-blue-700 hover:bg-blue-50 dark:text-blue-300 dark:hover:text-blue-200 dark:hover:bg-slate-700 rounded-md transition-colors"
-          >
+          <Button class="w-full justify-center" size="sm" variant="glass" @click="openNotificationCenter">
             {{ t('notifications.actions.viewAll') }}
-          </button>
+          </Button>
         </div>
         </div>
       </teleport>
@@ -137,6 +118,7 @@ import { useI18n } from 'vue-i18n'
 import { useRouter } from 'vue-router'
 import { useNotificationsStore } from '@/stores/notifications'
 import { storeToRefs } from 'pinia'
+import Button from '@/components/ui/Button.vue'
 import {
   BellIcon,
   BellSlashIcon,
@@ -184,6 +166,8 @@ const toggleDropdown = async () => {
   isDropdownOpen.value = !isDropdownOpen.value
   
   if (isDropdownOpen.value) {
+    // 打开前先通知其他顶部弹层收起
+    try { window.dispatchEvent(new CustomEvent('ui:close-topbar-popovers')) } catch {}
     // 打开下拉框时刷新未读数量
     await notificationsStore.fetchUnreadCount()
     // 始终获取最新通知，避免后台注入后前端不更新
@@ -380,11 +364,14 @@ onMounted(() => {
   notificationsStore.fetchUnreadCount()
   // 开始定期刷新
   startRefreshInterval()
+  // 监听外部请求关闭通知下拉
+  try { window.addEventListener('ui:close-notification-dropdown', closeDropdown) } catch {}
 })
 
 // 清理定时器
 onBeforeUnmount(() => {
   stopRefreshInterval()
+  try { window.removeEventListener('ui:close-notification-dropdown', closeDropdown) } catch {}
 })
 
 // 点击外部关闭下拉框的指令

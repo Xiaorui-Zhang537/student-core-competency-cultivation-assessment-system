@@ -1,5 +1,6 @@
 {
   "shared": {
+    "date": "Date",
     "common": {
       "latest": "Latest",
       "hot": "Hottest",
@@ -163,7 +164,8 @@
         "title": "Title",
         "category": "Category",
         "tags": "Tags",
-        "tagSearch": "Search tags...",
+      "tagSearch": "Search tags...",
+      "addTags": "Add tags (press Enter)",
         "content": "Content",
         "contentPlaceholder": "Share your thoughts...",
         "images": "Images (optional)",
@@ -189,7 +191,8 @@
         "delete": "Delete Post",
         "comments": "{count} Comments",
         "writeComment": "Write your comment...",
-        "postComment": "Post Comment",
+      "postComment": "Post Comment",
+      "reply": "Reply",
         "order": "Order:",
         "orderTime": "By Time",
         "orderHot": "By Hot",

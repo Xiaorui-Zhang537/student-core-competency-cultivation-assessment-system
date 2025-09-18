@@ -172,6 +172,42 @@ Shared（通用）
 -   **Stores**: `useTeacherStore`, `useCourseStore`, `useGradeStore`
 -   **API**: `teacher.api.ts`, `course.api.ts`, `grade.api.ts`
 
+#### AI 批改与历史（TeacherAIGradingView / TeacherAIGradingHistoryView）
+
+- 入口：教师端顶部“AI 批改作业”与“历史”按钮（支持面包屑携带 `courseId` 上下文）
+- “从提交选择”弹层：
+  - 第 1 个选择器：按当前 `courseId` 加载作业（`assignmentApi.getAssignmentsByCourse(courseId)`）
+  - 第 2 个选择器：按所选作业加载提交（`submissionApi.getSubmissionsByAssignment(assignmentId)`），可预览
+  - 可选择“以文本内容”或“以提交文件”加入左侧队列
+- 批改过程：顶端显示动态进度条（`completed/total`），移除旧的顶层进度条
+- 导出：
+  - 文本导出同“AI 批改作业”页面
+  - 在历史详情弹窗新增“导出 PNG / PDF”，PDF 为单页长图（非分页）
+- 历史列表：
+  - 移除 ID 列；分页与全局一致（左侧 page-size 玻璃选择器：10/20/50；右侧 Prev/Next 中间显示 `Page N` 且走 i18n）
+  - “查看/删除”按钮带图标并 i18n；删除联动后端 `DELETE /api/ai/grade/history/{id}`（兼容 POST）
+- 详情弹窗：
+  - 标题改为文件名（无则回退为“记录 #ID”）
+  - 内容区限制高度 `max-h-[85vh] md:max-h-[80vh]` 且内部滚动并隐藏滚动条
+  - 右上角关闭改为 X 图标
+
+相关 API：
+```ts
+// aiGrading.api.ts（强制 jsonOnly + useGradingPrompt）
+gradeEssay(data)
+gradeEssayBatch(data[])
+gradeFiles({ fileIds })
+listHistory({ q, page, size })
+getHistoryDetail(id)
+deleteHistory(id) // 失败兜底 POST /delete
+
+// assignment.api.ts
+getAssignmentsByCourse(courseId, { page, size })
+
+// submission.api.ts
+getSubmissionsByAssignment(assignmentId, { page, size })
+```
+
 ### 3. 学生功能 (Student)
 -   **视图**:
     -   `DashboardView.vue`: 学生仪表盘，展示近期活动、课程进度和能力概览。

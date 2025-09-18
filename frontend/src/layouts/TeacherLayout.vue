@@ -7,12 +7,11 @@
         <div class="flex justify-between h-14">
           <!-- 左侧：Logo和菜单切换 -->
           <div class="flex items-center space-x-6">
-            <button
-              @click="uiStore.toggleSidebar()"
-              class="p-2 -ml-2 rounded-md text-gray-400 hover:text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-primary-500"
-            >
-              <bars3-icon class="h-6 w-6" />
-            </button>
+            <Button variant="glass" size="sm" @click="uiStore.toggleSidebar()">
+              <template #icon>
+                <Bars3Icon class="h-5 w-5" />
+              </template>
+            </Button>
             <div class="flex-shrink-0 flex items-center">
               <h1 class="text-xl font-bold text-gray-900 dark:text-white">
                 {{ t('layout.teacher.title') }}
@@ -26,28 +25,26 @@
           <!-- 右侧：主题切换、通知铃铛、用户菜单 -->
           <div class="ml-4 flex items-center md:ml-6 space-x-3">
             <!-- 主题切换 -->
-            <button
-              @click="uiStore.toggleDarkMode()"
-              class="p-1 rounded-full text-gray-400 hover:text-gray-500 dark:hover:text-gray-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500"
-            >
-              <sun-icon v-if="uiStore.isDarkMode" class="h-6 w-6" />
-              <moon-icon v-else class="h-6 w-6" />
-            </button>
+            <Button variant="glass" size="sm" @click="uiStore.toggleDarkMode()">
+              <template #icon>
+                <SunIcon v-if="uiStore.isDarkMode" class="h-5 w-5" />
+                <MoonIcon v-else class="h-5 w-5" />
+              </template>
+            </Button>
 
             <language-switcher />
 
             <!-- 玻璃强度切换 -->
             <div class="relative" @click.stop v-click-outside="() => (showGlassMenu=false)">
-              <button
-                class="p-1 rounded-full text-gray-400 hover:text-gray-500 dark:hover:text-gray-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500"
-                :title="t('layout.teacher.glass.title') || 'Glass Intensity'"
-                @click="showGlassMenu = !showGlassMenu"
-                ref="glassBtnRef"
-              >
-                <paint-brush-icon class="h-6 w-6" />
-              </button>
+              <span ref="glassBtnRef">
+                <Button variant="glass" size="sm" :title="t('layout.teacher.glass.title') || 'Glass Intensity'" @click="(showGlassMenu = !showGlassMenu, showBgMenu = false, emitCloseNotification())">
+                  <template #icon>
+                    <PaintBrushIcon class="h-5 w-5" />
+                  </template>
+                </Button>
+              </span>
               <teleport to="body">
-                <div v-if="showGlassMenu" class="fixed z-[1000] popover-glass border border-white/20 dark:border-white/12 shadow-md p-1 rounded-lg"
+                <div v-if="showGlassMenu" class="fixed z-[1000] popover-glass border border-white/20 dark:border-white/12 shadow-md p-1 rounded-2xl"
                      :style="glassMenuStyle" @click.stop>
                   <div class="px-3 py-2 text-xs text-gray-600 dark:text-gray-300">
                     <div class="font-medium mb-1">{{ t('layout.teacher.glass.title') || 'Glass Intensity' }}</div>
@@ -55,12 +52,12 @@
                     <div class="opacity-90">{{ t('layout.teacher.glass.info.normal') || 'Standard: balanced readability.' }}</div>
                   </div>
                   <div class="border-t border-white/10 my-1"></div>
-                  <button class="w-full text-left px-3 py-2 rounded hover:bg-white/10 text-sm flex items-center justify-between"
+                  <button class="w-full text-left px-3 py-2 rounded-2xl hover:bg-white/10 text-sm flex items-center justify-between"
                           @click="setGlass('more')">
                     <span>{{ t('layout.teacher.glass.more') || 'More Transparent' }}</span>
                     <span v-if="uiStore.glassIntensity==='more'" class="text-primary-500">✓</span>
                   </button>
-                  <button class="w-full text-left px-3 py-2 rounded hover:bg-white/10 text-sm flex items-center justify-between"
+                  <button class="w-full text-left px-3 py-2 rounded-2xl hover:bg-white/10 text-sm flex items-center justify-between"
                           @click="setGlass('normal')">
                     <span>{{ t('layout.teacher.glass.normal') || 'Standard' }}</span>
                     <span v-if="uiStore.glassIntensity==='normal'" class="text-primary-500">✓</span>
@@ -70,29 +67,28 @@
             </div>
 
             <div class="relative" @click.stop v-click-outside="() => (showBgMenu=false)">
-              <button
-                class="p-1 rounded-full text-gray-400 hover:text-gray-500 dark:hover:text-gray-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500"
-                :title="t('layout.teacher.bg.title') || 'Background Effects'"
-                @click="showBgMenu = !showBgMenu"
-                ref="bgBtnRef"
-              >
-                <eye-icon v-if="uiStore.bgEnabled" class="h-6 w-6" />
-                <eye-slash-icon v-else class="h-6 w-6" />
-              </button>
+              <span ref="bgBtnRef">
+                <Button variant="glass" size="sm" :title="t('layout.teacher.bg.title') || 'Background Effects'" @click="(showBgMenu = !showBgMenu, showGlassMenu = false, emitCloseNotification())">
+                  <template #icon>
+                    <EyeIcon v-if="uiStore.bgEnabled" class="h-5 w-5" />
+                    <EyeSlashIcon v-else class="h-5 w-5" />
+                  </template>
+                </Button>
+              </span>
               <teleport to="body">
-                <div v-if="showBgMenu" class="fixed z-[1000] popover-glass border border-white/20 dark:border-white/12 shadow-md p-1 rounded-lg"
+                <div v-if="showBgMenu" class="fixed z-[1000] popover-glass border border-white/20 dark:border-white/12 shadow-md p-1 rounded-2xl"
                      :style="bgMenuStyle" @click.stop>
                   <div class="px-3 py-2 text-xs text-gray-600 dark:text-gray-300">
                     <div class="font-medium mb-1">{{ t('layout.teacher.bg.title') || 'Background Effects' }}</div>
                     <div class="opacity-90">{{ t('layout.teacher.bg.info') || 'Toggle animated background and effects (smooth fade).' }}</div>
                   </div>
                   <div class="border-t border-white/10 my-1"></div>
-                  <button class="w-full text-left px-3 py-2 rounded hover:bg-white/10 text-sm flex items-center justify-between"
+                  <button class="w-full text-left px-3 py-2 rounded-2xl hover:bg-white/10 text-sm flex items-center justify-between"
                           @click="setBg(true)">
                     <span>{{ t('layout.teacher.bg.on') || 'Enabled' }}</span>
                     <span v-if="uiStore.bgEnabled" class="text-primary-500">✓</span>
                   </button>
-                  <button class="w-full text-left px-3 py-2 rounded hover:bg-white/10 text-sm flex items-center justify-between"
+                  <button class="w-full text-left px-3 py-2 rounded-2xl hover:bg-white/10 text-sm flex items-center justify-between"
                           @click="setBg(false)">
                     <span>{{ t('layout.teacher.bg.off') || 'Disabled' }}</span>
                     <span v-if="!uiStore.bgEnabled" class="text-primary-500">✓</span>
@@ -105,13 +101,11 @@
             <NotificationBell />
 
             <!-- 全局聊天按钮：打开聊天抽屉（无选中人时显示列表） -->
-            <button
-              @click="chat.isOpen ? chat.closeChat() : chat.openChat()"
-              class="p-1 rounded-full text-gray-400 hover:text-gray-500 dark:hover:text-gray-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500"
-              :title="t('shared.chat.open') as string || '聊天'"
-            >
-              <chat-bubble-left-right-icon class="h-6 w-6" />
-            </button>
+            <Button variant="glass" size="sm" :title="t('shared.chat.open') as string || '聊天'" @click="chat.isOpen ? chat.closeChat() : chat.openChat()">
+              <template #icon>
+                <ChatBubbleLeftRightIcon class="h-5 w-5" />
+              </template>
+            </Button>
 
             <!-- 用户菜单 -->
             <div class="relative" v-click-outside="() => (showUserMenu=false)">
@@ -279,6 +273,7 @@ import { ref, onMounted, onUnmounted, nextTick, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useUIStore } from '@/stores/ui'
 import { useAuthStore } from '@/stores/auth'
+import Button from '@/components/ui/Button.vue'
 import FuturisticBackground from '@/components/ui/FuturisticBackground.vue'
 import UserAvatar from '@/components/ui/UserAvatar.vue'
 import LanguageSwitcher from '@/components/ui/LanguageSwitcher.vue'
@@ -391,4 +386,21 @@ function setBg(v: boolean) {
   uiStore.bgEnabled = v
   showBgMenu.value = false
 }
+
+function emitCloseNotification() {
+  try { window.dispatchEvent(new CustomEvent('ui:close-notification-dropdown')) } catch {}
+}
 </script>
+
+<style scoped>
+/* 仅在教师端提高玻璃卡片的圆角，保持与学生端一致 */
+:deep(.glass-ultraThin[class*="rounded"]),
+:deep(.glass-thin[class*="rounded"]),
+:deep(.glass-regular[class*="rounded"]),
+:deep(.glass-thick[class*="rounded"]),
+:deep(.glass-ultraThick[class*="rounded"]),
+:deep(.popover-glass[class*="rounded"]),
+:deep(.card) {
+  border-radius: 20px !important;
+}
+</style>

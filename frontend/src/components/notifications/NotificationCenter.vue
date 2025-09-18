@@ -32,62 +32,65 @@
 
       <!-- 过滤器容器：保留下方三个过滤器，横向一排 -->
       <div class="mt-4 rounded-lg p-3 glass-thin" v-glass="{ strength: 'thin', interactive: false }">
-        <div class="flex flex-wrap items-end gap-3">
-          <div class="w-36">
-            <GlassPopoverSelect
-              :label="t('notifications.filters.type') as string"
-              v-model="filters.type"
-              :options="[
-                { label: t('notifications.filters.all') as string, value: '' },
-                { label: t('notifications.types.system') as string, value: 'system' },
-                { label: t('notifications.types.assignment') as string, value: 'assignment' },
-                { label: t('notifications.types.grade') as string, value: 'grade' },
-                { label: t('notifications.types.course') as string, value: 'course' },
-                { label: t('notifications.types.message') as string, value: 'message' }
-              ]"
-              size="sm"
-              stacked
-              @change="handleFilterChange"
-            />
+        <div class="flex flex-wrap items-center gap-4">
+          <div class="w-auto flex items-center gap-2">
+            <span class="text-xs font-medium leading-tight text-gray-700 dark:text-gray-300">{{ t('notifications.filters.type') }}</span>
+            <div class="w-36">
+              <GlassPopoverSelect
+                v-model="filters.type"
+                :options="[
+                  { label: t('notifications.filters.all') as string, value: '' },
+                  { label: t('notifications.types.system') as string, value: 'system' },
+                  { label: t('notifications.types.assignment') as string, value: 'assignment' },
+                  { label: t('notifications.types.grade') as string, value: 'grade' },
+                  { label: t('notifications.types.course') as string, value: 'course' },
+                  { label: t('notifications.types.message') as string, value: 'message' }
+                ]"
+                size="sm"
+                @change="handleFilterChange"
+              />
+            </div>
           </div>
 
-          <div class="w-32">
-            <GlassPopoverSelect
-              :label="t('notifications.filters.status') as string"
-              :options="[
-                { label: t('notifications.filters.all') as string, value: 'all' },
-                { label: t('notifications.status.unread') as string, value: 'unread' },
-                { label: t('notifications.status.read') as string, value: 'read' }
-              ]"
-              :model-value="filters.isRead===undefined ? 'all' : (filters.isRead ? 'read' : 'unread')"
-              @update:modelValue="(v:any)=>{ filters.isRead = (v==='all') ? undefined : (v==='read'); handleFilterChange() }"
-              size="sm"
-              stacked
-            />
+          <div class="w-auto flex items-center gap-2">
+            <span class="text-xs font-medium leading-tight text-gray-700 dark:text-gray-300">{{ t('notifications.filters.status') }}</span>
+            <div class="w-32">
+              <GlassPopoverSelect
+                :options="[
+                  { label: t('notifications.filters.all') as string, value: 'all' },
+                  { label: t('notifications.status.unread') as string, value: 'unread' },
+                  { label: t('notifications.status.read') as string, value: 'read' }
+                ]"
+                :model-value="filters.isRead===undefined ? 'all' : (filters.isRead ? 'read' : 'unread')"
+                @update:modelValue="(v:any)=>{ filters.isRead = (v==='all') ? undefined : (v==='read'); handleFilterChange() }"
+                size="sm"
+              />
+            </div>
           </div>
 
-          <div class="w-28">
-            <GlassPopoverSelect
-              :label="t('notifications.filters.priority') as string"
-              v-model="filters.priority"
-              :options="[
-                { label: t('notifications.filters.all') as string, value: '' },
-                { label: t('notifications.priority.urgent') as string, value: 'urgent' },
-                { label: t('notifications.priority.high') as string, value: 'high' },
-                { label: t('notifications.priority.normal') as string, value: 'normal' },
-                { label: t('notifications.priority.low') as string, value: 'low' }
-              ]"
-              size="sm"
-              stacked
-              @change="handleFilterChange"
-            />
+          <div class="w-auto flex items-center gap-2">
+            <span class="text-xs font-medium leading-tight text-gray-700 dark:text-gray-300">{{ t('notifications.filters.priority') }}</span>
+            <div class="w-28">
+              <GlassPopoverSelect
+                v-model="filters.priority"
+                :options="[
+                  { label: t('notifications.filters.all') as string, value: '' },
+                  { label: t('notifications.priority.urgent') as string, value: 'urgent' },
+                  { label: t('notifications.priority.high') as string, value: 'high' },
+                  { label: t('notifications.priority.normal') as string, value: 'normal' },
+                  { label: t('notifications.priority.low') as string, value: 'low' }
+                ]"
+                size="sm"
+                @change="handleFilterChange"
+              />
+            </div>
           </div>
 
           <div v-if="hasActiveFilters" class="ml-auto">
-            <button @click="handleClearFilters" class="btn-ghost btn-sm">
+            <Button size="sm" variant="ghost" @click="handleClearFilters">
               <x-mark-icon class="w-4 h-4 mr-1" />
               {{ t('notifications.actions.clearFilters') }}
-            </button>
+            </Button>
           </div>
         </div>
       </div>
@@ -131,31 +134,24 @@
                 </h4>
 
                 <!-- 发布/提醒区分徽章 -->
-                <span v-if="(notification.relatedType||'').toLowerCase()==='assignment_reminder'" class="inline-flex items-center text-xs px-2 py-0.5 rounded-full glass-ultraThin ml-1" v-glass="{ strength: 'ultraThin', interactive: false }">
+                <Badge v-if="(notification.relatedType||'').toLowerCase()==='assignment_reminder'" size="sm" variant="warning" class="ml-1">
                   {{ t('notifications.badge.reminder') }}
-                </span>
-                <span v-else-if="(notification.relatedType||'').toLowerCase().startsWith('assignment') && notification.type==='assignment'" class="inline-flex items-center text-xs px-2 py-0.5 rounded-full glass-ultraThin ml-1" v-glass="{ strength: 'ultraThin', interactive: false }">
+                </Badge>
+                <Badge v-else-if="(notification.relatedType||'').toLowerCase().startsWith('assignment') && notification.type==='assignment'" size="sm" variant="info" class="ml-1">
                   {{ t('notifications.badge.published') }}
-                </span>
+                </Badge>
 
                 <!-- 优先级标签（所有通知均显示） -->
-                <span
-                  class="priority-badge"
-                  :class="getPriorityClass(notification.priority)"
-                >
+                <Badge size="sm" :variant="priorityVariant(notification.priority)">
                   {{ getPriorityText(notification.priority) }}
-                </span>
+                </Badge>
               </div>
 
               <!-- 操作按钮 -->
               <div class="flex items-center space-x-1">
-                <button
-                  @click.stop="handleDeleteNotification(notification.id)"
-                  class="btn-ghost btn-xs text-red-600 hover:text-red-700 rounded-md transition-colors dark:hover:bg-slate-700"
-                  title="删除"
-                >
+                <Button size="xs" variant="ghost" class="text-red-600" title="删除" @click.stop="handleDeleteNotification(notification.id)">
                   <trash-icon class="w-4 h-4" />
-                </button>
+                </Button>
               </div>
             </div>
 
@@ -191,14 +187,10 @@
         v-if="pagination.page < pagination.totalPages"
         class="load-more"
       >
-        <button
-          @click="handleLoadMore"
-          class="btn-secondary"
-          :disabled="loading"
-        >
-          <span v-if="loading">{{ t('notifications.loading') }}</span>
-          <span v-else>{{ t('notifications.actions.loadMore') }}</span>
-        </button>
+        <Button variant="secondary" @click="handleLoadMore" :disabled="loading">
+          <template v-if="loading">{{ t('notifications.loading') }}</template>
+          <template v-else>{{ t('notifications.actions.loadMore') }}</template>
+        </Button>
       </div>
     </div>
   </div>
@@ -226,6 +218,7 @@ import {
 } from '@heroicons/vue/24/outline'
 import GlassPopoverSelect from '@/components/ui/filters/GlassPopoverSelect.vue'
 import Button from '@/components/ui/Button.vue'
+import Badge from '@/components/ui/Badge.vue'
 
 // Store
 const notificationsStore = useNotificationsStore()
@@ -375,6 +368,14 @@ const normalizePriority = (priority?: string): 'urgent'|'high'|'normal'|'low' =>
   const p = String(priority || '').toLowerCase()
   if (p === 'urgent' || p === 'high' || p === 'normal' || p === 'low') return p as any
   return 'low'
+}
+
+const priorityVariant = (priority?: string) => {
+  const p = normalizePriority(priority)
+  if (p === 'urgent') return 'danger'
+  if (p === 'high') return 'warning'
+  if (p === 'normal') return 'info'
+  return 'secondary'
 }
 
 // 本地化系统类标题（含通用回退）

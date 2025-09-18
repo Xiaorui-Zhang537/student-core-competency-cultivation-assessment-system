@@ -27,15 +27,11 @@
         </template>
         <template #right>
           <div class="w-64">
-            <div class="glass-thin rounded-full px-3 py-2 flex items-center gap-2" v-glass="{ strength: 'thin', interactive: true }">
-              <MagnifyingGlassIcon class="w-4 h-4 text-gray-500" />
-              <input
-                v-model="searchText"
-                :placeholder="(t('student.assignments.searchPlaceholder') as string) || (t('student.assignments.search') as string) || '搜索作业'"
-                class="bg-transparent outline-none w-full text-sm placeholder-gray-400"
-                aria-label="Search assignments"
-              />
-            </div>
+            <GlassSearchInput
+              v-model="searchText"
+              :placeholder="(t('student.assignments.searchPlaceholder') as string) || (t('student.assignments.search') as string) || '搜索作业'"
+              size="sm"
+            />
           </div>
         </template>
       </FilterBar>
@@ -52,7 +48,7 @@
             <div class="min-w-0">
               <div class="flex items-center gap-2">
                 <span class="text-base font-semibold text-gray-900 dark:text-white truncate">{{ a.title }}</span>
-                <span class="text-xs px-2 py-0.5 rounded-full" :class="statusBadgeClass(displayStatus(a))">{{ statusText(displayStatus(a)) }}</span>
+                <Badge size="sm" :variant="statusVariant(displayStatus(a))">{{ statusText(displayStatus(a)) }}</Badge>
               </div>
               <div class="text-sm text-gray-600 dark:text-gray-300 mt-1 truncate">{{ a.courseTitle || a.courseName || a.course?.title }}</div>
               <div class="text-xs text-gray-500 dark:text-gray-400 mt-1">{{ t('student.assignments.due') }}{{ formatTime(a.dueDate || a.dueAt) }}</div>
@@ -102,8 +98,10 @@ import FilterBar from '@/components/ui/filters/FilterBar.vue'
 import { studentApi } from '@/api/student.api'
 import GlassPopoverSelect from '@/components/ui/filters/GlassPopoverSelect.vue'
 import PageHeader from '@/components/ui/PageHeader.vue'
+import Badge from '@/components/ui/Badge.vue'
 import { MagnifyingGlassIcon } from '@heroicons/vue/24/outline'
 import { useSubmissionStore } from '@/stores/submission'
+import GlassSearchInput from '@/components/ui/inputs/GlassSearchInput.vue'
 
 const { t } = useI18n()
 const router = useRouter()
@@ -132,12 +130,12 @@ const statusOptions = computed(() => [
 
 const courseOptions = ref<Array<{ label: string, value: string }>>([{ label: t('student.assignments.filters.courseAll'), value: '' }])
 
-function statusBadgeClass(s: string) {
-  if (s === 'PENDING') return 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-300'
-  if (s === 'SUBMITTED') return 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300'
-  if (s === 'LATE') return 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300'
-  if (s === 'GRADED') return 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300'
-  return 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300'
+function statusVariant(s: string) {
+  if (s === 'PENDING') return 'warning'
+  if (s === 'SUBMITTED') return 'info'
+  if (s === 'LATE') return 'danger'
+  if (s === 'GRADED') return 'success'
+  return 'secondary'
 }
 function statusText(s: string) {
   if (s === 'PENDING') return t('student.assignments.status.pending')

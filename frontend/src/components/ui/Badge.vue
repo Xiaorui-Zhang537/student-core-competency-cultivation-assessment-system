@@ -1,7 +1,8 @@
 <template>
   <span
     :class="[
-      'inline-flex items-center rounded-full font-medium',
+      'inline-flex items-center rounded-full font-medium select-none',
+      'glass-ultraThin glass-interactive border',
       sizeClasses,
       variantClasses,
       $attrs.class
@@ -35,13 +36,14 @@ const sizeClasses = computed(() => {
 })
 
 const variantClasses = computed(() => {
-  const variants = {
-    primary: 'bg-primary-100 text-primary-800 dark:bg-primary-900 dark:text-primary-200',
-    secondary: 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200',
-    success: 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200',
-    warning: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200',
-    danger: 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200',
-    info: 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200'
+  // 玻璃风格：统一使用超薄玻璃背景，按语义色仅调整文字与边框色
+  const variants: Record<NonNullable<Props['variant']>, string> = {
+    primary: 'text-primary-700 dark:text-primary-300 border-primary-500/30',
+    secondary: 'text-gray-800 dark:text-gray-200 border-white/20 dark:border-white/12',
+    success: 'text-emerald-700 dark:text-emerald-300 border-emerald-500/30',
+    warning: 'text-amber-800 dark:text-amber-300 border-amber-500/30',
+    danger: 'text-rose-700 dark:text-rose-300 border-rose-500/30',
+    info: 'text-sky-700 dark:text-sky-300 border-sky-500/30'
   }
   return variants[props.variant]
 })

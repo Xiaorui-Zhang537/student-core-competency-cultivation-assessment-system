@@ -53,14 +53,14 @@
     <div v-if="assignmentStore.loading" class="text-center py-12">
       <p>{{ t('teacher.assignments.loading') }}</p>
     </div>
-    <div v-else class="space-y-4">
+          <div v-else class="space-y-4">
       <div v-for="assignment in assignmentStore.assignments" :key="assignment.id" class="card p-4 flex justify-between items-center">
         <div>
           <h3 class="font-bold text-lg">{{ assignment.title }}</h3>
           <p class="text-sm text-gray-600">{{ assignment.description }}</p>
           <div class="text-sm text-gray-500 mt-2">
             {{ t('teacher.assignments.list.dueDate') }}: {{ formatMinute(assignment.dueDate) }}
-            <span class="ml-4 inline-flex items-center text-xs px-2 py-0.5 rounded-full" :class="statusClass(String(assignment.status).toUpperCase())">{{ renderStatus(assignment) }}</span>
+            <Badge class="ml-2" size="sm" :variant="statusVariant(String(assignment.status).toUpperCase())">{{ renderStatus(assignment) }}</Badge>
           </div>
           <div v-if="String(assignment.status).toLowerCase()==='scheduled' && assignment.publishAt" class="text-xs text-gray-500 mt-1">
             {{ (t('teacher.assignments.modal.publishAt') as string) }}: {{ formatMinute(assignment.publishAt) }}
@@ -103,104 +103,103 @@
         <div class="flex items-center space-x-2">
           <Button variant="outline" size="sm" @click="prevPage" :disabled="currentPage === 1">{{ t('teacher.assignments.pagination.prev') }}</Button>
           <span class="text-sm">{{ t('teacher.assignments.pagination.page', { page: currentPage }) }}</span>
-          <Button variant="outline" size="sm" @click="nextPage">{{ t('teacher.assignments.pagination.next') }}</Button>
+          <Button variant="outline" size="sm" @click="nextPage" :disabled="currentPage >= totalPages">{{ t('teacher.assignments.pagination.next') }}</Button>
         </div>
       </div>
     </div>
 
-    <!-- Create/Edit Modal -->
-    <div v-if="showModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div class="modal glass-thick p-6 w-full max-w-lg max-h-[80vh] overflow-y-auto" v-glass="{ strength: 'thick', interactive: true }">
-        <h2 class="text-xl font-bold mb-4">{{ isEditing ? t('teacher.assignments.modal.editTitle') : t('teacher.assignments.modal.createTitle') }}</h2>
-        <div class="mb-3">
-          <label class="block text-sm font-medium mb-1">{{ t('teacher.assignments.modal.visibility') || '可见性' }}</label>
-          <div class="flex items-center gap-4 text-sm">
-            <label class="inline-flex items-center gap-2">
-              <input type="radio" value="draft" v-model="publishMode" />
-              <span>{{ t('teacher.assignments.modal.draft') || '保存为草稿' }}</span>
-            </label>
-            <label class="inline-flex items-center gap-2">
-              <input type="radio" value="publish" v-model="publishMode" />
-              <span>{{ t('teacher.assignments.modal.publishNow') || '立即发布' }}</span>
-            </label>
-            <label class="inline-flex items-center gap-2">
-              <input type="radio" value="scheduled" v-model="publishMode" />
-              <span>{{ t('teacher.assignments.modal.schedule') || '定时发布' }}</span>
-            </label>
-          </div>
-          <p class="mt-1 text-xs text-gray-500">{{ t('teacher.assignments.modal.visibilityHint') || '草稿不会对学生可见；仅发布后学生才能看到并提交。' }}</p>
+    <!-- Create/Edit Modal (GlassModal) -->
+    <GlassModal v-if="showModal" :title="(isEditing ? t('teacher.assignments.modal.editTitle') : t('teacher.assignments.modal.createTitle')) as string" maxWidth="max-w-lg" heightVariant="normal" @close="closeModal">
+      <div class="mb-3">
+        <label class="block text-sm font-medium mb-1">{{ t('teacher.assignments.modal.visibility') || '可见性' }}</label>
+        <div class="flex items-center gap-4 text-sm">
+          <label class="inline-flex items-center gap-2">
+            <input type="radio" value="draft" v-model="publishMode" />
+            <span>{{ t('teacher.assignments.modal.draft') || '保存为草稿' }}</span>
+          </label>
+          <label class="inline-flex items-center gap-2">
+            <input type="radio" value="publish" v-model="publishMode" />
+            <span>{{ t('teacher.assignments.modal.publishNow') || '立即发布' }}</span>
+          </label>
+          <label class="inline-flex items-center gap-2">
+            <input type="radio" value="scheduled" v-model="publishMode" />
+            <span>{{ t('teacher.assignments.modal.schedule') || '定时发布' }}</span>
+          </label>
         </div>
-        <form @submit.prevent="handleSubmit" class="space-y-4">
-           <div>
-            <label for="courseId" class="block text-sm font-medium mb-1">{{ t('teacher.assignments.modal.course') }}</label>
-            <select id="courseId" v-model="form.courseId" required class="input input--glass glass-regular glass-interactive rounded-xl border border-white/30 dark:border-white/10" :disabled="isEditing">
-              <option v-for="course in courseStore.courses" :key="course.id" :value="course.id">
-                {{ course.title }}
-              </option>
-            </select>
-          </div>
-          <div>
-            <label for="title" class="block text-sm font-medium mb-1">{{ t('teacher.assignments.modal.title') }}</label>
-            <GlassInput id="title" v-model="form.title" type="text" required />
-          </div>
-          <div>
-            <label for="description" class="block text-sm font-medium mb-1">{{ t('teacher.assignments.modal.description') }}</label>
-            <GlassTextarea id="description" v-model="form.description" :rows="3" />
-          </div>
-          <div class="grid grid-cols-1 gap-3">
-            <div v-if="publishMode==='scheduled'" class="glass-thin rounded-lg p-3" v-glass="{ strength: 'thin', interactive: true }">
-              <GlassDateTimePicker :label="(t('teacher.assignments.modal.publishAt') as string) || '发布时间'" v-model="form.publishAt" />
-            </div>
-            <div class="glass-thin rounded-lg p-3" v-glass="{ strength: 'thin', interactive: true }">
-              <GlassDateTimePicker :label="(t('teacher.assignments.modal.dueAt') as string) || (t('teacher.assignments.modal.dueDate') as string)" v-model="form.dueDate" />
-              <div class="mt-2 flex flex-wrap items-center gap-2 text-xs text-gray-600 dark:text-gray-300">
-                <span>{{ t('teacher.assignments.modal.quickHint') || '快捷设置：' }}</span>
-                <button type="button" class="btn btn-xs btn-outline glass-thin" @click="quickSetDue(1)">{{ t('teacher.assignments.modal.quickRanges.1d') || '+1 天' }}</button>
-                <button type="button" class="btn btn-xs btn-outline glass-thin" @click="quickSetDue(7)">{{ t('teacher.assignments.modal.quickRanges.7d') || '+7 天' }}</button>
-                <button type="button" class="btn btn-xs btn-outline glass-thin" @click="quickSetDue(14)">{{ t('teacher.assignments.modal.quickRanges.14d') || '+14 天' }}</button>
-                <button type="button" class="btn btn-xs btn-outline glass-thin" @click="quickSetDue(30)">{{ t('teacher.assignments.modal.quickRanges.30d') || '+30 天' }}</button>
-              </div>
-            </div>
-          </div>
-          <div>
-            <label class="block text-sm font-medium mb-1">{{ t('teacher.assignments.modal.attachments') }}</label>
-            <FileUpload
-              ref="assignmentUploader"
-              :multiple="true"
-              :autoUpload="false"
-              :accept="'.pdf,.doc,.docx,.ppt,.pptx,.zip,image/*'"
-              :upload-url="`${baseURL}/files/upload`"
-              :upload-headers="uploadHeaders"
-              :upload-data="assignmentUploadData"
-              @update:files="onFilesUpdate"
-              @upload-error="onAssignmentUploadError"
-            />
-            <!-- 已有关联附件列表（编辑时显示） -->
-            <div v-if="editingAssignmentId && attachments.length" class="mt-4">
-              <h4 class="text-sm font-medium mb-2">{{ t('teacher.assignments.modal.existing') }}</h4>
-              <ul class="divide-y divide-gray-200">
-                <li v-for="f in attachments" :key="f.id" class="py-2 flex items-center justify-between">
-                  <div class="min-w-0 mr-3">
-                    <div class="text-sm truncate">{{ f.originalName || f.fileName || ('附件#' + f.id) }}</div>
-                    <div class="text-xs text-gray-500">{{ t('teacher.assignments.modal.size') }}：{{ formatSize(f.fileSize) }}</div>
-                  </div>
-                  <div class="flex items-center gap-2">
-                    <a class="btn btn-sm btn-outline" :href="`${baseURL}/files/${f.id}/download`">{{ t('teacher.assignments.modal.download') }}</a>
-                    <button type="button" class="btn btn-sm btn-danger-outline" @click="confirmDeleteAttachment(f.id)">{{ t('teacher.assignments.modal.delete') }}</button>
-                  </div>
-                </li>
-              </ul>
-            </div>
-          </div>
-          <div class="flex justify-end space-x-3 mt-6">
-            <button type="button" @click="closeModal" class="btn btn-secondary">{{ t('teacher.assignments.modal.cancel') }}</button>
-            <button type="submit" :disabled="assignmentStore.loading" class="btn btn-primary">
-              {{ isEditing ? t('teacher.assignments.actions.save') : t('teacher.assignments.modal.create') }}
-            </button>
-          </div>
-        </form>
+        <p class="mt-1 text-xs text-gray-500">{{ t('teacher.assignments.modal.visibilityHint') || '草稿不会对学生可见；仅发布后学生才能看到并提交。' }}</p>
       </div>
-    </div>
+      <form @submit.prevent="handleSubmit" class="space-y-4">
+         <div>
+          <label for="courseId" class="block text-sm font-medium mb-1">{{ t('teacher.assignments.modal.course') }}</label>
+          <select id="courseId" v-model="form.courseId" required class="ui-pill--select ui-pill--pl ui-pill--md ui-pill--pr-select" :disabled="isEditing">
+            <option v-for="course in courseStore.courses" :key="course.id" :value="course.id">
+              {{ course.title }}
+            </option>
+          </select>
+        </div>
+        <div>
+          <label for="title" class="block text-sm font-medium mb-1">{{ t('teacher.assignments.modal.title') }}</label>
+          <GlassInput id="title" v-model="form.title" type="text" required />
+        </div>
+        <div>
+          <label for="description" class="block text-sm font-medium mb-1">{{ t('teacher.assignments.modal.description') }}</label>
+          <GlassTextarea id="description" v-model="form.description" :rows="3" />
+        </div>
+        <div class="grid grid-cols-1 gap-3">
+          <div v-if="publishMode==='scheduled'" class="glass-thin rounded-lg p-3" v-glass="{ strength: 'thin', interactive: true }">
+            <GlassDateTimePicker :label="(t('teacher.assignments.modal.publishAt') as string) || '发布时间'" v-model="form.publishAt" />
+          </div>
+          <div class="glass-thin rounded-lg p-3" v-glass="{ strength: 'thin', interactive: true }">
+            <GlassDateTimePicker :label="(t('teacher.assignments.modal.dueAt') as string) || (t('teacher.assignments.modal.dueDate') as string)" v-model="form.dueDate" />
+            <div class="mt-2 flex flex-wrap items-center gap-2 text-xs text-gray-600 dark:text-gray-300">
+              <span>{{ t('teacher.assignments.modal.quickHint') || '快捷设置：' }}</span>
+              <Button size="xs" variant="outline" @click="quickSetDue(1)">{{ t('teacher.assignments.modal.quickRanges.1d') || '+1 天' }}</Button>
+              <Button size="xs" variant="outline" @click="quickSetDue(7)">{{ t('teacher.assignments.modal.quickRanges.7d') || '+7 天' }}</Button>
+              <Button size="xs" variant="outline" @click="quickSetDue(14)">{{ t('teacher.assignments.modal.quickRanges.14d') || '+14 天' }}</Button>
+              <Button size="xs" variant="outline" @click="quickSetDue(30)">{{ t('teacher.assignments.modal.quickRanges.30d') || '+30 天' }}</Button>
+            </div>
+          </div>
+        </div>
+        <div>
+          <label class="block text-sm font-medium mb-1">{{ t('teacher.assignments.modal.attachments') }}</label>
+          <FileUpload
+            ref="assignmentUploader"
+            :multiple="true"
+            :autoUpload="false"
+            :accept="'.pdf,.doc,.docx,.ppt,.pptx,.zip,image/*'"
+            :upload-url="`${baseURL}/files/upload`"
+            :upload-headers="uploadHeaders"
+            :upload-data="assignmentUploadData"
+            @update:files="onFilesUpdate"
+            @upload-error="onAssignmentUploadError"
+          />
+          <!-- 已有关联附件列表（编辑时显示） -->
+          <div v-if="editingAssignmentId && attachments.length" class="mt-4">
+            <h4 class="text-sm font-medium mb-2">{{ t('teacher.assignments.modal.existing') }}</h4>
+            <ul class="divide-y divide-gray-200">
+              <li v-for="f in attachments" :key="f.id" class="py-2 flex items-center justify-between">
+                <div class="min-w-0 mr-3">
+                  <div class="text-sm truncate">{{ f.originalName || f.fileName || ('附件#' + f.id) }}</div>
+                  <div class="text-xs text-gray-500">{{ t('teacher.assignments.modal.size') }}：{{ formatSize(f.fileSize) }}</div>
+                </div>
+                <div class="flex items-center gap-2">
+                  <Button as="a" :href="`${baseURL}/files/${f.id}/download`" size="sm" variant="outline">{{ t('teacher.assignments.modal.download') }}</Button>
+                  <Button size="sm" variant="danger" @click="confirmDeleteAttachment(f.id)">{{ t('teacher.assignments.modal.delete') }}</Button>
+                </div>
+              </li>
+            </ul>
+          </div>
+        </div>
+        <div class="flex justify-end space-x-3 mt-6">
+          <Button variant="secondary" type="button" @click="closeModal">
+            {{ t('teacher.assignments.modal.cancel') }}
+          </Button>
+          <Button variant="primary" type="submit" :disabled="assignmentStore.loading">
+            {{ isEditing ? t('teacher.assignments.actions.save') : t('teacher.assignments.modal.create') }}
+          </Button>
+        </div>
+      </form>
+    </GlassModal>
     </div>
   </div>
 </template>
@@ -223,7 +222,10 @@ import GlassPopoverSelect from '@/components/ui/filters/GlassPopoverSelect.vue'
 import PageHeader from '@/components/ui/PageHeader.vue'
 import GlassDateTimePicker from '@/components/ui/inputs/GlassDateTimePicker.vue'
 import GlassInput from '@/components/ui/inputs/GlassInput.vue'
+import Badge from '@/components/ui/Badge.vue'
+import GlassSearchInput from '@/components/ui/inputs/GlassSearchInput.vue'
 import GlassTextarea from '@/components/ui/inputs/GlassTextarea.vue'
+import GlassModal from '@/components/ui/GlassModal.vue'
 
 const assignmentStore = useAssignmentStore();
 const courseStore = useCourseStore();
@@ -240,6 +242,11 @@ const originalStatus = ref<string>('draft')
 const selectedCourseId = ref<string | null>(null);
 const currentPage = ref(1);
 const pageSize = ref(10);
+const totalPages = computed(() => {
+  const total = Number(assignmentStore.totalAssignments || 0)
+  const size = Number(pageSize.value || 10)
+  return Math.max(1, Math.ceil(total / (size || 1)))
+})
 
 const form = reactive<AssignmentCreationRequest & { id?: string; publishAt?: string }>({
   courseId: '',
@@ -302,6 +309,14 @@ const statusClass = (status: string) => {
   if (status === 'DRAFT' || status === 'SCHEDULED') return `${base} bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300`
   if (status === 'CLOSED') return `${base} bg-gray-100 text-gray-800 dark:bg-gray-800/60 dark:text-gray-200`
   return `${base} bg-gray-100 text-gray-800 dark:bg-gray-800/60 dark:text-gray-200`
+}
+
+const statusVariant = (status: string) => {
+  const s = String(status || '').toUpperCase()
+  if (s === 'PUBLISHED') return 'success'
+  if (s === 'DRAFT' || s === 'SCHEDULED') return 'warning'
+  if (s === 'CLOSED') return 'secondary'
+  return 'secondary'
 }
 
 function renderStatus(a: any) {
@@ -503,8 +518,10 @@ const prevPage = () => {
 };
 
 const nextPage = () => {
-  currentPage.value++;
-  handleCourseFilterChange();
+  if (currentPage.value < totalPages.value) {
+    currentPage.value++;
+    handleCourseFilterChange();
+  }
 };
 
 function goAiGrading() {

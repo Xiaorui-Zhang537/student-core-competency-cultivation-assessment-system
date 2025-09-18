@@ -10,9 +10,10 @@
           <div>
             <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">{{ t('common.search') || '搜索' }}</label>
             <div class="flex items-center gap-2">
-              <GlassSearchInput v-model="q" :placeholder="t('common.search') || '搜索会话'" />
-              <Button size="sm" variant="secondary" class="whitespace-nowrap shrink-0" @click="search">{{ t('common.search') || '搜索' }}</Button>
-              <Button size="sm" variant="primary" class="whitespace-nowrap shrink-0" @click="newConv">{{ t('common.new') || '新建' }}</Button>
+              <div class="flex-1 min-w-0">
+                <GlassSearchInput v-model="q" :placeholder="t('common.search') || '搜索会话'" />
+              </div>
+              <Button size="sm" variant="primary" icon="plus" class="whitespace-nowrap shrink-0" @click="newConv">{{ t('common.new') || '新建' }}</Button>
             </div>
           </div>
 
@@ -73,9 +74,9 @@
             <h3 class="text-sm font-semibold text-gray-700 dark:text-gray-200">{{ t('teacher.ai.memory') || '长期记忆' }}</h3>
             <div class="flex items-center gap-2">
               <label class="text-xs text-gray-500">{{ t('common.enable') || '启用' }}</label>
-              <input type="checkbox" v-model="memory.enabled" @change="saveMemory" />
+              <GlassSwitch v-model="memory.enabled" size="sm" @update:modelValue="saveMemory" />
             </div>
-            <GlassTextarea v-model="memory.content" :rows="4" :placeholder="t('teacher.ai.memoryPlaceholder') || '个性化偏好、口吻等...'" @blur="saveMemory" />
+            <GlassTextarea v-model="memory.content" :rows="4" :disabled="!memory.enabled" :placeholder="t('teacher.ai.memoryPlaceholder') || '个性化偏好、口吻等...'" @blur="saveMemory" />
           </div>
 
           <div class="space-y-3 text-xs text-gray-600 dark:text-gray-300 rounded-lg p-3 border border-gray-100 dark:border-gray-700/60" v-glass="{ strength: 'ultraThin', interactive: false }">
@@ -151,7 +152,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
 import { useAIStore } from '@/stores/ai'
 import { useI18n } from 'vue-i18n'
 import { fileApi } from '@/api/file.api'
@@ -162,6 +163,7 @@ import PageHeader from '@/components/ui/PageHeader.vue'
 import GlassSearchInput from '@/components/ui/inputs/GlassSearchInput.vue'
 import GlassTextarea from '@/components/ui/inputs/GlassTextarea.vue'
 import GlassInput from '@/components/ui/inputs/GlassInput.vue'
+import GlassSwitch from '@/components/ui/inputs/GlassSwitch.vue'
 
 const { t } = useI18n()
 const ai = useAIStore()
@@ -221,6 +223,12 @@ const sending = ref(false)
 // 已移除 JSON 输出与批改 Prompt 开关
 
 const search = async () => { await ai.fetchConversations({ q: q.value }) }
+// 输入自动搜索（防抖）
+let searchTimer: any = null
+watch(q, () => {
+  if (searchTimer) clearTimeout(searchTimer)
+  searchTimer = setTimeout(() => { search() }, 300)
+})
 const newConv = async () => { await ai.createConversation({ title: '新对话', model: model.value }) }
 const open = async (id: number) => { await ai.openConversation(id) }
 const pin = async (c: any, pinned: boolean) => { await ai.pinConversation(c.id, pinned) }

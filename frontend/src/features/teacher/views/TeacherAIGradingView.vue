@@ -124,33 +124,64 @@
         </div>
       </div>
 
-      <!-- Picker Modal -->
-      <div v-if="modalOpen" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-        <div class="card p-4 w-full max-w-2xl">
-          <div class="flex items-center justify-between mb-3">
-            <h4 class="font-semibold">{{ t('teacher.aiGrading.picker.title') }}</h4>
-            <Button size="sm" variant="secondary" @click="modalOpen=false">{{ t('teacher.aiGrading.picker.close') }}</Button>
-          </div>
-          <div class="grid grid-cols-1 gap-2 mb-3">
-            <GlassPopoverSelect :label="t('teacher.courses.breadcrumb') as string" :options="courseOptions" v-model="picker.courseId" :placeholder="(t('common.pleaseSelect') || '请选择') + (t('teacher.courses.title') || '课程')" />
-            <GlassPopoverSelect :label="t('teacher.assignments.title') as string" :options="assignmentOptions" v-model="picker.assignmentId" :placeholder="(t('common.pleaseSelect') || '请选择') + (t('teacher.assignments.title') || '作业')" />
-          </div>
-          <div class="flex items-center gap-2 mb-2">
-            <Button size="sm" variant="outline" @click="loadSubmissions">{{ t('teacher.aiGrading.picker.load') }}</Button>
-            <Button size="sm" variant="ghost" @click="selectAll">{{ t('teacher.aiGrading.picker.selectAll') }}</Button>
-            <Button size="sm" variant="primary" @click="addSelected">{{ t('teacher.aiGrading.picker.addSelected') }}</Button>
-          </div>
-          <ul class="divide-y divide-gray-200 max-h-64 overflow-auto" v-if="picker.items.length">
-            <li v-for="s in picker.items" :key="s.id" class="py-2 flex items-center justify-between">
-              <label class="flex items-center gap-2 cursor-pointer">
-                <input type="checkbox" v-model="picker.selected" :value="s" />
-                <span class="text-sm">#{{ s.id }}</span>
-              </label>
-              <div class="text-xs text-gray-500">{{ s.submittedAt }}</div>
-            </li>
-          </ul>
+      <!-- Picker Modal (GlassModal) -->
+      <GlassModal v-if="modalOpen" :title="t('teacher.aiGrading.picker.title') as string" maxWidth="max-w-5xl" heightVariant="normal" @close="modalOpen=false">
+        <div class="picker-controls flex items-center gap-4 flex-wrap md:flex-nowrap mb-4">
+          <GlassPopoverSelect :label="t('teacher.aiGrading.picker.assignment') || '作业选择'" :options="assignmentOptions" v-model="picker.assignmentId" size="sm" width="clamp(240px, 36vw, 420px)" :truncate-label="false" :placeholder="(t('common.pleaseSelect') || '请选择') + (t('teacher.assignments.title') || '作业')" />
+          <GlassPopoverSelect :label="t('teacher.aiGrading.picker.student') || '学生'" :options="picker.students" v-model="picker.studentId" size="sm" width="clamp(240px, 36vw, 420px)" :truncate-label="false" :placeholder="(t('common.pleaseSelect') || '请选择') + (t('teacher.aiGrading.picker.student') || '学生')" />
         </div>
-      </div>
+
+        <div class="grid grid-cols-1 gap-3" v-if="picker.studentId">
+          <!-- Preview Area -->
+          <div class="card p-3" v-glass="{ strength: 'regular', interactive: true }">
+            <div class="flex items-center justify-between mb-2">
+              <div class="text-sm font-medium">{{ t('teacher.aiGrading.picker.preview') || '提交预览' }}</div>
+              <div class="flex items-center gap-2">
+                <label class="text-xs flex items-center gap-1">
+                  <input type="checkbox" v-model="picker.useText" :disabled="!picker.preview.text" />
+                  <span>{{ t('teacher.aiGrading.picker.useText') || '使用文本内容' }}</span>
+                </label>
+                <Button size="sm" variant="indigo" @click="selectAllFiles" :disabled="!picker.preview.files.length"><PlusIcon class="w-4 h-4 mr-1" />{{ t('teacher.aiGrading.picker.selectAllFiles') || '全选附件' }}</Button>
+                <Button size="sm" variant="danger" @click="clearSelectedFiles" :disabled="!picker.selectedFileIds.length"><XMarkIcon class="w-4 h-4 mr-1" />{{ t('teacher.aiGrading.picker.clearFiles') || '清空选择' }}</Button>
+              </div>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+              <div>
+                <div class="text-xs text-gray-600 dark:text-gray-300 mb-1">{{ t('teacher.aiGrading.picker.text') || '文本内容' }}</div>
+                <div v-if="picker.preview.text" class="bg-white/40 dark:bg-white/5 border border-white/30 dark:border-white/10 rounded p-2 text-xs max-h-40 overflow-auto no-scrollbar whitespace-pre-wrap">
+                  {{ truncate(picker.preview.text, 800) }}
+                </div>
+                <div v-else class="text-xs text-gray-500">{{ t('common.empty') || '无内容' }}</div>
+              </div>
+              <div>
+                <div class="text-xs text-gray-600 dark:text-gray-300 mb-1">{{ t('teacher.aiGrading.picker.attachments') || '附件' }}</div>
+                <ul class="divide-y divide-gray-200 dark:divide-white/10 max-h-40 overflow-auto no-scrollbar">
+                  <li v-for="f in picker.preview.files" :key="f.id" class="py-1 flex items-center justify-between">
+                    <label class="flex items-center gap-2 cursor-pointer text-xs">
+                      <input type="checkbox" :value="Number(f.id)" v-model="picker.selectedFileIds" />
+                      <span :title="f.originalName || f.fileName || f.name">{{ f.originalName || f.fileName || f.name }}</span>
+                    </label>
+                    <span class="text-[10px] text-gray-500">{{ f.size ? (Math.round(f.size/102.4)/10 + ' KB') : '' }}</span>
+                  </li>
+                  <li v-if="!picker.preview.files.length" class="py-2 text-xs text-gray-500">{{ t('common.empty') || '无内容' }}</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+
+          <!-- Action Bar -->
+          <div class="flex items-center justify-end gap-2">
+            <Button size="sm" variant="teal" @click="loadSubmissions"><ArrowPathIcon class="w-4 h-4 mr-1" />{{ t('teacher.aiGrading.picker.reload') || '重新加载' }}</Button>
+            <Button size="sm" variant="primary" @click="addSelected" :disabled="!canAddFromPreview"><PlusIcon class="w-4 h-4 mr-1" />{{ t('teacher.aiGrading.picker.addSelected') }}</Button>
+          </div>
+        </div>
+
+        <div v-else class="text-xs text-gray-500">{{ t('teacher.aiGrading.picker.hint') || '请选择作业与学生以预览提交' }}</div>
+
+        <template #footer>
+          <Button size="sm" variant="secondary" @click="modalOpen=false"><XMarkIcon class="w-4 h-4 mr-1" />{{ t('teacher.aiGrading.picker.close') }}</Button>
+        </template>
+      </GlassModal>
     </div>
   </div>
 </template>
@@ -166,6 +197,7 @@ import { aiApi } from '@/api/ai.api'
 import { fileApi } from '@/api/file.api'
 import GlassPopoverSelect from '@/components/ui/filters/GlassPopoverSelect.vue'
 import GlassTextarea from '@/components/ui/inputs/GlassTextarea.vue'
+import GlassModal from '@/components/ui/GlassModal.vue'
 import { PlayIcon, PlusIcon, InboxArrowDownIcon, XMarkIcon, ArrowPathIcon, TrashIcon, ArrowDownTrayIcon, ClockIcon, ChevronRightIcon } from '@heroicons/vue/24/outline'
 import { useRouter } from 'vue-router'
 import { courseApi } from '@/api/course.api'
@@ -195,6 +227,14 @@ const progressPercent = computed(() => {
 const activeResult = computed(() => files.value[activeIndex.value] && files.value[activeIndex.value].result ? files.value[activeIndex.value] : null)
 const activeItem = computed(() => files.value[activeIndex.value] || null)
 const activeRaw = computed(() => null)
+
+// Picker add button enablement
+const canAddFromPreview = computed(() => {
+  const pv = picker.value.preview
+  const hasText = !!(picker.value.useText && pv && pv.text && String(pv.text).trim())
+  const hasFiles = Array.isArray(picker.value.selectedFileIds) && picker.value.selectedFileIds.length > 0
+  return !!(hasText || hasFiles)
+})
 
 const onFilesSelected = async (selected: File[]) => {
   if (!Array.isArray(selected) || selected.length === 0) return
@@ -295,12 +335,26 @@ async function gradeFiles(items: GradingItem[]) {
 
 // Picker modal logic
 const modalOpen = ref(false)
-function openPicker() { modalOpen.value = true }
+async function openPicker() { 
+  modalOpen.value = true 
+  // 打开时若尚未有作业选项，按上下文加载
+  if (!assignmentOptions.value.length) {
+    await loadAssignmentOptions()
+  }
+}
 
 const showPicker = ref(false) // legacy flag, not used but retained for minimal diff
-const picker = ref({ courseId: '', assignmentId: '', items: [] as any[], selected: [] as any[] })
+const picker = ref({
+  courseId: '',
+  assignmentId: '',
+  studentId: '',
+  submissions: [] as any[],
+  students: [] as Array<{ label: string; value: string; meta?: any }>,
+  preview: { submission: null as any, text: '' as string, files: [] as any[] },
+  useText: false,
+  selectedFileIds: [] as number[]
+})
 // 默认将弹窗选择器的课程与面包屑同步
-watch(courseId, (cid) => { if (cid) picker.value.courseId = String(cid) }, { immediate: true })
 watch(courseId, (cid) => { if (cid) picker.value.courseId = String(cid) }, { immediate: true })
 const loadSubmissions = async () => {
   if (!picker.value.assignmentId) return
@@ -308,17 +362,57 @@ const loadSubmissions = async () => {
     const api = (await import('@/api/submission.api')).submissionApi
     const resp: any = await api.getSubmissionsByAssignment(String(picker.value.assignmentId), { page: 1, size: 200 })
     const items = resp?.data?.items || resp?.data?.list || resp?.items || []
-    picker.value.items = items
-  } catch { picker.value.items = [] }
+    picker.value.submissions = Array.isArray(items) ? items : []
+    // derive students list (unique by studentId)
+    const seen = new Set<string>()
+    const students: Array<{ label: string; value: string; meta?: any }> = []
+    for (const s of picker.value.submissions) {
+      const sid = String(s?.studentId || s?.userId || '')
+      if (!sid || seen.has(sid)) continue
+      seen.add(sid)
+      const name = String(s?.studentName || s?.userName || s?.nickname || s?.name || ('学生#' + sid))
+      students.push({ label: name, value: sid, meta: { count: 1 } })
+    }
+    picker.value.students = students
+  } catch {
+    picker.value.submissions = []
+    picker.value.students = []
+  }
 }
-function selectAll() { picker.value.selected = [...picker.value.items] }
+function selectAll() { /* legacy no-op in new modal */ }
 async function addSelected() {
-  const arr = Array.isArray(picker.value.selected) ? picker.value.selected : []
-  for (const s of arr) {
-    await addSubmissionFiles(s)
+  // Add from current preview selection
+  const pv = picker.value.preview
+  if (!pv || (!picker.value.useText && (!Array.isArray(picker.value.selectedFileIds) || picker.value.selectedFileIds.length === 0))) return
+  // Add text
+  if (picker.value.useText && pv.text) {
+    const tempId = Number(pv?.submission?.id) || Date.now()
+    const textName = `submission_${pv?.submission?.id || tempId}.txt`
+    if (!files.value.some(f => f.text && f.name === textName)) {
+      files.value.push({ id: tempId, name: textName, status: 'pending', text: String(pv.text) } as any)
+    }
+  }
+  // Add files
+  const idToInfo = new Map<number, any>()
+  for (const f of (pv.files || [])) {
+    const fid = Number(f?.id)
+    if (Number.isFinite(fid)) idToInfo.set(fid, f)
+  }
+  for (const fid of picker.value.selectedFileIds) {
+    if (!Number.isFinite(fid)) continue
+    if (files.value.some(ff => Number(ff.id) === Number(fid))) continue
+    const info = idToInfo.get(Number(fid)) || {}
+    const name = String(info?.originalName || info?.fileName || `file_${fid}`)
+    files.value.push({ id: Number(fid), name, status: 'pending' })
   }
   modalOpen.value = false
 }
+
+function selectAllFiles() {
+  const ids = (picker.value.preview.files || []).map((f: any) => Number(f?.id)).filter((n: any) => Number.isFinite(n))
+  picker.value.selectedFileIds = ids
+}
+function clearSelectedFiles() { picker.value.selectedFileIds = [] }
 
 const addSubmissionFiles = async (s: any) => {
   try {
@@ -417,6 +511,7 @@ function goCourseDetail(){ router.push({ name: 'TeacherCourseManagement' }) }
 
 function isJson(v: any) { return v && typeof v === 'object' && !Array.isArray(v) }
 function pretty(v: any) { try { return JSON.stringify(v, null, 2) } catch { return String(v) } }
+function truncate(s: string, max = 800) { const str = String(s || ''); return str.length > max ? str.slice(0, max) + '…' : str }
 function formatBrief(v: any) { if (!v || typeof v !== 'object') return ''; const parts = [] as string[]; for (const [k, val] of Object.entries(v)) parts.push(`${k}: ${val}`); return parts.join(', ') }
 
 // 兼容不同 JSON 结构的 overall 提取
@@ -467,7 +562,7 @@ function renderCriterion(block: any) {
       const bar = typeof score === 'number' ? `<div class=\"h-2 w-40 rounded-md overflow-hidden border border-gray-300/70 dark:border-white/10 bg-gray-200/60 dark:bg-white/10 shadow-inner\"><div class=\"h-full bg-gradient-to-r from-sky-400 to-blue-500\" style=\"width:${score*20}%\"></div></div>` : ''
       const evid = ev
         .filter((e: any) => (e && (e.quote || e.reasoning || e.conclusion)))
-        .map((e: any) => `<li class="mb-1"><div class="text-xs text-gray-600 dark:text-gray-300">${e.quote ? '“'+escapeHtml(e.quote)+'”' : ''}</div><div class="text-xs">${escapeHtml(e.reasoning || '')}</div>${e.conclusion?`<div class=\"text-xs italic text-gray-500\">${escapeHtml(e.conclusion)}</div>`:''}</li>`) 
+        .map((e: any) => `<li class="mb-1"><div class="text-xs text-gray-600 dark:text-gray-300">${e.quote ? '"'+escapeHtml(e.quote)+'"' : ''}</div><div class="text-xs">${escapeHtml(e.reasoning || '')}</div>${e.conclusion?`<div class=\"text-xs italic text-gray-500\">${escapeHtml(e.conclusion)}</div>`:''}</li>`) 
         .join('')
       const sugg = sug.map((s: any) => `<li class="mb-1 text-xs">${escapeHtml(String(s))}</li>`).join('')
       sections.push(`<div class="space-y-2"><div class="text-sm font-medium">${escapeHtml(String(k))} ${score!=null?`(${score}/5)`:''}</div>${bar}<div><div class="text-xs font-semibold mt-2">Evidence</div><ul>${evid}</ul></div><div><div class="text-xs font-semibold mt-2">Suggestions</div><ul>${sugg}</ul></div></div>`)
@@ -501,12 +596,34 @@ onMounted(async () => {
         courseTitle.value = String(one?.data?.title || one?.title || '')
       } catch {}
     }
-    // 保持原有课程列表加载逻辑
-    const courseApiDynamic = (await import('@/api/course.api')).courseApi
-    // 教师端应过滤只显示当前教师课程，若后端需要 teacherId 则在此补传
-    const coursesResp: any = await courseApiDynamic.getCourses({ page: 1, size: 200 })
-    const courses = coursesResp?.data?.items || coursesResp?.data?.list || []
-    courseOptions.value = courses.map((c: any) => ({ label: c.title || c.name || `课程#${c.id}` , value: String(c.id) }))
+    // 不再在弹窗中显示课程选择器，但保留 courseOptions 以供面包屑标题回填（如无则跳过）
+    try {
+      const courseApiDynamic = (await import('@/api/course.api')).courseApi
+      const coursesResp: any = await courseApiDynamic.getCourses({ page: 1, size: 200 })
+      const courses = coursesResp?.data?.items || coursesResp?.data?.list || []
+      courseOptions.value = courses.map((c: any) => ({ label: c.title || c.name || `课程#${c.id}` , value: String(c.id) }))
+    } catch {}
+
+    // 预设 assignmentId / studentId / openPicker（支持从作业管理页跳转时预选）
+    const preAssignmentId = q?.assignmentId ? String(q.assignmentId) : ''
+    const preStudentId = q?.studentId ? String(q.studentId) : ''
+    const preOpen = String(q?.openPicker || '').toLowerCase()
+    const shouldOpenPicker = preOpen === '1' || preOpen === 'true'
+
+    // 进入时加载当前课程的作业列表
+    await loadAssignmentOptions()
+
+    if (preAssignmentId) {
+      picker.value.assignmentId = preAssignmentId
+      // 直接加载该作业的提交列表
+      await loadSubmissions()
+      if (preStudentId) {
+        picker.value.studentId = preStudentId
+      }
+    }
+    if (shouldOpenPicker) {
+      modalOpen.value = true
+    }
   } catch {}
 })
 
@@ -524,15 +641,67 @@ watch([courseId, courseOptions], async () => {
   }
 })
 
-watch(() => picker.value.courseId, async (cid) => {
+async function loadAssignmentOptions() {
   assignmentOptions.value = []
   picker.value.assignmentId = ''
-  if (!cid) return
-  const assignmentApi = (await import('@/api/assignment.api')).assignmentApi
   try {
-    const resp: any = await assignmentApi.getAssignmentsByCourse(String(cid), { page: 1, size: 200 })
-    const items = resp?.data?.items || resp?.data?.list || []
-    assignmentOptions.value = items.map((a: any) => ({ label: a.title || a.name || `作业#${a.id}`, value: String(a.id) }))
+    const { assignmentApi } = await import('@/api/assignment.api')
+    if (courseId.value) {
+      const resp: any = await assignmentApi.getAssignmentsByCourse(String(courseId.value), { page: 1, size: 200 })
+      const items = resp?.items || resp?.data?.items || resp?.data?.list || []
+      assignmentOptions.value = items.map((a: any) => ({ label: (a?.title || a?.name || `作业#${a?.id}`), value: String(a?.id) }))
+    } else {
+      // 兜底：按教师获取全部作业（后端应按当前教师过滤）
+      const resp: any = await assignmentApi.getAssignments({ page: 1, size: 200 })
+      const items = resp?.items || resp?.data?.items || resp?.data?.list || []
+      assignmentOptions.value = items.map((a: any) => ({ label: ((a?.courseName || a?.courseTitle) ? `${a.courseName || a.courseTitle} · ` : '') + (a?.title || a?.name || `作业#${a?.id}`), value: String(a?.id) }))
+    }
+  } catch {}
+}
+
+// 当页面级 courseId 变化时，刷新作业下拉
+watch(courseId, async () => { await loadAssignmentOptions() })
+
+// When assignment changes, reload submissions and reset student/preview
+watch(() => picker.value.assignmentId, async (aid) => {
+  picker.value.studentId = ''
+  picker.value.students = []
+  picker.value.submissions = []
+  picker.value.preview = { submission: null, text: '', files: [] }
+  picker.value.useText = false
+  picker.value.selectedFileIds = []
+  if (aid) await loadSubmissions()
+})
+
+// When student changes, prepare preview (text + related files)
+watch(() => picker.value.studentId, async (sid) => {
+  picker.value.preview = { submission: null, text: '', files: [] }
+  picker.value.useText = false
+  picker.value.selectedFileIds = []
+  if (!sid) return
+  try {
+    // pick latest submission by submittedAt if multiple
+    const subs = picker.value.submissions.filter(s => String(s?.studentId || s?.userId || '') === String(sid))
+    if (!subs.length) return
+    const latest = subs.sort((a: any, b: any) => new Date(String(b?.submittedAt || b?.createdAt || 0)).getTime() - new Date(String(a?.submittedAt || a?.createdAt || 0)).getTime())[0]
+    picker.value.preview.submission = latest
+    picker.value.preview.text = String(latest?.content || '').trim()
+    try {
+      const res: any = await fileApi.getRelatedFiles('submission', String(latest?.id))
+      const list: any[] = Array.isArray(res?.data) ? res.data : (Array.isArray(res) ? res : [])
+      picker.value.preview.files = list
+      // default selection strategy
+      if (list.length > 0) {
+        picker.value.selectedFileIds = list.map(f => Number(f?.id)).filter((n: any) => Number.isFinite(n))
+        picker.value.useText = false
+      } else if (picker.value.preview.text) {
+        picker.value.useText = true
+      }
+    } catch {
+      // no files, fallback to text only if exists
+      picker.value.preview.files = []
+      if (picker.value.preview.text) picker.value.useText = true
+    }
   } catch {}
 })
 
@@ -675,7 +844,7 @@ function normalizeFromEvaluationObject(evaluation: any) {
     focus_flow: toSec(attitude['2C. Task Focus / Flow'] || attitude['2C'])
   }
   out.ability_growth = {
-    blooms_level: toSec(ability['3A. Bloom’s Taxonomy Progression'] || ability['3A']),
+    blooms_level: toSec(ability["3A. Bloom's Taxonomy Progression"] || ability['3A']),
     metacognition: toSec(ability['3B. Metacognition (Plan–Monitor–Revise)'] || ability['3B']),
     transfer: toSec(ability['3C. Knowledge Transfer'] || ability['3C'])
   }
@@ -866,7 +1035,7 @@ function normalizeFromEvaluationLoose(evaluation: any) {
     focus_flow: toSec(attitude && (attitude['2C. Task Focus / Flow'] || attitude['2C']))
   }
   out.ability_growth = {
-    blooms_level: toSec(ability && (ability['3A. Bloom’s Taxonomy Progression'] || ability['3A'])),
+    blooms_level: toSec(ability && (ability["3A. Bloom's Taxonomy Progression"] || ability['3A'])),
     metacognition: toSec(ability && (ability['3B. Metacognition (Plan–Monitor–Revise)'] || ability['3B'])),
     transfer: toSec(ability && (ability['3C. Knowledge Transfer'] || ability['3C']))
   }
@@ -1192,5 +1361,15 @@ function safeJsonParse(raw: string): any {
   animation: shimmer 1.2s ease-in-out infinite;
 }
 </style>
+
+<style scoped>
+/* 让弹窗顶部的选择器标题保持单行不换行，整体自适应换行 */
+.picker-controls :deep(span[class*='text-xs']) { white-space: nowrap; }
+</style>
+
+
+
+
+ 
 
 

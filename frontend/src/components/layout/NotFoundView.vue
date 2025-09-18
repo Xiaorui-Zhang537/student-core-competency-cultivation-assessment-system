@@ -34,14 +34,7 @@
           
           <div class="space-y-4">
             <div class="relative">
-              <magnifying-glass-icon class="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
-              <input
-                v-model="searchQuery"
-                type="text"
-                placeholder="搜索课程、作业、学生..."
-                class="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                @keyup.enter="handleSearch"
-              />
+              <GlassSearchInput v-model="searchQuery" placeholder="搜索课程、作业、学生..." size="md" @keyup.enter="handleSearch" />
             </div>
             <button variant="primary" class="w-full" @click="handleSearch" :disabled="!searchQuery.trim()">
               <magnifying-glass-icon class="w-4 h-4 mr-2" />

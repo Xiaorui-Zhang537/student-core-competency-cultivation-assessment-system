@@ -1,0 +1,37 @@
+@layer components {
+  /* 通用药丸形态基类 */
+  .ui-pill { @apply rounded-full; }
+
+  /* 输入/选择触发器的统一药丸样式 */
+  .ui-pill--input {
+    @apply input input--glass glass-regular glass-interactive rounded-full border placeholder-muted;
+    @apply w-full;
+    /* 边框在暗黑模式下对齐 */
+    border-color: theme('colors.white / 0.3');
+  }
+
+  .dark .ui-pill--input {
+    border-color: color-mix(in oklab, white 10%, transparent);
+  }
+
+  .ui-pill--select { @apply ui-pill--input text-left; }
+
+  /* 统一尺寸与内边距（h+字体+左右留白） */
+  .ui-pill--sm { @apply h-9 text-sm; }
+  .ui-pill--md { @apply h-10; }
+  .ui-pill--pl { @apply pl-4; }
+  .ui-pill--pr-select { @apply pr-8; }
+
+  /* 筛选条容器（药丸） */
+  .ui-filter-bar { @apply filter-container rounded-full; }
+
+  /* 下拉弹层统一（玻璃+圆角） */
+  .ui-popover-menu { @apply popover-glass glass-thin glass-interactive border shadow-md no-scrollbar rounded-2xl; }
+
+  /* 选中值 tag 样式（多选展示用） */
+  .ui-chip {
+    @apply px-2 py-0.5 rounded-full text-xs border cursor-pointer transition-colors;
+    @apply bg-white/30 dark:bg-white/10 border-white/40 dark:border-white/10 hover:bg-white/40 dark:hover:bg-white/20;
+  }
+}
+

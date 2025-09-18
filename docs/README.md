@@ -53,6 +53,18 @@
 
 ## 变更记录（Changelog）
 
+### 教师端 - AI 批改弹窗改造与上传忽略策略（2025-09-17）
+- 弹窗交互重构（`features/teacher/views/TeacherAIGradingView.vue`）
+  - 选择器：移除课程选择，基于页面 `courseId` 自动加载当前课程的作业；新增“作业选择”“学生”两个选择器，水平排列且标题不换行，选择器自适应宽度（clamp）。
+  - 预览：选中学生后展示提交文本与附件列表；支持“使用文本内容”勾选、附件多选、全选附件、清空选择；“添加已选”将勾选内容加入批改队列。
+  - 路由参数支持：`courseId`、`assignmentId`、`studentId`、`openPicker`，可从“作业/提交”页带参跳转并自动打开弹窗与预选。
+  - 组件与样式：`GlassPopoverSelect` 新增 `truncateLabel` 属性（默认 true），批改弹窗设置为 `false` 以避免“...” 截断；按钮统一加入图标与主题色背景（主色/靛蓝/蓝绿/红色等）。
+- 接口保持不变（前端复用 `assignmentApi.getAssignments[ByCourse]`、`submissionApi.getSubmissionsByAssignment`、`fileApi.getRelatedFiles`、`aiGradingApi.gradeFiles/gradeEssay`）。
+- i18n：新增/补齐键
+  - 批改弹窗：`teacher.aiGrading.picker.{assignment,student,preview,useText,attachments,selectAllFiles,clearFiles,text,reload}`
+  - 学生管理入课密钥：`teacher.students.enrollKey.{title,require,keyLabel,placeholder,tip,save,saved,failed}` 与 `teacher.students.actions.setEnrollKey`
+- 版本控制与上传策略：根 `.gitignore` 合并冲突已修复，并新增忽略上传目录的规则：`/upload/`, `/uploads/`, `backend/uploads/`（避免将实际上传的文件纳入版本控制）。
+
 ### 学生端 - 我的课程/课程详情/节次详情 + 入课密钥与播放控制（2025-09-11）
 - 新功能：
   - 教师端“学生管理”支持设置课程入课密钥（是否需要密钥、密钥哈希保存）

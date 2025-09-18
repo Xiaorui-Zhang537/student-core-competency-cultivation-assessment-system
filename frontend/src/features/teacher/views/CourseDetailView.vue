@@ -44,7 +44,10 @@
       <Card :hoverable="true" padding="md" class="relative overflow-hidden">
         <div class="flex items-center justify-between mb-4">
           <h2 class="text-xl font-semibold">{{ t('teacher.courseDetail.sections.lessons') || '课程节次' }}</h2>
-          <Button size="sm" variant="outline" @click="reloadLessons">{{ t('teacher.courseDetail.actions.reloadLessons') || '刷新' }}</Button>
+          <Button size="sm" variant="outline" @click="reloadLessons">
+            <ArrowPathIcon class="w-4 h-4 mr-1" />
+            {{ t('teacher.courseDetail.actions.reloadLessons') || '刷新' }}
+          </Button>
         </div>
         <!-- Chapters Toolbar -->
         <div class="p-4 rounded border relative overflow-hidden" v-glass="{ strength: 'regular', interactive: true }" :class="['glass-regular glass-interactive','mb-4']">
@@ -59,8 +62,10 @@
             </div>
           </div>
           <div class="mt-3 flex items-center gap-2">
-            <Button size="sm" variant="primary" @click="createChapter">{{ t('teacher.courseDetail.actions.addChapter') }}</Button>
-            <Button size="sm" variant="outline" @click="reloadChapters">{{ t('teacher.courseDetail.actions.reloadChapters') }}</Button>
+            <Button size="sm" variant="primary" @click="createChapter">
+              <PlusIcon class="w-4 h-4 mr-1" />
+              {{ t('teacher.courseDetail.actions.addChapter') }}
+            </Button>
           </div>
           <div class="mt-4">
             <div class="text-sm mb-2">{{ t('teacher.courseDetail.sections.chapterList') }}</div>
@@ -93,13 +98,19 @@
               </div>
             </div>
             <div class="mt-3">
-              <Button size="sm" variant="primary" @click="createLesson">{{ t('teacher.courseDetail.actions.addLesson') }}</Button>
+              <Button size="sm" variant="primary" @click="createLesson">
+                <PlusIcon class="w-4 h-4 mr-1" />
+                {{ t('teacher.courseDetail.actions.addLesson') }}
+              </Button>
             </div>
           </div>
           <div v-for="l in lessons" :key="l.id" class="p-4 rounded border border-gray-300 dark:border-gray-600 relative overflow-hidden group" draggable="true" @dragstart="onDragStart(l)" @dragover.prevent @drop="onDrop(l)">
             <div class="flex items-center gap-3">
               <div class="font-medium flex-1 truncate">{{ l.title }}</div>
-              <Button size="xs" variant="danger" @click="deleteLessonRow(l)">{{ t('teacher.courseDetail.actions.deleteLesson') || '删除' }}</Button>
+              <Button size="xs" variant="danger" @click="deleteLessonRow(l)">
+                <TrashIcon class="w-4 h-4 mr-1" />
+                {{ t('teacher.courseDetail.actions.deleteLesson') || '删除' }}
+              </Button>
               <div class="w-full md:w-1/2 flex items-center justify-end gap-3">
                 <div class="flex items-center gap-2 whitespace-nowrap">
                   <label class="text-sm whitespace-nowrap">{{ t('teacher.courseDetail.sections.chapterSelect') }}</label>
@@ -137,6 +148,9 @@
                       :placeholder="t('teacher.courseDetail.actions.selectMaterialShort') || '选资料'"
                     />
                   </div>
+                  <Button size="sm" variant="outline" class="shrink-0" @click="openMaterialPicker(l)">
+                    {{ t('teacher.courseDetail.actions.selectMaterialShort') }}
+                  </Button>
                 </div>
               </div>
               <div>
@@ -159,15 +173,15 @@
                   <GlassTextarea class="w-full" :rows="2" v-model="l._content" :placeholder="t('teacher.courseDetail.sections.lessonIntroPh') as string" @update:modelValue="() => onContentInput(l)" />
                 </div>
                 <!-- 播放设置：独立一行，右对齐，位于“绑定作业”下面且资料行之后 -->
-                <div class="mt-3 flex items-center gap-4 justify-end">
-                  <label class="inline-flex items-center gap-2 text-sm">
-                    <input type="checkbox" v-model="l._allowScrubbing" @change="() => schedulePlaybackSave(l)" />
-                    {{ t('teacher.courseDetail.sections.allowScrubbing') || '允许拖动进度条' }}
-                  </label>
-                  <label class="inline-flex items-center gap-2 text-sm">
-                    <input type="checkbox" v-model="l._allowSpeedChange" @change="() => schedulePlaybackSave(l)" />
-                    {{ t('teacher.courseDetail.sections.allowSpeed') || '允许倍速' }}
-                  </label>
+                <div class="mt-3 flex items-center gap-6 justify-end">
+                  <div class="inline-flex items-center gap-2 text-sm">
+                    <span>{{ t('teacher.courseDetail.sections.allowScrubbing') || '允许拖动进度条' }}</span>
+                    <GlassSwitch v-model="(l._allowScrubbing as any)" size="sm" @update:modelValue="() => schedulePlaybackSave(l)" />
+                  </div>
+                  <div class="inline-flex items-center gap-2 text-sm">
+                    <span>{{ t('teacher.courseDetail.sections.allowSpeed') || '允许倍速' }}</span>
+                    <GlassSwitch v-model="(l._allowSpeedChange as any)" size="sm" @update:modelValue="() => schedulePlaybackSave(l)" />
+                  </div>
                 </div>
               </div>
             </div>
@@ -266,88 +280,74 @@
     </div>
   </div>
 
-  <!-- Video Picker Modal -->
-  <teleport to="body">
-    <div v-if="videoPickerVisible" class="fixed inset-0 z-[1100] flex items-center justify-center">
-      <div class="absolute inset-0 bg-black/40" @click="videoPickerVisible = false"></div>
-      <div
-        class="relative z-[1101] w-[44rem] max-w-[90vw] max-h-[80vh] rounded-xl overflow-hidden"
-        v-glass="{ strength: 'regular', interactive: true }"
-      >
-        <div class="px-4 py-3 border-b border-white/20 flex items-center justify-between">
-          <h3 class="text-lg font-semibold">{{ t('teacher.courseDetail.actions.selectVideoTitle') }}</h3>
-          <button class="text-sm text-gray-500 hover:text-gray-700" @click="videoPickerVisible = false">×</button>
-        </div>
-        <div class="p-4">
-          <GlassSearchInput v-model="videoQuery" :placeholder="t('teacher.courseDetail.sections.searchVideo') as string" size="sm" />
-          <ul class="divide-y divide-gray-200 overflow-y-auto" style="max-height: 55vh;">
-            <li v-for="f in paginatedVideos" :key="f.id" class="py-2 flex items-center justify-between">
-              <div class="flex items-center min-w-0 mr-3 gap-2">
-                <component :is="fileIcon(f)" class="w-5 h-5 text-gray-500" />
-                <div class="min-w-0">
-                  <div class="text-sm truncate">{{ f.originalName || f.fileName || t('teacher.courseDetail.sections.file', { id: f.id }) }}</div>
-                  <div class="text-xs text-gray-500">{{ t('teacher.courseDetail.sections.size', { size: formatSize(f.fileSize) }) }}</div>
-                </div>
-              </div>
-              <div class="flex items-center gap-2">
-                <Button size="sm" variant="primary" class="whitespace-nowrap" @click="chooseVideo(f)">{{ t('teacher.courseDetail.actions.useThisVideo') }}</Button>
-                <Button size="sm" variant="outline" as="a" :href="`${baseURL}/files/${f.id}/download`">{{ t('teacher.courseDetail.sections.download') }}</Button>
-              </div>
-            </li>
-            <li v-if="!videos.length" class="py-6 text-center text-sm text-gray-500">{{ t('teacher.courseDetail.sections.noVideos') }}</li>
-          </ul>
-          <div v-if="videos.length > pageSize" class="mt-3 flex items-center justify-end gap-2">
-            <Button size="sm" variant="outline" :disabled="videosPage===1" @click="videosPage--">{{ t('teacher.courseDetail.sections.prev') }}</Button>
-            <span class="text-xs text-gray-500">{{ videosPage }} / {{ videosTotalPages }}</span>
-            <Button size="sm" variant="outline" :disabled="videosPage===videosTotalPages" @click="videosPage++">{{ t('teacher.courseDetail.sections.next') }}</Button>
+  <!-- Video Picker Modal (GlassModal) -->
+  <GlassModal v-if="videoPickerVisible" :title="t('teacher.courseDetail.actions.selectVideoTitle') as string" maxWidth="max-w-3xl" heightVariant="compact" @close="videoPickerVisible = false">
+    <div>
+      <GlassSearchInput v-model="videoQuery" :placeholder="t('teacher.courseDetail.sections.searchVideo') as string" size="sm" />
+      <ul class="divide-y divide-gray-200 overflow-y-auto" style="max-height: 55vh;">
+        <li v-for="f in paginatedVideos" :key="f.id" class="py-2 flex items-center justify-between">
+          <div class="flex items-center min-w-0 mr-3 gap-2">
+            <component :is="fileIcon(f)" class="w-5 h-5 text-gray-500" />
+            <div class="min-w-0">
+              <div class="text-sm truncate">{{ f.originalName || f.fileName || t('teacher.courseDetail.sections.file', { id: f.id }) }}</div>
+              <div class="text-xs text-gray-500">{{ t('teacher.courseDetail.sections.size', { size: formatSize(f.fileSize) }) }}</div>
+            </div>
           </div>
-        </div>
-        <div class="px-4 py-3 border-t border-white/10 flex items-center justify-end">
-          <Button size="sm" variant="outline" @click="videoPickerVisible = false">{{ t('teacher.courseDetail.actions.close') }}</Button>
-        </div>
+          <div class="flex items-center gap-2">
+            <Button size="sm" variant="primary" class="whitespace-nowrap" @click="chooseVideo(f)">{{ t('teacher.courseDetail.actions.useThisVideo') }}</Button>
+            <Button size="sm" variant="outline" as="a" :href="`${baseURL}/files/${f.id}/download`">{{ t('teacher.courseDetail.sections.download') }}</Button>
+          </div>
+        </li>
+        <li v-if="!videos.length" class="py-6 text-center text-sm text-gray-500">{{ t('teacher.courseDetail.sections.noVideos') }}</li>
+      </ul>
+      <div v-if="videos.length > pageSize" class="mt-3 flex items-center justify-end gap-2">
+        <Button size="sm" variant="outline" :disabled="videosPage===1" @click="videosPage--">{{ t('teacher.courseDetail.sections.prev') }}</Button>
+        <span class="text-xs text-gray-500">{{ videosPage }} / {{ videosTotalPages }}</span>
+        <Button size="sm" variant="outline" :disabled="videosPage===videosTotalPages" @click="videosPage++">{{ t('teacher.courseDetail.sections.next') }}</Button>
       </div>
     </div>
-  </teleport>
+    <template #footer>
+      <Button size="sm" variant="outline" @click="videoPickerVisible = false">{{ t('teacher.courseDetail.actions.close') }}</Button>
+    </template>
+  </GlassModal>
   
-  <!-- Material Picker Modal -->
-  <teleport to="body">
-    <div v-if="materialPickerVisible" class="fixed inset-0 z-[1100] flex items-center justify-center">
-      <div class="absolute inset-0 bg-black/40" @click="materialPickerVisible = false"></div>
-      <div class="relative z-[1101] w-[44rem] max-w-[90vw] max-h-[80vh] rounded-xl overflow-hidden" v-glass>
-        <div class="px-4 py-3 border-b border-white/20 flex items-center justify-between">
-          <h3 class="text-lg font-semibold">{{ t('teacher.courseDetail.sections.materials') }}</h3>
-          <button class="text-sm text-gray-500 hover:text-gray-700" @click="materialPickerVisible = false">×</button>
-        </div>
-        <div class="p-4">
-          <GlassSearchInput v-model="materialQuery" :placeholder="t('teacher.courseDetail.sections.searchMaterial') as string" size="sm" />
-          <ul class="divide-y divide-gray-200 overflow-y-auto" style="max-height: 55vh;">
-            <li v-for="f in paginatedMaterials" :key="f.id" class="py-2 flex items-center justify-between">
-              <div class="flex items-center min-w-0 mr-3 gap-2">
-                <component :is="fileIcon(f)" class="w-5 h-5 text-gray-500" />
-                <div class="min-w-0">
-                  <div class="text-sm truncate">{{ f.originalName || f.fileName || t('teacher.courseDetail.sections.file', { id: f.id }) }}</div>
-                  <div class="text-xs text-gray-500">{{ t('teacher.courseDetail.sections.size', { size: formatSize(f.fileSize) }) }}</div>
-                </div>
-              </div>
-              <div class="flex items-center gap-2">
-                <Button size="sm" variant="primary" class="whitespace-nowrap shrink-0 min-w-max" @click="togglePickMaterial(f)">{{ t('teacher.courseDetail.actions.selectMaterialShort') }}</Button>
-                <Button size="sm" variant="outline" as="a" :href="`${baseURL}/files/${f.id}/download`">{{ t('teacher.courseDetail.sections.download') }}</Button>
-              </div>
-            </li>
-            <li v-if="!materials.length" class="py-6 text-center text-sm text-gray-500">{{ t('teacher.courseDetail.sections.noMaterials') }}</li>
-          </ul>
-          <div v-if="materials.length > pageSize" class="mt-3 flex items-center justify-end gap-2">
-            <Button size="sm" variant="outline" :disabled="materialsPage===1" @click="materialsPage--">{{ t('teacher.courseDetail.sections.prev') }}</Button>
-            <span class="text-xs text-gray-500">{{ materialsPage }} / {{ materialsTotalPages }}</span>
-            <Button size="sm" variant="outline" :disabled="materialsPage===materialsTotalPages" @click="materialsPage++">{{ t('teacher.courseDetail.sections.next') }}</Button>
+  <!-- Material Picker Modal (GlassModal) -->
+  <GlassModal v-if="materialPickerVisible" :title="t('teacher.courseDetail.sections.materials') as string" maxWidth="max-w-3xl" heightVariant="compact" @close="materialPickerVisible = false">
+    <div>
+      <GlassSearchInput v-model="materialQuery" :placeholder="t('teacher.courseDetail.sections.searchMaterial') as string" size="sm" />
+      <ul class="divide-y divide-gray-200 overflow-y-auto" style="max-height: 55vh;">
+        <li v-for="f in paginatedMaterials" :key="f.id" class="py-2 flex items-center justify-between">
+          <div class="flex items-center min-w-0 mr-3 gap-2">
+            <component :is="fileIcon(f)" class="w-5 h-5 text-gray-500" />
+            <div class="min-w-0">
+              <div class="text-sm truncate">{{ f.originalName || f.fileName || t('teacher.courseDetail.sections.file', { id: f.id }) }}</div>
+              <div class="text-xs text-gray-500">{{ t('teacher.courseDetail.sections.size', { size: formatSize(f.fileSize) }) }}</div>
+            </div>
           </div>
-        </div>
-        <div class="px-4 py-3 border-t border-white/10 flex items-center justify-end">
-          <Button size="sm" variant="outline" @click="materialPickerVisible = false">{{ t('teacher.courseDetail.actions.close') }}</Button>
-        </div>
+          <div class="flex items-center gap-2">
+            <Button
+              size="sm"
+              :variant="isMaterialSelectedForTarget(f) ? 'success' : 'primary'"
+              class="whitespace-nowrap shrink-0 min-w-max"
+              @click="chooseMaterial(f)"
+            >
+              {{ t('teacher.courseDetail.actions.selectMaterialShort') }}
+            </Button>
+            <Button size="sm" variant="outline" as="a" :href="`${baseURL}/files/${f.id}/download`">{{ t('teacher.courseDetail.sections.download') }}</Button>
+          </div>
+        </li>
+        <li v-if="!materials.length" class="py-6 text-center text-sm text-gray-500">{{ t('teacher.courseDetail.sections.noMaterials') }}</li>
+      </ul>
+      <div v-if="materials.length > pageSize" class="mt-3 flex items-center justify-end gap-2">
+        <Button size="sm" variant="outline" :disabled="materialsPage===1" @click="materialsPage--">{{ t('teacher.courseDetail.sections.prev') }}</Button>
+        <span class="text-xs text-gray-500">{{ materialsPage }} / {{ materialsTotalPages }}</span>
+        <Button size="sm" variant="outline" :disabled="materialsPage===materialsTotalPages" @click="materialsPage++">{{ t('teacher.courseDetail.sections.next') }}</Button>
       </div>
     </div>
-  </teleport>
+    <template #footer>
+      <Button size="sm" variant="outline" @click="materialPickerVisible = false">{{ t('teacher.courseDetail.actions.close') }}</Button>
+    </template>
+  </GlassModal>
 </template>
 
 <script setup lang="ts">
@@ -362,7 +362,7 @@ import { fileApi } from '@/api/file.api';
 import Button from '@/components/ui/Button.vue'
 import Card from '@/components/ui/Card.vue'
 import { chapterApi } from '@/api/chapter.api'
-import { DocumentIcon, PhotoIcon, FilmIcon, ArchiveBoxIcon, ChevronRightIcon, UserGroupIcon, ClipboardDocumentListIcon, PresentationChartBarIcon } from '@heroicons/vue/24/outline'
+import { DocumentIcon, PhotoIcon, FilmIcon, ArchiveBoxIcon, ChevronRightIcon, UserGroupIcon, ClipboardDocumentListIcon, PresentationChartBarIcon, ArrowPathIcon, PlusIcon, TrashIcon } from '@heroicons/vue/24/outline'
 // @ts-ignore shim for vue-i18n types in this project
 import { useI18n } from 'vue-i18n'
 import GlassPopoverSelect from '@/components/ui/filters/GlassPopoverSelect.vue'
@@ -371,6 +371,8 @@ import PageHeader from '@/components/ui/PageHeader.vue'
 import GlassInput from '@/components/ui/inputs/GlassInput.vue'
 import GlassTextarea from '@/components/ui/inputs/GlassTextarea.vue'
 import GlassSearchInput from '@/components/ui/inputs/GlassSearchInput.vue'
+import GlassSwitch from '@/components/ui/inputs/GlassSwitch.vue'
+import GlassModal from '@/components/ui/GlassModal.vue'
 
 const courseStore = useCourseStore();
 const route = useRoute();
@@ -592,37 +594,70 @@ const saveMaterials = async (l: any) => {
   const key = String(l.id)
   if (!(saveMaterials as any)._seqMap) { (saveMaterials as any)._seqMap = new Map<string, number>() }
   const seqMap: Map<string, number> = (saveMaterials as any)._seqMap
-  const next = (seqMap.get(key) || 0) + 1
-  seqMap.set(key, next)
+  const mySeq = (seqMap.get(key) || 0) + 1
+  seqMap.set(key, mySeq)
 
   const ids = Array.isArray(l._materialFileIds) ? l._materialFileIds : []
   // 去重并过滤非法值
-  const uniq = Array.from(new Set(ids.map((x:any)=>Number(x)).filter((x:any)=>!isNaN(x) && x>0)))
+  const uniq: number[] = Array.from(new Set(ids.map((x:any)=>Number(x)).filter((x:any)=>!isNaN(x) && x>0)))
+
+  // 乐观更新：先本地生效，避免“选中后立刻消失”的错觉
+  l._materialFileIds = [...uniq]
   try {
-    await lessonApi.updateLessonContent(String(l.id), { materialFileIds: uniq as any });
+    const mapped: any[] = []
+    for (const id of uniq) {
+      const found = materials.value.find((m:any)=> String(m.id)===String(id))
+      if (found) mapped.push(found)
+    }
+    l._materialFiles = mapped
+  } catch { /* ignore */ }
+
+  // 提交后端
+  try {
+    await lessonApi.updateLessonContent(String(l.id), { materialFileIds: uniq as any })
   } catch (e) {
-    // 保存失败则不覆盖本地已选，提示用户
     console.error('保存资料失败', e)
     return
   }
-  // 以服务端为准，保存后立即读取一次，确保删除/新增都已落库
-  try {
-    const files: any = await lessonApi.getLessonMaterials(String(l.id))
-    const list = (files?.data || files || []) as any[]
-    // 若期间有新的提交发生，丢弃旧响应，避免“闪一下”被回滚
-    if (seqMap.get(key) !== next) return
-    l._materialFiles = list
-    l._materialFileIds = list.map((f:any)=> Number(f.id)).filter((v:any)=> !isNaN(v))
-  } catch {
-    // 回退：若读取失败，至少按本地选择即时更新名称展示
+
+  // 读取并合并（带重试），避免后端写入与读取存在短暂延迟导致“回滚”
+  const sleep = (ms:number) => new Promise(res => setTimeout(res, ms))
+  const maxAttempts = 3
+  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
     try {
-      const mapped: any[] = []
-      for (const id of uniq as number[]) {
-        const found = materials.value.find((m:any)=> String(m.id)===String(id))
-        if (found) mapped.push(found)
+      const files: any = await lessonApi.getLessonMaterials(String(l.id))
+      if (seqMap.get(key) !== mySeq) return // 有新提交产生，丢弃旧响应
+      const list = (files?.data || files || []) as any[]
+      const fetchedIds: number[] = list.map((f: any) => Number(f.id)).filter((v: any) => !isNaN(v))
+      const coversAll = uniq.every(id => fetchedIds.includes(id))
+      if (coversAll || attempt === maxAttempts) {
+        const unionIds = Array.from(new Set([...fetchedIds, ...uniq]))
+        l._materialFileIds = unionIds
+        const mapById = new Map<string, any>()
+        for (const it of list) mapById.set(String(it.id), it)
+        for (const id of unionIds) {
+          const k = String(id)
+          if (!mapById.has(k)) {
+            const found = materials.value.find((m:any)=> String(m.id)===k)
+            if (found) mapById.set(k, found)
+          }
+        }
+        l._materialFiles = unionIds.map(id => mapById.get(String(id))).filter(Boolean)
+        break
       }
-      l._materialFiles = mapped
-    } catch { l._materialFiles = [] }
+      await sleep(220)
+    } catch {
+      if (attempt === maxAttempts) {
+        const mapped: any[] = []
+        for (const id of uniq) {
+          const found = materials.value.find((m:any)=> String(m.id)===String(id))
+          if (found) mapped.push(found)
+        }
+        l._materialFiles = mapped
+      } else {
+        await sleep(220)
+      }
+    }
   }
 };
 
@@ -773,16 +808,21 @@ const chooseVideo = (file: any) => {
   saveVideoUrl(videoPickerFor.value);
 };
 const openMaterialPicker = (l: any) => { materialPickerFor.value = l; materialPickerVisible.value = true; };
-const togglePickMaterial = (file: any) => {
+const isMaterialSelectedForTarget = (file: any): boolean => {
+  const target = materialPickerFor.value
+  if (!target || !Array.isArray(target._materialFileIds)) return false
+  const id = Number(file.id)
+  return target._materialFileIds.includes(id)
+}
+const chooseMaterial = (file: any) => {
   const target = materialPickerFor.value
   if (!target) return
   if (!Array.isArray(target._materialFileIds)) target._materialFileIds = []
   const id = Number(file.id)
-  const i = target._materialFileIds.indexOf(id)
-  if (i >= 0) target._materialFileIds.splice(i, 1)
-  else target._materialFileIds.push(id)
-  // auto save materials immediately (no heavy payload)
+  if (!target._materialFileIds.includes(id)) target._materialFileIds.push(id)
+  // 立刻保存并关闭选择器
   saveMaterials(target)
+  materialPickerVisible.value = false
 };
 
 // helpers

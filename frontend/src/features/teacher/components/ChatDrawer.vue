@@ -1,10 +1,10 @@
 <template>
   <teleport to="body">
   <div v-if="open" class="fixed inset-0 z-[2000]">
-    <div class="absolute inset-0 bg-black/30" @click="emit('close')"></div>
-    <div class="absolute right-0 top-0 h-full w-full sm:w-[820px] glass-thick glass-interactive border-l border-gray-200/40 dark:border-gray-700/40 flex flex-col" v-glass="{ strength: 'thick', interactive: true }">
+    <div class="absolute inset-0 bg-transparent" @click="emit('close')"></div>
+    <div class="absolute right-0 top-0 h-full w-full sm:w-[820px] glass-thin glass-interactive border-l border-gray-200/40 dark:border-gray-700/40 shadow-xl overflow-hidden rounded-l-none rounded-2xl flex flex-col" v-glass="{ strength: 'thin', interactive: true }">
       <!-- 顶部标题栏 -->
-      <div class="p-4 border-b border-gray-200/40 dark:border-gray-700/40 flex items-center justify-between" style="box-shadow: inset 0 -1px 0 rgba(255,255,255,0.12)">
+      <div class="p-4 border-b border-gray-200/40 dark:border-gray-700/40 flex items-center justify-between" style="box-shadow: inset 0 -1px 0 rgba(255,255,255,0.18)">
         <div class="font-semibold text-gray-900 dark:text-white">{{ headerTitle }}</div>
         <Button variant="ghost" size="sm" @click="emit('close')">✕</Button>
       </div>
@@ -19,7 +19,7 @@
             <Button size="sm" :variant="activeTab==='system' ? 'primary' : 'menu'" @click="activeTab='system'">{{ t('shared.chat.system') || '系统消息' }}</Button>
           </div>
           <div class="px-3 pb-2">
-            <input v-model="keyword" :placeholder="t('shared.chat.searchPlaceholder') as string || '搜索联系人'" class="input w-full" />
+            <GlassSearchInput v-model="keyword" :placeholder="t('shared.chat.searchPlaceholder') as string || '搜索联系人'" size="sm" />
           </div>
           <div class="flex-1 overflow-y-auto px-2 pb-3 space-y-1">
             <!-- 最近会话列表 -->
@@ -175,17 +175,10 @@
           </div>
 
           <!-- 输入区 -->
-      <div v-if="activeTab!=='system'" class="p-3 border-t border-gray-200 dark:border-gray-700 flex items-center gap-2 relative">
-            <Button type="button" variant="ghost" size="sm" class="flex items-center" :disabled="!hasActivePeer" @click="toggleEmoji">
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-5 h-5 mr-1"><path d="M12 2a10 10 0 100 20 10 10 0 000-20zm0 2a8 8 0 110 16A8 8 0 0112 4zm-3 7a1 1 0 100-2 1 1 0 000 2zm8 0a1 1 0 100-2 1 1 0 000 2zm-8.536 3.464a1 1 0 011.414 0A4 4 0 0012 16a4 4 0 002.121-.536 1 1 0 011.05 1.7A6 6 0 0112 18a6 6 0 01-3.172-.836 1 1 0 01-.364-1.7z"/></svg>
-          {{ t('shared.emojiPicker.button') }}
-        </Button>
-            <input ref="draftInput" v-model="draft" class="input flex-1" :placeholder="t('teacher.students.chat.placeholder') as string" @keydown.enter.prevent="send()" />
+          <div v-if="activeTab!=='system'" class="p-3 border-t border-gray-200 dark:border-gray-700 flex items-center gap-2 relative">
+            <EmojiPicker :variant="'ghost'" :size="'sm'" @select="pickEmoji" />
+            <GlassTextarea ref="draftInput" v-model="(draft as any)" :rows="2" :placeholder="t('teacher.students.chat.placeholder') as string" class="flex-1 w-full min-h-[48px] max-h-40 resize-none" @keydown.enter.prevent="send()" />
             <Button variant="primary" :disabled="sending || !draft" @click="send()">{{ t('teacher.ai.send') }}</Button>
-
-        <div v-if="showEmoji" class="absolute bottom-12 left-2 z-50 p-2 w-60 max-h-56 overflow-auto rounded-xl grid grid-cols-8 gap-1 no-scrollbar" v-glass="{ strength: 'regular', interactive: true }">
-          <button v-for="(e, idx) in emojiList" :key="idx" type="button" class="text-xl rounded hover:bg-white/40 dark:hover:bg-slate-700/50 transition-colors" @click="pickEmoji(e)">{{ e }}</button>
-            </div>
           </div>
         </div>
       </div>
@@ -199,8 +192,12 @@ import { ref, onMounted, watch, nextTick } from 'vue'
 // @ts-ignore
 import { useI18n } from 'vue-i18n'
 import UserAvatar from '@/components/ui/UserAvatar.vue'
+import GlassInput from '@/components/ui/inputs/GlassInput.vue'
+import GlassSearchInput from '@/components/ui/inputs/GlassSearchInput.vue'
+import GlassTextarea from '@/components/ui/inputs/GlassTextarea.vue'
 import { XMarkIcon, BookmarkIcon, BookmarkSlashIcon } from '@heroicons/vue/24/outline'
 import Button from '@/components/ui/Button.vue'
+import EmojiPicker from '@/components/ui/EmojiPicker.vue'
 
 const props = defineProps<{
   open: boolean
@@ -227,14 +224,7 @@ const total = ref(0)
 const draft = ref('')
 // 移除标题
 const sending = ref(false)
-const draftInput = ref<HTMLInputElement | null>(null)
-const showEmoji = ref(false)
-const emojiList = [
-  '😀','😁','😂','🤣','😊','😇','🙂','😉','😍','😘','😗','😄','😅','😆','😌','🤗',
-  '🤔','🤨','😐','😑','😶','🙄','😏','😴','😪','😷','🤒','🤕','🤧','🥳','🤩','🥰',
-  '👍','👎','🙏','👏','🙌','💪','🤝','👌','✌️','🤘','👋','🤙','🫶','❤️','💛','💙',
-  '💜','🖤','🤍','🤎','💯','🔥','✨','🌟','🎉','🎊','🍀','🌈','🍻','☕'
-]
+const draftInput = ref<HTMLTextAreaElement | null>(null)
 const scrollContainer = ref<HTMLElement | null>(null)
 const emptyText = t('teacher.students.table.empty') as string
 
@@ -512,11 +502,9 @@ const retrySend = async (msg: MessageItem) => {
 const onEmoji = async (emoji: string) => {
   draft.value = (draft.value || '') + emoji
   await nextTick()
-  draftInput.value?.focus()
+  try { draftInput.value?.focus() } catch {}
 }
-
-const toggleEmoji = () => { showEmoji.value = !showEmoji.value }
-const pickEmoji = async (e: string) => { await onEmoji(e); showEmoji.value = false }
+const pickEmoji = async (e: string) => { await onEmoji(e) }
 
 const choosePeer = async (id: string | number, name?: string | null, cId?: string | number | null) => {
   chat.setPeer(id, name ?? null, (cId ?? props.courseId) ?? null)

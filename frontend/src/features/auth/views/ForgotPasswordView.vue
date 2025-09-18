@@ -16,9 +16,9 @@
       </div>
 
       <div>
-        <button type="submit" :disabled="uiStore.loading" class="w-full btn btn-primary">
+        <Button class="w-full" variant="primary" type="submit" :disabled="uiStore.loading">
           {{ uiStore.loading ? '发送中...' : '发送重置链接' }}
-        </button>
+        </Button>
       </div>
     </form>
 
@@ -39,6 +39,7 @@ import { useUIStore } from '@/stores/ui';
 import { userApi } from '@/api/user.api';
 import { useI18n } from 'vue-i18n'
 import GlassInput from '@/components/ui/inputs/GlassInput.vue'
+import Button from '@/components/ui/Button.vue'
 
 const uiStore = useUIStore();
 const { t } = useI18n()

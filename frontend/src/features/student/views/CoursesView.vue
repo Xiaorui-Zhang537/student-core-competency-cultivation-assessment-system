@@ -9,11 +9,11 @@
       </template>
     </PageHeader>
 
-    <!-- Stats (StartCard) -->
+    <!-- Stats (StatCard, 复用工作台四卡样式) -->
     <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-      <StartCard :value="activeCoursesCount" :label="t('student.courses.active') as string" color="blue" />
-      <StartCard :value="completedCoursesCount" :label="t('student.courses.completed') as string" color="green" />
-      <StartCard :value="`${averageProgress.toFixed(1)}%`" :label="t('student.courses.avgProgress') as string" color="purple" />
+      <StartCard :label="t('student.courses.active') as string" :value="activeCoursesCount" tone="blue" :icon="AcademicCapIcon" />
+      <StartCard :label="t('student.courses.completed') as string" :value="completedCoursesCount" tone="emerald" :icon="CheckCircleIcon" />
+      <StartCard :label="t('student.courses.avgProgress') as string" :value="`${averageProgress.toFixed(1)}%`" tone="violet" :icon="ChartBarIcon" />
     </div>
 
     <!-- Search and Filter (aligned with Assignments FilterBar) -->
@@ -21,8 +21,7 @@
       <FilterBar class="glass-thin rounded-full">
         <template #left>
           <div class="relative w-80">
-            <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M9 3.5a5.5 5.5 0 100 11 5.5 5.5 0 000-11zM2 9a7 7 0 1112.452 4.391l3.328 3.329a.75.75 0 11-1.06 1.06l-3.329-3.328A7 7 0 012 9z" clip-rule="evenodd"/></svg>
-            <input v-model="searchQuery" type="text" :placeholder="t('student.courses.searchPlaceholder') as string" class="input input--glass pl-9 w-full h-10" @keyup.enter="applyImmediateSearch()" />
+            <GlassSearchInput v-model="searchQuery" :placeholder="t('student.courses.searchPlaceholder') as string" size="md" @keyup.enter="applyImmediateSearch()" />
           </div>
           <div class="w-56 ml-2">
             <GlassPopoverSelect
@@ -85,37 +84,34 @@
       </Card>
     </div>
 
-    <!-- Course Store Modal -->
-    <div v-if="showCourseStore" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" @click.self="showCourseStore = false">
-      <Card class="w-full max-w-4xl max-h-[90vh] flex flex-col">
-        <div class="p-6 border-b flex justify-between items-center">
-          <h3 class="text-lg font-semibold">{{ t('student.courses.storeTitle') }}</h3>
-          <Button variant="glass-ghost" @click="showCourseStore = false">&times;</Button>
+    <!-- Course Store Modal (GlassModal) -->
+    <GlassModal v-if="showCourseStore" :title="t('student.courses.storeTitle') as string" maxWidth="max-w-xl" heightVariant="tall" @close="showCourseStore=false">
+      <div class="overflow-y-auto" style="max-height:70vh;">
+        <div v-if="courseStore.loading" class="text-center"><p>{{ t('student.courses.loading') }}</p></div>
+        <div v-else class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <Card v-for="course in courseStore.courses" :key="course.id">
+            <h4 class="font-medium mb-2">{{ course.title }}</h4>
+            <p class="text-sm text-gray-600 mb-3">{{ course.description }}</p>
+            <div class="flex justify-between items-center">
+              <span class="text-sm text-gray-500">{{ t('student.courses.instructor') }}: {{ course.teacherName }}</span>
+              <Button
+                size="sm"
+                variant="primary"
+                :loading="enrollingId === String(course.id)"
+                :disabled="isEnrolled(String(course.id)) || enrollingId === String(course.id)"
+                @click="handleEnroll(String(course.id))"
+              >
+                <span v-if="isEnrolled(String(course.id))">{{ t('student.courses.enrolled') }}</span>
+                <span v-else>{{ t('student.courses.enroll') }}</span>
+              </Button>
+            </div>
+          </Card>
         </div>
-        <div class="p-6 overflow-y-auto">
-          <div v-if="courseStore.loading" class="text-center"><p>{{ t('student.courses.loading') }}</p></div>
-          <div v-else class="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <Card v-for="course in courseStore.courses" :key="course.id">
-              <h4 class="font-medium mb-2">{{ course.title }}</h4>
-              <p class="text-sm text-gray-600 mb-3">{{ course.description }}</p>
-              <div class="flex justify-between items-center">
-                <span class="text-sm text-gray-500">{{ t('student.courses.instructor') }}: {{ course.teacherName }}</span>
-                <Button
-                  size="sm"
-                  variant="primary"
-                  :loading="enrollingId === String(course.id)"
-                  :disabled="isEnrolled(String(course.id)) || enrollingId === String(course.id)"
-                  @click="handleEnroll(String(course.id))"
-                >
-                  <span v-if="isEnrolled(String(course.id))">{{ t('student.courses.enrolled') }}</span>
-                  <span v-else>{{ t('student.courses.enroll') }}</span>
-                </Button>
-              </div>
-            </Card>
-          </div>
-        </div>
-      </Card>
-    </div>
+      </div>
+      <template #footer>
+        <Button variant="secondary" @click="showCourseStore=false">{{ t('common.close') || '关闭' }}</Button>
+      </template>
+    </GlassModal>
   </div>
 </template>
 
@@ -133,6 +129,9 @@ import StartCard from '@/components/ui/StartCard.vue'
 import GlassPopoverSelect from '@/components/ui/filters/GlassPopoverSelect.vue'
 import PageHeader from '@/components/ui/PageHeader.vue'
 import FilterBar from '@/components/ui/filters/FilterBar.vue'
+import GlassModal from '@/components/ui/GlassModal.vue'
+import GlassSearchInput from '@/components/ui/inputs/GlassSearchInput.vue'
+import { AcademicCapIcon, CheckCircleIcon, ChartBarIcon } from '@heroicons/vue/24/outline'
 
 const router = useRouter();
 const studentStore = useStudentStore();

@@ -57,11 +57,30 @@
 				"archived": "已归档",
 				"unknown": "未知"
 			},
+			"difficulty": "难度",
+			"duration": "预计时长(小时)",
+			"maxStudents": "最大人数",
+			"startDate": "开课时间",
+			"endDate": "结课时间",
+			"category": {
+				"liberalArts": "文科",
+				"engineering": "工科",
+				"science": "理科",
+				"other": "其他"
+			},
 			"card": {
 				"coverAlt": "课程封面",
 				"tags": "标签：",
 				"none": "无"
 			},
+			"tagOptions": {
+				"beginner": "入门",
+				"intermediate": "进阶",
+				"advanced": "高级",
+				"examPrep": "考试",
+				"practice": "实战"
+			},
+			"tagsPlaceholder": "选择标签",
 			"actions": {
 				"create": "创建课程",
 				"edit": "编辑",
@@ -79,6 +98,7 @@
 				"description": "描述",
 				"content": "课程内容",
 				"category": "分类",
+				"status": "状态",
 				"tags": "标签 (逗号分隔)",
 				"cover": "课程封面",
 				"coverPicked": "已选择封面（文件ID：{id}）",
@@ -204,7 +224,16 @@
 				"selectAll": "全选",
 				"addSelected": "添加已选",
 				"close": "关闭",
-				"hint": "已添加到队列，请点击开始批改。"
+				"hint": "已添加到队列，请点击开始批改。",
+				"student": "学生",
+				"assignment": "作业选择",
+				"preview": "提交预览",
+				"useText": "使用文本内容",
+				"attachments": "附件",
+				"selectAllFiles": "全选附件",
+				"clearFiles": "清空选择",
+				"text": "文本内容",
+				"reload": "重新加载"
 			},
 			"render": {
 				"overall": "总体评价",
@@ -630,6 +659,17 @@
 				"failTitle": "加载失败",
 				"failMsg": "获取课程学生失败"
 			}
+		,
+		"enrollKey": {
+			"title": "课程入课密钥",
+			"require": "加入课程需要密钥",
+			"keyLabel": "入课密钥",
+			"placeholder": "请输入新密钥（仅保存哈希）",
+			"tip": "若仅勾选开关不输入密钥且历史无密钥，将提示需要提供密钥。",
+			"save": "保存",
+			"saved": "入课密钥设置成功",
+			"failed": "入课密钥设置失败"
+		}
 		},
 		"enrollKey": {
 			"title": "课程入课密钥",

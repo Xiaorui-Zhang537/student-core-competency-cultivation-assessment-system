@@ -126,3 +126,14 @@ i18n.global.locale.value = 'en-US'
 - 新增 `student.grades.*` 键：标题、副标题、加载态、空态、分数字样（outOf）。
 - `AssignmentsView`、`AnalyticsView`、`CourseDetailView` 已统一移除兜底并走 i18n。
 - 统一品牌样式：优先使用 `glass-*` 类与 `v-glass` 指令，按钮/卡片用 `/components/ui` 目录组件。
+
+## 9. 教师端 AI 批改弹窗新增键（2025-09-17）
+- 新增：`teacher.aiGrading.picker.{assignment,student,preview,useText,attachments,selectAllFiles,clearFiles,text,reload}`
+- 示例用法：
+```vue
+<GlassPopoverSelect :label="t('teacher.aiGrading.picker.assignment')" :placeholder="t('common.pleaseSelect') + t('teacher.assignments.title')" />
+```
+
+## 10. 学生管理入课密钥键（2025-09-11）
+- `teacher.students.enrollKey.{title,require,keyLabel,placeholder,tip,save,saved,failed}`
+- `teacher.students.actions.setEnrollKey`

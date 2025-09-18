@@ -12,30 +12,23 @@
       </PageHeader>
 
       <!-- Filters -->
-      <div class="mb-6 filter-container p-4 rounded-xl" v-glass="{ strength: 'thin', interactive: false }">
+      <div class="mb-6 filter-container p-4 rounded-2xl" v-glass="{ strength: 'thin', interactive: false }">
       <div class="grid grid-cols-1 md:grid-cols-2 gap-4 items-center">
-        <!-- 搜索框 with 图标 -->
-        <div class="relative">
-          <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-            <MagnifyingGlassIcon class="h-5 w-5 text-gray-400" />
-          </div>
-          <input
-            v-model="filters.query"
-            type="text"
-            :placeholder="t('teacher.courses.filters.searchPlaceholder')"
-            @input="applyFilters"
-            class="input input--glass pl-10 bg-transparent glass-regular glass-interactive rounded-xl border border-white/30 dark:border-white/10"
-            v-glass="{ strength: 'regular', interactive: true }"
-          />
-        </div>
+        <!-- 搜索框：改为直接复用 /ui 的 GlassSearchInput（自带图标与焦点描边） -->
+        <GlassSearchInput
+          v-model="filters.query"
+          :placeholder="t('teacher.courses.filters.searchPlaceholder') as string"
+          size="md"
+          @update:modelValue="applyFilters()"
+        />
         <!-- 状态分段按钮组 + 清空按钮（同列左右分布，消除右侧空白） -->
         <div class="flex items-center justify-between gap-4">
-          <div class="inline-flex whitespace-nowrap rounded-xl overflow-hidden border border-white/30 dark:border-white/10 glass-ultraThin" v-glass="{ strength: 'ultraThin', interactive: false }">
-            <button type="button" @click="setStatus('')" :class="segClass('')">{{ t('teacher.courses.filters.status.all') }}</button>
-            <button type="button" @click="setStatus('DRAFT')" :class="segClass('DRAFT')">{{ t('teacher.courses.filters.status.draft') }}</button>
-            <button type="button" @click="setStatus('PUBLISHED')" :class="segClass('PUBLISHED')">{{ t('teacher.courses.filters.status.published') }}</button>
-            <button type="button" @click="setStatus('ARCHIVED')" :class="segClass('ARCHIVED')">{{ t('teacher.courses.filters.status.archived') }}</button>
-          </div>
+          <SegmentedPills
+            :model-value="filters.status"
+            :options="statusOptions"
+            size="sm"
+            @update:modelValue="(v:any) => setStatus(v)"
+          />
           <div class="flex-shrink-0">
             <Button variant="outline" @click="clearFilters">
               <XMarkIcon class="w-4 h-4 mr-2" />
@@ -54,7 +47,7 @@
         <div
           v-for="course in courseStore.courses"
           :key="course.id"
-          class="relative card overflow-hidden cursor-pointer transition-all duration-300 hover:shadow-md hover:-translate-y-0.5"
+          class="relative card overflow-hidden cursor-pointer transition-all duration-300 hover:shadow-md hover:-translate-y-0.5 rounded-2xl"
           @click="navigateToCourse(course)"
         >
           <div class="h-40 bg-gray-100 dark:bg-gray-700 overflow-hidden relative">
@@ -65,33 +58,29 @@
               class="w-full h-full object-cover"
               @error="onCardCoverError(course)"
             />
-            <!-- 状态徽标浮层 -->
-              <span
-              class="absolute top-3 left-3 text-xs px-2 py-0.5 rounded bg-white/90 dark:bg-gray-800/90 border border-gray-200 dark:border-gray-700"
-              :class="statusBadgeClass(course.status)"
+            <!-- 状态徽标浮层（玻璃 Badge） -->
+            <Badge
+              :variant="statusVariant(course.status)"
+              size="sm"
+              class="absolute top-3 left-3"
             >
               {{ statusText(course.status) }}
-            </span>
+            </Badge>
           </div>
           <div class="p-4">
             <h3 class="font-bold text-lg line-clamp-1">{{ course.title }}</h3>
             <p class="text-xs text-gray-500 mb-2">{{ course.category }}</p>
             <p class="text-sm text-gray-600 dark:text-gray-300 line-clamp-2 min-h-[2.5rem]">{{ course.description }}</p>
             <div class="mt-4 flex justify-between items-center">
-              <div class="text-xs text-gray-500">
-                <span>{{ t('teacher.courses.card.tags') }}</span>
-                <span v-if="getTagsText(course)" class="text-gray-700 dark:text-gray-200">{{ getTagsText(course) }}</span>
-                <span v-else class="text-gray-400">{{ t('teacher.courses.card.none') }}</span>
+              <div class="flex flex-wrap gap-1.5 items-center min-h-[1.5rem]">
+                <Badge v-for="tag in toTagList(course)" :key="String(tag)" size="sm" :variant="tagVariant(String(tag))">
+                  {{ localizeTag(String(tag)) }}
+                </Badge>
+                <span v-if="toTagList(course).length===0" class="text-xs text-gray-400">{{ t('teacher.courses.card.none') }}</span>
               </div>
               <div class="flex items-center">
-                <Button size="sm" variant="outline" class="mr-2" @click.stop="openEditModal(course)">
-                  <PencilSquareIcon class="w-4 h-4 mr-1" />
-                  {{ t('teacher.courses.actions.edit') }}
-                </Button>
-                <Button size="sm" variant="outline" @click.stop="handleDeleteCourse(String(course.id))">
-                  <TrashIcon class="w-4 h-4 mr-1" />
-                  {{ t('teacher.courses.actions.delete') }}
-                </Button>
+                <Button size="sm" variant="secondary" class="mr-2" icon="edit" @click.stop="openEditModal(course)">{{ t('teacher.courses.actions.edit') }}</Button>
+                <Button size="sm" variant="danger" icon="delete" @click.stop="handleDeleteCourse(String(course.id))">{{ t('teacher.courses.actions.delete') }}</Button>
               </div>
             </div>
           </div>
@@ -106,11 +95,8 @@
         </Button>
       </div>
 
-      <!-- Create/Edit Modal -->
-      <div v-if="showModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div class="modal glass-thick w-full max-w-2xl max-h-[85vh] overflow-y-auto" v-glass="{ strength: 'thick', interactive: true }">
-        <div class="p-6">
-        <h2 class="text-xl font-bold mb-4">{{ isEditing ? t('teacher.courses.modal.editTitle') : t('teacher.courses.modal.createTitle') }}</h2>
+      <!-- Create/Edit Modal (GlassModal) -->
+      <GlassModal v-if="showModal" :title="(isEditing ? t('teacher.courses.modal.editTitle') : t('teacher.courses.modal.createTitle')) as string" maxWidth="max-w-xl" heightVariant="tall" @close="closeModal">
         <form @submit.prevent="handleSubmit" class="space-y-4">
           <div>
             <label for="title" class="block text-sm font-medium mb-1">{{ t('teacher.courses.modal.title') }}</label>
@@ -125,12 +111,50 @@
             <GlassTextarea id="content" v-model="form.content" :rows="6" />
           </div>
           <div>
-            <label for="category" class="block text-sm font-medium mb-1">{{ t('teacher.courses.modal.category') }}</label>
-            <GlassInput id="category" v-model="form.category" type="text" />
+            <label class="block text-sm font-medium mb-1">{{ t('teacher.courses.modal.status') || '状态' }}</label>
+            <div class="w-full md:w-64">
+              <div class="inline-flex whitespace-nowrap rounded-2xl overflow-hidden border border-white/30 dark:border-white/10 glass-ultraThin" v-glass="{ strength: 'ultraThin', interactive: false }">
+                <button type="button" @click="form.status='draft'" :class="statusPickClass('draft')">{{ t('teacher.courses.status.draft') }}</button>
+                <button type="button" @click="form.status='published'" :class="statusPickClass('published')">{{ t('teacher.courses.status.published') }}</button>
+                <button type="button" @click="form.status='archived'" :class="statusPickClass('archived')">{{ t('teacher.courses.status.archived') }}</button>
+              </div>
+            </div>
+          </div>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label for="category" class="block text-sm font-medium mb-1">{{ t('teacher.courses.modal.category') }}</label>
+              <div class="w-full md:w-64">
+                <GlassPopoverSelect :options="categoryOptions" :model-value="form.category" size="sm" @update:modelValue="(v:any)=> form.category = String(v)" />
+              </div>
+            </div>
+            <div>
+              <label class="block text-sm font-medium mb-1">{{ t('teacher.courses.difficulty') || '难度' }}</label>
+              <div class="w-full md:w-64">
+                <SegmentedPills :model-value="(form as any).difficulty || 'beginner'" :options="difficultyOptions" size="sm" @update:modelValue="(v:any)=> (form as any).difficulty = String(v)" />
+              </div>
+            </div>
+            <div>
+              <label class="block text-sm font-medium mb-1">{{ t('teacher.courses.duration') || '预计时长(小时)' }}</label>
+              <div class="w-full md:w-64">
+                <GlassInput v-model="durationInput" type="number" />
+              </div>
+            </div>
+            <div>
+              <label class="block text-sm font-medium mb-1">{{ t('teacher.courses.maxStudents') || '最大人数' }}</label>
+              <div class="w-full md:w-64">
+                <GlassInput v-model="maxStudentsInput" type="number" />
+              </div>
+            </div>
+            <div>
+              <GlassDateTimePicker v-model="startDate" :label="(t('teacher.courses.startDate') as string) || '开课时间'" date-only />
+            </div>
+            <div>
+              <GlassDateTimePicker v-model="endDate" :label="(t('teacher.courses.endDate') as string) || '结课时间'" date-only />
+            </div>
           </div>
           <div>
-            <label for="tags" class="block text-sm font-medium mb-1">{{ t('teacher.courses.modal.tags') }}</label>
-            <GlassInput id="tags" v-model="tagsInput" type="text" />
+            <label class="block text-sm font-medium mb-1">{{ t('teacher.courses.modal.tags') || '标签' }}</label>
+            <GlassTagsInput v-model="selectedTagsStr" :placeholder="(t('teacher.courses.tagsPlaceholder') as string) || '输入后回车添加标签'" />
           </div>
           <div>
             <label class="block text-sm font-medium mb-1">{{ t('teacher.courses.modal.cover') }}</label>
@@ -154,9 +178,7 @@
             </Button>
           </div>
         </form>
-        </div>
-      </div>
-    </div>
+      </GlassModal>
     
     <!-- root wrapper close -->
     </div>
@@ -164,7 +186,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, onMounted } from 'vue';
+import { ref, reactive, onMounted, computed } from 'vue';
 import { useCourseStore } from '@/stores/course';
 import { useAuthStore } from '@/stores/auth';
 import { useRouter } from 'vue-router';
@@ -180,12 +202,20 @@ const debounce = (fn: (...args: any[]) => void, delay = 300) => {
 import FileUpload from '@/components/forms/FileUpload.vue';
 import apiClient, { baseURL } from '@/api/config';
 import Button from '@/components/ui/Button.vue'
-import { MagnifyingGlassIcon, PlusIcon, XMarkIcon, PencilSquareIcon, TrashIcon } from '@heroicons/vue/24/outline'
+import { PlusIcon, XMarkIcon } from '@heroicons/vue/24/outline'
 // @ts-ignore - vue-i18n runtime is available at build time; type may be resolved via shim
 import { useI18n } from 'vue-i18n'
 import PageHeader from '@/components/ui/PageHeader.vue'
 import GlassInput from '@/components/ui/inputs/GlassInput.vue'
+import GlassSearchInput from '@/components/ui/inputs/GlassSearchInput.vue'
 import GlassTextarea from '@/components/ui/inputs/GlassTextarea.vue'
+import GlassModal from '@/components/ui/GlassModal.vue'
+import GlassMultiSelect from '@/components/ui/filters/GlassMultiSelect.vue'
+import GlassPopoverSelect from '@/components/ui/filters/GlassPopoverSelect.vue'
+import Badge from '@/components/ui/Badge.vue'
+import SegmentedPills from '@/components/ui/SegmentedPills.vue'
+import GlassTagsInput from '@/components/ui/inputs/GlassTagsInput.vue'
+import GlassDateTimePicker from '@/components/ui/inputs/GlassDateTimePicker.vue'
 
 const courseStore = useCourseStore();
 const authStore = useAuthStore();
@@ -196,15 +226,38 @@ const showModal = ref(false);
 const isEditing = ref(false);
 const editingCourseId = ref<string | null>(null);
 
-const form = reactive<Omit<CourseCreationRequest, 'tags'> & { id?: string; tags: string[]; coverImage?: string; content?: string }>({
+const form = reactive<Omit<CourseCreationRequest, 'tags'> & { id?: string; tags: string[]; coverImage?: string; content?: string; status?: 'draft'|'published'|'archived' }>({
   title: '',
   description: '',
   content: '',
   category: '',
   tags: [],
-  coverImage: ''
+  coverImage: '',
+  status: 'draft'
 });
-const tagsInput = ref('');
+const selectedTagsStr = ref<string[]>([])
+const startDate = ref<string>('')
+const endDate = ref<string>('')
+const durationInput = ref<string>('')
+const maxStudentsInput = ref<string>('')
+const difficultyOptions = computed(() => [
+  { label: t('teacher.courses.tagOptions.beginner') as string || '入门', value: 'beginner' },
+  { label: t('teacher.courses.tagOptions.intermediate') as string || '进阶', value: 'intermediate' },
+  { label: t('teacher.courses.tagOptions.advanced') as string || '高级', value: 'advanced' }
+])
+const categoryOptions = computed(() => [
+  { label: t('teacher.courseEdit.form.categoryOptions.programming') as string || '编程开发', value: 'programming' },
+  { label: t('teacher.courseEdit.form.categoryOptions.design') as string || '设计创意', value: 'design' },
+  { label: t('teacher.courseEdit.form.categoryOptions.business') as string || '商业管理', value: 'business' },
+  { label: t('teacher.courseEdit.form.categoryOptions.marketing') as string || '市场营销', value: 'marketing' },
+  { label: t('teacher.courseEdit.form.categoryOptions.language') as string || '语言学习', value: 'language' },
+  { label: t('teacher.courseEdit.form.categoryOptions.science') as string || '科学技术', value: 'science' },
+  { label: t('teacher.courseEdit.form.categoryOptions.art') as string || '艺术人文', value: 'art' },
+  { label: t('teacher.courses.category.liberalArts') as string || '文科', value: 'liberal-arts' },
+  { label: t('teacher.courses.category.engineering') as string || '工科', value: 'engineering' },
+  { label: t('teacher.courses.category.science') as string || '理科', value: 'science-college' },
+  { label: t('teacher.courses.category.other') as string || '其他', value: 'other' },
+])
 const coverUploader = ref();
 const uploadHeaders = {
   Authorization: localStorage.getItem('token') ? `Bearer ${localStorage.getItem('token')}` : ''
@@ -241,6 +294,12 @@ const filters = reactive({
     query: '',
     status: '',
 });
+const statusOptions = computed(() => [
+  { label: t('teacher.courses.filters.status.all') as string, value: '' },
+  { label: t('teacher.courses.filters.status.draft') as string, value: 'DRAFT' },
+  { label: t('teacher.courses.filters.status.published') as string, value: 'PUBLISHED' },
+  { label: t('teacher.courses.filters.status.archived') as string, value: 'ARCHIVED' },
+])
 
 const statusClass = (status: string) => {
     return {
@@ -251,8 +310,9 @@ const statusClass = (status: string) => {
 }
 
 const statusText = (status: string) => {
+  const normalized = (status || '').toUpperCase()
   const map: Record<string, string> = { DRAFT: t('teacher.courses.status.draft'), PUBLISHED: t('teacher.courses.status.published'), ARCHIVED: t('teacher.courses.status.archived') }
-  return map[status] || status || t('teacher.courses.status.unknown')
+  return map[normalized] || status || t('teacher.courses.status.unknown')
 }
 
 const statusBadgeClass = (status: string) => {
@@ -269,21 +329,87 @@ const setStatus = (val: string) => {
   applyFilters()
 }
 
+function segGlass(val: string) {
+  const isActive = filters.status === val
+  return { strength: isActive ? 'regular' : 'ultraThin', interactive: false }
+}
+
 const segClass = (val: string) => {
   const isActive = filters.status === val
   return [
     'px-3 py-2 text-sm transition-colors focus:outline-none',
     isActive
-      ? 'bg-primary-600 text-white'
-      : 'bg-white/10 dark:bg-white/10 text-gray-800 dark:text-gray-200 hover:bg-white/20 dark:hover:bg-white/20'
+      ? 'text-white bg-primary-500/30'
+      : 'text-gray-800 dark:text-gray-200 hover:bg-white/10 dark:hover:bg-white/10'
   ]
 }
 
 const getTagsText = (course: any): string => {
-  const t = (course as any)?.tags
-  if (Array.isArray(t)) return t.join(', ')
-  if (typeof t === 'string') return t
+  const v = (course as any)?.tags
+  if (Array.isArray(v) && v.length) return v.join(', ')
+  if (typeof v === 'string' && v.trim().length) return v
   return ''
+}
+
+function toTagList(course: any): string[] {
+  const v = course?.tags
+  if (Array.isArray(v)) return v
+  if (typeof v === 'string' && v.trim().length) return v.split(',').map((s: string) => s.trim()).filter(Boolean)
+  return []
+}
+
+function localizeTag(tag: string): string {
+  const key = tag.toLowerCase()
+  const dict: Record<string, string> = {
+    beginner: t('teacher.courses.tagOptions.beginner') as string,
+    intermediate: t('teacher.courses.tagOptions.intermediate') as string,
+    advanced: t('teacher.courses.tagOptions.advanced') as string,
+    exam: t('teacher.courses.tagOptions.examPrep') as string,
+    examprep: t('teacher.courses.tagOptions.examPrep') as string,
+    practice: t('teacher.courses.tagOptions.practice') as string
+  }
+  return dict[key] || tag
+}
+
+function statusVariant(status: string): 'success' | 'warning' | 'secondary' {
+  const s = (status || '').toUpperCase()
+  if (s === 'PUBLISHED') return 'success'
+  if (s === 'DRAFT') return 'warning'
+  return 'secondary'
+}
+
+function tagVariant(tag: string): 'info' | 'primary' | 'danger' | 'warning' | 'success' | 'secondary' {
+  const k = tag.toLowerCase()
+  // Known mappings keep fixed semantic colors
+  if (k === 'beginner') return 'info'
+  if (k === 'intermediate') return 'primary'
+  if (k === 'advanced') return 'danger'
+  if (k === 'exam' || k === 'examprep') return 'warning'
+  if (k === 'practice') return 'success'
+  // Custom tags: stable pseudo-random color from allowed variants (exclude secondary to ensure colored)
+  const palette: Array<'info'|'primary'|'danger'|'warning'|'success'> = ['info','primary','danger','warning','success']
+  let hash = 0
+  for (let i = 0; i < k.length; i++) {
+    hash = ((hash << 5) - hash) + k.charCodeAt(i)
+    hash |= 0
+  }
+  const idx = Math.abs(hash) % palette.length
+  return palette[idx]
+}
+
+function statusPickClass(val: 'draft'|'published'|'archived') {
+  const active = form.status === val
+  return [
+    'px-3 py-2 text-sm transition-colors focus:outline-none',
+    active ? 'text-white bg-primary-500/30' : 'text-gray-800 dark:text-gray-200 hover:bg-white/10'
+  ]
+}
+
+function normalizeStatus(s: any): 'draft'|'published'|'archived' {
+  const v = String(s || '').toLowerCase()
+  if (v === 'published') return 'published'
+  if (v === 'archived') return 'archived'
+  return 'draft'
 }
 
 const navigateToCourse = (course: Course) => {
@@ -295,16 +421,28 @@ const navigateToCourse = (course: Course) => {
 const openCreateModal = () => {
   isEditing.value = false;
   editingCourseId.value = null;
-  Object.assign(form, { title: '', description: '', content: '', category: '', tags: [], coverImage: '' });
-  tagsInput.value = '';
+  Object.assign(form, { title: '', description: '', content: '', category: '', tags: [], coverImage: '', status: 'draft', difficulty: 'beginner', duration: undefined as any, maxStudents: undefined as any, startDate: '', endDate: '' });
+  selectedTagsStr.value = [];
+  startDate.value = ''
+  endDate.value = ''
+  durationInput.value = ''
+  maxStudentsInput.value = ''
   showModal.value = true;
 };
 
 const openEditModal = (course: Course) => {
   isEditing.value = true;
   editingCourseId.value = String(course.id);
-  Object.assign(form, { ...course });
-  tagsInput.value = (Array.isArray(course.tags) ? course.tags : []).join(', ');
+  Object.assign(form, { ...course, status: normalizeStatus((course as any).status) });
+  selectedTagsStr.value = Array.isArray(course.tags)
+    ? (course.tags as string[])
+    : (typeof (course as any).tags === 'string' && (course as any).tags.trim().length
+        ? String((course as any).tags).split(',').map((s: string) => s.trim()).filter(Boolean)
+        : []);
+  startDate.value = (course as any).startDate || ''
+  endDate.value = (course as any).endDate || ''
+  durationInput.value = String((course as any).duration ?? '')
+  maxStudentsInput.value = String((course as any).maxStudents ?? '')
   showModal.value = true;
 };
 
@@ -322,7 +460,12 @@ const handleSubmit = async () => {
   // Prepare payload for the API
   const payload = {
       ...form,
-      tags: tagsInput.value, // Send tags as a string
+      // 后端 Course.tags 为 String，按逗号拼接提交
+      tags: (selectedTagsStr.value || []).join(','),
+      startDate: startDate.value || undefined,
+      endDate: endDate.value || undefined,
+      duration: durationInput.value ? Number(durationInput.value) : undefined,
+      maxStudents: maxStudentsInput.value ? Number(maxStudentsInput.value) : undefined,
       teacherId: String(teacherId)
   };
 

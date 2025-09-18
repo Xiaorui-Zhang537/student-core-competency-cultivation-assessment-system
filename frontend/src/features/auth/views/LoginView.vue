@@ -41,9 +41,9 @@
       </div>
 
       <div>
-        <button type="submit" :disabled="authStore.loading" class="w-full btn btn-primary">
+        <Button class="w-full" variant="primary" type="submit" :disabled="authStore.loading">
           {{ authStore.loading ? t('auth.login.action.submitting') : t('auth.login.action.submit') }}
-        </button>
+        </Button>
       </div>
     </form>
 
@@ -65,6 +65,7 @@ import type { LoginRequest } from '@/types/auth'
 import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import GlassInput from '@/components/ui/inputs/GlassInput.vue'
+import Button from '@/components/ui/Button.vue'
 
 const authStore = useAuthStore()
 const router = useRouter()
