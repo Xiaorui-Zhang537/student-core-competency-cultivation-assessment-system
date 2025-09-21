@@ -470,6 +470,45 @@ public class GradeServiceImpl implements GradeService {
     }
 
     @Override
+    public void returnForResubmission(Long gradeId, Long teacherId, String reason, java.time.LocalDateTime resubmitUntil) {
+        logger.info("打回重做，gradeId={}, teacherId={}, until={}", gradeId, teacherId, resubmitUntil);
+        Grade existing = gradeMapper.selectGradeById(gradeId);
+        if (existing == null) {
+            throw new BusinessException(ErrorCode.GRADE_NOT_FOUND);
+        }
+        // 权限：必须为该作业教师
+        Assignment assignment = assignmentMapper.selectAssignmentById(existing.getAssignmentId());
+        if (assignment == null || (assignment.getTeacherId() != null && !assignment.getTeacherId().equals(teacherId))) {
+            throw new BusinessException(ErrorCode.COURSE_ACCESS_DENIED, "无权打回非本人作业");
+        }
+
+        Grade patch = new Grade();
+        patch.setId(existing.getId());
+        patch.setStatus("returned");
+        patch.setRegradeReason(reason);
+        patch.setUpdatedAt(java.time.LocalDateTime.now());
+        // 反射式添加：若实体包含 resubmitUntil 字段则写入（已在实体添加）
+        patch.setResubmitUntil(resubmitUntil);
+        int u = gradeMapper.updateGrade(patch);
+        if (u <= 0) throw new BusinessException(ErrorCode.OPERATION_FAILED, "设置打回状态失败");
+
+        // 同步提交状态
+        if (existing.getSubmissionId() != null) {
+            try {
+                submissionService.updateSubmissionStatus(existing.getSubmissionId(), "returned");
+            } catch (Exception e) {
+                logger.warn("打回成功但同步提交状态失败 submissionId={}", existing.getSubmissionId(), e);
+            }
+        }
+        // 通知（简化：调用通知服务）
+        try {
+            notificationService.sendGradeNotification(existing.getId(), "assignment_returned", reason);
+        } catch (Exception e) {
+            logger.warn("打回成功但发送通知失败 gradeId={}", existing.getId(), e);
+        }
+    }
+
+    @Override
     public List<Map<String, Object>> getGradeTrend(Long studentId, Long courseId, Integer days) {
         logger.info("获取成绩趋势，学生ID: {}, 课程ID: {}, 周期天数: {}", studentId, courseId, days);
 

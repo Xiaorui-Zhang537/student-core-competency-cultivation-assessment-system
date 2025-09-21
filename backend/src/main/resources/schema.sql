@@ -164,7 +164,7 @@ CREATE TABLE `ability_goals` (
 CREATE TABLE `ability_reports` (
                                    `id` bigint NOT NULL AUTO_INCREMENT COMMENT '报告ID',
                                    `student_id` bigint NOT NULL COMMENT '学生ID',
-                                   `report_type` enum('monthly','semester','annual','custom') COLLATE utf8mb4_unicode_ci DEFAULT 'monthly' COMMENT '报告类型',
+                                  `report_type` enum('monthly','semester','annual','custom','ai') COLLATE utf8mb4_unicode_ci DEFAULT 'monthly' COMMENT '报告类型',
                                    `title` varchar(200) COLLATE utf8mb4_unicode_ci NOT NULL COMMENT '报告标题',
                                    `overall_score` decimal(5,2) NOT NULL COMMENT '综合得分',
                                    `report_period_start` date NOT NULL COMMENT '报告周期开始',
@@ -174,7 +174,11 @@ CREATE TABLE `ability_reports` (
                                    `achievements` json DEFAULT NULL COMMENT '成就列表（JSON格式）',
                                    `improvement_areas` json DEFAULT NULL COMMENT '待改进领域（JSON格式）',
                                    `recommendations` text COLLATE utf8mb4_unicode_ci COMMENT '综合建议',
-                                   `generated_by` enum('system','teacher') COLLATE utf8mb4_unicode_ci DEFAULT 'system' COMMENT '生成方式',
+                                  `generated_by` enum('system','teacher') COLLATE utf8mb4_unicode_ci DEFAULT 'system' COMMENT '生成方式',
+                                  `course_id` bigint DEFAULT NULL COMMENT '课程ID',
+                                  `assignment_id` bigint DEFAULT NULL COMMENT '作业ID',
+                                  `submission_id` bigint DEFAULT NULL COMMENT '提交ID',
+                                  `ai_history_id` bigint DEFAULT NULL COMMENT 'AI批改历史ID',
                                    `is_published` tinyint(1) DEFAULT '0' COMMENT '是否发布',
                                    `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
                                    `published_at` timestamp NULL DEFAULT NULL COMMENT '发布时间',
@@ -183,7 +187,9 @@ CREATE TABLE `ability_reports` (
                                    KEY `idx_student_id` (`student_id`),
                                    KEY `idx_report_type` (`report_type`),
                                    KEY `idx_period` (`report_period_start`,`report_period_end`),
-                                   KEY `idx_created_at` (`created_at`),
+                                  KEY `idx_created_at` (`created_at`),
+                                  KEY `idx_ability_report_ctx` (`student_id`,`course_id`,`assignment_id`,`submission_id`),
+                                  KEY `idx_ability_report_aihist` (`ai_history_id`),
                                    CONSTRAINT `ability_reports_ibfk_1` FOREIGN KEY (`student_id`) REFERENCES `users` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='能力报告表';
 
@@ -336,7 +342,7 @@ CREATE TABLE `grades` (
                           `percentage` decimal(5,2) DEFAULT NULL COMMENT '百分比分数',
                           `grade_level` varchar(2) COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT '等级(A,B,C,D,F)',
                           `feedback` text COLLATE utf8mb4_unicode_ci COMMENT '评语',
-                          `status` enum('draft','published') COLLATE utf8mb4_unicode_ci DEFAULT 'draft' COMMENT '状态',
+                          `status` enum('draft','published','returned') COLLATE utf8mb4_unicode_ci DEFAULT 'draft' COMMENT '状态',
                           `deleted` tinyint(1) DEFAULT '0' COMMENT '是否删除',
                           `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
                           `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
@@ -350,6 +356,9 @@ CREATE TABLE `grades` (
                           CONSTRAINT `grades_ibfk_1` FOREIGN KEY (`student_id`) REFERENCES `users` (`id`) ON DELETE CASCADE,
                           CONSTRAINT `grades_ibfk_2` FOREIGN KEY (`assignment_id`) REFERENCES `assignments` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='成绩表';
+
+-- 兼容已存在数据库（请在生产环境执行一次）：
+-- ALTER TABLE grades MODIFY COLUMN `status` enum('draft','published','returned') COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'draft';
 
 -- ================== learning_recommendations：学习建议表 ==================
 -- 存储针对学生能力提升推送的个性化学习建议
@@ -571,7 +580,7 @@ CREATE TABLE `submissions` (
                                `submit_time` timestamp NULL DEFAULT CURRENT_TIMESTAMP COMMENT '提交时间',
                                `file_id` bigint DEFAULT NULL COMMENT '关联文件ID',
                                `content` text COLLATE utf8mb4_unicode_ci COMMENT '文本答案（如有）',
-                               `status` enum('submitted','graded','late','rejected') COLLATE utf8mb4_unicode_ci DEFAULT 'submitted' COMMENT '提交状态',
+                               `status` enum('submitted','graded','late','rejected','returned') COLLATE utf8mb4_unicode_ci DEFAULT 'submitted' COMMENT '提交状态',
                                `grade` decimal(5,2) DEFAULT NULL COMMENT '分数',
                                `feedback` text COLLATE utf8mb4_unicode_ci COMMENT '教师评语',
                                `grader_id` bigint DEFAULT NULL COMMENT '批改教师ID',
@@ -588,6 +597,9 @@ CREATE TABLE `submissions` (
                                CONSTRAINT `submissions_ibfk_2` FOREIGN KEY (`student_id`) REFERENCES `users` (`id`) ON DELETE CASCADE,
                                CONSTRAINT `submissions_ibfk_3` FOREIGN KEY (`file_id`) REFERENCES `file_records` (`id`) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='作业提交表';
+
+-- 兼容已存在数据库（请在生产环境执行一次）：
+-- ALTER TABLE submissions MODIFY COLUMN `status` enum('submitted','graded','late','rejected','returned') COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'submitted';
 
 -- ================== reports：举报表 ==================
 -- 存储教师/管理员对可疑提交的举报记录
@@ -1182,6 +1194,7 @@ create table grades
     strengths      text                                                  null,
     improvements   text                                                  null,
     allow_resubmit tinyint(1)                  default 0                 not null,
+    resubmit_until timestamp NULL DEFAULT NULL,
     rubric_json    json                                                  null,
     regrade_reason text                                                  null,
     status         enum ('draft', 'published') default 'draft'           null comment '状态',

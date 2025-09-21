@@ -2,6 +2,9 @@ package com.noncore.assessment.controller;
 
 import com.noncore.assessment.dto.response.TeacherStudentProfileResponse;
 import com.noncore.assessment.dto.response.CourseStudentBasicResponse;
+import com.noncore.assessment.dto.response.TeacherStudentActivityResponse;
+import com.noncore.assessment.dto.response.TeacherStudentAlertsResponse;
+import com.noncore.assessment.entity.LearningRecommendation;
 import com.noncore.assessment.entity.Course;
 import com.noncore.assessment.service.TeacherStudentService;
 import com.noncore.assessment.service.UserService;
@@ -55,6 +58,33 @@ public class TeacherStudentController extends BaseController {
                 getCurrentUserId(), courseId, page, size, keyword
         );
         return ResponseEntity.ok(ApiResponse.success(resp));
+    }
+
+    @GetMapping("/{studentId}/activity")
+    @PreAuthorize("hasRole('TEACHER') or hasRole('ADMIN')")
+    @Operation(summary = "获取学生近期学习活跃度与最近学习记录")
+    public ResponseEntity<ApiResponse<TeacherStudentActivityResponse>> getStudentActivity(@PathVariable Long studentId,
+                                                                                          @RequestParam(required = false, defaultValue = "7") Integer days,
+                                                                                          @RequestParam(required = false, defaultValue = "5") Integer limit) {
+        TeacherStudentActivityResponse resp = teacherStudentService.getStudentActivity(getCurrentUserId(), studentId, days, limit);
+        return ResponseEntity.ok(ApiResponse.success(resp));
+    }
+
+    @GetMapping("/{studentId}/alerts")
+    @PreAuthorize("hasRole('TEACHER') or hasRole('ADMIN')")
+    @Operation(summary = "获取学生风险预警")
+    public ResponseEntity<ApiResponse<TeacherStudentAlertsResponse>> getStudentAlerts(@PathVariable Long studentId) {
+        TeacherStudentAlertsResponse resp = teacherStudentService.getStudentAlerts(getCurrentUserId(), studentId);
+        return ResponseEntity.ok(ApiResponse.success(resp));
+    }
+
+    @GetMapping("/{studentId}/recommendations")
+    @PreAuthorize("hasRole('TEACHER') or hasRole('ADMIN')")
+    @Operation(summary = "获取学生个性化建议（按优先级）")
+    public ResponseEntity<ApiResponse<java.util.List<LearningRecommendation>>> getStudentRecommendations(@PathVariable Long studentId,
+                                                                                                        @RequestParam(required = false, defaultValue = "6") Integer limit) {
+        java.util.List<LearningRecommendation> list = teacherStudentService.getStudentRecommendations(getCurrentUserId(), studentId, limit);
+        return ResponseEntity.ok(ApiResponse.success(list));
     }
 }
 

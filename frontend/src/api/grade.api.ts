@@ -43,5 +43,9 @@ export const gradeApi = {
 
   publishBatchGrades: (gradeIds: string[]): Promise<ApiResponse<any>> => {
       return api.post('/grades/batch-publish', gradeIds);
+  },
+  // Return for resubmission
+  returnForResubmission: (gradeId: string, data: { reason?: string; resubmitUntil?: string }): Promise<ApiResponse<void>> => {
+    return api.post(`/grades/${gradeId}/return`, data);
   }
 };

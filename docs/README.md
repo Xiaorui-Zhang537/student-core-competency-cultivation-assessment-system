@@ -53,6 +53,16 @@
 
 ## 变更记录（Changelog）
 
+### 教师端 - 学生详情画像/活跃度/预警/建议与能力雷达（2025-09-19）
+- 新增端点：
+  - `GET /api/teachers/students/{studentId}` 返回用户完整画像与汇总指标
+  - `GET /api/teachers/students/{studentId}/activity` 近 7/30 天活跃度与最近学习
+  - `GET /api/teachers/students/{studentId}/alerts` 风险预警
+  - `GET /api/teachers/students/{studentId}/recommendations` 个性化建议
+- 前端：`StudentDetailView.vue` 展示档案、联系方式、课程/平均分/完成率/最近活跃、最近学习、能力雷达、预警与建议
+- API 文档：更新 `docs/backend/api/teacher.md` 与 `docs/frontend/api/teacher-student.api.md`
+- i18n：补充中英文文案（teacher.studentDetail.*）
+
 ### 教师端 - AI 批改弹窗改造与上传忽略策略（2025-09-17）
 - 弹窗交互重构（`features/teacher/views/TeacherAIGradingView.vue`）
   - 选择器：移除课程选择，基于页面 `courseId` 自动加载当前课程的作业；新增“作业选择”“学生”两个选择器，水平排列且标题不换行，选择器自适应宽度（clamp）。
@@ -97,4 +107,12 @@
 ### 学生端 - 我的作业（2025-09-02）
 - 列表页（AssignmentsView）：对齐筛选/搜索/分页与状态映射；新增错误提示与重试按钮；样式统一为玻璃风格。
 - 提交页（AssignmentSubmitView）：统一标题+描述与状态徽章；支持草稿与提交按钮禁用逻辑；上传/删除附件流程完善；已评分时按需拉取并展示分数与教师反馈；补齐 i18n 文案（中英）。
+
+### 教师端/学生端 - AI 批改与五维雷达接入（2025-09-19）
+- 教师评分页（GradeAssignmentView）：
+  - 新增“生成AI建议”按钮，自动从提交附件或文本调用后端 `POST /ai/grade/files|essay`，前端进行结构化规范化，展示“建议分/准确性/完整性/清晰度/整体分析/改进点”。
+  - 新增“一键写入五维能力分”，将AI四维映射至五维（道德认知/学习态度/学习能力/学习方法），写入 `POST /ability/teacher/assessment`，学习成绩维度在发布成绩后按百分比折算自动写入。
+- 学生作业提交页（AssignmentSubmitView）：
+  - 在“已评分”区域下方展示“AI能力报告（最近一次）”，显示综合分、四维条与综合建议，来源于 `/ability/student/report/latest`（若后端返回JSON字符串字段会在前端解析）。
+- i18n：补充了教师端“写入五维能力分”、学生端“AI能力报告（最近一次）/综合评分”等文案。
 - 文档：补充交互案例、页面时序与 `students/assignments` 参数说明。

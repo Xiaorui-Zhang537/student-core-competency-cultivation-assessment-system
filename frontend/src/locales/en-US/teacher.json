@@ -43,6 +43,7 @@
 			"loading": "Loading courses...",
 			"filters": {
 				"searchPlaceholder": "Search by title/description...",
+				"sortDifficultyLabel": "Difficulty Sort",
 				"status": {
 					"all": "All",
 					"draft": "Draft",
@@ -130,7 +131,14 @@
 			"subtitle": "Create, view and manage course assignments",
 			"filters": {
 				"byCourse": "Filter by Course",
-				"selectCourse": "Select a course"
+				"selectCourse": "Select a course",
+				"statusLabel": "Status",
+				"statusPlaceholder": "Select status"
+			},
+			"searchPlaceholder": "Search assignments",
+			"status": {
+				"pendingReview": "Pending review",
+				"ended": "Ended"
 			},
 			"loading": "Loading assignments...",
 			"actions": {
@@ -214,7 +222,8 @@
 				"graded": "Graded",
 				"returned": "Returned",
 				"draft": "Draft",
-				"late": "Late"
+				"late": "Late",
+				"unsubmitted": "Unsubmitted"
 			},
 			"actions": {
 				"grade": "Grade",
@@ -274,6 +283,9 @@
 				"completeness": "Completeness",
 				"clarity": "Clarity",
 				"apply": "Apply",
+				"writeRadar": "Write to Radar",
+				"generate": "Generate",
+				"hint": "Click the button below to generate AI suggestions for this submission.",
 				"analysis": "Analysis",
 				"improvements": "Improvements"
 			},
@@ -296,6 +308,8 @@
 				"allowResubmit": "Allow resubmission",
 				"sendNotification": "Notify student",
 				"publishImmediately": "Publish immediately",
+				"reason": "Reason",
+				"resubmitUntil": "Resubmit until",
 				"submit": "Submit Grade",
 				"saveDraft": "Save Draft"
 			},
@@ -347,7 +361,8 @@
 				"feedbackRequired": "Feedback is required"
 			},
 			"actions": {
-				"remindUnsubmitted": "Remind Unsubmitted"
+				"remindUnsubmitted": "Remind Unsubmitted",
+				"returnForResubmit": "Return for resubmission"
 			},
 			"stats": {
 				"totalEnrolled": "Total",
@@ -396,7 +411,8 @@
 				"selectAllFiles": "Select all attachments",
 				"clearFiles": "Clear selection",
 				"text": "Text",
-				"reload": "Reload"
+				"reload": "Reload",
+				"hintBackgroundRunning": "Will continue running in background after closing"
 			},
 			"render": {
 				"overall": "Overall",
@@ -417,7 +433,8 @@
 			},
 			"progress": {
 				"label": "Progress"
-			}
+			},
+			"viewDetail": "Details"
 		},
 		"analytics": {
 			"title": "Analytics",
@@ -497,7 +514,8 @@
 				"timeRangeMsg": "Start date cannot be later than end date",
 				"refreshFailed": "Refresh failed",
 				"refreshFailedMsg": "Please try again later",
-				"aiPromptHeader": "Analyze the following course data and provide insights and actionable improvements. Data (JSON):"
+				"aiPromptHeader": "Analyze the following course data and provide insights and actionable improvements. Data (JSON):",
+				"refresh": "Refreshed"
 			}
 		},
 		"ai": {
@@ -690,8 +708,26 @@
 			"stats": {
 				"graded": "Graded Assignments",
 				"average": "Average Score",
-				"courses": "Related Courses"
+				"courses": "Related Courses",
+				"enrolledCourses": "Enrolled Courses",
+				"completionRate": "Completion(%)",
+				"lastActive": "Last Active"
 			},
+			"profile": {
+				"studentNo": "Student No.",
+				"username": "Username",
+				"email": "Email",
+				"phone": "Phone",
+				"school": "School",
+				"grade": "Grade",
+				"subject": "Subject/Major",
+				"location": "Location",
+				"birthday": "Birthday"
+			},
+			"recentStudy": "Recent Study",
+			"radar": { "title": "Capability Radar", "viewInsights": "View Insights", "student": "Student", "classAvg": "Class" },
+			"alerts": { "title": "Alerts" },
+			"recommendations": { "title": "Recommendations" },
 			"table": {
 				"title": "Grades",
 				"assignment": "Assignment",

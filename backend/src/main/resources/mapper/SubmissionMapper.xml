@@ -208,6 +208,8 @@
             s.submitted_at,
             s.is_late,
             g.id AS grade_id,
+            g.status AS grade_status,
+            g.resubmit_until AS resubmit_until,
             g.score,
             g.max_score,
             g.percentage,

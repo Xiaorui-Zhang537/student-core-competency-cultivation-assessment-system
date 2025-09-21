@@ -67,14 +67,8 @@
             width="9rem"
             :fullWidth="false"
           />
-
-          <!-- 搜索框（紧随其后） -->
-          <div class="relative">
-            <GlassSearchInput v-model="searchQuery" :placeholder="t('teacher.students.filters.searchPlaceholder')" size="sm" class="w-56" />
-          </div>
-
           <!-- 排序选择器（与前面控件保持相同间距与高度） / 批量操作互斥 -->
-          <div v-if="selectedStudents.length === 0" class="ml-auto">
+          <div v-if="selectedStudents.length === 0">
             <GlassPopoverSelect
               v-model="sortBy"
               :options="sortOptions"
@@ -85,7 +79,7 @@
           </div>
 
           <!-- 批量操作（出现时替代排序，并右对齐） -->
-          <div v-else class="ml-auto flex items-center gap-2">
+          <div v-else class="flex items-center gap-2">
             <span class="text-sm text-gray-600 dark:text-gray-400">
               {{ t('teacher.students.batch.selectedCount', { count: selectedStudents.length }) }}
             </span>
@@ -97,6 +91,11 @@
               <user-minus-icon class="w-4 h-4 mr-1" />
               {{ t('teacher.students.batch.remove') }}
             </Button>
+          </div>
+
+          <!-- 搜索框（右对齐） -->
+          <div class="ml-auto relative">
+            <GlassSearchInput v-model="searchQuery" :placeholder="t('teacher.students.filters.searchPlaceholder')" size="sm" class="w-56" />
           </div>
         </div>
       </card>
@@ -154,7 +153,7 @@
                 <th class="px-6 py-3 text-left text-xs font-semibold text-gray-700 dark:text-gray-200 tracking-wide">
                   {{ t('teacher.students.table.lastActive') }}
                 </th>
-                <th class="px-6 py-3 text-left text-xs font-semibold text-gray-700 dark:text-gray-200 tracking-wide">
+                <th class="px-6 py-3 text-right pr-24 md:pr-32 text-xs font-semibold text-gray-700 dark:text-gray-200 tracking-wide">
                   {{ t('teacher.students.table.actions') }}
                 </th>
               </tr>
@@ -260,15 +259,11 @@
                         <div
                           v-if="showStudentMenu === student.id"
                           ref="menuRef"
-                          class="fixed z-[9999] rounded-lg shadow-lg popover-glass border border-white/25 dark:border-white/10 overflow-y-auto no-scrollbar p-1"
+                          class="fixed z-[9999] rounded-2xl shadow-lg popover-glass border border-white/25 dark:border-white/10 overflow-y-auto no-scrollbar p-1"
                           :style="{ left: menuPos.left + 'px', top: menuPos.top + 'px', width: menuPos.width + 'px', maxHeight: '180px' }"
                           @click.stop
                         >
                           <div class="py-1 space-y-1">
-                            <Button variant="menu" size="sm" class="w-full justify-start" @click="viewGrades(student.id)">
-                               <AcademicCapIcon class="w-4 h-4" />
-                               {{ t('teacher.students.table.viewGrades') }}
-                            </Button>
                             <Button variant="menu" size="sm" class="w-full justify-start" @click="resetProgress(student.id)">
                                <ArrowPathIcon class="w-4 h-4" />
                                {{ t('teacher.students.table.reset') }}
@@ -296,7 +291,7 @@
         <!-- 分页（移除额外容器样式，保留简洁行） -->
         <div class="mt-6 px-4 py-3 flex items-center justify-between">
           <div class="flex items-center gap-2">
-            <span class="text-sm text-gray-700 dark:text-gray-300">{{ t('teacher.assignments.pagination.perPagePrefix') }}</span>
+            <span class="text-sm text-gray-700 dark:text-gray-300 whitespace-nowrap">{{ t('teacher.assignments.pagination.perPagePrefix') }}</span>
             <GlassPopoverSelect
               :model-value="pageSize"
               :options="[{label:'10',value:10},{label:'20',value:20},{label:'50',value:50}]"
@@ -304,7 +299,7 @@
               width="80px"
               @update:modelValue="(v:any)=>{ pageSize = Number(v||10) }"
             />
-            <span class="text-sm text-gray-700 dark:text-gray-300">{{ t('teacher.assignments.pagination.perPageSuffix') }}</span>
+            <span class="text-sm text-gray-700 dark:text-gray-300 whitespace-nowrap">{{ t('teacher.assignments.pagination.perPageSuffix') }}</span>
           </div>
           <div class="flex items-center gap-2">
             <Button variant="outline" size="sm" class="whitespace-nowrap" @click="currentPage = Math.max(1, currentPage - 1)" :disabled="currentPage === 1">{{ t('teacher.assignments.pagination.prev') }}</Button>

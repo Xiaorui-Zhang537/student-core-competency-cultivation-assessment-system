@@ -43,6 +43,7 @@
 			"loading": "正在加载课程...",
 			"filters": {
 				"searchPlaceholder": "搜索课程标题/描述...",
+				"sortDifficultyLabel": "难度排序",
 				"status": {
 					"all": "全部",
 					"draft": "草稿",
@@ -126,7 +127,14 @@
 			"subtitle": "创建、查看和管理课程作业",
 			"filters": {
 				"byCourse": "按课程筛选",
-				"selectCourse": "请选择课程"
+				"selectCourse": "请选择课程",
+				"statusLabel": "状态",
+				"statusPlaceholder": "请选择状态"
+			},
+			"searchPlaceholder": "搜索作业",
+			"status": {
+				"pendingReview": "待批改",
+				"ended": "已结束"
 			},
 			"loading": "正在加载作业...",
 			"actions": {
@@ -233,7 +241,8 @@
 				"selectAllFiles": "全选附件",
 				"clearFiles": "清空选择",
 				"text": "文本内容",
-				"reload": "重新加载"
+				"reload": "重新加载",
+				"hintBackgroundRunning": "关闭后仍会在后台继续批改"
 			},
 			"render": {
 				"overall": "总体评价",
@@ -256,6 +265,8 @@
 			"progress": {
 				"label": "进度"
 			}
+			,
+			"viewDetail": "查看详情"
 		},
 		"submissions": {
 			"breadcrumb": {
@@ -275,11 +286,13 @@
 				"graded": "已评分",
 				"returned": "已退回",
 				"draft": "草稿",
-				"late": "迟交"
+				"late": "迟交",
+				"unsubmitted": "未提交"
 			},
 			"actions": {
 				"grade": "评分",
-				"remindUnsubmitted": "提醒未提交"
+				"remindUnsubmitted": "提醒未提交",
+				"returnForResubmit": "打回重做"
 			},
 			"pagination": {
 				"perPage": "每页",
@@ -335,6 +348,9 @@
 				"completeness": "完整性",
 				"clarity": "清晰度",
 				"apply": "采用建议",
+				"writeRadar": "写入五维能力分",
+				"generate": "生成AI建议",
+				"hint": "点击下方按钮，基于本次提交自动生成AI评分建议。",
 				"analysis": "AI分析",
 				"improvements": "改进建议"
 			},
@@ -357,6 +373,8 @@
 				"allowResubmit": "允许重新提交",
 				"sendNotification": "发送通知给学生",
 				"publishImmediately": "立即发布成绩",
+				"reason": "原因",
+				"resubmitUntil": "重交截止时间",
 				"submit": "提交评分",
 				"saveDraft": "保存草稿"
 			},
@@ -374,6 +392,9 @@
 				"viewOthers": "查看其他提交",
 				"export": "导出提交内容",
 				"report": "举报抄袭"
+			},
+			"actions": {
+				"returnForResubmit": "打回重做"
 			},
 			"notify": {
 				"gradeSuccess": "评分成功",
@@ -495,7 +516,8 @@
 				"timeRangeMsg": "开始日期不能晚于结束日期",
 				"refreshFailed": "刷新失败",
 				"refreshFailedMsg": "请稍后再试",
-				"aiPromptHeader": "请根据以下课程数据做教学洞察与建议，并指出高风险点与可执行改进项。数据(JSON)："
+				"aiPromptHeader": "请根据以下课程数据做教学洞察与建议，并指出高风险点与可执行改进项。数据(JSON)：",
+				"refresh": "已刷新"
 			}
 		},
 		"ai": {
@@ -508,6 +530,7 @@
 			"memory": "长期记忆",
 			"memoryPlaceholder": "个性化偏好、口吻等...",
 			"renameTitle": "重命名对话",
+			"model": { "label": "模型" },
 			"context": {
 				"title": "上下文",
 				"desc": "可选：选择课程与学生为 AI 提供上下文，获得更相关的建议。",
@@ -701,8 +724,26 @@
 			"stats": {
 				"graded": "已评分作业",
 				"average": "平均分",
-				"courses": "相关课程"
+				"courses": "相关课程",
+				"enrolledCourses": "已修课程",
+				"completionRate": "完成率(%)",
+				"lastActive": "最近活跃"
 			},
+			"profile": {
+				"studentNo": "学号",
+				"username": "用户名",
+				"email": "邮箱",
+				"phone": "电话",
+				"school": "学校",
+				"grade": "年级",
+				"subject": "专业/科目",
+				"location": "地区",
+				"birthday": "生日"
+			},
+			"recentStudy": "最近学习",
+			"radar": { "title": "能力雷达", "viewInsights": "查看洞察", "student": "学生", "classAvg": "班级" },
+			"alerts": { "title": "风险预警" },
+			"recommendations": { "title": "个性化建议" },
 			"table": {
 				"title": "成绩记录",
 				"assignment": "作业标题",

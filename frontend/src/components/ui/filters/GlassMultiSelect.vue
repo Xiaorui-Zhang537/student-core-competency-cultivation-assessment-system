@@ -5,8 +5,8 @@
       <button v-if="clearable && modelValue.length" type="button" class="text-xs text-primary-600 dark:text-primary-300" @click="$emit('update:modelValue', [])">{{ clearText }}</button>
     </div>
     <div ref="rootRef" class="relative w-full">
-      <button type="button" class="ui-pill--select ui-pill--pl ui-pill--pr-select" @click="toggle">
-        <div class="flex flex-wrap gap-1">
+      <button type="button" :class="['ui-pill--select','ui-pill--pl','ui-pill--pr-select', size==='sm' ? 'ui-pill--sm' : 'ui-pill--md']" @click="toggle">
+        <div class="flex flex-wrap items-center gap-1">
           <span v-if="!modelValue.length" class="text-gray-400">{{ placeholder }}</span>
           <span
             v-for="v in displayValues"
@@ -45,12 +45,14 @@ interface Props {
   placeholder?: string
   clearable?: boolean
   clearText?: string
+  size?: 'sm' | 'md'
 }
 
 const props = withDefaults(defineProps<Props>(), {
   placeholder: '请选择…',
   clearable: true,
-  clearText: '清空'
+  clearText: '清空',
+  size: 'sm'
 })
 
 const emit = defineEmits<{ (e:'update:modelValue', v:(string|number)[]):void }>()

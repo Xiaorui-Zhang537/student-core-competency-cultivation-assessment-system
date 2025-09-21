@@ -2,7 +2,7 @@
   <div class="min-h-screen p-6">
     <div class="max-w-7xl mx-auto">
     <!-- Header -->
-      <div class="mb-8">
+      <div class="mb-3">
       <div class="flex-1">
         <nav class="flex items-center space-x-2 text-sm text-gray-500 dark:text-gray-400 mb-2">
           <span class="hover:text-gray-700 dark:hover:text-gray-200 cursor-pointer" @click="router.push('/teacher/courses')">
@@ -32,19 +32,39 @@
       </div>
     </div>
 
-    <!-- Filters -->
-    <div class="mb-6 card p-4">
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div>
-          <label for="course-filter" class="block text-sm font-medium mb-1">{{ t('teacher.assignments.filters.byCourse') }}</label>
+    <!-- Filters: 标题-选择器一排 + 状态选择器 + 右侧搜索器 -->
+    <div class="mb-3 card p-4">
+      <div class="flex items-center gap-1 flex-wrap">
+        <div class="w-auto flex items-center gap-2">
+          <span class="text-sm font-semibold leading-tight text-gray-700 dark:text-gray-300">{{ t('teacher.assignments.filters.byCourse') }}</span>
+          <div class="w-56">
           <GlassPopoverSelect
-            :label="t('teacher.assignments.filters.byCourse') as string"
             v-model="selectedCourseId"
-            :options="[{label: t('teacher.assignments.filters.selectCourse') as string, value: null as any}, ...teacherCourses.map((c: any) => ({ label: c.title, value: String(c.id) }))]"
-            size="md"
-            stacked
+            :options="teacherCourses.map((c: any) => ({ label: c.title, value: String(c.id) }))"
+              :placeholder="(t('teacher.assignments.filters.selectCourse') as string)"
+              size="sm"
+              :fullWidth="false"
+              @change="handleCourseFilterChange"
+            />
+          </div>
+        </div>
+
+        <div class="w-auto flex items-center gap-2 -ml-16">
+          <span class="text-sm font-semibold leading-tight text-gray-700 dark:text-gray-300">{{ t('teacher.assignments.filters.statusLabel') || '状态' }}</span>
+          <div class="w-64">
+            <GlassPopoverSelect
+              v-model="statusFilter"
+              :options="statusOptions"
+              :placeholder="(t('teacher.assignments.filters.statusPlaceholder') as string) || '请选择状态'"
+              size="sm"
+              :fullWidth="false"
             @change="handleCourseFilterChange"
           />
+          </div>
+        </div>
+
+        <div class="ml-auto w-56">
+          <GlassSearchInput v-model="searchText" :placeholder="(t('teacher.assignments.searchPlaceholder') as string) || '搜索作业'" size="sm" />
         </div>
       </div>
     </div>
@@ -60,7 +80,7 @@
           <p class="text-sm text-gray-600">{{ assignment.description }}</p>
           <div class="text-sm text-gray-500 mt-2">
             {{ t('teacher.assignments.list.dueDate') }}: {{ formatMinute(assignment.dueDate) }}
-            <Badge class="ml-2" size="sm" :variant="statusVariant(String(assignment.status).toUpperCase())">{{ renderStatus(assignment) }}</Badge>
+            <Badge class="ml-2" size="sm" :variant="statusVariantByDisplay(displayStatusKey(assignment))">{{ renderStatus(assignment) }}</Badge>
           </div>
           <div v-if="String(assignment.status).toLowerCase()==='scheduled' && assignment.publishAt" class="text-xs text-gray-500 mt-1">
             {{ (t('teacher.assignments.modal.publishAt') as string) }}: {{ formatMinute(assignment.publishAt) }}
@@ -113,18 +133,7 @@
       <div class="mb-3">
         <label class="block text-sm font-medium mb-1">{{ t('teacher.assignments.modal.visibility') || '可见性' }}</label>
         <div class="flex items-center gap-4 text-sm">
-          <label class="inline-flex items-center gap-2">
-            <input type="radio" value="draft" v-model="publishMode" />
-            <span>{{ t('teacher.assignments.modal.draft') || '保存为草稿' }}</span>
-          </label>
-          <label class="inline-flex items-center gap-2">
-            <input type="radio" value="publish" v-model="publishMode" />
-            <span>{{ t('teacher.assignments.modal.publishNow') || '立即发布' }}</span>
-          </label>
-          <label class="inline-flex items-center gap-2">
-            <input type="radio" value="scheduled" v-model="publishMode" />
-            <span>{{ t('teacher.assignments.modal.schedule') || '定时发布' }}</span>
-          </label>
+          <SegmentedPills :model-value="publishMode" :options="publishOptions" size="sm" @update:modelValue="(v:any)=> publishMode = v" />
         </div>
         <p class="mt-1 text-xs text-gray-500">{{ t('teacher.assignments.modal.visibilityHint') || '草稿不会对学生可见；仅发布后学生才能看到并提交。' }}</p>
       </div>
@@ -205,7 +214,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, onMounted, computed } from 'vue';
+import { ref, reactive, onMounted, computed, watch } from 'vue';
 import { useAssignmentStore } from '@/stores/assignment';
 import { useCourseStore } from '@/stores/course';
 import { useAuthStore } from '@/stores/auth';
@@ -226,6 +235,8 @@ import Badge from '@/components/ui/Badge.vue'
 import GlassSearchInput from '@/components/ui/inputs/GlassSearchInput.vue'
 import GlassTextarea from '@/components/ui/inputs/GlassTextarea.vue'
 import GlassModal from '@/components/ui/GlassModal.vue'
+import SegmentedPills from '@/components/ui/SegmentedPills.vue'
+import { assignmentApi } from '@/api/assignment.api'
 
 const assignmentStore = useAssignmentStore();
 const courseStore = useCourseStore();
@@ -238,8 +249,23 @@ const showModal = ref(false);
 const isEditing = ref(false);
 const editingAssignmentId = ref<string | null>(null);
 const publishMode = ref<'draft' | 'publish' | 'scheduled'>('draft')
+const publishOptions = computed(() => ([
+  { label: (t('teacher.assignments.modal.draft') as string) || '保存为草稿', value: 'draft' },
+  { label: (t('teacher.assignments.modal.publishNow') as string) || '立即发布', value: 'publish' },
+  { label: (t('teacher.assignments.modal.schedule') as string) || '定时发布', value: 'scheduled' },
+]))
 const originalStatus = ref<string>('draft')
 const selectedCourseId = ref<string | null>(null);
+const searchText = ref('')
+const statusFilter = ref('')
+const statusOptions = computed(() => ([
+  { label: (t('teacher.courses.status.draft') as string) || '草稿', value: 'draft' },
+  { label: (t('teacher.courses.status.published') as string) || '已发布', value: 'published' },
+  { label: (t('teacher.assignments.status.pendingReview') as string) || '待批改', value: 'pending_review' },
+  { label: (t('teacher.assignments.status.ended') as string) || '已结束', value: 'ended' },
+  { label: (t('teacher.courses.status.archived') as string) || '已关闭', value: 'closed' },
+  { label: (t('teacher.assignments.modal.schedule') as string) || '定时发布', value: 'scheduled' },
+]))
 const currentPage = ref(1);
 const pageSize = ref(10);
 const totalPages = computed(() => {
@@ -304,29 +330,84 @@ const hasCourseContext = computed(() => effectiveCourseId.value !== '')
 
 
 const statusClass = (status: string) => {
-  const base = 'glass-ultraThin rounded-full' // 与学生端一致的玻璃圆润风格
-  if (status === 'PUBLISHED') return `${base} bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300`
-  if (status === 'DRAFT' || status === 'SCHEDULED') return `${base} bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300`
-  if (status === 'CLOSED') return `${base} bg-gray-100 text-gray-800 dark:bg-gray-800/60 dark:text-gray-200`
+  const base = 'glass-ultraThin rounded-full'
+  if (status === 'success') return `${base} bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300`
+  if (status === 'warning') return `${base} bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300`
+  if (status === 'secondary') return `${base} bg-gray-100 text-gray-800 dark:bg-gray-800/60 dark:text-gray-200`
+  if (status === 'info') return `${base} bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300`
   return `${base} bg-gray-100 text-gray-800 dark:bg-gray-800/60 dark:text-gray-200`
 }
 
-const statusVariant = (status: string) => {
-  const s = String(status || '').toUpperCase()
-  if (s === 'PUBLISHED') return 'success'
-  if (s === 'DRAFT' || s === 'SCHEDULED') return 'warning'
-  if (s === 'CLOSED') return 'secondary'
+const statusVariantByDisplay = (key: string) => {
+  const k = String(key || '').toLowerCase()
+  if (k === 'published') return 'success'
+  if (k === 'draft' || k === 'scheduled' || k === 'pending_review') return 'warning'
+  if (k === 'ended' || k === 'closed') return 'secondary'
   return 'secondary'
 }
 
 function renderStatus(a: any) {
-  const s = String(a?.status || '').toLowerCase()
-  if (s === 'scheduled') return (t('teacher.assignments.modal.schedule') as string) || '定时发布'
-  if (s === 'draft') return (t('teacher.courses.status.draft') as string) || '草稿'
-  if (s === 'published') return (t('teacher.courses.status.published') as string) || '已发布'
-  if (s === 'closed') return (t('teacher.courses.status.archived') as string) || '已关闭'
-  return s
+  const k = displayStatusKey(a)
+  if (k === 'scheduled') return (t('teacher.assignments.modal.schedule') as string) || '定时发布'
+  if (k === 'draft') return (t('teacher.courses.status.draft') as string) || '草稿'
+  if (k === 'published') return (t('teacher.courses.status.published') as string) || '已发布'
+  if (k === 'pending_review') return (t('teacher.assignments.status.pendingReview') as string) || '待批改'
+  if (k === 'ended' || k === 'closed') return (t('teacher.assignments.status.ended') as string) || '已结束'
+  return k
 }
+
+const statsCache = reactive<Record<string, { gradedCount?: number; ungradedCount?: number; submittedCount?: number }>>({})
+
+function isPastDue(a: any): boolean {
+  const dv = a?.dueDate || a?.dueAt
+  if (!dv) return false
+  const d = new Date(dv)
+  if (isNaN(d.getTime())) return false
+  return Date.now() > d.getTime()
+}
+
+async function ensureStats(a: any) {
+  const id = String(a?.id || '')
+  if (!id || statsCache[id]) return
+  try {
+    const res: any = await assignmentApi.getAssignmentSubmissionStats(id)
+    const d: any = res?.data || res || {}
+    statsCache[id] = {
+      gradedCount: Number(d?.gradedCount || 0),
+      ungradedCount: Number(d?.ungradedCount || Math.max(0, Number(d?.submittedCount || 0) - Number(d?.gradedCount || 0))),
+      submittedCount: Number(d?.submittedCount || 0),
+    }
+  } catch { /* ignore */ }
+}
+
+function displayStatusKey(a: any): 'draft'|'published'|'scheduled'|'closed'|'pending_review'|'ended' {
+  const raw = String(a?.status || '').toLowerCase()
+  if (raw === 'draft' || raw === 'scheduled' || raw === 'closed') return raw as any
+  if (raw === 'published') {
+    if (isPastDue(a)) {
+      const id = String(a?.id || '')
+      const st = statsCache[id]
+      if (!st) {
+        // 异步加载，先返回待批改占位
+        ensureStats(a)
+        return 'pending_review'
+      }
+      return (Number(st?.ungradedCount || 0) > 0) ? 'pending_review' : 'ended'
+    }
+    return 'published'
+  }
+  return 'draft'
+}
+
+const displayAssignments = computed(() => {
+  const list = assignmentStore.assignments || []
+  const filter = String(statusFilter.value || '')
+  if (!filter) return list
+  if (filter === 'pending_review' || filter === 'ended') {
+    return list.filter((a: any) => displayStatusKey(a) === filter)
+  }
+  return list.filter((a: any) => String(a?.status || '').toLowerCase() === filter)
+})
 
 function formatMinute(v: any) {
   try { const d = new Date(v); if (isNaN(d.getTime())) return ''; return d.toLocaleString() } catch { return '' }
@@ -503,11 +584,11 @@ const handleDeleteAssignment = async (assignment: Assignment) => {
   };
 
 const handleCourseFilterChange = () => {
-  if (selectedCourseId.value) {
-    assignmentStore.fetchAssignments({ courseId: selectedCourseId.value, page: currentPage.value, size: pageSize.value })
-  } else {
-    assignmentStore.fetchAssignments({ page: currentPage.value, size: pageSize.value })
-  }
+  const base: any = { page: currentPage.value, size: pageSize.value }
+  if (selectedCourseId.value) base.courseId = selectedCourseId.value
+  if (searchText.value) base.search = searchText.value
+  if (statusFilter.value) base.status = statusFilter.value
+  assignmentStore.fetchAssignments(base)
 };
 
 const prevPage = () => {
@@ -565,4 +646,17 @@ onMounted(async () => {
     openCreateModal()
   }
 });
+
+// 监听筛选与搜索（含防抖）
+watch([selectedCourseId, statusFilter, pageSize], () => {
+  currentPage.value = 1
+  handleCourseFilterChange()
+})
+
+let searchTimer: any = null
+watch(searchText, () => {
+  currentPage.value = 1
+  if (searchTimer) clearTimeout(searchTimer)
+  searchTimer = setTimeout(() => handleCourseFilterChange(), 300)
+})
 </script>

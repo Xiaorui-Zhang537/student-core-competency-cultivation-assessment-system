@@ -63,7 +63,10 @@
             <GlassTextarea v-model="newComment" :rows="3" :placeholder="t('shared.community.detail.writeComment') as string" class="w-full" />
             <div class="mt-2 flex items-center gap-2">
               <emoji-picker size="sm" variant="ghost" @select="onEmojiSelect" />
-              <Button size="sm" variant="primary" @click="handlePostComment" :disabled="!newComment.trim() || loading">{{ t('shared.community.detail.postComment') }}</Button>
+              <Button size="sm" variant="primary" @click="handlePostComment" :disabled="!newComment.trim() || loading">
+                <PaperAirplaneIcon class="w-4 h-4 mr-2" />
+                {{ t('shared.community.detail.postComment') }}
+              </Button>
             </div>
         </div>
 
@@ -161,7 +164,7 @@ import { useRoute, useRouter } from 'vue-router';
 import { storeToRefs } from 'pinia';
 import { useCommunityStore } from '@/stores/community';
 import { useAuthStore } from '@/stores/auth';
-import { UserIcon, EyeIcon, HandThumbUpIcon, ChatBubbleLeftIcon, SparklesIcon, ClockIcon, FireIcon } from '@heroicons/vue/24/outline';
+import { UserIcon, EyeIcon, HandThumbUpIcon, ChatBubbleLeftIcon, SparklesIcon, ClockIcon, FireIcon, PaperAirplaneIcon } from '@heroicons/vue/24/outline';
 import Button from '@/components/ui/Button.vue'
 import CommentThread from '@/components/comments/CommentThread.vue'
 import EmojiPicker from '@/components/ui/EmojiPicker.vue'

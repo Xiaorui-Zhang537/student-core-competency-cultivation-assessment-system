@@ -48,7 +48,7 @@ interface Props {
   reverseHeader?: boolean // 反转标题和关闭按钮位置
   hideScrollbar?: boolean // 隐藏内容区滚动条（已全局默认隐藏，此属性保留兼容）
   fillHeight?: boolean // 是否内容区铺满可用高度（默认自适应）
-  heightVariant?: 'compact' | 'normal' | 'tall' | 'max' // 高度档位
+  heightVariant?: 'compact' | 'normal' | 'large' | 'tall' | 'max' // 高度档位
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -76,6 +76,7 @@ const containerMaxHClass = computed(() => {
   switch (props.heightVariant) {
     case 'compact': return 'max-h-[60vh]'
     case 'normal': return 'max-h-[70vh]'
+    case 'large': return 'max-h-[72vh]'
     case 'tall': return 'max-h-[80vh]'
     case 'max': return 'max-h-[85vh]'
     default: return 'max-h-[70vh]'
@@ -86,6 +87,7 @@ const contentMaxHClass = computed(() => {
   switch (props.heightVariant) {
     case 'compact': return 'max-h-[48vh]'
     case 'normal': return 'max-h-[58vh]'
+    case 'large': return 'max-h-[60vh]'
     case 'tall': return 'max-h-[68vh]'
     case 'max': return 'max-h-[74vh]'
     default: return 'max-h-[58vh]'

@@ -119,6 +119,11 @@ public interface FileRecordMapper {
     List<FileRecord> selectByLessonId(@Param("lessonId") Long lessonId);
 
     /**
+     * 仅获取某节次关联的文件ID列表
+     */
+    List<Long> selectFileIdsByLessonId(@Param("lessonId") Long lessonId);
+
+    /**
      * 清空某节次的资料关联
      */
     int deleteLessonMaterialsByLessonId(@Param("lessonId") Long lessonId);

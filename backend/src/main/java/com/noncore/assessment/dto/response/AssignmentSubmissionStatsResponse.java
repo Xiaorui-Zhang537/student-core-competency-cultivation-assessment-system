@@ -18,6 +18,10 @@ public class AssignmentSubmissionStatsResponse {
     private Integer totalEnrolled;
     private Integer submittedCount;
     private Integer unsubmittedCount;
+    /** 已评分提交数 */
+    private Integer gradedCount;
+    /** 未评分提交数（= 已提交 - 已评分） */
+    private Integer ungradedCount;
 }
 
 

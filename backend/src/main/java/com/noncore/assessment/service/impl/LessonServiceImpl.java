@@ -367,7 +367,19 @@ public class LessonServiceImpl implements LessonService {
     @Override
     public java.util.List<com.noncore.assessment.entity.FileRecord> getLessonMaterials(Long lessonId) {
         try {
-            return fileRecordMapper.selectByLessonId(lessonId);
+            // 先走更稳健的两段式查询：取 file_id 列表，再查 file_records
+            java.util.List<Long> fileIds = fileRecordMapper.selectFileIdsByLessonId(lessonId);
+            if (fileIds != null && !fileIds.isEmpty()) {
+                java.util.List<com.noncore.assessment.entity.FileRecord> viaIds = fileRecordMapper.selectByIds(fileIds);
+                if (viaIds != null && !viaIds.isEmpty()) return viaIds;
+            }
+            // 退化为 JOIN 方案
+            java.util.List<com.noncore.assessment.entity.FileRecord> list = fileRecordMapper.selectByLessonId(lessonId);
+            if (list == null || list.isEmpty()) {
+                // 若关联表为空（例如历史数据或尚未迁移场景），回退到旧查询方式
+                return fileRecordMapper.selectByPurposeAndRelatedId("lesson_material", lessonId);
+            }
+            return list;
         } catch (Exception e) {
             // 兼容回退：如果关联表不存在或执行异常，回退到旧查询方式
             logger.warn("lesson_materials 查询失败，回退到 file_records.related_type=lesson_material，lessonId={}", lessonId, e);

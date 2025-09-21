@@ -30,7 +30,10 @@
     
 
     <!-- Loading State -->
-      <div v-if="teacherStore.loading" class="text-center py-12">
+    <img
+      src="../../../../../../../../../var/folders/4g/y4mgnnv92pg2bn4g4_7cf0k00000gn/T/TemporaryItems/NSIRD_screencaptureui_X5C8On/Screenshot 2025-09-20 at 15.25.40.png"
+      height="75" width="475" />
+    <div v-if="teacherStore.loading" class="text-center py-12">
         <p>{{ t('app.loading.title') }}</p>
       </div>
 

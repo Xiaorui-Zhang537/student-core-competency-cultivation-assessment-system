@@ -93,6 +93,11 @@
         ORDER BY fr.created_at DESC
     </select>
 
+    <!-- 仅获取某节次关联的文件ID列表（用于更稳健的二段查询） -->
+    <select id="selectFileIdsByLessonId" parameterType="java.lang.Long" resultType="java.lang.Long">
+        SELECT file_id FROM lesson_materials WHERE lesson_id = #{lessonId}
+    </select>
+
     <!-- 清空某节次的资料关联 -->
     <delete id="deleteLessonMaterialsByLessonId" parameterType="java.lang.Long">
         DELETE FROM lesson_materials WHERE lesson_id = #{lessonId}

@@ -71,13 +71,13 @@
             v-for="course in popularCourses"
             :key="course.id"
             @click="viewCourse(course)"
-            class="course-card"
+            class="course-card rounded-2xl overflow-hidden"
           >
-            <div class="course-thumbnail">
+            <div class="course-thumbnail rounded-2xl overflow-hidden">
               <img
                 :src="course.thumbnail || '/placeholder-course.jpg'"
                 :alt="course.title"
-                class="w-full h-48 object-cover"
+                class="w-full h-48 object-cover rounded-2xl"
               />
               <div class="course-badge">
                 <fire-icon class="w-4 h-4 text-orange-500" />
@@ -142,13 +142,13 @@
             v-for="course in recommendedCourses"
             :key="course.id"
             @click="viewCourse(course)"
-            class="course-card"
+            class="course-card rounded-2xl overflow-hidden"
           >
-            <div class="course-thumbnail">
+            <div class="course-thumbnail rounded-2xl overflow-hidden">
               <img
                 :src="course.thumbnail || '/placeholder-course.jpg'"
                 :alt="course.title"
-                class="w-full h-48 object-cover"
+                class="w-full h-48 object-cover rounded-2xl"
               />
               <div class="course-badge bg-blue-500 text-white">
                 <sparkles-icon class="w-4 h-4" />
@@ -221,11 +221,11 @@
               @click="viewCourse(course)"
               class="course-card"
             >
-              <div class="course-thumbnail">
+              <div class="course-thumbnail rounded-2xl overflow-hidden">
                 <img
                   :src="course.thumbnail || '/placeholder-course.jpg'"
                   :alt="course.title"
-                  class="w-full h-48 object-cover"
+                  class="w-full h-48 object-cover rounded-2xl"
                 />
               </div>
               

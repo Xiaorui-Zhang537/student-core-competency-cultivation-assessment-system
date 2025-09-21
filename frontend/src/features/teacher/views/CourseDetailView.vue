@@ -13,7 +13,7 @@
         <span>{{ course.title }}</span>
       </nav>
 
-      <PageHeader :title="course.title" :subtitle="course.category">
+<PageHeader :title="course.title" :subtitle="localizeCategory2(course.category)">
         <template #actions>
           <div class="flex items-center gap-2">
             <Button variant="teal" @click="router.push(`/teacher/courses/${course.id}/students`)">
@@ -31,17 +31,17 @@
           </div>
         </template>
       </PageHeader>
-      <div class="w-full h-56 bg-gray-200 rounded overflow-hidden" v-if="course.coverImage">
-        <img v-if="coverSrc" :src="coverSrc" :alt="t('teacher.courses.card.coverAlt')" class="w-full h-full object-cover" @error="coverSrc='';" />
+      <div class="w-full h-56 bg-gray-200 rounded-2xl overflow-hidden" v-if="course.coverImage">
+        <img v-if="coverSrc" :src="coverSrc" :alt="t('teacher.courses.card.coverAlt')" class="w-full h-full object-cover rounded-2xl" @error="coverSrc='';" />
       </div>
-      <Card :hoverable="true" padding="md" class="relative overflow-hidden">
+      <Card :hoverable="true" :hoverScale="false" padding="md" class="relative overflow-hidden rounded-2xl">
         <h2 class="text-xl font-semibold mb-4">{{ t('teacher.courseDetail.sections.description') }}</h2>
         <p>{{ course.description }}</p>
       </Card>
       <!-- 按需求：移除冗余的课程内容板块，仅保留描述与节次编辑 -->
 
       <!-- Lessons Editor: inline per-lesson editing for weight/video/materials/assignment binding -->
-      <Card :hoverable="true" padding="md" class="relative overflow-hidden">
+      <Card :hoverable="true" :hoverScale="false" padding="md" class="relative overflow-hidden rounded-2xl">
         <div class="flex items-center justify-between mb-4">
           <h2 class="text-xl font-semibold">{{ t('teacher.courseDetail.sections.lessons') || '课程节次' }}</h2>
           <Button size="sm" variant="outline" @click="reloadLessons">
@@ -50,7 +50,7 @@
           </Button>
         </div>
         <!-- Chapters Toolbar -->
-        <div class="p-4 rounded border relative overflow-hidden" v-glass="{ strength: 'regular', interactive: true }" :class="['glass-regular glass-interactive','mb-4']">
+        <div class="p-4 rounded-2xl border relative overflow-hidden" v-glass="{ strength: 'regular', interactive: true }" :class="['glass-regular glass-interactive','mb-4']">
           <div class="grid grid-cols-1 md:grid-cols-3 gap-3 items-end">
             <div>
               <label class="block text-sm mb-1">{{ t('teacher.courseDetail.sections.newChapterTitle') }}</label>
@@ -69,7 +69,7 @@
           </div>
           <div class="mt-4">
             <div class="text-sm mb-2">{{ t('teacher.courseDetail.sections.chapterList') }}</div>
-            <ul class="rounded border overflow-hidden">
+            <ul class="rounded-2xl border overflow-hidden">
               <li v-for="c in chapters" :key="c.id"
                   class="p-3 flex items-center justify-between cursor-move relative"
                   draggable="true" @dragstart="onChapterDragStart(c)" @dragover.prevent @drop="onChapterDrop(c)">
@@ -86,7 +86,7 @@
         </div>
         <div class="space-y-4">
           <!-- New lesson inline form -->
-          <div class="p-4 rounded border relative overflow-hidden" v-glass="{ strength: 'regular', interactive: true }">
+          <div class="p-4 rounded-2xl border relative overflow-hidden" v-glass="{ strength: 'regular', interactive: true }">
             <div class="grid grid-cols-1 md:grid-cols-3 gap-3 items-end">
               <div>
                 <label class="block text-sm mb-1">{{ t('teacher.courseDetail.sections.newLessonTitle') }}</label>
@@ -104,7 +104,7 @@
               </Button>
             </div>
           </div>
-          <div v-for="l in lessons" :key="l.id" class="p-4 rounded border border-gray-300 dark:border-gray-600 relative overflow-hidden group" draggable="true" @dragstart="onDragStart(l)" @dragover.prevent @drop="onDrop(l)">
+          <div v-for="l in lessons" :key="l.id" class="p-4 rounded-2xl border border-gray-300 dark:border-gray-600 relative overflow-hidden group" draggable="true" @dragstart="onDragStart(l)" @dragover.prevent @drop="onDrop(l)">
             <div class="flex items-center gap-3">
               <div class="font-medium flex-1 truncate">{{ l.title }}</div>
               <Button size="xs" variant="danger" @click="deleteLessonRow(l)">
@@ -134,8 +134,8 @@
               <div>
                 <div class="flex items-center gap-2 whitespace-nowrap">
                   <label class="text-sm whitespace-nowrap">{{ t('teacher.courseDetail.sections.video') }}</label>
-                  <GlassInput class="input-sm w-80 md:w-96 flex-1 min-w-0" :fullWidth="false" v-model="l._videoUrl" :placeholder="t('teacher.courseDetail.sections.videoUrlPh') as string" @change="() => saveVideoUrl(l)" />
-                  <Button size="sm" variant="outline" class="whitespace-nowrap" @click="openVideoPicker(l)">{{ t('teacher.courseDetail.actions.selectVideoShort') }}</Button>
+                  <GlassInput class="w-80 md:w-96 flex-1 min-w-0 h-9 text-sm" :fullWidth="false" v-model="l._videoUrl" :placeholder="t('teacher.courseDetail.sections.videoUrlPh') as string" @change="() => saveVideoUrl(l)" />
+                  <Button size="sm" variant="primary" icon="search" class="whitespace-nowrap" @click="openVideoPicker(l)">{{ t('teacher.courseDetail.actions.selectVideoShort') }}</Button>
                 </div>
                 <!-- 资料选择（独立一行，位于视频下方） -->
                 <div class="mt-3 flex items-center gap-2 whitespace-nowrap min-w-0">
@@ -148,9 +148,6 @@
                       :placeholder="t('teacher.courseDetail.actions.selectMaterialShort') || '选资料'"
                     />
                   </div>
-                  <Button size="sm" variant="outline" class="shrink-0" @click="openMaterialPicker(l)">
-                    {{ t('teacher.courseDetail.actions.selectMaterialShort') }}
-                  </Button>
                 </div>
               </div>
               <div>
@@ -190,7 +187,7 @@
         </div>
       </Card>
       <div class="grid grid-cols-1 md:grid-cols-2 gap-6 items-stretch">
-        <Card padding="md" class="order-2 sm:order-1 h-full relative overflow-hidden">
+        <Card padding="md" :hoverScale="false" class="order-2 sm:order-1 h-full relative overflow-hidden rounded-2xl">
           <div class="flex items-center justify-between mb-4">
             <h2 class="text-xl font-semibold leading-tight break-all">{{ t('teacher.courseDetail.sections.materials') }}</h2>
             <FileUpload
@@ -219,8 +216,8 @@
                 </div>
               </div>
               <div class="flex items-center gap-2">
-                <Button size="sm" variant="outline" as="a" :href="`${baseURL}/files/${f.id}/download`">{{ t('teacher.courseDetail.sections.download') }}</Button>
-                <Button size="sm" variant="danger" @click="confirmDelete(f.id, 'material')">{{ t('teacher.courseDetail.sections.delete') }}</Button>
+                <Button size="sm" variant="success" icon="download" as="a" :href="`${baseURL}/files/${f.id}/download`">{{ t('teacher.courseDetail.sections.download') }}</Button>
+                <Button size="sm" variant="danger" icon="delete" @click="confirmDelete(f.id, 'material')">{{ t('teacher.courseDetail.sections.delete') }}</Button>
               </div>
             </li>
             <li v-if="!materials.length" class="py-6 text-center text-sm text-gray-500">{{ t('teacher.courseDetail.sections.noMaterials') }}</li>
@@ -231,7 +228,7 @@
             <Button size="sm" variant="outline" :disabled="materialsPage===materialsTotalPages" @click="materialsPage++">{{ t('teacher.courseDetail.sections.next') }}</Button>
           </div>
         </Card>
-        <Card padding="md" class="order-1 sm:order-2 h-full relative overflow-hidden">
+        <Card padding="md" :hoverScale="false" class="order-1 sm:order-2 h-full relative overflow-hidden rounded-2xl">
           <div class="flex items-center justify-between mb-4">
             <h2 class="text-xl font-semibold leading-tight break-all">{{ t('teacher.courseDetail.sections.videos') }}</h2>
             <FileUpload
@@ -260,16 +257,16 @@
                 </div>
               </div>
               <div class="flex items-center gap-2">
-                <Button size="sm" variant="outline" as="a" :href="`${baseURL}/files/${f.id}/download`">{{ t('teacher.courseDetail.sections.download') }}</Button>
-                <Button size="sm" variant="danger" @click="confirmDelete(f.id, 'video')">{{ t('teacher.courseDetail.sections.delete') }}</Button>
+                <Button size="sm" variant="success" icon="download" as="a" :href="`${baseURL}/files/${f.id}/download`">{{ t('teacher.courseDetail.sections.download') }}</Button>
+                <Button size="sm" variant="danger" icon="delete" @click="confirmDelete(f.id, 'video')">{{ t('teacher.courseDetail.sections.delete') }}</Button>
               </div>
             </li>
             <li v-if="!videos.length" class="py-6 text-center text-sm text-gray-500">{{ t('teacher.courseDetail.sections.noVideos') }}</li>
           </ul>
           <div v-if="videos.length > pageSize" class="mt-3 flex items-center justify-end gap-2">
-            <Button size="sm" variant="outline" :disabled="videosPage===1" @click="videosPage--">{{ t('teacher.courseDetail.sections.prev') }}</Button>
+            <Button size="sm" variant="secondary" :disabled="videosPage===1" @click="videosPage--">{{ t('teacher.courseDetail.sections.prev') }}</Button>
             <span class="text-xs text-gray-500">{{ videosPage }} / {{ videosTotalPages }}</span>
-            <Button size="sm" variant="outline" :disabled="videosPage===videosTotalPages" @click="videosPage++">{{ t('teacher.courseDetail.sections.next') }}</Button>
+            <Button size="sm" variant="secondary" :disabled="videosPage===videosTotalPages" @click="videosPage++">{{ t('teacher.courseDetail.sections.next') }}</Button>
           </div>
         </Card>
       </div>
@@ -281,7 +278,7 @@
   </div>
 
   <!-- Video Picker Modal (GlassModal) -->
-  <GlassModal v-if="videoPickerVisible" :title="t('teacher.courseDetail.actions.selectVideoTitle') as string" maxWidth="max-w-3xl" heightVariant="compact" @close="videoPickerVisible = false">
+  <GlassModal v-if="videoPickerVisible" :title="t('teacher.courseDetail.actions.selectVideoTitle') as string" maxWidth="max-w-lg" heightVariant="normal" @close="videoPickerVisible = false">
     <div>
       <GlassSearchInput v-model="videoQuery" :placeholder="t('teacher.courseDetail.sections.searchVideo') as string" size="sm" />
       <ul class="divide-y divide-gray-200 overflow-y-auto" style="max-height: 55vh;">
@@ -294,8 +291,8 @@
             </div>
           </div>
           <div class="flex items-center gap-2">
-            <Button size="sm" variant="primary" class="whitespace-nowrap" @click="chooseVideo(f)">{{ t('teacher.courseDetail.actions.useThisVideo') }}</Button>
-            <Button size="sm" variant="outline" as="a" :href="`${baseURL}/files/${f.id}/download`">{{ t('teacher.courseDetail.sections.download') }}</Button>
+            <Button size="sm" variant="primary" icon="confirm" class="whitespace-nowrap" @click="chooseVideo(f)">{{ t('teacher.courseDetail.actions.useThisVideo') }}</Button>
+            <Button size="sm" variant="success" icon="download" as="a" :href="`${baseURL}/files/${f.id}/download`">{{ t('teacher.courseDetail.sections.download') }}</Button>
           </div>
         </li>
         <li v-if="!videos.length" class="py-6 text-center text-sm text-gray-500">{{ t('teacher.courseDetail.sections.noVideos') }}</li>
@@ -362,7 +359,7 @@ import { fileApi } from '@/api/file.api';
 import Button from '@/components/ui/Button.vue'
 import Card from '@/components/ui/Card.vue'
 import { chapterApi } from '@/api/chapter.api'
-import { DocumentIcon, PhotoIcon, FilmIcon, ArchiveBoxIcon, ChevronRightIcon, UserGroupIcon, ClipboardDocumentListIcon, PresentationChartBarIcon, ArrowPathIcon, PlusIcon, TrashIcon } from '@heroicons/vue/24/outline'
+import { DocumentIcon, PhotoIcon, FilmIcon, ArchiveBoxIcon, ChevronRightIcon, UserGroupIcon, ClipboardDocumentListIcon, PresentationChartBarIcon, ArrowPathIcon, PlusIcon, TrashIcon, ArrowDownTrayIcon } from '@heroicons/vue/24/outline'
 // @ts-ignore shim for vue-i18n types in this project
 import { useI18n } from 'vue-i18n'
 import GlassPopoverSelect from '@/components/ui/filters/GlassPopoverSelect.vue'
@@ -378,6 +375,23 @@ const courseStore = useCourseStore();
 const route = useRoute();
 const router = useRouter();
 const { t } = useI18n()
+function localizeCategory(cat?: string): string {
+  const key = String(cat || '').toLowerCase()
+  const map: Record<string, string> = {
+    programming: t('teacher.courseEdit.form.categoryOptions.programming') as string,
+    design: t('teacher.courseEdit.form.categoryOptions.design') as string,
+    business: t('teacher.courseEdit.form.categoryOptions.business') as string,
+    marketing: t('teacher.courseEdit.form.categoryOptions.marketing') as string,
+    language: t('teacher.courseEdit.form.categoryOptions.language') as string,
+    science: t('teacher.courseEdit.form.categoryOptions.science') as string,
+    art: t('teacher.courseEdit.form.categoryOptions.art') as string,
+    'liberal-arts': t('teacher.courses.category.liberalArts') as string,
+    engineering: t('teacher.courses.category.engineering') as string,
+    'science-college': t('teacher.courses.category.science') as string,
+    other: t('teacher.courses.category.other') as string
+  }
+  return map[key] || (cat || '')
+}
 
 // 接收路由 props: id（用于避免 extraneous non-props attributes 警告）
 const props = withDefaults(defineProps<{ id?: string | number }>(), {});
@@ -437,6 +451,25 @@ const assignmentOptions = computed(() => [
   { label: t('teacher.courseDetail.sections.unbound') as string, value: '' },
   ...courseAssignments.value.map((a: any) => ({ label: String(a.title || a.id), value: String(a.id) }))
 ]);
+
+// 分类本地化（中英文切换）
+function localizeCategory2(cat?: string): string {
+  const key = String(cat || '').toLowerCase()
+  const map: Record<string, string> = {
+    programming: t('teacher.courseEdit.form.categoryOptions.programming') as string,
+    design: t('teacher.courseEdit.form.categoryOptions.design') as string,
+    business: t('teacher.courseEdit.form.categoryOptions.business') as string,
+    marketing: t('teacher.courseEdit.form.categoryOptions.marketing') as string,
+    language: t('teacher.courseEdit.form.categoryOptions.language') as string,
+    science: t('teacher.courseEdit.form.categoryOptions.science') as string,
+    art: t('teacher.courseEdit.form.categoryOptions.art') as string,
+    'liberal-arts': t('teacher.courses.category.liberalArts') as string,
+    engineering: t('teacher.courses.category.engineering') as string,
+    'science-college': t('teacher.courses.category.science') as string,
+    other: t('teacher.courses.category.other') as string
+  }
+  return map[key] || (cat || '')
+}
 
 const fileIcon = (f: any) => {
   const name = (f.originalName || f.fileName || '').toLowerCase();
@@ -507,17 +540,17 @@ const confirmDelete = async (fileId: string | number, kind: 'material'|'video') 
   }
 };
 
-onMounted(() => {
+onMounted(async () => {
   const courseId = getCourseId();
   if (courseId) {
-    courseStore.fetchCourseById(courseId);
+    await courseStore.fetchCourseById(courseId);
   }
-  // 延迟到课程加载后刷新附件
-  setTimeout(() => { refreshMaterials(); refreshVideos(); }, 300);
-  // 加载课程节与作业
-  setTimeout(async () => { await reloadLessons(); await reloadAssignments(); }, 350);
-  // 加载章节
-  setTimeout(() => { reloadChapters(); }, 360);
+  // 先加载课程层级附件，确保多选项可用，再加载节次与其资料绑定，避免刷新后短暂不同步
+  await refreshMaterials();
+  await refreshVideos();
+  await reloadLessons();
+  await reloadAssignments();
+  await reloadChapters();
 });
 
 const reloadLessons = async () => {

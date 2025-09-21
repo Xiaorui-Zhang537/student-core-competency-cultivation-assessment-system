@@ -130,6 +130,16 @@ public class AbilityServiceImpl implements AbilityService {
         return report;
     }
 
+    // 解析任意对象为 double，失败返回 0.0
+    private static double toDouble(Object value) {
+        if (value == null) return 0.0;
+        try {
+            return Double.parseDouble(String.valueOf(value));
+        } catch (Exception ignored) {
+            return 0.0;
+        }
+    }
+
     @Override
     public void recordAbilityAssessment(Long studentId, Long dimensionId, BigDecimal score, 
                                        String assessmentType, Long relatedId, String evidence) {
@@ -240,6 +250,161 @@ public class AbilityServiceImpl implements AbilityService {
         
         logger.info("获取学生最新能力报告成功，学生ID: {}, 报告ID: {}", studentId, latestReport.getId());
         return latestReport;
+    }
+
+    @Override
+    public AbilityReport getLatestAbilityReportByContext(Long studentId, Long courseId, Long assignmentId, Long submissionId) {
+        Map<String, Object> params = new java.util.HashMap<>();
+        params.put("studentId", studentId);
+        if (submissionId != null) {
+            params.put("submissionId", submissionId);
+        } else if (assignmentId != null) {
+            params.put("assignmentId", assignmentId);
+        } else if (courseId != null) {
+            params.put("courseId", courseId);
+        }
+        try {
+            AbilityReport r = abilityReportMapper.selectLatestReportByContext(params);
+            if (r != null) return r;
+        } catch (Exception ignored) {}
+        return getLatestAbilityReport(studentId);
+    }
+
+    @Override
+    public AbilityReport createReportFromAi(Long studentId,
+                                            String normalizedJson,
+                                            String title,
+                                            Long courseId,
+                                            Long assignmentId,
+                                            Long submissionId,
+                                            Long aiHistoryId) {
+        logger.info("基于AI结果创建能力报告，学生ID: {}", studentId);
+        if (studentId == null) {
+            throw new BusinessException(ErrorCode.INVALID_PARAMETER, "学生ID不能为空");
+        }
+        AbilityReport report = new AbilityReport();
+        report.setStudentId(studentId);
+        report.setReportType("ai");
+        report.setTitle(title != null ? title : "AI 批改报告");
+        // 设定报告周期（AI 报告按当天周期持久化，满足非空约束）
+        java.time.LocalDate today = java.time.LocalDate.now();
+        report.setReportPeriodStart(today);
+        report.setReportPeriodEnd(today);
+        // 标记生成方式
+        report.setGeneratedBy("teacher");
+        report.setIsPublished(Boolean.FALSE);
+        // 将规范化JSON中的维度均分作为 dimensionScores；若无法解析则直接存文本
+        try {
+            Map<?,?> obj = objectMapper.readValue(String.valueOf(normalizedJson), Map.class);
+            Object overall = obj.get("overall");
+            Map<String, Object> dim = null;
+            if (overall instanceof Map) {
+                Object dm = ((Map<?,?>) overall).get("dimension_averages");
+                if (dm instanceof Map) {
+                    dim = new HashMap<>();
+                    dim.putAll((Map<String, Object>) dm);
+                }
+            }
+            if (dim != null) {
+                report.setDimensionScores(objectMapper.writeValueAsString(dim));
+            } else {
+                report.setDimensionScores(objectMapper.writeValueAsString(Collections.emptyMap()));
+            }
+            // 保存完整归一化 JSON 以供前端展示小维度分析
+            report.setTrendsAnalysis(String.valueOf(normalizedJson));
+            // overall.final_score → overallScore(0-5)转百分制简单乘20
+            double final5 = 0.0;
+            if (overall instanceof Map) {
+                Object s = ((Map<?,?>) overall).get("final_score");
+                if (s != null) final5 = Double.parseDouble(String.valueOf(s));
+            }
+            report.setOverallScore(BigDecimal.valueOf(Math.round(final5 * 20.0 * 100) / 100.0));
+            // 综合建议
+            String holistic = null;
+            if (overall instanceof Map) {
+                Object h = ((Map<?,?>) overall).get("holistic_feedback");
+                if (h != null) holistic = String.valueOf(h);
+            }
+            // 1) 先从四个维度聚合所有小维度的 suggestions
+            java.util.List<String> allSuggestions = new java.util.ArrayList<>();
+            String[] groupKeys = new String[]{"moral_reasoning","attitude_development","ability_growth","strategy_optimization"};
+            for (String gk : groupKeys) {
+                Object grpRaw = obj.get(gk);
+                if (grpRaw instanceof Map<?,?> grp) {
+                    for (Object sk : grp.keySet()) {
+                        Object secRaw = grp.get(sk);
+                        if (secRaw instanceof Map<?,?> sec) {
+                            Object sraw = sec.get("suggestions");
+                            if (sraw instanceof java.util.Collection<?> coll) {
+                                for (Object s : coll) {
+                                    String sv = s == null ? "" : String.valueOf(s).trim();
+                                    if (!sv.isEmpty()) allSuggestions.add(sv);
+                                    if (allSuggestions.size() >= 24) break;
+                                }
+                            } else if (sraw != null) {
+                                String sv = String.valueOf(sraw).trim();
+                                if (!sv.isEmpty()) allSuggestions.add(sv);
+                            }
+                        }
+                    }
+                }
+            }
+            // 2) 再从 holistic 中追加 "Key suggestions" 段
+            if (holistic != null && !holistic.isBlank()) {
+                String[] lines = holistic.replace("\r", "\n").split("\n");
+                boolean inKeys = false;
+                for (String raw : lines) {
+                    String ln = raw == null ? "" : raw.trim();
+                    if (ln.isEmpty()) continue;
+                    if (!inKeys) {
+                        if (ln.toLowerCase().contains("key suggestions")) { inKeys = true; }
+                        continue;
+                    }
+                    String item = ln;
+                    if (item.startsWith("- ")) item = item.substring(2).trim();
+                    if (item.startsWith("• ")) item = item.substring(2).trim();
+                    if (!item.isEmpty()) allSuggestions.add(item);
+                    if (allSuggestions.size() >= 32) break;
+                }
+            }
+            // 写入改进建议（去重）
+            if (!allSuggestions.isEmpty()) {
+                java.util.LinkedHashSet<String> dedup = new java.util.LinkedHashSet<>(allSuggestions);
+                report.setImprovementAreas(objectMapper.writeValueAsString(new java.util.ArrayList<>(dedup)));
+            }
+            // 若 holistic 为空，则用维度均分与部分建议拼接为 recommendations，避免前端空白
+            if (holistic != null && !holistic.isBlank()) {
+                report.setRecommendations(holistic);
+            } else {
+                StringBuilder sb = new StringBuilder();
+                sb.append(String.format("Overall: %.1f/5. ", final5));
+                if (dim != null) {
+                    double mr = toDouble(dim.get("moral_reasoning"));
+                    double at = toDouble(dim.get("attitude"));
+                    double ab = toDouble(dim.get("ability"));
+                    double st = toDouble(dim.get("strategy"));
+                    sb.append(String.format("Moral: %.1f, Attitude: %.1f, Ability: %.1f, Strategy: %.1f. ", mr, at, ab, st));
+                }
+                if (!allSuggestions.isEmpty()) {
+                    sb.append("Key suggestions:\n");
+                    int max = Math.min(6, allSuggestions.size());
+                    for (int i = 0; i < max; i++) sb.append("- ").append(allSuggestions.get(i)).append("\n");
+                }
+                report.setRecommendations(sb.toString().trim());
+            }
+        } catch (Exception e) {
+            logger.warn("解析AI规范化结果失败，将原文保存到recommendations字段: {}", e.getMessage());
+            report.setRecommendations(String.valueOf(normalizedJson));
+        }
+        // 保存并带上上下文关联
+        report.setCourseId(courseId);
+        report.setAssignmentId(assignmentId);
+        report.setSubmissionId(submissionId);
+        if (aiHistoryId != null) {
+            report.setAiHistoryId(aiHistoryId);
+        }
+        abilityReportMapper.insertReport(report);
+        return report;
     }
 
     @Override

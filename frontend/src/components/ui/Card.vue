@@ -3,8 +3,9 @@
     v-glass="{ strength: 'regular', interactive: true }"
     :class="[
       'rounded-2xl transition-all duration-200 glass-regular glass-interactive',
+      hoverable ? 'hover:shadow-md' : '',
+      (hoverable && hoverScale) ? 'hover:scale-[1.005]' : '',
       {
-        'hover:shadow-md hover:scale-[1.005]': hoverable,
         'p-0': !padding,
         'p-4': padding === 'sm',
         'p-6': padding === 'md',
@@ -32,10 +33,12 @@
 interface Props {
   hoverable?: boolean
   padding?: 'none' | 'sm' | 'md' | 'lg' | false
+  hoverScale?: boolean
 }
 
 withDefaults(defineProps<Props>(), {
   hoverable: false,
-  padding: 'md'
+  padding: 'md',
+  hoverScale: true
 })
 </script> 

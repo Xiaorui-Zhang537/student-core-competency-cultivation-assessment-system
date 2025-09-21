@@ -7,6 +7,8 @@ import com.noncore.assessment.exception.BusinessException;
 import com.noncore.assessment.exception.ErrorCode;
 import com.noncore.assessment.mapper.AssignmentMapper;
 import com.noncore.assessment.mapper.SubmissionMapper;
+import com.noncore.assessment.mapper.GradeMapper;
+import com.noncore.assessment.entity.Grade;
 import com.noncore.assessment.service.FileStorageService;
 import com.noncore.assessment.service.SubmissionService;
 import com.noncore.assessment.util.PageResult;
@@ -43,12 +45,14 @@ public class SubmissionServiceImpl implements SubmissionService {
     private final SubmissionMapper submissionMapper;
     private final AssignmentMapper assignmentMapper;
     private final FileStorageService fileStorageService;
+    private final GradeMapper gradeMapper;
 
     public SubmissionServiceImpl(SubmissionMapper submissionMapper, AssignmentMapper assignmentMapper,
-                                 FileStorageService fileStorageService) {
+                                 FileStorageService fileStorageService, GradeMapper gradeMapper) {
         this.submissionMapper = submissionMapper;
         this.assignmentMapper = assignmentMapper;
         this.fileStorageService = fileStorageService;
+        this.gradeMapper = gradeMapper;
     }
 
     @Override
@@ -65,8 +69,16 @@ public class SubmissionServiceImpl implements SubmissionService {
             throw new BusinessException(ErrorCode.ASSIGNMENT_NOT_PUBLISHED);
         }
 
-        // 检查截止时间
-        boolean isLate = LocalDateTime.now().isAfter(assignment.getDueDate());
+        // 截止时间：考虑“打回重做”的个性化重交截止
+        LocalDateTime now = LocalDateTime.now();
+        LocalDateTime effectiveDeadline = assignment.getDueDate();
+        try {
+            Grade sg = gradeMapper.selectByStudentAndAssignment(studentId, assignmentId);
+            if (sg != null && "returned".equalsIgnoreCase(String.valueOf(sg.getStatus())) && sg.getResubmitUntil() != null) {
+                effectiveDeadline = sg.getResubmitUntil();
+            }
+        } catch (Exception ignored) {}
+        boolean isLate = now.isAfter(effectiveDeadline);
         if (isLate && !assignment.getAllowLate()) {
             throw new BusinessException(ErrorCode.ASSIGNMENT_EXPIRED);
         }
@@ -146,8 +158,16 @@ public class SubmissionServiceImpl implements SubmissionService {
         if (!"published".equals(assignment.getStatus())) {
             throw new BusinessException(ErrorCode.ASSIGNMENT_NOT_PUBLISHED);
         }
-        // 截止时间
-        boolean isLate = LocalDateTime.now().isAfter(assignment.getDueDate());
+        // 截止时间：考虑“打回重做”的个性化重交截止
+        LocalDateTime now = LocalDateTime.now();
+        LocalDateTime effectiveDeadline = assignment.getDueDate();
+        try {
+            Grade sg = gradeMapper.selectByStudentAndAssignment(studentId, assignmentId);
+            if (sg != null && "returned".equalsIgnoreCase(String.valueOf(sg.getStatus())) && sg.getResubmitUntil() != null) {
+                effectiveDeadline = sg.getResubmitUntil();
+            }
+        } catch (Exception ignored) {}
+        boolean isLate = now.isAfter(effectiveDeadline);
         if (isLate && !assignment.getAllowLate()) {
             throw new BusinessException(ErrorCode.ASSIGNMENT_EXPIRED);
         }

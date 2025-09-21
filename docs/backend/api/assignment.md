@@ -26,10 +26,21 @@ Authorization: Bearer <token>
 - `POST /api/assignments/{id}/close`：关闭
 
 ## 4. 统计与提醒
-- `GET /api/assignments/{id}/submission-stats`：提交统计（已交/未交）
+- `GET /api/assignments/{id}/submission-stats`：提交统计（已交/未交/已评分/未评分）
 响应：
 ```json
-{ "code":200, "data": { "assignmentId":"88","courseId":"2","totalEnrolled": 50, "submittedCount": 42, "unsubmittedCount": 8 } }
+{
+  "code": 200,
+  "data": {
+    "assignmentId": 88,
+    "courseId": 2,
+    "totalEnrolled": 50,
+    "submittedCount": 42,
+    "unsubmittedCount": 8,
+    "gradedCount": 35,
+    "ungradedCount": 7
+  }
+}
 ```
 
 - `POST /api/assignments/{id}/remind-unsubmitted`：提醒未交（可携带 `message`）

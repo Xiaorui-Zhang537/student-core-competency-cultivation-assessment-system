@@ -20,16 +20,43 @@
     <div class="mb-8">
       <FilterBar class="glass-thin rounded-full">
         <template #left>
-          <div class="relative w-80">
-            <GlassSearchInput v-model="searchQuery" :placeholder="t('student.courses.searchPlaceholder') as string" size="md" @keyup.enter="applyImmediateSearch()" />
+          <div class="flex items-center gap-4">
+            <div class="w-auto flex items-center gap-2">
+              <span class="text-xs font-medium leading-tight text-gray-700 dark:text-gray-300">{{ t('student.courses.categoryLabel') || '分类' }}</span>
+              <div class="w-56">
+                <GlassPopoverSelect
+                  v-model="selectedCategory"
+                  :options="[{ label: t('student.courses.allCategories') as string, value: '' }, ...categoryOptions]"
+                  size="sm"
+                  :placeholder="t('student.courses.allCategories') as string"
+                />
+              </div>
+            </div>
+            <div class="w-auto flex items-center gap-2">
+              <span class="text-xs font-medium leading-tight text-gray-700 dark:text-gray-300">{{ t('student.courses.statusFilterLabel') || '状态' }}</span>
+              <div class="w-44">
+                <GlassPopoverSelect
+                  v-model="selectedStatus"
+                  :options="statusFilterOptions"
+                  size="sm"
+                />
+              </div>
+            </div>
+            <div class="w-auto flex items-center gap-2">
+              <span class="text-xs font-medium leading-tight text-gray-700 dark:text-gray-300">{{ t('student.courses.sortDifficultyLabel') || '难度排序' }}</span>
+              <div class="w-48">
+                <GlassPopoverSelect
+                  v-model="difficultyOrder"
+                  :options="difficultyOrderOptions"
+                  size="sm"
+                />
+              </div>
+            </div>
           </div>
-          <div class="w-56 ml-2">
-            <GlassPopoverSelect
-              v-model="selectedCategory"
-              :options="[{ label: t('student.courses.allCategories') as string, value: '' }, ...categoryOptions]"
-              size="sm"
-              :placeholder="t('student.courses.allCategories') as string"
-            />
+        </template>
+        <template #right>
+          <div class="relative w-56 ml-auto">
+            <GlassSearchInput v-model="searchQuery" :placeholder="t('student.courses.searchPlaceholder') as string" size="sm" @keyup.enter="applyImmediateSearch()" />
           </div>
         </template>
       </FilterBar>
@@ -48,16 +75,16 @@
       <Card
         v-for="course in filteredCourses"
         :key="course.id"
-        class="overflow-hidden cursor-pointer group"
+        class="overflow-hidden cursor-pointer group rounded-2xl"
         padding="none"
         :hoverable="true"
         @click="enterCourse(course)"
       >
-        <div class="relative h-48">
+        <div class="relative h-48 rounded-2xl overflow-hidden">
           <img v-if="course.coverImageUrl && !coverErrorMap[String(course.id)] && isAllowedImage(course.coverImageUrl)"
                :src="course.coverImageUrl"
                :alt="course.title || ''"
-               class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+               class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300 rounded-2xl"
                @error="coverErrorMap[String(course.id)] = true"
           />
           <div v-else class="w-full h-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center">
@@ -122,7 +149,7 @@ import { useRouter } from 'vue-router';
 import { useStudentStore } from '@/stores/student';
 import { useCourseStore } from '@/stores/course';
 import type { StudentCourse } from '@/types/student';
-import { t } from '@/i18n';
+import { useI18n } from 'vue-i18n'
 import Button from '@/components/ui/Button.vue'
 import Card from '@/components/ui/Card.vue'
 import StartCard from '@/components/ui/StartCard.vue'
@@ -134,6 +161,7 @@ import GlassSearchInput from '@/components/ui/inputs/GlassSearchInput.vue'
 import { AcademicCapIcon, CheckCircleIcon, ChartBarIcon } from '@heroicons/vue/24/outline'
 
 const router = useRouter();
+const { t, locale } = useI18n()
 const studentStore = useStudentStore();
 const courseStore = useCourseStore();
 
@@ -163,6 +191,18 @@ watch(searchQuery, (val) => updateDebounced(String(val || '')))
 debouncedQuery.value = ''
 
 const selectedCategory = ref('');
+const selectedStatus = ref<'all'|'active'|'completed'>('all')
+const statusFilterOptions = computed(() => ([
+  { label: (t('student.courses.statusAll') as string) || '全部', value: 'all' },
+  { label: (t('student.courses.statusOngoing') as string) || '进行中', value: 'active' },
+  { label: (t('student.courses.statusCompleted') as string) || '已完成', value: 'completed' }
+]))
+const difficultyOrder = ref<'none'|'asc'|'desc'>('none')
+const difficultyOrderOptions = computed(() => ([
+  { label: (t('student.courses.sortNone') as string) || '默认', value: 'none' },
+  { label: (t('student.courses.sortDifficultyAsc') as string) || '难度从低到高', value: 'asc' },
+  { label: (t('student.courses.sortDifficultyDesc') as string) || '难度从高到低', value: 'desc' }
+]))
 
 // Computed Properties
 // 使用 storeToRefs 保证解构后仍保留响应性
@@ -189,12 +229,34 @@ const filteredCourses = computed(() => {
   const list = Array.isArray(coursesSafe.value) ? coursesSafe.value : []
   const q = (debouncedQuery.value || '').toLowerCase();
   const cat = selectedCategory.value || '';
-  return list.filter((course: StudentCourse) => {
+  const filtered = list.filter((course: StudentCourse) => {
     const title = (course.title || '').toLowerCase();
     const searchMatch = q === '' || title.includes(q);
     const categoryMatch = cat === '' || course.category === cat;
-    return searchMatch && categoryMatch;
+    const statusMatch = selectedStatus.value === 'all'
+      ? true
+      : selectedStatus.value === 'completed'
+        ? Number(course.progress || 0) >= 100
+        : Number(course.progress || 0) < 100
+    return searchMatch && categoryMatch && statusMatch;
   });
+  // sort by difficulty if needed
+  if (difficultyOrder.value !== 'none') {
+    const order = difficultyOrder.value
+    const rank = (d?: string) => {
+      const v = String(d || '').toLowerCase()
+      if (v.startsWith('beginner') || v.includes('入门') || v.includes('初级')) return 1
+      if (v.startsWith('intermediate') || v.includes('中级')) return 2
+      if (v.startsWith('advanced') || v.includes('高级')) return 3
+      return 0
+    }
+    filtered.sort((a: any, b: any) => {
+      const ra = rank((a.difficulty || a.level))
+      const rb = rank((b.difficulty || b.level))
+      return order === 'asc' ? (ra - rb) : (rb - ra)
+    })
+  }
+  return filtered
 });
 
 // Methods

@@ -91,8 +91,8 @@ const iconOnLeft = computed(() => !!(slots.icon || (props.icon && iconPosition.v
 const iconOnRight = computed(() => !!(props.icon && iconPosition.value==='right'))
 
 // 统一控制图标 SVG 属性：删除图标使用描边版（与 AI 助手一致），其余保持填充版
-const iconSvgAttrs = computed<Record<string, string>>(() => {
-  if (props.icon === 'delete') {
+const iconSvgAttrs = computed<Record<string, string | undefined>>(() => {
+  if (props.icon === 'delete' || props.icon === 'download') {
     return {
       viewBox: '0 0 24 24',
       fill: 'none',
@@ -113,7 +113,7 @@ function renderIcon(name?: Props['icon']): string {
     case 'save': return '<path d="M17 3H3v14h14V3zM5 5h10v10H5V5zm2 2h6v2H7V7z" />'
     case 'confirm': return '<path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414L8.414 15l-4.121-4.121a1 1 0 111.414-1.414L8.414 12.172l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />'
     case 'cancel': return '<path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />'
-    case 'download': return '<path d="M10 3v8l3-3 1.5 1.5L10 15l-4.5-5.5L7 8l3 3V3h0zM4 17h12v-2H4v2z" />'
+    case 'download': return '<path d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5" /><path d="M7.5 9l4.5 4.5L16.5 9" /><path d="M12 3v10.5" />'
     case 'arrow-left': return '<path d="M12 5l-5 5 5 5V5z" />'
     case 'arrow-right': return '<path d="M8 5l5 5-5 5V5z" />'
     case 'close': return '<path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />'

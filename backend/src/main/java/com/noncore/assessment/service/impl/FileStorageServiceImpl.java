@@ -301,8 +301,9 @@ public class FileStorageServiceImpl implements FileStorageService {
                 // 只有上传者可以访问
                     false;
             case "course", "lesson", "community_post",
-                 "lesson_material", "course_material", "course_video" ->
-                // 课程/节次/社区附件与教学资料、课程视频：登录后允许访问（后续可细化为选课校验）
+                 "lesson_material", "course_material", "course_video",
+                 "submission" ->
+                // 课程/节次/社区附件与教学资料、课程视频、作业提交附件：允许教师端/系统处理访问
                     true;
             default -> false;
         };

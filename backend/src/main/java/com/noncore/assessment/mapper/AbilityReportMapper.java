@@ -115,4 +115,10 @@ public interface AbilityReportMapper {
      */
     List<Long> selectStudentsForReportGeneration(@Param("reportType") String reportType,
                                                 @Param("lastGeneratedBefore") LocalDate lastGeneratedBefore);
+
+    /**
+     * 按作业/提交上下文获取最新AI报告
+     */
+    AbilityReport selectLatestReportByContext(java.util.Map<String, Object> params);                                         
 } 
+

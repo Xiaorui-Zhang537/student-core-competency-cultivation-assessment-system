@@ -18,7 +18,7 @@
 
       <teleport to="body">
         <div v-if="open" class="fixed inset-0 z-[999]" @click="close"></div>
-        <div v-if="open" class="fixed z-[1000] popover-glass glass-regular glass-interactive rounded-2xl border border-white/20 dark:border-white/12 shadow-xl no-scrollbar overflow-hidden"
+        <div v-if="open" class="fixed z-[1000] popover-glass glass-regular glass-interactive rounded-2xl border border-white/20 dark:border-white/12 shadow-xl no-scrollbar overflow-visible"
              :style="panelStyle" v-glass="{ strength: 'regular', interactive: true }" @click.stop>
           <!-- Header: month switcher -->
           <div class="flex items-center justify-between px-4 pt-3 pb-2">

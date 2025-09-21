@@ -78,6 +78,13 @@ public class AbilityReport {
     @Schema(description = "综合建议", example = "继续保持编程学习的积极性，同时加强团队协作能力的培养")
     private String recommendations;
 
+    // 关联上下文
+    private Long courseId;
+    private Long assignmentId;
+    private Long submissionId;
+    @Schema(description = "关联AI批改历史ID", example = "123")
+    private Long aiHistoryId;
+
     @Schema(description = "生成方式", example = "system", allowableValues = {"system", "teacher"})
     @Builder.Default
     private String generatedBy = "system";

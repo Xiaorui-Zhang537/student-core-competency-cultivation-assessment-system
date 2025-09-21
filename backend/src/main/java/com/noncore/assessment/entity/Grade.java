@@ -69,6 +69,10 @@ public class Grade {
     @Schema(description = "是否允许重交")
     private Boolean allowResubmit;
 
+    @Schema(description = "允许重交截止时间")
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+    private LocalDateTime resubmitUntil;
+
     @Schema(description = "评分细则JSON（可选）")
     private String rubricJson;
 

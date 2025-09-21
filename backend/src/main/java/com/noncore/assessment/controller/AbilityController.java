@@ -238,6 +238,39 @@ public class AbilityController extends BaseController {
     }
 
     /**
+     * 学生：按上下文获取最新AI能力报告（与教师端策略一致，优先 submissionId -> assignmentId -> courseId）
+     */
+    @GetMapping("/student/report/latest-by-context")
+    @Operation(summary = "学生按上下文获取最新AI能力报告", description = "用于学生端按当前作业/提交上下文查看完整AI报告")
+    @PreAuthorize("hasRole('STUDENT')")
+    public ResponseEntity<ApiResponse<AbilityReport>> getStudentLatestReportByContext(
+            @Parameter(description = "课程ID") @RequestParam(required = false) Long courseId,
+            @Parameter(description = "作业ID") @RequestParam(required = false) Long assignmentId,
+            @Parameter(description = "提交ID") @RequestParam(required = false) Long submissionId
+    ) {
+        Long studentId = getCurrentUserId();
+        AbilityReport latestReport = abilityService.getLatestAbilityReportByContext(studentId, courseId, assignmentId, submissionId);
+        return ResponseEntity.ok(ApiResponse.success(latestReport));
+    }
+
+    
+
+    /**
+     * 教师：获取指定学生的最新能力报告（用于评分页面持久化展示AI建议）
+     */
+    @GetMapping("/teacher/report/latest")
+    @Operation(summary = "教师获取学生最新能力报告", description = "教师根据学生ID获取其最新的能力报告")
+    @PreAuthorize("hasRole('TEACHER')")
+    public ResponseEntity<ApiResponse<AbilityReport>> getLatestAbilityReportForTeacher(
+            @Parameter(description = "学生ID") @RequestParam Long studentId,
+            @Parameter(description = "课程ID") @RequestParam(required = false) Long courseId,
+            @Parameter(description = "作业ID") @RequestParam(required = false) Long assignmentId,
+            @Parameter(description = "提交ID") @RequestParam(required = false) Long submissionId) {
+        AbilityReport latestReport = abilityService.getLatestAbilityReportByContext(studentId, courseId, assignmentId, submissionId);
+        return ResponseEntity.ok(ApiResponse.success(latestReport));
+    }
+
+    /**
      * 获取指定能力报告
      */
     @GetMapping("/student/report/{reportId}")
@@ -248,6 +281,40 @@ public class AbilityController extends BaseController {
         return ResponseEntity.ok(ApiResponse.success(report));
     }
 
+    /**
+     * 教师：基于AI规范化结果创建能力报告
+     */
+    @PostMapping(value = "/teacher/report/from-ai", params = "studentId")
+    @Operation(summary = "教师创建AI能力报告", description = "将AI批改的规范化JSON生成一条能力报告记录")
+    @PreAuthorize("hasRole('TEACHER')")
+    public ResponseEntity<ApiResponse<AbilityReport>> createReportFromAi(
+            @Parameter(description = "学生ID") @RequestParam Long studentId,
+            @Parameter(description = "规范化JSON") @RequestParam String normalizedJson,
+            @Parameter(description = "报告标题") @RequestParam(required = false) String title,
+            @Parameter(description = "课程ID") @RequestParam(required = false) Long courseId,
+            @Parameter(description = "作业ID") @RequestParam(required = false) Long assignmentId,
+            @Parameter(description = "提交ID") @RequestParam(required = false) Long submissionId,
+            @Parameter(description = "AI批改历史ID") @RequestParam(required = false) Long aiHistoryId
+    ) {
+        AbilityReport report = abilityService.createReportFromAi(studentId, normalizedJson, title, courseId, assignmentId, submissionId, aiHistoryId);
+        return ResponseEntity.ok(ApiResponse.success(report));
+    }
+
+    // JSON Body 版本，避免 URL 过长引发代理或CORS异常
+    @PostMapping(value = "/teacher/report/from-ai", consumes = "application/json", params = "!studentId")
+    @Operation(summary = "教师创建AI能力报告(JSON)", description = "以JSON body提交，字段：studentId、normalizedJson、title、courseId、assignmentId、submissionId")
+    @PreAuthorize("hasRole('TEACHER')")
+    public ResponseEntity<ApiResponse<AbilityReport>> createReportFromAiJson(@RequestBody java.util.Map<String, Object> body) {
+        Long studentId = body.get("studentId") == null ? null : Long.valueOf(String.valueOf(body.get("studentId")));
+        String normalizedJson = String.valueOf(body.get("normalizedJson"));
+        String title = body.get("title") == null ? null : String.valueOf(body.get("title"));
+        Long courseId = body.get("courseId") == null ? null : Long.valueOf(String.valueOf(body.get("courseId")));
+        Long assignmentId = body.get("assignmentId") == null ? null : Long.valueOf(String.valueOf(body.get("assignmentId")));
+        Long submissionId = body.get("submissionId") == null ? null : Long.valueOf(String.valueOf(body.get("submissionId")));
+        Long aiHistoryId = body.get("aiHistoryId") == null ? null : Long.valueOf(String.valueOf(body.get("aiHistoryId")));
+        AbilityReport report = abilityService.createReportFromAi(studentId, normalizedJson, title, courseId, assignmentId, submissionId, aiHistoryId);
+        return ResponseEntity.ok(ApiResponse.success(report));
+    }
     /**
      * 生成能力报告
      */

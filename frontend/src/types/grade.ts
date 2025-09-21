@@ -16,7 +16,7 @@ export interface Grade {
 
 // For creating or updating a grade
 export interface GradeRequest {
-  submissionId: string;
+  submissionId?: string;
   studentId: string;
   score: number;
   feedback?: string;

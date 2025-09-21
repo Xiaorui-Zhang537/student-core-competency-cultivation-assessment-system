@@ -108,11 +108,12 @@ function computePos() {
   const rect = el.getBoundingClientRect()
   const viewportH = window.innerHeight || document.documentElement.clientHeight || 0
   const viewportW = window.innerWidth || document.documentElement.clientWidth || 0
-  // Prefer opening downward; if not enough room (below), place upward with a safe margin
+  // Open downward if enough room; otherwise open upward with a safe margin
   const downTop = rect.bottom + 6
   const upTop = Math.max(8, rect.top - PANEL_MAX_HEIGHT - 6)
-  const openDown = true
-  const top = downTop
+  const spaceBelow = Math.max(0, viewportH - rect.bottom - 6)
+  const openDown = spaceBelow >= PANEL_MAX_HEIGHT / 1.5 // allow partial but prefer up if too cramped
+  const top = openDown ? downTop : upTop
   // clamp left within viewport
   const desiredLeft = rect.left
   const maxLeft = Math.max(8, viewportW - rect.width - 8)

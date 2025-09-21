@@ -261,6 +261,7 @@ function exportDetailAsText() {
         if (e0?.quote) lines.push(`证据: ${String(e0.quote)}`)
         if (e0?.reasoning) lines.push(`推理: ${String(e0.reasoning)}`)
         if (e0?.conclusion) lines.push(`结论: ${String(e0.conclusion)}`)
+        if (e0?.explanation) lines.push(`解释: ${String(e0.explanation)}`)
       }
       const sug = Array.isArray(s?.suggestions) ? s.suggestions : []
       if (sug.length) {
@@ -401,13 +402,20 @@ function renderCriterion(block: any) {
       const score = sec?.score
       const ev = Array.isArray(sec?.evidence) ? sec.evidence : []
       const sug = Array.isArray(sec?.suggestions) ? sec.suggestions : []
-      const bar = typeof score === 'number' ? `<div class="h-2 w-40 rounded-md overflow-hidden border border-gray-300/70 dark:border-white/10 bg-gray-200/60 dark:bg-white/10 shadow-inner"><div class=\"h-full bg-gradient-to-r from-sky-400 to-blue-500 dark:from-sky-400 dark:to-blue-500\" style=\"width:${score*20}%\"></div></div>` : ''
+      const bar = typeof score === 'number' ? `<div class="h-2 w-40 rounded-md overflow-hidden border border-gray-300/70 dark:border-white/10 bg-gray-200/60 dark:bg-white/10 shadow-inner"><div class="h-full bg-gradient-to-r from-sky-400 to-blue-500 dark:from-sky-400 dark:to-blue-500" style="width:${score*20}%"></div></div>` : ''
+      const firstReasoning = (ev.find((e: any) => e && String(e.reasoning || '').trim()) || {}).reasoning || ''
+      const firstConclusion = (ev.find((e: any) => e && String(e.conclusion || '').trim()) || {}).conclusion || ''
       const evid = ev
-        .filter((e: any) => (e && (e.quote || e.reasoning || e.conclusion)))
-        .map((e: any) => `<li class="mb-1"><div class="text-xs text-gray-600 dark:text-gray-300">${e.quote ? '“'+escapeHtml(e.quote)+'”' : ''}</div><div class="text-xs">${escapeHtml(e.reasoning || '')}</div>${e.conclusion?`<div class=\"text-xs italic text-gray-500\">${escapeHtml(e.conclusion)}</div>`:''}</li>`) 
+        .filter((e: any) => (e && (e.quote || e.explanation)))
+        .map((e: any) => `<li class="mb-1">
+            <div class="text-xs text-gray-600 dark:text-gray-300">${e.quote ? '“'+escapeHtml(e.quote)+'”' : ''}</div>
+            ${e.explanation?`<div class="text-[11px] text-gray-500">${escapeHtml(e.explanation)}</div>`:''}
+          </li>`) 
         .join('')
+      const reasoningBlock = firstReasoning ? `<div class="text-xs"><span class="font-semibold">Reasoning:</span> ${escapeHtml(firstReasoning)}</div>` : ''
+      const conclusionBlock = firstConclusion ? `<div class="text-xs italic text-gray-600 dark:text-gray-300"><span class="not-italic font-semibold">Conclusion:</span> ${escapeHtml(firstConclusion)}</div>` : ''
       const sugg = sug.map((s: any) => `<li class="mb-1 text-xs">${escapeHtml(String(s))}</li>`).join('')
-      sections.push(`<div class="space-y-2"><div class="text-sm font-medium">${escapeHtml(String(k))} ${score!=null?`(${score}/5)`:''}</div>${bar}<div><div class="text-xs font-semibold mt-2">Evidence</div><ul>${evid}</ul></div><div><div class="text-xs font-semibold mt-2">Suggestions</div><ul>${sugg}</ul></div></div>`)
+      sections.push(`<div class="space-y-2"><div class="text-sm font-medium">${escapeHtml(String(k))} ${score!=null?`(${score}/5)`:''}</div>${bar}<div><div class="text-xs font-semibold mt-2">Evidence</div><ul>${evid}</ul>${reasoningBlock}${conclusionBlock}</div><div><div class="text-xs font-semibold mt-2">Suggestions</div><ul>${sugg}</ul></div></div>`)
     }
     return sections.join('')
   } catch { return `<pre class="text-xs">${escapeHtml(pretty(block))}</pre>` }
@@ -510,6 +518,12 @@ function normalizeFromEvaluationObject(evaluation: any) {
     return { score, evidence, suggestions }
   }
   const findGroup = (obj: any, hint: string) => { const k = Object.keys(obj || {}).find(k => k.toLowerCase().includes(hint)); return k ? obj[k] : undefined }
+  const findSubKey = (obj: any, hints: string[]) => {
+    const keys = Object.keys(obj || {})
+    const lowerHints = hints.map(h => String(h).toLowerCase())
+    const hit = keys.find(k => lowerHints.every(h => k.toLowerCase().includes(h)))
+    return hit ? obj[hit] : undefined
+  }
   const moral = evaluation["1) Moral Reasoning Maturity"] || findGroup(evaluation, 'moral reasoning') || {}
   const attitude = evaluation["2) Learning Attitude Development"] || findGroup(evaluation, 'attitude') || {}
   const ability = evaluation["3) Learning Ability Growth"] || findGroup(evaluation, 'ability') || {}
@@ -517,7 +531,16 @@ function normalizeFromEvaluationObject(evaluation: any) {
   const out: any = {}
   out.moral_reasoning = { stage_level: toSec(moral['1A. Stage Level Identification'] || moral['1A']), foundations_balance: toSec(moral['1B. Breadth of Moral Foundations'] || moral['1B']), argument_chain: toSec(moral['1C. Argument Chains and Counter-arguments'] || moral['1C']) }
   out.attitude_development = { emotional_engagement: toSec(attitude['2A. Emotional Engagement'] || attitude['2A']), resilience: toSec(attitude['2B. Persistence/Resilience'] || attitude['2B']), focus_flow: toSec(attitude['2C. Task Focus / Flow'] || attitude['2C']) }
-  out.ability_growth = { blooms_level: toSec(ability['3A. Bloom’s Taxonomy Progression'] || ability['3A']), metacognition: toSec(ability['3B. Metacognition (Plan–Monitor–Revise)'] || ability['3B']), transfer: toSec(ability['3C. Knowledge Transfer'] || ability['3C']) }
+  out.ability_growth = {
+    blooms_level: toSec(
+      ability['3A. Bloom\'s Taxonomy Progression'] ||
+      ability['3A. Bloom’s Taxonomy Progression'] ||
+      findSubKey(ability, ['3a','bloom']) ||
+      ability['3A']
+    ),
+    metacognition: toSec(ability['3B. Metacognition (Plan–Monitor–Revise)'] || ability['3B']),
+    transfer: toSec(ability['3C. Knowledge Transfer'] || ability['3C'])
+  }
   out.strategy_optimization = { diversity: toSec(strategy['4A. Strategy Diversity'] || strategy['4A']), depth: toSec(strategy['4B. Depth of Processing'] || strategy['4B']), self_regulation: toSec(strategy['4C. Self-Regulation'] || strategy['4C']) }
   const avg = (nums: number[]) => { const arr = nums.filter(n => Number.isFinite(n)); if (!arr.length) return 0; return Math.round((arr.reduce((a, b) => a + b, 0) / arr.length) * 10) / 10 }
   const mrAvg = avg([ Number(out.moral_reasoning?.stage_level?.score), Number(out.moral_reasoning?.foundations_balance?.score), Number(out.moral_reasoning?.argument_chain?.score) ])
@@ -670,7 +693,18 @@ function buildHolisticFeedback(out: any): string {
   } catch { return '' }
 }
 
-onMounted(load)
+onMounted(async () => {
+  await load()
+  // 若从评分页带入 openId，则自动打开详情
+  const q = router.currentRoute.value.query as any
+  const openId = q?.openId
+  if (openId) {
+    try {
+      const resp: any = await aiGradingApi.getHistoryDetail(String(openId))
+      detail.value = (resp?.data ?? resp)
+    } catch {}
+  }
+})
 onMounted(async () => {
   const q = router.currentRoute.value.query as any
   if (q?.courseId) {

@@ -436,15 +436,37 @@ public class NotificationServiceImpl implements NotificationService {
                 title = "评价反馈";
                 yield String.format("您的作业《%s》收到了详细的评价反馈，请查看", assignment.getTitle());
             }
+            case "assignment_returned" -> {
+                title = "作业被打回";
+                String untilStr = null;
+                try {
+                    java.time.LocalDateTime until = grade.getResubmitUntil();
+                    if (until != null) {
+                        untilStr = until.format(java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm"));
+                    }
+                } catch (Exception ignore) {}
+                if (untilStr != null) {
+                    yield String.format("您的作业《%s》已被打回，重交截止：%s。%s", assignment.getTitle(), untilStr, (customMessage != null ? customMessage : ""));
+                } else {
+                    yield String.format("您的作业《%s》已被打回，请根据教师要求修改后重新提交。%s", assignment.getTitle(), (customMessage != null ? customMessage : ""));
+                }
+            }
             default -> {
                 title = "成绩通知";
                 yield customMessage != null ? customMessage : "您有新的成绩通知";
             }
         };
 
-        // 发送通知给学生：一律关联到“作业”，前端可直接使用 assignmentId 跳转
-        sendNotification(grade.getStudentId(), assignment.getTeacherId(), title, content,
-                       "grade", "academic", "normal", "assignment", assignment.getId());
+        // 发送通知给学生：
+        // - assignment_returned 场景：通知类型改为 assignment，便于前端直接跳到作业提交页
+        // - 其他成绩相关：仍用 grade 类型
+        if ("assignment_returned".equals(type)) {
+            sendNotification(grade.getStudentId(), assignment.getTeacherId(), title, content,
+                    "assignment", "academic", "normal", "assignment", assignment.getId());
+        } else {
+            sendNotification(grade.getStudentId(), assignment.getTeacherId(), title, content,
+                    "grade", "academic", "normal", "assignment", assignment.getId());
+        }
 
         return Map.of("successCount", 1, "failCount", 0, "errors", new ArrayList<>());
     }

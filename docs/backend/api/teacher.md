@@ -50,7 +50,16 @@ Authorization: Bearer <token>
 ## 3. 课程进度（维护）
 - `POST /api/teachers/courses/{courseId}/students/{studentId}/progress/reset`：重置进度
 
-## 4. 返回码对照
+## 4. 学生详情/活跃度/预警/建议
+- `GET /api/teachers/students/{studentId}`：学生画像（返回 users 表完整字段 + 汇总指标）
+- `GET /api/teachers/students/{studentId}/courses`：学生参与课程（教师可见范围）
+- `GET /api/teachers/students/{studentId}/activity?days=7&limit=5`：活跃度与最近学习
+- `GET /api/teachers/students/{studentId}/alerts`：风险预警（如14天未活跃/低均分/低完成率）
+- `GET /api/teachers/students/{studentId}/recommendations?limit=6`：个性化学习建议（优先级排序）
+
+说明：所有接口均基于“教师与学生存在课程交集”的权限校验，非授课教师访问将返回 403。
+
+## 5. 返回码对照
 - 200：成功
 - 400：非法参数（日期区间/权重和不等于 1 等）
 - 401：未认证
@@ -70,7 +79,7 @@ Authorization: Bearer <token>
 - `exportAbilityRadarCsv(params)` / `postAbilityRadarCompare(body)` / `exportAbilityRadarCompareCsv(body)` / `postAbilityDimensionInsights(body)`
 - `resetStudentCourseProgress(courseId, studentId)`
 
-## 5. 时序图：课程分析拉取
+## 6. 时序图：课程分析拉取
 ```mermaid
 sequenceDiagram
   participant T as Teacher
@@ -84,7 +93,7 @@ sequenceDiagram
   A-->>V: 更新图表
 ```
 
-## 6. 时序图：能力权重更新
+## 7. 时序图：能力权重更新
 ```mermaid
 sequenceDiagram
   participant T as Teacher

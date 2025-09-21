@@ -17,6 +17,7 @@
         <result column="strengths" property="strengths"/>
         <result column="improvements" property="improvements"/>
         <result column="allow_resubmit" property="allowResubmit"/>
+        <result column="resubmit_until" property="resubmitUntil"/>
         <result column="rubric_json" property="rubricJson"/>
         <result column="regrade_reason" property="regradeReason"/>
         <result column="created_at" property="createdAt"/>
@@ -27,7 +28,7 @@
 
     <sql id="Base_Column_List">
         id, student_id, assignment_id, submission_id, grader_id, score, max_score, percentage,
-        grade_level, feedback, status, strengths, improvements, allow_resubmit, rubric_json, regrade_reason,
+        grade_level, feedback, status, strengths, improvements, allow_resubmit, resubmit_until, rubric_json, regrade_reason,
         created_at, updated_at, published_at, deleted
     </sql>
 
@@ -36,12 +37,12 @@
         INSERT INTO grades (
             student_id, assignment_id, submission_id, grader_id,
             score, max_score, percentage, grade_level,
-            feedback, status, strengths, improvements, allow_resubmit, rubric_json, regrade_reason,
+            feedback, status, strengths, improvements, allow_resubmit, resubmit_until, rubric_json, regrade_reason,
             created_at, updated_at, published_at, deleted
         ) VALUES (
                      #{studentId}, #{assignmentId}, #{submissionId}, #{graderId},
                      #{score}, #{maxScore}, #{percentage}, #{gradeLevel},
-                     #{feedback}, #{status}, #{strengths}, #{improvements}, #{allowResubmit}, #{rubricJson}, #{regradeReason},
+                     #{feedback}, #{status}, #{strengths}, #{improvements}, #{allowResubmit}, #{resubmitUntil}, #{rubricJson}, #{regradeReason},
                      #{createdAt}, #{updatedAt}, #{publishedAt}, #{deleted}
                  )
     </insert>
@@ -82,6 +83,7 @@
             <if test="strengths != null">strengths = #{strengths},</if>
             <if test="improvements != null">improvements = #{improvements},</if>
             <if test="allowResubmit != null">allow_resubmit = #{allowResubmit},</if>
+            <if test="resubmitUntil != null">resubmit_until = #{resubmitUntil},</if>
             <if test="rubricJson != null">rubric_json = #{rubricJson},</if>
             <if test="regradeReason != null">regrade_reason = #{regradeReason},</if>
             <if test="submissionId != null">submission_id = #{submissionId},</if>
@@ -369,13 +371,19 @@
     <!-- 查询单条成绩的历史记录 -->
     <select id="selectGradeHistoryByGradeId" resultType="map">
         SELECT
-            g.score,
-            g.feedback,
-            g.status,
-            g.updated_at as modifiedAt,
-            grader.username as modifiedBy
+            g.id as id,
+            g.score as score,
+            g.max_score as maxScore,
+            g.percentage as percentage,
+            g.grade_level as gradeLevel,
+            g.feedback as feedback,
+            g.strengths as strengths,
+            g.improvements as improvements,
+            g.status as status,
+            DATE_FORMAT(COALESCE(g.published_at, g.updated_at, g.created_at), '%Y-%m-%d %H:%i:%s') as gradedAt,
+            grader.username as graderName
         FROM grades g
-                 LEFT JOIN users grader ON g.grader_id = grader.id
+        LEFT JOIN users grader ON g.grader_id = grader.id
         WHERE g.id = #{gradeId}
     </select>
 

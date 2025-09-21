@@ -1,6 +1,9 @@
 package com.noncore.assessment.service;
 
 import com.noncore.assessment.dto.response.TeacherStudentProfileResponse;
+import com.noncore.assessment.dto.response.TeacherStudentActivityResponse;
+import com.noncore.assessment.dto.response.TeacherStudentAlertsResponse;
+import com.noncore.assessment.entity.LearningRecommendation;
 import com.noncore.assessment.entity.Course;
 import java.util.List;
 
@@ -25,4 +28,15 @@ public interface TeacherStudentService {
             Integer size,
             String keyword
     );
+
+    /**
+     * 获取学生近期活跃度与最近学习记录
+     */
+    TeacherStudentActivityResponse getStudentActivity(Long teacherId, Long studentId, Integer days, Integer limit);
+
+    /** 生成学生风险预警 */
+    TeacherStudentAlertsResponse getStudentAlerts(Long teacherId, Long studentId);
+
+    /** 获取学生个性化建议（按优先级） */
+    java.util.List<LearningRecommendation> getStudentRecommendations(Long teacherId, Long studentId, Integer limit);
 }

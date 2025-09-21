@@ -135,14 +135,14 @@
                 <GlassDateTimePicker v-model="endDate" :dateOnly="true" size="sm" />
               </div>
             </div>
-            <div v-if="compareEnabled" class="flex flex-col gap-2">
+              <div v-if="compareEnabled" class="flex flex-col gap-2">
               <div class="flex flex-wrap items-center gap-2">
                 <span class="text-sm text-gray-700 dark:text-gray-300">{{ t('teacher.analytics.settings.setA') }}</span>
-                <GlassMultiSelect v-model="assignmentIdsA" :options="assignmentSelectOptions" />
+                <GlassMultiSelect v-model="assignmentIdsA" :options="assignmentSelectOptions" size="sm" />
               </div>
               <div class="flex flex-wrap items-center gap-2">
                 <span class="text-sm text-gray-700 dark:text-gray-300">{{ t('teacher.analytics.settings.setB') }}</span>
-                <GlassMultiSelect v-model="assignmentIdsB" :options="assignmentSelectOptions" />
+                <GlassMultiSelect v-model="assignmentIdsB" :options="assignmentSelectOptions" size="sm" />
               </div>
             </div>
           </div>

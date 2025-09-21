@@ -228,6 +228,31 @@ public class GradeController extends BaseController {
         return ResponseEntity.ok(ApiResponse.success(result));
     }
 
+    /**
+     * 打回重做：可设置重交截止时间
+     */
+    @PostMapping("/{id}/return")
+    @PreAuthorize("hasRole('TEACHER') or hasRole('ADMIN')")
+    @Operation(summary = "打回重做", description = "将成绩/提交打回，允许学生在截止前重新提交")
+    public ResponseEntity<ApiResponse<Void>> returnForResubmission(
+            @PathVariable Long id,
+            @RequestBody(required = false) Map<String, Object> body
+    ) {
+        java.time.LocalDateTime until = null;
+        String reason = null;
+        if (body != null) {
+            Object rv = body.get("resubmitUntil");
+            if (rv != null) {
+                String s = String.valueOf(rv);
+                try { until = java.time.LocalDateTime.parse(s.replace(' ', 'T')); } catch (Exception ignored) {}
+            }
+            Object rs = body.get("reason");
+            if (rs != null) reason = String.valueOf(rs);
+        }
+        gradeService.returnForResubmission(id, getCurrentUserId(), reason, until);
+        return ResponseEntity.ok(ApiResponse.success());
+    }
+
     @GetMapping("/ranking")
     @PreAuthorize("hasRole('TEACHER') or hasRole('ADMIN')")
     @Operation(summary = "获取成绩排名", description = "获取成绩排名列表")

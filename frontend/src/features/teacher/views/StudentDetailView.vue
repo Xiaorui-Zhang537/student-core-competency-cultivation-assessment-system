@@ -60,21 +60,73 @@
               @change="onCourseChange"
             />
           </div>
-          <!-- Stats -->
-          <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <div class="card p-4 text-center">
-                  <h3 class="text-2xl font-bold">{{ gradedAssignmentsCount }}</h3>
-                  <p class="text-sm text-gray-500">{{ t('teacher.studentDetail.stats.graded') }}</p>
+          <!-- 关键指标（四卡一行，根据课程筛选变化） -->
+          <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+            <StartCard :label="t('teacher.studentDetail.stats.graded') as string" :value="gradedAssignmentsCount" tone="blue" :icon="DocumentTextIcon" />
+            <StartCard :label="t('teacher.studentDetail.stats.average') as string" :value="averageScore.toFixed(1)" tone="amber" :icon="StarIcon" />
+            <StartCard :label="t('teacher.studentDetail.stats.completionRate') || '完成率(%)'" :value="formatPercent(selectedCourseId ? courseProgress : profile.completionRate)" tone="emerald" :icon="ChartPieIcon" />
+            <StartCard :label="t('teacher.studentDetail.stats.lastActive') || '最近活跃'" :value="formatDateTime(profile.lastAccessTime)" tone="sky" :icon="ChatBubbleLeftRightIcon" />
+          </div>
+
+          <!-- 最近学习 + 能力雷达（左右并排） -->
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div class="card p-5">
+              <div class="flex items-center gap-2 mb-4">
+                <DocumentTextIcon class="w-5 h-5 text-indigo-600" />
+                <h3 class="text-lg font-semibold">{{ t('teacher.studentDetail.recentStudy') || '最近学习' }}</h3>
               </div>
-              <div class="card p-4 text-center">
-                  <h3 class="text-2xl font-bold">{{ averageScore.toFixed(1) }}</h3>
-                  <p class="text-sm text-gray-500">{{ t('teacher.studentDetail.stats.average') }}</p>
-              </div>
-              <div class="card p-4 text-center">
-                  <h3 class="text-2xl font-bold">{{ involvedCourses.length }}</h3>
-                  <p class="text-sm text-gray-500">{{ t('teacher.studentDetail.stats.courses') }}</p>
+              <div class="space-y-3">
+                <div v-for="r in recentLessons" :key="String(r.lessonId)+'-'+String(r.studiedAt)" class="flex items-center justify-between">
+                  <div class="truncate">
+                    <div class="font-medium truncate">{{ r.lessonTitle || '-' }}</div>
+                    <div class="text-sm text-gray-500 truncate">{{ r.courseTitle || ('#'+r.courseId) }}</div>
+                  </div>
+                  <div class="text-sm text-gray-500">{{ formatDateTime(r.studiedAt) }}</div>
+                </div>
+                <div v-if="recentLessons.length===0" class="text-sm text-gray-500">{{ t('common.empty') || '暂无数据' }}</div>
               </div>
             </div>
+
+            <div class="card p-5">
+              <div class="flex items-center justify-between mb-2">
+                <div class="flex items-center gap-2">
+                  <ChartPieIcon class="w-5 h-5 text-emerald-600" />
+                  <h3 class="text-lg font-semibold">{{ t('teacher.studentDetail.radar.title') || '能力雷达' }}</h3>
+                </div>
+                <Button size="sm" variant="outline" @click="viewOverview">{{ t('teacher.studentDetail.radar.viewInsights') || '查看洞察' }}</Button>
+              </div>
+              <RadarChart :indicators="radarIndicators" :series="radarSeries" :height="'300px'" />
+            </div>
+          </div>
+
+          <!-- 风险预警与个性化建议 -->
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div class="card p-5">
+              <h3 class="text-lg font-semibold mb-3">{{ t('teacher.studentDetail.alerts.title') || '风险预警' }}</h3>
+              <div v-if="alerts.length===0" class="text-sm text-gray-500">{{ t('common.none') || '暂无' }}</div>
+              <ul v-else class="space-y-2">
+                <li v-for="a in alerts" :key="a.code + a.message" class="flex items-start gap-2">
+                  <span :class="a.severity==='critical' ? 'text-red-600' : (a.severity==='warn' ? 'text-amber-600' : 'text-sky-600')">•</span>
+                  <span class="text-sm">{{ a.message }}</span>
+                </li>
+              </ul>
+            </div>
+            <div class="card p-5">
+              <h3 class="text-lg font-semibold mb-3">{{ t('teacher.studentDetail.recommendations.title') || '个性化建议' }}</h3>
+              <div v-if="recommendations.length===0" class="text-sm text-gray-500">{{ t('common.empty') || '暂无数据' }}</div>
+              <div v-else class="space-y-3">
+                <div v-for="r in recommendations" :key="r.id" class="border border-white/10 rounded p-3">
+                  <div class="font-medium mb-1 truncate">{{ r.title }}</div>
+                  <div class="text-sm text-gray-500 line-clamp-2">{{ r.description }}</div>
+                  <div class="mt-2 text-xs text-gray-400 flex items-center gap-2">
+                    <span>{{ r.recommendationType }}</span>
+                    <span v-if="r.estimatedTime">· {{ r.estimatedTime }}</span>
+                    <a v-if="r.resourceUrl" class="text-indigo-600 hover:underline" :href="r.resourceUrl" target="_blank">{{ t('common.view') || '查看' }}</a>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
           
           <!-- Grades Table (aligned with students management table style) -->
           <div class="card overflow-x-auto glass-regular glass-interactive">
@@ -175,9 +227,13 @@ import { useCourseStore } from '@/stores/course';
 import { useAuthStore } from '@/stores/auth';
 import { useI18n } from 'vue-i18n'
 import Button from '@/components/ui/Button.vue'
+import StartCard from '@/components/ui/StartCard.vue'
 import { ChatBubbleLeftRightIcon, ChartPieIcon, ArrowDownTrayIcon, DocumentTextIcon, PencilSquareIcon, ChevronRightIcon, AcademicCapIcon } from '@heroicons/vue/24/outline'
+import { StarIcon } from '@heroicons/vue/24/outline'
 import { useChatStore } from '@/stores/chat'
 import { teacherStudentApi } from '@/api/teacher-student.api'
+import RadarChart from '@/components/charts/RadarChart.vue'
+import { teacherApi } from '@/api/teacher.api'
 import PageHeader from '@/components/ui/PageHeader.vue'
 import GlassPopoverSelect from '@/components/ui/filters/GlassPopoverSelect.vue'
 const route = useRoute();
@@ -185,7 +241,7 @@ const router = useRouter();
 const gradeStore = useGradeStore();
 const courseStore = useCourseStore();
 const authStore = useAuthStore();
-const { t } = useI18n()
+const { t, locale } = useI18n()
 
 const studentId = ref<string | null>(null);
 const chat = useChatStore()
@@ -193,21 +249,35 @@ const chat = useChatStore()
 const studentName = ref(route.query.name as string || (t('teacher.students.table.student') as string));
 
 const profile = ref<any>({})
+const recentLessons = ref<Array<{lessonId:number;lessonTitle:string;courseId:number;courseTitle:string;studiedAt:any}>>([])
+const radarIndicators = ref<Array<{name:string;max:number}>>([])
+const radarSeries = ref<Array<{name:string;values:number[];color?:string}>>([])
+const alerts = ref<Array<{code:string;message:string;severity:string}>>([])
+const recommendations = ref<Array<any>>([])
 
 const grades = computed(() => gradeStore.grades);
 
-const gradedAssignmentsCount = computed(() => grades.value.length);
+// 选中课程下的过滤视图统计
+const filteredGrades = computed(() => {
+    if (!selectedCourseId.value) return grades.value
+    return grades.value.filter((g: any) => String(g.courseId || g.courseTitle || '') === String(selectedCourseId.value) || String(g.courseId || '') === String(selectedCourseId.value))
+})
+
+const gradedAssignmentsCount = computed(() => filteredGrades.value.length)
 
 const averageScore = computed(() => {
-    if (grades.value.length === 0) return 0;
-    const total = grades.value.reduce((sum, grade) => sum + grade.score, 0);
-    return total / grades.value.length;
-});
+    if (filteredGrades.value.length === 0) return 0
+    const total = filteredGrades.value.reduce((sum: number, g: any) => sum + Number(g.score || 0), 0)
+    return total / filteredGrades.value.length
+})
 
-const involvedCourses = computed(() => {
-    const courseTitles = new Set(grades.value.map(g => g.courseTitle));
-    return Array.from(courseTitles);
-});
+const courseProgress = computed(() => {
+    // 若已在后端 enrollment.progress 返回，可在拉取课程时补充存入 profile 或 studentCourses
+    // 这里作为前端兜底：用成绩条目完成率近似（仅当课程选择器选中某课程时）
+    if (!selectedCourseId.value) return profile.value?.completionRate
+    // 无法可靠计算时返回 profile 的总体完成率
+    return profile.value?.completionRate
+})
 
 const currentPage = ref(1);
 const pageSize = ref(10);
@@ -285,6 +355,72 @@ function formatDate(input: any): string {
   return date.toLocaleDateString()
 }
 
+function formatDateTime(input: any): string {
+  if (!input) return '-'
+  const num = Number(input)
+  const date = Number.isFinite(num) && num > 0 ? new Date(num) : new Date(String(input))
+  if (isNaN(date.getTime())) return '-'
+  // 按语言环境格式化去掉年份：
+  // zh-CN: MM月dd日 HH:mm
+  // en-US: MMM d HH:mm
+  const isEn = String(locale?.value || 'zh-CN').toLowerCase().startsWith('en')
+  if (!isEn) {
+    const pad2 = (v: number) => (v < 10 ? '0' + v : String(v))
+    const m = pad2(date.getMonth() + 1)
+    const d = pad2(date.getDate())
+    const hh = pad2(date.getHours())
+    const mm = pad2(date.getMinutes())
+    return `${m}月${d}日 ${hh}:${mm}`
+  }
+  const opts: Intl.DateTimeFormatOptions = { month: 'short', day: '2-digit', hour: '2-digit', minute: '2-digit', hour12: false }
+  return new Intl.DateTimeFormat('en-US', opts).format(date).replace(',', '')
+}
+
+function formatPercent(v: any): string {
+  if (v === null || v === undefined) return '-'
+  const num = Number(v)
+  if (!Number.isFinite(num)) return '-'
+  return String(Math.round(num * 10) / 10)
+}
+
+async function fetchActivity() {
+  if (!studentId.value) return
+  try {
+    const act = await teacherStudentApi.getStudentActivity(studentId.value, 7, 5)
+    recentLessons.value = act?.recentLessons || []
+  } catch {}
+}
+
+async function fetchAbilityRadar() {
+  try {
+    // 若带 courseId 则按该课程上下文拉取；否则尝试学生最近课程
+    const courseId = String(route.query.courseId || '')
+    if (!studentId.value || !courseId) return
+    const today = new Date()
+    const start = new Date(today.getTime() - 30*24*60*60*1000)
+    const pad = (n:number) => (n<10? '0'+n : String(n))
+    const fmt = (d:Date) => `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`
+    const resp = await teacherApi.getAbilityRadar({ courseId, studentId: String(studentId.value), startDate: fmt(start), endDate: fmt(today) })
+    const data: any = (resp as any).data || resp
+    const dims: string[] = data.dimensions || []
+    radarIndicators.value = dims.map((name:string) => ({ name, max: 100 }))
+    const s = { name: t('teacher.studentDetail.radar.student') || '学生', values: data.studentScores || [] }
+    const c = { name: t('teacher.studentDetail.radar.classAvg') || '班级', values: data.classAvgScores || [], color: '#10b981' }
+    radarSeries.value = [s, c]
+  } catch {}
+}
+
+async function fetchAlertsAndRecommendations() {
+  if (!studentId.value) return
+  try {
+    const a = await teacherStudentApi.getStudentAlerts(studentId.value)
+    alerts.value = a?.alerts || []
+  } catch {}
+  try {
+    recommendations.value = await teacherStudentApi.getStudentRecommendations(studentId.value, 6)
+  } catch {}
+}
+
 onMounted(async () => {
     const sid = (route.params as any).studentId as string || (route.params as any).id as string
     if (sid) {
@@ -297,6 +433,12 @@ onMounted(async () => {
         } catch {}
         // 预取该学生相关课程（真实数据）
         try { studentCourses.value = await teacherStudentApi.getStudentCourses(sid) } catch {}
+        // 学生活跃度
+        fetchActivity()
+        // 能力雷达
+        fetchAbilityRadar()
+        // 预警与建议
+        fetchAlertsAndRecommendations()
         fetchPage(1);
     }
 });

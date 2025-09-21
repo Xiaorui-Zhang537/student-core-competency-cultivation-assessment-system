@@ -329,13 +329,25 @@ public class AssignmentServiceImpl implements AssignmentService {
         // 若需要限制教师只能查看自己作业的统计，可在此校验 assignment.getTeacherId()
         long totalEnrolled = enrollmentMapper.countActiveByCourse(assignment.getCourseId());
         long submitted = submissionMapper.countByAssignment(assignmentId);
+        // 通过聚合查询获取已评分数量
+        java.util.Map<String, Object> agg = submissionMapper.getSubmissionStatistics(assignmentId);
+        long graded = 0L;
+        if (agg != null) {
+            Object gv = agg.get("graded_count");
+            if (gv != null) {
+                try { graded = Long.parseLong(String.valueOf(gv)); } catch (Exception ignored) { }
+            }
+        }
         long unsubmitted = Math.max(0L, totalEnrolled - submitted);
+        long ungraded = Math.max(0L, submitted - graded);
         return AssignmentSubmissionStatsResponse.builder()
                 .assignmentId(assignment.getId())
                 .courseId(assignment.getCourseId())
                 .totalEnrolled((int) totalEnrolled)
                 .submittedCount((int) submitted)
                 .unsubmittedCount((int) unsubmitted)
+                .gradedCount((int) graded)
+                .ungradedCount((int) ungraded)
                 .build();
     }
 
@@ -345,6 +357,10 @@ public class AssignmentServiceImpl implements AssignmentService {
         // 授权：仅教师本人或管理员（控制器层也应加角色校验，这里再做一次）
         if (assignment.getTeacherId() != null && !assignment.getTeacherId().equals(currentUserId)) {
             throw new BusinessException(ErrorCode.COURSE_ACCESS_DENIED, "无权提醒非本人作业");
+        }
+        // 截止后禁止提醒
+        if (assignment.getDueDate() != null && java.time.LocalDateTime.now().isAfter(assignment.getDueDate())) {
+            throw new BusinessException(ErrorCode.OPERATION_FAILED, "作业已过截止时间，无法发送提醒");
         }
         List<Long> activeStudentIds = enrollmentMapper.findActiveStudentIdsByCourse(assignment.getCourseId());
         // 过滤已提交学生

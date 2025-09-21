@@ -128,11 +128,6 @@ public class AiController extends BaseController {
                 java.util.Map<String, Object> parsed = jsonOnly
                         ? com.noncore.assessment.util.Jsons.parseObject(resp)
                         : java.util.Map.of("text", resp);
-                results.add(java.util.Map.of(
-                        "fileId", fid,
-                        "fileName", fileName,
-                        "result", parsed
-                ));
                 // save history when jsonOnly
                 if (jsonOnly) {
                     Double finalScore = null;
@@ -152,11 +147,28 @@ public class AiController extends BaseController {
                     rec.setRawJson(resp);
                     rec.setCreatedAt(java.time.LocalDateTime.now());
                     historyService.save(rec);
+                    results.add(new java.util.HashMap<>() {{
+                        put("fileId", fid);
+                        put("fileName", fileName);
+                        put("result", parsed);
+                        put("historyId", rec.getId());
+                    }});
+                } else {
+                    results.add(java.util.Map.of(
+                            "fileId", fid,
+                            "fileName", fileName,
+                            "result", parsed
+                    ));
                 }
             } catch (Exception e) {
+                String fileNameFallback = null;
+                try {
+                    var info = fileStorageService.getFileInfo(fid);
+                    fileNameFallback = info != null ? (info.getOriginalName() != null ? info.getOriginalName() : info.getStoredName()) : ("#" + fid);
+                } catch (Exception ignored) {}
                 results.add(java.util.Map.of(
                         "fileId", fid,
-                        "fileName", String.valueOf(fid),
+                        "fileName", fileNameFallback != null ? fileNameFallback : String.valueOf(fid),
                         "error", e.getMessage()
                 ));
             }
@@ -172,7 +184,29 @@ public class AiController extends BaseController {
         String json = aiService.generateAnswerJsonOnly(request, userId);
         try {
             java.util.Map<String, Object> parsed = com.noncore.assessment.util.Jsons.parseObject(json);
-            return ResponseEntity.ok(ApiResponse.success(parsed));
+            // 写入 AI 批改历史（essay 无文件ID）
+            try {
+                Double finalScore = null;
+                Object ov = parsed.get("overall");
+                if (ov instanceof java.util.Map<?,?> ovm) {
+                    Object fs = ovm.get("final_score");
+                    if (fs != null) finalScore = Double.valueOf(String.valueOf(fs));
+                }
+                var rec = new com.noncore.assessment.entity.AiGradingHistory();
+                rec.setTeacherId(userId);
+                rec.setFileId(null);
+                rec.setFileName(null);
+                rec.setModel(request.getModel());
+                rec.setFinalScore(finalScore);
+                rec.setRawJson(json);
+                rec.setCreatedAt(java.time.LocalDateTime.now());
+                historyService.save(rec);
+                java.util.Map<String,Object> out = new java.util.HashMap<>(parsed);
+                out.put("historyId", rec.getId());
+                return ResponseEntity.ok(ApiResponse.success(out));
+            } catch (Exception ignore) {
+                return ResponseEntity.ok(ApiResponse.success(parsed));
+            }
         } catch (IllegalArgumentException ex) {
             return ResponseEntity.ok(ApiResponse.success(java.util.Map.of(
                     "error", "INVALID_JSON",

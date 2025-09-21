@@ -266,4 +266,9 @@ public interface GradeService {
      * @return 最新成绩
      */
     Grade upsertGradeAndMaybePublish(Grade grade, boolean publishImmediately);
+
+    /**
+     * 打回重做：设置状态为 returned，并可设置重交截止时间。
+     */
+    void returnForResubmission(Long gradeId, Long teacherId, String reason, java.time.LocalDateTime resubmitUntil);
 } 

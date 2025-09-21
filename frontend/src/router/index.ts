@@ -236,6 +236,13 @@ const routes = [
         meta: { requiresAuth: true, role: 'TEACHER' }
       },
       {
+        path: 'assignments/:assignmentId/students/:studentId/grade',
+        name: 'TeacherGradeAssignmentByStudent',
+        component: () => import('@/features/teacher/views/GradeAssignmentView.vue'),
+        props: true,
+        meta: { requiresAuth: true, role: 'TEACHER' }
+      },
+      {
         path: 'analytics',
         name: 'TeacherAnalytics',
         component: () => import('@/features/teacher/views/AnalyticsView.vue'),

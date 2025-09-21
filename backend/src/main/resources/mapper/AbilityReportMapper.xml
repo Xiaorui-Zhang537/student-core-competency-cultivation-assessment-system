@@ -16,6 +16,7 @@
         <result column="achievements" property="achievements"/>
         <result column="improvement_areas" property="improvementAreas"/>
         <result column="recommendations" property="recommendations"/>
+        <result column="ai_history_id" property="aiHistoryId"/>
         <result column="generated_by" property="generatedBy"/>
         <result column="is_published" property="isPublished"/>
         <result column="created_at" property="createdAt"/>
@@ -28,8 +29,9 @@
     <sql id="abilityReportColumns">
         r.id, r.student_id, r.report_type, r.title, r.overall_score,
         r.report_period_start, r.report_period_end, r.dimension_scores, r.trends_analysis,
-        r.achievements, r.improvement_areas, r.recommendations,
-        r.generated_by, r.is_published, r.created_at, r.published_at
+        r.achievements, r.improvement_areas, r.recommendations, r.ai_history_id,
+        r.generated_by, r.is_published, r.created_at, r.published_at,
+        r.course_id, r.assignment_id, r.submission_id
     </sql>
     <sql id="abilityReportDetailColumns">
         <include refid="abilityReportColumns"/>,
@@ -42,13 +44,15 @@
         INSERT INTO ability_reports (
             student_id, report_type, title, overall_score,
             report_period_start, report_period_end, dimension_scores, trends_analysis,
-            achievements, improvement_areas, recommendations,
-            generated_by, is_published, created_at, published_at
+            achievements, improvement_areas, recommendations, ai_history_id,
+            generated_by, is_published, created_at, published_at,
+            course_id, assignment_id, submission_id
         ) VALUES (
                      #{studentId}, #{reportType}, #{title}, #{overallScore},
                      #{reportPeriodStart}, #{reportPeriodEnd}, #{dimensionScores}, #{trendsAnalysis},
-                     #{achievements}, #{improvementAreas}, #{recommendations},
-                     #{generatedBy}, #{isPublished}, NOW(), #{publishedAt}
+                     #{achievements}, #{improvementAreas}, #{recommendations}, #{aiHistoryId},
+                     #{generatedBy}, #{isPublished}, NOW(), #{publishedAt},
+                     #{courseId}, #{assignmentId}, #{submissionId}
                  )
     </insert>
 
@@ -75,6 +79,7 @@
             <if test="achievements != null">achievements = #{achievements},</if>
             <if test="improvementAreas != null">improvement_areas = #{improvementAreas},</if>
             <if test="recommendations != null">recommendations = #{recommendations},</if>
+            <if test="aiHistoryId != null">ai_history_id = #{aiHistoryId},</if>
             <if test="generatedBy != null">generated_by = #{generatedBy},</if>
             <if test="isPublished != null">is_published = #{isPublished},</if>
             <if test="publishedAt != null">published_at = #{publishedAt},</if>
@@ -82,6 +87,19 @@
         </set>
         WHERE id = #{id}
     </update>
+
+    <!-- 按作业/提交获取最新AI报告 -->
+    <select id="selectLatestReportByContext" resultMap="AbilityReportResultMap">
+        SELECT <include refid="abilityReportColumns"/>
+        FROM ability_reports r
+        WHERE r.student_id = #{studentId}
+        <if test="submissionId != null">AND r.submission_id = #{submissionId}</if>
+        <if test="submissionId == null and assignmentId != null">AND r.assignment_id = #{assignmentId}</if>
+        <if test="submissionId == null and assignmentId == null and courseId != null">AND r.course_id = #{courseId}</if>
+        AND r.report_type = 'ai'
+        ORDER BY r.created_at DESC
+        LIMIT 1
+    </select>
 
     <!-- 删除能力报告 -->
     <delete id="deleteReport" parameterType="long">

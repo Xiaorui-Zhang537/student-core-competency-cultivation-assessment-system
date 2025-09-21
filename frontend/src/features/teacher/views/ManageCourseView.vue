@@ -13,28 +13,34 @@
 
       <!-- Filters -->
       <div class="mb-6 filter-container p-4 rounded-2xl" v-glass="{ strength: 'thin', interactive: false }">
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-4 items-center">
-        <!-- 搜索框：改为直接复用 /ui 的 GlassSearchInput（自带图标与焦点描边） -->
-        <GlassSearchInput
-          v-model="filters.query"
-          :placeholder="t('teacher.courses.filters.searchPlaceholder') as string"
-          size="md"
-          @update:modelValue="applyFilters()"
-        />
-        <!-- 状态分段按钮组 + 清空按钮（同列左右分布，消除右侧空白） -->
-        <div class="flex items-center justify-between gap-4">
+        <div class="flex items-center justify-between gap-4 flex-wrap">
+          <!-- 左侧：难度排序（最前）+ 状态分段药丸 -->
+          <div class="flex items-center gap-4 flex-wrap">
+            <div class="w-auto flex items-center gap-2">
+              <span class="text-xs font-medium leading-tight text-gray-700 dark:text-gray-300">{{ t('teacher.courses.filters.sortDifficultyLabel') || '难度排序' }}</span>
+              <div class="w-48">
+                <GlassPopoverSelect
+                  v-model="difficultyOrder"
+                  :options="difficultyOrderOptions"
+                  size="sm"
+                />
+              </div>
+            </div>
           <SegmentedPills
             :model-value="filters.status"
             :options="statusOptions"
             size="sm"
             @update:modelValue="(v:any) => setStatus(v)"
           />
-          <div class="flex-shrink-0">
-            <Button variant="outline" @click="clearFilters">
-              <XMarkIcon class="w-4 h-4 mr-2" />
-              {{ t('teacher.courses.filters.clear') }}
-            </Button>
           </div>
+          <!-- 右侧：搜索框（右对齐） -->
+          <div class="w-56 ml-auto">
+            <GlassSearchInput
+              v-model="filters.query"
+              :placeholder="t('teacher.courses.filters.searchPlaceholder') as string"
+              size="sm"
+              @update:modelValue="applyFilters()"
+            />
         </div>
       </div>
       </div>
@@ -45,19 +51,22 @@
       </div>
       <div v-else class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         <div
-          v-for="course in courseStore.courses"
+          v-for="course in displayedCourses"
           :key="course.id"
           class="relative card overflow-hidden cursor-pointer transition-all duration-300 hover:shadow-md hover:-translate-y-0.5 rounded-2xl"
           @click="navigateToCourse(course)"
         >
-          <div class="h-40 bg-gray-100 dark:bg-gray-700 overflow-hidden relative">
+          <div class="h-40 bg-gray-100 dark:bg-gray-700 overflow-hidden relative rounded-2xl">
             <img
               v-if="course.coverImage && getCoverSrc(course)"
               :src="getCoverSrc(course)"
               :alt="t('teacher.courses.card.coverAlt')"
-              class="w-full h-full object-cover"
+              class="w-full h-full object-cover rounded-2xl"
               @error="onCardCoverError(course)"
             />
+            <div v-else class="w-full h-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center">
+              <span class="text-4xl font-bold text-white">{{ (course.title || '').charAt(0) }}</span>
+            </div>
             <!-- 状态徽标浮层（玻璃 Badge） -->
             <Badge
               :variant="statusVariant(course.status)"
@@ -69,7 +78,7 @@
           </div>
           <div class="p-4">
             <h3 class="font-bold text-lg line-clamp-1">{{ course.title }}</h3>
-            <p class="text-xs text-gray-500 mb-2">{{ course.category }}</p>
+            <p class="text-xs text-gray-500 mb-2">{{ localizeCategory(course.category) }}</p>
             <p class="text-sm text-gray-600 dark:text-gray-300 line-clamp-2 min-h-[2.5rem]">{{ course.description }}</p>
             <div class="mt-4 flex justify-between items-center">
               <div class="flex flex-wrap gap-1.5 items-center min-h-[1.5rem]">
@@ -294,6 +303,12 @@ const filters = reactive({
     query: '',
     status: '',
 });
+const difficultyOrder = ref<'none'|'asc'|'desc'>('none')
+const difficultyOrderOptions = computed(() => ([
+  { label: (t('student.courses.sortNone') as string) || '默认', value: 'none' },
+  { label: (t('student.courses.sortDifficultyAsc') as string) || '难度从低到高', value: 'asc' },
+  { label: (t('student.courses.sortDifficultyDesc') as string) || '难度从高到低', value: 'desc' }
+]))
 const statusOptions = computed(() => [
   { label: t('teacher.courses.filters.status.all') as string, value: '' },
   { label: t('teacher.courses.filters.status.draft') as string, value: 'DRAFT' },
@@ -369,6 +384,24 @@ function localizeTag(tag: string): string {
     practice: t('teacher.courses.tagOptions.practice') as string
   }
   return dict[key] || tag
+}
+
+function localizeCategory(cat?: string): string {
+  const key = String(cat || '').toLowerCase()
+  const map: Record<string, string> = {
+    programming: t('teacher.courseEdit.form.categoryOptions.programming') as string,
+    design: t('teacher.courseEdit.form.categoryOptions.design') as string,
+    business: t('teacher.courseEdit.form.categoryOptions.business') as string,
+    marketing: t('teacher.courseEdit.form.categoryOptions.marketing') as string,
+    language: t('teacher.courseEdit.form.categoryOptions.language') as string,
+    science: t('teacher.courseEdit.form.categoryOptions.science') as string,
+    art: t('teacher.courseEdit.form.categoryOptions.art') as string,
+    'liberal-arts': t('teacher.courses.category.liberalArts') as string,
+    engineering: t('teacher.courses.category.engineering') as string,
+    'science-college': t('teacher.courses.category.science') as string,
+    other: t('teacher.courses.category.other') as string
+  }
+  return map[key] || cat || ''
 }
 
 function statusVariant(status: string): 'success' | 'warning' | 'secondary' {
@@ -525,15 +558,35 @@ const fetchTeacherCourses = () => {
     const teacherId = authStore.user?.id;
     if (!teacherId) return;
     courseStore.fetchCourses({
-        page: 1, 
-        size: 10,
-        query: filters.query,
-        status: filters.status,
-        teacherId: String(teacherId),
+      page: 1,
+      size: 10,
+      query: filters.query,
+      status: filters.status,
+      teacherId: String(teacherId),
+      // 前端难度排序仅用于展示顺序（本地排序），不传给后端
     });
 };
 
 const applyFilters = debounce(fetchTeacherCourses, 300);
+
+// 展示用排序（按难度）
+const displayedCourses = computed(() => {
+  const list = Array.isArray(courseStore.courses) ? [...courseStore.courses] : []
+  if (difficultyOrder.value === 'none') return list
+  const rank = (d?: string) => {
+    const v = String(d || '').toLowerCase()
+    if (v.startsWith('beginner') || v.includes('入门') || v.includes('初级')) return 1
+    if (v.startsWith('intermediate') || v.includes('进阶') || v.includes('中级')) return 2
+    if (v.startsWith('advanced') || v.includes('高级')) return 3
+    return 0
+  }
+  list.sort((a: any, b: any) => {
+    const ra = rank((a.difficulty || (a as any).level))
+    const rb = rank((b.difficulty || (b as any).level))
+    return difficultyOrder.value === 'asc' ? (ra - rb) : (rb - ra)
+  })
+  return list
+})
 
 const clearFilters = () => {
     filters.query = '';

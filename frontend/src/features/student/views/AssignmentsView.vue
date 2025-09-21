@@ -6,23 +6,27 @@
       <!-- 过滤条（取消外层嵌套容器，仅保留 FilterBar） -->
       <FilterBar class="mb-6 glass-thin rounded-full">
         <template #left>
-          <div class="w-48">
-            <GlassPopoverSelect
-              :label="(t('student.assignments.filters.statusLabel') as string) || '状态'"
-              v-model="filters.status"
-              :options="statusOptions"
-              size="sm"
-              stacked
-            />
-          </div>
-          <div class="w-56 ml-2">
-            <GlassPopoverSelect
-              :label="(t('student.assignments.filters.courseLabel') as string) || '课程'"
-              v-model="filters.courseId"
-              :options="courseOptions"
-              size="sm"
-              stacked
-            />
+          <div class="flex items-center gap-4">
+            <div class="w-auto flex items-center gap-2">
+              <span class="text-xs font-medium leading-tight text-gray-700 dark:text-gray-300">{{ (t('student.assignments.filters.statusLabel') as string) || '状态' }}</span>
+              <div class="w-48">
+                <GlassPopoverSelect
+                  v-model="filters.status"
+                  :options="statusOptions"
+                  size="sm"
+                />
+              </div>
+            </div>
+            <div class="w-auto flex items-center gap-2">
+              <span class="text-xs font-medium leading-tight text-gray-700 dark:text-gray-300">{{ (t('student.assignments.filters.courseLabel') as string) || '课程' }}</span>
+              <div class="w-56">
+                <GlassPopoverSelect
+                  v-model="filters.courseId"
+                  :options="courseOptions"
+                  size="sm"
+                />
+              </div>
+            </div>
           </div>
         </template>
         <template #right>

@@ -168,11 +168,27 @@ public interface AbilityService {
     AbilityReport getLatestAbilityReport(Long studentId);
 
     /**
+     * 获取学生在特定上下文下的最新AI报告（优先 submissionId，其次 assignmentId，再次 courseId）
+     */
+    AbilityReport getLatestAbilityReportByContext(Long studentId, Long courseId, Long assignmentId, Long submissionId);
+
+    /**
      * 发布能力报告
      *
      * @param reportId 报告ID
      */
     void publishAbilityReport(Long reportId);
+
+    /**
+     * 基于AI规范化结果创建能力报告（教师端）
+     */
+    AbilityReport createReportFromAi(Long studentId,
+                                     String normalizedJson,
+                                     String title,
+                                     Long courseId,
+                                     Long assignmentId,
+                                     Long submissionId,
+                                     Long aiHistoryId);
 
     /**
      * 生成学习建议
