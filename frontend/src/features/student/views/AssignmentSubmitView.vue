@@ -9,12 +9,11 @@
         <span class="truncate flex-1 font-medium !text-gray-900 dark:!text-gray-100">{{ assignment.title }}</span>
       </nav>
       <PageHeader :title="assignment.title" :subtitle="assignment.description" />
-        <div class="mt-2 text-sm text-gray-600 dark:text-gray-300">
-          <strong>{{ dueLabel }}</strong> {{ new Date(effectiveDue.value).toLocaleString() }}
-          <span class="ml-4 badge" :class="statusClass(displayStatus)">
-            {{ t('student.assignments.submit.status') }} {{ statusText(displayStatus) }}
-          </span>
-        </div>
+      <!-- 顶部：信息卡 + 附件卡 并排 -->
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-2">
+        <AssignmentInfoCard :assignment="assignment" :effectiveDue="effectiveDue" :status="displayStatus" />
+        <AttachmentList :files="teacherAttachments" :title="i18nText('student.assignments.detail.attachmentsTitle', '附件')" />
+      </div>
       
       <!-- 统一垂直间距栈 -->
       <div class="space-y-6">
@@ -23,33 +22,75 @@
           {{ pastDue ? (t('student.assignments.submit.readOnlyBannerDue') as string) : (t('student.assignments.submit.readOnlyBannerSubmitted') as string) }}
         </div>
 
-        <!-- Teacher Attachments -->
-        <div class="card p-6 glass-ultraThin" v-glass="{ strength: 'ultraThin', interactive: true }">
-          <h2 class="text-lg font-semibold mb-3">{{ i18nText('student.assignments.detail.attachmentsTitle', '附件') }}</h2>
-          <div v-if="teacherAttachments.length === 0" class="text-sm text-gray-500">{{ i18nText('student.assignments.detail.noAttachments', '暂无附件') }}</div>
-          <ul v-else class="divide-y divide-gray-200/60 dark:divide-gray-700/60">
-            <li v-for="f in teacherAttachments" :key="String((f as any).id)" class="py-2 flex items-center justify-between">
-              <div class="min-w-0 mr-3">
-                <div class="text-sm truncate">{{ (f as any).originalName || (f as any).fileName || ('附件#' + (f as any).id) }}</div>
-                <div class="text-xs text-gray-500">{{ formatSize((f as any).fileSize) }}</div>
+        <!-- 中部：提交内容 + 上传附件 并排 -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <Card>
+            <template #header>
+              <h2 class="text-xl font-semibold">{{ t('student.assignments.submit.contentTitle') }}</h2>
+            </template>
+            <GlassTextarea v-model="form.content" :rows="10" class="w-full" :disabled="readOnly" :placeholder="t('student.assignments.submit.contentPlaceholder') as string" />
+          </Card>
+          <Card>
+            <template #header>
+              <h2 class="text-xl font-semibold">{{ t('student.assignments.submit.uploadTitle') }}</h2>
+            </template>
+            <FileUpload v-if="!readOnly"
+              :accept="'*'"
+              :multiple="true"
+              :showPreview="true"
+              :compact="false"
+              :dense="false"
+              @files-selected="onFilesSelected"
+              @file-removed="onFileRemoved"
+            />
+            <div v-if="isUploading" class="mt-2 text-sm text-gray-500">{{ t('student.assignments.submit.uploading') }}</div>
+            <div v-if="uploadedFiles.length > 0" class="mt-4 space-y-2">
+              <h3 class="text-sm font-medium">{{ t('student.assignments.submit.uploadedList') }}</h3>
+              <div v-for="file in uploadedFiles" :key="file.id" class="flex justify-between items-center p-2 rounded glass-ultraThin" v-glass="{ strength: 'ultraThin', interactive: false }">
+                <span>{{ (file as any).originalName || file.fileName }}</span>
+                <div class="flex items-center gap-2">
+                  <Button v-if="!readOnly" size="sm" variant="danger" @click="removeFile(file.id)">
+                    <template #icon>
+                      <svg class="w-4 h-4" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M6 6h8v10a2 2 0 01-2 2H8a2 2 0 01-2-2V6zm9-3a1 1 0 00-1-1h-3l-1-1H8L7 2H4a1 1 0 000 2h11a1 1 0 000-2z" clip-rule="evenodd"/></svg>
+                    </template>
+                    {{ t('student.assignments.submit.delete') }}
+                  </Button>
+                  <Button as="a" :href="`${baseURL}/files/${(file as any).id || file.fileId}/download`" size="sm" variant="success">
+                    <template #icon>
+                      <ArrowDownTrayIcon class="w-4 h-4" />
+                    </template>
+                    {{ i18nText('student.assignments.detail.download', '下载') }}
+                  </Button>
+                </div>
               </div>
-              <Button as="a" :href="`${baseURL}/files/${(f as any).id}/download`" size="sm" variant="success">
-                <template #icon>
-                  <ArrowDownTrayIcon class="w-4 h-4" />
-                </template>
-                {{ i18nText('student.assignments.detail.download', '下载') }}
-              </Button>
-            </li>
-          </ul>
+            </div>
+          </Card>
         </div>
 
-        <!-- Ungraded Hint -->
+        <!-- Actions (moved up, unique) -->
+        <div v-if="!readOnly" class="flex justify-end space-x-4">
+          <Button variant="outline" @click="handleSaveDraft" :disabled="disableActions || pastDue">
+            <template #icon>
+              <svg class="w-4 h-4" viewBox="0 0 20 20" fill="currentColor"><path d="M17 3H3v14h14V3zM5 5h10v10H5V5zm2 2h6v2H7V7z"/></svg>
+            </template>
+            {{ t('student.assignments.submit.saveDraft') }}
+          </Button>
+          <Button variant="primary" @click="handleSubmit" :disabled="disableActions || pastDue || !form.content">
+            <template #icon>
+              <svg class="w-4 h-4" viewBox="0 0 20 20" fill="currentColor"><path d="M2.94 2.34l14.72 5.89a1 1 0 010 1.86L2.94 15.98a1 1 0 01-1.36-1.16l1.58-5.67-1.58-5.67a1 1 0 011.36-1.16zM8 11l-1 3 7-3-7-3 1 3z"/></svg>
+            </template>
+            {{ t('student.assignments.submit.submit') }}
+          </Button>
+        </div>
+
+        <!-- Grade Block (only when graded) -->
+        <!-- 底部：成绩与 AI 报告 -->
+        <!-- 提示：已提交但未评分 -->
         <div v-if="displayStatus==='SUBMITTED' && !grade" class="p-3 rounded-xl glass-ultraThin" v-glass="{ strength: 'ultraThin', interactive: false }">
           <span class="text-sm text-gray-700 dark:text-gray-300">{{ i18nText('student.assignments.detail.ungradedHint', '作业已提交，等待老师评分。') }}</span>
         </div>
 
-        <!-- Grade Block (only when graded) -->
-        <div v-if="displayStatus==='GRADED'" class="card p-6 glass-ultraThin" v-glass="{ strength: 'ultraThin', interactive: true }">
+        <Card v-if="displayStatus==='GRADED'">
           <h2 class="text-xl font-semibold mb-4">{{ i18nText('student.grades.title', '成绩') }}</h2>
 
           <!-- Animated score strip -->
@@ -84,10 +125,10 @@
               <p class="whitespace-pre-line">{{ normalizeText((grade as any)?.improvements) }}</p>
             </div>
           </div>
-        </div>
+        </Card>
 
         <!-- AI Report -->
-        <div v-if="displayStatus==='GRADED' && latestReport" class="card p-6 glass-ultraThin" v-glass="{ strength: 'ultraThin', interactive: true }">
+        <Card v-if="displayStatus==='GRADED' && latestReport">
           <div class="flex items-center mb-4">
             <h2 class="text-xl font-semibold flex-1">{{ i18nText('student.ability.latestReport', 'AI 能力报告') }}</h2>
             <Button size="sm" variant="indigo" @click="openAiDetail" :disabled="!parsedAi"><template #icon><svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="12" cy="12" r="3"></circle></svg></template>{{ i18nText('teacher.aiGrading.viewDetail', '查看详情') }}</Button>
@@ -111,7 +152,7 @@
               {{ latestReport.recommendations }}
             </div>
           </div>
-        </div>
+        </Card>
 
         <!-- AI Report Detail Modal (full report, reuse teacher history rendering/export) -->
         <GlassModal v-if="aiDetailOpen" :title="i18nText('student.ability.latestReport', 'AI 能力报告（最近一次）')" maxWidth="max-w-5xl" :hideScrollbar="true" heightVariant="max" @close="aiDetailOpen=false">
@@ -163,61 +204,7 @@
           </template>
         </GlassModal>
 
-        <div class="card p-6 glass-ultraThin" v-glass="{ strength: 'ultraThin', interactive: true }">
-          <h2 class="text-xl font-semibold mb-4">{{ t('student.assignments.submit.contentTitle') }}</h2>
-          <GlassTextarea v-model="form.content" :rows="10" class="w-full" :disabled="readOnly" :placeholder="t('student.assignments.submit.contentPlaceholder') as string" />
-        </div>
         
-        <div class="card p-6 glass-ultraThin" v-glass="{ strength: 'ultraThin', interactive: true }">
-          <h2 class="text-xl font-semibold mb-4">{{ t('student.assignments.submit.uploadTitle') }}</h2>
-          <FileUpload v-if="!readOnly"
-            :accept="'*'"
-            :multiple="true"
-            :showPreview="true"
-            :compact="false"
-            :dense="false"
-            @files-selected="onFilesSelected"
-            @file-removed="onFileRemoved"
-          />
-          <div v-if="isUploading" class="mt-2 text-sm text-gray-500">{{ t('student.assignments.submit.uploading') }}</div>
-          
-          <div v-if="uploadedFiles.length > 0" class="mt-4 space-y-2">
-            <h3 class="text-sm font-medium">{{ t('student.assignments.submit.uploadedList') }}</h3>
-            <div v-for="file in uploadedFiles" :key="file.id" class="flex justify-between items-center p-2 rounded glass-ultraThin" v-glass="{ strength: 'ultraThin', interactive: false }">
-              <span>{{ (file as any).originalName || file.fileName }}</span>
-              <div class="flex items-center gap-2">
-                <Button v-if="!readOnly" size="sm" variant="danger" @click="removeFile(file.id)">
-                <template #icon>
-                  <svg class="w-4 h-4" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M6 6h8v10a2 2 0 01-2 2H8a2 2 0 01-2-2V6zm9-3a1 1 0 00-1-1h-3l-1-1H8L7 2H4a1 1 0 000 2h11a1 1 0 000-2z" clip-rule="evenodd"/></svg>
-                </template>
-                {{ t('student.assignments.submit.delete') }}
-              </Button>
-                <Button as="a" :href="`${baseURL}/files/${(file as any).id || file.fileId}/download`" size="sm" variant="success">
-                  <template #icon>
-                    <ArrowDownTrayIcon class="w-4 h-4" />
-                  </template>
-                  {{ i18nText('student.assignments.detail.download', '下载') }}
-                </Button>
-              </div>
-            </div>
-          </div>
-        </div>
-        
-        <!-- Actions -->
-        <div v-if="!readOnly" class="flex justify-end space-x-4">
-          <Button variant="outline" @click="handleSaveDraft" :disabled="disableActions || pastDue">
-            <template #icon>
-              <svg class="w-4 h-4" viewBox="0 0 20 20" fill="currentColor"><path d="M17 3H3v14h14V3zM5 5h10v10H5V5zm2 2h6v2H7V7z"/></svg>
-            </template>
-            {{ t('student.assignments.submit.saveDraft') }}
-          </Button>
-          <Button variant="primary" @click="handleSubmit" :disabled="disableActions || pastDue || !form.content">
-            <template #icon>
-              <svg class="w-4 h-4" viewBox="0 0 20 20" fill="currentColor"><path d="M2.94 2.34l14.72 5.89a1 1 0 010 1.86L2.94 15.98a1 1 0 01-1.36-1.16l1.58-5.67-1.58-5.67a1 1 0 011.36-1.16zM8 11l-1 3 7-3-7-3 1 3z"/></svg>
-            </template>
-            {{ t('student.assignments.submit.submit') }}
-          </Button>
-        </div>
       </div>
 
     </div>
@@ -250,6 +237,9 @@ import { abilityApi } from '@/api/ability.api'
 import GlassModal from '@/components/ui/GlassModal.vue'
 import html2canvas from 'html2canvas'
 import jsPDF from 'jspdf'
+import Card from '@/components/ui/Card.vue'
+import AssignmentInfoCard from '@/features/shared/AssignmentInfoCard.vue'
+import AttachmentList from '@/features/shared/AttachmentList.vue'
 
 const route = useRoute();
 const router = useRouter();

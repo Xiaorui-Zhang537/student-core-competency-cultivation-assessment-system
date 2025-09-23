@@ -73,6 +73,10 @@
         "download": "下载",
         "fullscreen": "全屏",
         "noInlinePreview": "该文件不支持在线预览，请下载查看。"
+      },
+      "video": {
+        "playFailed": "视频播放失败，请检查网络或文件格式。",
+        "hlsNotSupported": "该浏览器不支持 HLS 播放，请使用 Safari 或更换视频格式。"
       }
     },
     "analysis": {
@@ -115,6 +119,7 @@
     "assignments": {
       "title": "我的作业",
       "subtitle": "查看与提交作业",
+      "viewAll": "查看全部",
       "search": "搜索作业",
       "searchPlaceholder": "搜索作业标题、课程或状态…",
       "filters": {
@@ -138,6 +143,7 @@
         "view": "查看",
         "review": "查看评分"
       },
+      "publish": "发布日期",
       "due": "截止：",
       "resubmitUntil": "重交截止：",
       "empty": "暂无作业",

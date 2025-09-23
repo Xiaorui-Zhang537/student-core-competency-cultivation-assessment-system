@@ -75,7 +75,7 @@
 - 徽章统一后，暗黑模式对比度提升，减少了页面内散落的自定义类。
 # 前端 UI 统一规范
 
-> 版本：v0.2.1（与 frontend/package.json 对齐）
+> 版本：v0.2.2（与 frontend/package.json 对齐）
 
 ## 目标
 - 统一按钮风格为药丸形，所有交互按钮均带图标与明确底色。
@@ -124,6 +124,10 @@
 - 新增页面与组件必须遵循本规范。
 
 ## 更新记录
+- v0.2.2：
+  - 学生作业提交页采用两行双列卡片布局：顶部信息卡+附件卡；中部内容+上传卡（下方操作按钮）；底部成绩卡与 AI 报告卡。
+  - 新增共享组件：`features/shared/AssignmentInfoCard.vue`、`features/shared/AttachmentList.vue`；统一使用 `components/ui/Card.vue`。
+  - i18n 新增 `student.assignments.publish` 键。
 - v0.2.1：
   - 实时通知改为浅色玻璃药丸（`App.vue`）。
   - 通知下拉容器统一浅色玻璃与圆角 2xl；下拉内按钮为药丸玻璃（`NotificationBell.vue`）。

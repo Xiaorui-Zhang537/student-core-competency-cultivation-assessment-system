@@ -104,6 +104,7 @@ CREATE TABLE `ability_assessments` (
 CREATE TABLE `ability_dimensions` (
                                       `id` bigint NOT NULL AUTO_INCREMENT COMMENT '维度ID',
                                       `name` varchar(100) COLLATE utf8mb4_unicode_ci NOT NULL COMMENT '维度名称',
+                                      `code` varchar(50) COLLATE utf8mb4_unicode_ci NOT NULL COMMENT '维度编码（如：MORAL_COGNITION）',
                                       `description` text COLLATE utf8mb4_unicode_ci COMMENT '维度描述',
                                       `category` varchar(50) COLLATE utf8mb4_unicode_ci NOT NULL COMMENT '分类：technical,soft,academic,creative',
                                       `weight` decimal(3,2) DEFAULT '1.00' COMMENT '权重系数',
@@ -115,6 +116,7 @@ CREATE TABLE `ability_dimensions` (
                                       `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
                                       `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
                                       PRIMARY KEY (`id`),
+                                      UNIQUE KEY `uk_code` (`code`),
                                       KEY `idx_category` (`category`),
                                       KEY `idx_is_active` (`is_active`),
                                       KEY `idx_sort_order` (`sort_order`)
@@ -212,13 +214,15 @@ CREATE TABLE `assignments` (
                                `description` text COLLATE utf8mb4_unicode_ci COMMENT '作业描述',
                                `requirements` text COLLATE utf8mb4_unicode_ci COMMENT '作业要求',
                                `max_score` decimal(5,2) DEFAULT '100.00' COMMENT '总分',
-                               `due_date` timestamp NOT NULL COMMENT '截止时间',
+                               `due_date` timestamp NULL DEFAULT NULL COMMENT '截止时间',
                                `allow_late` tinyint(1) DEFAULT '0' COMMENT '是否允许迟交',
                                `max_attempts` int DEFAULT '1' COMMENT '最大提交次数',
                                `file_types` varchar(200) COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT '允许的文件类型',
                                `max_file_size` int DEFAULT '10' COMMENT '最大文件大小（MB）',
                                `status` enum('draft','scheduled','published','closed') COLLATE utf8mb4_unicode_ci DEFAULT 'draft' COMMENT '作业状态',
                                `publish_at` timestamp NULL DEFAULT NULL COMMENT '定时发布时间（为空表示不定时）',
+                               `assignment_type` enum('normal','course_bound') COLLATE utf8mb4_unicode_ci DEFAULT 'normal' NOT NULL COMMENT '作业类型',
+                               `lesson_id` bigint DEFAULT NULL COMMENT '绑定的节次ID（仅course_bound可用）',
                                `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
                                `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
                                `deleted` tinyint(1) DEFAULT '0' COMMENT '是否删除',
@@ -227,11 +231,14 @@ CREATE TABLE `assignments` (
                                KEY `idx_course_id` (`course_id`),
                                KEY `idx_teacher_id` (`teacher_id`),
                                KEY `idx_due_date` (`due_date`),
+                               KEY `idx_assignment_type` (`assignment_type`),
+                               KEY `idx_lesson_id` (`lesson_id`),
                                KEY `idx_status` (`status`),
                                KEY `idx_publish_at` (`publish_at`),
                                KEY `idx_deleted` (`deleted`),
                                CONSTRAINT `assignments_ibfk_1` FOREIGN KEY (`course_id`) REFERENCES `courses` (`id`) ON DELETE CASCADE,
-                               CONSTRAINT `assignments_ibfk_2` FOREIGN KEY (`teacher_id`) REFERENCES `users` (`id`) ON DELETE CASCADE
+                               CONSTRAINT `assignments_ibfk_2` FOREIGN KEY (`teacher_id`) REFERENCES `users` (`id`) ON DELETE CASCADE,
+                               CONSTRAINT `assignments_ibfk_3` FOREIGN KEY (`lesson_id`) REFERENCES `lessons` (`id`) ON DELETE SET NULL
 ) ENGINE=InnoDB AUTO_INCREMENT=5 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='作业表';
 
 -- ================== comment_likes：评论点赞表 ==================

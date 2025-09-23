@@ -24,8 +24,9 @@ public class StudentController extends BaseController {
 
     private final StudentService studentService;
     private final DashboardService dashboardService;
-    private final EnrollmentService enrollmentService;
+    // enrollmentService 已在字段列表顶部声明，无需重复
     private final AssignmentService assignmentService;
+    private final EnrollmentService enrollmentService;
     private final StudentAnalysisService studentAnalysisService;
     private final LessonService lessonService;
     private final SubmissionService submissionService;
@@ -136,7 +137,10 @@ public class StudentController extends BaseController {
             @RequestParam(defaultValue = "12") Integer size,
             @RequestParam(value = "q", required = false) String keyword
     ) {
-        var result = enrollmentService.getStudentCoursesPaged(getCurrentUserId(), page, size, keyword);
+        Long sid = getCurrentUserId();
+        // 先同步一次课程冗余进度，确保前端卡片显示
+        try { enrollmentService.syncStudentCourseProgress(sid); } catch (Exception ignored) {}
+        var result = enrollmentService.getStudentCoursesPaged(sid, page, size, keyword);
         return ResponseEntity.ok(ApiResponse.success(result));
     }
 

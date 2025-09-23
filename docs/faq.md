@@ -1,91 +1,66 @@
-# 常见问题（FAQ）
+# 常见问题（FAQ）与冒烟测试清单
 
-## 启动/访问
-- 启动后端 404 或 Swagger 打不开？
-  - 访问 `http://localhost:8080/api/swagger-ui.html`（注意 `/api` 前缀）
-  - 检查端口是否被占用；或修改 `server.port`
-- 前端 API 全部 404？
-  - `.env.development` 设置 `VITE_API_BASE_URL=http://localhost:8080`
-  - 开发模式也可使用 Vite 代理的 `/api` → `8080`
-- 文档站点首页 404？
-  - 确保 `docs/index.md` 存在；`docs/package.json` 设置了 `"type": "module"`
+## 学生端功能冒烟测试清单
 
-## 鉴权/JWT
-- 频繁 401？
-  - 登录后是否保存 token；请求是否带 `Authorization: Bearer <token>`
-  - token 过期会被重定向到登录页（拦截器已处理）
-- 刷新失败？
-  - 调用 `/auth/refresh` 时请传 `refreshToken` 参数
-  - 检查后端刷新过期时间配置
+- 核心路径
+  - 我的课程 → 课程详情 → 小节详情 → 作业提交页
+  - 路由应分别为：`/student/courses` → `/student/courses/:id` → `/student/lessons/:id` → `/student/assignments/:assignmentId/submit`
 
-## SSE/通知
-- SSE 流不工作？
-  - 使用 `GET /api/notifications/stream`，支持 `Authorization` 头或 `?token=`
-  - 确认浏览器未被扩展或代理阻断 SSE
-- 未读数不同步？
-  - 客户端收到 SSE 事件后需刷新列表或增量更新 Store
+- 课程详情（CourseDetailView）
+  - 是否展示课程进度、讲师信息（若后端提供）、课程资料下载列表
+  - 小节列表支持“展开/收起”，展开后显示：
+    - 资料列表（可下载）
+    - 关联作业列表（可跳转至提交页）
+  - 课程为空/无资料/无作业时的空态文案
 
-## 文件上传/下载
-- 上传 400？
-  - `multipart/form-data`，字段名必须是 `file`
-  - 检查大小/类型白名单（见 `application.yml`）
-- 预览失败？
-  - 仅允许 `image/*` 类型；非图片请使用下载
-- 下载 401？
-  - 使用 axios 发起并携带鉴权头，避免 `<a>` 直链
+- 小节详情（LessonDetailView）
+  - 视频播放：
+    - 文件ID资源：可正常播放；若 `<video>` 直链失败，将自动回退为 Blob URL
+    - 受保护直链（/files/{id}/download）：优先 Blob；失败回退直链
+    - HLS 链接（.m3u8）：Safari 原生可播；其它浏览器尝试动态加载 hls.js；失败显示“不支持 HLS”提示
+    - 错误信息是否使用 i18n 文案（`student.courses.video.playFailed`/`student.courses.video.hlsNotSupported`）
+  - 资料卡片：有则展示文档预览组件，无则显示“暂无资料”
+  - 关联作业：按 lessonId 过滤展示；可跳转提交页；过期也应可进入（只读在提交页判断）
+  - 学习笔记：可输入保存
 
-## 代理/端口/CORS
-- 跨域？
-  - 开发模式下建议代理 `/api` 到 `http://localhost:8080`
-  - 后端 CORS 放行需包含前端端口
-- 端口冲突？
-  - 修改后端 `server.port` 或前端 Vite 端口；文档站点默认 `4174`
+- 作业页面（Assignments/AssignmentSubmit）
+  - 列表过滤：状态、课程、搜索关键字
+  - 可见性对齐：
+    - 草稿（draft/crafted）：不显示
+    - 定时（scheduled）：未到发布时间不显示；到时后显示
+    - 已发布（published）：正常显示；过期仍保留入口
+  - 提交页：已过截止/已提交/已评分时只读；“打回重做”且未过重交截止时可编辑
 
-## 分页/排序/过滤
-- 怎么传分页？
-  - 统一 `page`（从 1 开始）、`size` 参数
-- 排序怎么传？
-  - `sort=field,asc|desc`，后端进行字段白名单校验
-- 多条件过滤？
-  - 使用查询参数（如 `status/teacherId/query`），未提供的不生效
+- 路由与权限
+  - 未登录访问上述页面：应被重定向到登录
+  - 非学生角色访问学生端路由：应被重定向到对应工作台
 
-## 缓存失效与一致性
-- 修改后数据不刷新？
-  - 写操作会在 Service 层失效相关缓存；若仍旧缓存，请检查 Key 设计与 TTL
-- 如何避免缓存雪崩/击穿？
-  - 设置随机 TTL、热点 Key 保护与限流；必要时本地缓存兜底
+- 视觉一致性
+  - 主要卡片、过滤器、按钮使用 `/components/ui` 下玻璃风格组件
+  - 空态、错误态文案有中英双语
 
-## SSE 断线重连
-- EventSource 偶尔断开？
-  - 使用指数退避（1s→2s→5s→10s 上限）重连
-  - 401 时先刷新 token 再重连；429/503 等等待后再试
+## 视频相关问题
 
-## 网关/代理报 502/504
-- 检查开发代理是否将 `/api` 正确转发到 `8080`
-- 后端是否超时（建议 `readTimeout` ≥ 30s，长任务异步化）
+- 问：为什么同一视频在某些浏览器无法播放？
+  - 答：部分浏览器 `<video>` 请求不会带鉴权头，已采用 Blob 方式回退；HLS 在 Safari 原生支持，其它浏览器依赖 hls.js，若未能加载则显示“不支持 HLS”提示。
 
-## 限流 429 处理
-- 遵循 `Retry-After` 响应头；前端退避重试，后端记录速率与用户维度
+- 问：支持哪些视频格式？
+  - 答：mp4、mov、webm、avi、mkv 等常见格式；HLS（.m3u8）根据浏览器支持情况播放。
 
-## 文件上传 413（Payload Too Large）
-- 增大 Nginx/代理与后端 `spring.servlet.multipart.max-file-size`、`max-request-size`
+## 可见性与路由
 
-## 数据库/Redis
-- MySQL 连接失败？
-  - 数据库已创建且导入 `schema.sql`
-  - 账号/密码正确；URL 中特殊字符需转义
-- Redis 必须开吗？
-  - 否。大部分功能可在不启 Redis 的情况下运行
+- 问：作业过期后为什么仍可从课程/小节进入？
+  - 答：为保证学习留痕与复查路径，过期仍保留路由；提交页内会根据截止与提交状态进入只读模式。
 
-## AI 集成
-- 无返回？
-  - 检查 `AI_DEFAULT_PROVIDER`、`OPENROUTER_API_KEY/DEEPSEEK_API_KEY`、`DEEPSEEK_MODEL`
-  - 检查网络连通性与配额/限流
-- 会话/记忆不生效？
-  - 确认 `/ai/conversations` 与 `/ai/memory` 正常
+## i18n 文案
 
-## 构建/文档
-- VitePress ESM 报错？
-  - `docs/package.json` 添加 `"type": "module"`
-- 首页 404？
-  - 确保 `docs/index.md` 存在并作为入口页
+- 本次新增：
+  - `student.courses.video.playFailed`
+  - `student.courses.video.hlsNotSupported`
+  - `student.assignments.viewAll`
+
+## 排查建议
+
+- 数据为空检查：后端返回的字段命名差异（如 `lessonId`/`lesson_id`、`publishAt`/`publish_at`）
+- 鉴权：本地开发环境跨域/鉴权导致 `<video>` 直链失效，优先验证 Blob 播放路径
+- HLS：确认浏览器是否支持 HLS 或 hls.js 是否能被加载（网络/CDN/构建策略）

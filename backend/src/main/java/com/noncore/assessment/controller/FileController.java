@@ -7,6 +7,8 @@ import com.noncore.assessment.util.ApiResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.ContentDisposition;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -73,9 +75,11 @@ public class FileController extends BaseController {
         headers.setContentType(MediaType.parseMediaType(mime));
         headers.setContentLength(fileBytes.length);
 
-        String encodedFilename = URLEncoder.encode(fileRecord.getOriginalName(), StandardCharsets.UTF_8);
-        // 浏览器PDF工具栏显示文件名依赖 Content-Disposition: inline; filename
-        headers.set(HttpHeaders.CONTENT_DISPOSITION, "inline; filename=\"" + fileRecord.getOriginalName() + "\"; filename*=UTF-8''" + encodedFilename);
+        String original = fileRecord.getOriginalName();
+        ContentDisposition cd = ContentDisposition.inline()
+                .filename(original, StandardCharsets.UTF_8)
+                .build();
+        headers.setContentDisposition(cd);
 
         return ResponseEntity.ok()
                 .headers(headers)
@@ -183,15 +187,75 @@ public class FileController extends BaseController {
         headers.setContentLength(fileBytes.length);
         // 对 PDF 设置 inline filename，确保浏览器 PDF 查看器显示原始文件名
         if (mt.startsWith("application/pdf")) {
-            String original = fileRecord.getOriginalName();
-            String encodedFilename = URLEncoder.encode(original, StandardCharsets.UTF_8);
-            headers.set(HttpHeaders.CONTENT_DISPOSITION,
-                    "inline; filename=\"" + original + "\"; filename*=UTF-8''" + encodedFilename);
+            ContentDisposition cd = ContentDisposition.inline()
+                    .filename(fileRecord.getOriginalName(), StandardCharsets.UTF_8)
+                    .build();
+            headers.setContentDisposition(cd);
         }
 
         return ResponseEntity.ok()
                 .headers(headers)
                 .body(fileBytes);
+    }
+
+    /**
+     * 流式播放接口（支持 Range 206），用于视频播放
+     */
+    @GetMapping("/{fileId}/stream")
+    @Operation(summary = "流式播放", description = "支持 Range 的视频流接口")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<byte[]> stream(@PathVariable Long fileId,
+                                         @RequestHeader(value = "Range", required = false) String rangeHeader) {
+        Long userId = getCurrentUserId();
+
+        FileRecord fileRecord = fileStorageService.getFileInfo(fileId);
+        if (fileRecord == null) {
+            return ResponseEntity.notFound().build();
+        }
+
+        byte[] all = fileStorageService.downloadFile(fileId, userId);
+        int total = all.length;
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.set(HttpHeaders.ACCEPT_RANGES, "bytes");
+        String mime = safeMimeType(fileRecord);
+        headers.setContentType(MediaType.parseMediaType(mime));
+
+        // 无 Range：返回全量
+        if (rangeHeader == null || !rangeHeader.startsWith("bytes=")) {
+            headers.setContentLength(total);
+            return ResponseEntity.ok()
+                    .headers(headers)
+                    .body(all);
+        }
+
+        // 解析 Range: bytes=start-end
+        try {
+            String range = rangeHeader.substring("bytes=".length());
+            String[] parts = range.split("-");
+            int start = Integer.parseInt(parts[0]);
+            int end = (parts.length > 1 && !parts[1].isBlank()) ? Integer.parseInt(parts[1]) : (total - 1);
+            if (start < 0) start = 0;
+            if (end >= total) end = total - 1;
+            if (start > end) start = Math.max(0, end);
+
+            int len = end - start + 1;
+            byte[] slice = new byte[len];
+            System.arraycopy(all, start, slice, 0, len);
+
+            headers.set(HttpHeaders.CONTENT_LENGTH, String.valueOf(len));
+            headers.set(HttpHeaders.CONTENT_RANGE, String.format("bytes %d-%d/%d", start, end, total));
+
+            return ResponseEntity.status(HttpStatus.PARTIAL_CONTENT)
+                    .headers(headers)
+                    .body(slice);
+        } catch (Exception ex) {
+            // 解析失败，退回全量
+            headers.setContentLength(total);
+            return ResponseEntity.ok()
+                    .headers(headers)
+                    .body(all);
+        }
     }
 
     private String safeMimeType(FileRecord f) {

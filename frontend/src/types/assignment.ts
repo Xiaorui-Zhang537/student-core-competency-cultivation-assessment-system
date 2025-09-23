@@ -5,6 +5,7 @@ export interface Assignment {
   title: string;
   description: string;
   dueDate: string;
+  assignmentType?: 'normal'|'course_bound';
   status: 'DRAFT' | 'PUBLISHED' | 'CLOSED';
   createdAt: string;
   updatedAt: string;
@@ -16,6 +17,7 @@ export interface AssignmentCreationRequest {
   title: string;
   description: string;
   dueDate: string;
+  assignmentType?: 'normal'|'course_bound';
 }
 
 // For updating an existing assignment
@@ -23,4 +25,5 @@ export interface AssignmentUpdateRequest {
   title?: string;
   description?: string;
   dueDate?: string;
+  assignmentType?: 'normal'|'course_bound';
 }

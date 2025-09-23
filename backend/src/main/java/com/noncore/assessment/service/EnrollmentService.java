@@ -38,4 +38,11 @@ public interface EnrollmentService {
      * 将 lesson_progress 以及 enrollments.progress 归零
      */
     void resetStudentCourseProgress(Long teacherId, Long courseId, Long studentId);
+
+    /**
+     * 同步学生所有课程的进度到 enrollments.progress（基于 lesson_progress 聚合）
+     * @param studentId 学生ID
+     * @return 已同步课程数
+     */
+    int syncStudentCourseProgress(Long studentId);
 } 

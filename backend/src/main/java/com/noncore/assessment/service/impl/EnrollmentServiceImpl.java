@@ -254,6 +254,26 @@ public class EnrollmentServiceImpl implements EnrollmentService {
         // 重置选课冗余进度
         enrollmentMapper.updateProgress(studentId, courseId, 0.0);
     }
+
+    @Override
+    public int syncStudentCourseProgress(Long studentId) {
+        logger.info("批量同步学生课程进度: studentId={}", studentId);
+        List<Course> courses = courseMapper.selectCoursesByStudentId(studentId);
+        int updated = 0;
+        if (courses != null) {
+            for (Course c : courses) {
+                try {
+                    java.math.BigDecimal rate = lessonProgressMapper.calculateCourseCompletionRate(studentId, c.getId());
+                    double pct = rate == null ? 0.0 : rate.doubleValue();
+                    enrollmentMapper.updateProgress(studentId, c.getId(), pct);
+                    updated++;
+                } catch (Exception e) {
+                    logger.warn("同步课程进度失败: courseId={}, studentId={}", c.getId(), studentId, e);
+                }
+            }
+        }
+        return updated;
+    }
     private void checkCourseOwnership(Long courseId, Long teacherId) {
         Course course = courseMapper.selectCourseById(courseId);
         if (course == null) {

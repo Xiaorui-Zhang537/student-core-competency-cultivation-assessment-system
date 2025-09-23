@@ -7,6 +7,13 @@ export const lessonApi = {
     return api.get(`/lessons/course/${courseId}`);
   },
 
+  // 课程整体进度（百分比，后端 BigDecimal 0-100）
+  getCourseProgressPercent(courseId: string, studentId?: string): Promise<ApiResponse<number>> {
+    const params: any = {}
+    if (studentId) params.studentId = studentId
+    return api.get(`/lessons/course/${courseId}/progress-percentage`, { params })
+  },
+
   getLesson(lessonId: string): Promise<ApiResponse<Lesson>> {
     return api.get(`/lessons/${lessonId}`);
   },

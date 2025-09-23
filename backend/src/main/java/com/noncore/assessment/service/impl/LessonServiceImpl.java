@@ -5,6 +5,7 @@ import com.noncore.assessment.entity.LessonProgress;
 import com.noncore.assessment.exception.BusinessException;
 import com.noncore.assessment.exception.ErrorCode;
 import com.noncore.assessment.mapper.LessonMapper;
+import com.noncore.assessment.mapper.EnrollmentMapper;
 import com.noncore.assessment.mapper.FileRecordMapper;
 import com.noncore.assessment.mapper.LessonProgressMapper;
 import com.noncore.assessment.service.LessonService;
@@ -29,11 +30,13 @@ public class LessonServiceImpl implements LessonService {
     private final LessonMapper lessonMapper;
     private final FileRecordMapper fileRecordMapper;
     private final LessonProgressMapper lessonProgressMapper;
+    private final EnrollmentMapper enrollmentMapper;
 
-    public LessonServiceImpl(LessonMapper lessonMapper, LessonProgressMapper lessonProgressMapper, FileRecordMapper fileRecordMapper) {
+    public LessonServiceImpl(LessonMapper lessonMapper, LessonProgressMapper lessonProgressMapper, FileRecordMapper fileRecordMapper, EnrollmentMapper enrollmentMapper) {
         this.lessonMapper = lessonMapper;
         this.lessonProgressMapper = lessonProgressMapper;
         this.fileRecordMapper = fileRecordMapper;
+        this.enrollmentMapper = enrollmentMapper;
     }
 
     @Override
@@ -140,6 +143,12 @@ public class LessonServiceImpl implements LessonService {
     public boolean updateStudentProgress(Long studentId, Long lessonId, BigDecimal progress, Integer studyTime, Integer lastPosition) {
         logger.info("更新学生章节进度，学生ID: {}, 章节ID: {}, 进度: {}%", studentId, lessonId, progress);
         LessonProgress existingProgress = lessonProgressMapper.selectByStudentAndLesson(studentId, lessonId);
+        // 确保 courseId 贯通（用于课程层面的聚合统计与筛选）
+        Long courseId = null;
+        try {
+            Lesson l = lessonMapper.selectLessonById(lessonId);
+            if (l != null) courseId = l.getCourseId();
+        } catch (Exception ignore) { }
         boolean completed = progress != null && progress.compareTo(new BigDecimal("100")) >= 0;
         if (existingProgress != null) {
             existingProgress.setProgress(progress);
@@ -151,7 +160,19 @@ public class LessonServiceImpl implements LessonService {
                 existingProgress.setCompleted(true);
                 existingProgress.setCompletedAt(LocalDateTime.now());
             }
-            return lessonProgressMapper.updateLessonProgress(existingProgress) > 0;
+            if (existingProgress.getCourseId() == null && courseId != null) {
+                existingProgress.setCourseId(courseId);
+            }
+            boolean ok = lessonProgressMapper.updateLessonProgress(existingProgress) > 0;
+            // 同步更新 enrollments.progress（基于课程完成率聚合）
+            if (ok && courseId != null) {
+                try {
+                    java.math.BigDecimal rate = lessonProgressMapper.calculateCourseCompletionRate(studentId, courseId);
+                    double pct = rate == null ? 0.0 : rate.doubleValue();
+                    enrollmentMapper.updateProgress(studentId, courseId, pct);
+                } catch (Exception ignore) {}
+            }
+            return ok;
         } else {
             LessonProgress np = new LessonProgress();
             np.setStudentId(studentId);
@@ -166,7 +187,18 @@ public class LessonServiceImpl implements LessonService {
             if (np.getCompleted()) {
                 np.setCompletedAt(LocalDateTime.now());
             }
-            return lessonProgressMapper.insertLessonProgress(np) > 0;
+            if (courseId != null) {
+                np.setCourseId(courseId);
+            }
+            boolean ok = lessonProgressMapper.insertLessonProgress(np) > 0;
+            if (ok && courseId != null) {
+                try {
+                    java.math.BigDecimal rate = lessonProgressMapper.calculateCourseCompletionRate(studentId, courseId);
+                    double pct = rate == null ? 0.0 : rate.doubleValue();
+                    enrollmentMapper.updateProgress(studentId, courseId, pct);
+                } catch (Exception ignore) {}
+            }
+            return ok;
         }
     }
 
@@ -342,7 +374,7 @@ public class LessonServiceImpl implements LessonService {
     public String getLastStudiedLessonTitle(Long studentId) {
         List<Map<String, Object>> recent = lessonProgressMapper.selectRecentStudiedLessons(studentId, 1);
         if (recent == null || recent.isEmpty()) return "";
-        Object t = recent.get(0).get("lesson_title");
+        Object t = recent.get(0).get("lessonTitle");
         return t == null ? "" : String.valueOf(t);
     }
 

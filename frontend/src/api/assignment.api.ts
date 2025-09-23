@@ -29,7 +29,7 @@ export const assignmentApi = {
     return api.get('/assignments', { params });
   },
 
-  getAssignmentsByCourse: (courseId: string, params: { page?: number; size?: number; sort?: string }): Promise<ApiResponse<PaginatedResponse<Assignment>>> => {
+  getAssignmentsByCourse: (courseId: string, params: { page?: number; size?: number; sort?: string; assignmentType?: string }): Promise<ApiResponse<PaginatedResponse<Assignment>>> => {
     // 后端 AssignmentController 暴露的课程作业接口路径为 /assignments?courseId=xxx
     const merged = { ...(params||{}), courseId } as any
     return api.get('/assignments', { params: merged });

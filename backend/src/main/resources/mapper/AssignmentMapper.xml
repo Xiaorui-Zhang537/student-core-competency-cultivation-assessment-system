@@ -16,6 +16,8 @@
         <result column="max_attempts" property="maxAttempts"/>
         <result column="file_types" property="fileTypes"/>
         <result column="status" property="status"/>
+        <result column="assignment_type" property="assignmentType"/>
+        <result column="lesson_id" property="lessonId"/>
         <result column="submission_count" property="submissionCount"/>
         <result column="created_at" property="createdAt"/>
         <result column="updated_at" property="updatedAt"/>
@@ -29,7 +31,7 @@
     <sql id="assignmentColumns">
         a.id, a.course_id, a.teacher_id, a.title, a.description, a.requirements,
         a.max_score, a.due_date, a.allow_late, a.max_attempts, a.file_types,
-        a.status, a.submission_count, a.created_at, a.updated_at, a.deleted
+        a.status, a.assignment_type, a.lesson_id, a.submission_count, a.created_at, a.updated_at, a.deleted
     </sql>
 
     <!-- 带课程和教师信息的查询字段 -->
@@ -43,11 +45,11 @@
     <insert id="insertAssignment" parameterType="com.noncore.assessment.entity.Assignment" useGeneratedKeys="true" keyProperty="id">
         INSERT INTO assignments (
             course_id, teacher_id, title, description, requirements, max_score,
-            due_date, allow_late, max_attempts, file_types, status, submission_count,
+            due_date, allow_late, max_attempts, file_types, status, assignment_type, lesson_id, submission_count,
             created_at, updated_at, deleted
         ) VALUES (
                      #{courseId}, #{teacherId}, #{title}, #{description}, #{requirements}, #{maxScore},
-                     #{dueDate}, #{allowLate}, #{maxAttempts}, #{fileTypes}, #{status}, #{submissionCount},
+                     #{dueDate}, #{allowLate}, #{maxAttempts}, #{fileTypes}, #{status}, #{assignmentType}, #{lessonId}, #{submissionCount},
                      NOW(), NOW(), #{deleted}
                  )
     </insert>
@@ -74,6 +76,8 @@
             <if test="maxAttempts != null">max_attempts = #{maxAttempts},</if>
             <if test="fileTypes != null">file_types = #{fileTypes},</if>
             <if test="status != null">status = #{status},</if>
+            <if test="assignmentType != null">assignment_type = #{assignmentType},</if>
+            <if test="lessonId != null">lesson_id = #{lessonId},</if>
             updated_at = NOW()
         </set>
         WHERE id = #{id} AND deleted = false

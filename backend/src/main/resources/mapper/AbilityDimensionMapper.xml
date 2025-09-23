@@ -7,6 +7,7 @@
     <resultMap id="AbilityDimensionResultMap" type="com.noncore.assessment.entity.AbilityDimension">
         <id column="id" property="id"/>
         <result column="name" property="name"/>
+        <result column="code" property="code"/>
         <result column="description" property="description"/>
         <result column="category" property="category"/>
         <result column="weight" property="weight"/>
@@ -20,7 +21,7 @@
     </resultMap>
 
     <sql id="Base_Column_List">
-        id, name, description, category, weight, max_score, icon, color, sort_order, is_active, created_at, updated_at
+        id, name, code, description, category, weight, max_score, icon, color, sort_order, is_active, created_at, updated_at
     </sql>
 
     <!-- 查询所有激活维度 -->
@@ -51,9 +52,9 @@
     <!-- 插入新维度 -->
     <insert id="insertDimension" useGeneratedKeys="true" keyProperty="id" parameterType="com.noncore.assessment.entity.AbilityDimension">
         INSERT INTO ability_dimensions
-        (name, description, category, weight, max_score, icon, color, sort_order, is_active, created_at, updated_at)
+        (name, code, description, category, weight, max_score, icon, color, sort_order, is_active, created_at, updated_at)
         VALUES
-            (#{name}, #{description}, #{category}, #{weight}, #{maxScore}, #{icon}, #{color}, #{sortOrder}, #{isActive}, NOW(), NOW())
+            (#{name}, #{code}, #{description}, #{category}, #{weight}, #{maxScore}, #{icon}, #{color}, #{sortOrder}, #{isActive}, NOW(), NOW())
     </insert>
 
     <!-- 更新维度 -->
@@ -61,6 +62,7 @@
         UPDATE ability_dimensions
         SET
             name = #{name},
+            code = #{code},
             description = #{description},
             category = #{category},
             weight = #{weight},

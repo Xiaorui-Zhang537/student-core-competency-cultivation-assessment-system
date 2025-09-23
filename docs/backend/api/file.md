@@ -10,6 +10,7 @@
 - `GET /api/files/storage/usage`：存储使用量统计
 - `GET /api/files/{fileId}/download`：下载文件（二进制）
 - `GET /api/files/{fileId}/preview`：预览图片（二进制，`image/*`）
+- `GET /api/files/{fileId}/stream`：视频流播放（支持 Range，`video/*`）
 - `DELETE /api/files/{fileId}`：删除文件
 - `DELETE /api/files/batch`：批量删除文件（请求体：`[fileId, ...]`）
 
@@ -113,6 +114,18 @@ curl -H "Authorization: Bearer $TOKEN" \
   http://localhost:8080/api/files/999/preview --output preview.jpg
 ```
 - 注意：下载/预览返回的是原始二进制，不包裹在 `ApiResponse` 中，响应头包含 `Content-Type` 与 `Content-Disposition`（下载）。
+
+### 4.1 视频流（推荐用于 `<video>` 播放）
+
+```bash
+curl -H "Authorization: Bearer $TOKEN" -H "Range: bytes=0-1048575" \
+  http://localhost:8080/api/files/9876/stream --output seg.bin
+```
+
+- 特性：
+  - 支持 `Range` 请求，返回 `206 Partial Content`；设置 `Accept-Ranges: bytes`、`Content-Range`、`Content-Length`。
+  - `Content-Type` 依据文件 MIME（如 `video/mp4`）。
+  - 适合 `<video>` 和 HLS 外链。
 
 ---
 

@@ -27,6 +27,11 @@ public class Assignment {
     private Long courseId;
     private Long teacherId;
     private Long lessonId;
+    /**
+     * 作业类型：normal（普通）、course_bound（课程绑定-无截止）
+     */
+    @Builder.Default
+    private String assignmentType = "normal";
     private String title;
     private String description;
     private String requirements; // 作业要求

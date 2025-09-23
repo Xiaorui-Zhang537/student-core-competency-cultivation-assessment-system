@@ -131,6 +131,13 @@
     <!-- Create/Edit Modal (GlassModal) -->
     <GlassModal v-if="showModal" :title="(isEditing ? t('teacher.assignments.modal.editTitle') : t('teacher.assignments.modal.createTitle')) as string" maxWidth="max-w-lg" heightVariant="normal" @close="closeModal">
       <div class="mb-3">
+        <label class="block text-sm font-medium mb-1">{{ t('teacher.assignments.modal.typeLabel') || '作业类型' }}</label>
+        <div class="flex items-center gap-4 text-sm">
+          <SegmentedPills :model-value="assignmentType" :options="assignmentTypeOptions" size="sm" @update:modelValue="(v:any)=> assignmentType = v" />
+        </div>
+        <p class="mt-1 text-xs text-gray-500" v-if="assignmentType==='course_bound'">{{ t('teacher.assignments.modal.typeHintCourseBound') || '课程作业：无截止时间，可绑定到课程节次。' }}</p>
+      </div>
+      <div class="mb-3" v-if="assignmentType==='normal'">
         <label class="block text-sm font-medium mb-1">{{ t('teacher.assignments.modal.visibility') || '可见性' }}</label>
         <div class="flex items-center gap-4 text-sm">
           <SegmentedPills :model-value="publishMode" :options="publishOptions" size="sm" @update:modelValue="(v:any)=> publishMode = v" />
@@ -158,7 +165,7 @@
           <div v-if="publishMode==='scheduled'" class="glass-thin rounded-lg p-3" v-glass="{ strength: 'thin', interactive: true }">
             <GlassDateTimePicker :label="(t('teacher.assignments.modal.publishAt') as string) || '发布时间'" v-model="form.publishAt" />
           </div>
-          <div class="glass-thin rounded-lg p-3" v-glass="{ strength: 'thin', interactive: true }">
+          <div class="glass-thin rounded-lg p-3" v-glass="{ strength: 'thin', interactive: true }" v-if="assignmentType!=='course_bound'">
             <GlassDateTimePicker :label="(t('teacher.assignments.modal.dueAt') as string) || (t('teacher.assignments.modal.dueDate') as string)" v-model="form.dueDate" />
             <div class="mt-2 flex flex-wrap items-center gap-2 text-xs text-gray-600 dark:text-gray-300">
               <span>{{ t('teacher.assignments.modal.quickHint') || '快捷设置：' }}</span>
@@ -182,21 +189,14 @@
             @update:files="onFilesUpdate"
             @upload-error="onAssignmentUploadError"
           />
-          <!-- 已有关联附件列表（编辑时显示） -->
+          <!-- 已关联附件：复用共享 AttachmentList（无卡片模式，自定义删除操作） -->
           <div v-if="editingAssignmentId && attachments.length" class="mt-4">
             <h4 class="text-sm font-medium mb-2">{{ t('teacher.assignments.modal.existing') }}</h4>
-            <ul class="divide-y divide-gray-200">
-              <li v-for="f in attachments" :key="f.id" class="py-2 flex items-center justify-between">
-                <div class="min-w-0 mr-3">
-                  <div class="text-sm truncate">{{ f.originalName || f.fileName || ('附件#' + f.id) }}</div>
-                  <div class="text-xs text-gray-500">{{ t('teacher.assignments.modal.size') }}：{{ formatSize(f.fileSize) }}</div>
-                </div>
-                <div class="flex items-center gap-2">
-                  <Button as="a" :href="`${baseURL}/files/${f.id}/download`" size="sm" variant="outline">{{ t('teacher.assignments.modal.download') }}</Button>
-                  <Button size="sm" variant="danger" @click="confirmDeleteAttachment(f.id)">{{ t('teacher.assignments.modal.delete') }}</Button>
-                </div>
-              </li>
-            </ul>
+            <AttachmentList :files="attachments" :noCard="true" :showDefaultDownload="true" :hideHeader="true">
+              <template #actions="{ file }">
+                <Button size="sm" variant="danger" @click="confirmDeleteAttachment((file as any).id)">{{ t('teacher.assignments.modal.delete') }}</Button>
+              </template>
+            </AttachmentList>
           </div>
         </div>
         <div class="flex justify-end space-x-3 mt-6">
@@ -237,6 +237,7 @@ import GlassTextarea from '@/components/ui/inputs/GlassTextarea.vue'
 import GlassModal from '@/components/ui/GlassModal.vue'
 import SegmentedPills from '@/components/ui/SegmentedPills.vue'
 import { assignmentApi } from '@/api/assignment.api'
+import AttachmentList from '@/features/shared/AttachmentList.vue'
 
 const assignmentStore = useAssignmentStore();
 const courseStore = useCourseStore();
@@ -253,6 +254,11 @@ const publishOptions = computed(() => ([
   { label: (t('teacher.assignments.modal.draft') as string) || '保存为草稿', value: 'draft' },
   { label: (t('teacher.assignments.modal.publishNow') as string) || '立即发布', value: 'publish' },
   { label: (t('teacher.assignments.modal.schedule') as string) || '定时发布', value: 'scheduled' },
+]))
+const assignmentType = ref<'normal'|'course_bound'>('normal')
+const assignmentTypeOptions = computed(() => ([
+  { label: (t('teacher.assignments.modal.typeNormal') as string) || '普通作业', value: 'normal' },
+  { label: (t('teacher.assignments.modal.typeCourseBound') as string) || '课程作业', value: 'course_bound' },
 ]))
 const originalStatus = ref<string>('draft')
 const selectedCourseId = ref<string | null>(null);
@@ -274,12 +280,13 @@ const totalPages = computed(() => {
   return Math.max(1, Math.ceil(total / (size || 1)))
 })
 
-const form = reactive<AssignmentCreationRequest & { id?: string; publishAt?: string }>({
+const form = reactive<AssignmentCreationRequest & { id?: string; publishAt?: string; assignmentType?: 'normal'|'course_bound' }>({
   courseId: '',
   title: '',
   description: '',
   dueDate: '',
   publishAt: '',
+  assignmentType: 'normal',
 });
 const assignmentUploader = ref();
 const assignmentUploadData = reactive<{ purpose: string; relatedId?: string | number }>({ purpose: 'assignment_attachment' });
@@ -414,7 +421,8 @@ function formatMinute(v: any) {
 }
 
 const resetForm = () => {
-    Object.assign(form, { courseId: selectedCourseId.value || '', title: '', description: '', dueDate: '', publishAt: '' });
+    Object.assign(form, { courseId: selectedCourseId.value || '', title: '', description: '', dueDate: '', publishAt: '', assignmentType: 'normal' });
+    assignmentType.value = 'normal'
 };
 
 const openCreateModal = () => {
@@ -429,6 +437,7 @@ const openCreateModal = () => {
       form.courseId = String(courseStore.courses[0].id);
   }
   publishMode.value = 'draft'
+  assignmentType.value = 'normal'
   showModal.value = true;
 };
 
@@ -457,8 +466,10 @@ const openEditModal = (assignment: Assignment) => {
     title: assignment.title,
     description: (assignment as any).description || '',
     dueDate: toLocalInput((assignment as any).dueDate),
-    publishAt: toLocalInput((assignment as any).publishAt)
+    publishAt: toLocalInput((assignment as any).publishAt),
+    assignmentType: (assignment as any).assignmentType || 'normal'
   });
+  assignmentType.value = (form.assignmentType as any) || 'normal'
   originalStatus.value = String((assignment as any)?.status || 'draft').toLowerCase()
   showModal.value = true;
   // 加载已有附件
@@ -482,17 +493,23 @@ const handleSubmit = async () => {
   // 校验：截止必须晚于发布时间/当前时间
   const baseTime = publishMode.value === 'scheduled' && form.publishAt ? new Date(form.publishAt).getTime() : Date.now()
   const due = form.dueDate ? new Date(form.dueDate).getTime() : 0
-  if (!due || due <= baseTime) {
-    alert(String(t('teacher.assignments.modal.validation.publishBeforeDue') || '截止时间必须晚于发布时间/当前时间'))
-    return
+  if (assignmentType.value !== 'course_bound') {
+    if (!due || due <= baseTime) {
+      alert(String(t('teacher.assignments.modal.validation.publishBeforeDue') || '截止时间必须晚于发布时间/当前时间'))
+      return
+    }
+  } else {
+    // 课程作业：无截止，强制清空
+    form.dueDate = ''
   }
   if (isEditing.value && editingAssignmentId.value) {
     const { title, description, dueDate, publishAt } = form;
-    const updateData: AssignmentUpdateRequest = { title, description, dueDate: toServerTime(dueDate) } as any;
+    const updateData: AssignmentUpdateRequest = { title, description, dueDate: assignmentType.value==='course_bound' ? '' : toServerTime(dueDate) } as any;
     // 确保 courseId 传回后端，避免“课程ID不能为空”
     (updateData as any).courseId = form.courseId;
     // 提供默认满分，避免后端校验失败（若后端允许不更新可移除）
     (updateData as any).maxScore = (updateData as any).maxScore || 100;
+    (updateData as any).assignmentType = assignmentType.value
     if (publishMode.value === 'scheduled') {
       (updateData as any).status = 'scheduled'
       ;(updateData as any).publishAt = toServerTime(publishAt)
@@ -519,9 +536,10 @@ const handleSubmit = async () => {
       }
     } catch {}
   } else {
-    const createData: AssignmentCreationRequest = { ...form, dueDate: toServerTime(form.dueDate) } as any;
+    const createData: AssignmentCreationRequest = { ...form, dueDate: assignmentType.value==='course_bound' ? '' : toServerTime(form.dueDate) } as any;
     // 默认满分 100 分
     (createData as any).maxScore = 100;
+    (createData as any).assignmentType = assignmentType.value
     if (publishMode.value === 'scheduled') {
       (createData as any).status = 'scheduled'
       ;(createData as any).publishAt = toServerTime(form.publishAt)

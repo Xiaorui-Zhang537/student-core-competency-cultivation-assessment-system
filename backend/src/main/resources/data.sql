@@ -40,12 +40,12 @@ VALUES
 -- 能力维度表：定义能力的维度类型
 -- =========================
 -- 固定四个非成绩维度：道德认知、学习态度、学习能力、学习方法
-INSERT INTO ability_dimensions (id, name, description, category, weight, max_score, icon, color, sort_order, is_active, created_at, updated_at)
+INSERT INTO ability_dimensions (id, name, code, description, category, weight, max_score, icon, color, sort_order, is_active, created_at, updated_at)
 VALUES
-    (1, '道德认知', '价值观与道德判断', 'soft', 1.00, 100, 'scale', '#EF4444', 1, 1, NOW(), NOW()),
-    (2, '学习态度', '积极性、坚持性与自律', 'soft', 1.00, 100, 'heart', '#F59E0B', 2, 1, NOW(), NOW()),
-    (3, '学习能力', '理解、分析与迁移应用', 'academic', 1.00, 100, 'sparkles', '#3B82F6', 3, 1, NOW(), NOW()),
-    (4, '学习方法', '策略、反思与资源利用', 'academic', 1.00, 100, 'book-open', '#10B981', 4, 1, NOW(), NOW());
+    (1, '道德认知', 'MORAL_COGNITION', '价值观与道德判断', 'soft', 1.00, 100, 'scale', '#EF4444', 1, 1, NOW(), NOW()),
+    (2, '学习态度', 'LEARNING_ATTITUDE', '积极性、坚持性与自律', 'soft', 1.00, 100, 'heart', '#F59E0B', 2, 1, NOW(), NOW()),
+    (3, '学习能力', 'LEARNING_ABILITY', '理解、分析与迁移应用', 'academic', 1.00, 100, 'sparkles', '#3B82F6', 3, 1, NOW(), NOW()),
+    (4, '学习方法', 'LEARNING_METHOD', '策略、反思与资源利用', 'academic', 1.00, 100, 'book-open', '#10B981', 4, 1, NOW(), NOW());
 
 -- =========================
 -- 能力库表：所有能力项（挂靠维度）

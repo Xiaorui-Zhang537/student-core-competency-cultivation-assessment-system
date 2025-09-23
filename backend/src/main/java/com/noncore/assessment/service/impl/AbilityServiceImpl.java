@@ -150,11 +150,16 @@ public class AbilityServiceImpl implements AbilityService {
         assessment.setStudentId(studentId);
         assessment.setDimensionId(dimensionId);
         assessment.setScore(score);
-        assessment.setMaxScore(BigDecimal.valueOf(100));
+        // 量纲修正：若前端传入 0-5 刻度（AI 四维与学习成绩均按照 0-5 写入），则将满分记为 5；
+        // 其他场景保持 100。
+        double s = score == null ? 0.0 : score.doubleValue();
+        assessment.setMaxScore(BigDecimal.valueOf(s <= 5.0 ? 5 : 100));
         assessment.setAssessmentType(assessmentType);
         assessment.setRelatedId(relatedId);
         assessment.setEvidence(evidence);
         assessment.setStatus("completed");
+        // 关键：设置评估时间，避免 assessed_at 为空导致聚合查询（按时间过滤）统计不到
+        assessment.setAssessedAt(java.time.LocalDateTime.now());
 
         // 保存评估记录
         abilityAssessmentMapper.insertAssessment(assessment);

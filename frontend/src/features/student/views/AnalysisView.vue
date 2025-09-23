@@ -179,7 +179,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, computed, watch } from 'vue'
+import { ref, onMounted, computed, watch, onUnmounted, nextTick } from 'vue'
 import * as echarts from 'echarts'
 import { studentApi } from '@/api/student.api'
 import { useI18n } from 'vue-i18n'
@@ -221,6 +221,8 @@ const enrolledCourses = ref<EnrolledCourseItem[]>([])
 const selectedCourseId = ref<string | null>(null)
 const radarIndicators = ref<{ name: string; max: number }[]>([])
 const radarSeries = ref<{ name: string; values: number[] }[]>([])
+// 保留后端原始维度名称以便在语言切换时重新本地化
+const rawRadarDimensions = ref<string[]>([])
 const insightsItems = ref<any[]>([])
 const radarRef = ref<any>(null)
 
@@ -379,9 +381,25 @@ function onCompareParamsChange() {
 async function fetchAssignmentsForCourse() {
   if (!selectedCourseId.value) { assignmentOptions.value = []; return }
   try {
-    const { assignmentApi } = await import('@/api/assignment.api')
-    const res: any = await assignmentApi.getAssignmentsByCourse(String(selectedCourseId.value), { page: 1, size: 1000 } as any)
-    const items = res?.data?.items?.items || res?.data?.items || res?.items || []
+    // 学生端应使用本人可见的作业列表或“我的提交”，避免权限导致取不到
+    const res: any = await studentApi.getAssignments({ courseId: String(selectedCourseId.value), page: 1, size: 1000 } as any)
+    const unwrap = (r: any) => r?.data?.items?.items ?? r?.data?.items ?? r?.items ?? (Array.isArray(r) ? r : [])
+    let items: any[] = unwrap(res)
+    // 兜底：若接口未返回或权限受限，回退到“我的提交”列表提取 assignmentId
+    if (!items || items.length === 0) {
+      try {
+        const ms: any = await studentApi.getMySubmissions({ courseId: String(selectedCourseId.value) })
+        const subs = unwrap(ms)
+        const map = new Map<string, { id: string; title: string }>()
+        for (const s of subs || []) {
+          const aid = String(s.assignmentId || s.assignment?.id || '')
+          if (!aid) continue
+          const title = String(s.assignment?.title || `#${aid}`)
+          if (!map.has(aid)) map.set(aid, { id: aid, title })
+        }
+        items = Array.from(map.values())
+      } catch { /* ignore */ }
+    }
     assignmentOptions.value = (items || []).map((it: any) => ({ id: String(it.id), title: it.title || (`#${it.id}`) }))
   } catch {
     assignmentOptions.value = []
@@ -402,6 +420,7 @@ async function loadRadar() {
       const r: any = await abilityApi.getStudentRadar({ courseId: selectedCourseId.value, startDate: fmt(start), endDate: fmt(end) })
       const data: any = r?.data ?? r
       const dims: string[] = data?.dimensions || []
+      rawRadarDimensions.value = [...dims]
       radarIndicators.value = dims.map(n => ({ name: localizeDimensionName(n), max: 100 }))
       const student = (data?.studentScores || []) as number[]
       const clazz = (data?.classAvgScores || []) as number[]
@@ -416,6 +435,7 @@ async function loadRadar() {
       const rCmp: any = await abilityApi.postStudentRadarCompare(body)
       const dCmp = rCmp?.data ?? rCmp
       const dims: string[] = dCmp?.dimensions || []
+      rawRadarDimensions.value = [...dims]
       radarIndicators.value = dims.map(n => ({ name: localizeDimensionName(n), max: 100 }))
       const series: { name: string; values: number[] }[] = []
       const aStu = (dCmp?.seriesA?.studentScores || []) as number[]
@@ -512,75 +532,56 @@ async function askAiOnRadar() {
 
 const gaugeRef = ref<HTMLElement | null>(null)
 let gaugeChart: echarts.ECharts | null = null
+let gaugeResizeHandler: (() => void) | null = null
+
+async function waitForGaugeContainer(maxTries = 10): Promise<boolean> {
+  for (let i = 0; i < maxTries; i++) {
+    await nextTick()
+    if (gaugeRef.value && gaugeRef.value.offsetWidth > 0 && gaugeRef.value.offsetHeight > 0) return true
+    await new Promise(r => requestAnimationFrame(() => r(null)))
+  }
+  return !!gaugeRef.value
+}
 
 function renderGauge(valueNum: number) {
   if (!gaugeRef.value) return
-  try { gaugeChart?.dispose() } catch {}
-  const theme = document.documentElement.classList.contains('dark') ? 'dark' : 'light'
-  gaugeChart = echarts.init(gaugeRef.value as HTMLDivElement, theme)
-  const v = Math.max(0, Math.min(100, Number(valueNum || 0)))
-  const base = '#3b82f6'
-  const option = {
-    backgroundColor: 'transparent',
-    series: [
-      // 背景环
-      {
-        type: 'gauge',
-        startAngle: 200, endAngle: -20, min: 0, max: 100,
-        axisLine: { lineStyle: { width: 14, color: [[1, theme==='dark' ? '#1f2937' : '#eef2ff']] } },
-        pointer: { show: false }, axisTick: { show: false }, splitLine: { show: false }, axisLabel: { show: false },
-        detail: { show: false }
-      },
-      // 进度环（蓝色渐变）
-      {
-        type: 'gauge',
-        startAngle: 200, endAngle: -20, min: 0, max: 100,
-        progress: {
-          show: true,
-          width: 14,
-          itemStyle: {
-            color: new (echarts as any).graphic.LinearGradient(0, 0, 1, 0, [
-              { offset: 0, color: '#60a5fa' },
-              { offset: 1, color: base }
-            ]),
-            shadowColor: base + '66', shadowBlur: 6
-          }
-        },
-        axisLine: { lineStyle: { width: 14, color: [[1, 'transparent']] } },
-        pointer: { show: false }, axisTick: { show: false }, splitLine: { show: false }, axisLabel: { show: false },
-        detail: {
-          valueAnimation: true,
-          fontSize: 40,
-          fontWeight: 700,
-          color: base,
-          offsetCenter: [0, '-4%'],
-          formatter: (val: number) => `${Math.round(val)}`
-        },
-        data: [{ value: v }]
-      },
-      // 次要文本
-      {
-        type: 'gauge',
-        startAngle: 200, endAngle: -20, min: 0, max: 100,
-        pointer: { show: false }, axisTick: { show: false }, splitLine: { show: false }, axisLabel: { show: false },
-        detail: {
-          show: true,
-          valueAnimation: false,
-          fontSize: 12,
-          color: theme==='dark' ? '#9ca3af' : '#6b7280',
-          offsetCenter: [0, '34%'],
-          formatter: () => (t('student.analysis.kpiAvgScore') as any) || '平均分'
-        },
-        data: [{ value: 0 }]
-      }
-    ]
-  }
-  gaugeChart.setOption(option)
+  ;(async () => {
+    const ok = await waitForGaugeContainer()
+    if (!ok || !gaugeRef.value) return
+    try { gaugeChart?.dispose() } catch {}
+    const theme = document.documentElement.classList.contains('dark') ? 'dark' : 'light'
+    gaugeChart = echarts.init(gaugeRef.value as HTMLDivElement, theme)
+    const v = Math.max(0, Math.min(100, Number(valueNum || 0)))
+    const base = '#3b82f6'
+    const option = {
+      backgroundColor: 'transparent',
+      series: [
+        { type: 'gauge', startAngle: 200, endAngle: -20, min: 0, max: 100,
+          axisLine: { lineStyle: { width: 14, color: [[1, theme==='dark' ? '#1f2937' : '#eef2ff']] } },
+          pointer: { show: false }, axisTick: { show: false }, splitLine: { show: false }, axisLabel: { show: false }, detail: { show: false } },
+        { type: 'gauge', startAngle: 200, endAngle: -20, min: 0, max: 100,
+          progress: { show: true, width: 14, itemStyle: { color: new (echarts as any).graphic.LinearGradient(0, 0, 1, 0, [ { offset: 0, color: '#60a5fa' }, { offset: 1, color: base } ]), shadowColor: base + '66', shadowBlur: 6 } },
+          axisLine: { lineStyle: { width: 14, color: [[1, 'transparent']] } },
+          pointer: { show: false }, axisTick: { show: false }, splitLine: { show: false }, axisLabel: { show: false },
+          detail: { valueAnimation: true, fontSize: 40, fontWeight: 700, color: base, offsetCenter: [0, '-4%'], formatter: (val: number) => `${Math.round(val)}` },
+          data: [{ value: v }] },
+        { type: 'gauge', startAngle: 200, endAngle: -20, min: 0, max: 100,
+          pointer: { show: false }, axisTick: { show: false }, splitLine: { show: false }, axisLabel: { show: false },
+          detail: { show: true, valueAnimation: false, fontSize: 12, color: theme==='dark' ? '#9ca3af' : '#6b7280', offsetCenter: [0, '34%'], formatter: () => (t('student.analysis.kpiAvgScore') as any) || '平均分' },
+          data: [{ value: 0 }] }
+      ]
+    }
+    gaugeChart.setOption(option)
+    if (!gaugeResizeHandler) {
+      gaugeResizeHandler = () => { try { gaugeChart?.resize() } catch {} }
+      window.addEventListener('resize', gaugeResizeHandler)
+    }
+  })()
 }
 
-// 课程切换或 KPI 变化时重绘仪表盘
+// 课程切换或 KPI 变化时重绘仪表盘（容器就绪后再渲染）
 watch([() => selectedCourseId.value, () => courseAvgScore.value], () => {
-  renderGauge(Number(courseAvgScore.value || 0))
+  nextTick(() => renderGauge(Number(courseAvgScore.value || 0)))
 })
 
 // 课程切换：刷新作业与仪表
@@ -591,8 +592,10 @@ watch(() => selectedCourseId.value, async () => {
   loadHoursTrend()
 })
 
-// 在首次加载完成后渲染仪表盘
-watch(() => loading.value, (v) => { if (v === false) renderGauge(Number(courseAvgScore.value || 0)) })
+// 在首次加载完成后渲染仪表盘（等待DOM切换完成）
+watch(() => loading.value, (v) => {
+  if (v === false) nextTick(() => renderGauge(Number(courseAvgScore.value || 0)))
+})
 
 async function loadScoreTrend() {
   try {
@@ -653,16 +656,55 @@ onMounted(async () => {
     try { await courseStore.fetchCourses({ page: 1, size: 100 }) } catch {}
   }
   await fetchCourseAssignments()
+  // 先不急于渲染，等待一次 tick 确保容器挂载
+  await nextTick()
   renderGauge(courseAvgScore.value)
   await Promise.all([load(), loadRadar(), loadInsights()])
+  // 数据入位后再次稳态渲染（避免首次 loading 切换造成实例被销毁）
+  await nextTick()
+  renderGauge(courseAvgScore.value)
   await loadScoreTrend()
   await loadHoursTrend()
 })
 
 watch(assignmentIdsA, () => { if (compareEnabled.value) { loadRadar(); loadInsights(); } }, { deep: true })
 watch(assignmentIdsB, () => { if (compareEnabled.value) { loadRadar(); loadInsights(); } }, { deep: true })
+
+// 监听对比模式开关：开启时加载可选作业集合，并刷新雷达与评语
+watch(() => compareEnabled.value, (v) => {
+  if (v) fetchAssignmentsForCourse()
+  loadRadar()
+  loadInsights()
+})
+
+function refreshRadarLocalization() {
+  if (rawRadarDimensions.value.length) {
+    radarIndicators.value = rawRadarDimensions.value.map(n => ({ name: localizeDimensionName(n), max: 100 }))
+  }
+  const studentLabel = t('teacher.analytics.charts.series.student') as string
+  const classLabel = t('teacher.analytics.charts.series.class') as string
+  radarSeries.value = radarSeries.value.map(s => {
+    let newName = s.name
+    newName = newName.replace(/学生|Student/gi, studentLabel)
+    newName = newName.replace(/班级|Class/gi, classLabel)
+    return { name: newName, values: s.values }
+  })
+}
+
+watch(() => i18n.global.locale.value, () => {
+  nextTick(() => {
+    refreshRadarLocalization()
+    renderGauge(Number(courseAvgScore.value || 0))
+  })
+})
+
+onUnmounted(() => {
+  try { gaugeChart?.dispose() } catch {}
+  if (gaugeResizeHandler) { window.removeEventListener('resize', gaugeResizeHandler); gaugeResizeHandler = null }
+})
 </script>
 
 <style scoped>
 .ms-compact :deep(.input) { min-height: 2rem; padding-top: 0.25rem; padding-bottom: 0.25rem; }
 </style>
+

@@ -69,6 +69,10 @@
         "download": "Download",
         "fullscreen": "Fullscreen",
         "noInlinePreview": "This file type cannot be previewed inline. Please download it."
+      },
+      "video": {
+        "playFailed": "Video failed to play. Please check your network or file format.",
+        "hlsNotSupported": "HLS is not supported in this browser. Use Safari or another format."
       }
     },
     "analysis": {
@@ -111,6 +115,7 @@
     "assignments": {
       "title": "Assignments",
       "subtitle": "View and submit assignments",
+      "viewAll": "View All",
       "search": "Search assignments",
       "searchPlaceholder": "Search by title, course or status…",
       "filters": {
@@ -134,6 +139,7 @@
         "view": "View",
         "review": "View Grade"
       },
+      "publish": "Published",
       "due": "Due: ",
       "empty": "No assignments",
       "pagination": {

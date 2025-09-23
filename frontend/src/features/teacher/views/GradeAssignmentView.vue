@@ -93,7 +93,7 @@
                     </div>
                   </div>
                   <div class="flex items-center space-x-2">
-                    <Button variant="ghost" size="sm" @click="previewSingleFile">
+                    <Button variant="ghost" size="sm" @click="previewSingleFile" :disabled="!canPreviewSubmission">
                       <eye-icon class="w-4 h-4" />
                     </Button>
                     <Button variant="ghost" size="sm" @click="downloadSingleFile">
@@ -1284,13 +1284,54 @@ const submitStatusClass = computed(() => {
   return submission.isLate ? 'text-red-600' : 'text-green-600'
 })
 
-const previewFile = (file: any) => {
-  // 实现文件预览
-  uiStore.showNotification({
-    type: 'info',
-    title: t('teacher.grading.notify.filePreview'),
-    message: `\${t('teacher.grading.notify.filePreview')}: ${file.name}`
-  })
+const previewFile = async (file: any) => {
+  const fid = String(file?.id || file?.fileId || '')
+  const filename = String(file?.originalName || file?.fileName || `file_${fid}`)
+  if (!fid) return
+  // 1) 先根据文件名后缀/元信息判断是否可在线预览，避免无谓的 /preview 400
+  const isPreviewExt = (name: string) => {
+    const n = String(name || '').toLowerCase()
+    return ['.png', '.jpg', '.jpeg', '.gif', '.webp', '.pdf'].some(ext => n.endsWith(ext))
+  }
+  try {
+    let previewable = isPreviewExt(filename)
+    if (!previewable) {
+      try {
+        const info: any = await fileApi.getFileInfo(fid)
+        const ct = String(info?.contentType || info?.mimeType || '')
+        if (ct && (ct.startsWith('image/') || ct === 'application/pdf')) previewable = true
+      } catch {}
+    }
+    if (!previewable) {
+      await fileApi.downloadFile(fid, filename)
+      return
+    }
+    // 2) 仅在推断可预览时才调用 preview；失败则回退下载
+    try {
+      const blob: Blob = await fileApi.getPreview(fid)
+      if (!blob || blob.size === 0) {
+        await fileApi.downloadFile(fid, filename)
+        return
+      }
+      const type = String((blob as any)?.type || '')
+      if (!(type.startsWith('image/') || type === 'application/pdf')) {
+        await fileApi.downloadFile(fid, filename)
+        return
+      }
+      const url = URL.createObjectURL(blob)
+      window.open(url, '_blank')
+      setTimeout(() => URL.revokeObjectURL(url), 60_000)
+    } catch (e: any) {
+      await fileApi.downloadFile(fid, filename)
+    }
+  } catch (err: any) {
+    const status = err?.response?.status
+    if (status === 401) {
+      uiStore.showNotification({ type: 'error', title: t('error.unauthorized') as string || '未授权', message: t('auth.login.required') as string || '未授权访问，请先登录' })
+      return
+    }
+    await fileApi.downloadFile(fid, filename)
+  }
 }
 
 const downloadFile = (file: any) => {
@@ -1302,12 +1343,28 @@ const downloadFile = (file: any) => {
   })
 }
 
-const previewSingleFile = () => {
-  if (!submission.filePath) return
-  // 后端有 /files/{fileId}/preview 或 download，此处 filePath 为存储路径，若后端返回 fileId 可替换为基于ID的URL
-  // 简化：直接打开下载链接（若有预览接口可切换）
-  const url = submission.filePath.startsWith('http') ? submission.filePath : `${baseURL}${submission.filePath}`
-  window.open(url, '_blank')
+const previewSingleFile = async () => {
+  try {
+    // 优先读取与该提交关联的文件列表
+    const res: any = await fileApi.getRelatedFiles('submission', String(submission.id))
+    const list: any[] = Array.isArray(res?.data) ? res.data : (Array.isArray(res) ? res : [])
+    if (list.length > 0) {
+      return await previewFile(list[0])
+    }
+    // 无附件则尝试预览文本内容（已在页面显示）；这里给出提示
+    if (String(submission.content || '').trim()) {
+      uiStore.showNotification({ type: 'info', title: t('teacher.grading.submission.content') as string, message: t('teacher.grading.notify.textShown') as string || '该提交无附件，已显示文本内容。' })
+      return
+    }
+    uiStore.showNotification({ type: 'warning', title: t('common.empty') as string || '无内容', message: t('teacher.grading.notify.noPreview') as string || '没有可预览的内容或附件。' })
+  } catch (err: any) {
+    const status = err?.response?.status
+    if (status === 401) {
+      uiStore.showNotification({ type: 'error', title: t('error.unauthorized') as string || '未授权', message: t('auth.login.required') as string || '未授权访问，请先登录' })
+    } else {
+      uiStore.showNotification({ type: 'error', title: t('teacher.grading.notify.filePreview') as string, message: (err?.message || '预览失败') })
+    }
+  }
 }
 
 // ---- AI 弹窗逻辑 ----
@@ -1343,6 +1400,16 @@ function selectAllAiFiles() {
   aiPicker.selectedFileIds = (aiPicker.files || []).map((f: any) => Number(f?.id)).filter((n: any) => Number.isFinite(n))
 }
 function clearSelectedAiFiles() { aiPicker.selectedFileIds = [] }
+
+// 可预览性：依据文件名/后端返回的 contentType 判断（图片/PDF）
+const canPreviewSubmission = computed(() => {
+  try {
+    const name = String(submission.fileName || '')
+    const lower = name.toLowerCase()
+    if (['.png','.jpg','.jpeg','.gif','.webp','.pdf'].some(ext => lower.endsWith(ext))) return true
+    return false
+  } catch { return false }
+})
 
 async function startAiGradingFromModal() {
   if (!canStartAi.value) return
@@ -1681,7 +1748,10 @@ const submitGrade = async () => {
         const dimResp: any = await abilityApi.getAbilityDimensions()
         const dims: any[] = Array.isArray(dimResp?.data) ? dimResp.data : (Array.isArray(dimResp) ? dimResp : [])
           const codeToId = new Map<string, any>()
-          for (const d of dims) { if (d?.code && d?.id != null) codeToId.set(String(d.code), d.id) }
+          for (const d of dims) {
+            const code = String((d?.code || '').toString() || '')
+            if (code && d?.id != null) codeToId.set(code, d.id)
+          }
           const pairs: Array<{ code: string; value: number }> = [
             { code: 'LEARNING_ABILITY', value: Number(dm.ability || 0) },
             { code: 'LEARNING_ATTITUDE', value: Number(dm.attitude || 0) },
@@ -1692,7 +1762,8 @@ const submitGrade = async () => {
           await Promise.all(pairs.map(p => {
             const did = codeToId.get(p.code); if (!did) return Promise.resolve()
             const score5 = Math.max(0, Math.min(5, Math.round((Number(p.value || 0)) * 10) / 10))
-            return abilityApi.recordTeacherAssessment({ studentId: submission.studentId, dimensionId: did, score: score5, assessmentType: 'assignment_ai', relatedId: submission.id, evidence }) as any
+            // 归档口径：与后端统计口径对齐，relatedId 使用 assignmentId 以便通过 assignments 关联 courseId
+            return abilityApi.recordTeacherAssessment({ studentId: submission.studentId, dimensionId: did, score: score5, assessmentType: 'assignment', relatedId: assignment.id, evidence }) as any
           }))
           // 提交评分后：保存完整归一化报告到 ability_reports（学生端可见）
           await abilityApi.createReportFromAi({
@@ -1708,7 +1779,7 @@ const submitGrade = async () => {
         // 无论是否有AI结果，都将学业成绩写入第五维（ACADEMIC_GRADE）
         const dimResp2: any = await abilityApi.getAbilityDimensions()
         const dims2: any[] = Array.isArray(dimResp2?.data) ? dimResp2.data : (Array.isArray(dimResp2) ? dimResp2 : [])
-        const target = (dims2 || []).find((d: any) => String(d?.code) === 'ACADEMIC_GRADE')
+        const target = (dims2 || []).find((d: any) => String(d?.code || '') === 'ACADEMIC_GRADE')
         if (target && target.id != null) {
           const pct = Number(assignment.totalScore || 0) > 0 ? (Number(payload.score) / Number(assignment.totalScore)) * 100 : 0
           const score5 = Math.max(0, Math.min(5, Math.round((pct / 20) * 10) / 10))
@@ -1716,7 +1787,7 @@ const submitGrade = async () => {
             studentId: submission.studentId,
             dimensionId: target.id,
             score: score5,
-            assessmentType: 'grade',
+            assessmentType: 'assignment',
             relatedId: gradeId,
             evidence: String(payload.feedback || '')
           })

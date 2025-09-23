@@ -65,6 +65,7 @@ export const abilityApi = {
     params.set('assessmentType', String(payload.assessmentType))
     if (payload.relatedId != null) params.set('relatedId', String(payload.relatedId))
     if (payload.evidence != null) params.set('evidence', String(payload.evidence))
-    return api.post('/ability/teacher/assessment', params)
+    // 重要：该接口使用 @RequestParam，需要 x-www-form-urlencoded
+    return api.post('/ability/teacher/assessment', params, { headers: { 'Content-Type': 'application/x-www-form-urlencoded' } })
   },
 };

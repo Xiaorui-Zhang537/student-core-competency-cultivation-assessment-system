@@ -31,6 +31,9 @@ public class AbilityDimension {
     @Schema(description = "维度名称", example = "编程能力")
     private String name;
 
+    @Schema(description = "维度编码", example = "LEARNING_ABILITY")
+    private String code;
+
     @Schema(description = "维度描述", example = "代码编写、调试和优化能力")
     private String description;
 

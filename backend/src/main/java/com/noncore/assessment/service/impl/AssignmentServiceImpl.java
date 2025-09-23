@@ -110,9 +110,15 @@ public class AssignmentServiceImpl implements AssignmentService {
     @Override
     public boolean bindAssignmentToLesson(Long assignmentId, Long lessonId) {
         logger.info("仅绑定作业到章节: assignmentId={}, lessonId={}", assignmentId, lessonId);
-        if (assignmentMapper.checkAssignmentExists(assignmentId) == 0) {
+        Assignment a = assignmentMapper.selectAssignmentById(assignmentId);
+        if (a == null) {
             throw new com.noncore.assessment.exception.BusinessException(com.noncore.assessment.exception.ErrorCode.ASSIGNMENT_NOT_FOUND);
         }
+        // 约束：仅 course_bound 类型允许绑定 lesson
+        if (!"course_bound".equalsIgnoreCase(String.valueOf(a.getAssignmentType()))) {
+            throw new BusinessException(ErrorCode.INVALID_PARAMETER, "仅课程绑定-无截止类型允许绑定章节");
+        }
+        // 课程一致性校验（若 lessonId 存在）可在 Mapper 层通过 join 验证，这里先略过或由数据库外键保障
         return assignmentMapper.updateLessonId(assignmentId, lessonId) > 0;
     }
 
@@ -251,8 +257,10 @@ public class AssignmentServiceImpl implements AssignmentService {
             return false;
         }
         // 逻辑实现：作业必须是“已发布”状态，并且（未过截止日期 或 允许迟交）
-        boolean isPublished = "published".equals(assignment.getStatus());
-        boolean isNotExpired = assignment.getDueDate() == null || LocalDateTime.now().isBefore(assignment.getDueDate());
+        boolean isPublished = "published".equalsIgnoreCase(String.valueOf(assignment.getStatus()));
+        // course_bound 类型视为不受截止限制
+        boolean isCourseBound = "course_bound".equalsIgnoreCase(String.valueOf(assignment.getAssignmentType()));
+        boolean isNotExpired = isCourseBound || assignment.getDueDate() == null || LocalDateTime.now().isBefore(assignment.getDueDate());
         boolean allowLate = assignment.getAllowLate() != null && assignment.getAllowLate();
 
         return isPublished && (isNotExpired || allowLate);
@@ -426,6 +434,19 @@ public class AssignmentServiceImpl implements AssignmentService {
         }
         if (assignment.getDueDate() != null && assignment.getDueDate().isBefore(LocalDateTime.now())) {
             throw new BusinessException(ErrorCode.INVALID_PARAMETER, "截止时间不能早于当前时间");
+        }
+        // 类型约束
+        String type = assignment.getAssignmentType() == null ? "normal" : assignment.getAssignmentType();
+        if ("course_bound".equalsIgnoreCase(type)) {
+            // 课程绑定型必须无截止
+            if (assignment.getDueDate() != null) {
+                throw new BusinessException(ErrorCode.INVALID_PARAMETER, "课程绑定-无截止类型的作业不允许设置截止时间");
+            }
+        } else {
+            // 普通类型不允许绑定 lessonId（绑定必须走专用接口且仅限 course_bound）
+            if (assignment.getLessonId() != null) {
+                throw new BusinessException(ErrorCode.INVALID_PARAMETER, "普通作业不能直接绑定章节，请使用课程绑定类型");
+            }
         }
     }
 } 

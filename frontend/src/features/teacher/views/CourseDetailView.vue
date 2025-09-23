@@ -216,7 +216,7 @@
                 </div>
               </div>
               <div class="flex items-center gap-2">
-                <Button size="sm" variant="success" icon="download" as="a" :href="`${baseURL}/files/${f.id}/download`">{{ t('teacher.courseDetail.sections.download') }}</Button>
+                <Button size="sm" variant="success" icon="download" as="a" :href="`${baseURL}/files/${f.id}/download`" class="whitespace-nowrap">{{ t('teacher.courseDetail.sections.download') }}</Button>
                 <Button size="sm" variant="danger" icon="delete" @click="confirmDelete(f.id, 'material')">{{ t('teacher.courseDetail.sections.delete') }}</Button>
               </div>
             </li>
@@ -257,7 +257,7 @@
                 </div>
               </div>
               <div class="flex items-center gap-2">
-                <Button size="sm" variant="success" icon="download" as="a" :href="`${baseURL}/files/${f.id}/download`">{{ t('teacher.courseDetail.sections.download') }}</Button>
+                <Button size="sm" variant="success" icon="download" as="a" :href="`${baseURL}/files/${f.id}/download`" class="whitespace-nowrap">{{ t('teacher.courseDetail.sections.download') }}</Button>
                 <Button size="sm" variant="danger" icon="delete" @click="confirmDelete(f.id, 'video')">{{ t('teacher.courseDetail.sections.delete') }}</Button>
               </div>
             </li>
@@ -292,7 +292,8 @@
           </div>
           <div class="flex items-center gap-2">
             <Button size="sm" variant="primary" icon="confirm" class="whitespace-nowrap" @click="chooseVideo(f)">{{ t('teacher.courseDetail.actions.useThisVideo') }}</Button>
-            <Button size="sm" variant="success" icon="download" as="a" :href="`${baseURL}/files/${f.id}/download`">{{ t('teacher.courseDetail.sections.download') }}</Button>
+            <Button size="sm" variant="success" icon="download" as="a" :href="`${baseURL}/files/${f.id}/download`" class="whitespace-nowrap">{{ t('teacher.courseDetail.sections.download') }}</Button>
+            <Button size="sm" variant="success" icon="download" as="a" :href="`${baseURL}/files/${f.id}/download`" class="whitespace-nowrap">{{ t('teacher.courseDetail.sections.download') }}</Button>
           </div>
         </li>
         <li v-if="!videos.length" class="py-6 text-center text-sm text-gray-500">{{ t('teacher.courseDetail.sections.noVideos') }}</li>
@@ -447,10 +448,13 @@ const chapterOptions = computed(() => [
   { label: t('teacher.courseDetail.sections.unset') as string, value: '' },
   ...chapters.value.map((c: any) => ({ label: String(c.title || c.id), value: String(c.id) }))
 ]);
-const assignmentOptions = computed(() => [
-  { label: t('teacher.courseDetail.sections.unbound') as string, value: '' },
-  ...courseAssignments.value.map((a: any) => ({ label: String(a.title || a.id), value: String(a.id) }))
-]);
+const assignmentOptions = computed(() => {
+  const filtered = (courseAssignments.value || []).filter((a: any) => String(a.assignmentType||'').toLowerCase()==='course_bound')
+  return [
+    { label: t('teacher.courseDetail.sections.unbound') as string, value: '' },
+    ...filtered.map((a: any) => ({ label: String(a.title || a.id), value: String(a.id) }))
+  ]
+});
 
 // 分类本地化（中英文切换）
 function localizeCategory2(cat?: string): string {
@@ -747,6 +751,13 @@ const bindAssignment = async (l: any) => {
     // 如果后端支持解绑接口，可在此调用；当前直接本地清空并返回
     l._assignmentId = ''
     return;
+  }
+  // 前端保护：仅允许 course_bound 类型
+  const found = (courseAssignments.value||[]).find((x:any)=> String(x.id)===String(aId))
+  if (!found || String(found.assignmentType||'').toLowerCase()!=='course_bound') {
+    alert(String(t('teacher.courseDetail.sections.bindConstraint')||'仅支持绑定课程绑定-无截止类型的作业'))
+    l._assignmentId = ''
+    return
   }
   await assignmentApi.bindLesson(String(aId), String(l.id));
   // 绑定成功后刷新一次映射，确保回填稳定

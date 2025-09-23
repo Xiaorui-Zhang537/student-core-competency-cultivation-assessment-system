@@ -6,6 +6,7 @@
 CREATE TABLE IF NOT EXISTS ability_dimensions (
     id BIGINT PRIMARY KEY AUTO_INCREMENT COMMENT '维度ID',
     name VARCHAR(100) NOT NULL COMMENT '维度名称',
+    code VARCHAR(50) NOT NULL COMMENT '维度编码（如：MORAL_COGNITION）',
     description TEXT COMMENT '维度描述',
     category VARCHAR(50) NOT NULL COMMENT '分类：technical,soft,academic,creative',
     weight DECIMAL(3,2) DEFAULT 1.00 COMMENT '权重系数',
@@ -17,6 +18,7 @@ CREATE TABLE IF NOT EXISTS ability_dimensions (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
     
+    UNIQUE KEY uk_code (code),
     INDEX idx_category (category),
     INDEX idx_is_active (is_active),
     INDEX idx_sort_order (sort_order)
@@ -156,12 +158,8 @@ CREATE TABLE IF NOT EXISTS ability_reports (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='能力报告表';
 
 -- 插入默认能力维度数据
-INSERT INTO ability_dimensions (name, description, category, weight, icon, color, sort_order) VALUES
-('编程能力', '代码编写、调试和优化能力', 'technical', 1.0, 'code', '#10B981', 1),
-('问题解决', '分析问题和找到有效解决方案的能力', 'technical', 0.9, 'puzzle', '#F59E0B', 2),
-('沟通协作', '与他人有效交流和团队合作的能力', 'soft', 0.8, 'chat', '#3B82F6', 3),
-('创新思维', '创造性思考和提出新想法的能力', 'creative', 0.7, 'lightbulb', '#8B5CF6', 4),
-('学习能力', '快速学习新知识和技能的能力', 'academic', 0.9, 'book', '#EF4444', 5),
-('领导力', '引导和激励他人的能力', 'soft', 0.6, 'crown', '#F97316', 6),
-('时间管理', '有效规划和利用时间的能力', 'soft', 0.7, 'clock', '#06B6D4', 7),
-('批判思维', '客观分析和评估信息的能力', 'academic', 0.8, 'shield-check', '#84CC16', 8); 
+INSERT INTO ability_dimensions (name, code, description, category, weight, icon, color, sort_order) VALUES
+('道德认知', 'MORAL_COGNITION', '价值观与道德判断', 'soft', 1.0, 'scale', '#EF4444', 1),
+('学习态度', 'LEARNING_ATTITUDE', '积极性、坚持性与自律', 'soft', 1.0, 'heart', '#F59E0B', 2),
+('学习能力', 'LEARNING_ABILITY', '理解、分析与迁移应用', 'academic', 1.0, 'sparkles', '#3B82F6', 3),
+('学习方法', 'LEARNING_METHOD', '策略、反思与资源利用', 'academic', 1.0, 'book-open', '#10B981', 4);

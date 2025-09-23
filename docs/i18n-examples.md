@@ -127,6 +127,11 @@ i18n.global.locale.value = 'en-US'
 - `AssignmentsView`、`AnalyticsView`、`CourseDetailView` 已统一移除兜底并走 i18n。
 - 统一品牌样式：优先使用 `glass-*` 类与 `v-glass` 指令，按钮/卡片用 `/components/ui` 目录组件。
 
+### 新增键（v0.2.2）
+- `student.assignments.publish`：发布日期
+  - zh-CN：`发布日期`
+  - en-US：`Published`
+
 ## 9. 教师端 AI 批改弹窗新增键（2025-09-17）
 - 新增：`teacher.aiGrading.picker.{assignment,student,preview,useText,attachments,selectAllFiles,clearFiles,text,reload}`
 - 示例用法：

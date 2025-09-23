@@ -22,7 +22,7 @@
             <PageHeader :title="course.title" :subtitle="course.description" />
             <div class="mt-2 p-4 rounded border inline-flex items-center gap-3">
               <span class="text-sm text-gray-600">{{ t('student.courses.progressLabel') }}</span>
-              <div class="font-semibold">{{ courseProgress }}%</div>
+              <div class="font-semibold">{{ displayProgress }}%</div>
             </div>
           </div>
           
@@ -45,12 +45,18 @@
                     <div v-else class="w-8 h-8 bg-gray-300 rounded-full flex items-center justify-center font-medium">{{ index + 1 }}</div>
                   </div>
                   <div class="flex-1 min-w-0">
-                    <div class="flex items-center justify-between gap-3">
+                    <div class="flex flex-wrap items-center justify-between gap-3">
                       <div class="min-w-0">
                         <h3 class="font-medium truncate">{{ lesson.title }}</h3>
                         <p class="text-sm text-gray-600">{{ lesson.description }}</p>
                       </div>
                       <div class="flex items-center gap-2">
+                        <Button size="sm" variant="menu" @click="toggleLesson(lesson)">
+                          <template #icon>
+                            <svg class="w-4 h-4" viewBox="0 0 20 20" fill="currentColor"><path d="M10 6l6 6H4l6-6z"/></svg>
+                          </template>
+                          {{ expanded.has(String(lesson.id)) ? (t('student.courses.detail.collapse') || '收起') : (t('student.courses.detail.expand') || '展开') }}
+                        </Button>
                         <Button size="sm" variant="outline" @click="goLessonDetail(lesson.id)">
                           <template #icon>
                             <svg class="w-4 h-4" viewBox="0 0 20 20" fill="currentColor"><path d="M10 3l7 7-7 7-1.5-1.5L13 11H3V9h10L8.5 4.5 10 3z"/></svg>
@@ -59,7 +65,53 @@
                         </Button>
                       </div>
                     </div>
-                    
+
+                    <!-- Expanded: materials + assignments -->
+                    <div v-if="expanded.has(String(lesson.id))" class="mt-3 space-y-3">
+                      <div class="rounded-lg border p-3" v-glass>
+                        <div class="flex items-center justify-between mb-2">
+                          <h4 class="text-sm font-semibold">{{ t('student.courses.detail.materials') }}</h4>
+                          <span class="text-xs text-gray-500">{{ (lessonMaterials[String(lesson.id)] || []).length }}</span>
+                        </div>
+                        <template v-if="(lessonMaterials[String(lesson.id)] || []).length">
+                          <ul class="list-disc pl-5 space-y-1">
+                            <li v-for="f in (lessonMaterials[String(lesson.id)] || [])" :key="f.id">
+                              <a class="text-blue-600 hover:underline" :href="`${baseURL}/files/${f.id}/download`">{{ f.originalName || f.fileName || `#${f.id}` }}</a>
+                            </li>
+                          </ul>
+                        </template>
+                        <p v-else class="text-sm text-gray-500">{{ t('student.courses.detail.noMaterials') }}</p>
+                      </div>
+
+                      <div class="rounded-lg border p-3" v-glass>
+                        <div class="flex items-center justify-between mb-2">
+                          <h4 class="text-sm font-semibold">{{ t('student.assignments.title') || '关联作业' }}</h4>
+                          <span class="text-xs text-gray-500">{{ lessonAssignments(lesson.id).length }}</span>
+                        </div>
+                        <template v-if="lessonAssignments(lesson.id).length">
+                          <ul class="space-y-2">
+                            <li v-for="a in lessonAssignments(lesson.id)" :key="a.id" class="flex items-center justify-between">
+                              <div class="min-w-0">
+                                <div class="text-sm font-medium truncate">{{ a.title }}</div>
+                                <div class="text-xs text-gray-500">{{ t('student.assignments.due') }}{{ formatDate(a.dueDate || a.dueAt) }}</div>
+                              </div>
+                              <div class="shrink-0 ml-3">
+                                <Button size="xs" variant="primary" @click="router.push(`/student/assignments/${a.id}/submit`)">{{ t('student.assignments.actions.view') || '进入' }}</Button>
+                              </div>
+                            </li>
+                          </ul>
+                        </template>
+                        <p v-else class="text-sm text-gray-500">{{ t('student.assignments.empty') || '本小节暂无关联作业' }}</p>
+                      </div>
+
+                      <div class="rounded-lg border p-3" v-glass>
+                        <div class="text-xs text-gray-600">
+                          <span class="font-medium">{{ t('student.courses.progressLabel') }}:</span>
+                          <span v-if="lesson.isCompleted" class="text-green-600 ml-1">{{ t('student.courses.detail.completed') }}</span>
+                          <span v-else class="ml-1">{{ '观看视频≥98% 且资料已阅读后自动完成' }}</span>
+                        </div>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -127,6 +179,7 @@ import { useLessonStore } from '@/stores/lesson';
 import type { StudentLesson } from '@/types/lesson';
 import { useChatStore } from '@/stores/chat'
 import { studentApi } from '@/api/student.api'
+import { lessonApi } from '@/api/lesson.api'
 import { assignmentApi } from '@/api/assignment.api'
 import { baseURL } from '@/api/config'
 import { fileApi } from '@/api/file.api'
@@ -154,6 +207,13 @@ const assignments = ref<any[]>([]);
 const course = computed(() => courseStore.currentCourse);
 const lessons = computed(() => lessonStore.lessons as StudentLesson[]);
 const completedLessonsCount = computed(() => lessons.value.filter(l => l.isCompleted).length);
+const displayProgress = computed(() => {
+  const api = Number(courseProgress.value || 0)
+  const total = Number(lessons.value.length || 0)
+  if (api > 0 || total === 0) return Math.round(api)
+  const localPct = total > 0 ? Math.round((completedLessonsCount.value / total) * 100) : 0
+  return localPct
+});
 
 // Methods
 function goLessonDetail(lessonId: string) {
@@ -195,17 +255,30 @@ onMounted(async () => {
 
 const fetchCourseProgress = async (courseId: string) => {
   try {
-    const res: any = await studentApi.getCourseProgress(courseId as any);
-    const v = res?.progress ?? res?.data ?? res;
-    courseProgress.value = Number(v || 0).toFixed ? Number(Number(v).toFixed(0)) : Number(v || 0);
+    const res: any = await studentApi.getCourseProgress(courseId as any)
+    const v = res?.progress ?? res?.data ?? res
+    const n = Number(v || 0)
+    courseProgress.value = Number.isFinite(n) ? Math.round(n) : 0
+    if (courseProgress.value === 0) {
+      // 后备：调用 lessons 的课程进度百分比计算（权限同学⽣）
+      try {
+        const p: any = await lessonApi.getCourseProgressPercent(courseId)
+        const pv = p?.data ?? p
+        const pn = Number(pv || 0)
+        if (Number.isFinite(pn) && pn > 0) courseProgress.value = Math.round(pn)
+      } catch {}
+    }
   } catch {
-    courseProgress.value = 0;
+    // 兜底：基于已完成节次数计算
+    const total = Number(lessons.value.length || 0)
+    courseProgress.value = total > 0 ? Math.round((completedLessonsCount.value / total) * 100) : 0
   }
-};
+}
 
 const loadAssignments = async (courseId: string) => {
   const res: any = await assignmentApi.getAssignmentsByCourse(courseId, { page: 1, size: 100 });
-  assignments.value = res?.items || res?.data?.items || [];
+  const raw = res?.items || res?.data?.items || []
+  assignments.value = visibleAssignments(raw)
 };
 
 const lessonAssignments = (lessonId: string) => {
@@ -236,4 +309,19 @@ const resolveVideoSrc = (videoUrl: string) => {
 const formatDate = (v: any) => {
   try { return new Date(v).toLocaleString(); } catch { return v; }
 };
+
+function visibleAssignments(list: any[]): any[] {
+  const now = Date.now()
+  return (Array.isArray(list) ? list : []).filter((a: any) => {
+    const st = String(a?.status || '').toLowerCase()
+    if (!st) return true
+    if (st === 'crafted' || st === 'draft') return false
+    if (st === 'scheduled') {
+      const ts = a?.publishAt || a?.publish_at
+      if (!ts) return false
+      try { return now >= new Date(ts).getTime() } catch { return false }
+    }
+    return true
+  })
+}
 </script>

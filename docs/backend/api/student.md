@@ -2,10 +2,13 @@
 
 > 以 Swagger 为准：`http://localhost:8080/api/swagger-ui.html`
 
-## Axios 前缀与响应解包
-- 前端 Axios 基础前缀：`/api`（见 `frontend/src/api/config.ts`，会将 `VITE_API_BASE_URL` 与 `/api` 规范化拼接）。
-- 统一返回格式：后端使用 `{ code, message, data }`，Axios 响应拦截器已自动解包为 `data`，调用侧直接获取业务数据。
-- 认证：除登录/注册外，请求会自动附带 `Authorization: Bearer <token>` 头。
+## 进度口径（更新）
+- 课节完成条件（OR）：
+  1) 视频观看≥98% 且资料已阅读；
+  2) 若该节次绑定了作业（assignment_type=course_bound），且学生对该作业已“提交”或“已评分”，视为该节完成。
+- 课程进度：按课节权重（`lessons.weight`）聚合的完成/进度；绑定作业的完成会直接将该节计为完成。
+- 学生 Dashboard 整体进度：所有已选课程进度的平均（沿用后端聚合）。
+- 教师端“学生管理”进度：与课程内口径一致（即含绑定作业影响）。
 
 ## 1. 仪表盘与学习进度
 - `GET /api/students/dashboard`：学生仪表盘数据
@@ -30,7 +33,7 @@ Authorization: Bearer <token>
 { "code":200, "data": { "items":[{"id":"2","title":"AI"}], "total": 12, "page":1, "size":10 } }
 ```
 
-- `GET /api/students/courses/{courseId}/progress`：课程进度
+- `GET /api/students/courses/{courseId}/progress`：课程进度（返回 `progress/totalStudyMinutes/weeklyStudyMinutes/lastStudiedLessonTitle`）
 
 ## 2. 课时
 - `GET /api/students/lessons/{lessonId}`：课时详情

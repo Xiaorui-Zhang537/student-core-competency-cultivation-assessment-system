@@ -114,8 +114,12 @@ const goRelated = async () => {
       if (directAid) return directAid
       const kind = String(n.relatedType || '').toLowerCase()
       const ntype = String(n.type || '').toLowerCase()
-      // 若为成绩通知，尝试用 gradeId 反查 assignmentId
-      const maybeGradeId = String((ntype === 'grade' || ntype === 'grade_posted') ? (n.relatedId || meta?.gradeId || meta?.id || '') : '')
+      // 若为成绩通知：后端规范 relatedType=assignment，relatedId=assignmentId，直接返回，避免误将 assignmentId 当作 gradeId 调用接口
+      if ((ntype === 'grade' || ntype === 'grade_posted') && kind === 'assignment' && n.relatedId) {
+        return String(n.relatedId)
+      }
+      // 仅当明确拿到 gradeId 时，才用其反查 assignmentId（避免无意义的 400）
+      const maybeGradeId = String((ntype === 'grade' || ntype === 'grade_posted') ? (meta?.gradeId || meta?.id || '') : '')
       if (maybeGradeId) {
         try {
           const gres: any = await gradeApi.getGradeById(maybeGradeId)
