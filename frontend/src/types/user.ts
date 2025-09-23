@@ -5,6 +5,7 @@ export interface UpdateProfileRequest {
   nickname?: string;
   avatar?: string;
   gender?: string;
+  mbti?: string;
   bio?: string;
   birthday?: string; // yyyy-MM-dd
   country?: string;
@@ -38,6 +39,7 @@ export interface UserProfileResponse extends Omit<User, 'token' | 'refreshToken'
   studentNo?: string;
   teacherNo?: string;
   gender?: string;
+  mbti?: string;
   bio?: string;
   birthday?: string;
   country?: string;

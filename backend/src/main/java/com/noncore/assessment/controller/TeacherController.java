@@ -74,7 +74,7 @@ public class TeacherController extends BaseController {
             @Parameter(description = "页码") @RequestParam(defaultValue = "1") Integer page,
             @Parameter(description = "每页大小") @RequestParam(defaultValue = "20") Integer size,
             @Parameter(description = "搜索关键词") @RequestParam(required = false) String search,
-            @Parameter(description = "排序字段(name|grade)") @RequestParam(required = false, defaultValue = "name") String sortBy,
+            @Parameter(description = "排序字段(name|grade|progress|lastActive|activity)") @RequestParam(required = false, defaultValue = "name") String sortBy,
             @Parameter(description = "活跃度筛选") @RequestParam(required = false) String activity,
             @Parameter(description = "成绩筛选") @RequestParam(required = false) String grade,
             @Parameter(description = "进度筛选") @RequestParam(required = false) String progress
@@ -89,7 +89,7 @@ public class TeacherController extends BaseController {
     public ResponseEntity<byte[]> exportCourseStudentPerformanceCsv(
             @Parameter(description = "课程ID") @PathVariable Long courseId,
             @Parameter(description = "搜索关键词") @RequestParam(required = false) String search,
-            @Parameter(description = "排序字段(name|grade)") @RequestParam(required = false, defaultValue = "name") String sortBy,
+            @Parameter(description = "排序字段(name|grade|progress|lastActive|activity)") @RequestParam(required = false, defaultValue = "name") String sortBy,
             @Parameter(description = "活跃度筛选") @RequestParam(required = false) String activity,
             @Parameter(description = "成绩筛选") @RequestParam(required = false) String grade,
             @Parameter(description = "进度筛选") @RequestParam(required = false) String progress

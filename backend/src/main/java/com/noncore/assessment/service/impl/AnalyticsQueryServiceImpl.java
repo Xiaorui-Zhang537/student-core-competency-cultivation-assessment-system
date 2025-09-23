@@ -40,14 +40,18 @@ public class AnalyticsQueryServiceImpl implements AnalyticsQueryService {
     private final GradeMapper gradeMapper;
     private final LessonProgressMapper lessonProgressMapper;
     private final LessonMapper lessonMapper;
+    private final EnrollmentMapper enrollmentMapper;
+    private final SubmissionMapper submissionMapper;
 
-    public AnalyticsQueryServiceImpl(UserMapper userMapper, CourseMapper courseMapper, AssignmentMapper assignmentMapper, GradeMapper gradeMapper, LessonProgressMapper lessonProgressMapper, LessonMapper lessonMapper) {
+    public AnalyticsQueryServiceImpl(UserMapper userMapper, CourseMapper courseMapper, AssignmentMapper assignmentMapper, GradeMapper gradeMapper, LessonProgressMapper lessonProgressMapper, LessonMapper lessonMapper, EnrollmentMapper enrollmentMapper, SubmissionMapper submissionMapper) {
         this.userMapper = userMapper;
         this.courseMapper = courseMapper;
         this.assignmentMapper = assignmentMapper;
         this.gradeMapper = gradeMapper;
         this.lessonProgressMapper = lessonProgressMapper;
         this.lessonMapper = lessonMapper;
+        this.enrollmentMapper = enrollmentMapper;
+        this.submissionMapper = submissionMapper;
     }
 
     // Removed legacy single-student progress report implementation
@@ -186,17 +190,46 @@ public class AnalyticsQueryServiceImpl implements AnalyticsQueryService {
             String activity = weekly >= 300 ? "high" : (weekly >= 120 ? "medium" : (weekly > 0 ? "low" : "inactive"));
 
             Integer totalLessons = lessonMapper.countLessonsByCourse(courseId);
-            // 统计完成章节数与最近学习时间
+            // 统计完成章节数
             List<com.noncore.assessment.entity.LessonProgress> lpList = lessonProgressMapper.selectByStudentAndCourse(s.getId(), courseId);
             Integer completedLessons = 0;
-            java.time.LocalDateTime lastActiveAt = null;
+            java.time.LocalDateTime lpLastStudiedAt = null;
             if (lpList != null && !lpList.isEmpty()) {
                 completedLessons = (int) lpList.stream().filter(p -> Boolean.TRUE.equals(p.getCompleted())).count();
-                lastActiveAt = lpList.stream()
+                lpLastStudiedAt = lpList.stream()
                         .map(com.noncore.assessment.entity.LessonProgress::getLastStudiedAt)
                         .filter(Objects::nonNull)
                         .max(java.time.LocalDateTime::compareTo)
                         .orElse(null);
+            }
+
+            // 最近提交时间（限定为本课程的作业）
+            java.time.LocalDateTime lastSubmissionAt = null;
+            java.util.List<com.noncore.assessment.entity.Submission> submissions = submissionMapper.selectByStudentId(s.getId());
+            if (submissions != null && !submissions.isEmpty()) {
+                lastSubmissionAt = submissions.stream()
+                        .filter(sub -> sub.getAssignmentId() != null && courseAssignmentIds.contains(sub.getAssignmentId()))
+                        .map(com.noncore.assessment.entity.Submission::getSubmittedAt)
+                        .filter(Objects::nonNull)
+                        .max(java.time.LocalDateTime::compareTo)
+                        .orElse(null);
+            }
+
+            // enrollment 回退（进入课程/访问行为）
+            java.time.LocalDateTime enrollmentLastAccess = null;
+            com.noncore.assessment.entity.Enrollment enr = enrollmentMapper.selectEnrollmentByStudentAndCourse(s.getId(), courseId);
+            if (enr != null) {
+                enrollmentLastAccess = enr.getLastAccessAt();
+            }
+
+            // 统一 lastActiveAt：取三者最大
+            java.time.LocalDateTime lastActiveAt = null;
+            if (lpLastStudiedAt != null) lastActiveAt = lpLastStudiedAt;
+            if (lastSubmissionAt != null && (lastActiveAt == null || lastSubmissionAt.isAfter(lastActiveAt))) {
+                lastActiveAt = lastSubmissionAt;
+            }
+            if (enrollmentLastAccess != null && (lastActiveAt == null || enrollmentLastAccess.isAfter(lastActiveAt))) {
+                lastActiveAt = enrollmentLastAccess;
             }
             CourseStudentPerformanceItem item = CourseStudentPerformanceItem.builder()
                     .studentId(s.getId())
@@ -255,9 +288,22 @@ public class AnalyticsQueryServiceImpl implements AnalyticsQueryService {
             }).toList();
         }
 
-        // 简单排序
+        // 排序扩展：grade | progress | lastActive | activity | name(默认)
         if ("grade".equalsIgnoreCase(sortBy)) {
             items = items.stream().sorted((a, b) -> Double.compare(b.getAverageGrade() == null ? 0 : b.getAverageGrade(), a.getAverageGrade() == null ? 0 : a.getAverageGrade())).toList();
+        } else if ("progress".equalsIgnoreCase(sortBy)) {
+            items = items.stream().sorted((a, b) -> Integer.compare(b.getProgress() == null ? 0 : b.getProgress(), a.getProgress() == null ? 0 : a.getProgress())).toList();
+        } else if ("lastActive".equalsIgnoreCase(sortBy)) {
+            java.util.function.Function<String, Long> toEpoch = (s) -> {
+                if (s == null || s.isBlank()) return 0L;
+                try { return java.time.LocalDateTime.parse(s).atZone(java.time.ZoneId.systemDefault()).toInstant().toEpochMilli(); } catch (Exception e) { return 0L; }
+            };
+            items = items.stream().sorted((a, b) -> Long.compare(toEpoch.apply(b.getLastActiveAt()), toEpoch.apply(a.getLastActiveAt()))).toList();
+        } else if ("activity".equalsIgnoreCase(sortBy)) {
+            java.util.Map<String, Integer> rank = new java.util.HashMap<>();
+            rank.put("high", 4); rank.put("medium", 3); rank.put("low", 2); rank.put("inactive", 1);
+            java.util.function.Function<String, Integer> score = (lv) -> rank.getOrDefault(lv == null ? "inactive" : lv.toLowerCase(), 1);
+            items = items.stream().sorted((a, b) -> Integer.compare(score.apply(b.getActivityLevel()), score.apply(a.getActivityLevel()))).toList();
         } else {
             items = items.stream().sorted((a, b) -> {
                 String an = a.getStudentName() == null ? "" : a.getStudentName();

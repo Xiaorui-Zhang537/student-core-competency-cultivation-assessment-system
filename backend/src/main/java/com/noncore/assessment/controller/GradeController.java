@@ -1,6 +1,7 @@
 package com.noncore.assessment.controller;
 
 import com.noncore.assessment.dto.response.GradeStatsResponse;
+import com.noncore.assessment.dto.response.GradeListItem;
 import com.noncore.assessment.entity.Grade;
 import com.noncore.assessment.exception.BusinessException;
 import com.noncore.assessment.exception.ErrorCode;
@@ -88,7 +89,7 @@ public class GradeController extends BaseController {
     @GetMapping("/student/{studentId}/page")
     @PreAuthorize("hasAnyRole('TEACHER', 'STUDENT', 'ADMIN')")
     @Operation(summary = "分页获取学生成绩", description = "分页获取指定学生的成绩列表")
-    public ResponseEntity<ApiResponse<PageResult<Grade>>> getStudentGradesWithPagination(
+    public ResponseEntity<ApiResponse<PageResult<GradeListItem>>> getStudentGradesWithPagination(
             @PathVariable Long studentId,
             @Parameter(description = "页码", example = "1") @RequestParam(defaultValue = "1") Integer page,
             @Parameter(description = "每页大小", example = "10") @RequestParam(defaultValue = "10") Integer size,
@@ -96,7 +97,7 @@ public class GradeController extends BaseController {
         if (hasRole("STUDENT") && !getCurrentUserId().equals(studentId)) {
             throw new BusinessException(ErrorCode.PERMISSION_DENIED);
         }
-        PageResult<Grade> result = gradeService.getStudentGradesWithPagination(studentId, page, size, courseId);
+        PageResult<GradeListItem> result = gradeService.getStudentGradesWithPagination(studentId, page, size, courseId);
         return ResponseEntity.ok(ApiResponse.success(result));
     }
 

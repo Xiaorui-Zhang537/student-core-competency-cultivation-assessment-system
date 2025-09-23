@@ -81,6 +81,14 @@ public class UserServiceImpl implements UserService {
         if (request.getGender() != null) {
             existingUser.setGender(request.getGender());
         }
+        if (request.getMbti() != null) {
+            String v = request.getMbti().trim().toUpperCase();
+            java.util.Set<String> MBTI = java.util.Set.of("ISTJ","ISFJ","INFJ","INTJ","ISTP","ISFP","INFP","INTP","ESTP","ESFP","ENFP","ENTP","ESTJ","ESFJ","ENFJ","ENTJ");
+            if (!MBTI.contains(v)) {
+                throw new BusinessException(ErrorCode.INVALID_PARAMETER, "MBTI 值不合法");
+            }
+            existingUser.setMbti(v);
+        }
         if (request.getBio() != null) {
             existingUser.setBio(request.getBio());
         }

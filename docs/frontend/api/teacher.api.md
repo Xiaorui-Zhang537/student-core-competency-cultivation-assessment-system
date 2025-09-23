@@ -13,7 +13,7 @@
 
 ## 参数与返回
 - 课程/作业分析：返回统计与分布数据（见 `@/types/teacher`）
-- 学生表现分页：`{ page?: number; size?: number; search?: string; sortBy?: string; activity?: string; grade?: string; progress?: string }`
+- 学生表现分页：`{ page?: number; size?: number; search?: string; sortBy?: 'name'|'grade'|'progress'|'lastActive'|'activity'; activity?: string; grade?: string; progress?: string }`
 - 能力图/权重接口：`{ courseId; classId?; studentId?; startDate; endDate }` 与 `weights: Record<string, number>`
 
 ## 示例
@@ -27,8 +27,8 @@ const assignStats = await teacherApi.getAssignmentAnalytics('5001')
 // 班级表现
 const perf = await teacherApi.getClassPerformance('1001')
 
-// 学生表现分页
-const page = await teacherApi.getCourseStudentPerformance('1001', { page: 1, size: 20, sortBy: 'grade' })
+// 学生表现分页（支持 name|grade|progress|lastActive|activity 排序）
+const page = await teacherApi.getCourseStudentPerformance('1001', { page: 1, size: 20, sortBy: 'lastActive' })
 
 // 导出学生列表
 const blob = await teacherApi.exportCourseStudents('1001', { search: '张' })

@@ -43,6 +43,7 @@ public class UserController extends BaseController {
                 .avatar(user.getAvatar())
                 .nickname(user.getNickname())
                 .gender(user.getGender())
+                .mbti(user.getMbti())
                 .bio(user.getBio())
                 .emailVerified(user.isEmailVerified())
                 .firstName(user.getFirstName())

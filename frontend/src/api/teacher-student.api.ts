@@ -46,7 +46,12 @@ export const teacherStudentApi = {
     return api.get<any[]>(`/teachers/students/${studentId}/courses`);
   },
   getStudentActivity(studentId: string, days = 7, limit = 5) {
-    return api.get<{ lastAccessTime: string | number | null; weeklyStudyMinutes: number | null; recentLessons: Array<{ lessonId: number; lessonTitle: string; courseId: number; courseTitle: string; studiedAt: string | number; }>; }>(`/teachers/students/${studentId}/activity`, { params: { days, limit } });
+    return api.get<{
+      lastAccessTime: string | number | null;
+      weeklyStudyMinutes: number | null;
+      recentLessons: Array<{ lessonId: number; lessonTitle: string; courseId: number; courseTitle: string; studiedAt: string | number; }>;
+      recentEvents?: Array<{ eventType: 'lesson'|'submission'|'quiz'|'discussion'|'visit'; title?: string; courseId?: number; courseTitle?: string; occurredAt: string | number; durationSeconds?: number; link?: string; }>;
+    }>(`/teachers/students/${studentId}/activity`, { params: { days, limit } });
   },
   getStudentAlerts(studentId: string) {
     return api.get<{ alerts: Array<{ code: string; message: string; severity: 'info'|'warn'|'critical' }> }>(`/teachers/students/${studentId}/alerts`)

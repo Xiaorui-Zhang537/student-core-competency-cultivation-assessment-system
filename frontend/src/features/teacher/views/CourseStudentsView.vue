@@ -439,7 +439,7 @@ const sortOptions = computed(() => ([
   { label: t('teacher.students.filters.sort.progress') as string, value: 'progress' },
   { label: t('teacher.students.filters.sort.grade') as string, value: 'grade' },
   { label: t('teacher.students.filters.sort.lastActive') as string, value: 'lastActive' },
-  { label: t('teacher.students.filters.sort.joinDate') as string, value: 'joinDate' },
+  { label: t('teacher.students.filters.sort.activity') as string, value: 'activity' },
 ]))
 
 // 统计数据（占位：后续可接入专用统计端点）

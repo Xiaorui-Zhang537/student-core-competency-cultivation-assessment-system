@@ -19,6 +19,10 @@ public class UpdateProfileRequest {
     @Schema(description = "性别")
     private String gender;
 
+    @Schema(description = "MBTI 人格类型(16种)")
+    @Size(max = 4)
+    private String mbti;
+
     @Size(max = 500, message = "个人简介长度不能超过500个字符")
     @Schema(description = "个人简介", example = "这是我的新简介。")
     private String bio;

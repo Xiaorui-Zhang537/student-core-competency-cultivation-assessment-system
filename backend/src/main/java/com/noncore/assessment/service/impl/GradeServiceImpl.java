@@ -8,6 +8,7 @@ import com.noncore.assessment.mapper.AssignmentMapper;
 import com.noncore.assessment.mapper.GradeMapper;
 import com.noncore.assessment.service.GradeService;
 import com.noncore.assessment.util.PageResult;
+import com.noncore.assessment.dto.response.GradeListItem;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -39,16 +40,19 @@ public class GradeServiceImpl implements GradeService {
 
     private final GradeMapper gradeMapper;
     private final AssignmentMapper assignmentMapper;
+    private final com.noncore.assessment.mapper.UserMapper userMapper;
     private final com.noncore.assessment.service.SubmissionService submissionService;
     private final com.noncore.assessment.service.NotificationService notificationService;
 
     public GradeServiceImpl(GradeMapper gradeMapper, AssignmentMapper assignmentMapper,
                             com.noncore.assessment.service.SubmissionService submissionService,
-                            com.noncore.assessment.service.NotificationService notificationService) {
+                            com.noncore.assessment.service.NotificationService notificationService,
+                            com.noncore.assessment.mapper.UserMapper userMapper) {
         this.gradeMapper = gradeMapper;
         this.assignmentMapper = assignmentMapper;
         this.submissionService = submissionService;
         this.notificationService = notificationService;
+        this.userMapper = userMapper;
     }
 
     @Override
@@ -171,12 +175,43 @@ public class GradeServiceImpl implements GradeService {
     }
 
     @Override
-    public PageResult<Grade> getStudentGradesWithPagination(Long studentId, Integer page, Integer size, Long courseId) {
+    public PageResult<GradeListItem> getStudentGradesWithPagination(Long studentId, Integer page, Integer size, Long courseId) {
         logger.info("分页获取学生成绩，学生ID: {}, 页码: {}, 每页大小: {}, 课程ID: {}", studentId, page, size, courseId);
         PageHelper.startPage(page, size);
-        List<Grade> grades = gradeMapper.selectByStudentIdFiltered(studentId, courseId);
-        PageInfo<Grade> pageInfo = new PageInfo<>(grades);
-        return PageResult.of(pageInfo.getList(), page, size, pageInfo.getTotal(), pageInfo.getPages());
+        // 使用带 JOIN 的 Mapper 返回完整所需字段（若无，则先用原表+二次填充）
+        List<Grade> base = gradeMapper.selectByStudentIdFiltered(studentId, courseId);
+        PageInfo<Grade> pageInfo = new PageInfo<>(base);
+        List<GradeListItem> view = new java.util.ArrayList<>();
+        for (Grade g : pageInfo.getList()) {
+            Assignment a = g.getAssignmentId() == null ? null : assignmentMapper.selectAssignmentById(g.getAssignmentId());
+            String courseTitle = a == null ? null : a.getCourseName();
+            Long courseIdVal = a == null ? null : a.getCourseId();
+            String teacherName = null;
+            if (a != null && a.getTeacherId() != null) {
+                com.noncore.assessment.entity.User teacher = userMapper.selectUserById(a.getTeacherId());
+                if (teacher != null) {
+                    teacherName = teacher.getNickname() != null ? teacher.getNickname() : (teacher.getUsername());
+                }
+            }
+            view.add(GradeListItem.builder()
+                    .id(g.getId())
+                    .submissionId(g.getSubmissionId())
+                    .studentId(g.getStudentId())
+                    .assignmentId(g.getAssignmentId())
+                    .courseId(courseIdVal)
+                    .assignmentTitle(a == null ? null : a.getTitle())
+                    .courseTitle(courseTitle)
+                    .teacherName(teacherName)
+                    .score(g.getScore())
+                    .maxScore(g.getMaxScore())
+                    .percentage(g.getPercentage())
+                    .gradeLevel(g.getGradeLevel())
+                    .status(g.getStatus())
+                    .gradedAt(g.getPublishedAt() != null ? g.getPublishedAt() : g.getUpdatedAt())
+                    .isPublished("published".equalsIgnoreCase(g.getStatus()))
+                    .build());
+        }
+        return PageResult.of(view, page, size, pageInfo.getTotal(), pageInfo.getPages());
     }
 
     @Override

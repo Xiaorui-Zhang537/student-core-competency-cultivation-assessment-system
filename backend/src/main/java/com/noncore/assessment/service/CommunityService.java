@@ -164,4 +164,9 @@ public interface CommunityService {
      * @return 标签列表
      */
     List<Tag> searchTags(String keyword, int limit);
+
+    /**
+     * 分页获取用户的评论列表（按时间排序）
+     */
+    PageResult<PostComment> getUserComments(Long userId, int page, int size);
 } 

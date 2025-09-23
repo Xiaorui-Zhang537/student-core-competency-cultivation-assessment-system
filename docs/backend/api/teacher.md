@@ -17,7 +17,13 @@ Authorization: Bearer <token>
 - `GET /api/teachers/analytics/assignment/{assignmentId}`：作业分析
 - `GET /api/teachers/analytics/class-performance/{courseId}`：班级表现
 - `GET /api/teachers/analytics/course/{courseId}/students`：课程学生表现（分页过滤）
+  - Query：`page,size,search,sortBy,activity,grade,progress`
+  - `sortBy` 可选：`name|grade|progress|lastActive|activity`
+  - 字段口径：
+    - `lastActiveAt`：课程范围内最近一次学习/提交/访问的最大时间
+    - `activityLevel`：基于近一周学习时长分档（high/medium/low/inactive），后续将由 activityScore 驱动
 - `GET /api/teachers/analytics/course/{courseId}/students/export`：导出（blob）
+  - 同步支持 `sortBy=name|grade|progress|lastActive|activity`
 
 ## 2. 能力雷达与权重
 - `GET /api/teachers/ability/radar`：雷达数据（`courseId/classId/studentId/startDate/endDate`）

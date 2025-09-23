@@ -14,7 +14,7 @@
     
     <groupId>com.noncore</groupId>
     <artifactId>student-assessment-system</artifactId>
-    <version>1.0.0</version>
+    <version>1.0.1</version>
     <name>Student Core Competency Cultivation Assessment System</name>
     <description>后端API服务，支持学生核心能力培养评估系统的所有功能</description>
     

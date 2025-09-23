@@ -610,7 +610,8 @@
 					"name": "Sort by name",
 					"progress": "Sort by progress",
 					"grade": "Sort by grade",
-					"lastActive": "Sort by activity",
+					"lastActive": "Sort by last active",
+					"activity": "Sort by activity",
 					"joinDate": "Sort by join date"
 				}
 			},

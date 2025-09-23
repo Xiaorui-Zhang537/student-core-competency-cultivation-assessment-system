@@ -61,6 +61,7 @@
         "role": "角色",
         "nickname": "昵称",
         "gender": "性别",
+        "mbti": "MBTI",
         "firstName": "名字",
         "lastName": "姓氏",
         "school": "学校",

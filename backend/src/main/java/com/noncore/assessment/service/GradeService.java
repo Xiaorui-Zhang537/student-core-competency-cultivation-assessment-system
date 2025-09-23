@@ -2,6 +2,7 @@ package com.noncore.assessment.service;
 
 import com.noncore.assessment.dto.response.GradeStatsResponse;
 import com.noncore.assessment.entity.Grade;
+import com.noncore.assessment.dto.response.GradeListItem;
 import com.noncore.assessment.util.PageResult;
 
 import java.math.BigDecimal;
@@ -66,7 +67,7 @@ public interface GradeService {
      * @param size 每页大小
      * @return 分页结果
      */
-    PageResult<Grade> getStudentGradesWithPagination(Long studentId, Integer page, Integer size, Long courseId);
+    PageResult<GradeListItem> getStudentGradesWithPagination(Long studentId, Integer page, Integer size, Long courseId);
 
     /**
      * 获取作业的所有成绩

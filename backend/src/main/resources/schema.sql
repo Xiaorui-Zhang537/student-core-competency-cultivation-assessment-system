@@ -680,6 +680,11 @@ CREATE TABLE `users` (
   UNIQUE KEY `uk_teacher_no` (`teacher_no`),
   KEY `idx_role` (`role`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='用户表';
+
+-- 新增：MBTI 人格类型列（16种），用于用户个性化资料
+ALTER TABLE `users`
+  ADD COLUMN `mbti` varchar(4) NULL COMMENT 'MBTI类型(16种：ISTJ,ISFJ,INFJ,INTJ,ISTP,ISFP,INFP,INTP,ESTP,ESFP,ENFP,ENTP,ESTJ,ESFJ,ENFJ,ENTJ)'
+  AFTER `gender`;
 -- RESOLVED: merge artifact separator removed
 create table abilities
 (

@@ -17,6 +17,7 @@
         <result column="teacher_no" property="teacherNo"/>
         <result column="bio" property="bio"/>
         <result column="gender" property="gender"/>
+        <result column="mbti" property="mbti"/>
         <result column="birthday" property="birthday"/>
         <result column="country" property="country"/>
         <result column="province" property="province"/>
@@ -34,14 +35,14 @@
     <!-- 基础查询字段 -->
     <sql id="userColumns">
         id, username, email, password, role, avatar, nickname, first_name, last_name,
-        student_no, teacher_no, gender, bio, birthday, country, province, city, phone, school, subject, grade, email_verified, deleted,
+        student_no, teacher_no, gender, mbti, bio, birthday, country, province, city, phone, school, subject, grade, email_verified, deleted,
         created_at, updated_at
     </sql>
 
     <!-- 带别名的基础查询字段 -->
     <sql id="aliasedUserColumns">
         u.id, u.username, u.email, u.password, u.role, u.avatar, u.nickname, u.first_name, u.last_name,
-        u.student_no, u.teacher_no, u.gender, u.bio, u.birthday, u.country, u.province, u.city, u.phone, u.school, u.subject, u.grade,
+        u.student_no, u.teacher_no, u.gender, u.mbti, u.bio, u.birthday, u.country, u.province, u.city, u.phone, u.school, u.subject, u.grade,
         u.email_verified, u.deleted, u.created_at, u.updated_at
     </sql>
 
@@ -49,11 +50,11 @@
     <insert id="insertUser" parameterType="com.noncore.assessment.entity.User" useGeneratedKeys="true" keyProperty="id">
         INSERT INTO users (
             username, email, password, role, avatar, nickname, first_name, last_name,
-            student_no, teacher_no, gender, bio, birthday, country, province, city, phone, school, subject, grade,
+            student_no, teacher_no, gender, mbti, bio, birthday, country, province, city, phone, school, subject, grade,
             email_verified, deleted, created_at, updated_at
         ) VALUES (
             #{username}, #{email}, #{password}, #{role}, #{avatar}, #{nickname}, #{firstName}, #{lastName},
-            #{studentNo}, #{teacherNo}, #{gender}, #{bio}, #{birthday}, #{country}, #{province}, #{city}, #{phone}, #{school}, #{subject}, #{grade},
+            #{studentNo}, #{teacherNo}, #{gender}, #{mbti}, #{bio}, #{birthday}, #{country}, #{province}, #{city}, #{phone}, #{school}, #{subject}, #{grade},
             #{emailVerified}, #{deleted}, #{createdAt}, #{updatedAt}
         )
     </insert>
@@ -111,6 +112,7 @@
             <if test="avatar != null and avatar != ''">avatar = #{avatar},</if>
             <if test="nickname != null and nickname != ''">nickname = #{nickname},</if>
             <if test="gender != null and gender != ''">gender = #{gender},</if>
+            <if test="mbti != null and mbti != ''">mbti = #{mbti},</if>
             <if test="firstName != null and firstName != ''">first_name = #{firstName},</if>
             <if test="lastName != null and lastName != ''">last_name = #{lastName},</if>
             <if test="studentNo != null and studentNo != ''">student_no = #{studentNo},</if>

@@ -341,6 +341,16 @@ public class CommunityServiceImpl implements CommunityService {
         return tagMapper.searchTags(keyword, limit);
     }
 
+    @Override
+    public PageResult<PostComment> getUserComments(Long userId, int page, int size) {
+        PageHelper.startPage(page, size);
+        Map<String, Object> params = new HashMap<>();
+        params.put("orderBy", "time");
+        List<PostComment> list = postCommentMapper.selectByUserId(userId, params);
+        PageInfo<PostComment> pi = new PageInfo<>(list);
+        return PageResult.of(list, pi.getPageNum(), pi.getPageSize(), pi.getTotal(), pi.getPages());
+    }
+
     /**
      * 处理帖子标签
      */

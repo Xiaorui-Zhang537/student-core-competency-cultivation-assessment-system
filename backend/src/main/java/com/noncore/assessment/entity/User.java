@@ -44,6 +44,9 @@ public class User implements Serializable {
     @Schema(description = "性别")
     private String gender;
 
+    @Schema(description = "MBTI 人格类型(16种)")
+    private String mbti;
+
     @Schema(description = "名字")
     private String firstName;
 

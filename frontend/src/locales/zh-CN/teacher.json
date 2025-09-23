@@ -613,7 +613,8 @@
 					"name": "按姓名排序",
 					"progress": "按进度排序",
 					"grade": "按成绩排序",
-					"lastActive": "按活跃度排序",
+					"lastActive": "按最后活动排序",
+					"activity": "按活跃度排序",
 					"joinDate": "按加入时间排序"
 				}
 			},

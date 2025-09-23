@@ -26,6 +26,7 @@ public class TeacherStudentProfileResponse {
     private String lastName;
     private String nickname;
     private String gender;
+    private String mbti;
     private String bio;
     private Date birthday;
     private String country;

@@ -48,6 +48,61 @@
               </Button>
             </div>
           </div>
+
+          <!-- Student Profile Info (Read-only) -->
+          <div class="card p-5">
+            <h3 class="text-lg font-semibold mb-4">{{ t('shared.profile.section.profileInfo') || '个人信息' }}</h3>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label class="block text-sm font-medium mb-1">{{ t('shared.profile.fields.username') }}</label>
+                <p class="text-sm">{{ profile.username || '-' }}</p>
+              </div>
+              <div>
+                <label class="block text-sm font-medium mb-1">{{ t('shared.profile.fields.email') }}</label>
+                <p class="text-sm">{{ profile.email || '-' }}</p>
+              </div>
+              <div>
+                <label class="block text-sm font-medium mb-1">{{ t('shared.profile.fields.studentNo') }}</label>
+                <p class="text-sm">{{ profile.studentNo || '-' }}</p>
+              </div>
+              <div>
+                <label class="block text-sm font-medium mb-1">MBTI</label>
+                <p class="text-sm">{{ profile.mbti || t('shared.profile.status.notSet') }}</p>
+              </div>
+              <div>
+                <label class="block text-sm font-medium mb-1">{{ t('shared.profile.fields.gender') }}</label>
+                <p class="text-sm">{{ profile.gender ? t('shared.profile.genders.' + String(profile.gender).toLowerCase()) : t('shared.profile.status.notSet') }}</p>
+              </div>
+              <div>
+                <label class="block text-sm font-medium mb-1">{{ t('shared.profile.fields.school') }}</label>
+                <p class="text-sm">{{ profile.school || t('shared.profile.status.notSet') }}</p>
+              </div>
+              <div>
+                <label class="block text-sm font-medium mb-1">{{ t('shared.profile.fields.subject') }}</label>
+                <p class="text-sm">{{ profile.subject || t('shared.profile.status.notSet') }}</p>
+              </div>
+              <div>
+                <label class="block text-sm font-medium mb-1">{{ t('shared.profile.fields.phone') }}</label>
+                <p class="text-sm">{{ profile.phone || t('shared.profile.status.notSet') }}</p>
+              </div>
+              <div>
+                <label class="block text-sm font-medium mb-1">{{ t('shared.profile.fields.birthday') }}</label>
+                <p class="text-sm">{{ profile.birthday ? formatDate(profile.birthday) : t('shared.profile.status.notSet') }}</p>
+              </div>
+              <div>
+                <label class="block text-sm font-medium mb-1">{{ t('shared.profile.fields.country') }}</label>
+                <p class="text-sm">{{ profile.country || t('shared.profile.status.notSet') }}</p>
+              </div>
+              <div>
+                <label class="block text-sm font-medium mb-1">{{ t('shared.profile.fields.province') }}</label>
+                <p class="text-sm">{{ profile.province || t('shared.profile.status.notSet') }}</p>
+              </div>
+              <div>
+                <label class="block text-sm font-medium mb-1">{{ t('shared.profile.fields.city') }}</label>
+                <p class="text-sm">{{ profile.city || t('shared.profile.status.notSet') }}</p>
+              </div>
+            </div>
+          </div>
           
           <!-- Course Filter (glass, keep original position) -->
           <div class="card p-4 flex items-center gap-3 whitespace-nowrap">
@@ -76,14 +131,30 @@
                 <h3 class="text-lg font-semibold">{{ t('teacher.studentDetail.recentStudy') || '最近学习' }}</h3>
               </div>
               <div class="space-y-3">
-                <div v-for="r in recentLessons" :key="String(r.lessonId)+'-'+String(r.studiedAt)" class="flex items-center justify-between">
-                  <div class="truncate">
-                    <div class="font-medium truncate">{{ r.lessonTitle || '-' }}</div>
-                    <div class="text-sm text-gray-500 truncate">{{ r.courseTitle || ('#'+r.courseId) }}</div>
+                <template v-if="recentEvents.length > 0">
+                  <div v-for="ev in recentEvents" :key="String(ev.eventType)+'-'+String(ev.occurredAt)+'-'+String(ev.title||'')" class="flex items-center justify-between">
+                    <div class="flex items-center gap-2 min-w-0">
+                      <span
+                        class="inline-block w-2 h-2 rounded-full"
+                        :class="{
+                          'bg-indigo-500': ev.eventType==='lesson',
+                          'bg-emerald-500': ev.eventType==='submission',
+                          'bg-amber-500': ev.eventType==='quiz',
+                          'bg-sky-500': ev.eventType==='discussion',
+                          'bg-gray-400': ev.eventType==='visit'
+                        }"
+                      ></span>
+                      <div class="truncate">
+                        <div class="font-medium truncate">{{ ev.title || fallbackEventTitle(ev.eventType) }}</div>
+                        <div class="text-sm text-gray-500 truncate">{{ ev.courseTitle || (ev.courseId ? ('#'+ev.courseId) : '') }}</div>
+                      </div>
+                    </div>
+                    <div class="text-sm text-gray-500">{{ formatDateTime(ev.occurredAt) }}</div>
                   </div>
-                  <div class="text-sm text-gray-500">{{ formatDateTime(r.studiedAt) }}</div>
-                </div>
-                <div v-if="recentLessons.length===0" class="text-sm text-gray-500">{{ t('common.empty') || '暂无数据' }}</div>
+                </template>
+                <template v-else>
+                  <div class="text-sm text-gray-500">{{ t('common.empty') || '暂无数据' }}</div>
+                </template>
               </div>
             </div>
 
@@ -250,6 +321,7 @@ const studentName = ref(route.query.name as string || (t('teacher.students.table
 
 const profile = ref<any>({})
 const recentLessons = ref<Array<{lessonId:number;lessonTitle:string;courseId:number;courseTitle:string;studiedAt:any}>>([])
+const recentEvents = ref<Array<{eventType:string; title?:string; courseId?:number; courseTitle?:string; occurredAt:any; durationSeconds?:number; link?:string}>>([])
 const radarIndicators = ref<Array<{name:string;max:number}>>([])
 const radarSeries = ref<Array<{name:string;values:number[];color?:string}>>([])
 const alerts = ref<Array<{code:string;message:string;severity:string}>>([])
@@ -386,8 +458,12 @@ function formatPercent(v: any): string {
 async function fetchActivity() {
   if (!studentId.value) return
   try {
-    const act = await teacherStudentApi.getStudentActivity(studentId.value, 7, 5)
-    recentLessons.value = act?.recentLessons || []
+    const act = await teacherStudentApi.getStudentActivity(studentId.value, 7, 8)
+    recentLessons.value = (act as any)?.recentLessons || []
+    recentEvents.value = (act as any)?.recentEvents || []
+    if (!recentEvents.value?.length && recentLessons.value?.length) {
+      recentEvents.value = recentLessons.value.map((r:any)=>({ eventType:'lesson', title:r.lessonTitle, courseId:r.courseId, courseTitle:r.courseTitle, occurredAt:r.studiedAt }))
+    }
   } catch {}
 }
 
@@ -419,6 +495,17 @@ async function fetchAlertsAndRecommendations() {
   try {
     recommendations.value = await teacherStudentApi.getStudentRecommendations(studentId.value, 6)
   } catch {}
+}
+
+function fallbackEventTitle(t: string): string {
+  switch ((t||'').toLowerCase()) {
+    case 'lesson': return '学习章节';
+    case 'submission': return '提交作业';
+    case 'quiz': return '测验答题';
+    case 'discussion': return '讨论互动';
+    case 'visit': return '访问课程';
+    default: return '学习活动';
+  }
 }
 
 onMounted(async () => {

@@ -30,6 +30,9 @@ public class UserProfileResponse {
     @Schema(description = "性别")
     private String gender;
 
+    @Schema(description = "MBTI 人格类型")
+    private String mbti;
+
     @Schema(description = "个人简介")
     private String bio;
 

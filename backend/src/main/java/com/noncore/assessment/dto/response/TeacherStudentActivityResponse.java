@@ -19,6 +19,8 @@ public class TeacherStudentActivityResponse {
     private Long weeklyStudyMinutes;
     /** 最近学习的章节列表（最多 N 条） */
     private List<RecentLessonDto> recentLessons;
+    /** 统一事件流（lesson|submission|quiz|discussion|visit） */
+    private List<ActivityEventDto> recentEvents;
 
     @Data
     @Builder
@@ -30,6 +32,20 @@ public class TeacherStudentActivityResponse {
         private Long courseId;
         private String courseTitle;
         private Date studiedAt;
+    }
+
+    @Data
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class ActivityEventDto {
+        private String eventType; // lesson|submission|quiz|discussion|visit
+        private String title;
+        private Long courseId;
+        private String courseTitle;
+        private Date occurredAt;
+        private Integer durationSeconds; // optional
+        private String link; // optional deeplink
     }
 }
 

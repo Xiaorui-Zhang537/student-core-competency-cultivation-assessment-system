@@ -41,6 +41,10 @@
                   <p>{{ userProfile.gender ? t('shared.profile.genders.' + String(userProfile.gender).toLowerCase()) : t('shared.profile.status.notSet') }}</p>
                 </div>
                 <div>
+                  <label class="block text-sm font-medium mb-1">{{ t('shared.profile.fields.mbti') || 'MBTI' }}</label>
+                  <p>{{ (userProfile as any).mbti || t('shared.profile.status.notSet') }}</p>
+                </div>
+                <div>
                   <label class="block text-sm font-medium mb-1">{{ t('shared.profile.fields.firstName') }}</label>
                   <p>{{ userProfile.firstName || t('shared.profile.status.notSet') }}</p>
                 </div>
@@ -148,6 +152,14 @@
                   size="md"
                 />
               </div>
+                <div>
+                  <label for="mbti" class="block text-sm font-medium mb-2">MBTI</label>
+                  <GlassPopoverSelect
+                    v-model="profileForm.mbti as any"
+                    :options="mbtiOptions"
+                    size="md"
+                  />
+                </div>
                 <div>
                   <label for="birthday" class="block text-sm font-medium mb-2">{{ t('shared.profile.fields.birthday') }}</label>
                   <GlassDateTimePicker id="birthday" v-model="profileForm.birthday" :label="'' as any" :date-only="true" />
@@ -299,6 +311,9 @@ const genderOptions = computed(() => [
   { label: t('shared.profile.genders.female') as string, value: 'FEMALE' },
   { label: t('shared.profile.genders.other') as string, value: 'OTHER' },
 ])
+const mbtiOptions = [
+  'ISTJ','ISFJ','INFJ','INTJ','ISTP','ISFP','INFP','INTP','ESTP','ESFP','ENFP','ENTP','ESTJ','ESFJ','ENFJ','ENTJ'
+].map(v => ({ label: v, value: v }))
 const showEditProfile = ref(false);
 const showChangePassword = ref(false);
 const uploadHeaders = { Authorization: localStorage.getItem('token') ? `Bearer ${localStorage.getItem('token')}` : '' } as Record<string, string>;
@@ -320,6 +335,7 @@ const profileForm = reactive<UpdateProfileRequest>({
   nickname: '',
   avatar: '',
   gender: '',
+  mbti: '',
   bio: '',
   birthday: '',
   country: '',
@@ -348,6 +364,8 @@ const setProfileForm = () => {
     profileForm.nickname = userProfile.value.nickname || '';
     profileForm.avatar = (userProfile.value as any).avatar || '';
     profileForm.gender = userProfile.value.gender || '';
+    // @ts-ignore
+    profileForm.mbti = (userProfile.value as any).mbti || '';
     profileForm.bio = userProfile.value.bio || '';
     profileForm.birthday = userProfile.value.birthday || '';
     profileForm.firstName = userProfile.value.firstName || '';
