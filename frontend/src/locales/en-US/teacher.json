@@ -580,6 +580,12 @@
 			},
 			"filters": {
 				"searchPlaceholder": "Search by name or ID...",
+				"labels": {
+					"progress": "Progress",
+					"grade": "Grade",
+					"activity": "Activity",
+					"sort": "Sort"
+				},
 				"progress": {
 					"all": "All progress",
 					"notStarted": "Not started",

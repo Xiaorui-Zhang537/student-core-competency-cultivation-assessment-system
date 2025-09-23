@@ -42,10 +42,11 @@
         <StartCard :label="t('teacher.students.cards.active') as string" :value="stats.activeStudents" tone="violet" :icon="ClockIcon" />
       </div>
 
-      <!-- 筛选与操作（仅保留外层玻璃容器，内部单行排布） -->
-      <card padding="lg" class="mb-8">
-        <div class="flex items-center flex-nowrap gap-2 overflow-x-auto whitespace-nowrap">
+      <!-- 筛选与操作（降低容器高度，去除控件阴影） -->
+      <card padding="sm" class="mb-4">
+        <div class="filters-row flex items-center flex-nowrap gap-2 overflow-x-auto whitespace-nowrap py-1">
           <!-- 三个过滤器（横向排列） -->
+          <span class="text-xs text-gray-600 dark:text-gray-300 mr-1">{{ t('teacher.students.filters.labels.progress') }}</span>
           <GlassPopoverSelect
             v-model="progressFilter"
             :options="progressOptions"
@@ -53,6 +54,7 @@
             width="9rem"
             :fullWidth="false"
           />
+          <span class="text-xs text-gray-600 dark:text-gray-300 mr-1">{{ t('teacher.students.filters.labels.grade') }}</span>
           <GlassPopoverSelect
             v-model="gradeFilter"
             :options="gradeOptions"
@@ -60,6 +62,7 @@
             width="10rem"
             :fullWidth="false"
           />
+          <span class="text-xs text-gray-600 dark:text-gray-300 mr-1">{{ t('teacher.students.filters.labels.activity') }}</span>
           <GlassPopoverSelect
             v-model="activityFilter"
             :options="activityOptions"
@@ -69,6 +72,7 @@
           />
           <!-- 排序选择器（与前面控件保持相同间距与高度） / 批量操作互斥 -->
           <div v-if="selectedStudents.length === 0">
+            <span class="text-xs text-gray-600 dark:text-gray-300 mr-1">{{ t('teacher.students.filters.labels.sort') }}</span>
             <GlassPopoverSelect
               v-model="sortBy"
               :options="sortOptions"
@@ -198,7 +202,7 @@
                           {{ student.completedLessons }}/{{ student.totalLessons }}
                         </span>
                       </div>
-                      <progress :value="student.progress" :max="100" size="sm" />
+                      <Progress :value="Number(student.progress || 0)" size="sm" color="primary" />
                     </div>
                   </div>
                 </td>
@@ -967,3 +971,22 @@ function computeMenuPos(id: string) {
   menuPos.value = { left, top, width: preferredWidth }
 }
  </script> 
+
+<style scoped>
+.filters-row :where(.shadow, .shadow-sm, .shadow-md, .shadow-lg, .shadow-xl, .shadow-2xl) {
+  box-shadow: none !important;
+}
+.filters-row :where(.ring, .ring-1, .ring-2, .ring-offset-1, .ring-offset-2) {
+  --tw-ring-offset-shadow: 0 0 #0000 !important;
+  --tw-ring-shadow: 0 0 #0000 !important;
+  box-shadow: none !important;
+}
+/* 移除胶囊选择器的底色与边框，避免出现整体长方形条 */
+.filters-row :where(.ui-pill--select){
+  box-shadow: none !important;
+}
+/* 搜索输入同样移除阴影/环效果 */
+.filters-row :where(.ui-pill--input){
+  box-shadow: none !important;
+}
+</style>

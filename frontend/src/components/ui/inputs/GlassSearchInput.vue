@@ -1,6 +1,6 @@
 <template>
   <div class="relative w-full rounded-full focus-within:ring-[1.5px] focus-within:ring-primary-500/40 focus-within:outline-none">
-    <svg class="pointer-events-none w-4 h-4 absolute left-2 top-1/2 -translate-y-1/2 text-gray-400" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l3.817 3.817a.75.75 0 11-1.06 1.06l-3.818-3.816A6 6 0 012 8z" clip-rule="evenodd"/></svg>
+    <svg class="pointer-events-none w-4 h-4 absolute left-2 top-1/2 -translate-y-1/2 mt-0.5 text-gray-400" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l3.817 3.817a.75.75 0 11-1.06 1.06l-3.818-3.816A6 6 0 012 8z" clip-rule="evenodd"/></svg>
     <input
       :id="id"
       type="text"

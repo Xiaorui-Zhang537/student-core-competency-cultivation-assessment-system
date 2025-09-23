@@ -583,6 +583,12 @@
 			},
 			"filters": {
 				"searchPlaceholder": "搜索学生姓名或学号...",
+				"labels": {
+					"progress": "进度",
+					"grade": "成绩",
+					"activity": "活跃度",
+					"sort": "排序"
+				},
 				"progress": {
 					"all": "全部进度",
 					"notStarted": "未开始",

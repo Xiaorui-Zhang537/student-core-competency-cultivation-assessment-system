@@ -7,7 +7,7 @@
             <GlassPopoverSelect
               :label="t('teacher.dashboard.course.select.label') as string"
               v-model="selectedCourseId"
-              :options="teacherCourses.map(c => ({ label: c.title, value: String(c.id) }))"
+              :options="teacherCourseOptions"
               :placeholder="t('teacher.dashboard.course.select.placeholder') as string"
               size="md"
               stacked
@@ -30,9 +30,6 @@
     
 
     <!-- Loading State -->
-    <img
-      src="../../../../../../../../../var/folders/4g/y4mgnnv92pg2bn4g4_7cf0k00000gn/T/TemporaryItems/NSIRD_screencaptureui_X5C8On/Screenshot 2025-09-20 at 15.25.40.png"
-      height="75" width="475" />
     <div v-if="teacherStore.loading" class="text-center py-12">
         <p>{{ t('app.loading.title') }}</p>
       </div>
@@ -101,6 +98,10 @@ const teacherCourses = computed(() => {
   if (!authStore.user?.id) return []
   return courseStore.courses.filter(course => String(course.teacherId) === String(authStore.user?.id))
 })
+
+const teacherCourseOptions = computed(() =>
+  teacherCourses.value.map((c: { id: string | number; title: string }) => ({ label: c.title, value: String(c.id) }))
+)
 
 const loading = teacherStore.loading
 const courseAnalytics = computed(() => teacherStore.courseAnalytics)
