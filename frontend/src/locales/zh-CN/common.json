@@ -9,8 +9,13 @@
     "select": "选择",
     "search": "搜索",
     "view": "查看",
+    "preview": "浏览",
     "verified": "已验证",
     "none": "无",
+    "status": {
+      "completed": "已完成",
+      "incomplete": "未完成"
+    },
     "none": "无",
     "new": "新建",
     "enable": "启用",
@@ -25,6 +30,7 @@
     "askAi": "询问AI",
     "pleaseSelect": "请选择…",
     "total": "共",
+    "gender": { "male": "男", "female": "女", "other": "其它" },
     "student": {
       "home": {
         "sections": { "quickEntries": "快速入口" },

@@ -5,11 +5,17 @@
     "cancel": "Cancel",
     "close": "Close",
     "confirm": "Confirm",
+    "verified": "Verified",
     "submit": "Submit",
     "select": "Select",
     "search": "Search",
     "view": "View",
+    "preview": "Preview",
     "none": "None",
+    "status": {
+      "completed": "Completed",
+      "incomplete": "Incomplete"
+    },
     "new": "New",
     "enable": "Enable",
     "rename": "Rename",
@@ -22,6 +28,7 @@
     "exportPng": "Export PNG",
     "askAi": "Ask AI",
     "pleaseSelect": "Please select…",
+    "gender": { "male": "Male", "female": "Female", "other": "Other" },
     "total": "Total",
     "student": {
       "home": {

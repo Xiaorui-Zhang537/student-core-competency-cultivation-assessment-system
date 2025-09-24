@@ -36,7 +36,7 @@
     <canvas v-if="false" ref="noiseCanvas" class="absolute inset-0" style="z-index:4"></canvas>
 
     <!-- Unified 2D canvas (background + particles + lines) -->
-    <canvas v-if="useLegacyFlow" ref="flowCanvas" class="absolute inset-0" :style="{position:'fixed',left:'0',top:'0',width:'100vw',height:'100vh',zIndex:2,opacity:fade}"></canvas>
+    <canvas v-if="useLegacyFlow" ref="flowCanvas" class="absolute inset-0" :style="{position:'fixed',left:'0',top:'0',width:'100vw',height:'100vh',zIndex:2,opacity:1}"></canvas>
 
     <!-- Bits matrix (disabled) -->
     <canvas ref="bitsCanvas" class="absolute inset-0" v-if="false"></canvas>
@@ -160,20 +160,33 @@ const palette = computed<string[]>(() => {
   return p
 })
 
-const fade = ref(props.enabled ? 1 : 0)
+const fade = ref(1)
 
 const rootStyle = computed(() => {
   const grad = getBackgroundGradient(dark.value ? 'dark' : 'light')
   // Light mode: 明亮渐变；Dark mode: 深靛蓝渐变，不是纯黑
   const base = dark.value
-    ? { background: `linear-gradient(160deg, #0A132A 0%, #0E1A39 60%, #0A132A 100%)` }
+    ? { background: `linear-gradient(160deg, ${grad.from} 0%, ${grad.to} 60%, ${grad.from} 100%)` }
     : { background: `linear-gradient(140deg, ${grad.from} 0%, ${grad.via} 45%, ${grad.to} 100%)` }
-  return Object.assign(base, { opacity: fade.value, transition: 'opacity 600ms ease' }) as any
+  // 始终保持不透明背景，不随开关淡出
+  return Object.assign(base, { opacity: 1, transition: 'none' }) as any
 })
 
 watch(() => props.enabled, (v) => {
-  // Smooth fade in/out; keep animation loop running for responsiveness
-  fade.value = v ? 1 : 0
+  // Keep base gradient visible even when effects are disabled
+  fade.value = 1
+  // Toggle particle/shape layers immediately without refresh
+  try {
+    if (particleRef.value) particleRef.value.style.display = v ? '' : 'none'
+    if (shapeRef.value) shapeRef.value.style.display = v ? '' : 'none'
+  } catch {}
+  if (v) {
+    // restart loop if needed
+    if (particles.length === 0) initUnifiedParticles()
+    startFlowLoop()
+  } else {
+    stopFlowLoop()
+  }
 })
 
 const neonColors = computed(() => palette.value)
@@ -380,7 +393,8 @@ function stepUnified(dt: number) {
   for (let k = pulses.length - 1; k >= 0; k--) { pulses[k].t -= dt; if (pulses[k].t <= 0) pulses.splice(k, 1) }
   for (let k = randomEvents.length - 1; k >= 0; k--) { randomEvents[k].t -= dt; if (randomEvents[k].t <= 0) randomEvents.splice(k, 1) }
   fctx.globalCompositeOperation = dark.value ? 'lighter' : 'source-over'
-  fctx.globalAlpha = dark.value ? 1 : 0.9
+  // 保持全不透明，避免关闭粒子后背景显得变淡
+  fctx.globalAlpha = 1
 
   // draw mouse trail (under particles)
   if (props.interactions?.mouseTrail && trailPoints.length > 1) {
@@ -624,6 +638,50 @@ function stepUnified(dt: number) {
       fctx.stroke()
     }
   }
+}
+
+function drawStaticBackground() {
+  if (!fctx) return
+  fctx.globalCompositeOperation = 'source-over'
+  if (dark.value) {
+    const g = fctx.createLinearGradient(0, 0, W, H)
+    g.addColorStop(0, '#0A132A')
+    g.addColorStop(0.6, '#0E1A39')
+    g.addColorStop(1, '#0A132A')
+    fctx.fillStyle = g as any
+  } else {
+    const g = fctx.createLinearGradient(0, 0, W, H)
+    g.addColorStop(0, '#E7EDF7')
+    g.addColorStop(0.5, '#D7E4FF')
+    g.addColorStop(1, '#C8D9FE')
+    fctx.fillStyle = g as any
+  }
+  fctx.fillRect(0, 0, W, H)
+}
+
+function startFlowLoop() {
+  if (flowRaf !== 0) return
+  const tick = (_now: number) => {
+    flowRaf = requestAnimationFrame(tick)
+    const dt = 1/60
+    stepUnified(dt)
+  }
+  flowRaf = requestAnimationFrame(tick)
+}
+
+function stopFlowLoop() {
+  if (flowRaf !== 0) {
+    cancelAnimationFrame(flowRaf)
+    flowRaf = 0
+  }
+  // clear dynamic arrays so particles vanish immediately
+  particles = []
+  pulses = []
+  randomEvents = []
+  trailPoints = []
+  ripples = []
+  // redraw the static background gradient
+  drawStaticBackground()
 }
 
 // Flow lines
@@ -998,14 +1056,14 @@ onMounted(async () => {
     drawNoise()
     // unified loop: particles only (neon lines removed)
     if (useLegacyFlow.value) {
-      initUnifiedParticles()
-    const tick = (now: number) => {
-        flowRaf = requestAnimationFrame(tick)
-        const dt = 1/60
-        stepUnified(dt)
-        // drawNeonLines(now * 0.001)
+      if (props.enabled) {
+        initUnifiedParticles()
+        startFlowLoop()
+      } else {
+        // prepare canvas and draw static background without particles
+        resizeCanvas()
+        drawStaticBackground()
       }
-      flowRaf = requestAnimationFrame(tick)
     }
     if (showLegacyWave.value) await setup3D()
     // Remove metaballs to avoid occlusion for now

@@ -7,6 +7,9 @@ export const userApi = {
   getProfile: (): Promise<ApiResponse<UserProfileResponse>> => {
     return api.get('/users/profile');
   },
+  getProfileById: (userId: string | number): Promise<ApiResponse<UserProfileResponse>> => {
+    return api.get(`/users/${userId}/profile`);
+  },
   updateProfile: (data: UpdateProfileRequest): Promise<ApiResponse<User>> => {
     return api.put('/users/profile', data);
   },

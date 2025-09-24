@@ -61,6 +61,13 @@ public class UserController extends BaseController {
         return ResponseEntity.ok(ApiResponse.success(profileResponse));
     }
 
+    @GetMapping("/{id}/profile")
+    @Operation(summary = "获取指定用户公开资料", description = "根据用户ID获取公开的个人资料（用于展示教师资料等，不含敏感信息）")
+    public ResponseEntity<ApiResponse<UserProfileResponse>> getPublicProfile(@PathVariable("id") Long userId) {
+        UserProfileResponse profile = userService.getUserPublicProfile(userId);
+        return ResponseEntity.ok(ApiResponse.success(profile));
+    }
+
     @PutMapping("/profile")
     @Operation(summary = "更新用户资料", description = "更新当前登录用户的个人资料")
     public ResponseEntity<ApiResponse<User>> updateProfile(@Valid @RequestBody UpdateProfileRequest request) {

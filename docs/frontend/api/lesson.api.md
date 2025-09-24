@@ -12,6 +12,17 @@
 - `completeLesson(lessonId)` → `POST /lessons/{lessonId}/complete`
 - `updateLessonProgress(lessonId, payload)` → `POST /lessons/{lessonId}/progress`（学生）
   - `payload: { progress?: number; studyTime?: number; lastPosition?: number }`
+## 2025-09-24 更新（节次详情合成进度/只增不减）
+
+- 合成规则：
+  - 视频：基于 `<video>` 的 `timeupdate/ended` 推导百分比
+  - 资料：每个文件滚动到底部（IntersectionObserver threshold=1.0）计为“已查看”；资料进度=已查看/总数
+  - 综合：二者平均；仅其一则采用该项；均无则初始化为 100%
+- 上报策略：
+  - 进入时先读取后端持久化（`GET /students/lessons/{id}`）并显示
+  - 自动上报（5s）与即时上报（视频结束/资料到底）均采用“只增不减”：仅当新合成进度>已存进度才 `POST /lessons/{id}/progress`
+  - 课程详情统计：通过 `GET /lessons/course/{courseId}/student-progress` 拉取整课节次的进度，用于“已完成计数”和每节徽章
+
 - `addLessonNotes(lessonId, notes)` → `POST /lessons/{lessonId}/notes`（学生）
 
 ## 最小示例
@@ -44,6 +55,7 @@ await lessonApi.addLessonNotes('3001', '本节重点：……')
 - 资料文件由 `file.api.ts` 上传，获得 `fileId` 后通过 `materialFileIds` 绑定
 - 进度上报频率建议节流，避免产生大量请求
 - 敏感操作需教师角色，具体以后端鉴权为准
+ - 字段约定：`content` 表示“本节说明/正文”，`description` 为“简介摘要”。前端创建/编辑时会同步两者，后端也做互补（任一为空将被补齐为另一方）。学生端列表展示 `description || content`
 
 ## 参数与返回
 - `Lesson` 字段参见 `@/types/lesson`

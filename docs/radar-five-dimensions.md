@@ -28,8 +28,27 @@
 - 前端 `AbilityDimension` 类型补充 `code` 字段。
 
 ## 前端渲染
-- 雷达图组件 `RadarChart.vue` 以 `indicators.max=100` 与 `series` 百分制值渲染。
+- 雷达图组件 `RadarChart.vue` 以 `indicators.max=100` 与 `series` 百分制值渲染；支持 Tooltip。
 - 教师端 `AnalyticsView.vue`、学生端 `AnalysisView.vue` 从接口 `dimensions` 数组构建指标，顺序保持与后端一致。
+
+### 新增：中英图例说明（v1.2）
+
+- 共享组件：`frontend/src/shared/views/AbilityRadarLegend.vue`
+  - 数据源：i18n 键 `shared.radarLegend.dimensions.{CODE}`
+  - 展示内容：
+    - `what`（考查内容 / What it examines）
+    - `abilities`（展示能力 / Abilities shown）
+    - `scoring`（评分逻辑 / Scoring logic）
+  - 集成位置：
+    - 教师端：`features/teacher/views/AnalyticsView.vue` 雷达图下方
+    - 学生端：`features/student/views/AbilityView.vue` 雷达图下方
+
+### i18n 键位
+
+- `frontend/src/locales/zh-CN/shared.json` 与 `en-US/shared.json` 新增 `shared.radarLegend.*`：
+  - `labels.title/expandAll/collapseAll/what/abilities/scoring`
+  - `dimensions.MORAL_COGNITION | LEARNING_ATTITUDE | LEARNING_ABILITY | LEARNING_METHOD | ACADEMIC_GRADE`
+
 
 ## 兼容性与历史数据
 - 历史写入若使用了 `submission.id` 或 `grade.id`，课程过滤下不会计入四维均分。可视需要通过一次性脚本迁移 `ability_assessments.related_id` → 对应的 `assignment.id`。

@@ -1,3 +1,22 @@
+## 学生端/教师端 UI 统一：章节-节次与本节说明
+
+### 章节-节次分组
+- 教师端与学生端的“课程内容”均按“章节-节次”结构展示。
+- 学生端顺序以 `chapter.orderIndex` 为准，未分组的节次归入“未分组”。
+
+### 本节说明/简介统一
+- 字段定义：`Lesson.content` 表示“本节说明/正文”，`Lesson.description` 表示“简介摘要”。
+- 前端创建/编辑：同时写入 `content` 与 `description`，避免两端显示不一致。
+- 后端保障：在创建/更新时，若两者其一为空则互补为另一方的值。
+- 学生端列表项简介显示：`description || content`。
+
+### i18n
+- 教师端键：`teacher.courseDetail.sections.lessonIntro` 与 `lessonIntroPh`；`lessonDesc` 文案已统一为“本节说明”。
+- 学生端未分组文案：`student.courses.detail.noChapter`。
+
+### 组件
+- 统一使用 `/components/ui` 的玻璃风格组件（GlassInput、GlassTextarea、GlassPopoverSelect 等）。
+
 ## UI 统一改造说明（选择器/过滤器/搜索框药丸化，容器圆润一致）
 
 本次改造目标：

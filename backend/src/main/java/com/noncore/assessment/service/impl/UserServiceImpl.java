@@ -1,6 +1,7 @@
 package com.noncore.assessment.service.impl;
 
 import com.noncore.assessment.entity.User;
+import com.noncore.assessment.dto.response.UserProfileResponse;
 import com.noncore.assessment.exception.BusinessException;
 import com.noncore.assessment.exception.ErrorCode;
 import com.noncore.assessment.mapper.UserMapper;
@@ -339,6 +340,40 @@ public class UserServiceImpl implements UserService {
         } catch (Exception e) {
             logger.warn("清理旧头像失败 userId={}", userId, e);
         }
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public UserProfileResponse getUserPublicProfile(Long userId) {
+        User user = userMapper.selectUserById(userId);
+        if (user == null) {
+            throw new BusinessException(ErrorCode.USER_NOT_FOUND);
+        }
+        // 返回尽可能完整的资料（不含密码），与 /users/profile 字段对齐
+        String birthdayStr = user.getBirthday() != null ? new java.text.SimpleDateFormat("yyyy-MM-dd").format(user.getBirthday()) : null;
+        return UserProfileResponse.builder()
+                .id(user.getId())
+                .username(user.getUsername())
+                .email(user.getEmail())
+                .role(user.getRole())
+                .avatar(user.getAvatar())
+                .nickname(user.getNickname())
+                .gender(user.getGender())
+                .mbti(user.getMbti())
+                .bio(user.getBio())
+                .emailVerified(user.isEmailVerified())
+                .firstName(user.getFirstName())
+                .lastName(user.getLastName())
+                .school(user.getSchool())
+                .subject(user.getSubject())
+                .studentNo(user.getStudentNo())
+                .teacherNo(user.getTeacherNo())
+                .birthday(birthdayStr)
+                .country(user.getCountry())
+                .province(user.getProvince())
+                .city(user.getCity())
+                .phone(user.getPhone())
+                .build();
     }
 
     private String generateResetToken(Long userId) {

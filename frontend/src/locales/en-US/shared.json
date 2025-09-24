@@ -61,6 +61,7 @@
         "role": "Role",
         "nickname": "Nickname",
         "gender": "Gender",
+        "mbti": "MBTI",
         "firstName": "First Name",
         "lastName": "Last Name",
         "school": "School",
@@ -358,6 +359,48 @@
     "loading": "Loading...",
     "file": {
       "unknownSize": "Unknown"
+    },
+    "radarLegend": {
+      "labels": {
+        "title": "Five-dimension Legend",
+        "expandAll": "Expand All",
+        "collapseAll": "Collapse All",
+        "what": "What it examines",
+        "abilities": "Abilities shown",
+        "scoring": "Scoring logic"
+      },
+      "dimensions": {
+        "MORAL_COGNITION": {
+          "title": "Moral Reasoning",
+          "what": "Stage of moral reasoning, breadth of moral foundations, argument and counter-argument chains",
+          "abilities": "Principled judgment, value weighing, critical thinking",
+          "scoring": "1A Stage: self-interest/punishment → social norms → universal principles; 1B Breadth: 1 → 2 → ≥3 foundations; 1C Argument: unsupported → causal + one counter → coherent chain + explicit rebuttal"
+        },
+        "LEARNING_ATTITUDE": {
+          "title": "Learning Attitude",
+          "what": "Emotional engagement, persistence/resilience, task focus/flow",
+          "abilities": "Motivation regulation, self-drive, task focus",
+          "scoring": "2A Emotion: negative → mixed/neutral → clearly positive; 2B Persistence: give up → single attempt → multiple adjustments with reflection; 2C Focus: off-topic → mostly focused → structured with smooth transitions"
+        },
+        "LEARNING_ABILITY": {
+          "title": "Learning Ability",
+          "what": "Bloom's progression, metacognition (plan–monitor–revise), knowledge transfer",
+          "abilities": "Higher-order thinking, reflective improvement, cross-domain transfer",
+          "scoring": "3A Bloom: remember/understand → apply/analyze → evaluate/create; 3B Metacognition: none → one/two stages → full cycle with concrete adjustments; 3C Transfer: none → near → clear far transfer"
+        },
+        "LEARNING_METHOD": {
+          "title": "Learning Strategy",
+          "what": "Strategy diversity, depth of processing, self-regulation (before–during–after)",
+          "abilities": "Strategy integration, deep processing, self-monitoring",
+          "scoring": "4A Diversity: single → two weakly integrated → ≥3 effectively combined; 4B Depth: listing/copying → some explanation → semantic reconstruction with multiple connections; 4C Regulation: none → partial → full cycle with specific next steps"
+        },
+        "ACADEMIC_GRADE": {
+          "title": "Academic Grade",
+          "what": "Overall performance in coursework/exams (normalized to percentage)",
+          "abilities": "Academic attainment",
+          "scoring": "Aggregated from grades and normalized by score/max to 0–100, on the same scale as other dimensions"
+        }
+      }
     }
   }
 }

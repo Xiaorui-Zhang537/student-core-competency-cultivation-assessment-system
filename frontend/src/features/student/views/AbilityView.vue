@@ -74,6 +74,11 @@
         </Card>
       </div>
 
+      <!-- 维度图例说明（中英） -->
+      <Card class="p-6" v-if="rawRadarLabels.length">
+        <AbilityRadarLegend :dimensions="rawRadarLabels" />
+      </Card>
+
       <!-- Trends Chart -->
       <Card class="p-6">
         <h2 class="text-xl font-semibold mb-4">{{ t('student.ability.trend') }}</h2>
@@ -119,6 +124,7 @@ import PageHeader from '@/components/ui/PageHeader.vue'
 import GlassSwitch from '@/components/ui/inputs/GlassSwitch.vue'
 import Card from '@/components/ui/Card.vue'
 import Button from '@/components/ui/Button.vue'
+import AbilityRadarLegend from '@/shared/views/AbilityRadarLegend.vue'
 
 const abilityStore = useAbilityStore();
 const courseStore = useCourseStore();

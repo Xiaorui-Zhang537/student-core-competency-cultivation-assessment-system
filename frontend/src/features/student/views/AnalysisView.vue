@@ -107,6 +107,11 @@
         </div>
       </div>
 
+      <!-- 维度说明（玻璃样式，与雷达同页显示） -->
+      <div v-if="rawRadarDimensions.length" class="p-6 glass-regular rounded-lg shadow" v-glass="{ strength: 'regular', interactive: true }">
+        <AbilityRadarLegend :dimensions="rawRadarDimensions" />
+      </div>
+
       <!-- Trends 区域：左侧仪表盘，右侧两张趋势图（去掉完成率） -->
       <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <!-- 左：课程平均分仪表盘（动画） + 作业列表 -->
@@ -201,6 +206,7 @@ import { gradeApi } from '@/api/grade.api'
 import { useAuthStore } from '@/stores/auth'
 import { api as http } from '@/api/config'
 import GlassSwitch from '@/components/ui/inputs/GlassSwitch.vue'
+import AbilityRadarLegend from '@/shared/views/AbilityRadarLegend.vue'
 
 const { t } = useI18n()
 const router = useRouter()

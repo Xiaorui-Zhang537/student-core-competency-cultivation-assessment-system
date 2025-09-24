@@ -2,7 +2,7 @@
   <div class="fixed inset-0 z-50 flex items-center justify-center p-4">
     <div class="absolute inset-0" :class="backdropDark ? 'bg-black/50' : 'bg-transparent'" @click="$emit('close')"></div>
     <div
-      class="relative w-full rounded-2xl glass-thin glass-interactive border shadow-xl overflow-hidden flex flex-col max-w-[95vw]"
+      class="relative w-full rounded-2xl glass-regular glass-interactive border shadow-2xl overflow-hidden flex flex-col max-w-[95vw] bg-white/60 dark:bg-slate-900/55 ring-1 ring-white/20 dark:ring-white/10"
       :class="[maxWidth, containerMaxHClass]"
       :style="wrapperStyle"
     >
@@ -55,7 +55,7 @@ const props = withDefaults(defineProps<Props>(), {
   maxWidth: 'max-w-lg',
   showClose: true,
   blur: 'sm',
-  backdropDark: false,
+  backdropDark: true,
   reverseHeader: false,
   hideScrollbar: true,
   fillHeight: false,

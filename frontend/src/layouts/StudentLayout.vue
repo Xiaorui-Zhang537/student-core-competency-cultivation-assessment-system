@@ -1,5 +1,6 @@
 <template>
-  <div class="min-h-screen relative bg-gray-50 dark:bg-gray-900">
+  <div class="min-h-screen relative" :style="baseBgStyle">
+    <div class="fixed inset-0 z-0 pointer-events-none" :style="blueVeilStyle"></div>
     <FuturisticBackground class="fixed inset-0 z-0 pointer-events-none" theme="auto" :intensity="0.18" :bits-density="0.8" :sweep-frequency="7" :parallax="true" :enable3D="true" :logo-glow="true" :emphasis="false" :interactions="{ mouseTrail: true, clickRipples: true }" :enabled="uiStore.bgEnabled" :respect-reduced-motion="true" />
     <nav class="sticky top-0 z-40 glass-thin glass-interactive" v-glass="{ strength: 'thin', interactive: true }">
       <div class="px-4 sm:px-6 lg:px-8">
@@ -242,7 +243,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted, watch, nextTick } from 'vue'
+import { ref, onMounted, onUnmounted, watch, nextTick, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { useUIStore } from '@/stores/ui'
 import { useAuthStore } from '@/stores/auth'
@@ -280,6 +281,30 @@ const authStore = useAuthStore()
 const chat = useChatStore()
 const { t } = useI18n()
 
+const htmlIsDark = ref<boolean>(document.documentElement.classList.contains('dark'))
+const baseBgStyle = computed(() => {
+  return htmlIsDark.value
+    ? { background: 'linear-gradient(160deg, #060B1A 0%, #0E1A39 60%, #060B1A 100%)' }
+    : { background: 'linear-gradient(140deg, #F9FBFF 0%, #EAF3FF 45%, #E6F7FD 100%)' }
+})
+const blueVeilStyle = computed(() => {
+  // Match FuturisticBackground canvas overlays in with-particles state
+  // Dark: center dark veil; Light: soft vignette; Both add subtle neon purple glow
+  return htmlIsDark.value
+    ? {
+        backgroundImage: [
+          'radial-gradient(circle at 30% 30%, rgba(139,92,246,0.06) 0%, rgba(0,0,0,0) 65%)',
+          'radial-gradient(circle at 50% 40%, rgba(12,20,40,0.35) 0%, rgba(0,0,0,0) 80%)'
+        ].join(', ')
+      }
+    : {
+        backgroundImage: [
+          'radial-gradient(circle at 30% 30%, rgba(124,58,237,0.05) 0%, rgba(0,0,0,0) 65%)',
+          'radial-gradient(circle at 60% 25%, rgba(0,0,0,0.08) 0%, rgba(0,0,0,0) 70%)'
+        ].join(', ')
+      }
+})
+
 const showUserMenu = ref(false)
 const showGlassMenu = ref(false)
 const glassBtnRef = ref<HTMLElement | null>(null)
@@ -299,6 +324,12 @@ const handleLogout = async () => {
 onMounted(() => {
   uiStore.initBackgroundEnabled()
   uiStore.initGlassIntensity()
+  try {
+    const mo = new MutationObserver(() => {
+      htmlIsDark.value = document.documentElement.classList.contains('dark')
+    })
+    mo.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] })
+  } catch {}
 })
 
 watch(showUserMenu, async (v: boolean) => {

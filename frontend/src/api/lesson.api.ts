@@ -18,6 +18,13 @@ export const lessonApi = {
     return api.get(`/lessons/${lessonId}`);
   },
 
+  // 学生在某课程下所有课节的进度列表
+  getStudentCourseProgressList(courseId: string, studentId?: string): Promise<ApiResponse<any[]>> {
+    const params: any = {}
+    if (studentId) params.studentId = studentId
+    return api.get(`/lessons/course/${courseId}/student-progress`, { params })
+  },
+
   // New: get lesson materials via association table (方案A)
   getLessonMaterials(lessonId: string): Promise<ApiResponse<any[]>> {
     return api.get(`/lessons/${lessonId}/materials`);

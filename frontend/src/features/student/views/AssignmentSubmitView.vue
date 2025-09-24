@@ -55,7 +55,7 @@
                     </template>
                     {{ t('student.assignments.submit.delete') }}
                   </Button>
-                  <Button as="a" :href="`${baseURL}/files/${(file as any).id || file.fileId}/download`" size="sm" variant="success">
+                  <Button size="sm" variant="success" @click="downloadSubmissionFile(file)">
                     <template #icon>
                       <ArrowDownTrayIcon class="w-4 h-4" />
                     </template>
@@ -278,6 +278,26 @@ function formatSize(bytes?: number) {
   let n = bytes
   while (n >= 1024 && i < units.length - 1) { n /= 1024; i++ }
   return `${n.toFixed(1)} ${units[i]}`
+}
+
+async function downloadSubmissionFile(file: any) {
+  try {
+    const id = String((file as any)?.id || (file as any)?.fileId || '')
+    if (!id) return
+    const name = (file as any)?.originalName || (file as any)?.fileName || `file_${id}`
+    await fileApi.downloadFile(id, name)
+  } catch (e) {
+    try {
+      const id = String((file as any)?.id || (file as any)?.fileId || '')
+      if (!id) return
+      const a = document.createElement('a')
+      a.href = `${baseURL}/files/${encodeURIComponent(id)}/download`
+      a.download = (file as any)?.originalName || (file as any)?.fileName || `file_${id}`
+      document.body.appendChild(a)
+      a.click()
+      a.remove()
+    } catch {}
+  }
 }
 
 const assignment = computed(() => assignmentStore.selectedAssignment);

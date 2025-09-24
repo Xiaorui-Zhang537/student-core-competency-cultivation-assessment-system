@@ -1,5 +1,19 @@
 <template>
   <div class="p-4 lg:p-6">
+    <!-- 面包屑 -->
+    <nav class="mb-4 relative z-10">
+      <ol class="flex items-center space-x-2 text-sm">
+        <li>
+          <router-link to="/student/courses" class="text-gray-500 hover:text-blue-600">{{ t('student.courses.title') }}</router-link>
+        </li>
+        <li v-if="lesson?.courseId"><span class="text-gray-400">&gt;</span></li>
+        <li v-if="lesson?.courseId">
+          <router-link :to="`/student/courses/${lesson.courseId}`" class="text-gray-500 hover:text-blue-600">{{ courseTitle }}</router-link>
+        </li>
+        <li><span class="text-gray-400">&gt;</span></li>
+        <li class="font-medium text-gray-700 truncate">{{ lesson?.title }}</li>
+      </ol>
+    </nav>
     <div v-if="loading" class="text-center py-12">{{ t('student.courses.loading') }}</div>
     <div v-else-if="!lesson" class="text-center py-12 card">{{ t('student.courses.detail.notFoundTitle') }}</div>
     <div v-else class="grid grid-cols-1 lg:grid-cols-4 gap-6">
@@ -7,22 +21,45 @@
       <aside class="lg:col-span-1">
         <Card padding="sm" class="max-h-[70vh] overflow-auto" v-glass>
           <h3 class="text-sm font-semibold mb-2">{{ t('student.courses.detail.contents') }}</h3>
-          <ul class="space-y-1">
-            <li v-for="it in toc" :key="it.id">
-              <router-link :to="`/student/lessons/${it.id}`" class="text-sm hover:underline" :class="{ 'font-semibold text-primary-600': String(it.id)===String(lesson.id) }">
-                {{ it.title }}
+          <div class="space-y-2">
+            <div v-for="group in groupedChapters" :key="group.key" class="glass-ultraThin border rounded-xl">
+              <div class="px-2 py-2.5 flex items-center justify-between cursor-pointer select-none" @click="toggleChapter(group.key)">
+                <div class="text-sm font-semibold text-gray-700 truncate pl-2">{{ group.title }}</div>
+                <svg v-if="isExpanded(group.key)" class="w-4 h-4 text-gray-500" viewBox="0 0 20 20" fill="currentColor"><path d="M5.23 12.21a.75.75 0 001.06.02L10 8.73l3.71 3.5a.75.75 0 001.04-1.08l-4.23-4a.75.75 0 00-1.04 0l-4.25 4a.75.75 0 00-.02 1.06z"/></svg>
+                <svg v-else class="w-4 h-4 text-gray-500" viewBox="0 0 20 20" fill="currentColor"><path d="M14.77 7.79a.75.75 0 00-1.06-.02L10 11.27 6.29 7.77a.75.75 0 00-1.04 1.08l4.23 4a.75.75 0 001.04 0l4.25-4a.75.75 0 00.02-1.06z"/></svg>
+              </div>
+              <ul v-show="isExpanded(group.key)" class="px-2 pb-2 space-y-1">
+                <li v-for="(it, idx) in group.items" :key="it.id">
+                  <router-link :to="`/student/lessons/${it.id}`" class="flex items-center gap-2 text-sm p-2 rounded-xl hover:bg-black/5 transition"
+                    :class="{ 'font-semibold text-primary-600 bg-primary-50 ring-1 ring-primary-200 rounded-xl': String(it.id)===String(lesson.id) }">
+                    <span class="inline-flex items-center justify-center w-5 h-5 rounded-full text-white text-[11px] font-medium"
+                          :class="getLessonProgress(it.id) >= 100 ? 'bg-green-500' : 'bg-blue-400'">
+                      <template v-if="getLessonProgress(it.id) >= 100">✓</template>
+                      <template v-else>{{ idx + 1 }}</template>
+                    </span>
+                    <span class="truncate flex-1">{{ it.title }}</span>
+                    <span class="ml-2 shrink-0">
+                      <ProgressCircle :value="getLessonProgress(it.id)" :size="18" :stroke="3" :show-label="false" />
+                    </span>
               </router-link>
             </li>
           </ul>
+            </div>
+          </div>
         </Card>
       </aside>
 
       <!-- 主体 -->
       <section class="lg:col-span-3">
-        <PageHeader :title="lesson.title" :subtitle="lesson.description || ''" />
+        <!-- 本节说明（右上进度圈并入，去除额外顶部空白） -->
+        <Card padding="md" class="space-y-2 mt-0" v-glass>
+          <h4 class="font-medium mb-4">{{ t('student.courses.detail.sectionIntro') || '本节说明' }}</h4>
+          <p class="text-sm text-gray-700 whitespace-pre-line">{{ lesson.content || lesson.description || '-' }}</p>
+        </Card>
 
-        <!-- 视频/资料 -->
-        <Card padding="md" class="space-y-4" v-glass>
+        <!-- 视频 -->
+        <Card padding="md" class="space-y-4 mt-4" v-glass>
+          <h4 class="font-medium mb-4">{{ t('student.lesson.videoTitle') || '视频' }}</h4>
           <div v-if="lesson.videoUrl" class="relative z-10" @click="onVideoClick" style="cursor: pointer;">
             <div class="aspect-video w-full rounded overflow-hidden relative">
               <video
@@ -47,9 +84,11 @@
             </div>
             <div v-if="videoError" class="mt-2 text-sm text-red-600">{{ videoError }}</div>
           </div>
+        </Card>
 
-          <div>
-            <h4 class="font-medium mb-2">{{ t('student.courses.detail.materials') }}</h4>
+        <!-- 资料 -->
+        <Card padding="md" class="space-y-3 mt-4" v-glass>
+          <h4 class="font-medium mb-4">{{ t('student.lesson.materialsTitle') || t('student.courses.detail.materials') }}</h4>
             <template v-if="materials.length">
               <ul class="space-y-3">
                 <li v-for="f in materials" :key="f.id">
@@ -61,19 +100,16 @@
               </ul>
             </template>
             <p v-else class="text-sm text-gray-500">{{ t('student.courses.detail.noMaterials') }}</p>
-            
-          </div>
         </Card>
 
         <!-- 关联作业 -->
         <Card padding="md" class="mt-4 space-y-3" v-glass>
-          <div class="flex items-center justify-between">
+          <div class="flex items-center justify-between mb-4">
             <h4 class="font-medium">{{ t('student.assignments.title') || '关联作业' }}</h4>
-            <Button size="sm" variant="menu" @click="router.push('/student/assignments')">{{ t('student.assignments.viewAll') || '查看全部' }}</Button>
           </div>
           <template v-if="relatedAssignments.length">
             <ul class="space-y-2">
-              <li v-for="a in relatedAssignments" :key="a.id" class="flex items-center justify-between p-3 rounded border">
+              <li v-for="a in relatedAssignments" :key="a.id" class="flex items-center justify-between p-3 rounded-xl border glass-ultraThin">
                 <div class="min-w-0">
                   <div class="font-medium truncate">{{ a.title }}</div>
                   <div class="text-xs text-gray-500 mt-0.5">
@@ -81,7 +117,12 @@
                   </div>
                 </div>
                 <div class="shrink-0 ml-3">
-                  <Button size="sm" variant="primary" @click="goAssignment(a.id)">{{ t('student.assignments.actions.view') || '进入' }}</Button>
+                  <Button size="sm" variant="primary" @click="goAssignment(a.id)">
+                    <template #icon>
+                      <svg class="w-4 h-4" viewBox="0 0 20 20" fill="currentColor"><path d="M10 3l7 7-7 7-1.5-1.5L13 11H3V9h10L8.5 4.5 10 3z"/></svg>
+                    </template>
+                    {{ t('student.assignments.actions.view') || '进入' }}
+                  </Button>
                 </div>
               </li>
             </ul>
@@ -91,10 +132,15 @@
 
         <!-- 笔记 -->
         <Card padding="md" class="mt-4" v-glass>
-          <h4 class="font-medium mb-2">{{ t('student.courses.note') || '学习笔记' }}</h4>
+          <h4 class="font-medium mb-4">{{ t('student.courses.note') || '学习笔记' }}</h4>
           <GlassTextarea v-model="notes" :rows="4" :placeholder="t('student.courses.notePh') || '记录你的要点...'" />
           <div class="mt-2 flex justify-end">
-            <Button size="sm" variant="primary" :loading="saving" @click="saveNotes">{{ t('student.courses.save') || '保存' }}</Button>
+            <Button size="sm" variant="purple" :loading="saving" @click="saveNotes">
+              <template #icon>
+                <svg class="w-4 h-4" viewBox="0 0 20 20" fill="currentColor"><path d="M7.629 13.707L3.586 9.664l1.414-1.414 2.629 2.629 7.071-7.071 1.414 1.414-8.485 8.485a1 1 0 01-1.414 0z"/></svg>
+              </template>
+              {{ t('student.courses.save') || '保存' }}
+            </Button>
           </div>
         </Card>
       </section>
@@ -108,6 +154,7 @@ import { useRoute, useRouter } from 'vue-router'
 import { lessonApi } from '@/api/lesson.api'
 import { fileApi } from '@/api/file.api'
 import { baseURL } from '@/api/config'
+import { studentApi } from '@/api/student.api'
 import PageHeader from '@/components/ui/PageHeader.vue'
 import Button from '@/components/ui/Button.vue'
 import Card from '@/components/ui/Card.vue'
@@ -115,6 +162,8 @@ import GlassTextarea from '@/components/ui/inputs/GlassTextarea.vue'
 // @ts-ignore
 import { useI18n } from 'vue-i18n'
 import DocumentViewer from '@/components/viewers/DocumentViewer.vue'
+import ProgressCircle from '@/components/ui/ProgressCircle.vue'
+import { courseApi } from '@/api/course.api'
 
 const { t } = useI18n()
 const route = useRoute()
@@ -123,6 +172,9 @@ const loading = ref(false)
 const lesson = ref<any>(null)
 const toc = ref<any[]>([])
 const materials = ref<any[]>([])
+const progressMap = ref<Record<string, number>>({})
+// 提前声明，供资料相关 computed 使用
+const materialsChecked = ref<Record<string, boolean>>({})
 const rawAssignments = ref<any[]>([])
 const relatedAssignments = computed(() => {
   const list = visibleAssignments(Array.isArray(rawAssignments.value) ? rawAssignments.value : [])
@@ -138,13 +190,13 @@ const videoError = ref('')
 const videoProgress = ref(0)
 const videoDuration = ref(0)
 const videoWatchedSeconds = ref(0)
-const materialsChecked = ref<Record<string, boolean>>({})
 let fileObserver: IntersectionObserver | null = null
-const completingLesson = ref(false)
 const requiredWatchPercent = 0.98
 let hls: any = null
 let lastAllowedTime = 0
 let guardsBoundForSrc = ''
+
+const courseTitle = ref('')
 
 const controlsList = computed(() => {
   const l = lesson.value || {}
@@ -178,15 +230,19 @@ function startAutoReport() {
   watchTimer = window.setInterval(async () => {
     try {
       const vid = videoRef.value
-      const payload: any = {}
+      const progress = Math.min(100, Math.max(0, computeCombinedProgress()))
+      const curId = String(lesson.value?.id || '')
+      const storedNow = Number(progressMap.value[curId] || 0)
+      // 不回退：仅在合成进度高于持久化进度时才上报
+      if (!(progress > storedNow)) return
+      const payload: any = { progress }
       if (vid) {
-        const dur = Number(vid.duration || 0)
         const cur = Number(vid.currentTime || 0)
-        if (dur > 0) payload.progress = Math.min(100, Math.round((cur / dur) * 100))
         payload.lastPosition = Math.round(cur)
         payload.studyTime = 5
       }
       await lessonApi.updateLessonProgress(String(lesson.value.id), payload)
+      progressMap.value[String(lesson.value.id)] = progress
     } catch {}
   }, 5000)
 }
@@ -200,6 +256,8 @@ async function loadAll(lessonId: string) {
   try {
     const data: any = await lessonApi.getLesson(lessonId)
     lesson.value = data
+    // 先读取后端持久化进度，避免初次进入显示为 0 的闪烁
+    try { await syncStoredProgressOnce(String(lessonId)) } catch {}
     // 初始化材料勾选状态
     try {
       const res: any = await lessonApi.getLessonMaterials(String(lessonId))
@@ -261,11 +319,40 @@ async function loadAll(lessonId: string) {
       const list: any = await lessonApi.getLessonsByCourse(String(data.courseId))
       toc.value = Array.isArray(list) ? list : (list?.items || [])
     } catch { toc.value = [] }
+    // 读取课程标题用于面包屑
+    try {
+      if (data?.courseId) {
+        const resp: any = await courseApi.getCourseById(Number(data.courseId))
+        const ct = resp?.data?.title || resp?.title || ''
+        if (ct) courseTitle.value = String(ct)
+      }
+    } catch { courseTitle.value = '' }
+    // 加载学生在本课程下的进度列表（与本地合并取最大，避免回退）
+    try {
+      if (data?.courseId) {
+        const res: any = await lessonApi.getStudentCourseProgressList(String(data.courseId))
+        const arr = (res?.data || res || []) as any[]
+        const map: Record<string, number> = {}
+        for (const p of (Array.isArray(arr) ? arr : [])) {
+          const lid = String(p.lessonId || p.lesson_id || p.lessonID || p.id || '')
+          const val = Number(p.progress ?? p.percentage ?? 0)
+          if (lid) map[lid] = Number.isFinite(val) ? Math.round(val) : 0
+        }
+        const merged: Record<string, number> = { ...progressMap.value }
+        for (const [lid, val] of Object.entries(map)) {
+          const existed = Number(merged[lid] || 0)
+          merged[lid] = Math.max(existed, Number(val || 0))
+        }
+        progressMap.value = merged
+      }
+    } catch { progressMap.value = {} }
     // 加载资料（方案A：走 /lessons/{id}/materials）
     try {
       const res: any = await lessonApi.getLessonMaterials(String(lessonId))
       materials.value = res?.data || res || []
     } catch { materials.value = [] }
+    // 依据内容与已存进度进行一次和解：
+    try { await reconcileStoredProgressWithContent() } catch {}
     // 加载关联作业（按课程取，再按 lessonId 过滤）
     try {
       if (data?.courseId) {
@@ -281,6 +368,52 @@ async function loadAll(lessonId: string) {
   } finally {
     loading.value = false
   }
+}
+
+async function reconcileStoredProgressWithContent() {
+  const id = String(lesson.value?.id || '')
+  if (!id) return
+  // 后端存量
+  let stored = progressMap.value[id]
+  if (!Number.isFinite(stored)) {
+    try {
+      const detail: any = await studentApi.getLessonDetails(id)
+      const p = detail?.data?.progress || detail?.progress || null
+      const pv = Number(p?.progress ?? p?.percentage ?? p ?? 0)
+      if (Number.isFinite(pv)) stored = Math.round(pv)
+    } catch { stored = 0 as any }
+  }
+  const hasVideo = !!String(lesson.value?.videoUrl || '')
+  const hasMaterials = (materials.value || []).length > 0
+  const currentSig = computeContentSignature()
+  const prevSig = readContentSignature(id)
+  if (!hasVideo && !hasMaterials) {
+    if (!Number.isFinite(stored) || stored < 100) {
+      await lessonApi.updateLessonProgress(id, { progress: 100 })
+      stored = 100 as any
+    }
+    writeContentSignature(id, currentSig)
+  } else {
+    // 不下调：尊重后端已有值（可能因作业完成被置 100）
+    if (!Number.isFinite(stored)) stored = 0 as any
+    // 若此前为完成态且内容变化，仅记录新签名，不在进入时下调；交给学习过程自然提升
+    if ((stored as any) >= 100 && prevSig && prevSig !== currentSig) {
+      writeContentSignature(id, currentSig)
+    }
+  }
+  progressMap.value[id] = Number.isFinite(stored as any) ? Math.round(stored as any) : 0
+}
+
+async function syncStoredProgressOnce(lessonId: string) {
+  if (!lessonId) return
+  try {
+    const detail: any = await studentApi.getLessonDetails(String(lessonId))
+    const p = detail?.data?.progress || detail?.progress || null
+    const pv = Number(p?.progress ?? p?.percentage ?? p ?? 0)
+    if (Number.isFinite(pv)) {
+      progressMap.value[String(lessonId)] = Math.round(pv)
+    }
+  } catch {}
 }
 
 async function saveNotes() {
@@ -324,6 +457,7 @@ function onTimeUpdate() {
 
 function onVideoEnded() {
   videoProgress.value = 1
+  try { reportProgressImmediate('video_end') } catch {}
 }
 
 function attachVideoGuards() {
@@ -379,6 +513,12 @@ function attachVideoGuards() {
 watch(() => [lesson.value?.allowScrubbing, lesson.value?.allowSpeedChange, videoSrc.value], async () => {
   await nextTick()
   attachVideoGuards()
+})
+
+// 当内容结构变化（视频地址或资料数量），触发一次持久化和解（用于“后期新增内容则重算”）
+watch(() => [String(lesson.value?.videoUrl || ''), (materials.value || []).length], async () => {
+  await nextTick()
+  try { await reconcileStoredProgressWithContent() } catch {}
 })
 
 async function onVideoError() {
@@ -498,11 +638,29 @@ function registerFileSentinel(el: Element | null, id: string) {
         if (entry.isIntersecting && fid) {
           materialsChecked.value[fid] = true
           try { fileObserver?.unobserve(entry.target) } catch {}
+          try { reportProgressImmediate('material_seen') } catch {}
         }
       }
     }, { root: null, rootMargin: '0px', threshold: 1.0 })
   }
   try { fileObserver.observe(el as Element) } catch {}
+}
+
+// 内容签名：用于判定“后期新增内容”导致的重算，仅在此前为完成态时触发下调
+function computeContentSignature(): string {
+  try {
+    const vid = String(lesson.value?.videoUrl || '')
+    const mcount = (materials.value || []).length
+    return `${vid ? 'v1' : 'v0'}#m${mcount}`
+  } catch { return 'v0#m0' }
+}
+
+function signatureStorageKey(lessonId: string) { return `lesson_sig_${lessonId}` }
+function readContentSignature(lessonId: string): string | null {
+  try { return localStorage.getItem(signatureStorageKey(lessonId)) } catch { return null }
+}
+function writeContentSignature(lessonId: string, sig: string) {
+  try { localStorage.setItem(signatureStorageKey(lessonId), sig) } catch {}
 }
 
 function goAssignment(id: string | number) {
@@ -528,37 +686,113 @@ function visibleAssignments(list: any[]): any[] {
   })
 }
 
-const allMaterialsChecked = computed(() => {
-  const vals = Object.values(materialsChecked.value || {})
-  return vals.length === 0 ? true : vals.every(Boolean)
+const totalMaterials = computed(() => (materials.value || []).length)
+const viewedMaterials = computed(() => Object.values(materialsChecked.value || {}).filter(Boolean).length)
+const materialsProgressPercent = computed(() => {
+  const total = Number(totalMaterials.value || 0)
+  if (total <= 0) return 0
+  const viewed = Number(viewedMaterials.value || 0)
+  return Math.min(100, Math.round((viewed / total) * 100))
 })
 
-const canMarkCompleted = computed(() => {
-  // 条件：1) 看满 requiredWatchPercent 2) 所有资料勾选
-  const okVideo = videoProgress.value >= requiredWatchPercent
-  return okVideo && allMaterialsChecked.value
-})
+function computeCombinedProgress(): number {
+  const hasVideo = !!String(lesson.value?.videoUrl || '')
+  const hasMaterials = (totalMaterials.value || 0) > 0
+  const videoPct = Math.round((videoProgress.value || 0) * 100)
+  const materialsPct = materialsProgressPercent.value
+  if (hasVideo && hasMaterials) return Math.round((videoPct + materialsPct) / 2)
+  if (hasVideo) return videoPct
+  if (hasMaterials) return materialsPct
+  return 0
+}
 
-watch(canMarkCompleted, async (ok) => {
-  if (!ok) return
-  if (!lesson.value?.id) return
-  if (completingLesson.value) return
-  completingLesson.value = true
+async function reportProgressImmediate(reason?: string) {
   try {
-    await lessonApi.updateLessonProgress(String(lesson.value.id), { progress: 100, lastPosition: Math.floor(videoDuration.value) })
-    try { await lessonApi.completeLesson(String(lesson.value.id)) } catch { /* 学生无权直接更新 Lesson，忽略 */ }
-    // 刷新课程页的进度（若来自课程详情）
+    const progress = Math.min(100, Math.max(0, computeCombinedProgress()))
+    const curId = String(lesson.value?.id || '')
+    const storedNow = Number(progressMap.value[curId] || 0)
+    // 不回退：仅当新合成进度高于已存进度时才上报
+    if (!(progress > storedNow)) return
+    const v = videoRef.value
+    const payload: any = { progress }
+    if (v) {
+      const cur = Number(v.currentTime || 0)
+      payload.lastPosition = Math.round(cur)
+    }
+    await lessonApi.updateLessonProgress(String(lesson.value.id), payload)
+    progressMap.value[String(lesson.value.id)] = progress
+    if (progress >= 100) {
     try {
       const cid = String(lesson.value?.courseId || '')
       if (cid) {
-        const { useCourseStore } = await import('@/stores/course')
-        const cs = useCourseStore()
-        await cs.fetchCourseById(cid)
+          const res: any = await lessonApi.getStudentCourseProgressList(cid)
+          const arr = (res?.data || res || []) as any[]
+          const map: Record<string, number> = {}
+          for (const p of (Array.isArray(arr) ? arr : [])) {
+            const lid = String(p.lessonId || p.lesson_id || p.lessonID || p.id || '')
+            const val = Number(p.progress ?? p.percentage ?? 0)
+            if (lid) map[lid] = Number.isFinite(val) ? Math.round(val) : 0
+          }
+          progressMap.value = { ...progressMap.value, ...map }
+        }
+      } catch {}
       }
     } catch {}
-  } finally {
-    completingLesson.value = false
+}
+
+// 章节分组与折叠
+const groupedChapters = computed(() => {
+  const buckets: Record<string, any[]> = {}
+  for (const l of (toc.value || [])) {
+    const key = (l as any)?.chapterId ? String((l as any).chapterId) : '__ungrouped__'
+    if (!buckets[key]) buckets[key] = []
+    buckets[key].push(l)
   }
+  const chapterKeys = Object.keys(buckets).filter(k => k !== '__ungrouped__')
+  const orderOf = (it: any) => Number(it?.orderIndex ?? it?.order ?? it?.id ?? 0)
+  chapterKeys.sort((a, b) => {
+    const la = [...buckets[a]].sort((x:any,y:any)=> orderOf(x) - orderOf(y))[0]
+    const lb = [...buckets[b]].sort((x:any,y:any)=> orderOf(x) - orderOf(y))[0]
+    return orderOf(la) - orderOf(lb)
+  })
+  const list: Array<{ key: string, title: string, items: any[] }> = []
+  for (let i = 0; i < chapterKeys.length; i++) {
+    const k = chapterKeys[i]
+    const items = [...buckets[k]].sort((x:any,y:any)=> orderOf(x) - orderOf(y))
+    const title = `第${i + 1}章`
+    list.push({ key: k, title, items })
+  }
+  const ungrouped = buckets['__ungrouped__'] || []
+  if (ungrouped.length) {
+    const items = [...ungrouped].sort((x:any,y:any)=> orderOf(x) - orderOf(y))
+    list.push({ key: '__ungrouped__', title: (t('student.courses.detail.noChapter') as any) || '未分组', items })
+  }
+  return list
+})
+
+const collapsedChapters = ref<Set<string>>(new Set<string>())
+function isExpanded(key: string): boolean { return !collapsedChapters.value.has(key) }
+function toggleChapter(key: string) {
+  const set = new Set(collapsedChapters.value)
+  if (set.has(key)) {
+    set.delete(key)
+  } else {
+    set.add(key)
+  }
+  collapsedChapters.value = set
+}
+
+// 进度
+function getLessonProgress(lessonId: string | number): number {
+  const v = progressMap.value[String(lessonId)]
+  return Number.isFinite(v) ? Math.round(v) : 0
+}
+const myProgressPercent = computed(() => {
+  const id = String(lesson.value?.id || '')
+  if (!id) return Math.min(100, Math.max(0, computeCombinedProgress()))
+  const v = progressMap.value[id]
+  if (Number.isFinite(v)) return Math.round(v)
+  return Math.min(100, Math.max(0, computeCombinedProgress()))
 })
 </script>
 

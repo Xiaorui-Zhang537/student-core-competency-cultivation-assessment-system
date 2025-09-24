@@ -66,7 +66,7 @@ const cards = [
   { key: 'dashboard', title: t('student.home.cards.dashboard.title'), desc: t('student.home.cards.dashboard.desc'), to: '/student/dashboard', icon: HomeIcon },
   { key: 'courses', title: t('student.home.cards.courses.title'), desc: t('student.home.cards.courses.desc'), to: '/student/courses', icon: AcademicCapIcon },
   { key: 'assignments', title: t('student.home.cards.assignments.title'), desc: t('student.home.cards.assignments.desc'), to: '/student/assignments', icon: ClipboardDocumentListIcon },
-  { key: 'analytics', title: t('student.home.cards.analytics.title'), desc: t('student.home.cards.analytics.desc'), to: '/student/analytics', icon: ChartBarIcon },
+  { key: 'analytics', title: t('student.home.cards.analytics.title'), desc: t('student.home.cards.analytics.desc'), to: '/student/analysis', icon: ChartBarIcon },
   { key: 'assistant', title: t('student.home.cards.assistant.title'), desc: t('student.home.cards.assistant.desc'), to: '/student/assistant', icon: SparklesIcon },
   { key: 'community', title: t('student.home.cards.community.title'), desc: t('student.home.cards.community.desc'), to: '/student/community', icon: ChatBubbleLeftRightIcon }
 ]

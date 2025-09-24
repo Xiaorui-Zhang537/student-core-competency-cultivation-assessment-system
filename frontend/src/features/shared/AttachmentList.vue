@@ -17,7 +17,7 @@
             <div class="text-xs text-gray-500">{{ formatSize((f as any).fileSize) }}</div>
           </div>
           <div class="flex items-center gap-2">
-            <Button v-if="showDefaultDownload" as="a" :href="`${baseURL}/files/${(f as any).id || (f as any).fileId}/download`" size="sm" variant="success" class="whitespace-nowrap">
+            <Button v-if="showDefaultDownload" size="sm" variant="success" class="whitespace-nowrap" @click="handleDownload(f)">
               <template #icon>
                 <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
               </template>
@@ -39,7 +39,7 @@
             <div class="text-xs text-gray-500">{{ formatSize((f as any).fileSize) }}</div>
           </div>
           <div class="flex items-center gap-2">
-            <Button v-if="showDefaultDownload" as="a" :href="`${baseURL}/files/${(f as any).id || (f as any).fileId}/download`" size="sm" variant="success" class="whitespace-nowrap">
+            <Button v-if="showDefaultDownload" size="sm" variant="success" class="whitespace-nowrap" @click="handleDownload(f)">
               <template #icon>
                 <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
               </template>
@@ -57,6 +57,7 @@
 import Card from '@/components/ui/Card.vue'
 import Button from '@/components/ui/Button.vue'
 import { baseURL } from '@/api/config'
+import { fileApi } from '@/api/file.api'
 // @ts-ignore
 import { useI18n } from 'vue-i18n'
 import { computed } from 'vue'
@@ -102,6 +103,27 @@ function formatSize(bytes?: number) {
   let n = bytes
   while (n >= 1024 && i < units.length - 1) { n /= 1024; i++ }
   return `${n.toFixed(1)} ${units[i]}`
+}
+
+async function handleDownload(f: any) {
+  try {
+    const id = String(f?.id || f?.fileId || '')
+    if (!id) return
+    const name = fileName(f)
+    await fileApi.downloadFile(id, name)
+  } catch (e) {
+    // 降级：尝试直链（可能401），避免完全无响应
+    try {
+      const id = String(f?.id || f?.fileId || '')
+      if (!id) return
+      const a = document.createElement('a')
+      a.href = `${baseURL}/files/${encodeURIComponent(id)}/download`
+      a.download = fileName(f)
+      document.body.appendChild(a)
+      a.click()
+      a.remove()
+    } catch {}
+  }
 }
 </script>
 

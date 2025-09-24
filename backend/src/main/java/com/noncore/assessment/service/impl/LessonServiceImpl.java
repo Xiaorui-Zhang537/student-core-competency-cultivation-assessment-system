@@ -42,6 +42,10 @@ public class LessonServiceImpl implements LessonService {
     @Override
     public Lesson createLesson(Lesson lesson) {
         logger.info("创建新章节: {}", lesson.getTitle());
+        // 字段互补：确保 description 与 content 同步（后端为真理）
+        try {
+            normalizeLessonTextFields(lesson);
+        } catch (Exception ignore) {}
         lesson.setCreatedAt(LocalDateTime.now());
         lesson.setUpdatedAt(LocalDateTime.now());
         lesson.setDeleted(false);
@@ -88,6 +92,10 @@ public class LessonServiceImpl implements LessonService {
         if (existingLesson == null) {
             throw new BusinessException(ErrorCode.LESSON_NOT_FOUND);
         }
+        // 字段互补：若仅提供其中一项，自动同步到另一项
+        try {
+            normalizeLessonTextFields(lesson);
+        } catch (Exception ignore) {}
         lesson.setId(lessonId);
         lesson.setUpdatedAt(LocalDateTime.now());
         int result = lessonMapper.updateLesson(lesson);
@@ -416,6 +424,23 @@ public class LessonServiceImpl implements LessonService {
             // 兼容回退：如果关联表不存在或执行异常，回退到旧查询方式
             logger.warn("lesson_materials 查询失败，回退到 file_records.related_type=lesson_material，lessonId={}", lessonId, e);
             return fileRecordMapper.selectByPurposeAndRelatedId("lesson_material", lessonId);
+        }
+    }
+
+    /**
+     * 统一说明与简介字段：当 description 或 content 其中之一非空而另一方为空时，进行互补。
+     * 避免前端不同入口造成不一致。
+     */
+    private void normalizeLessonTextFields(Lesson lesson) {
+        if (lesson == null) return;
+        String desc = lesson.getDescription();
+        String cont = lesson.getContent();
+        boolean descBlank = desc == null || desc.trim().isEmpty();
+        boolean contBlank = cont == null || cont.trim().isEmpty();
+        if (!descBlank && contBlank) {
+            lesson.setContent(desc);
+        } else if (!contBlank && descBlank) {
+            lesson.setDescription(cont);
         }
     }
 } 

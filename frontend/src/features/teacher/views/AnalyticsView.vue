@@ -162,6 +162,11 @@
           <div v-else class="text-sm text-gray-500 text-center">{{ t('teacher.analytics.charts.noRadar') }}</div>
         </card>
 
+        <!-- 维度图例说明（中英） -->
+        <card padding="lg" v-if="rawRadarDimensions.length">
+          <AbilityRadarLegend :dimensions="rawRadarDimensions" />
+        </card>
+
         <!-- 维度解析卡片（右列堆叠） -->
         <card padding="lg" v-if="compareEnabled || (!!selectedStudentId)" class="self-start w-full">
           <template #header>
@@ -213,6 +218,7 @@ import Badge from '@/components/ui/Badge.vue'
 import Progress from '@/components/ui/Progress.vue'
 import * as echarts from 'echarts'
 import RadarChart from '@/components/charts/RadarChart.vue'
+import AbilityRadarLegend from '@/shared/views/AbilityRadarLegend.vue'
 import AbilityWeightsDialog from '@/features/teacher/components/AbilityWeightsDialog.vue'
 import { DocumentArrowDownIcon, SparklesIcon, ArrowPathIcon, UserGroupIcon, CheckCircleIcon, StarIcon, ClipboardDocumentListIcon } from '@heroicons/vue/24/outline'
 // @ts-ignore shim for vue-i18n types in this project

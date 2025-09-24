@@ -25,6 +25,7 @@
     "courses": {
       "title": "My Courses",
       "subtitle": "Browse and manage your learning courses",
+      "detailTitle": "Course Detail",
       "browse": "Browse Courses",
       "active": "Active",
       "completed": "Completed",
@@ -47,6 +48,9 @@
       "statusOngoing": "Ongoing",
       "progressLabel": "Progress",
       "storeTitle": "Course Store",
+      "note": "Notes",
+      "notePh": "Record your key points...",
+      "save": "Save",
       "processing": "Processing...",
       "enrolled": "Enrolled",
       "enroll": "Enroll",
@@ -59,21 +63,63 @@
         "viewDetail": "View Details",
         "materials": "Materials",
         "noMaterials": "No materials",
+        "category": "Category",
+        "difficulty": "Difficulty",
+        "difficultyMap": {
+          "beginner": "Beginner",
+          "intermediate": "Intermediate",
+          "advanced": "Advanced",
+          "expert": "Expert"
+        },
+        "tags": "Tags",
+        "startDate": "Start Date",
+        "endDate": "End Date",
+        "noChapter": "Ungrouped",
+        "school": "School",
+        "subject": "Subject",
+        "email": "Email",
+        "phone": "Phone",
+        "location": "Location",
+        "code": "Code",
+        "major": "Major",
+        "bioTitle": "Bio",
+        "gender": "Gender",
+        "birthday": "Birthday",
         "sectionAssignments": "Section Assignments",
         "noSectionAssignments": "No assignments in this section",
         "instructorInfo": "Instructor Info",
         "contactTeacher": "Contact Teacher",
+        "viewProfile": "View Profile",
+        "contact": "Contact",
+        "noEnrolled": "No enrolled students",
         "notFoundTitle": "Course Not Found",
         "notFoundDesc": "Sorry, the course you visited does not exist or has been removed.",
         "backToList": "Back to Courses",
+        "categories": {
+          "computer_science": "Computer Science",
+          "math": "Mathematics",
+          "design": "Design / Arts",
+          "language": "Language",
+          "engineering": "Engineering"
+        },
         "download": "Download",
         "fullscreen": "Fullscreen",
-        "noInlinePreview": "This file type cannot be previewed inline. Please download it."
+        "noInlinePreview": "This file type cannot be previewed inline. Please download it.",
+        "detailTitle": "Course Detail",
+        "sectionIntro": "Section Intro"
       },
       "video": {
         "playFailed": "Video failed to play. Please check your network or file format.",
         "hlsNotSupported": "HLS is not supported in this browser. Use Safari or another format."
       }
+    ,
+    "categories": {
+      "computer_science": "Computer Science",
+      "math": "Mathematics",
+      "design": "Design / Arts",
+      "language": "Language",
+      "engineering": "Engineering"
+    }
     },
     "analysis": {
       "title": "Performance Analysis",
@@ -112,6 +158,10 @@
         "community": { "title": "Community", "desc": "Discuss and share" }
       }
     },
+  "lesson": {
+    "videoTitle": "Video",
+    "materialsTitle": "Materials"
+  },
     "assignments": {
       "title": "Assignments",
       "subtitle": "View and submit assignments",

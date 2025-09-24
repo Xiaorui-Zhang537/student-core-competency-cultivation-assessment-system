@@ -26,6 +26,7 @@
     "courses": {
       "title": "我的课程",
       "subtitle": "浏览和管理您的学习课程",
+      "detailTitle": "课程详情",
       "browse": "浏览课程",
       "active": "进行中",
       "completed": "已完成",
@@ -63,21 +64,63 @@
         "viewDetail": "查看详情",
         "materials": "资料",
         "noMaterials": "暂无资料",
+          "category": "分类",
+          "difficulty": "难度",
+          "difficultyMap": {
+            "beginner": "初级",
+            "intermediate": "中级",
+            "advanced": "高级",
+            "expert": "专家"
+          },
+          "tags": "标签",
+          "startDate": "开课时间",
+          "endDate": "结课时间",
+          "noChapter": "未分组",
+          "school": "学校",
+          "subject": "学科",
+          "email": "邮箱",
+          "phone": "电话",
+          "location": "地点",
+          "code": "编号",
+          "major": "专业科目",
+          "bioTitle": "简介",
+          "gender": "性别",
+          "birthday": "生日",
         "sectionAssignments": "本节作业",
         "noSectionAssignments": "本节暂无作业",
         "instructorInfo": "讲师信息",
         "contactTeacher": "联系老师",
+        "viewProfile": "查看资料",
+        "contact": "联系TA",
+        "noEnrolled": "暂无报名学生",
         "notFoundTitle": "课程不存在",
         "notFoundDesc": "抱歉，您访问的课程不存在或已被删除。",
-        "backToList": "返回课程列表",
+          "backToList": "返回课程列表",
+          "categories": {
+            "computer_science": "计算机",
+            "math": "数学",
+            "design": "设计/艺术",
+            "language": "语言",
+            "engineering": "工程"
+          },
         "download": "下载",
         "fullscreen": "全屏",
-        "noInlinePreview": "该文件不支持在线预览，请下载查看。"
+        "noInlinePreview": "该文件不支持在线预览，请下载查看。",
+        "detailTitle": "课程详情",
+        "sectionIntro": "本节说明"
       },
       "video": {
         "playFailed": "视频播放失败，请检查网络或文件格式。",
         "hlsNotSupported": "该浏览器不支持 HLS 播放，请使用 Safari 或更换视频格式。"
       }
+    ,
+    "categories": {
+      "computer_science": "计算机",
+      "math": "数学",
+      "design": "设计/艺术",
+      "language": "语言",
+      "engineering": "工程"
+    }
     },
     "analysis": {
       "title": "成绩分析",
@@ -116,6 +159,10 @@
         "community": { "title": "学习社区", "desc": "参与讨论与分享" }
       }
     },
+  "lesson": {
+    "videoTitle": "视频",
+    "materialsTitle": "资料"
+  },
     "assignments": {
       "title": "我的作业",
       "subtitle": "查看与提交作业",

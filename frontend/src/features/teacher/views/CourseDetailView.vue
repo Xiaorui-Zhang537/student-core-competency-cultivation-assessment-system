@@ -93,8 +93,8 @@
                 <GlassInput class="input-sm w-full" v-model="newLessonTitle" :placeholder="t('teacher.courseDetail.sections.newLessonTitlePh') as string" />
               </div>
               <div class="md:col-span-2">
-                <label class="block text-sm mb-1">{{ t('teacher.courseDetail.sections.lessonDesc') }}</label>
-                <GlassInput class="input-sm w-full" v-model="newLessonDesc" :placeholder="t('teacher.courseDetail.sections.lessonDescPh') as string" />
+                <label class="block text-sm mb-1">{{ t('teacher.courseDetail.sections.lessonIntro') }}</label>
+                <GlassTextarea class="w-full" :rows="2" v-model="newLessonIntro" :placeholder="t('teacher.courseDetail.sections.lessonIntroPh') as string" />
               </div>
             </div>
             <div class="mt-3">
@@ -216,7 +216,7 @@
                 </div>
               </div>
               <div class="flex items-center gap-2">
-                <Button size="sm" variant="success" icon="download" as="a" :href="`${baseURL}/files/${f.id}/download`" class="whitespace-nowrap">{{ t('teacher.courseDetail.sections.download') }}</Button>
+                <Button size="sm" variant="success" icon="download" class="whitespace-nowrap" @click="downloadById(f.id, f)">{{ t('teacher.courseDetail.sections.download') }}</Button>
                 <Button size="sm" variant="danger" icon="delete" @click="confirmDelete(f.id, 'material')">{{ t('teacher.courseDetail.sections.delete') }}</Button>
               </div>
             </li>
@@ -257,7 +257,7 @@
                 </div>
               </div>
               <div class="flex items-center gap-2">
-                <Button size="sm" variant="success" icon="download" as="a" :href="`${baseURL}/files/${f.id}/download`" class="whitespace-nowrap">{{ t('teacher.courseDetail.sections.download') }}</Button>
+                <Button size="sm" variant="success" icon="download" class="whitespace-nowrap" @click="downloadById(f.id, f)">{{ t('teacher.courseDetail.sections.download') }}</Button>
                 <Button size="sm" variant="danger" icon="delete" @click="confirmDelete(f.id, 'video')">{{ t('teacher.courseDetail.sections.delete') }}</Button>
               </div>
             </li>
@@ -292,8 +292,8 @@
           </div>
           <div class="flex items-center gap-2">
             <Button size="sm" variant="primary" icon="confirm" class="whitespace-nowrap" @click="chooseVideo(f)">{{ t('teacher.courseDetail.actions.useThisVideo') }}</Button>
-            <Button size="sm" variant="success" icon="download" as="a" :href="`${baseURL}/files/${f.id}/download`" class="whitespace-nowrap">{{ t('teacher.courseDetail.sections.download') }}</Button>
-            <Button size="sm" variant="success" icon="download" as="a" :href="`${baseURL}/files/${f.id}/download`" class="whitespace-nowrap">{{ t('teacher.courseDetail.sections.download') }}</Button>
+            <Button size="sm" variant="success" icon="download" class="whitespace-nowrap" @click="downloadById(f.id, f)">{{ t('teacher.courseDetail.sections.download') }}</Button>
+            <Button size="sm" variant="success" icon="download" class="whitespace-nowrap" @click="downloadById(f.id, f)">{{ t('teacher.courseDetail.sections.download') }}</Button>
           </div>
         </li>
         <li v-if="!videos.length" class="py-6 text-center text-sm text-gray-500">{{ t('teacher.courseDetail.sections.noVideos') }}</li>
@@ -331,7 +331,7 @@
             >
               {{ t('teacher.courseDetail.actions.selectMaterialShort') }}
             </Button>
-            <Button size="sm" variant="outline" as="a" :href="`${baseURL}/files/${f.id}/download`">{{ t('teacher.courseDetail.sections.download') }}</Button>
+            <Button size="sm" variant="outline" @click="downloadById(f.id, f)">{{ t('teacher.courseDetail.sections.download') }}</Button>
           </div>
         </li>
         <li v-if="!materials.length" class="py-6 text-center text-sm text-gray-500">{{ t('teacher.courseDetail.sections.noMaterials') }}</li>
@@ -376,6 +376,20 @@ const courseStore = useCourseStore();
 const route = useRoute();
 const router = useRouter();
 const { t } = useI18n()
+async function downloadById(id: string | number, f?: any) {
+  try {
+    await fileApi.downloadFile(String(id), f?.originalName || f?.fileName || `file_${id}`)
+  } catch (e) {
+    try {
+      const a = document.createElement('a')
+      a.href = `${baseURL}/files/${encodeURIComponent(String(id))}/download`
+      a.download = f?.originalName || f?.fileName || `file_${id}`
+      document.body.appendChild(a)
+      a.click()
+      a.remove()
+    } catch {}
+  }
+}
 function localizeCategory(cat?: string): string {
   const key = String(cat || '').toLowerCase()
   const map: Record<string, string> = {
@@ -400,7 +414,7 @@ const props = withDefaults(defineProps<{ id?: string | number }>(), {});
 const course = computed(() => courseStore.currentCourse);
 const lessons = ref<any[]>([]);
 const newLessonTitle = ref('');
-const newLessonDesc = ref('');
+const newLessonIntro = ref('');
 const courseAssignments = ref<any[]>([]);
 const materials = ref<any[]>([]);
 const videos = ref<any[]>([]);
@@ -568,7 +582,7 @@ const reloadLessons = async () => {
     _videoUrl: x.videoUrl || '',
     _assignmentId: '',
     _chapterId: x.chapterId ? String(x.chapterId) : '',
-    _content: x.content || '',
+    _content: x.content || x.description || '',
     _allowScrubbing: x.allowScrubbing !== false,
     _allowSpeedChange: x.allowSpeedChange !== false,
     _materialFileIds: [] as Array<number>,
@@ -618,7 +632,7 @@ const saveWeight = async (l: any) => {
 const saveContent = async (l: any) => {
   await lessonApi.updateLessonContent(String(l.id), { videoUrl: l._videoUrl });
   if (typeof l._content === 'string') {
-    await lessonApi.updateLesson(String(l.id), { content: l._content } as any);
+    await lessonApi.updateLesson(String(l.id), { content: l._content, description: l._content } as any);
   }
 };
 
@@ -789,9 +803,10 @@ const saveChapter = async (l: any) => {
 const createLesson = async () => {
   const courseId = getCourseId();
   if (!courseId || !newLessonTitle.value) return;
-  await lessonApi.createLesson({ courseId: Number(courseId), title: newLessonTitle.value, description: newLessonDesc.value, weight: 1.0 } as any);
+  const intro = (newLessonIntro.value || '').trim();
+  await lessonApi.createLesson({ courseId: Number(courseId), title: newLessonTitle.value, content: intro, description: intro, weight: 1.0 } as any);
   newLessonTitle.value = '';
-  newLessonDesc.value = '';
+  newLessonIntro.value = '';
   await reloadLessons();
 };
 

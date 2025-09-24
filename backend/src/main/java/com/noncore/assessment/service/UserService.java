@@ -2,6 +2,7 @@ package com.noncore.assessment.service;
 
 import com.noncore.assessment.entity.User;
 import com.noncore.assessment.dto.request.UpdateProfileRequest;
+import com.noncore.assessment.dto.response.UserProfileResponse;
 
 /**
  * 用户服务接口
@@ -95,4 +96,13 @@ public interface UserService {
      * @param fileId 新头像的文件ID
      */
     void updateAvatar(Long userId, Long fileId);
+
+    /**
+     * 获取公开的用户资料（按用户ID）
+     * 用于在课程详情页展示教师资料等场景
+     *
+     * @param userId 目标用户ID
+     * @return 用户公开资料响应
+     */
+    UserProfileResponse getUserPublicProfile(Long userId);
 } 

@@ -1636,15 +1636,39 @@ async function exportAiDetailAsPdf() {
   pdf.save(`${fileBase}.pdf`)
   document.body.removeChild(wrapper)
 }
-const downloadSingleFile = () => {
-  if (!submission.filePath) return
-  const url = submission.filePath.startsWith('http') ? submission.filePath : `${baseURL}${submission.filePath}`
-  const a = document.createElement('a')
-  a.href = url
-  a.download = submission.fileName || 'attachment'
-  document.body.appendChild(a)
-  a.click()
-  a.remove()
+const downloadSingleFile = async () => {
+  const name = submission.fileName || 'attachment'
+  try {
+    // 1) 优先：submission.fileId
+    const fid = String((submission as any).fileId || '')
+    if (fid) { await fileApi.downloadFile(fid, name); return }
+
+    // 2) 兼容：从后端查询与该 submission 关联的文件列表
+    if (submission.id) {
+      try {
+        const res: any = await fileApi.getRelatedFiles('submission', String(submission.id))
+        const list: any[] = (res?.data || res || []) as any[]
+        const first = (Array.isArray(list) ? list : []).find((f: any) => f && (f.id || f.fileId))
+        const rid = String(first?.id || first?.fileId || '')
+        if (rid) { await fileApi.downloadFile(rid, first?.originalName || first?.fileName || name); return }
+      } catch {}
+    }
+
+    // 3) 兼容：从 filePath 中提取 /files/{id}/...
+    const path = String(submission.filePath || '')
+    const m = path.match(/\/files\/(\d+)\/(?:download|preview|stream)/)
+    if (m && m[1]) { await fileApi.downloadFile(m[1], name); return }
+
+    // 4) 兜底：直链（可能 401，尽量避免）
+    if (!path) return
+    const url = path.startsWith('http') ? path : `${baseURL}${path}`
+    const a = document.createElement('a')
+    a.href = url
+    a.download = name
+    document.body.appendChild(a)
+    a.click()
+    a.remove()
+  } catch {}
 }
 
 // 动画分数：在分数变化时平滑过渡
