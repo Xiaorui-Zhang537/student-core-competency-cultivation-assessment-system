@@ -23,6 +23,7 @@ export interface TeacherStudentProfileDto {
   school?: string;
   subject?: string;
   grade?: string;
+  mbti?: string;
   createdAt?: string | number | null;
   updatedAt?: string | number | null;
 

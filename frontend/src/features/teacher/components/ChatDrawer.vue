@@ -35,7 +35,7 @@
            </div>
             <div class="relative flex-1 overflow-y-auto px-2 pb-3 pt-3 space-y-1" :key="'list-'+activeTab" :style="{ backgroundColor: 'var(--color-base-100)' }">
             <div v-if="activeTab==='recent'" class="chatlist-surface">
-              <div v-if="chat.loadingLists" class="text-xs text-gray-500 px-2 py-2">{{ t('shared.loading') || '加载中...' }}</div>
+              <div v-if="false"></div>
               <Button
                 v-for="c in recentList"
                 :key="c.id || c.notificationId || c._k"
@@ -50,7 +50,7 @@
                   <div class="flex-1 min-w-0">
                     <div class="flex items-center gap-2 text-left">
                       <div class="text-sm font-medium text-gray-900 dark:text-white truncate">{{ c.displayName }}</div>
-                      <span v-if="c.unread > 0" class="inline-flex items-center justify-center min-w-[20px] h-5 px-1 rounded-full bg-red-500 text-white text-xs">{{ c.unread }}</span>
+                      <span v-if="c.unread > 0" class="glass-badge glass-badge-sm text-[11px] leading-none px-[6px]">{{ Math.min(Number(c.unread||0), 99) }}</span>
                     </div>
                     <div class="text-xs text-gray-500 dark:text-gray-300 truncate text-left">{{ c.content || c.preview }}</div>
                   </div>
@@ -68,7 +68,7 @@
             </div>
 
             <div v-else-if="activeTab==='contacts'" class="chatlist-surface">
-              <div v-if="chat.loadingLists" class="text-xs text-gray-500 px-2 py-2">{{ t('shared.loading') || '加载中...' }}</div>
+              <div v-if="false"></div>
               <div v-for="g in chat.contactGroups" :key="g.courseId" class="px-2">
                 <Button type="button" variant="menu" class="w-full flex items-center justify-between px-2 py-1 rounded hover:bg-gray-100 dark:hover:bg-gray-700 !justify-start" @click="onToggleGroup(g)">
                   <div class="text-sm font-semibold text-gray-800 dark:text-gray-100 truncate">{{ g.courseName }}</div>
@@ -96,7 +96,13 @@
         <!-- 右侧：会话区或占位 -->
         <div class="flex-1 flex flex-col min-w-0" :key="`content-${activeTab}-${peerActiveId}`" :style="{ backgroundColor: 'var(--color-base-100)' }">
           <div v-if="hasActivePeer" class="flex-1 overflow-y-auto p-4 space-y-3 no-scrollbar min-h-0" ref="scrollContainer" :key="`chat-${peerActiveId}`">
-            <template v-for="item in renderedItems" :key="item.type==='message' ? item.data.id : item.key">
+            <div v-if="loadingMessages" class="w-full h-full flex items-center justify-center py-16">
+              <div class="flex flex-col items-center gap-3">
+                <div class="theme-spinner theme-spinner-lg"></div>
+                <div class="text-xs text-base-content/70">{{ t('shared.loading') || '加载中...' }}</div>
+              </div>
+            </div>
+            <template v-if="!loadingMessages" v-for="item in renderedItems" :key="item.type==='message' ? item.data.id : item.key">
               <!-- 时间分隔条 -->
               <div v-if="item.type==='time-divider'" class="text-center my-2 text-xs text-gray-400 select-none">{{ item.timeText }}</div>
 
@@ -107,32 +113,38 @@
                   <div class="w-7 h-7 rounded-full bg-gray-200 dark:bg-gray-700"></div>
                 </user-avatar>
 
-                <!-- 气泡与尾巴 -->
-                <div class="relative max-w-[70%]">
+                <!-- 气泡与尾巴（仅当有文本时显示） -->
+                <div v-if="hasText(item.data.content)" class="relative max-w-[70%]">
                   <div :class="[
-                      item.data.isMine
-                        ? 'bg-blue-600 text-white bubble-mine'
-                        : 'bg-gray-100 dark:bg-gray-700 dark:text-gray-100 bubble-peer',
-                      'rounded-2xl px-3 py-2 whitespace-pre-wrap break-words'
+                      'glass-bubble rounded-2xl px-3 py-2 whitespace-pre-wrap break-words',
+                      item.data.isMine ? 'glass-bubble-mine text-white' : 'glass-bubble-peer text-base-content'
                     ]">
                     {{ item.data.content }}
                   </div>
-                  <span v-if="!item.data.isMine" class="tail tail-left bg-gray-100 dark:bg-gray-700"></span>
-                  <span v-else class="tail tail-right bg-blue-600"></span>
+                  <span v-if="!item.data.isMine" class="tail tail-left tail-peer"></span>
+                  <span v-else class="tail tail-right tail-mine"></span>
                 </div>
 
-                <!-- 附件区域：图片预览(鉴权Blob) + 文件下载(程序化) -->
+                <!-- 附件区域：图片网格 + 文件卡（支持灯箱） -->
                 <div v-if="(item as any).data.attachmentFileIds && (item as any).data.attachmentFileIds.length>0" class="flex flex-col gap-2 max-w-[70%]" :class="item.data.isMine ? 'items-end' : 'items-start'">
-                  <div v-for="fid in (item as any).data.attachmentFileIds" :key="`att-${(item as any).data.id}-${fid}`" class="w-full">
-                    <template v-if="isImageAttachment(fid)">
-                      <img v-if="getPreviewUrl(fid)" :src="getPreviewUrl(fid)" class="max-w-[220px] rounded-lg border border-white/10" />
-                    </template>
-                    <template v-else>
-                      <a href="#" @click.prevent="downloadAttachment(fid)" class="inline-flex items-center gap-2 text-xs underline">
-                        <span class="inline-block w-4 h-4 bg-gray-400 rounded-sm"></span>
-                        {{ fileName(fid) || ('文件 #' + fid) }}
-                      </a>
-                    </template>
+                  <!-- 图片网格 -->
+                  <div v-if="((item as any).data.attachmentFileIds as any[]).some(fid => canPreview(fid))" class="grid grid-cols-2 gap-2 w-full">
+                    <div v-for="fid in (item as any).data.attachmentFileIds" :key="`att-img-${(item as any).data.id}-${fid}`" v-show="canPreview(fid)" class="relative group">
+                      <img v-if="getPreviewUrl(fid)" :src="getPreviewUrl(fid)" class="w-full h-28 object-cover rounded-lg glass-img-border cursor-pointer" @click="openLightbox(((item as any).data.attachmentFileIds as any[]).filter((x:any)=>isImageAttachment(x)), fid)" />
+                    </div>
+                  </div>
+                  <!-- 文件卡列表 -->
+                  <div v-if="((item as any).data.attachmentFileIds as any[]).some(fid => !canPreview(fid))" class="space-y-2 w-full">
+                    <div v-for="fid in (item as any).data.attachmentFileIds" :key="`att-file-${(item as any).data.id}-${fid}`" v-show="!canPreview(fid)" :class="['flex items-center justify-between p-2 rounded-lg', 'glass-attach', item.data.isMine ? 'glass-attach-mine' : 'glass-attach-peer']">
+                      <div class="flex items-center gap-2 min-w-0">
+                        <span class="inline-block w-6 h-6 rounded bg-gray-300 dark:bg-gray-600"></span>
+                        <div class="text-xs text-gray-800 dark:text-gray-100 truncate">{{ fileName(fid) || ('文件 #' + fid) }}</div>
+                      </div>
+                      <Button variant="primary" size="xs" type="button" class="inline-flex items-center" @click="downloadAttachment(fid)">
+                        <ArrowDownTrayIcon class="w-3.5 h-3.5 mr-1" />
+                        {{ t('shared.download') || '下载' }}
+                      </Button>
+                    </div>
                   </div>
                 </div>
 
@@ -158,18 +170,52 @@
             {{ t('shared.chat.pickSomeone') || '从左侧选择一位联系人开始聊天' }}
           </div>
 
-          <!-- 输入区 -->
-        <div class="p-3 flex items-center gap-2 relative shrink-0 min-h-[56px]" style="box-shadow: inset 0 1px 0 rgba(255,255,255,0.18)">
+          <!-- 输入区（含未发送附件预览） -->
+        <div class="p-3 flex flex-col gap-2 relative shrink-0" style="box-shadow: inset 0 1px 0 rgba(255,255,255,0.18)">
+            <!-- 未发送附件预览：图片缩略图网格 + 文件卡片 -->
+            <div v-if="attachmentFileIds.length>0" class="flex flex-col gap-2">
+              <div class="grid grid-cols-3 sm:grid-cols-4 gap-2" v-if="pendingImageIds.length>0">
+                <div v-for="fid in pendingImageIds" :key="'pend-img-'+fid" class="relative group">
+                  <img v-if="getPreviewUrl(fid)" :src="getPreviewUrl(fid)" class="w-full h-24 object-cover rounded-lg glass-img-border cursor-pointer" @click="openLightbox(pendingImageIds, fid)" />
+                  <Button variant="danger" size="xs" type="button" class="absolute -top-1 -right-1 opacity-0 group-hover:opacity-100 transition-opacity" @click.stop="removePending(fid)">×</Button>
+                </div>
+              </div>
+              <div class="space-y-2" v-if="pendingFileIds.length>0">
+                <div v-for="fid in pendingFileIds" :key="'pend-file-'+fid" class="flex items-center justify-between p-2 rounded-lg glass-attach glass-attach-mine">
+                  <div class="flex items-center gap-2 min-w-0">
+                    <span class="inline-block w-6 h-6 rounded bg-gray-300 dark:bg-gray-600"></span>
+                    <div class="text-xs text-gray-800 dark:text-gray-100 truncate">{{ fileName(fid) || ('文件 #'+fid) }}</div>
+                  </div>
+                  <Button variant="ghost" size="xs" type="button" @click.stop="removePending(fid)">×</Button>
+                </div>
+              </div>
+            </div>
+
+            <div class="flex items-center gap-2">
             <emoji-picker :variant="'ghost'" :size="'sm'" @select="pickEmoji" />
             <input ref="fileInput" type="file" class="hidden" @change="onFilePicked" />
             <Button variant="menu" size="sm" @click="triggerPickFile">{{ t('shared.uploadLabel') || '上传' }}</Button>
-            <span v-if="attachmentFileIds.length>0" class="text-xs text-gray-500">{{ '已选附件 ' + attachmentFileIds.length }}</span>
             <glass-textarea ref="draftInput" v-model="(draft as any)" :rows="2" :placeholder="t('teacher.students.chat.placeholder') as string" class="flex-1 w-full min-h-[48px] max-h-40 resize-none" @keydown="onDraftKeydown" />
             <Button variant="primary" :disabled="sending || (!draft && attachmentFileIds.length===0)" @click="send()">{{ t('teacher.ai.send') }}</Button>
           </div>
         </div>
         </div>
       </div>
+      </div>
+  </div>
+  </div>
+</teleport>
+
+<!-- 灯箱渲染（teleport 到 body） -->
+<teleport to="body" v-if="lightbox.open">
+  <div class="fixed inset-0 z-[13000] flex items-center justify-center lightbox-backdrop" @click="closeLightbox">
+    <div class="max-w-[85vw] max-h-[85vh] p-2 rounded-xl border lightbox-content relative" @click.stop>
+      <img v-if="lightbox.current && getPreviewUrl(lightbox.current)" :src="getPreviewUrl(lightbox.current)" class="max-w-[80vw] max-h-[75vh] object-contain rounded" />
+      <div class="absolute inset-x-0 -bottom-10 flex items-center justify-between px-4">
+        <Button variant="menu" size="sm" @click="lightboxPrev">上一张</Button>
+        <Button variant="menu" size="sm" @click="lightboxNext">下一张</Button>
+      </div>
+      <Button class="absolute -top-2 -right-2" variant="danger" size="xs" @click="closeLightbox">✕</Button>
   </div>
   </div>
 </teleport>
@@ -184,7 +230,7 @@ import UserAvatar from '@/components/ui/UserAvatar.vue'
 import GlassInput from '@/components/ui/inputs/GlassInput.vue'
 import GlassSearchInput from '@/components/ui/inputs/GlassSearchInput.vue'
 import GlassTextarea from '@/components/ui/inputs/GlassTextarea.vue'
-import { XMarkIcon, BookmarkIcon, BookmarkSlashIcon } from '@heroicons/vue/24/outline'
+import { XMarkIcon, BookmarkIcon, BookmarkSlashIcon, ArrowDownTrayIcon } from '@heroicons/vue/24/outline'
 import Button from '@/components/ui/Button.vue'
 import EmojiPicker from '@/components/ui/EmojiPicker.vue'
 
@@ -210,8 +256,9 @@ const { t } = useI18n()
 
 const title = ref('')
 const messages = ref<any[]>([])
+const loadingMessages = ref(false)
 const page = ref(1)
-const size = ref(50)
+const size = ref(100)
 const total = ref(0)
 const draft = ref('')
 // 附件：上传成功的文件ID集合（发送时随消息提交）
@@ -310,7 +357,7 @@ const messageIsMine = (n: any): boolean => {
 }
 
 // 头像与渲染辅助
-type MessageItem = { id: string | number; content: string; createdAt: string; isMine: boolean; status?: 'sent' | 'pending' | 'failed' }
+type MessageItem = { id: string | number; content: string; createdAt: string; isMine: boolean; status?: 'sent' | 'pending' | 'failed'; attachmentFileIds?: Array<string|number> }
 type RenderMessage = { type: 'message'; data: MessageItem & { avatarUrl: string | null } }
 type RenderDivider = { type: 'time-divider'; key: string; timeText: string }
 type RenderItem = RenderMessage | RenderDivider
@@ -409,6 +456,7 @@ const scrollToBottom = async () => {
 // 附件元数据与渲染辅助
 const fileMetaMap = ref<Record<string, any>>({})
 const previewUrlMap = ref<Record<string, string>>({})
+const previewBlockedMap = ref<Record<string, boolean>>({})
 function revokePreviewUrl(fid: string | number) {
   const key = String(fid)
   const url = previewUrlMap.value[key]
@@ -428,13 +476,28 @@ function getPreviewUrl(fid: string | number): string {
 async function ensurePreviewBlob(fid: string | number) {
   const key = String(fid)
   if (previewUrlMap.value[key]) return
+  // 未登录直接标记不可预览，显示文件卡，避免 401
+  try { if (!auth.isAuthenticated) { previewBlockedMap.value[key] = true; return } } catch {}
   try {
     const { fileApi } = await import('@/api/file.api')
     const blob = await fileApi.getPreview(key)
+    // 若后端返回 json 错误（400 等），Blob.type 会是 application/json
+    if (blob && (blob as any).type && String((blob as any).type).includes('application/json')) {
+      previewBlockedMap.value[key] = true
+      return
+    }
     const url = URL.createObjectURL(blob)
     previewUrlMap.value[key] = url
-  } catch {
-    // 失败时保持为空，由 img 自行跳过渲染
+  } catch (e: any) {
+    // 失败：标记该文件不支持预览，退回文件卡
+    previewBlockedMap.value[key] = true
+    // 若权限错误，提示一次
+    try {
+      const code = Number(e?.code || 0)
+      if (code === 1705 || code === 403) {
+        console.debug('[preview-blocked]', key, code)
+      }
+    } catch {}
   }
 }
 async function downloadAttachment(fid: string | number) {
@@ -444,6 +507,7 @@ async function downloadAttachment(fid: string | number) {
     await fileApi.downloadFile(String(fid), name || undefined)
   } catch {}
 }
+function hasText(s: unknown): boolean { return String(s ?? '').trim().length > 0 }
 function fileName(fid: string | number): string | null {
   const meta = fileMetaMap.value[String(fid)]
   return meta?.originalName || meta?.original_name || null
@@ -452,6 +516,11 @@ function isImageAttachment(fid: string | number): boolean {
   const meta = fileMetaMap.value[String(fid)]
   const mime = String(meta?.mimeType || meta?.mime || '')
   return mime.startsWith('image/')
+}
+function canPreview(fid: string | number): boolean {
+  const key = String(fid)
+  if (previewBlockedMap.value[key]) return false
+  return isImageAttachment(fid)
 }
 async function ensureFileMeta(fid: string | number) {
   const key = String(fid)
@@ -469,14 +538,17 @@ async function ensureFileMeta(fid: string | number) {
 
 const load = async () => {
   if (!currentPeerId.value) return
+  loadingMessages.value = true
   const { chatApi } = await import('@/api/chat.api')
-  const res: any = await chatApi.getMessages(currentPeerId.value as any, { page: page.value, size: size.value, courseId: currentCourseId.value ? Number(currentCourseId.value) : undefined })
+  const paramsBase: any = { page: page.value, size: size.value }
+  const courseParam = currentCourseId.value ? Number(currentCourseId.value) : undefined
+  const res: any = await chatApi.getMessages(currentPeerId.value as any, { ...paramsBase, courseId: courseParam })
   const list = (res?.items || []).map((n: any) => ({
     id: n.id,
     content: n.content,
     createdAt: n.createdAt || n.created_at || new Date().toISOString(),
     isMine: messageIsMine(n),
-    attachmentFileIds: n.attachmentFileIds || n.attachment_file_ids || [],
+    attachmentFileIds: (n.attachmentFileIds || n.attachment_file_ids || n.attachments || []).map((x:any) => (typeof x === 'object' && x?.fileId != null) ? x.fileId : x),
     status: 'sent'
   }))
   // 合并：以服务端为准合并现有消息，避免乐观消息被覆盖
@@ -498,18 +570,68 @@ const load = async () => {
       }
     } catch {}
   }
-  // 标记为已读
+  // 若结果为空或明显少于一条，尝试另一种参数（带/不带课程）再合并，避免后端筛选差异导致看不到
+  if (((messages.value as any[]).length === 0 || (messages.value as any[]).length < 1)) {
+    try {
+      const otherParams = courseParam != null ? { ...paramsBase } : { ...paramsBase, courseId: 0 }
+      const res2: any = await chatApi.getMessages(currentPeerId.value as any, otherParams)
+      const list2 = (res2?.items || []).map((n: any) => ({
+        id: n.id,
+        content: n.content,
+        createdAt: n.createdAt || n.created_at || new Date().toISOString(),
+        isMine: messageIsMine(n),
+        attachmentFileIds: (n.attachmentFileIds || n.attachment_file_ids || n.attachments || []).map((x:any) => (typeof x === 'object' && x?.fileId != null) ? x.fileId : x),
+        status: 'sent'
+      }))
+      const byId = new Map<string, any>()
+      for (const m of (messages.value as any[])) byId.set(String(m.id), m)
+      for (const m of list2) byId.set(String(m.id), { ...byId.get(String(m.id)), ...m })
+      messages.value = Array.from(byId.values()).sort((a: any, b: any) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime())
+    } catch {}
+  }
+
+  // 仍为空则进一步回退到 /notifications/conversation 接口合并
+  if ((messages.value as any[]).length === 0) {
+    try {
+      const { notificationAPI } = await import('@/api/notification.api')
+      const res3: any = await notificationAPI.getConversation(currentPeerId.value as any, { page: page.value, size: size.value })
+      const items = (res3?.items || res3?.data?.items || [])
+      const list3 = items.map((n: any) => ({
+        id: n.id,
+        content: n.content,
+        createdAt: n.createdAt || n.created_at || new Date().toISOString(),
+        isMine: messageIsMine(n),
+        attachmentFileIds: (n.attachmentFileIds || n.attachment_file_ids || n.attachments || []).map((x:any) => (typeof x === 'object' && x?.fileId != null) ? x.fileId : x),
+        status: 'sent'
+      }))
+      messages.value = list3
+    } catch {}
+  }
+  // 标记为已读（先带课程上下文，再无课程上下文各尝试一次）
   try { await chatApi.markReadByPeer(currentPeerId.value as any, currentCourseId.value ? Number(currentCourseId.value) : undefined) } catch {}
+  try { await chatApi.markReadByPeer(currentPeerId.value as any) } catch {}
   try { chat.markPeerRead(String(currentPeerId.value || ''), String(currentCourseId.value || '')) } catch {}
   // 同步刷新“最近”，确保未读角标与后端一致
   try { await chat.loadLists({ courseId: currentCourseId.value || undefined }) } catch {}
-  await scrollToBottom()
+  // 兼容历史多会话ID/不同 courseId 的数据：对同一 peer 的所有最近会话逐一标记
+  try {
+    const list: any[] = (chat.recentConversations as any[]) || []
+    for (const c of list) {
+      if (String(c.peerId) === String(currentPeerId.value || '')) {
+        try { await chatApi.markReadByPeer(c.peerId as any, c.courseId ? Number(c.courseId) : undefined) } catch {}
+        try { chat.markPeerRead(String(c.peerId), String(c.courseId || '')) } catch {}
+      }
+    }
+  } catch {}
+  // 首次进入或切换会话：滚到最新一条
+  await nextTick(); await scrollToBottom()
   try { if (currentPeerId.value) await ensurePeerAvatar(String(currentPeerId.value)) } catch {}
+  loadingMessages.value = false
 }
 
-const createLocalPendingMessage = (content: string): MessageItem => {
+const createLocalPendingMessage = (content: string, attachments?: Array<string|number>): MessageItem => {
   const id = `local-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
-  return { id, content, createdAt: new Date().toISOString(), isMine: true, status: 'pending' }
+  return { id, content, createdAt: new Date().toISOString(), isMine: true, status: 'pending', attachmentFileIds: attachments && attachments.length ? attachments.slice() : [] }
 }
 
 const markMessageStatus = (id: string | number, status: 'sent' | 'failed' | 'pending') => {
@@ -527,8 +649,9 @@ const send = async (contentOverride?: string | unknown, tempIdToResolve?: string
   const content = ((raw ?? '') as any).toString().trim()
   // 允许“仅附件无文本”也能发送
   if (!content && attachmentFileIds.value.length === 0) return
-  // 插入或复用本地 pending 消息
+  // 插入或复用本地 pending 消息（带附件快照）
   let localMsg: MessageItem
+  const attachedSnapshot = (attachmentFileIds.value && attachmentFileIds.value.length > 0) ? attachmentFileIds.value.slice() : []
   if (tempIdToResolve != null) {
     const idx = (messages.value as MessageItem[]).findIndex(m => String(m.id) === String(tempIdToResolve))
     if (idx >= 0) {
@@ -538,11 +661,11 @@ const send = async (contentOverride?: string | unknown, tempIdToResolve?: string
       messages.value = cloned
       localMsg = updated
     } else {
-      localMsg = createLocalPendingMessage(content)
+      localMsg = createLocalPendingMessage(content, attachedSnapshot)
       ;(messages.value as MessageItem[]).push(localMsg)
     }
   } else {
-    localMsg = createLocalPendingMessage(content)
+    localMsg = createLocalPendingMessage(content, attachedSnapshot)
     ;(messages.value as MessageItem[]).push(localMsg)
   }
   await nextTick()
@@ -559,7 +682,30 @@ const send = async (contentOverride?: string | unknown, tempIdToResolve?: string
       relatedId: currentCourseId.value ? Number(currentCourseId.value) : undefined,
       attachmentFileIds: (attachmentFileIds.value && attachmentFileIds.value.length > 0) ? attachmentFileIds.value : undefined
     }
-    const sent: any = await chatApi.sendMessage(payload)
+    let sent: any
+    try {
+      sent = await chatApi.sendMessage(payload)
+    } catch (err: any) {
+      const msg = String(err?.message || '')
+      const code = Number(err?.code || 0)
+      // 只要不是未登录(401)且携带课程上下文，就降级为普通私聊重试一次
+      if (payload.relatedType && code !== 401) {
+        try {
+          const retryPayload: any = { ...payload }
+          delete retryPayload.relatedType
+          delete retryPayload.relatedId
+          sent = await chatApi.sendMessage(retryPayload)
+        } catch (err2) {
+          throw err2
+        }
+      } else {
+        throw err
+      }
+    }
+    // 立即为附件预取元数据，保证发送后可见
+    try {
+      for (const fid of attachedSnapshot) { await ensureFileMeta(String(fid)) }
+    } catch {}
     // 标记本地消息为 sent
     markMessageStatus(localMsg.id, 'sent')
     // 若后端返回了真实消息 id，则把本地临时 id 替换为服务端 id，避免后续去重导致“丢失”
@@ -569,7 +715,7 @@ const send = async (contentOverride?: string | unknown, tempIdToResolve?: string
         const idx = (messages.value as MessageItem[]).findIndex(m => String(m.id) === String(localMsg.id))
         if (idx >= 0) {
           const cloned = (messages.value as MessageItem[]).slice()
-          cloned[idx] = { ...cloned[idx], id: serverId, status: 'sent' }
+          cloned[idx] = { ...cloned[idx], id: serverId, status: 'sent', attachmentFileIds: attachedSnapshot }
           messages.value = cloned
         }
       }
@@ -700,6 +846,14 @@ watch(() => props.open, async (v) => {
   if (v) {
     if (!auth.isAuthenticated) return
     try { console.debug('[ChatDrawer] open prop changed ->', v) } catch {}
+    // 先尝试标记当前 peer 的会话为已读（带/不带课程），避免先加载列表闪现红点
+    try {
+      const { chatApi } = await import('@/api/chat.api')
+      if (currentPeerId.value) {
+        try { await chatApi.markReadByPeer(currentPeerId.value as any, currentCourseId.value ? Number(currentCourseId.value) : undefined) } catch {}
+        try { await chatApi.markReadByPeer(currentPeerId.value as any) } catch {}
+      }
+    } catch {}
     const persisted = (() => { try {
       const uid = String(localStorage.getItem('userId') || '')
       const role = (() => { try { return (auth.user as any)?.role || '' } catch { return '' } })()
@@ -709,6 +863,17 @@ watch(() => props.open, async (v) => {
     const last = persisted && persisted[0]
     const cid = currentCourseId.value || (last?.courseId || undefined)
     await chat.loadLists({ courseId: cid })
+    // 再次对所有同 peer 分支逐一标记已读，确保历史分支清零
+    try {
+      const { chatApi } = await import('@/api/chat.api')
+      const list: any[] = (chat.recentConversations as any[]) || []
+      for (const c of list) {
+        if (String(c.peerId) === String(currentPeerId.value || '')) {
+          try { await chatApi.markReadByPeer(c.peerId as any, c.courseId ? Number(c.courseId) : undefined) } catch {}
+          try { chat.markPeerRead(String(c.peerId), String(c.courseId || '')) } catch {}
+        }
+      }
+    } catch {}
     if (currentPeerId.value) await load()
   }
 })
@@ -729,6 +894,31 @@ const fileInput = ref<HTMLInputElement | null>(null)
 function triggerPickFile() {
   try { fileInput.value?.click() } catch {}
 }
+const lightbox = ref<{ open: boolean; items: Array<string|number>; current?: string|number|null }>({ open: false, items: [], current: null })
+const pendingImageIds = computed(() => attachmentFileIds.value.filter(fid => isImageAttachment(fid)))
+const pendingFileIds = computed(() => attachmentFileIds.value.filter(fid => !isImageAttachment(fid)))
+function openLightbox(items: Array<string|number>, current?: string|number) {
+  lightbox.value = { open: true, items: items.slice(), current: current ?? (items[0] || null) }
+}
+function closeLightbox() { lightbox.value.open = false }
+function lightboxPrev() {
+  if (!lightbox.value.open || !lightbox.value.items.length) return
+  const arr = lightbox.value.items
+  const idx = Math.max(0, arr.findIndex(x => String(x) === String(lightbox.value.current)))
+  const next = idx <= 0 ? arr[arr.length - 1] : arr[idx - 1]
+  lightbox.value.current = next
+}
+function lightboxNext() {
+  if (!lightbox.value.open || !lightbox.value.items.length) return
+  const arr = lightbox.value.items
+  const idx = Math.max(0, arr.findIndex(x => String(x) === String(lightbox.value.current)))
+  const next = idx >= arr.length - 1 ? arr[0] : arr[idx + 1]
+  lightbox.value.current = next
+}
+function removePending(fid: string|number) {
+  const i = attachmentFileIds.value.findIndex(x => String(x) === String(fid))
+  if (i >= 0) attachmentFileIds.value.splice(i, 1)
+}
 async function onFilePicked(ev: Event) {
   try {
     const input = ev.target as HTMLInputElement
@@ -737,10 +927,19 @@ async function onFilePicked(ev: Event) {
     const { fileApi } = await import('@/api/file.api')
     const uploaded: any = await fileApi.uploadFile(file, { purpose: 'chat', relatedId: String(currentPeerId.value || '') })
     const fileId = uploaded?.id || uploaded?.data?.id
-    if (fileId != null) attachmentFileIds.value.push(fileId)
+    if (fileId != null) {
+      attachmentFileIds.value.push(fileId)
+      try { await ensureFileMeta(String(fileId)) } catch {}
+    }
     await nextTick()
     try { draftInput.value?.focus() } catch {}
     if (input) input.value = ''
+    // 若没有文本，默认立即发送“仅附件”消息，避免切换会话后丢失感知
+    try {
+      if (!hasText(draft.value) && attachmentFileIds.value.length > 0) {
+        await send()
+      }
+    } catch {}
   } catch {}
 }
 </script>
@@ -775,9 +974,41 @@ button:focus-visible, .btn:focus-visible, [role="button"]:focus-visible {
 .bubble-peer { position: relative; }
 .bubble-mine { position: relative; }
 
+/* 主题色融合 + 玻璃风格的聊天气泡 */
+.bubble {
+  background: rgb(var(--glass-bg-rgb) / var(--glass-alpha-regular));
+  border-color: var(--glass-border-color);
+  backdrop-filter: blur(var(--glass-blur-regular)) saturate(var(--glass-saturate-regular)) contrast(var(--glass-contrast-regular));
+  -webkit-backdrop-filter: blur(var(--glass-blur-regular)) saturate(var(--glass-saturate-regular)) contrast(var(--glass-contrast-regular));
+  box-shadow: var(--glass-inner-shadow), var(--glass-outer-shadow);
+}
+.bubble-mine {
+  /* 融合主题强调色，保证深色主题对比度 */
+  background: color-mix(in oklab, var(--color-accent) 28%, rgb(var(--glass-bg-rgb) / var(--glass-alpha-regular)));
+  border-color: color-mix(in oklab, var(--color-accent) 55%, var(--glass-border-color));
+}
+.bubble-peer {
+  background: color-mix(in oklab, var(--color-base-100) 85%, rgb(var(--glass-bg-rgb) / var(--glass-alpha-ultraThin)));
+  border-color: var(--glass-border-color);
+}
+
+/* 尾巴与背景一致 */
+.tail-peer { background: color-mix(in oklab, var(--color-base-100) 85%, rgb(var(--glass-bg-rgb) / var(--glass-alpha-ultraThin))); }
+.tail-mine { background: color-mix(in oklab, var(--color-accent) 28%, rgb(var(--glass-bg-rgb) / var(--glass-alpha-regular))); }
+
 /* 隐藏滚动条（仍可滚动） */
 .no-scrollbar::-webkit-scrollbar { display: none; }
 .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+/* 简易灯箱样式（玻璃风格） */
+.lightbox-backdrop { background: rgba(0,0,0,0.5); }
+.lightbox-content {
+  background: rgb(var(--glass-bg-rgb) / var(--glass-alpha-regular));
+  border-color: var(--glass-border-color);
+  backdrop-filter: blur(var(--glass-blur-regular)) saturate(var(--glass-saturate-regular)) contrast(var(--glass-contrast-regular));
+  -webkit-backdrop-filter: blur(var(--glass-blur-regular)) saturate(var(--glass-saturate-regular)) contrast(var(--glass-contrast-regular));
+  box-shadow: var(--glass-inner-shadow), var(--glass-outer-shadow);
+}
 </style>
 
 

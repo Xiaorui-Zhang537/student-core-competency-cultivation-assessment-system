@@ -174,6 +174,11 @@ curl -X DELETE -H "Authorization: Bearer $TOKEN" -H "Content-Type: application/j
 - 下载与预览需带鉴权头（前端用 axios 客户端发起）
 - 预览仅允许 `image/*` 类型
 
+### 聊天附件权限（chat）
+- 用途为 `chat` 的文件，仅允许消息的发送者或接收者访问下载/预览。
+- 通过 `chat_message_attachments` 与 `notifications` 表关联校验（`n.type='message'` 且 `n.sender_id=userId OR n.recipient_id=userId`）。
+- 因此，前端必须使用带 Token 的客户端请求预览与下载，直链 `<img src>` 或 `<a href>` 会因 401/403 失败。
+
 ---
 
 ## 时序图：文件上传

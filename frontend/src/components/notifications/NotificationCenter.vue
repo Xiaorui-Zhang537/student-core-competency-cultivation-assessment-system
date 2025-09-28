@@ -5,8 +5,8 @@
       <div class="flex items-end justify-between gap-3 flex-nowrap">
         <h3 class="text-2xl lg:text-3xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
           {{ t('notifications.title') }}
-          <span v-if="unreadCount > 0" class="notification-badge">
-            {{ unreadCount }}
+          <span v-if="unreadCount > 0" class="glass-badge glass-badge-sm glass-badge-error ml-2 px-[6px] leading-none text-[12px]">
+            {{ Math.min(unreadCount as any, 99) }}
           </span>
         </h3>
         <div class="flex items-center gap-2 flex-nowrap justify-end">
@@ -30,8 +30,23 @@
       <!-- 页面副标题 -->
       <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">{{ t('notifications.subtitle') }}</p>
 
-      <!-- 过滤器容器：保留下方三个过滤器，横向一排 -->
-      <liquid-glass class="mt-4 p-3" containerClass="rounded-lg">
+      <!-- 过滤器容器：玻璃样式（主题主色），与列表宽度对齐 -->
+      <div class="mt-4">
+        <LiquidGlass
+          class="rounded-2xl"
+          :radius="16"
+          :frost="0.05"
+          :border="0.08"
+          :lightness="50"
+          :alpha="0.92"
+          :blur="10"
+          :scale="-120"
+          :rOffset="0"
+          :gOffset="8"
+          :bOffset="16"
+          container-class="glass-regular glass-tint-primary"
+        >
+          <div class="p-3">
         <div class="flex flex-wrap items-center gap-4">
           <div class="w-auto flex items-center gap-2">
             <span class="text-xs font-medium leading-tight text-gray-700 dark:text-gray-300">{{ t('notifications.filters.type') }}</span>
@@ -91,9 +106,11 @@
               <x-mark-icon class="w-4 h-4 mr-1" />
               {{ t('notifications.actions.clearFilters') }}
             </Button>
+            </div>
           </div>
-        </div>
-      </liquid-glass>
+          </div>
+        </LiquidGlass>
+      </div>
     </div>
 
     <!-- 通知列表 -->
@@ -108,11 +125,13 @@
         <p class="text-gray-500 dark:text-gray-400 text-center mt-4">{{ t('notifications.empty') }}</p>
       </div>
 
-      <div v-else class="space-y-2">
-        <div
+      <div v-else class="space-y-3">
+        <Card
           v-for="notification in notifications"
           :key="notification.id"
-          class="notification-item p-3 rounded-lg transition cursor-pointer"
+          padding="sm"
+          tint="secondary"
+          class="notification-item transition cursor-pointer"
           :class="[`type-${notification.type}`]"
           @click="openDetail(notification.id)"
         >
@@ -178,7 +197,7 @@
               </span>
             </div>
           </div>
-        </div>
+        </Card>
       </div>
 
       <!-- 加载更多 -->
@@ -198,6 +217,7 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
 import LiquidGlass from '@/components/ui/LiquidGlass.vue'
+import Card from '@/components/ui/Card.vue'
 import { useNotificationsStore } from '@/stores/notifications'
 import { storeToRefs } from 'pinia'
 import { useI18n } from 'vue-i18n'
@@ -515,7 +535,8 @@ onMounted(() => {
 /* 过滤器区域样式已重构为原子类，以下旧样式删除 */
 
 .notification-list {
-  padding: 1rem;
+  padding-top: 1rem;
+  padding-bottom: 1rem;
   max-height: none; /* 放宽高度限制，使用页面滚动 */
   overflow-y: visible;
 }

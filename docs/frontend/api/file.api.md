@@ -10,6 +10,7 @@
 ## 注意事项
 - Content-Type 设置为 `multipart/form-data`
 - 下载/预览需鉴权头，使用 axios 客户端发起
+ - 聊天抽屉附件必须使用 `getPreview` 与 `downloadFile`（带 Token）。不要直接 `<img src="/api/files/{id}/preview">` 或 `<a href="/api/files/{id}/download">`，否则在鉴权环境下会 401/403。
 
 ## 参数与返回
 - `uploadFile(file, extra?)`：`extra` 可传 `{ purpose?: string; relatedId?: string|number }`
@@ -27,6 +28,14 @@ const url = URL.createObjectURL(blob)
 
 // 下载
 await fileApi.downloadFile(fileInfo.id, '附件.zip')
+// 聊天附件（示例）：
+// 1) 上传（purpose=chat, relatedId=对端用户ID 或 课程上下文）
+await fileApi.uploadFile(file, { purpose: 'chat', relatedId: peerId })
+// 2) 预览（图片）
+const chatBlob = await fileApi.getPreview(fileId)
+const chatUrl = URL.createObjectURL(chatBlob)
+// 3) 下载（任意类型）
+await fileApi.downloadFile(fileId, '聊天附件')
 
 // 关联查询
 const list = await fileApi.getRelatedFiles('assignment', 5001)

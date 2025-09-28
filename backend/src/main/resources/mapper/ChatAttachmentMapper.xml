@@ -39,7 +39,8 @@
         INNER JOIN notifications n ON n.id = a.notification_id
         WHERE a.file_id = #{fileId}
           AND (n.sender_id = #{userId} OR n.recipient_id = #{userId})
-          AND (n.type = 'message')
+          AND n.type = 'message'
+          AND n.deleted = 0
         LIMIT 1
     </select>
 

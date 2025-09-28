@@ -38,7 +38,7 @@
             <ripple-button pill :title="t('shared.chat.open') as string || '聊天'" @click.stop="toggleChatDrawer($event)">
               <chat-bubble-left-right-icon class="w-5 h-5" />
             </ripple-button>
-            <span v-if="chat.totalUnread > 0 && !chat.isOpen" class="absolute -top-0.5 -right-0.5 inline-flex items-center justify-center min-w-[16px] h-[16px] px-1 rounded-full bg-red-500 text-white text-[10px] leading-none">{{ Math.min(chat.totalUnread as any, 99) }}</span>
+            <span v-if="chat.totalUnread > 0 && !chat.isOpen" class="absolute -top-0.5 -right-0.5 glass-badge glass-badge-xs text-[10px] leading-none px-[6px]">{{ Math.min(chat.totalUnread as any, 99) }}</span>
           </span>
           <span ref="userMenuBtn" class="inline-flex">
             <ripple-button pill class="pl-2 pr-3 h-11 items-center whitespace-nowrap" :title="t('layout.common.me') as string || '我'" @click="onToggleUserMenu">

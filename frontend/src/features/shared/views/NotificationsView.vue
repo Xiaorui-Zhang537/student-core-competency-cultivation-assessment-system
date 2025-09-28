@@ -1,6 +1,6 @@
 <template>
   <div class="py-6">
-    <div class="max-w-7xl mx-auto p-4 glass-regular glass-tint-info rounded-2xl" v-glass>
+    <div class="max-w-7xl mx-auto px-4">
       <notification-center />
     </div>
   </div>

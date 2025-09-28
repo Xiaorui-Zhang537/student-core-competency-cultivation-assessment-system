@@ -32,6 +32,8 @@ public class TeacherContactsResponse {
     public static class Person {
         private Long id;
         private String username;
+        private String nickname;
+        private String displayName;
         private String avatar;
     }
 }

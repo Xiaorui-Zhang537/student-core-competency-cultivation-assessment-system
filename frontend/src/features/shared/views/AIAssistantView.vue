@@ -108,7 +108,7 @@
           <div class="h-[60vh] overflow-y-auto p-4 space-y-4 bg-transparent">
             <div v-for="m in currentMessages" :key="m.id" class="flex" :class="m.role === 'user' ? 'justify-end' : 'justify-start'">
               <div class="max-w-[80%] rounded-2xl px-4 py-2 text-sm"
-                   :class="m.role === 'user' ? 'bg-primary-600 text-white rounded-br-none' : 'bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-bl-none'">
+                   :class="m.role === 'user' ? 'glass-bubble glass-bubble-mine rounded-br-none text-white' : 'glass-bubble glass-bubble-peer rounded-bl-none text-base-content'">
                 <p class="whitespace-pre-wrap">{{ m.content }}</p>
               </div>
             </div>

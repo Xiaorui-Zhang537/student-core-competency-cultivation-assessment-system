@@ -163,7 +163,7 @@
 
   /* 全局底色：始终使用主题 base-100，避免局部容器覆盖造成色偏 */
   html, body, #app {
-    background-color: var(--color-base-100, #E4D8B4) !important;
+    background-color: var(--color-base-100) !important;
     background-image: none !important;
   }
   /* 主题变量桥接：把项目语义变量赋给 DaisyUI tokens，避免变量缺失导致黑字 */
@@ -357,6 +357,145 @@
 
 /* 分栏严格对半布局（用于分析页） */
 @layer components {
+  /* 通用玻璃徽标（未读角标/计数红点），跟随主题色 */
+  .glass-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 1rem;
+    height: 1rem;
+    padding: 0 0.25rem;
+    border-radius: 9999px;
+    font-size: 0.6875rem; /* ~11px */
+    line-height: 1;
+    color: var(--color-base-content);
+    border: 1px solid var(--glass-border-color);
+    background-color: color-mix(in oklab, var(--color-error) 26%, rgb(var(--glass-bg-rgb) / var(--glass-alpha-regular)));
+    backdrop-filter: blur(var(--glass-blur-regular)) saturate(var(--glass-saturate-regular));
+    -webkit-backdrop-filter: blur(var(--glass-blur-regular)) saturate(var(--glass-saturate-regular));
+    box-shadow: var(--glass-inner-shadow), var(--glass-outer-shadow);
+  }
+  html[data-theme="dracula"] .glass-badge {
+    color: white;
+    background-color: color-mix(in oklab, var(--color-error) 34%, rgb(var(--glass-bg-rgb) / var(--glass-alpha-regular)));
+    border-color: color-mix(in oklab, var(--color-error) 38%, var(--glass-border-color));
+  }
+
+  .glass-badge-primary {
+    background-color: color-mix(in oklab, var(--color-primary) 28%, rgb(var(--glass-bg-rgb) / var(--glass-alpha-regular)));
+    border-color: color-mix(in oklab, var(--color-primary) 36%, var(--glass-border-color));
+    color: var(--color-primary-content);
+  }
+  .glass-badge-accent {
+    background-color: color-mix(in oklab, var(--color-accent) 28%, rgb(var(--glass-bg-rgb) / var(--glass-alpha-regular)));
+    border-color: color-mix(in oklab, var(--color-accent) 36%, var(--glass-border-color));
+    color: var(--color-accent-content);
+  }
+  .glass-badge-error {
+    background-color: color-mix(in oklab, var(--color-error) 28%, rgb(var(--glass-bg-rgb) / var(--glass-alpha-regular)));
+    border-color: color-mix(in oklab, var(--color-error) 36%, var(--glass-border-color));
+    color: var(--color-error-content);
+  }
+
+  .glass-badge-xs { min-width: 0.875rem; height: 0.875rem; font-size: 0.625rem; padding: 0 0.25rem; }
+  .glass-badge-sm { min-width: 1rem; height: 1rem; font-size: 0.6875rem; padding: 0 0.25rem; }
+  .glass-badge-md { min-width: 1.125rem; height: 1.125rem; font-size: 0.75rem; padding: 0 0.3125rem; }
+
+  /* 纯小圆点（无数字） */
+  .glass-dot {
+    width: 0.5rem;
+    height: 0.5rem;
+    border-radius: 9999px;
+    border: 1px solid var(--glass-border-color);
+    background-color: color-mix(in oklab, var(--color-error) 32%, rgb(var(--glass-bg-rgb) / var(--glass-alpha-regular)));
+    box-shadow: var(--glass-inner-shadow), var(--glass-outer-shadow);
+    backdrop-filter: blur(var(--glass-blur-regular)) saturate(var(--glass-saturate-regular));
+    -webkit-backdrop-filter: blur(var(--glass-blur-regular)) saturate(var(--glass-saturate-regular));
+  }
+  html[data-theme="dracula"] .glass-dot {
+    background-color: color-mix(in oklab, var(--color-error) 42%, rgb(var(--glass-bg-rgb) / var(--glass-alpha-regular)));
+    border-color: color-mix(in oklab, var(--color-error) 36%, var(--glass-border-color));
+  }
+
+  /* 小圆点主题变体 */
+  .glass-dot-primary {
+    background-color: color-mix(in oklab, var(--color-primary) 34%, rgb(var(--glass-bg-rgb) / var(--glass-alpha-regular)));
+    border-color: color-mix(in oklab, var(--color-primary) 36%, var(--glass-border-color));
+  }
+  .glass-dot-accent {
+    background-color: color-mix(in oklab, var(--color-accent) 34%, rgb(var(--glass-bg-rgb) / var(--glass-alpha-regular)));
+    border-color: color-mix(in oklab, var(--color-accent) 36%, var(--glass-border-color));
+  }
+  /* Themed spinner (follows primary color and dark mode) */
+  .theme-spinner { 
+    border: 2px solid color-mix(in oklab, var(--color-primary) 80%, transparent);
+    border-top-color: transparent;
+    border-right-color: color-mix(in oklab, var(--color-primary) 68%, transparent);
+    border-left-color: color-mix(in oklab, var(--color-primary) 68%, transparent);
+    border-bottom-color: color-mix(in oklab, var(--color-primary) 52%, transparent);
+    border-radius: 9999px;
+    animation: spin 0.9s linear infinite;
+  }
+  html[data-theme="dracula"] .theme-spinner {
+    border: 2px solid color-mix(in oklab, var(--color-primary) 85%, transparent);
+    border-top-color: transparent;
+    border-right-color: color-mix(in oklab, var(--color-primary) 72%, transparent);
+    border-left-color: color-mix(in oklab, var(--color-primary) 72%, transparent);
+    border-bottom-color: color-mix(in oklab, var(--color-primary) 58%, transparent);
+  }
+  .theme-spinner-sm { border-width: 2px; width: 1.25rem; height: 1.25rem; }
+  .theme-spinner-md { border-width: 2px; width: 1.75rem; height: 1.75rem; }
+  .theme-spinner-lg { border-width: 3px; width: 2.5rem; height: 2.5rem; }
+  /* Chat glass theme helpers */
+  .glass-bubble {
+    background: rgb(var(--glass-bg-rgb) / var(--glass-alpha-regular));
+    border: 1px solid var(--glass-border-color);
+    backdrop-filter: blur(var(--glass-blur-regular)) saturate(var(--glass-saturate-regular)) contrast(var(--glass-contrast-regular));
+    -webkit-backdrop-filter: blur(var(--glass-blur-regular)) saturate(var(--glass-saturate-regular)) contrast(var(--glass-contrast-regular));
+    box-shadow: var(--glass-inner-shadow), var(--glass-outer-shadow);
+  }
+  .glass-bubble-mine {
+    background: color-mix(in oklab, var(--color-accent) 28%, rgb(var(--glass-bg-rgb) / var(--glass-alpha-regular)));
+    border-color: color-mix(in oklab, var(--color-accent) 55%, var(--glass-border-color));
+    color: white;
+  }
+  .glass-bubble-peer {
+    /* 同步到当前主题：浅色取 secondary，暗色下用 primary 降低橙偏色 */
+    background: color-mix(in oklab,
+      var(--color-secondary) 24%,
+      rgb(var(--glass-bg-rgb) / var(--glass-alpha-ultraThin))
+    );
+    border-color: color-mix(in oklab, var(--color-secondary) 36%, var(--glass-border-color));
+  }
+  html[data-theme="dracula"] .glass-bubble-peer {
+    background: color-mix(in oklab,
+      var(--color-primary) 22%,
+      rgb(var(--glass-bg-rgb) / var(--glass-alpha-ultraThin))
+    );
+    border-color: color-mix(in oklab, var(--color-primary) 34%, var(--glass-border-color));
+  }
+
+  .glass-attach {
+    background: rgb(var(--glass-bg-rgb) / var(--glass-alpha-ultraThin));
+    border: 1px solid var(--glass-border-color);
+    backdrop-filter: blur(var(--glass-blur-ultraThin)) saturate(var(--glass-saturate-regular)) contrast(var(--glass-contrast-regular));
+    -webkit-backdrop-filter: blur(var(--glass-blur-ultraThin)) saturate(var(--glass-saturate-regular)) contrast(var(--glass-contrast-regular));
+    box-shadow: var(--glass-inner-shadow), var(--glass-outer-shadow);
+  }
+  .glass-attach-mine {
+    background: color-mix(in oklab, var(--color-accent) 18%, rgb(var(--glass-bg-rgb) / var(--glass-alpha-ultraThin)));
+    border-color: color-mix(in oklab, var(--color-accent) 40%, var(--glass-border-color));
+  }
+  .glass-attach-peer {
+    background: color-mix(in oklab, var(--color-secondary) 16%, rgb(var(--glass-bg-rgb) / var(--glass-alpha-ultraThin)));
+    border-color: color-mix(in oklab, var(--color-secondary) 26%, var(--glass-border-color));
+  }
+  html[data-theme="dracula"] .glass-attach-peer {
+    background: color-mix(in oklab, var(--color-primary) 16%, rgb(var(--glass-bg-rgb) / var(--glass-alpha-ultraThin)));
+    border-color: color-mix(in oklab, var(--color-primary) 26%, var(--glass-border-color));
+  }
+
+  .glass-img-border { border: 1px solid var(--glass-border-color); }
   /* 表单弹窗固定尺寸（与 GlassModal size 对齐） */
   .form-modal-xs { max-width: 320px; }
   .form-modal-sm { max-width: 480px; }
@@ -371,6 +510,7 @@
   .text-muted { color: color-mix(in oklab, var(--color-base-content) 60%, transparent); }
   .text-subtle { color: color-mix(in oklab, var(--color-base-content) 45%, transparent); }
   .text-strong { color: color-mix(in oklab, var(--color-base-content) 85%, transparent); }
+  .text-theme-primary { color: var(--color-primary); }
   .bg-soft-primary { background-color: color-mix(in oklab, var(--color-primary) 15%, transparent); }
   .ring-soft-primary { box-shadow: 0 0 0 1px color-mix(in oklab, var(--color-primary) 28%, transparent) inset; }
   .hover-bg-soft { @apply transition; }
@@ -746,4 +886,18 @@
 
   .btn-variant-ghost { color: var(--color-base-content); background-color: transparent; }
   .btn-variant-ghost:hover { background-color: color-mix(in oklab, var(--color-base-content) 6%, transparent); }
+}
+
+/* 主题化进度条（展示端，遵循 retro/dracula 变量；导出端仍由 exporters 注入样式） */
+@layer utilities {
+  /* 统一使用主题语义色，避免固定色与 oklab/color-mix */
+  [data-gradient="overall"] { background-color: var(--color-secondary) !important; }
+  [data-gradient="dimension"] { background-color: var(--color-primary) !important; }
+  /* 四维度：按主题语义色映射 */
+  [data-gradient="dimension_moral"] { background-color: var(--color-warning) !important; }
+  [data-gradient="dimension_attitude"] { background-color: var(--color-accent) !important; }
+  [data-gradient="dimension_ability"] { background-color: var(--color-info) !important; }
+  [data-gradient="dimension_strategy"] { background-color: var(--color-success) !important; }
+  /* 仅运行时的 UI 覆盖：不影响导出（导出 onclone 注入 EXPORT_THEME_CSS 覆盖 data-gradient） */
+  [data-ui-gradient="dimension"] { background-color: var(--color-primary) !important; }
 }

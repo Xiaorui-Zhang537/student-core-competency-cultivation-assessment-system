@@ -76,7 +76,7 @@
                     <div class="text-sm mb-2 flex items-center gap-3" v-if="getOverall(activeItem.result)?.final_score != null">
                       <span>{{ t('teacher.aiGrading.render.final_score') }}: {{ overallScore(activeItem.result) }}</span>
                       <div class="h-2 w-64 rounded-md overflow-hidden border border-gray-300/70 dark:border-white/10 bg-gray-200/60 dark:bg-white/10 shadow-inner">
-                        <div class="h-full bg-gradient-to-r from-emerald-400 to-emerald-500 dark:from-emerald-400 dark:to-emerald-500 transition-[width] duration-700" :style="{ width: (Number(overallScore(activeItem.result))*20 || 0) + '%' }"></div>
+                        <div class="h-full transition-[width] duration-700" data-gradient="overall" :style="{ width: (Number(overallScore(activeItem.result))*20 || 0) + '%' }"></div>
                       </div>
                     </div>
                     <div class="space-y-2 mb-2" v-if="dimensionBars(activeItem.result)">
@@ -84,7 +84,7 @@
                       <div v-for="row in dimensionBars(activeItem.result)" :key="row.key" class="flex items-center gap-3">
                         <div class="w-40 text-xs text-gray-700 dark:text-gray-300">{{ row.label }}: {{ row.value }}</div>
                         <div class="h-2 flex-1 rounded-md overflow-hidden border border-gray-300/70 dark:border-white/10 bg-gray-200/60 dark:bg-white/10 shadow-inner">
-                          <div class="h-full bg-gradient-to-r from-indigo-400 to-indigo-500 dark:from-indigo-400 dark:to-indigo-500 transition-[width] duration-700" :style="{ width: (row.value*20 || 0) + '%' }"></div>
+                          <div class="h-full transition-[width] duration-700" data-gradient="dimension" :style="{ width: (row.value*20 || 0) + '%' }"></div>
                         </div>
                       </div>
                     </div>

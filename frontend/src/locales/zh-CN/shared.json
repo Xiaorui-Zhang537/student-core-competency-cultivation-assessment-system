@@ -32,6 +32,8 @@
       "retry": "重试"
     },
     "uploadLabel": "上传",
+    "download": "下载",
+    "attachment": "附件",
     "upload": {
       "uploading": "正在上传...",
       "dragTip": "拖拽文件到此处或点击上传",
@@ -166,8 +168,8 @@
         "title": "帖子标题",
         "category": "分类",
         "tags": "话题标签",
-      "tagSearch": "搜索标签...",
-      "addTags": "添加标签（回车确认）",
+        "tagSearch": "搜索标签...",
+        "addTags": "添加标签（回车确认）",
         "content": "帖子内容",
         "contentPlaceholder": "分享你的想法...",
         "images": "图片附件（可选）",
@@ -193,8 +195,8 @@
         "delete": "删除帖子",
         "comments": "{count} 条评论",
         "writeComment": "写下你的评论...",
-      "postComment": "发表评论",
-      "reply": "回复",
+        "postComment": "发表评论",
+        "reply": "回复",
         "order": "排序：",
         "orderTime": "按时间",
         "orderHot": "按热度",
@@ -358,6 +360,8 @@
     "clear": "清除",
     "confirm": "确定",
     "loading": "加载中...",
+    "loadingMessages": "正在加载消息...",
+    "loadingConversations": "正在加载会话...",
     "file": {
       "unknownSize": "未知"
     },

@@ -120,9 +120,15 @@
               (user_id = #{userId} AND sender_id = #{peerId})
               OR (user_id = #{peerId} AND sender_id = #{userId})
           )
-          <if test="courseId != null"> AND COALESCE(related_id, 0) = COALESCE(#{courseId}, 0) </if>
+          <if test="courseId != null">
+            AND (
+              related_id = #{courseId}
+              OR related_id IS NULL
+              OR related_id = 0
+            )
+          </if>
           AND type = 'message'
-        ORDER BY created_at ASC
+        ORDER BY created_at DESC
         LIMIT #{offset}, #{size}
     </select>
 
@@ -134,7 +140,13 @@
               (user_id = #{userId} AND sender_id = #{peerId})
               OR (user_id = #{peerId} AND sender_id = #{userId})
           )
-          <if test="courseId != null"> AND COALESCE(related_id, 0) = COALESCE(#{courseId}, 0) </if>
+          <if test="courseId != null">
+            AND (
+              related_id = #{courseId}
+              OR related_id IS NULL
+              OR related_id = 0
+            )
+          </if>
           AND type = 'message'
     </select>
 

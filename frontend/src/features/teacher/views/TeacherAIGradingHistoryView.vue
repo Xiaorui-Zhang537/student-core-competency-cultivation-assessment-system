@@ -43,7 +43,7 @@
                 <td class="py-2 pr-4">
                   <div v-if="hasScore(it)" class="flex items-center gap-2 w-40">
                     <div class="h-2 flex-1 rounded-md overflow-hidden border border-gray-300/70 dark:border-white/10 bg-gray-200/60 dark:bg-white/10 shadow-inner">
-                    <div class="h-full bg-gradient-to-r from-emerald-400 to-emerald-500" :style="{ width: (resolveFinalScore(it)*20)+'%' }"></div>
+                    <div class="h-full" data-gradient="overall" :style="{ width: (resolveFinalScore(it)*20)+'%' }"></div>
                     </div>
                     <span class="text-xs text-gray-700 dark:text-gray-300">{{ resolveFinalScore(it).toFixed(1) }}</span>
                   </div>
@@ -76,43 +76,45 @@
     </div>
 
     <glass-modal v-if="detail" :title="detail.fileName || '记录'" size="xl" :hideScrollbar="true" heightVariant="max" solidBody @close="detail=null">
-      <div v-if="parsed" ref="detailRef" class="grid grid-cols-1 md:grid-cols-2 gap-4" data-export-root="1">
-        <div class="card p-3 md:col-span-2">
+      <div v-if="parsed" ref="detailRef" data-export-root="1" class="space-y-4">
+        <Card padding="sm" tint="secondary">
           <h4 class="font-semibold mb-2">{{ t('teacher.aiGrading.render.overall') }}</h4>
           <div>
             <div class="text-sm mb-2 flex items-center gap-3" v-if="getOverall(parsed)?.final_score != null">
               <span>{{ t('teacher.aiGrading.render.final_score') }}: {{ overallScore(parsed) }}</span>
               <div class="h-2 w-64 rounded-md overflow-hidden border border-gray-300/70 dark:border-white/10 bg-gray-200/60 dark:bg-white/10 shadow-inner">
-                <div class="h-full bg-gradient-to-r from-emerald-400 to-emerald-500" :style="{ width: (Number(overallScore(parsed))*20 || 0) + '%' }"></div>
+                <div class="h-full" data-gradient="overall" :style="{ width: (Number(overallScore(parsed))*20 || 0) + '%' }"></div>
               </div>
             </div>
             <div class="space-y-2 mb-2" v-if="dimensionBars(parsed)">
               <div class="text-sm font-medium">{{ t('teacher.aiGrading.render.dimension_averages') }}</div>
               <div v-for="row in dimensionBars(parsed)" :key="row.key" class="flex items-center gap-3">
                 <div class="w-40 text-xs text-gray-700 dark:text-gray-300">{{ row.label }}: {{ row.value }}</div>
-                <div class="h-2 flex-1 rounded-md overflow-hidden border border-gray-300/70 dark:border白色/10 bg-gray-200/60 dark:bg白色/10 shadow-inner">
-                  <div class="h-full bg-gradient-to-r from-indigo-400 to-indigo-500" :style="{ width: (row.value*20 || 0) + '%' }"></div>
+                <div class="h-2 flex-1 rounded-md overflow-hidden border border-gray-300/70 dark:border-white/10 bg-gray-200/60 dark:bg-white/10 shadow-inner">
+                  <div class="h-full" :data-gradient="dimGradient(row.key)" :style="{ width: (row.value*20 || 0) + '%' }"></div>
                 </div>
               </div>
             </div>
             <div class="text-sm whitespace-pre-wrap">{{ t('teacher.aiGrading.render.holistic_feedback') }}: {{ overallFeedback(parsed) || (t('common.empty') || '无内容') }}</div>
           </div>
-        </div>
-        <div class="card p-3" v-if="parsed?.moral_reasoning">
+        </Card>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <Card padding="sm" tint="warning" v-if="parsed?.moral_reasoning">
           <h4 class="font-semibold mb-2">{{ t('teacher.aiGrading.render.moral_reasoning') }}</h4>
-          <div v-html="renderCriterion(parsed.moral_reasoning)"></div>
-        </div>
-        <div class="card p-3" v-if="parsed?.attitude_development">
+          <div v-html="renderCriterion(parsed.moral_reasoning, 'dimension_moral')"></div>
+        </Card>
+        <Card padding="sm" tint="accent" v-if="parsed?.attitude_development">
           <h4 class="font-semibold mb-2">{{ t('teacher.aiGrading.render.attitude_development') }}</h4>
-          <div v-html="renderCriterion(parsed.attitude_development)"></div>
-        </div>
-        <div class="card p-3" v-if="parsed?.ability_growth">
+          <div v-html="renderCriterion(parsed.attitude_development, 'dimension_attitude')"></div>
+        </Card>
+        <Card padding="sm" tint="info" v-if="parsed?.ability_growth">
           <h4 class="font-semibold mb-2">{{ t('teacher.aiGrading.render.ability_growth') }}</h4>
-          <div v-html="renderCriterion(parsed.ability_growth)"></div>
-        </div>
-        <div class="card p-3" v-if="parsed?.strategy_optimization">
+          <div v-html="renderCriterion(parsed.ability_growth, 'dimension_ability')"></div>
+        </Card>
+        <Card padding="sm" tint="success" v-if="parsed?.strategy_optimization">
           <h4 class="font-semibold mb-2">{{ t('teacher.aiGrading.render.strategy_optimization') }}</h4>
-          <div v-html="renderCriterion(parsed.strategy_optimization)"></div>
+          <div v-html="renderCriterion(parsed.strategy_optimization, 'dimension_strategy')"></div>
+        </Card>
         </div>
       </div>
       <pre v-else class="bg-black/70 text-green-100 p-3 rounded overflow-auto text-xs max-h-[60vh]">{{ pretty(detail?.rawJson) }}</pre>
@@ -127,12 +129,12 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
-import html2canvas from 'html2canvas'
-import jsPDF from 'jspdf'
+import { ref, computed, onMounted, nextTick } from 'vue'
+import { exportNodeAsPng, exportNodeAsPdf, applyExportGradientsInline } from '@/shared/utils/exporters'
 import { useI18n } from 'vue-i18n'
 import PageHeader from '@/components/ui/PageHeader.vue'
 import Button from '@/components/ui/Button.vue'
+import Card from '@/components/ui/Card.vue'
 import GlassSearchInput from '@/components/ui/inputs/GlassSearchInput.vue'
 import GlassPopoverSelect from '@/components/ui/filters/GlassPopoverSelect.vue'
 import { aiGradingApi } from '@/api/aiGrading.api'
@@ -293,15 +295,9 @@ function exportDetailAsText() {
 
 async function exportDetailAsPng() {
   if (!detailRef.value) return
-  const node = detailRef.value
-  const it = detail.value
-  const fileBase = (it?.fileName || 'grading').toString().replace(/\s+/g, '_')
-  const canvas = await html2canvas(node as HTMLElement, { backgroundColor: null, scale: 2, useCORS: true })
-  const url = canvas.toDataURL('image/png')
-  const a = document.createElement('a')
-  a.href = url
-  a.download = `${fileBase}.png`
-  a.click()
+  applyExportGradientsInline(detailRef.value)
+  const fileBase = (detail.value?.fileName || 'grading').toString().replace(/\s+/g, '_')
+  await exportNodeAsPng(detailRef.value, fileBase)
 }
 
 async function exportDetailAsPdf() {
@@ -324,30 +320,9 @@ async function exportDetailAsPdf() {
   document.body.appendChild(wrapper)
 
   // 2) 用 html2canvas 渲染整块内容（高分辨率）
-  const canvas = await html2canvas(cloned as HTMLElement, {
-    backgroundColor: '#ffffff',
-    scale: 2,
-    useCORS: true,
-    logging: false,
-    onclone: (doc) => {
-      const root = doc.querySelector('[data-export-root="1"]') as HTMLElement
-      if (root) {
-        root.style.maxHeight = 'none'
-        root.style.overflow = 'visible'
-      }
-      const scroller = doc.querySelector('[data-export-scroll="1"]') as HTMLElement
-      if (scroller) {
-        scroller.style.maxHeight = 'none'
-        scroller.style.overflow = 'visible'
-      }
-    }
-  })
-
-  // 3) 单页长图 PDF：使用画布像素尺寸作为 PDF 页面尺寸
-  const pdf = new jsPDF({ orientation: 'p', unit: 'px', format: [canvas.width, canvas.height], compress: true })
-  const imgData = canvas.toDataURL('image/png')
-  pdf.addImage(imgData, 'PNG', 0, 0, canvas.width, canvas.height, undefined, 'FAST')
-  pdf.save(`${fileBase}.pdf`)
+  applyExportGradientsInline(cloned)
+  const pdfBase = (detail.value?.fileName || 'grading').toString().replace(/\s+/g, '_')
+  await exportNodeAsPdf(cloned, pdfBase)
   document.body.removeChild(wrapper)
 }
 
@@ -394,7 +369,15 @@ function dimensionBars(obj: any): Array<{ key: string; label: string; value: num
     ]
   } catch { return null }
 }
-function renderCriterion(block: any) {
+function dimGradient(key: string): 'dimension' | 'overall' | 'dimension_moral' | 'dimension_attitude' | 'dimension_ability' | 'dimension_strategy' {
+  const k = String(key || '').toLowerCase()
+  if (k.includes('moral') || k.includes('stage') || k.includes('argument') || k.includes('foundation')) return 'dimension_moral'
+  if (k.includes('attitude') || k.includes('emotion') || k.includes('resilience') || k.includes('flow')) return 'dimension_attitude'
+  if (k.includes('ability') || k.includes('bloom') || k.includes('metacognition') || k.includes('transfer')) return 'dimension_ability'
+  if (k.includes('strategy') || k.includes('diversity') || k.includes('depth') || k.includes('regulation')) return 'dimension_strategy'
+  return 'dimension'
+}
+function renderCriterion(block: any, barKind?: 'dimension' | 'dimension_moral' | 'dimension_attitude' | 'dimension_ability' | 'dimension_strategy') {
   try {
     const sections: string[] = []
     for (const [k, v] of Object.entries(block || {})) {
@@ -402,7 +385,8 @@ function renderCriterion(block: any) {
       const score = sec?.score
       const ev = Array.isArray(sec?.evidence) ? sec.evidence : []
       const sug = Array.isArray(sec?.suggestions) ? sec.suggestions : []
-      const bar = typeof score === 'number' ? `<div class="h-2 w-40 rounded-md overflow-hidden border border-gray-300/70 dark:border-white/10 bg-gray-200/60 dark:bg-white/10 shadow-inner"><div class="h-full bg-gradient-to-r from-sky-400 to-blue-500 dark:from-sky-400 dark:to-blue-500" style="width:${score*20}%"></div></div>` : ''
+      const which = barKind || 'dimension'
+      const bar = typeof score === 'number' ? `<div class=\"h-2 w-40 rounded-md overflow-hidden border border-gray-300/70 dark:border-white/10 bg-gray-200/60 dark:bg-white/10 shadow-inner\"><div class=\"h-full\" data-gradient=\"${which}\" style=\"width:${score*20}%\"></div></div>` : ''
       const firstReasoning = (ev.find((e: any) => e && String(e.reasoning || '').trim()) || {}).reasoning || ''
       const firstConclusion = (ev.find((e: any) => e && String(e.conclusion || '').trim()) || {}).conclusion || ''
       const evid = ev

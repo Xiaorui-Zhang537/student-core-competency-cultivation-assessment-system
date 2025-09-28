@@ -150,7 +150,7 @@
               <div class="flex items-start gap-6">
                 <div class="min-w-[160px] text-center mt-6 md:mt-8">
                   <div class="text-xs text-gray-500 mb-1">{{ t('teacher.grading.ai.suggestedScore') }}</div>
-                  <div class="text-3xl font-extrabold text-blue-600 dark:text-blue-400">{{ aiSuggestion.suggestedScore }}</div>
+                  <div class="text-3xl font-extrabold text-theme-primary">{{ aiSuggestion.suggestedScore }}</div>
                   </div>
                 <div class="flex-1 grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div class="space-y-2">
@@ -189,7 +189,7 @@
                 <h4 class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{{ t('teacher.grading.ai.improvements') }}</h4>
                 <ul class="text-sm text-gray-600 dark:text-gray-400 space-y-1">
                   <li v-for="suggestion in aiSuggestion.improvements" :key="suggestion" class="flex items-start">
-                    <span class="text-blue-500 mr-2">•</span>{{ suggestion }}
+                    <span class="text-theme-primary mr-2">•</span>{{ suggestion }}
                   </li>
                 </ul>
               </div>
@@ -299,7 +299,7 @@
                    class="flex items-start space-x-4 p-4 rounded-xl glass-ultraThin" v-glass="{ strength: 'ultraThin', interactive: false }">
                 <div class="flex-shrink-0">
                   <div class="w-8 h-8 rounded-full glass-ultraThin flex items-center justify-center" v-glass="{ strength: 'ultraThin', interactive: false }">
-                    <academic-cap-icon class="w-4 h-4 text-blue-600 dark:text-blue-400" />
+                    <academic-cap-icon class="w-4 h-4 text-theme-primary" />
                   </div>
                 </div>
                 <div class="flex-1">
@@ -494,44 +494,46 @@
 
       <!-- AI 报告详情弹窗（与历史页一致的样式与渲染） -->
       <glass-modal v-if="aiDetailOpen" :title="assignment.title || (t('teacher.aiGrading.viewDetail') as string) || 'AI 能力报告'" size="xl" :hideScrollbar="true" heightVariant="max" solidBody @close="aiDetailOpen=false">
-        <div v-if="aiDetailParsed" ref="aiDetailRef" class="grid grid-cols-1 md:grid-cols-2 gap-4" data-export-root="1">
-          <Card padding="sm" tint="info" class="md:col-span-2">
+        <div v-if="aiDetailParsed" ref="aiDetailRef" data-export-root="1" class="space-y-4">
+          <Card padding="sm" tint="secondary">
             <h4 class="font-semibold mb-2">{{ t('teacher.aiGrading.render.overall') }}</h4>
             <div>
               <div class="text-sm mb-2 flex items-center gap-3" v-if="getOverall(aiDetailParsed)?.final_score != null">
                 <span>{{ t('teacher.aiGrading.render.final_score') }}: {{ overallScore(aiDetailParsed) }}</span>
-                <div class="h-2 w-64 rounded-md overflow-hidden border border-gray-300/70 dark:border-white/10 bg-gray-200/60 dark:bg-white/10 shadow-inner">
-                  <div class="h-full bg-gradient-to-r from-emerald-400 to-emerald-500" :style="{ width: ((Number(overallScore(aiDetailParsed))*20) || 0) + '%' }"></div>
-                </div>
+                  <div class="h-2 w-64 rounded-md overflow-hidden border border-gray-300/70 dark:border-white/10 bg-gray-200/60 dark:bg-white/10 shadow-inner">
+                    <div class="h-full" data-gradient="overall" :style="{ width: ((Number(overallScore(aiDetailParsed))*20) || 0) + '%' }"></div>
+                  </div>
               </div>
               <div class="space-y-2 mb-2" v-if="dimensionBars(aiDetailParsed)">
                 <div class="text-sm font-medium">{{ t('teacher.aiGrading.render.dimension_averages') }}</div>
                 <div v-for="row in dimensionBars(aiDetailParsed)" :key="row.key" class="flex items-center gap-3">
                   <div class="w-40 text-xs text-gray-700 dark:text-gray-300">{{ row.label }}: {{ row.value }}</div>
-                  <div class="h-2 flex-1 rounded-md overflow-hidden border border-gray-300/70 dark:border-white/10 bg-gray-200/60 dark:bg-white/10 shadow-inner">
-                    <div class="h-full bg-gradient-to-r from-indigo-400 to-indigo-500" :style="{ width: ((row.value*20) || 0) + '%' }"></div>
-                  </div>
+                 <div class="h-2 flex-1 rounded-md overflow-hidden border border-gray-300/70 dark:border-white/10 bg-gray-200/60 dark:bg-white/10 shadow-inner">
+                   <div class="h-full" :data-gradient="dimGradient(row.key)" :style="{ width: ((row.value*20) || 0) + '%' }"></div>
+                 </div>
                 </div>
               </div>
               <div class="text-sm whitespace-pre-wrap">{{ t('teacher.aiGrading.render.holistic_feedback') }}: {{ overallFeedback(aiDetailParsed) || (t('common.empty') || '无内容') }}</div>
             </div>
           </Card>
-          <Card padding="sm" tint="secondary" v-if="aiDetailParsed?.moral_reasoning">
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <Card padding="sm" tint="warning" v-if="aiDetailParsed?.moral_reasoning">
             <h4 class="font-semibold mb-2">{{ t('teacher.aiGrading.render.moral_reasoning') }}</h4>
-            <div v-html="renderCriterion(aiDetailParsed.moral_reasoning)"></div>
-          </Card>
-          <Card padding="sm" tint="secondary" v-if="aiDetailParsed?.attitude_development">
+             <div v-html="renderCriterion(aiDetailParsed.moral_reasoning, 'dimension_moral')"></div>
+            </Card>
+            <Card padding="sm" tint="accent" v-if="aiDetailParsed?.attitude_development">
             <h4 class="font-semibold mb-2">{{ t('teacher.aiGrading.render.attitude_development') }}</h4>
-            <div v-html="renderCriterion(aiDetailParsed.attitude_development)"></div>
-          </Card>
-          <Card padding="sm" tint="secondary" v-if="aiDetailParsed?.ability_growth">
+             <div v-html="renderCriterion(aiDetailParsed.attitude_development, 'dimension_attitude')"></div>
+            </Card>
+            <Card padding="sm" tint="info" v-if="aiDetailParsed?.ability_growth">
             <h4 class="font-semibold mb-2">{{ t('teacher.aiGrading.render.ability_growth') }}</h4>
-            <div v-html="renderCriterion(aiDetailParsed.ability_growth)"></div>
-          </Card>
-          <Card padding="sm" tint="secondary" v-if="aiDetailParsed?.strategy_optimization">
+             <div v-html="renderCriterion(aiDetailParsed.ability_growth, 'dimension_ability')"></div>
+            </Card>
+            <Card padding="sm" tint="success" v-if="aiDetailParsed?.strategy_optimization">
             <h4 class="font-semibold mb-2">{{ t('teacher.aiGrading.render.strategy_optimization') }}</h4>
-            <div v-html="renderCriterion(aiDetailParsed.strategy_optimization)"></div>
-          </Card>
+             <div v-html="renderCriterion(aiDetailParsed.strategy_optimization, 'dimension_strategy')"></div>
+            </Card>
+          </div>
         </div>
         <pre v-else class="bg-black/70 text-green-100 p-3 rounded overflow-auto text-xs max-h-[60vh]">{{ pretty(aiRawJson) }}</pre>
         <template #footer>
@@ -552,14 +554,14 @@
               <div class="flex items-center space-x-3">
                 <div class="w-12 h-12">
                   <user-avatar :avatar="submission.avatar" :size="48">
-                    <div class="w-12 h-12 rounded-full bg-blue-100 dark:bg-blue-900 flex items-center justify-center">
-                      <user-icon class="w-6 h-6 text-blue-600 dark:text-blue-400" />
+                    <div class="w-12 h-12 rounded-full" :style="{ backgroundColor: 'color-mix(in oklab, var(--color-primary) 15%, transparent)' }">
+                      <user-icon class="w-6 h-6 text-theme-primary" />
                     </div>
                   </user-avatar>
                 </div>
                 <div>
                   <h4 class="font-medium text-gray-900 dark:text-white">{{ submission.studentName }}</h4>
-                  <p class="text-sm text-gray-500 dark:text-gray-400">{{ submission.studentId }}</p>
+                  <Badge v-if="submission.mbti" size="sm" :variant="mbtiVariant">MBTI · {{ submission.mbti }}</Badge>
                 </div>
               </div>
               
@@ -567,10 +569,6 @@
                 <div>
                   <span class="text-gray-500 dark:text-gray-400">{{ t('teacher.grading.student.course') }}</span>
                   <span class="font-medium text-gray-900 dark:text-white block">{{ assignment.courseName }}</span>
-                </div>
-                <div>
-                  <span class="text-gray-500 dark:text-gray-400">{{ t('teacher.grading.student.class') }}</span>
-                  <span class="font-medium text-gray-900 dark:text-white block">{{ submission.className }}</span>
                 </div>
                 <div>
                   <span class="text-gray-500 dark:text-gray-400">{{ t('teacher.grading.student.avg') }}</span>
@@ -714,8 +712,9 @@ import GlassModal from '@/components/ui/GlassModal.vue'
 import GlassSwitch from '@/components/ui/inputs/GlassSwitch.vue'
 import GlassDateTimePicker from '@/components/ui/inputs/GlassDateTimePicker.vue'
 import SegmentedPills from '@/components/ui/SegmentedPills.vue'
-import html2canvas from 'html2canvas'
-import jsPDF from 'jspdf'
+import { exportNodeAsPng, exportNodeAsPdf, applyExportGradientsInline } from '@/shared/utils/exporters'
+import { getMbtiVariant } from '@/shared/utils/badgeColor'
+import { userApi } from '@/api/user.api'
 
 // Router and Stores
 const route = useRoute()
@@ -745,6 +744,7 @@ const submission = reactive<any>({
   id: String(route.params.submissionId || ''),
   studentId: String(route.params.studentId || ''),
   studentName: '',
+  mbti: '',
   className: '',
   submittedAt: '',
   isLate: false,
@@ -753,6 +753,8 @@ const submission = reactive<any>({
   fileName: '',
   filePath: ''
 })
+
+const mbtiVariant = computed(() => getMbtiVariant((submission as any).mbti))
 
 // AI评分建议
 const aiSuggestion = ref<any | null>(null)
@@ -812,7 +814,7 @@ function dimensionBars(obj: any): Array<{ key: string; label: string; value: num
     ]
   } catch { return null }
 }
-function renderCriterion(block: any) {
+function renderCriterion(block: any, barKind?: 'dimension' | 'dimension_moral' | 'dimension_attitude' | 'dimension_ability' | 'dimension_strategy') {
   try {
     const sections: string[] = []
     for (const [k, v] of Object.entries(block || {})) {
@@ -820,7 +822,8 @@ function renderCriterion(block: any) {
       const score = sec?.score
       const ev = Array.isArray(sec?.evidence) ? sec.evidence : []
       const sug = Array.isArray(sec?.suggestions) ? sec.suggestions : []
-      const bar = typeof score === 'number' ? `<div class=\"h-2 w-40 rounded-md overflow-hidden border border-gray-300/70 dark:border-white/10 bg-gray-200/60 dark:bg-white/10 shadow-inner\"><div class=\"h-full bg-gradient-to-r from-sky-400 to-blue-500\" style=\"width:${score*20}%\"></div></div>` : ''
+      const which = barKind || 'dimension'
+      const bar = typeof score === 'number' ? `<div class=\"h-2 w-40 rounded-md overflow-hidden border border-gray-300/70 dark:border-white/10 bg-gray-200/60 dark:bg-white/10 shadow-inner\"><div class=\"h-full\" data-gradient=\"${which}\" style=\"width:${score*20}%\"></div></div>` : ''
       const firstReasoning = (ev.find((e: any) => e && String(e.reasoning || '').trim()) || {}).reasoning || ''
       const firstConclusion = (ev.find((e: any) => e && String(e.conclusion || '').trim()) || {}).conclusion || ''
       const groupReasoning = String(firstReasoning || (sec?.reasoning || ((sec && !Array.isArray(sec?.evidence) && (sec as any).evidence?.reasoning) || '')) || '')
@@ -836,6 +839,15 @@ function renderCriterion(block: any) {
     }
     return sections.join('')
   } catch { return `<pre class=\"text-xs\">${escapeHtml(JSON.stringify(block, null, 2))}</pre>` }
+}
+// 维度条显示用主题映射（仅显示，不影响导出模板固定皮肤）
+function dimGradient(key: string): 'dimension' | 'overall' | 'dimension_moral' | 'dimension_attitude' | 'dimension_ability' | 'dimension_strategy' {
+  const k = String(key || '').toLowerCase()
+  if (k.includes('moral') || k.includes('stage') || k.includes('argument') || k.includes('foundation')) return 'dimension_moral'
+  if (k.includes('attitude') || k.includes('emotion') || k.includes('resilience') || k.includes('flow')) return 'dimension_attitude'
+  if (k.includes('ability') || k.includes('bloom') || k.includes('metacognition') || k.includes('transfer')) return 'dimension_ability'
+  if (k.includes('strategy') || k.includes('diversity') || k.includes('depth') || k.includes('regulation')) return 'dimension_strategy'
+  return 'dimension'
 }
 function escapeHtml(s: string) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\"/g,'&quot;').replace(/'/g,'&#39;') }
 
@@ -936,6 +948,15 @@ const loadSubmission = async () => {
           const name = pdata?.nickname || pdata?.name || pdata?.username
           submission.studentName = name || String(submission.studentId)
           submission.avatar = pdata?.avatar
+          submission.mbti = pdata?.mbti || pdata?.MBTI || pdata?.profile?.mbti || pdata?.profile?.MBTI || ''
+          if (!submission.mbti) {
+            try {
+              const ures: any = await userApi.getProfileById(String(submission.studentId))
+              const udata: any = (ures?.data?.data) ?? (ures?.data) ?? ures
+              const resolvedMbti = udata?.mbti || udata?.MBTI || udata?.profile?.mbti || udata?.profile?.MBTI || ''
+              if (resolvedMbti) submission.mbti = String(resolvedMbti)
+            } catch {}
+          }
         } catch {}
       }
     }
@@ -1000,11 +1021,21 @@ const loadSubmission = async () => {
       } catch {}
     }
     // 兜底头像
-    if (!submission.avatar && submission.studentId) {
+    if ((!submission.avatar || !submission.mbti) && submission.studentId) {
       try {
         const prof: any = await teacherStudentApi.getStudentProfile(String(submission.studentId))
-        if (prof && (prof as any).avatar) submission.avatar = (prof as any).avatar
+        const pdata: any = pickData(prof)
+        if (pdata?.avatar) submission.avatar = pdata.avatar
+        if (!submission.mbti) submission.mbti = pdata?.mbti || pdata?.MBTI || pdata?.profile?.mbti || pdata?.profile?.MBTI || ''
       } catch {}
+      if (!submission.mbti) {
+        try {
+          const ures: any = await userApi.getProfileById(String(submission.studentId))
+          const udata: any = (ures?.data?.data) ?? (ures?.data) ?? ures
+          const resolvedMbti = udata?.mbti || udata?.MBTI || udata?.profile?.mbti || udata?.profile?.MBTI || ''
+          if (resolvedMbti) submission.mbti = String(resolvedMbti)
+        } catch {}
+      }
     }
   } catch (error) {
     // 仅在确实没有 studentId 和 assignmentId 时提示失败；未提交路径不提示
@@ -1605,19 +1636,13 @@ function exportAiDetailAsText() {
 }
 async function exportAiDetailAsPng() {
   if (!aiDetailRef.value) return
-  const node = aiDetailRef.value
+  applyExportGradientsInline(aiDetailRef.value)
   const fileBase = (assignment.title || 'grading').toString().replace(/\s+/g, '_')
-  const canvas = await html2canvas(node as HTMLElement, { backgroundColor: null, scale: 2, useCORS: true })
-  const url = canvas.toDataURL('image/png')
-  const a = document.createElement('a')
-  a.href = url
-  a.download = `${fileBase}.png`
-  a.click()
+  await exportNodeAsPng(aiDetailRef.value, fileBase)
 }
 async function exportAiDetailAsPdf() {
   if (!aiDetailRef.value) return
   const node = aiDetailRef.value
-  const fileBase = (assignment.title || 'grading').toString().replace(/\s+/g, '_')
   const cloned = node.cloneNode(true) as HTMLElement
   const wrapper = document.createElement('div')
   wrapper.style.position = 'fixed'
@@ -1627,13 +1652,18 @@ async function exportAiDetailAsPdf() {
   wrapper.style.background = '#ffffff'
   cloned.style.maxHeight = 'none'
   cloned.style.overflow = 'visible'
+  applyExportGradientsInline(cloned)
   wrapper.appendChild(cloned)
   document.body.appendChild(wrapper)
-  const canvas = await html2canvas(cloned as HTMLElement, { backgroundColor: '#ffffff', scale: 2, useCORS: true, logging: false, onclone: (doc) => { const root = doc.querySelector('[data-export-root="1"]') as HTMLElement; if (root) { root.style.maxHeight = 'none'; root.style.overflow = 'visible' } } })
-  const pdf = new jsPDF({ orientation: 'p', unit: 'px', format: [canvas.width, canvas.height], compress: true })
-  const imgData = canvas.toDataURL('image/png')
-  pdf.addImage(imgData, 'PNG', 0, 0, canvas.width, canvas.height, undefined, 'FAST')
-  pdf.save(`${fileBase}.pdf`)
+  // 关键：强制移除 glass 容器的 backdrop-filter，避免 html2canvas 解析 oklab/oklch
+  try {
+    cloned.querySelectorAll('[v-glass], .glass-ultraThin, .glass-thin, .glass-regular, .glass-thick, .glass-ultraThick').forEach((n) => {
+      const s = (n as HTMLElement).style
+      s.backdropFilter = 'none'
+      s.setProperty('-webkit-backdrop-filter', 'none')
+    })
+  } catch {}
+  await exportNodeAsPdf(cloned, (assignment.title || 'grading').toString().replace(/\s+/g, '_'))
   document.body.removeChild(wrapper)
 }
 const downloadSingleFile = async () => {

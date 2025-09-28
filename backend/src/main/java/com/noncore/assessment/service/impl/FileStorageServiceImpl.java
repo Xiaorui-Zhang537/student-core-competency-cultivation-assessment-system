@@ -300,8 +300,13 @@ public class FileStorageServiceImpl implements FileStorageService {
             // 兼容旧数据：回退使用 related_type
             purpose = fileRecord.getRelatedType();
         }
-        // 聊天附件：发送者或接收者可访问
+        // 聊天附件：发送者或接收者可访问；若关联记录尚未建立，放宽为 relatedId == 当前用户
         if ("chat".equalsIgnoreCase(String.valueOf(purpose))) {
+            try {
+                if (Objects.equals(fileRecord.getRelatedId(), userId)) {
+                    return true;
+                }
+            } catch (Exception ignore) {}
             try {
                 int ok = chatAttachmentMapper.existsUserAccessForFile(fileId, userId);
                 if (ok > 0) return true;

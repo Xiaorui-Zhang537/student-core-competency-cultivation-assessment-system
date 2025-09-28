@@ -143,7 +143,7 @@
               <div v-for="row in dimensionRows" :key="row.code" class="flex items-center gap-3">
                 <div class="w-40 text-xs text-gray-700 dark:text-gray-300">{{ row.label }}</div>
                 <div class="h-2 flex-1 rounded-md overflow-hidden border border-gray-300/70 dark:border-white/10 bg-gray-200/60 dark:bg-white/10 shadow-inner">
-                  <div class="h-full bg-gradient-to-r from-indigo-400 to-indigo-500" :style="{ width: row.percent + '%' }"></div>
+                  <div class="h-full" data-gradient="dimension" :style="{ width: row.percent + '%' }"></div>
                 </div>
                 <div class="w-10 text-right text-xs">{{ row.value }}</div>
               </div>
@@ -156,14 +156,14 @@
 
         <!-- AI Report Detail Modal (full report, reuse teacher history rendering/export) -->
         <glass-modal v-if="aiDetailOpen" :title="i18nText('student.ability.latestReport', 'AI 能力报告（最近一次）')" size="xl" :hideScrollbar="true" heightVariant="max" solidBody @close="aiDetailOpen=false">
-          <div v-if="parsedAi" ref="aiDetailRef" class="grid grid-cols-1 md:grid-cols-2 gap-4" data-export-root="1">
-            <div class="card p-3 md:col-span-2">
+          <div v-if="parsedAi" ref="aiDetailRef" data-export-root="1" class="space-y-4">
+            <Card padding="sm" tint="secondary">
               <h4 class="font-semibold mb-2">{{ i18nText('teacher.aiGrading.render.overall', '总体') }}</h4>
               <div>
                 <div class="text-sm mb-2 flex items-center gap-3" v-if="getOverall(parsedAi)?.final_score != null">
                   <span>{{ i18nText('teacher.aiGrading.render.final_score', '最终分') }}: {{ overallScore(parsedAi) }}</span>
                   <div class="h-2 w-64 rounded-md overflow-hidden border border-gray-300/70 dark:border-white/10 bg-gray-200/60 dark:bg-white/10 shadow-inner">
-                    <div class="h-full bg-gradient-to-r from-emerald-400 to-emerald-500" :style="{ width: ((Number(overallScore(parsedAi))*20) || 0) + '%' }"></div>
+                    <div class="h-full" data-gradient="overall" :style="{ width: ((Number(overallScore(parsedAi))*20) || 0) + '%' }"></div>
                   </div>
                 </div>
                 <div class="space-y-2 mb-2" v-if="dimensionBars(parsedAi)">
@@ -171,28 +171,30 @@
                   <div v-for="row in dimensionBars(parsedAi)" :key="row.key" class="flex items-center gap-3">
                     <div class="w-40 text-xs text-gray-700 dark:text-gray-300">{{ row.label }}: {{ row.value }}</div>
                     <div class="h-2 flex-1 rounded-md overflow-hidden border border-gray-300/70 dark:border-white/10 bg-gray-200/60 dark:bg-white/10 shadow-inner">
-                      <div class="h-full bg-gradient-to-r from-indigo-400 to-indigo-500" :style="{ width: ((row.value*20) || 0) + '%' }"></div>
+                      <div class="h-full" :data-gradient="dimGradient(row.key)" :style="{ width: ((row.value*20) || 0) + '%' }"></div>
                     </div>
                   </div>
                 </div>
                 <div class="text-sm whitespace-pre-wrap">{{ i18nText('teacher.aiGrading.render.holistic_feedback', '整体反馈') }}: {{ overallFeedback(parsedAi) || (i18nText('common.empty', '无内容')) }}</div>
               </div>
-            </div>
-            <div class="card p-3" v-if="parsedAi?.moral_reasoning">
+            </Card>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <Card padding="sm" tint="warning" v-if="parsedAi?.moral_reasoning">
               <h4 class="font-semibold mb-2">{{ i18nText('teacher.aiGrading.render.moral_reasoning', '道德推理') }}</h4>
-              <div v-html="renderCriterion(parsedAi.moral_reasoning)"></div>
-            </div>
-            <div class="card p-3" v-if="parsedAi?.attitude_development">
+              <div v-html="renderCriterion(parsedAi.moral_reasoning, 'dimension_moral')"></div>
+            </Card>
+            <Card padding="sm" tint="accent" v-if="parsedAi?.attitude_development">
               <h4 class="font-semibold mb-2">{{ i18nText('teacher.aiGrading.render.attitude_development', '学习态度') }}</h4>
-              <div v-html="renderCriterion(parsedAi.attitude_development)"></div>
-            </div>
-            <div class="card p-3" v-if="parsedAi?.ability_growth">
+              <div v-html="renderCriterion(parsedAi.attitude_development, 'dimension_attitude')"></div>
+            </Card>
+            <Card padding="sm" tint="info" v-if="parsedAi?.ability_growth">
               <h4 class="font-semibold mb-2">{{ i18nText('teacher.aiGrading.render.ability_growth', '学习能力') }}</h4>
-              <div v-html="renderCriterion(parsedAi.ability_growth)"></div>
-            </div>
-            <div class="card p-3" v-if="parsedAi?.strategy_optimization">
+              <div v-html="renderCriterion(parsedAi.ability_growth, 'dimension_ability')"></div>
+            </Card>
+            <Card padding="sm" tint="success" v-if="parsedAi?.strategy_optimization">
               <h4 class="font-semibold mb-2">{{ i18nText('teacher.aiGrading.render.strategy_optimization', '学习策略') }}</h4>
-              <div v-html="renderCriterion(parsedAi.strategy_optimization)"></div>
+              <div v-html="renderCriterion(parsedAi.strategy_optimization, 'dimension_strategy')"></div>
+            </Card>
             </div>
           </div>
           <pre v-else class="bg-black/70 text-green-100 p-3 rounded overflow-auto text-xs max-h-[60vh]">{{ pretty(aiRawJson) }}</pre>
@@ -235,8 +237,7 @@ import GlassTextarea from '@/components/ui/inputs/GlassTextarea.vue'
 import Button from '@/components/ui/Button.vue'
 import { abilityApi } from '@/api/ability.api'
 import GlassModal from '@/components/ui/GlassModal.vue'
-import html2canvas from 'html2canvas'
-import jsPDF from 'jspdf'
+import { exportNodeAsPng, exportNodeAsPdf, applyExportGradientsInline } from '@/shared/utils/exporters'
 import Card from '@/components/ui/Card.vue'
 import AssignmentInfoCard from '@/features/shared/AssignmentInfoCard.vue'
 import AttachmentList from '@/features/shared/AttachmentList.vue'
@@ -685,7 +686,7 @@ function dimensionBars(obj: any): Array<{ key: string; label: string; value: num
     ]
   } catch { return null }
 }
-function renderCriterion(block: any) {
+function renderCriterion(block: any, barKind?: 'dimension' | 'dimension_moral' | 'dimension_attitude' | 'dimension_ability' | 'dimension_strategy') {
   try {
     const sections: string[] = []
     for (const [k, v] of Object.entries(block || {})) {
@@ -693,7 +694,8 @@ function renderCriterion(block: any) {
       const score = sec?.score
       const ev = Array.isArray(sec?.evidence) ? sec.evidence : []
       const sug = Array.isArray(sec?.suggestions) ? sec.suggestions : []
-      const bar = typeof score === 'number' ? `<div class="h-2 w-40 rounded-md overflow-hidden border border-gray-300/70 dark:border-white/10 bg-gray-200/60 dark:bg-white/10 shadow-inner"><div class="h-full bg-gradient-to-r from-sky-400 to-blue-500 dark:from-sky-400 dark:to-blue-500" style="width:${score*20}%"></div></div>` : ''
+      const which = barKind || 'dimension'
+      const bar = typeof score === 'number' ? `<div class=\"h-2 w-40 rounded-md overflow-hidden border border-gray-300/70 dark:border-white/10 bg-gray-200/60 dark:bg-white/10 shadow-inner\"><div class=\"h-full\" data-gradient=\"${which}\" style=\"width:${score*20}%\"></div></div>` : ''
       const firstReasoning = (ev.find((e: any) => e && String(e.reasoning || '').trim()) || {}).reasoning || ''
       const firstConclusion = (ev.find((e: any) => e && String(e.conclusion || '').trim()) || {}).conclusion || ''
       const evid = ev
@@ -709,6 +711,14 @@ function renderCriterion(block: any) {
     }
     return sections.join('')
   } catch { return `<pre class="text-xs">${escapeHtml(pretty(block))}</pre>` }
+}
+function dimGradient(key: string): 'dimension' | 'overall' | 'dimension_moral' | 'dimension_attitude' | 'dimension_ability' | 'dimension_strategy' {
+  const k = String(key || '').toLowerCase()
+  if (k.includes('moral') || k.includes('stage') || k.includes('argument') || k.includes('foundation')) return 'dimension_moral'
+  if (k.includes('attitude') || k.includes('emotion') || k.includes('resilience') || k.includes('flow')) return 'dimension_attitude'
+  if (k.includes('ability') || k.includes('bloom') || k.includes('metacognition') || k.includes('transfer')) return 'dimension_ability'
+  if (k.includes('strategy') || k.includes('diversity') || k.includes('depth') || k.includes('regulation')) return 'dimension_strategy'
+  return 'dimension'
 }
 function escapeHtml(s: string) {
   return String(s)
@@ -960,21 +970,14 @@ function exportAiDetailAsText() {
 
 async function exportAiDetailAsPng() {
   if (!aiDetailRef.value) return
-  const node = aiDetailRef.value
+  applyExportGradientsInline(aiDetailRef.value)
   const fileBase = (String((assignment.value as any)?.title || 'grading')).replace(/\s+/g, '_')
-  const canvas = await html2canvas(node as HTMLElement, { backgroundColor: null, scale: 2, useCORS: true })
-  const url = canvas.toDataURL('image/png')
-  const a = document.createElement('a')
-  a.href = url
-  a.download = `${fileBase}.png`
-  a.click()
+  await exportNodeAsPng(aiDetailRef.value, fileBase)
 }
 
 async function exportAiDetailAsPdf() {
   if (!aiDetailRef.value) return
   const node = aiDetailRef.value
-  const fileBase = (String((assignment.value as any)?.title || 'grading')).replace(/\s+/g, '_')
-
   const cloned = node.cloneNode(true) as HTMLElement
   const wrapper = document.createElement('div')
   wrapper.style.position = 'fixed'
@@ -984,32 +987,12 @@ async function exportAiDetailAsPdf() {
   wrapper.style.background = '#ffffff'
   cloned.style.maxHeight = 'none'
   cloned.style.overflow = 'visible'
+  applyExportGradientsInline(cloned)
   wrapper.appendChild(cloned)
   document.body.appendChild(wrapper)
-
-  const canvas = await html2canvas(cloned as HTMLElement, {
-    backgroundColor: '#ffffff',
-    scale: 2,
-    useCORS: true,
-    logging: false,
-    onclone: (doc) => {
-      const root = doc.querySelector('[data-export-root="1"]') as HTMLElement
-      if (root) {
-        root.style.maxHeight = 'none'
-        root.style.overflow = 'visible'
-      }
-      const scroller = doc.querySelector('[data-export-scroll="1"]') as HTMLElement
-      if (scroller) {
-        scroller.style.maxHeight = 'none'
-        scroller.style.overflow = 'visible'
-      }
-    }
-  })
-
-  const pdf = new jsPDF({ orientation: 'p', unit: 'px', format: [canvas.width, canvas.height], compress: true })
-  const imgData = canvas.toDataURL('image/png')
-  pdf.addImage(imgData, 'PNG', 0, 0, canvas.width, canvas.height, undefined, 'FAST')
-  pdf.save(`${fileBase}.pdf`)
+  const fileBase = (String((assignment.value as any)?.title || 'grading')).replace(/\s+/g, '_')
+  await exportNodeAsPdf(cloned, fileBase)
   document.body.removeChild(wrapper)
 }
 </script>
+

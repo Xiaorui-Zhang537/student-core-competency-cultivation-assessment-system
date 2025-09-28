@@ -36,9 +36,13 @@ public class TeacherContactsServiceImpl implements TeacherContactsService {
             if (students == null || students.isEmpty()) continue;
             List<TeacherContactsResponse.Person> persons = new ArrayList<>();
             for (User u : students) {
+                final String nick = u.getNickname();
+                final String guessName = (nick != null && !nick.isBlank()) ? nick : u.getUsername();
                 persons.add(TeacherContactsResponse.Person.builder()
                         .id(u.getId())
                         .username(u.getUsername())
+                        .nickname(nick)
+                        .displayName(guessName)
                         .avatar(u.getAvatar())
                         .build());
             }

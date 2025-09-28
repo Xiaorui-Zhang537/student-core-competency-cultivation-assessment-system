@@ -1,12 +1,15 @@
 <template>
   <div class="notification-bell" v-click-outside="closeDropdown">
     <!-- 触发器：支持自定义；默认使用 RippleButton(icon) -->
-    <span ref="btnRef">
+    <span ref="btnRef" class="relative inline-flex">
       <slot name="trigger" :toggle="toggleDropdown">
         <ripple-button icon :title="t('notifications.title') as string" @click="toggleDropdown">
           <bell-icon class="w-4 h-4" />
         </ripple-button>
       </slot>
+      <span v-if="unreadCount > 0" class="absolute -top-1 -right-1 glass-badge glass-badge-xs glass-badge-error text-[10px] leading-none px-[6px]">
+        {{ Math.min(unreadCount as any, 99) }}
+      </span>
     </span>
 
     <!-- 下拉通知面板 -->
@@ -92,10 +95,10 @@
                     </p>
                   </div>
 
-                  <!-- 未读指示器 -->
+                  <!-- 未读指示器：主题玻璃小圆点（使用 accent 以与 bell 匹配） -->
                   <div
                     v-if="!notification.isRead"
-                    class="w-2 h-2 bg-blue-500 rounded-full flex-shrink-0 mt-2"
+                    class="glass-dot glass-dot-accent flex-shrink-0 mt-2"
                   ></div>
                 </div>
               </div>
