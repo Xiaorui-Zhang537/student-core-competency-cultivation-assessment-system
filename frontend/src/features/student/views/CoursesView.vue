@@ -1,8 +1,8 @@
 <template>
-  <div class="p-6 bg-gray-50">
+  <div class="p-6">
     <PageHeader :title="t('student.courses.title')" :subtitle="t('student.courses.subtitle')">
       <template #actions>
-        <Button variant="glass" @click="showCourseStore = true">
+        <Button variant="primary" @click="showCourseStore = true">
           <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" /></svg>
           {{ t('student.courses.browse') }}
         </Button>
@@ -18,7 +18,7 @@
 
     <!-- Search and Filter (aligned with Assignments FilterBar) -->
     <div class="mb-8">
-      <FilterBar class="glass-thin rounded-full">
+      <FilterBar tint="secondary" class="rounded-full">
         <template #left>
           <div class="flex items-center gap-4">
             <div class="w-auto flex items-center gap-2">
@@ -29,6 +29,7 @@
                   :options="[{ label: t('student.courses.allCategories') as string, value: '' }, ...categoryOptions]"
                   size="sm"
                   :placeholder="t('student.courses.allCategories') as string"
+                  tint="primary"
                 />
               </div>
             </div>
@@ -39,6 +40,7 @@
                   v-model="selectedStatus"
                   :options="statusFilterOptions"
                   size="sm"
+                  tint="accent"
                 />
               </div>
             </div>
@@ -49,6 +51,7 @@
                   v-model="difficultyOrder"
                   :options="difficultyOrderOptions"
                   size="sm"
+                  tint="secondary"
                 />
               </div>
             </div>
@@ -56,7 +59,7 @@
         </template>
         <template #right>
           <div class="relative w-56 ml-auto">
-            <GlassSearchInput v-model="searchQuery" :placeholder="t('student.courses.searchPlaceholder') as string" size="sm" @keyup.enter="applyImmediateSearch()" />
+            <GlassSearchInput v-model="searchQuery" :placeholder="t('student.courses.searchPlaceholder') as string" size="sm" tint="info" @keyup.enter="applyImmediateSearch()" />
           </div>
         </template>
       </FilterBar>
@@ -66,10 +69,10 @@
     <div v-if="!pageLoaded" class="text-center py-12">
       <p>{{ t('student.courses.loading') }}</p>
     </div>
-    <Card v-else-if="filteredCourses.length === 0" class="text-center py-12">
+    <Card v-else-if="filteredCourses.length === 0" class="text-center py-12" tint="info">
       <h3 class="text-lg font-medium">{{ t('student.courses.emptyTitle') }}</h3>
       <p class="text-gray-500 mt-2">{{ t('student.courses.emptyDesc') }}</p>
-      <Button class="mt-4" variant="glass" @click="showCourseStore = true">{{ t('student.courses.goStore') }}</Button>
+      <Button class="mt-4" variant="primary" @click="showCourseStore = true">{{ t('student.courses.goStore') }}</Button>
     </Card>
     <div v-else class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
       <Card
@@ -78,6 +81,7 @@
         class="overflow-hidden cursor-pointer group rounded-2xl"
         padding="none"
         :hoverable="true"
+        tint="primary"
         @click="enterCourse(course)"
       >
         <div class="relative h-48 rounded-2xl overflow-hidden">
@@ -87,7 +91,7 @@
                class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300 rounded-2xl"
                @error="coverErrorMap[String(course.id)] = true"
           />
-          <div v-else class="w-full h-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center">
+          <div v-else class="w-full h-full bg-gradient-to-br from-[var(--color-primary)] to-[var(--color-accent)] flex items-center justify-center">
             <span class="text-4xl font-bold text-white">{{ (course.title || '').charAt(0) }}</span>
           </div>
           <div class="absolute bottom-0 left-0 right-0 bg-black bg-opacity-50 p-4">
@@ -95,15 +99,19 @@
               <span>{{ t('student.courses.progressLabel') }}</span>
               <span>{{ (Number(course.progress) || 0).toFixed(0) }}%</span>
             </div>
-            <div class="w-full bg-gray-200 rounded-full h-1.5"><div class="bg-blue-600 h-1.5 rounded-full" :style="{ width: `${Number(course.progress || 0)}%` }"></div></div>
+            <Progress
+              :value="Number(course.progress || 0)"
+              size="sm"
+              :color="Number(course.progress || 0) >= 100 ? 'success' : 'primary'"
+            />
           </div>
         </div>
         <div class="p-6">
           <h3 class="text-lg font-semibold line-clamp-2 mb-2">{{ course.title }}</h3>
-          <p class="text-gray-600 text-sm mb-4 line-clamp-2">{{ course.description }}</p>
+          <p class="text-muted text-sm mb-4 line-clamp-2">{{ course.description }}</p>
           <div class="flex items-center justify-between text-sm">
-            <span class="text-gray-500">{{ t('student.courses.instructor') }}: {{ course.teacherName }}</span>
-            <span class="font-medium" :class="course.progress === 100 ? 'text-green-600' : 'text-blue-600'">
+            <span class="text-muted">{{ t('student.courses.instructor') }}: {{ course.teacherName }}</span>
+            <span class="font-medium" :class="course.progress === 100 ? 'text-[var(--color-success)]' : 'text-[var(--color-primary)]'">
               {{ course.progress === 100 ? t('student.courses.statusCompleted') : t('student.courses.statusOngoing') }}
             </span>
           </div>
@@ -112,7 +120,7 @@
     </div>
 
     <!-- Course Store Modal (GlassModal) -->
-    <GlassModal v-if="showCourseStore" :title="t('student.courses.storeTitle') as string" maxWidth="max-w-xl" heightVariant="tall" @close="showCourseStore=false">
+    <GlassModal v-if="showCourseStore" :title="t('student.courses.storeTitle') as string" size="md" heightVariant="tall" solidBody @close="showCourseStore=false">
       <div class="overflow-y-auto" style="max-height:70vh;">
         <div v-if="courseStore.loading" class="text-center"><p>{{ t('student.courses.loading') }}</p></div>
         <div v-else class="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -158,6 +166,7 @@ import PageHeader from '@/components/ui/PageHeader.vue'
 import FilterBar from '@/components/ui/filters/FilterBar.vue'
 import GlassModal from '@/components/ui/GlassModal.vue'
 import GlassSearchInput from '@/components/ui/inputs/GlassSearchInput.vue'
+import Progress from '@/components/ui/Progress.vue'
 import { AcademicCapIcon, CheckCircleIcon, ChartBarIcon } from '@heroicons/vue/24/outline'
 
 const router = useRouter();

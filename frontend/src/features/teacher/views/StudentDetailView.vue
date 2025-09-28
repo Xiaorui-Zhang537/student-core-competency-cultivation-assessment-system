@@ -5,52 +5,50 @@
       <div class="mb-8">
         <nav class="flex items-center space-x-2 text-sm text-gray-500 dark:text-gray-400 mb-2">
           <router-link to="/teacher/courses" class="cursor-pointer pointer-events-auto hover:text-gray-700 dark:hover:text-gray-200">{{ t('teacher.courses.breadcrumb') }}</router-link>
-          <ChevronRightIcon class="w-4 h-4 pointer-events-none" />
+          <chevron-right-icon class="w-4 h-4 pointer-events-none" />
           <template v-if="route.query.courseId && route.query.courseTitle">
             <router-link :to="`/teacher/courses/${route.query.courseId}`" class="cursor-pointer pointer-events-auto hover:text-gray-700 dark:hover:text-gray-200">{{ String(route.query.courseTitle) }}</router-link>
-            <ChevronRightIcon class="w-4 h-4 pointer-events-none" />
+            <chevron-right-icon class="w-4 h-4 pointer-events-none" />
             <router-link :to="`/teacher/courses/${route.query.courseId}/students`" class="cursor-pointer pointer-events-auto hover:text-gray-700 dark:hover:text-gray-200">{{ t('teacher.students.breadcrumb.self') }}</router-link>
-            <ChevronRightIcon class="w-4 h-4 pointer-events-none" />
+            <chevron-right-icon class="w-4 h-4 pointer-events-none" />
           </template>
           <span class="font-medium text-gray-900 dark:text-white">{{ studentName }}</span>
         </nav>
-        <PageHeader :title="t('teacher.studentDetail.title', { name: studentName })" :subtitle="''" />
+        <page-header :title="t('teacher.studentDetail.title', { name: studentName })" :subtitle="''" />
       </div>
 
-      <div v-if="gradeStore.loading" class="text-center card p-8">
-          <p>{{ t('teacher.studentDetail.loading') }}</p>
-            </div>
-      
-      <div v-else class="space-y-8">
+      <div class="space-y-8">
           <!-- Profile Card + Actions -->
-          <div class="card p-5 flex items-center justify-between">
-            <div class="flex items-center gap-4">
-              <div class="w-14 h-14 rounded-full overflow-hidden bg-gray-200">
-                <img v-if="profile.avatar" :src="profile.avatar" class="w-full h-full object-cover" />
+          <Card padding="md" tint="info">
+            <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:gap-6">
+              <div class="flex items-center gap-4 min-w-0">
+                <user-avatar v-if="profile.avatar" :avatar="profile.avatar" :size="56" :rounded="true" :fit="'cover'" />
+                <div class="min-w-0">
+                  <div class="flex items-center gap-3">
+                    <span class="text-xl font-semibold truncate">{{ studentName }}</span>
+                    <Badge v-if="profile.mbti" size="sm" :variant="mbtiVariant">MBTI · {{ profile.mbti }}</Badge>
+                  </div>
+                 </div>
               </div>
-              <div>
-                <div class="text-xl font-semibold">{{ studentName }}</div>
-                <div class="text-sm text-gray-500">{{ profile.email || '-' }}</div>
+              <div class="flex items-center gap-2 sm:ml-auto">
+                <Button variant="primary" size="sm" @click="contactStudent">
+                  <chat-bubble-left-right-icon class="w-4 h-4 mr-1" />
+                  {{ t('teacher.studentDetail.actions.contact') }}
+                </Button>
+                <Button variant="info" size="sm" @click="viewOverview">
+                  <chart-pie-icon class="w-4 h-4 mr-1" />
+                  {{ t('teacher.studentDetail.actions.overview') }}
+                </Button>
+                <Button variant="outline" size="sm" @click="exportGrades">
+                  <arrow-down-tray-icon class="w-4 h-4 mr-1" />
+                  {{ t('teacher.studentDetail.actions.export') }}
+                </Button>
               </div>
             </div>
-            <div class="flex items-center gap-2">
-              <Button variant="primary" size="sm" @click="contactStudent">
-                <ChatBubbleLeftRightIcon class="w-4 h-4 mr-1" />
-                {{ t('teacher.studentDetail.actions.contact') }}
-              </Button>
-              <Button variant="info" size="sm" @click="viewOverview">
-                <ChartPieIcon class="w-4 h-4 mr-1" />
-                {{ t('teacher.studentDetail.actions.overview') }}
-              </Button>
-              <Button variant="outline" size="sm" @click="exportGrades">
-                <ArrowDownTrayIcon class="w-4 h-4 mr-1" />
-                {{ t('teacher.studentDetail.actions.export') }}
-              </Button>
-            </div>
-          </div>
+          </Card>
 
           <!-- Student Profile Info (Read-only) -->
-          <div class="card p-5">
+          <Card padding="md" tint="secondary">
             <h3 class="text-lg font-semibold mb-4">{{ t('shared.profile.section.profileInfo') || '个人信息' }}</h3>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
@@ -66,12 +64,15 @@
                 <p class="text-sm">{{ profile.studentNo || '-' }}</p>
               </div>
               <div>
-                <label class="block text-sm font-medium mb-1">MBTI</label>
-                <p class="text-sm">{{ profile.mbti || t('shared.profile.status.notSet') }}</p>
-              </div>
-              <div>
                 <label class="block text-sm font-medium mb-1">{{ t('shared.profile.fields.gender') }}</label>
                 <p class="text-sm">{{ profile.gender ? t('shared.profile.genders.' + String(profile.gender).toLowerCase()) : t('shared.profile.status.notSet') }}</p>
+              </div>
+              <div>
+                <label class="block text-sm font-medium mb-1">{{ t('shared.profile.fields.mbti') || 'MBTI' }}</label>
+                <div class="text-sm">
+                  <Badge v-if="profile.mbti" size="sm" :variant="mbtiVariant">{{ profile.mbti }}</Badge>
+                  <span v-else>{{ t('shared.profile.status.notSet') }}</span>
+                </div>
               </div>
               <div>
                 <label class="block text-sm font-medium mb-1">{{ t('shared.profile.fields.school') }}</label>
@@ -102,32 +103,32 @@
                 <p class="text-sm">{{ profile.city || t('shared.profile.status.notSet') }}</p>
               </div>
             </div>
-          </div>
+          </Card>
           
           <!-- Course Filter (glass, keep original position) -->
-          <div class="card p-4 flex items-center gap-3 whitespace-nowrap">
-            <label class="text-sm text-gray-600 whitespace-nowrap">{{ t('teacher.studentDetail.filter.label') }}</label>
-            <GlassPopoverSelect
+          <Card padding="sm" tint="accent" class="flex items-center gap-3 whitespace-nowrap">
+            <label class="text-sm text-gray-600 whitespace-nowrap pr-2">{{ t('teacher.studentDetail.filter.label') }}</label>
+            <glass-popover-select
               v-model="selectedCourseId"
               :options="[{ label: t('teacher.studentDetail.filter.all') as string, value: '' }, ...studentCourses.map((c:any)=>({ label: String(c.title||c.id), value: String(c.id) }))]"
               size="sm"
               width="18rem"
               @change="onCourseChange"
             />
-          </div>
+          </Card>
           <!-- 关键指标（四卡一行，根据课程筛选变化） -->
           <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
-            <StartCard :label="t('teacher.studentDetail.stats.graded') as string" :value="gradedAssignmentsCount" tone="blue" :icon="DocumentTextIcon" />
-            <StartCard :label="t('teacher.studentDetail.stats.average') as string" :value="averageScore.toFixed(1)" tone="amber" :icon="StarIcon" />
-            <StartCard :label="t('teacher.studentDetail.stats.completionRate') || '完成率(%)'" :value="formatPercent(selectedCourseId ? courseProgress : profile.completionRate)" tone="emerald" :icon="ChartPieIcon" />
-            <StartCard :label="t('teacher.studentDetail.stats.lastActive') || '最近活跃'" :value="formatDateTime(profile.lastAccessTime)" tone="sky" :icon="ChatBubbleLeftRightIcon" />
+            <start-card :label="t('teacher.studentDetail.stats.graded') as string" :value="gradedAssignmentsCount" tone="blue" :icon="DocumentTextIcon" />
+            <start-card :label="t('teacher.studentDetail.stats.average') as string" :value="averageScore.toFixed(1)" tone="amber" :icon="StarIcon" />
+            <start-card :label="t('teacher.studentDetail.stats.completionRate') || '完成率(%)'" :value="formatPercent(selectedCourseId ? courseProgress : profile.completionRate)" tone="emerald" :icon="ChartPieIcon" />
+            <start-card :label="t('teacher.studentDetail.stats.lastActive') || '最近活跃'" :value="formatDateTime(profile.lastAccessTime)" tone="sky" :icon="ChatBubbleLeftRightIcon" />
           </div>
 
           <!-- 最近学习 + 能力雷达（左右并排） -->
           <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div class="card p-5">
+            <Card padding="md" tint="info">
               <div class="flex items-center gap-2 mb-4">
-                <DocumentTextIcon class="w-5 h-5 text-indigo-600" />
+                <document-text-icon class="w-5 h-5 text-indigo-600" />
                 <h3 class="text-lg font-semibold">{{ t('teacher.studentDetail.recentStudy') || '最近学习' }}</h3>
               </div>
               <div class="space-y-3">
@@ -156,23 +157,23 @@
                   <div class="text-sm text-gray-500">{{ t('common.empty') || '暂无数据' }}</div>
                 </template>
               </div>
-            </div>
+            </Card>
 
-            <div class="card p-5">
+            <Card padding="md" tint="secondary">
               <div class="flex items-center justify-between mb-2">
                 <div class="flex items-center gap-2">
-                  <ChartPieIcon class="w-5 h-5 text-emerald-600" />
+                  <chart-pie-icon class="w-5 h-5 text-emerald-600" />
                   <h3 class="text-lg font-semibold">{{ t('teacher.studentDetail.radar.title') || '能力雷达' }}</h3>
                 </div>
                 <Button size="sm" variant="outline" @click="viewOverview">{{ t('teacher.studentDetail.radar.viewInsights') || '查看洞察' }}</Button>
               </div>
-              <RadarChart :indicators="radarIndicators" :series="radarSeries" :height="'300px'" />
-            </div>
+              <radar-chart :indicators="radarIndicators" :series="radarSeries" :height="'300px'" />
+            </Card>
           </div>
 
           <!-- 风险预警与个性化建议 -->
           <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div class="card p-5">
+            <Card padding="md" tint="warning">
               <h3 class="text-lg font-semibold mb-3">{{ t('teacher.studentDetail.alerts.title') || '风险预警' }}</h3>
               <div v-if="alerts.length===0" class="text-sm text-gray-500">{{ t('common.none') || '暂无' }}</div>
               <ul v-else class="space-y-2">
@@ -181,8 +182,8 @@
                   <span class="text-sm">{{ a.message }}</span>
                 </li>
               </ul>
-            </div>
-            <div class="card p-5">
+            </Card>
+            <Card padding="md" tint="success">
               <h3 class="text-lg font-semibold mb-3">{{ t('teacher.studentDetail.recommendations.title') || '个性化建议' }}</h3>
               <div v-if="recommendations.length===0" class="text-sm text-gray-500">{{ t('common.empty') || '暂无数据' }}</div>
               <div v-else class="space-y-3">
@@ -196,14 +197,14 @@
                   </div>
                 </div>
               </div>
-            </div>
+            </Card>
           </div>
           
           <!-- Grades Table (aligned with students management table style) -->
-          <div class="card overflow-x-auto glass-regular glass-interactive">
+          <Card padding="lg" tint="info" class="overflow-x-auto">
             <div class="card-header py-5 px-6 flex items-center justify-between">
               <div class="flex items-center gap-2">
-                <AcademicCapIcon class="w-5 h-5 text-indigo-600" />
+                <academic-cap-icon class="w-5 h-5 text-indigo-600" />
                 <h2 class="text-xl font-semibold leading-tight text-gray-900 dark:text-white">{{ t('teacher.studentDetail.table.title') }}</h2>
                 <span class="ml-2 text-sm text-gray-500">
                   {{ t('teacher.studentDetail.stats.graded') }}: {{ gradedAssignmentsCount }} · {{ t('teacher.studentDetail.stats.average') }}: {{ averageScore.toFixed(1) }}
@@ -211,11 +212,14 @@
               </div>
               <div class="flex items-center gap-3">
                 <span class="text-sm text-gray-500 dark:text-gray-400">{{ t('teacher.students.table.total', { count: total }) }}</span>
+                <span v-if="gradeStore.loading" class="text-xs text-gray-400">{{ t('teacher.studentDetail.loading') }}</span>
               </div>
             </div>
             <div class="border-b border-gray-200 dark:border-gray-700 mx-6"></div>
             <div class="pt-5 px-6 pb-4">
-            <table class="min-w-full divide-y divide-white/10 text-left">
+            <div class="rounded-xl overflow-hidden border border-white/10">
+              <div v-if="gradeStore.loading" class="text-center p-6 text-sm text-gray-500">{{ t('teacher.studentDetail.loading') }}</div>
+              <table class="min-w-full divide-y divide-white/10 text-left">
               <thead class="bg-transparent">
                 <tr>
                   <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">{{ t('teacher.studentDetail.table.assignment') }}</th>
@@ -235,18 +239,18 @@
                   <td class="px-6 py-4">{{ grade.teacherName }}</td>
                   <td class="px-6 py-4">{{ formatDate(grade.gradedAt) }}</td>
                   <td class="px-6 py-4">
-                    <span :class="grade.isPublished ? 'inline-block px-2 py-0.5 rounded text-xs bg-green-100 text-green-800' : 'inline-block px-2 py-0.5 rounded text-xs bg-yellow-100 text-yellow-800'">
+                    <Badge :variant="grade.isPublished ? 'success' : 'warning'" size="sm">
                       {{ grade.isPublished ? t('teacher.studentDetail.table.published') : t('teacher.studentDetail.table.unpublished') }}
-                    </span>
+                    </Badge>
                   </td>
                   <td class="px-6 py-4">
                     <div class="flex items-center justify-end gap-2">
                       <Button variant="outline" size="sm" @click="viewSubmissions(grade)">
-                        <DocumentTextIcon class="w-4 h-4 mr-1" />
+                        <document-text-icon class="w-4 h-4 mr-1" />
                         {{ t('teacher.studentDetail.actions.viewSubmissions') }}
                       </Button>
                       <Button variant="teal" size="sm" @click="goRegrade(grade)">
-                        <PencilSquareIcon class="w-4 h-4 mr-1" />
+                        <pencil-square-icon class="w-4 h-4 mr-1" />
                         {{ t('teacher.studentDetail.actions.regrade') }}
                       </Button>
                     </div>
@@ -254,20 +258,21 @@
                 </tr>
               </tbody>
             </table>
+            </div>
             <div v-if="grades.length === 0" class="text-center p-8">
               <p>{{ t('teacher.studentDetail.table.empty') }}</p>
             </div>
             <!-- Pagination aligned with students management -->
             <div class="mt-6"></div>
             </div>
-          </div>
+          </Card>
       </div>
 
       <!-- 独立分页行（在卡片外，且不额外包容器） -->
       <div class="px-6 py-3 flex items-center justify-between whitespace-nowrap">
         <div class="flex items-center gap-2 whitespace-nowrap">
           <span class="text-sm text-gray-700 dark:text-gray-300 whitespace-nowrap">{{ t('teacher.assignments.pagination.perPagePrefix') }}</span>
-          <GlassPopoverSelect
+          <glass-popover-select
             v-model="pageSize as any"
             :options="[{label:'10',value:10},{label:'20',value:20},{label:'50',value:50}]"
             size="sm"
@@ -290,7 +295,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue';
+import { onMounted, computed, ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useGradeStore } from '@/stores/grade';
 
@@ -307,6 +312,11 @@ import RadarChart from '@/components/charts/RadarChart.vue'
 import { teacherApi } from '@/api/teacher.api'
 import PageHeader from '@/components/ui/PageHeader.vue'
 import GlassPopoverSelect from '@/components/ui/filters/GlassPopoverSelect.vue'
+import Card from '@/components/ui/Card.vue'
+import Badge from '@/components/ui/Badge.vue'
+import { getMbtiVariant } from '@/shared/utils/badgeColor'
+import { userApi } from '@/api/user.api'
+import UserAvatar from '@/components/ui/UserAvatar.vue'
 const route = useRoute();
 const router = useRouter();
 const gradeStore = useGradeStore();
@@ -320,6 +330,7 @@ const chat = useChatStore()
 const studentName = ref(route.query.name as string || (t('teacher.students.table.student') as string));
 
 const profile = ref<any>({})
+const mbtiVariant = computed(() => getMbtiVariant((profile.value as any)?.mbti))
 const recentLessons = ref<Array<{lessonId:number;lessonTitle:string;courseId:number;courseTitle:string;studiedAt:any}>>([])
 const recentEvents = ref<Array<{eventType:string; title?:string; courseId?:number; courseTitle?:string; occurredAt:any; durationSeconds?:number; link?:string}>>([])
 const radarIndicators = ref<Array<{name:string;max:number}>>([])
@@ -513,7 +524,31 @@ onMounted(async () => {
     if (sid) {
         studentId.value = sid;
         try {
-          profile.value = await teacherStudentApi.getStudentProfile(sid)
+          const res = await teacherStudentApi.getStudentProfile(sid)
+          const data: any = (res as any)?.data?.data ?? (res as any)?.data ?? (res as any)
+          profile.value = {
+            ...data,
+            mbti: data?.mbti || data?.MBTI || data?.profile?.mbti || data?.profile?.MBTI || ''
+          }
+          try { (window as any).__studentDetailProfile = { source: 'teacherStudentApi', raw: res, data: profile.value } } catch {}
+          // 若教师端学生资料未包含 mbti，则回退到通用用户资料接口补齐
+          if (!profile.value.mbti) {
+            try {
+              const ures: any = await userApi.getProfileById(String(sid))
+              const udata: any = (ures?.data?.data) ?? (ures?.data) ?? ures
+              if (udata) {
+                const resolvedMbti = udata?.mbti || udata?.MBTI || udata?.profile?.mbti || udata?.profile?.MBTI || ''
+                if (resolvedMbti) {
+                  profile.value.mbti = String(resolvedMbti)
+                }
+                // 兜底补齐常用展示字段（不覆盖已有）
+                if (!profile.value.nickname && udata?.nickname) profile.value.nickname = udata.nickname
+                if (!profile.value.username && udata?.username) profile.value.username = udata.username
+                if (!profile.value.name && (udata?.name || (udata?.lastName || '') + (udata?.firstName || ''))) profile.value.name = udata.name || ((udata?.lastName || '') + (udata?.firstName || ''))
+              }
+              try { (window as any).__studentDetailProfileFallback = { source: 'userApi', raw: ures, data: udata, merged: profile.value } } catch {}
+            } catch {}
+          }
           if (profile.value && (profile.value as any).name) {
             studentName.value = (profile.value as any).name
           }

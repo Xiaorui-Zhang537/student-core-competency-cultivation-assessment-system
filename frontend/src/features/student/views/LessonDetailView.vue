@@ -4,14 +4,14 @@
     <nav class="mb-4 relative z-10">
       <ol class="flex items-center space-x-2 text-sm">
         <li>
-          <router-link to="/student/courses" class="text-gray-500 hover:text-blue-600">{{ t('student.courses.title') }}</router-link>
+          <router-link to="/student/courses" class="text-[var(--color-neutral-content)] hover:text-[var(--color-primary)]">{{ t('student.courses.title') }}</router-link>
         </li>
-        <li v-if="lesson?.courseId"><span class="text-gray-400">&gt;</span></li>
+        <li v-if="lesson?.courseId"><span class="text-[color-mix(in_oklab,var(--color-base-content)_45%,transparent)]">&gt;</span></li>
         <li v-if="lesson?.courseId">
-          <router-link :to="`/student/courses/${lesson.courseId}`" class="text-gray-500 hover:text-blue-600">{{ courseTitle }}</router-link>
+          <router-link :to="`/student/courses/${lesson.courseId}`" class="text-[var(--color-neutral-content)] hover:text-[var(--color-primary)]">{{ courseTitle }}</router-link>
         </li>
-        <li><span class="text-gray-400">&gt;</span></li>
-        <li class="font-medium text-gray-700 truncate">{{ lesson?.title }}</li>
+        <li><span class="text-[color-mix(in_oklab,var(--color-base-content)_45%,transparent)]">&gt;</span></li>
+        <li class="font-medium text-[var(--color-base-content)] truncate">{{ lesson?.title }}</li>
       </ol>
     </nav>
     <div v-if="loading" class="text-center py-12">{{ t('student.courses.loading') }}</div>
@@ -19,46 +19,46 @@
     <div v-else class="grid grid-cols-1 lg:grid-cols-4 gap-6">
       <!-- 目录 -->
       <aside class="lg:col-span-1">
-        <Card padding="sm" class="max-h-[70vh] overflow-auto" v-glass>
+        <card padding="sm" class="max-h-[70vh] overflow-auto" tint="secondary">
           <h3 class="text-sm font-semibold mb-2">{{ t('student.courses.detail.contents') }}</h3>
           <div class="space-y-2">
             <div v-for="group in groupedChapters" :key="group.key" class="glass-ultraThin border rounded-xl">
               <div class="px-2 py-2.5 flex items-center justify-between cursor-pointer select-none" @click="toggleChapter(group.key)">
-                <div class="text-sm font-semibold text-gray-700 truncate pl-2">{{ group.title }}</div>
-                <svg v-if="isExpanded(group.key)" class="w-4 h-4 text-gray-500" viewBox="0 0 20 20" fill="currentColor"><path d="M5.23 12.21a.75.75 0 001.06.02L10 8.73l3.71 3.5a.75.75 0 001.04-1.08l-4.23-4a.75.75 0 00-1.04 0l-4.25 4a.75.75 0 00-.02 1.06z"/></svg>
-                <svg v-else class="w-4 h-4 text-gray-500" viewBox="0 0 20 20" fill="currentColor"><path d="M14.77 7.79a.75.75 0 00-1.06-.02L10 11.27 6.29 7.77a.75.75 0 00-1.04 1.08l4.23 4a.75.75 0 001.04 0l4.25-4a.75.75 0 00.02-1.06z"/></svg>
+                <div class="text-sm font-semibold text-[var(--color-base-content)] truncate pl-2">{{ group.title }}</div>
+                <svg v-if="isExpanded(group.key)" class="w-4 h-4" style="color: color-mix(in oklab, var(--color-base-content) 55%, transparent)" viewBox="0 0 20 20" fill="currentColor"><path d="M5.23 12.21a.75.75 0 001.06.02L10 8.73l3.71 3.5a.75.75 0 001.04-1.08l-4.23-4a.75.75 0 00-1.04 0l-4.25 4a.75.75 0 00.02 1.06z"/></svg>
+                <svg v-else class="w-4 h-4" style="color: color-mix(in oklab, var(--color-base-content) 55%, transparent)" viewBox="0 0 20 20" fill="currentColor"><path d="M14.77 7.79a.75.75 0 00-1.06-.02L10 11.27 6.29 7.77a.75.75 0 00-1.04 1.08l4.23 4a.75.75 0 001.04 0l4.25-4a.75.75 0 00.02-1.06z"/></svg>
               </div>
               <ul v-show="isExpanded(group.key)" class="px-2 pb-2 space-y-1">
                 <li v-for="(it, idx) in group.items" :key="it.id">
-                  <router-link :to="`/student/lessons/${it.id}`" class="flex items-center gap-2 text-sm p-2 rounded-xl hover:bg-black/5 transition"
-                    :class="{ 'font-semibold text-primary-600 bg-primary-50 ring-1 ring-primary-200 rounded-xl': String(it.id)===String(lesson.id) }">
-                    <span class="inline-flex items-center justify-center w-5 h-5 rounded-full text-white text-[11px] font-medium"
-                          :class="getLessonProgress(it.id) >= 100 ? 'bg-green-500' : 'bg-blue-400'">
+                  <router-link :to="`/student/lessons/${it.id}`" class="flex items-center gap-2 text-sm p-2 rounded-xl transition hover:bg-[color-mix(in_oklab,var(--color-base-content)_6%,transparent)]"
+                    :class="{ 'font-semibold text-[var(--color-primary)] bg-[color-mix(in_oklab,var(--color-primary)_15%,transparent)] ring-1 ring-[color-mix(in_oklab,var(--color-primary)_28%,transparent)] rounded-xl': String(it.id)===String(lesson.id) }">
+                    <span class="inline-flex items-center justify-center w-5 h-5 rounded-full text-[11px] font-medium"
+                          :class="getLessonProgress(it.id) >= 100 ? 'text-[var(--color-success-content)] bg-[color-mix(in_oklab,var(--color-success)_80%,transparent)]' : 'text-[var(--color-primary-content)] bg-[color-mix(in_oklab,var(--color-primary)_70%,transparent)]'">
                       <template v-if="getLessonProgress(it.id) >= 100">✓</template>
                       <template v-else>{{ idx + 1 }}</template>
                     </span>
                     <span class="truncate flex-1">{{ it.title }}</span>
                     <span class="ml-2 shrink-0">
-                      <ProgressCircle :value="getLessonProgress(it.id)" :size="18" :stroke="3" :show-label="false" />
+                      <progress-circle :value="getLessonProgress(it.id)" :size="18" :stroke="3" :show-label="false" />
                     </span>
               </router-link>
             </li>
           </ul>
             </div>
           </div>
-        </Card>
+        </card>
       </aside>
 
       <!-- 主体 -->
       <section class="lg:col-span-3">
         <!-- 本节说明（右上进度圈并入，去除额外顶部空白） -->
-        <Card padding="md" class="space-y-2 mt-0" v-glass>
+        <card padding="md" class="space-y-2 mt-0" tint="primary">
           <h4 class="font-medium mb-4">{{ t('student.courses.detail.sectionIntro') || '本节说明' }}</h4>
-          <p class="text-sm text-gray-700 whitespace-pre-line">{{ lesson.content || lesson.description || '-' }}</p>
-        </Card>
+          <p class="text-sm whitespace-pre-line" style="color: color-mix(in oklab, var(--color-base-content) 75%, transparent)">{{ lesson.content || lesson.description || '-' }}</p>
+        </card>
 
         <!-- 视频 -->
-        <Card padding="md" class="space-y-4 mt-4" v-glass>
+        <card padding="md" class="space-y-4 mt-4" tint="accent">
           <h4 class="font-medium mb-4">{{ t('student.lesson.videoTitle') || '视频' }}</h4>
           <div v-if="lesson.videoUrl" class="relative z-10" @click="onVideoClick" style="cursor: pointer;">
             <div class="aspect-video w-full rounded overflow-hidden relative">
@@ -84,26 +84,26 @@
             </div>
             <div v-if="videoError" class="mt-2 text-sm text-red-600">{{ videoError }}</div>
           </div>
-        </Card>
+        </card>
 
         <!-- 资料 -->
-        <Card padding="md" class="space-y-3 mt-4" v-glass>
+        <card padding="md" class="space-y-3 mt-4" tint="info">
           <h4 class="font-medium mb-4">{{ t('student.lesson.materialsTitle') || t('student.courses.detail.materials') }}</h4>
             <template v-if="materials.length">
               <ul class="space-y-3">
                 <li v-for="f in materials" :key="f.id">
                   <div class="space-y-2">
-                    <DocumentViewer :file="f" />
+                    <document-viewer :file="f" />
                     <div :data-fid="String(f.id)" :ref="makeFileSentinelRef(String(f.id))" style="height:1px;"></div>
                   </div>
                 </li>
               </ul>
             </template>
-            <p v-else class="text-sm text-gray-500">{{ t('student.courses.detail.noMaterials') }}</p>
-        </Card>
+            <p v-else class="text-sm" style="color: color-mix(in oklab, var(--color-base-content) 60%, transparent)">{{ t('student.courses.detail.noMaterials') }}</p>
+        </card>
 
         <!-- 关联作业 -->
-        <Card padding="md" class="mt-4 space-y-3" v-glass>
+        <card padding="md" class="mt-4 space-y-3" tint="warning">
           <div class="flex items-center justify-between mb-4">
             <h4 class="font-medium">{{ t('student.assignments.title') || '关联作业' }}</h4>
           </div>
@@ -112,7 +112,7 @@
               <li v-for="a in relatedAssignments" :key="a.id" class="flex items-center justify-between p-3 rounded-xl border glass-ultraThin">
                 <div class="min-w-0">
                   <div class="font-medium truncate">{{ a.title }}</div>
-                  <div class="text-xs text-gray-500 mt-0.5">
+                  <div class="text-xs mt-0.5" style="color: color-mix(in oklab, var(--color-base-content) 60%, transparent)">
                     {{ t('student.assignments.due') }}{{ formatDate(a.dueDate || a.dueAt) || '-' }}
                   </div>
                 </div>
@@ -127,13 +127,13 @@
               </li>
             </ul>
           </template>
-          <p v-else class="text-sm text-gray-500">{{ t('student.assignments.empty') || '本小节暂无关联作业' }}</p>
-        </Card>
+          <p v-else class="text-sm" style="color: color-mix(in oklab, var(--color-base-content) 60%, transparent)">{{ t('student.assignments.empty') || '本小节暂无关联作业' }}</p>
+        </card>
 
         <!-- 笔记 -->
-        <Card padding="md" class="mt-4" v-glass>
+        <card padding="md" class="mt-4" tint="secondary">
           <h4 class="font-medium mb-4">{{ t('student.courses.note') || '学习笔记' }}</h4>
-          <GlassTextarea v-model="notes" :rows="4" :placeholder="t('student.courses.notePh') || '记录你的要点...'" />
+          <glass-textarea v-model="notes" :rows="4" :placeholder="t('student.courses.notePh') || '记录你的要点...'" />
           <div class="mt-2 flex justify-end">
             <Button size="sm" variant="purple" :loading="saving" @click="saveNotes">
               <template #icon>
@@ -142,7 +142,7 @@
               {{ t('student.courses.save') || '保存' }}
             </Button>
           </div>
-        </Card>
+        </card>
       </section>
     </div>
   </div>

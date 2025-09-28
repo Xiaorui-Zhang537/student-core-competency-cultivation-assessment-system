@@ -22,7 +22,7 @@
       <!-- Left Column: Assignments and Courses -->
       <div class="lg:col-span-2 space-y-8">
         <!-- Upcoming Assignments -->
-        <div class="p-6 glass-regular rounded-lg shadow" v-glass="{ strength: 'regular', interactive: true }">
+        <Card padding="md" tint="warning">
           <h2 class="text-xl font-semibold mb-4">{{ t('student.dashboard.upcomingAssignments') }}</h2>
           <div v-if="upcomingAssignments.length > 0" class="space-y-3">
             <div v-for="assignment in upcomingAssignments" :key="assignment.id" class="p-3 glass-thin rounded flex justify-between items-center" v-glass="{ strength: 'thin', interactive: false }">
@@ -34,10 +34,10 @@
             </div>
           </div>
           <p v-else class="text-gray-500">{{ t('student.dashboard.noUpcoming') }}</p>
-        </div>
+        </Card>
 
         <!-- Active Courses -->
-        <div class="p-6 glass-regular rounded-lg shadow" v-glass="{ strength: 'regular', interactive: true }">
+        <Card padding="md" tint="secondary">
           <h2 class="text-xl font-semibold mb-4">{{ t('student.dashboard.activeCourses') }}</h2>
           <div v-if="activeCourses.length > 0" class="space-y-3">
             <div v-for="course in activeCourses" :key="course.id" class="p-3 glass-thin rounded flex justify-between items-center" v-glass="{ strength: 'thin', interactive: false }">
@@ -49,19 +49,19 @@
             </div>
           </div>
           <p v-else class="text-gray-500">{{ t('student.dashboard.noCourses') }}</p>
-        </div>
+        </Card>
       </div>
 
       <!-- Right Column: Grades and Progress -->
       <div class="space-y-8">
         <!-- Overall Progress -->
-        <div class="p-6 glass-regular rounded-lg shadow text-center" v-glass="{ strength: 'regular', interactive: true }">
+        <Card padding="md" tint="accent" class="text-center">
           <h2 class="text-xl font-semibold mb-4">{{ t('student.dashboard.overallProgress') }}</h2>
           <div class="text-4xl font-bold text-primary-600">{{ overallProgress }}%</div>
-        </div>
+        </Card>
 
         <!-- Recent Grades -->
-        <div class="p-6 glass-regular rounded-lg shadow" v-glass="{ strength: 'regular', interactive: true }">
+        <Card padding="md" tint="info">
           <h2 class="text-xl font-semibold mb-4">{{ t('student.dashboard.recentGrades') }}</h2>
           <div v-if="recentGrades.length > 0" class="space-y-3">
             <div v-for="(grade, index) in recentGrades" :key="index" class="p-3 glass-thin rounded flex justify-between items-center" v-glass="{ strength: 'thin', interactive: false }">
@@ -73,14 +73,14 @@
             </div>
           </div>
           <p v-else class="text-gray-500">{{ t('student.dashboard.noRecentGrades') }}</p>
-        </div>
+        </Card>
       </div>
     </div>
      <!-- Empty State -->
-    <div v-else class="text-center py-12 glass-regular rounded-lg shadow" v-glass="{ strength: 'regular', interactive: true }">
-        <h3 class="text-lg font-medium">{{ t('student.dashboard.errorTitle') }}</h3>
-        <p class="text-gray-500">{{ t('student.dashboard.errorDesc') }}</p>
-    </div>
+    <Card v-else padding="md" tint="info" class="text-center py-12">
+      <h3 class="text-lg font-medium">{{ t('student.dashboard.errorTitle') }}</h3>
+      <p class="text-gray-500">{{ t('student.dashboard.errorDesc') }}</p>
+    </Card>
   </div>
 </template>
 
@@ -92,6 +92,7 @@ import { useI18n } from 'vue-i18n'
 import StartCard from '@/components/ui/StartCard.vue'
 import { AcademicCapIcon, ClipboardDocumentListIcon, StarIcon, ClockIcon } from '@heroicons/vue/24/outline'
 import PageHeader from '@/components/ui/PageHeader.vue'
+import Card from '@/components/ui/Card.vue'
 import { useSubmissionStore } from '@/stores/submission'
 import Button from '@/components/ui/Button.vue'
 

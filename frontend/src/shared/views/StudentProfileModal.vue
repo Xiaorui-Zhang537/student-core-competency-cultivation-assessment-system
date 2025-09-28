@@ -1,14 +1,14 @@
 <template>
-  <GlassModal v-if="open" :title="modalTitle" maxWidth="max-w-xl" height-variant="large" :backdrop-dark="false" @close="$emit('close')">
+  <glass-modal v-if="open" :title="modalTitle" size="md" height-variant="large" :backdrop-dark="false" solidBody @close="$emit('close')">
     <div class="flex items-start gap-4">
-      <UserAvatar :avatar="userAvatar || profile?.avatar" :size="80" :alt="displayName">
+      <user-avatar :avatar="userAvatar || profile?.avatar" :size="80" :alt="displayName">
         <span class="text-2xl font-medium text-gray-600">{{ displayName.charAt(0) || '#' }}</span>
-      </UserAvatar>
+      </user-avatar>
       <div class="min-w-0 flex-1">
         <div class="flex items-center gap-2 flex-wrap">
           <h3 class="text-xl font-semibold truncate">{{ displayName }}</h3>
-          <Badge v-if="profile?.mbti" size="sm" :variant="mbtiVariant">MBTI: {{ profile.mbti }}</Badge>
-          <Badge v-if="profile?.grade" size="sm" variant="success">{{ profile.grade }}</Badge>
+          <badge v-if="profile?.mbti" size="sm" :variant="mbtiVariant">MBTI: {{ profile.mbti }}</badge>
+          <badge v-if="profile?.grade" size="sm" variant="success">{{ profile.grade }}</badge>
         </div>
         <p v-if="profile?.bio" class="mt-1 text-sm text-gray-600 line-clamp-3">{{ profile.bio }}</p>
       </div>
@@ -25,7 +25,7 @@
       <div v-if="profile?.nickname"><span class="text-gray-500">昵称：</span>{{ profile.nickname }}</div>
       <div v-if="profile?.email">
         <span class="text-gray-500">{{ t('student.courses.detail.email') || '邮箱' }}：</span>{{ profile.email }}
-        <Badge v-if="profile?.emailVerified" size="sm" variant="success" class="ml-2">{{ t('common.verified') || '已验证' }}</Badge>
+        <badge v-if="profile?.emailVerified" size="sm" variant="success" class="ml-2">{{ t('common.verified') || '已验证' }}</badge>
       </div>
       <div v-if="profile?.phone"><span class="text-gray-500">{{ t('student.courses.detail.phone') || '电话' }}：</span>{{ profile.phone }}</div>
       <div v-if="profile?.school"><span class="text-gray-500">{{ t('student.courses.detail.school') || '学校' }}：</span>{{ profile.school }}</div>
@@ -41,7 +41,7 @@
       <Button variant="outline" @click="$emit('close')">{{ t('common.close') || '关闭' }}</Button>
       <Button variant="primary" :disabled="!userId" @click="contact">{{ t('student.courses.detail.contact') || '联系TA' }}</Button>
     </template>
-  </GlassModal>
+  </glass-modal>
 </template>
 
 <script setup lang="ts">

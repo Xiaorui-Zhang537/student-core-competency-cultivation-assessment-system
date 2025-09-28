@@ -66,10 +66,16 @@ apiClient.interceptors.response.use(
       const suppressLog = cfg && cfg.suppressLog === true;
       switch (status) {
         case 401:
-          if (window.location.pathname !== '/auth/login') {
-            localStorage.removeItem('token');
-            window.location.href = '/auth/login';
-          }
+          try { localStorage.removeItem('token'); } catch {}
+          try {
+            const p = window.location.pathname || ''
+            // 处于任何 /auth/* 来客页时，不要强制跳回 /auth/login，避免“忘记密码/注册”被打断
+            if (!/^\/?auth(\/|$)/i.test(p)) {
+              if (p !== '/auth/login') {
+                window.location.href = '/auth/login'
+              }
+            }
+          } catch {}
           break;
         default:
           if (!suppressLog) {

@@ -31,6 +31,7 @@
       "failed": "发送失败",
       "retry": "重试"
     },
+    "uploadLabel": "上传",
     "upload": {
       "uploading": "正在上传...",
       "dragTip": "拖拽文件到此处或点击上传",

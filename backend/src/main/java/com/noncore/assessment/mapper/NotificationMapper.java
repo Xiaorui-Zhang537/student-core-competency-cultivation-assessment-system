@@ -194,8 +194,16 @@ public interface NotificationMapper {
     List<Notification> selectConversationBetween(@Param("userId") Long userId,
                                                  @Param("peerId") Long peerId,
                                                  @Param("offset") int offset,
-                                                 @Param("size") Integer size);
+                                                 @Param("size") Integer size,
+                                                 @Param("courseId") Long courseId);
 
     Integer countConversationBetween(@Param("userId") Long userId,
-                                     @Param("peerId") Long peerId);
+                                     @Param("peerId") Long peerId,
+                                     @Param("courseId") Long courseId);
+
+    /**
+     * 设置通知所属会话ID
+     */
+    int setConversationId(@Param("id") Long notificationId,
+                          @Param("conversationId") Long conversationId);
 } 

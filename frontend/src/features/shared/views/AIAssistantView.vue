@@ -2,16 +2,16 @@
   <div class="relative">
     <div class="min-h-screen p-4 md:p-6">
       <div class="max-w-6xl mx-auto mb-4 md:mb-6">
-        <PageHeader :title="t('teacher.ai.title')" :subtitle="t('teacher.ai.subtitle')" />
+        <page-header :title="t('teacher.ai.title')" :subtitle="t('teacher.ai.subtitle')" />
       </div>
 
       <div class="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-12 gap-4">
-        <aside class="md:col-span-4 lg:col-span-4 xl:col-span-3 filter-container p-4 space-y-4 rounded-xl" v-glass="{ strength: 'thin', interactive: false }">
+        <aside class="md:col-span-4 lg:col-span-4 xl:col-span-3 filter-container p-4 space-y-4 rounded-xl glass-tint-secondary" v-glass="{ strength: 'thin', interactive: false }">
           <div>
             <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">{{ t('common.search') || '搜索' }}</label>
             <div class="flex items-center gap-2">
               <div class="flex-1 min-w-0">
-                <GlassSearchInput v-model="q" :placeholder="t('common.search') || '搜索会话'" />
+                <glass-search-input v-model="q" :placeholder="t('common.search') || '搜索会话'" />
               </div>
               <Button size="sm" variant="primary" icon="plus" class="whitespace-nowrap shrink-0" @click="newConv">{{ t('common.new') || '新建' }}</Button>
             </div>
@@ -23,43 +23,47 @@
               <span class="text-xs text-gray-500">{{ conversations.length }}</span>
             </div>
             <div class="divide-y divide-gray-100 dark:divide-gray-700 rounded-lg border border-gray-100 dark:border-gray-700 overflow-hidden max-h-[50vh] overflow-y-auto">
-              <button v-for="c in conversations" :key="c.id"
-                      class="w-full text-left px-3 py-2 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
-                      :class="activeConversationId === c.id ? 'bg-gray-50 dark:bg-gray-700/50' : ''"
-                      @click="open(c.id)">
-                <div class="flex items-center justify-between gap-3">
-                  <div class="min-w-0">
+              <Button
+                v-for="c in conversations"
+                :key="c.id"
+                variant="menu"
+                class="w-full px-2 py-3 text-left transition-colors rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700/50 min-h-[64px] focus:outline-none focus:ring-0 focus-visible:ring-0 focus:ring-offset-0"
+                :class="activeConversationId === c.id ? 'conv-selected' : ''"
+                @click="open(c.id)"
+              >
+                <div class="flex flex-col gap-1">
+                  <div class="flex items-center gap-3">
                     <div class="truncate font-medium">{{ c.title || (t('teacher.ai.untitled') || '未命名会话') }}</div>
-                    <div class="text-xs text-gray-500 truncate" v-if="c.model">{{ c.model }}</div>
+                    <div class="flex items-center gap-2 shrink-0 ml-auto">
+                      <Button variant="ghost" size="xs" class="text-base-content/70 hover:text-base-content" :title="t('common.rename') || '重命名'" @click.stop="rename(c)">
+                        <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                          <path d="M12 20h9"/>
+                          <path d="M16.5 3.5l4 4-11 11H5.5v-4.5l11-10.5z"/>
+                        </svg>
+                      </Button>
+                      <Button variant="ghost" size="xs" :class="c.pinned ? 'theme-primary' : 'text-base-content/60 hover:text-base-content'" :title="c.pinned ? (t('common.unpin') || '取消置顶') : (t('common.pin') || '置顶')" @click.stop="pin(c, !c.pinned)">
+                        <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+                          <path :fill="c.pinned ? 'currentColor' : 'none'" d="M12 17l-5.878 3.09 1.123-6.545L2.49 8.91l6.561-.953L12 2l2.949 5.957 6.561.953-4.755 4.635 1.123 6.545z"/>
+                        </svg>
+                      </Button>
+                      <Button variant="danger" size="xs" :title="t('common.delete') || '删除'" @click.stop="remove(c.id)">
+                        <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+                          <polyline points="3 6 5 6 21 6"/>
+                          <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>
+                          <path d="M10 11v6M14 11v6M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/>
+                        </svg>
+                      </Button>
+                    </div>
                   </div>
-                  <div class="flex items-center gap-2 shrink-0">
-                    <Button variant="ghost" size="xs" :title="t('common.rename') || '重命名'" @click.stop="rename(c)">
-                      <svg class="w-4 h-4 text-gray-600 dark:text-gray-300" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M12 20h9"/>
-                        <path d="M16.5 3.5l4 4-11 11H5.5v-4.5l11-10.5z"/>
-                      </svg>
-                    </Button>
-                    <Button variant="ghost" size="xs" :title="c.pinned ? (t('common.unpin') || '取消置顶') : (t('common.pin') || '置顶')" @click.stop="pin(c, !c.pinned)">
-                      <svg class="w-4 h-4" :class="c.pinned ? 'text-primary-600' : 'text-gray-500 dark:text-gray-400'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
-                        <path :fill="c.pinned ? 'currentColor' : 'none'" d="M12 17l-5.878 3.09 1.123-6.545L2.49 8.91l6.561-.953L12 2l2.949 5.957 6.561.953-4.755 4.635 1.123 6.545z"/>
-                      </svg>
-                    </Button>
-                    <Button variant="danger" size="xs" :title="t('common.delete') || '删除'" @click.stop="remove(c.id)">
-                      <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
-                        <polyline points="3 6 5 6 21 6"/>
-                        <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>
-                        <path d="M10 11v6M14 11v6M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/>
-                      </svg>
-                    </Button>
-                  </div>
+                  <div class="text-xs text-gray-500 truncate" v-if="c.model">{{ c.model }}</div>
                 </div>
-              </button>
+              </Button>
             </div>
           </div>
 
           <div class="space-y-2">
             <h3 class="text-sm font-semibold text-gray-700 dark:text-gray-200">{{ t('teacher.ai.model.title') || '模型' }}</h3>
-            <GlassPopoverSelect
+            <glass-popover-select
               v-model="model"
               :options="[
                 { label: 'DeepSeek V3.1', value: 'deepseek/deepseek-chat-v3.1' },
@@ -74,9 +78,9 @@
             <h3 class="text-sm font-semibold text-gray-700 dark:text-gray-200">{{ t('teacher.ai.memory') || '长期记忆' }}</h3>
             <div class="flex items-center gap-2">
               <label class="text-xs text-gray-500">{{ t('common.enable') || '启用' }}</label>
-              <GlassSwitch v-model="memory.enabled" size="sm" @update:modelValue="saveMemory" />
+              <glass-switch v-model="memory.enabled" size="sm" @update:modelValue="saveMemory" />
             </div>
-            <GlassTextarea v-model="memory.content" :rows="4" :disabled="!memory.enabled" :placeholder="t('teacher.ai.memoryPlaceholder') || '个性化偏好、口吻等...'" @blur="saveMemory" />
+            <glass-textarea v-model="memory.content" :rows="4" :disabled="!memory.enabled" :placeholder="t('teacher.ai.memoryPlaceholder') || '个性化偏好、口吻等...'" @blur="saveMemory" />
           </div>
 
           <div class="space-y-3 text-xs text-gray-600 dark:text-gray-300 rounded-lg p-3 border border-gray-100 dark:border-gray-700/60" v-glass="{ strength: 'ultraThin', interactive: false }">
@@ -89,7 +93,7 @@
           </div>
         </aside>
 
-        <section class="md:col-span-8 lg:col-span-8 xl:col-span-9 glass-thick glass-interactive rounded-2xl border border-gray-200/40 dark:border-gray-700/40 overflow-hidden" v-glass="{ strength: 'thick', interactive: true }">
+        <section class="md:col-span-8 lg:col-span-8 xl:col-span-9 glass-thick glass-interactive glass-tint-primary rounded-2xl border border-gray-200/40 dark:border-gray-700/40 overflow-hidden" v-glass="{ strength: 'thick', interactive: true }">
           <div class="px-4 py-3 border-b border-white/25 dark:border-white/10 bg-transparent">
             <div class="flex items-center justify-between">
               <div class="min-w-0">
@@ -110,7 +114,7 @@
             </div>
           </div>
           <div class="border-t border-white/25 dark:border-white/10 p-3 bg-transparent flex items-center gap-3">
-            <GlassTextarea
+            <glass-textarea
               v-model="draft"
               @keydown.enter.exact.prevent="send"
               :rows="3"
@@ -137,16 +141,22 @@
         </section>
       </div>
       <!-- Rename Modal -->
-      <div v-if="showRename" class="fixed inset-0 z-50 flex items-center justify-center bg-black/30">
-        <div class="w-full max-w-sm card p-4">
-          <h3 class="text-base font-semibold mb-3">{{ t('teacher.ai.renameTitle') || '重命名对话' }}</h3>
-          <GlassInput v-model="renameTitle" class="mb-4" :placeholder="t('common.rename') || '请输入新的标题'" />
-          <div class="flex justify-end gap-2">
-            <Button size="sm" variant="secondary" @click="showRename=false">{{ t('common.cancel') || '取消' }}</Button>
-            <Button size="sm" variant="primary" @click="confirmRename">{{ t('teacher.courses.actions.save') || '保存' }}</Button>
-          </div>
-        </div>
-      </div>
+      <GlassModal
+        v-if="showRename"
+        :title="(t('teacher.ai.renameTitle') as string) || '重命名对话'"
+        :backdropDark="false"
+        blur="sm"
+        clarity="default"
+        maxWidth="max-w-[1040px]"
+        heightVariant="normal"
+        @close="showRename=false"
+      >
+        <glass-input v-model="renameTitle" class="mb-4" :placeholder="t('common.rename') || '请输入新的标题'" />
+        <template #footer>
+          <Button size="sm" variant="secondary" @click="showRename=false">{{ t('common.cancel') || '取消' }}</Button>
+          <Button size="sm" variant="primary" @click="confirmRename">{{ t('teacher.courses.actions.save') || '保存' }}</Button>
+        </template>
+      </GlassModal>
     </div>
   </div>
 </template>
@@ -164,6 +174,8 @@ import GlassSearchInput from '@/components/ui/inputs/GlassSearchInput.vue'
 import GlassTextarea from '@/components/ui/inputs/GlassTextarea.vue'
 import GlassInput from '@/components/ui/inputs/GlassInput.vue'
 import GlassSwitch from '@/components/ui/inputs/GlassSwitch.vue'
+import Card from '@/components/ui/Card.vue'
+import GlassModal from '@/components/ui/GlassModal.vue'
 
 const { t } = useI18n()
 const ai = useAIStore()
@@ -291,8 +303,12 @@ const onTextareaInput = () => {}
   @apply bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700;
 }
 .input {
-  @apply w-full rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500;
+  @apply w-full rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-base-content px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500;
 }
+/* 会话条目选中：柔和加深背景，不使用阴影 */
+.conv-selected { background-color: color-mix(in oklab, var(--color-base-200) 28%, transparent); }
+/* 主题主色文本（避免硬编码蓝色） */
+.theme-primary { color: rgb(var(--color-primary)); }
 </style>
 
 

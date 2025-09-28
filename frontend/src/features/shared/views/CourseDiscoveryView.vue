@@ -1,11 +1,11 @@
 <template>
-  <div class="min-h-screen bg-gray-50 dark:bg-gray-900">
+  <div class="min-h-screen">
     <!-- 页面头部 -->
     <div class="bg-white dark:bg-gray-800 shadow-sm">
       <div class="max-w-7xl mx-auto px-4 py-6">
         <div class="flex flex-col md:flex-row md:items-center md:justify-between">
           <div class="w-full">
-            <PageHeader :title="t('shared.discovery.title') || '课程发现'" :subtitle="t('shared.discovery.subtitle') || '发现优质课程，开启学习之旅'" />
+            <page-header :title="t('shared.discovery.title') || '课程发现'" :subtitle="t('shared.discovery.subtitle') || '发现优质课程，开启学习之旅'" />
           </div>
           
           <!-- 搜索框 -->
@@ -27,7 +27,7 @@
 
     <div class="max-w-7xl mx-auto px-4 py-8">
       <!-- 分类导航 -->
-      <div class="mb-8">
+      <div class="mb-8 p-4 glass-regular glass-tint-secondary rounded-2xl" v-glass>
         <h2 class="text-xl font-semibold text-gray-900 dark:text-white mb-4">课程分类</h2>
         <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-4">
           <div
@@ -47,9 +47,9 @@
       </div>
 
       <!-- 热门课程 -->
-      <div class="mb-8">
+      <div class="mb-8 p-4 glass-regular glass-tint-primary rounded-2xl" v-glass>
         <div class="flex items-center justify-between mb-6">
-          <h2 class="text-xl font-semibold text-gray-900 dark:text-white">热门课程</h2>
+          <h2 class="text-xl font-semibold text-base-content">热门课程</h2>
           <Button variant="secondary" size="sm" icon="arrow-right" @click="viewAllPopular">查看全部</Button>
         </div>
 
@@ -118,9 +118,9 @@
       </div>
 
       <!-- 推荐课程 -->
-      <div class="mb-8">
+      <div class="mb-8 p-4 glass-regular glass-tint-accent rounded-2xl" v-glass>
         <div class="flex items-center justify-between mb-6">
-          <h2 class="text-xl font-semibold text-gray-900 dark:text-white">为您推荐</h2>
+          <h2 class="text-xl font-semibold text-base-content">为您推荐</h2>
           <Button variant="secondary" size="sm" icon="arrow-right" @click="refreshRecommended">换一批</Button>
         </div>
 
@@ -187,9 +187,9 @@
       </div>
 
       <!-- 分类课程列表 -->
-      <div v-if="selectedCategory" class="mb-8">
+      <div v-if="selectedCategory" class="mb-8 p-4 glass-regular glass-tint-info rounded-2xl" v-glass>
         <div class="flex items-center justify-between mb-6">
-          <h2 class="text-xl font-semibold text-gray-900 dark:text-white">
+          <h2 class="text-xl font-semibold text-base-content">
             {{ selectedCategory.name }}课程
           </h2>
           <Button variant="secondary" size="sm" icon="close" @click="clearCategoryFilter">清除筛选</Button>
@@ -418,7 +418,7 @@ onMounted(() => {
 }
 
 .category-name {
-  @apply text-sm font-medium text-gray-900 dark:text-white text-center mb-1;
+  @apply text-sm font-medium text-base-content text-center mb-1;
 }
 
 .category-count {
@@ -446,7 +446,7 @@ onMounted(() => {
 }
 
 .course-title {
-  @apply font-semibold text-gray-900 dark:text-white mb-2 line-clamp-2 leading-tight;
+  @apply font-semibold text-base-content mb-2 line-clamp-2 leading-tight;
 }
 
 .course-instructor {

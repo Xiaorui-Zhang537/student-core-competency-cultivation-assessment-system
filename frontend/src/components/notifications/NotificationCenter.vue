@@ -31,12 +31,12 @@
       <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">{{ t('notifications.subtitle') }}</p>
 
       <!-- 过滤器容器：保留下方三个过滤器，横向一排 -->
-      <div class="mt-4 rounded-lg p-3 glass-thin" v-glass="{ strength: 'thin', interactive: false }">
+      <liquid-glass class="mt-4 p-3" containerClass="rounded-lg">
         <div class="flex flex-wrap items-center gap-4">
           <div class="w-auto flex items-center gap-2">
             <span class="text-xs font-medium leading-tight text-gray-700 dark:text-gray-300">{{ t('notifications.filters.type') }}</span>
             <div class="w-36">
-              <GlassPopoverSelect
+              <glass-popover-select
                 v-model="filters.type"
                 :options="[
                   { label: t('notifications.filters.all') as string, value: '' },
@@ -55,7 +55,7 @@
           <div class="w-auto flex items-center gap-2">
             <span class="text-xs font-medium leading-tight text-gray-700 dark:text-gray-300">{{ t('notifications.filters.status') }}</span>
             <div class="w-32">
-              <GlassPopoverSelect
+              <glass-popover-select
                 :options="[
                   { label: t('notifications.filters.all') as string, value: 'all' },
                   { label: t('notifications.status.unread') as string, value: 'unread' },
@@ -71,7 +71,7 @@
           <div class="w-auto flex items-center gap-2">
             <span class="text-xs font-medium leading-tight text-gray-700 dark:text-gray-300">{{ t('notifications.filters.priority') }}</span>
             <div class="w-28">
-              <GlassPopoverSelect
+              <glass-popover-select
                 v-model="filters.priority"
                 :options="[
                   { label: t('notifications.filters.all') as string, value: '' },
@@ -93,7 +93,7 @@
             </Button>
           </div>
         </div>
-      </div>
+      </liquid-glass>
     </div>
 
     <!-- 通知列表 -->
@@ -112,8 +112,7 @@
         <div
           v-for="notification in notifications"
           :key="notification.id"
-          class="notification-item p-3 rounded-lg transition cursor-pointer glass-regular glass-interactive"
-          v-glass="{ strength: 'regular', interactive: true }"
+          class="notification-item p-3 rounded-lg transition cursor-pointer"
           :class="[`type-${notification.type}`]"
           @click="openDetail(notification.id)"
         >
@@ -134,17 +133,17 @@
                 </h4>
 
                 <!-- 发布/提醒区分徽章 -->
-                <Badge v-if="(notification.relatedType||'').toLowerCase()==='assignment_reminder'" size="sm" variant="warning" class="ml-1">
+                <badge v-if="(notification.relatedType||'').toLowerCase()==='assignment_reminder'" size="sm" variant="warning" class="ml-1">
                   {{ t('notifications.badge.reminder') }}
-                </Badge>
-                <Badge v-else-if="(notification.relatedType||'').toLowerCase().startsWith('assignment') && notification.type==='assignment'" size="sm" variant="info" class="ml-1">
+                </badge>
+                <badge v-else-if="(notification.relatedType||'').toLowerCase().startsWith('assignment') && notification.type==='assignment'" size="sm" variant="info" class="ml-1">
                   {{ t('notifications.badge.published') }}
-                </Badge>
+                </badge>
 
                 <!-- 优先级标签（所有通知均显示） -->
-                <Badge size="sm" :variant="priorityVariant(notification.priority)">
+                <badge size="sm" :variant="priorityVariant(notification.priority)">
                   {{ getPriorityText(notification.priority) }}
-                </Badge>
+                </badge>
               </div>
 
               <!-- 操作按钮 -->
@@ -198,6 +197,7 @@
 
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
+import LiquidGlass from '@/components/ui/LiquidGlass.vue'
 import { useNotificationsStore } from '@/stores/notifications'
 import { storeToRefs } from 'pinia'
 import { useI18n } from 'vue-i18n'

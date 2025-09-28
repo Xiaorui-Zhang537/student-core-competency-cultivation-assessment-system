@@ -1,6 +1,6 @@
 <template>
   <div class="w-full">
-    <div v-glass class="rounded-xl border border-white/30 dark:border-white/10 overflow-hidden">
+    <liquid-glass class="rounded-2xl overflow-hidden" containerClass="border border-white/30 dark:border-white/10">
       <div v-if="loading" class="text-sm text-gray-500 py-6 text-center">{{ t('student.courses.loading') }}</div>
       <div v-else-if="error" class="text-sm text-red-500 py-6 text-center">{{ error }}</div>
 
@@ -20,7 +20,7 @@
           {{ t('student.courses.detail.noInlinePreview') || '该文件不支持在线预览，请下载查看。' }}
         </slot>
       </div>
-    </div>
+    </liquid-glass>
   </div>
   
 </template>
@@ -29,6 +29,7 @@
 import { ref, onMounted, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import apiClient, { baseURL } from '@/api/config'
+import LiquidGlass from '@/components/ui/LiquidGlass.vue'
 
 interface FileLike { id: string|number; originalName?: string; fileName?: string; mimeType?: string; extension?: string }
 interface Props { file: FileLike }

@@ -33,65 +33,73 @@
     </div>
 
     <!-- Filters: 标题-选择器一排 + 状态选择器 + 右侧搜索器 -->
-    <div class="mb-3 card p-4">
-      <div class="flex items-center gap-1 flex-wrap">
-        <div class="w-auto flex items-center gap-2">
-          <span class="text-sm font-semibold leading-tight text-gray-700 dark:text-gray-300">{{ t('teacher.assignments.filters.byCourse') }}</span>
-          <div class="w-56">
-          <GlassPopoverSelect
-            v-model="selectedCourseId"
-            :options="teacherCourses.map((c: any) => ({ label: c.title, value: String(c.id) }))"
-              :placeholder="(t('teacher.assignments.filters.selectCourse') as string)"
-              size="sm"
-              :fullWidth="false"
+    <FilterBar tint="info" align="center" :dense="false" class="mb-6 h-19">
+      <template #left>
+        <div class="flex items-center gap-3 flex-wrap">
+          <div class="w-auto flex items-center gap-2">
+            <span class="text-sm font-semibold leading-tight text-gray-700 dark:text-gray-300">{{ t('teacher.assignments.filters.byCourse') }}</span>
+            <div class="w-60">
+            <GlassPopoverSelect
+              v-model="selectedCourseId"
+              :options="teacherCourses.map((c: any) => ({ label: c.title, value: String(c.id) }))"
+                :placeholder="(t('teacher.assignments.filters.selectCourse') as string)"
+                size="sm"
+                :fullWidth="false"
+                width="14rem"
+                @change="handleCourseFilterChange"
+              />
+            </div>
+          </div>
+
+          <div class="w-auto flex items-center gap-2">
+            <span class="text-sm font-semibold leading-tight text-gray-700 dark:text-gray-300">{{ t('teacher.assignments.filters.statusLabel') || '状态' }}</span>
+            <div class="w-50">
+              <GlassPopoverSelect
+                v-model="statusFilter"
+                :options="statusOptions"
+                :placeholder="(t('teacher.assignments.filters.statusPlaceholder') as string) || '请选择状态'"
+                size="sm"
+                :fullWidth="false"
+                width="10rem"
               @change="handleCourseFilterChange"
             />
+            </div>
           </div>
         </div>
+      </template>
 
-        <div class="w-auto flex items-center gap-2 -ml-16">
-          <span class="text-sm font-semibold leading-tight text-gray-700 dark:text-gray-300">{{ t('teacher.assignments.filters.statusLabel') || '状态' }}</span>
-          <div class="w-64">
-            <GlassPopoverSelect
-              v-model="statusFilter"
-              :options="statusOptions"
-              :placeholder="(t('teacher.assignments.filters.statusPlaceholder') as string) || '请选择状态'"
-              size="sm"
-              :fullWidth="false"
-            @change="handleCourseFilterChange"
-          />
-          </div>
-        </div>
-
-        <div class="ml-auto w-56">
+      <template #right>
+        <div class="w-56">
           <GlassSearchInput v-model="searchText" :placeholder="(t('teacher.assignments.searchPlaceholder') as string) || '搜索作业'" size="sm" />
         </div>
-      </div>
-    </div>
+      </template>
+    </FilterBar>
 
     <!-- Assignment List -->
     <div v-if="assignmentStore.loading" class="text-center py-12">
       <p>{{ t('teacher.assignments.loading') }}</p>
     </div>
-          <div v-else class="space-y-4">
-      <div v-for="assignment in assignmentStore.assignments" :key="assignment.id" class="card p-4 flex justify-between items-center">
-        <div>
-          <h3 class="font-bold text-lg">{{ assignment.title }}</h3>
-          <p class="text-sm text-gray-600">{{ assignment.description }}</p>
-          <div class="text-sm text-gray-500 mt-2">
-            {{ t('teacher.assignments.list.dueDate') }}: {{ formatMinute(assignment.dueDate) }}
-            <Badge class="ml-2" size="sm" :variant="statusVariantByDisplay(displayStatusKey(assignment))">{{ renderStatus(assignment) }}</Badge>
+      <div v-else class="space-y-4 mt-4">
+      <Card v-for="assignment in assignmentStore.assignments" :key="assignment.id" padding="md" tint="secondary" class="relative">
+        <div class="min-w-0 pr-48">
+          <div class="flex items-center gap-2">
+            <h3 class="font-bold text-base truncate max-w-[52vw]">{{ assignment.title }}</h3>
+            <Badge class="ml-1" size="sm" :variant="statusVariantByDisplay(displayStatusKey(assignment))">{{ renderStatus(assignment) }}</Badge>
           </div>
-          <div v-if="String(assignment.status).toLowerCase()==='scheduled' && assignment.publishAt" class="text-xs text-gray-500 mt-1">
-            {{ (t('teacher.assignments.modal.publishAt') as string) }}: {{ formatMinute(assignment.publishAt) }}
+          <div class="text-sm text-gray-600 mt-1 truncate max-w-[60vw]">{{ assignment.description }}</div>
+          <div class="text-xs text-gray-500 mt-1">
+            {{ t('teacher.assignments.list.dueDate') }}: {{ formatMinute(assignment.dueDate) }}
+            <span v-if="String(assignment.status).toLowerCase()==='scheduled' && assignment.publishAt" class="ml-2">
+              {{ (t('teacher.assignments.modal.publishAt') as string) }}: {{ formatMinute(assignment.publishAt) }}
+            </span>
           </div>
         </div>
-        <div>
-          <Button size="sm" variant="success" class="mr-2" @click="() => viewSubmissions(assignment)">
+        <div class="absolute right-4 top-1/2 -translate-y-1/2 flex items-center gap-2">
+          <Button size="sm" variant="success" @click="() => viewSubmissions(assignment)">
             <InboxArrowDownIcon class="w-4 h-4 mr-1" />
             {{ t('teacher.assignments.actions.viewSubmissions') }}
           </Button>
-          <Button size="sm" variant="outline" class="mr-2" @click="openEditModal(assignment)">
+          <Button size="sm" variant="outline" @click="openEditModal(assignment)">
             <PencilSquareIcon class="w-4 h-4 mr-1" />
             {{ t('teacher.assignments.actions.edit') }}
           </Button>
@@ -100,11 +108,11 @@
             {{ t('teacher.assignments.actions.delete') }}
           </Button>
         </div>
-      </div>
-       <div v-if="!assignmentStore.loading && assignmentStore.assignments.length === 0" class="text-center py-12 card">
+      </Card>
+       <Card v-if="!assignmentStore.loading && assignmentStore.assignments.length === 0" class="text-center py-12" tint="info">
         <h3 class="text-lg font-medium">{{ t('teacher.assignments.list.emptyTitle') }}</h3>
         <p class="text-gray-500">{{ selectedCourseId ? t('teacher.assignments.list.emptyDescWithCourse') : t('teacher.assignments.list.emptyDescNoCourse') }}</p>
-      </div>
+      </Card>
       <!-- Pagination -->
       <div class="mt-6 flex items-center justify-between">
         <div class="flex items-center space-x-2">
@@ -129,7 +137,7 @@
     </div>
 
     <!-- Create/Edit Modal (GlassModal) -->
-    <GlassModal v-if="showModal" :title="(isEditing ? t('teacher.assignments.modal.editTitle') : t('teacher.assignments.modal.createTitle')) as string" maxWidth="max-w-lg" heightVariant="normal" @close="closeModal">
+    <GlassModal v-if="showModal" :title="(isEditing ? t('teacher.assignments.modal.editTitle') : t('teacher.assignments.modal.createTitle')) as string" size="lg" heightVariant="normal" solidBody @close="closeModal">
       <div class="mb-3">
         <label class="block text-sm font-medium mb-1">{{ t('teacher.assignments.modal.typeLabel') || '作业类型' }}</label>
         <div class="flex items-center gap-4 text-sm">
@@ -144,7 +152,7 @@
         </div>
         <p class="mt-1 text-xs text-gray-500">{{ t('teacher.assignments.modal.visibilityHint') || '草稿不会对学生可见；仅发布后学生才能看到并提交。' }}</p>
       </div>
-      <form @submit.prevent="handleSubmit" class="space-y-4">
+      <form id="assignmentForm" @submit.prevent="handleSubmit" class="space-y-4">
          <div>
           <label for="courseId" class="block text-sm font-medium mb-1">{{ t('teacher.assignments.modal.course') }}</label>
           <select id="courseId" v-model="form.courseId" required class="ui-pill--select ui-pill--pl ui-pill--md ui-pill--pr-select" :disabled="isEditing">
@@ -199,15 +207,15 @@
             </AttachmentList>
           </div>
         </div>
-        <div class="flex justify-end space-x-3 mt-6">
-          <Button variant="secondary" type="button" @click="closeModal">
-            {{ t('teacher.assignments.modal.cancel') }}
-          </Button>
-          <Button variant="primary" type="submit" :disabled="assignmentStore.loading">
-            {{ isEditing ? t('teacher.assignments.actions.save') : t('teacher.assignments.modal.create') }}
-          </Button>
-        </div>
       </form>
+      <template #footer>
+        <Button variant="secondary" type="button" @click="closeModal">
+          {{ t('teacher.assignments.modal.cancel') }}
+        </Button>
+        <Button variant="primary" type="submit" form="assignmentForm" :disabled="assignmentStore.loading">
+          {{ isEditing ? t('teacher.assignments.actions.save') : t('teacher.assignments.modal.create') }}
+        </Button>
+      </template>
     </GlassModal>
     </div>
   </div>
@@ -238,6 +246,8 @@ import GlassModal from '@/components/ui/GlassModal.vue'
 import SegmentedPills from '@/components/ui/SegmentedPills.vue'
 import { assignmentApi } from '@/api/assignment.api'
 import AttachmentList from '@/features/shared/AttachmentList.vue'
+import FilterBar from '@/components/ui/filters/FilterBar.vue'
+import Card from '@/components/ui/Card.vue'
 
 const assignmentStore = useAssignmentStore();
 const courseStore = useCourseStore();
@@ -265,6 +275,7 @@ const selectedCourseId = ref<string | null>(null);
 const searchText = ref('')
 const statusFilter = ref('')
 const statusOptions = computed(() => ([
+  { label: (t('teacher.assignments.filters.all') as string) || '全部', value: '' },
   { label: (t('teacher.courses.status.draft') as string) || '草稿', value: 'draft' },
   { label: (t('teacher.courses.status.published') as string) || '已发布', value: 'published' },
   { label: (t('teacher.assignments.status.pendingReview') as string) || '待批改', value: 'pending_review' },

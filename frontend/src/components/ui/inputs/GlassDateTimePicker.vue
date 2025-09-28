@@ -7,10 +7,10 @@
         ref="anchor"
         type="button"
         class="ui-pill--select ui-pill--pr-select w-full"
-        :class="size==='sm' ? 'ui-pill--sm ui-pill--pl' : 'ui-pill--md ui-pill--pl'"
+        :class="[size==='sm' ? 'ui-pill--sm ui-pill--pl' : 'ui-pill--md ui-pill--pl', tintClass]"
         @click="toggle"
       >
-        <span class="truncate" :class="valueText ? 'text-gray-900 dark:text-gray-100' : 'text-gray-400'">
+        <span class="truncate" :class="valueText ? 'text-gray-900 dark:text-gray-100' : 'text-gray-400'" :style="valueText ? selectedLabelStyle : undefined">
           {{ valueText || placeholderText }}
         </span>
         <svg class="w-4 h-4 absolute right-2 top-1/2 -translate-y-1/2 text-gray-400" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.24 4.5a.75.75 0 01-1.08 0l-4.24-4.5a.75.75 0 01.02-1.06z" clip-rule="evenodd"/></svg>
@@ -19,6 +19,7 @@
       <teleport to="body">
         <div v-if="open" class="fixed inset-0 z-[999]" @click="close"></div>
         <div v-if="open" class="fixed z-[1000] popover-glass glass-regular glass-interactive rounded-2xl border border-white/20 dark:border-white/12 shadow-xl no-scrollbar overflow-visible"
+             :class="tintClass"
              :style="panelStyle" v-glass="{ strength: 'regular', interactive: true }" @click.stop>
           <!-- Header: month switcher -->
           <div class="flex items-center justify-between px-4 pt-3 pb-2">
@@ -44,11 +45,11 @@
             <div class="flex items-center gap-2">
               <span class="text-xs text-gray-500 dark:text-gray-400">{{ t('shared.time') || '时间' }}</span>
               <div class="w-20">
-                <GlassPopoverSelect :options="hourOptions" :model-value="hour" @update:modelValue="(v:any)=>hour = Number(v)" size="sm" />
+                <GlassPopoverSelect :options="hourOptions" :model-value="hour" @update:modelValue="(v:any)=>hour = Number(v)" size="sm" :tint="tint" />
               </div>
               <span class="text-xs text-gray-500">:</span>
               <div class="w-20">
-                <GlassPopoverSelect :options="minuteSelectOptions" :model-value="minute" @update:modelValue="(v:any)=>minute = Number(v)" size="sm" />
+                <GlassPopoverSelect :options="minuteSelectOptions" :model-value="minute" @update:modelValue="(v:any)=>minute = Number(v)" size="sm" :tint="tint" />
               </div>
             </div>
             <div class="ml-auto flex items-center gap-2">
@@ -64,7 +65,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, watch } from 'vue'
+import { ref, computed, onMounted, watch, type CSSProperties } from 'vue'
 // @ts-ignore
 import { useI18n } from 'vue-i18n'
 import GlassPopoverSelect from '@/components/ui/filters/GlassPopoverSelect.vue'
@@ -77,6 +78,7 @@ interface Props {
   minuteStep?: number
   dateOnly?: boolean
   size?: 'sm' | 'md'
+  tint?: 'primary' | 'secondary' | 'accent' | 'success' | 'warning' | 'danger' | 'info' | null
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -84,6 +86,7 @@ const props = withDefaults(defineProps<Props>(), {
   minuteStep: 5,
   dateOnly: false,
   size: 'sm',
+  tint: null,
 })
 const emit = defineEmits<{ (e:'update:modelValue', v:string): void }>()
 const { t } = useI18n()
@@ -91,6 +94,11 @@ const { t } = useI18n()
 const anchor = ref<HTMLElement | null>(null)
 const open = ref(false)
 const positionTick = ref(0)
+
+const tintClass = computed(() => props.tint ? `glass-tint-${props.tint}` : '')
+const themeColorVar = computed(() => props.tint ? `var(--color-${props.tint})` : 'var(--color-primary)')
+const themeColorContentVar = computed(() => props.tint ? `var(--color-${props.tint}-content)` : 'var(--color-primary-content)')
+const selectedLabelStyle = computed<CSSProperties>(() => ({ color: themeColorContentVar.value }))
 
 const internal = ref<Date | null>(parseFromModel(props.modelValue))
 watch(() => props.modelValue, v => internal.value = parseFromModel(v))
@@ -229,9 +237,9 @@ function positionPanel(){
     const el = anchor.value as HTMLElement
     const rect = el?.getBoundingClientRect()
     if (!rect) return { left:'20px', top:'20px', width:'360px' }
-    // 弹窗宽度更宽一些，且不小于输入框宽度
-    const baseWidth = 420
-    const width = Math.max(baseWidth, rect.width + 140)
+    // 弹窗宽度略大于输入框但限制最大值，避免在窄表单中过宽
+    const widthBaseline = Math.max(rect.width + 60, 320)
+    const width = Math.min(440, Math.max(widthBaseline, rect.width))
     const left = Math.min(window.innerWidth - width - 8, Math.max(8, rect.left))
     // 允许弹层随滚动：fixed + rect基于视口，无需加 scrollY
     const desiredHeight = 340

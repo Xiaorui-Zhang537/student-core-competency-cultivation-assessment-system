@@ -1,125 +1,101 @@
 <template>
   <teleport to="body">
-  <div v-if="open" class="fixed inset-0 z-[2000]">
-    <div class="absolute inset-0 bg-transparent" @click="emit('close')"></div>
-    <div class="absolute right-0 top-0 h-full w-full sm:w-[820px] glass-thin glass-interactive border-l border-gray-200/40 dark:border-gray-700/40 shadow-xl overflow-hidden rounded-l-none rounded-2xl flex flex-col" v-glass="{ strength: 'thin', interactive: true }">
-      <!-- 顶部标题栏 -->
-      <div class="p-4 border-b border-gray-200/40 dark:border-gray-700/40 flex items-center justify-between" style="box-shadow: inset 0 -1px 0 rgba(255,255,255,0.18)">
-        <div class="font-semibold text-gray-900 dark:text-white">{{ headerTitle }}</div>
-        <Button variant="ghost" size="sm" @click="emit('close')">✕</Button>
-      </div>
+  <div v-if="open" class="fixed inset-0 z-[12000]" role="dialog" aria-modal="true" :aria-labelledby="'chatDrawerTitle'">
+    <!-- 透明遮罩：不变暗，仅用于点击关闭 -->
+    <div class="absolute inset-0 z-[0] bg-transparent" @click="emit('close')"></div>
+    <!-- 侧边抽屉：右侧定位包裹，内部仅负责玻璃与内容 -->
+    <div class="absolute inset-y-0 right-0 w-[92vw] sm:w-[820px] z-[10]">
+      <div
+        class="w-full h-full rounded-l-2xl flex flex-col ring-1 shadow-2xl"
+        :key="`shell-${activeTab}`"
+        :style="{
+          background: 'rgb(var(--glass-bg-rgb) / var(--glass-alpha-regular))',
+          borderColor: 'var(--glass-border-color)',
+          backdropFilter: 'blur(var(--glass-blur-regular)) saturate(var(--glass-saturate-regular)) contrast(var(--glass-contrast-regular))',
+          WebkitBackdropFilter: 'blur(var(--glass-blur-regular)) saturate(var(--glass-saturate-regular)) contrast(var(--glass-contrast-regular))',
+          boxShadow: 'var(--glass-inner-shadow), var(--glass-outer-shadow)'
+        }"
+      >
+        <!-- 顶部标题栏（液态玻璃容器内的普通标题条） -->
+        <div class="p-4 flex items-center justify-between" style="box-shadow: inset 0 -1px 0 rgba(255,255,255,0.18)">
+          <div id="chatDrawerTitle" class="font-semibold text-gray-900 dark:text-white">{{ headerTitle }}</div>
+          <Button variant="ghost" size="sm" @click="emit('close')">✕</Button>
+        </div>
 
-      <!-- 主体：左侧列表 + 右侧会话 -->
-      <div class="flex flex-1 min-h-0">
+        <!-- 主体：左侧列表 + 右侧会话（整块由 LiquidGlass 提供半透明底，禁用折射） -->
+        <div class="flex flex-1 min-h-0">
         <!-- 左侧：最近/联系人 列表 -->
-        <div class="hidden sm:flex sm:flex-col w-64 border-r border-gray-200/40 dark:border-gray-700/40">
+        <div class="hidden sm:flex sm:flex-col w-64 shrink-0" :key="`left-${activeTab}`" :style="{ backgroundColor: 'var(--color-base-100)', boxShadow: 'inset -1px 0 rgba(255,255,255,0.18)' }">
           <div class="px-3 pt-3 pb-2 flex items-center gap-2">
             <Button size="sm" :variant="activeTab==='recent' ? 'primary' : 'menu'" @click="activeTab='recent'">{{ t('shared.chat.recent') || '最近' }}</Button>
             <Button size="sm" :variant="activeTab==='contacts' ? 'primary' : 'menu'" @click="activeTab='contacts'">{{ t('shared.chat.contacts') || '联系人' }}</Button>
-            <Button size="sm" :variant="activeTab==='system' ? 'primary' : 'menu'" @click="activeTab='system'">{{ t('shared.chat.system') || '系统消息' }}</Button>
           </div>
-          <div class="px-3 pb-2">
-            <GlassSearchInput v-model="keyword" :placeholder="t('shared.chat.searchPlaceholder') as string || '搜索联系人'" size="sm" />
-          </div>
-          <div class="flex-1 overflow-y-auto px-2 pb-3 space-y-1">
-            <!-- 最近会话列表 -->
-            <template v-if="activeTab==='recent'">
+           <div class="px-3 pb-2" v-if="activeTab==='contacts'">
+             <glass-search-input v-model="keyword" :placeholder="t('shared.chat.searchPlaceholder') as string || '搜索联系人'" size="sm" />
+           </div>
+            <div class="relative flex-1 overflow-y-auto px-2 pb-3 pt-3 space-y-1" :key="'list-'+activeTab" :style="{ backgroundColor: 'var(--color-base-100)' }">
+            <div v-if="activeTab==='recent'" class="chatlist-surface">
               <div v-if="chat.loadingLists" class="text-xs text-gray-500 px-2 py-2">{{ t('shared.loading') || '加载中...' }}</div>
-              <button
+              <Button
                 v-for="c in recentList"
                 :key="c.id || c.notificationId || c._k"
-                :class="['group w-full text-left px-3 py-2 rounded hover:bg-gray-100 dark:hover:bg-gray-700', String(c.peerId)===String(peerActiveId) ? 'bg-blue-50 dark:bg-blue-900/30' : '']"
+                variant="menu"
+                :class="['group w-full text-left px-0 py-3 min-h-[52px] rounded-lg transition-colors outline-none focus:outline-none focus-visible:outline-none ring-0 focus:ring-0 focus-visible:ring-0 focus:ring-offset-0 focus:shadow-none focus-visible:shadow-none hover:bg-transparent !justify-start !items-center', String(c.peerId)===String(peerActiveId) ? 'chat-selected' : '']"
                 @click="choosePeer(c.peerId, c.displayName, c.courseId)"
               >
-                <div class="flex items-center gap-3">
-                  <UserAvatar :avatar="c.avatar || getContactAvatar(c.peerId)" :size="28">
+                <div class="flex items-center gap-4 pl-2">
+                  <user-avatar :avatar="c.avatar || getContactAvatar(c.peerId)" :size="28">
                     <div class="w-7 h-7 rounded-full bg-gray-200 dark:bg-gray-700"></div>
-                  </UserAvatar>
+                  </user-avatar>
                   <div class="flex-1 min-w-0">
-                    <div class="flex items-center justify-between">
+                    <div class="flex items-center gap-2 text-left">
                       <div class="text-sm font-medium text-gray-900 dark:text-white truncate">{{ c.displayName }}</div>
-                      <span v-if="c.unread > 0" class="ml-2 inline-flex items-center justify-center w-5 h-5 rounded-full bg-red-500 text-white text-xs">{{ c.unread }}</span>
+                      <span v-if="c.unread > 0" class="inline-flex items-center justify-center min-w-[20px] h-5 px-1 rounded-full bg-red-500 text-white text-xs">{{ c.unread }}</span>
                     </div>
-                    <div class="text-xs text-gray-500 dark:text-gray-300 truncate">{{ c.content || c.preview }}</div>
+                    <div class="text-xs text-gray-500 dark:text-gray-300 truncate text-left">{{ c.content || c.preview }}</div>
                   </div>
-                  <div class="flex items-center gap-1 ml-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                    <Button
-                      :title="(chat.isPinned(c.peerId, props.courseId||null) ? t('shared.chat.unpin') : t('shared.chat.pin')) as string"
-                      size="xs" variant="ghost"
-                      @click.stop="togglePinAction(c.peerId)"
-                    >
+                  <div class="flex items-center gap-1 ml-auto opacity-0 group-hover:opacity-100 transition-opacity">
+                    <Button :title="(chat.isPinned(c.peerId, props.courseId||null) ? t('shared.chat.unpin') : t('shared.chat.pin')) as string" size="xs" variant="ghost" @click.stop="togglePinAction(c.peerId)">
                       <component :is="chat.isPinned(c.peerId, props.courseId||null) ? BookmarkIcon : BookmarkSlashIcon" class="w-4 h-4" />
                     </Button>
-                    <Button
-                      :title="t('shared.chat.delete') as string"
-                      size="xs" variant="danger"
-                      @click.stop="deleteRecent(c.peerId)"
-                    >
-                      <XMarkIcon class="w-4 h-4" />
+                    <Button :title="t('shared.chat.delete') as string" size="xs" variant="danger" @click.stop="deleteRecent(c.peerId)">
+                      <x-mark-icon class="w-4 h-4" />
                     </Button>
                   </div>
                 </div>
-              </button>
+              </Button>
               <div v-if="recentList.length===0 && !chat.loadingLists" class="text-xs text-gray-500 px-2 py-2">{{ t('shared.chat.emptyList') || '暂无会话' }}</div>
-            </template>
+            </div>
 
-            <!-- 联系人列表（按课程分组，可折叠） -->
-            <template v-else-if="activeTab==='contacts'">
+            <div v-else-if="activeTab==='contacts'" class="chatlist-surface">
               <div v-if="chat.loadingLists" class="text-xs text-gray-500 px-2 py-2">{{ t('shared.loading') || '加载中...' }}</div>
               <div v-for="g in chat.contactGroups" :key="g.courseId" class="px-2">
-                <button type="button" class="w-full flex items-center justify-between px-2 py-1 rounded hover:bg-gray-100 dark:hover:bg-gray-700"
-                        @click="onToggleGroup(g)">
+                <Button type="button" variant="menu" class="w-full flex items-center justify-between px-2 py-1 rounded hover:bg-gray-100 dark:hover:bg-gray-700 !justify-start" @click="onToggleGroup(g)">
                   <div class="text-sm font-semibold text-gray-800 dark:text-gray-100 truncate">{{ g.courseName }}</div>
                   <svg :class="['w-4 h-4 transition-transform', g.expanded ? 'rotate-90' : '']" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M6 6L14 10L6 14V6Z" clip-rule="evenodd"/></svg>
-                </button>
+                </Button>
                 <div v-show="g.expanded" class="mt-1 space-y-1">
                   <div v-if="g.loading" class="text-xs text-gray-500 dark:text-gray-300 px-3 py-2">{{ t('shared.loading') || '加载中...' }}</div>
-                  <button
-                    v-for="p in g.students"
-                    :key="p.id"
-                    :class="['w-full text-left px-3 py-2 rounded hover:bg-gray-100 dark:hover:bg-gray-700', String(p.id)===String(peerActiveId) ? 'bg-blue-50 dark:bg-blue-900/30' : '']"
-                    @click="choosePeer(p.id, p.name, g.courseId)"
-                  >
-                    <div class="flex items-center gap-3">
-                      <UserAvatar :avatar="p.avatar" :size="28">
+                  <Button v-for="p in g.students" :key="p.id" variant="menu" :class="['w-full text-left px-0 py-3 min-h-[52px] rounded-lg transition-colors outline-none focus:outline-none focus-visible:outline-none ring-0 focus:ring-0 focus-visible:ring-0 focus:ring-offset-0 focus:shadow-none focus-visible:shadow-none hover:bg-transparent !justify-start !items-center', String(p.id)===String(peerActiveId) ? 'chat-selected' : '']" @click="choosePeer(p.id, p.name, g.courseId)">
+                    <div class="flex items-center gap-4 pl-2">
+                      <user-avatar :avatar="p.avatar" :size="28">
                         <div class="w-7 h-7 rounded-full bg-gray-200 dark:bg-gray-700"></div>
-                      </UserAvatar>
-                      <div class="text-sm font-medium text-gray-900 dark:text-white truncate">{{ p.name || ('#'+p.id) }}</div>
+                      </user-avatar>
+                      <div class="text-sm font-medium text-gray-900 dark:text-white truncate text-left">{{ p.nickname || p.nickName || p.displayName || p.display_name || p.name || p.fullName || p.username || p.userName || ('#'+p.id) }}</div>
                     </div>
-                  </button>
+                  </Button>
                 </div>
               </div>
               <div v-if="(!chat.contactGroups || chat.contactGroups.length===0) && !chat.loadingLists" class="text-xs text-gray-500 px-2 py-2">{{ t('shared.chat.emptyList') || '暂无联系人' }}</div>
-            </template>
+            </div>
 
-            <!-- 系统消息列表（点击查看详情） -->
-            <template v-else>
-              <div v-if="chat.loadingLists" class="text-xs text-gray-500 px-2 py-2">{{ t('shared.loading') || '加载中...' }}</div>
-              <button
-                v-for="n in chat.systemMessages"
-                :key="n.id"
-                class="w-full px-3 py-2 rounded hover:bg-gray-100 dark:hover:bg-gray-700 text-left"
-                :class="{ 'bg-blue-50 dark:bg-blue-900/30': String(selectedSystem?.id||'')===String(n.id) }"
-                @click="chooseSystem(n)"
-              >
-                <div class="flex items-center gap-3">
-                  <UserAvatar :avatar="''" :size="28">
-                    <div class="w-7 h-7 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center text-xs">S</div>
-                  </UserAvatar>
-                  <div class="flex-1 min-w-0">
-                    <div class="text-sm font-medium text-gray-900 dark:text-white truncate">{{ n.title || '系统' }}</div>
-                    <div class="text-xs text-gray-500 dark:text-gray-300 truncate">{{ n.content }}</div>
-                  </div>
-                </div>
-              </button>
-              <div v-if="(!chat.systemMessages || chat.systemMessages.length===0) && !chat.loadingLists" class="text-xs text-gray-500 px-2 py-2">{{ t('shared.chat.emptyList') || '暂无系统消息' }}</div>
-            </template>
+            <div v-else class="chatlist-surface"></div>
           </div>
         </div>
 
         <!-- 右侧：会话区或占位 -->
-        <div class="flex-1 flex flex-col min-w-0">
-          <div v-if="hasActivePeer && activeTab!=='system'" class="flex-1 overflow-y-auto p-4 space-y-3 no-scrollbar" ref="scrollContainer">
+        <div class="flex-1 flex flex-col min-w-0" :key="`content-${activeTab}-${peerActiveId}`" :style="{ backgroundColor: 'var(--color-base-100)' }">
+          <div v-if="hasActivePeer" class="flex-1 overflow-y-auto p-4 space-y-3 no-scrollbar min-h-0" ref="scrollContainer" :key="`chat-${peerActiveId}`">
             <template v-for="item in renderedItems" :key="item.type==='message' ? item.data.id : item.key">
               <!-- 时间分隔条 -->
               <div v-if="item.type==='time-divider'" class="text-center my-2 text-xs text-gray-400 select-none">{{ item.timeText }}</div>
@@ -127,9 +103,9 @@
               <!-- 消息条目 -->
               <div v-else class="flex items-end gap-2" :class="item.data.isMine ? 'justify-end' : 'justify-start'">
                 <!-- 对方头像（左） -->
-                <UserAvatar v-if="!item.data.isMine" :avatar="item.data.avatarUrl" :size="28">
+                <user-avatar v-if="!item.data.isMine" :avatar="item.data.avatarUrl" :size="28">
                   <div class="w-7 h-7 rounded-full bg-gray-200 dark:bg-gray-700"></div>
-                </UserAvatar>
+                </user-avatar>
 
                 <!-- 气泡与尾巴 -->
                 <div class="relative max-w-[70%]">
@@ -145,52 +121,65 @@
                   <span v-else class="tail tail-right bg-blue-600"></span>
                 </div>
 
+                <!-- 附件区域：图片预览(鉴权Blob) + 文件下载(程序化) -->
+                <div v-if="(item as any).data.attachmentFileIds && (item as any).data.attachmentFileIds.length>0" class="flex flex-col gap-2 max-w-[70%]" :class="item.data.isMine ? 'items-end' : 'items-start'">
+                  <div v-for="fid in (item as any).data.attachmentFileIds" :key="`att-${(item as any).data.id}-${fid}`" class="w-full">
+                    <template v-if="isImageAttachment(fid)">
+                      <img v-if="getPreviewUrl(fid)" :src="getPreviewUrl(fid)" class="max-w-[220px] rounded-lg border border-white/10" />
+                    </template>
+                    <template v-else>
+                      <a href="#" @click.prevent="downloadAttachment(fid)" class="inline-flex items-center gap-2 text-xs underline">
+                        <span class="inline-block w-4 h-4 bg-gray-400 rounded-sm"></span>
+                        {{ fileName(fid) || ('文件 #' + fid) }}
+                      </a>
+                    </template>
+                  </div>
+                </div>
+
                 <!-- 发送状态（仅我方） -->
                 <div v-if="item.data.isMine" class="ml-1 text-[10px] flex items-center gap-1">
                   <span v-if="item.data.status==='pending'" class="text-gray-400">{{ t('shared.chat.sending') || '发送中' }}</span>
                   <span v-else-if="item.data.status==='failed'" class="text-red-500">
                     {{ t('shared.chat.failed') || '发送失败' }}
-                    <button class="underline ml-1" @click="retrySend(item.data)">{{ t('shared.chat.retry') || '重试' }}</button>
+                    <Button variant="ghost" size="xs" class="underline ml-1" @click="retrySend(item.data)">{{ t('shared.chat.retry') || '重试' }}</Button>
                   </span>
                 </div>
 
                 <!-- 我方头像（右） -->
-                <UserAvatar v-if="item.data.isMine" :avatar="item.data.avatarUrl" :size="28">
+                <user-avatar v-if="item.data.isMine" :avatar="item.data.avatarUrl" :size="28">
                   <div class="w-7 h-7 rounded-full bg-gray-200 dark:bg-gray-700"></div>
-                </UserAvatar>
+                </user-avatar>
               </div>
             </template>
 
             <div v-if="renderedItems.length === 0" class="text-center text-gray-500 dark:text-gray-400 py-10">{{ emptyText }}</div>
           </div>
-          <div v-else-if="activeTab==='system' && selectedSystem" class="flex-1 overflow-y-auto p-4 space-y-3">
-            <div class="space-y-2">
-              <div class="text-base font-semibold text-gray-900 dark:text-white truncate">{{ selectedSystem.title || (t('shared.chat.system')||'系统消息') }}</div>
-              <div class="text-xs text-gray-500 dark:text-gray-400">{{ formatTime(selectedSystem.createdAt || selectedSystem.created_at) }}</div>
-              <div class="mt-2 whitespace-pre-wrap break-words text-sm text-gray-800 dark:text-gray-100">{{ selectedSystem.content }}</div>
-            </div>
-          </div>
-          <div v-else class="flex-1 flex items-center justify-center text-sm text-gray-500 dark:text-gray-400 px-4">
+          <div v-else class="flex-1 flex items-center justify-center text-sm text-gray-500 dark:text-gray-400 px-4" :key="`placeholder-${activeTab}`">
             {{ t('shared.chat.pickSomeone') || '从左侧选择一位联系人开始聊天' }}
           </div>
 
           <!-- 输入区 -->
-          <div v-if="activeTab!=='system'" class="p-3 border-t border-gray-200 dark:border-gray-700 flex items-center gap-2 relative">
-            <EmojiPicker :variant="'ghost'" :size="'sm'" @select="pickEmoji" />
-            <GlassTextarea ref="draftInput" v-model="(draft as any)" :rows="2" :placeholder="t('teacher.students.chat.placeholder') as string" class="flex-1 w-full min-h-[48px] max-h-40 resize-none" @keydown.enter.prevent="send()" />
-            <Button variant="primary" :disabled="sending || !draft" @click="send()">{{ t('teacher.ai.send') }}</Button>
+        <div class="p-3 flex items-center gap-2 relative shrink-0 min-h-[56px]" style="box-shadow: inset 0 1px 0 rgba(255,255,255,0.18)">
+            <emoji-picker :variant="'ghost'" :size="'sm'" @select="pickEmoji" />
+            <input ref="fileInput" type="file" class="hidden" @change="onFilePicked" />
+            <Button variant="menu" size="sm" @click="triggerPickFile">{{ t('shared.uploadLabel') || '上传' }}</Button>
+            <span v-if="attachmentFileIds.length>0" class="text-xs text-gray-500">{{ '已选附件 ' + attachmentFileIds.length }}</span>
+            <glass-textarea ref="draftInput" v-model="(draft as any)" :rows="2" :placeholder="t('teacher.students.chat.placeholder') as string" class="flex-1 w-full min-h-[48px] max-h-40 resize-none" @keydown="onDraftKeydown" />
+            <Button variant="primary" :disabled="sending || (!draft && attachmentFileIds.length===0)" @click="send()">{{ t('teacher.ai.send') }}</Button>
           </div>
         </div>
+        </div>
       </div>
-    </div>
   </div>
-  </teleport>
-  </template>
+  </div>
+</teleport>
+</template>
 
 <script setup lang="ts">
-import { ref, onMounted, watch, nextTick } from 'vue'
+import { ref, onMounted, onUnmounted, watch, nextTick } from 'vue'
 // @ts-ignore
 import { useI18n } from 'vue-i18n'
+import LiquidGlass from '@/components/ui/LiquidGlass.vue'
 import UserAvatar from '@/components/ui/UserAvatar.vue'
 import GlassInput from '@/components/ui/inputs/GlassInput.vue'
 import GlassSearchInput from '@/components/ui/inputs/GlassSearchInput.vue'
@@ -212,6 +201,9 @@ const chat = useChatStore()
 const auth = useAuthStore()
 const emit = defineEmits<{
   (e: 'close'): void
+  (e: 'update:peerId', v: string | number | null): void
+  (e: 'update:peerName', v: string | null): void
+  (e: 'update:courseId', v: string | number | null): void
 }>()
 
 const { t } = useI18n()
@@ -222,6 +214,8 @@ const page = ref(1)
 const size = ref(50)
 const total = ref(0)
 const draft = ref('')
+// 附件：上传成功的文件ID集合（发送时随消息提交）
+const attachmentFileIds = ref<Array<string|number>>([])
 // 移除标题
 const sending = ref(false)
 const draftInput = ref<HTMLTextAreaElement | null>(null)
@@ -229,14 +223,18 @@ const scrollContainer = ref<HTMLElement | null>(null)
 const emptyText = t('teacher.students.table.empty') as string
 
 // 左侧面板状态
-const activeTab = ref<'recent' | 'contacts' | 'system'>('recent')
+const activeTab = ref<'recent' | 'contacts'>('recent')
 const keyword = ref('')
-const hasActivePeer = computed(() => !!props.peerId)
-const peerActiveId = computed(() => props.peerId ? String(props.peerId) : '')
+// 统一数据源：优先 props，回退 store
+const currentPeerId = computed(() => props.peerId ?? chat.peerId)
+const currentPeerName = computed(() => props.peerName ?? chat.peerName)
+const currentCourseId = computed(() => props.courseId ?? chat.courseId)
+const hasActivePeer = computed(() => !!currentPeerId.value)
+const peerActiveId = computed(() => currentPeerId.value ? String(currentPeerId.value) : '')
 // 发送不再受角色或会话激活限制
 
 const headerTitle = computed(() => {
-  if (hasActivePeer.value) return (t('teacher.students.chat.title', { name: props.peerName || title.value }) as string)
+  if (hasActivePeer.value) return (t('teacher.students.chat.title', { name: currentPeerName.value || title.value }) as string)
   return t('shared.chat.open') as string || '聊天'
 })
 
@@ -307,7 +305,7 @@ const messageIsMine = (n: any): boolean => {
   if (sender) return String(sender) === myId
   const recipient = extractId(n, ['recipientId','recipient_id','toUserId','to_user_id','toId','to_id'])
   // 若仅有 recipientId，则当其等于当前会话对端，推断为我发出
-  if (recipient) return String(recipient) === String(props.peerId || '')
+  if (recipient) return String(recipient) === String(currentPeerId.value || '')
   return false
 }
 
@@ -408,23 +406,105 @@ const scrollToBottom = async () => {
   }
 }
 
+// 附件元数据与渲染辅助
+const fileMetaMap = ref<Record<string, any>>({})
+const previewUrlMap = ref<Record<string, string>>({})
+function revokePreviewUrl(fid: string | number) {
+  const key = String(fid)
+  const url = previewUrlMap.value[key]
+  if (url) {
+    try { URL.revokeObjectURL(url) } catch {}
+    delete previewUrlMap.value[key]
+  }
+}
+function getPreviewUrl(fid: string | number): string {
+  const key = String(fid)
+  const url = previewUrlMap.value[key]
+  if (url) return url
+  // 懒加载生成，触发后续 ensurePreviewBlob
+  void ensurePreviewBlob(fid)
+  return ''
+}
+async function ensurePreviewBlob(fid: string | number) {
+  const key = String(fid)
+  if (previewUrlMap.value[key]) return
+  try {
+    const { fileApi } = await import('@/api/file.api')
+    const blob = await fileApi.getPreview(key)
+    const url = URL.createObjectURL(blob)
+    previewUrlMap.value[key] = url
+  } catch {
+    // 失败时保持为空，由 img 自行跳过渲染
+  }
+}
+async function downloadAttachment(fid: string | number) {
+  try {
+    const { fileApi } = await import('@/api/file.api')
+    const name = fileName(fid) || `file_${String(fid)}`
+    await fileApi.downloadFile(String(fid), name || undefined)
+  } catch {}
+}
+function fileName(fid: string | number): string | null {
+  const meta = fileMetaMap.value[String(fid)]
+  return meta?.originalName || meta?.original_name || null
+}
+function isImageAttachment(fid: string | number): boolean {
+  const meta = fileMetaMap.value[String(fid)]
+  const mime = String(meta?.mimeType || meta?.mime || '')
+  return mime.startsWith('image/')
+}
+async function ensureFileMeta(fid: string | number) {
+  const key = String(fid)
+  if (fileMetaMap.value[key]) return
+  try {
+    const { fileApi } = await import('@/api/file.api')
+    const info: any = await fileApi.getFileInfo(String(fid))
+    fileMetaMap.value[key] = info?.data || info || {}
+    // 若是图片则预取 Blob 以加速首屏
+    if (isImageAttachment(fid)) {
+      void ensurePreviewBlob(fid)
+    }
+  } catch { /* ignore */ }
+}
+
 const load = async () => {
-  if (!props.peerId) return
-  const { notificationAPI } = await import('@/api/notification.api')
-  const res: any = await notificationAPI.getConversation(props.peerId, { page: page.value, size: size.value })
+  if (!currentPeerId.value) return
+  const { chatApi } = await import('@/api/chat.api')
+  const res: any = await chatApi.getMessages(currentPeerId.value as any, { page: page.value, size: size.value, courseId: currentCourseId.value ? Number(currentCourseId.value) : undefined })
   const list = (res?.items || []).map((n: any) => ({
     id: n.id,
     content: n.content,
     createdAt: n.createdAt || n.created_at || new Date().toISOString(),
     isMine: messageIsMine(n),
+    attachmentFileIds: n.attachmentFileIds || n.attachment_file_ids || [],
     status: 'sent'
   }))
-  messages.value = list
-  total.value = res?.total || list.length
+  // 合并：以服务端为准合并现有消息，避免乐观消息被覆盖
+  if (Array.isArray(list)) {
+    const byId = new Map<string, any>()
+    for (const m of (messages.value as any[])) byId.set(String(m.id), m)
+    for (const m of list) byId.set(String(m.id), { ...byId.get(String(m.id)), ...m })
+    messages.value = Array.from(byId.values()).sort((a: any, b: any) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime())
+    total.value = res?.total || (res?.data?.total) || (messages.value as any[]).length
+    // 预取附件元数据与图片预览 Blob
+    try {
+      const ids = new Set<string>()
+      for (const m of (messages.value as any[])) {
+        const arr = (m.attachmentFileIds || []) as Array<string|number>
+        for (const fid of arr) ids.add(String(fid))
+      }
+      for (const id of ids) {
+        await ensureFileMeta(id)
+      }
+    } catch {}
+  }
   // 标记为已读
-  try { await notificationAPI.readConversation(props.peerId) } catch {}
+  try { await chatApi.markReadByPeer(currentPeerId.value as any, currentCourseId.value ? Number(currentCourseId.value) : undefined) } catch {}
+  try { chat.markPeerRead(String(currentPeerId.value || ''), String(currentCourseId.value || '')) } catch {}
+  // 同步刷新“最近”，确保未读角标与后端一致
+  try { await chat.loadLists({ courseId: currentCourseId.value || undefined }) } catch {}
   await scrollToBottom()
-  try { if (props.peerId) await ensurePeerAvatar(String(props.peerId)) } catch {}
+  try { if (currentPeerId.value) await ensurePeerAvatar(String(currentPeerId.value)) } catch {}
 }
 
 const createLocalPendingMessage = (content: string): MessageItem => {
@@ -445,7 +525,8 @@ const send = async (contentOverride?: string | unknown, tempIdToResolve?: string
   // 允许任何登录用户发送（权限由后端控制）
   const raw = (typeof contentOverride === 'string' ? contentOverride : draft.value)
   const content = ((raw ?? '') as any).toString().trim()
-  if (!content) return
+  // 允许“仅附件无文本”也能发送
+  if (!content && attachmentFileIds.value.length === 0) return
   // 插入或复用本地 pending 消息
   let localMsg: MessageItem
   if (tempIdToResolve != null) {
@@ -470,27 +551,50 @@ const send = async (contentOverride?: string | unknown, tempIdToResolve?: string
 
   try {
     sending.value = true
-    const { notificationAPI } = await import('@/api/notification.api')
+    const { chatApi } = await import('@/api/chat.api')
     const payload: any = {
-      // @ts-ignore
-      recipientId: Number(props.peerId),
+      recipientId: Number(currentPeerId.value),
       content: content,
-      relatedType: props.courseId ? 'course' : undefined,
-      // @ts-ignore
-      relatedId: props.courseId ? Number(props.courseId) : undefined
+      relatedType: currentCourseId.value ? 'course' : undefined,
+      relatedId: currentCourseId.value ? Number(currentCourseId.value) : undefined,
+      attachmentFileIds: (attachmentFileIds.value && attachmentFileIds.value.length > 0) ? attachmentFileIds.value : undefined
     }
-    const sent: any = await notificationAPI.sendMessage(payload)
-    const latestContent = payload.content
-    const latestPreview = payload.content
-    // 即时更新左侧最近会话顺序与预览
-    chat.upsertRecentAfterSend(String(props.peerId || ''), String(props.courseId || ''), latestContent, latestPreview, props.peerName ?? undefined)
-    // 标记本地消息为 sent，并刷新真实记录
+    const sent: any = await chatApi.sendMessage(payload)
+    // 标记本地消息为 sent
     markMessageStatus(localMsg.id, 'sent')
-    await load()
+    // 若后端返回了真实消息 id，则把本地临时 id 替换为服务端 id，避免后续去重导致“丢失”
+    try {
+      const serverId = sent?.id || sent?.data?.id
+      if (serverId) {
+        const idx = (messages.value as MessageItem[]).findIndex(m => String(m.id) === String(localMsg.id))
+        if (idx >= 0) {
+          const cloned = (messages.value as MessageItem[]).slice()
+          cloned[idx] = { ...cloned[idx], id: serverId, status: 'sent' }
+          messages.value = cloned
+        }
+      }
+    } catch {}
+    // 更新“最近”列表预览/排序（利用后端带回的 recent mirror）
+    try {
+      const data = (sent && (sent.data || sent))
+      const mirror = (() => { try { return typeof data?.data === 'string' ? JSON.parse(data.data) : (typeof data?.data === 'object' ? data.data : (typeof data?.mirror === 'object' ? data.mirror : (data?.data && JSON.parse(data.data)))) } catch { return null } })()
+      const convId = mirror?.conversationId || data?.conversationId
+      chat.upsertRecentAfterSend(String(currentPeerId.value || ''), String(currentCourseId.value || ''), content, content, currentPeerName.value ?? undefined, convId)
+    } catch {
+      chat.upsertRecentAfterSend(String(currentPeerId.value || ''), String(currentCourseId.value || ''), content, content, currentPeerName.value ?? undefined)
+    }
+    // 刷新“最近”列表以拿到会话ID等后端字段；并在联系人页发送后自动切到“最近”
+    try { await chat.loadLists({ courseId: currentCourseId.value || undefined }) } catch {}
+    if (activeTab.value !== 'recent') activeTab.value = 'recent'
+    try { await load() } catch {}
+    await scrollToBottom()
+    // 关闭短时间内的自动刷新，避免干扰乐观消息展示
   } catch (e) {
     markMessageStatus(localMsg.id, 'failed')
   } finally {
     sending.value = false
+    // 清空附件队列
+    attachmentFileIds.value = []
   }
 }
 
@@ -507,7 +611,18 @@ const onEmoji = async (emoji: string) => {
 const pickEmoji = async (e: string) => { await onEmoji(e) }
 
 const choosePeer = async (id: string | number, name?: string | null, cId?: string | number | null) => {
+  // 仅设置会话，不强制切换标签，避免跳回“最近”
   chat.setPeer(id, name ?? null, (cId ?? props.courseId) ?? null)
+  // 受控模式同步父组件
+  try { emit('update:peerId', id) } catch {}
+  try { emit('update:peerName', name ?? null) } catch {}
+  try { emit('update:courseId', (cId ?? props.courseId) ?? null) } catch {}
+  await nextTick()
+  try {
+    // 先清空本地消息，避免旧会话内容闪烁
+    messages.value = []
+    await load()
+  } catch {}
   try { await ensurePeerAvatar(String(id)) } catch {}
 }
 
@@ -515,21 +630,15 @@ const onToggleGroup = async (g: any) => {
   chat.toggleContactGroup(g.courseId)
 }
 
-const selectedSystem = ref<any | null>(null)
-const chooseSystem = async (n: any) => {
-  selectedSystem.value = n
+// 移除系统消息逻辑
+
+// 切换标签时，强制清理对方选择与系统选中，避免界面叠加残留
+watch(activeTab, async () => {
   try {
-    const { notificationAPI } = await import('@/api/notification.api')
-    if (n?.id) await notificationAPI.markAsRead(String(n.id))
+    await nextTick()
+    if (scrollContainer.value) scrollContainer.value.scrollTop = 0
   } catch {}
-  // 若系统消息包含 actionUrl（如帖子链接），支持直接跳转
-  try {
-    if (n?.actionUrl) {
-      const { default: router } = await import('@/router')
-      router.push(n.actionUrl)
-    }
-  } catch {}
-}
+})
 
 const getContactAvatar = (pid: string | number) => {
   const found = (chat.contacts as any[] || []).find((c: any) => String(c.id) === String(pid))
@@ -550,6 +659,8 @@ const togglePinAction = (pid: string | number) => {
 }
 
 onMounted(async () => {
+  // 未登录时不触发任何远端加载，避免 401 噪音
+  if (!auth.isAuthenticated) return
   title.value = props.peerName ? `${props.peerName}` : (t('teacher.students.table.message') as string)
   // 始终加载列表，保证左侧数据完整
   // 优先从当前上下文（props.courseId 或最近持久化）加载联系人，避免切入口不同导致联系人为空
@@ -560,14 +671,35 @@ onMounted(async () => {
     return JSON.parse(localStorage.getItem(key) || '[]')
   } catch { return [] } })()
   const last = persisted && persisted[0]
-  const cid = props.courseId || chat.courseId || (last?.courseId || undefined)
+  const cid = currentCourseId.value || (last?.courseId || undefined)
   await chat.loadLists({ courseId: cid })
   // 若已选中会话，再加载会话消息
-  if (props.peerId) await load()
+  if (currentPeerId.value) await load()
+})
+
+// Esc 键关闭抽屉
+function onKeydown(e: KeyboardEvent) {
+  try {
+    if (e.key === 'Escape' && props.open) {
+      emit('close')
+    }
+  } catch {}
+}
+onMounted(() => { try { window.addEventListener('keydown', onKeydown) } catch {} })
+onUnmounted(() => { try { window.removeEventListener('keydown', onKeydown) } catch {} })
+onUnmounted(() => {
+  try {
+    const keys = Object.keys(previewUrlMap.value)
+    for (const k of keys) {
+      try { URL.revokeObjectURL(previewUrlMap.value[k]) } catch {}
+    }
+  } catch {}
 })
 
 watch(() => props.open, async (v) => {
   if (v) {
+    if (!auth.isAuthenticated) return
+    try { console.debug('[ChatDrawer] open prop changed ->', v) } catch {}
     const persisted = (() => { try {
       const uid = String(localStorage.getItem('userId') || '')
       const role = (() => { try { return (auth.user as any)?.role || '' } catch { return '' } })()
@@ -575,18 +707,65 @@ watch(() => props.open, async (v) => {
       return JSON.parse(localStorage.getItem(key) || '[]')
     } catch { return [] } })()
     const last = persisted && persisted[0]
-    const cid = props.courseId || chat.courseId || (last?.courseId || undefined)
+    const cid = currentCourseId.value || (last?.courseId || undefined)
     await chat.loadLists({ courseId: cid })
-    if (props.peerId) await load()
+    if (currentPeerId.value) await load()
   }
 })
-watch(() => props.peerId, async () => { await load() })
+watch(() => [props.peerId, chat.peerId], async () => { await load() })
+
+// 发送输入区键盘行为：Enter 发送，Shift+Enter 换行
+function onDraftKeydown(e: KeyboardEvent) {
+  try {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault()
+      send()
+    }
+  } catch {}
+}
+
+// 上传
+const fileInput = ref<HTMLInputElement | null>(null)
+function triggerPickFile() {
+  try { fileInput.value?.click() } catch {}
+}
+async function onFilePicked(ev: Event) {
+  try {
+    const input = ev.target as HTMLInputElement
+    const file = input?.files?.[0]
+    if (!file) return
+    const { fileApi } = await import('@/api/file.api')
+    const uploaded: any = await fileApi.uploadFile(file, { purpose: 'chat', relatedId: String(currentPeerId.value || '') })
+    const fileId = uploaded?.id || uploaded?.data?.id
+    if (fileId != null) attachmentFileIds.value.push(fileId)
+    await nextTick()
+    try { draftInput.value?.focus() } catch {}
+    if (input) input.value = ''
+  } catch {}
+}
 </script>
 
 <style scoped lang="postcss">
 .input { @apply border rounded px-3 py-2 text-sm bg-white dark:bg-gray-900 border-gray-300 dark:border-gray-700 text-gray-900 dark:text-gray-100; }
 .btn { @apply inline-flex items-center justify-center rounded px-3 py-2 text-sm font-medium; }
 .btn-primary { @apply bg-blue-600 text-white hover:bg-blue-700; }
+
+/* 左侧列表选中：使用主题强调色加深，无任何边框线 */
+.chat-selected {
+  background-color: color-mix(in oklab, var(--color-accent) 20%, transparent);
+  box-shadow: none;
+  outline: none;
+  border: none;
+  /* 彻底去掉蓝色外圈（Safari/Chrome focus ring/focus-visible/moz outline等） */
+}
+button, .btn, [role="button"] {
+  outline: none !important;
+}
+button:focus, .btn:focus, [role="button"]:focus,
+button:focus-visible, .btn:focus-visible, [role="button"]:focus-visible {
+  outline: none !important;
+  box-shadow: none !important;
+}
 
 /* 气泡尾巴：使用额外元素实现，保证与暗黑模式背景一致 */
 .tail { position: absolute; width: 10px; height: 10px; }

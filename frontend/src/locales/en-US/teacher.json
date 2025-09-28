@@ -133,7 +133,8 @@
 				"byCourse": "Filter by Course",
 				"selectCourse": "Select a course",
 				"statusLabel": "Status",
-				"statusPlaceholder": "Select status"
+				"statusPlaceholder": "Select status",
+				"all": "All"
 			},
 			"searchPlaceholder": "Search assignments",
 			"status": {
@@ -367,6 +368,24 @@
 			"actions": {
 				"remindUnsubmitted": "Remind Unsubmitted",
 				"returnForResubmit": "Return for resubmission"
+			},
+			"sidebar": {
+				"viewProfile": "View student profile",
+				"contact": "Contact student",
+				"otherSubmissions": "View other submissions",
+				"export": "Export submission",
+				"report": "Report suspected plagiarism"
+			},
+			"ai": {
+				"title": "AI Grading",
+				"applySuggestion": "Apply suggestion",
+				"viewDetail": "View details",
+				"open": "AI Grading",
+				"badge": "AI Analysis",
+				"hint": "Click below to generate AI suggestions and capability analysis for this submission.",
+				"suggestedScore": "Suggested score",
+				"analysis": "AI Analysis",
+				"improvements": "Improvements"
 			},
 			"stats": {
 				"totalEnrolled": "Total",
@@ -825,7 +844,8 @@
 				"selectMaterialShort": "Pick material",
 				"saveMaterials": "Save Materials",
 				"savePlayback": "Save Playback Settings",
-				"deleteLesson": "Delete Lesson"
+				"deleteLesson": "Delete Lesson",
+				"deleteChapter": "Delete Chapter"
 			},
 			"notFound": {
 				"title": "Course not found",
@@ -833,7 +853,8 @@
 			},
 			"confirm": {
 				"deleteFile": "Delete this file? This cannot be undone.",
-				"deleteLesson": "Are you sure to delete this lesson? This action cannot be undone."
+				"deleteLesson": "Are you sure to delete this lesson? This action cannot be undone.",
+				"deleteChapter": "Are you sure to delete this chapter? This action cannot be undone."
 			}
 			,
 			"notify": {

@@ -12,6 +12,21 @@
     v-bind="$attrs"
     @click="handleClick"
   >
+    <liquid-glass
+      v-if="isGlassVariant"
+      containerClass="absolute inset-0 rounded-full pointer-events-none"
+      class="rounded-full"
+      :radius="999"
+      :frost="0.05"
+      :border="0.07"
+      :lightness="50"
+      :alpha="0.93"
+      :blur="11"
+      :scale="-180"
+      :rOffset="0"
+      :gOffset="10"
+      :bOffset="20"
+    />
     <svg
       v-if="loading"
       class="animate-spin -ml-1 mr-2 h-4 w-4"
@@ -41,6 +56,7 @@
 
 <script setup lang="ts">
 import { computed, useSlots } from 'vue'
+import LiquidGlass from '@/components/ui/LiquidGlass.vue'
 
 interface Props {
   variant?: 'glass' | 'glass-ghost' | 'primary' | 'secondary' | 'outline' | 'ghost' | 'danger' | 'success' | 'warning' | 'indigo' | 'purple' | 'teal'
@@ -53,7 +69,7 @@ interface Props {
 }
 
 const props = withDefaults(defineProps<Props>(), {
-  variant: 'glass',
+  variant: 'primary',
   size: 'md',
   loading: false,
   disabled: false,
@@ -124,25 +140,26 @@ function renderIcon(name?: Props['icon']): string {
   }
 }
 
+const isGlassVariant = computed(() => props.variant === 'glass' || props.variant === 'glass-ghost')
+
 const variantClasses = computed(() => {
-  // Light-mode readability enhancements are encoded here (button-only), dark remains as before
-  const variants = {
-    glass: 'glass-thin glass-interactive text-gray-900 dark:text-gray-100 hover:shadow-md',
-    'glass-ghost': 'glass-ultraThin glass-interactive text-gray-800 dark:text-gray-200 hover:shadow-md',
-    primary: 'glass-regular glass-interactive text-white bg-primary-600/30 hover:bg-primary-600/40 focus:ring-primary-500',
-    secondary: 'glass-regular glass-interactive text-gray-900 dark:text-gray-100 bg-gray-400/20 hover:bg-gray-400/30 focus:ring-gray-500',
-    outline: 'glass-ultraThin glass-interactive border border-white/30 text-gray-800 dark:text-gray-200 hover:bg-white/10 focus:ring-indigo-500',
-    ghost: 'glass-ultraThin glass-interactive text-gray-700 dark:text-gray-300 hover:bg-white/10 focus:ring-gray-500',
-    danger: 'glass-regular glass-interactive text-white bg-red-600/30 hover:bg-red-600/40 focus:ring-red-500',
-    success: 'glass-regular glass-interactive text-white bg-green-600/30 hover:bg-green-600/40 focus:ring-green-500',
-    warning: 'glass-regular glass-interactive text-white bg-amber-500/30 hover:bg-amber-500/40 focus:ring-amber-500',
-    info: 'glass-regular glass-interactive text-white bg-indigo-600/30 hover:bg-indigo-600/40 focus:ring-indigo-500',
-    // Temporary aliases kept for compatibility during migration (will be removed after replacements)
-    indigo: 'glass-regular glass-interactive text-white bg-indigo-600/30 hover:bg-indigo-600/40 focus:ring-indigo-500',
-    purple: 'glass-regular glass-interactive text-white bg-purple-600/30 hover:bg-purple-600/40 focus:ring-purple-500',
-    teal: 'glass-regular glass-interactive text-white bg-teal-600/30 hover:bg-teal-600/40 focus:ring-teal-500',
-    // Menu-specific: left-aligned content, higher text contrast in light mode
-    menu: 'glass-ultraThin glass-interactive text-gray-800 dark:text-gray-200 hover:bg-white/10 focus:ring-indigo-500 justify-start'
+  const baseGlass = 'relative overflow-hidden text-base-content hover:bg-white/5'
+  const baseGhost = 'relative overflow-hidden text-base-content hover:bg-white/5'
+  const variants: Record<string, string> = {
+    glass: baseGlass,
+    'glass-ghost': baseGhost,
+    primary: 'btn-variant-primary',
+    secondary: 'btn-variant-secondary',
+    outline: 'btn-variant-outline',
+    ghost: 'btn-variant-ghost',
+    danger: 'btn-variant-danger',
+    success: 'btn-variant-success',
+    warning: 'btn-variant-warning',
+    info: 'btn-variant-info',
+    indigo: 'btn-variant-info',
+    purple: 'btn-variant-info',
+    teal: 'btn-variant-info',
+    menu: 'relative overflow-hidden text-base-content hover:bg-white/10 focus:ring-indigo-500 justify-start items-center text-left !px-0'
   }
   return variants[props.variant]
 })

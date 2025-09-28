@@ -5,14 +5,14 @@
         <span class="hover:!text-gray-900 dark:hover:!text-gray-100 cursor-pointer font-medium" @click="router.push({ name: 'StudentAssignments' })">
           {{ i18nText('student.assignments.title', 'Assignments') }}
         </span>
-        <ChevronRightIcon class="w-4 h-4 opacity-70 !text-gray-900 dark:!text-gray-100" />
+        <chevron-right-icon class="w-4 h-4 opacity-70 !text-gray-900 dark:!text-gray-100" />
         <span class="truncate flex-1 font-medium !text-gray-900 dark:!text-gray-100">{{ assignment.title }}</span>
       </nav>
-      <PageHeader :title="assignment.title" :subtitle="assignment.description" />
+      <page-header :title="assignment.title" :subtitle="assignment.description" />
       <!-- 顶部：信息卡 + 附件卡 并排 -->
       <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-2">
-        <AssignmentInfoCard :assignment="assignment" :effectiveDue="effectiveDue" :status="displayStatus" />
-        <AttachmentList :files="teacherAttachments" :title="i18nText('student.assignments.detail.attachmentsTitle', '附件')" />
+        <assignment-info-card :assignment="assignment" :effectiveDue="effectiveDue" :status="displayStatus" />
+        <attachment-list :files="teacherAttachments" :title="i18nText('student.assignments.detail.attachmentsTitle', '附件')" />
       </div>
       
       <!-- 统一垂直间距栈 -->
@@ -24,17 +24,17 @@
 
         <!-- 中部：提交内容 + 上传附件 并排 -->
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <Card>
+          <card>
             <template #header>
               <h2 class="text-xl font-semibold">{{ t('student.assignments.submit.contentTitle') }}</h2>
             </template>
-            <GlassTextarea v-model="form.content" :rows="10" class="w-full" :disabled="readOnly" :placeholder="t('student.assignments.submit.contentPlaceholder') as string" />
-          </Card>
-          <Card>
+            <glass-textarea v-model="form.content" :rows="10" class="w-full" :disabled="readOnly" :placeholder="t('student.assignments.submit.contentPlaceholder') as string" />
+          </card>
+          <card>
             <template #header>
               <h2 class="text-xl font-semibold">{{ t('student.assignments.submit.uploadTitle') }}</h2>
             </template>
-            <FileUpload v-if="!readOnly"
+            <file-upload v-if="!readOnly"
               :accept="'*'"
               :multiple="true"
               :showPreview="true"
@@ -51,33 +51,33 @@
                 <div class="flex items-center gap-2">
                   <Button v-if="!readOnly" size="sm" variant="danger" @click="removeFile(file.id)">
                     <template #icon>
-                      <svg class="w-4 h-4" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M6 6h8v10a2 2 0 01-2 2H8a2 2 0 01-2-2V6zm9-3a1 1 0 00-1-1h-3l-1-1H8L7 2H4a1 1 0 000 2h11a1 1 0 000-2z" clip-rule="evenodd"/></svg>
+                      <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
                     </template>
                     {{ t('student.assignments.submit.delete') }}
                   </Button>
                   <Button size="sm" variant="success" @click="downloadSubmissionFile(file)">
                     <template #icon>
-                      <ArrowDownTrayIcon class="w-4 h-4" />
+                      <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
                     </template>
                     {{ i18nText('student.assignments.detail.download', '下载') }}
                   </Button>
                 </div>
               </div>
             </div>
-          </Card>
+          </card>
         </div>
 
         <!-- Actions (moved up, unique) -->
         <div v-if="!readOnly" class="flex justify-end space-x-4">
           <Button variant="outline" @click="handleSaveDraft" :disabled="disableActions || pastDue">
             <template #icon>
-              <svg class="w-4 h-4" viewBox="0 0 20 20" fill="currentColor"><path d="M17 3H3v14h14V3zM5 5h10v10H5V5zm2 2h6v2H7V7z"/></svg>
+              <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3H3v14h14V3zM5 5h10v10H5V5zm2 2h6v2H7V7z" /></svg>
             </template>
             {{ t('student.assignments.submit.saveDraft') }}
           </Button>
           <Button variant="primary" @click="handleSubmit" :disabled="disableActions || pastDue || !form.content">
             <template #icon>
-              <svg class="w-4 h-4" viewBox="0 0 20 20" fill="currentColor"><path d="M2.94 2.34l14.72 5.89a1 1 0 010 1.86L2.94 15.98a1 1 0 01-1.36-1.16l1.58-5.67-1.58-5.67a1 1 0 011.36-1.16zM8 11l-1 3 7-3-7-3 1 3z"/></svg>
+              <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 13l4 4L19 7" /></svg>
             </template>
             {{ t('student.assignments.submit.submit') }}
           </Button>
@@ -90,7 +90,7 @@
           <span class="text-sm text-gray-700 dark:text-gray-300">{{ i18nText('student.assignments.detail.ungradedHint', '作业已提交，等待老师评分。') }}</span>
         </div>
 
-        <Card v-if="displayStatus==='GRADED'">
+        <card v-if="displayStatus==='GRADED'">
           <h2 class="text-xl font-semibold mb-4">{{ i18nText('student.grades.title', '成绩') }}</h2>
 
           <!-- Animated score strip -->
@@ -125,10 +125,10 @@
               <p class="whitespace-pre-line">{{ normalizeText((grade as any)?.improvements) }}</p>
             </div>
           </div>
-        </Card>
+        </card>
 
         <!-- AI Report -->
-        <Card v-if="displayStatus==='GRADED' && latestReport">
+        <card v-if="displayStatus==='GRADED' && latestReport">
           <div class="flex items-center mb-4">
             <h2 class="text-xl font-semibold flex-1">{{ i18nText('student.ability.latestReport', 'AI 能力报告') }}</h2>
             <Button size="sm" variant="indigo" @click="openAiDetail" :disabled="!parsedAi"><template #icon><svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="12" cy="12" r="3"></circle></svg></template>{{ i18nText('teacher.aiGrading.viewDetail', '查看详情') }}</Button>
@@ -152,10 +152,10 @@
               {{ latestReport.recommendations }}
             </div>
           </div>
-        </Card>
+        </card>
 
         <!-- AI Report Detail Modal (full report, reuse teacher history rendering/export) -->
-        <GlassModal v-if="aiDetailOpen" :title="i18nText('student.ability.latestReport', 'AI 能力报告（最近一次）')" maxWidth="max-w-5xl" :hideScrollbar="true" heightVariant="max" @close="aiDetailOpen=false">
+        <glass-modal v-if="aiDetailOpen" :title="i18nText('student.ability.latestReport', 'AI 能力报告（最近一次）')" size="xl" :hideScrollbar="true" heightVariant="max" solidBody @close="aiDetailOpen=false">
           <div v-if="parsedAi" ref="aiDetailRef" class="grid grid-cols-1 md:grid-cols-2 gap-4" data-export-root="1">
             <div class="card p-3 md:col-span-2">
               <h4 class="font-semibold mb-2">{{ i18nText('teacher.aiGrading.render.overall', '总体') }}</h4>
@@ -202,7 +202,7 @@
             <Button size="sm" variant="purple" @click="exportAiDetailAsPdf" :disabled="!parsedAi"><template #icon><svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2h9l5 5v13a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2z"></path><path d="M14 2v6h6"></path></svg></template>{{ i18nText('teacher.aiGrading.exportPdf', '导出 PDF') }}</Button>
             <Button size="sm" variant="secondary" @click="aiDetailOpen=false"><template #icon><svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></template>{{ i18nText('teacher.aiGrading.picker.close', '关闭') }}</Button>
           </template>
-        </GlassModal>
+        </glass-modal>
 
         
       </div>

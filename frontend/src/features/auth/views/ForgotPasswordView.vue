@@ -11,7 +11,7 @@
       <div>
         <label for="email" class="block text-sm font-medium mb-2">邮箱地址</label>
         <div class="rounded-lg">
-          <GlassInput id="email" v-model="email" type="email" :disabled="uiStore.loading" placeholder="请输入您的邮箱地址" />
+          <glass-input id="email" v-model="email" type="email" :disabled="uiStore.loading" placeholder="请输入您的邮箱地址" />
         </div>
       </div>
 
@@ -25,9 +25,7 @@
     <div class="mt-6 text-center">
       <p class="text-sm text-gray-600">
         记起密码了？
-        <router-link to="/auth/login" class="font-medium text-primary-600 hover:text-primary-500">
-          返回登录
-        </router-link>
+        <a href="/auth/login" @click.prevent="goLogin" class="font-medium text-primary-600 hover:text-primary-500">返回登录</a>
       </p>
     </div>
   </div>
@@ -35,6 +33,7 @@
 
 <script setup lang="ts">
 import { ref } from 'vue';
+import { useRouter } from 'vue-router'
 import { useUIStore } from '@/stores/ui';
 import { userApi } from '@/api/user.api';
 import { useI18n } from 'vue-i18n'
@@ -42,6 +41,7 @@ import GlassInput from '@/components/ui/inputs/GlassInput.vue'
 import Button from '@/components/ui/Button.vue'
 
 const uiStore = useUIStore();
+const router = useRouter()
 const { t } = useI18n()
 const email = ref('');
 
@@ -62,4 +62,9 @@ const handleForgotPassword = async () => {
     uiStore.setLoading(false);
   }
 };
+
+const goLogin = async () => {
+  await router.push('/auth/login')
+  window.location.reload()
+}
 </script>

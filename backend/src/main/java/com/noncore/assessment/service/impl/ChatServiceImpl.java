@@ -38,6 +38,21 @@ public class ChatServiceImpl implements ChatService {
         res.put("unread", unread);
         return res;
     }
+
+    @Override
+    public int setArchived(Long userId, Long conversationId, boolean archived) {
+        return chatMapper.setArchived(conversationId, userId, archived);
+    }
+
+    @Override
+    public Integer getUnreadTotal(Long userId) {
+        try {
+            Integer v = chatMapper.getUnreadTotal(userId);
+            return v == null ? 0 : v;
+        } catch (Exception e) {
+            return 0;
+        }
+    }
 }
 
 

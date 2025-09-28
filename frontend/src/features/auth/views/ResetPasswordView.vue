@@ -9,13 +9,13 @@
       <div>
         <label for="password" class="block text-sm font-medium mb-2">新密码</label>
         <div class="rounded-lg">
-          <GlassInput id="password" v-model="password" type="password" :disabled="uiStore.loading" placeholder="请输入新密码（至少6位）" />
+          <glass-input id="password" v-model="password" type="password" :disabled="uiStore.loading" placeholder="请输入新密码（至少6位）" />
         </div>
       </div>
       <div>
         <label for="confirm" class="block text-sm font-medium mb-2">确认新密码</label>
         <div class="rounded-lg">
-          <GlassInput id="confirm" v-model="confirm" type="password" :disabled="uiStore.loading" placeholder="请再次输入新密码" />
+          <glass-input id="confirm" v-model="confirm" type="password" :disabled="uiStore.loading" placeholder="请再次输入新密码" />
         </div>
       </div>
 

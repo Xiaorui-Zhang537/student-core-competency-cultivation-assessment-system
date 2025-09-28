@@ -9,7 +9,7 @@
       <div>
         <label for="username" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{{ t('auth.login.form.username.label') }}</label>
         <div class="rounded-lg">
-          <GlassInput
+          <glass-input
             id="username"
             v-model="form.username"
             type="text"
@@ -22,7 +22,7 @@
       <div>
         <label for="password" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{{ t('auth.login.form.password.label') }}</label>
         <div class="rounded-lg">
-          <GlassInput
+          <glass-input
             id="password"
             v-model="form.password"
             type="password"

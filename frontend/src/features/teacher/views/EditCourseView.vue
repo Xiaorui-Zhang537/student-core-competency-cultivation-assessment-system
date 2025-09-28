@@ -3,7 +3,7 @@
     <div class="max-w-4xl mx-auto">
       <!-- Header -->
       <div class="mb-8">
-        <PageHeader :title="t('teacher.courseEdit.title')" :subtitle="t('teacher.courseEdit.subtitle')" />
+        <page-header :title="t('teacher.courseEdit.title')" :subtitle="t('teacher.courseEdit.subtitle')" />
       </div>
 
       <!-- Loading State -->
@@ -15,17 +15,17 @@
       <form v-else-if="courseForm.id" @submit.prevent="handleUpdateCourse" class="card p-8 space-y-6">
                 <div>
           <label for="title" class="label">{{ t('teacher.courseEdit.form.title') }} <span class="text-red-500">*</span></label>
-          <GlassInput id="title" v-model="courseForm.title" type="text" required />
+          <glass-input id="title" v-model="courseForm.title" type="text" required />
                 </div>
 
                 <div>
           <label for="description" class="label">{{ t('teacher.courseEdit.form.description') }} <span class="text-red-500">*</span></label>
-          <GlassTextarea id="description" v-model="courseForm.description" :rows="3" required />
+          <glass-textarea id="description" v-model="courseForm.description" :rows="3" required />
                 </div>
 
                 <div>
           <label for="content" class="label">{{ t('teacher.courseEdit.form.content') }}</label>
-          <GlassTextarea id="content" v-model="courseForm.content" :rows="6" />
+          <glass-textarea id="content" v-model="courseForm.content" :rows="6" />
                   </div>
 
                   <div>

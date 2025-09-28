@@ -1,6 +1,6 @@
 <template>
   <div class="absolute inset-0 pointer-events-none" ref="root">
-    <GlassBadge
+    <glass-badge
       v-for="(b, i) in badges"
       :key="i"
       :size="b.size"

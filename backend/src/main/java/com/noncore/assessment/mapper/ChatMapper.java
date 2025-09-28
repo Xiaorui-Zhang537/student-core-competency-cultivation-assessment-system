@@ -23,6 +23,35 @@ public interface ChatMapper {
 
     int recalcUnread(@Param("userId") Long userId,
                      @Param("conversationId") Long conversationId);
+
+    Long findConversationId(@Param("peerA") Long peerA,
+                            @Param("peerB") Long peerB,
+                            @Param("courseId") Long courseId);
+
+    int insertConversation(@Param("peerA") Long peerA,
+                           @Param("peerB") Long peerB,
+                           @Param("courseId") Long courseId,
+                           @Param("lastMessageId") Long lastMessageId,
+                           @Param("lastMessageAt") java.time.LocalDateTime lastMessageAt);
+
+    int updateConversationLast(@Param("conversationId") Long conversationId,
+                               @Param("lastMessageId") Long lastMessageId,
+                               @Param("lastMessageAt") java.time.LocalDateTime lastMessageAt);
+
+    int ensureMember(@Param("conversationId") Long conversationId,
+                     @Param("userId") Long userId);
+
+    int incrementUnread(@Param("conversationId") Long conversationId,
+                        @Param("userId") Long userId);
+
+    int setArchived(@Param("conversationId") Long conversationId,
+                    @Param("userId") Long userId,
+                    @Param("archived") boolean archived);
+
+    int resetUnread(@Param("conversationId") Long conversationId,
+                    @Param("userId") Long userId);
+
+    Integer getUnreadTotal(@Param("userId") Long userId);
 }
 
 

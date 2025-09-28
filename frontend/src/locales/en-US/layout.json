@@ -22,7 +22,10 @@
 			}
 		},
 		"common": {
-			"help": "Help"
+			"help": "Help",
+			"toggleTheme": "Toggle Theme",
+			"themeFamily": "Theme Family",
+			"me": "Me"
 		},
 		"teacher": {
 			"title": "Student Core Competency Cultivation Assessment System",

@@ -14,7 +14,7 @@
       m.archived            AS archived,
       -- 对端用户（peer）
       CASE WHEN c.peer_a_id = #{userId} THEN c.peer_b_id ELSE c.peer_a_id END AS peerId,
-      u.username            AS peerUsername,
+      COALESCE(u.nickname, u.username) AS peerUsername,
       u.avatar              AS peerAvatar,
       -- 最近一条消息内容
       n.content             AS lastContent
@@ -60,6 +60,58 @@
       AND user_id = #{userId}
       AND type = 'message'
       AND (is_read = 0 OR is_read IS NULL)
+  </select>
+
+  <!-- 查找或创建会话相关操作 -->
+  <select id="findConversationId" resultType="long">
+    SELECT id
+    FROM chat_conversations
+    WHERE peer_a_id = LEAST(#{peerA}, #{peerB})
+      AND peer_b_id = GREATEST(#{peerA}, #{peerB})
+      AND course_id = COALESCE(#{courseId}, 0)
+    LIMIT 1
+  </select>
+
+  <insert id="insertConversation">
+    INSERT INTO chat_conversations (type, peer_a_id, peer_b_id, course_id, last_message_id, last_message_at, created_at, updated_at)
+    VALUES ('direct', LEAST(#{peerA}, #{peerB}), GREATEST(#{peerA}, #{peerB}), COALESCE(#{courseId}, 0), #{lastMessageId}, #{lastMessageAt}, NOW(), NOW())
+  </insert>
+
+  <update id="updateConversationLast">
+    UPDATE chat_conversations
+    SET last_message_id = #{lastMessageId},
+        last_message_at = #{lastMessageAt},
+        updated_at = NOW()
+    WHERE id = #{conversationId}
+  </update>
+
+  <insert id="ensureMember">
+    INSERT IGNORE INTO chat_conversation_members (conversation_id, user_id, unread_count, pinned, archived, created_at, updated_at)
+    VALUES (#{conversationId}, #{userId}, 0, 0, 0, NOW(), NOW())
+  </insert>
+
+  <update id="incrementUnread">
+    UPDATE chat_conversation_members
+    SET unread_count = unread_count + 1, updated_at = NOW()
+    WHERE conversation_id = #{conversationId} AND user_id = #{userId}
+  </update>
+
+  <update id="setArchived">
+    UPDATE chat_conversation_members
+    SET archived = #{archived}, updated_at = NOW()
+    WHERE conversation_id = #{conversationId} AND user_id = #{userId}
+  </update>
+
+  <update id="resetUnread">
+    UPDATE chat_conversation_members
+    SET unread_count = 0, updated_at = NOW()
+    WHERE conversation_id = #{conversationId} AND user_id = #{userId}
+  </update>
+
+  <select id="getUnreadTotal" resultType="int">
+    SELECT COALESCE(SUM(unread_count), 0)
+    FROM chat_conversation_members
+    WHERE user_id = #{userId}
   </select>
 
 </mapper>

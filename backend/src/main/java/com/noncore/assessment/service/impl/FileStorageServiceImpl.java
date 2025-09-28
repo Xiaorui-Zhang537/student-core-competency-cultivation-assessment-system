@@ -37,8 +37,12 @@ public class FileStorageServiceImpl implements FileStorageService {
 
     private final FileRecordMapper fileRecordMapper;
 
-    public FileStorageServiceImpl(FileRecordMapper fileRecordMapper) {
+    private final com.noncore.assessment.mapper.ChatAttachmentMapper chatAttachmentMapper;
+
+    public FileStorageServiceImpl(FileRecordMapper fileRecordMapper,
+                                  com.noncore.assessment.mapper.ChatAttachmentMapper chatAttachmentMapper) {
         this.fileRecordMapper = fileRecordMapper;
+        this.chatAttachmentMapper = chatAttachmentMapper;
     }
 
     // Unified configuration keys aligned with application.yml
@@ -295,6 +299,13 @@ public class FileStorageServiceImpl implements FileStorageService {
         if (purpose == null) {
             // 兼容旧数据：回退使用 related_type
             purpose = fileRecord.getRelatedType();
+        }
+        // 聊天附件：发送者或接收者可访问
+        if ("chat".equalsIgnoreCase(String.valueOf(purpose))) {
+            try {
+                int ok = chatAttachmentMapper.existsUserAccessForFile(fileId, userId);
+                if (ok > 0) return true;
+            } catch (Exception ignore) {}
         }
         return switch (purpose) {
             case "avatar", "assignment" ->

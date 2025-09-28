@@ -33,6 +33,8 @@
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted, watch, nextTick } from 'vue'
 import * as echarts from 'echarts'
+import { resolveEChartsTheme, glassTooltipCss, resolveThemePalette } from '@/charts/echartsTheme'
+import { getEChartsThemedTokens, normalizeCssColor } from '@/utils/theme'
 import { ChartPieIcon } from '@heroicons/vue/24/outline'
 
 // Props
@@ -77,41 +79,95 @@ const props = withDefaults(defineProps<Props>(), {
 // 状态
 const chartRef = ref<HTMLElement>()
 const chartInstance = ref<echarts.ECharts>()
+let resizeObserver: ResizeObserver | null = null
 
-// 默认颜色
-const defaultColors = [
-  '#3b82f6', '#ef4444', '#10b981', '#f59e0b',
-  '#8b5cf6', '#06b6d4', '#84cc16', '#f97316',
-  '#ec4899', '#6366f1'
-]
+const ensurePalette = () => {
+  const palette = getEChartsThemedTokens()?.palette
+  if (Array.isArray(palette) && palette.length) {
+    return palette.map(color => ensureOpaque(color))
+  }
+  return resolveThemePalette().map(color => ensureOpaque(color))
+}
+
+const hasData = () => Array.isArray(props.data) && props.data.length > 0
+
+const computeIsDark = () => {
+  if (props.theme === 'auto') {
+    return document.documentElement.classList.contains('dark')
+  }
+  return props.theme === 'dark'
+}
+
+interface RgbaColor { r: number; g: number; b: number; a: number }
+
+const clamp = (value: number, min: number, max: number) => Math.max(min, Math.min(max, value))
+
+const parseRgba = (color: string): RgbaColor | null => {
+  const normalized = normalizeCssColor(color)
+  const match = normalized.match(/rgba?\(([^)]+)\)/i)
+  if (!match) return null
+  const parts = match[1].split(',').map(p => Number(p.trim()))
+  if (parts.length < 3 || parts.some(n => Number.isNaN(n))) return null
+  const [r, g, b, a = 1] = parts
+  return { r, g, b, a }
+}
+
+const toRgbaString = ({ r, g, b, a }: RgbaColor) => `rgba(${Math.round(clamp(r, 0, 255))}, ${Math.round(clamp(g, 0, 255))}, ${Math.round(clamp(b, 0, 255))}, ${clamp(a, 0, 1)})`
+
+const ensureOpaque = (color: string, floor = 1) => {
+  const parsed = parseRgba(color)
+  if (!parsed) return color
+  return toRgbaString({ ...parsed, a: Math.max(parsed.a, floor) })
+}
+
+const applyStableStates = (item: PieData, baseColor: string): PieData => ({
+  ...item,
+  itemStyle: {
+    color: baseColor
+  },
+  emphasis: { disabled: true },
+  blur: { disabled: true },
+  select: { disabled: true }
+})
+
+const disposeChart = () => {
+  if (resizeObserver && chartRef.value) {
+    try { resizeObserver.unobserve(chartRef.value) } catch {}
+    resizeObserver.disconnect()
+    resizeObserver = null
+  }
+  if (chartInstance.value) {
+    try { chartInstance.value.dispose() } catch {}
+    chartInstance.value = undefined
+  }
+}
 
 // 初始化图表
 const initChart = async () => {
-  if (!chartRef.value || !props.data || props.data.length === 0) return
+  if (!chartRef.value) return
+  if (!hasData()) {
+    disposeChart()
+    return
+  }
   
   try {
-    // 销毁已存在的实例
-    if (chartInstance.value) {
-      chartInstance.value.dispose()
-    }
+    disposeChart()
     
     await nextTick()
     
-    // 确定主题
-    const theme = props.theme === 'auto' 
-      ? (document.documentElement.classList.contains('dark') ? 'dark' : 'light')
-      : props.theme
-    
-    // 创建图表实例
-    chartInstance.value = echarts.init(chartRef.value, theme)
+    // 创建图表实例（统一主题）
+    const theme = resolveEChartsTheme()
+    chartInstance.value = echarts.init(chartRef.value as HTMLDivElement, theme as any)
+    const isDark = computeIsDark()
+    const tokens = getEChartsThemedTokens()
     
     // 处理数据，添加默认颜色
-    const processedData = props.data.map((item, index) => ({
-      ...item,
-      itemStyle: {
-        color: item.color || defaultColors[index % defaultColors.length]
-      }
-    }))
+    const palette = ensurePalette()
+    const processedData = props.data.map((item, index) => {
+      const rawColor = item.color || palette[index % palette.length]
+      const baseColor = ensureOpaque(rawColor)
+      return applyStableStates(item, baseColor)
+    })
     
     // 配置选项
     const option = {
@@ -121,7 +177,7 @@ const initChart = async () => {
         left: 'center',
         top: '5%',
         textStyle: {
-          color: theme === 'dark' ? '#ffffff' : '#333333',
+          color: tokens.textPrimary || (isDark ? '#f3f4f6' : '#1f2937'),
           fontSize: 16,
           fontWeight: 'bold'
         }
@@ -129,11 +185,23 @@ const initChart = async () => {
       
       tooltip: {
         trigger: 'item',
-        backgroundColor: theme === 'dark' ? '#374151' : '#ffffff',
-        borderColor: theme === 'dark' ? '#4b5563' : '#e5e7eb',
-        textStyle: {
-          color: theme === 'dark' ? '#ffffff' : '#333333'
-        },
+        triggerOn: 'mousemove',
+        // 使用玻璃样式并禁用自带的阴影/边框
+        backgroundColor: 'transparent',
+        borderColor: 'transparent',
+        textStyle: { color: 'var(--color-base-content)' },
+        extraCssText: glassTooltipCss(),
+        // 新增：强制 HTML 渲染与类名，避免默认黑底样式
+        className: 'echarts-glass-tooltip',
+        renderMode: 'html',
+        // 避免 tooltip 抢焦造成闪烁
+        enterable: false,
+        confine: true,
+        alwaysShowContent: false,
+        appendToBody: false,
+        transitionDuration: 0,
+        showDelay: 0,
+        hideDelay: 30,
         formatter: '{a} <br/>{b}: {c} ({d}%)',
         ...props.tooltip
       },
@@ -145,7 +213,7 @@ const initChart = async () => {
         top: 20,
         bottom: 20,
         textStyle: {
-          color: theme === 'dark' ? '#ffffff' : '#333333'
+          color: tokens.textPrimary || (isDark ? '#f3f4f6' : '#1f2937')
         },
         ...props.legend
       },
@@ -156,30 +224,32 @@ const initChart = async () => {
           type: 'pie',
           radius: props.radius,
           center: props.center,
+          avoidLabelOverlap: false,
+          selectedMode: false,
+          silent: false,
+          hoverAnimation: false,
+          selectedOffset: 0,
           data: processedData,
           roseType: props.roseType,
           emphasis: {
-            itemStyle: {
-              shadowBlur: 10,
-              shadowOffsetX: 0,
-              shadowColor: 'rgba(0, 0, 0, 0.5)'
-            }
+            focus: 'none',
+            scale: false
           },
           label: {
             show: props.showLabel,
             position: props.labelPosition,
-            color: theme === 'dark' ? '#ffffff' : '#333333',
+            color: tokens.textPrimary || (isDark ? '#f9fafb' : '#1f2937'),
             formatter: '{b}: {d}%'
           },
           labelLine: {
             show: props.showLabel && props.labelPosition === 'outside'
           },
+          animation: !!props.animation,
           animationType: 'scale',
-          animationEasing: 'elasticOut',
-          animationDelay: function (idx: number) {
-            return Math.random() * 200
-          },
-          animationDuration: props.animation ? 1000 : 0
+          animationEasing: 'linear',
+          animationDelay: 0,
+          animationDuration: props.animation ? 400 : 0,
+          stateAnimation: { duration: 0 }
         }
       ]
     }
@@ -188,10 +258,18 @@ const initChart = async () => {
     chartInstance.value.setOption(option)
     
     // 响应式处理
-    const resizeObserver = new ResizeObserver(() => {
-      chartInstance.value?.resize()
+    resizeObserver = new ResizeObserver(() => {
+    chartInstance.value?.resize()
     })
     resizeObserver.observe(chartRef.value)
+
+    // 全局移出时隐藏 tip，避免遗留
+    try { (chartInstance.value as any).off && (chartInstance.value as any).off('globalout') } catch {}
+    try {
+      chartInstance.value?.on('globalout', () => {
+        try { chartInstance.value?.dispatchAction({ type: 'hideTip' } as any) } catch {}
+      })
+    } catch {}
     
   } catch (err) {
     console.error('饼图初始化失败:', err)
@@ -202,12 +280,17 @@ const initChart = async () => {
 const updateChart = () => {
   if (!chartInstance.value) return
   
-  const processedData = props.data.map((item, index) => ({
-    ...item,
-    itemStyle: {
-      color: item.color || defaultColors[index % defaultColors.length]
-    }
-  }))
+  if (!hasData()) {
+    chartInstance.value.setOption({ series: [{ data: [] }] }, true)
+    return
+  }
+
+  const palette = ensurePalette()
+  const processedData = props.data.map((item, index) => {
+    const rawColor = item.color || palette[index % palette.length]
+    const baseColor = ensureOpaque(rawColor)
+    return applyStableStates(item, baseColor)
+  })
   
   const option = {
     series: [
@@ -301,9 +384,7 @@ onMounted(() => {
 })
 
 onUnmounted(() => {
-  if (chartInstance.value) {
-    chartInstance.value.dispose()
-  }
+  disposeChart()
 })
 </script>
 
@@ -318,4 +399,6 @@ onUnmounted(() => {
   flex: 1;
   min-height: 200px;
 }
+/* 确保 tooltip 元素不占据布局空间 */
+:deep(.echarts-glass-tooltip) { position: fixed; left: 0; top: 0; }
 </style> 

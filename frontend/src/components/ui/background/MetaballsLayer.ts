@@ -35,7 +35,7 @@ export function create(containerEl: HTMLElement, opts: MetaballsOptions): LayerH
   let theme: ThemeMode = opts.theme
   let tier = opts.tier
   let emphasis = opts.emphasis
-  let pointer = { x: 0, y: 0 }
+  const pointer = { x: 0, y: 0 }
 
   const state = {
     ready: false,

@@ -1,50 +1,51 @@
 <template>
   <div class="min-h-screen p-6">
     <div class="max-w-7xl mx-auto">
-      <PageHeader :title="t('shared.community.title')" :subtitle="t('shared.community.subtitle')">
+      <page-header :title="t('shared.community.title')" :subtitle="t('shared.community.subtitle')">
         <template #actions>
           <div class="flex items-center space-x-3">
             <Button variant="primary" class="whitespace-nowrap" @click="showCreatePostModal = true">
-              <PlusIcon class="w-4 h-4 mr-2" />
+              <plus-icon class="w-4 h-4 mr-2" />
               {{ t('shared.community.createPost') }}
             </Button>
           </div>
         </template>
-      </PageHeader>
+      </page-header>
 
       <!-- Community Stats (与教师端一致：无外框，仅网格排列的 StatCard) -->
       <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6 mb-8">
-        <StartCard class="relative z-10" :hoverable="false" :label="t('shared.community.stats.posts') as string" :value="safeStats.totalPosts" tone="blue" :icon="DocumentTextIcon" />
-        <StartCard class="relative z-10" :hoverable="false" :label="t('shared.community.stats.users') as string" :value="safeStats.totalUsers" tone="emerald" :icon="UserGroupIcon" />
-        <StartCard class="relative z-10" :hoverable="false" :label="t('shared.community.stats.comments') as string" :value="safeStats.totalComments" tone="violet" :icon="ChatBubbleLeftRightIcon" />
-        <StartCard class="relative z-10" :hoverable="false" :label="t('shared.community.stats.activeToday') as string" :value="safeStats.activeUsersToday" tone="amber" :icon="BoltIcon" />
+        <start-card class="relative z-10" :hoverable="false" :label="t('shared.community.stats.posts') as string" :value="safeStats.totalPosts" tone="blue" :icon="DocumentTextIcon" />
+        <start-card class="relative z-10" :hoverable="false" :label="t('shared.community.stats.users') as string" :value="safeStats.totalUsers" tone="emerald" :icon="UserGroupIcon" />
+        <start-card class="relative z-10" :hoverable="false" :label="t('shared.community.stats.comments') as string" :value="safeStats.totalComments" tone="violet" :icon="ChatBubbleLeftRightIcon" />
+        <start-card class="relative z-10" :hoverable="false" :label="t('shared.community.stats.activeToday') as string" :value="safeStats.activeUsersToday" tone="amber" :icon="BoltIcon" />
       </div>
 
       <div class="grid grid-cols-1 lg:grid-cols-4 gap-8">
         <!-- Left Sidebar -->
         <div class="lg:col-span-1 space-y-6">
           <!-- Categories -->
-          <div class="p-4 filter-container rounded-2xl shadow" v-glass="{ strength: 'thin', interactive: false }">
-             <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">{{ t('shared.community.categories.title') }}</h2>
+          <div class="p-4 filter-container rounded-2xl glass-tint-secondary" v-glass="{ strength: 'thin', interactive: false }">
+            <h2 class="text-lg font-semibold text-base-content mb-4">{{ t('shared.community.categories.title') }}</h2>
             <div class="space-y-2">
-              <button
+              <Button
                 v-for="category in categories"
                 :key="category.id"
+                variant="menu"
+                class="w-full justify-between px-3 py-2 text-sm rounded-lg transition-colors"
                 @click="onCategoryChange(category.id)"
-                class="w-full flex items-center justify-between px-3 py-2 text-sm rounded-lg transition-colors"
                 :class="filterOptions.category === category.id ? 'bg-primary-100 dark:bg-primary-900 text-primary-700 dark:text-primary-300' : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700'"
               >
                  <span class="flex items-center">
                   <component :is="category.icon" class="w-4 h-4 mr-3" />
                    <span>{{ category.name }}</span>
                 </span>
-              </button>
+              </Button>
             </div>
           </div>
 
           <!-- Hot Topics -->
-          <div v-if="hotTopics.length" class="p-4 filter-container rounded-2xl shadow" v-glass="{ strength: 'thin', interactive: false }">
-            <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">{{ t('shared.community.hotTopics') }}</h3>
+          <div v-if="hotTopics.length" class="p-4 filter-container rounded-2xl glass-tint-accent" v-glass="{ strength: 'thin', interactive: false }">
+            <h3 class="text-lg font-semibold text-base-content mb-4">{{ t('shared.community.hotTopics') }}</h3>
             <div class="space-y-3">
               <div
                 v-for="(topic, index) in hotTopics"
@@ -54,7 +55,7 @@
               >
                 <div class="flex items-center space-x-2">
                   <span class="w-6 h-6 bg-red-500 text-white rounded text-xs flex items-center justify-center">{{ index + 1 }}</span>
-                  <span class="text-sm text-gray-900 dark:text-white">#{{ topic.topic }}</span>
+                  <span class="text-sm text-base-content">#{{ topic.topic }}</span>
                 </div>
                 <span class="text-xs text-gray-500">{{ topic.postCount }}</span>
               </div>
@@ -62,18 +63,18 @@
           </div>
 
           <!-- Active Users -->
-          <div v-if="activeUsers.length" class="p-4 filter-container rounded-2xl shadow" v-glass="{ strength: 'thin', interactive: false }">
-            <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">{{ t('shared.community.activeUsers') }}</h3>
+          <div v-if="activeUsers.length" class="p-4 filter-container rounded-2xl glass-tint-info" v-glass="{ strength: 'thin', interactive: false }">
+            <h3 class="text-lg font-semibold text-base-content mb-4">{{ t('shared.community.activeUsers') }}</h3>
             <div class="space-y-3">
               <div v-for="user in activeUsers" :key="user.userId" class="flex items-center space-x-3">
                 <div class="flex-shrink-0">
-                  <img v-if="user.avatarUrl" :src="user.avatarUrl" alt="avatar" class="w-8 h-8 rounded-full object-cover" />
+                  <user-avatar v-if="user.avatarUrl" :avatar="user.avatarUrl" :size="32" :rounded="true" :fit="'cover'" />
                   <div v-else class="w-8 h-8 rounded-full bg-gray-200 dark:bg-gray-600 flex items-center justify-center">
-                    <UserIcon class="w-4 h-4 text-gray-400" />
+                    <user-icon class="w-4 h-4 text-gray-400" />
                   </div>
                 </div>
                 <div class="flex-1 min-w-0">
-                  <p class="text-sm font-medium text-gray-900 dark:text-white">{{ user.nickname || user.username }}</p>
+                  <p class="text-sm font-medium text-base-content">{{ user.nickname || user.username }}</p>
                   <p class="text-xs text-gray-500">{{ user.postCount }} 帖子</p>
                 </div>
               </div>
@@ -83,14 +84,14 @@
 
         <!-- Main Content: Posts List -->
         <div class="lg:col-span-3">
-          <div class="p-4 glass-regular rounded-2xl shadow" v-glass="{ strength: 'regular', interactive: true }">
+          <div class="p-4 glass-regular glass-tint-primary rounded-2xl" v-glass="{ strength: 'regular', interactive: true }">
             <div class="flex justify-between items-center mb-4">
-              <h2 class="text-lg font-semibold text-gray-900 dark:text-white">
+              <h2 class="text-lg font-semibold text-base-content">
                 {{ categories.find((c: { id: string; name: string; icon: any; }) => c.id === filterOptions.category)?.name || '全部帖子' }}
               </h2>
               <div class="flex items-center space-x-3">
                 <div class="relative w-64">
-                  <GlassSearchInput
+                  <glass-search-input
                     v-model="filterOptions.keyword"
                     :placeholder="t('shared.community.list.searchPlaceholder') as string"
                     size="sm"
@@ -98,7 +99,7 @@
                   />
                 </div>
                 <div class="w-36">
-                  <GlassPopoverSelect
+                  <glass-popover-select
                     v-model="filterOptions.orderBy"
                     :options="[
                       {label: t('shared.community.list.order.latest') as string, value: 'latest'},
@@ -123,29 +124,29 @@
               >
                   <div class="flex items-start space-x-4">
                   <div class="flex-shrink-0">
-                    <img v-if="post.author?.avatar" :src="post.author.avatar" alt="avatar" class="w-10 h-10 rounded-full object-cover" />
+                    <user-avatar v-if="post.author?.avatar" :avatar="post.author.avatar" :size="40" :rounded="true" :fit="'cover'" />
                     <div v-else class="w-10 h-10 rounded-full bg-gray-200 dark:bg-gray-600 flex items-center justify-center">
-                      <UserIcon class="w-5 h-5 text-gray-400" />
+                      <user-icon class="w-5 h-5 text-gray-400" />
                     </div>
                   </div>
                   <div class="flex-1 min-w-0" @click="viewPost(post.id)">
                    <div class="flex items-center space-x-2 mb-1">
-                      <h3 class="text-sm font-medium text-gray-900 dark:text-white">{{ post.title }}</h3>
-                      <Badge size="sm" :variant="categoryVariant(post.category)">{{ displayCategory(post.category) }}</Badge>
+                      <h3 class="text-sm font-medium text-base-content">{{ post.title }}</h3>
+                      <badge size="sm" :variant="categoryVariant(post.category)">{{ displayCategory(post.category) }}</badge>
                     </div>
-                   <p class="text-sm text-gray-600 dark:text-gray-400 line-clamp-2 mb-2" v-html="post.content"></p>
-                    <div class="flex items-center space-x-4 text-xs text-gray-500">
+                   <p class="text-sm text-subtle line-clamp-2 mb-2" v-html="post.content"></p>
+                    <div class="flex items-center space-x-4 text-xs text-subtle">
                       <span>{{ post.author?.nickname || post.author?.username || t('shared.community.list.anonymous') }}</span>
                       <span>{{ formatDate(post.createdAt) }}</span>
-                       <div class="flex items-center space-x-1"><EyeIcon class="w-3 h-3" /><span>{{ post.viewCount }}</span></div>
-                      <div class="flex items-center space-x-1"><ChatBubbleLeftIcon class="w-3 h-3" /><span>{{ post.commentCount }}</span></div>
+                       <div class="flex items-center space-x-1"><eye-icon class="w-3 h-3" /><span>{{ post.viewCount }}</span></div>
+                      <div class="flex items-center space-x-1"><chat-bubble-left-icon class="w-3 h-3" /><span>{{ post.commentCount }}</span></div>
                       <Button size="xs" variant="secondary" @click.stop="communityStore.toggleLikePost(post.id)" :class="post.isLiked ? 'text-red-500' : ''">
-                        <HandThumbUpIcon class="w-3 h-3 mr-1" />
+                        <hand-thumb-up-icon class="w-3 h-3 mr-1" />
                         <span>{{ post.likeCount }}</span>
                       </Button>
                     </div>
                     <div v-if="post.tags?.length" class="flex items-center flex-wrap gap-2 mt-2">
-                      <Badge v-for="tag in post.tags" :key="tag.id" size="sm" :variant="tagVariantByName(tag.name)">#{{ tag.name }}</Badge>
+                      <badge v-for="tag in post.tags" :key="tag.id" size="sm" :variant="tagVariantByName(tag.name)">#{{ tag.name }}</badge>
                     </div>
                   </div>
                   <div class="flex-shrink-0 space-x-2">
@@ -164,20 +165,20 @@
 
             <!-- Empty State -->
             <div v-if="!loading && !posts.length" class="text-center py-12">
-              <ChatBubbleLeftIcon class="w-16 h-16 text-gray-400 mx-auto mb-4" />
-              <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-2">{{ t('shared.community.list.emptyTitle') }}</h3>
-              <p class="text-gray-600 dark:text-gray-400 mb-4">
+              <chat-bubble-left-icon class="w-16 h-16 text-gray-400 mx-auto mb-4" />
+              <h3 class="text-lg font-medium text-base-content mb-2">{{ t('shared.community.list.emptyTitle') }}</h3>
+              <p class="text-subtle mb-4">
                 {{ filterOptions.keyword ? t('shared.community.list.emptyDescKeyword') : t('shared.community.list.emptyDescCategory') }}
               </p>
               <Button variant="primary" class="whitespace-nowrap" @click="showCreatePostModal = true">
-                <PlusIcon class="w-4 h-4 mr-2" />
+                <plus-icon class="w-4 h-4 mr-2" />
                 {{ t('shared.community.list.publishFirst') }}
               </Button>
             </div>
 
             <!-- Pagination -->
             <div v-if="!loading && totalPosts > filterOptions.size" class="mt-6 flex justify-between items-center">
-               <span class="text-sm text-gray-500">{{ t('shared.community.list.total', { count: totalPosts }) }}</span>
+               <span class="text-sm text-subtle">{{ t('shared.community.list.total', { count: totalPosts }) }}</span>
               <div class="flex space-x-1">
                 <Button size="sm" variant="outline" @click="changePage(filterOptions.page - 1)" :disabled="filterOptions.page === 1">{{ t('shared.community.list.prev') }}</Button>
                 <Button size="sm" variant="outline" @click="changePage(filterOptions.page + 1)" :disabled="filterOptions.page * filterOptions.size >= totalPosts">{{ t('shared.community.list.next') }}</Button>
@@ -188,15 +189,15 @@
       </div>
 
       <!-- Create Post Modal (GlassModal) -->
-      <GlassModal v-if="showCreatePostModal" :title="t('shared.community.modal.createTitle') as string" maxWidth="max-w-xl" heightVariant="tall" @close="showCreatePostModal=false">
-        <form @submit.prevent="handleCreatePost" class="space-y-4">
+      <glass-modal v-if="showCreatePostModal" :title="t('shared.community.modal.createTitle') as string" size="md" heightVariant="tall" solidBody @close="showCreatePostModal=false">
+        <form id="createPostForm" @submit.prevent="handleCreatePost" class="space-y-4">
             <div>
               <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{{ t('shared.community.modal.title') }}</label>
-              <GlassInput v-model="newPost.title" :placeholder="t('shared.community.modal.title') as string" />
+              <glass-input v-model="newPost.title" :placeholder="t('shared.community.modal.title') as string" />
             </div>
             <div>
               <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{{ t('shared.community.modal.category') }}</label>
-              <GlassPopoverSelect
+              <glass-popover-select
                 v-model="newPost.category"
                 :options="categoryOptions"
                 size="md"
@@ -204,15 +205,15 @@
             </div>
             <div>
               <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{{ t('shared.community.modal.tags') }}</label>
-              <GlassTagsInput v-model="newPost.selectedTags" :placeholder="t('shared.community.modal.addTags') as string || '添加标签（回车确认）'" />
+              <glass-tags-input v-model="newPost.selectedTags" :placeholder="t('shared.community.modal.addTags') as string || '添加标签（回车确认）'" />
             </div>
             <div>
               <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{{ t('shared.community.modal.content') }}</label>
-              <GlassTextarea v-model="newPost.content" :rows="6" :placeholder="t('shared.community.modal.contentPlaceholder') as string" />
+              <glass-textarea v-model="newPost.content" :rows="6" :placeholder="t('shared.community.modal.contentPlaceholder') as string" />
             </div>
             <div>
               <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">附件</label>
-              <FileUpload
+              <file-upload
                 ref="postUploader"
                 :accept="'.pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.txt,.zip,.rar,image/*,video/*'"
                 :multiple="true"
@@ -224,23 +225,24 @@
                 @upload-error="onPostUploadError"
               />
             </div>
-          <div class="flex justify-end space-x-3 pt-4">
-            <Button type="button" variant="secondary" @click="showCreatePostModal = false">{{ t('shared.community.modal.cancel') }}</Button>
-            <Button type="submit" variant="primary" :disabled="loading">{{ t('shared.community.modal.publish') }}</Button>
-          </div>
+          
         </form>
-      </GlassModal>
+        <template #footer>
+          <Button type="button" variant="secondary" @click="showCreatePostModal = false">{{ t('shared.community.modal.cancel') }}</Button>
+          <Button type="submit" form="createPostForm" variant="primary" :disabled="loading">{{ t('shared.community.modal.publish') }}</Button>
+        </template>
+      </glass-modal>
 
       <!-- Edit Post Modal (GlassModal) -->
-      <GlassModal v-if="editModal.visible" :title="t('shared.community.modal.editTitle') as string" maxWidth="max-w-xl" heightVariant="tall" @close="editModal.visible=false">
-        <form @submit.prevent="handleUpdatePost" class="space-y-4">
+      <glass-modal v-if="editModal.visible" :title="t('shared.community.modal.editTitle') as string" size="md" heightVariant="tall" solidBody @close="editModal.visible=false">
+        <form id="editPostForm" @submit.prevent="handleUpdatePost" class="space-y-4">
             <div>
               <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{{ t('shared.community.modal.title') }}</label>
-              <GlassInput v-model="editModal.form.title" />
+              <glass-input v-model="editModal.form.title" />
             </div>
             <div>
               <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{{ t('shared.community.modal.category') }}</label>
-              <GlassPopoverSelect
+              <glass-popover-select
                 v-model="editModal.form.category"
                 :options="categoryOptions"
                 size="md"
@@ -248,15 +250,15 @@
             </div>
             <div>
               <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{{ t('shared.community.modal.tags') }}</label>
-              <GlassTagsInput v-model="editModal.form.tags" :placeholder="t('shared.community.modal.addTags') as string || '添加标签（回车确认）'" />
+              <glass-tags-input v-model="editModal.form.tags" :placeholder="t('shared.community.modal.addTags') as string || '添加标签（回车确认）'" />
             </div>
             <div>
               <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{{ t('shared.community.modal.content') }}</label>
-              <GlassTextarea v-model="editModal.form.content" :rows="6" />
+              <glass-textarea v-model="editModal.form.content" :rows="6" />
             </div>
             <div>
               <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{{ t('shared.community.modal.attachment') }}</label>
-              <FileUpload
+              <file-upload
                 ref="postEditUploader"
                 :accept="'.pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.txt,.zip,.rar,image/*,video/*'"
                 :multiple="true"
@@ -283,12 +285,13 @@
                 </ul>
               </div>
             </div>
-          <div class="flex justify-end space-x-3 pt-4">
-            <Button type="button" variant="secondary" @click="editModal.visible = false">{{ t('shared.community.modal.cancel') }}</Button>
-            <Button type="submit" :disabled="loading" variant="primary">{{ t('shared.community.modal.save') }}</Button>
-          </div>
+          
         </form>
-      </GlassModal>
+        <template #footer>
+          <Button type="button" variant="secondary" @click="editModal.visible = false">{{ t('shared.community.modal.cancel') }}</Button>
+          <Button type="submit" :disabled="loading" form="editPostForm" variant="primary">{{ t('shared.community.modal.save') }}</Button>
+        </template>
+      </glass-modal>
     </div>
   </div>
 </template>

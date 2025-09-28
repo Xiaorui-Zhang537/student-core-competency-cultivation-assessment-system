@@ -1,19 +1,20 @@
 <template>
   <div class="w-full">
     <div v-if="showLabel" class="flex justify-between items-center mb-2">
-      <span class="text-sm font-medium text-gray-700 dark:text-gray-300">
+      <span class="text-sm font-medium text-strong">
         {{ label }}
       </span>
-      <span class="text-sm text-gray-500 dark:text-gray-400">
+      <span class="text-sm text-muted">
         {{ Math.round(value) }}%
       </span>
     </div>
     
     <div
       :class="[
-        'w-full bg-gray-200 rounded-full overflow-hidden dark:bg-gray-700',
+        'w-full rounded-full overflow-hidden',
         sizeClasses
       ]"
+      :style="{ backgroundColor: 'color-mix(in oklab, var(--color-base-content) 18%, transparent)' }"
     >
       <div
         :class="[
@@ -54,11 +55,11 @@ const sizeClasses = computed(() => {
 })
 
 const colorClasses = computed(() => {
-  const colors = {
-    primary: 'bg-primary-600',
-    success: 'bg-green-600',
-    warning: 'bg-yellow-600',
-    danger: 'bg-red-600'
+  const colors: Record<NonNullable<Props['color']>, string> = {
+    primary: 'bg-[color-mix(in_oklab,var(--color-primary)_70%,transparent)]',
+    success: 'bg-[color-mix(in_oklab,var(--color-success)_70%,transparent)]',
+    warning: 'bg-[color-mix(in_oklab,var(--color-warning)_70%,transparent)]',
+    danger: 'bg-[color-mix(in_oklab,var(--color-error)_70%,transparent)]'
   }
   return colors[props.color]
 })

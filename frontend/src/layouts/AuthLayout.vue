@@ -1,23 +1,8 @@
 <template>
   <!-- 强制刷新标记: v2025-07-29-11:15 -->
-  <div class="min-h-screen relative overflow-hidden">
+  <div class="min-h-screen relative overflow-hidden text-base-content">
     <!-- 动态背景 -->
-    <div class="absolute inset-0 bg-gradient-to-br from-primary-50 via-blue-50 to-accent-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
-      <FuturisticBackground
-        class="absolute inset-0"
-        theme="auto"
-        :intensity="0.18"
-        :bits-density="0.8"
-        :sweep-frequency="7"
-        :parallax="true"
-        :enable3D="true"
-        :logo-glow="true"
-        :emphasis="true"
-        :interactions="{ mouseTrail: true, clickRipples: true }"
-        :enabled="uiStore.bgEnabled"
-        :respect-reduced-motion="true"
-      />
-    </div>
+    <div class="absolute inset-0" :style="authBgStyle"></div>
 
     <!-- 主容器 -->
     <div class="relative z-10 min-h-screen flex items-center justify-center p-4">
@@ -35,18 +20,10 @@
             <moon-icon v-else class="w-5 h-5 text-gray-600 group-hover:-rotate-12 transition-transform duration-300" />
           </button>
 
-          <!-- 背景开关 -->
-          <button
-            @click="uiStore.toggleBackground()"
-            v-glass="{ strength: 'thin', interactive: true }"
-            class="p-2 rounded-lg transition-all duration-200"
-            :title="uiStore.bgEnabled ? '关闭背景' : '开启背景'"
-          >
-            <component :is="uiStore.bgEnabled ? 'EyeSlashIcon' : 'EyeIcon'" class="w-5 h-5 text-gray-600 dark:text-gray-300" />
-          </button>
+          <!-- 背景开关移除（新版主题为静态米色底） -->
 
           <!-- 语言切换 -->
-          <LanguageSwitcher />
+          <language-switcher />
         </div>
 
         <!-- Logo 和标题区域 -->
@@ -95,14 +72,14 @@
         </div>
 
         <!-- 内容卡片区域（改为复用 Card 玻璃组件） -->
-        <Card :hoverable="false" padding="lg" class="relative">
+        <card :hoverable="false" padding="lg" class="relative">
           <!-- 加载状态覆盖 -->
           <div v-if="isLoading" class="absolute inset-0 bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm rounded-2xl flex items-center justify-center z-20">
             <div class="text-center">
               <div class="inline-flex items-center justify-center w-12 h-12 bg-primary-100 dark:bg-primary-900/30 rounded-xl mb-3">
                 <div class="w-6 h-6 border-2 border-primary-600 border-t-transparent rounded-full animate-spin"></div>
               </div>
-              <p class="text-sm text-gray-600 dark:text-gray-400">{{ loadingText }}</p>
+              <p class="text-sm text-subtle">{{ loadingText }}</p>
             </div>
           </div>
 
@@ -121,7 +98,7 @@
               </template>
             </router-view>
           </div>
-        </Card>
+        </card>
 
         <!-- 功能特性展示 -->
         <div class="mt-8 grid grid-cols-3 gap-4">
@@ -135,7 +112,7 @@
               :is="feature.icon"
               class="w-6 h-6 mx-auto mb-2 text-primary-600 dark:text-primary-400 group-hover:scale-110 transition-transform duration-300"
             />
-            <h3 class="text-xs font-medium text-gray-900 dark:text-white mb-1">{{ t(feature.titleKey) }}</h3>
+            <h3 class="text-xs font-medium text-base-content mb-1">{{ t(feature.titleKey) }}</h3>
             <p class="text-xs text-gray-600 dark:text-gray-400">{{ t(feature.descKey) }}</p>
           </div>
         </div>
@@ -204,12 +181,11 @@ import {
   DevicePhoneMobileIcon,
   CloudIcon,
   CpuChipIcon,
-  EyeIcon,
-  EyeSlashIcon,
+  
   QuestionMarkCircleIcon
 } from '@heroicons/vue/24/outline'
 import LanguageSwitcher from '@/components/ui/LanguageSwitcher.vue'
-import FuturisticBackground from '@/components/ui/FuturisticBackground.vue'
+// FuturisticBackground 已移除
 import Card from '@/components/ui/Card.vue'
 
 // 组合式API
@@ -231,6 +207,18 @@ const formattedTime = computed(() => d(currentTime.value, 'medium'))
 
 // 主题相关
 const isDark = computed(() => uiStore.isDarkMode)
+const isNewTheme = computed(() => {
+  const theme = document.documentElement.getAttribute('data-theme') || ''
+  return theme === 'retro' || theme === 'dracula'
+})
+const authBgStyle = computed(() => {
+  return isNewTheme.value
+    ? { background: 'var(--color-base-100)' }
+    : { background: isDark.value
+        ? 'linear-gradient(to bottom right, #0f172a, #111827, #0f172a)'
+        : 'linear-gradient(to bottom right, #eff6ff, #e0f2fe, #fff7ed)'
+      }
+})
 
 // 动画偏好与设备能力（背景组件内部已做处理，此处无需额外逻辑）
 
@@ -408,7 +396,6 @@ onMounted(() => {
   nextTick(() => {
     handleRouteChange()
   })
-  uiStore.initBackgroundEnabled()
 })
 
 onUnmounted(() => {

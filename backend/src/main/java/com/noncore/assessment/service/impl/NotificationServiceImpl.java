@@ -31,6 +31,8 @@ public class NotificationServiceImpl implements NotificationService {
     private static final Logger logger = LoggerFactory.getLogger(NotificationServiceImpl.class);
 
     private final NotificationMapper notificationMapper;
+    private final com.noncore.assessment.mapper.ChatMapper chatMapper;
+    private final com.noncore.assessment.mapper.ChatAttachmentMapper chatAttachmentMapper;
     private final UserMapper userMapper;
     private final CourseMapper courseMapper;
     private final AssignmentMapper assignmentMapper;
@@ -43,13 +45,17 @@ public class NotificationServiceImpl implements NotificationService {
 
     public NotificationServiceImpl(NotificationMapper notificationMapper, UserMapper userMapper,
                                  CourseMapper courseMapper, AssignmentMapper assignmentMapper,
-                                 GradeMapper gradeMapper, CacheService cacheService) {
+                                 GradeMapper gradeMapper, CacheService cacheService,
+                                 com.noncore.assessment.mapper.ChatAttachmentMapper chatAttachmentMapper,
+                                 com.noncore.assessment.mapper.ChatMapper chatMapper) {
         this.notificationMapper = notificationMapper;
         this.userMapper = userMapper;
         this.courseMapper = courseMapper;
         this.assignmentMapper = assignmentMapper;
         this.gradeMapper = gradeMapper;
         this.cacheService = cacheService;
+        this.chatAttachmentMapper = chatAttachmentMapper;
+        this.chatMapper = chatMapper;
     }
 
     @Override
@@ -521,22 +527,37 @@ public class NotificationServiceImpl implements NotificationService {
     }
 
     @Override
-    public PageResult<Notification> getConversation(Long userId, Long peerId, Integer page, Integer size) {
-        logger.info("获取会话：userId={}, peerId={}, page={}, size={}", userId, peerId, page, size);
+    public PageResult<Notification> getConversation(Long userId, Long peerId, Integer page, Integer size, Long courseId) {
+        logger.info("获取会话：userId={}, peerId={}, page={}, size={}, courseId={}", userId, peerId, page, size, courseId);
         int p = (page == null || page < 1) ? 1 : page;
         int s = (size == null || size < 1) ? 20 : size;
         int offset = (p - 1) * s;
-        List<Notification> items = notificationMapper.selectConversationBetween(userId, peerId, offset, s);
-        Integer total = notificationMapper.countConversationBetween(userId, peerId);
+        List<Notification> items = notificationMapper.selectConversationBetween(userId, peerId, offset, s, courseId);
+        // 附件回填（批量查询）
+        try {
+            java.util.List<Long> ids = items.stream().map(Notification::getId).toList();
+            if (!ids.isEmpty()) {
+                java.util.List<com.noncore.assessment.entity.ChatMessageAttachment> atts =
+                        chatAttachmentMapper.selectByNotificationIds(ids);
+                java.util.Map<Long, java.util.List<Long>> map = new java.util.HashMap<>();
+                for (var a : atts) {
+                    map.computeIfAbsent(a.getNotificationId(), k -> new java.util.ArrayList<>()).add(a.getFileId());
+                }
+                for (var n : items) {
+                    n.setAttachmentFileIds(map.getOrDefault(n.getId(), java.util.Collections.emptyList()));
+                }
+            }
+        } catch (Exception ignore) {}
+        Integer total = notificationMapper.countConversationBetween(userId, peerId, courseId);
         int totalPages = (int) Math.ceil((total == null ? 0 : total) / (double) s);
         return PageResult.of(items, p, s, total == null ? 0L : total.longValue(), totalPages);
     }
 
     @Override
-    public int markConversationAsRead(Long userId, Long peerId) {
-        logger.info("标记会话已读：userId={}, peerId={}", userId, peerId);
+    public int markConversationAsRead(Long userId, Long peerId, Long courseId) {
+        logger.info("标记会话已读：userId={}, peerId={}, courseId={}", userId, peerId, courseId);
         // 简化处理：取我作为接收者的未读消息，逐条标记
-        List<Notification> mine = notificationMapper.selectConversationBetween(userId, peerId, 0, Integer.MAX_VALUE);
+        List<Notification> mine = notificationMapper.selectConversationBetween(userId, peerId, 0, Integer.MAX_VALUE, courseId);
         int count = 0;
         for (Notification n : mine) {
             if (Boolean.FALSE.equals(n.getIsRead()) && userId.equals(n.getRecipientId())) {
@@ -544,6 +565,14 @@ public class NotificationServiceImpl implements NotificationService {
             }
         }
         if (count > 0) {
+            // 重算该会话在成员表的未读（若能定位 conversationId）
+            try {
+                Long cId = chatMapper.findConversationId(Math.min(userId, peerId), Math.max(userId, peerId), (courseId == null ? 0L : courseId));
+                if (cId != null) {
+                    chatMapper.recalcUnread(userId, cId);
+                    chatMapper.resetUnread(cId, userId);
+                }
+            } catch (Exception ignore) {}
             cacheService.delete(UNREAD_COUNT_CACHE_PREFIX + userId);
             if (sseService != null) {
                 try {
@@ -556,7 +585,8 @@ public class NotificationServiceImpl implements NotificationService {
     }
 
     @Override
-    public Notification sendMessage(Long senderId, Long recipientId, String content, String relatedType, Long relatedId) {
+    public Notification sendMessage(Long senderId, Long recipientId, String content, String relatedType, Long relatedId,
+                                    java.util.List<Long> attachmentFileIds) {
         if (senderId == null || recipientId == null) {
             throw new BusinessException(ErrorCode.INVALID_PARAMETER, "发送者或接收者不能为空");
         }
@@ -588,6 +618,65 @@ public class NotificationServiceImpl implements NotificationService {
         if (meta != null) {
             n.setData(meta);
         }
+        // 附件入库（可选）
+        if (attachmentFileIds != null && !attachmentFileIds.isEmpty()) {
+            try {
+                chatAttachmentMapper.batchInsert(n.getId(), attachmentFileIds, senderId);
+            } catch (Exception e) {
+                logger.warn("附加聊天附件失败 notificationId={}, fileIds={}", n.getId(), attachmentFileIds, e);
+            }
+        }
+        // 更新/创建会话与未读
+        try {
+            Long courseId = ("course".equalsIgnoreCase(relatedType) && relatedId != null) ? relatedId : 0L;
+            Long cId = chatMapper.findConversationId(Math.min(senderId, recipientId), Math.max(senderId, recipientId), courseId);
+            if (cId == null) {
+                chatMapper.insertConversation(senderId, recipientId, courseId, n.getId(), java.time.LocalDateTime.now());
+                cId = chatMapper.findConversationId(Math.min(senderId, recipientId), Math.max(senderId, recipientId), courseId);
+            } else {
+                chatMapper.updateConversationLast(cId, n.getId(), java.time.LocalDateTime.now());
+            }
+            try { if (cId != null) notificationMapper.setConversationId(n.getId(), cId); } catch (Exception ignore) {}
+            if (cId != null) {
+                // 双方成员确保存在
+                chatMapper.ensureMember(cId, senderId);
+                chatMapper.ensureMember(cId, recipientId);
+                // 接收方未读+1
+                chatMapper.incrementUnread(cId, recipientId);
+                // 若任一方曾归档，则自动解除归档，确保“最近”可见
+                try {
+                    chatMapper.setArchived(cId, senderId, false);
+                    chatMapper.setArchived(cId, recipientId, false);
+                } catch (Exception ignore) {}
+            }
+        } catch (Exception e) {
+            logger.warn("更新会话失败 sender={}, recipient={}, err={}", senderId, recipientId, String.valueOf(e.getMessage()));
+        }
+        // 构造对“最近”所需的镜像字段，便于前端直接 upsert
+        try {
+            Long courseId = ("course".equalsIgnoreCase(relatedType) && relatedId != null) ? relatedId : 0L;
+            Long peerId = recipientId;
+            com.noncore.assessment.entity.User peer = userMapper.selectUserById(peerId);
+            Map<String, Object> recentMirror = new java.util.HashMap<>();
+            recentMirror.put("conversationId", n.getConversationId());
+            recentMirror.put("peerId", peerId);
+            String peerDisplay = null;
+            try {
+                if (peer != null) {
+                    String nn = peer.getNickname();
+                    peerDisplay = (nn != null && !nn.isBlank()) ? nn : peer.getUsername();
+                }
+            } catch (Exception ignore) {}
+            recentMirror.put("peerUsername", peerDisplay != null ? peerDisplay : String.valueOf(peerId));
+            recentMirror.put("peerAvatar", peer != null ? peer.getAvatar() : null);
+            recentMirror.put("courseId", courseId);
+            recentMirror.put("lastContent", n.getContent());
+            recentMirror.put("lastMessageAt", java.time.LocalDateTime.now());
+            recentMirror.put("unread", 0);
+            // 暂存到 data 返回：方便前端直接入列
+            String mirrorJson = new com.fasterxml.jackson.databind.ObjectMapper().writeValueAsString(recentMirror);
+            n.setData(mirrorJson);
+        } catch (Exception ignore) {}
         return n;
     }
 } 

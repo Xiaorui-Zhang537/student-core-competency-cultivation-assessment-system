@@ -5,22 +5,22 @@
       <div class="mb-8">
         <nav class="flex items-center space-x-2 text-sm text-gray-500 dark:text-gray-400 mb-2">
           <span class="hover:text-gray-700 dark:hover:text-gray-200 cursor-pointer" @click="router.push('/teacher/courses')">{{ t('teacher.courses.breadcrumb') }}</span>
-          <ChevronRightIcon class="w-4 h-4" />
+          <chevron-right-icon class="w-4 h-4" />
           <span v-if="assignment.courseName || assignmentCourseId" class="hover:text-gray-700 dark:hover:text-gray-200 cursor-pointer" @click="goCourse()">{{ assignment.courseName || `#${assignmentCourseId}` }}</span>
-          <ChevronRightIcon class="w-4 h-4" />
+          <chevron-right-icon class="w-4 h-4" />
           <span class="hover:text-gray-700 dark:hover:text-gray-200 cursor-pointer" @click="router.push('/teacher/assignments')">{{ t('teacher.submissions.breadcrumb.assignments') }}</span>
-          <ChevronRightIcon class="w-4 h-4" />
+          <chevron-right-icon class="w-4 h-4" />
           <span class="hover:text-gray-700 dark:hover:text-gray-200 cursor-pointer" @click="router.push(`/teacher/assignments/${assignment.id}/submissions`)">{{ t('teacher.submissions.breadcrumb.self') }}</span>
-          <ChevronRightIcon class="w-4 h-4" />
+          <chevron-right-icon class="w-4 h-4" />
           <span>{{ submission.studentName || submission.studentId }}</span>
         </nav>
-        <PageHeader :title="t('teacher.grading.title', { name: submission.studentName || submission.studentId })" :subtitle="pageSubtitle">
+        <page-header :title="t('teacher.grading.title', { name: submission.studentName || submission.studentId })" :subtitle="pageSubtitle">
           <template #actions>
             <badge :variant="getSubmissionStatusVariant(submission.status)">
               {{ getSubmissionStatusText(submission.status) }}
             </badge>
           </template>
-        </PageHeader>
+        </page-header>
       </div>
 
       <!-- 加载状态 -->
@@ -33,7 +33,7 @@
         <!-- 左侧主要内容 -->
         <div class="xl:col-span-2 space-y-8">
           <!-- 作业信息 -->
-          <card padding="lg">
+          <card padding="lg" tint="info">
             <template #header>
               <h2 class="text-lg font-semibold text-gray-900 dark:text-white">{{ t('teacher.grading.assignment.requirements') }}</h2>
             </template>
@@ -64,7 +64,7 @@
           </card>
 
           <!-- 学生提交内容 -->
-          <card padding="lg" v-if="showSubmissionContent">
+          <card padding="lg" tint="accent" v-if="showSubmissionContent">
             <template #header>
               <h2 class="text-lg font-semibold text-gray-900 dark:text-white">{{ t('teacher.grading.submission.content') }}</h2>
             </template>
@@ -112,7 +112,7 @@
               </div>
             </div>
           </card>
-          <card padding="lg" v-else>
+          <card padding="lg" tint="accent" v-else>
             <template #header>
               <h2 class="text-lg font-semibold text-gray-900 dark:text-white">{{ t('teacher.grading.submission.content') }}</h2>
             </template>
@@ -124,23 +124,23 @@
           
 
           <!-- AI评分建议 -->
-          <card padding="lg" v-if="aiSuggestion">
+          <card padding="lg" tint="warning" v-if="aiSuggestion">
             <template #header>
               <div class="flex items-center justify-between">
                 <h2 class="text-lg font-semibold text-gray-900 dark:text-white">{{ t('teacher.grading.ai.title') }}</h2>
                 <div class="flex items-center gap-2">
                   <Button variant="outline" size="sm" @click="applyAiSuggestion">
-                    <CheckIcon class="w-4 h-4 mr-1" />
-                    {{ t('teacher.grading.ai.apply') }}
+                    <check-icon class="w-4 h-4 mr-1" />
+                    {{ t('teacher.grading.ai.applySuggestion') || '一键应用' }}
                   </Button>
                   
                   <Button v-if="aiSuggestion" variant="indigo" size="sm" @click="viewAiDetail">
-                    <EyeIcon class="w-4 h-4 mr-1" />
-                    {{ t('teacher.aiGrading.viewDetail') || '查看详情' }}
+                    <eye-icon class="w-4 h-4 mr-1" />
+                    {{ t('teacher.grading.ai.viewDetail') || '查看详情' }}
                   </Button>
                   <Button size="sm" variant="primary" class="ml-1" :loading="aiLoading" @click="openAiModal">
-                    <SparklesIcon class="w-4 h-4 mr-1" />
-                    {{ t('teacher.grading.ai.generate') || '生成AI建议' }}
+                    <sparkles-icon class="w-4 h-4 mr-1" />
+                    {{ t('teacher.grading.ai.open') || 'AI 批改' }}
                   </Button>
                 </div>
               </div>
@@ -155,22 +155,22 @@
                 <div class="flex-1 grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div class="space-y-2">
                     <div class="text-xs text-gray-500">{{ t('teacher.aiGrading.render.moral_reasoning') }}</div>
-                    <Progress :value="(aiSuggestion.dims?.moral ?? 0) * 20" />
+                    <Progress :value="(aiSuggestion.dims?.moral ?? 0) * 20" size="sm" />
                     <div class="text-xs text-right text-gray-500">{{ (aiSuggestion.dims?.moral ?? 0).toFixed(1) }}/5</div>
                 </div>
                   <div class="space-y-2">
                     <div class="text-xs text-gray-500">{{ t('teacher.aiGrading.render.attitude_development') }}</div>
-                    <Progress :value="(aiSuggestion.dims?.attitude ?? 0) * 20" />
+                    <Progress :value="(aiSuggestion.dims?.attitude ?? 0) * 20" size="sm" />
                     <div class="text-xs text-right text-gray-500">{{ (aiSuggestion.dims?.attitude ?? 0).toFixed(1) }}/5</div>
                     </div>
                   <div class="space-y-2">
                     <div class="text-xs text-gray-500">{{ t('teacher.aiGrading.render.ability_growth') }}</div>
-                    <Progress :value="(aiSuggestion.dims?.ability ?? 0) * 20" />
+                    <Progress :value="(aiSuggestion.dims?.ability ?? 0) * 20" size="sm" />
                     <div class="text-xs text-right text-gray-500">{{ (aiSuggestion.dims?.ability ?? 0).toFixed(1) }}/5</div>
                     </div>
                   <div class="space-y-2">
                     <div class="text-xs text-gray-500">{{ t('teacher.aiGrading.render.strategy_optimization') }}</div>
-                    <Progress :value="(aiSuggestion.dims?.strategy ?? 0) * 20" />
+                    <Progress :value="(aiSuggestion.dims?.strategy ?? 0) * 20" size="sm" />
                     <div class="text-xs text-right text-gray-500">{{ (aiSuggestion.dims?.strategy ?? 0).toFixed(1) }}/5</div>
                     </div>
                   </div>
@@ -196,7 +196,7 @@
             </div>
           </card>
 
-          <card padding="lg" v-else>
+          <card padding="lg" tint="secondary" v-else>
             <template #header>
               <div class="flex items-center justify-between">
                 <h2 class="text-lg font-semibold text-gray-900 dark:text-white">{{ t('teacher.grading.ai.title') }}</h2>
@@ -209,21 +209,21 @@
             <div class="flex items-center justify-between">
               <div class="text-sm text-gray-600 dark:text-gray-300">{{ t('teacher.grading.ai.hint') || '点击下方按钮，基于本次提交自动生成AI评分建议。' }}</div>
               <Button size="sm" variant="primary" :loading="aiLoading" @click="openAiModal">
-                <SparklesIcon class="w-4 h-4 mr-1" />
-                {{ t('teacher.grading.ai.generate') || '生成AI建议' }}
+                <sparkles-icon class="w-4 h-4 mr-1" />
+                {{ t('teacher.grading.ai.open') || 'AI 批改' }}
               </Button>
             </div>
           </card>
 
           <!-- AI 批改弹窗（选择附件或文本 + 模型 + 进度） -->
-           <GlassModal v-if="aiModalOpen" :title="t('teacher.aiGrading.picker.title') as string" maxWidth="max-w-lg" heightVariant="tall" @close="aiModalOpen=false">
+           <glass-modal v-if="aiModalOpen" :title="t('teacher.aiGrading.picker.title') as string" size="sm" heightVariant="tall" solidBody @close="aiModalOpen=false">
             <div class="space-y-3">
             <div class="flex items-center gap-3 flex-nowrap">
               <div class="flex items-center gap-2">
                 <span class="text-xs text-gray-600 dark:text-gray-300 whitespace-nowrap">{{ t('teacher.ai.model.label') || '模型' }}</span>
-                  <GlassPopoverSelect v-model="gradingModel" :options="gradingModelOptions" size="sm" />
+                  <glass-popover-select v-model="gradingModel" :options="gradingModelOptions" size="sm" />
                 </div>
-                <SegmentedPills
+                <segmented-pills
                   class="ml-2"
                   v-model="aiSource"
                   :options="[{ label: '文本', value: 'text' }, { label: '附件', value: 'files' }]"
@@ -231,20 +231,20 @@
                 />
                 <div class="flex items-center gap-2 ml-auto">
                   <Button size="sm" variant="primary" :disabled="hasOngoing || !canStartAi" @click="startAiGradingFromModal">
-                    <SparklesIcon class="w-4 h-4 mr-1" />{{ t('teacher.aiGrading.start') || '开始批改' }}
+                    <sparkles-icon class="w-4 h-4 mr-1" />{{ t('teacher.aiGrading.start') || '开始批改' }}
                   </Button>
                 </div>
               </div>
 
               <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-                <div class="card p-3" v-glass="{ strength: 'regular', interactive: true }">
+                <Card padding="sm" tint="secondary">
                   <div class="text-xs text-gray-600 dark:text-gray-300 mb-2">{{ t('teacher.aiGrading.picker.text') || '文本内容' }}</div>
                   <div v-if="aiPicker.previewText" class="bg-white/40 dark:bg-white/5 border border-white/30 dark:border-white/10 rounded p-2 text-xs max-h-40 overflow-auto no-scrollbar whitespace-pre-wrap">
                     {{ aiPicker.previewText }}
                   </div>
                   <div v-else class="text-xs text-gray-500">{{ t('common.empty') || '无内容' }}</div>
-                </div>
-                <div class="card p-3" v-glass="{ strength: 'regular', interactive: true }">
+                </Card>
+                <Card padding="sm" tint="secondary">
                   <div class="flex items-center justify-between mb-2">
                     <div class="text-xs text-gray-600 dark:text-gray-300">{{ t('teacher.aiGrading.picker.attachments') || '附件' }}</div>
                   </div>
@@ -258,10 +258,10 @@
                     </li>
                     <li v-if="!aiPicker.files.length" class="py-2 text-xs text-gray-500">{{ t('common.empty') || '无内容' }}</li>
                   </ul>
-                </div>
+                </Card>
               </div>
 
-              <div v-if="aiProgress.items.length" class="card p-3" v-glass="{ strength: 'regular', interactive: true }">
+              <Card v-if="aiProgress.items.length" padding="sm" tint="warning">
                 <div class="text-xs text-gray-600 dark:text-gray-300 mb-2">{{ t('teacher.aiGrading.progress.label') || '进度' }}</div>
                 <ul class="space-y-1 text-xs">
                   <li v-for="it in aiProgress.items" :key="it.id" class="flex items-center justify-between">
@@ -275,7 +275,7 @@
                     <span class="ml-2" :class="it.status==='error' ? 'text-red-600' : (it.status==='done' ? 'text-green-600' : 'text-gray-600')">{{ t('teacher.aiGrading.status.' + it.status) }}</span>
                   </li>
                 </ul>
-              </div>
+              </Card>
             </div>
             <template #footer>
               <div class="flex items-center justify-between w-full">
@@ -283,12 +283,12 @@
                 <Button size="sm" variant="secondary" @click="aiModalOpen=false">{{ t('teacher.aiGrading.picker.close') || '关闭' }}</Button>
               </div>
             </template>
-          </GlassModal>
+          </glass-modal>
 
       
 
           <!-- 评分历史 -->
-          <card padding="lg" v-if="gradingHistory.length > 0">
+          <card padding="lg" tint="info" v-if="gradingHistory.length > 0">
             <template #header>
               <h2 class="text-lg font-semibold text-gray-900 dark:text-white">{{ t('teacher.grading.history.title') }}</h2>
             </template>
@@ -330,7 +330,7 @@
         <!-- 右侧评分面板 -->
         <div class="space-y-6">
           <!-- 评分表单 -->
-          <card padding="lg">
+          <card padding="lg" tint="primary">
             <template #header>
               <h3 class="text-lg font-semibold text-gray-900 dark:text-white">{{ t('teacher.grading.form.title') }}</h3>
             </template>
@@ -342,7 +342,7 @@
                   {{ t('teacher.grading.form.score') }} <span class="text-red-500">*</span>
                 </label>
                 <div class="flex items-center space-x-2">
-                  <GlassInput
+                  <glass-input
                     v-model="gradeForm.score as any"
                     type="number"
                     :min="0"
@@ -373,7 +373,7 @@
                 <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                   {{ t('teacher.grading.form.grade') }} <span class="text-red-500">*</span>
                 </label>
-                <GlassPopoverSelect
+                <glass-popover-select
                   v-model="gradeForm.grade"
                   :options="gradeOptions"
                   size="md"
@@ -387,7 +387,7 @@
                 <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                   {{ t('teacher.grading.form.feedback') }} <span class="text-red-500">*</span>
                 </label>
-                <GlassTextarea
+                <glass-textarea
                   v-model="gradeForm.feedback"
                   :rows="6"
                   :placeholder="t('teacher.grading.form.feedbackPlaceholder') as string"
@@ -403,7 +403,7 @@
                   <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                     {{ t('teacher.grading.form.strengths') }}
                   </label>
-                  <GlassTextarea
+                  <glass-textarea
                     v-model="gradeForm.strengths"
                     :rows="3"
                     :placeholder="t('teacher.grading.form.strengthsPlaceholder') as string"
@@ -413,7 +413,7 @@
                   <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                     {{ t('teacher.grading.form.improvements') }}
                   </label>
-                  <GlassTextarea
+                  <glass-textarea
                     v-model="gradeForm.improvements"
                     :rows="3"
                     :placeholder="t('teacher.grading.form.improvementsPlaceholder') as string"
@@ -425,19 +425,19 @@
               <div class="space-y-3">
                 <div class="flex items-center justify-between">
                   <span class="text-sm text-gray-700 dark:text-gray-300">{{ t('teacher.grading.form.allowResubmit') }}</span>
-                  <GlassSwitch v-model="(gradeForm.allowResubmit as any)" size="sm" />
+                  <glass-switch v-model="(gradeForm.allowResubmit as any)" size="sm" />
                 </div>
                 <div class="flex items-center justify-between">
                   <span class="text-sm text-gray-700 dark:text-gray-300">{{ t('teacher.grading.form.sendNotification') }}</span>
-                  <GlassSwitch v-model="(gradeForm.sendNotification as any)" size="sm" />
+                  <glass-switch v-model="(gradeForm.sendNotification as any)" size="sm" />
                 </div>
                 <div class="flex items-center justify-between">
                   <span class="text-sm text-gray-700 dark:text-gray-300">{{ t('teacher.grading.form.publishImmediately') }}</span>
-                  <GlassSwitch v-model="(gradeForm.publishImmediately as any)" size="sm" />
+                  <glass-switch v-model="(gradeForm.publishImmediately as any)" size="sm" />
                 </div>
                 <div class="flex items-center justify-between" v-if="gradeForm.allowResubmit">
                   <span class="text-sm text-gray-700 dark:text-gray-300">{{ t('teacher.grading.form.resubmitUntil') || '重交截止时间' }}</span>
-                  <GlassDateTimePicker v-model="gradeForm.resubmitUntil" size="md" />
+                  <glass-date-time-picker v-model="gradeForm.resubmitUntil" size="md" />
                 </div>
               </div>
 
@@ -451,8 +451,8 @@
                   :loading="isSubmitting"
                   :disabled="!isFormValid"
                 >
-                  <check-icon class="w-4 h-4 mr-2" />
-                  {{ t('teacher.grading.form.submit') }}
+                   <check-icon class="w-4 h-4 mr-2" />
+                   {{ t('teacher.grading.form.submit') }}
                 </Button>
                 
                 <Button
@@ -463,8 +463,8 @@
                   @click="saveDraft"
                   :loading="isDraftSaving"
                 >
-                  <document-duplicate-icon class="w-4 h-4 mr-2" />
-                  {{ t('teacher.grading.form.saveDraft') }}
+                   <document-duplicate-icon class="w-4 h-4 mr-2" />
+                   {{ t('teacher.grading.form.saveDraft') }}
                 </Button>
                 <Button
                   type="button"
@@ -473,29 +473,29 @@
                   class="w-full"
                   @click="openReturnModal"
                 >
-                  <exclamation-triangle-icon class="w-4 h-4 mr-2" />
-                  {{ t('teacher.grading.actions.returnForResubmit') || '打回重做' }}
+                   <exclamation-triangle-icon class="w-4 h-4 mr-2" />
+                   {{ t('teacher.grading.actions.returnForResubmit') || '打回重做' }}
                 </Button>
               </div>
             </form>
           </card>
-      <GlassModal v-if="showReturn" :title="(t('teacher.grading.actions.returnForResubmit') as string) || '打回重做'" maxWidth="max-w-md" heightVariant="compact" @close="showReturn=false">
+      <glass-modal v-if="showReturn" :title="(t('teacher.grading.actions.returnForResubmit') as string) || '打回重做'" size="sm" heightVariant="compact" solidBody @close="showReturn=false">
         <div class="space-y-3">
           <label class="text-sm">{{ t('teacher.grading.form.reason') || '原因' }}</label>
-          <GlassTextarea v-model="returnForm.reason" :rows="4" />
+          <glass-textarea v-model="returnForm.reason" :rows="4" />
           <label class="text-sm">{{ t('teacher.grading.form.resubmitUntil') || '重交截止时间' }}</label>
-          <GlassDateTimePicker v-model="returnForm.resubmitUntil" />
+          <glass-date-time-picker v-model="returnForm.resubmitUntil" />
         </div>
         <template #footer>
           <Button variant="secondary" size="sm" @click="showReturn=false">{{ t('common.cancel') || '取消' }}</Button>
           <Button variant="danger" size="sm" @click="confirmReturn">{{ t('common.confirm') || '确定' }}</Button>
         </template>
-      </GlassModal>
+      </glass-modal>
 
       <!-- AI 报告详情弹窗（与历史页一致的样式与渲染） -->
-      <GlassModal v-if="aiDetailOpen" :title="assignment.title || (t('teacher.aiGrading.viewDetail') as string) || 'AI 能力报告'" maxWidth="max-w-5xl" :hideScrollbar="true" heightVariant="max" @close="aiDetailOpen=false">
+      <glass-modal v-if="aiDetailOpen" :title="assignment.title || (t('teacher.aiGrading.viewDetail') as string) || 'AI 能力报告'" size="xl" :hideScrollbar="true" heightVariant="max" solidBody @close="aiDetailOpen=false">
         <div v-if="aiDetailParsed" ref="aiDetailRef" class="grid grid-cols-1 md:grid-cols-2 gap-4" data-export-root="1">
-          <div class="card p-3 md:col-span-2">
+          <Card padding="sm" tint="info" class="md:col-span-2">
             <h4 class="font-semibold mb-2">{{ t('teacher.aiGrading.render.overall') }}</h4>
             <div>
               <div class="text-sm mb-2 flex items-center gap-3" v-if="getOverall(aiDetailParsed)?.final_score != null">
@@ -515,23 +515,23 @@
               </div>
               <div class="text-sm whitespace-pre-wrap">{{ t('teacher.aiGrading.render.holistic_feedback') }}: {{ overallFeedback(aiDetailParsed) || (t('common.empty') || '无内容') }}</div>
             </div>
-          </div>
-          <div class="card p-3" v-if="aiDetailParsed?.moral_reasoning">
+          </Card>
+          <Card padding="sm" tint="secondary" v-if="aiDetailParsed?.moral_reasoning">
             <h4 class="font-semibold mb-2">{{ t('teacher.aiGrading.render.moral_reasoning') }}</h4>
             <div v-html="renderCriterion(aiDetailParsed.moral_reasoning)"></div>
-          </div>
-          <div class="card p-3" v-if="aiDetailParsed?.attitude_development">
+          </Card>
+          <Card padding="sm" tint="secondary" v-if="aiDetailParsed?.attitude_development">
             <h4 class="font-semibold mb-2">{{ t('teacher.aiGrading.render.attitude_development') }}</h4>
             <div v-html="renderCriterion(aiDetailParsed.attitude_development)"></div>
-          </div>
-          <div class="card p-3" v-if="aiDetailParsed?.ability_growth">
+          </Card>
+          <Card padding="sm" tint="secondary" v-if="aiDetailParsed?.ability_growth">
             <h4 class="font-semibold mb-2">{{ t('teacher.aiGrading.render.ability_growth') }}</h4>
             <div v-html="renderCriterion(aiDetailParsed.ability_growth)"></div>
-          </div>
-          <div class="card p-3" v-if="aiDetailParsed?.strategy_optimization">
+          </Card>
+          <Card padding="sm" tint="secondary" v-if="aiDetailParsed?.strategy_optimization">
             <h4 class="font-semibold mb-2">{{ t('teacher.aiGrading.render.strategy_optimization') }}</h4>
             <div v-html="renderCriterion(aiDetailParsed.strategy_optimization)"></div>
-          </div>
+          </Card>
         </div>
         <pre v-else class="bg-black/70 text-green-100 p-3 rounded overflow-auto text-xs max-h-[60vh]">{{ pretty(aiRawJson) }}</pre>
         <template #footer>
@@ -540,10 +540,10 @@
           <Button size="sm" variant="purple" @click="exportAiDetailAsPdf" :disabled="!aiDetailParsed">{{ t('teacher.aiGrading.exportPdf') || '导出 PDF' }}</Button>
           <Button size="sm" variant="secondary" @click="aiDetailOpen=false">{{ t('teacher.aiGrading.picker.close') || '关闭' }}</Button>
         </template>
-      </GlassModal>
+      </glass-modal>
 
           <!-- 学生信息 -->
-          <card padding="lg">
+          <card padding="lg" tint="success">
             <template #header>
               <h3 class="text-lg font-semibold text-gray-900 dark:text-white">{{ t('teacher.grading.student.title') }}</h3>
             </template>
@@ -584,15 +584,15 @@
               
               <div class="flex justify-center">
                 <Button variant="primary" size="lg" @click="viewStudentProfile">
-                  <UserIcon class="w-4 h-4 mr-2" />
-                  {{ t('teacher.grading.student.viewProfile') }}
+                  <user-icon class="w-4 h-4 mr-2" />
+                  {{ t('teacher.grading.sidebar.viewProfile') || '查看学生档案' }}
                 </Button>
               </div>
             </div>
           </card>
 
           <!-- 快速操作 -->
-          <card padding="lg">
+          <card padding="lg" tint="success">
             <template #header>
               <h3 class="text-lg font-semibold text-gray-900 dark:text-white">{{ t('teacher.grading.quick.title') }}</h3>
             </template>
@@ -600,40 +600,40 @@
             <div class="space-y-3">
               <Button variant="outline" class="w-full justify-start" @click="contactStudent">
                 <chat-bubble-left-icon class="w-4 h-4 mr-3" />
-                {{ t('teacher.grading.quick.contact') }}
+                {{ t('teacher.grading.sidebar.contact') || '联系学生' }}
               </Button>
               <Button variant="outline" class="w-full justify-start" @click="viewOtherSubmissions">
                 <document-text-icon class="w-4 h-4 mr-3" />
-                {{ t('teacher.grading.quick.viewOthers') }}
+                {{ t('teacher.grading.sidebar.otherSubmissions') || '查看其它提交' }}
               </Button>
               <Button variant="outline" class="w-full justify-start" @click="exportSubmission">
                 <arrow-down-tray-icon class="w-4 h-4 mr-3" />
-                {{ t('teacher.grading.quick.export') }}
+                {{ t('teacher.grading.sidebar.export') || '导出提交' }}
               </Button>
               <Button variant="outline" class="w-full justify-start" @click="reportPlagiarism">
                 <exclamation-triangle-icon class="w-4 h-4 mr-3" />
-                {{ t('teacher.grading.quick.report') }}
+                {{ t('teacher.grading.sidebar.report') || '举报疑似抄袭' }}
               </Button>
             </div>
           </card>
         </div>
       </div>
       <!-- 举报弹窗 (GlassModal) -->
-      <GlassModal v-if="showReport" :title="t('teacher.grading.quick.report') as string" maxWidth="max-w-md" heightVariant="compact" @close="showReport=false">
+      <glass-modal v-if="showReport" :title="t('teacher.grading.quick.report') as string" size="sm" heightVariant="compact" solidBody @close="showReport=false">
         <div class="space-y-2">
           <label class="text-sm">{{ t('teacher.studentDetail.table.reason') || '原因' }}</label>
-          <GlassInput v-model="reportForm.reason" />
+          <glass-input v-model="reportForm.reason" />
           <label class="text-sm">{{ t('teacher.studentDetail.table.details') || '详情' }}</label>
-          <GlassTextarea v-model="reportForm.details" :rows="4" />
+          <glass-textarea v-model="reportForm.details" :rows="4" />
         </div>
         <template #footer>
           <Button variant="secondary" size="sm" @click="showReport=false">{{ t('common.cancel') || '取消' }}</Button>
           <Button variant="primary" size="sm" @click="submitReport">{{ t('common.submit') || '提交' }}</Button>
         </template>
-      </GlassModal>
+      </glass-modal>
 
       <!-- AI 历史详情弹窗 -->
-      <GlassModal v-if="aiHistoryDetailOpen" :title="t('teacher.aiGrading.historyDetail') as string || 'AI 批改详情'" maxWidth="max-w-3xl" heightVariant="tall" @close="aiHistoryDetailOpen=false">
+      <glass-modal v-if="aiHistoryDetailOpen" :title="t('teacher.aiGrading.historyDetail') as string || 'AI 批改详情'" size="2xl" heightVariant="max" solidBody @close="aiHistoryDetailOpen=false">
         <div class="space-y-3">
           <div class="flex flex-wrap items-center gap-3 text-sm">
             <badge variant="secondary">{{ aiHistoryDetail?.model || '-' }}</badge>
@@ -642,7 +642,7 @@
             <span class="ml-auto text-gray-700 dark:text-gray-200">{{ t('teacher.grading.ai.suggestedScore') }}: <b>{{ aiHistoryDetailView?.suggestedScore ?? '-' }}</b></span>
           </div>
           <div class="grid grid-cols-2 gap-3">
-            <div class="card p-3" v-glass="{ strength: 'regular', interactive: true }">
+            <Card padding="sm" tint="secondary">
               <div class="text-xs text-gray-600 dark:text-gray-300 mb-2">{{ t('teacher.grading.ai.title') }}</div>
               <div class="grid grid-cols-4 gap-2 text-xs">
                 <div class="text-center">
@@ -663,17 +663,17 @@
                 </div>
               </div>
               <div class="mt-3 text-xs text-gray-700 dark:text-gray-300 whitespace-pre-wrap">{{ aiHistoryDetailView?.analysis || '' }}</div>
-            </div>
-            <div class="card p-3" v-glass="{ strength: 'regular', interactive: true }">
+            </Card>
+            <Card padding="sm" tint="secondary">
               <div class="text-xs text-gray-600 dark:text-gray-300 mb-2">{{ t('common.details') || '详情' }}</div>
               <pre class="text-[11px] leading-4 max-h-64 overflow-auto no-scrollbar bg-white/40 dark:bg-white/5 border border-white/30 dark:border-white/10 rounded p-2">{{ aiHistoryDetailPretty }}</pre>
-            </div>
+            </Card>
           </div>
         </div>
         <template #footer>
           <Button size="sm" variant="secondary" @click="aiHistoryDetailOpen=false">{{ t('common.close') || '关闭' }}</Button>
         </template>
-      </GlassModal>
+      </glass-modal>
 
       <!-- 改为调用全局抽屉：删除本地 Teleport -->
     </div>
@@ -1840,7 +1840,18 @@ const submitGrade = async () => {
 }
 
 const viewStudentProfile = () => {
-  router.push(`/teacher/students/${submission.studentId}`)
+  const sid = String(submission.studentId || '')
+  const cid = assignment?.courseId != null ? String(assignment.courseId) : ''
+  const ctitle = assignment?.courseName || ''
+  const sname = submission?.studentName || ''
+  router.push({
+    path: `/teacher/students/${sid}`,
+    query: {
+      courseId: cid || undefined,
+      courseTitle: ctitle || undefined,
+      name: sname || undefined
+    }
+  })
 }
 
 const chat = useChatStore()

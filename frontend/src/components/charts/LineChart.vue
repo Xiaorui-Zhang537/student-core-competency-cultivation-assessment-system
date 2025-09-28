@@ -39,7 +39,9 @@
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted, watch, nextTick } from 'vue'
 import * as echarts from 'echarts'
+import { resolveEChartsTheme, glassTooltipCss, resolveThemePalette } from '@/charts/echartsTheme'
 import { ExclamationTriangleIcon } from '@heroicons/vue/24/outline'
+import { getEChartsThemedTokens, normalizeCssColor } from '@/utils/theme'
 
 // Props
 interface ChartData {
@@ -82,6 +84,128 @@ const props = withDefaults(defineProps<Props>(), {
 const chartRef = ref<HTMLElement>()
 const chartInstance = ref<echarts.ECharts>()
 const error = ref(false)
+let resizeObserver: ResizeObserver | null = null
+
+const ensurePalette = () => {
+  const palette = getEChartsThemedTokens().palette
+  // 若主题返回的颜色不足或存在透明色，则回退到标准色盘
+  if (Array.isArray(palette) && palette.length) {
+    return palette.map(color => ensureOpaque(color))
+  }
+  return resolveThemePalette().map(color => ensureOpaque(color))
+}
+
+const computeIsDark = () => {
+  if (props.theme === 'auto') {
+    return document.documentElement.classList.contains('dark')
+  }
+  return props.theme === 'dark'
+}
+
+interface RgbaColor { r: number; g: number; b: number; a: number }
+
+const clamp = (value: number, min: number, max: number) => Math.max(min, Math.min(max, value))
+
+const parseRgba = (color: string): RgbaColor | null => {
+  const normalized = normalizeCssColor(color)
+  const match = normalized.match(/rgba?\(([^)]+)\)/i)
+  if (!match) return null
+  const parts = match[1].split(',').map(p => Number(p.trim()))
+  if (parts.length < 3 || parts.some(n => Number.isNaN(n))) return null
+  const [r, g, b, a = 1] = parts
+  return { r, g, b, a }
+}
+
+const toRgbaString = ({ r, g, b, a }: RgbaColor) => `rgba(${Math.round(clamp(r, 0, 255))}, ${Math.round(clamp(g, 0, 255))}, ${Math.round(clamp(b, 0, 255))}, ${clamp(a, 0, 1)})`
+
+const ensureOpaque = (color: string, floor = 1) => {
+  const parsed = parseRgba(color)
+  if (!parsed) return color
+  return toRgbaString({ ...parsed, a: Math.max(parsed.a, floor) })
+}
+
+const darkenColor = (color: string, ratio = 0.18) => {
+  const parsed = parseRgba(color)
+  if (!parsed) return color
+  const factor = clamp(1 - Math.abs(ratio), 0, 1)
+  return toRgbaString({
+    r: parsed.r * factor,
+    g: parsed.g * factor,
+    b: parsed.b * factor,
+    a: parsed.a
+  })
+}
+
+const safeAlpha = (color: string, alpha: number) => {
+  const parsed = parseRgba(color)
+  if (!parsed) return color
+  return toRgbaString({ ...parsed, a: clamp(alpha, 0, 1) })
+}
+
+const normalizeSeries = () => (props.data || []).filter((s: any) => s && Array.isArray(s.data))
+
+const buildSeries = (isDark: boolean, palette: string[]) => {
+  const seriesList = normalizeSeries()
+  return seriesList.map((item: ChartData, idx: number) => {
+    const type = item.type || 'line'
+    const isBar = type === 'bar'
+    const rawColor = item.color || palette[idx % palette.length]
+    const baseColor = ensureOpaque(rawColor)
+    const darkened = ensureOpaque(darkenColor(baseColor, 0.22))
+
+    const base: any = {
+      name: item.name,
+      type: type as 'line' | 'bar',
+      data: Array.isArray(item.data) ? item.data : [],
+      animationDuration: props.animation ? 900 : 0,
+      itemStyle: { color: baseColor, opacity: 1 },
+      hoverAnimation: false,
+      stateAnimation: { duration: 0 },
+      emphasis: { disabled: true },
+      blur: { disabled: true },
+      select: { disabled: true }
+    }
+
+    if (isBar) {
+      base.barMaxWidth = 32
+      base.itemStyle.borderRadius = [6, 6, 6, 6]
+    } else {
+      base.smooth = item.smooth !== false
+      base.symbol = 'circle'
+      base.symbolSize = isDark ? 5 : 4
+      base.lineStyle = {
+        color: baseColor,
+        width: isDark ? 3 : 2
+      }
+      const areaAlpha = isDark ? 0.28 : 0.2
+      const topAlpha = Math.min(areaAlpha + 0.08, 1)
+      const bottomAlpha = Math.min(areaAlpha * 0.36, 1)
+      base.areaStyle = {
+        color: { type: 'linear', x: 0, y: 0, x2: 0, y2: 1, colorStops: [
+          { offset: 0, color: safeAlpha(baseColor, topAlpha) },
+          { offset: 1, color: safeAlpha(baseColor, bottomAlpha) }
+        ] }
+      }
+      base.emphasis = { disabled: true }
+      base.blur = { disabled: true }
+      base.select = { disabled: true }
+    }
+
+    return base
+  })
+}
+
+const disposeChart = () => {
+  if (resizeObserver && chartRef.value) {
+    try { resizeObserver.unobserve(chartRef.value) } catch (err) {}
+    resizeObserver.disconnect()
+    resizeObserver = null
+  }
+  if (chartInstance.value) {
+    try { chartInstance.value.dispose() } catch (err) {}
+    chartInstance.value = undefined
+  }
+}
 
 // 等待容器可用且有尺寸
 const waitForContainer = async (maxTries = 10): Promise<boolean> => {
@@ -101,36 +225,27 @@ const initChart = async () => {
   try {
     error.value = false
     
-    // 销毁已存在的实例
-    if (chartInstance.value) {
-      chartInstance.value.dispose()
-    }
+    disposeChart()
     
     await nextTick()
     
-    // 确定主题
-    const theme = props.theme === 'auto' 
-      ? (document.documentElement.classList.contains('dark') ? 'dark' : 'light')
-      : props.theme
-    
-    // 创建图表实例
-    chartInstance.value = echarts.init(chartRef.value as HTMLDivElement, theme)
-    
-    // 配置选项
-    const palette = theme === 'dark'
-      ? ['#93c5fd', '#22d3ee', '#f472b6', '#f59e0b', '#34d399']
-      : ['#3b82f6', '#06b6d4', '#ec4899', '#f59e0b', '#10b981']
+    // 创建图表实例（统一主题）
+    const theme = resolveEChartsTheme()
+    chartInstance.value = echarts.init(chartRef.value as HTMLDivElement, theme as any)
 
-    const normalizedSeries = (props.data || []).filter((s: any) => s && Array.isArray(s.data))
+    const isDark = computeIsDark()
+    const palette = ensurePalette()
+    const tokens = getEChartsThemedTokens()
+    const normalizedSeries = normalizeSeries()
     const hasBar = normalizedSeries.some(s => (s.type || 'line') === 'bar')
 
     const option: any = {
-      backgroundColor: theme === 'dark' ? '#0b0f1a' : '#ffffff',
+      backgroundColor: props.backgroundColor,
       title: props.title ? {
         text: props.title,
         left: 'center',
         textStyle: {
-          color: theme === 'dark' ? '#ffffff' : '#333333',
+          color: tokens.textPrimary || (isDark ? '#f3f4f6' : '#1f2937'),
           fontSize: 16,
           fontWeight: 'bold'
         }
@@ -147,23 +262,30 @@ const initChart = async () => {
       legend: {
         top: 'bottom',
         textStyle: {
-          color: theme === 'dark' ? '#ffffff' : '#333333'
+          color: tokens.textPrimary || (isDark ? '#f3f4f6' : '#1f2937')
         },
         ...props.legend
       },
       
       tooltip: {
         trigger: 'axis',
-        backgroundColor: theme === 'dark' ? '#374151' : '#ffffff',
-        borderColor: theme === 'dark' ? '#4b5563' : '#e5e7eb',
-        textStyle: {
-          color: theme === 'dark' ? '#ffffff' : '#333333'
-        },
+        backgroundColor: 'transparent',
+        borderColor: 'transparent',
+        textStyle: { color: 'var(--color-base-content)' },
+        extraCssText: glassTooltipCss(),
+        className: 'echarts-glass-tooltip',
+        renderMode: 'html',
+        enterable: false,
+        confine: true,
+        appendToBody: true,
+        transitionDuration: 0,
         axisPointer: {
           type: 'cross',
           label: {
-            backgroundColor: theme === 'dark' ? '#6b7280' : '#6b7280'
-          }
+            backgroundColor: safeAlpha(tokens.textPrimary || (isDark ? '#f9fafb' : '#111827'), isDark ? 0.16 : 0.12),
+            color: tokens.textPrimary || (isDark ? '#f9fafb' : '#111827')
+          },
+          animation: false
         },
         ...props.tooltip
       },
@@ -174,11 +296,11 @@ const initChart = async () => {
         data: Array.isArray(props.xAxisData) ? props.xAxisData : [],
         axisLine: {
           lineStyle: {
-            color: theme === 'dark' ? '#4b5563' : '#d1d5db'
+            color: tokens.axisLine
           }
         },
         axisLabel: {
-          color: theme === 'dark' ? '#9ca3af' : '#6b7280'
+          color: tokens.axisLabel
         }
       },
       
@@ -186,58 +308,20 @@ const initChart = async () => {
         type: 'value',
         axisLine: {
           lineStyle: {
-            color: theme === 'dark' ? '#6b7280' : '#d1d5db'
+            color: tokens.axisLine
           }
         },
         axisLabel: {
-          color: theme === 'dark' ? '#9ca3af' : '#6b7280'
+          color: tokens.axisLabel
         },
         splitLine: {
           lineStyle: {
-            color: theme === 'dark' ? '#4b5563' : '#e5e7eb'
+            color: tokens.splitLine
           }
         }
       },
       
-      series: normalizedSeries.map((item, idx) => {
-        const isBar = (item.type || 'line') === 'bar'
-        const baseColor = item.color || palette[idx % palette.length]
-        return {
-          name: item.name,
-          type: (item.type || 'line') as 'line' | 'bar',
-          smooth: item.smooth !== false,
-          data: Array.isArray(item.data) ? item.data : [],
-          symbol: 'circle',
-          symbolSize: theme === 'dark' ? 5 : 4,
-          // 为柱状图设置每个柱子不同颜色；折线图保持系列颜色
-          itemStyle: isBar
-            ? {
-                color: (params: any) => palette[params.dataIndex % palette.length]
-              }
-            : {
-                color: baseColor
-              },
-          lineStyle: !isBar
-            ? {
-                color: baseColor,
-                width: theme === 'dark' ? 3 : 2
-              }
-            : undefined,
-          areaStyle: !isBar
-            ? {
-                color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
-                  { offset: 0, color: baseColor + (theme === 'dark' ? '40' : '30') },
-                  { offset: 1, color: baseColor + (theme === 'dark' ? '10' : '05') }
-                ])
-              }
-            : undefined,
-          barMaxWidth: isBar ? 32 : undefined,
-          emphasis: {
-            focus: 'series'
-          },
-          animationDuration: props.animation ? 1000 : 0
-        }
-      })
+      series: buildSeries(isDark, palette)
     }
     if (normalizedSeries.length === 0 || !Array.isArray(props.xAxisData)) {
       option.series = []
@@ -245,13 +329,12 @@ const initChart = async () => {
     }
     
     // 设置选项（完全替换以避免保留无效旧系列）
-    chartInstance.value.clear()
     chartInstance.value.setOption(option, true)
     
     // 响应式处理
-    const resizeObserver = new ResizeObserver(() => {
+    resizeObserver = new ResizeObserver(() => {
       if (!chartInstance.value) return
-      requestAnimationFrame(() => chartInstance.value && chartInstance.value.resize())
+      requestAnimationFrame(() => chartInstance.value?.resize())
     })
     resizeObserver.observe(chartRef.value)
     
@@ -263,52 +346,27 @@ const initChart = async () => {
 
 // 更新图表
 const updateChart = () => {
-  if (!chartInstance.value) return
+  if (!chartInstance.value) {
+    initChart()
+    return
+  }
 
-  const isDark = (props.theme === 'auto')
-    ? document.documentElement.classList.contains('dark')
-    : props.theme === 'dark'
-  const palette = isDark
-    ? ['#93c5fd', '#22d3ee', '#f472b6', '#f59e0b', '#34d399']
-    : ['#3b82f6', '#06b6d4', '#ec4899', '#f59e0b', '#10b981']
-
-  const normalizedSeries = (props.data || []).filter((s: any) => s && Array.isArray(s.data))
+  const palette = ensurePalette()
+  const normalizedSeries = normalizeSeries()
   const hasBar = normalizedSeries.some(s => (s.type || 'line') === 'bar')
+  const isDark = computeIsDark()
 
   const option: any = {
     xAxis: {
       data: Array.isArray(props.xAxisData) ? props.xAxisData : [],
       boundaryGap: hasBar ? true : false
     },
-    series: normalizedSeries.map((item, idx) => {
-      const isBar = (item.type || 'line') === 'bar'
-      const baseColor = item.color || palette[idx % palette.length]
-      return {
-        name: item.name,
-        type: (item.type || 'line') as 'line' | 'bar',
-        data: Array.isArray(item.data) ? item.data : [],
-        smooth: item.smooth !== false,
-        symbol: 'circle',
-        symbolSize: isDark ? 5 : 4,
-        itemStyle: isBar
-          ? { color: (params: any) => palette[params.dataIndex % palette.length] }
-          : { color: baseColor },
-        lineStyle: !isBar ? { color: baseColor, width: isDark ? 3 : 2 } : undefined,
-        areaStyle: !isBar
-          ? { color: new (echarts as any).graphic.LinearGradient(0, 0, 0, 1, [
-              { offset: 0, color: baseColor + (isDark ? '40' : '30') },
-              { offset: 1, color: baseColor + (isDark ? '10' : '05') }
-            ]) }
-          : undefined,
-        barMaxWidth: isBar ? 32 : undefined
-      }
-    })
+    series: buildSeries(isDark, palette)
   }
   if (normalizedSeries.length === 0) {
     option.series = []
   }
 
-  chartInstance.value.clear()
   chartInstance.value.setOption(option, true)
 }
 
@@ -366,9 +424,7 @@ onMounted(() => {
 })
 
 onUnmounted(() => {
-  if (chartInstance.value) {
-    chartInstance.value.dispose()
-  }
+  disposeChart()
 })
 </script>
 

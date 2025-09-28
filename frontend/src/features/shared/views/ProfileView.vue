@@ -1,7 +1,7 @@
 <template>
   <div class="p-6">
     <div class="max-w-4xl mx-auto">
-      <PageHeader :title="t('shared.profile.title')" :subtitle="t('shared.profile.subtitle')" />
+      <page-header :title="t('shared.profile.title')" :subtitle="t('shared.profile.subtitle')" />
 
       <div v-if="authStore.loading && !userProfile" class="text-center py-12">
         <p>{{ t('shared.profile.messages.loadUser') }}</p>
@@ -9,14 +9,12 @@
 
       <div v-else-if="userProfile" class="space-y-8">
         <!-- Profile Info -->
-        <div class="rounded-xl p-6" v-glass="{ strength: 'regular', interactive: true }">
+        <div class="rounded-xl p-6 glass-tint-primary" v-glass="{ strength: 'regular', interactive: true }">
           <h2 class="text-lg font-semibold mb-4">{{ t('shared.profile.section.profileInfo') }}</h2>
           <div class="flex items-start space-x-6">
             <!-- 头像展示 -->
             <div class="w-24 flex-shrink-0">
-              <user-avatar :avatar="(userProfile as any)?.avatar" :size="96">
-                <img :src="defaultAvatars[0]" alt="默认头像" class="w-24 h-24 rounded-full object-cover" />
-              </user-avatar>
+              <user-avatar :avatar="(userProfile as any)?.avatar" :size="96" :rounded="true" :fit="'cover'" :fallback-src="defaultAvatars[0]" />
             </div>
             <div class="flex-1">
               <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -102,7 +100,7 @@
         </div>
 
         <!-- Edit Profile Form -->
-        <div v-if="showEditProfile" class="rounded-xl p-6" v-glass="{ strength: 'regular', interactive: true }">
+        <div v-if="showEditProfile" class="rounded-xl p-6 glass-tint-secondary" v-glass="{ strength: 'regular', interactive: true }">
           <h2 class="text-lg font-semibold mb-4">{{ t('shared.profile.section.editProfile') }}</h2>
           <form @submit.prevent="handleUpdateProfile" class="space-y-6">
               <!-- 头像上传 -->
@@ -129,12 +127,12 @@
                       v-for="(url, idx) in defaultAvatars"
                       :key="idx"
                       type="button"
-                      class="h-12 w-12 rounded-full overflow-hidden border transition-colors"
-                      :class="profileForm.avatar === url ? 'border-primary-500' : 'border-gray-300 dark:border-gray-600'"
+                      class="p-0 h-12 w-12 rounded-full overflow-hidden border transition-colors bg-transparent"
+                      :class="profileForm.avatar === url ? 'border-primary-500 ring-2 ring-primary-500 ring-offset-2 ring-offset-white dark:ring-offset-gray-800 shadow-md' : 'border-gray-300 dark:border-gray-600 hover:border-primary-400'"
                       @click="selectDefaultAvatar(url)"
-                       :title="'Avatar ' + (idx+1)"
+                      :title="'Avatar ' + (idx+1)"
                     >
-                      <img :src="url" alt="默认头像" class="w-full h-full object-cover" />
+                      <user-avatar :avatar="url" :size="48" :rounded="true" :fit="'cover'" />
                     </button>
                   </div>
                 </div>
@@ -142,11 +140,11 @@
               <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
                   <label for="nickname" class="block text-sm font-medium mb-2">{{ t('shared.profile.fields.nickname') }}</label>
-                <GlassInput id="nickname" v-model="profileForm.nickname" type="text" />
+                <glass-input id="nickname" v-model="profileForm.nickname" type="text" />
               </div>
               <div>
                   <label for="gender" class="block text-sm font-medium mb-2">{{ t('shared.profile.fields.gender') }}</label>
-                <GlassPopoverSelect
+                <glass-popover-select
                   v-model="profileForm.gender"
                   :options="genderOptions"
                   size="md"
@@ -154,7 +152,7 @@
               </div>
                 <div>
                   <label for="mbti" class="block text-sm font-medium mb-2">MBTI</label>
-                  <GlassPopoverSelect
+                  <glass-popover-select
                     v-model="profileForm.mbti as any"
                     :options="mbtiOptions"
                     size="md"
@@ -162,52 +160,52 @@
                 </div>
                 <div>
                   <label for="birthday" class="block text-sm font-medium mb-2">{{ t('shared.profile.fields.birthday') }}</label>
-                  <GlassDateTimePicker id="birthday" v-model="profileForm.birthday" :label="'' as any" :date-only="true" />
+                  <glass-date-time-picker id="birthday" v-model="profileForm.birthday" :label="'' as any" :date-only="true" />
                 </div>
                 <div>
                   <label for="firstName" class="block text-sm font-medium mb-2">{{ t('shared.profile.fields.firstName') }}</label>
-                  <GlassInput id="firstName" v-model="profileForm.firstName" type="text" />
+                  <glass-input id="firstName" v-model="profileForm.firstName" type="text" />
                 </div>
                 <div>
                   <label for="lastName" class="block text-sm font-medium mb-2">{{ t('shared.profile.fields.lastName') }}</label>
-                  <GlassInput id="lastName" v-model="profileForm.lastName" type="text" />
+                  <glass-input id="lastName" v-model="profileForm.lastName" type="text" />
                 </div>
                 <div>
                   <label for="phone" class="block text-sm font-medium mb-2">{{ t('shared.profile.fields.phone') }}</label>
-                  <GlassInput id="phone" v-model="profileForm.phone" type="tel" placeholder="请输入手机号" />
+                  <glass-input id="phone" v-model="profileForm.phone" type="tel" placeholder="请输入手机号" />
                 </div>
                 <div>
                   <label for="school" class="block text-sm font-medium mb-2">{{ t('shared.profile.fields.school') }}</label>
-                  <GlassInput id="school" v-model="profileForm.school" type="text" placeholder="学校名称" />
+                  <glass-input id="school" v-model="profileForm.school" type="text" placeholder="学校名称" />
                 </div>
                 <div>
                   <label for="subject" class="block text-sm font-medium mb-2">{{ t('shared.profile.fields.subject') }}</label>
-                  <GlassInput id="subject" v-model="profileForm.subject" type="text" placeholder="专业/科目" />
+                  <glass-input id="subject" v-model="profileForm.subject" type="text" placeholder="专业/科目" />
                 </div>
                 <div v-if="authStore.userRole === 'STUDENT'">
                   <label for="studentNo" class="block text-sm font-medium mb-2">{{ t('shared.profile.fields.studentNo') }}</label>
-                  <GlassInput id="studentNo" v-model="profileForm.studentNo" type="text" placeholder="学号" />
+                  <glass-input id="studentNo" v-model="profileForm.studentNo" type="text" placeholder="学号" />
                 </div>
                 <div v-if="authStore.userRole === 'TEACHER'">
                   <label for="teacherNo" class="block text-sm font-medium mb-2">{{ t('shared.profile.fields.teacherNo') }}</label>
-                  <GlassInput id="teacherNo" v-model="profileForm.teacherNo" type="text" placeholder="工号" />
+                  <glass-input id="teacherNo" v-model="profileForm.teacherNo" type="text" placeholder="工号" />
                 </div>
                 <div>
                   <label for="country" class="block text-sm font-medium mb-2">{{ t('shared.profile.fields.country') }}</label>
-                  <GlassInput id="country" v-model="profileForm.country" type="text" placeholder="中国" />
+                  <glass-input id="country" v-model="profileForm.country" type="text" placeholder="中国" />
                 </div>
                 <div>
                   <label for="province" class="block text-sm font-medium mb-2">{{ t('shared.profile.fields.province') }}</label>
-                  <GlassInput id="province" v-model="profileForm.province" type="text" placeholder="" />
+                  <glass-input id="province" v-model="profileForm.province" type="text" placeholder="" />
                 </div>
                 <div>
                   <label for="city" class="block text-sm font-medium mb-2">{{ t('shared.profile.fields.city') }}</label>
-                  <GlassInput id="city" v-model="profileForm.city" type="text" placeholder="" />
+                  <glass-input id="city" v-model="profileForm.city" type="text" placeholder="" />
                 </div>
             </div>
             <div>
               <label for="bio" class="block text-sm font-medium mb-2">{{ t('shared.profile.fields.bio') }}</label>
-              <GlassTextarea id="bio" v-model="profileForm.bio" :rows="4" />
+              <glass-textarea id="bio" v-model="profileForm.bio" :rows="4" />
             </div>
             <div class="flex justify-end space-x-3">
               <Button type="button" variant="secondary" @click="cancelEdit">
@@ -223,7 +221,7 @@
         </div>
 
         <!-- Account Security -->
-        <div class="rounded-xl p-6" v-glass="{ strength: 'regular', interactive: true }">
+        <div class="rounded-xl p-6 glass-tint-accent" v-glass="{ strength: 'regular', interactive: true }">
           <h2 class="text-lg font-semibold mb-4">{{ t('shared.profile.section.accountSecurity') }}</h2>
           <div class="space-y-4">
             <div class="flex items-center justify-between p-4 rounded-lg" v-glass="{ strength: 'thin', interactive: true }">
@@ -250,7 +248,7 @@
         </div>
 
         <!-- Change Password Form -->
-        <div v-if="showChangePassword" class="rounded-xl p-6" v-glass="{ strength: 'regular', interactive: true }">
+        <div v-if="showChangePassword" class="rounded-xl p-6 glass-tint-info" v-glass="{ strength: 'regular', interactive: true }">
           <h2 class="text-lg font-semibold mb-4">{{ t('shared.profile.section.changePassword') }}</h2>
           <form @submit.prevent="handleChangePassword" class="space-y-6">
             <div>
@@ -271,7 +269,7 @@
                 {{ t('shared.profile.actions.cancel') }}
               </Button>
               <Button type="submit" :disabled="uiStore.loading" variant="indigo">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 11c-1.657 0-3 1.343-3 3v4h6v-4c0-1.657-1.343-3-3-3z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 11V7a5 5 0 1110 0v4"/></svg>
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="当前Color"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 11c-1.657 0-3 1.343-3 3v4h6v-4c0-1.657-1.343-3-3-3z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 11V7a5 5 0 1110 0v4"/></svg>
                 {{ t('shared.profile.actions.changePassword') }}
               </Button>
             </div>
@@ -295,6 +293,7 @@ import FileUpload from '@/components/forms/FileUpload.vue';
 import { baseURL } from '@/api/config';
 import UserAvatar from '@/components/ui/UserAvatar.vue';
 import Button from '@/components/ui/Button.vue'
+import { DEFAULT_AVATARS } from '@/shared/utils/avatars'
 import { useI18n } from 'vue-i18n'
 import PageHeader from '@/components/ui/PageHeader.vue'
 import GlassInput from '@/components/ui/inputs/GlassInput.vue'
@@ -318,18 +317,7 @@ const showEditProfile = ref(false);
 const showChangePassword = ref(false);
 const uploadHeaders = { Authorization: localStorage.getItem('token') ? `Bearer ${localStorage.getItem('token')}` : '' } as Record<string, string>;
 // 头像展示统一由 UserAvatar 处理
-const defaultAvatars = [
-  'https://api.dicebear.com/7.x/adventurer-neutral/svg?seed=Nova',
-  'https://api.dicebear.com/7.x/adventurer/svg?seed=Luna',
-  'https://api.dicebear.com/7.x/avataaars/svg?seed=Kai',
-  'https://api.dicebear.com/7.x/notionists-neutral/svg?seed=Iris',
-  'https://api.dicebear.com/7.x/big-smile/svg?seed=Leo',
-  'https://api.dicebear.com/7.x/thumbs/svg?seed=Mila',
-  'https://api.dicebear.com/7.x/micah/svg?seed=Aiden',
-  'https://api.dicebear.com/7.x/miniavs/svg?seed=Sage',
-  'https://api.dicebear.com/7.x/adventurer-neutral/svg?seed=Zoe',
-  'https://api.dicebear.com/7.x/notionists/svg?seed=Eli'
-] as string[]
+const defaultAvatars = DEFAULT_AVATARS as string[]
 
 const profileForm = reactive<UpdateProfileRequest>({
   nickname: '',

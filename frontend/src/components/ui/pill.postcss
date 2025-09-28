@@ -33,5 +33,62 @@
     @apply px-2 py-0.5 rounded-full text-xs border cursor-pointer transition-colors;
     @apply bg-white/30 dark:bg-white/10 border-white/40 dark:border-white/10 hover:bg-white/40 dark:hover:bg-white/20;
   }
+
+  /* 分段药丸按钮（Segmented）——主题化变体与状态 */
+  .ui-pill-segment {
+    @apply relative inline-flex items-center justify-center select-none;
+    @apply transition-colors duration-150 ease-out;
+    color: var(--color-base-content);
+    background-color: transparent;
+  }
+  .ui-pill-segment:hover { background-color: color-mix(in oklab, var(--color-base-content) 6%, transparent); }
+  .ui-pill-segment.is-disabled { opacity: .5; pointer-events: none; }
+  .ui-pill-segment:focus-visible { outline: none; box-shadow: 0 0 0 2px color-mix(in oklab, var(--color-primary) 36%, transparent); border-radius: 9999px; }
+
+  /* 变体：在激活态时突出显示，未激活为透明/悬停轻底 */
+  .pill-variant-primary.is-active {
+    background-color: color-mix(in oklab, var(--color-primary) 22%, transparent);
+    color: var(--color-primary-content);
+    box-shadow: 0 0 0 1px color-mix(in oklab, var(--color-primary) 36%, transparent) inset;
+  }
+  .pill-variant-secondary.is-active {
+    background-color: color-mix(in oklab, var(--color-secondary) 20%, transparent);
+    color: var(--color-secondary-content);
+    box-shadow: 0 0 0 1px color-mix(in oklab, var(--color-secondary) 32%, transparent) inset;
+  }
+  .pill-variant-accent.is-active {
+    background-color: color-mix(in oklab, var(--color-accent) 20%, transparent);
+    color: var(--color-accent-content);
+    box-shadow: 0 0 0 1px color-mix(in oklab, var(--color-accent) 32%, transparent) inset;
+  }
+  .pill-variant-success.is-active {
+    background-color: color-mix(in oklab, var(--color-success) 22%, transparent);
+    color: var(--color-success-content);
+    box-shadow: 0 0 0 1px color-mix(in oklab, var(--color-success) 34%, transparent) inset;
+  }
+  .pill-variant-warning.is-active {
+    background-color: color-mix(in oklab, var(--color-warning) 22%, transparent);
+    color: var(--color-warning-content);
+    box-shadow: 0 0 0 1px color-mix(in oklab, var(--color-warning) 34%, transparent) inset;
+  }
+  .pill-variant-danger.is-active {
+    background-color: color-mix(in oklab, var(--color-error) 22%, transparent);
+    color: var(--color-error-content);
+    box-shadow: 0 0 0 1px color-mix(in oklab, var(--color-error) 34%, transparent) inset;
+  }
+  .pill-variant-info.is-active {
+    background-color: color-mix(in oklab, var(--color-info) 22%, transparent);
+    color: var(--color-info-content);
+    box-shadow: 0 0 0 1px color-mix(in oklab, var(--color-info) 34%, transparent) inset;
+  }
+  .pill-variant-neutral.is-active {
+    background-color: color-mix(in oklab, var(--color-base-content) 16%, transparent);
+    color: var(--color-base-content);
+    box-shadow: 0 0 0 1px color-mix(in oklab, var(--color-base-content) 28%, transparent) inset;
+  }
+
+  /* 尺寸快捷类（配合 SegmentedPills） */
+  .ui-pill-size-sm { @apply h-9 px-3 text-sm; }
+  .ui-pill-size-md { @apply h-10 px-4 text-sm; }
 }
 

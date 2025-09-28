@@ -3,6 +3,7 @@ import { createPinia } from 'pinia'
 import App from './App.vue'
 import router from './router'
 import { useAuthStore } from '@/stores/auth'
+import { useChatStore } from '@/stores/chat'
 import { useUIStore } from '@/stores/ui'
 import { createNotificationStream } from '@/composables/useNotificationStream'
 import '@/styles/main.postcss'
@@ -21,6 +22,18 @@ async function initializeApp() {
   app.directive('click-outside', ClickOutsideDirective)
   // 全局注册常用 UI 组件，避免各页面重复导入遗漏
   app.component('PageHeader', PageHeader)
+
+  // 辅助调试：在控制台暴露聊天 store（开发/生产均可，用后可移除）
+  try {
+    const chatDebug = useChatStore(pinia)
+    ;(window as any).__chat = chatDebug
+    ;(window as any).__openChat = (id?: any, name?: any, courseId?: any) => chatDebug.openChat(id, name, courseId)
+    ;(window as any).__closeChat = () => chatDebug.closeChat()
+    // 便捷别名（无下划线）：
+    ;(window as any).chat = chatDebug
+    ;(window as any).openChat = (id?: any, name?: any, courseId?: any) => chatDebug.openChat(id, name, courseId)
+    ;(window as any).closeChat = () => chatDebug.closeChat()
+  } catch {}
 
   const authStore = useAuthStore()
   const uiStore = useUIStore()

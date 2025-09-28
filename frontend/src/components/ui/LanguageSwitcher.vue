@@ -1,11 +1,18 @@
 <template>
   <div class="relative z-[60]" ref="host" v-click-outside="() => (open=false)">
-    <Button variant="glass" size="sm" icon="arrow-right" @click="open = !open" :title="t('app.language.title') || 'Language'">
+    <ripple-button pill :class="buttonClassMerged" @click="toggleOpen" :title="t('app.language.title') || 'Language'">
       {{ currentShortLabel }}
-    </Button>
+    </ripple-button>
     <teleport to="body">
-      <div v-if="open" class="glass-regular rounded-xl shadow-lg" v-glass="{ strength: 'regular', interactive: true }" :style="styleObj" @click.stop>
-        <div class="px-3 py-2 text-xs text-gray-600 dark:text-gray-300">
+      <liquid-glass
+        v-if="open"
+        :style="styleObj"
+        containerClass="fixed z-[1000] rounded-2xl border border-white/20 overflow-hidden"
+        :radius="16"
+        :frost="0.05"
+        @click.stop
+      >
+        <div class="px-3 py-2 text-xs text-subtle">
           <div class="font-medium mb-1">{{ t('app.language.title') }}</div>
           <div class="opacity-90">{{ t('app.language.note') }}</div>
         </div>
@@ -18,7 +25,7 @@
           <span>{{ t('app.language.enUS') }}</span>
           <span v-if="locale.value==='en-US'" class="text-primary-500">✓</span>
         </button>
-      </div>
+      </liquid-glass>
     </teleport>
   </div>
  </template>
@@ -28,13 +35,21 @@ import { ref, computed, nextTick, watchEffect } from 'vue'
 import { useLocale } from '@/i18n/useLocale'
 import { loadLocaleMessages, REQUIRED_NAMESPACES } from '@/i18n'
 import { useI18n } from 'vue-i18n'
-import Button from '@/components/ui/Button.vue'
+import RippleButton from '@/components/ui/RippleButton.vue'
+import LiquidGlass from '@/components/ui/LiquidGlass.vue'
 
 const open = ref(false)
+function toggleOpen() {
+  try { window.dispatchEvent(new CustomEvent('ui:close-topbar-popovers')) } catch {}
+  open.value = !open.value
+}
 const host = ref<HTMLElement | null>(null)
 const styleObj = ref<Record<string, string>>({})
 const { locale, setLocale } = useLocale()
 const { t } = useI18n()
+const props = withDefaults(defineProps<{ buttonClass?: string }>(), { buttonClass: '' })
+const baseBtn = 'px-4 h-11 flex items-center rounded-full text-sm bg-transparent'
+const buttonClassMerged = computed(() => [baseBtn, props.buttonClass].filter(Boolean).join(' '))
 
 const currentShortLabel = computed(() => (locale.value === 'zh-CN' ? t('app.language.short.zh') : t('app.language.short.en')))
 
@@ -54,13 +69,16 @@ watchEffect(async () => {
     const rect = el.getBoundingClientRect()
     styleObj.value = {
       position: 'fixed',
-      top: `${rect.bottom + 8}px`,
+      top: `${rect.bottom + 10}px`,
       left: `${Math.max(8, rect.right - 160)}px`,
       width: '10rem',
       zIndex: '1000'
     }
   } catch {}
 })
+
+// 统一响应“关闭顶栏弹层”事件
+try { window.addEventListener('ui:close-topbar-popovers', () => (open.value = false)) } catch {}
 </script>
 
 

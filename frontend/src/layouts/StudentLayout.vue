@@ -1,237 +1,65 @@
 <template>
-  <div class="min-h-screen relative" :style="baseBgStyle">
-    <div class="fixed inset-0 z-0 pointer-events-none" :style="blueVeilStyle"></div>
-    <FuturisticBackground class="fixed inset-0 z-0 pointer-events-none" theme="auto" :intensity="0.18" :bits-density="0.8" :sweep-frequency="7" :parallax="true" :enable3D="true" :logo-glow="true" :emphasis="false" :interactions="{ mouseTrail: true, clickRipples: true }" :enabled="uiStore.bgEnabled" :respect-reduced-motion="true" />
-    <nav class="sticky top-0 z-40 glass-thin glass-interactive" v-glass="{ strength: 'thin', interactive: true }">
-      <div class="px-4 sm:px-6 lg:px-8">
-        <div class="flex justify-between h-14">
-          <div class="flex items-center space-x-6">
-            <Button variant="glass" size="sm" @click="uiStore.toggleSidebar()">
-              <template #icon>
-                <Bars3Icon class="h-5 w-5" />
-              </template>
-            </Button>
-            <div class="flex-shrink-0 flex items-center">
-              <h1 class="text-xl font-bold text-gray-900 dark:text-white">{{ t('app.title') }}</h1>
-            </div>
+  <div class="min-h-screen relative text-base-content" :style="baseBgStyle">
+    <nav class="sticky top-0 z-40 px-6 pt-6 pb-6">
+      <div class="flex items-center gap-3">
+        <!-- 左：系统名称（药丸，SparklesText，不换行，自适应宽度，高度60px） -->
+        <liquid-glass :radius="30" class="flex items-center justify-center gap-3 h-full" containerClass="rounded-full h-[60px] px-5 whitespace-nowrap">
+          <div class="flex items-center justify-center gap-3">
+            <liquid-logo :size="36" :image-url="'/brand/logo.png'" :liquid="12" :speed="1.0" />
+            <sparkles-text :text="t('app.title') as string" :sparklesCount="18" class="text-3xl" />
           </div>
+        </liquid-glass>
 
+        <div class="flex-1"></div>
+
+        <!-- 右：按钮组（药丸，图标为主，语言为文字，头像+昵称单独小药丸，整体高度60px） -->
+        <liquid-glass :radius="30" class="flex items-center justify-center gap-1 h-full" containerClass="rounded-full h-[60px] px-4">
+          <ripple-button pill :title="t('layout.common.toggleTheme') as string || '主题'" @click="uiStore.toggleDarkMode()">
+            <sun-icon v-if="uiStore.isDarkMode" class="w-5 h-5" />
+            <moon-icon v-else class="w-5 h-5" />
+          </ripple-button>
+          <span ref="themeBtnRef" class="inline-flex">
+            <ripple-button pill :title="t('layout.common.themeFamily') as string || '主题家族'" @click="onToggleThemeMenu">
+              <paint-brush-icon class="w-5 h-5" />
+            </ripple-button>
+          </span>
+          <language-switcher buttonClass="px-4 h-11 flex items-center rounded-full" />
           
-
-          <div class="ml-4 flex items-center md:ml-6 space-x-3">
-            <Button variant="glass" size="sm" @click="uiStore.toggleDarkMode()">
-              <template #icon>
-                <SunIcon v-if="uiStore.isDarkMode" class="h-5 w-5" />
-                <MoonIcon v-else class="h-5 w-5" />
-              </template>
-            </Button>
-
-            <language-switcher />
-
-            <div class="relative" @click.stop v-click-outside="() => (showGlassMenu=false)">
-              <span ref="glassBtnRef">
-                <Button variant="glass" size="sm" :title="t('layout.teacher.glass.title') || 'Glass Intensity'" @click="(showGlassMenu = !showGlassMenu, showBgMenu = false, emitCloseNotification())">
-                  <template #icon>
-                    <PaintBrushIcon class="h-5 w-5" />
-                  </template>
-                </Button>
-              </span>
-              <teleport to="body">
-                <div v-if="showGlassMenu" class="fixed z-[1000] popover-glass border border-white/20 dark:border-white/12 shadow-md p-1 rounded-2xl"
-                     :style="glassMenuStyle" @click.stop>
-                  <div class="px-3 py-2 text-xs text-gray-600 dark:text-gray-300">
-                    <div class="font-medium mb-1">{{ t('layout.teacher.glass.title') || 'Glass Intensity' }}</div>
-                    <div class="opacity-90">{{ t('layout.teacher.glass.info.more') || 'More Transparent: lower opacity and lighter blur.' }}</div>
-                    <div class="opacity-90">{{ t('layout.teacher.glass.info.normal') || 'Standard: balanced readability.' }}</div>
-                  </div>
-                  <div class="border-t border-white/10 my-1"></div>
-                  <button class="w-full text-left px-3 py-2 rounded-2xl hover:bg-white/10 text-sm flex items-center justify-between"
-                          @click="setGlass('more')">
-                    <span>{{ t('layout.teacher.glass.more') || 'More Transparent' }}</span>
-                    <span v-if="uiStore.glassIntensity==='more'" class="text-primary-500">✓</span>
-                  </button>
-                  <button class="w-full text-left px-3 py-2 rounded-2xl hover:bg-white/10 text-sm flex items-center justify-between"
-                          @click="setGlass('normal')">
-                    <span>{{ t('layout.teacher.glass.normal') || 'Standard' }}</span>
-                    <span v-if="uiStore.glassIntensity==='normal'" class="text-primary-500">✓</span>
-                  </button>
-                </div>
-              </teleport>
-            </div>
-
-            <div class="relative" @click.stop v-click-outside="() => (showBgMenu=false)">
-              <span ref="bgBtnRef">
-                <Button variant="glass" size="sm" :title="t('layout.teacher.bg.title') || 'Background Effects'" @click="(showBgMenu = !showBgMenu, showGlassMenu = false, emitCloseNotification())">
-                  <template #icon>
-                    <EyeIcon v-if="uiStore.bgEnabled" class="h-5 w-5" />
-                    <EyeSlashIcon v-else class="h-5 w-5" />
-                  </template>
-                </Button>
-              </span>
-              <teleport to="body">
-                <div v-if="showBgMenu" class="fixed z-[1000] popover-glass border border-white/20 dark:border-white/12 shadow-md p-1 rounded-2xl"
-                     :style="bgMenuStyle" @click.stop>
-                  <div class="px-3 py-2 text-xs text-gray-600 dark:text-gray-300">
-                    <div class="font-medium mb-1">{{ t('layout.teacher.bg.title') || 'Background Effects' }}</div>
-                    <div class="opacity-90">{{ t('layout.teacher.bg.info') || 'Toggle animated background and effects (smooth fade).' }}</div>
-                  </div>
-                  <div class="border-t border-white/10 my-1"></div>
-                  <button class="w-full text-left px-3 py-2 rounded-2xl hover:bg-white/10 text-sm flex items-center justify-between"
-                          @click="setBg(true)">
-                    <span>{{ t('layout.teacher.bg.on') || 'Enabled' }}</span>
-                    <span v-if="uiStore.bgEnabled" class="text-primary-500">✓</span>
-                  </button>
-                  <button class="w-full text-left px-3 py-2 rounded-2xl hover:bg-white/10 text-sm flex items-center justify-between"
-                          @click="setBg(false)">
-                    <span>{{ t('layout.teacher.bg.off') || 'Disabled' }}</span>
-                    <span v-if="!uiStore.bgEnabled" class="text-primary-500">✓</span>
-                  </button>
-                </div>
-              </teleport>
-            </div>
-
-            <!-- 通知铃铛 -->
-            <notification-bell />
-
-            <!-- 聊天开关按钮（学生端与教师端一致） -->
-            <Button variant="glass" size="sm" :title="t('shared.chat.open') as string || '聊天'" @click="chat.isOpen ? chat.closeChat() : chat.openChat()">
-              <template #icon>
-                <ChatBubbleLeftRightIcon class="h-5 w-5" />
-              </template>
-            </Button>
-
-              <div class="relative" v-click-outside="() => (showUserMenu=false)">
-              <button
-                @click="showUserMenu = !showUserMenu"
-                class="flex items-center text-sm rounded-full focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500"
-                ref="userMenuBtn"
-              >
-                <user-avatar :avatar="(authStore.user as any)?.avatar" :size="32">
-                  <div class="h-8 w-8 rounded-full bg-gradient-to-r from-primary-500 to-purple-600 flex items-center justify-center text-white font-medium text-sm">
-                    {{ (authStore.user?.username || 'S').charAt(0).toUpperCase() }}
-                  </div>
-                </user-avatar>
-                <div class="hidden md:block text-left ml-2">
-                  <p class="text-sm font-medium text-gray-900 dark:text-white">{{ (authStore.user as any)?.nickname || authStore.user?.username || (t('layout.student.title') as string || '学生') }}</p>
-                  <p class="text-xs text-gray-500 dark:text-gray-400">{{ t('layout.student.role') || '学生' }}</p>
-                </div>
-                <chevron-down-icon class="h-4 w-4 text-gray-400 ml-1" />
-              </button>
-
-              <teleport to="body">
-                <div
-                  v-if="showUserMenu"
-                  class="origin-top-right w-48 rounded-xl shadow-lg glass-thin focus:outline-none"
-                  v-glass="{ strength: 'thin', interactive: false }"
-                  :style="userMenuStyle"
-                  @click.stop
-                >
-                  <div class="py-1">
-                    <router-link
-                      to="/student/profile"
-                      class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100/50 dark:hover:bg-gray-700/50 rounded-lg"
-                      @click="showUserMenu = false"
-                    >
-                      <user-icon class="h-4 w-4 inline-block mr-2" /> {{ t('layout.student.user.profile') || '个人资料' }}
-                    </router-link>
-                    <router-link
-                      to="/student/help"
-                      class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100/50 dark:hover:bg-gray-700/50 rounded-lg"
-                      @click="showUserMenu = false"
-                    >
-                      <question-mark-circle-icon class="h-4 w-4 inline-block mr-2" /> {{ t('layout.common.help') || '帮助' }}
-                    </router-link>
-                    <div class="border-t border-gray-100 dark:border-gray-600"></div>
-                    <button
-                      @click="handleLogout"
-                      class="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-gray-100/50 dark:hover:bg-gray-700/50 rounded-lg"
-                    >
-                      <arrow-right-on-rectangle-icon class="h-4 w-4 inline-block mr-2" /> {{ t('layout.student.user.logout') || '退出登录' }}
-                    </button>
-                  </div>
-                </div>
-              </teleport>
-            </div>
-          </div>
-        </div>
+          <notification-bell>
+            <template #trigger="{ toggle }">
+              <ripple-button pill :title="t('notifications.title') as string" @click="toggle">
+                <bell-icon class="w-5 h-5" />
+              </ripple-button>
+            </template>
+          </notification-bell>
+          <span class="relative inline-flex">
+            <ripple-button pill :title="t('shared.chat.open') as string || '聊天'" @click.stop="toggleChatDrawer($event)">
+              <chat-bubble-left-right-icon class="w-5 h-5" />
+            </ripple-button>
+            <span v-if="chat.totalUnread > 0 && !chat.isOpen" class="absolute -top-0.5 -right-0.5 inline-flex items-center justify-center min-w-[16px] h-[16px] px-1 rounded-full bg-red-500 text-white text-[10px] leading-none">{{ Math.min(chat.totalUnread as any, 99) }}</span>
+          </span>
+          <!-- 头像与昵称：使用 Ripple 风格的药丸 -->
+          <span ref="userMenuBtn" class="inline-flex">
+            <ripple-button pill class="pl-2 pr-3 h-11 items-center whitespace-nowrap" :title="t('layout.common.me') as string || '我'" @click="showUserMenu = !showUserMenu">
+              <user-avatar :avatar="(authStore.user as any)?.avatar" :size="30">
+                <div class="w-[30px] h-[30px] rounded-full bg-gray-200 dark:bg-gray-700"></div>
+              </user-avatar>
+              <span class="text-sm font-medium text-base-content whitespace-nowrap">{{ displayName }}</span>
+            </ripple-button>
+          </span>
+        </liquid-glass>
       </div>
     </nav>
 
-    <div class="flex pt-14">
-      <aside
-        v-glass="{ strength: 'regular', interactive: true }"
-        :class="[
-          'fixed inset-y-0 left-0 z-30 w-64 glass-regular glass-interactive transform transition-transform duration-300 ease-in-out',
-          uiStore.sidebarOpen ? 'translate-x-0' : '-translate-x-full'
-        ]"
-        style="top: 3.5rem;"
-      >
-        <div class="h-full px-3 py-4 overflow-y-auto">
-          <nav class="space-y-2">
-            <!-- 主页从侧边栏移除：独立顶层页面，不显示在左菜单 -->
-            <router-link
-              to="/student/dashboard"
-              exact-active-class="bg-primary-50 border-primary-500 text-primary-700 dark:bg-primary-900 dark:text-primary-300"
-              class="group flex items-center px-2 py-2 text-sm font-medium rounded-md text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-white border-l-4 border-transparent"
-            >
-              <home-icon class="mr-3 h-5 w-5" /> {{ t('layout.student.sidebar.dashboard') || '工作台' }}
-            </router-link>
-            <router-link
-              to="/student/assignments"
-              active-class="bg-primary-50 border-primary-500 text-primary-700 dark:bg-primary-900 dark:text-primary-300"
-              class="group flex items-center px-2 py-2 text-sm font-medium rounded-md text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-white border-l-4 border-transparent"
-            >
-              <clipboard-document-list-icon class="mr-3 h-5 w-5" /> {{ t('layout.student.sidebar.assignments') || '我的作业' }}
-            </router-link>
-            <router-link
-              to="/student/courses"
-              active-class="bg-primary-50 border-primary-500 text-primary-700 dark:bg-primary-900 dark:text-primary-300"
-              class="group flex items-center px-2 py-2 text-sm font-medium rounded-md text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-white border-l-4 border-transparent"
-            >
-              <academic-cap-icon class="mr-3 h-5 w-5" /> {{ t('layout.student.sidebar.courses') || '我的课程' }}
-            </router-link>
-            <router-link
-              to="/student/analysis"
-              active-class="bg-primary-50 border-primary-500 text-primary-700 dark:bg-primary-900 dark:text-primary-300"
-              class="group flex items-center px-2 py-2 text-sm font-medium rounded-md text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-white border-l-4 border-transparent"
-            >
-              <ChartBarIcon class="mr-3 h-5 w-5" /> {{ t('layout.student.sidebar.analysis') || '成绩分析' }}
-            </router-link>
-            <router-link
-              to="/student/assistant"
-              active-class="bg-primary-50 border-primary-500 text-primary-700 dark:bg-primary-900 dark:text-primary-300"
-              class="group flex items-center px-2 py-2 text-sm font-medium rounded-md text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-white border-l-4 border-transparent"
-            >
-              <SparklesIcon class="mr-3 h-5 w-5" /> {{ t('layout.student.sidebar.ai') || 'AI 助手' }}
-            </router-link>
-            <router-link
-              to="/student/community"
-              active-class="bg-primary-50 border-primary-500 text-primary-700 dark:bg-primary-900 dark:text-primary-300"
-              class="group flex items-center px-2 py-2 text-sm font-medium rounded-md text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-white border-l-4 border-transparent"
-            >
-              <ChatBubbleLeftRightIcon class="mr-3 h-5 w-5" /> {{ t('layout.student.sidebar.community') || '学习社区' }}
-            </router-link>
-            <!-- 成绩菜单合并到成绩分析页，移除此项 -->
-          </nav>
-        </div>
-      </aside>
-
-      <div
-        v-if="uiStore.sidebarOpen"
-        class="fixed inset-0 z-20 lg:hidden"
-        v-glass="{ strength: 'thick', interactive: false }"
-        @click="uiStore.closeSidebar()"
-      ></div>
-
-      <main :class="['flex-1', uiStore.sidebarOpen ? 'lg:pl-64' : 'pl-0']">
+    <div class="flex pt-2 pb-20">
+      <main class="flex-1">
         <div class="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
           <router-view />
         </div>
       </main>
 
       <!-- 全局聊天抽屉（如学生端也需要，可保留；否则可后续移除） -->
-      <ChatDrawer
-        v-if="chat.isOpen"
+      <chat-drawer
         :open="chat.isOpen"
         :peer-id="chat.peerId as any"
         :peer-name="chat.peerName as any"
@@ -239,6 +67,87 @@
         @close="chat.closeChat()"
       />
     </div>
+
+    <dock-bar
+      :items="dockItems"
+      v-model="activeDock"
+      :bottom-offset="24"
+      @select="onSelectDock"
+    />
+
+    <!-- 用户菜单弹层（模板内挂载） -->
+    <teleport to="body">
+      <div v-if="showUserMenu" class="fixed inset-0 z-[999]" @click="showUserMenu = false"></div>
+      <liquid-glass
+        v-if="showUserMenu"
+        :style="userMenuStyle"
+        containerClass="fixed z-[1000] rounded-xl shadow-lg"
+        :radius="16"
+        :frost="0.05"
+        @click.stop
+      >
+        <div class="py-1">
+          <router-link
+            to="/student/profile"
+            class="block px-4 py-2 text-sm text-subtle hover:bg-gray-100/50 dark:hover:bg-gray-700/50 rounded-lg"
+            @click="showUserMenu = false"
+          >
+            <div class="flex items-center space-x-2">
+              <user-icon class="h-4 w-4" />
+              <span>{{ t('layout.student.user.profile') || '个人资料' }}</span>
+            </div>
+          </router-link>
+          <router-link
+            to="/student/help"
+            class="block px-4 py-2 text-sm text-subtle hover:bg-gray-100/50 dark:hover:bg-gray-700/50 rounded-lg"
+            @click="showUserMenu = false"
+          >
+            <div class="flex items-center space-x-2">
+              <question-mark-circle-icon class="h-4 w-4" />
+              <span>{{ t('layout.common.help') || '帮助' }}</span>
+            </div>
+          </router-link>
+          <div class="border-t border-gray-100 dark:border-gray-600"></div>
+          <button
+            @click="handleLogout"
+            class="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-gray-100/50 dark:hover:bg-gray-700/50 rounded-lg"
+          >
+            <div class="flex items-center space-x-2">
+              <arrow-right-on-rectangle-icon class="h-4 w-4" />
+              <span>{{ t('layout.student.user.logout') || '退出登录' }}</span>
+            </div>
+          </button>
+        </div>
+      </liquid-glass>
+    </teleport>
+
+    <!-- 主题菜单弹层（与教师端一致） -->
+    <teleport to="body">
+      <div v-if="showThemeMenu" class="fixed inset-0 z-[999]" @click="showThemeMenu = false"></div>
+      <liquid-glass
+        v-if="showThemeMenu"
+        :style="themeMenuStyle"
+        containerClass="fixed z-[1000] rounded-2xl"
+        class="p-1"
+        :radius="16"
+        :frost="0.05"
+        @click.stop
+      >
+        <div class="px-3 py-2 text-xs text-subtle">
+          <div class="font-medium mb-1">主题</div>
+          <div class="opacity-90">在新版（静态背景+新配色）与旧版（动态背景+旧配色）之间切换</div>
+        </div>
+        <div class="border-t border-white/10 my-1"></div>
+        <button class="w-full text-left px-3 py-2 rounded-2xl hover:bg-white/10 text-sm flex items-center justify-between" @click="setTheme('retro')">
+          <span>Retro</span>
+          <span v-if="uiStore.theme==='retro'" class="text-primary-500">✓</span>
+        </button>
+        <button class="w-full text-left px-3 py-2 rounded-2xl hover:bg-white/10 text-sm flex items-center justify-between" @click="setTheme('dracula')">
+          <span>Dracula</span>
+          <span v-if="uiStore.theme==='dracula'" class="text-primary-500">✓</span>
+        </button>
+      </liquid-glass>
+    </teleport>
   </div>
 </template>
 
@@ -253,6 +162,11 @@ import FuturisticBackground from '@/components/ui/FuturisticBackground.vue'
 import ChatDrawer from '@/features/teacher/components/ChatDrawer.vue'
 import { useChatStore } from '@/stores/chat'
 import LanguageSwitcher from '@/components/ui/LanguageSwitcher.vue'
+import LiquidGlass from '@/components/ui/LiquidGlass.vue'
+import DockBar from '@/components/ui/DockBar.vue'
+import RippleButton from '@/components/ui/RippleButton.vue'
+import SparklesText from '@/components/ui/SparklesText.vue'
+import LiquidLogo from '@/components/ui/LiquidLogo.vue'
 import {
   Bars3Icon,
   SunIcon,
@@ -267,6 +181,7 @@ import {
   ChartBarIcon,
   ChatBubbleLeftRightIcon,
   SparklesIcon,
+  BellIcon,
   EyeIcon,
   EyeSlashIcon,
   PaintBrushIcon,
@@ -281,39 +196,16 @@ const authStore = useAuthStore()
 const chat = useChatStore()
 const { t } = useI18n()
 
-const htmlIsDark = ref<boolean>(document.documentElement.classList.contains('dark'))
-const baseBgStyle = computed(() => {
-  return htmlIsDark.value
-    ? { background: 'linear-gradient(160deg, #060B1A 0%, #0E1A39 60%, #060B1A 100%)' }
-    : { background: 'linear-gradient(140deg, #F9FBFF 0%, #EAF3FF 45%, #E6F7FD 100%)' }
-})
-const blueVeilStyle = computed(() => {
-  // Match FuturisticBackground canvas overlays in with-particles state
-  // Dark: center dark veil; Light: soft vignette; Both add subtle neon purple glow
-  return htmlIsDark.value
-    ? {
-        backgroundImage: [
-          'radial-gradient(circle at 30% 30%, rgba(139,92,246,0.06) 0%, rgba(0,0,0,0) 65%)',
-          'radial-gradient(circle at 50% 40%, rgba(12,20,40,0.35) 0%, rgba(0,0,0,0) 80%)'
-        ].join(', ')
-      }
-    : {
-        backgroundImage: [
-          'radial-gradient(circle at 30% 30%, rgba(124,58,237,0.05) 0%, rgba(0,0,0,0) 65%)',
-          'radial-gradient(circle at 60% 25%, rgba(0,0,0,0.08) 0%, rgba(0,0,0,0) 70%)'
-        ].join(', ')
-      }
-})
+const baseBgStyle = computed(() => ({ background: 'var(--color-base-100)' }))
 
 const showUserMenu = ref(false)
-const showGlassMenu = ref(false)
-const glassBtnRef = ref<HTMLElement | null>(null)
-const glassMenuStyle = ref<Record<string, string>>({})
 const userMenuBtn = ref<HTMLElement | null>(null)
 const userMenuStyle = ref<Record<string, string>>({})
-const showBgMenu = ref(false)
-const bgBtnRef = ref<HTMLElement | null>(null)
-const bgMenuStyle = ref<Record<string, string>>({})
+const showThemeMenu = ref(false)
+const themeBtnRef = ref<HTMLElement | null>(null)
+const themeMenuStyle = ref<Record<string, string>>({})
+
+const displayName = computed(() => (authStore.user as any)?.nickname || (authStore.user as any)?.name || (authStore.user as any)?.username || t('layout.common.me') || 'Me')
 
 const handleLogout = async () => {
   showUserMenu.value = false
@@ -321,16 +213,8 @@ const handleLogout = async () => {
   router.push('/auth/login')
 }
 
-onMounted(() => {
-  uiStore.initBackgroundEnabled()
-  uiStore.initGlassIntensity()
-  try {
-    const mo = new MutationObserver(() => {
-      htmlIsDark.value = document.documentElement.classList.contains('dark')
-    })
-    mo.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] })
-  } catch {}
-})
+onMounted(() => { try { window.addEventListener('ui:close-topbar-popovers', closeTopbarPopovers) } catch {} })
+onUnmounted(() => { try { window.removeEventListener('ui:close-topbar-popovers', closeTopbarPopovers) } catch {} })
 
 watch(showUserMenu, async (v: boolean) => {
   if (!v) return
@@ -348,47 +232,29 @@ watch(showUserMenu, async (v: boolean) => {
   } catch {}
 })
 
-watch(showGlassMenu, async (v: boolean) => {
+
+watch(showThemeMenu, async (v: boolean) => {
   if (!v) return
   await nextTick()
   try {
-    const el = glassBtnRef.value as HTMLElement
+    const el = themeBtnRef.value as HTMLElement
     const rect = el.getBoundingClientRect()
-    glassMenuStyle.value = {
+    themeMenuStyle.value = {
       position: 'fixed',
       top: `${rect.bottom + 6}px`,
-      left: `${Math.max(8, rect.right - 220)}px`,
-      width: '14rem',
+      left: `${Math.max(8, rect.right - 260)}px`,
+      width: '16rem',
       zIndex: '1000'
     }
   } catch {}
 })
 
-watch(showBgMenu, async (v: boolean) => {
-  if (!v) return
-  await nextTick()
-  try {
-    const el = bgBtnRef.value as HTMLElement
-    const rect = el.getBoundingClientRect()
-    bgMenuStyle.value = {
-      position: 'fixed',
-      top: `${rect.bottom + 6}px`,
-      left: `${Math.max(8, rect.right - 240)}px`,
-      width: '15rem',
-      zIndex: '1000'
-    }
-  } catch {}
-})
-
-function setBg(v: boolean) {
-  uiStore.bgEnabled = v
-  showBgMenu.value = false
+function setTheme(v: 'retro' | 'dracula') {
+  uiStore.setTheme(v)
+  showThemeMenu.value = false
 }
 
-function setGlass(v: 'normal' | 'more') {
-  uiStore.setGlassIntensity(v)
-  showGlassMenu.value = false
-}
+// setGlass 移除：旧主题强制 more，新主题强制 normal（由 store 控制）
 
 function toggleUserMenu() {
   showUserMenu.value = !showUserMenu.value
@@ -397,6 +263,66 @@ function toggleUserMenu() {
 function emitCloseNotification() {
   try { window.dispatchEvent(new CustomEvent('ui:close-notification-dropdown')) } catch {}
 }
+function closeTopbarPopovers() {
+  showThemeMenu.value = false
+  showUserMenu.value = false
+}
+
+function onToggleThemeMenu() {
+  try { window.dispatchEvent(new CustomEvent('ui:close-topbar-popovers')) } catch {}
+  showThemeMenu.value = !showThemeMenu.value
+}
+
+// Dock 配置
+const activeDock = computed<string>({
+  get() {
+    const p = router.currentRoute.value.path
+    if (p.startsWith('/student/assignments')) return 'assignments'
+    if (p.startsWith('/student/courses')) return 'courses'
+    if (p.startsWith('/student/analysis')) return 'analysis'
+    if (p.startsWith('/student/assistant')) return 'assistant'
+    if (p.startsWith('/student/community')) return 'community'
+    if (p.startsWith('/student/dashboard')) return 'dashboard'
+    return ''
+  },
+  set(v: string) {}
+})
+
+const dockItems = computed(() => ([
+  { key: 'dashboard', label: (t('layout.student.sidebar.dashboard') as string) || '工作台', icon: HomeIcon },
+  { key: 'assignments', label: (t('layout.student.sidebar.assignments') as string) || '作业', icon: ClipboardDocumentListIcon },
+  { key: 'courses', label: (t('layout.student.sidebar.courses') as string) || '课程', icon: AcademicCapIcon },
+  { key: 'analysis', label: (t('layout.student.sidebar.analysis') as string) || '分析', icon: ChartBarIcon },
+  { key: 'assistant', label: (t('layout.student.sidebar.ai') as string) || '助手', icon: SparklesIcon },
+  { key: 'community', label: (t('layout.student.sidebar.community') as string) || '社区', icon: ChatBubbleLeftRightIcon },
+]))
+
+function onSelectDock(k: string) {
+  const map: Record<string, string> = {
+    dashboard: '/student/dashboard',
+    assignments: '/student/assignments',
+    courses: '/student/courses',
+    analysis: '/student/analysis',
+    assistant: '/student/assistant',
+    community: '/student/community',
+  }
+  const to = map[k] || '/student/dashboard'
+  if (router.currentRoute.value.path !== to) router.push(to)
+}
+
+function toggleChatDrawer(ev?: Event) {
+  try { ev?.stopPropagation(); ev?.preventDefault() } catch {}
+  try { console.debug('[StudentLayout] chat toggle clicked. isOpen(before)=', chat.isOpen) } catch {}
+  try { window.dispatchEvent(new CustomEvent('ui:close-topbar-popovers')) } catch {}
+  if (chat.isOpen) return chat.closeChat()
+  chat.openChat()
+  try { console.debug('[StudentLayout] chat toggled. isOpen(after)=', chat.isOpen) } catch {}
+}
+
+// 调试：观察 isOpen 变化
+watch(() => chat.isOpen, (v: boolean) => { try { console.debug('[StudentLayout] chat.isOpen changed ->', v) } catch {} })
+
+// 主题家族弹层（与教师端一致）
 </script>
 
 <style scoped>

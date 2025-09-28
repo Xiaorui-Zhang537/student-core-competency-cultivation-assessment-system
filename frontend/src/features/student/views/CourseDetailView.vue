@@ -9,107 +9,114 @@
       <nav class="relative z-10 mb-2">
         <ol class="flex items-center space-x-2 text-sm">
           <li>
-            <router-link to="/student/courses" class="text-gray-500 hover:text-blue-600">{{ t('student.courses.title') }}</router-link>
+            <router-link to="/student/courses" class="text-muted hover:text-[var(--color-primary)]">{{ t('student.courses.title') }}</router-link>
           </li>
-          <li><span class="text-gray-400">&gt;</span></li>
-          <li class="font-medium text-gray-700 truncate">{{ course.title }}</li>
+          <li><span class="text-subtle">&gt;</span></li>
+          <li class="font-medium text-strong truncate">{{ course.title }}</li>
         </ol>
       </nav>
 
       <!-- 第一排：课程元信息（7） | 教师信息（3） -->
       <div class="grid grid-cols-1 lg:grid-cols-10 gap-6 items-stretch">
         <div class="lg:col-span-7">
-          <Card class="h-full">
+          <card class="h-full" tint="primary">
             <div class="p-5">
               <h1 class="text-2xl font-bold truncate">{{ course.title }}</h1>
-              <p v-if="course.description" class="mt-2 text-gray-600">{{ course.description }}</p>
+              <p v-if="course.description" class="mt-2 text-muted">{{ course.description }}</p>
               <!-- 1) 先显示开课/结课时间（玻璃Badge） -->
-              <div class="mt-3 flex flex-wrap items-center gap-2 text-sm text-gray-600">
-                <Badge v-if="course.startDate" size="sm" variant="secondary">
+              <div class="mt-3 flex flex-wrap items-center gap-2 text-sm text-muted">
+                <badge v-if="course.startDate" size="sm" variant="secondary">
                   <span class="inline-flex items-center gap-1">
                     <span>📅</span>{{ t('student.courses.detail.startDate') }}: {{ formatDateOnly(course.startDate) }}
                   </span>
-                </Badge>
-                <Badge v-if="course.endDate" size="sm" variant="secondary">
+                </badge>
+                <badge v-if="course.endDate" size="sm" variant="secondary">
                   <span class="inline-flex items-center gap-1">
                     <span>⏳</span>{{ t('student.courses.detail.endDate') }}: {{ formatDateOnly(course.endDate) }}
                   </span>
-                </Badge>
+                </badge>
               </div>
               <!-- 2) 换行显示 难度/分类/标签（全部玻璃Badge，标签无标题） -->
-              <div class="mt-2 flex flex-wrap items-center gap-2 text-sm text-gray-600">
-                <Badge v-if="course.difficulty" size="sm" :variant="difficultyVariant">{{ t('student.courses.detail.difficulty') }}: {{ localizedDifficulty }}</Badge>
-                <Badge v-if="course.category" size="sm" :variant="categoryVariant">{{ t('student.courses.detail.category') }}: {{ localizedCategory }}</Badge>
+              <div class="mt-2 flex flex-wrap items-center gap-2 text-sm text-muted">
+                <badge v-if="course.difficulty" size="sm" :variant="difficultyVariant">{{ t('student.courses.detail.difficulty') }}: {{ localizedDifficulty }}</badge>
+                <badge v-if="course.category" size="sm" :variant="categoryVariant">{{ t('student.courses.detail.category') }}: {{ localizedCategory }}</badge>
                 <template v-if="tagsArray.length">
-                  <Badge v-for="tag in tagsArray" :key="tag" size="sm" :variant="getTagVariant(tag)">#{{ tag }}</Badge>
+                  <badge v-for="tag in tagsArray" :key="tag" size="sm" :variant="getTagVariant(tag)">#{{ tag }}</badge>
                 </template>
               </div>
               <!-- 3) 进度条（/ui/Progress） -->
               <div class="mt-3">
-                <Progress v-if="typeof displayProgress === 'number'" :value="Math.round(displayProgress)" :showLabel="true" :label="t('student.courses.progressLabel')" color="primary" size="md" />
+                <progress v-if="typeof displayProgress === 'number'" :value="Math.round(displayProgress)" :showLabel="true" :label="t('student.courses.progressLabel')" color="primary" size="md" />
               </div>
               <!-- 4) 报名学生：头像+姓名，可点击查看资料/联系 -->
               <div class="mt-4">
                 <div v-if="studentsLoading" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
                   <div v-for="i in 8" :key="i" class="p-2 rounded-xl glass-ultraThin border animate-pulse">
                     <div class="flex items-center gap-2">
-                      <div class="w-10 h-10 rounded-full bg-gray-300/60" />
-                      <div class="h-3 w-24 bg-gray-300/60 rounded" />
+                      <div class="w-10 h-10 rounded-full bg-[color-mix(in_oklab,var(--color-base-content)_16%,transparent)]" />
+                      <div class="h-3 w-24 bg-[color-mix(in_oklab,var(--color-base-content)_16%,transparent)] rounded" />
                     </div>
                   </div>
                 </div>
                 <div v-else-if="students.length" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
-                  <button v-for="s in students" :key="String(s.id)" class="group text-left p-2 rounded-xl glass-ultraThin glass-interactive border hover:ring-2 hover:ring-primary-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-400"
-                          type="button" :aria-label="resolveName(s)" @click="openStudentProfile(s)">
+                  <Button
+                    v-for="s in students"
+                    :key="String(s.id)"
+                    variant="menu"
+                    class="w-full text-left p-2 border justify-start"
+                    type="button"
+                    :aria-label="resolveName(s)"
+                    @click="openStudentProfile(s)"
+                  >
                     <div class="flex items-center gap-2">
-                      <UserAvatar :avatar="s.avatar" :size="40" :alt="resolveName(s)">
-                        <span class="text-base font-medium text-gray-600">{{ resolveName(s).charAt(0) }}</span>
-                      </UserAvatar>
+                      <user-avatar :avatar="s.avatar" :size="40" :alt="resolveName(s)">
+                        <span class="text-base font-medium text-muted">{{ resolveName(s).charAt(0) }}</span>
+                      </user-avatar>
                       <div class="min-w-0">
-                        <div class="truncate text-sm font-medium text-gray-800">{{ resolveName(s) }}</div>
+                        <div class="truncate text-sm font-medium text-strong">{{ resolveName(s) }}</div>
                       </div>
                     </div>
-                  </button>
+                  </Button>
                 </div>
-                <div v-else class="text-sm text-gray-500">{{ t('student.courses.detail.noEnrolled') || '暂无报名学生' }}</div>
+                <div v-else class="text-sm text-muted">{{ t('student.courses.detail.noEnrolled') || '暂无报名学生' }}</div>
               </div>
             </div>
-          </Card>
+          </card>
             </div>
         <div class="lg:col-span-3">
-          <Card class="h-full">
+          <card class="h-full" tint="info">
             <div class="px-4 py-3 border-b">
               <h3 class="text-lg font-semibold">{{ t('student.courses.detail.instructorInfo') }}</h3>
             </div>
             <div class="p-4">
               <div class="flex items-center gap-4">
-                <UserAvatar :avatar="resolvedTeacherAvatar" :size="64" :alt="fullName || teacherName || course.teacherName">
-                  <span class="text-xl font-medium text-gray-600">{{ (teacherName || course.teacherName || '#').charAt(0) }}</span>
-                </UserAvatar>
+                <user-avatar :avatar="resolvedTeacherAvatar" :size="64" :alt="fullName || teacherName || course.teacherName">
+                  <span class="text-xl font-medium text-muted">{{ (teacherName || course.teacherName || '#').charAt(0) }}</span>
+                </user-avatar>
                 <div class="min-w-0 flex-1">
                   <div class="font-semibold truncate">{{ fullName || teacherName || course.teacherName }}</div>
-                  <div class="text-sm text-gray-500">
+                  <div class="text-sm text-muted">
                     <div v-if="genderLabel">{{ t('student.courses.detail.gender') || '性别' }}：{{ genderLabel }}</div>
                     <div v-if="teacherBirthday">{{ t('student.courses.detail.birthday') || '生日' }}：{{ teacherBirthday }}</div>
                   </div>
                 </div>
               </div>
-              <div class="mt-3 grid grid-cols-1 gap-2 text-sm text-gray-700">
-                <div v-if="teacher?.school"><span class="text-gray-500">{{ t('student.courses.detail.school') || '学校' }}：</span>{{ teacher.school }}</div>
-                <div v-if="teacher?.email"><span class="text-gray-500">{{ t('student.courses.detail.email') || '邮箱' }}：</span>{{ teacher.email }}</div>
-                <div v-if="teacher?.phone"><span class="text-gray-500">{{ t('student.courses.detail.phone') || '电话' }}：</span>{{ teacher.phone }}</div>
+              <div class="mt-3 grid grid-cols-1 gap-2 text-sm text-strong">
+                <div v-if="teacher?.school"><span class="text-muted">{{ t('student.courses.detail.school') || '学校' }}：</span>{{ teacher.school }}</div>
+                <div v-if="teacher?.email"><span class="text-muted">{{ t('student.courses.detail.email') || '邮箱' }}：</span>{{ teacher.email }}</div>
+                <div v-if="teacher?.phone"><span class="text-muted">{{ t('student.courses.detail.phone') || '电话' }}：</span>{{ teacher.phone }}</div>
                 <div v-if="teacher?.country || teacher?.province || teacher?.city">
-                  <span class="text-gray-500">{{ t('student.courses.detail.location') || '地点' }}：</span>
+                  <span class="text-muted">{{ t('student.courses.detail.location') || '地点' }}：</span>
                   {{ [teacher?.country, teacher?.province, teacher?.city].filter(Boolean).join(' / ') }}
                 </div>
-                <div v-if="teacher?.mbti"><span class="text-gray-500">MBTI：</span>{{ teacher.mbti }}</div>
-                <div v-if="teacher?.studentNo || teacher?.teacherNo"><span class="text-gray-500">{{ t('student.courses.detail.code') || '编号' }}：</span>{{ teacher.teacherNo || teacher.studentNo }}</div>
+                <div v-if="teacher?.mbti"><span class="text-muted">MBTI：</span>{{ teacher.mbti }}</div>
+                <div v-if="teacher?.studentNo || teacher?.teacherNo"><span class="text-muted">{{ t('student.courses.detail.code') || '编号' }}：</span>{{ teacher.teacherNo || teacher.studentNo }}</div>
               </div>
-              <div v-if="teacher?.subject" class="mt-3 text-sm text-gray-700">
-                <span class="text-gray-500">{{ t('student.courses.detail.major') || '专业科目' }}：</span>{{ teacher.subject }}
+              <div v-if="teacher?.subject" class="mt-3 text-sm text-strong">
+                <span class="text-muted">{{ t('student.courses.detail.major') || '专业科目' }}：</span>{{ teacher.subject }}
               </div>
-              <div v-if="teacher?.bio" class="mt-3 text-sm text-gray-700">
-                <span class="text-gray-500">{{ t('student.courses.detail.bioTitle') || '简介' }}：</span>{{ teacher?.bio }}
+              <div v-if="teacher?.bio" class="mt-3 text-sm text-strong">
+                <span class="text-muted">{{ t('student.courses.detail.bioTitle') || '简介' }}：</span>{{ teacher?.bio }}
               </div>
               <div class="mt-4">
                 <Button variant="primary" size="sm" class="w-full" @click="contactTeacher">
@@ -120,23 +127,23 @@
                 </Button>
               </div>
             </div>
-          </Card>
+          </card>
                       </div>
                     </div>
 
       <!-- 第二排：课程节次（7） | 课程资料（3） -->
       <div class="grid grid-cols-1 lg:grid-cols-10 gap-6 items-stretch">
         <div class="lg:col-span-7">
-          <Card class="h-full">
+          <card class="h-full" tint="secondary">
             <div class="px-4 py-3 border-b flex items-center justify-between">
               <h3 class="text-lg font-semibold">{{ t('student.courses.detail.contents') }}</h3>
-              <span class="text-sm text-gray-500">{{ completedByProgressCount }} / {{ lessons.length }} {{ t('student.courses.detail.completed') }}</span>
+              <span class="text-sm text-muted">{{ completedByProgressCount }} / {{ lessons.length }} {{ t('student.courses.detail.completed') }}</span>
             </div>
             <div class="p-4 space-y-3">
               <template v-if="groupedChapters.length">
                 <div v-for="group in groupedChapters" :key="group.key" class="space-y-2">
                   <div class="flex items-center justify-between">
-                    <div class="text-sm font-semibold text-gray-700">{{ group.title }}</div>
+                    <div class="text-sm font-semibold text-strong">{{ group.title }}</div>
                     <Button size="xs" variant="purple" class="inline-flex items-center" @click="toggleChapter(group.key)">
                       <template #icon>
                         <svg v-if="isExpanded(group.key)" class="w-4 h-4" viewBox="0 0 20 20" fill="currentColor"><path d="M5.23 12.21a.75.75 0 001.06.02L10 8.73l3.71 3.5a.75.75 0 001.04-1.08l-4.23-4a.75.75 0 00-1.04 0l-4.25 4a.75.75 0 00-.02 1.06z"/></svg>
@@ -145,23 +152,23 @@
                       {{ isExpanded(group.key) ? (t('student.courses.detail.collapse') || '收起') : (t('student.courses.detail.expand') || '展开') }}
                     </Button>
                   </div>
-                  <div v-if="group.desc" class="text-xs text-gray-500">{{ group.desc }}</div>
+                  <div v-if="group.desc" class="text-xs text-subtle">{{ group.desc }}</div>
                   <div class="space-y-2" v-show="isExpanded(group.key)">
                     <div v-for="(lesson, index) in group.items" :key="lesson.id" class="p-4 border rounded-xl glass-ultraThin">
                       <div class="flex items-start gap-4">
                         <div class="flex-shrink-0 mr-1">
-                          <div v-if="getLessonProgress(lesson.id) >= 100" class="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center text-white">✓</div>
-                          <div v-else class="w-8 h-8 bg-blue-400 text-white rounded-full flex items-center justify-center font-medium">{{ index + 1 }}</div>
+                          <div v-if="getLessonProgress(lesson.id) >= 100" class="w-8 h-8 rounded-full flex items-center justify-center text-[var(--color-success-content)] bg-[color-mix(in_oklab,var(--color-success)_80%,transparent)]">✓</div>
+                          <div v-else class="w-8 h-8 rounded-full flex items-center justify-center font-medium text-[var(--color-primary-content)] bg-[color-mix(in_oklab,var(--color-primary)_70%,transparent)]">{{ index + 1 }}</div>
                         </div>
                         <div class="flex-1 min-w-0">
                           <div class="flex flex-wrap items-center justify-between gap-3">
                             <div class="min-w-0">
                               <div class="flex items-center gap-2 min-w-0">
                                 <h3 class="font-medium truncate">{{ lesson.title }}</h3>
-                                <Badge v-if="getLessonProgress(lesson.id) >= 100" size="sm" variant="success">{{ t('student.courses.detail.completed') }}</Badge>
-                                <Badge v-else size="sm" variant="secondary">{{ t('common.status.incomplete') || '未完成' }}</Badge>
+                                <badge v-if="getLessonProgress(lesson.id) >= 100" size="sm" variant="success">{{ t('student.courses.detail.completed') }}</badge>
+                                <badge v-else size="sm" variant="secondary">{{ t('common.status.incomplete') || '未完成' }}</badge>
                               </div>
-                              <p class="text-sm text-gray-600 mt-1.5">{{ lesson.description || lesson.content }}</p>
+                              <p class="text-sm text-muted mt-1.5">{{ lesson.description || lesson.content }}</p>
                             </div>
                             <div class="flex items-center gap-2">
                               <Button size="sm" variant="success" @click="goLessonDetail(lesson.id)">
@@ -182,18 +189,18 @@
                 <div v-for="(lesson, index) in lessons" :key="lesson.id" class="p-4 border rounded-xl glass-ultraThin">
                   <div class="flex items-start gap-4">
                     <div class="flex-shrink-0 mr-1">
-                      <div v-if="getLessonProgress(lesson.id) >= 100" class="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center text-white">✓</div>
-                      <div v-else class="w-8 h-8 bg-blue-400 text-white rounded-full flex items-center justify-center font-medium">{{ index + 1 }}</div>
+                      <div v-if="getLessonProgress(lesson.id) >= 100" class="w-8 h-8 rounded-full flex items-center justify-center text-[var(--color-success-content)] bg-[color-mix(in_oklab,var(--color-success)_80%,transparent)]">✓</div>
+                      <div v-else class="w-8 h-8 rounded-full flex items-center justify-center font-medium text-[var(--color-primary-content)] bg-[color-mix(in_oklab,var(--color-primary)_70%,transparent)]">{{ index + 1 }}</div>
                     </div>
                     <div class="flex-1 min-w-0">
                       <div class="flex flex-wrap items-center justify-between gap-3">
                             <div class="min-w-0">
                               <div class="flex items-center gap-2 min-w-0">
                                 <h3 class="font-medium truncate">{{ lesson.title }}</h3>
-                                <Badge v-if="getLessonProgress(lesson.id) >= 100" size="sm" variant="success">{{ t('student.courses.detail.completed') }}</Badge>
-                                <Badge v-else size="sm" variant="secondary">{{ t('common.status.incomplete') || '未完成' }}</Badge>
+                                <badge v-if="getLessonProgress(lesson.id) >= 100" size="sm" variant="success">{{ t('student.courses.detail.completed') }}</badge>
+                                <badge v-else size="sm" variant="secondary">{{ t('common.status.incomplete') || '未完成' }}</badge>
                               </div>
-                              <p class="text-sm text-gray-600 mt-1.5">{{ lesson.description || lesson.content }}</p>
+                              <p class="text-sm text-muted mt-1.5">{{ lesson.description || lesson.content }}</p>
                             </div>
                         <div class="flex items-center gap-2">
                           <Button size="sm" variant="success" @click="goLessonDetail(lesson.id)">
@@ -209,15 +216,15 @@
                 </div>
               </template>
             </div>
-          </Card>
+          </card>
         </div>
         <div class="lg:col-span-3">
-          <Card class="h-full">
+          <card class="h-full" tint="accent">
             <div class="px-4 py-3 border-b">
               <h3 class="text-lg font-semibold">{{ t('student.courses.detail.materials') }}</h3>
             </div>
             <div class="p-4">
-              <AttachmentList :files="courseMaterials" :noCard="true" :hideHeader="true" :showDefaultDownload="false">
+              <attachment-list :files="courseMaterials" :noCard="true" :hideHeader="true" :showDefaultDownload="false">
                 <template #actions="{ file }">
                   <Button
                     size="sm"
@@ -231,27 +238,27 @@
                     </template>
                   </Button>
                 </template>
-              </AttachmentList>
-              <div v-if="!courseMaterials.length" class="text-sm text-gray-500 mt-2">{{ t('student.courses.detail.noMaterials') }}</div>
+              </attachment-list>
+              <div v-if="!courseMaterials.length" class="text-sm text-muted mt-2">{{ t('student.courses.detail.noMaterials') }}</div>
             </div>
-          </Card>
+          </card>
         </div>
       </div>
     </div>
 
-    <div v-else class="text-center py-12 card">
+    <card v-else class="text-center py-12" tint="info">
       <h3 class="text-lg font-medium">{{ t('student.courses.detail.notFoundTitle') }}</h3>
-      <p class="text-gray-500 mt-2">{{ t('student.courses.detail.notFoundDesc') }}</p>
+      <p class="text-muted mt-2">{{ t('student.courses.detail.notFoundDesc') }}</p>
       <Button as="a" href="/student/courses" class="mt-4" variant="primary">
         <template #icon>
           <svg class="w-4 h-4" viewBox="0 0 20 20" fill="currentColor"><path d="M7 10l5 5V5l-5 5z"/></svg>
         </template>
         {{ t('student.courses.detail.backToList') }}
       </Button>
-    </div>
+    </card>
 
     <!-- 学生资料弹窗挂载到页面根容器内 -->
-    <StudentProfileModal
+    <student-profile-modal
       v-if="showProfile"
       :open="showProfile"
       :user-id="activeStudent?.id"

@@ -8,6 +8,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 /**
  * 通知实体类
@@ -85,6 +86,12 @@ public class Notification {
     @Schema(description = "是否删除", example = "false")
     @Builder.Default
     private Boolean deleted = false;
+
+    // 扩展：聊天消息的附件文件ID列表（仅当 type='message' 时可能存在）
+    private List<Long> attachmentFileIds;
+
+    // 扩展：所属会话ID（聊天消息）
+    private Long conversationId;
 
     /**
      * 标记为已读

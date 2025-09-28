@@ -55,8 +55,8 @@ const thumbStyle = computed(() => {
 })
 
 const trackClass = computed(() => props.modelValue
-  ? 'glass-thin bg-gradient-to-r from-primary-400/60 to-primary-500/60 border-white/40'
-  : 'glass-thin bg-white/25 border-white/30'
+  ? 'glass-thin bg-[color-mix(in_oklab,var(--color-primary)_35%,transparent)] border-[color-mix(in_oklab,var(--color-primary)_38%,transparent)]'
+  : 'glass-thin bg-[color-mix(in_oklab,var(--color-base-content)_8%,transparent)] border-[color-mix(in_oklab,var(--color-base-content)_20%,transparent)]'
 )
 </script>
 

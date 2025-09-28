@@ -12,6 +12,7 @@
             v-for="v in displayValues"
             :key="String(v.value)"
             class="ui-chip"
+            :style="chipStyle"
             @click.stop="toggleValue(v.value)"
             :title="'点击移除: ' + v.label"
           >
@@ -23,11 +24,25 @@
     </div>
   </div>
   <teleport to="body">
-    <div v-if="open" ref="menuRef" class="fixed z-[9999] ui-popover-menu p-2 max-h-48 overflow-y-auto" :style="{ left: pos.left+'px', top: pos.top+'px', width: pos.width+'px' }" @click.stop>
+    <div v-if="open" ref="menuRef" class="fixed z-[9999] ui-popover-menu p-2 max-h-48 overflow-y-auto" :class="tintClass" :style="{ left: pos.left+'px', top: pos.top+'px', width: pos.width+'px' }" @click.stop>
       <div class="space-y-1">
-        <label v-for="opt in options" :key="String(opt.value)" class="flex items-center gap-2 px-2 py-1 rounded hover:bg-white/10">
-          <input type="checkbox" :checked="checkedMap.get(String(opt.value))===true" :disabled="!!opt.disabled" @change="toggleValue(opt.value)" />
-          <span class="text-sm">{{ opt.label }}</span>
+        <label v-for="opt in options" :key="String(opt.value)" class="flex items-center gap-2 px-2 py-1 rounded transition-colors hover:bg-white/10">
+          <input
+            type="checkbox"
+            :checked="isChecked(opt.value)"
+            :disabled="!!opt.disabled"
+            @change="toggleValue(opt.value)"
+            class="sr-only"
+          />
+          <span
+            :class="['inline-flex h-5 w-5 items-center justify-center rounded-md border transition-all duration-150']"
+            :style="checkboxBoxStyle(opt.value)"
+          >
+            <svg v-if="isChecked(opt.value)" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="h-3.5 w-3.5">
+              <path fill-rule="evenodd" d="M16.704 5.29a1 1 0 00-1.408-1.42l-6.29 6.24-2.302-2.286a1 1 0 10-1.404 1.424l3.001 2.98a1 1 0 001.408-.004l6.995-6.934z" clip-rule="evenodd" />
+            </svg>
+          </span>
+          <span class="text-sm" :style="isChecked(opt.value) ? selectedOptionStyle : undefined">{{ opt.label }}</span>
         </label>
       </div>
     </div>
@@ -35,7 +50,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref, onMounted, onBeforeUnmount } from 'vue'
+import { computed, ref, onMounted, onBeforeUnmount, type CSSProperties } from 'vue'
 
 interface Option { label: string; value: string | number; disabled?: boolean }
 interface Props {
@@ -46,13 +61,15 @@ interface Props {
   clearable?: boolean
   clearText?: string
   size?: 'sm' | 'md'
+  tint?: 'primary' | 'secondary' | 'accent' | 'success' | 'warning' | 'danger' | 'info' | null
 }
 
 const props = withDefaults(defineProps<Props>(), {
   placeholder: '请选择…',
   clearable: true,
   clearText: '清空',
-  size: 'sm'
+  size: 'sm',
+  tint: null
 })
 
 const emit = defineEmits<{ (e:'update:modelValue', v:(string|number)[]):void }>()
@@ -60,6 +77,17 @@ const rootRef = ref<HTMLElement|null>(null)
 const menuRef = ref<HTMLElement|null>(null)
 const open = ref(false)
 const pos = ref({ left: 0, top: 0, width: 280 })
+
+const tintClass = computed(() => props.tint ? `glass-tint-${props.tint}` : '')
+const themeColorVar = computed(() => props.tint ? `var(--color-${props.tint})` : 'var(--color-primary)')
+const themeColorContentVar = computed(() => props.tint ? `var(--color-${props.tint}-content)` : 'var(--color-primary-content)')
+const selectedOptionStyle = computed<CSSProperties>(() => ({ color: themeColorVar.value }))
+const chipStyle = computed<CSSProperties>(() => ({
+  color: themeColorContentVar.value,
+  background: `color-mix(in oklab, ${themeColorVar.value} 22%, transparent)`,
+  borderColor: `color-mix(in oklab, ${themeColorVar.value} 36%, transparent)`
+}))
+const checkboxAccent = computed(() => themeColorVar.value)
 
 const checkedMap = computed(() => {
   const m = new Map<string, boolean>()
@@ -104,11 +132,31 @@ function onDocClick(e: MouseEvent) {
   if (!insideRoot && !insideMenu) open.value = false
 }
 
+const isChecked = (val: string | number) => checkedMap.value.get(String(val)) === true
+
+const checkboxBoxStyle = (val: string | number): CSSProperties => {
+  const accent = checkboxAccent.value
+  if (isChecked(val)) {
+    return {
+      background: `color-mix(in oklab, ${accent} 28%, transparent)` ,
+      borderColor: `color-mix(in oklab, ${accent} 48%, transparent)` ,
+      color: themeColorContentVar.value,
+      boxShadow: `0 0 0 1px color-mix(in oklab, ${accent} 42%, transparent) inset`
+    }
+  }
+  return {
+    background: `color-mix(in oklab, ${accent} 8%, transparent)`,
+    borderColor: `color-mix(in oklab, ${accent} 24%, transparent)`
+  }
+}
+
 onMounted(() => {
   window.addEventListener('resize', onWindow, { passive: true })
   window.addEventListener('scroll', onWindow, { passive: true })
   document.addEventListener('click', onDocClick)
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape') open.value = false })
 })
+
 onBeforeUnmount(() => {
   window.removeEventListener('resize', onWindow)
   window.removeEventListener('scroll', onWindow)

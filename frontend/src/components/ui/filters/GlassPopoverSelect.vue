@@ -5,24 +5,31 @@
       <button
         type="button"
         class="ui-pill--select ui-pill--pr-select"
-        :class="size==='sm' ? 'ui-pill--sm ui-pill--pl' : 'ui-pill--md ui-pill--pl'"
+        :class="[size==='sm' ? 'ui-pill--sm ui-pill--pl' : 'ui-pill--md ui-pill--pl', tintClass]"
         :disabled="disabled"
         @click="toggle"
       >
-        <span :class="truncateLabel ? 'truncate' : ''">{{ selectedLabel || placeholder || '' }}</span>
+        <span
+          :class="truncateLabel ? 'truncate' : ''"
+          :style="selectedLabel ? selectedLabelStyle : undefined"
+        >
+          {{ selectedLabel || placeholder || '' }}
+        </span>
         <svg class="pointer-events-none w-4 h-4 text-gray-400 absolute right-2 top-1/2 -translate-y-1/2" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.24 4.5a.75.75 0 01-1.08 0l-4.24-4.5a.75.75 0 01.02-1.06z" clip-rule="evenodd"/></svg>
       </button>
       <!-- local (non-teleport) dropdown -->
       <div v-if="open && !teleport"
-           class="absolute z-[9999] ui-popover-menu p-1 max-h-80 overflow-y-auto overscroll-contain left-0 w-full top-full mt-1">
+           class="absolute z-[9999] ui-popover-menu p-1 max-h-80 overflow-y-auto overscroll-contain left-0 w-full top-full mt-1"
+           :class="tintClass">
         <button v-for="(opt, idx) in options"
                 :key="String(opt.value)"
                 type="button"
                 class="w-full text-left px-3 py-2 rounded transition-colors"
                 :class="[
                   idx===activeIndex ? 'bg-white/10 dark:bg-white/10' : 'hover:bg-white/10',
-                  isSelected(opt.value) ? 'text-primary-600 dark:text-primary-300' : 'text-gray-700 dark:text-gray-200'
+                  isSelected(opt.value) ? 'font-semibold' : 'text-gray-700 dark:text-gray-200'
                 ]"
+                :style="isSelected(opt.value) ? selectedOptionStyle : undefined"
                 :disabled="!!opt.disabled"
                 @click="choose(opt.value)"
                 @mousemove="activeIndex = idx"
@@ -35,6 +42,7 @@
   <teleport to="body" v-if="teleport">
     <div v-if="open"
          class="fixed z-[9999] ui-popover-menu p-1 max-h-80 overflow-y-auto overscroll-contain"
+         :class="tintClass"
          :style="{ left: pos.left + 'px', top: pos.top + 'px', width: pos.width + 'px' }"
          @keydown.stop.prevent="onKeydown"
     >
@@ -44,8 +52,9 @@
               class="w-full text-left px-3 py-2 rounded transition-colors"
               :class="[
                 idx===activeIndex ? 'bg-white/10 dark:bg-white/10' : 'hover:bg-white/10',
-                isSelected(opt.value) ? 'text-primary-600 dark:text-primary-300' : 'text-gray-700 dark:text-gray-200'
+                isSelected(opt.value) ? 'font-semibold' : 'text-gray-700 dark:text-gray-200'
               ]"
+              :style="isSelected(opt.value) ? selectedOptionStyle : undefined"
               :disabled="!!opt.disabled"
               @click="choose(opt.value)"
               @mousemove="activeIndex = idx"
@@ -57,7 +66,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, onBeforeUnmount, watch } from 'vue'
+import { ref, computed, onMounted, onBeforeUnmount, watch, CSSProperties } from 'vue'
 
 interface Option { label: string; value: string | number; disabled?: boolean }
 interface Props {
@@ -72,6 +81,7 @@ interface Props {
   teleport?: boolean
   truncateLabel?: boolean
   fullWidth?: boolean
+  tint?: 'primary' | 'secondary' | 'accent' | 'success' | 'warning' | 'danger' | 'info' | null
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -81,7 +91,8 @@ const props = withDefaults(defineProps<Props>(), {
   width: undefined,
   teleport: true,
   truncateLabel: true,
-  fullWidth: true
+  fullWidth: true,
+  tint: null
 })
 
 const emit = defineEmits<{ (e:'update:modelValue', v:string|number|null):void; (e:'change', v:string|number|null):void; (e:'open'):void; (e:'close'):void }>()
@@ -92,6 +103,19 @@ const pos = ref({ left: 0, top: 0, width: 280 })
 const PANEL_MAX_HEIGHT = 320 // px (matches max-h-80)
 const activeIndex = ref(0)
 let scrollParents: HTMLElement[] = []
+
+const tintClass = computed(() => props.tint ? `glass-tint-${props.tint}` : '')
+
+const themeColorVar = computed(() => props.tint ? `var(--color-${props.tint})` : 'var(--color-primary)')
+const themeColorContentVar = computed(() => props.tint ? `var(--color-${props.tint}-content)` : 'var(--color-primary-content)')
+
+const selectedLabelStyle = computed<CSSProperties>(() => ({
+  color: themeColorContentVar.value
+}))
+
+const selectedOptionStyle = computed<CSSProperties>(() => ({
+  color: themeColorVar.value
+}))
 
 const selectedLabel = computed(() => {
   const cur = props.options.find(o => String(o.value) === String(props.modelValue ?? ''))

@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.noncore.assessment.mapper.ChatAttachmentMapper">
+
+    <resultMap id="AttachmentMap" type="com.noncore.assessment.entity.ChatMessageAttachment">
+        <id column="id" property="id"/>
+        <result column="notification_id" property="notificationId"/>
+        <result column="file_id" property="fileId"/>
+        <result column="uploader_id" property="uploaderId"/>
+        <result column="created_at" property="createdAt"/>
+    </resultMap>
+
+    <insert id="insert" parameterType="com.noncore.assessment.entity.ChatMessageAttachment" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO chat_message_attachments (notification_id, file_id, uploader_id, created_at)
+        VALUES (#{notificationId}, #{fileId}, #{uploaderId}, NOW())
+    </insert>
+
+    <insert id="batchInsert">
+        INSERT INTO chat_message_attachments (notification_id, file_id, uploader_id, created_at)
+        VALUES
+        <foreach collection="fileIds" item="fid" separator=",">
+            (#{notificationId}, #{fid}, #{uploaderId}, NOW())
+        </foreach>
+    </insert>
+
+    <select id="selectByNotificationIds" resultMap="AttachmentMap">
+        SELECT id, notification_id, file_id, uploader_id, created_at
+        FROM chat_message_attachments
+        WHERE notification_id IN
+        <foreach collection="ids" item="id" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </select>
+
+    <!-- 判断用户是否可访问某聊天附件对应的文件（作为发送者或接收者） -->
+    <select id="existsUserAccessForFile" resultType="int">
+        SELECT COUNT(1)
+        FROM chat_message_attachments a
+        INNER JOIN notifications n ON n.id = a.notification_id
+        WHERE a.file_id = #{fileId}
+          AND (n.sender_id = #{userId} OR n.recipient_id = #{userId})
+          AND (n.type = 'message')
+        LIMIT 1
+    </select>
+
+</mapper>
+
+

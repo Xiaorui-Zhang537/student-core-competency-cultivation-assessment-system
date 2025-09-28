@@ -1,10 +1,10 @@
 <template>
   <div class="p-6 min-h-screen">
-    <PageHeader :title="t('teacher.dashboard.header.title')" :subtitle="t('teacher.dashboard.header.subtitle')">
+    <page-header :title="t('teacher.dashboard.header.title')" :subtitle="t('teacher.dashboard.header.subtitle')">
       <template #actions>
         <div class="flex items-end gap-4 w-full sm:w-auto">
           <div class="w-full sm:w-64">
-            <GlassPopoverSelect
+            <glass-popover-select
               :label="t('teacher.dashboard.course.select.label') as string"
               v-model="selectedCourseId"
               :options="teacherCourseOptions"
@@ -16,15 +16,15 @@
           </div>
           <div class="hidden sm:flex items-center gap-2">
             <Button variant="primary" @click="goPublishAssignment">
-              <PlusIcon class="w-4 h-4 mr-2" />{{ t('teacher.dashboard.actions.publish') }}
+              <plus-icon class="w-4 h-4 mr-2" />{{ t('teacher.dashboard.actions.publish') }}
             </Button>
             <Button variant="success" @click="goGradeAssignments">
-              <CheckBadgeIcon class="w-4 h-4 mr-2" />{{ t('teacher.dashboard.actions.grade') }}
+              <check-badge-icon class="w-4 h-4 mr-2" />{{ t('teacher.dashboard.actions.grade') }}
             </Button>
           </div>
         </div>
       </template>
-    </PageHeader>
+    </page-header>
 
     <!-- Course Selector -->
     
@@ -38,27 +38,27 @@
     <div v-else-if="selectedCourseId && courseAnalytics" class="space-y-8">
         <!-- Stats Cards (统一为工作台小卡片组件) -->
         <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
-          <StartCard :label="t('teacher.dashboard.cards.totalStudents') as string" :value="n(safeAnalytics.totalStudents, 'integer')" tone="blue" :icon="UserGroupIcon" />
-          <StartCard :label="t('teacher.dashboard.cards.completionRate') as string" :value="n((safeAnalytics.completionRate || 0) / 100, 'percent')" tone="emerald" :icon="CheckCircleIcon" />
-          <StartCard :label="t('teacher.dashboard.cards.averageScore') as string" :value="(safeAnalytics.averageScore || 0).toFixed(1)" tone="violet" :icon="StarIcon" />
-          <StartCard :label="t('teacher.dashboard.cards.totalAssignments') as string" :value="n(safeAnalytics.totalAssignments, 'integer')" tone="amber" :icon="ClipboardDocumentListIcon" />
+          <start-card :label="t('teacher.dashboard.cards.totalStudents') as string" :value="n(safeAnalytics.totalStudents, 'integer')" tone="blue" :icon="UserGroupIcon" />
+          <start-card :label="t('teacher.dashboard.cards.completionRate') as string" :value="n((safeAnalytics.completionRate || 0) / 100, 'percent')" tone="emerald" :icon="CheckCircleIcon" />
+          <start-card :label="t('teacher.dashboard.cards.averageScore') as string" :value="(safeAnalytics.averageScore || 0).toFixed(1)" tone="violet" :icon="StarIcon" />
+          <start-card :label="t('teacher.dashboard.cards.totalAssignments') as string" :value="n(safeAnalytics.totalAssignments, 'integer')" tone="amber" :icon="ClipboardDocumentListIcon" />
         </div>
 
         <!-- Class Performance Chart -->
-        <div class="card p-6">
+        <Card padding="lg" tint="accent">
           <div class="flex items-center justify-between mb-4">
-            <h2 class="text-xl font-semibold text-gray-900 dark:text-white">{{ t('teacher.dashboard.chart.title') }}</h2>
-            <span class="text-xs text-gray-500">{{ t('teacher.dashboard.chart.subtitle') }}</span>
+            <h2 class="text-xl font-semibold text-base-content">{{ t('teacher.dashboard.chart.title') }}</h2>
+            <span class="text-xs text-subtle">{{ t('teacher.dashboard.chart.subtitle') }}</span>
           </div>
           <div ref="chartRef" class="h-[32rem] w-full"></div>
-        </div>
+        </Card>
     </div>
 
      <!-- Empty State -->
     <div v-else class="text-center py-16 card">
       <svg xmlns="http://www.w3.org/2000/svg" class="w-12 h-12 mx-auto text-gray-400 mb-3" viewBox="0 0 24 24" fill="currentColor"><path d="M19 3H5a2 2 0 00-2 2v14l4-4h12a2 2 0 002-2V5a2 2 0 00-2-2z"/></svg>
-      <h3 class="text-lg font-medium text-gray-900 dark:text-white">{{ t('teacher.dashboard.empty.title') }}</h3>
-      <p class="text-gray-500">{{ t('teacher.dashboard.empty.description') }}</p>
+      <h3 class="text-lg font-medium text-base-content">{{ t('teacher.dashboard.empty.title') }}</h3>
+      <p class="text-subtle">{{ t('teacher.dashboard.empty.description') }}</p>
     </div>
   </div>
 </template>
@@ -71,10 +71,12 @@ import { useTeacherStore } from '@/stores/teacher'
 import { useCourseStore } from '@/stores/course'
 import { useAuthStore } from '@/stores/auth' // 1. 导入 useAuthStore
 import * as echarts from 'echarts'
+import { resolveEChartsTheme, glassTooltipCss } from '@/charts/echartsTheme'
 import { useI18n } from 'vue-i18n'
 import { loadLocaleMessages } from '@/i18n'
 import { PlusIcon, CheckBadgeIcon, UserGroupIcon, CheckCircleIcon, StarIcon, ClipboardDocumentListIcon } from '@heroicons/vue/24/outline'
 import Button from '@/components/ui/Button.vue'
+import Card from '@/components/ui/Card.vue'
 import StartCard from '@/components/ui/StartCard.vue'
 import GlassSelect from '@/components/ui/filters/GlassSelect.vue'
 import GlassPopoverSelect from '@/components/ui/filters/GlassPopoverSelect.vue'
@@ -140,12 +142,14 @@ const initChart = () => {
   const dist: any[] = (classPerformance.value as any).gradeDistribution || []
   if (!chartRef.value) return
   // 复用已存在的实例，避免重复 init 警告
-  chart = echarts.getInstanceByDom(chartRef.value) || echarts.init(chartRef.value)
+  const theme = resolveEChartsTheme()
+  chart = echarts.getInstanceByDom(chartRef.value) || echarts.init(chartRef.value as HTMLDivElement, theme as any)
   if (!dist.length) {
     chart.clear()
     return
   }
-  const palette = ['#3b82f6', '#06b6d4', '#ec4899', '#f59e0b', '#10b981', '#8b5cf6', '#f43f5e']
+  // 使用统一主题色盘
+  const palette = (resolveEChartsTheme() as any).color || ['#3b82f6', '#06b6d4', '#ec4899', '#f59e0b', '#10b981', '#8b5cf6', '#f43f5e']
   const categories = dist.map(d => d.gradeLevel ?? d.level ?? t('teacher.dashboard.chart.level.unknown'))
   const values = dist.map(d => d.count ?? 0)
   // 动态计算更粗的柱宽（默认近似直方图，仍保留一定间隔）
@@ -162,6 +166,13 @@ const initChart = () => {
   chart.setOption({
     tooltip: {
       trigger: 'item',
+      backgroundColor: 'transparent',
+      borderColor: 'transparent',
+      textStyle: { color: 'var(--color-base-content)' },
+      extraCssText: glassTooltipCss(),
+      appendToBody: false,
+      showDelay: 0,
+      hideDelay: 30,
       formatter: (p: any) => `${p.name}<br/>${t('teacher.dashboard.chart.series.students')}: ${p.value}`
     },
     grid: { left: '4%', right: '2%', bottom: '5%', containLabel: true },
@@ -173,8 +184,16 @@ const initChart = () => {
       data: values,
       barWidth: computedBarWidth,
       barCategoryGap: '8%',
+      // 默认颜色 + 悬停加深
       itemStyle: {
         color: (params: any) => palette[params.dataIndex % palette.length]
+      },
+      emphasis: {
+        focus: 'none',
+        itemStyle: {
+          // 仅降低不透明度表现“变暗”，不改变色相
+          opacity: 0.85
+        }
       }
     }]
   }, { notMerge: true, lazyUpdate: false })

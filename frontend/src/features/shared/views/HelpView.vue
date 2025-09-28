@@ -1,17 +1,16 @@
 <template>
   <div class="min-h-screen relative">
-    <FuturisticBackground class="fixed inset-0 z-0 pointer-events-none" theme="auto" :intensity="0.16" :bits-density="0.8" :sweep-frequency="7" :parallax="true" :enable3D="true" :logo-glow="true" :emphasis="false" :interactions="{ mouseTrail: true, clickRipples: true }" />
     <div class="relative z-10 max-w-6xl mx-auto p-6">
       <!-- 页面标题 -->
       <div class="mb-8">
-        <PageHeader :title="t('shared.help.title') || '帮助中心'" :subtitle="t('shared.help.subtitle') || '在这里找到常见问题的答案，查看使用指南，或联系技术支持获得帮助'" />
+        <page-header :title="t('shared.help.title') || '帮助中心'" :subtitle="t('shared.help.subtitle') || '在这里找到常见问题的答案，查看使用指南，或联系技术支持获得帮助'" />
       </div>
 
       
 
       <!-- 快速入口 -->
       <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
-        <Card
+        <card
           v-for="item in quickAccess"
           :key="item.id"
           padding="lg"
@@ -24,22 +23,22 @@
                  :class="item.iconBg">
               <component :is="item.icon" class="w-6 h-6 text-white" />
             </div>
-            <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-2">{{ item.title }}</h3>
-            <p class="text-sm text-gray-600 dark:text-gray-400">{{ item.description }}</p>
+            <h3 class="text-lg font-semibold text-base-content mb-2">{{ item.title }}</h3>
+            <p class="text-sm text-subtle">{{ item.description }}</p>
           </div>
-        </Card>
+        </card>
       </div>
 
       <!-- 主要内容区域 -->
       <div class="grid grid-cols-1 lg:grid-cols-4 gap-8">
         <!-- 左侧导航 -->
         <div class="lg:col-span-1">
-          <Card padding="lg" class="sticky top-6 glass-thin" v-glass>
+          <card padding="lg" class="sticky top-6 glass-thin" v-glass>
             <template #header>
-              <h2 class="text-lg font-semibold text-gray-900 dark:text-white">{{ t('shared.help.nav') || '导航' }}</h2>
+              <h2 class="text-lg font-semibold text-base-content">{{ t('shared.help.nav') || '导航' }}</h2>
             </template>
             <nav class="space-y-2">
-              <button
+              <Button
                 v-for="section in sections"
                 :key="section.id"
                 @click="activeSection = section.id"
@@ -49,25 +48,25 @@
                   : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700'"
               >
                 {{ section.title }}
-              </button>
+              </Button>
               <router-link
                 to="/docs"
-                class="block w-full text-left px-3 py-2 rounded-lg text-sm transition-colors text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700"
+                class="block w-full text-left px-3 py-2 rounded-lg text-sm transition-colors text-subtle hover:bg-gray-100 dark:hover:bg-gray-700"
               >
                 {{ t('shared.help.sections.docs') || '文档' }}
               </router-link>
             </nav>
-          </Card>
+          </card>
         </div>
 
         <!-- 右侧内容 -->
         <div class="lg:col-span-3 space-y-8">
           <!-- 文章列表 -->
           <section v-if="activeSection === 'articles'" id="articles">
-            <Card padding="lg" class="glass" v-glass>
+            <card padding="lg" class="glass" v-glass>
               <template #header>
                 <div class="flex items-center justify-between gap-3 flex-wrap">
-                  <h2 class="text-xl font-semibold text-gray-900 dark:text-white">{{ t('shared.help.sections.articles') || '帮助文章' }}</h2>
+                  <h2 class="text-xl font-semibold text-base-content">{{ t('shared.help.sections.articles') || '帮助文章' }}</h2>
                   <div class="flex items-center gap-2">
                     <Button size="sm" :variant="sortMode==='latest' ? 'primary' : 'outline'" @click="changeSort('latest')">{{ t('shared.common.latest') || '最新' }}</Button>
                     <Button size="sm" :variant="sortMode==='hot' ? 'primary' : 'outline'" @click="changeSort('hot')">{{ t('shared.common.hot') || '最热' }}</Button>
@@ -95,28 +94,28 @@
 
               <!-- 文章卡片列表 -->
               <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <Card v-for="a in helpStore.articles" :key="a.id" padding="lg" hoverable class="cursor-pointer" @click="openArticle(a.slug)">
-                  <h3 class="font-medium text-gray-900 dark:text-white mb-2">{{ a.title }}</h3>
-                  <p class="text-sm text-gray-600 dark:text-gray-400 line-clamp-3" v-if="a.contentMd">{{ a.contentMd.slice(0, 120) }}...</p>
-                  <div class="mt-3 text-xs text-gray-500 flex items-center justify-between">
+                <card v-for="a in helpStore.articles" :key="a.id" padding="lg" hoverable class="cursor-pointer" @click="openArticle(a.slug)">
+                  <h3 class="font-medium text-base-content mb-2">{{ a.title }}</h3>
+                  <p class="text-sm text-subtle line-clamp-3" v-if="a.contentMd">{{ a.contentMd.slice(0, 120) }}...</p>
+                  <div class="mt-3 text-xs text-subtle flex items-center justify-between">
                     <span>{{ (a.views || 0) }} {{ t('shared.common.views') || '浏览' }}</span>
                     <span>{{ (a.upVotes || 0) - (a.downVotes || 0) }} {{ t('shared.common.score') || '评分' }}</span>
                   </div>
-                </Card>
+                </card>
               </div>
 
-              <div v-if="!helpStore.loading && helpStore.articles.length===0" class="text-sm text-gray-500 py-6 text-center">
+              <div v-if="!helpStore.loading && helpStore.articles.length===0" class="text-sm text-subtle py-6 text-center">
                 {{ t('shared.common.empty') || '暂无内容' }}
               </div>
-            </Card>
+            </card>
           </section>
 
           <!-- 文章详情 -->
           <section v-if="activeSection === 'articleDetail' && helpStore.article" id="articleDetail">
-            <Card padding="lg" class="glass" v-glass>
+            <card padding="lg" class="glass" v-glass>
               <template #header>
                 <div class="flex items-center gap-3 flex-wrap">
-                  <h2 class="text-xl font-semibold text-gray-900 dark:text-white">{{ helpStore.article?.title }}</h2>
+                  <h2 class="text-xl font-semibold text-base-content">{{ helpStore.article?.title }}</h2>
                   <div class="inline-flex items-center gap-2 flex-nowrap whitespace-nowrap">
                     <Button size="sm" variant="outline" @click="activeSection='articles'">{{ t('shared.common.back') || '返回' }}</Button>
                     <Button size="sm" :loading="isVoting" @click="voteArticle(true)">{{ t('shared.help.actions.useful') || '有帮助' }}</Button>
@@ -126,13 +125,13 @@
               </template>
 
               <div class="prose dark:prose-invert max-w-none" v-html="helpStore.article?.contentHtml || ''"></div>
-            </Card>
+            </card>
           </section>
           <!-- 常见问题 -->
           <section v-if="activeSection === 'faq'" id="faq">
-            <Card padding="lg" class="glass" v-glass>
+            <card padding="lg" class="glass" v-glass>
               <template #header>
-                <h2 class="text-xl font-semibold text-gray-900 dark:text-white">{{ t('shared.help.sections.faq') || '常见问题' }}</h2>
+                <h2 class="text-xl font-semibold text-base-content">{{ t('shared.help.sections.faq') || '常见问题' }}</h2>
               </template>
               
               <div class="space-y-6">
@@ -141,26 +140,26 @@
                   :key="category.id"
                   class="border-b border-gray-200 dark:border-gray-600 last:border-b-0 pb-6 last:pb-0"
                 >
-                  <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-4">{{ category.name }}</h3>
+                  <h3 class="text-lg font-medium text-base-content mb-4">{{ category.name }}</h3>
                   <div class="space-y-4">
                     <div
                       v-for="faq in category.faqs"
                       :key="faq.id"
                       class="border border-gray-200 dark:border-gray-600 rounded-lg"
                     >
-                      <button
+                      <Button
                         @click="toggleFaq(faq.id)"
                         class="w-full px-4 py-3 text-left flex justify-between items-center hover:bg-gray-50 dark:hover:bg-gray-700 rounded-lg"
                       >
-                        <span class="font-medium text-gray-900 dark:text-white">{{ faq.question }}</span>
+                        <span class="font-medium text-base-content">{{ faq.question }}</span>
                         <chevron-down-icon
                           class="w-5 h-5 text-gray-500 transform transition-transform"
                           :class="{ 'rotate-180': expandedFaqs.includes(faq.id) }"
                         />
-                      </button>
+                      </Button>
                       <div
                         v-show="expandedFaqs.includes(faq.id)"
-                        class="px-4 pb-4 text-gray-600 dark:text-gray-400"
+                        class="px-4 pb-4 text-subtle"
                       >
                         <div v-html="faq.answer"></div>
                       </div>
@@ -168,19 +167,19 @@
                   </div>
                 </div>
               </div>
-            </Card>
+            </card>
           </section>
 
           <!-- 使用指南 -->
           <section v-if="activeSection === 'guide'" id="guide">
-            <Card padding="lg" class="glass" v-glass>
+            <card padding="lg" class="glass" v-glass>
               <template #header>
-                <h2 class="text-xl font-semibold text-gray-900 dark:text-white">{{ t('shared.help.sections.guide') || '使用指南' }}</h2>
+                <h2 class="text-xl font-semibold text-base-content">{{ t('shared.help.sections.guide') || '使用指南' }}</h2>
               </template>
               
               <div class="space-y-8">
                 <div v-for="guide in userGuides" :key="guide.id">
-                  <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-4 flex items-center">
+                  <h3 class="text-lg font-medium text-base-content mb-4 flex items-center">
                     <component :is="guide.icon" class="w-5 h-5 mr-2 text-primary-600" />
                     {{ guide.title }}
                   </h3>
@@ -194,9 +193,9 @@
                         <span class="w-6 h-6 bg-primary-600 text-white rounded-full flex items-center justify-center text-sm font-medium mr-3">
                           {{ step.step }}
                         </span>
-                        <h4 class="font-medium text-gray-900 dark:text-white">{{ step.title }}</h4>
+                        <h4 class="font-medium text-base-content">{{ step.title }}</h4>
                       </div>
-                      <p class="text-sm text-gray-600 dark:text-gray-400">{{ step.description }}</p>
+                      <p class="text-sm text-subtle">{{ step.description }}</p>
                       <Button
                         v-if="step.action"
                         variant="outline"
@@ -210,14 +209,14 @@
                   </div>
                 </div>
               </div>
-            </Card>
+            </card>
           </section>
 
           <!-- 视频教程 -->
           <section v-if="activeSection === 'tutorials'" id="tutorials">
-            <Card padding="lg" class="glass" v-glass>
+            <card padding="lg" class="glass" v-glass>
               <template #header>
-                <h2 class="text-xl font-semibold text-gray-900 dark:text-white">{{ t('shared.help.sections.tutorials') || '视频教程' }}</h2>
+                <h2 class="text-xl font-semibold text-base-content">{{ t('shared.help.sections.tutorials') || '视频教程' }}</h2>
               </template>
               
               <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -230,10 +229,10 @@
                     <play-icon class="w-12 h-12 text-gray-400" />
                   </div>
                   <div class="p-4">
-                    <h3 class="font-medium text-gray-900 dark:text-white mb-2">{{ tutorial.title }}</h3>
-                    <p class="text-sm text-gray-600 dark:text-gray-400 mb-3">{{ tutorial.description }}</p>
+                    <h3 class="font-medium text-base-content mb-2">{{ tutorial.title }}</h3>
+                    <p class="text-sm text-subtle mb-3">{{ tutorial.description }}</p>
                     <div class="flex items-center justify-between">
-                      <span class="text-xs text-gray-500">{{ tutorial.duration }}</span>
+                      <span class="text-xs text-subtle">{{ tutorial.duration }}</span>
                       <Button variant="outline" size="sm" @click="playTutorial(tutorial.id)">
                         {{ t('shared.help.actions.watch') || '观看' }}
                       </Button>
@@ -241,16 +240,16 @@
                   </div>
                 </div>
               </div>
-            </Card>
+            </card>
           </section>
 
           <!-- 技术支持 -->
           <section v-if="activeSection === 'support'" id="support">
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
               <!-- 联系方式 -->
-              <Card padding="lg" class="glass" v-glass>
+              <card padding="lg" class="glass" v-glass>
                 <template #header>
-                  <h2 class="text-xl font-semibold text-gray-900 dark:text-white">{{ t('shared.help.sections.support') || '联系技术支持' }}</h2>
+                <h2 class="text-xl font-semibold text-base-content">{{ t('shared.help.sections.support') || '联系技术支持' }}</h2>
                 </template>
                 
                 <div class="space-y-6">
@@ -263,28 +262,28 @@
                         </div>
                       </div>
                       <div class="flex-1">
-                        <h3 class="font-medium text-gray-900 dark:text-white">{{ contact.title }}</h3>
-                        <p class="text-sm text-gray-600 dark:text-gray-400 mb-2">{{ contact.description }}</p>
+                        <h3 class="font-medium text-base-content">{{ contact.title }}</h3>
+                        <p class="text-sm text-subtle mb-2">{{ contact.description }}</p>
                         <div class="text-sm">
-                          <p class="text-gray-900 dark:text-white font-medium">{{ contact.value }}</p>
-                          <p class="text-gray-500">{{ contact.time }}</p>
+                          <p class="text-base-content font-medium">{{ contact.value }}</p>
+                          <p class="text-subtle">{{ contact.time }}</p>
                         </div>
                       </div>
                     </div>
                   </div>
                 </div>
-              </Card>
+              </card>
 
               <!-- 提交工单 -->
-              <Card padding="lg" class="glass" v-glass>
+              <card padding="lg" class="glass" v-glass>
                 <template #header>
-                  <h2 class="text-xl font-semibold text-gray-900 dark:text-white">{{ t('shared.help.sections.ticket') || '提交技术工单' }}</h2>
+                <h2 class="text-xl font-semibold text-base-content">{{ t('shared.help.sections.ticket') || '提交技术工单' }}</h2>
                 </template>
                 
                 <form @submit.prevent="submitTicket" class="space-y-4">
                   <div>
                     <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{{ t('shared.help.form.type') || '问题类型' }}</label>
-                    <GlassPopoverSelect
+                    <glass-popover-select
                       v-model="ticketForm.type as any"
                       :options="[
                         { label: t('shared.help.form.selectType') || '选择问题类型', value: '', disabled: true },
@@ -321,7 +320,7 @@
                   
                   <div>
                     <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{{ t('shared.help.form.priority') || '优先级' }}</label>
-                    <GlassPopoverSelect
+                    <glass-popover-select
                       v-model="ticketForm.priority as any"
                       :options="[
                         { label: t('shared.help.form.priLow') || '低', value: 'low' },
@@ -342,24 +341,24 @@
                     {{ t('shared.help.actions.submitTicket') || '提交工单' }}
                   </Button>
                 </form>
-              </Card>
+              </card>
               
               <!-- 我的工单（仅登录后显示） -->
-              <Card v-if="authStore.isAuthenticated" padding="lg" class="glass md:col-span-2" v-glass>
+              <card v-if="authStore.isAuthenticated" padding="lg" class="glass md:col-span-2" v-glass>
                 <template #header>
                   <div class="flex items-center justify-between">
-                    <h2 class="text-xl font-semibold text-gray-900 dark:text-white">{{ t('shared.help.sections.myTickets') || '我的工单' }}</h2>
+                    <h2 class="text-xl font-semibold text-base-content">{{ t('shared.help.sections.myTickets') || '我的工单' }}</h2>
                     <Button size="sm" variant="outline" @click="helpStore.fetchMyTickets()">{{ t('shared.common.latest') || '最新' }}</Button>
                   </div>
                 </template>
-                <div v-if="helpStore.tickets.length === 0" class="text-sm text-gray-500">
+                <div v-if="helpStore.tickets.length === 0" class="text-sm text-subtle">
                   {{ t('shared.common.empty') || '暂无内容' }}
                 </div>
                 <div v-else class="divide-y divide-gray-200/60 dark:divide-gray-700/60">
                   <div v-for="ticket in helpStore.tickets" :key="ticket.id" class="py-3 flex items-start justify-between">
                     <div class="pr-3 w-full">
-                      <div class="font-medium text-gray-900 dark:text-white">{{ ticket.title }}</div>
-                      <div class="text-xs text-gray-500 mt-1">#{{ ticket.id }} · {{ ticket.createdAt }}</div>
+                      <div class="font-medium text-base-content">{{ ticket.title }}</div>
+                      <div class="text-xs text-subtle mt-1">#{{ ticket.id }} · {{ ticket.createdAt }}</div>
                     </div>
                     <div class="inline-flex items-center gap-2 flex-nowrap whitespace-nowrap">
                       <Button size="sm" variant="outline" class="whitespace-nowrap" @click="editTicket(ticket)">{{ t('shared.common.edit') || '编辑' }}</Button>
@@ -367,13 +366,13 @@
                     </div>
                   </div>
                 </div>
-              </Card>
+              </card>
             </div>
           </section>
 
           <!-- 系统状态 -->
           <section v-if="activeSection === 'status'" id="status">
-            <Card padding="lg" class="glass" v-glass>
+            <card padding="lg" class="glass" v-glass>
               <template #header>
                 <h2 class="text-xl font-semibold text-gray-900 dark:text-white">{{ t('shared.help.sections.status') || '系统状态' }}</h2>
               </template>
@@ -424,12 +423,12 @@
                   </div>
                 </div>
               </div>
-            </Card>
+            </card>
           </section>
 
           <!-- 反馈 -->
           <section v-if="activeSection === 'feedback'" id="feedback">
-            <Card padding="lg" class="glass" v-glass>
+            <card padding="lg" class="glass" v-glass>
               <template #header>
                 <h2 class="text-xl font-semibold text-gray-900 dark:text-white">{{ t('shared.help.sections.feedback') || '意见反馈' }}</h2>
               </template>
@@ -497,7 +496,7 @@
                   </Button>
                 </div>
               </form>
-            </Card>
+            </card>
           </section>
         </div>
       </div>
@@ -511,7 +510,7 @@ import { useUIStore } from '@/stores/ui'
 import Card from '@/components/ui/Card.vue'
 import Button from '@/components/ui/Button.vue'
 import PageHeader from '@/components/ui/PageHeader.vue'
-import FuturisticBackground from '@/components/ui/FuturisticBackground.vue'
+// 动态背景已移除
 import GlassDirective from '@/directives/glass'
 import { useI18n } from 'vue-i18n'
 const { t } = useI18n()

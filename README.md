@@ -5,12 +5,13 @@
 ### 项目状态
 - 教师端：已完成
 - 学生端：已完成本次迭代（课程密钥、课程/节次、进度与笔记）
+- UI 主题：已完成 DaisyUI 主题改造与彩色玻璃（v0.3.0）
 
 ---
 
 ## 技术栈（以代码为准）
 - 后端：Java 17、Spring Boot 3.5.4、MyBatis、PageHelper、Spring Security（JWT）、Redis、SpringDoc OpenAPI
-- 前端：Vue 3.5.18、TypeScript、Vite 5、Pinia、Tailwind CSS、Axios、ECharts
+- 前端：Vue 3.5.18、TypeScript、Vite 5、Pinia、Tailwind CSS、DaisyUI、Axios、ECharts
 - 数据库：MySQL 8.x
 
 ---
@@ -74,6 +75,12 @@ npm run dev
   - `.env.development`：`VITE_API_BASE_URL=http://localhost:8080`
 - 说明：`src/api/config.ts` 会自动在末尾追加 `/api`；若未设置，则默认走本地代理 `/api`。
 
+### UI 主题（DaisyUI + Glass）
+- 浅色：`retro`（米黄色 `base-100` 静态底色），深色：`synthwave`。
+- 右上角主题切换：新版（retro/synthwave）vs 旧版（动态背景）。
+- 彩色玻璃工具类：`glass-tint-{primary|secondary|accent|info|success|warning|error}`（仅新版主题生效）。
+- 详见文档：`docs/ui-theming.md`。
+
 ---
 
 ## 生产部署（示例）
@@ -120,7 +127,24 @@ server {
 ---
 
 ## 更新日志（学生端改造）
+### 2025-09-25 UI 主题与彩色玻璃（v0.3.0）
+- 集成 DaisyUI 并采用 `retro/synthwave` 主题；
+- 新版主题使用 `base-100` 米黄色纯色底（移除动态背景组件）；
+- 核心 UI 组件全部改为主题语义色；
+- 页面按区块启用彩色玻璃 tint（仅新版主题）；
+- `docs/ui-theming.md` 新增主题与开发指南；
+- 兼容旧版主题（动态背景）。
 ### 本次迭代（我的课程/课程详情/节次详情 + 入课密钥与播放控制）
+- 2025-09-24 UI 与交互补充（学生端）
+  - 节次详情：
+    - 左侧目录树圆角与玻璃风统一（rounded-xl + glass-ultraThin），选中态描边；章行高度与左内边距优化。
+    - 右侧“本节说明/视频/资料/我的作业/学习笔记”标题间距统一（mb-4）。
+    - 进度：合成“视频观看+资料查看”，仅增不减上报；首次无内容即持久化100%；课程维度统计按 progress≥100。
+  - 课程详情：
+    - 小节卡片统一圆角玻璃风；每节根据进度展示“已完成/未完成”Badge；顶部“已完成”计数基于进度。
+    - 面包屑统一为“我的课程 > 课程名称”。
+  - 其它：favicon 404 修复（新增 svg + data:ico 兜底）；i18n 增补 `common.status.completed/incomplete`；若干细节间距与对齐。
+
 
 - 教师端
   - 入课密钥：在“学生管理”新增“设置入课密钥”弹窗；支持开启/关闭是否需要密钥，并设置新密钥（仅保存哈希）

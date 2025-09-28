@@ -47,19 +47,19 @@
         >
           <div class="p-3 sm:p-4 flex items-start">
               <div class="flex-shrink-0">
-                <CheckCircleIcon 
+                <check-circle-icon 
                   v-if="notification.type === 'success'" 
                   class="h-6 w-6 text-green-400" 
                 />
-                <ExclamationTriangleIcon 
+                <exclamation-triangle-icon 
                   v-else-if="notification.type === 'warning'" 
                   class="h-6 w-6 text-yellow-400" 
                 />
-                <XCircleIcon 
+                <x-circle-icon 
                   v-else-if="notification.type === 'error'" 
                   class="h-6 w-6 text-red-400" 
                 />
-                <InformationCircleIcon 
+                <information-circle-icon 
                   v-else 
                   class="h-6 w-6 text-blue-400" 
                 />
@@ -73,7 +73,7 @@
                 </p>
               </div>
               <div class="ml-3 flex-shrink-0 flex">
-                <Button size="xs" variant="glass" icon="close" @click="uiStore.removeNotification(notification.id)" />
+                <button size="xs" variant="glass" icon="close" @click="uiStore.removeNotification(notification.id)" />
               </div>
           </div>
         </div>
@@ -83,7 +83,7 @@
     <!-- 全局错误边界弹窗 -->
     <div
       v-if="showErrorModal"
-      class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
+      class="fixed inset-0 bg-transparent flex items-center justify-center z-50 p-4"
       @click.self="showErrorModal = false"
     >
       <div class="modal glass-thick max-w-md w-full p-6" v-glass="{ strength: 'thick' }">
@@ -95,8 +95,8 @@
           {{ t('app.error.description') }}
         </p>
         <div class="flex space-x-3">
-          <Button class="flex-1" variant="primary" icon="confirm" @click="reloadPage">{{ t('app.error.button.reload') }}</Button>
-          <Button class="flex-1" variant="secondary" icon="close" @click="showErrorModal = false">{{ t('app.error.button.close') }}</Button>
+          <button class="flex-1" variant="primary" icon="confirm" @click="reloadPage">{{ t('app.error.button.reload') }}</button>
+          <button class="flex-1" variant="secondary" icon="close" @click="showErrorModal = false">{{ t('app.error.button.close') }}</button>
         </div>
       </div>
     </div>
@@ -122,6 +122,16 @@
     >
       <p class="text-xs font-medium text-blue-800 dark:text-blue-200">{{ t('app.devMode') }}</p>
     </div>
+    
+    <!-- 全局挂载聊天抽屉（仅登录后显示） -->
+    <chat-drawer
+      v-if="authStore.isAuthenticated"
+      :open="chat.isOpen"
+      :peer-id="chat.peerId as any"
+      :peer-name="chat.peerName as any"
+      :course-id="chat.courseId as any"
+      @close="chat.closeChat()"
+    />
   </div>
 </template>
 
@@ -130,9 +140,11 @@ import { ref, onMounted, onUnmounted, nextTick } from 'vue'
 import { useRouter } from 'vue-router'
 import { useUIStore } from '@/stores/ui'
 import { useAuthStore } from '@/stores/auth'
+import { useChatStore } from '@/stores/chat'
 import { storeToRefs } from 'pinia'
 import { useI18n } from 'vue-i18n'
 import Button from '@/components/ui/Button.vue'
+import ChatDrawer from '@/features/teacher/components/ChatDrawer.vue'
 import {
   CheckCircleIcon,
   ExclamationTriangleIcon,
@@ -146,6 +158,7 @@ import {
 const router = useRouter()
 const uiStore = useUIStore()
 const authStore = useAuthStore()
+const chat = useChatStore()
 const { notifications } = storeToRefs(uiStore)
 
 // 响应式状态

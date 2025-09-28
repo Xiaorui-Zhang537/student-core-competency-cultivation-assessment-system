@@ -197,16 +197,17 @@ public interface NotificationService {
     /**
      * 获取与某人的会话记录
      */
-    PageResult<Notification> getConversation(Long userId, Long peerId, Integer page, Integer size);
+    PageResult<Notification> getConversation(Long userId, Long peerId, Integer page, Integer size, Long courseId);
 
     /**
      * 将与某人的会话全部标记为已读
      */
-    int markConversationAsRead(Long userId, Long peerId);
+    int markConversationAsRead(Long userId, Long peerId, Long courseId);
 
     /**
      * 发送聊天消息（面向双方：教师或学生）。
      * 若为课程上下文，需校验发送者与接收者皆为该课程的参与者（教师或学生）。
      */
-    Notification sendMessage(Long senderId, Long recipientId, String content, String relatedType, Long relatedId);
+    Notification sendMessage(Long senderId, Long recipientId, String content, String relatedType, Long relatedId,
+                             java.util.List<Long> attachmentFileIds);
 } 

@@ -53,6 +53,12 @@
 
 ## 变更记录（Changelog）
 
+### 2025-09-25 UI 主题与彩色玻璃（v0.3.0）
+- 采用 DaisyUI 主题（retro/synthwave），Pinia 绑定 `data-theme` 与暗黑。
+- 新版主题下使用米黄色 `base-100` 静态底色；旧版保留动态背景。
+- 全量组件/页面改造为主题语义色；新增彩色玻璃 tint 工具类并按页面应用。
+- 新文档：`docs/ui-theming.md`（主题指南、tint 使用规范）。
+
 ### 教师端 - 学生详情画像/活跃度/预警/建议与能力雷达（2025-09-19）
 - 新增端点：
   - `GET /api/teachers/students/{studentId}` 返回用户完整画像与汇总指标

@@ -3,23 +3,24 @@
     <svg :width="size" :height="size" :viewBox="`0 0 ${box} ${box}`" class="shrink-0">
       <circle
         :cx="center" :cy="center" :r="radius"
-        class="text-gray-200/70"
         :stroke-width="stroke"
         fill="none"
         stroke="currentColor"
+        :style="{ color: 'color-mix(in oklab, var(--color-base-content) 18%, transparent)' }"
       />
       <circle
         :cx="center" :cy="center" :r="radius"
         :stroke-dasharray="circumference"
         :stroke-dashoffset="dashOffset"
-        class="text-primary-500 transition-[stroke-dashoffset] duration-500 ease-out"
+        class="transition-[stroke-dashoffset] duration-500 ease-out"
         :stroke-width="stroke"
         fill="none"
         stroke-linecap="round"
         stroke="currentColor"
+        :style="{ color: 'color-mix(in oklab, var(--color-primary) 70%, transparent)' }"
         :transform="`rotate(-90 ${center} ${center})`"
       />
-      <g v-if="showCheck" :transform="`translate(${center - 5} ${center - 4})`" fill="currentColor" class="text-green-500">
+      <g v-if="showCheck" :transform="`translate(${center - 5} ${center - 4})`" fill="currentColor" :style="{ color: 'color-mix(in oklab, var(--color-success) 80%, transparent)' }">
         <path d="M1.5 4.5 L3.5 6.5 L7.5 2.5" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round" />
       </g>
       <text v-else-if="showLabel" :x="center" :y="center + 3" text-anchor="middle" class="fill-current text-[10px] select-none" :class="labelClass">

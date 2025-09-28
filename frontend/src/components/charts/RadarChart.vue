@@ -8,6 +8,7 @@
 <script setup lang="ts">
 import { onMounted, onUnmounted, ref, watch, nextTick } from 'vue'
 import * as echarts from 'echarts'
+import { resolveEChartsTheme, glassTooltipCss, resolveThemePalette } from '@/charts/echartsTheme'
 
 interface Indicator { name: string; max: number }
 interface SeriesItem { name: string; values: number[]; color?: string }
@@ -19,35 +20,51 @@ interface Props {
   width?: string
   height?: string
   theme?: 'light' | 'dark' | 'auto'
+  // 是否将 tooltip 节点挂载到 body（在某些含有强 backdrop-filter 的容器中需关闭以避免合成层冲突）
+  appendTooltipToBody?: boolean
+  // 是否显示图例
+  showLegend?: boolean
 }
 
 const props = withDefaults(defineProps<Props>(), {
   width: '100%',
   height: '380px',
-  theme: 'auto'
+  theme: 'auto',
+  appendTooltipToBody: true,
+  showLegend: true
 })
 
 const chartRef = ref<HTMLElement>()
 let inst: echarts.ECharts | null = null
 let darkObserver: MutationObserver | null = null
 let reRenderScheduled = false
+let lastIsDark: boolean | null = null
 
 const buildOption = () => {
   const theme = props.theme === 'auto'
     ? (document.documentElement.classList.contains('dark') ? 'dark' : 'light')
     : props.theme
-  const palette = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444']
   // Use transparent background to preserve glass effect behind the chart
   const bg = 'transparent'
   return {
     backgroundColor: bg,
     title: props.title ? { text: props.title, left: 'center', textStyle: { color: theme === 'dark' ? '#e5e7eb' : '#111827' } } : undefined,
-    legend: { bottom: 0, left: 'center', textStyle: { color: theme === 'dark' ? '#e5e7eb' : '#374151' } },
+    legend: props.showLegend ? { bottom: 0, left: 'center', textStyle: { color: theme === 'dark' ? '#e5e7eb' : '#374151' } } : { show: false },
     tooltip: {
       trigger: 'item',
-      backgroundColor: theme === 'dark' ? '#374151' : '#ffffff',
-      borderColor: theme === 'dark' ? '#4b5563' : '#e5e7eb',
-      textStyle: { color: theme === 'dark' ? '#ffffff' : '#111827' }
+      backgroundColor: 'transparent',
+      borderColor: 'transparent',
+      textStyle: { color: 'var(--color-base-content)' },
+      extraCssText: glassTooltipCss(),
+      className: 'echarts-glass-tooltip',
+      renderMode: 'html',
+      enterable: false,
+      confine: true,
+      alwaysShowContent: false,
+      appendToBody: !!props.appendTooltipToBody,
+      transitionDuration: 0,
+      showDelay: 10,
+      hideDelay: 60
     },
     radar: {
       indicator: props.indicators,
@@ -56,22 +73,32 @@ const buildOption = () => {
       splitLine: { lineStyle: { color: theme === 'dark' ? ['#4b5563'] : ['#cbd5e1'] } },
       // Make split areas transparent so chart does not cover glass
       splitArea: { areaStyle: { color: 'transparent' } },
-      axisLine: { lineStyle: { color: theme === 'dark' ? '#6b7280' : '#d1d5db' } }
+      axisLine: { lineStyle: { color: theme === 'dark' ? '#6b7280' : '#d1d5db' } },
+      animation: false
     },
     series: [
       {
         type: 'radar',
-        // 增强浅色模式折线可读性
-        lineStyle: { width: 3, opacity: 1 },
-        symbol: 'circle',
-        symbolSize: 3,
-        data: props.series.map((s, i) => ({
-          value: s.values,
-          name: s.name,
-          itemStyle: { color: s.color || palette[i % palette.length] },
-          lineStyle: { color: s.color || palette[i % palette.length], width: 3, opacity: 1 },
-          areaStyle: { opacity: theme === 'dark' ? 0.25 : 0.22 }
-        }))
+        // 增强浅色模式折线可读性（颜色交给统一主题；仅在显式传入 s.color 时覆盖）
+        symbol: 'none',
+        symbolSize: 0,
+        emphasis: { focus: 'none', scale: false },
+        data: props.series.map((s, idx) => {
+          const palette = resolveThemePalette()
+          const color = s.color || palette[idx % palette.length]
+          const base: any = {
+            value: s.values,
+            name: s.name,
+            lineStyle: { width: 2.5, opacity: 1, color },
+            areaStyle: { opacity: theme === 'dark' ? 0.25 : 0.22, color }
+          }
+          base.itemStyle = { color }
+          base.emphasis = {
+            lineStyle: { width: 3.2, color },
+            areaStyle: { opacity: theme === 'dark' ? 0.35 : 0.32, color }
+          }
+          return base
+        })
       }
     ]
   }
@@ -89,18 +116,21 @@ const waitForContainer = async (maxTries = 10): Promise<boolean> => {
 const render = async () => {
   const ok = await waitForContainer()
   if (!ok || !chartRef.value) return
-  // 确保无论内部引用或 DOM 上缓存的实例都被正确释放
-  try { inst?.dispose() } catch {}
-  const existing = echarts.getInstanceByDom(chartRef.value)
-  if (existing) {
-    try { existing.dispose() } catch {}
-  }
   await nextTick()
-  const theme = props.theme === 'auto'
-    ? (document.documentElement.classList.contains('dark') ? 'dark' : 'light')
-    : props.theme
-  inst = echarts.init(chartRef.value as HTMLDivElement, theme)
-  inst.setOption(buildOption())
+  const theme = resolveEChartsTheme()
+  if (!inst) {
+    inst = echarts.init(chartRef.value as HTMLDivElement, theme as any)
+  } else {
+    try { inst.clear() } catch {}
+  }
+  inst.setOption(buildOption(), true)
+  // 鼠标离开画布时确保隐藏 tooltip，防止遗留触发布局抖动
+  try { (inst as any).off && (inst as any).off('globalout') } catch {}
+  try {
+    inst.on('globalout', () => {
+      try { inst?.dispatchAction({ type: 'hideTip' } as any) } catch {}
+    })
+  } catch {}
 }
 
 const scheduleRender = () => {
@@ -109,7 +139,7 @@ const scheduleRender = () => {
   window.setTimeout(() => {
     reRenderScheduled = false
     render()
-  }, 60)
+  }, 150)
 }
 
   let resizeHandler: (() => void) | null = null
@@ -118,14 +148,14 @@ const scheduleRender = () => {
     render()
     resizeHandler = () => inst?.resize()
     window.addEventListener('resize', resizeHandler)
-    // 监听根元素的 class 变化以捕获深浅色切换
+  // 监听根元素的 class 变化以捕获深浅色切换
     if (!darkObserver) {
-      darkObserver = new MutationObserver(() => {
-        if (props.theme === 'auto') {
-          // 在主题切换动画期间可能会触发多次 class 变更，这里合并重渲染
-          scheduleRender()
-        }
-      })
+    darkObserver = new MutationObserver(() => {
+      if (props.theme !== 'auto') return
+      const isDark = document.documentElement.classList.contains('dark')
+      if (lastIsDark === null) { lastIsDark = isDark; return }
+      if (isDark !== lastIsDark) { lastIsDark = isDark; scheduleRender() }
+    })
       darkObserver.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] })
     }
   })
@@ -163,5 +193,7 @@ defineExpose({
 <style scoped lang="postcss">
 .radar-chart-container { position: relative; }
 .radar-chart { min-height: 260px; }
+/* 确保 tooltip 元素不占据布局空间 */
+:deep(.echarts-glass-tooltip) { position: fixed; left: 0; top: 0; }
 </style>
 

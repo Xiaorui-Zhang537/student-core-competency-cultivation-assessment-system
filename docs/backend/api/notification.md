@@ -162,19 +162,23 @@ POST /api/notifications/course/21001?type=notice&customMessage=明日调课
 Authorization: Bearer <teacher_token>
 ```
 
-## 4. 会话
-- `GET /api/notifications/conversation?peerId=...`：与某人的会话
-- `POST /api/notifications/conversation/read?peerId=...`：标记会话已读
+## 4. 会话（已拆分到 Chat 域）
+- 说明：聊天相关端点已迁移至 `/api/chat/*`，如下：
+  - `GET /api/chat/messages?peerId=...`：按对端获取会话消息
+  - `POST /api/chat/messages`：发送聊天消息
+  - `PUT /api/chat/conversations/peer/{peerId}/read`：按对端标记会话已读
+  - `GET /api/chat/conversations/my`：我的最近会话
+
+历史端点（将逐步下线，仅做兼容）：
+- `GET /api/notifications/conversation?peerId=...`
+- `POST /api/notifications/conversation/read?peerId=...`
 
 请求：
 ```
 GET /api/notifications/conversation?peerId=20002&page=1&size=20
 Authorization: Bearer <token>
 ```
-响应：
-```json
-{ "code":200, "data": { "items": [{"id":1,"content":"hi"}], "total": 1, "page":1, "size":20 } }
-```
+请改用 `Chat` 文档中对应端点。
 
 ## 5. 实时通知（SSE）
 - `GET /api/notifications/stream`：SSE 订阅（支持查询参数 `token` 或 `Authorization: Bearer` 头）

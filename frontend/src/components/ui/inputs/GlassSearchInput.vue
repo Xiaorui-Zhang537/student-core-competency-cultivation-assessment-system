@@ -9,13 +9,13 @@
       :disabled="disabled"
       :value="modelValue as any"
       @input="onInput"
-      v-glass="{ strength: 'regular', interactive: true }"
-      :class="size==='sm' ? 'ui-pill--sm' : 'ui-pill--md'"
+      :class="[size==='sm' ? 'ui-pill--sm' : 'ui-pill--md', tintClass]"
     />
   </div>
 </template>
 
 <script setup lang="ts">
+import { computed } from 'vue'
 defineOptions({ inheritAttrs: false })
 
 interface Props {
@@ -24,6 +24,7 @@ interface Props {
   id?: string
   disabled?: boolean
   size?: 'sm' | 'md'
+  tint?: 'primary' | 'secondary' | 'accent' | 'success' | 'warning' | 'danger' | 'info' | null
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -31,10 +32,13 @@ const props = withDefaults(defineProps<Props>(), {
   placeholder: '',
   id: undefined,
   disabled: false,
-  size: 'md'
+  size: 'md',
+  tint: null
 })
 
 const emit = defineEmits<{ (e: 'update:modelValue', v: string | null): void }>()
+
+const tintClass = computed(() => props.tint ? `glass-tint-${props.tint}` : '')
 
 function onInput(e: Event) {
   const target = e.target as HTMLInputElement

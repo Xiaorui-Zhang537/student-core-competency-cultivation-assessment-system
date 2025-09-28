@@ -23,7 +23,7 @@
 -   **构建工具**: [Vite](https://vitejs.dev/)
 -   **状态管理**: [Pinia](https://pinia.vuejs.org/)
 -   **路由**: [Vue Router 4](https://router.vuejs.org/)
--   **UI 框架**: [Tailwind CSS](https://tailwindcss.com/)
+-   **UI 样式**: [Tailwind CSS](https://tailwindcss.com/) + [DaisyUI](https://daisyui.com/)
 -   **HTTP 客户端**: [Axios](https://axios-http.com/)
 -   **图表库**: [ECharts](https://echarts.apache.org/)
 -   **代码规范**: [ESLint](https://eslint.org/) + [Prettier](https://prettier.io/)
@@ -144,7 +144,15 @@ Shared（通用）
 
 ## 🧭 项目状态
 - 教师端：已完成
-- 学生端：开发中（Beta）
+- 学生端：开发中（Beta）；主题改造完成（v0.3.0）。
+
+---
+
+## 🎨 主题与彩色玻璃
+- 浅色：`retro`（米黄色 `base-100` 静态底色）；深色：`dracula`。
+- 右上角主题切换：新版（retro/dracula）与旧版（动态背景）。
+- 彩色玻璃 tint：`glass-tint-{primary|secondary|accent|info|success|warning|error}`（仅新版主题生效）。
+- 详情见 `docs/ui-theming.md`。
 
 ---
 

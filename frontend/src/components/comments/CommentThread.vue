@@ -16,37 +16,37 @@
         <span>{{ formatDate(comment.createdAt) }}</span>
         <Button size="xs" variant="ghost" class="!px-1 !py-0.5" :class="comment.isLiked ? 'text-red-500' : ''" @click="onLikeComment" :disabled="likeBusy">
           <template #icon>
-            <HandThumbUpIcon class="w-3.5 h-3.5" />
+            <hand-thumb-up-icon class="w-3.5 h-3.5" />
           </template>
           <span>{{ safeLikeCount }}</span>
         </Button>
         <Button size="xs" variant="primary" class="!px-1.5 !py-0.5" @click="askAiForComment">
           <template #icon>
-            <SparklesIcon class="w-3.5 h-3.5" />
+            <sparkles-icon class="w-3.5 h-3.5" />
           </template>
           {{ t('shared.community.detail.askAi') }}
         </Button>
         <Button size="xs" variant="success" class="!px-1.5 !py-0.5" @click="toggleReply">
           <template #icon>
-            <ChatBubbleLeftIcon class="w-3.5 h-3.5" />
+            <chat-bubble-left-icon class="w-3.5 h-3.5" />
           </template>
           {{ t('shared.community.detail.reply') }}
         </Button>
         <Button v-if="authStore.user?.id && String(authStore.user.id) === String(comment.authorId)" size="xs" variant="danger" class="!px-1.5 !py-0.5" @click="handleDeleteSelf">
           <template #icon>
-            <TrashIcon class="w-3.5 h-3.5" />
+            <trash-icon class="w-3.5 h-3.5" />
           </template>
           {{ t('shared.community.list.delete') }}
         </Button>
       </div>
       <!-- 回复输入框 -->
       <div v-if="showReplyBox" class="mt-2">
-        <GlassTextarea v-model="replyContent" :rows="2" class="w-full" :placeholder="t('shared.community.detail.writeComment') as string" />
-        <div class="mt-1 flex items-center gap-2">
-          <emoji-picker @select="(e: string) => { replyContent = (replyContent || '') + e }" />
+        <glass-textarea v-model="replyContent" :rows="2" class="w-full" :placeholder="t('shared.community.detail.writeComment') as string" />
+        <div class="mt-1 flex items-center gap-3">
+          <emoji-picker variant="secondary" tint="primary" size="sm" @select="(e: string) => { replyContent = (replyContent || '') + e }" />
           <Button variant="primary" size="sm" :disabled="!replyContent.trim()" @click="submitReply">
             <template #icon>
-              <PaperAirplaneIcon class="w-4 h-4" />
+              <paper-airplane-icon class="w-4 h-4" />
             </template>
             {{ t('shared.community.detail.postComment') }}
           </Button>

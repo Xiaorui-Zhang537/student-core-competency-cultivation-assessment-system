@@ -5,16 +5,16 @@
         <nav class="flex items-center space-x-2 text-sm text-gray-500 dark:text-gray-400 mb-2">
           <!-- 新增: 课程管理 -->
           <span class="hover:text-gray-700 dark:hover:text-gray-200 cursor-pointer" @click="router.push('/teacher/courses')">{{ t('teacher.courses.breadcrumb') }}</span>
-          <ChevronRightIcon class="w-4 h-4" />
+          <chevron-right-icon class="w-4 h-4" />
           <!-- 新增: 对应课程ID，可点击返回课程页 -->
           <span v-if="courseId" class="hover:text-gray-700 dark:hover:text-gray-200 cursor-pointer" @click="goCourse()">{{ courseTitle || `#${courseId}` }}</span>
-          <ChevronRightIcon v-if="courseId" class="w-4 h-4" />
+          <chevron-right-icon v-if="courseId" class="w-4 h-4" />
           <!-- 原有: 作业管理 -> 提交列表 -->
           <span class="hover:text-gray-700 dark:hover:text-gray-200 cursor-pointer" @click="router.push('/teacher/assignments')">{{ t('teacher.submissions.breadcrumb.assignments') }}</span>
-          <ChevronRightIcon class="w-4 h-4" />
+          <chevron-right-icon class="w-4 h-4" />
           <span>{{ t('teacher.submissions.breadcrumb.self') }}</span>
         </nav>
-        <PageHeader :title="t('teacher.submissions.title')" :subtitle="t('teacher.submissions.subtitle')">
+        <page-header :title="t('teacher.submissions.title')" :subtitle="t('teacher.submissions.subtitle')">
           <template #actions>
             <div class="flex items-center gap-4">
               <!-- 统计摘要 -->
@@ -28,22 +28,22 @@
               </Button>
             </div>
           </template>
-        </PageHeader>
+        </page-header>
       </div>
 
     <div v-if="loading" class="text-center py-12">{{ t('teacher.submissions.loading') }}</div>
     <div v-else>
-      <div v-if="errorMessage" class="card p-6 text-center text-red-600">
+      <Card v-if="errorMessage" padding="md" tint="danger" class="text-center">
         <p class="mb-3">{{ errorMessage }}</p>
          <Button variant="info" @click="fetch()">
            <arrow-path-icon class="w-4 h-4 mr-2" />
            {{ t('teacher.submissions.retry') }}
          </Button>
-      </div>
-      <div v-else-if="displayRows.length === 0" class="card p-6 text-center text-gray-500">{{ t('teacher.submissions.empty') }}</div>
+      </Card>
+      <Card v-else-if="displayRows.length === 0" padding="md" tint="info" class="text-center text-gray-500">{{ t('teacher.submissions.empty') }}</Card>
       <div v-else class="space-y-3">
-        <div v-for="row in displayRows" :key="row.key" class="glass-regular glass-interactive border border-gray-200/40 dark:border-gray-700/40 rounded-xl p-4 flex items-center justify-between" v-glass="{ strength: 'regular', interactive: true }">
-          <div class="flex items-center gap-3">
+        <Card v-for="row in displayRows" :key="row.key" padding="md" tint="secondary" class="relative">
+          <div class="flex items-center gap-3 pr-40 min-w-0">
             <div class="w-9 h-9">
               <user-avatar :avatar="row.avatar" :size="36">
                 <div class="w-9 h-9 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center">
@@ -51,9 +51,9 @@
                 </div>
               </user-avatar>
             </div>
-            <div>
-              <div class="font-medium">{{ row.studentName || row.studentId }}</div>
-              <div class="text-sm text-gray-500">
+            <div class="min-w-0">
+              <div class="font-medium truncate max-w-[60vw]">{{ row.studentName || row.studentId }}</div>
+              <div class="text-sm text-gray-500 mt-0.5">
                 <template v-if="row.status && row.status !== 'unsubmitted'">
                   {{ t('teacher.submissions.submittedAt', { time: formatDate(row.submittedAt) }) }}
                   <span v-if="row.isLate" class="ml-2 text-red-600">({{ t('teacher.submissions.late') }})</span>
@@ -67,20 +67,20 @@
               </div>
             </div>
           </div>
-          <div>
+          <div class="absolute right-4 top-1/2 -translate-y-1/2">
             <Button size="sm" variant="purple" :disabled="loading" @click="goGrade(row)">
               <check-badge-icon class="w-4 h-4 mr-1" />
               {{ t('teacher.submissions.actions.grade') }}
             </Button>
           </div>
-        </div>
+        </Card>
       </div>
 
       <div class="mt-6 flex items-center justify-between">
         <div class="flex items-center space-x-2">
           <span class="text-sm text-gray-700">{{ t('teacher.assignments.pagination.perPagePrefix') }}</span>
           <div class="w-24">
-            <GlassPopoverSelect
+            <glass-popover-select
               :options="[{label:'10', value:10},{label:'20', value:20},{label:'50', value:50}]"
               :model-value="pageSize"
               @update:modelValue="(v:any)=>{ pageSize = Number(v||10); changePageSize() }"
@@ -108,6 +108,7 @@ import { gradeApi } from '@/api/grade.api';
 import { assignmentApi } from '@/api/assignment.api';
 import { useUIStore } from '@/stores/ui';
 import Button from '@/components/ui/Button.vue'
+import Card from '@/components/ui/Card.vue'
 import UserAvatar from '@/components/ui/UserAvatar.vue'
 import { ArrowPathIcon, CheckBadgeIcon, UserIcon } from '@heroicons/vue/24/outline'
 import { ChevronRightIcon } from '@heroicons/vue/24/outline';

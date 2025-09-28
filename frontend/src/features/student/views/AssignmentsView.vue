@@ -4,26 +4,28 @@
       <PageHeader :title="t('student.assignments.title') || '我的作业'" :subtitle="t('student.assignments.subtitle') || '查看与提交作业'" />
 
       <!-- 过滤条（取消外层嵌套容器，仅保留 FilterBar） -->
-      <FilterBar class="mb-6 glass-thin rounded-full">
+      <FilterBar tint="info" align="center" :dense="false" class="mb-6 rounded-full h-19">
         <template #left>
           <div class="flex items-center gap-4">
             <div class="w-auto flex items-center gap-2">
-              <span class="text-xs font-medium leading-tight text-gray-700 dark:text-gray-300">{{ (t('student.assignments.filters.statusLabel') as string) || '状态' }}</span>
+              <span class="text-xs font-medium leading-tight text-subtle">{{ (t('student.assignments.filters.statusLabel') as string) || '状态' }}</span>
               <div class="w-48">
                 <GlassPopoverSelect
                   v-model="filters.status"
                   :options="statusOptions"
                   size="sm"
+                  tint="primary"
                 />
               </div>
             </div>
             <div class="w-auto flex items-center gap-2">
-              <span class="text-xs font-medium leading-tight text-gray-700 dark:text-gray-300">{{ (t('student.assignments.filters.courseLabel') as string) || '课程' }}</span>
+              <span class="text-xs font-medium leading-tight text-subtle">{{ (t('student.assignments.filters.courseLabel') as string) || '课程' }}</span>
               <div class="w-56">
                 <GlassPopoverSelect
                   v-model="filters.courseId"
                   :options="courseOptions"
                   size="sm"
+                  tint="secondary"
                 />
               </div>
             </div>
@@ -35,6 +37,7 @@
               v-model="searchText"
               :placeholder="(t('student.assignments.searchPlaceholder') as string) || (t('student.assignments.search') as string) || '搜索作业'"
               size="sm"
+              tint="info"
             />
           </div>
         </template>
@@ -42,50 +45,49 @@
 
       <!-- 列表（每行一个卡片） -->
       <div class="grid grid-cols-1 gap-4">
-        <div v-if="errorMessage" class="col-span-full p-6 text-center text-red-600 glass-thin rounded-xl" v-glass="{ strength: 'thin', interactive: true }">
+        <div v-if="errorMessage" class="col-span-full p-6 text-center text-red-600 rounded-xl">
           <p class="mb-3">{{ errorMessage }}</p>
           <Button variant="info" @click="loadList">{{ t('teacher.submissions.retry') }}</Button>
         </div>
 
-        <div v-for="a in list" :key="a.id" class="glass-thin rounded-xl p-4 shadow-sm" v-glass="{ strength: 'thin', interactive: true }">
-          <div class="flex items-start justify-between gap-3">
-            <div class="min-w-0">
-              <div class="flex items-center gap-2">
-                <span class="text-base font-semibold text-gray-900 dark:text-white truncate">{{ a.title }}</span>
-                <Badge size="sm" :variant="statusVariant(displayStatus(a))">{{ statusText(displayStatus(a)) }}</Badge>
-              </div>
-              <div class="text-sm text-gray-600 dark:text-gray-300 mt-1 truncate">{{ a.courseTitle || a.courseName || a.course?.title }}</div>
-              <div class="text-xs text-gray-500 dark:text-gray-400 mt-1">{{ t('student.assignments.due') }}{{ formatTime(a.dueDate || a.dueAt) }}</div>
+        <Card v-for="a in list" :key="a.id" padding="md" tint="info" class="relative">
+          <div class="min-w-0 pr-44">
+            <div class="flex items-center gap-2">
+              <span class="text-base font-semibold text-base-content truncate">{{ a.title }}</span>
+              <Badge size="sm" :variant="statusVariant(displayStatus(a))">{{ statusText(displayStatus(a)) }}</Badge>
             </div>
-            <div class="flex items-center gap-2 shrink-0">
-              <Button v-if="displayStatus(a)==='PENDING' && !isPastDue(a.dueDate || a.dueAt)" variant="primary" size="sm" @click="submit(a.id)">{{ t('student.assignments.actions.submit') }}</Button>
-              <Button v-else-if="displayStatus(a)==='SUBMITTED' || isPastDue(a.dueDate || a.dueAt)" variant="menu" size="sm" @click="view(a.id)">{{ t('student.assignments.actions.view') }}</Button>
-              <Button v-else variant="menu" size="sm" @click="view(a.id)">{{ t('student.assignments.actions.review') }}</Button>
-            </div>
+            <div class="text-sm text-subtle mt-1 truncate">{{ a.courseTitle || a.courseName || a.course?.title }}</div>
+            <div class="text-xs text-subtle mt-1">{{ t('student.assignments.due') }}{{ formatTime(a.dueDate || a.dueAt) }}</div>
           </div>
-        </div>
+          <div class="absolute right-4 top-1/2 -translate-y-1/2 flex items-center gap-2">
+            <Button v-if="displayStatus(a)==='PENDING' && !isPastDue(a.dueDate || a.dueAt)" variant="success" size="sm" @click="submit(a.id)">{{ t('student.assignments.actions.submit') }}</Button>
+            <Button v-else-if="displayStatus(a)==='SUBMITTED' || isPastDue(a.dueDate || a.dueAt)" variant="menu" size="sm" @click="view(a.id)">{{ t('student.assignments.actions.view') }}</Button>
+            <Button v-else variant="menu" size="sm" @click="view(a.id)">{{ t('student.assignments.actions.review') }}</Button>
+          </div>
+        </Card>
 
-        <div v-if="!loading && !errorMessage && list.length===0" class="col-span-full p-8 text-center text-gray-500 dark:text-gray-400 glass-thin rounded-xl" v-glass="{ strength: 'thin', interactive: true }">{{ t('student.assignments.empty') }}</div>
-        <div v-if="loading" class="col-span-full p-8 text-center text-gray-500 dark:text-gray-400 glass-thin rounded-xl" v-glass="{ strength: 'thin', interactive: true }">{{ t('shared.loading') }}</div>
+        <div v-if="!loading && !errorMessage && list.length===0" class="col-span-full p-8 text-center text-subtle rounded-xl glass-regular glass-tint-info" v-glass>{{ t('student.assignments.empty') }}</div>
+        <div v-if="loading" class="col-span-full p-8 text-center text-subtle rounded-xl glass-regular glass-tint-secondary" v-glass>{{ t('shared.loading') }}</div>
       </div>
 
       <!-- 分页控制（文案与布局对齐教师端） -->
       <div class="mt-6 flex items-center justify-between relative z-10">
         <div class="flex items-center space-x-2">
-          <span class="text-sm text-gray-900 dark:text-gray-100">{{ perPagePrefixText }}</span>
+          <span class="text-sm text-base-content">{{ perPagePrefixText }}</span>
           <div class="w-28">
             <GlassPopoverSelect
               v-model="pageSize"
               :options="[{label: '10', value: 10}, {label: '20', value: 20}, {label: '50', value: 50}]"
               size="sm"
+              tint="accent"
               @change="(v:any)=>{ pageSize = Number(v||10); changePageSize() }"
             />
           </div>
-          <span class="text-sm text-gray-900 dark:text-gray-100">{{ perPageSuffixText }}</span>
+          <span class="text-sm text-base-content">{{ perPageSuffixText }}</span>
         </div>
         <div class="flex items-center space-x-2">
           <Button variant="outline" size="sm" :disabled="loading || currentPage===1" @click="prevPage">{{ t('student.assignments.pagination.prev') || '上一页' }}</Button>
-          <span class="text-sm text-gray-900 dark:text-gray-100">{{ pageText }}</span>
+          <span class="text-sm text-base-content">{{ pageText }}</span>
           <Button variant="outline" size="sm" :disabled="loading || currentPage>=totalPages" @click="nextPage">{{ t('student.assignments.pagination.next') || '下一页' }}</Button>
         </div>
       </div>
@@ -99,6 +101,7 @@ import { useI18n } from 'vue-i18n'
 import { useRouter } from 'vue-router'
 import Button from '@/components/ui/Button.vue'
 import FilterBar from '@/components/ui/filters/FilterBar.vue'
+import Card from '@/components/ui/Card.vue'
 import { studentApi } from '@/api/student.api'
 import GlassPopoverSelect from '@/components/ui/filters/GlassPopoverSelect.vue'
 import PageHeader from '@/components/ui/PageHeader.vue'

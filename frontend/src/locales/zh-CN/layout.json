@@ -22,7 +22,10 @@
 			}
 		},
 		"common": {
-			"help": "帮助"
+			"help": "帮助",
+			"toggleTheme": "切换主题",
+			"themeFamily": "主题家族",
+			"me": "我"
 		},
 		"teacher": {
 			"title": "学生核心能力培养评估系统",

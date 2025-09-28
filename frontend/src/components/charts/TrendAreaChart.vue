@@ -18,6 +18,7 @@
 <script setup lang="ts">
 import { ref, watch, onMounted, onUnmounted, nextTick, computed } from 'vue'
 import * as echarts from 'echarts'
+import { resolveEChartsTheme, glassTooltipCss } from '@/charts/echartsTheme'
 
 type Point = { x: string | number; y: number }
 type SeriesInput = { name: string; data: Point[]; color?: string }
@@ -115,9 +116,10 @@ const buildOption = (): any => {
     },
     tooltip: {
       trigger: 'axis',
-      backgroundColor: theme === 'dark' ? '#374151' : '#ffffff',
-      borderColor: theme === 'dark' ? '#4b5563' : '#e5e7eb',
-      textStyle: { color: theme === 'dark' ? '#ffffff' : '#111827' },
+      backgroundColor: 'transparent',
+      borderColor: 'transparent',
+      textStyle: { color: 'var(--color-base-content)' },
+      extraCssText: glassTooltipCss(),
       ...props.tooltip
     },
     xAxis: {
@@ -149,8 +151,8 @@ const init = async () => {
     if (ro) { try { ro.disconnect() } catch {} ro = null }
     if (chart) { try { chart.dispose() } catch {} chart = null }
     await nextTick()
-    const theme = props.theme === 'auto' ? (document.documentElement.classList.contains('dark') ? 'dark' : 'light') : props.theme
-    chart = echarts.init(chartRef.value as HTMLDivElement, theme)
+    const theme = resolveEChartsTheme()
+    chart = echarts.init(chartRef.value as HTMLDivElement, theme as any)
     chart.clear()
     chart.setOption(buildOption(), true)
     ro = new ResizeObserver(() => {

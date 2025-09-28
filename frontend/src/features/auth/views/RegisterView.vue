@@ -6,7 +6,7 @@
     </div>
 
     <form @submit.prevent="handleSubmit" class="space-y-6">
-      <!-- 默认头像选择 -->
+      <!-- 默认头像选择（统一使用 UserAvatar 显示，圆形裁切） -->
       <div>
         <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{{ t('auth.register.form.avatar') || '选择头像（可选）' }}</label>
         <div v-glass="{ strength: 'ultraThin' }" class="grid grid-cols-5 gap-2 rounded-lg p-2">
@@ -14,7 +14,7 @@
             v-for="(url, idx) in defaultAvatars"
             :key="idx"
             type="button"
-            class="h-12 w-12 rounded-full overflow-hidden border-2 transition-all"
+            class="h-12 w-12 rounded-full overflow-hidden border-2 transition-all bg-transparent flex items-center justify-center"
             :class="
               form.avatar === url
                 ? 'border-primary-500 ring-2 ring-primary-500 ring-offset-2 ring-offset-white dark:ring-offset-gray-800 shadow-md'
@@ -23,7 +23,7 @@
             @click="form.avatar = url"
             :title="'默认头像 ' + (idx+1)"
           >
-            <img :src="url" alt="默认头像" class="w-full h-full object-cover" />
+            <user-avatar :avatar="url" :size="44" :rounded="true" :fit="'cover'" />
           </button>
         </div>
       </div>
@@ -44,7 +44,7 @@
       <div>
         <label for="username" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{{ t('auth.register.form.username.label') }}</label>
         <div class="rounded-lg">
-          <GlassInput id="username" v-model="form.username" type="text" :disabled="authStore.loading" />
+          <glass-input id="username" v-model="form.username" type="text" :disabled="authStore.loading" />
         </div>
         <p v-if="form.username && !isUsernameValid" class="mt-1 text-xs text-red-600">{{ t('auth.register.error.usernameInvalid') }}</p>
       </div>
@@ -52,7 +52,7 @@
       <div>
         <label for="email" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{{ t('auth.register.form.email.label') }}</label>
         <div class="rounded-lg">
-          <GlassInput id="email" v-model="form.email" type="email" :disabled="authStore.loading" />
+          <glass-input id="email" v-model="form.email" type="email" :disabled="authStore.loading" />
         </div>
         <p v-if="form.email && !isEmailValid" class="mt-1 text-xs text-red-600">{{ t('auth.register.error.emailInvalid') }}</p>
       </div>
@@ -60,7 +60,7 @@
       <div>
         <label for="password" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{{ t('auth.register.form.password.label') }}</label>
         <div class="rounded-lg">
-          <GlassInput id="password" v-model="form.password" type="password" :disabled="authStore.loading" />
+          <glass-input id="password" v-model="form.password" type="password" :disabled="authStore.loading" />
         </div>
         <p v-if="form.password && !isPasswordValid" class="mt-1 text-xs text-red-600">{{ t('auth.register.error.passwordInvalid') }}</p>
       </div>
@@ -68,7 +68,7 @@
       <div>
         <label for="confirmPassword" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{{ t('auth.register.form.confirmPassword.label') }}</label>
         <div class="rounded-lg">
-          <GlassInput id="confirmPassword" v-model="confirmPassword" type="password" :disabled="authStore.loading" />
+          <glass-input id="confirmPassword" v-model="confirmPassword" type="password" :disabled="authStore.loading" />
         </div>
       </div>
 
@@ -100,6 +100,8 @@ import { i18n } from '@/i18n'
 import { useRouter } from 'vue-router'
 import GlassInput from '@/components/ui/inputs/GlassInput.vue'
 import Button from '@/components/ui/Button.vue'
+import UserAvatar from '@/components/ui/UserAvatar.vue'
+import { DEFAULT_AVATARS } from '@/shared/utils/avatars'
 
 const authStore = useAuthStore();
 const uiStore = useUIStore();
@@ -125,18 +127,7 @@ const isUsernameValid = computed(() => /^[A-Za-z0-9]+$/.test(form.username || ''
 const isEmailValid = computed(() => /^[\w.!#$%&'*+/=?^`{|}~-]+@[\w-]+(?:\.[\w-]+)+$/.test(form.email || ''))
 const isPasswordValid = computed(() => /^[A-Za-z0-9@#$%^&*!._-]+$/.test(form.password || ''))
 
-const defaultAvatars = [
-  'https://api.dicebear.com/7.x/adventurer-neutral/svg?seed=Nova',
-  'https://api.dicebear.com/7.x/adventurer/svg?seed=Luna',
-  'https://api.dicebear.com/7.x/avataaars/svg?seed=Kai',
-  'https://api.dicebear.com/7.x/notionists-neutral/svg?seed=Iris',
-  'https://api.dicebear.com/7.x/big-smile/svg?seed=Leo',
-  'https://api.dicebear.com/7.x/thumbs/svg?seed=Mila',
-  'https://api.dicebear.com/7.x/micah/svg?seed=Aiden',
-  'https://api.dicebear.com/7.x/miniavs/svg?seed=Sage',
-  'https://api.dicebear.com/7.x/adventurer-neutral/svg?seed=Zoe',
-  'https://api.dicebear.com/7.x/notionists/svg?seed=Eli'
-] as string[]
+const defaultAvatars = DEFAULT_AVATARS as string[]
 
 const handleSubmit = () => {
   if (!isUsernameValid.value) {

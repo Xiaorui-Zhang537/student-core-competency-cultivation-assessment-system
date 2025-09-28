@@ -4,25 +4,25 @@
     <nav class="text-sm text-gray-600 dark:text-gray-300 mb-2 flex items-center gap-1">
       <a href="javascript:void(0)" class="hover:underline" @click.prevent="goCourses">{{ t('teacher.courses.breadcrumb') || '课程管理' }}</a>
       <template v-if="courseTitle">
-        <ChevronRightIcon class="w-4 h-4 opacity-70" />
+        <chevron-right-icon class="w-4 h-4 opacity-70" />
         <a href="javascript:void(0)" class="hover:underline" @click.prevent="goCourseDetail">{{ courseTitle }}</a>
       </template>
-      <ChevronRightIcon class="w-4 h-4 opacity-70" />
+      <chevron-right-icon class="w-4 h-4 opacity-70" />
       <a href="javascript:void(0)" class="hover:underline" @click.prevent="goAssignments">{{ t('teacher.assignments.breadcrumb.self') || '作业管理' }}</a>
-      <ChevronRightIcon class="w-4 h-4 opacity-70" />
+      <chevron-right-icon class="w-4 h-4 opacity-70" />
       <a href="javascript:void(0)" class="hover:underline" @click.prevent="goBack">{{ t('teacher.aiGrading.title') || 'AI 批改作业' }}</a>
-      <ChevronRightIcon class="w-4 h-4 opacity-70" />
+      <chevron-right-icon class="w-4 h-4 opacity-70" />
       <span class="opacity-80">{{ t('teacher.aiGrading.historyTitle') || 'AI 批改历史' }}</span>
     </nav>
     <div class="max-w-7xl mx-auto">
-      <PageHeader :title="t('teacher.aiGrading.historyTitle') || 'AI 批改历史'" :subtitle="t('teacher.aiGrading.historySubtitle') || '查看过往批改记录'">
+      <page-header :title="t('teacher.aiGrading.historyTitle') || 'AI 批改历史'" :subtitle="t('teacher.aiGrading.historySubtitle') || '查看过往批改记录'">
         <template #actions>
           <div class="flex items-center gap-2">
-            <GlassSearchInput v-model="q" :placeholder="t('common.search') || '搜索文件/模型'" size="sm" class="w-64" />
-            <Button size="sm" variant="primary" class="w-auto px-3 whitespace-nowrap shrink-0" @click="load"><MagnifyingGlassIcon class="w-4 h-4 mr-1" />{{ t('common.search') || '搜索' }}</Button>
+            <glass-search-input v-model="q" :placeholder="t('common.search') || '搜索文件/模型'" size="sm" class="w-64" />
+            <Button size="sm" variant="primary" class="w-auto px-3 whitespace-nowrap shrink-0" @click="load"><magnifying-glass-icon class="w-4 h-4 mr-1" />{{ t('common.search') || '搜索' }}</Button>
           </div>
         </template>
-      </PageHeader>
+      </page-header>
 
       <div class="card p-4" v-glass="{ strength: 'ultraThin', interactive: true }">
         <div class="overflow-x-auto">
@@ -52,8 +52,8 @@
                 <td class="py-2 pr-4">{{ formatTime(it.createdAt) }}</td>
                 <td class="py-2 pr-4">
                   <div class="flex items-center gap-2">
-                    <Button size="xs" variant="indigo" @click="openDetail(it)"><EyeIcon class="w-4 h-4 mr-1" />{{ t('common.view') || t('teacher.aiGrading.view') || '查看' }}</Button>
-                    <Button size="xs" variant="danger" @click="confirmDelete(it)"><TrashIcon class="w-4 h-4 mr-1" />{{ t('teacher.aiGrading.delete') || '删除' }}</Button>
+                    <Button size="xs" variant="indigo" @click="openDetail(it)"><eye-icon class="w-4 h-4 mr-1" />{{ t('common.view') || t('teacher.aiGrading.view') || '查看' }}</Button>
+                    <Button size="xs" variant="danger" @click="confirmDelete(it)"><trash-icon class="w-4 h-4 mr-1" />{{ t('teacher.aiGrading.delete') || '删除' }}</Button>
                   </div>
                 </td>
               </tr>
@@ -63,7 +63,7 @@
         <div class="flex items-center justify-between mt-3 text-xs text-gray-500">
           <div class="flex items-center gap-3 whitespace-nowrap">
             <span class="whitespace-nowrap">{{ t('teacher.assignments.pagination.perPagePrefix') || '每页显示' }}</span>
-            <GlassPopoverSelect v-model="sizeStr" :options="pageSizeOptions" size="sm" width="80px" />
+            <glass-popover-select v-model="sizeStr" :options="pageSizeOptions" size="sm" width="80px" />
             <span class="whitespace-nowrap">{{ t('teacher.assignments.pagination.perPageSuffix') || '条' }}</span>
           </div>
           <div class="flex items-center gap-2">
@@ -75,7 +75,7 @@
       </div>
     </div>
 
-    <GlassModal v-if="detail" :title="detail.fileName || '记录'" maxWidth="max-w-5xl" :hideScrollbar="true" heightVariant="max" @close="detail=null">
+    <glass-modal v-if="detail" :title="detail.fileName || '记录'" size="xl" :hideScrollbar="true" heightVariant="max" solidBody @close="detail=null">
       <div v-if="parsed" ref="detailRef" class="grid grid-cols-1 md:grid-cols-2 gap-4" data-export-root="1">
         <div class="card p-3 md:col-span-2">
           <h4 class="font-semibold mb-2">{{ t('teacher.aiGrading.render.overall') }}</h4>
@@ -117,12 +117,12 @@
       </div>
       <pre v-else class="bg-black/70 text-green-100 p-3 rounded overflow-auto text-xs max-h-[60vh]">{{ pretty(detail?.rawJson) }}</pre>
       <template #footer>
-        <Button size="sm" variant="primary" @click="exportDetailAsText" :disabled="!parsed"><ArrowDownTrayIcon class="w-4 h-4 mr-2" />{{ t('teacher.aiGrading.exportText') || '导出文本' }}</Button>
-        <Button size="sm" variant="success" @click="exportDetailAsPng" :disabled="!parsed"><ArrowDownTrayIcon class="w-4 h-4 mr-2" />{{ t('teacher.aiGrading.exportPng') || '导出 PNG' }}</Button>
-        <Button size="sm" variant="purple" @click="exportDetailAsPdf" :disabled="!parsed"><ArrowDownTrayIcon class="w-4 h-4 mr-2" />{{ t('teacher.aiGrading.exportPdf') || '导出 PDF' }}</Button>
-        <Button size="sm" variant="secondary" @click="detail=null"><XMarkIcon class="w-4 h-4 mr-1" />{{ t('teacher.aiGrading.picker.close') || '关闭' }}</Button>
+        <Button size="sm" variant="primary" @click="exportDetailAsText" :disabled="!parsed"><arrow-down-tray-icon class="w-4 h-4 mr-2" />{{ t('teacher.aiGrading.exportText') || '导出文本' }}</Button>
+        <Button size="sm" variant="success" @click="exportDetailAsPng" :disabled="!parsed"><arrow-down-tray-icon class="w-4 h-4 mr-2" />{{ t('teacher.aiGrading.exportPng') || '导出 PNG' }}</Button>
+        <Button size="sm" variant="purple" @click="exportDetailAsPdf" :disabled="!parsed"><arrow-down-tray-icon class="w-4 h-4 mr-2" />{{ t('teacher.aiGrading.exportPdf') || '导出 PDF' }}</Button>
+        <Button size="sm" variant="secondary" @click="detail=null"><x-mark-icon class="w-4 h-4 mr-1" />{{ t('teacher.aiGrading.picker.close') || '关闭' }}</Button>
       </template>
-    </GlassModal>
+    </glass-modal>
   </div>
 </template>
 

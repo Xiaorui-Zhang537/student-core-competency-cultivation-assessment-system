@@ -13,7 +13,7 @@
     <!-- Main Content -->
     <div v-else class="space-y-8">
       <!-- Controls: Course Select + Compare & Assignment Sets -->
-      <Card padding="md" class="p-6">
+      <Card padding="md" class="p-6" tint="info">
         <div class="flex flex-col lg:flex-row lg:items-center gap-4">
           <div class="flex items-center gap-3">
             <span class="text-sm text-gray-700 dark:text-gray-300">{{ t('student.ability.course') }}</span>
@@ -22,6 +22,7 @@
               :options="courseSelectOptions"
               :placeholder="t('student.ability.selectCourse') as string"
               size="md"
+              tint="primary"
               @change="onCourseChange"
             />
           </div>
@@ -32,11 +33,11 @@
           <div v-if="compareEnabled" class="flex-1 grid grid-cols-1 md:grid-cols-2 gap-4">
             <div class="flex flex-col gap-2">
               <span class="text-xs font-medium text-gray-600 dark:text-gray-400">{{ t('student.ability.compare.setA') }}</span>
-              <GlassMultiSelect v-model="assignmentIdsA" :options="assignmentSelectOptions" />
+              <GlassMultiSelect v-model="assignmentIdsA" :options="assignmentSelectOptions" tint="primary" />
             </div>
             <div class="flex flex-col gap-2">
               <span class="text-xs font-medium text-gray-600 dark:text-gray-400">{{ t('student.ability.compare.setB') }}</span>
-              <GlassMultiSelect v-model="assignmentIdsB" :options="assignmentSelectOptions" />
+              <GlassMultiSelect v-model="assignmentIdsB" :options="assignmentSelectOptions" tint="secondary" />
             </div>
             <div class="md:col-span-2 flex items-center gap-3">
               <Button variant="primary" @click="applyCompare" :disabled="applyLoading">
@@ -116,6 +117,7 @@ import { useAbilityStore } from '@/stores/ability';
 import { abilityApi } from '@/api/ability.api';
 import { useCourseStore } from '@/stores/course';
 import * as echarts from 'echarts';
+import { resolveEChartsTheme } from '@/charts/echartsTheme'
 // @ts-ignore shim for vue-i18n types in this project
 import { useI18n } from 'vue-i18n'
 import GlassMultiSelect from '@/components/ui/filters/GlassMultiSelect.vue'
@@ -240,7 +242,8 @@ function resetCompare() {
 
 const initRadarChart = () => {
   if (!radarChartRef.value) return
-  radarChart = echarts.getInstanceByDom(radarChartRef.value) || echarts.init(radarChartRef.value)
+  const theme = resolveEChartsTheme()
+  radarChart = echarts.getInstanceByDom(radarChartRef.value) || echarts.init(radarChartRef.value as HTMLDivElement, theme as any)
   const option = {
     radar: { indicator: rawRadarLabels.value.map(n => ({ name: localizeDimensionName(n), max: 100 })) },
     series: [{ type: 'radar', data: [{ value: radarValues.value, name: t('teacher.analytics.charts.series.student') }] }]
@@ -250,7 +253,8 @@ const initRadarChart = () => {
 
 const initTrendChart = () => {
   if (!trendChartRef.value || !abilityStore.trendsData) return;
-  trendChart = echarts.getInstanceByDom(trendChartRef.value) || echarts.init(trendChartRef.value);
+  const theme2 = resolveEChartsTheme()
+  trendChart = echarts.getInstanceByDom(trendChartRef.value) || echarts.init(trendChartRef.value as HTMLDivElement, theme2 as any);
   const option = {
     tooltip: { trigger: 'axis' },
     xAxis: { type: 'category', data: abilityStore.trendsData.dates },

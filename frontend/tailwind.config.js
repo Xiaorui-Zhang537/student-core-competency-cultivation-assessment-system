@@ -3,6 +3,9 @@
 export default {
   content: ['./index.html', './src/**/*.{vue,js,ts,jsx,tsx}'],
   darkMode: 'class',
+  daisyui: {
+    themes: ['retro', 'dracula']
+  },
   theme: {
     extend: {
       colors: {
@@ -55,6 +58,7 @@ export default {
     }
   },
   plugins: [
-    require('@tailwindcss/typography')
+    require('@tailwindcss/typography'),
+    require('daisyui')
   ]
 } 

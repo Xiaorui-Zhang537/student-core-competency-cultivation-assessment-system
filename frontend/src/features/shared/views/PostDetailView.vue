@@ -4,16 +4,16 @@
     <div v-if="!loading && !currentPost" class="text-center">{{ t('shared.community.detail.notFound') }}</div>
     
     <div v-if="currentPost" class="max-w-4xl mx-auto">
-      <PageHeader :title="currentPost.title" :subtitle="t('shared.community.detail.postedAt', { datetime: formatDate(currentPost.createdAt) })" />
+      <page-header :title="currentPost.title" :subtitle="t('shared.community.detail.postedAt', { datetime: formatDate(currentPost.createdAt) })" />
       <!-- Back Button -->
-      <router-link :to="backToCommunity" class="inline-flex items-center text-sm text-gray-600 dark:text-gray-400 hover:text-primary-600 mb-4">
+      <router-link :to="backToCommunity" class="inline-flex items-center text-sm text-subtle hover:text-primary-600 mb-4">
         <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
         {{ t('shared.community.detail.back') }}
       </router-link>
 
       <!-- Post Header -->
-      <div class="glass-regular rounded-2xl p-6 mb-6" v-glass="{ strength: 'regular', interactive: true }">
-        <div class="flex items-center space-x-4 text-sm text-gray-500 dark:text-gray-400">
+      <div class="glass-regular glass-tint-secondary rounded-2xl p-6 mb-6" v-glass="{ strength: 'regular', interactive: true }">
+        <div class="flex items-center space-x-4 text-sm text-subtle">
           <div class="flex items-center space-x-2">
             <user-avatar :avatar="currentPost.author?.avatar" :size="20">
               <user-icon class="w-5 h-5" />
@@ -25,12 +25,12 @@
            <div class="flex items-center space-x-1"><chat-bubble-left-icon class="w-4 h-4" /><span>{{ currentPost.commentCount }}</span></div>
         </div>
          <div v-if="currentPost.tags?.length" class="flex items-center space-x-2 mt-4">
-            <Badge v-for="tag in currentPost.tags" :key="tag.id" size="sm" variant="secondary">#{{ tag.name }}</Badge>
+            <badge v-for="tag in currentPost.tags" :key="tag.id" size="sm" variant="secondary">#{{ tag.name }}</badge>
         </div>
       </div>
 
       <!-- Post Content -->
-      <div class="glass-regular rounded-2xl p-6 mb-6" v-glass="{ strength: 'regular', interactive: true }">
+      <div class="glass-regular glass-tint-info rounded-2xl p-6 mb-6" v-glass="{ strength: 'regular', interactive: true }">
         <div class="prose dark:prose-invert max-w-none" v-html="currentPost.content"></div>
         <div v-if="attachments.length" class="mt-6 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
           <div v-for="f in attachments" :key="f.id" class="rounded overflow-hidden glass-ultraThin" v-glass="{ strength: 'ultraThin', interactive: false }">
@@ -55,16 +55,16 @@
       </div>
 
       <!-- Comments Section -->
-      <div class="glass-regular rounded-2xl p-6" v-glass="{ strength: 'regular', interactive: true }">
-        <h2 class="text-xl font-bold text-gray-900 dark:text-white mb-4">{{ t('shared.community.detail.comments', { count: totalComments }) }}</h2>
+      <div class="glass-regular glass-tint-primary rounded-2xl p-6" v-glass="{ strength: 'regular', interactive: true }">
+        <h2 class="text-xl font-bold text-base-content mb-4">{{ t('shared.community.detail.comments', { count: totalComments }) }}</h2>
         
         <!-- Post Comment Form -->
         <div class="mb-6">
-            <GlassTextarea v-model="newComment" :rows="3" :placeholder="t('shared.community.detail.writeComment') as string" class="w-full" />
-            <div class="mt-2 flex items-center gap-2">
-              <emoji-picker size="sm" variant="ghost" @select="onEmojiSelect" />
+            <glass-textarea v-model="newComment" :rows="3" :placeholder="t('shared.community.detail.writeComment') as string" class="w-full" />
+            <div class="mt-2 flex items-center gap-3">
+              <emoji-picker size="sm" variant="secondary" tint="primary" @select="onEmojiSelect" />
               <Button size="sm" variant="primary" @click="handlePostComment" :disabled="!newComment.trim() || loading">
-                <PaperAirplaneIcon class="w-4 h-4 mr-2" />
+                <paper-airplane-icon class="w-4 h-4 mr-2" />
                 {{ t('shared.community.detail.postComment') }}
               </Button>
             </div>
@@ -73,17 +73,17 @@
         <!-- Comments List -->
         <div class="space-y-4">
             <div class="flex items-center justify-between mb-2">
-            <div class="text-xs text-gray-500">{{ t('shared.community.detail.order') }}</div>
+            <div class="text-xs text-subtle">{{ t('shared.community.detail.order') }}</div>
             <div class="space-x-2">
-              <Button size="xs" variant="ghost" :class="commentOrderBy==='time' ? (isDark ? 'text-blue-300' : 'text-primary-600') : (isDark ? 'text-gray-400' : '')" @click="setOrder('time')">
+              <Button size="xs" variant="ghost" :class="commentOrderBy==='time' ? 'font-semibold selected-accent' : (isDark ? 'text-gray-400' : '')" @click="setOrder('time')">
                 <template #icon>
-                  <ClockIcon class="w-3.5 h-3.5" />
+                  <clock-icon class="w-3.5 h-3.5" />
                 </template>
                 {{ t('shared.community.detail.orderTime') }}
               </Button>
-              <Button size="xs" variant="ghost" :class="commentOrderBy==='hot' ? (isDark ? 'text-blue-300' : 'text-primary-600') : (isDark ? 'text-gray-400' : '')" @click="setOrder('hot')">
+              <Button size="xs" variant="ghost" :class="commentOrderBy==='hot' ? 'font-semibold selected-accent' : (isDark ? 'text-gray-400' : '')" @click="setOrder('hot')">
                 <template #icon>
-                  <FireIcon class="w-3.5 h-3.5" />
+                  <fire-icon class="w-3.5 h-3.5" />
                 </template>
                 {{ t('shared.community.detail.orderHot') }}
               </Button>
@@ -92,9 +92,9 @@
           <comment-thread v-for="comment in localComments" :key="comment.id" :comment="comment" :post-id="currentPost.id" @deleted="onTopDeleted" />
           <!-- 评论分页 -->
             <div v-if="totalComments > commentsSize" class="mt-4 flex items-center justify-between">
-            <span class="text-xs text-gray-500">{{ t('shared.community.detail.total', { count: totalComments }) }}</span>
+              <span class="text-xs text-subtle">{{ t('shared.community.detail.total', { count: totalComments }) }}</span>
             <div class="flex items-center space-x-2">
-              <span class="text-xs text-gray-500">{{ t('shared.community.detail.page', { page: commentsPage }) }}</span>
+              <span class="text-xs text-subtle">{{ t('shared.community.detail.page', { page: commentsPage }) }}</span>
               <Button size="sm" variant="outline" :disabled="commentsPage * commentsSize >= totalComments" @click="loadMoreComments">{{ t('shared.community.detail.more') }}</Button>
             </div>
           </div>
@@ -102,25 +102,25 @@
       </div>
 
       <!-- Edit Current Post Modal -->
-      <div v-if="editCurrent.visible" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+      <div v-if="editCurrent.visible" class="fixed inset-0 bg-transparent flex items-center justify-center z-50 p-4">
         <div class="modal glass-thick p-6 max-w-2xl w-full mx-4 max-h-[80vh] overflow-y-auto" v-glass="{ strength: 'thick', interactive: true }">
           <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-4">{{ t('shared.community.modal.editTitle') }}</h3>
           <form @submit.prevent="handleUpdateCurrentPost" class="space-y-4">
             <div>
               <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{{ t('shared.community.modal.title') }}</label>
-              <GlassInput v-model="editCurrent.form.title" />
+              <glass-input v-model="editCurrent.form.title" />
             </div>
             <div>
               <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{{ t('shared.community.modal.category') }}</label>
-              <GlassPopoverSelect v-model="editCurrent.form.category" :options="categoryOptions" />
+              <glass-popover-select v-model="editCurrent.form.category" :options="categoryOptions" />
             </div>
             <div>
               <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{{ t('shared.community.modal.content') }}</label>
-              <GlassTextarea v-model="editCurrent.form.content" :rows="6" />
+              <glass-textarea v-model="editCurrent.form.content" :rows="6" />
             </div>
             <div>
               <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{{ t('shared.community.modal.attachment') }}</label>
-              <FileUpload
+              <file-upload
                 ref="detailEditUploader"
                 :accept="'.pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.txt,.zip,.rar,image/*,video/*'"
                 :multiple="true"
@@ -427,3 +427,8 @@ const loadPreview = async (f: any) => {
 
 
 </script>
+
+<style scoped>
+.selected-accent svg { color: var(--color-accent) !important; }
+.selected-accent svg * { stroke: currentColor !important; fill: none !important; }
+</style>

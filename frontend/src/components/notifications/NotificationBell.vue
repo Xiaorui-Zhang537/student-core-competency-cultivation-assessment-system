@@ -1,13 +1,12 @@
 <template>
   <div class="notification-bell" v-click-outside="closeDropdown">
-    <!-- 铃铛图标 -->
+    <!-- 触发器：支持自定义；默认使用 RippleButton(icon) -->
     <span ref="btnRef">
-      <Button variant="glass" size="sm" @click="toggleDropdown" :title="t('notifications.title')">
-        <template #icon>
-          <BellIcon class="w-5 h-5" />
-        </template>
-        <span v-if="unreadCount > 0" class="ml-1 text-xs font-bold text-red-500">{{ unreadCount > 99 ? '99+' : unreadCount }}</span>
-      </Button>
+      <slot name="trigger" :toggle="toggleDropdown">
+        <ripple-button icon :title="t('notifications.title') as string" @click="toggleDropdown">
+          <bell-icon class="w-4 h-4" />
+        </ripple-button>
+      </slot>
     </span>
 
     <!-- 下拉通知面板 -->
@@ -20,93 +19,96 @@
       leave-to-class="opacity-0 translate-y-1"
     >
       <teleport to="body">
-        <div
+        <liquid-glass
           v-if="isDropdownOpen"
-          class="notification-dropdown rounded-2xl glass-thin glass-interactive border border-white/20 overflow-hidden"
-          v-glass="{ strength: 'thin', interactive: true }"
           :style="dropdownStyle"
+          containerClass="notification-dropdown fixed z-[1000] rounded-2xl border border-white/20 overflow-hidden shadow"
+          :radius="16"
+          :frost="0.05"
         >
-        <!-- 下拉面板头部 -->
-        <div class="dropdown-header" style="box-shadow: inset 0 -1px 0 rgba(255,255,255,0.14);">
-          <h3 class="text-lg font-semibold text-gray-900 dark:text-white flex items-center">
-            <span>{{ t('notifications.title') }}</span>
-            <span v-if="unreadCount > 0" class="text-sm font-normal text-gray-500 dark:text-gray-400 ml-2">
-              ({{ unreadCount }}{{ t('notifications.unreadSuffix') }})
-            </span>
-            <Button v-if="hasUnread" size="xs" variant="glass" icon="confirm" class="ml-3" :disabled="loading" @click="handleMarkAllAsRead">{{ t('notifications.actions.markAll') }}</Button>
-          </h3>
-        </div>
-
-        <!-- 通知列表 -->
-        <div class="dropdown-content">
-          <div v-if="loading" class="loading-state">
-            <div class="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600 mx-auto"></div>
-            <p class="text-gray-500 dark:text-gray-400 text-center text-sm mt-2">{{ t('notifications.loading') }}</p>
+          <!-- 下拉面板头部 -->
+          <div class="dropdown-header" style="box-shadow: inset 0 -1px 0 rgba(255,255,255,0.14);">
+            <h3 class="text-lg font-semibold text-base-content flex items-center">
+              <span>{{ t('notifications.title') }}</span>
+              <span v-if="unreadCount > 0" class="text-sm font-normal text-gray-500 dark:text-gray-400 ml-2">
+                ({{ unreadCount }}{{ t('notifications.unreadSuffix') }})
+              </span>
+              <ripple-button v-if="hasUnread" class="ml-3 px-3 py-1 text-xs rounded-full" :title="t('notifications.actions.markAll') as string" @click="handleMarkAllAsRead">
+                {{ t('notifications.actions.markAll') }}
+              </ripple-button>
+            </h3>
           </div>
 
-          <div v-else-if="recentNotifications.length === 0" class="empty-state">
-            <bell-slash-icon class="w-12 h-12 text-gray-300 mx-auto" />
-            <p class="text-gray-500 dark:text-gray-400 text-center text-sm mt-2">{{ t('notifications.empty') }}</p>
-          </div>
+          <!-- 通知列表 -->
+          <div class="dropdown-content">
+            <div v-if="loading" class="loading-state">
+              <div class="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600 mx-auto"></div>
+              <p class="text-gray-500 dark:text-gray-400 text-center text-sm mt-2">{{ t('notifications.loading') }}</p>
+            </div>
 
-          <div v-else class="space-y-2">
-            <div
-              v-for="notification in recentNotifications"
-              :key="notification.id"
-              class="notification-item rounded-md px-2 py-2 transition-colors hover:bg-gray-100 dark:hover:bg-slate-700"
-              :class="{ 'notification-unread': !notification.isRead }"
-              @click="handleNotificationClick(notification)"
-            >
-              <div class="flex items-start space-x-3">
-                <!-- 类型图标 -->
-                <component
-                  :is="getNotificationIcon(notification.type)"
-                  class="w-5 h-5 flex-shrink-0 mt-0.5"
-                  :class="getNotificationIconColor(notification.type)"
-                />
-                
-                <div class="flex-1 min-w-0">
-                  <!-- 标题 + 优先级徽章 -->
-                  <div class="flex items-center space-x-2">
-                    <p class="notification-title dark:text-white font-semibold">
-                      {{ getLocalizedTitle(notification) }}
+            <div v-else-if="recentNotifications.length === 0" class="empty-state">
+              <bell-slash-icon class="w-12 h-12 text-gray-300 mx-auto" />
+              <p class="text-gray-500 dark:text-gray-400 text-center text-sm mt-2">{{ t('notifications.empty') }}</p>
+            </div>
+
+            <div v-else class="space-y-2">
+              <div
+                v-for="notification in recentNotifications"
+                :key="notification.id"
+                class="notification-item rounded-md px-2 py-2 transition-colors hover:bg-gray-100 dark:hover:bg-slate-700"
+                :class="{ 'notification-unread': !notification.isRead }"
+                @click="handleNotificationClick(notification)"
+              >
+                <div class="flex items-start space-x-3">
+                  <!-- 类型图标 -->
+                  <component
+                    :is="getNotificationIcon(notification.type)"
+                    class="w-5 h-5 flex-shrink-0 mt-0.5"
+                    :class="getNotificationIconColor(notification.type)"
+                  />
+                  
+                  <div class="flex-1 min-w-0">
+                    <!-- 标题 + 优先级徽章 -->
+                    <div class="flex items-center space-x-2">
+                      <p class="notification-title font-semibold">
+                        {{ getLocalizedTitle(notification) }}
+                      </p>
+                      <span
+                        class="priority-badge"
+                        :class="getPriorityClass(notification.priority)"
+                      >
+                        {{ getPriorityText(notification.priority) }}
+                      </span>
+                    </div>
+                    
+                    <!-- 内容预览 -->
+                    <p class="notification-preview">
+                      {{ getLocalizedContent(notification) }}
                     </p>
-                    <span
-                      class="priority-badge"
-                      :class="getPriorityClass(notification.priority)"
-                    >
-                      {{ getPriorityText(notification.priority) }}
-                    </span>
+                    
+                    <!-- 时间 -->
+                    <p class="notification-time">
+                      {{ formatTime(notification.createdAt) }}
+                    </p>
                   </div>
-                  
-                  <!-- 内容预览 -->
-                  <p class="notification-preview">
-                    {{ getLocalizedContent(notification) }}
-                  </p>
-                  
-                  <!-- 时间 -->
-                  <p class="notification-time">
-                    {{ formatTime(notification.createdAt) }}
-                  </p>
-                </div>
 
-                <!-- 未读指示器 -->
-                <div
-                  v-if="!notification.isRead"
-                  class="w-2 h-2 bg-blue-500 rounded-full flex-shrink-0 mt-2"
-                ></div>
+                  <!-- 未读指示器 -->
+                  <div
+                    v-if="!notification.isRead"
+                    class="w-2 h-2 bg-blue-500 rounded-full flex-shrink-0 mt-2"
+                  ></div>
+                </div>
               </div>
             </div>
           </div>
-        </div>
 
-        <!-- 下拉面板底部 -->
-        <div class="dropdown-footer" style="box-shadow: inset 0 1px 0 rgba(255,255,255,0.14);">
-          <Button class="w-full justify-center" size="sm" variant="glass" @click="openNotificationCenter">
-            {{ t('notifications.actions.viewAll') }}
-          </Button>
-        </div>
-        </div>
+          <!-- 下拉面板底部 -->
+          <div class="dropdown-footer" style="box-shadow: inset 0 1px 0 rgba(255,255,255,0.14);">
+            <Button variant="secondary" class="w-full justify-center rounded-xl py-2" :title="t('notifications.actions.viewAll') as string" @click="openNotificationCenter">
+              {{ t('notifications.actions.viewAll') }}
+            </Button>
+          </div>
+        </liquid-glass>
       </teleport>
     </Transition>
   </div>
@@ -118,7 +120,9 @@ import { useI18n } from 'vue-i18n'
 import { useRouter } from 'vue-router'
 import { useNotificationsStore } from '@/stores/notifications'
 import { storeToRefs } from 'pinia'
+import RippleButton from '@/components/ui/RippleButton.vue'
 import Button from '@/components/ui/Button.vue'
+import LiquidGlass from '@/components/ui/LiquidGlass.vue'
 import {
   BellIcon,
   BellSlashIcon,
@@ -163,24 +167,23 @@ const recentNotifications = computed(() => {
 
 // 方法
 const toggleDropdown = async () => {
+  try { window.dispatchEvent(new CustomEvent('ui:close-topbar-popovers')) } catch {}
   isDropdownOpen.value = !isDropdownOpen.value
   
   if (isDropdownOpen.value) {
-    // 打开前先通知其他顶部弹层收起
-    try { window.dispatchEvent(new CustomEvent('ui:close-topbar-popovers')) } catch {}
     // 打开下拉框时刷新未读数量
     await notificationsStore.fetchUnreadCount()
     // 始终获取最新通知，避免后台注入后前端不更新
     await notificationsStore.fetchNotifications(true)
     await nextTick()
-    // 计算按钮位置，将下拉绝对定位到 body，避免被父元素 overflow/transform 影响
+    // 计算按钮位置，将下拉固定定位到 body，避免被父元素 overflow/transform 影响
     try {
       const el = btnRef.value as HTMLElement
       const rect = el.getBoundingClientRect()
       dropdownStyle.value = {
         position: 'fixed',
-        top: `${rect.bottom + 8}px`,
-        left: `${Math.max(8, rect.left - 240 + rect.width)}px`,
+        top: `${rect.bottom + 18}px`,
+        left: `${Math.max(8, rect.right - 320)}px`,
         width: '20rem',
         zIndex: '1000'
       }
@@ -366,12 +369,14 @@ onMounted(() => {
   startRefreshInterval()
   // 监听外部请求关闭通知下拉
   try { window.addEventListener('ui:close-notification-dropdown', closeDropdown) } catch {}
+  try { window.addEventListener('ui:close-topbar-popovers', closeDropdown) } catch {}
 })
 
 // 清理定时器
 onBeforeUnmount(() => {
   stopRefreshInterval()
   try { window.removeEventListener('ui:close-notification-dropdown', closeDropdown) } catch {}
+  try { window.removeEventListener('ui:close-topbar-popovers', closeDropdown) } catch {}
 })
 
 // 点击外部关闭下拉框的指令
@@ -408,13 +413,13 @@ const vClickOutside = {
   border-radius: 0.75rem; /* rounded-xl */
   background-color: transparent;
   border: 1px solid transparent;
-  box-shadow: var(--glass-inner-shadow, inset 0 1px 0 rgba(255,255,255,0.16)), 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -2px rgb(0 0 0 / 0.05);
+  box-shadow: var(--glass-inner-shadow, inset 0 1px 0 rgba(255,255,255,0.14)), 0 6px 16px rgba(0,0,0,0.10);
 }
 
 :global(.dark) .notification-dropdown {
   background-color: transparent;
   border-color: transparent;
-  box-shadow: var(--glass-inner-shadow, inset 0 1px 0 rgba(255,255,255,0.10)), 0 10px 20px -5px rgb(0 0 0 / 0.4);
+  box-shadow: var(--glass-inner-shadow, inset 0 1px 0 rgba(255,255,255,0.08)), 0 6px 16px rgba(0,0,0,0.32);
 }
 
 .dropdown-header {

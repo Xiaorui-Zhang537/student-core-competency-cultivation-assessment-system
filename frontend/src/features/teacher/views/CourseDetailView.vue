@@ -20,7 +20,7 @@
               <UserGroupIcon class="w-4 h-4 mr-2" />
               {{ t('teacher.courseDetail.buttons.students') }}
             </Button>
-            <Button variant="purple" @click="router.push({ name: 'TeacherAssignments' })">
+            <Button variant="secondary" @click="router.push({ name: 'TeacherAssignments' })">
               <ClipboardDocumentListIcon class="w-4 h-4 mr-2" />
               {{ t('teacher.courseDetail.buttons.assignments') }}
             </Button>
@@ -34,14 +34,14 @@
       <div class="w-full h-56 bg-gray-200 rounded-2xl overflow-hidden" v-if="course.coverImage">
         <img v-if="coverSrc" :src="coverSrc" :alt="t('teacher.courses.card.coverAlt')" class="w-full h-full object-cover rounded-2xl" @error="coverSrc='';" />
       </div>
-      <Card :hoverable="true" :hoverScale="false" padding="md" class="relative overflow-hidden rounded-2xl">
+      <Card :hoverable="true" :hoverScale="false" padding="md" class="relative overflow-hidden rounded-2xl" tint="info">
         <h2 class="text-xl font-semibold mb-4">{{ t('teacher.courseDetail.sections.description') }}</h2>
         <p>{{ course.description }}</p>
       </Card>
       <!-- 按需求：移除冗余的课程内容板块，仅保留描述与节次编辑 -->
 
       <!-- Lessons Editor: inline per-lesson editing for weight/video/materials/assignment binding -->
-      <Card :hoverable="true" :hoverScale="false" padding="md" class="relative overflow-hidden rounded-2xl">
+      <Card :hoverable="true" :hoverScale="false" padding="md" class="relative overflow-hidden rounded-2xl" tint="secondary">
         <div class="flex items-center justify-between mb-4">
           <h2 class="text-xl font-semibold">{{ t('teacher.courseDetail.sections.lessons') || '课程节次' }}</h2>
           <Button size="sm" variant="outline" @click="reloadLessons">
@@ -50,7 +50,7 @@
           </Button>
         </div>
         <!-- Chapters Toolbar -->
-        <div class="p-4 rounded-2xl border relative overflow-hidden" v-glass="{ strength: 'regular', interactive: true }" :class="['glass-regular glass-interactive','mb-4']">
+        <Card padding="md" tint="info" class="mb-4">
           <div class="grid grid-cols-1 md:grid-cols-3 gap-3 items-end">
             <div>
               <label class="block text-sm mb-1">{{ t('teacher.courseDetail.sections.newChapterTitle') }}</label>
@@ -69,24 +69,29 @@
           </div>
           <div class="mt-4">
             <div class="text-sm mb-2">{{ t('teacher.courseDetail.sections.chapterList') }}</div>
-            <ul class="rounded-2xl border overflow-hidden">
+            <ul class="rounded-2xl border overflow-hidden" style="background-color: color-mix(in oklab, var(--color-info) 12%, transparent);">
               <li v-for="c in chapters" :key="c.id"
                   class="p-3 flex items-center justify-between cursor-move relative"
                   draggable="true" @dragstart="onChapterDragStart(c)" @dragover.prevent @drop="onChapterDrop(c)">
-                <div class="absolute inset-0" v-glass></div>
+                <div class="absolute inset-0 rounded-2xl" v-glass></div>
                 <div class="min-w-0 relative">
                   <div class="text-sm font-medium truncate">{{ c.title }}</div>
                   <div class="text-xs text-gray-500 truncate">{{ c.description }}</div>
                 </div>
-                <span class="text-xs text-gray-400 relative">#{{ c.orderIndex }}</span>
+                <div class="relative inline-flex items-center gap-2">
+                  <span class="text-xs text-gray-400">#{{ c.orderIndex }}</span>
+                  <Button size="xs" variant="danger" icon="delete" @click.stop="deleteChapterRow(c)">
+                    {{ t('teacher.courseDetail.actions.deleteChapter') || '删除章节' }}
+                  </Button>
+                </div>
               </li>
               <li v-if="!chapters.length" class="p-3 text-center text-xs text-gray-500">{{ t('teacher.courseDetail.sections.noChapters') }}</li>
             </ul>
           </div>
-        </div>
+        </Card>
         <div class="space-y-4">
           <!-- New lesson inline form -->
-          <div class="p-4 rounded-2xl border relative overflow-hidden" v-glass="{ strength: 'regular', interactive: true }">
+          <Card padding="md" tint="info">
             <div class="grid grid-cols-1 md:grid-cols-3 gap-3 items-end">
               <div>
                 <label class="block text-sm mb-1">{{ t('teacher.courseDetail.sections.newLessonTitle') }}</label>
@@ -103,8 +108,8 @@
                 {{ t('teacher.courseDetail.actions.addLesson') }}
               </Button>
             </div>
-          </div>
-          <div v-for="l in lessons" :key="l.id" class="p-4 rounded-2xl border border-gray-300 dark:border-gray-600 relative overflow-hidden group" draggable="true" @dragstart="onDragStart(l)" @dragover.prevent @drop="onDrop(l)">
+          </Card>
+          <Card v-for="l in lessons" :key="l.id" padding="md" tint="accent" class="border border-transparent relative overflow-hidden group" draggable="true" @dragstart="onDragStart(l)" @dragover.prevent @drop="onDrop(l)">
             <div class="flex items-center gap-3">
               <div class="font-medium flex-1 truncate">{{ l.title }}</div>
               <Button size="xs" variant="danger" @click="deleteLessonRow(l)">
@@ -182,12 +187,12 @@
                 </div>
               </div>
             </div>
-          </div>
+          </Card>
           <div v-if="!lessons.length" class="text-sm text-gray-500">{{ t('teacher.courseDetail.sections.noLessons') }}</div>
         </div>
       </Card>
       <div class="grid grid-cols-1 md:grid-cols-2 gap-6 items-stretch">
-        <Card padding="md" :hoverScale="false" class="order-2 sm:order-1 h-full relative overflow-hidden rounded-2xl">
+        <Card padding="md" :hoverScale="false" class="order-2 sm:order-1 h-full relative overflow-hidden rounded-2xl" tint="accent">
           <div class="flex items-center justify-between mb-4">
             <h2 class="text-xl font-semibold leading-tight break-all">{{ t('teacher.courseDetail.sections.materials') }}</h2>
             <FileUpload
@@ -228,7 +233,7 @@
             <Button size="sm" variant="outline" :disabled="materialsPage===materialsTotalPages" @click="materialsPage++">{{ t('teacher.courseDetail.sections.next') }}</Button>
           </div>
         </Card>
-        <Card padding="md" :hoverScale="false" class="order-1 sm:order-2 h-full relative overflow-hidden rounded-2xl">
+        <Card padding="md" :hoverScale="false" class="order-1 sm:order-2 h-full relative overflow-hidden rounded-2xl" tint="warning">
           <div class="flex items-center justify-between mb-4">
             <h2 class="text-xl font-semibold leading-tight break-all">{{ t('teacher.courseDetail.sections.videos') }}</h2>
             <FileUpload
@@ -278,7 +283,7 @@
   </div>
 
   <!-- Video Picker Modal (GlassModal) -->
-  <GlassModal v-if="videoPickerVisible" :title="t('teacher.courseDetail.actions.selectVideoTitle') as string" maxWidth="max-w-lg" heightVariant="normal" @close="videoPickerVisible = false">
+  <GlassModal v-if="videoPickerVisible" :title="t('teacher.courseDetail.actions.selectVideoTitle') as string" size="sm" heightVariant="normal" solidBody @close="videoPickerVisible = false">
     <div>
       <GlassSearchInput v-model="videoQuery" :placeholder="t('teacher.courseDetail.sections.searchVideo') as string" size="sm" />
       <ul class="divide-y divide-gray-200 overflow-y-auto" style="max-height: 55vh;">
@@ -310,7 +315,7 @@
   </GlassModal>
   
   <!-- Material Picker Modal (GlassModal) -->
-  <GlassModal v-if="materialPickerVisible" :title="t('teacher.courseDetail.sections.materials') as string" maxWidth="max-w-3xl" heightVariant="compact" @close="materialPickerVisible = false">
+  <GlassModal v-if="materialPickerVisible" :title="t('teacher.courseDetail.sections.materials') as string" size="lg" heightVariant="compact" solidBody @close="materialPickerVisible = false">
     <div>
       <GlassSearchInput v-model="materialQuery" :placeholder="t('teacher.courseDetail.sections.searchMaterial') as string" size="sm" />
       <ul class="divide-y divide-gray-200 overflow-y-auto" style="max-height: 55vh;">
@@ -854,6 +859,25 @@ const deleteLessonRow = async (l: any) => {
     lessons.value = lessons.value.filter(x => x.id !== l.id)
   } catch (e) {
     console.error('删除节次失败', e)
+  }
+}
+
+// 删除章节
+const deleteChapterRow = async (c: any) => {
+  if (!confirm(t('teacher.courseDetail.confirm.deleteChapter') || '确认删除该章节？')) return
+  try {
+    await chapterApi.remove(String(c.id))
+    chapters.value = chapters.value.filter(x => x.id !== c.id)
+    // 若有节次指向该章节，前端同时清空其 chapterId 并保存（与后端一致性）
+    try {
+      const affected = lessons.value.filter((l:any)=> String(l._chapterId||'') === String(c.id))
+      for (const l of affected) {
+        l._chapterId = ''
+        await lessonApi.updateLesson(String(l.id), { chapterId: null } as any)
+      }
+    } catch {}
+  } catch (e) {
+    console.error('删除章节失败', e)
   }
 }
 

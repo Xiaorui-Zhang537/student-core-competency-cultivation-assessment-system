@@ -38,7 +38,16 @@
   /* Borders and highlights */
   --glass-border-color: rgba(255, 255, 255, 0.30);
   --glass-inner-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.25);
-  --glass-outer-shadow: 0 8px 30px rgba(0, 0, 0, 0.08);
+  --glass-outer-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
+
+  /* 彩色玻璃（新主题默认启用占位变量；旧主题不使用） */
+  --glass-tint-primary: color-mix(in oklab, var(--color-primary) 22%, transparent);
+  --glass-tint-secondary: color-mix(in oklab, var(--color-secondary) 18%, transparent);
+  --glass-tint-accent: color-mix(in oklab, var(--color-accent) 18%, transparent);
+  --glass-tint-success: color-mix(in oklab, var(--color-success) 18%, transparent);
+  --glass-tint-warning: color-mix(in oklab, var(--color-warning) 18%, transparent);
+  --glass-tint-error: color-mix(in oklab, var(--color-error) 18%, transparent);
+  --glass-tint-info: color-mix(in oklab, var(--color-info) 18%, transparent);
 }
 
 /* Dark mode tokens */
@@ -76,7 +85,16 @@
   /* Borders and highlights (lower intensity to avoid halos) */
   --glass-border-color: rgba(255, 255, 255, 0.12);
   --glass-inner-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06);
-  --glass-outer-shadow: 0 10px 30px rgba(0, 0, 0, 0.30);
+  --glass-outer-shadow: 0 6px 22px rgba(0, 0, 0, 0.22);
+
+  /* 暗色下适当提高色彩饱和覆盖比例避免偏灰 */
+  --glass-tint-primary: color-mix(in oklab, var(--color-primary) 28%, transparent);
+  --glass-tint-secondary: color-mix(in oklab, var(--color-secondary) 24%, transparent);
+  --glass-tint-accent: color-mix(in oklab, var(--color-accent) 24%, transparent);
+  --glass-tint-success: color-mix(in oklab, var(--color-success) 24%, transparent);
+  --glass-tint-warning: color-mix(in oklab, var(--color-warning) 24%, transparent);
+  --glass-tint-error: color-mix(in oklab, var(--color-error) 24%, transparent);
+  --glass-tint-info: color-mix(in oklab, var(--color-info) 24%, transparent);
 }
 
 /* Mobile weakening: reduce blur/contrast/saturate for performance */

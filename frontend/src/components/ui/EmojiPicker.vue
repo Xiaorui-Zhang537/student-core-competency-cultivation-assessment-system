@@ -1,7 +1,7 @@
 <template>
   <div class="relative inline-block" ref="btnRef">
-    <Button :size="size" :variant="variant" class="flex items-center" @click="toggle">
-      <FaceSmileIcon class="w-5 h-5 mr-1" />
+    <Button :size="size" :variant="btnVariant" class="flex items-center" @click="toggle">
+      <face-smile-icon class="w-5 h-5 mr-1" />
       {{ t('shared.emojiPicker.button') }}
     </Button>
   </div>
@@ -9,27 +9,30 @@
     <div
       v-if="open"
       ref="panelRef"
-      class="fixed z-[9999] p-2 w-60 max-h-56 overflow-auto rounded-xl grid grid-cols-8 gap-1 no-scrollbar"
-      v-glass="{ strength: 'regular', interactive: true }"
+      class="fixed z-[20050] p-2 w-60 max-h-56 overflow-auto rounded-2xl grid grid-cols-8 gap-1 no-scrollbar ui-popover-menu"
+      :class="tintClass"
+      v-glass="{ strength: 'thin', interactive: false }"
       :style="{ left: `${pos.left}px`, top: `${pos.top}px` }"
     >
-      <button v-for="(e, idx) in emojis" :key="idx" type="button" class="text-xl rounded hover:bg-white/40 dark:hover:bg-slate-700/50 transition-colors" @click="pick(e)">{{ e }}</button>
+      <button v-for="(e, idx) in emojis" :key="idx" type="button" class="text-xl rounded hover:bg-white/20 dark:hover:bg-white/10 transition-colors" @click="pick(e)">{{ e }}</button>
     </div>
   </teleport>
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onBeforeUnmount, nextTick } from 'vue'
+import { ref, onMounted, onBeforeUnmount, nextTick, computed } from 'vue'
 import { FaceSmileIcon } from '@heroicons/vue/24/outline'
 // @ts-ignore shim for vue-i18n types in this project
 import { useI18n } from 'vue-i18n'
 import Button from '@/components/ui/Button.vue'
+import LiquidGlass from '@/components/ui/LiquidGlass.vue'
 
 const emit = defineEmits<{ (e: 'emoji', emoji: string): void; (e: 'select', emoji: string): void }>()
 
-const props = withDefaults(defineProps<{ size?: 'xs'|'sm'|'md'; variant?: 'ghost'|'outline'|'secondary' }>(), {
+const props = withDefaults(defineProps<{ size?: 'xs'|'sm'|'md'; variant?: 'ghost'|'outline'|'secondary'; tint?: 'primary'|'secondary'|'accent'|'info'|'success'|'warning'|'danger'|null }>(), {
   size: 'sm',
-  variant: 'ghost'
+  variant: 'ghost',
+  tint: 'primary'
 })
 
 const open = ref(false)
@@ -37,6 +40,8 @@ const btnRef = ref<HTMLElement | null>(null)
 const panelRef = ref<HTMLElement | null>(null)
 const pos = ref({ left: 0, top: 0 })
 const { t } = useI18n()
+const btnVariant = computed(() => props.variant || 'ghost')
+const tintClass = computed(() => props.tint ? `glass-tint-${props.tint}` : '')
 const emojis = [
   // Smileys & Emotion
   '😀','😁','😂','🤣','😃','😄','😅','😆','😉','😊','😋','😎','😍','😘','😗','😙','😚','🙂','🤗','🤩','🥳','😏','😒','🙄','😬','😌','😔','😪','🤤','😴','🤒','🤕','🤢','🤮','🤧','😷','🥵','🥶','🥴','😵','🤯','🤠','🥹','😭','😤','😠','😡','🤬','😇','🤔','🤨','🫤','🫠','😐','😑','😶','😮‍💨','😮','😲','😳','🥺','😱','😨','😰','😥','😓','🤥','🤫','🤭','🫢','🫣','🤐','😈','👿','💀','☠️','👻','👽','🤖',

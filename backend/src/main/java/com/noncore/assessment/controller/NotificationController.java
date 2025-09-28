@@ -151,9 +151,10 @@ public class NotificationController extends BaseController {
     public ResponseEntity<ApiResponse<PageResult<Notification>>> getConversation(
             @RequestParam("peerId") Long peerId,
             @RequestParam(value = "page", defaultValue = "1") Integer page,
-            @RequestParam(value = "size", defaultValue = "20") Integer size
+            @RequestParam(value = "size", defaultValue = "20") Integer size,
+            @RequestParam(value = "courseId", required = false) Long courseId
     ) {
-        PageResult<Notification> result = notificationService.getConversation(getCurrentUserId(), peerId, page, size);
+        PageResult<Notification> result = notificationService.getConversation(getCurrentUserId(), peerId, page, size, courseId);
         return ResponseEntity.ok(ApiResponse.success(result));
     }
 
@@ -163,8 +164,10 @@ public class NotificationController extends BaseController {
     @PostMapping("/conversation/read")
     @Operation(summary = "标记会话已读")
     @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<ApiResponse<Map<String, Object>>> readConversation(@RequestParam("peerId") Long peerId) {
-        int count = notificationService.markConversationAsRead(getCurrentUserId(), peerId);
+    public ResponseEntity<ApiResponse<Map<String, Object>>> readConversation(
+            @RequestParam("peerId") Long peerId,
+            @RequestParam(value = "courseId", required = false) Long courseId) {
+        int count = notificationService.markConversationAsRead(getCurrentUserId(), peerId, courseId);
         return ResponseEntity.ok(ApiResponse.success(Map.of("marked", count)));
     }
     /**
@@ -247,7 +250,14 @@ public class NotificationController extends BaseController {
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<ApiResponse<Notification>> sendMessage(@RequestBody NotificationRequest request) {
         Long senderId = getCurrentUserId();
-        Notification n = notificationService.sendMessage(senderId, request.getRecipientId(), request.getContent(), request.getRelatedType(), request.getRelatedId());
+        Notification n = notificationService.sendMessage(
+            senderId,
+            request.getRecipientId(),
+            request.getContent(),
+            request.getRelatedType(),
+            request.getRelatedId(),
+            request.getAttachmentFileIds()
+        );
         return ResponseEntity.ok(ApiResponse.success(n));
     }
 } 

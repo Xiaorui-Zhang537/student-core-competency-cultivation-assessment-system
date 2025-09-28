@@ -5,27 +5,27 @@
       <nav class="text-sm text-gray-600 dark:text-gray-300 mb-2 flex items-center gap-1">
         <a href="javascript:void(0)" class="hover:underline" @click.prevent="goCourses">{{ t('teacher.courses.breadcrumb') || '课程管理' }}</a>
         <template v-if="courseTitle">
-          <ChevronRightIcon class="w-4 h-4 opacity-70" />
+          <chevron-right-icon class="w-4 h-4 opacity-70" />
           <a href="javascript:void(0)" class="hover:underline" @click.prevent="goCourseDetail">{{ courseTitle }}</a>
         </template>
-        <ChevronRightIcon class="w-4 h-4 opacity-70" />
+        <chevron-right-icon class="w-4 h-4 opacity-70" />
         <a href="javascript:void(0)" class="hover:underline" @click.prevent="goAssignments">{{ t('teacher.assignments.breadcrumb.self') || '作业管理' }}</a>
-        <ChevronRightIcon class="w-4 h-4 opacity-70" />
+        <chevron-right-icon class="w-4 h-4 opacity-70" />
         <span class="opacity-80">{{ t('teacher.aiGrading.title') || 'AI 批改作业' }}</span>
       </nav>
-      <PageHeader :title="t('teacher.aiGrading.title')" :subtitle="t('teacher.aiGrading.subtitle')">
+      <page-header :title="t('teacher.aiGrading.title')" :subtitle="t('teacher.aiGrading.subtitle')">
         <template #actions>
           <div class="flex items-center gap-3 flex-wrap">
             <div class="flex items-center gap-2">
               <span class="text-xs text-gray-600 dark:text-gray-300">{{ t('teacher.ai.model.label') }}</span>
-              <GlassPopoverSelect v-model="gradingModel" :options="gradingModelOptions" size="sm" />
+              <glass-popover-select v-model="gradingModel" :options="gradingModelOptions" size="sm" />
             </div>
-            <Button variant="success" class="whitespace-nowrap" @click="exportActiveAsText" :disabled="!activeItem || !activeItem.result"><ArrowDownTrayIcon class="w-4 h-4 mr-2" />{{ t('teacher.aiGrading.exportText') || '导出文本' }}</Button>
-            <Button variant="purple" class="whitespace-nowrap" @click="goHistory"><ClockIcon class="w-4 h-4 mr-2" />{{ t('teacher.aiGrading.history') || '历史记录' }}</Button>
-            <Button variant="primary" class="whitespace-nowrap" :disabled="pending || files.length===0" @click="startGrading"><PlayIcon class="w-4 h-4 mr-2" />{{ t('teacher.aiGrading.start') }}</Button>
+            <Button variant="success" class="whitespace-nowrap" @click="exportActiveAsText" :disabled="!activeItem || !activeItem.result"><arrow-down-tray-icon class="w-4 h-4 mr-2" />{{ t('teacher.aiGrading.exportText') || '导出文本' }}</Button>
+            <Button variant="purple" class="whitespace-nowrap" @click="goHistory"><clock-icon class="w-4 h-4 mr-2" />{{ t('teacher.aiGrading.history') || '历史记录' }}</Button>
+            <Button variant="primary" class="whitespace-nowrap" :disabled="pending || files.length===0" @click="startGrading"><play-icon class="w-4 h-4 mr-2" />{{ t('teacher.aiGrading.start') }}</Button>
           </div>
         </template>
-      </PageHeader>
+      </page-header>
 
       
 
@@ -33,17 +33,17 @@
         <div class="lg:col-span-1">
           <div class="card p-4 space-y-4" v-glass="{ strength: 'regular', interactive: true }">
             <h3 class="font-medium">{{ t('teacher.aiGrading.inputTitle') }}</h3>
-            <FileUpload multiple accept=".txt,.doc,.docx,.pdf" @files-selected="onFilesSelected"/>
+            <file-upload multiple accept=".txt,.doc,.docx,.pdf" @files-selected="onFilesSelected"/>
             <div class="space-y-2">
-              <GlassTextarea v-model="textDraft" :rows="5" class="w-full" :placeholder="t('teacher.aiGrading.pastePlaceholder') as string" />
+              <glass-textarea v-model="textDraft" :rows="5" class="w-full" :placeholder="t('teacher.aiGrading.pastePlaceholder') as string" />
               <div class="flex items-center gap-2">
-                <Button variant="warning" size="sm" class="whitespace-nowrap" @click="addTextItem" :disabled="!textDraft.trim()"><PlusIcon class="w-4 h-4 mr-1" />{{ t('teacher.aiGrading.addText') }}</Button>
+                <Button variant="warning" size="sm" class="whitespace-nowrap" @click="addTextItem" :disabled="!textDraft.trim()"><plus-icon class="w-4 h-4 mr-1" />{{ t('teacher.aiGrading.addText') }}</Button>
                 <span class="text-xs text-gray-500" v-if="textDraft.trim().length">{{ textDraft.trim().length }} 字符</span>
               </div>
             </div>
             <div class="flex items-center gap-2">
-              <Button variant="teal" class="whitespace-nowrap" @click="openPicker"><InboxArrowDownIcon class="w-4 h-4 mr-2" />{{ t('teacher.aiGrading.pickFromSubmissions') }}</Button>
-              <Button variant="danger" class="whitespace-nowrap" @click="clearAll" :disabled="files.length===0"><XMarkIcon class="w-4 h-4 mr-2" />{{ t('teacher.aiGrading.clearAll') }}</Button>
+              <Button variant="teal" class="whitespace-nowrap" @click="openPicker"><inbox-arrow-down-icon class="w-4 h-4 mr-2" />{{ t('teacher.aiGrading.pickFromSubmissions') }}</Button>
+              <Button variant="danger" class="whitespace-nowrap" @click="clearAll" :disabled="files.length===0"><x-mark-icon class="w-4 h-4 mr-2" />{{ t('teacher.aiGrading.clearAll') }}</Button>
             </div>
             <ul class="divide-y divide-white/10 dark:divide-white/10 max-h-60 overflow-auto no-scrollbar pr-1">
               <li v-for="(f, idx) in files" :key="f.id" class="py-2 flex items-center justify-between cursor-pointer rounded-md px-2 transition-colors"
@@ -54,8 +54,8 @@
                   <div class="text-xs text-gray-600 dark:text-gray-300">{{ renderStatus(f) }}</div>
                 </div>
                 <div class="flex items-center gap-2">
-                  <Button size="sm" variant="ghost" class="whitespace-nowrap" @click.stop="retryOne(f)" v-if="f.error"><ArrowPathIcon class="w-4 h-4 mr-1" />{{ t('teacher.aiGrading.retry') }}</Button>
-                  <Button size="sm" variant="danger" class="whitespace-nowrap" @click.stop="removeOne(f)"><TrashIcon class="w-4 h-4 mr-1" />{{ t('teacher.aiGrading.remove') }}</Button>
+                  <Button size="sm" variant="ghost" class="whitespace-nowrap" @click.stop="retryOne(f)" v-if="f.error"><arrow-path-icon class="w-4 h-4 mr-1" />{{ t('teacher.aiGrading.retry') }}</Button>
+                  <Button size="sm" variant="danger" class="whitespace-nowrap" @click.stop="removeOne(f)"><trash-icon class="w-4 h-4 mr-1" />{{ t('teacher.aiGrading.remove') }}</Button>
                 </div>
               </li>
             </ul>
@@ -125,10 +125,10 @@
       </div>
 
       <!-- Picker Modal (GlassModal) -->
-      <GlassModal v-if="modalOpen" :title="t('teacher.aiGrading.picker.title') as string" maxWidth="max-w-5xl" heightVariant="normal" @close="modalOpen=false">
+      <glass-modal v-if="modalOpen" :title="t('teacher.aiGrading.picker.title') as string" size="xl" heightVariant="normal" @close="modalOpen=false">
         <div class="picker-controls flex items-center gap-4 flex-wrap md:flex-nowrap mb-4">
-          <GlassPopoverSelect :label="t('teacher.aiGrading.picker.assignment') || '作业选择'" :options="assignmentOptions" v-model="picker.assignmentId" size="sm" width="clamp(240px, 36vw, 420px)" :truncate-label="false" :placeholder="(t('common.pleaseSelect') || '请选择') + (t('teacher.assignments.title') || '作业')" />
-          <GlassPopoverSelect :label="t('teacher.aiGrading.picker.student') || '学生'" :options="picker.students" v-model="picker.studentId" size="sm" width="clamp(240px, 36vw, 420px)" :truncate-label="false" :placeholder="(t('common.pleaseSelect') || '请选择') + (t('teacher.aiGrading.picker.student') || '学生')" />
+          <glass-popover-select :label="t('teacher.aiGrading.picker.assignment') || '作业选择'" :options="assignmentOptions" v-model="picker.assignmentId" size="sm" width="clamp(200px, 28vw, 320px)" :fullWidth="false" :truncate-label="false" :placeholder="(t('common.pleaseSelect') || '请选择') + (t('teacher.assignments.title') || '作业')" />
+          <glass-popover-select :label="t('teacher.aiGrading.picker.student') || '学生'" :options="picker.students" v-model="picker.studentId" size="sm" width="clamp(200px, 28vw, 320px)" :fullWidth="false" :truncate-label="false" :placeholder="(t('common.pleaseSelect') || '请选择') + (t('teacher.aiGrading.picker.student') || '学生')" />
         </div>
 
         <div class="grid grid-cols-1 gap-3" v-if="picker.studentId">
@@ -141,8 +141,8 @@
                   <input type="checkbox" v-model="picker.useText" :disabled="!picker.preview.text" />
                   <span>{{ t('teacher.aiGrading.picker.useText') || '使用文本内容' }}</span>
                 </label>
-                <Button size="sm" variant="indigo" @click="selectAllFiles" :disabled="!picker.preview.files.length"><PlusIcon class="w-4 h-4 mr-1" />{{ t('teacher.aiGrading.picker.selectAllFiles') || '全选附件' }}</Button>
-                <Button size="sm" variant="danger" @click="clearSelectedFiles" :disabled="!picker.selectedFileIds.length"><XMarkIcon class="w-4 h-4 mr-1" />{{ t('teacher.aiGrading.picker.clearFiles') || '清空选择' }}</Button>
+                <Button size="sm" variant="indigo" @click="selectAllFiles" :disabled="!picker.preview.files.length"><plus-icon class="w-4 h-4 mr-1" />{{ t('teacher.aiGrading.picker.selectAllFiles') || '全选附件' }}</Button>
+                <Button size="sm" variant="danger" @click="clearSelectedFiles" :disabled="!picker.selectedFileIds.length"><x-mark-icon class="w-4 h-4 mr-1" />{{ t('teacher.aiGrading.picker.clearFiles') || '清空选择' }}</Button>
               </div>
             </div>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -171,17 +171,17 @@
 
           <!-- Action Bar -->
           <div class="flex items-center justify-end gap-2">
-            <Button size="sm" variant="teal" @click="loadSubmissions"><ArrowPathIcon class="w-4 h-4 mr-1" />{{ t('teacher.aiGrading.picker.reload') || '重新加载' }}</Button>
-            <Button size="sm" variant="primary" @click="addSelected" :disabled="!canAddFromPreview"><PlusIcon class="w-4 h-4 mr-1" />{{ t('teacher.aiGrading.picker.addSelected') }}</Button>
+            <Button size="sm" variant="teal" @click="loadSubmissions"><arrow-path-icon class="w-4 h-4 mr-1" />{{ t('teacher.aiGrading.picker.reload') || '重新加载' }}</Button>
+            <Button size="sm" variant="primary" @click="addSelected" :disabled="!canAddFromPreview"><plus-icon class="w-4 h-4 mr-1" />{{ t('teacher.aiGrading.picker.addSelected') }}</Button>
           </div>
         </div>
 
         <div v-else class="text-xs text-gray-500">{{ t('teacher.aiGrading.picker.hint') || '请选择作业与学生以预览提交' }}</div>
 
         <template #footer>
-          <Button size="sm" variant="secondary" @click="modalOpen=false"><XMarkIcon class="w-4 h-4 mr-1" />{{ t('teacher.aiGrading.picker.close') }}</Button>
+          <Button size="sm" variant="secondary" @click="modalOpen=false"><x-mark-icon class="w-4 h-4 mr-1" />{{ t('teacher.aiGrading.picker.close') }}</Button>
         </template>
-      </GlassModal>
+      </glass-modal>
     </div>
   </div>
 </template>

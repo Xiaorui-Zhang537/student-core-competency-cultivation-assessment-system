@@ -1994,3 +1994,21 @@ ON DUPLICATE KEY UPDATE
 DROP TEMPORARY TABLE IF EXISTS tmp_last_ids;
 DROP TEMPORARY TABLE IF EXISTS tmp_conv_keys;
 DROP TEMPORARY TABLE IF EXISTS tmp_chat_msgs;
+
+/* ================================
+   Chat Message Attachments Schema
+   ================================ */
+
+-- 聊天消息附件表：将消息（notifications.type='message'）与通用文件表 file_records 关联
+-- 说明：messages 当前复用 notifications 持久化，附件以结构化方式记录在本表
+CREATE TABLE chat_message_attachments (
+  id            BIGINT PRIMARY KEY AUTO_INCREMENT COMMENT '主键',
+  notification_id BIGINT NOT NULL COMMENT '消息ID（notifications.id）',
+  file_id       BIGINT NOT NULL COMMENT '文件ID（file_records.id）',
+  uploader_id   BIGINT NOT NULL COMMENT '上传者用户ID',
+  created_at    DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+  UNIQUE KEY uk_msg_file (notification_id, file_id),
+  KEY idx_file (file_id),
+  CONSTRAINT fk_cma_notification FOREIGN KEY (notification_id) REFERENCES notifications(id) ON DELETE CASCADE,
+  CONSTRAINT fk_cma_file FOREIGN KEY (file_id) REFERENCES file_records(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='聊天消息附件表';

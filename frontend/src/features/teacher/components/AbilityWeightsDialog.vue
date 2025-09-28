@@ -1,5 +1,5 @@
 <template>
-  <GlassModal v-if="open" :title="t('teacher.analytics.weights.title') as string" maxWidth="max-w-md" heightVariant="compact" @close="$emit('close')">
+  <glass-modal v-if="open" :title="t('teacher.analytics.weights.title') as string" :maxWidth="'max-w-[1600px]'" heightVariant="normal" solidBody @close="$emit('close')">
     <div class="space-y-3">
       <div v-for="d in dims" :key="d.code" class="flex items-center justify-between">
         <span class="text-sm">{{ t(`teacher.analytics.weights.dimensions.${d.code}`) }}</span>
@@ -10,7 +10,7 @@
       <Button variant="secondary" @click="$emit('close')">{{ t('teacher.analytics.weights.cancel') }}</Button>
       <Button variant="primary" @click="save" :disabled="!valid || saving">{{ t('teacher.analytics.weights.save') }}</Button>
     </template>
-  </GlassModal>
+  </glass-modal>
 </template>
 
 <script setup lang="ts">

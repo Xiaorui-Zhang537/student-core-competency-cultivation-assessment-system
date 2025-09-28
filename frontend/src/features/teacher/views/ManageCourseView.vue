@@ -12,10 +12,9 @@
       </PageHeader>
 
       <!-- Filters -->
-      <div class="mb-6 filter-container p-4 rounded-2xl" v-glass="{ strength: 'thin', interactive: false }">
-        <div class="flex items-center justify-between gap-4 flex-wrap">
-          <!-- 左侧：难度排序（最前）+ 状态分段药丸 -->
-          <div class="flex items-center gap-4 flex-wrap">
+      <FilterBar tint="info" align="center" :dense="false" class="mb-6 h-19">
+        <template #left>
+          <div class="flex items-center gap-3 flex-wrap">
             <div class="w-auto flex items-center gap-2">
               <span class="text-xs font-medium leading-tight text-gray-700 dark:text-gray-300">{{ t('teacher.courses.filters.sortDifficultyLabel') || '难度排序' }}</span>
               <div class="w-48">
@@ -26,34 +25,37 @@
                 />
               </div>
             </div>
-          <SegmentedPills
-            :model-value="filters.status"
-            :options="statusOptions"
-            size="sm"
-            @update:modelValue="(v:any) => setStatus(v)"
-          />
+            <SegmentedPills
+              :model-value="filters.status"
+              :options="statusOptions"
+              size="sm"
+              @update:modelValue="(v:any) => setStatus(v)"
+            />
           </div>
-          <!-- 右侧：搜索框（右对齐） -->
-          <div class="w-56 ml-auto">
+        </template>
+        <template #right>
+          <div class="relative w-56">
             <GlassSearchInput
               v-model="filters.query"
               :placeholder="t('teacher.courses.filters.searchPlaceholder') as string"
               size="sm"
               @update:modelValue="applyFilters()"
             />
-        </div>
-      </div>
-      </div>
+          </div>
+        </template>
+      </FilterBar>
 
       <!-- Course List -->
       <div v-if="courseStore.loading" class="text-center py-12">
         <p>{{ t('teacher.courses.loading') }}</p>
       </div>
-      <div v-else class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        <div
+      <div v-else class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-4">
+        <Card
           v-for="course in displayedCourses"
           :key="course.id"
-          class="relative card overflow-hidden cursor-pointer transition-all duration-300 hover:shadow-md hover:-translate-y-0.5 rounded-2xl"
+          class="relative overflow-hidden cursor-pointer transition-all duration-300 hover:shadow-md hover:-translate-y-0.5"
+          tint="primary"
+          padding="none"
           @click="navigateToCourse(course)"
         >
           <div class="h-40 bg-gray-100 dark:bg-gray-700 overflow-hidden relative rounded-2xl">
@@ -93,20 +95,20 @@
               </div>
             </div>
           </div>
-        </div>
+        </Card>
       </div>
-      <div v-if="!courseStore.loading && courseStore.courses.length === 0" class="text-center py-12 card">
+      <Card v-if="!courseStore.loading && courseStore.courses.length === 0" class="text-center py-12" tint="info">
         <h3 class="text-lg font-medium">{{ t('teacher.courses.empty.title') }}</h3>
         <p class="text-gray-500 mb-4">{{ t('teacher.courses.empty.description') }}</p>
         <Button variant="primary" @click="openCreateModal">
           <PlusIcon class="w-4 h-4 mr-2" />
           {{ t('teacher.courses.actions.create') }}
         </Button>
-      </div>
+      </Card>
 
       <!-- Create/Edit Modal (GlassModal) -->
-      <GlassModal v-if="showModal" :title="(isEditing ? t('teacher.courses.modal.editTitle') : t('teacher.courses.modal.createTitle')) as string" maxWidth="max-w-xl" heightVariant="tall" @close="closeModal">
-        <form @submit.prevent="handleSubmit" class="space-y-4">
+      <GlassModal v-if="showModal" :title="(isEditing ? t('teacher.courses.modal.editTitle') : t('teacher.courses.modal.createTitle')) as string" size="md" heightVariant="tall" solidBody @close="closeModal">
+        <form id="courseForm" @submit.prevent="handleSubmit" class="space-y-4">
           <div>
             <label for="title" class="block text-sm font-medium mb-1">{{ t('teacher.courses.modal.title') }}</label>
             <GlassInput id="title" v-model="form.title" type="text" />
@@ -122,11 +124,13 @@
           <div>
             <label class="block text-sm font-medium mb-1">{{ t('teacher.courses.modal.status') || '状态' }}</label>
             <div class="w-full md:w-64">
-              <div class="inline-flex whitespace-nowrap rounded-2xl overflow-hidden border border-white/30 dark:border-white/10 glass-ultraThin" v-glass="{ strength: 'ultraThin', interactive: false }">
-                <button type="button" @click="form.status='draft'" :class="statusPickClass('draft')">{{ t('teacher.courses.status.draft') }}</button>
-                <button type="button" @click="form.status='published'" :class="statusPickClass('published')">{{ t('teacher.courses.status.published') }}</button>
-                <button type="button" @click="form.status='archived'" :class="statusPickClass('archived')">{{ t('teacher.courses.status.archived') }}</button>
-              </div>
+              <SegmentedPills
+                :model-value="form.status"
+                :options="statusPillOptions"
+                size="sm"
+                variant="primary"
+                @update:modelValue="(v:any) => form.status = v as any"
+              />
             </div>
           </div>
           <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -139,7 +143,7 @@
             <div>
               <label class="block text-sm font-medium mb-1">{{ t('teacher.courses.difficulty') || '难度' }}</label>
               <div class="w-full md:w-64">
-                <SegmentedPills :model-value="(form as any).difficulty || 'beginner'" :options="difficultyOptions" size="sm" @update:modelValue="(v:any)=> (form as any).difficulty = String(v)" />
+              <SegmentedPills :model-value="(form as any).difficulty || 'beginner'" :options="difficultyOptions" size="sm" variant="accent" @update:modelValue="(v:any)=> (form as any).difficulty = String(v)" />
               </div>
             </div>
             <div>
@@ -180,13 +184,13 @@
             />
             <p v-if="form.coverImage" class="text-xs text-gray-500 mt-2">{{ t('teacher.courses.modal.coverPicked', { id: form.coverImage }) }}</p>
           </div>
-          <div class="flex justify-end space-x-3 mt-6">
-            <Button type="button" variant="secondary" @click="closeModal">{{ t('teacher.courses.modal.cancel') }}</Button>
-            <Button type="submit" :disabled="courseStore.loading" variant="primary">
-              {{ isEditing ? t('teacher.courses.actions.save') : t('teacher.courses.actions.create') }}
-            </Button>
-          </div>
         </form>
+        <template #footer>
+          <Button type="button" variant="secondary" @click="closeModal">{{ t('teacher.courses.modal.cancel') }}</Button>
+          <Button type="submit" form="courseForm" :disabled="courseStore.loading" variant="primary">
+            {{ isEditing ? t('teacher.courses.actions.save') : t('teacher.courses.actions.create') }}
+          </Button>
+        </template>
       </GlassModal>
     
     <!-- root wrapper close -->
@@ -221,10 +225,12 @@ import GlassTextarea from '@/components/ui/inputs/GlassTextarea.vue'
 import GlassModal from '@/components/ui/GlassModal.vue'
 import GlassMultiSelect from '@/components/ui/filters/GlassMultiSelect.vue'
 import GlassPopoverSelect from '@/components/ui/filters/GlassPopoverSelect.vue'
+import FilterBar from '@/components/ui/filters/FilterBar.vue'
 import Badge from '@/components/ui/Badge.vue'
 import SegmentedPills from '@/components/ui/SegmentedPills.vue'
 import GlassTagsInput from '@/components/ui/inputs/GlassTagsInput.vue'
 import GlassDateTimePicker from '@/components/ui/inputs/GlassDateTimePicker.vue'
+import Card from '@/components/ui/Card.vue'
 
 const courseStore = useCourseStore();
 const authStore = useAuthStore();
@@ -430,20 +436,18 @@ function tagVariant(tag: string): 'info' | 'primary' | 'danger' | 'warning' | 's
   return palette[idx]
 }
 
-function statusPickClass(val: 'draft'|'published'|'archived') {
-  const active = form.status === val
-  return [
-    'px-3 py-2 text-sm transition-colors focus:outline-none',
-    active ? 'text-white bg-primary-500/30' : 'text-gray-800 dark:text-gray-200 hover:bg-white/10'
-  ]
-}
-
 function normalizeStatus(s: any): 'draft'|'published'|'archived' {
   const v = String(s || '').toLowerCase()
   if (v === 'published') return 'published'
   if (v === 'archived') return 'archived'
   return 'draft'
 }
+
+const statusPillOptions = computed(() => [
+  { label: t('teacher.courses.status.draft') as string, value: 'draft' },
+  { label: t('teacher.courses.status.published') as string, value: 'published' },
+  { label: t('teacher.courses.status.archived') as string, value: 'archived' }
+])
 
 const navigateToCourse = (course: Course) => {
     if (course && course.id) {

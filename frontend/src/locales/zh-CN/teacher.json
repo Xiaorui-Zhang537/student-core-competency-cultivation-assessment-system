@@ -129,7 +129,8 @@
 				"byCourse": "按课程筛选",
 				"selectCourse": "请选择课程",
 				"statusLabel": "状态",
-				"statusPlaceholder": "请选择状态"
+				"statusPlaceholder": "请选择状态",
+				"all": "全部"
 			},
 			"searchPlaceholder": "搜索作业",
 			"status": {
@@ -399,6 +400,24 @@
 			},
 			"actions": {
 				"returnForResubmit": "打回重做"
+			},
+			"sidebar": {
+				"viewProfile": "查看学生档案",
+				"contact": "联系学生",
+				"otherSubmissions": "查看其它提交",
+				"export": "导出提交",
+				"report": "举报疑似抄袭"
+			},
+			"ai": {
+				"title": "AI 批改",
+				"applySuggestion": "一键应用",
+				"viewDetail": "查看详情",
+				"open": "AI 批改",
+				"badge": "AI 分析",
+				"hint": "点击下方按钮，基于当前提交生成 AI 建议与能力维度分析。",
+				"suggestedScore": "建议分数",
+				"analysis": "AI 分析",
+				"improvements": "改进建议"
 			},
 			"notify": {
 				"gradeSuccess": "评分成功",
@@ -841,7 +860,8 @@
 				"selectMaterialShort": "选资料",
 				"saveMaterials": "保存资料绑定",
 				"savePlayback": "保存播放设置",
-				"deleteLesson": "删除节次"
+				"deleteLesson": "删除节次",
+				"deleteChapter": "删除章节"
 			},
 			"notFound": {
 				"title": "未找到课程",
@@ -849,7 +869,8 @@
 			},
 			"confirm": {
 				"deleteFile": "确认删除该文件？此操作不可撤销。",
-				"deleteLesson": "确认删除该节次？此操作不可撤销。"
+				"deleteLesson": "确认删除该节次？此操作不可撤销。",
+				"deleteChapter": "确认删除该章节？此操作不可撤销。"
 			}
 			,
 			"notify": {

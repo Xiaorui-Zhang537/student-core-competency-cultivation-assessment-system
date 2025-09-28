@@ -31,7 +31,7 @@
       <div class="text-center flex flex-col items-center justify-center h-full" :style="dense ? { aspectRatio: '16 / 10' } : {}">
         <!-- 上传图标 -->
         <div class="mb-3">
-          <CloudArrowUpIcon 
+          <cloud-arrow-up-icon 
             v-if="!uploading"
             :class="['mx-auto text-gray-400', dense ? 'h-6 w-6' : (compact ? 'h-8 w-8' : 'h-12 w-12')]"
           />
@@ -73,7 +73,7 @@
           type="button"
           :disabled="disabled"
         >
-          <PhotoIcon :class="[dense ? 'w-3 h-3' : (compact ? 'w-3 h-3' : 'w-4 h-4'), 'mr-2']" />
+          <photo-icon :class="[dense ? 'w-3 h-3' : (compact ? 'w-3 h-3' : 'w-4 h-4'), 'mr-2']" />
           {{ t('shared.upload.select') }}
         </Button>
 
@@ -83,7 +83,7 @@
             <span class="text-sm text-gray-600 dark:text-gray-400">{{ t('shared.upload.progress') }}</span>
             <span class="text-sm font-medium text-gray-900 dark:text-white">{{ progress }}%</span>
           </div>
-          <Progress :value="progress" color="primary" size="sm" />
+          <progress :value="progress" color="primary" size="sm" />
         </div>
       </div>
     </div>
@@ -114,11 +114,11 @@
           <div class="flex items-center space-x-3 flex-1 min-w-0">
             <!-- 文件图标 -->
             <div class="flex-shrink-0">
-              <DocumentIcon 
+              <document-icon 
                 v-if="!isImage(file)"
                 class="w-8 h-8 text-gray-400"
               />
-              <PhotoIcon 
+              <photo-icon 
                 v-else
                 class="w-8 h-8 text-blue-500"
               />
@@ -139,7 +139,7 @@
             
             <!-- 上传状态 -->
             <div class="flex-shrink-0">
-              <CheckCircleIcon 
+              <check-circle-icon 
                 v-if="file.uploaded"
                 class="w-5 h-5 text-green-500"
               />
@@ -147,7 +147,7 @@
                 v-else-if="file.uploading"
                 class="w-5 h-5 border-2 border-blue-500 border-t-transparent rounded-full animate-spin"
               ></div>
-              <ExclamationCircleIcon 
+              <exclamation-circle-icon 
                 v-else-if="file.error"
                 class="w-5 h-5 text-red-500"
                 :title="file.error"
@@ -159,11 +159,13 @@
           <Button
             v-if="!disabled"
             @click="removeFile(index)"
+            variant="ghost"
+            size="sm"
             class="ml-3 p-1.5 rounded hover:bg-red-50 dark:hover:bg-red-900/20 text-gray-400 hover:text-red-600 transition-colors"
             type="button"
             :title="t('shared.upload.removeWithName', { name: file.name })"
           >
-            <XMarkIcon class="w-4 h-4" />
+            <x-mark-icon class="w-4 h-4" />
           </Button>
         </div>
       </div>
@@ -186,10 +188,12 @@
           <Button
             v-if="!disabled"
             @click="removeFile(files.indexOf(file))"
-            class="absolute -top-2 -right-2 w-6 h-6 bg-red-500 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+            variant="danger"
+            size="xs"
+            class="absolute -top-2 -right-2 w-6 h-6 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
             type="button"
           >
-            <XMarkIcon class="w-3 h-3" />
+            <x-mark-icon class="w-3 h-3" />
           </Button>
         </div>
       </div>

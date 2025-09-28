@@ -1,25 +1,25 @@
 <template>
-  <div class="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800 flex items-center justify-center p-6">
+  <div class="min-h-screen flex items-center justify-center p-6">
     <div class="max-w-4xl w-full text-center">
       <!-- 主要错误内容 -->
       <div class="mb-12">
         <!-- 动画404数字 -->
         <div class="relative mb-8">
-          <h1 class="text-8xl md:text-9xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600 dark:from-blue-400 dark:to-purple-400 select-none">
+          <h1 class="text-8xl md:text-9xl font-bold select-none" style="color: var(--color-primary)">
             404
           </h1>
           <!-- 装饰性元素 -->
           <div class="absolute inset-0 flex items-center justify-center">
-            <div class="w-32 h-32 bg-blue-100 dark:bg-blue-900 rounded-full opacity-20 animate-pulse"></div>
+            <div class="w-32 h-32 rounded-full opacity-20 animate-pulse" style="background-color: color-mix(in oklab, var(--color-primary) 20%, transparent)"></div>
           </div>
         </div>
 
         <!-- 错误信息 -->
         <div class="space-y-4 mb-8">
-          <h2 class="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white">
+          <h2 class="text-3xl md:text-4xl font-bold" style="color: var(--color-base-content)">
             页面走丢了
           </h2>
-          <p class="text-lg text-gray-600 dark:text-gray-400 max-w-2xl mx-auto">
+          <p class="text-lg text-muted max-w-2xl mx-auto">
             抱歉，您访问的页面不存在。可能是链接错误、页面已被移动或您没有访问权限。
           </p>
         </div>
@@ -36,10 +36,10 @@
             <div class="relative">
               <GlassSearchInput v-model="searchQuery" placeholder="搜索课程、作业、学生..." size="md" @keyup.enter="handleSearch" />
             </div>
-            <button variant="primary" class="w-full" @click="handleSearch" :disabled="!searchQuery.trim()">
+            <Button variant="primary" class="w-full" @click="handleSearch" :disabled="!searchQuery.trim()">
               <magnifying-glass-icon class="w-4 h-4 mr-2" />
               搜索
-            </button>
+            </Button>
           </div>
         </card>
       </div>
@@ -49,46 +49,47 @@
         <!-- 返回首页 -->
         <card padding="lg" hoverable class="cursor-pointer" @click="goHome">
           <div class="text-center">
-            <div class="flex items-center justify-center w-12 h-12 bg-blue-100 dark:bg-blue-900 rounded-lg mx-auto mb-4">
-              <home-icon class="w-6 h-6 text-blue-600 dark:text-blue-400" />
+            <div class="flex items-center justify-center w-12 h-12 rounded-lg mx-auto mb-4" style="background-color: color-mix(in oklab, var(--color-primary) 20%, transparent)">
+              <home-icon class="w-6 h-6" style="color: var(--color-primary)" />
             </div>
             <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-2">返回首页</h3>
-            <p class="text-sm text-gray-600 dark:text-gray-400">回到主页继续浏览</p>
+            <p class="text-sm text-muted">回到主页继续浏览</p>
           </div>
         </card>
 
         <!-- 浏览课程 -->
         <card padding="lg" hoverable class="cursor-pointer" @click="browseCourses">
           <div class="text-center">
-            <div class="flex items-center justify-center w-12 h-12 bg-green-100 dark:bg-green-900 rounded-lg mx-auto mb-4">
-              <book-open-icon class="w-6 h-6 text-green-600 dark:text-green-400" />
+            <div class="flex items-center justify-center w-12 h-12 rounded-lg mx-auto mb-4" style="background-color: color-mix(in oklab, var(--color-success) 20%, transparent)">
+              <book-open-icon class="w-6 h-6" style="color: var(--color-success)" />
             </div>
             <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-2">浏览课程</h3>
-            <p class="text-sm text-gray-600 dark:text-gray-400">查看所有可用课程</p>
+            <p class="text-sm text-muted">查看所有可用课程</p>
           </div>
         </card>
 
         <!-- 联系支持 -->
         <card padding="lg" hoverable class="cursor-pointer" @click="contactSupport">
           <div class="text-center">
-            <div class="flex items-center justify-center w-12 h-12 bg-purple-100 dark:bg-purple-900 rounded-lg mx-auto mb-4">
-              <question-mark-circle-icon class="w-6 h-6 text-purple-600 dark:text-purple-400" />
+            <div class="flex items-center justify-center w-12 h-12 rounded-lg mx-auto mb-4" style="background-color: color-mix(in oklab, var(--color-accent) 20%, transparent)">
+              <question-mark-circle-icon class="w-6 h-6" style="color: var(--color-accent)" />
             </div>
             <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-2">获取帮助</h3>
-            <p class="text-sm text-gray-600 dark:text-gray-400">联系技术支持</p>
+            <p class="text-sm text-muted">联系技术支持</p>
           </div>
         </card>
       </div>
 
       <!-- 常用链接 -->
-      <div class="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-sm">
-        <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">您可能在寻找</h3>
+      <div class="rounded-lg p-6 shadow-sm" style="background-color: var(--color-base-100)">
+        <h3 class="text-lg font-semibold mb-4" style="color: var(--color-base-content)">您可能在寻找</h3>
         <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
           <router-link
             v-for="link in quickLinks"
             :key="link.path"
             :to="link.path"
-            class="flex items-center space-x-2 text-sm text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 transition-colors"
+            class="flex items-center space-x-2 text-sm transition-colors"
+            style="color: var(--color-primary)"
           >
             <component :is="link.icon" class="w-4 h-4" />
             <span>{{ link.title }}</span>
@@ -98,22 +99,22 @@
 
       <!-- 返回按钮 -->
       <div class="mt-8 flex justify-center space-x-4">
-        <button variant="outline" @click="goBack" v-if="canGoBack">
+        <Button variant="outline" @click="goBack" v-if="canGoBack">
           <arrow-left-icon class="w-4 h-4 mr-2" />
           返回上页
-        </button>
-        <button variant="primary" @click="goHome">
+        </Button>
+        <Button variant="primary" @click="goHome">
           <home-icon class="w-4 h-4 mr-2" />
           返回首页
-        </button>
+        </Button>
       </div>
 
       <!-- 装饰性元素 -->
       <div class="fixed top-10 right-10 opacity-10 pointer-events-none">
-        <div class="w-64 h-64 bg-gradient-to-br from-blue-400 to-purple-500 rounded-full blur-3xl"></div>
+        <div class="w-64 h-64 rounded-full blur-3xl" style="background-color: color-mix(in oklab, var(--color-primary) 25%, transparent)"></div>
       </div>
       <div class="fixed bottom-10 left-10 opacity-10 pointer-events-none">
-        <div class="w-48 h-48 bg-gradient-to-br from-green-400 to-blue-500 rounded-full blur-3xl"></div>
+        <div class="w-48 h-48 rounded-full blur-3xl" style="background-color: color-mix(in oklab, var(--color-accent) 25%, transparent)"></div>
       </div>
     </div>
   </div>

@@ -4,6 +4,8 @@ import { ref, watch } from 'vue'
 export const useUIStore = defineStore('ui', () => {
   // 状态
   const isDarkMode = ref(false)
+  type ThemeName = 'retro' | 'dracula'
+  const themeName = ref<ThemeName>('retro')
   const sidebarOpen = ref(true)
   const loading = ref(false)
   const notifications = ref<Array<{
@@ -13,8 +15,7 @@ export const useUIStore = defineStore('ui', () => {
     message: string
     timeout?: number
   }>>([])
-  const bgEnabled = ref(true)
-  const glassIntensity = ref<'normal' | 'more'>('more')
+  // 旧主题背景与玻璃强度已移除
 
   // 初始化暗黑模式
   const initDarkMode = () => {
@@ -25,55 +26,44 @@ export const useUIStore = defineStore('ui', () => {
       // 检查系统偏好
       isDarkMode.value = window.matchMedia('(prefers-color-scheme: dark)').matches
     }
-    updateDarkModeClass()
-  }
-
-  // 初始化背景开关
-  const initBackgroundEnabled = () => {
-    const stored = localStorage.getItem('bgEnabled')
-    if (stored != null) {
-      bgEnabled.value = JSON.parse(stored)
-    } else {
-      bgEnabled.value = true
+    // 同步主题名称（第一次加载时依据 isDarkMode）
+    const storedThemeRaw = localStorage.getItem('themeName')
+    let resolved: ThemeName | null = null
+    if (storedThemeRaw === 'retro' || storedThemeRaw === 'dracula') {
+      resolved = storedThemeRaw
     }
+    themeName.value = resolved ?? (isDarkMode.value ? 'dracula' : 'retro')
+    updateThemeClasses()
   }
 
-  // 初始化玻璃强度
-  const initGlassIntensity = () => {
-    const stored = localStorage.getItem('glassIntensity') as 'normal' | 'more' | null
-    if (stored === 'normal' || stored === 'more') glassIntensity.value = stored
-    updateGlassIntensityClass()
-  }
+  // 旧主题相关初始化已移除
 
   // 更新暗黑模式类
-  const updateDarkModeClass = () => {
-    if (isDarkMode.value) {
-      document.documentElement.classList.add('dark')
-    } else {
-      document.documentElement.classList.remove('dark')
-    }
-  }
-
-  const updateGlassIntensityClass = () => {
+  const updateThemeClasses = () => {
     const root = document.documentElement
-    root.classList.remove('glass-intensity-normal', 'glass-intensity-more')
-    root.classList.add(glassIntensity.value === 'normal' ? 'glass-intensity-normal' : 'glass-intensity-more')
+    // dark class for existing styles
+    const dark = (themeName.value === 'dracula')
+    if (dark) root.classList.add('dark')
+    else root.classList.remove('dark')
+
+    // daisyUI theme via data-theme
+    root.setAttribute('data-theme', themeName.value)
   }
+  
 
   // 监听暗黑模式变化
   watch(isDarkMode, (newValue) => {
     localStorage.setItem('darkMode', JSON.stringify(newValue))
-    updateDarkModeClass()
+    // 若手动切换深浅，则同步主题名（仅当当前主题与深浅不一致时进行校正）
+    const desired: ThemeName = (newValue ? 'dracula' : 'retro')
+    if (themeName.value !== desired) themeName.value = desired
+    updateThemeClasses()
   })
-  // 监听背景开关变化
-  watch(bgEnabled, (newValue) => {
-    localStorage.setItem('bgEnabled', JSON.stringify(newValue))
+  watch(themeName, (v) => {
+    localStorage.setItem('themeName', v)
+    updateThemeClasses()
   })
-  // 监听玻璃强度变化
-  watch(glassIntensity, (v) => {
-    localStorage.setItem('glassIntensity', v)
-    updateGlassIntensityClass()
-  })
+  
 
   // 方法
   const toggleDarkMode = () => {
@@ -81,11 +71,18 @@ export const useUIStore = defineStore('ui', () => {
       const root = document.documentElement
       root.classList.add('theme-switching')
       isDarkMode.value = !isDarkMode.value
+      themeName.value = isDarkMode.value ? 'dracula' : 'retro'
       // 移除过渡类（与 CSS 的 450ms 保持一致，稍加余量）
       window.setTimeout(() => root.classList.remove('theme-switching'), 520)
     } catch {
       isDarkMode.value = !isDarkMode.value
+      themeName.value = isDarkMode.value ? 'dracula' : 'retro'
     }
+  }
+
+  const setTheme = (name: ThemeName) => {
+    themeName.value = name
+    isDarkMode.value = (name === 'dracula')
   }
 
   const toggleSidebar = () => {
@@ -96,13 +93,7 @@ export const useUIStore = defineStore('ui', () => {
       sidebarOpen.value = false
   }
 
-  const toggleBackground = () => {
-    bgEnabled.value = !bgEnabled.value
-  }
-
-  const setGlassIntensity = (v: 'normal' | 'more') => {
-    glassIntensity.value = v
-  }
+  // 背景与玻璃强度相关功能已删除
 
   const showNotification = (notification: {
     type: 'success' | 'error' | 'warning' | 'info'
@@ -143,17 +134,13 @@ export const useUIStore = defineStore('ui', () => {
     sidebarOpen,
     loading,
     notifications,
-    bgEnabled,
-    glassIntensity,
+    themeName,
     // 方法
     initDarkMode,
-    initBackgroundEnabled,
-    initGlassIntensity,
     toggleDarkMode,
+    setTheme,
     toggleSidebar,
     closeSidebar,
-    toggleBackground,
-    setGlassIntensity,
     showNotification,
     removeNotification,
     clearNotifications,

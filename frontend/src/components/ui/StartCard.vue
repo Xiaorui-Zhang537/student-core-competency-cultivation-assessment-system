@@ -1,8 +1,8 @@
 <template>
   <div
     :class="[
-      'rounded-2xl border bg-gradient-to-br shadow-sm transition-all duration-200 relative z-10 opacity-100',
-      toneClasses,
+      'rounded-2xl border shadow-sm transition-all duration-200 relative z-10 opacity-100 glass-regular glass-interactive',
+      tintClass,
       hoverable ? 'hover:shadow-md hover:scale-[1.02]' : '',
       dense ? 'p-4' : 'p-6'
     ]"
@@ -25,7 +25,8 @@ import { computed } from 'vue'
 interface Props {
   label: string
   value?: string | number
-  tone?: 'blue' | 'emerald' | 'violet' | 'amber'
+  tone?: 'blue' | 'emerald' | 'violet' | 'amber' | 'indigo'
+  tint?: 'primary' | 'secondary' | 'accent' | 'success' | 'warning' | 'info' | null
   icon?: any
   hoverable?: boolean
   dense?: boolean
@@ -33,34 +34,29 @@ interface Props {
 
 const props = withDefaults(defineProps<Props>(), {
   tone: 'blue',
+  tint: null,
   hoverable: true,
   dense: false
 })
 
-const toneClasses = computed(() => {
-  const map: Record<string, string> = {
-    blue: 'from-blue-50 to-blue-100 dark:from-blue-900/20 dark:to-blue-800/20 border-blue-100 dark:border-blue-800',
-    emerald: 'from-emerald-50 to-emerald-100 dark:from-emerald-900/20 dark:to-emerald-800/20 border-emerald-100 dark:border-emerald-800',
-    violet: 'from-violet-50 to-violet-100 dark:from-violet-900/20 dark:to-violet-800/20 border-violet-100 dark:border-violet-800',
-    amber: 'from-amber-50 to-amber-100 dark:from-amber-900/20 dark:to-amber-800/20 border-amber-100 dark:border-amber-800',
-    indigo: 'from-indigo-50 to-indigo-100 dark:from-indigo-900/20 dark:to-indigo-800/20 border-indigo-100 dark:border-indigo-800'
+// 兼容旧 tone，映射到新主题变体
+const resolvedTint = computed(() => {
+  if (props.tint) return props.tint
+  const map: Record<string, 'primary'|'success'|'accent'|'warning'|'info'> = {
+    blue: 'primary',
+    emerald: 'success',
+    violet: 'accent',
+    amber: 'warning',
+    indigo: 'info'
   }
-  return map[props.tone] || map.blue
+  return map[props.tone] || 'primary'
 })
 
-const labelColor = computed(() => {
-  const map: Record<string, string> = {
-    blue: 'text-blue-700 dark:text-blue-300',
-    emerald: 'text-emerald-700 dark:text-emerald-300',
-    violet: 'text-violet-700 dark:text-violet-300',
-    amber: 'text-amber-700 dark:text-amber-300',
-    indigo: 'text-indigo-700 dark:text-indigo-300'
-  }
-  return map[props.tone] || map.blue
-})
+const tintClass = computed(() => `glass-tint-${resolvedTint.value}`)
 
+const labelColor = computed(() => `text-[var(--color-${resolvedTint.value}-content)]`)
 const valueColor = labelColor
-const iconColor = computed(() => labelColor.value.replace('text-', 'text-'))
+const iconColor = computed(() => labelColor.value)
 </script>
 
 <style scoped>

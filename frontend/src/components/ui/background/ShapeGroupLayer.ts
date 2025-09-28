@@ -42,7 +42,7 @@ export function create(containerEl: HTMLElement, opts: ShapeGroupOptions): Layer
   let emphasis = opts.emphasis
 
   const pointer = { x: 0, y: 0 }
-  let targetRot = { x: 0, y: 0 }
+  const targetRot = { x: 0, y: 0 }
 
   const shapes: any[] = []
   const spins: Array<{ rx: number; ry: number; rz: number; sx: number; life: number }> = []

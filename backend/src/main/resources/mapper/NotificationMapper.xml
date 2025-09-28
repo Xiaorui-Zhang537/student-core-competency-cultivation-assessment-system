@@ -24,13 +24,14 @@
         <result column="data" property="data"/>
         <result column="icon" property="icon"/>
         <result column="action_url" property="actionUrl"/>
+    <result column="conversation_id" property="conversationId"/>
     </resultMap>
 
     <!-- 公共列 -->
     <sql id="Base_Column_List">
         id, user_id, sender_id, title, content, type, priority, is_read, related_type, related_id, expired_at, created_at,
         <!-- 下面字段视是否加到表里自动兼容 -->
-        category, read_at, updated_at, deleted, data, icon, action_url
+        category, read_at, updated_at, deleted, data, icon, action_url, conversation_id
     </sql>
 
     <!-- 插入通知 -->
@@ -119,6 +120,8 @@
               (user_id = #{userId} AND sender_id = #{peerId})
               OR (user_id = #{peerId} AND sender_id = #{userId})
           )
+          <if test="courseId != null"> AND COALESCE(related_id, 0) = COALESCE(#{courseId}, 0) </if>
+          AND type = 'message'
         ORDER BY created_at ASC
         LIMIT #{offset}, #{size}
     </select>
@@ -131,7 +134,15 @@
               (user_id = #{userId} AND sender_id = #{peerId})
               OR (user_id = #{peerId} AND sender_id = #{userId})
           )
+          <if test="courseId != null"> AND COALESCE(related_id, 0) = COALESCE(#{courseId}, 0) </if>
+          AND type = 'message'
     </select>
+
+  <update id="setConversationId">
+    UPDATE notifications
+    SET conversation_id = #{conversationId}
+    WHERE id = #{id}
+  </update>
 
     <select id="selectByRecipientAndType" resultMap="NotificationResultMap">
         SELECT <include refid="Base_Column_List"/>

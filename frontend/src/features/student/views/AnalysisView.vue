@@ -14,54 +14,58 @@
       </div>
 
       <!-- Controls: 课程选择（仅查看本人参与课程）+ 对比开关 同行显示 -->
-      <div class="mt-2 p-4 glass-regular rounded-lg shadow flex items-center flex-wrap gap-3" v-glass="{ strength: 'regular', interactive: true }">
-        <div class="flex items-center gap-2">
-          <span class="whitespace-nowrap text-sm text-gray-700 dark:text-gray-300">{{ t('student.ability.course') || t('teacher.analytics.selectCourse') || '请选择课程' }}</span>
-          <GlassPopoverSelect
-            v-model="selectedCourseId"
-            :options="courseSelectOptions"
-            :placeholder="(t('student.ability.selectCourse') as string) || (t('teacher.analytics.selectCourse') as string)"
-            size="sm"
-            width="160px"
-            @change="onCourseChange"
-          />
-        </div>
-        <div class="flex items-center gap-2">
-          <span class="text-sm text-gray-700 dark:text-gray-300">{{ t('student.ability.compare') || '对比模式' }}</span>
-          <GlassSwitch v-model="compareEnabled" size="sm" />
-        </div>
-        <div class="flex items-center gap-2" v-if="compareEnabled">
-          <span class="whitespace-nowrap text-xs font-medium leading-tight text-gray-700 dark:text-gray-300">{{ t('teacher.analytics.settings.classAvgLabel') || '班级均值' }}</span>
-          <GlassPopoverSelect
-            v-model="includeClassAvg"
-            :options="[
-              { label: (t('teacher.analytics.charts.classAvgBoth') as string) || '班级均值: A与B', value: 'both' },
-              { label: (t('teacher.analytics.charts.classAvgA') as string) || '班级均值: 仅A', value: 'A' },
-              { label: (t('teacher.analytics.charts.classAvgB') as string) || '班级均值: 仅B', value: 'B' },
-              { label: (t('teacher.analytics.charts.classAvgNone') as string) || '班级均值: 关闭', value: 'none' }
-            ]"
-            size="sm"
-            width="160px"
-            @change="onCompareParamsChange"
-          />
-        </div>
-        <div class="flex items-center gap-2" v-if="compareEnabled">
-          <span class="text-xs font-medium leading-tight text-gray-700 dark:text-gray-300">{{ t('student.ability.compareSetA') || '集合A' }}</span>
-          <div class="ms-compact" style="width: 160px">
-            <GlassMultiSelect v-model="assignmentIdsA" :options="assignmentSelectOptions" :placeholder="t('common.pleaseSelect') as string" />
+      <Card padding="md" tint="info" class="mt-2">
+        <div class="flex items-center flex-wrap gap-3">
+          <div class="flex items-center gap-2">
+            <span class="whitespace-nowrap text-sm text-gray-700 dark:text-gray-300">{{ t('student.ability.course') || t('teacher.analytics.selectCourse') || '请选择课程' }}</span>
+            <GlassPopoverSelect
+              v-model="selectedCourseId"
+              :options="courseSelectOptions"
+              :placeholder="(t('student.ability.selectCourse') as string) || (t('teacher.analytics.selectCourse') as string)"
+              size="sm"
+              width="280px"
+              tint="primary"
+              @change="onCourseChange"
+            />
+          </div>
+          <div class="flex items-center gap-2">
+            <span class="text-sm text-gray-700 dark:text-gray-300">{{ t('student.ability.compare') || '对比模式' }}</span>
+            <GlassSwitch v-model="compareEnabled" size="sm" />
+          </div>
+          <div class="flex items-center gap-2" v-if="compareEnabled">
+            <span class="whitespace-nowrap text-xs font-medium leading-tight text-gray-700 dark:text-gray-300">{{ t('teacher.analytics.settings.classAvgLabel') || '班级均值' }}</span>
+            <GlassPopoverSelect
+              v-model="includeClassAvg"
+              :options="[
+                { label: (t('teacher.analytics.charts.classAvgBoth') as string) || '班级均值: A与B', value: 'both' },
+                { label: (t('teacher.analytics.charts.classAvgA') as string) || '班级均值: 仅A', value: 'A' },
+                { label: (t('teacher.analytics.charts.classAvgB') as string) || '班级均值: 仅B', value: 'B' },
+                { label: (t('teacher.analytics.charts.classAvgNone') as string) || '班级均值: 关闭', value: 'none' }
+              ]"
+              size="sm"
+              width="160px"
+              tint="secondary"
+              @change="onCompareParamsChange"
+            />
+          </div>
+          <div class="flex items-center gap-2" v-if="compareEnabled">
+            <span class="text-xs font-medium leading-tight text-gray-700 dark:text-gray-300">{{ t('student.ability.compareSetA') || '集合A' }}</span>
+            <div class="ms-compact" style="width: 160px">
+              <GlassMultiSelect v-model="assignmentIdsA" :options="assignmentSelectOptions" :placeholder="t('common.pleaseSelect') as string" tint="accent" />
+            </div>
+          </div>
+          <div class="flex items-center gap-2" v-if="compareEnabled">
+            <span class="text-xs font-medium leading-tight text-gray-700 dark:text-gray-300">{{ t('student.ability.compareSetB') || '集合B' }}</span>
+            <div class="ms-compact" style="width: 160px">
+              <GlassMultiSelect v-model="assignmentIdsB" :options="assignmentSelectOptions" :placeholder="t('common.pleaseSelect') as string" tint="accent" />
+            </div>
           </div>
         </div>
-        <div class="flex items-center gap-2" v-if="compareEnabled">
-          <span class="text-xs font-medium leading-tight text-gray-700 dark:text-gray-300">{{ t('student.ability.compareSetB') || '集合B' }}</span>
-          <div class="ms-compact" style="width: 160px">
-            <GlassMultiSelect v-model="assignmentIdsB" :options="assignmentSelectOptions" :placeholder="t('common.pleaseSelect') as string" />
-          </div>
-        </div>
-      </div>
+      </Card>
 
       <!-- 能力雷达 + 维度评语（学生本人） -->
       <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div class="p-6 glass-regular rounded-lg shadow lg:col-span-2" v-glass="{ strength: 'regular', interactive: true }">
+        <Card padding="md" tint="primary" class="lg:col-span-2">
           <div class="flex items-center justify-between mb-4">
             <h3 class="text-lg font-semibold">{{ t('teacher.analytics.charts.radar') }}</h3>
             <div class="flex items-center gap-2">
@@ -85,8 +89,8 @@
             </div>
           </div>
           <div v-else class="text-sm text-gray-500 text-center">{{ t('teacher.analytics.charts.noRadar') }}</div>
-        </div>
-        <div class="p-6 glass-regular rounded-lg shadow" v-glass="{ strength: 'regular', interactive: true }">
+        </Card>
+        <Card padding="md" tint="secondary">
           <h3 class="text-lg font-semibold mb-4">{{ t('student.ability.insights.title') || '维度评语' }}</h3>
           <div v-if="insightsItems.length === 0" class="text-sm text-gray-500">{{ t('student.ability.insights.empty') || '暂无评语' }}</div>
           <div v-else class="divide-y divide-gray-200 dark:divide-gray-700">
@@ -104,18 +108,18 @@
               <div class="mt-1 text-sm text-gray-700 dark:text-gray-300">{{ it.suggestion }}</div>
             </div>
           </div>
-        </div>
+        </Card>
       </div>
 
       <!-- 维度说明（玻璃样式，与雷达同页显示） -->
-      <div v-if="rawRadarDimensions.length" class="p-6 glass-regular rounded-lg shadow" v-glass="{ strength: 'regular', interactive: true }">
+      <Card v-if="rawRadarDimensions.length" padding="md" tint="info">
         <AbilityRadarLegend :dimensions="rawRadarDimensions" />
-      </div>
+      </Card>
 
       <!-- Trends 区域：左侧仪表盘，右侧两张趋势图（去掉完成率） -->
       <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <!-- 左：课程平均分仪表盘（动画） + 作业列表 -->
-        <div class="p-6 glass-regular rounded-lg shadow" v-glass="{ strength: 'regular', interactive: true }">
+        <Card padding="md" tint="accent">
           <div class="w-full max-w-[420px] mx-auto">
             <div class="text-sm font-semibold text-gray-700 dark:text-gray-200 mb-2 text-center">{{ t('student.analysis.kpiAvgScore') }}</div>
             <div ref="gaugeRef" class="w-full h-[260px]"></div>
@@ -126,10 +130,11 @@
               <div class="text-xs text-gray-500 dark:text-gray-400 mr-2">{{ t('student.grades.total') }} ({{ courseAssignments.length }})</div>
             </div>
             <div class="divide-y divide-gray-200 dark:divide-gray-700 rounded-lg border border-gray-100 dark:border-gray-700 overflow-hidden max-h-[260px] overflow-y-auto">
-              <button
+              <Button
                 v-for="a in courseAssignments"
                 :key="String(a.id)"
-                class="w-full text-left px-3 py-2 hover:bg-gray-50 dark:hover:bg-gray-700/40 transition-colors"
+                variant="menu"
+                class="w-full text-left justify-between px-3 py-2"
                 @click="goAssignment(a)"
               >
                 <div class="flex items-center justify-between gap-3">
@@ -146,14 +151,14 @@
                     </span>
                   </div>
                 </div>
-              </button>
+              </Button>
               <div v-if="courseAssignments.length === 0" class="px-3 py-6 text-center text-sm text-gray-500">{{ t('student.grades.emptyTitle') || '暂无已评分的作业' }}</div>
             </div>
           </div>
-        </div>
+        </Card>
         <!-- 右：两张趋势图堆叠（成绩、学习时长） -->
         <div class="lg:col-span-2 grid grid-cols-1 gap-6">
-          <div class="p-6 glass-regular rounded-lg shadow" v-glass="{ strength: 'regular', interactive: true }">
+          <Card padding="md" tint="success">
             <div class="text-sm font-semibold text-gray-700 dark:text-gray-200 mb-2">{{ t('student.analysis.trendScore') }}</div>
             <TrendAreaChart
               :series="scoreSeriesPoints"
@@ -163,8 +168,8 @@
               :legend="{ bottom: 0 }"
               :tooltip="{ confine: true }"
             />
-          </div>
-          <div class="p-6 glass-regular rounded-lg shadow" v-glass="{ strength: 'regular', interactive: true }">
+          </Card>
+          <Card padding="md" tint="warning">
             <div class="text-sm font-semibold text-gray-700 dark:text-gray-200 mb-2">{{ t('student.analysis.trendHours') }}</div>
             <TrendAreaChart
               :series="hoursSeriesPoints"
@@ -174,7 +179,7 @@
               :legend="{ bottom: 0 }"
               :tooltip="{ confine: true }"
             />
-          </div>
+          </Card>
         </div>
       </div>
       
@@ -186,12 +191,14 @@
 <script setup lang="ts">
 import { ref, onMounted, computed, watch, onUnmounted, nextTick } from 'vue'
 import * as echarts from 'echarts'
+import { resolveEChartsTheme } from '@/charts/echartsTheme'
 import { studentApi } from '@/api/student.api'
 import { useI18n } from 'vue-i18n'
 import { i18n, loadLocaleMessages } from '@/i18n'
 import StartCard from '@/components/ui/StartCard.vue'
 import TrendAreaChart from '@/components/charts/TrendAreaChart.vue'
 import PageHeader from '@/components/ui/PageHeader.vue'
+import Card from '@/components/ui/Card.vue'
 import RadarChart from '@/components/charts/RadarChart.vue'
 import GlassPopoverSelect from '@/components/ui/filters/GlassPopoverSelect.vue'
 import GlassMultiSelect from '@/components/ui/filters/GlassMultiSelect.vue'
@@ -555,15 +562,16 @@ function renderGauge(valueNum: number) {
     const ok = await waitForGaugeContainer()
     if (!ok || !gaugeRef.value) return
     try { gaugeChart?.dispose() } catch {}
-    const theme = document.documentElement.classList.contains('dark') ? 'dark' : 'light'
-    gaugeChart = echarts.init(gaugeRef.value as HTMLDivElement, theme)
+    const theme = resolveEChartsTheme()
+    const isDark = document.documentElement.classList.contains('dark')
+    gaugeChart = echarts.init(gaugeRef.value as HTMLDivElement, theme as any)
     const v = Math.max(0, Math.min(100, Number(valueNum || 0)))
     const base = '#3b82f6'
     const option = {
       backgroundColor: 'transparent',
       series: [
         { type: 'gauge', startAngle: 200, endAngle: -20, min: 0, max: 100,
-          axisLine: { lineStyle: { width: 14, color: [[1, theme==='dark' ? '#1f2937' : '#eef2ff']] } },
+          axisLine: { lineStyle: { width: 14, color: [[1, isDark ? '#1f2937' : '#eef2ff']] } },
           pointer: { show: false }, axisTick: { show: false }, splitLine: { show: false }, axisLabel: { show: false }, detail: { show: false } },
         { type: 'gauge', startAngle: 200, endAngle: -20, min: 0, max: 100,
           progress: { show: true, width: 14, itemStyle: { color: new (echarts as any).graphic.LinearGradient(0, 0, 1, 0, [ { offset: 0, color: '#60a5fa' }, { offset: 1, color: base } ]), shadowColor: base + '66', shadowBlur: 6 } },
@@ -573,7 +581,7 @@ function renderGauge(valueNum: number) {
           data: [{ value: v }] },
         { type: 'gauge', startAngle: 200, endAngle: -20, min: 0, max: 100,
           pointer: { show: false }, axisTick: { show: false }, splitLine: { show: false }, axisLabel: { show: false },
-          detail: { show: true, valueAnimation: false, fontSize: 12, color: theme==='dark' ? '#9ca3af' : '#6b7280', offsetCenter: [0, '34%'], formatter: () => (t('student.analysis.kpiAvgScore') as any) || '平均分' },
+          detail: { show: true, valueAnimation: false, fontSize: 12, color: isDark ? '#9ca3af' : '#6b7280', offsetCenter: [0, '34%'], formatter: () => (t('student.analysis.kpiAvgScore') as any) || '平均分' },
           data: [{ value: 0 }] }
       ]
     }

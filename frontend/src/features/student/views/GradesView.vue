@@ -4,7 +4,7 @@
       <div class="mb-6 flex items-center justify-between">
         <h1 class="text-2xl font-semibold text-gray-900 dark:text-white">{{ t('student.grades.title') || '我的成绩' }}</h1>
         <div class="flex items-center gap-3">
-          <GlassPopoverSelect v-model="filters.courseId" :options="courseOptions" size="md" placeholder="{{ t('student.grades.filterCourse') || '筛选课程' }}" />
+          <glass-popover-select v-model="filters.courseId" :options="courseOptions" size="md" placeholder="{{ t('student.grades.filterCourse') || '筛选课程' }}" />
         </div>
       </div>
 
@@ -12,7 +12,7 @@
         <div v-for="g in grades" :key="g.id" class="rounded-xl glass-ultraThin p-5" v-glass="{ strength: 'ultraThin', interactive: true }">
           <div class="flex items-center justify-between mb-2">
             <div class="text-base font-medium text-gray-900 dark:text-white truncate">{{ g.assignmentTitle || ('#' + g.assignmentId) }}</div>
-            <Badge variant="secondary">{{ formatDate(g.updatedAt || g.publishedAt || g.createdAt) }}</Badge>
+            <badge variant="secondary">{{ formatDate(g.updatedAt || g.publishedAt || g.createdAt) }}</badge>
           </div>
 
           <div class="flex items-center justify-between mb-2">
@@ -27,7 +27,7 @@
           <div class="mt-3 flex items-center justify-between">
             <div class="flex items-center gap-2">
               <span class="text-sm text-gray-600 dark:text-gray-300">{{ t('student.grades.level') || '等级' }}</span>
-              <Badge size="sm">{{ g.gradeLevel || autoLevel(g) }}</Badge>
+              <badge size="sm">{{ g.gradeLevel || autoLevel(g) }}</badge>
             </div>
             <div class="text-sm text-gray-500">{{ t('student.grades.status.' + (g.status || 'published')) || g.status }}</div>
           </div>

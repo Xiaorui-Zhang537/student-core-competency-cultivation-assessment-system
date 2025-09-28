@@ -1,17 +1,17 @@
 <template>
   <div class="max-w-3xl mx-auto py-6">
-    <PageHeader :title="t('shared.notifications.title') || t('layout.notifications') || '通知详情'" :subtitle="t('shared.notifications.subtitle') || ''" />
+    <page-header :title="t('shared.notifications.title') || t('layout.notifications') || '通知详情'" :subtitle="t('shared.notifications.subtitle') || ''" />
     <div v-if="loading" class="text-center text-gray-500 dark:text-gray-400">{{ t('notifications.loading') }}</div>
     <div v-else-if="!notification" class="text-center text-gray-500 dark:text-gray-400">
       {{ t('notifications.empty') }}
     </div>
-    <div v-else class="rounded-xl p-6" v-glass="{ strength: 'regular', interactive: true }">
+    <div v-else class="rounded-xl p-6 glass-tint-secondary" v-glass="{ strength: 'regular', interactive: true }">
       <div class="flex items-start justify-between">
         <div class="flex items-center gap-2">
           <div class="h-9 w-9">
-            <UserAvatar v-if="avatarUrl" :avatar="avatarUrl" :size="36">
+            <user-avatar v-if="avatarUrl" :avatar="avatarUrl" :size="36">
               <span class="text-xs">{{ avatarNameInitial }}</span>
-            </UserAvatar>
+            </user-avatar>
             <span v-else class="inline-flex items-center justify-center h-9 w-9 rounded-full bg-primary-100/70 dark:bg-primary-900/40 text-primary-700 dark:text-primary-300 ring-1 ring-primary-200/60 dark:ring-primary-800">
               <svg v-if="notification.type==='message'" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-5 h-5"><path d="M8 10h8M8 14h5"/><path fill-rule="evenodd" d="M4 5a2 2 0 012-2h12a2 2 0 012 2v10a2 2 0 01-2 2H9l-4 4V5z" clip-rule="evenodd"/></svg>
               <svg v-else-if="notification.type==='assignment'" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-5 h-5"><path d="M8 6h8v2H8zM8 10h8v2H8zM8 14h6v2H8z"/><path d="M5 4h14a1 1 0 011 1v14l-4-3H5a1 1 0 01-1-1V5a1 1 0 011-1z"/></svg>
@@ -21,14 +21,14 @@
             </span>
           </div>
           <div>
-            <h2 class="text-xl font-semibold text-gray-900 dark:text-white">{{ notification.title }}</h2>
-            <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">{{ formatTime(notification.createdAt) }}</p>
+            <h2 class="text-xl font-semibold text-base-content">{{ notification.title }}</h2>
+            <p class="text-xs text-subtle mt-1">{{ formatTime(notification.createdAt) }}</p>
           </div>
         </div>
         <span class="text-xs px-2 py-1 rounded bg-primary-100/70 text-primary-700 dark:bg-primary-900/40 dark:text-primary-300 capitalize shadow-sm">{{ notification.type }}</span>
       </div>
 
-      <div class="mt-4 p-4 rounded-lg bg-white/60 dark:bg-slate-800/50 text-gray-700 dark:text-gray-200 whitespace-pre-line">
+      <div class="mt-4 p-4 rounded-lg bg-white/60 dark:bg-slate-800/50 text-base-content whitespace-pre-line">
         {{ notification.content }}
       </div>
 

@@ -16,6 +16,9 @@
 
 ### 组件
 - 统一使用 `/components/ui` 的玻璃风格组件（GlassInput、GlassTextarea、GlassPopoverSelect 等）。
+- 现已引入 Liquid Glass 效果组件 `@/components/ui/LiquidGlass.vue`，全局用于弹窗、卡片、按钮与输入类容器背景。
+  - 浏览器支持：该组件依赖 SVG displacement filter 与 backdrop-filter，在 Safari 和 Firefox 支持有限。请为这两类浏览器准备退化样式或兜底。
+  - 参考文档：Inspira UI Liquid Glass Effect（`https://inspira-ui.com/docs/zh-cn/components/visualization/liquid-glass`）。
 
 ## UI 统一改造说明（选择器/过滤器/搜索框药丸化，容器圆润一致）
 
@@ -92,6 +95,13 @@
 - 少量模板类名变更，不影响接口与业务逻辑；
 - 如有第三方控件嵌入，需包一层容器以应用 `.ui-pill--input`。
 - 徽章统一后，暗黑模式对比度提升，减少了页面内散落的自定义类。
+
+## Liquid Glass 全量替换说明
+
+- 新增组件：`@/components/ui/LiquidGlass.vue`，属性与参考实现一致：`radius|border|lightness|blend|xChannel|yChannel|alpha|blur|rOffset|gOffset|bOffset|scale|frost|class|containerClass`。
+- 已替换：`GlassModal.vue`、`Card.vue`、`Button.vue`（glass 变体）、`GlassInput.vue`、`GlassTextarea.vue`、`filters/GlassSelect.vue`、`DocumentViewer.vue`。
+- 后续清理：逐步移除遗留 `v-glass` 指令与 `glass-*` 类的使用，统一改为 `LiquidGlass`。
+- 兼容策略：Chromium 优先启用 Liquid Glass；Safari/Firefox 可通过条件判断降级为 `.glass-*` 或纯色/半透明背景。
 # 前端 UI 统一规范
 
 > 版本：v0.2.2（与 frontend/package.json 对齐）
@@ -137,6 +147,13 @@
 - 顶部图标按钮统一为 `Button` 的 `glass` 变体，`size="sm"`，通过图标插槽渲染 heroicons。
 - 下拉菜单/面板：容器 `rounded-2xl`，菜单项使用 `Button` 的 `menu` 变体。
 
+### 底部 DockBar 规范
+- 组件：`@/components/ui/DockBar.vue`。
+- 容器宽度自适应：根据实际菜单项宽度计算，并在超出视口时按比例缩放，避免遮蔽。
+- 安全区与偏移：通过 `bottomOffset` 自动叠加 `env(safe-area-inset-bottom)`，布局中无需再额外留白。
+- 透明约束：DockBar 内部所有子元素背景均为透明，避免遮挡 `LiquidGlass` 折射效果；仅 `active` 项使用透明色混合高亮。
+- 布局用法：`<DockBar :items="dockItems" v-model="activeDock" :bottom-offset="24" @select="onSelectDock" />`，不再传 `max-width`。
+
 ## 改造约束
 - 不得开发使用原生 `<button>`、`.btn` 或非 `Button` 的按钮实现。
 - 不得使用非 `rounded-2xl` 的主要容器圆角。特殊极小组件（如日历单元格）除外。
@@ -147,6 +164,7 @@
   - 学生作业提交页采用两行双列卡片布局：顶部信息卡+附件卡；中部内容+上传卡（下方操作按钮）；底部成绩卡与 AI 报告卡。
   - 新增共享组件：`features/shared/AssignmentInfoCard.vue`、`features/shared/AttachmentList.vue`；统一使用 `components/ui/Card.vue`。
   - i18n 新增 `student.assignments.publish` 键。
+  - 新增 DockBar 规范：容器自适应与透明化处理；移除布局层 `max-width` 传参。
 - v0.2.1：
   - 实时通知改为浅色玻璃药丸（`App.vue`）。
   - 通知下拉容器统一浅色玻璃与圆角 2xl；下拉内按钮为药丸玻璃（`NotificationBell.vue`）。
@@ -154,3 +172,29 @@
   - 语言切换弹层内菜单项使用原生按钮（轻量），触发按钮为浅玻璃药丸（`LanguageSwitcher.vue`）。
   - 统一搜索输入：学生端“我的作业”、教师端“管理课程”等使用 `GlassSearchInput`。
 - v0.2.0：统一按钮为药丸形+图标；统一容器圆角为 `rounded-2xl`；布局与菜单统一；替换遗留原生按钮。
+
+## 布局层 LiquidGlass 使用与降级建议
+
+- StudentLayout/TeacherLayout：顶部导航、用户菜单弹层与侧边栏均已采用 `@/components/ui/LiquidGlass.vue` 包裹，结合圆角与阴影统一视觉。
+- 通知相关：`NotificationBell.vue` 下拉面板、`NotificationCenter.vue` 过滤器容器，已统一为 LiquidGlass；`ChatDrawer.vue` 抽屉容器也已统一。
+- Safari/Firefox 降级：
+  - 因 SVG displacement filter 与 backdrop-filter 支持不完善，建议在 UA/特性检测下，回退为：
+    - 简化版半透明背景（如 `bg-white/70 dark:bg-gray-900/60`）+ 轻边框（`border-white/15`）+ 阴影；
+    - 或保留旧版 `.glass-*` 样式（无需 displacement），通过条件类名启用。
+  - 组件侧接口：`LiquidGlass` 支持通过 `containerClass` 追加降级类；也可在布局中按浏览器条件渲染备用容器。
+- 参考：Inspira UI Liquid Glass Effect（`https://inspira-ui.com/docs/zh-cn/components/visualization/liquid-glass`）。
+
+## 弹层层级策略（z-index）与聊天抽屉规范
+
+- 层级约定（从低到高）：
+  - 顶栏/内容卡片：`z-0 ~ z-40`
+  - 通知/语言切换等普通弹层容器：`z-[1000]`
+  - 日期选择/多选下拉/表单类弹层（`.ui-popover-menu` 等）：`z-[9999]`
+  - 聊天抽屉（`ChatDrawer.vue`）：`z-[12000]`（保证始终高于通用弹层）
+- 聊天抽屉交互：
+  - 右上角“聊天”按钮切换打开/关闭；打开前会广播 `ui:close-topbar-popovers` 以收起其他弹层。
+  - 点击透明遮罩关闭；按键 `Esc` 关闭（辅助可达性）。
+  - 抽屉内容使用 `LiquidGlass`；遮罩为透明以避免变暗背景。
+  - 抽屉作为布局级全局组件挂载于 `TeacherLayout.vue` 与 `StudentLayout.vue`。
+
+注意：如需全屏模态强压聊天抽屉，请将该模态显式提升到高于 `z-[12000]` 的层级，并在 UI 规范中注明。

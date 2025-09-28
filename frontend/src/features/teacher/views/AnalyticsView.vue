@@ -8,6 +8,8 @@
             :options="courseSelectOptions"
             :placeholder="t('teacher.analytics.selectCourse') as string"
             size="md"
+            width="260px"
+            :fullWidth="false"
             @change="onCourseChange"
           />
           <div class="flex items-center gap-3">
@@ -36,7 +38,7 @@
     <div class="grid grid-cols-12 gap-6 mb-2 items-start w-full">
       <!-- 左列包裹：成绩分布 + 学生表现排行（同一列内堆叠，避免被右列拉高后产生空白） -->
       <div class="col-span-12 lg:col-span-6 min-w-0 flex flex-col gap-4 self-start w-full">
-        <card padding="lg" class="self-start w-full">
+        <Card padding="lg" class="self-start w-full" tint="info">
         <template #header>
             <div class="flex items-center justify-between h-11 overflow-hidden">
             <h3 class="text-lg font-semibold text-gray-900 dark:text-white">{{ t('teacher.analytics.charts.scoreDistribution') }}</h3>
@@ -44,12 +46,12 @@
           </div>
         </template>
         <div class="mb-3 min-h-[44px]"></div>
-          <div class="w-full">
+          <div class="w-full relative z-0">
             <div ref="scoreDistributionRef" class="h-80 w-full"></div>
           </div>
-      </card>
+      </Card>
 
-        <card padding="lg" class="self-start w-full">
+        <Card padding="lg" class="self-start w-full" tint="accent">
         <template #header>
           <h3 class="text-lg font-semibold text-gray-900 dark:text-white">{{ t('teacher.analytics.tables.studentRanking') }}</h3>
         </template>
@@ -65,13 +67,13 @@
               <div class="text-sm text-gray-700 dark:text-gray-200">{{ (s.averageGrade ?? 0).toFixed(1) }}</div>
             </li>
           </ul>
-      </card>
+      </Card>
       </div>
 
       <!-- 五维能力雷达图 -->
       <div class="col-span-12 lg:col-span-6 min-w-0 flex flex-col gap-4 w-full">
         <!-- 控制面板 -->
-        <card padding="lg" class="w-full">
+        <Card padding="lg" class="w-full" tint="warning">
           <template #header>
             <div class="flex items-center justify-between h-11">
               <h3 class="text-lg font-semibold text-gray-900 dark:text-white">{{ t('teacher.analytics.settings.title') }}</h3>
@@ -103,53 +105,55 @@
             <div class="flex flex-wrap items-center gap-4 whitespace-nowrap">
               <div class="flex items-center gap-2">
                 <span class="text-xs font-medium leading-tight text-gray-700 dark:text-gray-300">{{ t('teacher.analytics.settings.studentLabel') }}</span>
-                <GlassPopoverSelect
-                  v-model="selectedStudentId"
-                  :options="studentSelectOptions"
-                  :placeholder="t('teacher.analytics.charts.selectStudent') as string"
-                  size="sm"
-                  width="160px"
-                  @change="loadRadar"
-                />
+                  <GlassPopoverSelect
+                    v-model="selectedStudentId"
+                    :options="studentSelectOptions"
+                    :placeholder="t('teacher.analytics.charts.selectStudent') as string"
+                    size="sm"
+                    width="160px"
+                    tint="primary"
+                    @change="loadRadar"
+                  />
               </div>
               <div class="flex items-center gap-2">
                 <span class="text-xs font-medium leading-tight text-gray-700 dark:text-gray-300">{{ t('teacher.analytics.settings.classAvgLabel') }}</span>
-                <GlassPopoverSelect
-                  v-model="includeClassAvg"
-                  :options="[
-                    { label: t('teacher.analytics.charts.classAvgBoth') as string || '班级均值: A与B', value: 'both' },
-                    { label: t('teacher.analytics.charts.classAvgA') as string || '班级均值: 仅A', value: 'A' },
-                    { label: t('teacher.analytics.charts.classAvgB') as string || '班级均值: 仅B', value: 'B' },
-                    { label: t('teacher.analytics.charts.classAvgNone') as string || '班级均值: 关闭', value: 'none' }
-                  ]"
-                  size="sm"
-                  width="180px"
-                  @change="loadRadar"
-                  :disabled="!compareEnabled"
-                />
+                  <GlassPopoverSelect
+                    v-model="includeClassAvg"
+                    :options="[
+                      { label: t('teacher.analytics.charts.classAvgBoth') as string || '班级均值: A与B', value: 'both' },
+                      { label: t('teacher.analytics.charts.classAvgA') as string || '班级均值: 仅A', value: 'A' },
+                      { label: t('teacher.analytics.charts.classAvgB') as string || '班级均值: 仅B', value: 'B' },
+                      { label: t('teacher.analytics.charts.classAvgNone') as string || '班级均值: 关闭', value: 'none' }
+                    ]"
+                    size="sm"
+                    width="180px"
+                    tint="secondary"
+                    @change="loadRadar"
+                    :disabled="!compareEnabled"
+                  />
               </div>
               <div v-if="!compareEnabled" class="flex items-center gap-2">
                 <span class="text-xs font-medium leading-tight text-gray-700 dark:text-gray-300">{{ t('teacher.analytics.settings.timeFilter') }}</span>
-                <GlassDateTimePicker v-model="startDate" :dateOnly="true" size="sm" />
+                <GlassDateTimePicker v-model="startDate" :dateOnly="true" size="sm" tint="accent" />
                 <span class="text-xs text-gray-500">-</span>
-                <GlassDateTimePicker v-model="endDate" :dateOnly="true" size="sm" />
+                <GlassDateTimePicker v-model="endDate" :dateOnly="true" size="sm" tint="accent" />
               </div>
             </div>
               <div v-if="compareEnabled" class="flex flex-col gap-2">
               <div class="flex flex-wrap items-center gap-2">
                 <span class="text-sm text-gray-700 dark:text-gray-300">{{ t('teacher.analytics.settings.setA') }}</span>
-                <GlassMultiSelect v-model="assignmentIdsA" :options="assignmentSelectOptions" size="sm" />
+                <GlassMultiSelect v-model="assignmentIdsA" :options="assignmentSelectOptions" size="sm" tint="primary" />
               </div>
               <div class="flex flex-wrap items-center gap-2">
                 <span class="text-sm text-gray-700 dark:text-gray-300">{{ t('teacher.analytics.settings.setB') }}</span>
-                <GlassMultiSelect v-model="assignmentIdsB" :options="assignmentSelectOptions" size="sm" />
+                <GlassMultiSelect v-model="assignmentIdsB" :options="assignmentSelectOptions" size="sm" tint="secondary" />
               </div>
             </div>
           </div>
-        </card>
+        </Card>
 
         <!-- 雷达图展示 -->
-        <card padding="lg">
+        <Card padding="lg" tint="secondary">
           <template #header>
             <div class="flex items-center justify-between h-11 relative z-10 overflow-hidden">
               <h3 class="text-lg font-semibold text-gray-900 dark:text-white">{{ t('teacher.analytics.charts.radar') }}</h3>
@@ -157,10 +161,10 @@
             </div>
           </template>
           <div v-if="radarIndicators.length" class="w-full">
-            <radar-chart :indicators="radarIndicators" :series="radarSeries" height="320px" />
+            <radar-chart :indicators="radarIndicators" :series="radarSeries" height="320px" :appendTooltipToBody="false" :showLegend="true" />
           </div>
           <div v-else class="text-sm text-gray-500 text-center">{{ t('teacher.analytics.charts.noRadar') }}</div>
-        </card>
+        </Card>
 
         <!-- 维度图例说明（中英） -->
         <card padding="lg" v-if="rawRadarDimensions.length">
@@ -168,7 +172,7 @@
         </card>
 
         <!-- 维度解析卡片（右列堆叠） -->
-        <card padding="lg" v-if="compareEnabled || (!!selectedStudentId)" class="self-start w-full">
+        <Card padding="lg" v-if="compareEnabled || (!!selectedStudentId)" class="self-start w-full" tint="primary">
           <template #header>
             <div class="flex items-center justify-between h-11">
               <h3 class="text-lg font-semibold text-gray-900 dark:text-white">{{ t('teacher.analytics.charts.dimensionInsights') || '维度解析' }}</h3>
@@ -192,7 +196,7 @@
               <div class="mt-1 text-sm text-gray-700 dark:text-gray-300">{{ it.suggestion }}</div>
             </div>
           </div>
-        </card>
+        </Card>
       </div>
     
     </div>
@@ -217,6 +221,7 @@ import Button from '@/components/ui/Button.vue'
 import Badge from '@/components/ui/Badge.vue'
 import Progress from '@/components/ui/Progress.vue'
 import * as echarts from 'echarts'
+import { resolveEChartsTheme, glassTooltipCss, resolveThemePalette } from '@/charts/echartsTheme'
 import RadarChart from '@/components/charts/RadarChart.vue'
 import AbilityRadarLegend from '@/shared/views/AbilityRadarLegend.vue'
 import AbilityWeightsDialog from '@/features/teacher/components/AbilityWeightsDialog.vue'
@@ -292,6 +297,9 @@ const coursePerformanceRef = ref<HTMLElement>()
 
 let learningTrendChart: echarts.ECharts | null = null
 let scoreDistributionChart: echarts.ECharts | null = null
+let darkObserver: MutationObserver | null = null
+let reRenderScheduled = false
+let lastIsDark: boolean | null = null
 let coursePerformanceChart: echarts.ECharts | null = null
 
 // 计算属性：当前教师的课程列表
@@ -345,7 +353,8 @@ function getOrCreateChart(el: HTMLElement | undefined, existing: echarts.ECharts
   if (!el) return null
   let inst = echarts.getInstanceByDom(el)
   if (!inst) {
-    inst = echarts.init(el)
+    const theme = resolveEChartsTheme()
+    inst = echarts.init(el as HTMLDivElement, theme as any)
   } else {
     inst.clear()
   }
@@ -368,8 +377,24 @@ const initScoreDistributionChart = () => {
     title: {
       show: false
     },
+    hoverLayerThreshold: Infinity,
     tooltip: {
       trigger: 'item',
+      triggerOn: 'mousemove',
+      backgroundColor: 'transparent',
+      borderColor: 'transparent',
+      textStyle: { color: 'var(--color-base-content)' },
+      extraCssText: glassTooltipCss(),
+      className: 'echarts-glass-tooltip',
+      renderMode: 'html',
+      enterable: false,
+      confine: true,
+      alwaysShowContent: false,
+      appendToBody: false,
+      transitionDuration: 0,
+      showDelay: 0,
+      hideDelay: 30,
+      position: (pos: any) => [pos[0] + 12, pos[1] + 12],
       formatter: '{b}: {c} ({d}%)'
     },
     legend: {
@@ -382,12 +407,40 @@ const initScoreDistributionChart = () => {
         // 扩大半径并居中，使其尽量填充卡片
         radius: ['40%', '78%'],
         center: ['50%', '50%'],
-        data: pieData,
+        avoidLabelOverlap: false,
+        selectedMode: false,
+        hoverAnimation: false,
+        data: pieData.map((item: any, idx: number) => ({
+          ...item,
+          itemStyle: { color: resolveThemePalette()[idx % resolveThemePalette().length] },
+          emphasis: { itemStyle: { opacity: 0.85 } },
+          blur: { itemStyle: { opacity: 1 } }
+        })),
+        emphasis: { focus: 'none', scale: false },
       }
     ]
   }
 
   scoreDistributionChart && scoreDistributionChart.setOption(option)
+  try { (scoreDistributionChart as any).off && (scoreDistributionChart as any).off('globalout') } catch {}
+  try {
+    scoreDistributionChart?.on('globalout', () => {
+      try { scoreDistributionChart?.dispatchAction({ type: 'hideTip' } as any) } catch {}
+    })
+  } catch {}
+}
+
+function scheduleReinitScoreDistribution() {
+  if (reRenderScheduled) return
+  reRenderScheduled = true
+  window.setTimeout(() => {
+    reRenderScheduled = false
+    if (scoreDistributionChart) {
+      scoreDistributionChart.dispose()
+      scoreDistributionChart = null
+    }
+    initScoreDistributionChart()
+  }, 150)
 }
 
 // 删除课程表现图，保留接口位置以便后续启用
@@ -516,11 +569,30 @@ onMounted(async () => {
   }
   onCourseChange()
   window.addEventListener('resize', resizeCharts)
+  // 监听浅/深色切换，自动重建饼图以应用主题色
+  if (!darkObserver) {
+    darkObserver = new MutationObserver(() => {
+      const isDark = document.documentElement.classList.contains('dark')
+      if (lastIsDark === null) {
+        lastIsDark = isDark
+        return
+      }
+      if (isDark !== lastIsDark) {
+        lastIsDark = isDark
+        scheduleReinitScoreDistribution()
+      }
+    })
+    darkObserver.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] })
+  }
 })
 
 onUnmounted(() => {
   scoreDistributionChart?.dispose()
   window.removeEventListener('resize', resizeCharts)
+  if (darkObserver) {
+    darkObserver.disconnect()
+    darkObserver = null
+  }
 })
 
 const askAiForAnalytics = () => {
