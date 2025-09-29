@@ -36,48 +36,33 @@
       </template>
     </router-view>
 
-    <!-- 全局通知系统（玻璃） -->
-    <div class="fixed top-4 right-4 z-50 space-y-2">
-      <div class="space-y-2">
-        <div
-          v-for="notification in notifications"
-          :key="notification.id"
-          class="w-auto max-w-[90vw] sm:max-w-[560px] rounded-full pointer-events-auto overflow-hidden transform transition-all duration-300 ease-in-out glass-thin glass-interactive border border-white/20 dark:border-white/12 shadow-md"
-          v-glass="{ strength: 'thin', interactive: true }"
-        >
-          <div class="p-3 sm:p-4 flex items-start">
-              <div class="flex-shrink-0">
-                <check-circle-icon 
-                  v-if="notification.type === 'success'" 
-                  class="h-6 w-6 text-green-400" 
-                />
-                <exclamation-triangle-icon 
-                  v-else-if="notification.type === 'warning'" 
-                  class="h-6 w-6 text-yellow-400" 
-                />
-                <x-circle-icon 
-                  v-else-if="notification.type === 'error'" 
-                  class="h-6 w-6 text-red-400" 
-                />
-                <information-circle-icon 
-                  v-else 
-                  class="h-6 w-6 text-blue-400" 
-                />
+    <!-- 全局通知系统（Animated List + 玻璃 + 主题色） -->
+    <div class="fixed top-4 right-4 z-50 w-auto max-w-[90vw] sm:max-w-[560px]">
+      <AnimatedList :items="notifications" :delay="120" :reverse="true">
+        <template #item="{ item }">
+          <div
+            class="rounded-full pointer-events-auto overflow-hidden glass-thin glass-interactive border border-white/20 dark:border-white/12 shadow-md"
+            :class="tintClass(item.type)"
+            v-glass="{ strength: 'thin', interactive: true }"
+          >
+            <div class="p-4 sm:p-5 flex items-center">
+              <div class="flex-shrink-0 w-7 h-7 mr-4 flex items-center justify-start">
+                <CheckCircleSolid v-if="item.type === 'success'" class="h-7 w-7" :style="iconStyle('success')" />
+                <ExclamationTriangleSolid v-else-if="item.type === 'warning'" class="h-7 w-7" :style="iconStyle('warning')" />
+                <XCircleSolid v-else-if="item.type === 'error'" class="h-7 w-7" :style="iconStyle('error')" />
+                <InformationCircleSolid v-else class="h-7 w-7" :style="iconStyle('info')" />
               </div>
-              <div class="ml-3 min-w-0 flex-1">
-                <p class="text-sm font-medium text-gray-900 dark:text-white break-words whitespace-normal">
-                  {{ notification.title }}
-                </p>
-                <p v-if="notification.message" class="mt-1 text-sm text-gray-700 dark:text-gray-300 break-words whitespace-normal">
-                  {{ notification.message }}
-                </p>
+              <div class="min-w-0 flex-1">
+                <p class="text-[15px] sm:text-[17px] font-semibold break-words whitespace-normal">{{ item.title }}</p>
+                <p v-if="item.message" class="mt-1 text-[14px] sm:text-[15px] break-words whitespace-normal leading-6 opacity-90">{{ item.message }}</p>
               </div>
               <div class="ml-3 flex-shrink-0 flex">
-                <button size="xs" variant="glass" icon="close" @click="uiStore.removeNotification(notification.id)" />
+                <button size="sm" variant="glass" icon="close" @click="uiStore.removeNotification(item.id)" />
               </div>
+            </div>
           </div>
-        </div>
-      </div>
+        </template>
+      </AnimatedList>
     </div>
 
     <!-- 全局错误边界弹窗 -->
@@ -136,13 +121,14 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted, nextTick } from 'vue'
+import { ref, onMounted, onUnmounted, nextTick, computed, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useUIStore } from '@/stores/ui'
 import { useAuthStore } from '@/stores/auth'
 import { useChatStore } from '@/stores/chat'
 import { storeToRefs } from 'pinia'
 import { useI18n } from 'vue-i18n'
+import AnimatedList from '@/components/ui/AnimatedList.vue'
 import Button from '@/components/ui/Button.vue'
 import ChatDrawer from '@/features/teacher/components/ChatDrawer.vue'
 import {
@@ -153,13 +139,97 @@ import {
   XMarkIcon,
   WifiIcon
 } from '@heroicons/vue/24/outline'
+import {
+  CheckCircleIcon as CheckCircleSolid,
+  ExclamationTriangleIcon as ExclamationTriangleSolid,
+  XCircleIcon as XCircleSolid,
+  InformationCircleIcon as InformationCircleSolid
+} from '@heroicons/vue/24/solid'
 
 // Stores
 const router = useRouter()
 const uiStore = useUIStore()
 const authStore = useAuthStore()
 const chat = useChatStore()
-const { notifications } = storeToRefs(uiStore)
+const { notifications, themeName } = storeToRefs(uiStore)
+// 读取主题主色和强调色，保证与背景对比
+const themePrimary = ref<string>('')
+const themeAccent = ref<string>('')
+const themeBg = ref<string>('')
+
+function parseColor(input: string): { r: number; g: number; b: number } | null {
+  const v = (input || '').trim()
+  if (!v) return null
+  // hex #rrggbb
+  const hex = v.startsWith('#') ? v.slice(1) : (v.startsWith('0x') ? v.slice(2) : '')
+  if (hex && (hex.length === 6 || hex.length === 3)) {
+    const h = hex.length === 3 ? hex.split('').map(c => c + c).join('') : hex
+    const r = parseInt(h.slice(0, 2), 16)
+    const g = parseInt(h.slice(2, 4), 16)
+    const b = parseInt(h.slice(4, 6), 16)
+    return { r, g, b }
+  }
+  // rgb(r,g,b)
+  const m = v.match(/rgb\s*\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*\)/i)
+  if (m) return { r: Number(m[1]), g: Number(m[2]), b: Number(m[3]) }
+  return null
+}
+
+function relativeLuminance({ r, g, b }: { r: number; g: number; b: number }): number {
+  const srgb = [r, g, b].map(v => v / 255).map(v => (v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4)))
+  return 0.2126 * srgb[0] + 0.7152 * srgb[1] + 0.0722 * srgb[2]
+}
+
+function contrastRatio(c1: string, c2: string): number {
+  const a = parseColor(c1)
+  const b = parseColor(c2)
+  if (!a || !b) return 1
+  const L1 = relativeLuminance(a)
+  const L2 = relativeLuminance(b)
+  const [hi, lo] = L1 >= L2 ? [L1, L2] : [L2, L1]
+  return (hi + 0.05) / (lo + 0.05)
+}
+
+function ensureContrast(pref: string, bg: string, fallback: string): string {
+  // 优先使用主色；若对比度 < 3，则用强调色；若仍不足，回退安全色
+  try {
+    if (pref && bg && contrastRatio(pref, bg) >= 3) return pref
+    if (fallback && bg && contrastRatio(fallback, bg) >= 3) return fallback
+  } catch {}
+  // 根据暗黑/明亮回退到高对比安全色
+  const isDark = document.documentElement.classList.contains('dark')
+  return isDark ? '#60a5fa' : '#2563eb'
+}
+
+const effectivePrimary = computed(() => ensureContrast(themePrimary.value || '#22d3ee', themeBg.value || '#ffffff', themeAccent.value || '#a78bfa'))
+const effectiveAccent = computed(() => ensureContrast(themeAccent.value || '#a78bfa', themeBg.value || '#ffffff', themePrimary.value || '#22d3ee'))
+
+const accentBarStyle = computed(() => {
+  const from = effectivePrimary.value
+  const to = effectiveAccent.value
+  return { background: `linear-gradient(180deg, ${from}, ${to})` }
+})
+
+// 根据通知类型返回对应的玻璃 tint 类
+function tintClass(type?: string): string {
+  const t = String(type || 'info').toLowerCase()
+  if (t === 'success') return 'glass-tint-success'
+  if (t === 'warning') return 'glass-tint-warning'
+  if (t === 'error') return 'glass-tint-error'
+  return 'glass-tint-info'
+}
+
+// 图标颜色随主题语义色
+function iconStyle(kind: 'success'|'warning'|'error'|'info') {
+  // 直接使用主题 CSS 变量，天然随主题/暗黑模式切换
+  const map: Record<string, string> = {
+    success: 'var(--color-success)',
+    warning: 'var(--color-warning)',
+    error: 'var(--color-error)',
+    info: 'var(--color-info)'
+  }
+  return { color: map[kind] }
+}
 
 // 响应式状态
 const globalLoading = ref(false)
@@ -218,7 +288,17 @@ const handleOffline = () => {
 }
 
 // 生命周期
+function readThemeVars() {
+  try {
+    const rs = getComputedStyle(document.documentElement)
+    themePrimary.value = rs.getPropertyValue('--color-theme-primary').trim() || rs.getPropertyValue('--p').trim() || '#22d3ee'
+    themeAccent.value = rs.getPropertyValue('--color-theme-accent').trim() || rs.getPropertyValue('--a').trim() || '#a78bfa'
+    themeBg.value = rs.getPropertyValue('--color-base-100').trim() || getComputedStyle(document.body).backgroundColor || '#ffffff'
+  } catch {}
+}
+
 onMounted(() => {
+  readThemeVars()
   window.addEventListener('error', (event) => {
     handleGlobalError(event.error || new Error(event.message))
   })
@@ -234,6 +314,11 @@ onMounted(() => {
     console.error('路由错误:', error)
     handleGlobalError(error, '路由导航')
   })
+})
+
+watch(themeName, () => {
+  // 主题切换后重读 CSS 变量，更新有效颜色
+  readThemeVars()
 })
 
 onUnmounted(() => {

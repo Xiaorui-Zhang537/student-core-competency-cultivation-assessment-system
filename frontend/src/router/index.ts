@@ -64,7 +64,7 @@ const routes = [
     children: [
       {
         path: '',
-        redirect: '/student/home'
+        redirect: '/student/dashboard'
       },
       {
         path: 'dashboard',
@@ -154,13 +154,7 @@ const routes = [
       // ... 其他学生路由
     ]
   },
-  // 学生首页独立：不走 StudentLayout 左侧菜单
-  {
-    path: '/student/home',
-    name: 'StudentHome',
-    component: () => import('@/features/student/views/HomeView.vue'),
-    meta: { requiresAuth: true, role: 'STUDENT' }
-  },
+  // 学生首页已移除，统一使用 /student/dashboard
   {
     path: '/teacher',
     component: TeacherLayout,
@@ -395,13 +389,13 @@ router.beforeEach((to, from, next) => {
       return next({ name: 'Login', query: { redirect: to.fullPath } });
     }
     if (to.meta.role && to.meta.role !== userRole) {
-      const dashboard = userRole === 'TEACHER' ? '/teacher/dashboard' : '/student/home';
+      const dashboard = userRole === 'TEACHER' ? '/teacher/dashboard' : '/student/dashboard';
       return next(dashboard);
     }
   }
 
   if (to.meta.requiresGuest && isAuthenticated) {
-    const dashboard = userRole === 'TEACHER' ? '/teacher/dashboard' : '/student/home';
+    const dashboard = userRole === 'TEACHER' ? '/teacher/dashboard' : '/student/dashboard';
     return next(dashboard);
   }
 

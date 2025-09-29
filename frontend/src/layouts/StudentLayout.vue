@@ -23,6 +23,11 @@
               <paint-brush-icon class="w-5 h-5" />
             </ripple-button>
           </span>
+          <span ref="cursorBtnRef" class="inline-flex">
+            <ripple-button pill :title="t('layout.common.cursorTrail') as string || '鼠标轨迹'" @click="onToggleCursorMenu">
+              <sparkles-icon class="w-5 h-5" />
+            </ripple-button>
+          </span>
           <language-switcher buttonClass="px-4 h-11 flex items-center rounded-full" />
           
           <notification-bell>
@@ -54,7 +59,7 @@
     <div class="flex pt-2 pb-20">
       <main class="flex-1">
         <div class="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-          <router-view />
+          <router-view :key="viewKey" />
         </div>
       </main>
 
@@ -134,20 +139,62 @@
         @click.stop
       >
         <div class="px-3 py-2 text-xs text-subtle">
-          <div class="font-medium mb-1">主题</div>
-          <div class="opacity-90">在新版（静态背景+新配色）与旧版（动态背景+旧配色）之间切换</div>
+          <div class="font-medium mb-1">{{ t('layout.common.themeSelectTitle') || '主题配色' }}</div>
+          <div class="opacity-90">{{ t('layout.common.themeSelectDesc') }}</div>
         </div>
         <div class="border-t border-white/10 my-1"></div>
-        <button class="w-full text-left px-3 py-2 rounded-2xl hover:bg-white/10 text-sm flex items-center justify-between" @click="setTheme('retro')">
-          <span>Retro</span>
-          <span v-if="uiStore.theme==='retro'" class="text-primary-500">✓</span>
+        <button class="w-full text-left px-3 py-2 rounded-2xl hover:bg-white/10 text-sm flex items-center justify-between" @click="setTheme(uiStore.isDarkMode ? 'coffee' : 'cupcake')">
+          <span>Cupcake + Coffee</span>
+          <span v-if="uiStore.themeName==='cupcake' || uiStore.themeName==='coffee'" class="text-theme-primary">✓</span>
         </button>
-        <button class="w-full text-left px-3 py-2 rounded-2xl hover:bg-white/10 text-sm flex items-center justify-between" @click="setTheme('dracula')">
-          <span>Dracula</span>
-          <span v-if="uiStore.theme==='dracula'" class="text-primary-500">✓</span>
+        <button class="w-full text-left px-3 py-2 rounded-2xl hover:bg-white/10 text-sm flex items-center justify-between" @click="setTheme(uiStore.isDarkMode ? 'dracula' : 'retro')">
+          <span>{{ t('layout.common.themeOption.retroDracula') || 'Retro + Dracula' }}</span>
+          <span v-if="uiStore.themeName==='retro' || uiStore.themeName==='dracula'" class="text-theme-primary">✓</span>
+        </button>
+        <button class="w-full text-left px-3 py-2 rounded-2xl hover:bg-white/10 text-sm flex items-center justify-between" @click="setTheme(uiStore.isDarkMode ? 'dark' : 'light')">
+          <span>Light + Dark</span>
+          <span v-if="uiStore.themeName==='light' || uiStore.themeName==='dark'" class="text-theme-primary">✓</span>
         </button>
       </liquid-glass>
     </teleport>
+
+    <!-- 鼠标轨迹菜单 -->
+    <teleport to="body">
+      <div v-if="showCursorMenu" class="fixed inset-0 z-[999]" @click="showCursorMenu = false"></div>
+      <liquid-glass
+        v-if="showCursorMenu"
+        :style="cursorMenuStyle"
+        containerClass="fixed z-[1000] rounded-2xl"
+        class="p-1"
+        :radius="16"
+        :frost="0.05"
+        @click.stop
+      >
+        <div class="px-3 py-2 text-xs text-subtle">
+          <div class="font-medium mb-1">{{ t('layout.common.cursorTrailTitle') || '鼠标轨迹' }}</div>
+          <div class="opacity-90">{{ t('layout.common.cursorTrailDesc') }}</div>
+        </div>
+        <div class="border-t border-white/10 my-1"></div>
+        <button class="w-full text-left px-3 py-2 rounded-2xl hover:bg-white/10 text-sm flex items-center justify-between" @click="setCursor('off')">
+          <span>{{ t('layout.common.cursorTrailOff') || '关闭' }}</span>
+          <span v-if="uiStore.cursorTrailMode==='off'" class="text-theme-primary">✓</span>
+        </button>
+        <button class="w-full text-left px-3 py-2 rounded-2xl hover:bg-white/10 text-sm flex items-center justify-between" @click="setCursor('fluid')">
+          <span>{{ t('layout.common.cursorTrailFluid') || '流体光标' }}</span>
+          <span v-if="uiStore.cursorTrailMode==='fluid'" class="text-theme-primary">✓</span>
+        </button>
+        <button class="w-full text-left px-3 py-2 rounded-2xl hover:bg-white/10 text-sm flex items-center justify-between" @click="setCursor('smooth')">
+          <span>{{ t('layout.common.cursorTrailSmooth') || '顺滑光标' }}</span>
+          <span v-if="uiStore.cursorTrailMode==='smooth'" class="text-theme-primary">✓</span>
+        </button>
+        <button class="w-full text-left px-3 py-2 rounded-2xl hover:bg-white/10 text-sm flex items-center justify-between" @click="setCursor('tailed')">
+          <span>{{ t('layout.common.cursorTrailTailed') || '带尾迹光标' }}</span>
+          <span v-if="uiStore.cursorTrailMode==='tailed'" class="text-theme-primary">✓</span>
+        </button>
+      </liquid-glass>
+    </teleport>
+
+    <cursor-trail-layer />
   </div>
 </template>
 
@@ -167,6 +214,7 @@ import DockBar from '@/components/ui/DockBar.vue'
 import RippleButton from '@/components/ui/RippleButton.vue'
 import SparklesText from '@/components/ui/SparklesText.vue'
 import LiquidLogo from '@/components/ui/LiquidLogo.vue'
+import CursorTrailLayer from '@/components/ui/CursorTrailLayer.vue'
 import {
   Bars3Icon,
   SunIcon,
@@ -204,8 +252,12 @@ const userMenuStyle = ref<Record<string, string>>({})
 const showThemeMenu = ref(false)
 const themeBtnRef = ref<HTMLElement | null>(null)
 const themeMenuStyle = ref<Record<string, string>>({})
+const showCursorMenu = ref(false)
+const cursorBtnRef = ref<HTMLElement | null>(null)
+const cursorMenuStyle = ref<Record<string, string>>({})
 
 const displayName = computed(() => (authStore.user as any)?.nickname || (authStore.user as any)?.name || (authStore.user as any)?.username || t('layout.common.me') || 'Me')
+const viewKey = ref(0)
 
 const handleLogout = async () => {
   showUserMenu.value = false
@@ -242,16 +294,37 @@ watch(showThemeMenu, async (v: boolean) => {
     themeMenuStyle.value = {
       position: 'fixed',
       top: `${rect.bottom + 6}px`,
-      left: `${Math.max(8, rect.right - 260)}px`,
-      width: '16rem',
+      left: `${Math.max(8, rect.right - 224)}px`,
+      width: '14rem',
       zIndex: '1000'
     }
   } catch {}
 })
 
-function setTheme(v: 'retro' | 'dracula') {
+watch(showCursorMenu, async (v: boolean) => {
+  if (!v) return
+  await nextTick()
+  try {
+    const el = cursorBtnRef.value as HTMLElement
+    const rect = el.getBoundingClientRect()
+    cursorMenuStyle.value = {
+      position: 'fixed',
+      top: `${rect.bottom + 6}px`,
+      left: `${Math.max(8, rect.right - 220)}px`,
+      width: '14rem',
+      zIndex: '1000'
+    }
+  } catch {}
+})
+
+function setTheme(v: 'retro' | 'dracula' | 'light' | 'dark' | 'cupcake' | 'coffee') {
   uiStore.setTheme(v)
   showThemeMenu.value = false
+}
+
+function setCursor(v: 'off' | 'fluid' | 'smooth' | 'tailed') {
+  uiStore.setCursorTrailMode(v)
+  showCursorMenu.value = false
 }
 
 // setGlass 移除：旧主题强制 more，新主题强制 normal（由 store 控制）
@@ -266,12 +339,22 @@ function emitCloseNotification() {
 function closeTopbarPopovers() {
   showThemeMenu.value = false
   showUserMenu.value = false
+  showCursorMenu.value = false
 }
 
 function onToggleThemeMenu() {
   try { window.dispatchEvent(new CustomEvent('ui:close-topbar-popovers')) } catch {}
   showThemeMenu.value = !showThemeMenu.value
 }
+
+function onToggleCursorMenu() {
+  try { window.dispatchEvent(new CustomEvent('ui:close-topbar-popovers')) } catch {}
+  showCursorMenu.value = !showCursorMenu.value
+}
+
+// 统一主题切换刷新：布局层重载视图，避免各图表重复监听
+watch(() => uiStore.isDarkMode, () => { viewKey.value++ })
+watch(() => uiStore.themeName, () => { viewKey.value++ })
 
 // Dock 配置
 const activeDock = computed<string>({

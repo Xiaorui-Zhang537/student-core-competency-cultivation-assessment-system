@@ -25,7 +25,20 @@
 			"help": "帮助",
 			"toggleTheme": "切换主题",
 			"themeFamily": "主题家族",
-			"me": "我"
+			"themeSelectTitle": "主题配色",
+			"themeSelectDesc": "选择你喜欢的主题配色。每个主题由一组明暗配色组成，系统会在浅色和深色之间自如切换。",
+			"themeOption": {
+				"retroDracula": "Retro + Dracula",
+				"comingSoon": "更多主题组合即将上线"
+			},
+			"me": "我",
+			"cursorTrail": "鼠标轨迹",
+			"cursorTrailTitle": "鼠标轨迹",
+			"cursorTrailDesc": "选择是否开启鼠标轨迹特效。关闭更省电，流体光标性能要求更高。",
+			"cursorTrailOff": "关闭",
+			"cursorTrailFluid": "流体光标",
+            "cursorTrailSmooth": "顺滑光标",
+            "cursorTrailTailed": "带尾迹光标"
 		},
 		"teacher": {
 			"title": "学生核心能力培养评估系统",

@@ -4,11 +4,11 @@
     <nav class="mb-4 relative z-10">
       <ol class="flex items-center space-x-2 text-sm">
         <li>
-          <router-link to="/student/courses" class="text-[var(--color-neutral-content)] hover:text-[var(--color-primary)]">{{ t('student.courses.title') }}</router-link>
+          <router-link to="/student/courses" class="text-[var(--color-base-content)] hover:text-[var(--color-primary)]">{{ t('student.courses.title') }}</router-link>
         </li>
         <li v-if="lesson?.courseId"><span class="text-[color-mix(in_oklab,var(--color-base-content)_45%,transparent)]">&gt;</span></li>
         <li v-if="lesson?.courseId">
-          <router-link :to="`/student/courses/${lesson.courseId}`" class="text-[var(--color-neutral-content)] hover:text-[var(--color-primary)]">{{ courseTitle }}</router-link>
+          <router-link :to="`/student/courses/${lesson.courseId}`" class="text-[var(--color-base-content)] hover:text-[var(--color-primary)]">{{ courseTitle }}</router-link>
         </li>
         <li><span class="text-[color-mix(in_oklab,var(--color-base-content)_45%,transparent)]">&gt;</span></li>
         <li class="font-medium text-[var(--color-base-content)] truncate">{{ lesson?.title }}</li>
@@ -50,15 +50,15 @@
       </aside>
 
       <!-- 主体 -->
-      <section class="lg:col-span-3">
+      <section class="lg:col-span-3 space-y-6">
         <!-- 本节说明（右上进度圈并入，去除额外顶部空白） -->
-        <card padding="md" class="space-y-2 mt-0" tint="primary">
+        <card padding="md" class="space-y-2" tint="primary">
           <h4 class="font-medium mb-4">{{ t('student.courses.detail.sectionIntro') || '本节说明' }}</h4>
           <p class="text-sm whitespace-pre-line" style="color: color-mix(in oklab, var(--color-base-content) 75%, transparent)">{{ lesson.content || lesson.description || '-' }}</p>
         </card>
 
         <!-- 视频 -->
-        <card padding="md" class="space-y-4 mt-4" tint="accent">
+        <card padding="md" class="space-y-4" tint="accent">
           <h4 class="font-medium mb-4">{{ t('student.lesson.videoTitle') || '视频' }}</h4>
           <div v-if="lesson.videoUrl" class="relative z-10" @click="onVideoClick" style="cursor: pointer;">
             <div class="aspect-video w-full rounded overflow-hidden relative">
@@ -87,7 +87,7 @@
         </card>
 
         <!-- 资料 -->
-        <card padding="md" class="space-y-3 mt-4" tint="info">
+        <card padding="md" class="space-y-3" tint="info">
           <h4 class="font-medium mb-4">{{ t('student.lesson.materialsTitle') || t('student.courses.detail.materials') }}</h4>
             <template v-if="materials.length">
               <ul class="space-y-3">
@@ -103,7 +103,7 @@
         </card>
 
         <!-- 关联作业 -->
-        <card padding="md" class="mt-4 space-y-3" tint="warning">
+        <card padding="md" class="space-y-3" tint="warning">
           <div class="flex items-center justify-between mb-4">
             <h4 class="font-medium">{{ t('student.assignments.title') || '关联作业' }}</h4>
           </div>
@@ -119,7 +119,7 @@
                 <div class="shrink-0 ml-3">
                   <Button size="sm" variant="primary" @click="goAssignment(a.id)">
                     <template #icon>
-                      <svg class="w-4 h-4" viewBox="0 0 20 20" fill="currentColor"><path d="M10 3l7 7-7 7-1.5-1.5L13 11H3V9h10L8.5 4.5 10 3z"/></svg>
+                      <EyeIcon class="w-4 h-4" />
                     </template>
                     {{ t('student.assignments.actions.view') || '进入' }}
                   </Button>
@@ -131,7 +131,7 @@
         </card>
 
         <!-- 笔记 -->
-        <card padding="md" class="mt-4" tint="secondary">
+        <card padding="md" class="" tint="secondary">
           <h4 class="font-medium mb-4">{{ t('student.courses.note') || '学习笔记' }}</h4>
           <glass-textarea v-model="notes" :rows="4" :placeholder="t('student.courses.notePh') || '记录你的要点...'" />
           <div class="mt-2 flex justify-end">
@@ -164,6 +164,7 @@ import { useI18n } from 'vue-i18n'
 import DocumentViewer from '@/components/viewers/DocumentViewer.vue'
 import ProgressCircle from '@/components/ui/ProgressCircle.vue'
 import { courseApi } from '@/api/course.api'
+import { EyeIcon } from '@heroicons/vue/24/outline'
 
 const { t } = useI18n()
 const route = useRoute()

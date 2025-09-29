@@ -52,19 +52,34 @@
         </Card>
       </div>
 
-      <!-- Right Column: Grades and Progress -->
+      <!-- Right Column: Calendar, Grades and Progress -->
       <div class="space-y-8">
+        <!-- Spring Calendar -->
+        <Card padding="md" tint="secondary">
+          <h2 class="text-xl font-semibold mb-4">{{ t('student.dashboard.calendar') || '学习日历' }}</h2>
+          <SpringCalendar :calendar-data="calendarData" :initial-index="0" />
+        </Card>
         <!-- Overall Progress -->
         <Card padding="md" tint="accent" class="text-center">
           <h2 class="text-xl font-semibold mb-4">{{ t('student.dashboard.overallProgress') }}</h2>
-          <div class="text-4xl font-bold text-primary-600">{{ overallProgress }}%</div>
+          <div class="text-4xl font-bold" :style="{ color: 'var(--color-netural)' }">{{ overallProgress.toFixed(2) }}%</div>
+          <div class="mt-3">
+            <Progress :value="overallProgress" size="lg" color="primary" />
+
+          </div>
         </Card>
 
         <!-- Recent Grades -->
         <Card padding="md" tint="info">
           <h2 class="text-xl font-semibold mb-4">{{ t('student.dashboard.recentGrades') }}</h2>
           <div v-if="recentGrades.length > 0" class="space-y-3">
-            <div v-for="(grade, index) in recentGrades" :key="index" class="p-3 glass-thin rounded flex justify-between items-center" v-glass="{ strength: 'thin', interactive: false }">
+            <div
+              v-for="(grade, index) in recentGrades"
+              :key="index"
+              class="p-3 glass-thin rounded flex justify-between items-center cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700"
+              v-glass="{ strength: 'thin', interactive: false }"
+              @click="grade.assignmentId ? router.push(`/student/assignments/${grade.assignmentId}/submit`) : null"
+            >
               <div>
                 <h4 class="font-medium">{{ grade.assignmentTitle }}</h4>
                 <p class="text-sm text-gray-500">{{ grade.courseTitle }}</p>
@@ -86,6 +101,7 @@
 
 <script setup lang="ts">
 import { onMounted, computed, watch } from 'vue'
+import { useRouter } from 'vue-router'
 import { useUIStore } from '@/stores/ui'
 import { useStudentStore } from '@/stores/student'
 import { useI18n } from 'vue-i18n'
@@ -93,6 +109,8 @@ import StartCard from '@/components/ui/StartCard.vue'
 import { AcademicCapIcon, ClipboardDocumentListIcon, StarIcon, ClockIcon } from '@heroicons/vue/24/outline'
 import PageHeader from '@/components/ui/PageHeader.vue'
 import Card from '@/components/ui/Card.vue'
+import Progress from '@/components/ui/Progress.vue'
+import SpringCalendar from '@/components/ui/SpringCalendar.vue'
 import { useSubmissionStore } from '@/stores/submission'
 import Button from '@/components/ui/Button.vue'
 
@@ -100,6 +118,7 @@ const uiStore = useUIStore()
 const studentStore = useStudentStore()
 const submissionStore = useSubmissionStore()
 const { t } = useI18n()
+const router = useRouter()
 
 // 渲染所需派生状态，避免模板直接访问未定义属性
 const dashboardReady = computed(() => !studentStore.loading)
@@ -149,6 +168,36 @@ const weeklyStudyHours = computed(() => {
   const minutes = Number((stats.value as any)?.weeklyStudyTime || 0)
   const hours = minutes / 60
   return Math.round(hours * 10) / 10
+})
+
+// 从“即将到期作业”生成未来 7 天窗口的日历数据（遵循主题色显示）
+const calendarData = computed(() => {
+  const list = upcomingAssignments.value || []
+  const byDate: Record<string, any[]> = {}
+  for (const a of list) {
+    const d = new Date(a?.dueDate)
+    if (isNaN(d.getTime())) continue
+    const key = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`
+    if (!byDate[key]) byDate[key] = []
+    byDate[key].push(a)
+  }
+  const out: Array<{ month: string; date: number; day: string; events?: { title: string; day: string; time: string }[] }> = []
+  const now = new Date()
+  const months = ['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC']
+  const days = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat']
+  for (let i = 0; i < 7; i++) {
+    const d = new Date(now)
+    d.setDate(now.getDate() + i)
+    const key = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`
+    const events = (byDate[key] || []).map((a:any) => {
+      const dt = new Date(a?.dueDate)
+      const hh = String(dt.getHours()).padStart(2,'0')
+      const mm = String(dt.getMinutes()).padStart(2,'0')
+      return { title: a?.title || 'Assignment', day: days[dt.getDay()], time: `${hh}:${mm}` }
+    })
+    out.push({ month: months[d.getMonth()], date: d.getDate(), day: days[d.getDay()], events: events.length ? events : undefined })
+  }
+  return out
 })
 
 const getScoreColor = (score: number) => {

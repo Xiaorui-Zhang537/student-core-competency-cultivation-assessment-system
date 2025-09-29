@@ -33,6 +33,10 @@ public class ChatServiceImpl implements ChatService {
         // 将该会话中“我作为接收者”的未读通知标记已读，并重算未读
         int marked = chatMapper.markConversationRead(userId, conversationId);
         int unread = chatMapper.recalcUnread(userId, conversationId);
+        // 同步会话成员表的未读计数，避免列表再次查询出现回弹
+        try {
+            chatMapper.setUnreadCount(conversationId, userId, unread);
+        } catch (Exception ignore) {}
         Map<String, Object> res = new HashMap<>();
         res.put("marked", marked);
         res.put("unread", unread);

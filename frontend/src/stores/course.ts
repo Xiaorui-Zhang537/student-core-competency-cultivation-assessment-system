@@ -102,6 +102,11 @@ export const useCourseStore = defineStore('course', {
         await handleApiCall(() => courseApi.enrollInCourse(courseId), uiStore, '课程报名失败', { successMessage: '报名成功！' });
     },
 
+    async unenrollFromCourse(courseId: string) {
+        const uiStore = useUIStore();
+        await handleApiCall(() => courseApi.unenrollFromCourse(courseId), uiStore, '退课失败', { successMessage: '已退课' });
+    },
+
     // Actions for Course Discovery
     async fetchPopularCourses(limit: number = 8) {
         const uiStore = useUIStore();

@@ -9,6 +9,7 @@
       "activeCourses": "进行中的课程",
       "noCourses": "您还没有加入任何课程。",
       "overallProgress": "总学习进度",
+      "calendar": "学习日历",
       "recentGrades": "最近成绩",
       "noRecentGrades": "暂无最近的成绩记录。",
       "errorTitle": "无法加载仪表盘数据",
@@ -55,6 +56,9 @@
       "save": "保存",
       "enrolled": "已报名",
       "enroll": "加入课程",
+      "unenroll": "退课",
+      "enrollClosed": "报名已截止",
+      "confirmUnenroll": "确定要退课吗？",
       "detail": {
         "contents": "课程内容",
         "completed": "已完成",
@@ -140,7 +144,8 @@
         "score": "成绩",
         "completion": "完成率",
         "hours": "时长"
-      }
+      },
+      "latestFeedback": "最近作业评价"
     },
     "home": {
       "sections": { "quickEntries": "快速入口" },
@@ -256,7 +261,8 @@
         "score": "成绩走势",
         "completion": "完成率趋势",
         "hours": "时长趋势"
-      }
+      },
+      "latestFeedback": "最近作业评价"
     },
     "ability": {
       "title": "能力成长分析",

@@ -1,6 +1,6 @@
 <template>
   <div class="relative inline-block" ref="btnRef">
-    <Button :size="size" :variant="btnVariant" class="flex items-center" @click="toggle">
+    <Button :size="size" :variant="btnVariant" :class="['flex items-center', buttonClass]" @click="toggle">
       <face-smile-icon class="w-5 h-5 mr-1" />
       {{ t('shared.emojiPicker.button') }}
     </Button>
@@ -29,10 +29,11 @@ import LiquidGlass from '@/components/ui/LiquidGlass.vue'
 
 const emit = defineEmits<{ (e: 'emoji', emoji: string): void; (e: 'select', emoji: string): void }>()
 
-const props = withDefaults(defineProps<{ size?: 'xs'|'sm'|'md'; variant?: 'ghost'|'outline'|'secondary'; tint?: 'primary'|'secondary'|'accent'|'info'|'success'|'warning'|'danger'|null }>(), {
+const props = withDefaults(defineProps<{ size?: 'xs'|'sm'|'md'; variant?: 'ghost'|'outline'|'secondary'|'primary'; tint?: 'primary'|'secondary'|'accent'|'info'|'success'|'warning'|'danger'|null; buttonClass?: string }>(), {
   size: 'sm',
   variant: 'ghost',
-  tint: 'primary'
+  tint: 'primary',
+  buttonClass: ''
 })
 
 const open = ref(false)

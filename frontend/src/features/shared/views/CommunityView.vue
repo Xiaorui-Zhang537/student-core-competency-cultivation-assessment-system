@@ -31,12 +31,12 @@
                 v-for="category in categories"
                 :key="category.id"
                 variant="menu"
-                class="w-full justify-between px-3 py-2 text-sm rounded-lg transition-colors"
+                class="w-full justify-between pl-4 pr-3 py-3 text-sm rounded-xl transition-colors"
                 @click="onCategoryChange(category.id)"
                 :class="filterOptions.category === category.id ? 'bg-primary-100 dark:bg-primary-900 text-primary-700 dark:text-primary-300' : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700'"
               >
-                 <span class="flex items-center">
-                  <component :is="category.icon" class="w-4 h-4 mr-3" />
+                <span class="flex items-center ml-2">
+                  <component :is="category.icon" class="w-5 h-5 mr-3" />
                    <span>{{ category.name }}</span>
                 </span>
               </Button>
@@ -96,6 +96,7 @@
                     :placeholder="t('shared.community.list.searchPlaceholder') as string"
                     size="sm"
                     @keyup.enter="applyFilters"
+                    @update:modelValue="(v: string) => { if (String(v || '').trim() === '') { applyFilters() } }"
                   />
                 </div>
                 <div class="w-36">
@@ -403,7 +404,8 @@ const applyFilters = () => {
     page: filterOptions.page,
     size: filterOptions.size,
     orderBy: filterOptions.orderBy,
-    keyword: filterOptions.keyword,
+    // 允许搜索栏空白时，keyword 传 undefined 展示全部
+    keyword: String(filterOptions.keyword || '').trim() === '' ? undefined : filterOptions.keyword,
     category: filterOptions.category === 'all' ? undefined : categoryIdToLabel[filterOptions.category] || filterOptions.category
   };
   communityStore.fetchPosts(params);
@@ -419,6 +421,8 @@ const changePage = (page: number) => {
   filterOptions.page = page;
    const params: any = {
     ...filterOptions,
+    // 空白搜索同样视为展示全部
+    keyword: String(filterOptions.keyword || '').trim() === '' ? undefined : filterOptions.keyword,
     category: filterOptions.category === 'all' ? undefined : filterOptions.category
   };
   communityStore.fetchPosts(params);

@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { i18n } from '@/i18n'
 import type { ApiResponse, ApiError } from '@/types/api';
 
 const rawBase = import.meta.env.VITE_API_BASE_URL?.replace(/\/+$/, '') || '';
@@ -33,6 +34,15 @@ apiClient.interceptors.request.use(
       // 其它请求统一带上 Bearer
       config.headers.Authorization = `Bearer ${token}`;
     }
+    // 统一附带语言首选项，便于后端返回对应语言内容（如评语/报告）
+    try {
+      const locale = (i18n.global as any)?.locale?.value || localStorage.getItem('locale') || 'zh-CN'
+      if (locale) {
+        config.headers['Accept-Language'] = String(locale)
+        // 可选的自定义头，后端若不识别则忽略
+        config.headers['X-Locale'] = String(locale)
+      }
+    } catch {}
     return config;
   },
   (error) => Promise.reject(error)

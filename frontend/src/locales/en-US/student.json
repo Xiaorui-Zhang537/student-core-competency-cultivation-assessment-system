@@ -9,6 +9,7 @@
       "activeCourses": "Active Courses",
       "noCourses": "You haven't joined any course yet.",
       "overallProgress": "Overall Progress",
+      "calendar": "Calendar",
       "recentGrades": "Recent Grades",
       "noRecentGrades": "No recent grades.",
       "errorTitle": "Failed to load dashboard",
@@ -54,6 +55,9 @@
       "processing": "Processing...",
       "enrolled": "Enrolled",
       "enroll": "Enroll",
+      "unenroll": "Unenroll",
+      "enrollClosed": "Enrollment Closed",
+      "confirmUnenroll": "Are you sure you want to unenroll?",
       "detail": {
         "contents": "Course Contents",
         "completed": "Completed",
@@ -139,7 +143,8 @@
         "score": "Score",
         "completion": "Completion",
         "hours": "Hours"
-      }
+      },
+      "latestFeedback": "Latest Assignment Feedback"
     },
     "home": {
       "sections": { "quickEntries": "Quick Entries" },

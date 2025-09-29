@@ -180,20 +180,29 @@
             </div>
           </template>
           <div v-if="insightsItems.length === 0" class="text-sm text-gray-500">{{ t('teacher.analytics.charts.noInsights') || '暂无解析' }}</div>
-          <div v-else class="divide-y divide-gray-200 dark:divide-gray-700">
-            <div v-for="(it, idx) in insightsItems" :key="idx" class="py-3">
-              <div class="flex items-center justify-between">
-                <div class="text-sm font-medium text-gray-900 dark:text-gray-100">{{ localizeDimensionName(it.name) }}</div>
-                <div class="text-sm text-gray-600 dark:text-gray-300">
-                  <span class="mr-2">A: {{ (it.scoreA ?? 0).toFixed(1) }}</span>
-                  <span v-if="compareEnabled" class="mr-2">B: {{ (it.scoreB ?? 0).toFixed(1) }}</span>
-                  <span v-if="compareEnabled && it.delta != null" :class="(it.delta ?? 0) >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'">
-                    Δ {{ (it.delta ?? 0).toFixed(1) }}
-                  </span>
-                </div>
+          <div v-else class="space-y-2">
+            <div
+              v-for="(it, idx) in insightsItems"
+              :key="idx"
+              class="collapse collapse-plus glass-ultraThin border rounded-xl text-[var(--color-base-content)]"
+            >
+              <input type="radio" name="teacher-insights" :checked="idx === 0" />
+              <div class="collapse-title font-semibold flex items-center justify-between">
+                <span class="text-sm text-[var(--color-base-content)]">{{ localizeDimensionName(it.name) }}</span>
+                <span class="text-xs text-[color-mix(in_oklab,var(--color-base-content)_70%,transparent)]">
+                  A: {{ (it.scoreA ?? 0).toFixed(1) }}
+                  <template v-if="compareEnabled">
+                    <span class="ml-2">B: {{ (it.scoreB ?? 0).toFixed(1) }}</span>
+                    <span v-if="it.delta != null" :class="(it.delta ?? 0) >= 0 ? 'text-[var(--color-success-content)]' : 'text-[var(--color-error-content)]'" class="ml-2">
+                      Δ {{ (it.delta ?? 0).toFixed(1) }}
+                    </span>
+                  </template>
+                </span>
               </div>
-              <div class="mt-1 text-sm text-gray-700 dark:text-gray-300">{{ it.analysis }}</div>
-              <div class="mt-1 text-sm text-gray-700 dark:text-gray-300">{{ it.suggestion }}</div>
+              <div class="collapse-content text-sm">
+                <div class="text-[color-mix(in_oklab,var(--color-base-content)_82%,transparent)] whitespace-pre-wrap">{{ getInsightTexts(it).analysis || it.analysis }}</div>
+                <div class="mt-1 text-[color-mix(in_oklab,var(--color-base-content)_82%,transparent)] whitespace-pre-wrap">{{ getInsightTexts(it).suggestion || it.suggestion }}</div>
+              </div>
             </div>
           </div>
         </Card>
@@ -222,6 +231,7 @@ import Badge from '@/components/ui/Badge.vue'
 import Progress from '@/components/ui/Progress.vue'
 import * as echarts from 'echarts'
 import { resolveEChartsTheme, glassTooltipCss, resolveThemePalette } from '@/charts/echartsTheme'
+import { getThemeCoreColors } from '@/utils/theme'
 import RadarChart from '@/components/charts/RadarChart.vue'
 import AbilityRadarLegend from '@/shared/views/AbilityRadarLegend.vue'
 import AbilityWeightsDialog from '@/features/teacher/components/AbilityWeightsDialog.vue'
@@ -287,7 +297,8 @@ const NAME_ZH_TO_CODE: Record<string, string> = {
 
 function localizeDimensionName(serverName: string): string {
   const code = NAME_ZH_TO_CODE[serverName]
-  return code ? t(`teacher.analytics.weights.dimensions.${code}`) : serverName
+  // 与学生端统一，改用共享维度标题
+  return code ? (t(`shared.radarLegend.dimensions.${code}.title`) as any) : serverName
 }
 
 // 图表引用
@@ -297,9 +308,7 @@ const coursePerformanceRef = ref<HTMLElement>()
 
 let learningTrendChart: echarts.ECharts | null = null
 let scoreDistributionChart: echarts.ECharts | null = null
-let darkObserver: MutationObserver | null = null
-let reRenderScheduled = false
-let lastIsDark: boolean | null = null
+// 主题刷新由布局层统一处理
 let coursePerformanceChart: echarts.ECharts | null = null
 
 // 计算属性：当前教师的课程列表
@@ -369,8 +378,9 @@ const initScoreDistributionChart = () => {
   scoreDistributionChart = getOrCreateChart(scoreDistributionRef.value, scoreDistributionChart)
 
   const dist: any[] = (teacherStore.classPerformance as any)?.gradeDistribution || []
+  const palette = resolveThemePalette()
   const pieData = Array.isArray(dist)
-    ? dist.map(d => ({ name: d.gradeLevel ?? d.level ?? t('teacher.analytics.charts.unknown'), value: d.count ?? 0 }))
+    ? dist.map((d, idx) => ({ name: d.gradeLevel ?? d.level ?? t('teacher.analytics.charts.unknown'), value: d.count ?? 0, color: palette[idx % palette.length] }))
     : []
 
   const option = {
@@ -410,12 +420,7 @@ const initScoreDistributionChart = () => {
         avoidLabelOverlap: false,
         selectedMode: false,
         hoverAnimation: false,
-        data: pieData.map((item: any, idx: number) => ({
-          ...item,
-          itemStyle: { color: resolveThemePalette()[idx % resolveThemePalette().length] },
-          emphasis: { itemStyle: { opacity: 0.85 } },
-          blur: { itemStyle: { opacity: 1 } }
-        })),
+        data: pieData,
         emphasis: { focus: 'none', scale: false },
       }
     ]
@@ -431,16 +436,8 @@ const initScoreDistributionChart = () => {
 }
 
 function scheduleReinitScoreDistribution() {
-  if (reRenderScheduled) return
-  reRenderScheduled = true
-  window.setTimeout(() => {
-    reRenderScheduled = false
-    if (scoreDistributionChart) {
-      scoreDistributionChart.dispose()
-      scoreDistributionChart = null
-    }
-    initScoreDistributionChart()
-  }, 150)
+  if (scoreDistributionChart) { try { scoreDistributionChart.dispose() } catch {} scoreDistributionChart = null }
+  initScoreDistributionChart()
 }
 
 // 删除课程表现图，保留接口位置以便后续启用
@@ -569,30 +566,13 @@ onMounted(async () => {
   }
   onCourseChange()
   window.addEventListener('resize', resizeCharts)
-  // 监听浅/深色切换，自动重建饼图以应用主题色
-  if (!darkObserver) {
-    darkObserver = new MutationObserver(() => {
-      const isDark = document.documentElement.classList.contains('dark')
-      if (lastIsDark === null) {
-        lastIsDark = isDark
-        return
-      }
-      if (isDark !== lastIsDark) {
-        lastIsDark = isDark
-        scheduleReinitScoreDistribution()
-      }
-    })
-    darkObserver.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] })
-  }
+  // 不在页面层监听主题变化
 })
 
 onUnmounted(() => {
   scoreDistributionChart?.dispose()
   window.removeEventListener('resize', resizeCharts)
-  if (darkObserver) {
-    darkObserver.disconnect()
-    darkObserver = null
-  }
+  // 无主题观察者
 })
 
 const askAiForAnalytics = () => {
@@ -748,6 +728,32 @@ const loadInsights = async () => {
     insightsItems.value = (r?.data?.data?.items ?? r?.data?.items ?? r?.items ?? []) as any[]
   } catch (e: any) {
     insightsItems.value = []
+  }
+}
+
+function getInsightTexts(it: any): { analysis: string; suggestion: string } {
+  try {
+    const serverName = String(it?.name || '')
+    const code = NAME_ZH_TO_CODE[serverName]
+    const scoreNum = Number(it?.scoreA ?? it?.score ?? 0)
+    const deltaNum = (it?.delta != null) ? Number(it?.delta) : NaN
+    let deltaText = ''
+    if (!Number.isNaN(deltaNum)) {
+      const abs = Math.abs(deltaNum).toFixed(1)
+      if (deltaNum > 0) deltaText = (t('shared.radarLegend.insights.delta.up', { value: abs }) as any)
+      else if (deltaNum < 0) deltaText = (t('shared.radarLegend.insights.delta.down', { value: abs }) as any)
+      else deltaText = (t('shared.radarLegend.insights.delta.equal') as any)
+    }
+    if (code) {
+      const base = `shared.radarLegend.insights.${code}`
+    const baseline = compareEnabled.value ? (t('shared.radarLegend.insights.baseline.setB') as any) : (t('shared.radarLegend.insights.baseline.classAvg') as any)
+    const analysis = t(`${base}.analysis`, { scoreA: scoreNum.toFixed(1), scoreB: (Number.isFinite(Number(it?.scoreB)) ? Number(it?.scoreB).toFixed(1) : (t('shared.radarLegend.insights.na') as any)), delta: deltaText, baseline }) as any
+    const suggestion = t(`${base}.suggestion`, { scoreA: scoreNum.toFixed(1), scoreB: (Number.isFinite(Number(it?.scoreB)) ? Number(it?.scoreB).toFixed(1) : (t('shared.radarLegend.insights.na') as any)), baseline }) as any
+      if (analysis || suggestion) return { analysis, suggestion }
+    }
+    return { analysis: String(it?.analysis || ''), suggestion: String(it?.suggestion || '') }
+  } catch {
+    return { analysis: String(it?.analysis || ''), suggestion: String(it?.suggestion || '') }
   }
 }
 

@@ -28,10 +28,12 @@ let colorProbe: HTMLSpanElement | null = null
 
 export function normalizeCssColor(color: string): string {
   if (!color || typeof window === 'undefined') return color
-  const oklchMatch = color.trim().match(/^oklch\(\s*([\d.]+)%\s+([\d.]+)\s+([\d.]+)(?:deg)?(?:\s*\/\s*([\d.]+))?\s*\)$/i)
+  // 兼容 oklch(0.8 0.114 19.57) 或 oklch(80% 0.114 19.57) 两种写法
+  const oklchMatch = color.trim().match(/^oklch\(\s*([\d.]+)(%?)\s+([\d.]+)\s+([\d.]+)(?:deg)?(?:\s*\/\s*([\d.]+))?\s*\)$/i)
   if (oklchMatch) {
-    const [, lStr, cStr, hStr, alphaStr] = oklchMatch
-    const l = Number(lStr) / 100
+    const [, lRaw, lUnit, cStr, hStr, alphaStr] = oklchMatch as any
+    const lNum = Number(lRaw)
+    const l = lUnit === '%' ? (lNum / 100) : lNum
     const c = Number(cStr)
     const h = Number(hStr)
     const alpha = alphaStr !== undefined ? Number(alphaStr) : 1

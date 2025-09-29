@@ -1,5 +1,5 @@
 <template>
-  <div class="fixed inset-0 z-50 flex items-center justify-center p-4">
+  <div class="fixed inset-0 z-[13000] flex items-center justify-center p-4">
     <div class="absolute inset-0" :class="backdropDark ? 'bg-black/50' : 'bg-transparent'" @click="$emit('close')"></div>
     <liquid-glass
       class="relative w-full rounded-2xl overflow-hidden flex flex-col max-w-[95vw]"

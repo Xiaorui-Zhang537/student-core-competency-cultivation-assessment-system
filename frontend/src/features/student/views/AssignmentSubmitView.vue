@@ -12,25 +12,25 @@
       <!-- 顶部：信息卡 + 附件卡 并排 -->
       <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-2">
         <assignment-info-card :assignment="assignment" :effectiveDue="effectiveDue" :status="displayStatus" />
-        <attachment-list :files="teacherAttachments" :title="i18nText('student.assignments.detail.attachmentsTitle', '附件')" />
+        <Card tint="accent"><attachment-list :files="teacherAttachments" :title="i18nText('student.assignments.detail.attachmentsTitle', '附件')" :noCard="true" :hideHeader="false" /></Card>
       </div>
       
       <!-- 统一垂直间距栈 -->
       <div class="space-y-6">
-        <!-- Readonly Banner -->
-        <div v-if="readOnly" class="p-3 rounded bg-yellow-50 dark:bg-yellow-900/20 text-yellow-800 dark:text-yellow-200 text-sm">
+        <!-- Readonly Banner (Glass + Tint) -->
+        <div v-if="readOnly" class="p-3 rounded-xl glass-ultraThin glass-tint-warning text-sm mt-4" v-glass="{ strength: 'ultraThin', interactive: false }">
           {{ pastDue ? (t('student.assignments.submit.readOnlyBannerDue') as string) : (t('student.assignments.submit.readOnlyBannerSubmitted') as string) }}
         </div>
 
         <!-- 中部：提交内容 + 上传附件 并排 -->
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <card>
+          <card tint="secondary">
             <template #header>
               <h2 class="text-xl font-semibold">{{ t('student.assignments.submit.contentTitle') }}</h2>
             </template>
             <glass-textarea v-model="form.content" :rows="10" class="w-full" :disabled="readOnly" :placeholder="t('student.assignments.submit.contentPlaceholder') as string" />
           </card>
-          <card>
+          <card tint="info">
             <template #header>
               <h2 class="text-xl font-semibold">{{ t('student.assignments.submit.uploadTitle') }}</h2>
             </template>
@@ -46,7 +46,7 @@
             <div v-if="isUploading" class="mt-2 text-sm text-gray-500">{{ t('student.assignments.submit.uploading') }}</div>
             <div v-if="uploadedFiles.length > 0" class="mt-4 space-y-2">
               <h3 class="text-sm font-medium">{{ t('student.assignments.submit.uploadedList') }}</h3>
-              <div v-for="file in uploadedFiles" :key="file.id" class="flex justify-between items-center p-2 rounded glass-ultraThin" v-glass="{ strength: 'ultraThin', interactive: false }">
+              <div v-for="file in uploadedFiles" :key="file.id" class="flex justify-between items-center p-2 rounded glass-ultraThin glass-tint-secondary" v-glass="{ strength: 'ultraThin', interactive: false }">
                 <span>{{ (file as any).originalName || file.fileName }}</span>
                 <div class="flex items-center gap-2">
                   <Button v-if="!readOnly" size="sm" variant="danger" @click="removeFile(file.id)">
@@ -86,11 +86,11 @@
         <!-- Grade Block (only when graded) -->
         <!-- 底部：成绩与 AI 报告 -->
         <!-- 提示：已提交但未评分 -->
-        <div v-if="displayStatus==='SUBMITTED' && !grade" class="p-3 rounded-xl glass-ultraThin" v-glass="{ strength: 'ultraThin', interactive: false }">
+        <div v-if="displayStatus==='SUBMITTED' && !grade" class="p-3 rounded-xl glass-ultraThin glass-tint-info" v-glass="{ strength: 'ultraThin', interactive: false }">
           <span class="text-sm text-gray-700 dark:text-gray-300">{{ i18nText('student.assignments.detail.ungradedHint', '作业已提交，等待老师评分。') }}</span>
         </div>
 
-        <card v-if="displayStatus==='GRADED'">
+        <card v-if="displayStatus==='GRADED'" tint="secondary">
           <h2 class="text-xl font-semibold mb-4">{{ i18nText('student.grades.title', '成绩') }}</h2>
 
           <!-- Animated score strip -->
@@ -128,7 +128,7 @@
         </card>
 
         <!-- AI Report -->
-        <card v-if="displayStatus==='GRADED' && latestReport">
+        <card v-if="displayStatus==='GRADED' && latestReport" tint="info">
           <div class="flex items-center mb-4">
             <h2 class="text-xl font-semibold flex-1">{{ i18nText('student.ability.latestReport', 'AI 能力报告') }}</h2>
             <Button size="sm" variant="indigo" @click="openAiDetail" :disabled="!parsedAi"><template #icon><svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="12" cy="12" r="3"></circle></svg></template>{{ i18nText('teacher.aiGrading.viewDetail', '查看详情') }}</Button>

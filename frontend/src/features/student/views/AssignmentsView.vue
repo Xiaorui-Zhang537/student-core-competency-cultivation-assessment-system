@@ -61,8 +61,13 @@
           </div>
           <div class="absolute right-4 top-1/2 -translate-y-1/2 flex items-center gap-2">
             <Button v-if="displayStatus(a)==='PENDING' && !isPastDue(a.dueDate || a.dueAt)" variant="success" size="sm" @click="submit(a.id)">{{ t('student.assignments.actions.submit') }}</Button>
-            <Button v-else-if="displayStatus(a)==='SUBMITTED' || isPastDue(a.dueDate || a.dueAt)" variant="menu" size="sm" @click="view(a.id)">{{ t('student.assignments.actions.view') }}</Button>
-            <Button v-else variant="menu" size="sm" @click="view(a.id)">{{ t('student.assignments.actions.review') }}</Button>
+            <Button v-else-if="displayStatus(a)==='SUBMITTED' || isPastDue(a.dueDate || a.dueAt)" variant="info" size="sm" class="gap-3" @click="view(a.id)">
+              <template #icon>
+                <EyeIcon class="h-4 w-4" />
+              </template>
+              {{ t('student.assignments.actions.view') }}
+            </Button>
+            <Button v-else variant="secondary" icon="confirm" size="sm" class="gap-3" @click="view(a.id)">{{ t('student.assignments.actions.review') }}</Button>
           </div>
         </Card>
 
@@ -106,7 +111,7 @@ import { studentApi } from '@/api/student.api'
 import GlassPopoverSelect from '@/components/ui/filters/GlassPopoverSelect.vue'
 import PageHeader from '@/components/ui/PageHeader.vue'
 import Badge from '@/components/ui/Badge.vue'
-import { MagnifyingGlassIcon } from '@heroicons/vue/24/outline'
+import { MagnifyingGlassIcon, EyeIcon } from '@heroicons/vue/24/outline'
 import { useSubmissionStore } from '@/stores/submission'
 import GlassSearchInput from '@/components/ui/inputs/GlassSearchInput.vue'
 

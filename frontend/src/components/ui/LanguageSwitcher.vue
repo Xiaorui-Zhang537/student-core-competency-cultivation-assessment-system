@@ -19,11 +19,11 @@
         <div class="border-t border-white/10 my-1"></div>
         <button class="w-full text-left px-3 py-2 rounded-2xl hover:bg-white/10 text-sm flex items-center justify-between" @click="change('zh-CN')">
           <span>{{ t('app.language.zhCN') }}</span>
-          <span v-if="locale.value==='zh-CN'" class="text-primary-500">✓</span>
+          <span v-if="isCurrent('zh-CN')" class="text-theme-primary">✓</span>
         </button>
         <button class="w-full text-left px-3 py-2 rounded-2xl hover:bg-white/10 text-sm flex items-center justify-between" @click="change('en-US')">
           <span>{{ t('app.language.enUS') }}</span>
-          <span v-if="locale.value==='en-US'" class="text-primary-500">✓</span>
+          <span v-if="isCurrent('en-US')" class="text-theme-primary">✓</span>
         </button>
       </liquid-glass>
     </teleport>
@@ -51,7 +51,17 @@ const props = withDefaults(defineProps<{ buttonClass?: string }>(), { buttonClas
 const baseBtn = 'px-4 h-11 flex items-center rounded-full text-sm bg-transparent'
 const buttonClassMerged = computed(() => [baseBtn, props.buttonClass].filter(Boolean).join(' '))
 
-const currentShortLabel = computed(() => (locale.value === 'zh-CN' ? t('app.language.short.zh') : t('app.language.short.en')))
+const currentShortLabel = computed(() => {
+  const v = String(locale.value || '').toLowerCase().replace('_','-')
+  return (v === 'zh' || v === 'zh-cn') ? t('app.language.short.zh') : t('app.language.short.en')
+})
+
+function isCurrent(code: 'zh-CN' | 'en-US') {
+  const v = String(locale.value || '').toLowerCase().replace('_','-')
+  if (code === 'zh-CN') return v === 'zh-cn' || v === 'zh'
+  // code === 'en-US'
+  return v === 'en-us' || v === 'en'
+}
 
 // click-outside handled by directive
 

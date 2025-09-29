@@ -25,7 +25,20 @@
 			"help": "Help",
 			"toggleTheme": "Toggle Theme",
 			"themeFamily": "Theme Family",
-			"me": "Me"
+			"themeSelectTitle": "Theme Colors",
+			"themeSelectDesc": "Pick a theme palette you love. Each theme is a light+dark paired set so the app looks consistent in both modes.",
+			"themeOption": {
+				"retroDracula": "Retro + Dracula",
+				"comingSoon": "More theme pairs coming soon"
+			},
+			"me": "Me",
+			"cursorTrail": "Cursor Trail",
+			"cursorTrailTitle": "Cursor Trail",
+			"cursorTrailDesc": "Choose whether to enable cursor trail effects. Off saves battery; Fluid requires more GPU.",
+			"cursorTrailOff": "Off",
+			"cursorTrailFluid": "Fluid Cursor",
+            "cursorTrailSmooth": "Smooth Cursor",
+            "cursorTrailTailed": "Tailed Cursor"
 		},
 		"teacher": {
 			"title": "Student Core Competency Cultivation Assessment System",

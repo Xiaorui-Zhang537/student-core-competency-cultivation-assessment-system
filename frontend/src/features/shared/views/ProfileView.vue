@@ -263,13 +263,15 @@
               <label for="confirmNewPassword" class="block text-sm font-medium mb-2">{{ t('shared.profile.changePwd.confirm') || 'Confirm New Password' }}</label>
               <input id="confirmNewPassword" v-model="confirmNewPassword" type="password" required class="input" />
             </div>
-            <div class="flex justify_end space-x-3">
+            <div class="flex justify-end space-x-3">
               <Button type="button" variant="secondary" @click="showChangePassword = false">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
                 {{ t('shared.profile.actions.cancel') }}
               </Button>
               <Button type="submit" :disabled="uiStore.loading" variant="indigo">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="当前Color"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 11c-1.657 0-3 1.343-3 3v4h6v-4c0-1.657-1.343-3-3-3z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 11V7a5 5 0 1110 0v4"/></svg>
+                <template #icon>
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 11c-1.657 0-3 1.343-3 3v4h6v-4c0-1.657-1.343-3-3-3z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 11V7a5 5 0 1110 0v4"/></svg>
+                </template>
                 {{ t('shared.profile.actions.changePassword') }}
               </Button>
             </div>

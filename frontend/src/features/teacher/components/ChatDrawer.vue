@@ -26,9 +26,11 @@
         <div class="flex flex-1 min-h-0">
         <!-- 左侧：最近/联系人 列表 -->
         <div class="hidden sm:flex sm:flex-col w-64 shrink-0" :key="`left-${activeTab}`" :style="{ backgroundColor: 'var(--color-base-100)', boxShadow: 'inset -1px 0 rgba(255,255,255,0.18)' }">
-          <div class="px-3 pt-3 pb-2 flex items-center gap-2">
-            <Button size="sm" :variant="activeTab==='recent' ? 'primary' : 'menu'" @click="activeTab='recent'">{{ t('shared.chat.recent') || '最近' }}</Button>
-            <Button size="sm" :variant="activeTab==='contacts' ? 'primary' : 'menu'" @click="activeTab='contacts'">{{ t('shared.chat.contacts') || '联系人' }}</Button>
+          <div class="pt-3 pb-2 px-2">
+            <div class="grid grid-cols-2 gap-2">
+              <Button size="sm" :variant="activeTab==='recent' ? 'primary' : 'menu'" class="w-full justify-center" @click="activeTab='recent'">{{ t('shared.chat.recent') || '最近' }}</Button>
+              <Button size="sm" :variant="activeTab==='contacts' ? 'primary' : 'menu'" class="w-full justify-center" @click="activeTab='contacts'">{{ t('shared.chat.contacts') || '联系人' }}</Button>
+            </div>
           </div>
            <div class="px-3 pb-2" v-if="activeTab==='contacts'">
              <glass-search-input v-model="keyword" :placeholder="t('shared.chat.searchPlaceholder') as string || '搜索联系人'" size="sm" />
@@ -192,10 +194,13 @@
             </div>
 
             <div class="flex items-center gap-2">
-            <emoji-picker :variant="'ghost'" :size="'sm'" @select="pickEmoji" />
+            <emoji-picker :variant="'primary'" :size="'sm'" :buttonClass="'!text-white'" @select="pickEmoji" />
             <input ref="fileInput" type="file" class="hidden" @change="onFilePicked" />
-            <Button variant="menu" size="sm" @click="triggerPickFile">{{ t('shared.uploadLabel') || '上传' }}</Button>
-            <glass-textarea ref="draftInput" v-model="(draft as any)" :rows="2" :placeholder="t('teacher.students.chat.placeholder') as string" class="flex-1 w-full min-h-[48px] max-h-40 resize-none" @keydown="onDraftKeydown" />
+            <Button variant="success" size="sm" class="inline-flex items-center" @click="triggerPickFile">
+              <ArrowUpTrayIcon class="w-4 h-4 mr-1" />
+              {{ t('shared.uploadLabel') || '上传' }}
+            </Button>
+            <glass-textarea ref="draftInput" v-model="(draft as any)" :rows="2" :placeholder="t('teacher.students.chat.placeholder') as string" class="flex-1 w-full min-h-[44px] max-h-36 resize-none" @keydown="onDraftKeydown" />
             <Button variant="primary" :disabled="sending || (!draft && attachmentFileIds.length===0)" @click="send()">{{ t('teacher.ai.send') }}</Button>
           </div>
         </div>
@@ -230,7 +235,7 @@ import UserAvatar from '@/components/ui/UserAvatar.vue'
 import GlassInput from '@/components/ui/inputs/GlassInput.vue'
 import GlassSearchInput from '@/components/ui/inputs/GlassSearchInput.vue'
 import GlassTextarea from '@/components/ui/inputs/GlassTextarea.vue'
-import { XMarkIcon, BookmarkIcon, BookmarkSlashIcon, ArrowDownTrayIcon } from '@heroicons/vue/24/outline'
+import { XMarkIcon, BookmarkIcon, BookmarkSlashIcon, ArrowDownTrayIcon, ArrowUpTrayIcon } from '@heroicons/vue/24/outline'
 import Button from '@/components/ui/Button.vue'
 import EmojiPicker from '@/components/ui/EmojiPicker.vue'
 
@@ -536,6 +541,39 @@ async function ensureFileMeta(fid: string | number) {
   } catch { /* ignore */ }
 }
 
+// 优先按“会话ID”批量标记为已读，失败时回退到按对端标记
+async function markAllReadForCurrentPeer() {
+  if (!currentPeerId.value) return
+  try {
+    const { chatApi } = await import('@/api/chat.api')
+    const pid = String(currentPeerId.value)
+    const cid = currentCourseId.value != null && currentCourseId.value !== '' ? String(currentCourseId.value) : ''
+    const isStudent = (() => { try { return window.location.pathname.startsWith('/student') } catch { return false } })()
+    const list: any[] = (chat.recentConversations as any[]) || []
+    const targets = list.filter((c: any) => {
+      const samePeer = String(c.peerId) === pid
+      if (!samePeer) return false
+      // 学生端按 peer 维度聚合；教师端按 peer+course 维度
+      if (isStudent) return true
+      return String(c.courseId || '') === String(cid || '')
+    })
+    let usedConversationId = false
+    for (const c of targets) {
+      if (c && c.id != null) {
+        try { await chatApi.markConversationRead(c.id) } catch {}
+        usedConversationId = true
+      }
+    }
+    // 若没有有效的会话ID可用，则回退到按对端标记
+    if (!usedConversationId) {
+      try { await chatApi.markReadByPeer(currentPeerId.value as any, cid ? Number(cid) : undefined) } catch {}
+      try { await chatApi.markReadByPeer(currentPeerId.value as any) } catch {}
+    }
+    // 前端本地状态清零
+    try { chat.markPeerRead(String(pid), String(cid || '')) } catch {}
+  } catch {}
+}
+
 const load = async () => {
   if (!currentPeerId.value) return
   loadingMessages.value = true
@@ -608,9 +646,7 @@ const load = async () => {
     } catch {}
   }
   // 标记为已读（先带课程上下文，再无课程上下文各尝试一次）
-  try { await chatApi.markReadByPeer(currentPeerId.value as any, currentCourseId.value ? Number(currentCourseId.value) : undefined) } catch {}
-  try { await chatApi.markReadByPeer(currentPeerId.value as any) } catch {}
-  try { chat.markPeerRead(String(currentPeerId.value || ''), String(currentCourseId.value || '')) } catch {}
+  try { await markAllReadForCurrentPeer() } catch {}
   // 同步刷新“最近”，确保未读角标与后端一致
   try { await chat.loadLists({ courseId: currentCourseId.value || undefined }) } catch {}
   // 兼容历史多会话ID/不同 courseId 的数据：对同一 peer 的所有最近会话逐一标记
@@ -618,7 +654,8 @@ const load = async () => {
     const list: any[] = (chat.recentConversations as any[]) || []
     for (const c of list) {
       if (String(c.peerId) === String(currentPeerId.value || '')) {
-        try { await chatApi.markReadByPeer(c.peerId as any, c.courseId ? Number(c.courseId) : undefined) } catch {}
+        // 再次按会话ID兜底
+        if (c && c.id != null) { try { await chatApi.markConversationRead(c.id) } catch {} }
         try { chat.markPeerRead(String(c.peerId), String(c.courseId || '')) } catch {}
       }
     }
@@ -847,13 +884,7 @@ watch(() => props.open, async (v) => {
     if (!auth.isAuthenticated) return
     try { console.debug('[ChatDrawer] open prop changed ->', v) } catch {}
     // 先尝试标记当前 peer 的会话为已读（带/不带课程），避免先加载列表闪现红点
-    try {
-      const { chatApi } = await import('@/api/chat.api')
-      if (currentPeerId.value) {
-        try { await chatApi.markReadByPeer(currentPeerId.value as any, currentCourseId.value ? Number(currentCourseId.value) : undefined) } catch {}
-        try { await chatApi.markReadByPeer(currentPeerId.value as any) } catch {}
-      }
-    } catch {}
+    try { if (currentPeerId.value) await markAllReadForCurrentPeer() } catch {}
     const persisted = (() => { try {
       const uid = String(localStorage.getItem('userId') || '')
       const role = (() => { try { return (auth.user as any)?.role || '' } catch { return '' } })()
@@ -869,7 +900,7 @@ watch(() => props.open, async (v) => {
       const list: any[] = (chat.recentConversations as any[]) || []
       for (const c of list) {
         if (String(c.peerId) === String(currentPeerId.value || '')) {
-          try { await chatApi.markReadByPeer(c.peerId as any, c.courseId ? Number(c.courseId) : undefined) } catch {}
+          if (c && c.id != null) { try { await chatApi.markConversationRead(c.id) } catch {} }
           try { chat.markPeerRead(String(c.peerId), String(c.courseId || '')) } catch {}
         }
       }

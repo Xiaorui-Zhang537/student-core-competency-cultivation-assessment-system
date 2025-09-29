@@ -61,6 +61,7 @@ export const useStudentStore = defineStore('student', () => {
           dueDate: a.dueDate,
         })),
         recentGrades: ((response as any)?.recentGrades || []).map((g: any) => ({
+          assignmentId: String(g.assignmentId || ''),
           assignmentTitle: g.assignmentTitle,
           courseTitle: g.courseTitle,
           score: Number(g.score || 0),
@@ -120,7 +121,8 @@ export const useStudentStore = defineStore('student', () => {
         description: c.description || '',
         teacherName: c.teacherName || '',
         category: c.category || '',
-        coverImageUrl: c.coverImageUrl || c.coverImage || '',
+        // 优先教师端上传封面（coverImage 为文件ID），否则退到外链/后台提供的 URL
+        coverImageUrl: c.coverImage || c.coverImageUrl || '',
         progress: Number(c.progress ?? 0),
         enrolledAt: c.enrolledAt || ''
       })) as any;

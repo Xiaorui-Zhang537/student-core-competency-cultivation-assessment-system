@@ -54,6 +54,13 @@ public class EnrollmentServiceImpl implements EnrollmentService {
         if (!"published".equals(course.getStatus())) {
             throw new BusinessException(ErrorCode.COURSE_NOT_PUBLISHED);
         }
+        // 报名截止：若设置了 endDate，且当前日期晚于 endDate，则不允许报名
+        try {
+            java.time.LocalDate today = java.time.LocalDate.now();
+            if (course.getEndDate() != null && today.isAfter(course.getEndDate())) {
+                throw new BusinessException(ErrorCode.COURSE_ENROLLMENT_CLOSED);
+            }
+        } catch (BusinessException be) { throw be; } catch (Exception ignored) {}
         if (Boolean.TRUE.equals(course.getRequireEnrollKey())) {
             throw new BusinessException(ErrorCode.PERMISSION_DENIED, "该课程需要入课密钥");
         }
@@ -81,6 +88,13 @@ public class EnrollmentServiceImpl implements EnrollmentService {
         if (!"published".equals(course.getStatus())) {
             throw new BusinessException(ErrorCode.COURSE_NOT_PUBLISHED);
         }
+        // 报名截止：若设置了 endDate，且当前日期晚于 endDate，则不允许报名
+        try {
+            java.time.LocalDate today = java.time.LocalDate.now();
+            if (course.getEndDate() != null && today.isAfter(course.getEndDate())) {
+                throw new BusinessException(ErrorCode.COURSE_ENROLLMENT_CLOSED);
+            }
+        } catch (BusinessException be) { throw be; } catch (Exception ignored) {}
         if (course.getMaxStudents() != null && course.getEnrollmentCount() >= course.getMaxStudents()) {
             throw new BusinessException(ErrorCode.COURSE_FULL);
         }

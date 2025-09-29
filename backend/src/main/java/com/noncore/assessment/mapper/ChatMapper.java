@@ -52,6 +52,10 @@ public interface ChatMapper {
                     @Param("userId") Long userId);
 
     Integer getUnreadTotal(@Param("userId") Long userId);
+
+    int setUnreadCount(@Param("conversationId") Long conversationId,
+                       @Param("userId") Long userId,
+                       @Param("unreadCount") Integer unreadCount);
 }
 
 

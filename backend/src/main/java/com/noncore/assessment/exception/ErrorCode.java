@@ -61,6 +61,7 @@ public enum ErrorCode {
     TEACHER_ID_EMPTY(1213, "教师ID不能为空"),
     MAX_STUDENTS_INVALID(1214, "最大学生数必须大于0"),
     COURSE_DURATION_INVALID(1215, "课程时长必须大于0"),
+    COURSE_ENROLLMENT_CLOSED(1216, "报名已截止"),
     
     // 作业相关 (1300-1399)
     ASSIGNMENT_NOT_FOUND(1300, "作业不存在"),

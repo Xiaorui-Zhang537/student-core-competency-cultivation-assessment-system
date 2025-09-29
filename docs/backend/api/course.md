@@ -43,6 +43,15 @@ Authorization: Bearer <token>
 - `POST /api/courses/{id}/students/invite`：邀请学生加入
 - `DELETE /api/courses/{id}/students/{studentId}`：移除学生
 
+#### 报名截止规则
+- 规则：若课程设置了 `endDate`，且当前日期晚于 `endDate`，后端将拒绝选课。
+- 错误码：`1216`（COURSE_ENROLLMENT_CLOSED，报名已截止）。
+- 响应示例：
+```json
+{ "code": 1216, "message": "报名已截止", "data": null }
+```
+- 前端建议：禁用“加入课程”按钮，展示提醒文案；已报名课程可显示“退课”按钮。
+
 ### 教师设置入课密钥
 - `PUT /api/courses/{id}/enroll-key`
   - Body: `{ "require": true|false, "key": "明文密钥(可选)" }`

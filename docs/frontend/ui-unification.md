@@ -104,7 +104,7 @@
 - 兼容策略：Chromium 优先启用 Liquid Glass；Safari/Firefox 可通过条件判断降级为 `.glass-*` 或纯色/半透明背景。
 # 前端 UI 统一规范
 
-> 版本：v0.2.2（与 frontend/package.json 对齐）
+> 版本：v0.2.3（与 frontend/package.json 对齐）
 
 ## 目标
 - 统一按钮风格为药丸形，所有交互按钮均带图标与明确底色。
@@ -160,6 +160,11 @@
 - 新增页面与组件必须遵循本规范。
 
 ## 更新记录
+- v0.2.3：
+  - 全局通知改为 Animated List 顺序入场（新项置顶，渐进入场）。
+  - 通知卡片加入主题色“玻璃染色”与左侧主题渐变强调条（primary→accent），并根据当前背景自动保证对比度（避免与主题背景接近）。
+  - 信息类型图标随主题主色渲染，提升可读性。
+  - 参考组件规范：Animated List（`https://inspira-ui.com/docs/zh-cn/components/miscellaneous/animated-list`）。
 - v0.2.2：
   - 学生作业提交页采用两行双列卡片布局：顶部信息卡+附件卡；中部内容+上传卡（下方操作按钮）；底部成绩卡与 AI 报告卡。
   - 新增共享组件：`features/shared/AssignmentInfoCard.vue`、`features/shared/AttachmentList.vue`；统一使用 `components/ui/Card.vue`。
@@ -177,6 +182,7 @@
 
 - StudentLayout/TeacherLayout：顶部导航、用户菜单弹层与侧边栏均已采用 `@/components/ui/LiquidGlass.vue` 包裹，结合圆角与阴影统一视觉。
 - 通知相关：`NotificationBell.vue` 下拉面板、`NotificationCenter.vue` 过滤器容器，已统一为 LiquidGlass；`ChatDrawer.vue` 抽屉容器也已统一。
+  - 全局通知：`App.vue` 使用 `AnimatedList.vue` 顺序入场（Animated List），卡片采用 `glass-thin glass-interactive glass-tint-primary` 与主题渐变强调条；动态计算主色/强调色与背景对比度，避免色彩过近。
 - Safari/Firefox 降级：
   - 因 SVG displacement filter 与 backdrop-filter 支持不完善，建议在 UA/特性检测下，回退为：
     - 简化版半透明背景（如 `bg-white/70 dark:bg-gray-900/60`）+ 轻边框（`border-white/15`）+ 阴影；
@@ -198,3 +204,19 @@
   - 抽屉作为布局级全局组件挂载于 `TeacherLayout.vue` 与 `StudentLayout.vue`。
 
 注意：如需全屏模态强压聊天抽屉，请将该模态显式提升到高于 `z-[12000]` 的层级，并在 UI 规范中注明。
+
+## 图表主题与自动重载规范
+
+- 所有基于 ECharts 的组件统一使用 `resolveEChartsTheme()` 与 `resolveThemePalette()`。
+- 组件必须监听 `document.documentElement` 的 `class` 变化（`dark` 切换），在主题变化时以轻微节流（150ms）重建实例以应用新主题，并保留动画：
+  - RadarChart：已内置
+  - PieChart：已内置
+  - LineChart：已内置（含柱状数据）
+  - TrendAreaChart：已内置
+- Tooltip 必须使用玻璃风格：`glassTooltipCss()`，并使用 `renderMode: 'html'` + `className: 'echarts-glass-tooltip'`。
+- 背景色统一为透明，保持玻璃卡片的背景效果。
+
+### 使用建议
+- 在视图层引用通用图表组件，传入 `theme='auto'`（默认）可自动跟随主题。
+- 如需自定义颜色，优先从 `resolveThemePalette()` 取色后适配透明度。
+- 主题切换后无需手动刷新，组件会自动重载并带动画过渡。

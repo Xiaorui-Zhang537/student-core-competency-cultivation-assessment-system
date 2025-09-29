@@ -202,7 +202,7 @@
 import { ref, reactive, onMounted, computed } from 'vue';
 import { useCourseStore } from '@/stores/course';
 import { useAuthStore } from '@/stores/auth';
-import { useRouter } from 'vue-router';
+import { useRouter, useRoute } from 'vue-router';
 import type { Course, CourseCreationRequest, CourseUpdateRequest } from '@/types/course';
 // 轻量去依赖：局部实现 debounce，避免引入 lodash-es
 const debounce = (fn: (...args: any[]) => void, delay = 300) => {
@@ -235,6 +235,7 @@ import Card from '@/components/ui/Card.vue'
 const courseStore = useCourseStore();
 const authStore = useAuthStore();
 const router = useRouter();
+const route = useRoute();
 const { t } = useI18n()
 
 const showModal = ref(false);
@@ -603,5 +604,17 @@ onMounted(async () => {
         await authStore.fetchUser();
     }
     fetchTeacherCourses();
+    // 支持通过路由参数触发创建弹窗：?create=1 / ?action=create
+    try {
+      const q: any = route.query || {}
+      const flag = String(q.create || q.action || '').toLowerCase()
+      if (flag === '1' || flag === 'true' || flag === 'create' || flag === 'createcourse') {
+        openCreateModal()
+        const newQuery = { ...q }
+        delete newQuery.create
+        delete newQuery.action
+        router.replace({ query: newQuery })
+      }
+    } catch {}
 });
 </script>

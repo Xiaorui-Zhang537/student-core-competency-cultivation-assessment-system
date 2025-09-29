@@ -71,7 +71,8 @@ import { useTeacherStore } from '@/stores/teacher'
 import { useCourseStore } from '@/stores/course'
 import { useAuthStore } from '@/stores/auth' // 1. 导入 useAuthStore
 import * as echarts from 'echarts'
-import { resolveEChartsTheme, glassTooltipCss } from '@/charts/echartsTheme'
+import { resolveEChartsTheme, glassTooltipCss, resolveThemePalette } from '@/charts/echartsTheme'
+import { getThemeCoreColors, rgba } from '@/utils/theme'
 import { useI18n } from 'vue-i18n'
 import { loadLocaleMessages } from '@/i18n'
 import { PlusIcon, CheckBadgeIcon, UserGroupIcon, CheckCircleIcon, StarIcon, ClipboardDocumentListIcon } from '@heroicons/vue/24/outline'
@@ -93,6 +94,7 @@ const selectedCourseId = ref<string | null>(null)
 const chartRef = ref<HTMLElement | null>(null)
 let chart: echarts.ECharts | null = null
 let resizeBound = false
+// 主题刷新由布局层统一处理
 const onResize = () => chart?.resize()
 
 // 3. 创建 teacherCourses 计算属性
@@ -148,8 +150,8 @@ const initChart = () => {
     chart.clear()
     return
   }
-  // 使用统一主题色盘
-  const palette = (resolveEChartsTheme() as any).color || ['#3b82f6', '#06b6d4', '#ec4899', '#f59e0b', '#10b981', '#8b5cf6', '#f43f5e']
+  // 使用主题调色盘（界面层配色策略）
+  const palette = resolveThemePalette()
   const categories = dist.map(d => d.gradeLevel ?? d.level ?? t('teacher.dashboard.chart.level.unknown'))
   const values = dist.map(d => d.count ?? 0)
   // 动态计算更粗的柱宽（默认近似直方图，仍保留一定间隔）
@@ -191,13 +193,15 @@ const initChart = () => {
       emphasis: {
         focus: 'none',
         itemStyle: {
-          // 仅降低不透明度表现“变暗”，不改变色相
+          // 降低透明度表现强调
           opacity: 0.85
         }
       }
     }]
   }, { notMerge: true, lazyUpdate: false })
 }
+
+function scheduleReinit() { if (chart) { try { chart.dispose() } catch {} chart = null }; nextTick(initChart) }
 
 watch(classPerformance, () => nextTick(initChart), { deep: true })
 // 当语言切换时，重绘图表以应用新文案
@@ -220,6 +224,7 @@ onMounted(async () => {
     window.addEventListener('resize', onResize)
     resizeBound = true
   }
+  // 不在页面层监听主题变化
 })
 
 onUnmounted(() => {
@@ -228,5 +233,6 @@ onUnmounted(() => {
     resizeBound = false
   }
   chart?.dispose()
+  // 无主题观察者
 })
 </script>

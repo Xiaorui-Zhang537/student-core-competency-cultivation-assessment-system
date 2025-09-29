@@ -9,28 +9,28 @@
       <nav class="relative z-10 mb-2">
         <ol class="flex items-center space-x-2 text-sm">
           <li>
-            <router-link to="/student/courses" class="text-muted hover:text-[var(--color-primary)]">{{ t('student.courses.title') }}</router-link>
+            <router-link to="/student/courses" class="text-[var(--color-base-content)] hover:text-[var(--color-primary)]">{{ t('student.courses.title') }}</router-link>
           </li>
-          <li><span class="text-subtle">&gt;</span></li>
-          <li class="font-medium text-strong truncate">{{ course.title }}</li>
+          <li><span class="text-[color-mix(in_oklab,var(--color-base-content)_45%,transparent)]">&gt;</span></li>
+          <li class="font-medium text-[var(--color-base-content)] truncate">{{ course.title }}</li>
         </ol>
       </nav>
 
-      <!-- 第一排：课程元信息（7） | 教师信息（3） -->
-      <div class="grid grid-cols-1 lg:grid-cols-10 gap-6 items-stretch">
+      <!-- 自适应网格：左列信息 + 内容；右列教师信息可跨行，去除左列上方空白 -->
+      <div class="grid grid-cols-1 lg:grid-cols-10 gap-6 items-start">
         <div class="lg:col-span-7">
-          <card class="h-full" tint="primary">
+          <card tint="primary">
             <div class="p-5">
               <h1 class="text-2xl font-bold truncate">{{ course.title }}</h1>
               <p v-if="course.description" class="mt-2 text-muted">{{ course.description }}</p>
               <!-- 1) 先显示开课/结课时间（玻璃Badge） -->
               <div class="mt-3 flex flex-wrap items-center gap-2 text-sm text-muted">
-                <badge v-if="course.startDate" size="sm" variant="secondary">
+                <badge v-if="course.startDate" size="sm" variant="accent">
                   <span class="inline-flex items-center gap-1">
                     <span>📅</span>{{ t('student.courses.detail.startDate') }}: {{ formatDateOnly(course.startDate) }}
                   </span>
                 </badge>
-                <badge v-if="course.endDate" size="sm" variant="secondary">
+                <badge v-if="course.endDate" size="sm" variant="accent">
                   <span class="inline-flex items-center gap-1">
                     <span>⏳</span>{{ t('student.courses.detail.endDate') }}: {{ formatDateOnly(course.endDate) }}
                   </span>
@@ -46,7 +46,7 @@
               </div>
               <!-- 3) 进度条（/ui/Progress） -->
               <div class="mt-3">
-                <progress v-if="typeof displayProgress === 'number'" :value="Math.round(displayProgress)" :showLabel="true" :label="t('student.courses.progressLabel')" color="primary" size="md" />
+                <Progress v-if="typeof displayProgress === 'number'" :value="Math.round(displayProgress)" size="md" :color="Number(displayProgress)>=100 ? 'info' : 'primary'" />
               </div>
               <!-- 4) 报名学生：头像+姓名，可点击查看资料/联系 -->
               <div class="mt-4">
@@ -83,8 +83,9 @@
             </div>
           </card>
             </div>
-        <div class="lg:col-span-3">
-          <card class="h-full" tint="info">
+        <!-- 右侧列容器：跨两行，内部纵向堆叠讲师信息与资料 -->
+        <div class="lg:col-span-3 lg:row-span-2 self-start flex flex-col gap-4">
+          <card tint="info">
             <div class="px-4 py-3 border-b">
               <h3 class="text-lg font-semibold">{{ t('student.courses.detail.instructorInfo') }}</h3>
             </div>
@@ -121,20 +122,42 @@
               <div class="mt-4">
                 <Button variant="primary" size="sm" class="w-full" @click="contactTeacher">
                   <template #icon>
-                    <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 8.5l-10 6-10-6"/><path d="M2 8l10 6 10-6v8a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V8z"/></svg>
+                    <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M2 5a2 2 0 012-2h16a2 2 0 012 2v14a2 2 0 01-2 2H4a2 2 0 01-2-2V5zm2 1v12h16V6H4zm3 2h6a1 1 0 110 2H7a1 1 0 110-2zm0 4h10a1 1 0 110 2H7a1 1 0 110-2z"/></svg>
                   </template>
                   {{ t('student.courses.detail.contactTeacher') }}
                 </Button>
               </div>
             </div>
           </card>
-                      </div>
-                    </div>
+          <!-- 课程资料（右列，位于讲师信息下方） -->
+          <card tint="accent">
+            <div class="px-4 py-3 border-b">
+              <h3 class="text-lg font-semibold">{{ t('student.courses.detail.materials') }}</h3>
+            </div>
+            <div class="p-4">
+              <attachment-list :files="courseMaterials" :noCard="true" :hideHeader="true" :showDefaultDownload="false">
+                <template #actions="{ file }">
+                  <Button
+                    size="sm"
+                    variant="success"
+                    class="whitespace-nowrap"
+                    :title="String(t('student.courses.detail.download') || '下载')"
+                    @click="() => fileApi.downloadFile(String(file?.id || file?.fileId || ''), String(file?.originalName || file?.fileName || 'file'))"
+                  >
+                    <template #icon>
+                      <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                    </template>
+                  </Button>
+                </template>
+              </attachment-list>
+              <div v-if="!courseMaterials.length" class="text-sm text-muted mt-2">{{ t('student.courses.detail.noMaterials') }}</div>
+            </div>
+          </card>
+        </div>
 
-      <!-- 第二排：课程节次（7） | 课程资料（3） -->
-      <div class="grid grid-cols-1 lg:grid-cols-10 gap-6 items-stretch">
+        <!-- 课程内容（左列，占 7 列） -->
         <div class="lg:col-span-7">
-          <card class="h-full" tint="secondary">
+          <card tint="secondary">
             <div class="px-4 py-3 border-b flex items-center justify-between">
               <h3 class="text-lg font-semibold">{{ t('student.courses.detail.contents') }}</h3>
               <span class="text-sm text-muted">{{ completedByProgressCount }} / {{ lessons.length }} {{ t('student.courses.detail.completed') }}</span>
@@ -218,31 +241,7 @@
             </div>
           </card>
         </div>
-        <div class="lg:col-span-3">
-          <card class="h-full" tint="accent">
-            <div class="px-4 py-3 border-b">
-              <h3 class="text-lg font-semibold">{{ t('student.courses.detail.materials') }}</h3>
-            </div>
-            <div class="p-4">
-              <attachment-list :files="courseMaterials" :noCard="true" :hideHeader="true" :showDefaultDownload="false">
-                <template #actions="{ file }">
-                  <Button
-                    size="sm"
-                    variant="success"
-                    class="whitespace-nowrap"
-                    :title="String(t('student.courses.detail.download') || '下载')"
-                    @click="() => fileApi.downloadFile(String(file?.id || file?.fileId || ''), String(file?.originalName || file?.fileName || 'file'))"
-                  >
-                    <template #icon>
-                      <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-                    </template>
-                  </Button>
-                </template>
-              </attachment-list>
-              <div v-if="!courseMaterials.length" class="text-sm text-muted mt-2">{{ t('student.courses.detail.noMaterials') }}</div>
-            </div>
-          </card>
-        </div>
+        
       </div>
     </div>
 

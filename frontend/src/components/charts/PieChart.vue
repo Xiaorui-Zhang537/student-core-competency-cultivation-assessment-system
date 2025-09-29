@@ -33,7 +33,7 @@
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted, watch, nextTick } from 'vue'
 import * as echarts from 'echarts'
-import { resolveEChartsTheme, glassTooltipCss, resolveThemePalette } from '@/charts/echartsTheme'
+import { resolveEChartsTheme, glassTooltipCss } from '@/charts/echartsTheme'
 import { getEChartsThemedTokens, normalizeCssColor } from '@/utils/theme'
 import { ChartPieIcon } from '@heroicons/vue/24/outline'
 
@@ -42,6 +42,10 @@ interface PieData {
   name: string
   value: number
   color?: string
+  itemStyle?: any
+  emphasis?: any
+  blur?: any
+  select?: any
 }
 
 interface Props {
@@ -81,13 +85,7 @@ const chartRef = ref<HTMLElement>()
 const chartInstance = ref<echarts.ECharts>()
 let resizeObserver: ResizeObserver | null = null
 
-const ensurePalette = () => {
-  const palette = getEChartsThemedTokens()?.palette
-  if (Array.isArray(palette) && palette.length) {
-    return palette.map(color => ensureOpaque(color))
-  }
-  return resolveThemePalette().map(color => ensureOpaque(color))
-}
+// 配色由界面层传入（item.color）。组件不再根据主题自行挑选色盘。
 
 const hasData = () => Array.isArray(props.data) && props.data.length > 0
 
@@ -161,12 +159,10 @@ const initChart = async () => {
     const isDark = computeIsDark()
     const tokens = getEChartsThemedTokens()
     
-    // 处理数据，添加默认颜色
-    const palette = ensurePalette()
-    const processedData = props.data.map((item, index) => {
-      const rawColor = item.color || palette[index % palette.length]
-      const baseColor = ensureOpaque(rawColor)
-      return applyStableStates(item, baseColor)
+    // 处理数据，添加（界面层传入的）颜色
+    const processedData = props.data.map((item) => {
+      const baseColor = item.color ? ensureOpaque(item.color) : undefined
+      return baseColor ? applyStableStates(item, baseColor) : { ...item, emphasis: { disabled: true }, blur: { disabled: true }, select: { disabled: true } }
     })
     
     // 配置选项
@@ -285,11 +281,9 @@ const updateChart = () => {
     return
   }
 
-  const palette = ensurePalette()
-  const processedData = props.data.map((item, index) => {
-    const rawColor = item.color || palette[index % palette.length]
-    const baseColor = ensureOpaque(rawColor)
-    return applyStableStates(item, baseColor)
+  const processedData = props.data.map((item) => {
+    const baseColor = item.color ? ensureOpaque(item.color) : undefined
+    return baseColor ? applyStableStates(item, baseColor) : { ...item, emphasis: { disabled: true }, blur: { disabled: true }, select: { disabled: true } }
   })
   
   const option = {
@@ -314,15 +308,6 @@ watch(
   { deep: true }
 )
 
-// 监听主题变化
-watch(
-  () => document.documentElement.classList.contains('dark'),
-  () => {
-    if (props.theme === 'auto') {
-      initChart()
-    }
-  }
-)
 
 // 导出方法
 const exportChart = (type: 'png' | 'jpeg' = 'png') => {
@@ -379,13 +364,9 @@ defineExpose({
 })
 
 // 生命周期
-onMounted(() => {
-  initChart()
-})
+onMounted(() => { initChart() })
 
-onUnmounted(() => {
-  disposeChart()
-})
+onUnmounted(() => { disposeChart() })
 </script>
 
 <style scoped lang="postcss">

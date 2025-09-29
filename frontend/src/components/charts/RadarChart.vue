@@ -8,7 +8,7 @@
 <script setup lang="ts">
 import { onMounted, onUnmounted, ref, watch, nextTick } from 'vue'
 import * as echarts from 'echarts'
-import { resolveEChartsTheme, glassTooltipCss, resolveThemePalette } from '@/charts/echartsTheme'
+import { resolveEChartsTheme, glassTooltipCss } from '@/charts/echartsTheme'
 
 interface Indicator { name: string; max: number }
 interface SeriesItem { name: string; values: number[]; color?: string }
@@ -36,9 +36,6 @@ const props = withDefaults(defineProps<Props>(), {
 
 const chartRef = ref<HTMLElement>()
 let inst: echarts.ECharts | null = null
-let darkObserver: MutationObserver | null = null
-let reRenderScheduled = false
-let lastIsDark: boolean | null = null
 
 const buildOption = () => {
   const theme = props.theme === 'auto'
@@ -83,9 +80,8 @@ const buildOption = () => {
         symbol: 'none',
         symbolSize: 0,
         emphasis: { focus: 'none', scale: false },
-        data: props.series.map((s, idx) => {
-          const palette = resolveThemePalette()
-          const color = s.color || palette[idx % palette.length]
+        data: props.series.map((s) => {
+          const color = s.color || 'rgba(59,130,246,1)'
           const base: any = {
             value: s.values,
             name: s.name,
@@ -133,14 +129,7 @@ const render = async () => {
   } catch {}
 }
 
-const scheduleRender = () => {
-  if (reRenderScheduled) return
-  reRenderScheduled = true
-  window.setTimeout(() => {
-    reRenderScheduled = false
-    render()
-  }, 150)
-}
+const scheduleRender = () => { render() }
 
   let resizeHandler: (() => void) | null = null
 
@@ -148,16 +137,7 @@ const scheduleRender = () => {
     render()
     resizeHandler = () => inst?.resize()
     window.addEventListener('resize', resizeHandler)
-  // 监听根元素的 class 变化以捕获深浅色切换
-    if (!darkObserver) {
-    darkObserver = new MutationObserver(() => {
-      if (props.theme !== 'auto') return
-      const isDark = document.documentElement.classList.contains('dark')
-      if (lastIsDark === null) { lastIsDark = isDark; return }
-      if (isDark !== lastIsDark) { lastIsDark = isDark; scheduleRender() }
-    })
-      darkObserver.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] })
-    }
+  // 不再在组件层监听主题变化，由布局层统一刷新
   })
 
   onUnmounted(() => {
@@ -166,10 +146,7 @@ const scheduleRender = () => {
       window.removeEventListener('resize', resizeHandler)
       resizeHandler = null
     }
-    if (darkObserver) {
-      darkObserver.disconnect()
-      darkObserver = null
-    }
+    // 无主题观察者
   })
 
 watch(

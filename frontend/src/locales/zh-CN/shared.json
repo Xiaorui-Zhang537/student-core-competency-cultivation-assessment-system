@@ -278,6 +278,15 @@
         "submitTicket": "提交工单",
         "submitFeedback": "提交反馈"
       },
+      "cards": {
+        "categories": "分类总数",
+        "hotArticles": "热门文章",
+        "myTickets": "我的工单",
+        "new7d": "近7日新增"
+      },
+      "cta": {
+        "viewDocs": "查看完整文档"
+      },
       "feedback": {
         "thanks": "感谢反馈"
       },
@@ -304,6 +313,34 @@
       "maintenance": {
         "title": "系统维护通知",
         "desc": "我们将在本周日凌晨 2:00–4:00 进行系统维护，期间可能影响部分功能使用。"
+      },
+      "guide": {
+        "register": "立即注册",
+        "browseCourses": "浏览课程",
+        "myCourses": "我的课程",
+        "createCourse": "创建课程",
+        "manageStudents": "学生管理",
+        "gradeAssignments": "作业批改"
+      },
+      "faq": {
+        "account": {
+          "title": "账户相关",
+          "login": { "q": "忘记密码怎么办？", "a": "在登录页点击\"忘记密码\"，输入邮箱，收到重置链接后按提示操作。" },
+          "profile": { "q": "如何修改个人信息？", "a": "登录后进入\"个人资料\"页面修改信息并保存。" },
+          "security": { "q": "如何确保账户安全？", "a": "建议使用强密码、定期更换、不在公共设备保存登录信息，并及时退出登录。" }
+        },
+        "courses": {
+          "title": "课程相关",
+          "enrollment": { "q": "如何报名课程？", "a": "在课程列表选择课程并点击报名/学习，付费课程完成支付后将出现在\"我的课程\"。" },
+          "progress": { "q": "学习进度如何计算？", "a": "按已完成课时统计，完成后自动更新，可在课程详情查看。" },
+          "certificate": { "q": "如何获得课程证书？", "a": "完成必修内容并通过考核后系统自动生成，可在\"我的证书\"查看下载。" }
+        },
+        "technical": {
+          "title": "技术问题",
+          "browser": { "q": "支持哪些浏览器？", "a": "支持最新版本 Chrome（推荐）、Firefox、Safari、Edge。" },
+          "network": { "q": "网络异常如何处理？", "a": "检查网络、刷新页面、清除缓存、尝试其他浏览器或关闭拦截插件。" },
+          "mobile": { "q": "支持手机端使用吗？", "a": "平台支持响应式设计，手机和平板可正常使用。" }
+        }
       },
       "notify": {
         "videoWip": "视频播放功能开发中...",
@@ -373,6 +410,38 @@
         "what": "考查内容",
         "abilities": "展示能力",
         "scoring": "评分逻辑"
+      },
+      "insights": {
+        "na": "—",
+        "delta": {
+          "up": "+{value}",
+          "down": "-{value}",
+          "equal": "0"
+        },
+        "baseline": {
+          "classAvg": "班级均值",
+          "setB": "集合B"
+        },
+        "MORAL_COGNITION": {
+          "analysis": "道德认知 — 本期 {scoreA}，对比期（{baseline}）{scoreB}，变化 {delta}",
+          "suggestion": "多从原则层面反思，完善论证与反驳链条。"
+        },
+        "LEARNING_ATTITUDE": {
+          "analysis": "学习态度 — 本期 {scoreA}，对比期（{baseline}）{scoreB}，变化 {delta}",
+          "suggestion": "加强动机调节，保持专注与稳定投入。"
+        },
+        "LEARNING_ABILITY": {
+          "analysis": "学习能力 — 本期 {scoreA}，对比期（{baseline}）{scoreB}，变化 {delta}",
+          "suggestion": "多进行高阶思维练习，完成计划–监控–修订闭环。"
+        },
+        "LEARNING_METHOD": {
+          "analysis": "学习方法 — 本期 {scoreA}，对比期（{baseline}）{scoreB}，变化 {delta}",
+          "suggestion": "结合多样策略，提升深度加工与自我调节。"
+        },
+        "ACADEMIC_GRADE": {
+          "analysis": "学习成绩 — 本期 {scoreA}，对比期（{baseline}）{scoreB}，变化 {delta}",
+          "suggestion": "查缺补漏，系统复习薄弱点以巩固成绩。"
+        }
       },
       "dimensions": {
         "MORAL_COGNITION": {

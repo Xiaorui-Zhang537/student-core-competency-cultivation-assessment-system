@@ -39,7 +39,7 @@
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted, watch, nextTick } from 'vue'
 import * as echarts from 'echarts'
-import { resolveEChartsTheme, glassTooltipCss, resolveThemePalette } from '@/charts/echartsTheme'
+import { resolveEChartsTheme, glassTooltipCss } from '@/charts/echartsTheme'
 import { ExclamationTriangleIcon } from '@heroicons/vue/24/outline'
 import { getEChartsThemedTokens, normalizeCssColor } from '@/utils/theme'
 
@@ -86,14 +86,7 @@ const chartInstance = ref<echarts.ECharts>()
 const error = ref(false)
 let resizeObserver: ResizeObserver | null = null
 
-const ensurePalette = () => {
-  const palette = getEChartsThemedTokens().palette
-  // 若主题返回的颜色不足或存在透明色，则回退到标准色盘
-  if (Array.isArray(palette) && palette.length) {
-    return palette.map(color => ensureOpaque(color))
-  }
-  return resolveThemePalette().map(color => ensureOpaque(color))
-}
+// 配色由界面层传入（series[i].color）。组件不再根据主题自行挑选色盘。
 
 const computeIsDark = () => {
   if (props.theme === 'auto') {
@@ -144,13 +137,12 @@ const safeAlpha = (color: string, alpha: number) => {
 
 const normalizeSeries = () => (props.data || []).filter((s: any) => s && Array.isArray(s.data))
 
-const buildSeries = (isDark: boolean, palette: string[]) => {
+const buildSeries = (isDark: boolean) => {
   const seriesList = normalizeSeries()
   return seriesList.map((item: ChartData, idx: number) => {
     const type = item.type || 'line'
     const isBar = type === 'bar'
-    const rawColor = item.color || palette[idx % palette.length]
-    const baseColor = ensureOpaque(rawColor)
+    const baseColor = ensureOpaque(item.color || 'rgba(59,130,246,1)')
     const darkened = ensureOpaque(darkenColor(baseColor, 0.22))
 
     const base: any = {
@@ -234,7 +226,6 @@ const initChart = async () => {
     chartInstance.value = echarts.init(chartRef.value as HTMLDivElement, theme as any)
 
     const isDark = computeIsDark()
-    const palette = ensurePalette()
     const tokens = getEChartsThemedTokens()
     const normalizedSeries = normalizeSeries()
     const hasBar = normalizedSeries.some(s => (s.type || 'line') === 'bar')
@@ -321,7 +312,7 @@ const initChart = async () => {
         }
       },
       
-      series: buildSeries(isDark, palette)
+      series: buildSeries(isDark)
     }
     if (normalizedSeries.length === 0 || !Array.isArray(props.xAxisData)) {
       option.series = []
@@ -351,7 +342,6 @@ const updateChart = () => {
     return
   }
 
-  const palette = ensurePalette()
   const normalizedSeries = normalizeSeries()
   const hasBar = normalizedSeries.some(s => (s.type || 'line') === 'bar')
   const isDark = computeIsDark()
@@ -361,7 +351,7 @@ const updateChart = () => {
       data: Array.isArray(props.xAxisData) ? props.xAxisData : [],
       boundaryGap: hasBar ? true : false
     },
-    series: buildSeries(isDark, palette)
+    series: buildSeries(isDark)
   }
   if (normalizedSeries.length === 0) {
     option.series = []
@@ -382,14 +372,6 @@ watch(
 )
 
 // 监听主题变化
-watch(
-  () => document.documentElement.classList.contains('dark'),
-  () => {
-    if (props.theme === 'auto') {
-      initChart()
-    }
-  }
-)
 
 // 导出方法
 const exportChart = (type: 'png' | 'jpeg' = 'png') => {
@@ -419,13 +401,9 @@ defineExpose({
 })
 
 // 生命周期
-onMounted(() => {
-  initChart()
-})
+onMounted(() => { initChart() })
 
-onUnmounted(() => {
-  disposeChart()
-})
+onUnmounted(() => { disposeChart() })
 </script>
 
 <style scoped lang="postcss">

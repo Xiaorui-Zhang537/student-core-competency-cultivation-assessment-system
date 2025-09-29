@@ -8,32 +8,41 @@
 
       
 
-      <!-- 快速入口 -->
-      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
-        <card
-          v-for="item in quickAccess"
-          :key="item.id"
-          padding="lg"
-          hoverable
-          class="text-center cursor-pointer"
-          @click="scrollToSection(item.target)"
-        >
-          <div class="flex flex-col items-center">
-            <div class="w-12 h-12 rounded-lg flex items-center justify-center mb-4"
-                 :class="item.iconBg">
-              <component :is="item.icon" class="w-6 h-6 text-white" />
-            </div>
-            <h3 class="text-lg font-semibold text-base-content mb-2">{{ item.title }}</h3>
-            <p class="text-sm text-subtle">{{ item.description }}</p>
-          </div>
-        </card>
+      <!-- 顶部指标（StartCard 四卡） -->
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-4">
+        <div class="cursor-pointer" @click="activeSection = 'articles'">
+          <StartCard :label="t('shared.help.cards.categories') || '分类总数'"
+                     :value="categoriesCount"
+                     tone="blue"
+                     :icon="BookOpenIcon" />
+        </div>
+        <div class="cursor-pointer" @click="activeSection = 'articles'">
+          <StartCard :label="t('shared.help.cards.hotArticles') || '热门文章'"
+                     :value="hotArticlesCount"
+                     tone="emerald"
+                     :icon="ChartBarIcon" />
+        </div>
+        <div class="cursor-pointer" @click="activeSection = 'support'">
+          <StartCard :label="t('shared.help.cards.myTickets') || '我的工单'"
+                     :value="myTicketsCount"
+                     tone="violet"
+                     :icon="ChatBubbleLeftIcon" />
+        </div>
+        <div class="cursor-pointer" @click="activeSection = 'articles'">
+          <StartCard :label="t('shared.help.cards.new7d') || '近7日新增'"
+                     :value="newArticles7dCount"
+                     tone="amber"
+                     :icon="LightBulbIcon" />
+        </div>
       </div>
+
+      
 
       <!-- 主要内容区域 -->
       <div class="grid grid-cols-1 lg:grid-cols-4 gap-8">
         <!-- 左侧导航 -->
         <div class="lg:col-span-1">
-          <card padding="lg" class="sticky top-6 glass-thin" v-glass>
+          <card padding="lg" tint="secondary" class="sticky top-6 glass-thin" v-glass>
             <template #header>
               <h2 class="text-lg font-semibold text-base-content">{{ t('shared.help.nav') || '导航' }}</h2>
             </template>
@@ -44,17 +53,17 @@
                 @click="activeSection = section.id"
                 class="w-full text-left px-3 py-2 rounded-lg text-sm transition-colors"
                 :class="activeSection === section.id
-                  ? 'bg-primary-100 dark:bg-primary-900 text-primary-700 dark:text-primary-300'
+                  ? 'bg-violet-500/15 dark:bg-violet-500/20 text-violet-600 dark:text-violet-200 ring-1 ring-violet-500/20'
                   : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700'"
               >
                 {{ section.title }}
               </Button>
-              <router-link
-                to="/docs"
-                class="block w-full text-left px-3 py-2 rounded-lg text-sm transition-colors text-subtle hover:bg-gray-100 dark:hover:bg-gray-700"
+              <Button
+                @click="router.push('/docs')"
+                class="w-full text-left px-3 py-2 rounded-lg text-sm transition-colors text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700"
               >
                 {{ t('shared.help.sections.docs') || '文档' }}
-              </router-link>
+              </Button>
             </nav>
           </card>
         </div>
@@ -63,7 +72,7 @@
         <div class="lg:col-span-3 space-y-8">
           <!-- 文章列表 -->
           <section v-if="activeSection === 'articles'" id="articles">
-            <card padding="lg" class="glass" v-glass>
+            <card padding="lg" tint="secondary" class="glass" v-glass>
               <template #header>
                 <div class="flex items-center justify-between gap-3 flex-wrap">
                   <h2 class="text-xl font-semibold text-base-content">{{ t('shared.help.sections.articles') || '帮助文章' }}</h2>
@@ -112,7 +121,7 @@
 
           <!-- 文章详情 -->
           <section v-if="activeSection === 'articleDetail' && helpStore.article" id="articleDetail">
-            <card padding="lg" class="glass" v-glass>
+            <card padding="lg" tint="secondary" class="glass" v-glass>
               <template #header>
                 <div class="flex items-center gap-3 flex-wrap">
                   <h2 class="text-xl font-semibold text-base-content">{{ helpStore.article?.title }}</h2>
@@ -127,40 +136,29 @@
               <div class="prose dark:prose-invert max-w-none" v-html="helpStore.article?.contentHtml || ''"></div>
             </card>
           </section>
-          <!-- 常见问题 -->
+          <!-- 常见问题（daisyUI Accordion with plus/minus） -->
           <section v-if="activeSection === 'faq'" id="faq">
-            <card padding="lg" class="glass" v-glass>
+            <card padding="lg" tint="secondary" class="glass" v-glass>
               <template #header>
                 <h2 class="text-xl font-semibold text-base-content">{{ t('shared.help.sections.faq') || '常见问题' }}</h2>
               </template>
               
-              <div class="space-y-6">
+              <div class="space-y-8">
                 <div
                   v-for="category in faqCategories"
                   :key="category.id"
-                  class="border-b border-gray-200 dark:border-gray-600 last:border-b-0 pb-6 last:pb-0"
+                  class="last:pb-0"
                 >
                   <h3 class="text-lg font-medium text-base-content mb-4">{{ category.name }}</h3>
-                  <div class="space-y-4">
+                  <div class="join join-vertical w-full">
                     <div
-                      v-for="faq in category.faqs"
+                      v-for="(faq, idx) in category.faqs"
                       :key="faq.id"
-                      class="border border-gray-200 dark:border-gray-600 rounded-lg"
+                      class="collapse collapse-plus join-item bg-base-100 border border-base-300 rounded-xl"
                     >
-                      <Button
-                        @click="toggleFaq(faq.id)"
-                        class="w-full px-4 py-3 text-left flex justify-between items-center hover:bg-gray-50 dark:hover:bg-gray-700 rounded-lg"
-                      >
-                        <span class="font-medium text-base-content">{{ faq.question }}</span>
-                        <chevron-down-icon
-                          class="w-5 h-5 text-gray-500 transform transition-transform"
-                          :class="{ 'rotate-180': expandedFaqs.includes(faq.id) }"
-                        />
-                      </Button>
-                      <div
-                        v-show="expandedFaqs.includes(faq.id)"
-                        class="px-4 pb-4 text-subtle"
-                      >
+                      <input type="radio" :name="`faq-accordion-${category.id}`" :checked="idx === 0" />
+                      <div class="collapse-title font-medium text-base-content">{{ faq.question }}</div>
+                      <div class="collapse-content text-sm text-subtle">
                         <div v-html="faq.answer"></div>
                       </div>
                     </div>
@@ -172,13 +170,13 @@
 
           <!-- 使用指南 -->
           <section v-if="activeSection === 'guide'" id="guide">
-            <card padding="lg" class="glass" v-glass>
+            <card padding="lg" tint="secondary" class="glass" v-glass>
               <template #header>
                 <h2 class="text-xl font-semibold text-base-content">{{ t('shared.help.sections.guide') || '使用指南' }}</h2>
               </template>
               
               <div class="space-y-8">
-                <div v-for="guide in userGuides" :key="guide.id">
+                <div v-for="guide in userGuidesFiltered" :key="guide.id">
                   <h3 class="text-lg font-medium text-base-content mb-4 flex items-center">
                     <component :is="guide.icon" class="w-5 h-5 mr-2 text-primary-600" />
                     {{ guide.title }}
@@ -212,42 +210,13 @@
             </card>
           </section>
 
-          <!-- 视频教程 -->
-          <section v-if="activeSection === 'tutorials'" id="tutorials">
-            <card padding="lg" class="glass" v-glass>
-              <template #header>
-                <h2 class="text-xl font-semibold text-base-content">{{ t('shared.help.sections.tutorials') || '视频教程' }}</h2>
-              </template>
-              
-              <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div
-                  v-for="tutorial in videoTutorials"
-                  :key="tutorial.id"
-                  class="border border-gray-200 dark:border-gray-600 rounded-lg overflow-hidden"
-                >
-                  <div class="aspect-video bg-gray-100 dark:bg-gray-700 flex items-center justify-center">
-                    <play-icon class="w-12 h-12 text-gray-400" />
-                  </div>
-                  <div class="p-4">
-                    <h3 class="font-medium text-base-content mb-2">{{ tutorial.title }}</h3>
-                    <p class="text-sm text-subtle mb-3">{{ tutorial.description }}</p>
-                    <div class="flex items-center justify-between">
-                      <span class="text-xs text-subtle">{{ tutorial.duration }}</span>
-                      <Button variant="outline" size="sm" @click="playTutorial(tutorial.id)">
-                        {{ t('shared.help.actions.watch') || '观看' }}
-                      </Button>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </card>
-          </section>
+          
 
           <!-- 技术支持 -->
           <section v-if="activeSection === 'support'" id="support">
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
               <!-- 联系方式 -->
-              <card padding="lg" class="glass" v-glass>
+              <card padding="lg" tint="secondary" class="glass" v-glass>
                 <template #header>
                 <h2 class="text-xl font-semibold text-base-content">{{ t('shared.help.sections.support') || '联系技术支持' }}</h2>
                 </template>
@@ -275,7 +244,7 @@
               </card>
 
               <!-- 提交工单 -->
-              <card padding="lg" class="glass" v-glass>
+              <card padding="lg" tint="secondary" class="glass" v-glass>
                 <template #header>
                 <h2 class="text-xl font-semibold text-base-content">{{ t('shared.help.sections.ticket') || '提交技术工单' }}</h2>
                 </template>
@@ -344,7 +313,7 @@
               </card>
               
               <!-- 我的工单（仅登录后显示） -->
-              <card v-if="authStore.isAuthenticated" padding="lg" class="glass md:col-span-2" v-glass>
+              <card v-if="authStore.isAuthenticated" padding="lg" tint="secondary" class="glass md:col-span-2" v-glass>
                 <template #header>
                   <div class="flex items-center justify-between">
                     <h2 class="text-xl font-semibold text-base-content">{{ t('shared.help.sections.myTickets') || '我的工单' }}</h2>
@@ -370,65 +339,11 @@
             </div>
           </section>
 
-          <!-- 系统状态 -->
-          <section v-if="activeSection === 'status'" id="status">
-            <card padding="lg" class="glass" v-glass>
-              <template #header>
-                <h2 class="text-xl font-semibold text-gray-900 dark:text-white">{{ t('shared.help.sections.status') || '系统状态' }}</h2>
-              </template>
-              
-              <div class="space-y-6">
-                <!-- 总体状态 -->
-                <div class="flex items-center justify-between p-4 glass-thin rounded-lg" v-glass>
-                  <div class="flex items-center space-x-3">
-                    <div class="w-3 h-3 bg-green-500 rounded-full"></div>
-                    <span class="font-medium text-green-800 dark:text-green-200">{{ t('shared.help.status.allOk') || '所有系统运行正常' }}</span>
-                  </div>
-                  <span class="text-sm text-green-600 dark:text-green-400">{{ t('shared.help.status.lastCheck', { when: '2' }) || '最后检查: 2分钟前' }}</span>
-                </div>
-
-                <!-- 各系统状态 -->
-                <div class="space-y-4">
-                  <div v-for="service in systemServices" :key="service.name" 
-                       class="flex items-center justify-between p-4 glass-thin rounded-lg" v-glass>
-                    <div class="flex items-center space-x-3">
-                      <div class="w-3 h-3 rounded-full"
-                           :class="service.status === 'operational' ? 'bg-green-500' : 
-                                   service.status === 'degraded' ? 'bg-yellow-500' : 'bg-red-500'">
-                      </div>
-                      <span class="font-medium text-gray-900 dark:text-white">{{ service.name }}</span>
-                    </div>
-                    <div class="text-right">
-                      <div class="text-sm text-gray-900 dark:text-white">
-                        {{ getStatusText(service.status) }}
-                      </div>
-                      <div class="text-xs text-gray-500">响应时间: {{ service.responseTime }}ms</div>
-                    </div>
-                  </div>
-                </div>
-
-                <!-- 维护通知 -->
-                <div v-if="maintenanceNotices.length > 0" class="space-y-4">
-                  <h3 class="font-medium text-gray-900 dark:text-white">维护通知</h3>
-                  <div v-for="notice in maintenanceNotices" :key="notice.id"
-                       class="p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700 rounded-lg">
-                    <div class="flex items-start space-x-3">
-                      <calendar-icon class="w-5 h-5 text-blue-600 mt-0.5" />
-                      <div>
-                        <h4 class="font-medium text-blue-900 dark:text-blue-100">{{ notice.title }}</h4>
-                        <p class="text-sm text-blue-700 dark:text-blue-200 mt-1">{{ notice.description }}</p>
-                        <p class="text-xs text-blue-600 dark:text-blue-300 mt-2">{{ notice.scheduledTime }}</p>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </card>
-          </section>
+          
 
           <!-- 反馈 -->
           <section v-if="activeSection === 'feedback'" id="feedback">
-            <card padding="lg" class="glass" v-glass>
+            <card padding="lg" tint="secondary" class="glass" v-glass>
               <template #header>
                 <h2 class="text-xl font-semibold text-gray-900 dark:text-white">{{ t('shared.help.sections.feedback') || '意见反馈' }}</h2>
               </template>
@@ -510,6 +425,7 @@ import { useUIStore } from '@/stores/ui'
 import Card from '@/components/ui/Card.vue'
 import Button from '@/components/ui/Button.vue'
 import PageHeader from '@/components/ui/PageHeader.vue'
+import StartCard from '@/components/ui/StartCard.vue'
 // 动态背景已移除
 import GlassDirective from '@/directives/glass'
 import { useI18n } from 'vue-i18n'
@@ -523,12 +439,10 @@ import {
   MagnifyingGlassIcon,
   QuestionMarkCircleIcon,
   BookOpenIcon,
-  PlayIcon,
   PhoneIcon,
   ChatBubbleLeftIcon,
   EnvelopeIcon,
   ChevronDownIcon,
-  CalendarIcon,
   ExclamationTriangleIcon,
   LightBulbIcon,
   HeartIcon,
@@ -573,121 +487,99 @@ const feedbackForm = reactive({
   anonymous: false
 })
 
-// 快速入口
-const quickAccess = [
-  {
-    id: 'faq',
-    title: t('shared.help.sections.faq') || '常见问题',
-    description: t('shared.help.quick.faqDesc') || '查找常见问题的解答',
-    icon: QuestionMarkCircleIcon,
-    iconBg: 'bg-blue-500',
-    target: 'faq'
-  },
-  {
-    id: 'guide',
-    title: t('shared.help.sections.guide') || '使用指南',
-    description: t('shared.help.quick.guideDesc') || '学习如何使用系统',
-    icon: BookOpenIcon,
-    iconBg: 'bg-green-500',
-    target: 'guide'
-  },
-  {
-    id: 'support',
-    title: t('shared.help.sections.support') || '技术支持',
-    description: t('shared.help.quick.supportDesc') || '联系我们获得帮助',
-    icon: ChatBubbleLeftIcon,
-    iconBg: 'bg-purple-500',
-    target: 'support'
-  },
-  {
-    id: 'feedback',
-    title: t('shared.help.sections.feedback') || '意见反馈',
-    description: t('shared.help.quick.feedbackDesc') || '告诉我们您的想法',
-    icon: HeartIcon,
-    iconBg: 'bg-pink-500',
-    target: 'feedback'
+// 顶部 StartCard 统计
+const categoriesCount = computed(() => (helpStore.categories?.length || 0))
+const hotArticlesCount = computed(() => (helpStore.articles?.length || 0))
+const myTicketsCount = computed(() => (authStore.isAuthenticated ? (helpStore.tickets?.length || 0) : 0))
+const newArticles7dCount = computed(() => {
+  const list = helpStore.articles || []
+  const now = Date.now()
+  const sevenDays = 7 * 24 * 60 * 60 * 1000
+  let cnt = 0
+  for (const a of list) {
+    const ts = a?.createdAt ? Date.parse(String(a.createdAt)) : NaN
+    if (!isNaN(ts) && (now - ts) <= sevenDays) cnt++
   }
-]
+  return cnt
+})
 
 // 导航菜单
 const sections = [
   { id: 'faq', title: t('shared.help.sections.faq') || '常见问题' },
   { id: 'articles', title: t('shared.help.sections.articles') || '帮助文章' },
   { id: 'guide', title: t('shared.help.sections.guide') || '使用指南' },
-  { id: 'tutorials', title: t('shared.help.sections.tutorials') || '视频教程' },
   { id: 'support', title: t('shared.help.sections.support') || '技术支持' },
-  { id: 'status', title: t('shared.help.sections.status') || '系统状态' },
   { id: 'feedback', title: t('shared.help.sections.feedback') || '意见反馈' }
 ]
 
-// FAQ数据
-const faqCategories = [
+// FAQ数据（i18n 驱动）
+const faqCategories = computed(() => ([
   {
     id: 'account',
-    name: '账户相关',
+    name: t('shared.help.faq.account.title') || '账户相关',
     faqs: [
       {
         id: 'login',
-        question: '忘记密码怎么办？',
-        answer: '您可以在登录页面点击"忘记密码"链接，输入您的邮箱地址，系统会发送密码重置链接到您的邮箱。请检查邮箱（包括垃圾邮件文件夹）并按照指示操作。'
+        question: t('shared.help.faq.account.login.q') || '忘记密码怎么办？',
+        answer: t('shared.help.faq.account.login.a') || '您可以在登录页面点击"忘记密码"链接…'
       },
       {
         id: 'profile',
-        question: '如何修改个人信息？',
-        answer: '登录后，点击右上角的头像，选择"个人资料"，在个人资料页面您可以修改姓名、邮箱、电话等信息。修改后请点击"保存"按钮。'
+        question: t('shared.help.faq.account.profile.q') || '如何修改个人信息？',
+        answer: t('shared.help.faq.account.profile.a') || '登录后前往个人资料页面进行修改…'
       },
       {
         id: 'security',
-        question: '如何确保账户安全？',
-        answer: '建议您：<br/>1. 使用强密码（包含字母、数字和符号）<br/>2. 定期更换密码<br/>3. 不在公共设备上保存登录信息<br/>4. 及时退出登录'
+        question: t('shared.help.faq.account.security.q') || '如何确保账户安全？',
+        answer: t('shared.help.faq.account.security.a') || '建议使用强密码、定期更换、勿在公共设备保存登录信息…'
       }
     ]
   },
   {
     id: 'courses',
-    name: '课程相关',
+    name: t('shared.help.faq.courses.title') || '课程相关',
     faqs: [
       {
         id: 'enrollment',
-        question: '如何报名课程？',
-        answer: '在课程列表页面找到您想要学习的课程，点击"立即学习"或"报名"按钮。如果是付费课程，需要完成付款流程。报名成功后，课程会出现在您的"我的课程"中。'
+        question: t('shared.help.faq.courses.enrollment.q') || '如何报名课程？',
+        answer: t('shared.help.faq.courses.enrollment.a') || '在课程列表页面选择课程并报名…'
       },
       {
         id: 'progress',
-        question: '学习进度如何计算？',
-        answer: '学习进度根据您完成的课时数量计算。每完成一个课时，进度会自动更新。您可以在课程详情页面查看详细的学习进度和统计信息。'
+        question: t('shared.help.faq.courses.progress.q') || '学习进度如何计算？',
+        answer: t('shared.help.faq.courses.progress.a') || '按已完成课时统计，并在课程详情页查看…'
       },
       {
         id: 'certificate',
-        question: '如何获得课程证书？',
-        answer: '完成课程所有必修内容并通过考核后，系统会自动生成课程证书。您可以在"我的证书"页面查看和下载证书。'
+        question: t('shared.help.faq.courses.certificate.q') || '如何获得课程证书？',
+        answer: t('shared.help.faq.courses.certificate.a') || '完成必修内容并通过考核后系统自动生成证书…'
       }
     ]
   },
   {
     id: 'technical',
-    name: '技术问题',
+    name: t('shared.help.faq.technical.title') || '技术问题',
     faqs: [
       {
         id: 'browser',
-        question: '支持哪些浏览器？',
-        answer: '我们支持以下浏览器的最新版本：<br/>• Chrome (推荐)<br/>• Firefox<br/>• Safari<br/>• Edge<br/>为了获得最佳体验，建议使用Chrome浏览器。'
+        question: t('shared.help.faq.technical.browser.q') || '支持哪些浏览器？',
+        answer: t('shared.help.faq.technical.browser.a') || '支持 Chrome/Firefox/Safari/Edge 最新版本…'
       },
       {
-        id: 'video',
-        question: '视频无法播放怎么办？',
-        answer: '请尝试以下解决方案：<br/>1. 检查网络连接<br/>2. 刷新页面<br/>3. 清除浏览器缓存<br/>4. 尝试使用其他浏览器<br/>5. 检查是否安装了广告拦截插件'
+        id: 'network',
+        question: t('shared.help.faq.technical.network.q') || '网络异常如何处理？',
+        answer: t('shared.help.faq.technical.network.a') || '检查网络连接、刷新页面、清除缓存、尝试其他浏览器…'
       },
       {
         id: 'mobile',
-        question: '支持手机端使用吗？',
-        answer: '是的，我们的平台支持响应式设计，可以在手机和平板设备上正常使用。我们也提供了移动应用，您可以在应用商店搜索下载。'
+        question: t('shared.help.faq.technical.mobile.q') || '支持手机端使用吗？',
+        answer: t('shared.help.faq.technical.mobile.a') || '平台支持响应式，手机和平板可正常使用。'
       }
     ]
   }
-]
+]))
 
-// 使用指南
+// 使用指南（点击联动帮助文章筛选或导航）
 const userGuides = [
   {
     id: 'student',
@@ -699,24 +591,27 @@ const userGuides = [
         step: 1,
         title: '注册账户',
         description: '填写基本信息完成注册',
-        actionText: '立即注册',
-        action: () => {}
+        actionText: t('shared.help.guide.register') || '立即注册',
+        action: () => {
+          if (authStore.isAuthenticated) return router.push({ name: 'StudentDashboard' })
+          return router.push({ name: 'Register' })
+        }
       },
       {
         id: 2,
         step: 2,
         title: '浏览课程',
         description: '在课程库中找到感兴趣的课程',
-        actionText: '浏览课程',
-        action: () => {}
+        actionText: t('shared.help.guide.browseCourses') || '浏览课程',
+        action: () => router.push({ name: 'StudentCourses' })
       },
       {
         id: 3,
         step: 3,
         title: '开始学习',
         description: '报名课程并开始学习',
-        actionText: '我的课程',
-        action: () => {}
+        actionText: t('shared.help.guide.myCourses') || '我的课程',
+        action: () => router.push({ name: 'StudentCourses' })
       }
     ]
   },
@@ -730,68 +625,65 @@ const userGuides = [
         step: 1,
         title: '创建课程',
         description: '设计课程结构和内容',
-        actionText: '创建课程',
-        action: () => {}
+        actionText: t('shared.help.guide.createCourse') || '创建课程',
+        action: () => router.push({ name: 'TeacherCourseManagement', query: { create: '1' } })
       },
       {
         id: 2,
         step: 2,
         title: '管理学生',
         description: '查看学生学习情况',
-        actionText: '学生管理',
-        action: () => {}
+        actionText: t('shared.help.guide.manageStudents') || '学生管理',
+        action: async () => {
+          try {
+            // 优先跳转到教师的第一个课程的学生管理页
+            if (authStore.userRole === 'TEACHER') {
+              const { useCourseStore } = await import('@/stores/course')
+              const cs = useCourseStore()
+              if (!Array.isArray(cs.courses) || cs.courses.length === 0) {
+                const teacherId = authStore.user?.id
+                if (teacherId) {
+                  await cs.fetchCourses({ page: 1, size: 10, teacherId: String(teacherId) })
+                }
+              }
+              const first = Array.isArray(cs.courses) ? cs.courses[0] : null
+              if (first && (first as any).id) {
+                return router.push({ name: 'TeacherCourseStudents', params: { id: (first as any).id } })
+              }
+            }
+          } catch {}
+          // 兜底：进入课程管理页
+          return router.push({ name: 'TeacherCourseManagement' })
+        }
       },
       {
         id: 3,
         step: 3,
         title: '批改作业',
         description: '评分和反馈学生作业',
-        actionText: '作业批改',
-        action: () => {}
+        actionText: t('shared.help.guide.gradeAssignments') || '作业批改',
+        action: () => router.push({ name: 'TeacherAssignments' })
       }
     ]
   }
 ]
 
-// 视频教程
-const videoTutorials = [
-  {
-    id: 1,
-    title: '平台基础功能介绍',
-    description: '了解平台的主要功能和界面',
-    duration: '5:30',
-    thumbnail: ''
-  },
-  {
-    id: 2,
-    title: '如何创建和管理课程',
-    description: '教师用户创建课程的完整流程',
-    duration: '8:45',
-    thumbnail: ''
-  },
-  {
-    id: 3,
-    title: '学生学习流程演示',
-    description: '从注册到完成课程的全过程',
-    duration: '6:20',
-    thumbnail: ''
-  },
-  {
-    id: 4,
-    title: '作业提交和批改',
-    description: '作业系统的使用方法',
-    duration: '7:15',
-    thumbnail: ''
-  }
-]
+// 按角色过滤显示对应指南
+const userGuidesFiltered = computed(() => {
+  const role = authStore.userRole
+  if (role === 'TEACHER') return userGuides.filter(g => g.id === 'teacher')
+  return userGuides.filter(g => g.id === 'student')
+})
 
-// 技术支持联系方式
+// 移除视频教程（无后端支持）
+
+// 技术支持联系方式（来自用户提供）
 const supportContacts = [
   {
     type: 'phone',
     title: '电话支持',
     description: '紧急问题请直接拨打',
-    value: '400-123-4567',
+    value: '15362612345',
     time: '工作日 9:00-18:00',
     icon: PhoneIcon,
     iconBg: 'bg-green-500'
@@ -800,7 +692,7 @@ const supportContacts = [
     type: 'email',
     title: '邮件支持',
     description: '非紧急问题请发送邮件',
-    value: 'support@platform.com',
+    value: 'xiaorui537@gmail.com',
     time: '24小时内回复',
     icon: EnvelopeIcon,
     iconBg: 'bg-blue-500'
@@ -816,24 +708,7 @@ const supportContacts = [
   }
 ]
 
-// 系统服务状态
-const systemServices = [
-  { name: '用户认证服务', status: 'operational', responseTime: 45 },
-  { name: '课程管理系统', status: 'operational', responseTime: 120 },
-  { name: '视频播放服务', status: 'operational', responseTime: 200 },
-  { name: '文件存储服务', status: 'operational', responseTime: 80 },
-  { name: '消息通知系统', status: 'operational', responseTime: 65 }
-]
-
-// 维护通知
-const maintenanceNotices = [
-  {
-    id: 1,
-    title: t('shared.help.maintenance.title') || '系统维护通知',
-    description: t('shared.help.maintenance.desc') || '我们将在本周日凌晨2:00-4:00进行系统维护，期间可能影响部分功能使用。',
-    scheduledTime: '2024-01-21 02:00 - 04:00'
-  }
-]
+// 移除系统状态（无后端支持）
 
 // 反馈类型（随语言切换动态更新）
 const feedbackTypeOptions = computed(() => ([
@@ -901,22 +776,7 @@ const toggleFaq = (faqId: string) => {
   }
 }
 
-const playTutorial = (tutorialId: number) => {
-  uiStore.showNotification({
-    type: 'info',
-    title: t('shared.help.sections.tutorials') || '视频教程',
-    message: t('shared.help.notify.videoWip') || '视频播放功能开发中...'
-  })
-}
-
-const getStatusText = (status: string) => {
-  switch (status) {
-    case 'operational': return t('shared.help.status.operational') || '正常运行'
-    case 'degraded': return t('shared.help.status.degraded') || '性能下降'
-    case 'outage': return t('shared.help.status.outage') || '服务中断'
-    default: return t('shared.help.status.unknown') || '未知状态'
-  }
-}
+// 移除视频/状态相关方法
 
 const ticketStatusText = (s: string) => {
   switch (s) {

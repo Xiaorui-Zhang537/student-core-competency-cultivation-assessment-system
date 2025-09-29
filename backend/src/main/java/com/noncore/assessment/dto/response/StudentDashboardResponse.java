@@ -75,6 +75,7 @@ public class StudentDashboardResponse {
     @NoArgsConstructor
     @AllArgsConstructor
     public static class RecentGradeDto {
+        private Long assignmentId;
         private String assignmentTitle;
         private String courseTitle;
         private Double score;

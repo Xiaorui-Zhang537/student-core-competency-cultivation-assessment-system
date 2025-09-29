@@ -281,6 +281,15 @@
         "submitTicket": "Submit Ticket",
         "submitFeedback": "Submit Feedback"
       },
+      "cards": {
+        "categories": "Categories",
+        "hotArticles": "Hot Articles",
+        "myTickets": "My Tickets",
+        "new7d": "New in 7d"
+      },
+      "cta": {
+        "viewDocs": "View full docs"
+      },
       "feedback": {
         "thanks": "Thanks for your feedback"
       },
@@ -307,6 +316,34 @@
       "maintenance": {
         "title": "Maintenance Notice",
         "desc": "We will perform system maintenance this Sunday 2:00–4:00 AM; some features may be affected."
+      },
+      "guide": {
+        "register": "Register now",
+        "browseCourses": "Browse courses",
+        "myCourses": "My courses",
+        "createCourse": "Create course",
+        "manageStudents": "Manage students",
+        "gradeAssignments": "Grade assignments"
+      },
+      "faq": {
+        "account": {
+          "title": "Account",
+          "login": { "q": "Forgot password?", "a": "Click 'Forgot password' on the login page, enter your email, then follow the reset link sent to you." },
+          "profile": { "q": "How to edit profile?", "a": "Go to 'Profile' after login, edit fields and save." },
+          "security": { "q": "How to keep account secure?", "a": "Use strong passwords, rotate regularly, avoid saving login on public devices, and sign out in time." }
+        },
+        "courses": {
+          "title": "Courses",
+          "enrollment": { "q": "How to enroll?", "a": "Choose a course on the course list, click enroll/learn. Paid courses appear in 'My courses' after payment." },
+          "progress": { "q": "How is progress calculated?", "a": "By completed lessons. Progress updates automatically and is visible on the course detail page." },
+          "certificate": { "q": "How to get certificates?", "a": "Complete required content and pass assessments; certificates are generated automatically and downloadable in 'My Certificates'." }
+        },
+        "technical": {
+          "title": "Technical",
+          "browser": { "q": "Supported browsers?", "a": "Latest Chrome (recommended), Firefox, Safari, Edge." },
+          "network": { "q": "How to fix network issues?", "a": "Check connection, refresh, clear cache, try another browser, or disable blocking plugins." },
+          "mobile": { "q": "Mobile support?", "a": "Responsive design works on phones and tablets." }
+        }
       },
       "notify": {
         "videoWip": "Video playback is under development...",
@@ -362,7 +399,6 @@
     "now": "Now",
     "clear": "Clear",
     "confirm": "Confirm",
-    "loading": "Loading...",
     "file": {
       "unknownSize": "Unknown"
     },
@@ -374,6 +410,38 @@
         "what": "What it examines",
         "abilities": "Abilities shown",
         "scoring": "Scoring logic"
+      },
+      "insights": {
+        "na": "N/A",
+        "delta": {
+          "up": "+{value}",
+          "down": "-{value}",
+          "equal": "0"
+        },
+        "baseline": {
+          "classAvg": "Class Avg",
+          "setB": "Set B"
+        },
+        "MORAL_COGNITION": {
+          "analysis": "Moral reasoning — this period {scoreA}, compare ({baseline}) {scoreB}, change {delta}",
+          "suggestion": "Reflect on principles and strengthen argument chains."
+        },
+        "LEARNING_ATTITUDE": {
+          "analysis": "Learning attitude — this period {scoreA}, compare ({baseline}) {scoreB}, change {delta}",
+          "suggestion": "Enhance motivation and maintain focused study sessions."
+        },
+        "LEARNING_ABILITY": {
+          "analysis": "Learning ability — this period {scoreA}, compare ({baseline}) {scoreB}, change {delta}",
+          "suggestion": "Practice higher-order thinking and metacognitive cycles."
+        },
+        "LEARNING_METHOD": {
+          "analysis": "Learning strategy — this period {scoreA}, compare ({baseline}) {scoreB}, change {delta}",
+          "suggestion": "Adopt diverse strategies and deepen semantic processing."
+        },
+        "ACADEMIC_GRADE": {
+          "analysis": "Academic grade — this period {scoreA}, compare ({baseline}) {scoreB}, change {delta}",
+          "suggestion": "Consolidate knowledge points and review weak topics."
+        }
       },
       "dimensions": {
         "MORAL_COGNITION": {

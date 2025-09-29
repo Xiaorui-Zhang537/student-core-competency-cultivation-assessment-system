@@ -1,5 +1,5 @@
 <template>
-  <card :hoverable="true" padding="md" class="w-full">
+  <card :hoverable="true" padding="md" class="w-full" tint="primary">
     <template #header>
       <div class="flex items-start gap-3">
         <div class="flex-1 min-w-0">

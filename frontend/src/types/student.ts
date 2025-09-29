@@ -17,7 +17,7 @@ export interface StudentCourse {
 export interface StudentDashboardData {
   upcomingAssignments: Array<{ id: string; title: string; courseTitle: string; dueDate: string }>;
   activeCourses: Array<{ id: string; title: string; teacherName: string; progress: number; coverImage?: string }>;
-  recentGrades: Array<{ assignmentTitle: string; courseTitle: string; score: number; gradedAt?: string }>;
+  recentGrades: Array<{ assignmentId?: string | number; assignmentTitle: string; courseTitle: string; score: number; gradedAt?: string }>;
   overallProgress: number;
   stats: StudentDashboardStats;
 }

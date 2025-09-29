@@ -19,6 +19,7 @@
 import { ref, watch, onMounted, onUnmounted, nextTick, computed } from 'vue'
 import * as echarts from 'echarts'
 import { resolveEChartsTheme, glassTooltipCss } from '@/charts/echartsTheme'
+import { normalizeCssColor, rgba } from '@/utils/theme'
 
 type Point = { x: string | number; y: number }
 type SeriesInput = { name: string; data: Point[]; color?: string }
@@ -65,17 +66,14 @@ const waitForContainer = async (maxTries = 10): Promise<boolean> => {
 const buildOption = (): any => {
   const theme = props.theme === 'auto' ? (document.documentElement.classList.contains('dark') ? 'dark' : 'light') : props.theme
 
-  // 统一调色板，和雷达/饼图保持一致风格
-  const palette = theme === 'dark'
-    ? ['#93c5fd', '#22d3ee', '#f472b6', '#f59e0b', '#34d399']
-    : ['#3b82f6', '#06b6d4', '#ec4899', '#f59e0b', '#10b981']
+  // 配色由界面层传入（series[i].color）。组件不再根据主题自行挑选色盘。
 
   const categories = Array.isArray(props.xAxisData) && props.xAxisData.length
     ? props.xAxisData
     : (props.series?.[0]?.data || []).map(p => (p?.x ?? ''))
 
   const normalized = (props.series || []).filter(s => s && Array.isArray(s.data)).map((s, idx) => {
-    const base = s.color || palette[idx % palette.length]
+    const base = normalizeCssColor(String(s.color || 'rgb(59 130 246)'))
     return {
       name: s.name,
       type: 'line',
@@ -87,8 +85,8 @@ const buildOption = (): any => {
       lineStyle: { color: base, width: theme === 'dark' ? 3 : 2 },
       areaStyle: {
         color: new (echarts as any).graphic.LinearGradient(0, 0, 0, 1, [
-          { offset: 0, color: base + (theme === 'dark' ? '40' : '30') },
-          { offset: 1, color: base + (theme === 'dark' ? '10' : '05') }
+          { offset: 0, color: rgba(base, theme === 'dark' ? 0.35 : 0.25) },
+          { offset: 1, color: rgba(base, theme === 'dark' ? 0.12 : 0.06) }
         ])
       }
     }
@@ -126,14 +124,14 @@ const buildOption = (): any => {
       type: 'category',
       boundaryGap: false,
       data: Array.isArray(categories) ? categories.map(c => String(c)) : [],
-      axisLine: { lineStyle: { color: theme === 'dark' ? '#4b5563' : '#d1d5db' } },
-      axisLabel: { color: theme === 'dark' ? '#9ca3af' : '#6b7280' }
+      axisLine: { lineStyle: { color: theme === 'dark' ? 'rgba(255,255,255,0.45)' : '#d1d5db' } },
+      axisLabel: { color: theme === 'dark' ? 'rgba(255,255,255,0.86)' : '#6b7280' }
     },
     yAxis: {
       type: 'value',
-      axisLine: { lineStyle: { color: theme === 'dark' ? '#6b7280' : '#d1d5db' } },
-      axisLabel: { color: theme === 'dark' ? '#9ca3af' : '#6b7280' },
-      splitLine: { lineStyle: { color: theme === 'dark' ? '#4b5563' : '#e5e7eb' } }
+      axisLine: { lineStyle: { color: theme === 'dark' ? 'rgba(255,255,255,0.45)' : '#d1d5db' } },
+      axisLabel: { color: theme === 'dark' ? 'rgba(255,255,255,0.86)' : '#6b7280' },
+      splitLine: { lineStyle: { color: theme === 'dark' ? 'rgba(255,255,255,0.28)' : '#e5e7eb' } }
     },
     series: normalized
   }
@@ -176,9 +174,7 @@ watch(() => [props.series, props.xAxisData, props.theme], () => {
   if (chart) update()
 }, { deep: true })
 
-watch(() => document.documentElement.classList.contains('dark'), () => {
-  if (props.theme === 'auto') init()
-})
+onMounted(() => {})
 
 onMounted(init)
 onUnmounted(() => {

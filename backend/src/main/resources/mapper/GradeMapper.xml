@@ -403,6 +403,7 @@
     <!-- 学生近期成绩（用于仪表盘） -->
     <select id="findRecentGradesByStudent" resultType="com.noncore.assessment.dto.response.StudentDashboardResponse$RecentGradeDto">
         SELECT
+            g.assignment_id AS assignmentId,
             a.title AS assignmentTitle,
             c.title AS courseTitle,
             g.score AS score,

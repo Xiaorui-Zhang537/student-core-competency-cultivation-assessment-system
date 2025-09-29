@@ -85,8 +85,8 @@
         @click="enterCourse(course)"
       >
         <div class="relative h-48 rounded-2xl overflow-hidden">
-          <img v-if="course.coverImageUrl && !coverErrorMap[String(course.id)] && isAllowedImage(course.coverImageUrl)"
-               :src="course.coverImageUrl"
+          <img v-if="getCoverSrc(course) && !coverErrorMap[String(course.id)]"
+               :src="getCoverSrc(course)"
                :alt="course.title || ''"
                class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300 rounded-2xl"
                @error="coverErrorMap[String(course.id)] = true"
@@ -127,18 +127,49 @@
           <Card v-for="course in courseStore.courses" :key="course.id">
             <h4 class="font-medium mb-2">{{ course.title }}</h4>
             <p class="text-sm text-gray-600 mb-3">{{ course.description }}</p>
+            <div class="flex flex-wrap items-center gap-2 mb-2 text-sm">
+              <Badge v-if="course.startDate" size="sm" variant="info">
+                <span class="inline-flex items-center gap-1">📅 {{ t('student.courses.detail.startDate') }}: {{ formatDateOnly(course.startDate) }}</span>
+              </Badge>
+              <Badge v-if="course.endDate" size="sm" variant="info">
+                <span class="inline-flex items-center gap-1">⏳ {{ t('student.courses.detail.endDate') }}: {{ formatDateOnly(course.endDate) }}</span>
+              </Badge>
+            </div>
+            <div class="flex flex-wrap items-center gap-2 mb-3 text-sm">
+              <Badge v-if="course.difficulty" size="sm" :variant="getDifficultyVariant(course.difficulty)">
+                {{ t('student.courses.detail.difficulty') }}: {{ localizeDifficulty(course.difficulty, t) }}
+              </Badge>
+              <Badge v-if="course.category" size="sm" :variant="getCategoryVariant(course.category)">
+                {{ t('student.courses.detail.category') }}: {{ localizeCategory(course.category, t) }}
+              </Badge>
+              <template v-for="tag in toTagArray(course.tags)" :key="`${course.id}-${tag}`">
+                <Badge size="sm" :variant="getTagVariant(tag)">#{{ tag }}</Badge>
+              </template>
+            </div>
             <div class="flex justify-between items-center">
               <span class="text-sm text-gray-500">{{ t('student.courses.instructor') }}: {{ course.teacherName }}</span>
-              <Button
-                size="sm"
-                variant="primary"
-                :loading="enrollingId === String(course.id)"
-                :disabled="isEnrolled(String(course.id)) || enrollingId === String(course.id)"
-                @click="handleEnroll(String(course.id))"
-              >
-                <span v-if="isEnrolled(String(course.id))">{{ t('student.courses.enrolled') }}</span>
-                <span v-else>{{ t('student.courses.enroll') }}</span>
-              </Button>
+              <div class="flex items-center gap-2">
+                <Badge v-if="isEnrollClosed(course)" size="sm" variant="warning">{{ t('student.courses.enrollClosed') || '报名已截止' }}</Badge>
+                <Button
+                  v-if="isEnrolled(String(course.id))"
+                  size="sm"
+                  variant="danger"
+                  :loading="enrollingId === `un-${String(course.id)}`"
+                  @click.stop="handleUnenroll(String(course.id))"
+                >
+                  {{ t('student.courses.unenroll') || '退课' }}
+                </Button>
+                <Button
+                  v-else
+                  size="sm"
+                  variant="primary"
+                  :loading="enrollingId === String(course.id)"
+                  :disabled="isEnrollClosed(course) || enrollingId === String(course.id)"
+                  @click.stop="handleEnroll(String(course.id))"
+                >
+                  {{ isEnrollClosed(course) ? (t('student.courses.enrollClosed') || '报名已截止') : (t('student.courses.enroll') ) }}
+                </Button>
+              </div>
             </div>
           </Card>
         </div>
@@ -167,6 +198,10 @@ import FilterBar from '@/components/ui/filters/FilterBar.vue'
 import GlassModal from '@/components/ui/GlassModal.vue'
 import GlassSearchInput from '@/components/ui/inputs/GlassSearchInput.vue'
 import Progress from '@/components/ui/Progress.vue'
+import Badge from '@/components/ui/Badge.vue'
+import { getDifficultyVariant, getCategoryVariant, getTagVariant } from '@/shared/utils/badgeColor'
+import { localizeDifficulty, localizeCategory } from '@/shared/utils/localize'
+import apiClient from '@/api/config'
 import { AcademicCapIcon, CheckCircleIcon, ChartBarIcon } from '@heroicons/vue/24/outline'
 
 const router = useRouter();
@@ -287,16 +322,77 @@ const isEnrolled = (courseId: string) => {
   return coursesSafe.value.some((c: StudentCourse) => String(c.id) === courseId);
 };
 
-function isAllowedImage(url: string): boolean {
+function isEnrollClosed(course: any): boolean {
   try {
-    const u = new URL(url)
-    // 仅允许与站点同源的图片，或 http(s) 且非已知失败域
-    const sameOrigin = u.origin === window.location.origin
-    const blockedHosts = ['via.placeholder.com']
-    return sameOrigin || (!blockedHosts.includes(u.hostname) && /^https?:$/.test(u.protocol))
-  } catch {
-    return false
-  }
+    const end = course?.endDate
+    if (!end) return false
+    const d = new Date(end)
+    if (Number.isNaN(d.getTime())) return false
+    const today = new Date()
+    // 比较日期部分
+    const endDateOnly = new Date(d.getFullYear(), d.getMonth(), d.getDate())
+    const todayOnly = new Date(today.getFullYear(), today.getMonth(), today.getDate())
+    return todayOnly.getTime() > endDateOnly.getTime()
+  } catch { return false }
+}
+
+const handleUnenroll = async (courseId: string) => {
+  const ok = window.confirm(String(t('student.courses.confirmUnenroll') || '确定要退课吗？'))
+  if (!ok) return
+  enrollingId.value = `un-${courseId}`
+  await courseStore.unenrollFromCourse(courseId)
+  await studentStore.fetchMyCourses()
+  enrollingId.value = null
+}
+
+const coverBlobMap = ref<Record<string, string>>({})
+function getCoverSrc(course: any): string {
+  const raw = String(course?.coverImageUrl || '')
+  if (!raw || coverErrorMap.value[String(course.id)]) return ''
+  // http(s) 直链
+  if (/^https?:\/\//i.test(raw)) return raw
+  // 文件ID → 预览blob
+  const key = `${course.id}|${raw}`
+  if (coverBlobMap.value[key]) return coverBlobMap.value[key]
+  // 异步拉取blob并缓存
+  apiClient
+    .get(`/files/${encodeURIComponent(raw)}/preview`, { responseType: 'blob' })
+    .then((res: any) => {
+      const url = URL.createObjectURL(res)
+      coverBlobMap.value[key] = url
+    })
+    .catch(() => {
+      // 预览失败（可能非 image/pdf），回退到 download 接口
+      apiClient
+        .get(`/files/${encodeURIComponent(raw)}/download`, { responseType: 'blob' })
+        .then((res: any) => {
+          const url = URL.createObjectURL(res)
+          coverBlobMap.value[key] = url
+        })
+        .catch(() => { coverErrorMap.value[String(course.id)] = true })
+    })
+  return ''
+}
+
+function formatDateOnly(v: any): string {
+  try {
+    const d = new Date(v)
+    if (Number.isNaN(d.getTime())) return String(v)
+    const lang = String(locale.value || 'zh-CN').toLowerCase()
+    const isZh = lang.startsWith('zh')
+    if (isZh) {
+      const y = d.getFullYear(); const m = d.getMonth() + 1; const day = d.getDate()
+      return `${y}年${m}月${day}日`
+    }
+    return d.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })
+  } catch { return String(v) }
+}
+
+function toTagArray(raw: any): string[] {
+  if (!raw) return []
+  if (Array.isArray(raw)) return raw.filter(Boolean).map((x: any) => String(x))
+  if (typeof raw === 'string') return raw.split(',').map(s => s.trim()).filter(Boolean)
+  return []
 }
 
 // Lifecycle Hooks

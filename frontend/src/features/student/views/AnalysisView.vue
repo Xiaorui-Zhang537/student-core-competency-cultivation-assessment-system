@@ -63,9 +63,9 @@
         </div>
       </Card>
 
-      <!-- 能力雷达 + 维度评语（学生本人） -->
-      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <Card padding="md" tint="primary" class="lg:col-span-2">
+      <!-- 能力雷达 + 维度评语（学生本人，左右各占一半） -->
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <Card padding="md" tint="primary">
           <div class="flex items-center justify-between mb-4">
             <h3 class="text-lg font-semibold">{{ t('teacher.analytics.charts.radar') }}</h3>
             <div class="flex items-center gap-2">
@@ -93,19 +93,28 @@
         <Card padding="md" tint="secondary">
           <h3 class="text-lg font-semibold mb-4">{{ t('student.ability.insights.title') || '维度评语' }}</h3>
           <div v-if="insightsItems.length === 0" class="text-sm text-gray-500">{{ t('student.ability.insights.empty') || '暂无评语' }}</div>
-          <div v-else class="divide-y divide-gray-200 dark:divide-gray-700">
-            <div v-for="(it, idx) in insightsItems" :key="idx" class="py-3">
-              <div class="flex items-center justify-between">
-                <div class="text-sm font-medium text-gray-900 dark:text-gray-100">{{ localizeDimensionName(it.name) }}</div>
-                <div class="text-sm text-gray-600 dark:text-gray-300">
-                  <span class="mr-2">{{ t('teacher.analytics.charts.series.student') }}: {{ (it.scoreA ?? it.score ?? 0).toFixed(1) }}</span>
-                  <span v-if="it.delta != null" :class="(it.delta ?? 0) >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'">
-                    Δ {{ (it.delta ?? 0).toFixed(1) }}
-                  </span>
-                </div>
+          <div v-else class="space-y-2">
+            <div
+              v-for="(it, idx) in insightsItems"
+              :key="idx"
+              class="collapse collapse-plus glass-ultraThin border rounded-xl text-[var(--color-base-content)]"
+            >
+              <input type="radio" name="student-insights" :checked="idx === 0" />
+              <div class="collapse-title font-semibold flex items-center justify-between">
+                <span class="text-sm text-[var(--color-base-content)]">{{ localizeDimensionName(it.name) }}</span>
+                <span class="text-xs text-[color-mix(in_oklab,var(--color-base-content)_70%,transparent)]">
+                  {{ t('teacher.analytics.charts.series.student') }}: {{ (it.scoreA ?? it.score ?? 0).toFixed(1) }}
+                  <template v-if="it.delta != null">
+                    <span :class="(it.delta ?? 0) >= 0 ? 'text-[var(--color-success-content)]' : 'text-[var(--color-error-content)]'" class="ml-2">
+                      Δ {{ (it.delta ?? 0).toFixed(1) }}
+                    </span>
+                  </template>
+                </span>
               </div>
-              <div class="mt-1 text-sm text-gray-700 dark:text-gray-300">{{ it.analysis }}</div>
-              <div class="mt-1 text-sm text-gray-700 dark:text-gray-300">{{ it.suggestion }}</div>
+              <div class="collapse-content text-sm">
+                <div class="text-[color-mix(in_oklab,var(--color-base-content)_82%,transparent)] whitespace-pre-wrap">{{ it.analysisText || it.analysis }}</div>
+                <div class="mt-1 text-[color-mix(in_oklab,var(--color-base-content)_82%,transparent)] whitespace-pre-wrap">{{ it.suggestionText || it.suggestion }}</div>
+              </div>
             </div>
           </div>
         </Card>
@@ -134,17 +143,17 @@
                 v-for="a in courseAssignments"
                 :key="String(a.id)"
                 variant="menu"
-                class="w-full text-left justify-between px-3 py-2"
+                class="w-full text-left py-2"
                 @click="goAssignment(a)"
               >
-                <div class="flex items-center justify-between gap-3">
+                <div class="flex items-center gap-3 w-full pl-4 pr-3">
                   <div class="min-w-0">
                     <div class="truncate text-sm text-gray-900 dark:text-gray-100">{{ a.title || ('#' + a.id) }}</div>
                     <div class="text-xs text-gray-500 truncate" v-if="a.courseTitle">{{ a.courseTitle }}</div>
                   </div>
-                  <div class="shrink-0 flex items-center gap-2">
+                  <div class="ml-auto shrink-0 flex items-center gap-2">
                     <div class="h-2 w-24 bg-gray-200 dark:bg-gray-700 rounded overflow-hidden">
-                      <div class="h-2 bg-primary-500" :style="{ width: ((typeof a.score === 'number' ? Number(a.score) : 0)) + '%' }"></div>
+                      <div class="h-2" :style="{ width: ((typeof a.score === 'number' ? Number(a.score) : 0)) + '%', backgroundColor: getThemeCoreColors().primary }"></div>
                     </div>
                     <span class="text-xs font-medium text-gray-700 dark:text-gray-200">
                       {{ typeof a.score === 'number' ? Math.round(Number(a.score)) : (t('student.grades.ungraded') as string) }}
@@ -156,29 +165,31 @@
             </div>
           </div>
         </Card>
-        <!-- 右：两张趋势图堆叠（成绩、学习时长） -->
+        <!-- 右：成绩趋势图 + 最近一次作业教师评价（上下堆叠） -->
         <div class="lg:col-span-2 grid grid-cols-1 gap-6">
           <Card padding="md" tint="success">
             <div class="text-sm font-semibold text-gray-700 dark:text-gray-200 mb-2">{{ t('student.analysis.trendScore') }}</div>
             <TrendAreaChart
               :series="scoreSeriesPoints"
               :xAxisData="scoreXAxis"
-              height="260px"
+              height="420px"
               :grid="{ top: '10%', left: '6%', right: '6%', bottom: '16%' }"
               :legend="{ bottom: 0 }"
               :tooltip="{ confine: true }"
             />
           </Card>
           <Card padding="md" tint="warning">
-            <div class="text-sm font-semibold text-gray-700 dark:text-gray-200 mb-2">{{ t('student.analysis.trendHours') }}</div>
-            <TrendAreaChart
-              :series="hoursSeriesPoints"
-              :xAxisData="hoursXAxis"
-              height="260px"
-              :grid="{ top: '10%', left: '6%', right: '6%', bottom: '16%' }"
-              :legend="{ bottom: 0 }"
-              :tooltip="{ confine: true }"
-            />
+            <div class="flex items-center justify-between mb-2">
+              <div class="text-sm font-semibold text-gray-700 dark:text-gray-200">{{ t('student.analysis.latestFeedback') || '最近作业评价' }}</div>
+              <div v-if="latestFeedback?.gradedAt" class="text-xs text-gray-500">{{ String(latestFeedback?.gradedAt).toString().substring(0,10) }}</div>
+            </div>
+            <div v-if="!latestFeedback">
+              <div class="text-sm text-gray-500">{{ t('common.empty') || '暂无评价' }}</div>
+            </div>
+            <div v-else>
+              <div class="text-sm text-gray-900 dark:text-gray-100 mb-1">{{ latestFeedback.title }}</div>
+              <p class="text-sm text-gray-700 dark:text-gray-300 whitespace-pre-wrap">{{ latestFeedback.feedback }}</p>
+            </div>
           </Card>
         </div>
       </div>
@@ -214,6 +225,7 @@ import { useAuthStore } from '@/stores/auth'
 import { api as http } from '@/api/config'
 import GlassSwitch from '@/components/ui/inputs/GlassSwitch.vue'
 import AbilityRadarLegend from '@/shared/views/AbilityRadarLegend.vue'
+import { getThemeCoreColors, rgba } from '@/utils/theme'
 
 const { t } = useI18n()
 const router = useRouter()
@@ -238,6 +250,7 @@ const radarSeries = ref<{ name: string; values: number[] }[]>([])
 const rawRadarDimensions = ref<string[]>([])
 const insightsItems = ref<any[]>([])
 const radarRef = ref<any>(null)
+const latestFeedback = ref<{ title: string; feedback: string; gradedAt?: string } | null>(null)
 
 // 对比模式
 const compareEnabled = ref<boolean>(false)
@@ -280,12 +293,21 @@ async function fetchCourseAssignments() {
     const gradeList = unwrapItems(gradeRes) as any[]
 
     const gradeMap = new Map<string, number>()
+    // 同时提取最近一次带教师评语的作业
+    let latest: { title: string; feedback: string; gradedAt?: string } | null = null
     for (const g of gradeList || []) {
       const aid = String(g.assignmentId || g.assignment?.id || g.submissionId || '')
       const raw = g.score ?? g.percentage
+      const fb = (g as any)?.feedback || (g as any)?.teacherFeedback || ''
+      const gradedAt = String((g as any)?.gradedAt || (g as any)?.updatedAt || (g as any)?.updated_at || '')
       if (aid && raw !== null && raw !== undefined) {
         const sc = Number(raw)
         if (!isNaN(sc)) gradeMap.set(aid, sc)
+      }
+      if (typeof fb === 'string' && fb.trim() !== '') {
+        if (!latest || new Date(gradedAt).getTime() > new Date(latest.gradedAt || 0).getTime()) {
+          latest = { title: String(g.assignment?.title || `#${aid}`), feedback: String(fb), gradedAt }
+        }
       }
     }
 
@@ -299,8 +321,10 @@ async function fetchCourseAssignments() {
         courseTitle: ''
       }
     })
+    latestFeedback.value = latest
   } catch {
     courseAssignments.value = []
+    latestFeedback.value = null
   }
 }
 
@@ -318,19 +342,64 @@ const NAME_ZH_TO_CODE: Record<string, string> = {
 }
 function localizeDimensionName(serverName: string): string {
   const code = NAME_ZH_TO_CODE[serverName]
-  // 复用教师端维度 i18n 键
+  // 使用共享维度说明的标题键，支持中英文
   // @ts-ignore
-  return code ? (t(`teacher.analytics.weights.dimensions.${code}`) as any) : serverName
+  return code ? ((t(`shared.radarLegend.dimensions.${code}.title`) as any) || serverName) : serverName
+}
+
+function getInsightTexts(it: any): { analysis: string; suggestion: string } {
+  try {
+    const serverName = String(it?.name || '')
+    const code = NAME_ZH_TO_CODE[serverName]
+    const scoreNum = Number(it?.scoreA ?? it?.score ?? 0)
+    const deltaNum = (it?.delta != null) ? Number(it?.delta) : NaN
+    let deltaText = ''
+    if (!Number.isNaN(deltaNum)) {
+      const abs = Math.abs(deltaNum).toFixed(1)
+      if (deltaNum > 0) deltaText = (t('shared.radarLegend.insights.delta.up', { value: abs }) as any)
+      else if (deltaNum < 0) deltaText = (t('shared.radarLegend.insights.delta.down', { value: abs }) as any)
+      else deltaText = (t('shared.radarLegend.insights.delta.equal') as any)
+    }
+    if (code) {
+      const base = `shared.radarLegend.insights.${code}`
+      const baseline = compareEnabled.value ? (t('shared.radarLegend.insights.baseline.setB') as any) : (t('shared.radarLegend.insights.baseline.classAvg') as any)
+      const analysis = t(`${base}.analysis`, { scoreA: scoreNum.toFixed(1), scoreB: (Number.isFinite(Number(it?.scoreB)) ? Number(it?.scoreB).toFixed(1) : (t('shared.radarLegend.insights.na') as any)), delta: deltaText, baseline }) as any
+      const suggestion = t(`${base}.suggestion`, { scoreA: scoreNum.toFixed(1), scoreB: (Number.isFinite(Number(it?.scoreB)) ? Number(it?.scoreB).toFixed(1) : (t('shared.radarLegend.insights.na') as any)), baseline }) as any
+      if (analysis || suggestion) return { analysis, suggestion }
+    }
+    return { analysis: String(it?.analysis || ''), suggestion: String(it?.suggestion || '') }
+  } catch {
+    return { analysis: String(it?.analysis || ''), suggestion: String(it?.suggestion || '') }
+  }
+}
+
+function recomputeInsightTexts() {
+  try {
+    insightsItems.value = (insightsItems.value || []).map((it: any) => {
+      const texts = getInsightTexts(it)
+      return { ...it, analysisText: texts.analysis || it.analysis, suggestionText: texts.suggestion || it.suggestion }
+    })
+  } catch { /* ignore */ }
 }
 
 const empty = computed(() =>
   (trends.value.score.length + trends.value.completion.length + trends.value.hours.length) === 0
 )
 
-const toSeriesPoints = (name: string, arr: Point[]) => [{ name, data: Array.isArray(arr) ? arr.map(p => ({ x: String(p?.x ?? ''), y: Number(p?.y) || 0 })) : [] }]
+// 为保证与主题色一致，这里为成绩趋势指定主题主色
+// 主题刷新由布局层统一处理
+const toSeriesPoints = (name: string, arr: Point[]) => {
+  // 使用主题调色盘第一色作为单系列趋势色
+  const { resolveThemePalette } = require('@/charts/echartsTheme')
+  const palette = resolveThemePalette()
+  return [{ name, data: Array.isArray(arr) ? arr.map(p => ({ x: String(p?.x ?? ''), y: Number(p?.y) || 0 })) : [], color: palette[0] }]
+}
 const toXAxis = (arr: Point[]) => (Array.isArray(arr) ? arr.map(p => String(p?.x ?? '')) : [])
 
-const scoreSeriesPoints = computed(() => toSeriesPoints(t('student.analysis.series.score') as string, trends.value.score))
+const scoreSeriesPoints = computed(() => {
+  // 依赖 themeVersion 以在主题切换时重算颜色
+  return toSeriesPoints(t('student.analysis.series.score') as string, trends.value.score)
+})
 const scoreXAxis = computed(() => toXAxis(trends.value.score))
 const completionSeriesPoints = computed(() => toSeriesPoints(t('student.analysis.series.completion') as string, trends.value.completion))
 const completionXAxis = computed(() => toXAxis(trends.value.completion))
@@ -375,6 +444,7 @@ function onCourseChange() {
   renderGauge(courseAvgScore.value) // 刷新仪表
   loadScoreTrend()
   loadHoursTrend()
+  fetchLatestAiFeedback()
 }
 
 function toggleCompare() {
@@ -384,6 +454,58 @@ function toggleCompare() {
   }
   loadRadar()
   loadInsights()
+}
+
+// 解析松散 JSON（复用学生提交页的宽容解析）
+function safeJsonParseLoose(raw: any): any {
+  try {
+    if (!raw) return null
+    if (typeof raw === 'object') return raw
+    let s = String(raw || '')
+    s = s.replace(/^\uFEFF/, '').trim()
+    const fence = /```(?:json)?\s*([\s\S]*?)```/i
+    const m = s.match(fence)
+    if (m && m[1]) s = m[1].trim()
+    const first = s.indexOf('{')
+    const last = s.lastIndexOf('}')
+    if (first >= 0 && last > first) s = s.substring(first, last + 1)
+    s = s.replace(/,\s*}/g, '}').replace(/,\s*]/g, ']')
+    return JSON.parse(s)
+  } catch { return null }
+}
+
+function getOverall(obj: any): any {
+  if (!obj || typeof obj !== 'object') return null
+  if ((obj as any).overall) return (obj as any).overall
+  if ((obj as any).final_score || (obj as any).holistic_feedback || (obj as any).dimension_averages) return obj
+  return null
+}
+
+async function fetchLatestAiFeedback() {
+  try {
+    if (!selectedCourseId.value) { return }
+    const selectedId = String(selectedCourseId.value)
+    const ctx: any = { courseId: selectedId }
+    const rep: any = await abilityApi.getStudentLatestReportByContext(ctx)
+    const data: any = (rep && rep.data !== undefined) ? rep.data : rep
+    if (!data) { return }
+    // 若后端返回了 courseId 且与当前选择不一致，则不展示
+    const dataCourseId = String(
+      (data as any)?.courseId || (data as any)?.course_id || (data as any)?.context?.courseId || (data as any)?.course?.id || ''
+    )
+    if (dataCourseId && dataCourseId !== selectedId) { return }
+    const raw = data.trendsAnalysis || data.trends_analysis || data.normalizedJson || data.rawJson || data.raw_json || null
+    const obj = safeJsonParseLoose(raw)
+    let feedback = ''
+    if (obj) {
+      const ov = getOverall(obj)
+      feedback = String(ov?.holistic_feedback || '')
+    }
+    if (!feedback) feedback = String(data.recommendations || '')
+    if (feedback) {
+      latestFeedback.value = { title: String(data.title || 'AI 能力报告'), feedback, gradedAt: String(data.createdAt || data.updatedAt || '') }
+    }
+  } catch { /* ignore */ }
 }
 
 function onCompareParamsChange() {
@@ -479,7 +601,11 @@ async function loadInsights() {
       body.assignmentIdsB = assignmentIdsA.value && assignmentIdsA.value.length ? assignmentIdsA.value : undefined
     }
     const r: any = await abilityApi.postStudentDimensionInsights(body)
-    insightsItems.value = (r?.data?.data?.items ?? r?.data?.items ?? r?.items ?? []) as any[]
+    const list = (r?.data?.data?.items ?? r?.data?.items ?? r?.items ?? []) as any[]
+    insightsItems.value = (list || []).map((it: any) => {
+      const texts = getInsightTexts(it)
+      return { ...it, analysisText: texts.analysis || it.analysis, suggestionText: texts.suggestion || it.suggestion }
+    })
   } catch (e: any) {
     // 对 400 权限错误静默处理（仅本人课程）
     insightsItems.value = []
@@ -546,6 +672,7 @@ async function askAiOnRadar() {
 const gaugeRef = ref<HTMLElement | null>(null)
 let gaugeChart: echarts.ECharts | null = null
 let gaugeResizeHandler: (() => void) | null = null
+let themeObserver: MutationObserver | null = null
 
 async function waitForGaugeContainer(maxTries = 10): Promise<boolean> {
   for (let i = 0; i < maxTries; i++) {
@@ -566,20 +693,23 @@ function renderGauge(valueNum: number) {
     const isDark = document.documentElement.classList.contains('dark')
     gaugeChart = echarts.init(gaugeRef.value as HTMLDivElement, theme as any)
     const v = Math.max(0, Math.min(100, Number(valueNum || 0)))
-    const base = '#3b82f6'
+    const base = getThemeCoreColors().primary
+    const baseStrong = rgba(base, 1)
+    const baseLight = rgba(base, 0.6)
     const option = {
       backgroundColor: 'transparent',
       series: [
         { type: 'gauge', startAngle: 200, endAngle: -20, min: 0, max: 100,
-          axisLine: { lineStyle: { width: 14, color: [[1, isDark ? '#1f2937' : '#eef2ff']] } },
+          axisLine: { lineStyle: { width: 14, color: [[1, rgba(getThemeCoreColors().baseContent, isDark ? 0.24 : 0.10)]] } },
           pointer: { show: false }, axisTick: { show: false }, splitLine: { show: false }, axisLabel: { show: false }, detail: { show: false } },
         { type: 'gauge', startAngle: 200, endAngle: -20, min: 0, max: 100,
-          progress: { show: true, width: 14, itemStyle: { color: new (echarts as any).graphic.LinearGradient(0, 0, 1, 0, [ { offset: 0, color: '#60a5fa' }, { offset: 1, color: base } ]), shadowColor: base + '66', shadowBlur: 6 } },
+          progress: { show: true, width: 14, roundCap: true, itemStyle: { color: new (echarts as any).graphic.LinearGradient(0, 0, 1, 0, [ { offset: 0, color: baseLight }, { offset: 1, color: baseStrong } ]), shadowColor: rgba(base, 0.4), shadowBlur: 6 } },
           axisLine: { lineStyle: { width: 14, color: [[1, 'transparent']] } },
           pointer: { show: false }, axisTick: { show: false }, splitLine: { show: false }, axisLabel: { show: false },
-          detail: { valueAnimation: true, fontSize: 40, fontWeight: 700, color: base, offsetCenter: [0, '-4%'], formatter: (val: number) => `${Math.round(val)}` },
+          detail: { valueAnimation: true, fontSize: 40, fontWeight: 700, color: baseStrong, offsetCenter: [0, '-4%'], formatter: (val: number) => `${Math.round(val)}` },
           data: [{ value: v }] },
         { type: 'gauge', startAngle: 200, endAngle: -20, min: 0, max: 100,
+          axisLine: { lineStyle: { width: 14, color: [[1, 'transparent']] } },
           pointer: { show: false }, axisTick: { show: false }, splitLine: { show: false }, axisLabel: { show: false },
           detail: { show: true, valueAnimation: false, fontSize: 12, color: isDark ? '#9ca3af' : '#6b7280', offsetCenter: [0, '34%'], formatter: () => (t('student.analysis.kpiAvgScore') as any) || '平均分' },
           data: [{ value: 0 }] }
@@ -604,6 +734,7 @@ watch(() => selectedCourseId.value, async () => {
   renderGauge(courseAvgScore.value)
   loadScoreTrend()
   loadHoursTrend()
+  await fetchLatestAiFeedback()
 })
 
 // 在首次加载完成后渲染仪表盘（等待DOM切换完成）
@@ -679,6 +810,8 @@ onMounted(async () => {
   renderGauge(courseAvgScore.value)
   await loadScoreTrend()
   await loadHoursTrend()
+  await fetchLatestAiFeedback()
+  // 主题切换由布局层统一刷新；此处仅重绘仪表即可在页面重载后生效
 })
 
 watch(assignmentIdsA, () => { if (compareEnabled.value) { loadRadar(); loadInsights(); } }, { deep: true })
@@ -708,6 +841,7 @@ function refreshRadarLocalization() {
 watch(() => i18n.global.locale.value, () => {
   nextTick(() => {
     refreshRadarLocalization()
+    recomputeInsightTexts()
     renderGauge(Number(courseAvgScore.value || 0))
   })
 })
@@ -715,6 +849,7 @@ watch(() => i18n.global.locale.value, () => {
 onUnmounted(() => {
   try { gaugeChart?.dispose() } catch {}
   if (gaugeResizeHandler) { window.removeEventListener('resize', gaugeResizeHandler); gaugeResizeHandler = null }
+  if (themeObserver) { try { themeObserver.disconnect() } catch {}; themeObserver = null }
 })
 </script>
 

@@ -318,8 +318,8 @@ public class FileStorageServiceImpl implements FileStorageService {
                     false;
             case "course", "lesson", "community_post",
                  "lesson_material", "course_material", "course_video",
-                 "submission" ->
-                // 课程/节次/社区附件与教学资料、课程视频、作业提交附件：允许教师端/系统处理访问
+                 "submission", "course_cover" ->
+                // 课程/节次/社区附件与教学资料、课程视频、作业提交附件、课程封面：允许教师端/系统处理访问
                     true;
             default -> false;
         };
