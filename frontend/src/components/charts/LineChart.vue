@@ -39,7 +39,7 @@
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted, watch, nextTick } from 'vue'
 import * as echarts from 'echarts'
-import { resolveEChartsTheme, glassTooltipCss } from '@/charts/echartsTheme'
+import { resolveEChartsTheme, glassTooltipCss, resolveThemePalette } from '@/charts/echartsTheme'
 import { ExclamationTriangleIcon } from '@heroicons/vue/24/outline'
 import { getEChartsThemedTokens, normalizeCssColor } from '@/utils/theme'
 
@@ -63,7 +63,7 @@ interface Props {
   legend?: object
   tooltip?: object
   animation?: boolean
-  backgroundColor?: string
+  backgroundColor?: string | 'auto'
   loading?: boolean
   empty?: boolean
 }
@@ -85,8 +85,15 @@ const chartRef = ref<HTMLElement>()
 const chartInstance = ref<echarts.ECharts>()
 const error = ref(false)
 let resizeObserver: ResizeObserver | null = null
+let darkObserver: { disconnect: () => void } | null = null
+let reRenderScheduled = false
 
-// 配色由界面层传入（series[i].color）。组件不再根据主题自行挑选色盘。
+const ensurePalette = () => {
+  const tokens = getEChartsThemedTokens()
+  const pal = Array.isArray(tokens?.palette) ? tokens.palette.filter(Boolean) : []
+  const base = pal.length ? pal : resolveThemePalette()
+  return base.map(color => ensureOpaque(color))
+}
 
 const computeIsDark = () => {
   if (props.theme === 'auto') {
@@ -137,12 +144,13 @@ const safeAlpha = (color: string, alpha: number) => {
 
 const normalizeSeries = () => (props.data || []).filter((s: any) => s && Array.isArray(s.data))
 
-const buildSeries = (isDark: boolean) => {
+const buildSeries = (isDark: boolean, palette: string[]) => {
   const seriesList = normalizeSeries()
   return seriesList.map((item: ChartData, idx: number) => {
     const type = item.type || 'line'
     const isBar = type === 'bar'
-    const baseColor = ensureOpaque(item.color || 'rgba(59,130,246,1)')
+    const rawColor = item.color || palette[idx % palette.length]
+    const baseColor = ensureOpaque(rawColor)
     const darkened = ensureOpaque(darkenColor(baseColor, 0.22))
 
     const base: any = {
@@ -199,6 +207,11 @@ const disposeChart = () => {
   }
 }
 
+const resolveBg = () => {
+  if (props.backgroundColor === 'auto') return 'transparent'
+  return props.backgroundColor as string
+}
+
 // 等待容器可用且有尺寸
 const waitForContainer = async (maxTries = 10): Promise<boolean> => {
   for (let i = 0; i < maxTries; i++) {
@@ -226,17 +239,18 @@ const initChart = async () => {
     chartInstance.value = echarts.init(chartRef.value as HTMLDivElement, theme as any)
 
     const isDark = computeIsDark()
+    const palette = ensurePalette()
     const tokens = getEChartsThemedTokens()
     const normalizedSeries = normalizeSeries()
     const hasBar = normalizedSeries.some(s => (s.type || 'line') === 'bar')
 
-    const option: any = {
-      backgroundColor: props.backgroundColor,
+  const option: any = {
+      backgroundColor: resolveBg(),
       title: props.title ? {
         text: props.title,
         left: 'center',
         textStyle: {
-          color: tokens.textPrimary || (isDark ? '#f3f4f6' : '#1f2937'),
+          color: tokens.textPrimary,
           fontSize: 16,
           fontWeight: 'bold'
         }
@@ -252,9 +266,7 @@ const initChart = async () => {
       
       legend: {
         top: 'bottom',
-        textStyle: {
-          color: tokens.textPrimary || (isDark ? '#f3f4f6' : '#1f2937')
-        },
+        textStyle: { color: tokens.textPrimary },
         ...props.legend
       },
       
@@ -273,8 +285,8 @@ const initChart = async () => {
         axisPointer: {
           type: 'cross',
           label: {
-            backgroundColor: safeAlpha(tokens.textPrimary || (isDark ? '#f9fafb' : '#111827'), isDark ? 0.16 : 0.12),
-            color: tokens.textPrimary || (isDark ? '#f9fafb' : '#111827')
+            backgroundColor: safeAlpha(tokens.textPrimary, isDark ? 0.16 : 0.12),
+            color: tokens.textPrimary
           },
           animation: false
         },
@@ -312,7 +324,7 @@ const initChart = async () => {
         }
       },
       
-      series: buildSeries(isDark)
+      series: buildSeries(isDark, palette)
     }
     if (normalizedSeries.length === 0 || !Array.isArray(props.xAxisData)) {
       option.series = []
@@ -342,6 +354,7 @@ const updateChart = () => {
     return
   }
 
+  const palette = ensurePalette()
   const normalizedSeries = normalizeSeries()
   const hasBar = normalizedSeries.some(s => (s.type || 'line') === 'bar')
   const isDark = computeIsDark()
@@ -351,13 +364,37 @@ const updateChart = () => {
       data: Array.isArray(props.xAxisData) ? props.xAxisData : [],
       boundaryGap: hasBar ? true : false
     },
-    series: buildSeries(isDark)
+    series: buildSeries(isDark, palette)
   }
   if (normalizedSeries.length === 0) {
     option.series = []
   }
 
   chartInstance.value.setOption(option, true)
+  // 移出画布时隐藏 tooltip，避免遗留小空白容器
+  try { (chartInstance.value as any).off && (chartInstance.value as any).off('globalout') } catch {}
+  try {
+    chartInstance.value?.on('globalout', () => {
+      try { chartInstance.value?.dispatchAction({ type: 'hideTip' } as any) } catch {}
+    })
+  } catch {}
+}
+
+// 主题轻量刷新（最小变更：不销毁实例）
+const refreshForTheme = () => {
+  if (!chartInstance.value) { initChart(); return }
+  const isDark = computeIsDark()
+  const tokens = getEChartsThemedTokens()
+  const palette = ensurePalette()
+  const option: any = {
+    backgroundColor: resolveBg(),
+    title: props.title ? { textStyle: { color: tokens.textPrimary } } : undefined,
+    legend: { textStyle: { color: tokens.textPrimary } },
+    xAxis: { axisLine: { lineStyle: { color: tokens.axisLine } }, axisLabel: { color: tokens.axisLabel } },
+    yAxis: { axisLine: { lineStyle: { color: tokens.axisLine } }, axisLabel: { color: tokens.axisLabel }, splitLine: { lineStyle: { color: tokens.splitLine } } },
+    series: buildSeries(isDark, palette)
+  }
+  try { chartInstance.value.setOption(option, false) } catch {}
 }
 
 // 监听数据变化
@@ -401,9 +438,35 @@ defineExpose({
 })
 
 // 生命周期
-onMounted(() => { initChart() })
+function scheduleReinit() {
+  if (reRenderScheduled) return
+  reRenderScheduled = true
+  requestAnimationFrame(() => {
+    reRenderScheduled = false
+    refreshForTheme()
+  })
+}
 
-onUnmounted(() => { disposeChart() })
+onMounted(() => {
+  initChart()
+  if (!darkObserver) {
+    // 监听全局主题切换，避免每个实例创建 DOM 观察
+    const onChanging = () => {
+      try { chartInstance.value?.dispatchAction({ type: 'hideTip' } as any) } catch {}
+    }
+    const onChanged = () => scheduleReinit()
+    darkObserver = {
+      disconnect() {
+        try { window.removeEventListener('theme:changing', onChanging) } catch {}
+        try { window.removeEventListener('theme:changed', onChanged) } catch {}
+      }
+    }
+    try { window.addEventListener('theme:changing', onChanging) } catch {}
+    try { window.addEventListener('theme:changed', onChanged) } catch {}
+  }
+})
+
+onUnmounted(() => { disposeChart(); if (darkObserver) { try { darkObserver.disconnect() } catch {}; darkObserver = null } })
 </script>
 
 <style scoped lang="postcss">

@@ -8,8 +8,19 @@ import { useAuthStore } from '@/stores/auth'
 const routes = [
   {
     path: '/',
-    redirect: '/auth/login'
+    component: () => import('@/layouts/PublicLayout.vue'),
+    children: [
+      { path: '', name: 'Home', component: () => import('@/features/shared/views/HomeView.vue') },
+    ]
   },
+  // 兼容旧 home/* 路由：全部重定向到锚点
+  { path: '/home/overview', redirect: '/' },
+  { path: '/home/features', redirect: '/#features' },
+  { path: '/home/compare', redirect: '/#compare' },
+  { path: '/home/timeline', redirect: '/#timeline' },
+  { path: '/home/journey', redirect: '/#timeline' },
+  { path: '/home/structure', redirect: '/#structure' },
+  { path: '/home/marquee', redirect: '/#marquee' },
   // 兼容旧地址 /student/analytics → 新的 /student/analysis
   {
     path: '/student/analytics',
@@ -108,7 +119,7 @@ const routes = [
       {
         path: 'grades',
         name: 'StudentGrades',
-        component: () => import('@/features/student/views/GradesView.vue')
+        redirect: { name: 'StudentAnalysis' }
       },
       {
         path: 'profile',

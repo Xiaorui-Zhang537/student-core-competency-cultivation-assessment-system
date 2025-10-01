@@ -33,7 +33,7 @@
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted, watch, nextTick } from 'vue'
 import * as echarts from 'echarts'
-import { resolveEChartsTheme, glassTooltipCss } from '@/charts/echartsTheme'
+import { resolveEChartsTheme, glassTooltipCss, resolveThemePalette } from '@/charts/echartsTheme'
 import { getEChartsThemedTokens, normalizeCssColor } from '@/utils/theme'
 import { ChartPieIcon } from '@heroicons/vue/24/outline'
 
@@ -84,8 +84,17 @@ const props = withDefaults(defineProps<Props>(), {
 const chartRef = ref<HTMLElement>()
 const chartInstance = ref<echarts.ECharts>()
 let resizeObserver: ResizeObserver | null = null
+let darkObserver: MutationObserver | null = null
+let lastIsDark: boolean | null = null
+let reRenderScheduled = false
 
-// 配色由界面层传入（item.color）。组件不再根据主题自行挑选色盘。
+const ensurePalette = () => {
+  const palette = getEChartsThemedTokens()?.palette
+  if (Array.isArray(palette) && palette.length) {
+    return palette.map(color => ensureOpaque(color))
+  }
+  return resolveThemePalette().map(color => ensureOpaque(color))
+}
 
 const hasData = () => Array.isArray(props.data) && props.data.length > 0
 
@@ -141,6 +150,14 @@ const disposeChart = () => {
 }
 
 // 初始化图表
+const resolveBg = () => {
+  if (props.backgroundColor === 'auto') {
+    // 保持玻璃卡片视觉：透明底色即可适配主题
+    return 'transparent'
+  }
+  return props.backgroundColor as string
+}
+
 const initChart = async () => {
   if (!chartRef.value) return
   if (!hasData()) {
@@ -159,15 +176,17 @@ const initChart = async () => {
     const isDark = computeIsDark()
     const tokens = getEChartsThemedTokens()
     
-    // 处理数据，添加（界面层传入的）颜色
-    const processedData = props.data.map((item) => {
-      const baseColor = item.color ? ensureOpaque(item.color) : undefined
-      return baseColor ? applyStableStates(item, baseColor) : { ...item, emphasis: { disabled: true }, blur: { disabled: true }, select: { disabled: true } }
+    // 处理数据，添加默认颜色
+    const palette = ensurePalette()
+    const processedData = props.data.map((item, index) => {
+      const rawColor = item.color || palette[index % palette.length]
+      const baseColor = ensureOpaque(rawColor)
+      return applyStableStates(item, baseColor)
     })
     
     // 配置选项
     const option = {
-      backgroundColor: props.backgroundColor,
+      backgroundColor: resolveBg(),
       title: props.title ? {
         text: props.title,
         left: 'center',
@@ -252,6 +271,8 @@ const initChart = async () => {
     
     // 设置选项
     chartInstance.value.setOption(option)
+    // 初始化后隐藏 tooltip，避免容器左上角残留
+    try { chartInstance.value?.dispatchAction({ type: 'hideTip' } as any) } catch {}
     
     // 响应式处理
     resizeObserver = new ResizeObserver(() => {
@@ -281,9 +302,11 @@ const updateChart = () => {
     return
   }
 
-  const processedData = props.data.map((item) => {
-    const baseColor = item.color ? ensureOpaque(item.color) : undefined
-    return baseColor ? applyStableStates(item, baseColor) : { ...item, emphasis: { disabled: true }, blur: { disabled: true }, select: { disabled: true } }
+  const palette = ensurePalette()
+  const processedData = props.data.map((item, index) => {
+    const rawColor = item.color || palette[index % palette.length]
+    const baseColor = ensureOpaque(rawColor)
+    return applyStableStates(item, baseColor)
   })
   
   const option = {
@@ -295,6 +318,25 @@ const updateChart = () => {
   }
   
   chartInstance.value.setOption(option)
+}
+
+// 主题轻量刷新（不销毁实例，只更新需要的样式与数据颜色）
+const refreshForTheme = () => {
+  if (!chartInstance.value) { initChart(); return }
+  const tokens = getEChartsThemedTokens()
+  const palette = ensurePalette()
+  const processedData = props.data.map((item, index) => {
+    const rawColor = item.color || palette[index % palette.length]
+    const baseColor = ensureOpaque(rawColor)
+    return applyStableStates(item, baseColor)
+  })
+  const option: any = {
+    backgroundColor: resolveBg(),
+    title: props.title ? { textStyle: { color: tokens.textPrimary } } : undefined,
+    legend: { textStyle: { color: tokens.textPrimary } },
+    series: [{ data: processedData }]
+  }
+  try { chartInstance.value.setOption(option, false) } catch {}
 }
 
 // 监听数据变化
@@ -364,9 +406,33 @@ defineExpose({
 })
 
 // 生命周期
-onMounted(() => { initChart() })
+function scheduleReinit() {
+  if (reRenderScheduled) return
+  reRenderScheduled = true
+  requestAnimationFrame(() => {
+    reRenderScheduled = false
+    refreshForTheme()
+  })
+}
 
-onUnmounted(() => { disposeChart() })
+onMounted(() => {
+  initChart()
+  if (!darkObserver) {
+    // 监听全局主题切换，避免 MutationObserver
+    const onChanging = () => { try { chartInstance.value?.dispatchAction({ type: 'hideTip' } as any) } catch {} }
+    const onChanged = () => scheduleReinit()
+    ;(darkObserver as any) = {
+      disconnect() {
+        try { window.removeEventListener('theme:changing', onChanging) } catch {}
+        try { window.removeEventListener('theme:changed', onChanged) } catch {}
+      }
+    }
+    try { window.addEventListener('theme:changing', onChanging) } catch {}
+    try { window.addEventListener('theme:changed', onChanged) } catch {}
+  }
+})
+
+onUnmounted(() => { disposeChart(); if (darkObserver) { try { (darkObserver as any).disconnect?.() } catch {}; darkObserver = null } })
 </script>
 
 <style scoped lang="postcss">

@@ -174,4 +174,23 @@
   --glass-blur-ultraThick: 16px;
 }
 
+/* 在主题过渡期间，临时降低玻璃滤镜与透明度，减少首帧卡顿 */
+html.theme-switching {
+  --glass-blur-ultraThin: 4px;
+  --glass-blur-thin: 6px;
+  --glass-blur-regular: 8px;
+  --glass-blur-thick: 10px;
+  --glass-blur-ultraThick: 12px;
+  --glass-alpha-ultraThin: 0.10;
+  --glass-alpha-thin: 0.12;
+  --glass-alpha-regular: 0.16;
+  --glass-alpha-thick: 0.20;
+  --glass-alpha-ultraThick: 0.24;
+  --glass-saturate-ultraThin: 1.1;
+  --glass-saturate-thin: 1.2;
+  --glass-saturate-regular: 1.25;
+  --glass-saturate-thick: 1.3;
+  --glass-saturate-ultraThick: 1.35;
+}
+
 

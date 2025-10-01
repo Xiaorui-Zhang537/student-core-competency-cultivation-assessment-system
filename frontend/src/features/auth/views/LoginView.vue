@@ -22,10 +22,9 @@
       <div>
         <label for="password" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{{ t('auth.login.form.password.label') }}</label>
         <div class="rounded-lg">
-          <glass-input
+          <glass-password-input
             id="password"
             v-model="form.password"
-            type="password"
             :disabled="authStore.loading"
             :placeholder="t('auth.login.form.password.placeholder') as string"
           />
@@ -65,6 +64,7 @@ import type { LoginRequest } from '@/types/auth'
 import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import GlassInput from '@/components/ui/inputs/GlassInput.vue'
+import GlassPasswordInput from '@/components/ui/inputs/GlassPasswordInput.vue'
 import Button from '@/components/ui/Button.vue'
 
 const authStore = useAuthStore()
@@ -74,24 +74,18 @@ const { t } = useI18n()
 const form = ref<LoginRequest>({ username: '', password: '' })
 
 const handleLogin = async (credentials: LoginRequest) => {
-  const before = router.currentRoute.value.fullPath
   await authStore.login(credentials)
-  // 登录后由 store 触发路由跳转；此处等待下一帧确保路由完成后强制刷新
-  requestAnimationFrame(() => {
-    const after = router.currentRoute.value.fullPath
-    if (before !== after) {
-      window.location.reload()
-    }
-  })
+  // 登录后做一次性刷新，确保状态与资源一致
+  requestAnimationFrame(() => window.location.reload())
 }
 
 const goRegister = async () => {
   await router.push('/auth/register')
-  window.location.reload()
+  requestAnimationFrame(() => window.location.reload())
 }
 
 const goForgot = async () => {
   await router.push('/auth/forgot-password')
-  window.location.reload()
+  requestAnimationFrame(() => window.location.reload())
 }
 </script>

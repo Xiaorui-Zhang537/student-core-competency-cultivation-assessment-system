@@ -71,6 +71,15 @@ export const useUIStore = defineStore('ui', () => {
 
     // daisyUI theme via data-theme
     root.setAttribute('data-theme', themeName.value)
+
+    // 派发全局主题变更事件，供图表等组件进行轻量重绘而无需各自监听 DOM 变更
+    try {
+      const detail = { themeName: themeName.value, isDark: dark }
+      // 使用 rAF 确保 DOM 属性已更新完成
+      requestAnimationFrame(() => {
+        try { window.dispatchEvent(new CustomEvent('theme:changed', { detail })) } catch {}
+      })
+    } catch {}
   }
   
 
@@ -124,8 +133,16 @@ export const useUIStore = defineStore('ui', () => {
   }
 
   const setTheme = (name: ThemeName) => {
-    themeName.value = name
-    isDarkMode.value = (name === 'dracula' || name === 'dark' || name === 'coffee')
+    try {
+      const dark = (name === 'dracula' || name === 'dark' || name === 'coffee')
+      // 先派发 theme:changing，组件可提前降级动画/隐藏 tooltip
+      try { window.dispatchEvent(new CustomEvent('theme:changing', { detail: { nextTheme: name, isDark: dark } })) } catch {}
+      themeName.value = name
+      isDarkMode.value = dark
+    } catch {
+      themeName.value = name
+      isDarkMode.value = (name === 'dracula' || name === 'dark' || name === 'coffee')
+    }
   }
 
   const setCursorTrailMode = (mode: CursorTrailMode) => {

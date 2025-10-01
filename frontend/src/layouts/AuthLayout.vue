@@ -4,11 +4,10 @@
     <!-- 动态背景 -->
     <div class="absolute inset-0" :style="authBgStyle"></div>
 
-    <!-- 主容器 -->
-    <div class="relative z-10 min-h-screen flex items-center justify-center p-4">
-      <div class="w-full max-w-md">
-        <!-- 顶部工具栏 -->
-        <div class="flex justify-between items-center mb-8">
+    <!-- 主容器：分屏布局 -->
+    <div class="relative z-10 min-h-screen p-6 md:p-10">
+      <!-- 顶部工具栏（右上角） -->
+      <div class="flex items-center justify-end gap-3 mb-6">
           <!-- 主题切换按钮 -->
           <button
             @click="toggleTheme"
@@ -19,142 +18,112 @@
             <sun-icon v-if="isDark" class="w-5 h-5 text-yellow-500 group-hover:rotate-180 transition-transform duration-300" />
             <moon-icon v-else class="w-5 h-5 text-gray-600 group-hover:-rotate-12 transition-transform duration-300" />
           </button>
-
-          <!-- 背景开关移除（新版主题为静态米色底） -->
-
-          <!-- 语言切换 -->
-          <language-switcher />
-        </div>
-
-        <!-- Logo 和标题区域 -->
-        <div class="text-center mb-8 animate-fade-in">
-          <!-- Logo 容器 -->
-          <div class="relative inline-block mb-6">
-            <div class="relative">
-              <!-- 主 Logo -->
-              <div class="inline-flex items-center justify-center w-20 h-20 bg-gradient-to-br from-primary-500 to-primary-600 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 group">
-                <academic-cap-icon class="w-10 h-10 text-white group-hover:scale-110 transition-transform duration-300" />
+      </div>
+      <!-- 分屏栅格 -->
+      <div class="grid grid-cols-1 md:grid-cols-12 gap-8 items-center">
+        <!-- 左侧品牌与卖点 -->
+        <div class="md:col-span-7 order-2 md:order-1">
+          <div class="animate-fade-in">
+            <!-- Logo 与标题 -->
+            <div class="flex items-center gap-4 mb-6">
+              <div class="relative">
+                <div class="inline-flex items-center justify-center w-16 h-16 md:w-20 md:h-20 bg-gradient-to-br from-primary-500 to-primary-600 rounded-2xl shadow-lg">
+                  <academic-cap-icon class="w-8 h-8 md:w-10 md:h-10 text-white" />
+                </div>
+                <div class="absolute inset-0 bg-gradient-to-br from-primary-400 to-primary-600 rounded-2xl blur-lg opacity-30 -z-10"></div>
               </div>
-              
-              <!-- Logo 光晕效果 -->
-              <div class="absolute inset-0 bg-gradient-to-br from-primary-400 to-primary-600 rounded-2xl blur-lg opacity-30 -z-10 animate-pulse"></div>
-            </div>
-            
-            <!-- 状态指示器 -->
-            <div class="absolute -top-1 -right-1 w-6 h-6 bg-green-500 rounded-full flex items-center justify-center animate-pulse">
-              <div class="w-2 h-2 bg-white rounded-full"></div>
-            </div>
-          </div>
-
-          <!-- 系统标题 -->
-          <div class="space-y-2">
-            <h1 class="text-3xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 dark:from-white dark:to-gray-300 bg-clip-text text-transparent leading-tight">
-              {{ t('app.title') }}
-            </h1>
-            <div class="flex items-center justify-center space-x-2 text-gray-600 dark:text-gray-400">
-              <sparkles-icon class="w-4 h-4 text-primary-500 animate-pulse" />
-              <p class="text-sm font-medium">{{ t('layout.auth.subtitle') }}</p>
-              <sparkles-icon class="w-4 h-4 text-accent-500 animate-pulse" />
-            </div>
-          </div>
-
-          <!-- 版本与时间信息 -->
-          <div class="mt-4 flex items-center justify-center space-x-3 text-xs">
-            <div v-glass="{ strength: 'thin' }" class="inline-flex items-center px-3 py-1 rounded-full font-medium text-primary-700 dark:text-primary-300">
-              <span class="w-2 h-2 bg-green-500 rounded-full mr-2 animate-pulse"></span>
-              {{ `v${version}` }}
-            </div>
-            <div v-glass="{ strength: 'thin' }" class="inline-flex items-center px-3 py-1 rounded-full text-gray-700 dark:text-gray-300">
-              <span class="w-2 h-2 bg-blue-500 rounded-full mr-2"></span>
-              {{ formattedTime }}
-            </div>
-          </div>
-        </div>
-
-        <!-- 内容卡片区域（改为复用 Card 玻璃组件） -->
-        <card :hoverable="false" padding="lg" class="relative">
-          <!-- 加载状态覆盖 -->
-          <div v-if="isLoading" class="absolute inset-0 bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm rounded-2xl flex items-center justify-center z-20">
-            <div class="text-center">
-              <div class="inline-flex items-center justify-center w-12 h-12 bg-primary-100 dark:bg-primary-900/30 rounded-xl mb-3">
-                <div class="w-6 h-6 border-2 border-primary-600 border-t-transparent rounded-full animate-spin"></div>
+              <div>
+                <h1 class="text-2xl md:text-3xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 dark:from-white dark:to-gray-300 bg-clip-text text-transparent leading-tight">
+                  {{ t('app.title') }}
+                </h1>
+                <p class="mt-1 text-sm md:text-base text-gray-600 dark:text-gray-400">{{ t('layout.auth.subtitle') }}</p>
               </div>
-              <p class="text-sm text-subtle">{{ loadingText }}</p>
             </div>
-          </div>
 
-          <!-- 路由内容 -->
-          <div class="transition-all duration-300" :class="{ 'opacity-30 pointer-events-none': isLoading }">
-            <router-view>
-              <template #default="{ Component, route }">
-                <transition
-                  name="page"
-                  mode="out-in"
-                  @before-enter="onBeforeEnter"
-                  @after-enter="onAfterEnter"
-                >
-                  <component :is="Component" :key="route.path" />
-                </transition>
-              </template>
-            </router-view>
-          </div>
-        </card>
+            <!-- 卖点列表 -->
+            <div class="grid sm:grid-cols-2 gap-4 mb-6">
+              <div v-glass="{ strength: 'thin' }" class="p-4 rounded-xl">
+                <div class="text-sm font-medium text-base-content mb-1">{{ t('layout.auth.points.radar.title') }}</div>
+                <div class="text-xs text-gray-600 dark:text-gray-400">{{ t('layout.auth.points.radar.desc') }}</div>
+              </div>
+              <div v-glass="{ strength: 'thin' }" class="p-4 rounded-xl">
+                <div class="text-sm font-medium text-base-content mb-1">{{ t('layout.auth.points.ai.title') }}</div>
+                <div class="text-xs text-gray-600 dark:text-gray-400">{{ t('layout.auth.points.ai.desc') }}</div>
+              </div>
+              <div v-glass="{ strength: 'thin' }" class="p-4 rounded-xl">
+                <div class="text-sm font-medium text-base-content mb-1">{{ t('layout.auth.points.growth.title') }}</div>
+                <div class="text-xs text-gray-600 dark:text-gray-400">{{ t('layout.auth.points.growth.desc') }}</div>
+              </div>
+            </div>
 
-        <!-- 功能特性展示 -->
-        <div class="mt-8 grid grid-cols-3 gap-4">
-          <div
-            v-for="(feature, index) in features"
-            :key="index"
-            v-glass="{ strength: 'regular', interactive: true }"
-            class="text-center p-4 rounded-xl transition-all duration-300 hover:scale-105 group"
-          >
-            <component
-              :is="feature.icon"
-              class="w-6 h-6 mx-auto mb-2 text-primary-600 dark:text-primary-400 group-hover:scale-110 transition-transform duration-300"
-            />
-            <h3 class="text-xs font-medium text-base-content mb-1">{{ t(feature.titleKey) }}</h3>
-            <p class="text-xs text-gray-600 dark:text-gray-400">{{ t(feature.descKey) }}</p>
+            <!-- 可信背书条（占位） -->
+            <div class="flex flex-wrap items-center gap-3 text-xs text-gray-500 dark:text-gray-400">
+              <span class="opacity-80">{{ t('layout.auth.trust.title') }}</span>
+              <div class="h-6 w-[1px] bg-gray-300 dark:bg-gray-700"></div>
+              <div class="flex items-center gap-3">
+                <span v-glass="{ strength: 'ultraThin' }" class="px-2 py-1 rounded">Your School</span>
+                <span v-glass="{ strength: 'ultraThin' }" class="px-2 py-1 rounded">Your Institute</span>
+                <span v-glass="{ strength: 'ultraThin' }" class="px-2 py-1 rounded">Project Name</span>
+              </div>
+            </div>
           </div>
         </div>
 
-        <!-- 页脚信息 -->
-        <div class="mt-8 text-center space-y-3">
-          <!-- 社交链接 -->
-          <div class="flex justify-center space-x-4">
-            <template v-for="social in socialLinks" :key="social.name">
-              <button
-                v-if="social.route"
-                type="button"
-                @click="goAndReload(social.url)"
-                v-glass="{ strength: 'thin', interactive: true }"
-                class="p-2 rounded-lg transition-all duration-200 hover:scale-110"
-                :title="social.name"
-              >
-                <component :is="social.icon" class="w-4 h-4 text-gray-600 dark:text-gray-400" />
-              </button>
-              <a
-                v-else
-                :href="social.url"
-                v-glass="{ strength: 'thin', interactive: true }"
-                class="p-2 rounded-lg transition-all duration-200 hover:scale-110"
-                :title="social.name"
-              >
-                <component :is="social.icon" class="w-4 h-4 text-gray-600 dark:text-gray-400" />
-              </a>
+        <!-- 右侧表单卡片 -->
+        <div class="md:col-span-5 order-1 md:order-2">
+          <div class="flex justify-between items-center mb-4">
+            <!-- 语言切换放表单上方 -->
+            <div class="ml-auto"><language-switcher /></div>
+          </div>
+          <card :hoverable="false" padding="lg" class="relative">
+            <!-- 加载状态覆盖 -->
+            <div v-if="isLoading" class="absolute inset-0 bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm rounded-2xl flex items-center justify-center z-20">
+              <div class="text-center">
+                <div class="inline-flex items-center justify-center w-12 h-12 bg-primary-100 dark:bg-primary-900/30 rounded-xl mb-3">
+                  <div class="w-6 h-6 border-2 border-primary-600 border-t-transparent rounded-full animate-spin"></div>
+                </div>
+                <p class="text-sm text-subtle">{{ loadingText }}</p>
+              </div>
+            </div>
+
+            <!-- 路由内容 -->
+            <div class="transition-all duration-300" :class="{ 'opacity-30 pointer-events-none': isLoading }">
+              <router-view>
+                <template #default="{ Component, route }">
+                  <transition
+                    name="page"
+                    mode="out-in"
+                    @before-enter="onBeforeEnter"
+                    @after-enter="onAfterEnter"
+                  >
+                    <component :is="Component" :key="route.path" />
+                  </transition>
+                </template>
+              </router-view>
+            </div>
+
+            <template #footer>
+              <div class="flex items-center justify-between text-xs text-gray-500 dark:text-gray-400">
+                <div class="inline-flex items-center gap-2">
+                  <span v-glass="{ strength: 'thin' }" class="inline-flex items-center px-2 py-1 rounded-full font-medium text-primary-700 dark:text-primary-300">
+                    <span class="w-1.5 h-1.5 bg-green-500 rounded-full mr-1.5"></span>
+                    {{ `v${version}` }}
+                  </span>
+                  <span v-glass="{ strength: 'thin' }" class="inline-flex items-center px-2 py-1 rounded-full">
+                    <span class="w-1.5 h-1.5 bg-blue-500 rounded-full mr-1.5"></span>
+                    {{ formattedTime }}
+                  </span>
+                </div>
+                <div class="inline-flex items-center gap-3">
+                  <a href="#" class="hover:text-primary-600 dark:hover:text-primary-400 transition-colors duration-200">{{ t('layout.auth.footer.privacy') }}</a>
+                  <span>•</span>
+                  <a href="#" class="hover:text-primary-600 dark:hover:text-primary-400 transition-colors duration-200">{{ t('layout.auth.footer.terms') }}</a>
+                  <span>•</span>
+                  <button type="button" @click="goAndReload('/help')" class="hover:text-primary-600 dark:hover:text-primary-400 transition-colors duration-200">{{ t('layout.auth.footer.help') }}</button>
+                </div>
+              </div>
             </template>
-          </div>
-
-          <!-- 版权信息 -->
-          <div class="text-xs text-gray-500 dark:text-gray-400 space-y-1">
-            <p>&copy; 2024 {{ t('layout.auth.footer.copyright') }}</p>
-            <div class="flex items-center justify-center space-x-4">
-              <a href="#" class="hover:text-primary-600 dark:hover:text-primary-400 transition-colors duration-200">{{ t('layout.auth.footer.privacy') }}</a>
-              <span>•</span>
-              <a href="#" class="hover:text-primary-600 dark:hover:text-primary-400 transition-colors duration-200">{{ t('layout.auth.footer.terms') }}</a>
-              <span>•</span>
-              <button type="button" @click="goAndReload('/help')" class="hover:text-primary-600 dark:hover:text-primary-400 transition-colors duration-200">{{ t('layout.auth.footer.help') }}</button>
-            </div>
-          </div>
+          </card>
         </div>
       </div>
     </div>

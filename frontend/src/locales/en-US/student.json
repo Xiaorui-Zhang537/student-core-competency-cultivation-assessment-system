@@ -180,7 +180,8 @@
         "graded": "Graded",
         "courseAll": "All Courses",
         "statusLabel": "Status",
-        "courseLabel": "Course"
+        "courseLabel": "Course",
+        "onlyPending": "Only Pending"
       },
       "status": {
         "pending": "Pending",

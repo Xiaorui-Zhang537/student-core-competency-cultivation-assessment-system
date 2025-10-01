@@ -8,17 +8,11 @@
             <page-header :title="t('shared.discovery.title') || '课程发现'" :subtitle="t('shared.discovery.subtitle') || '发现优质课程，开启学习之旅'" />
           </div>
           
-          <!-- 搜索框 -->
+          <!-- 搜索框（玻璃样式统一） -->
           <div class="mt-4 md:mt-0 w-full md:w-96">
-            <div class="relative">
-              <magnifying-glass-icon class="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
-              <input
-                v-model="searchQuery"
-                @keyup.enter="handleSearch"
-                type="text"
-                placeholder="搜索课程..."
-                class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:placeholder-gray-400"
-              />
+            <div class="flex items-center gap-2">
+              <GlassSearchInput v-model="searchQuery" :placeholder="t('shared.discovery.searchPlaceholder') || '搜索课程...'" size="sm" tint="info" />
+              <Button variant="primary" size="sm" icon="search" class="shrink-0" @click="handleSearch">{{ t('common.search') || '搜索' }}</Button>
             </div>
           </div>
         </div>
@@ -271,6 +265,7 @@ import { useCourseStore } from '@/stores/course';
 import type { Course, CourseCategory } from '@/types/course'
 import PageHeader from '@/components/ui/PageHeader.vue'
 import Button from '@/components/ui/Button.vue'
+import GlassSearchInput from '@/components/ui/inputs/GlassSearchInput.vue'
 import { useI18n } from 'vue-i18n'
 import {
   MagnifyingGlassIcon,

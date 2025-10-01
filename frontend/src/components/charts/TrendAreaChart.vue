@@ -18,7 +18,8 @@
 <script setup lang="ts">
 import { ref, watch, onMounted, onUnmounted, nextTick, computed } from 'vue'
 import * as echarts from 'echarts'
-import { resolveEChartsTheme, glassTooltipCss } from '@/charts/echartsTheme'
+import { resolveEChartsTheme, glassTooltipCss, resolveThemePalette } from '@/charts/echartsTheme'
+import { getEChartsThemedTokens } from '@/utils/theme'
 import { normalizeCssColor, rgba } from '@/utils/theme'
 
 type Point = { x: string | number; y: number }
@@ -51,6 +52,9 @@ const props = withDefaults(defineProps<Props>(), {
 const chartRef = ref<HTMLElement | null>(null)
 let chart: echarts.ECharts | null = null
 let ro: ResizeObserver | null = null
+let darkObserver: MutationObserver | null = null
+let lastIsDark: boolean | null = null
+let reRenderScheduled = false
 
 const isEmpty = computed(() => !props.series || props.series.length === 0 || props.series.every(s => !s || !Array.isArray(s.data) || s.data.length === 0))
 
@@ -65,15 +69,18 @@ const waitForContainer = async (maxTries = 10): Promise<boolean> => {
 
 const buildOption = (): any => {
   const theme = props.theme === 'auto' ? (document.documentElement.classList.contains('dark') ? 'dark' : 'light') : props.theme
+  const tokens = getEChartsThemedTokens()
 
-  // 配色由界面层传入（series[i].color）。组件不再根据主题自行挑选色盘。
+  // 统一调色盘（来自 CSS 变量或默认色盘），与其他图保持一致
+  const palette = resolveThemePalette()
 
   const categories = Array.isArray(props.xAxisData) && props.xAxisData.length
     ? props.xAxisData
     : (props.series?.[0]?.data || []).map(p => (p?.x ?? ''))
 
   const normalized = (props.series || []).filter(s => s && Array.isArray(s.data)).map((s, idx) => {
-    const base = normalizeCssColor(String(s.color || 'rgb(59 130 246)'))
+    const baseRaw = s.color || palette[idx % palette.length]
+    const base = normalizeCssColor(String(baseRaw))
     return {
       name: s.name,
       type: 'line',
@@ -98,7 +105,7 @@ const buildOption = (): any => {
       text: props.title,
       left: 'center',
       textStyle: {
-        color: theme === 'dark' ? '#ffffff' : '#111827',
+        color: tokens.textPrimary,
         fontWeight: 'bold',
         fontSize: 16
       }
@@ -109,7 +116,7 @@ const buildOption = (): any => {
     },
     legend: {
       top: 'bottom',
-      textStyle: { color: theme === 'dark' ? '#e5e7eb' : '#374151' },
+      textStyle: { color: tokens.textPrimary },
       ...props.legend
     },
     tooltip: {
@@ -118,20 +125,26 @@ const buildOption = (): any => {
       borderColor: 'transparent',
       textStyle: { color: 'var(--color-base-content)' },
       extraCssText: glassTooltipCss(),
+      className: 'echarts-glass-tooltip',
+      renderMode: 'html',
+      enterable: false,
+      confine: true,
+      appendToBody: true,
+      transitionDuration: 0,
       ...props.tooltip
     },
     xAxis: {
       type: 'category',
       boundaryGap: false,
       data: Array.isArray(categories) ? categories.map(c => String(c)) : [],
-      axisLine: { lineStyle: { color: theme === 'dark' ? 'rgba(255,255,255,0.45)' : '#d1d5db' } },
-      axisLabel: { color: theme === 'dark' ? 'rgba(255,255,255,0.86)' : '#6b7280' }
+      axisLine: { lineStyle: { color: tokens.axisLine } },
+      axisLabel: { color: tokens.axisLabel }
     },
     yAxis: {
       type: 'value',
-      axisLine: { lineStyle: { color: theme === 'dark' ? 'rgba(255,255,255,0.45)' : '#d1d5db' } },
-      axisLabel: { color: theme === 'dark' ? 'rgba(255,255,255,0.86)' : '#6b7280' },
-      splitLine: { lineStyle: { color: theme === 'dark' ? 'rgba(255,255,255,0.28)' : '#e5e7eb' } }
+      axisLine: { lineStyle: { color: tokens.axisLine } },
+      axisLabel: { color: tokens.axisLabel },
+      splitLine: { lineStyle: { color: tokens.splitLine } }
     },
     series: normalized
   }
@@ -153,6 +166,14 @@ const init = async () => {
     chart = echarts.init(chartRef.value as HTMLDivElement, theme as any)
     chart.clear()
     chart.setOption(buildOption(), true)
+    // 初始化后隐藏 tooltip，避免页面左上角残留小空白容器
+    try { chart?.dispatchAction({ type: 'hideTip' } as any) } catch {}
+    try { (chart as any).off && (chart as any).off('globalout') } catch {}
+    try {
+      chart.on('globalout', () => {
+        try { chart?.dispatchAction({ type: 'hideTip' } as any) } catch {}
+      })
+    } catch {}
     ro = new ResizeObserver(() => {
       if (!chart) return
       requestAnimationFrame(() => { if (chart) { try { chart.resize() } catch {} } })
@@ -166,20 +187,43 @@ const init = async () => {
 
 const update = () => {
   if (!chart) return
-  chart.clear()
   chart.setOption(buildOption(), true)
+  // 移出画布时隐藏 tooltip，避免遗留小空白容器
+  try { (chart as any).off && (chart as any).off('globalout') } catch {}
+  try {
+    chart.on('globalout', () => {
+      try { chart?.dispatchAction({ type: 'hideTip' } as any) } catch {}
+    })
+  } catch {}
 }
 
 watch(() => [props.series, props.xAxisData, props.theme], () => {
   if (chart) update()
 }, { deep: true })
 
-onMounted(() => {})
+function scheduleReinit() {
+  if (reRenderScheduled) return
+  reRenderScheduled = true
+  requestAnimationFrame(() => {
+    reRenderScheduled = false
+    if (!chart) { init(); return }
+    try {
+      chart.setOption(buildOption(), false)
+    } catch { init() }
+  })
+}
+
+onMounted(() => {
+  // 使用全局事件，避免每个图表实例各自创建 MutationObserver 造成抖动
+  try { window.addEventListener('theme:changed', scheduleReinit) } catch {}
+})
 
 onMounted(init)
 onUnmounted(() => {
   if (ro) { try { ro.disconnect() } catch {} ro = null }
   if (chart) { try { chart.dispose() } catch {} chart = null }
+  try { window.removeEventListener('theme:changed', scheduleReinit) } catch {}
+  if (darkObserver) { try { darkObserver.disconnect() } catch {} darkObserver = null }
 })
 
 defineExpose({ getChartInstance: () => chart })

@@ -59,14 +59,11 @@ onMounted(async () => {
     uiStore.showNotification({ type: 'error', title: t('app.notifications.error.title'), message: e?.message || t('auth.verify.fail') })
   } finally {
     verifying.value = false
-    // 验证结果无论成功与否，给出返回登录提示；若成功则自动跳转并刷新
-    // 避免你描述的“跳到登录白屏，需要刷新”的问题
+    // 验证完成后引导回登录，无需强制刷新
     try {
-      // 短暂延迟给用户看到提示
       setTimeout(async () => {
         await router.replace('/auth/login')
-        // 强制刷新，确保登录页状态与资源正确加载
-        window.location.reload()
+        requestAnimationFrame(() => window.location.reload())
       }, 800)
     } catch {}
   }

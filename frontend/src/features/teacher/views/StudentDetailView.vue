@@ -167,7 +167,10 @@
                 </div>
                 <Button size="sm" variant="outline" @click="viewOverview">{{ t('teacher.studentDetail.radar.viewInsights') || '查看洞察' }}</Button>
               </div>
-              <radar-chart :indicators="radarIndicators" :series="radarSeries" :height="'300px'" />
+              <div v-if="radarIndicators.length" class="w-full">
+                <radar-chart :indicators="radarIndicators" :series="radarSeries" :height="'300px'" />
+              </div>
+              <div v-else class="text-sm text-gray-500 text-center">{{ t('teacher.analytics.charts.noRadar') }}</div>
             </Card>
           </div>
 
@@ -490,10 +493,15 @@ async function fetchAbilityRadar() {
     const resp = await teacherApi.getAbilityRadar({ courseId, studentId: String(studentId.value), startDate: fmt(start), endDate: fmt(today) })
     const data: any = (resp as any).data || resp
     const dims: string[] = data.dimensions || []
-    radarIndicators.value = dims.map((name:string) => ({ name, max: 100 }))
+    const nextIndicators = dims.map((name:string) => ({ name, max: 100 }))
     const s = { name: t('teacher.studentDetail.radar.student') || '学生', values: data.studentScores || [] }
     const c = { name: t('teacher.studentDetail.radar.classAvg') || '班级', values: data.classAvgScores || [], color: '#10b981' }
-    radarSeries.value = [s, c]
+    const nextSeries = [s, c]
+    // 避免重复设置引发双次渲染
+    const sameDims = JSON.stringify(radarIndicators.value) === JSON.stringify(nextIndicators)
+    const sameSeries = JSON.stringify(radarSeries.value) === JSON.stringify(nextSeries)
+    if (!sameDims) radarIndicators.value = nextIndicators
+    if (!sameSeries) radarSeries.value = nextSeries
   } catch {}
 }
 
@@ -553,15 +561,15 @@ onMounted(async () => {
             studentName.value = (profile.value as any).name
           }
         } catch {}
-        // 预取该学生相关课程（真实数据）
-        try { studentCourses.value = await teacherStudentApi.getStudentCourses(sid) } catch {}
-        // 学生活跃度
-        fetchActivity()
-        // 能力雷达
-        fetchAbilityRadar()
-        // 预警与建议
-        fetchAlertsAndRecommendations()
-        fetchPage(1);
+        // 并行拉取，减少首帧阻塞；失败不阻断其他任务
+        const tasks: Array<Promise<any>> = [
+          (async () => { try { studentCourses.value = await teacherStudentApi.getStudentCourses(sid) } catch {} })(),
+          (async () => { try { await fetchActivity() } catch {} })(),
+          (async () => { try { await fetchAbilityRadar() } catch {} })(),
+          (async () => { try { await fetchAlertsAndRecommendations() } catch {} })(),
+          (async () => { try { await fetchPage(1) } catch {} })()
+        ]
+        await Promise.allSettled(tasks)
     }
 });
 </script>

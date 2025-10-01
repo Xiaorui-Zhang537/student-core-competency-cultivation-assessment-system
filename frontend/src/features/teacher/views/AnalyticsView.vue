@@ -161,7 +161,7 @@
             </div>
           </template>
           <div v-if="radarIndicators.length" class="w-full">
-            <radar-chart :indicators="radarIndicators" :series="radarSeries" height="320px" :appendTooltipToBody="false" :showLegend="true" />
+            <radar-chart :indicators="radarIndicators" :series="radarSeries" height="320px" :appendTooltipToBody="true" :showLegend="true" />
           </div>
           <div v-else class="text-sm text-gray-500 text-center">{{ t('teacher.analytics.charts.noRadar') }}</div>
         </Card>
@@ -231,7 +231,6 @@ import Badge from '@/components/ui/Badge.vue'
 import Progress from '@/components/ui/Progress.vue'
 import * as echarts from 'echarts'
 import { resolveEChartsTheme, glassTooltipCss, resolveThemePalette } from '@/charts/echartsTheme'
-import { getThemeCoreColors } from '@/utils/theme'
 import RadarChart from '@/components/charts/RadarChart.vue'
 import AbilityRadarLegend from '@/shared/views/AbilityRadarLegend.vue'
 import AbilityWeightsDialog from '@/features/teacher/components/AbilityWeightsDialog.vue'
@@ -308,7 +307,9 @@ const coursePerformanceRef = ref<HTMLElement>()
 
 let learningTrendChart: echarts.ECharts | null = null
 let scoreDistributionChart: echarts.ECharts | null = null
-// 主题刷新由布局层统一处理
+let darkObserver: MutationObserver | null = null
+let lastIsDark: boolean | null = null
+let reRenderScheduled = false
 let coursePerformanceChart: echarts.ECharts | null = null
 
 // 计算属性：当前教师的课程列表
@@ -378,9 +379,8 @@ const initScoreDistributionChart = () => {
   scoreDistributionChart = getOrCreateChart(scoreDistributionRef.value, scoreDistributionChart)
 
   const dist: any[] = (teacherStore.classPerformance as any)?.gradeDistribution || []
-  const palette = resolveThemePalette()
   const pieData = Array.isArray(dist)
-    ? dist.map((d, idx) => ({ name: d.gradeLevel ?? d.level ?? t('teacher.analytics.charts.unknown'), value: d.count ?? 0, color: palette[idx % palette.length] }))
+    ? dist.map(d => ({ name: d.gradeLevel ?? d.level ?? t('teacher.analytics.charts.unknown'), value: d.count ?? 0 }))
     : []
 
   const option = {
@@ -400,10 +400,10 @@ const initScoreDistributionChart = () => {
       enterable: false,
       confine: true,
       alwaysShowContent: false,
-      appendToBody: false,
+      appendToBody: true,
       transitionDuration: 0,
       showDelay: 0,
-      hideDelay: 30,
+      hideDelay: 40,
       position: (pos: any) => [pos[0] + 12, pos[1] + 12],
       formatter: '{b}: {c} ({d}%)'
     },
@@ -420,13 +420,20 @@ const initScoreDistributionChart = () => {
         avoidLabelOverlap: false,
         selectedMode: false,
         hoverAnimation: false,
-        data: pieData,
+        data: pieData.map((item: any, idx: number) => ({
+          ...item,
+          itemStyle: { color: resolveThemePalette()[idx % resolveThemePalette().length] },
+          emphasis: { itemStyle: { opacity: 0.85 } },
+          blur: { itemStyle: { opacity: 1 } }
+        })),
         emphasis: { focus: 'none', scale: false },
       }
     ]
   }
 
   scoreDistributionChart && scoreDistributionChart.setOption(option)
+  // 初始化后立即隐藏 tooltip，避免左上角残留小空白容器
+  try { scoreDistributionChart?.dispatchAction({ type: 'hideTip' } as any) } catch {}
   try { (scoreDistributionChart as any).off && (scoreDistributionChart as any).off('globalout') } catch {}
   try {
     scoreDistributionChart?.on('globalout', () => {
@@ -436,8 +443,13 @@ const initScoreDistributionChart = () => {
 }
 
 function scheduleReinitScoreDistribution() {
-  if (scoreDistributionChart) { try { scoreDistributionChart.dispose() } catch {} scoreDistributionChart = null }
-  initScoreDistributionChart()
+  if (reRenderScheduled) return
+  reRenderScheduled = true
+  requestAnimationFrame(() => {
+    reRenderScheduled = false
+    // 轻量刷新：不销毁实例，直接重建配置并 setOption
+    initScoreDistributionChart()
+  })
 }
 
 // 删除课程表现图，保留接口位置以便后续启用
@@ -566,13 +578,26 @@ onMounted(async () => {
   }
   onCourseChange()
   window.addEventListener('resize', resizeCharts)
-  // 不在页面层监听主题变化
+  // 监听浅/深色切换，自动重建饼图以应用主题色
+  // 使用全局主题事件，避免每个页面/组件都创建 MutationObserver 造成抖动
+  if (!darkObserver) {
+    const onChanging = () => { try { scoreDistributionChart?.dispatchAction({ type: 'hideTip' } as any) } catch {} }
+    const onChanged = () => scheduleReinitScoreDistribution()
+    darkObserver = {
+      disconnect() {
+        try { window.removeEventListener('theme:changing', onChanging) } catch {}
+        try { window.removeEventListener('theme:changed', onChanged) } catch {}
+      }
+    } as any
+    try { window.addEventListener('theme:changing', onChanging) } catch {}
+    try { window.addEventListener('theme:changed', onChanged) } catch {}
+  }
 })
 
 onUnmounted(() => {
   scoreDistributionChart?.dispose()
   window.removeEventListener('resize', resizeCharts)
-  // 无主题观察者
+  if (darkObserver) { try { darkObserver.disconnect() } catch {}; darkObserver = null }
 })
 
 const askAiForAnalytics = () => {

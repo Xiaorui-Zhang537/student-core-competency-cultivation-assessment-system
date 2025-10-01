@@ -181,7 +181,8 @@
         "graded": "已评分",
         "courseAll": "全部课程",
         "statusLabel": "状态",
-        "courseLabel": "课程"
+        "courseLabel": "课程",
+        "onlyPending": "仅显示待处理"
       },
       "status": {
         "pending": "待提交",

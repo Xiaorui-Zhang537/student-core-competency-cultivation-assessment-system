@@ -59,8 +59,123 @@
 				"zh": "中文",
 				"en": "EN"
 			}
+		},
+		"home": {
+			"enterApp": "进入应用",
+			"menu": {
+				"overview": "概览",
+				"features": "特性",
+				"compare": "对比",
+				"timeline": "版本",
+				"journey": "历程",
+				"structure": "结构",
+				"marquee": "走马灯"
+			},
+			"hero": {
+				"title": "学生核心能力培养评估系统",
+				"subtitle": "融合课程、作业、社区与AI能力评估，帮助学生在真实学习活动中持续进步。"
+			},
+			"cta": {
+				"docs": "查看文档",
+				"login": "前往登录"
+			},
+			"cards": {
+				"assessment": { "title": "多维评估", "desc": "结合成绩、活跃度与行为数据，输出雷达与趋势建议。" },
+				"courses": { "title": "课程与作业", "desc": "创建课程/章节/作业，支持选课、提交与批改流程。" },
+				"ai": { "title": "AI 批改", "desc": "引入结构化反馈与要点提示，提升批改效率与公平性。" },
+				"analytics": { "title": "成绩分析", "desc": "班级与个人多维指标，洞察能力短板与提升路径。" },
+				"community": { "title": "社区", "desc": "帖子、评论与点赞，促进交流与知识分享。" },
+				"chat": { "title": "聊天与通知", "desc": "会话与通知统一中心，实时触达重要信息。" }
+			},
+			"pages": {
+				"studentDashboard": { "title": "学生工作台", "desc": "学习概览与待办一览。" },
+				"assignments": { "title": "我的作业", "desc": "提交与评分进度清晰可见。" },
+				"courses": { "title": "我的课程", "desc": "浏览课程与章节内容。" },
+				"analysis": { "title": "成绩/能力分析", "desc": "多个维度图表洞察。" },
+				"community": { "title": "社区", "desc": "互动与知识沉淀。" },
+				"notifications": { "title": "通知中心", "desc": "重要消息不再错过。" }
+			},
+			"compare": {
+				"studentVsTeacher": "学生端 vs 教师端",
+				"student": { "title": "学生端", "desc": "聚焦学习与提交体验。" },
+				"teacher": { "title": "教师端", "desc": "聚焦布置、批改与班级管理。" },
+				"lightVsDark": "明暗主题",
+				"light": "浅色",
+				"dark": "深色",
+				"glassStyles": "玻璃风格对比",
+				"glassRegular": "标准玻璃",
+				"glassUltra": "高光玻璃"
+			},
+			"timeline": {
+				"versions": "版本更迭",
+				"devJourney": "开发历程",
+				"v010": "初始版本：认证/课程/作业基础功能",
+				"v020": "加入能力评估与图表主题",
+				"v030": "UI 玻璃主题改造与统一",
+				"v031": "学生端体验与文案完善"
+			},
+			"journey": {
+				"step1": { "title": "问题定义", "desc": "围绕非核心能力培养场景建立指标与数据采集。" },
+				"step2": { "title": "架构成型", "desc": "后端即真理：接口与类型先行，前端严格对齐。" },
+				"step3": { "title": "体验统一", "desc": "玻璃风与主题语义色统一到 /ui 组件。" },
+				"step4": { "title": "持续迭代", "desc": "结合反馈优化交互与性能，完善文档与国际化。" }
+			}
+		}
+		,
+		"layout": {
+			"auth": {
+				"subtitle": "以过程性数据与多元评价，描绘成长画像",
+				"theme": {
+					"switchToLight": "切换到浅色",
+					"switchToDark": "切换到深色"
+				},
+				"password": {
+					"show": "显示密码",
+					"hide": "隐藏密码"
+				},
+				"capsLockOn": "大写锁定已开启",
+				"points": {
+					"radar": { "title": "雷达五维度评估", "desc": "洞察综合能力，定位优势与短板" },
+					"ai": { "title": "AI 助教批改", "desc": "结构化反馈，提升批改效率与公平性" },
+					"growth": { "title": "成长档案与对比", "desc": "追踪阶段性进步，支持班级对比" }
+				},
+				"trust": { "title": "已服务于以下单位" },
+				"footer": {
+					"privacy": "隐私政策",
+					"terms": "服务条款",
+					"help": "帮助中心",
+					"copyright": "保留所有权利"
+				}
+			}
 		}
 	}
+  ,
+  "layout": {
+    "auth": {
+      "subtitle": "以过程性数据与多元评价，描绘成长画像",
+      "theme": {
+        "switchToLight": "切换到浅色",
+        "switchToDark": "切换到深色"
+      },
+      "password": {
+        "show": "显示密码",
+        "hide": "隐藏密码"
+      },
+      "capsLockOn": "大写锁定已开启",
+      "points": {
+        "radar": { "title": "雷达五维度评估", "desc": "洞察综合能力，定位优势与短板" },
+        "ai": { "title": "AI 助教批改", "desc": "结构化反馈，提升批改效率与公平性" },
+        "growth": { "title": "成长档案与对比", "desc": "追踪阶段性进步，支持班级对比" }
+      },
+      "trust": { "title": "已服务于以下单位" },
+      "footer": {
+        "privacy": "隐私政策",
+        "terms": "服务条款",
+        "help": "帮助中心",
+        "copyright": "保留所有权利"
+      }
+    }
+  }
 }
 
 

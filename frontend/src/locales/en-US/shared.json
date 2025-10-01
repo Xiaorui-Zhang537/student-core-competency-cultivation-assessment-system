@@ -317,32 +317,61 @@
         "title": "Maintenance Notice",
         "desc": "We will perform system maintenance this Sunday 2:00–4:00 AM; some features may be affected."
       },
+      "support": {
+        "email": {
+          "title": "Email Support",
+          "desc": "For non-urgent issues, please email us",
+          "time": "Reply within 24 hours"
+        },
+        "wechat": {
+          "title": "WeChat",
+          "desc": "Add WeChat for support",
+          "time": "Business days 9:00–18:00"
+        }
+      },
       "guide": {
-        "register": "Register now",
-        "browseCourses": "Browse courses",
-        "myCourses": "My courses",
-        "createCourse": "Create course",
-        "manageStudents": "Manage students",
-        "gradeAssignments": "Grade assignments"
+        "student": {
+          "title": "Student Guide",
+          "steps": {
+            "browseCourses": { "title": "Browse Courses", "desc": "Search and preview courses that fit your needs.", "action": "Browse" },
+            "submitAssignment": { "title": "Submit Assignments", "desc": "View pending assignments and upload submissions as required.", "action": "Submit" },
+            "viewGrades": { "title": "View Grades", "desc": "Check course grades and feedback in the grade center.", "action": "View" },
+            "askAI": { "title": "Ask AI", "desc": "Open the learning assistant to ask questions about courses or assignments.", "action": "Ask" },
+            "communityQA": { "title": "Community Q&A", "desc": "Seek help in the community and collaborate with peers and teachers.", "action": "Discuss" }
+          }
+        },
+        "teacher": {
+          "title": "Teacher Guide",
+          "steps": {
+            "createCourse": { "title": "Create Course", "desc": "Create and structure courses in course management.", "action": "Create" },
+            "manageStudents": { "title": "Manage Students", "desc": "Review learning progress, invite/remove students, and export data.", "action": "Manage" },
+            "gradeAssignments": { "title": "Grade Assignments", "desc": "View submissions and give grades and feedback.", "action": "Grade" },
+            "aiGrading": { "title": "AI Grading", "desc": "Use AI-assisted grading to improve efficiency and consistency.", "action": "Try" },
+            "analytics": { "title": "Analytics", "desc": "View key course metrics and student performance.", "action": "Analyze" },
+            "askAI": { "title": "Ask AI", "desc": "Open the teaching assistant to draft content, create questions, and answer queries.", "action": "Consult" },
+            "communityQA": { "title": "Community Q&A", "desc": "Engage with students in the community to answer questions and share experience.", "action": "Discuss" }
+          }
+        }
       },
       "faq": {
         "account": {
           "title": "Account",
           "login": { "q": "Forgot password?", "a": "Click 'Forgot password' on the login page, enter your email, then follow the reset link sent to you." },
           "profile": { "q": "How to edit profile?", "a": "Go to 'Profile' after login, edit fields and save." },
-          "security": { "q": "How to keep account secure?", "a": "Use strong passwords, rotate regularly, avoid saving login on public devices, and sign out in time." }
+          "security": { "q": "How to keep account secure?", "a": "Use strong passwords, rotate regularly, avoid saving login on public devices, and sign out in time." },
+          "support": { "q": "How to contact support?", "a": "Use Email or WeChat from the 'Support' section on this page." }
         },
         "courses": {
           "title": "Courses",
           "enrollment": { "q": "How to enroll?", "a": "Choose a course on the course list, click enroll/learn. Paid courses appear in 'My courses' after payment." },
           "progress": { "q": "How is progress calculated?", "a": "By completed lessons. Progress updates automatically and is visible on the course detail page." },
-          "certificate": { "q": "How to get certificates?", "a": "Complete required content and pass assessments; certificates are generated automatically and downloadable in 'My Certificates'." }
+          "submit": { "q": "How to submit assignments?", "a": "Go to 'Assignments', open the pending task, follow the instructions to fill/upload and submit." }
         },
         "technical": {
           "title": "Technical",
-          "browser": { "q": "Supported browsers?", "a": "Latest Chrome (recommended), Firefox, Safari, Edge." },
-          "network": { "q": "How to fix network issues?", "a": "Check connection, refresh, clear cache, try another browser, or disable blocking plugins." },
-          "mobile": { "q": "Mobile support?", "a": "Responsive design works on phones and tablets." }
+          "browser": { "q": "Supported browsers?", "a": "For best experience, use the latest Chrome. Other browsers may work with limited features." },
+          "cache": { "q": "How to clear cache when issues occur?", "a": "Clear site cache and cookies in your browser settings, then re-login and retry." },
+          "uploads": { "q": "Upload failed, what to do?", "a": "Check file type/size as prompted and ensure a stable connection. If it persists, contact support." }
         }
       },
       "notify": {

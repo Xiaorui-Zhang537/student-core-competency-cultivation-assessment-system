@@ -62,7 +62,7 @@
       <!-- 主要内容 -->
       <main class="flex-1">
         <div class="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-0 pb-6">
-          <router-view :key="viewKey" />
+          <router-view />
         </div>
       </main>
       
@@ -256,7 +256,6 @@ const showCursorMenu = ref(false)
 const cursorBtnRef = ref<HTMLElement | null>(null)
 const cursorMenuStyle = ref<Record<string, string>>({})
 const displayName = computed(() => (authStore.user as any)?.nickname || (authStore.user as any)?.name || (authStore.user as any)?.username || t('layout.common.me') || 'Me')
-const viewKey = ref(0)
 
 const handleLogout = async () => {
   showUserMenu.value = false
@@ -338,9 +337,7 @@ function setCursor(v: 'off' | 'fluid' | 'smooth' | 'tailed') {
   showThemeMenu.value = false
 }
 
-// 统一主题切换刷新：布局层重载视图，避免各图表重复监听
-watch(() => uiStore.isDarkMode, () => { viewKey.value++ })
-watch(() => uiStore.themeName, () => { viewKey.value++ })
+// 主题切换刷新交由图表组件或页面内图表自行处理
 
 // 由 store 提供响应式主题名，避免读取非响应式 DOM
 const currentTheme = computed(() => uiStore.themeName)

@@ -149,7 +149,9 @@ public interface AssignmentMapper {
     List<Assignment> selectAssignmentsForEnrolledStudent(@Param("studentId") Long studentId,
                                                         @Param("courseId") Long courseId,
                                                         @Param("status") String status,
-                                                        @Param("keyword") String keyword);
+                                                        @Param("keyword") String keyword,
+                                                        @Param("includeHistory") boolean includeHistory,
+                                                        @Param("onlyPending") boolean onlyPending);
 
     /**
      * 获取作业统计信息

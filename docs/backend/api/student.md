@@ -42,7 +42,8 @@ Authorization: Bearer <token>
 
 ## 3. 作业与提交
 - `GET /api/students/my-submissions`：我提交的作业（可按 `courseId` 过滤）
-- `GET /api/students/assignments`：学生端作业列表（`courseId/status/q`）
+- `GET /api/students/assignments`：学生端作业列表（`courseId/status/q/includeHistory`）
+  - `includeHistory`：是否包含历史课程（非 active）的作业。默认 `false`；为 `true` 时会返回所有选课状态的作业（包含历史/已结课）。
 
 ## 4. 学生分析（聚合）
 - `GET /api/students/analysis?range=7d|30d|term`：成绩/完成率/学习时长等聚合数据

@@ -72,7 +72,7 @@ import { useCourseStore } from '@/stores/course'
 import { useAuthStore } from '@/stores/auth' // 1. 导入 useAuthStore
 import * as echarts from 'echarts'
 import { resolveEChartsTheme, glassTooltipCss, resolveThemePalette } from '@/charts/echartsTheme'
-import { getThemeCoreColors, rgba } from '@/utils/theme'
+import { getEChartsThemedTokens } from '@/utils/theme'
 import { useI18n } from 'vue-i18n'
 import { loadLocaleMessages } from '@/i18n'
 import { PlusIcon, CheckBadgeIcon, UserGroupIcon, CheckCircleIcon, StarIcon, ClipboardDocumentListIcon } from '@heroicons/vue/24/outline'
@@ -94,7 +94,9 @@ const selectedCourseId = ref<string | null>(null)
 const chartRef = ref<HTMLElement | null>(null)
 let chart: echarts.ECharts | null = null
 let resizeBound = false
-// 主题刷新由布局层统一处理
+let darkObserver: { disconnect: () => void } | null = null
+let lastIsDark: boolean | null = null
+let reRenderScheduled = false
 const onResize = () => chart?.resize()
 
 // 3. 创建 teacherCourses 计算属性
@@ -150,8 +152,9 @@ const initChart = () => {
     chart.clear()
     return
   }
-  // 使用主题调色盘（界面层配色策略）
+  // 使用统一主题色盘（避免某些主题色盘过亮导致柱子接近白色）
   const palette = resolveThemePalette()
+  const tokens = getEChartsThemedTokens()
   const categories = dist.map(d => d.gradeLevel ?? d.level ?? t('teacher.dashboard.chart.level.unknown'))
   const values = dist.map(d => d.count ?? 0)
   // 动态计算更粗的柱宽（默认近似直方图，仍保留一定间隔）
@@ -178,14 +181,29 @@ const initChart = () => {
       formatter: (p: any) => `${p.name}<br/>${t('teacher.dashboard.chart.series.students')}: ${p.value}`
     },
     grid: { left: '4%', right: '2%', bottom: '5%', containLabel: true },
-    xAxis: { type: 'category', data: categories, axisTick: { alignWithLabel: true } },
-    yAxis: { type: 'value' },
+    xAxis: {
+      type: 'category',
+      data: categories,
+      axisTick: { alignWithLabel: true },
+      axisLine: { lineStyle: { color: tokens.axisLine } },
+      axisLabel: { color: tokens.axisLabel }
+    },
+    yAxis: {
+      type: 'value',
+      axisLine: { lineStyle: { color: tokens.axisLine } },
+      axisLabel: { color: tokens.axisLabel },
+      splitLine: { lineStyle: { color: tokens.splitLine } }
+    },
     series: [{
       name: t('teacher.dashboard.chart.series.students'),
       type: 'bar',
       data: values,
       barWidth: computedBarWidth,
       barCategoryGap: '8%',
+      // 重放动画：首次渲染或主题切换后，提供短促进入动画
+      animation: true,
+      animationDuration: 420,
+      animationEasing: 'cubicOut',
       // 默认颜色 + 悬停加深
       itemStyle: {
         color: (params: any) => palette[params.dataIndex % palette.length]
@@ -193,7 +211,7 @@ const initChart = () => {
       emphasis: {
         focus: 'none',
         itemStyle: {
-          // 降低透明度表现强调
+          // 仅降低不透明度表现“变暗”，不改变色相
           opacity: 0.85
         }
       }
@@ -201,7 +219,52 @@ const initChart = () => {
   }, { notMerge: true, lazyUpdate: false })
 }
 
-function scheduleReinit() { if (chart) { try { chart.dispose() } catch {} chart = null }; nextTick(initChart) }
+// 主题轻量刷新：不销毁实例，仅更新颜色与文字样式
+function refreshForTheme() {
+  if (!chart) return
+  try {
+    const tokens = getEChartsThemedTokens()
+    const palette = resolveThemePalette()
+    chart.setOption({
+      xAxis: { axisLine: { lineStyle: { color: tokens.axisLine } }, axisLabel: { color: tokens.axisLabel } },
+      yAxis: { axisLine: { lineStyle: { color: tokens.axisLine } }, axisLabel: { color: tokens.axisLabel }, splitLine: { lineStyle: { color: tokens.splitLine } } },
+      series: [{ itemStyle: { color: (params: any) => palette[params.dataIndex % palette.length] } }]
+    }, false)
+  } catch {}
+}
+
+function scheduleReinit() {
+  if (reRenderScheduled) return
+  reRenderScheduled = true
+  requestAnimationFrame(() => {
+    reRenderScheduled = false
+    // 主题切换后进行一次带动画的轻量重绘（不销毁实例），并更新坐标/网格线颜色
+    try { chart?.dispatchAction({ type: 'hideTip' } as any) } catch {}
+    const dist: any[] = (classPerformance.value as any).gradeDistribution || []
+    if (!chartRef.value || !chart || !dist.length) { initChart(); return }
+    const palette = resolveThemePalette()
+    const tokens = getEChartsThemedTokens()
+    const categories = dist.map(d => d.gradeLevel ?? d.level ?? t('teacher.dashboard.chart.level.unknown'))
+    const values = dist.map(d => d.count ?? 0)
+    const containerWidth = (chartRef.value as HTMLElement).clientWidth || 800
+    const innerWidth = Math.floor(containerWidth * 0.94)
+    const n = Math.max(categories.length, 1)
+    const minGapPx = 12
+    const computedBarWidth = (() => {
+      const widthIfDense = Math.floor(innerWidth / (n * 1.2))
+      const widthIfFew = Math.floor((innerWidth - (n + 1) * minGapPx) / n)
+      const base = n <= 6 ? widthIfFew : widthIfDense
+      return Math.min(140, Math.max(36, base))
+    })()
+    chart.clear()
+    chart.setOption({
+      grid: { left: '4%', right: '2%', bottom: '5%', containLabel: true },
+      xAxis: { type: 'category', data: categories, axisTick: { alignWithLabel: true }, axisLine: { lineStyle: { color: tokens.axisLine } }, axisLabel: { color: tokens.axisLabel } },
+      yAxis: { type: 'value', axisLine: { lineStyle: { color: tokens.axisLine } }, axisLabel: { color: tokens.axisLabel }, splitLine: { lineStyle: { color: tokens.splitLine } } },
+      series: [{ name: t('teacher.dashboard.chart.series.students'), type: 'bar', data: values, barWidth: computedBarWidth, barCategoryGap: '8%', animation: true, animationDuration: 420, animationEasing: 'cubicOut', itemStyle: { color: (params: any) => palette[params.dataIndex % palette.length] }, emphasis: { focus: 'none', itemStyle: { opacity: 0.85 } } }]
+    }, { notMerge: true, lazyUpdate: false })
+  })
+}
 
 watch(classPerformance, () => nextTick(initChart), { deep: true })
 // 当语言切换时，重绘图表以应用新文案
@@ -224,7 +287,19 @@ onMounted(async () => {
     window.addEventListener('resize', onResize)
     resizeBound = true
   }
-  // 不在页面层监听主题变化
+  // 监听全局主题事件：切换中隐藏 tooltip，切换完成后重放动画
+  if (!darkObserver) {
+    const onChanging = () => { try { chart?.dispatchAction({ type: 'hideTip' } as any) } catch {} }
+    const onChanged = () => scheduleReinit()
+    darkObserver = {
+      disconnect() {
+        try { window.removeEventListener('theme:changing', onChanging) } catch {}
+        try { window.removeEventListener('theme:changed', onChanged) } catch {}
+      }
+    }
+    try { window.addEventListener('theme:changing', onChanging) } catch {}
+    try { window.addEventListener('theme:changed', onChanged) } catch {}
+  }
 })
 
 onUnmounted(() => {
@@ -233,6 +308,6 @@ onUnmounted(() => {
     resizeBound = false
   }
   chart?.dispose()
-  // 无主题观察者
+  if (darkObserver) { try { darkObserver.disconnect() } catch {} darkObserver = null }
 })
 </script>

@@ -60,7 +60,7 @@
       <div>
         <label for="password" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{{ t('auth.register.form.password.label') }}</label>
         <div class="rounded-lg">
-          <glass-input id="password" v-model="form.password" type="password" :disabled="authStore.loading" />
+          <glass-password-input id="password" v-model="form.password" :disabled="authStore.loading" />
         </div>
         <p v-if="form.password && !isPasswordValid" class="mt-1 text-xs text-red-600">{{ t('auth.register.error.passwordInvalid') }}</p>
       </div>
@@ -68,7 +68,7 @@
       <div>
         <label for="confirmPassword" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{{ t('auth.register.form.confirmPassword.label') }}</label>
         <div class="rounded-lg">
-          <glass-input id="confirmPassword" v-model="confirmPassword" type="password" :disabled="authStore.loading" />
+          <glass-password-input id="confirmPassword" v-model="confirmPassword" :disabled="authStore.loading" />
         </div>
       </div>
 
@@ -99,6 +99,7 @@ import { useI18n } from 'vue-i18n'
 import { i18n } from '@/i18n'
 import { useRouter } from 'vue-router'
 import GlassInput from '@/components/ui/inputs/GlassInput.vue'
+import GlassPasswordInput from '@/components/ui/inputs/GlassPasswordInput.vue'
 import Button from '@/components/ui/Button.vue'
 import UserAvatar from '@/components/ui/UserAvatar.vue'
 import { DEFAULT_AVATARS } from '@/shared/utils/avatars'
@@ -152,6 +153,6 @@ const handleSubmit = () => {
 
 const goLogin = async () => {
   await router.push('/auth/login')
-  window.location.reload()
+  requestAnimationFrame(() => window.location.reload())
 }
 </script>

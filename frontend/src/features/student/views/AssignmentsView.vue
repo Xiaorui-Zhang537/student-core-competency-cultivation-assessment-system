@@ -29,6 +29,10 @@
                 />
               </div>
             </div>
+            <div class="w-auto flex items-center gap-2">
+              <span class="text-xs font-medium leading-tight text-subtle">{{ (t('student.assignments.filters.onlyPending') as string) || '仅显示待处理' }}</span>
+              <GlassSwitch v-model="onlyPending" size="sm" />
+            </div>
           </div>
         </template>
         <template #right>
@@ -114,6 +118,7 @@ import Badge from '@/components/ui/Badge.vue'
 import { MagnifyingGlassIcon, EyeIcon } from '@heroicons/vue/24/outline'
 import { useSubmissionStore } from '@/stores/submission'
 import GlassSearchInput from '@/components/ui/inputs/GlassSearchInput.vue'
+import GlassSwitch from '@/components/ui/inputs/GlassSwitch.vue'
 
 const { t } = useI18n()
 const router = useRouter()
@@ -128,6 +133,7 @@ const currentPage = ref(1)
 const pageSize = ref(10)
 const total = ref(0)
 const totalPages = ref(1)
+const onlyPending = ref(false)
 
 const perPagePrefixText = computed(() => (t('student.assignments.pagination.perPagePrefix') as string) || '每页显示')
 const perPageSuffixText = computed(() => (t('student.assignments.pagination.perPageSuffix') as string) || '条')
@@ -202,7 +208,10 @@ async function loadCourses() {
 function mapToBackendStatus(v: string) {
   if (!v || v === 'ALL') return undefined
   const m = v.toLowerCase()
-  if (m === 'pending' || m === 'submitted' || m === 'graded') return m
+  // 后端的 a.status 表示作业生命周期（draft/published/closed），
+  // 仅当筛选“待完成”时可映射为已发布作业
+  if (m === 'pending') return 'published'
+  // “已提交/已评分”不能映射到作业生命周期，改为前端本地过滤
   return undefined
 }
 
@@ -227,14 +236,24 @@ async function loadList() {
     if (filters.value.keyword) params.q = filters.value.keyword
     params.page = currentPage.value
     params.size = pageSize.value
+    // 默认包含历史课程作业；仅显示待处理由后端过滤
+    params.includeHistory = true
+    params.onlyPending = !!onlyPending.value
     const res: any = await studentApi.getAssignments(params)
     const items = res?.items || res?.data?.items || res || []
     const rawList = Array.isArray(items) ? items : (items.items || [])
-    // 仅展示已发布/可见的作业；草稿/定时未到(CRAFTED/DRAFT/SCHEDULED future)不显示
-    const visible = (rawList || []).filter((a: any) => {
+    // 先拉取本页所有作业的提交记录，便于基于“我是否提交过”进行可见性判断
+    try {
+      const idsAll: string[] = (rawList || []).map((a: any) => String(a.id)).filter(Boolean)
+      await Promise.allSettled(idsAll.map((id: string) => submissionStore.fetchSubmissionForAssignment(id)))
+    } catch {}
+    // 仅展示可见作业：
+    // - 定时未到：隐藏；
+    // - 草稿：包含（后端已通过 includeHistory 返回历史作业，这里不再隐藏草稿）
+    let visible = (rawList || []).filter((a: any) => {
       const st = String(a?.status || '').toLowerCase()
       if (!st) return true
-      if (st === 'crafted' || st === 'draft') return false
+      if (st === 'crafted' || st === 'draft') return true
       if (st === 'scheduled') {
         const ts = a?.publishAt || a?.publish_at
         if (!ts) return false
@@ -242,8 +261,9 @@ async function loadList() {
       }
       return true
     })
+    // 取消前端提交状态过滤，改由后端 onlyPending 控制；已保留最小可见性过滤（草稿若“我”提交过则显示；未到发布时间隐藏）
     list.value = visible
-    // 自动拉取当前页每条作业的提交记录，确保徽章无需进入详情也能刷新
+    // 再次保证徽章数据完整（已提前拉取，这里冗余兜底）
     try {
       const ids: string[] = (visible || []).map((a: any) => String(a.id))
       await Promise.allSettled(ids.map((id: string) => submissionStore.fetchSubmissionForAssignment(id)))
@@ -276,6 +296,7 @@ watch(searchText, (val) => {
 
 watch(filters, loadList, { deep: true })
 watch([currentPage, pageSize], () => loadList())
+watch(onlyPending, () => { currentPage.value = 1; loadList() })
 
 onMounted(async () => {
   await loadCourses()
@@ -303,21 +324,7 @@ function changePageSize() {
 :deep(.pill.filter-container[class*="rounded"]) {
   border-radius: 9999px !important;
 }
-.input {
-  border: 1px solid var(--tw-border-opacity, rgba(209,213,219,1));
-  border-radius: 0.25rem;
-  padding-left: 0.75rem;
-  padding-right: 0.75rem;
-  padding-top: 0.5rem;
-  padding-bottom: 0.5rem;
-  font-size: 0.875rem;
-  line-height: 1.25rem;
-  background: white;
-  color: #111827;
-}
-@media (prefers-color-scheme: dark) {
-  .input { background: #111827; color: #f9fafb; border-color: #374151; }
-}
+/* 使用全局 input 主题化样式（见 styles/main.postcss），移除本地硬编码颜色 */
 </style>
 
 

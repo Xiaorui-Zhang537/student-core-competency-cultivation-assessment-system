@@ -30,10 +30,14 @@
 
                   <div>
           <label for="category" class="label">{{ t('teacher.courseEdit.form.category') }} <span class="text-red-500">*</span></label>
-          <select id="category" v-model="courseForm.category" class="ui-pill--select ui-pill--pl ui-pill--md ui-pill--pr-select" required>
-            <option disabled value="">{{ t('teacher.courseEdit.form.selectCategory') }}</option>
-            <option v-for="cat in categories" :key="cat" :value="cat">{{ cat }}</option>
-                    </select>
+          <GlassPopoverSelect
+            :model-value="courseForm.category"
+            :options="categories.map((c: string) => ({ label: c, value: c }))"
+            :placeholder="(t('teacher.courseEdit.form.selectCategory') as string)"
+            size="sm"
+            tint="info"
+            @update:modelValue="(v:any)=> courseForm.category = String(v || '')"
+          />
                 </div>
 
         <!-- Actions -->
@@ -66,6 +70,7 @@ import Button from '@/components/ui/Button.vue'
 import PageHeader from '@/components/ui/PageHeader.vue'
 import GlassInput from '@/components/ui/inputs/GlassInput.vue'
 import GlassTextarea from '@/components/ui/inputs/GlassTextarea.vue'
+import GlassPopoverSelect from '@/components/ui/filters/GlassPopoverSelect.vue'
 
 const route = useRoute();
 const router = useRouter();

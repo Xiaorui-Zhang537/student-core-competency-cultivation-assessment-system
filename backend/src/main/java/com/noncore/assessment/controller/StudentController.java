@@ -152,9 +152,11 @@ public class StudentController extends BaseController {
             @RequestParam(defaultValue = "10") Integer size,
             @RequestParam(value = "courseId", required = false) Long courseId,
             @RequestParam(value = "status", required = false) String status,
-            @RequestParam(value = "q", required = false) String keyword
+            @RequestParam(value = "q", required = false) String keyword,
+            @RequestParam(value = "includeHistory", required = false, defaultValue = "false") Boolean includeHistory,
+            @RequestParam(value = "onlyPending", required = false, defaultValue = "false") Boolean onlyPending
     ) {
-        var result = assignmentService.getAssignmentsForStudent(getCurrentUserId(), page, size, courseId, status, keyword);
+        var result = assignmentService.getAssignmentsForStudent(getCurrentUserId(), page, size, courseId, status, keyword, includeHistory, onlyPending);
         return ResponseEntity.ok(ApiResponse.success(result));
     }
 

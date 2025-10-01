@@ -249,8 +249,10 @@ const radarSeries = ref<{ name: string; values: number[] }[]>([])
 // 保留后端原始维度名称以便在语言切换时重新本地化
 const rawRadarDimensions = ref<string[]>([])
 const insightsItems = ref<any[]>([])
+let radarRefreshScheduled = false
 const radarRef = ref<any>(null)
 const latestFeedback = ref<{ title: string; feedback: string; gradedAt?: string } | null>(null)
+const themeVersion = ref(0)
 
 // 对比模式
 const compareEnabled = ref<boolean>(false)
@@ -389,10 +391,8 @@ const empty = computed(() =>
 // 为保证与主题色一致，这里为成绩趋势指定主题主色
 // 主题刷新由布局层统一处理
 const toSeriesPoints = (name: string, arr: Point[]) => {
-  // 使用主题调色盘第一色作为单系列趋势色
-  const { resolveThemePalette } = require('@/charts/echartsTheme')
-  const palette = resolveThemePalette()
-  return [{ name, data: Array.isArray(arr) ? arr.map(p => ({ x: String(p?.x ?? ''), y: Number(p?.y) || 0 })) : [], color: palette[0] }]
+  const primary = getThemeCoreColors().primary
+  return [{ name, data: Array.isArray(arr) ? arr.map(p => ({ x: String(p?.x ?? ''), y: Number(p?.y) || 0 })) : [], color: primary }]
 }
 const toXAxis = (arr: Point[]) => (Array.isArray(arr) ? arr.map(p => String(p?.x ?? '')) : [])
 
@@ -437,14 +437,19 @@ function onCourseChange() {
   assignmentIdsA.value = []
   assignmentIdsB.value = []
   insightsItems.value = []
-  fetchAssignmentsForCourse()
-  loadRadar()
-  loadInsights()
-  fetchCourseAssignments() // 刷新作业列表
-  renderGauge(courseAvgScore.value) // 刷新仪表
-  loadScoreTrend()
-  loadHoursTrend()
-  fetchLatestAiFeedback()
+  // 若当前处于对比模式，刷新可选作业集合
+  if (compareEnabled.value) fetchAssignmentsForCourse()
+  // 合并雷达与评语刷新，避免重复触发
+  scheduleRadarRefresh()
+}
+
+function scheduleRadarRefresh() {
+  if (radarRefreshScheduled) return
+  radarRefreshScheduled = true
+  requestAnimationFrame(async () => {
+    radarRefreshScheduled = false
+    await Promise.allSettled([loadRadar(), loadInsights()])
+  })
 }
 
 function toggleCompare() {
@@ -508,10 +513,7 @@ async function fetchLatestAiFeedback() {
   } catch { /* ignore */ }
 }
 
-function onCompareParamsChange() {
-  loadRadar()
-  loadInsights()
-}
+function onCompareParamsChange() { scheduleRadarRefresh() }
 
 async function fetchAssignmentsForCourse() {
   if (!selectedCourseId.value) { assignmentOptions.value = []; return }
@@ -555,14 +557,20 @@ async function loadRadar() {
       const r: any = await abilityApi.getStudentRadar({ courseId: selectedCourseId.value, startDate: fmt(start), endDate: fmt(end) })
       const data: any = r?.data ?? r
       const dims: string[] = data?.dimensions || []
-      rawRadarDimensions.value = [...dims]
-      radarIndicators.value = dims.map(n => ({ name: localizeDimensionName(n), max: 100 }))
+      const nextDims = [...dims]
+      const nextIndicators = nextDims.map(n => ({ name: localizeDimensionName(n), max: 100 }))
       const student = (data?.studentScores || []) as number[]
       const clazz = (data?.classAvgScores || []) as number[]
-      radarSeries.value = [
+      const nextSeries = [
         { name: t('teacher.analytics.charts.series.student') as string, values: student },
         { name: t('teacher.analytics.charts.series.class') as string, values: clazz },
       ]
+      const sameDims = JSON.stringify(rawRadarDimensions.value) === JSON.stringify(nextDims)
+      const sameInd = JSON.stringify(radarIndicators.value) === JSON.stringify(nextIndicators)
+      const sameSeries = JSON.stringify(radarSeries.value) === JSON.stringify(nextSeries)
+      if (!sameDims) rawRadarDimensions.value = nextDims
+      if (!sameInd) radarIndicators.value = nextIndicators
+      if (!sameSeries) radarSeries.value = nextSeries
     } else {
       const body: any = { courseId: String(selectedCourseId.value), includeClassAvg: includeClassAvg.value }
       if (assignmentIdsA.value?.length) body.assignmentIdsA = assignmentIdsA.value.map(id => Number(id))
@@ -570,8 +578,8 @@ async function loadRadar() {
       const rCmp: any = await abilityApi.postStudentRadarCompare(body)
       const dCmp = rCmp?.data ?? rCmp
       const dims: string[] = dCmp?.dimensions || []
-      rawRadarDimensions.value = [...dims]
-      radarIndicators.value = dims.map(n => ({ name: localizeDimensionName(n), max: 100 }))
+      const nextDims = [...dims]
+      const nextIndicators = nextDims.map(n => ({ name: localizeDimensionName(n), max: 100 }))
       const series: { name: string; values: number[] }[] = []
       const aStu = (dCmp?.seriesA?.studentScores || []) as number[]
       const aCls = (dCmp?.seriesA?.classAvgScores || []) as number[]
@@ -581,7 +589,12 @@ async function loadRadar() {
       if (Array.isArray(aCls) && aCls.length) series.push({ name: 'A - ' + (t('teacher.analytics.charts.series.class') || '班级'), values: aCls })
       series.push({ name: 'B - ' + (t('teacher.analytics.charts.series.student') || '学生'), values: bStu })
       if (Array.isArray(bCls) && bCls.length) series.push({ name: 'B - ' + (t('teacher.analytics.charts.series.class') || '班级'), values: bCls })
-      radarSeries.value = series
+      const sameDims = JSON.stringify(rawRadarDimensions.value) === JSON.stringify(nextDims)
+      const sameInd = JSON.stringify(radarIndicators.value) === JSON.stringify(nextIndicators)
+      const sameSeries = JSON.stringify(radarSeries.value) === JSON.stringify(series)
+      if (!sameDims) rawRadarDimensions.value = nextDims
+      if (!sameInd) radarIndicators.value = nextIndicators
+      if (!sameSeries) radarSeries.value = series
     }
   } catch {
     radarIndicators.value = []
@@ -673,6 +686,16 @@ const gaugeRef = ref<HTMLElement | null>(null)
 let gaugeChart: echarts.ECharts | null = null
 let gaugeResizeHandler: (() => void) | null = null
 let themeObserver: MutationObserver | null = null
+let themeListenerBound = false
+let themeChangedHandler: (() => void) | null = null
+
+function runIdle(task: () => void) {
+  try {
+    const ric: any = (window as any).requestIdleCallback
+    if (typeof ric === 'function') ric(() => task(), { timeout: 800 })
+    else setTimeout(task, 50)
+  } catch { setTimeout(task, 50) }
+}
 
 async function waitForGaugeContainer(maxTries = 10): Promise<boolean> {
   for (let i = 0; i < maxTries; i++) {
@@ -688,10 +711,11 @@ function renderGauge(valueNum: number) {
   ;(async () => {
     const ok = await waitForGaugeContainer()
     if (!ok || !gaugeRef.value) return
-    try { gaugeChart?.dispose() } catch {}
     const theme = resolveEChartsTheme()
     const isDark = document.documentElement.classList.contains('dark')
-    gaugeChart = echarts.init(gaugeRef.value as HTMLDivElement, theme as any)
+    if (!gaugeChart) {
+      gaugeChart = echarts.init(gaugeRef.value as HTMLDivElement, theme as any)
+    }
     const v = Math.max(0, Math.min(100, Number(valueNum || 0)))
     const base = getThemeCoreColors().primary
     const baseStrong = rgba(base, 1)
@@ -715,7 +739,7 @@ function renderGauge(valueNum: number) {
           data: [{ value: 0 }] }
       ]
     }
-    gaugeChart.setOption(option)
+    try { gaugeChart.setOption(option, true) } catch { try { gaugeChart?.dispose(); gaugeChart = echarts.init(gaugeRef.value as HTMLDivElement, theme as any); gaugeChart.setOption(option, true) } catch {} }
     if (!gaugeResizeHandler) {
       gaugeResizeHandler = () => { try { gaugeChart?.resize() } catch {} }
       window.addEventListener('resize', gaugeResizeHandler)
@@ -733,8 +757,8 @@ watch(() => selectedCourseId.value, async () => {
   await fetchCourseAssignments()
   renderGauge(courseAvgScore.value)
   loadScoreTrend()
-  loadHoursTrend()
-  await fetchLatestAiFeedback()
+  runIdle(() => { loadHoursTrend() })
+  runIdle(() => { fetchLatestAiFeedback() })
 })
 
 // 在首次加载完成后渲染仪表盘（等待DOM切换完成）
@@ -809,19 +833,26 @@ onMounted(async () => {
   await nextTick()
   renderGauge(courseAvgScore.value)
   await loadScoreTrend()
-  await loadHoursTrend()
-  await fetchLatestAiFeedback()
-  // 主题切换由布局层统一刷新；此处仅重绘仪表即可在页面重载后生效
+  runIdle(() => { loadHoursTrend() })
+  runIdle(() => { fetchLatestAiFeedback() })
+  // 监听全局主题事件：切换中隐藏可能的 tooltip；切换完成后重绘仪表并重算颜色
+  if (!themeListenerBound) {
+    themeChangedHandler = () => {
+      themeVersion.value++
+      renderGauge(Number(courseAvgScore.value || 0))
+    }
+    window.addEventListener('theme:changed', themeChangedHandler as any)
+    themeListenerBound = true
+  }
 })
 
-watch(assignmentIdsA, () => { if (compareEnabled.value) { loadRadar(); loadInsights(); } }, { deep: true })
-watch(assignmentIdsB, () => { if (compareEnabled.value) { loadRadar(); loadInsights(); } }, { deep: true })
+watch(assignmentIdsA, () => { if (compareEnabled.value) scheduleRadarRefresh() }, { deep: true })
+watch(assignmentIdsB, () => { if (compareEnabled.value) scheduleRadarRefresh() }, { deep: true })
 
 // 监听对比模式开关：开启时加载可选作业集合，并刷新雷达与评语
 watch(() => compareEnabled.value, (v) => {
   if (v) fetchAssignmentsForCourse()
-  loadRadar()
-  loadInsights()
+  scheduleRadarRefresh()
 })
 
 function refreshRadarLocalization() {
@@ -849,7 +880,7 @@ watch(() => i18n.global.locale.value, () => {
 onUnmounted(() => {
   try { gaugeChart?.dispose() } catch {}
   if (gaugeResizeHandler) { window.removeEventListener('resize', gaugeResizeHandler); gaugeResizeHandler = null }
-  if (themeObserver) { try { themeObserver.disconnect() } catch {}; themeObserver = null }
+  if (themeListenerBound && themeChangedHandler) { try { window.removeEventListener('theme:changed', themeChangedHandler as any) } catch {}; themeListenerBound = false; themeChangedHandler = null }
 })
 </script>
 

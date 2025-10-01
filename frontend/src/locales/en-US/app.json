@@ -59,8 +59,123 @@
 				"zh": "中文",
 				"en": "EN"
 			}
+		},
+		"home": {
+			"enterApp": "Enter App",
+			"menu": {
+				"overview": "Overview",
+				"features": "Features",
+				"compare": "Compare",
+				"timeline": "Versions",
+				"journey": "Journey",
+				"structure": "Structure",
+				"marquee": "Marquee"
+			},
+			"hero": {
+				"title": "Student Core Competency Cultivation Assessment System",
+				"subtitle": "Integrates courses, assignments, community and AI-driven assessment to help students continuously improve in real learning activities."
+			},
+			"cta": {
+				"docs": "View Docs",
+				"login": "Sign In"
+			},
+			"cards": {
+				"assessment": { "title": "Multi-dimensional Assessment", "desc": "Combine grades, engagement and behavior to produce radar and trend insights." },
+				"courses": { "title": "Courses & Assignments", "desc": "Create courses/lessons/assignments, support enrollment, submission and grading." },
+				"ai": { "title": "AI Grading", "desc": "Structured feedback with key points for efficient and fair grading." },
+				"analytics": { "title": "Analytics", "desc": "Class and personal metrics to identify gaps and improvement paths." },
+				"community": { "title": "Community", "desc": "Posts, comments and likes for communication and knowledge sharing." },
+				"chat": { "title": "Chat & Notifications", "desc": "Unified center for conversations and notifications, real-time updates." }
+			},
+			"pages": {
+				"studentDashboard": { "title": "Student Dashboard", "desc": "Overview and to-dos at a glance." },
+				"assignments": { "title": "Assignments", "desc": "Submission and grading status made clear." },
+				"courses": { "title": "Courses", "desc": "Browse courses and lessons." },
+				"analysis": { "title": "Analysis", "desc": "Insights across multiple charts." },
+				"community": { "title": "Community", "desc": "Engagement and knowledge sharing." },
+				"notifications": { "title": "Notifications", "desc": "Never miss important updates." }
+			},
+			"compare": {
+				"studentVsTeacher": "Student vs Teacher",
+				"student": { "title": "Student", "desc": "Focus on learning and submissions." },
+				"teacher": { "title": "Teacher", "desc": "Focus on assigning, grading and class management." },
+				"lightVsDark": "Light vs Dark",
+				"light": "Light",
+				"dark": "Dark",
+				"glassStyles": "Glass Styles",
+				"glassRegular": "Regular Glass",
+				"glassUltra": "Ultra Glass"
+			},
+			"timeline": {
+				"versions": "Version History",
+				"devJourney": "Development Journey",
+				"v010": "Initial: auth/course/assignment basics",
+				"v020": "Added competency analytics and chart theme",
+				"v030": "Unified glass UI theming",
+				"v031": "Student UX and copy improvements"
+			},
+			"journey": {
+				"step1": { "title": "Problem Definition", "desc": "Define indicators and data capture for non-core competency scenarios." },
+				"step2": { "title": "Architecture First", "desc": "Backend as the source of truth. API and types first, frontend aligns." },
+				"step3": { "title": "Unified Experience", "desc": "Glass style and semantic colors unified into /ui components." },
+				"step4": { "title": "Continuous Iteration", "desc": "Improve UX and performance with feedback, complete docs and i18n." }
+			}
+		}
+		,
+		"layout": {
+			"auth": {
+				"subtitle": "Portray growth with process data and multi-dimensional evaluation",
+				"theme": {
+					"switchToLight": "Switch to Light",
+					"switchToDark": "Switch to Dark"
+				},
+				"password": {
+					"show": "Show password",
+					"hide": "Hide password"
+				},
+				"capsLockOn": "Caps Lock is on",
+				"points": {
+					"radar": { "title": "Radar across 5 dimensions", "desc": "See strengths and gaps holistically" },
+					"ai": { "title": "AI-assisted grading", "desc": "Structured feedback for fairness and efficiency" },
+					"growth": { "title": "Growth records & compare", "desc": "Track progress with class comparison" }
+				},
+				"trust": { "title": "Trusted by" },
+				"footer": {
+					"privacy": "Privacy",
+					"terms": "Terms",
+					"help": "Help Center",
+					"copyright": "All rights reserved"
+				}
+			}
 		}
 	}
+  ,
+  "layout": {
+    "auth": {
+      "subtitle": "Portray growth with process data and multi-dimensional evaluation",
+      "theme": {
+        "switchToLight": "Switch to Light",
+        "switchToDark": "Switch to Dark"
+      },
+      "password": {
+        "show": "Show password",
+        "hide": "Hide password"
+      },
+      "capsLockOn": "Caps Lock is on",
+      "points": {
+        "radar": { "title": "Radar across 5 dimensions", "desc": "See strengths and gaps holistically" },
+        "ai": { "title": "AI-assisted grading", "desc": "Structured feedback for fairness and efficiency" },
+        "growth": { "title": "Growth records & compare", "desc": "Track progress with class comparison" }
+      },
+      "trust": { "title": "Trusted by" },
+      "footer": {
+        "privacy": "Privacy",
+        "terms": "Terms",
+        "help": "Help Center",
+        "copyright": "All rights reserved"
+      }
+    }
+  }
 }
 
 

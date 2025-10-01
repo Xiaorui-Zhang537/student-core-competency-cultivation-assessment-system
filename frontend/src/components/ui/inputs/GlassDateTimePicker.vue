@@ -285,49 +285,49 @@ watch([hour, minute], ([h, m]) => {
   background: linear-gradient(180deg, rgba(255,255,255,0.28), rgba(255,255,255,0.12));
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
-  color: #111827;
+  color: var(--color-base-content);
   border-radius: 9999px;
   padding: 8px 28px 8px 12px;
   text-align: left;
 }
 @media (prefers-color-scheme: dark) {
-  .picker-input { color: #f9fafb; border-color: rgba(255,255,255,0.25); }
+  .picker-input { color: var(--color-base-content); border-color: rgba(255,255,255,0.25); }
 }
 .nav-btn {
   width: 28px;
   height: 28px;
   border-radius: 8px;
   background: rgba(255,255,255,0.10);
-  color: #1f2937;
+  color: var(--color-base-content);
 }
 .nav-btn:hover { background: rgba(255,255,255,0.20); }
 @media (prefers-color-scheme: dark) {
-  .nav-btn { color: #e5e7eb; }
+  .nav-btn { color: var(--color-base-content); }
 }
 
 .day-btn {
   text-align: center;
   border-radius: 8px;
-  color: #1f2937;
+  color: var(--color-base-content);
 }
 .day-btn:hover { background: rgba(255,255,255,0.10); }
 @media (prefers-color-scheme: dark) {
-  .day-btn { color: #f3f4f6; }
+  .day-btn { color: var(--color-base-content); }
 }
 
-/* 强制覆盖父级可能设置的浅色字体，确保明亮模式下日历数字为深色，暗黑为浅色 */
-.popover-glass .day-btn { color: #111827 !important; }
-.dark .popover-glass .day-btn { color: #f3f4f6 !important; }
+/* 强制覆盖父级可能设置的浅色字体：统一使用主题内容色 */
+.popover-glass .day-btn { color: var(--color-base-content) !important; }
+.dark .popover-glass .day-btn { color: var(--color-base-content) !important; }
 
 .glass-select {
   background: rgba(255,255,255,0.10);
-  color: #1f2937;
+  color: var(--color-base-content);
   border-radius: 6px;
   padding: 4px 8px;
   border: 1px solid rgba(255,255,255,0.20);
 }
 @media (prefers-color-scheme: dark) {
-  .glass-select { color: #f3f4f6; }
+  .glass-select { color: var(--color-base-content); }
 }
 
 .chip {
@@ -335,11 +335,11 @@ watch([hour, minute], ([h, m]) => {
   padding: 4px 8px;
   border-radius: 8px;
   background: rgba(255,255,255,0.10);
-  color: #1f2937;
+  color: var(--color-base-content);
 }
 .chip:hover { background: rgba(255,255,255,0.20); }
 @media (prefers-color-scheme: dark) {
-  .chip { color: #f3f4f6; }
+  .chip { color: var(--color-base-content); }
 }
 
 .btn-confirm {

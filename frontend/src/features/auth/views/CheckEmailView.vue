@@ -40,18 +40,19 @@ onMounted(async () => {
     try {
       await router.replace({ path: route.path, query: { ...route.query, _rf: '1' } })
     } catch {}
-    window.location.reload()
+    // 初次进入执行一次刷新，确保资源与状态一致
+    requestAnimationFrame(() => window.location.reload())
   }
 })
 
 const goLogin = async () => {
   await router.push('/auth/login')
-  window.location.reload()
+  requestAnimationFrame(() => window.location.reload())
 }
 
 const goRegister = async () => {
   await router.push('/auth/register')
-  window.location.reload()
+  requestAnimationFrame(() => window.location.reload())
 }
 </script>
 

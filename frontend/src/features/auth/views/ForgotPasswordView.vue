@@ -65,6 +65,6 @@ const handleForgotPassword = async () => {
 
 const goLogin = async () => {
   await router.push('/auth/login')
-  window.location.reload()
+  requestAnimationFrame(() => window.location.reload())
 }
 </script>

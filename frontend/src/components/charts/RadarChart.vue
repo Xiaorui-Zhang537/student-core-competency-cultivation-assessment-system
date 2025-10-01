@@ -8,7 +8,8 @@
 <script setup lang="ts">
 import { onMounted, onUnmounted, ref, watch, nextTick } from 'vue'
 import * as echarts from 'echarts'
-import { resolveEChartsTheme, glassTooltipCss } from '@/charts/echartsTheme'
+import { resolveEChartsTheme, glassTooltipCss, resolveThemePalette } from '@/charts/echartsTheme'
+import { getEChartsThemedTokens } from '@/utils/theme'
 
 interface Indicator { name: string; max: number }
 interface SeriesItem { name: string; values: number[]; color?: string }
@@ -36,6 +37,9 @@ const props = withDefaults(defineProps<Props>(), {
 
 const chartRef = ref<HTMLElement>()
 let inst: echarts.ECharts | null = null
+let darkObserver: { disconnect: () => void } | null = null
+let lastIsDark: boolean | null = null
+let reRenderScheduled = false
 
 const buildOption = () => {
   const theme = props.theme === 'auto'
@@ -43,10 +47,11 @@ const buildOption = () => {
     : props.theme
   // Use transparent background to preserve glass effect behind the chart
   const bg = 'transparent'
+  const tokens = getEChartsThemedTokens()
   return {
     backgroundColor: bg,
-    title: props.title ? { text: props.title, left: 'center', textStyle: { color: theme === 'dark' ? '#e5e7eb' : '#111827' } } : undefined,
-    legend: props.showLegend ? { bottom: 0, left: 'center', textStyle: { color: theme === 'dark' ? '#e5e7eb' : '#374151' } } : { show: false },
+    title: props.title ? { text: props.title, left: 'center', textStyle: { color: tokens.textPrimary } } : undefined,
+    legend: props.showLegend ? { bottom: 0, left: 'center', textStyle: { color: tokens.textPrimary } } : { show: false },
     tooltip: {
       trigger: 'item',
       backgroundColor: 'transparent',
@@ -65,12 +70,12 @@ const buildOption = () => {
     },
     radar: {
       indicator: props.indicators,
-      axisName: { color: theme === 'dark' ? '#e5e7eb' : '#374151' },
+      axisName: { color: tokens.axisLabel },
       // 提高浅色模式下网格线可读性
-      splitLine: { lineStyle: { color: theme === 'dark' ? ['#4b5563'] : ['#cbd5e1'] } },
+      splitLine: { lineStyle: { color: tokens.splitLine } },
       // Make split areas transparent so chart does not cover glass
       splitArea: { areaStyle: { color: 'transparent' } },
-      axisLine: { lineStyle: { color: theme === 'dark' ? '#6b7280' : '#d1d5db' } },
+      axisLine: { lineStyle: { color: tokens.axisLine } },
       animation: false
     },
     series: [
@@ -80,8 +85,9 @@ const buildOption = () => {
         symbol: 'none',
         symbolSize: 0,
         emphasis: { focus: 'none', scale: false },
-        data: props.series.map((s) => {
-          const color = s.color || 'rgba(59,130,246,1)'
+        data: props.series.map((s, idx) => {
+          const palette = resolveThemePalette()
+          const color = s.color || palette[idx % palette.length]
           const base: any = {
             value: s.values,
             name: s.name,
@@ -120,6 +126,8 @@ const render = async () => {
     try { inst.clear() } catch {}
   }
   inst.setOption(buildOption(), true)
+  // 初始化后立即隐藏 tooltip，避免容器左上角残留
+  try { inst?.dispatchAction({ type: 'hideTip' } as any) } catch {}
   // 鼠标离开画布时确保隐藏 tooltip，防止遗留触发布局抖动
   try { (inst as any).off && (inst as any).off('globalout') } catch {}
   try {
@@ -129,7 +137,16 @@ const render = async () => {
   } catch {}
 }
 
-const scheduleRender = () => { render() }
+const scheduleRender = () => {
+  if (reRenderScheduled) return
+  reRenderScheduled = true
+  requestAnimationFrame(() => {
+    reRenderScheduled = false
+    // 隐藏遗留的 tooltip 再重绘
+    try { inst?.dispatchAction({ type: 'hideTip' } as any) } catch {}
+    render()
+  })
+}
 
   let resizeHandler: (() => void) | null = null
 
@@ -137,7 +154,19 @@ const scheduleRender = () => { render() }
     render()
     resizeHandler = () => inst?.resize()
     window.addEventListener('resize', resizeHandler)
-  // 不再在组件层监听主题变化，由布局层统一刷新
+    // 使用全局事件，避免 DOM 观察带来的抖动
+    if (!darkObserver) {
+      const onChanging = () => { try { inst?.dispatchAction({ type: 'hideTip' } as any) } catch {} }
+      const onChanged = () => scheduleRender()
+      darkObserver = {
+        disconnect() {
+          try { window.removeEventListener('theme:changing', onChanging) } catch {}
+          try { window.removeEventListener('theme:changed', onChanged) } catch {}
+        }
+      }
+      try { window.addEventListener('theme:changing', onChanging) } catch {}
+      try { window.addEventListener('theme:changed', onChanged) } catch {}
+    }
   })
 
   onUnmounted(() => {
@@ -146,7 +175,7 @@ const scheduleRender = () => { render() }
       window.removeEventListener('resize', resizeHandler)
       resizeHandler = null
     }
-    // 无主题观察者
+    if (darkObserver) { try { darkObserver.disconnect() } catch {}; darkObserver = null }
   })
 
 watch(

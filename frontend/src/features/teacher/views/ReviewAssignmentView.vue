@@ -153,13 +153,17 @@
         <p class="mt-1 text-xs text-gray-500">{{ t('teacher.assignments.modal.visibilityHint') || '草稿不会对学生可见；仅发布后学生才能看到并提交。' }}</p>
       </div>
       <form id="assignmentForm" @submit.prevent="handleSubmit" class="space-y-4">
-         <div>
+        <div>
           <label for="courseId" class="block text-sm font-medium mb-1">{{ t('teacher.assignments.modal.course') }}</label>
-          <select id="courseId" v-model="form.courseId" required class="ui-pill--select ui-pill--pl ui-pill--md ui-pill--pr-select" :disabled="isEditing">
-            <option v-for="course in courseStore.courses" :key="course.id" :value="course.id">
-              {{ course.title }}
-            </option>
-          </select>
+          <GlassPopoverSelect
+            :model-value="form.courseId"
+            :options="courseStore.courses.map((c: any) => ({ label: c.title, value: String(c.id) }))"
+            :placeholder="(t('teacher.assignments.filters.selectCourse') as string)"
+            size="sm"
+            tint="info"
+            :disabled="isEditing"
+            @update:modelValue="(v:any)=> form.courseId = String(v || '')"
+          />
         </div>
         <div>
           <label for="title" class="block text-sm font-medium mb-1">{{ t('teacher.assignments.modal.title') }}</label>

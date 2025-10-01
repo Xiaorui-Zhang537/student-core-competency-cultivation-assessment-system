@@ -15,13 +15,13 @@
                      :value="categoriesCount"
                      tone="blue"
                      :icon="BookOpenIcon" />
-        </div>
+            </div>
         <div class="cursor-pointer" @click="activeSection = 'articles'">
           <StartCard :label="t('shared.help.cards.hotArticles') || '热门文章'"
                      :value="hotArticlesCount"
                      tone="emerald"
                      :icon="ChartBarIcon" />
-        </div>
+          </div>
         <div class="cursor-pointer" @click="activeSection = 'support'">
           <StartCard :label="t('shared.help.cards.myTickets') || '我的工单'"
                      :value="myTicketsCount"
@@ -53,7 +53,7 @@
                 @click="activeSection = section.id"
                 class="w-full text-left px-3 py-2 rounded-lg text-sm transition-colors"
                 :class="activeSection === section.id
-                  ? 'bg-violet-500/15 dark:bg-violet-500/20 text-violet-600 dark:text-violet-200 ring-1 ring-violet-500/20'
+                  ? 'bg-emerald-500/15 dark:bg-emerald-500/20 text-emerald-600 dark:text-emerald-200 ring-1 ring-emerald-500/20'
                   : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700'"
               >
                 {{ section.title }}
@@ -150,11 +150,11 @@
                   class="last:pb-0"
                 >
                   <h3 class="text-lg font-medium text-base-content mb-4">{{ category.name }}</h3>
-                  <div class="join join-vertical w-full">
+                  <div class="join join-vertical w-full rounded-2xl overflow-hidden border border-base-300">
                     <div
                       v-for="(faq, idx) in category.faqs"
                       :key="faq.id"
-                      class="collapse collapse-plus join-item bg-base-100 border border-base-300 rounded-xl"
+                      class="collapse collapse-plus join-item bg-base-100 border-base-300 border"
                     >
                       <input type="radio" :name="`faq-accordion-${category.id}`" :checked="idx === 0" />
                       <div class="collapse-title font-medium text-base-content">{{ faq.question }}</div>
@@ -178,7 +178,7 @@
               <div class="space-y-8">
                 <div v-for="guide in userGuidesFiltered" :key="guide.id">
                   <h3 class="text-lg font-medium text-base-content mb-4 flex items-center">
-                    <component :is="guide.icon" class="w-5 h-5 mr-2 text-primary-600" />
+                    <component :is="guide.icon" class="w-5 h-5 mr-2 text-emerald-600 dark:text-emerald-400" />
                     {{ guide.title }}
                   </h3>
                   <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -188,7 +188,7 @@
                       class="border border-gray-200 dark:border-gray-600 rounded-lg p-4"
                     >
                       <div class="flex items-center mb-3">
-                        <span class="w-6 h-6 bg-primary-600 text-white rounded-full flex items-center justify-center text-sm font-medium mr-3">
+                        <span class="w-6 h-6 bg-emerald-600 dark:bg-emerald-500 text-white rounded-full flex items-center justify-center text-sm font-medium mr-3">
                           {{ step.step }}
                         </span>
                         <h4 class="font-medium text-base-content">{{ step.title }}</h4>
@@ -420,7 +420,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, onMounted, computed } from 'vue'
+import { ref, reactive, onMounted, computed, watch } from 'vue'
 import { useUIStore } from '@/stores/ui'
 import Card from '@/components/ui/Card.vue'
 import Button from '@/components/ui/Button.vue'
@@ -434,7 +434,7 @@ import { useHelpStore } from '@/stores/help'
 import { useAuthStore } from '@/stores/auth'
 import GlassSelect from '@/components/ui/filters/GlassSelect.vue'
 import GlassPopoverSelect from '@/components/ui/filters/GlassPopoverSelect.vue'
-import { useRouter } from 'vue-router'
+import { useRouter, useRoute } from 'vue-router'
 import {
   MagnifyingGlassIcon,
   QuestionMarkCircleIcon,
@@ -461,6 +461,7 @@ const uiStore = useUIStore()
 const helpStore = useHelpStore()
 const authStore = useAuthStore()
 const router = useRouter()
+const route = useRoute()
 
 // 状态
 const activeSection = ref('faq')
@@ -532,6 +533,11 @@ const faqCategories = computed(() => ([
         id: 'security',
         question: t('shared.help.faq.account.security.q') || '如何确保账户安全？',
         answer: t('shared.help.faq.account.security.a') || '建议使用强密码、定期更换、勿在公共设备保存登录信息…'
+      },
+      {
+        id: 'support',
+        question: t('shared.help.faq.account.support.q') || '如何联系技术支持？',
+        answer: t('shared.help.faq.account.support.a') || '您可以通过页面的“技术支持”模块使用邮箱或微信联系。'
       }
     ]
   },
@@ -550,9 +556,9 @@ const faqCategories = computed(() => ([
         answer: t('shared.help.faq.courses.progress.a') || '按已完成课时统计，并在课程详情页查看…'
       },
       {
-        id: 'certificate',
-        question: t('shared.help.faq.courses.certificate.q') || '如何获得课程证书？',
-        answer: t('shared.help.faq.courses.certificate.a') || '完成必修内容并通过考核后系统自动生成证书…'
+        id: 'submit',
+        question: t('shared.help.faq.courses.submit.q') || '如何提交作业？',
+        answer: t('shared.help.faq.courses.submit.a') || '前往“作业”页面，在待提交列表中进入作业详情，按要求填写/上传后提交。'
       }
     ]
   },
@@ -563,80 +569,92 @@ const faqCategories = computed(() => ([
       {
         id: 'browser',
         question: t('shared.help.faq.technical.browser.q') || '支持哪些浏览器？',
-        answer: t('shared.help.faq.technical.browser.a') || '支持 Chrome/Firefox/Safari/Edge 最新版本…'
+        answer: t('shared.help.faq.technical.browser.a') || '为获得最完整体验，请使用 Chrome 最新版本。其他浏览器也可访问，但体验可能受限。'
       },
       {
-        id: 'network',
-        question: t('shared.help.faq.technical.network.q') || '网络异常如何处理？',
-        answer: t('shared.help.faq.technical.network.a') || '检查网络连接、刷新页面、清除缓存、尝试其他浏览器…'
+        id: 'cache',
+        question: t('shared.help.faq.technical.cache.q') || '遇到异常如何清除缓存？',
+        answer: t('shared.help.faq.technical.cache.a') || '在浏览器设置中清除站点缓存与 Cookie，然后重新登录再试。'
       },
       {
-        id: 'mobile',
-        question: t('shared.help.faq.technical.mobile.q') || '支持手机端使用吗？',
-        answer: t('shared.help.faq.technical.mobile.a') || '平台支持响应式，手机和平板可正常使用。'
+        id: 'uploads',
+        question: t('shared.help.faq.technical.uploads.q') || '上传失败怎么办？',
+        answer: t('shared.help.faq.technical.uploads.a') || '请检查文件格式与大小是否符合页面提示，确保网络稳定后重试。若仍失败，请联系技术支持。'
       }
     ]
   }
 ]))
 
-// 使用指南（点击联动帮助文章筛选或导航）
-const userGuides = [
+// 使用指南（中英文切换、按角色展示）
+const userGuides = computed(() => ([
   {
     id: 'student',
-    title: '学生使用指南',
+    title: t('shared.help.guide.student.title') || '学生使用指南',
     icon: AcademicCapIcon,
     steps: [
       {
         id: 1,
         step: 1,
-        title: '注册账户',
-        description: '填写基本信息完成注册',
-        actionText: t('shared.help.guide.register') || '立即注册',
-        action: () => {
-          if (authStore.isAuthenticated) return router.push({ name: 'StudentDashboard' })
-          return router.push({ name: 'Register' })
-        }
+        title: t('shared.help.guide.student.steps.browseCourses.title') || '浏览课程',
+        description: t('shared.help.guide.student.steps.browseCourses.desc') || '在课程库中检索并预览适合你的课程。',
+        actionText: t('shared.help.guide.student.steps.browseCourses.action') || '去浏览',
+        action: () => router.push({ name: 'StudentCourses' })
       },
       {
         id: 2,
         step: 2,
-        title: '浏览课程',
-        description: '在课程库中找到感兴趣的课程',
-        actionText: t('shared.help.guide.browseCourses') || '浏览课程',
-        action: () => router.push({ name: 'StudentCourses' })
+        title: t('shared.help.guide.student.steps.submitAssignment.title') || '提交作业',
+        description: t('shared.help.guide.student.steps.submitAssignment.desc') || '在作业中心查看待交作业并按要求上传提交。',
+        actionText: t('shared.help.guide.student.steps.submitAssignment.action') || '去提交',
+        action: () => router.push({ name: 'StudentAssignments' })
       },
       {
         id: 3,
         step: 3,
-        title: '开始学习',
-        description: '报名课程并开始学习',
-        actionText: t('shared.help.guide.myCourses') || '我的课程',
-        action: () => router.push({ name: 'StudentCourses' })
+        title: t('shared.help.guide.student.steps.viewGrades.title') || '浏览成绩',
+        description: t('shared.help.guide.student.steps.viewGrades.desc') || '在成绩中心查看每门课程的成绩与评语。',
+        actionText: t('shared.help.guide.student.steps.viewGrades.action') || '去查看',
+        action: () => router.push({ name: 'StudentAnalysis' })
+      },
+      {
+        id: 4,
+        step: 4,
+        title: t('shared.help.guide.student.steps.askAI.title') || '询问AI',
+        description: t('shared.help.guide.student.steps.askAI.desc') || '打开学习助手，针对课程/作业提出问题并获得建议。',
+        actionText: t('shared.help.guide.student.steps.askAI.action') || '去提问',
+        action: () => router.push({ name: 'StudentAssistant' })
+      },
+      {
+        id: 5,
+        step: 5,
+        title: t('shared.help.guide.student.steps.communityQA.title') || '社区答疑',
+        description: t('shared.help.guide.student.steps.communityQA.desc') || '在学习社区向同学与老师求助，互相解答问题。',
+        actionText: t('shared.help.guide.student.steps.communityQA.action') || '去交流',
+        action: () => router.push({ name: 'StudentCommunity' })
       }
     ]
   },
   {
     id: 'teacher',
-    title: '教师使用指南',
+    title: t('shared.help.guide.teacher.title') || '教师使用指南',
     icon: UserGroupIcon,
     steps: [
       {
         id: 1,
         step: 1,
-        title: '创建课程',
-        description: '设计课程结构和内容',
-        actionText: t('shared.help.guide.createCourse') || '创建课程',
+        title: t('shared.help.guide.teacher.steps.createCourse.title') || '创建课程',
+        description: t('shared.help.guide.teacher.steps.createCourse.desc') || '在课程管理中创建并完善课程结构与内容。',
+        actionText: t('shared.help.guide.teacher.steps.createCourse.action') || '去创建',
         action: () => router.push({ name: 'TeacherCourseManagement', query: { create: '1' } })
       },
       {
         id: 2,
         step: 2,
-        title: '管理学生',
-        description: '查看学生学习情况',
-        actionText: t('shared.help.guide.manageStudents') || '学生管理',
+        title: t('shared.help.guide.teacher.steps.manageStudents.title') || '管理学生',
+        description: t('shared.help.guide.teacher.steps.manageStudents.desc') || '查看学生学习情况，邀请/移除学生并导出数据。',
+        actionText: t('shared.help.guide.teacher.steps.manageStudents.action') || '去管理',
         action: async () => {
           try {
-            // 优先跳转到教师的第一个课程的学生管理页
             if (authStore.userRole === 'TEACHER') {
               const { useCourseStore } = await import('@/stores/course')
               const cs = useCourseStore()
@@ -652,61 +670,84 @@ const userGuides = [
               }
             }
           } catch {}
-          // 兜底：进入课程管理页
           return router.push({ name: 'TeacherCourseManagement' })
         }
       },
       {
         id: 3,
         step: 3,
-        title: '批改作业',
-        description: '评分和反馈学生作业',
-        actionText: t('shared.help.guide.gradeAssignments') || '作业批改',
+        title: t('shared.help.guide.teacher.steps.gradeAssignments.title') || '批改作业',
+        description: t('shared.help.guide.teacher.steps.gradeAssignments.desc') || '在作业管理中查看提交并进行评分与反馈。',
+        actionText: t('shared.help.guide.teacher.steps.gradeAssignments.action') || '去批改',
         action: () => router.push({ name: 'TeacherAssignments' })
+      },
+      {
+        id: 4,
+        step: 4,
+        title: t('shared.help.guide.teacher.steps.aiGrading.title') || 'AI批改',
+        description: t('shared.help.guide.teacher.steps.aiGrading.desc') || '使用 AI 辅助批改，提升批改效率与一致性。',
+        actionText: t('shared.help.guide.teacher.steps.aiGrading.action') || '去体验',
+        action: () => router.push({ name: 'TeacherAIGrading' })
+      },
+      {
+        id: 5,
+        step: 5,
+        title: t('shared.help.guide.teacher.steps.analytics.title') || '数据分析',
+        description: t('shared.help.guide.teacher.steps.analytics.desc') || '查看课程关键指标与学生表现，辅助教学决策。',
+        actionText: t('shared.help.guide.teacher.steps.analytics.action') || '去分析',
+        action: () => router.push({ name: 'TeacherAnalytics' })
+      },
+      {
+        id: 6,
+        step: 6,
+        title: t('shared.help.guide.teacher.steps.askAI.title') || '询问AI',
+        description: t('shared.help.guide.teacher.steps.askAI.desc') || '打开教学助手，撰写内容、出题与答疑辅助。',
+        actionText: t('shared.help.guide.teacher.steps.askAI.action') || '去咨询',
+        action: () => router.push({ name: 'TeacherAssistant' })
+      },
+      {
+        id: 7,
+        step: 7,
+        title: t('shared.help.guide.teacher.steps.communityQA.title') || '社区答疑',
+        description: t('shared.help.guide.teacher.steps.communityQA.desc') || '在社区与学生互动，答疑解惑并分享教学经验。',
+        actionText: t('shared.help.guide.teacher.steps.communityQA.action') || '去交流',
+        action: () => router.push({ name: 'TeacherCommunity' })
       }
     ]
   }
-]
+]))
 
-// 按角色过滤显示对应指南
+// 按角色过滤显示对应指南（随语言切换自动更新）
 const userGuidesFiltered = computed(() => {
+  const all = userGuides.value
   const role = authStore.userRole
-  if (role === 'TEACHER') return userGuides.filter(g => g.id === 'teacher')
-  return userGuides.filter(g => g.id === 'student')
+  if (role === 'TEACHER') return all.filter(g => g.id === 'teacher')
+  return all.filter(g => g.id === 'student')
 })
 
 // 移除视频教程（无后端支持）
 
-// 技术支持联系方式（来自用户提供）
-const supportContacts = [
-  {
-    type: 'phone',
-    title: '电话支持',
-    description: '紧急问题请直接拨打',
-    value: '15362612345',
-    time: '工作日 9:00-18:00',
-    icon: PhoneIcon,
-    iconBg: 'bg-green-500'
-  },
+// 技术支持联系方式（i18n 驱动，仅邮箱 + 微信）
+const supportContacts = computed(() => ([
   {
     type: 'email',
-    title: '邮件支持',
-    description: '非紧急问题请发送邮件',
+    title: t('shared.help.support.email.title') || '邮件支持',
+    description: t('shared.help.support.email.desc') || '非紧急问题请发送邮件',
     value: 'xiaorui537@gmail.com',
-    time: '24小时内回复',
+    time: t('shared.help.support.email.time') || '24小时内回复',
     icon: EnvelopeIcon,
     iconBg: 'bg-blue-500'
   },
   {
-    type: 'chat',
-    title: '在线客服',
-    description: '实时在线解答问题',
-    value: '点击开启对话',
-    time: '工作日 9:00-22:00',
+    type: 'wechat',
+    title: t('shared.help.support.wechat.title') || '微信 WeChat',
+    description: t('shared.help.support.wechat.desc') || '添加微信获取支持',
+    value: 'Xiao_Rui537',
+    time: t('shared.help.support.wechat.time') || '工作日 9:00-18:00',
     icon: ChatBubbleLeftIcon,
-    iconBg: 'bg-purple-500'
+    iconBg: 'bg-emerald-500'
   }
-]
+]))
 
 // 移除系统状态（无后端支持）
 
@@ -748,12 +789,12 @@ async function voteArticle(helpful: boolean) {
   }
 }
 
-async function editTicket(t: any) {
-  const title = prompt(t('shared.common.edit') || '编辑标题', t.title)
+async function editTicket(ticket: any) {
+  const title = prompt(t('shared.common.edit') || '编辑标题', ticket.title)
   if (title === null) return
-  const desc = prompt(t('shared.common.edit') || '编辑描述', t.description || '')
+  const desc = prompt(t('shared.common.edit') || '编辑描述', ticket.description || '')
   if (desc === null) return
-  await helpStore.updateTicket(t.id, title, desc)
+  await helpStore.updateTicket(ticket.id, title, desc)
   uiStore.showNotification({ type: 'success', title: t('shared.common.saved') || '已保存', message: '' })
 }
 
@@ -882,5 +923,23 @@ onMounted(() => {
   if (authStore.isAuthenticated) {
     helpStore.fetchMyTickets().catch(() => {})
   }
+  // 恢复分区：优先 query.section，其次 hash
+  try {
+    const sectionFromQuery = String((route.query as any)?.section || '').trim()
+    const sectionFromHash = String((route.hash || '').replace(/^#/, '')).trim()
+    const candidate = sectionFromQuery || sectionFromHash
+    const allowed = new Set(['faq','articles','guide','support','feedback','articleDetail'])
+    if (candidate && allowed.has(candidate)) {
+      activeSection.value = candidate
+    }
+  } catch {}
+})
+
+// 分区变化时写回到 URL，避免主题/语言切换导致重置
+watch(activeSection, (s) => {
+  try {
+    const q = { ...(route.query as any), section: s }
+    router.replace({ query: q })
+  } catch {}
 })
 </script> 

@@ -117,8 +117,7 @@ import { useAbilityStore } from '@/stores/ability';
 import { abilityApi } from '@/api/ability.api';
 import { useCourseStore } from '@/stores/course';
 import * as echarts from 'echarts';
-import { resolveEChartsTheme, resolveThemePalette } from '@/charts/echartsTheme'
-import { getThemeCoreColors } from '@/utils/theme'
+import { resolveEChartsTheme } from '@/charts/echartsTheme'
 // @ts-ignore shim for vue-i18n types in this project
 import { useI18n } from 'vue-i18n'
 import GlassMultiSelect from '@/components/ui/filters/GlassMultiSelect.vue'
@@ -246,10 +245,9 @@ const initRadarChart = () => {
   if (!radarChartRef.value) return
   const theme = resolveEChartsTheme()
   radarChart = echarts.getInstanceByDom(radarChartRef.value) || echarts.init(radarChartRef.value as HTMLDivElement, theme as any)
-  const palette = resolveThemePalette()
   const option = {
     radar: { indicator: rawRadarLabels.value.map(n => ({ name: localizeDimensionName(n), max: 100 })) },
-    series: [{ type: 'radar', data: [{ value: radarValues.value, name: t('teacher.analytics.charts.series.student'), itemStyle: { color: palette[0] } }] }]
+    series: [{ type: 'radar', data: [{ value: radarValues.value, name: t('teacher.analytics.charts.series.student') }] }]
   }
   radarChart.setOption(option)
 }
@@ -258,12 +256,11 @@ const initTrendChart = () => {
   if (!trendChartRef.value || !abilityStore.trendsData) return;
   const theme2 = resolveEChartsTheme()
   trendChart = echarts.getInstanceByDom(trendChartRef.value) || echarts.init(trendChartRef.value as HTMLDivElement, theme2 as any);
-  const palette2 = resolveThemePalette()
   const option = {
     tooltip: { trigger: 'axis' },
     xAxis: { type: 'category', data: abilityStore.trendsData.dates },
     yAxis: { type: 'value' },
-    series: abilityStore.trendsData.dimensions.map((dim, idx) => ({ name: dim.name, type: 'line', data: dim.scores, smooth: true, color: palette2[idx % palette2.length] }))
+    series: abilityStore.trendsData.dimensions.map(dim => ({ name: dim.name, type: 'line', data: dim.scores, smooth: true }))
   };
   trendChart.setOption(option);
 };

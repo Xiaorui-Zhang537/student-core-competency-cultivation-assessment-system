@@ -216,9 +216,22 @@
         FROM assignments a
         LEFT JOIN courses c ON a.course_id = c.id
         LEFT JOIN users u ON a.teacher_id = u.id
-        INNER JOIN enrollments e ON a.course_id = e.course_id AND e.status = 'active'
+        INNER JOIN enrollments e ON a.course_id = e.course_id
         WHERE a.deleted = false
           AND e.student_id = #{studentId}
+        <if test="includeHistory == false">
+            AND e.status = 'active'
+        </if>
+        <!-- 仅显示待处理：作业需为已发布，且该学生尚未提交（或未评分，可根据需要调整） -->
+        <if test="onlyPending == true">
+            AND a.status = 'published'
+            AND NOT EXISTS (
+                SELECT 1 FROM submissions s
+                WHERE s.assignment_id = a.id
+                  AND s.student_id = #{studentId}
+                  AND (s.status IN ('submitted','SUBMITTED','graded','GRADED') OR s.submitted_at IS NOT NULL)
+            )
+        </if>
         <if test="courseId != null">
             AND a.course_id = #{courseId}
         </if>
