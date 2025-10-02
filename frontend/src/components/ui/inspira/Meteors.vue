@@ -6,7 +6,7 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
-const props = withDefaults(defineProps<{ count?: number; class?: string }>(), { count: 16 })
+const props = withDefaults(defineProps<{ count?: number; class?: string }>(), { count: 36 })
 
 const styleMap = computed(() => Array.from({ length: props.count }).map(() => {
   const left = Math.random() * 100

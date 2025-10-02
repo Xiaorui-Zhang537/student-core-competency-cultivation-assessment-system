@@ -6,6 +6,11 @@ export const useUIStore = defineStore('ui', () => {
   const isDarkMode = ref(false)
   type ThemeName = 'retro' | 'dracula' | 'light' | 'dark' | 'cupcake' | 'coffee'
   const themeName = ref<ThemeName>('retro')
+  // 新增：背景选择（明/暗各自独立）
+  type LightBackground = 'none' | 'aurora' | 'tetris'
+  type DarkBackground = 'none' | 'neural' | 'meteors'
+  const backgroundLight = ref<LightBackground>('none')
+  const backgroundDark = ref<DarkBackground>('none')
   type CursorTrailMode = 'off' | 'fluid' | 'smooth' | 'tailed'
   const cursorTrailMode = ref<CursorTrailMode>('off')
   type CursorStyle = 'arrow' | 'triangle' | 'teardrop'
@@ -57,6 +62,24 @@ export const useUIStore = defineStore('ui', () => {
       cursorTrailMode.value = 'off'
       cursorStyle.value = 'arrow'
     }
+    // 初始化背景偏好
+    try {
+      const lb = localStorage.getItem('backgroundLight')
+      if (lb === 'none' || lb === 'aurora' || lb === 'tetris') {
+        backgroundLight.value = lb as LightBackground
+      } else {
+        backgroundLight.value = 'none'
+      }
+      const db = localStorage.getItem('backgroundDark')
+      if (db === 'none' || db === 'neural' || db === 'meteors') {
+        backgroundDark.value = db as DarkBackground
+      } else {
+        backgroundDark.value = 'none'
+      }
+    } catch {
+      backgroundLight.value = 'none'
+      backgroundDark.value = 'none'
+    }
   }
 
   // 旧主题相关初始化已移除
@@ -107,6 +130,13 @@ export const useUIStore = defineStore('ui', () => {
   watch(cursorStyle, (v) => {
     try { localStorage.setItem('cursorStyle', v) } catch {}
   })
+  // 持久化背景偏好
+  watch(backgroundLight, (v) => {
+    try { localStorage.setItem('backgroundLight', v) } catch {}
+  })
+  watch(backgroundDark, (v) => {
+    try { localStorage.setItem('backgroundDark', v) } catch {}
+  })
   
 
   // 方法
@@ -150,6 +180,14 @@ export const useUIStore = defineStore('ui', () => {
   }
   const setCursorStyle = (style: CursorStyle) => {
     cursorStyle.value = style
+  }
+
+  // 背景设置方法
+  const setBackgroundLight = (bg: LightBackground) => {
+    backgroundLight.value = bg
+  }
+  const setBackgroundDark = (bg: DarkBackground) => {
+    backgroundDark.value = bg
   }
 
   const toggleSidebar = () => {
@@ -202,12 +240,16 @@ export const useUIStore = defineStore('ui', () => {
     loading,
     notifications,
     themeName,
+    backgroundLight,
+    backgroundDark,
     cursorTrailMode,
     cursorStyle,
     // 方法
     initDarkMode,
     toggleDarkMode,
     setTheme,
+    setBackgroundLight,
+    setBackgroundDark,
     setCursorTrailMode,
     setCursorStyle,
     toggleSidebar,

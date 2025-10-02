@@ -1,5 +1,6 @@
 <template>
   <div class="min-h-screen relative text-base-content" :style="baseBgStyle">
+    <BackgroundLayer />
     <!-- 顶部导航栏 -->
     <nav class="sticky top-0 z-40 px-6 pt-6 pb-6">
       <div class="flex items-center gap-3">
@@ -22,6 +23,13 @@
                 <sun-icon v-if="uiStore.isDarkMode" class="w-5 h-5" />
                 <moon-icon v-else class="w-5 h-5" />
               </ripple-button>
+            </DockIcon>
+            <DockIcon>
+              <span ref="bgBtnRef" class="inline-flex">
+                <ripple-button pill :title="t('layout.common.bgPickerTitle') as string || '背景'" @click="onToggleBgPicker">
+                  <photo-icon class="w-5 h-5" />
+                </ripple-button>
+              </span>
             </DockIcon>
             <DockIcon>
               <span ref="themeBtnRef" class="inline-flex">
@@ -132,6 +140,57 @@
           <span v-if="uiStore.themeName==='light' || uiStore.themeName==='dark'" class="text-theme-primary">✓</span>
         </button>
       </liquid-glass>
+      <!-- 背景选择悬浮菜单（与主题菜单一致样式） -->
+      <div v-if="showBgPicker" class="fixed inset-0 z-[999]" @click="showBgPicker = false"></div>
+      <liquid-glass
+        v-if="showBgPicker"
+        :style="bgMenuStyle"
+        containerClass="fixed z-[1000] rounded-2xl"
+        class="p-1"
+        :radius="16"
+        :frost="0.05"
+        @click.stop
+      >
+        <div class="px-3 py-2 text-xs text-subtle">
+          <div class="font-medium mb-1">{{ t('layout.common.bgPickerTitle') || '背景与主题' }}</div>
+          <div class="opacity-90">{{ t('layout.common.bgPickerDesc') }}</div>
+        </div>
+        <div class="border-t border-white/10 my-1"></div>
+        <div class="px-2 py-2">
+          <div class="text-xs text-subtle mb-2">{{ t('layout.common.lightMode') || '明亮模式' }}</div>
+          <div class="flex flex-col gap-2">
+            <button class="w-full text-left px-3 py-2 rounded-xl hover:bg-white/10 text-sm flex items-center justify-between" @click="setLight('none')">
+              <span>{{ t('layout.common.bg.none') || '无' }}</span>
+              <span v-if="uiStore.backgroundLight==='none'" class="text-theme-primary">✓</span>
+            </button>
+            <button class="w-full text-left px-3 py-2 rounded-xl hover:bg-white/10 text-sm flex items-center justify-between" @click="setLight('aurora')">
+              <span>{{ t('layout.common.bg.aurora') || '极光' }}</span>
+              <span v-if="uiStore.backgroundLight==='aurora'" class="text-theme-primary">✓</span>
+            </button>
+            <button class="w-full text-left px-3 py-2 rounded-xl hover:bg-white/10 text-sm flex items-center justify-between" @click="setLight('tetris')">
+              <span>{{ t('layout.common.bg.tetris') || '俄罗斯方块' }}</span>
+              <span v-if="uiStore.backgroundLight==='tetris'" class="text-theme-primary">✓</span>
+            </button>
+          </div>
+        </div>
+        <div class="px-2 py-2 pt-0">
+          <div class="text-xs text-subtle mb-2">{{ t('layout.common.darkMode') || '暗黑模式' }}</div>
+          <div class="flex flex-col gap-2">
+            <button class="w-full text-left px-3 py-2 rounded-xl hover:bg-white/10 text-sm flex items-center justify-between" @click="setDark('none')">
+              <span>{{ t('layout.common.bg.none') || '无' }}</span>
+              <span v-if="uiStore.backgroundDark==='none'" class="text-theme-primary">✓</span>
+            </button>
+            <button class="w-full text-left px-3 py-2 rounded-xl hover:bg-white/10 text-sm flex items-center justify-between" @click="setDark('neural')">
+              <span>{{ t('layout.common.bg.neural') || '神经网络' }}</span>
+              <span v-if="uiStore.backgroundDark==='neural'" class="text-theme-primary">✓</span>
+            </button>
+            <button class="w-full text-left px-3 py-2 rounded-xl hover:bg-white/10 text-sm flex items-center justify-between" @click="setDark('meteors')">
+              <span>{{ t('layout.common.bg.meteors') || '流星' }}</span>
+              <span v-if="uiStore.backgroundDark==='meteors'" class="text-theme-primary">✓</span>
+            </button>
+          </div>
+        </div>
+      </liquid-glass>
       <!-- 点击外部关闭：头像菜单遮罩 -->
       <div v-if="showUserMenu" class="fixed inset-0 z-[999]" @click="showUserMenu = false"></div>
       <liquid-glass
@@ -236,6 +295,7 @@ import RippleButton from '@/components/ui/RippleButton.vue'
 import SparklesText from '@/components/ui/SparklesText.vue'
 import LiquidLogo from '@/components/ui/LiquidLogo.vue'
 import CursorTrailLayer from '@/components/ui/CursorTrailLayer.vue'
+import BackgroundLayer from '@/components/ui/BackgroundLayer.vue'
 import { useChatStore } from '@/stores/chat'
 import { useI18n } from 'vue-i18n'
 import {
@@ -244,6 +304,7 @@ import {
   MoonIcon,
   ChevronDownIcon,
   PaintBrushIcon,
+  PhotoIcon,
   UserIcon,
   ArrowRightOnRectangleIcon,
   HomeIcon,
@@ -264,7 +325,7 @@ const chat = useChatStore()
 const { t } = useI18n()
 
 // 状态
-const baseBgStyle = computed(() => ({ background: 'var(--color-base-100)' }))
+const baseBgStyle = computed(() => ({ backgroundColor: 'color-mix(in oklab, var(--color-base-100) 86%, transparent)' }))
 const showUserMenu = ref(false)
 const userMenuBtn = ref<HTMLElement | null>(null)
 const userMenuStyle = ref<Record<string, string>>({})
@@ -275,6 +336,9 @@ const themeMenuStyle = ref<Record<string, string>>({})
 const showCursorMenu = ref(false)
 const cursorBtnRef = ref<HTMLElement | null>(null)
 const cursorMenuStyle = ref<Record<string, string>>({})
+const showBgPicker = ref(false)
+const bgBtnRef = ref<HTMLElement | null>(null)
+const bgMenuStyle = ref<Record<string, string>>({})
 const displayName = computed(() => (authStore.user as any)?.nickname || (authStore.user as any)?.name || (authStore.user as any)?.username || t('layout.common.me') || 'Me')
 
 const handleLogout = async () => {
@@ -342,6 +406,21 @@ watch(showCursorMenu, async (v: boolean) => {
     }
   } catch {}
 })
+watch(showBgPicker, async (v: boolean) => {
+  if (!v) return
+  await nextTick()
+  try {
+    const el = bgBtnRef.value as HTMLElement
+    const rect = el.getBoundingClientRect()
+    bgMenuStyle.value = {
+      position: 'fixed',
+      top: `${rect.bottom + 10}px`,
+      left: `${Math.max(8, rect.right - 224)}px`,
+      width: '14rem',
+      zIndex: '1000'
+    }
+  } catch {}
+})
 // 调试：观察 isOpen 变化
 watch(() => chat.isOpen, (v: boolean) => { try { console.debug('[TeacherLayout] chat.isOpen changed ->', v) } catch {} })
 
@@ -356,6 +435,9 @@ function setCursor(v: 'off' | 'fluid' | 'smooth' | 'tailed') {
   uiStore.setCursorTrailMode(v)
   showThemeMenu.value = false
 }
+
+function setLight(v: 'none' | 'aurora' | 'tetris') { uiStore.setBackgroundLight(v) }
+function setDark(v: 'none' | 'neural' | 'meteors') { uiStore.setBackgroundDark(v) }
 
 // 主题切换刷新交由图表组件或页面内图表自行处理
 
@@ -377,6 +459,11 @@ function onToggleCursorMenu() {
   showCursorMenu.value = !showCursorMenu.value
 }
 
+function onToggleBgPicker() {
+  try { window.dispatchEvent(new CustomEvent('ui:close-topbar-popovers')) } catch {}
+  showBgPicker.value = !showBgPicker.value
+}
+
 function onToggleUserMenu() {
   try { window.dispatchEvent(new CustomEvent('ui:close-topbar-popovers')) } catch {}
   showUserMenu.value = !showUserMenu.value
@@ -386,6 +473,7 @@ function closeTopbarPopovers() {
   showThemeMenu.value = false
   showUserMenu.value = false
   showCursorMenu.value = false
+  showBgPicker.value = false
 }
 
 // Dock 配置

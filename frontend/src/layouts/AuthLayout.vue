@@ -1,8 +1,7 @@
 <template>
   <!-- 强制刷新标记: v2025-07-29-11:15 -->
-  <div class="min-h-screen relative overflow-hidden text-base-content">
-    <!-- 动态背景 -->
-    <div class="absolute inset-0" :style="authBgStyle"></div>
+  <div class="min-h-screen relative overflow-hidden text-base-content" :style="baseBgStyle">
+    <BackgroundLayer />
 
     <!-- 主容器：分屏布局 -->
     <div class="relative z-10 min-h-screen py-8 md:py-10 pl-8 pr-8 md:pl-16 md:pr-16 xl:pl-24 xl:pr-24 2xl:pl-32 2xl:pr-32 max-w-8xl mx-auto">
@@ -15,6 +14,13 @@
                 <sun-icon v-if="uiStore.isDarkMode" class="w-5 h-5" />
                 <moon-icon v-else class="w-5 h-5" />
               </ripple-button>
+            </DockIcon>
+            <DockIcon>
+              <span ref="bgBtnRef" class="inline-flex">
+                <ripple-button pill :title="t('layout.common.bgPickerTitle') as string" @click="onToggleBgPicker">
+                  <photo-icon class="w-5 h-5" />
+                </ripple-button>
+              </span>
             </DockIcon>
             <DockIcon>
               <span ref="cursorBtnRef" class="inline-flex">
@@ -59,6 +65,49 @@
             <span>{{ t('layout.common.cursorTrailOff') }}</span>
             <span v-if="uiStore.cursorTrailMode==='off'" class="text-theme-primary">✓</span>
           </button>
+        </liquid-glass>
+        <!-- 背景选择悬浮菜单（与主题菜单一致样式） -->
+        <div v-if="showBgPicker" class="fixed inset-0 z-[999]" @click="showBgPicker = false"></div>
+        <liquid-glass v-if="showBgPicker" :style="bgMenuStyle" containerClass="fixed z-[1000] rounded-2xl" class="p-1" :radius="16" :frost="0.05" @click.stop>
+          <div class="px-3 py-2 text-xs text-subtle">
+            <div class="font-medium mb-1">{{ t('layout.common.bgPickerTitle') }}</div>
+            <div class="opacity-90">{{ t('layout.common.bgPickerDesc') }}</div>
+          </div>
+          <div class="border-t border-white/10 my-1"></div>
+          <div class="px-2 py-2">
+          <div class="text-xs text-subtle mb-2">{{ t('layout.common.lightMode') }}</div>
+          <div class="flex flex-col gap-2">
+              <button class="w-full text-left px-3 py-2 rounded-xl hover:bg-white/10 text-sm flex items-center justify-between" @click="setLight('none')">
+                <span>{{ t('layout.common.bg.none') }}</span>
+                <span v-if="uiStore.backgroundLight==='none'" class="text-theme-primary">✓</span>
+              </button>
+              <button class="w-full text-left px-3 py-2 rounded-xl hover:bg-white/10 text-sm flex items-center justify-between" @click="setLight('aurora')">
+                <span>{{ t('layout.common.bg.aurora') }}</span>
+                <span v-if="uiStore.backgroundLight==='aurora'" class="text-theme-primary">✓</span>
+              </button>
+              <button class="w-full text-left px-3 py-2 rounded-xl hover:bg-white/10 text-sm flex items-center justify-between" @click="setLight('tetris')">
+                <span>{{ t('layout.common.bg.tetris') }}</span>
+                <span v-if="uiStore.backgroundLight==='tetris'" class="text-theme-primary">✓</span>
+              </button>
+            </div>
+          </div>
+          <div class="px-2 py-2 pt-0">
+          <div class="text-xs text-subtle mb-2">{{ t('layout.common.darkMode') }}</div>
+          <div class="flex flex-col gap-2">
+              <button class="w-full text-left px-3 py-2 rounded-xl hover:bg-white/10 text-sm flex items-center justify-between" @click="setDark('none')">
+                <span>{{ t('layout.common.bg.none') }}</span>
+                <span v-if="uiStore.backgroundDark==='none'" class="text-theme-primary">✓</span>
+              </button>
+              <button class="w-full text-left px-3 py-2 rounded-xl hover:bg-white/10 text-sm flex items-center justify-between" @click="setDark('neural')">
+                <span>{{ t('layout.common.bg.neural') }}</span>
+                <span v-if="uiStore.backgroundDark==='neural'" class="text-theme-primary">✓</span>
+              </button>
+              <button class="w-full text-left px-3 py-2 rounded-xl hover:bg-white/10 text-sm flex items-center justify-between" @click="setDark('meteors')">
+                <span>{{ t('layout.common.bg.meteors') }}</span>
+                <span v-if="uiStore.backgroundDark==='meteors'" class="text-theme-primary">✓</span>
+              </button>
+            </div>
+          </div>
         </liquid-glass>
       </teleport>
       <!-- 分屏栅格 -->
@@ -184,12 +233,12 @@
       </div>
     </div>
 
-    
+    <cursor-trail-layer />
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted, nextTick } from 'vue'
+import { ref, computed, onMounted, onUnmounted, nextTick, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useUIStore } from '@/stores/ui'
 import { useLocale } from '@/i18n/useLocale'
@@ -209,6 +258,7 @@ import {
   
   QuestionMarkCircleIcon
 } from '@heroicons/vue/24/outline'
+import { PaintBrushIcon, PhotoIcon } from '@heroicons/vue/24/outline'
 import LanguageSwitcher from '@/components/ui/LanguageSwitcher.vue'
 import { LetterPullup, RadiantText } from '@/components/ui/inspira'
 import { DEFAULT_AVATARS } from '@/shared/utils/avatars'
@@ -222,6 +272,8 @@ import { HomeIcon, CursorArrowRaysIcon } from '@heroicons/vue/24/outline'
 // FuturisticBackground 已移除
 import Card from '@/components/ui/Card.vue'
 import CardSpotlight from '@/components/ui/inspira/CardSpotlight.vue'
+import BackgroundLayer from '@/components/ui/BackgroundLayer.vue'
+import CursorTrailLayer from '@/components/ui/CursorTrailLayer.vue'
 
 // 组合式API
 const route = useRoute()
@@ -239,6 +291,7 @@ let timer: number | null = null
 const { locale, setLocale } = useLocale()
 const { t, d } = useI18n()
 const formattedTime = computed(() => d(currentTime.value, 'medium'))
+const baseBgStyle = computed(() => ({ backgroundColor: 'color-mix(in oklab, var(--color-base-100) 86%, transparent)' }))
 
 // 主题相关
 const isDark = computed(() => uiStore.isDarkMode)
@@ -246,14 +299,7 @@ const isNewTheme = computed(() => {
   const theme = document.documentElement.getAttribute('data-theme') || ''
   return theme === 'retro' || theme === 'dracula'
 })
-const authBgStyle = computed(() => {
-  return isNewTheme.value
-    ? { background: 'var(--color-base-100)' }
-    : { background: isDark.value
-        ? 'linear-gradient(to bottom right, #0f172a, #111827, #0f172a)'
-        : 'linear-gradient(to bottom right, #eff6ff, #e0f2fe, #fff7ed)'
-      }
-})
+// 主页背景改由 BackgroundLayer 控制
 
 // 动画偏好与设备能力（背景组件内部已做处理，此处无需额外逻辑）
 
@@ -376,6 +422,9 @@ function goLogin() {
 const cursorBtnRef = ref<HTMLElement | null>(null)
 const showCursorMenu = ref(false)
 const cursorMenuStyle = ref<Record<string, string>>({})
+const showBgPicker = ref(false)
+const bgBtnRef = ref<HTMLElement | null>(null)
+const bgMenuStyle = ref<Record<string, string>>({})
 
 function onToggleCursorMenu() {
   showCursorMenu.value = !showCursorMenu.value
@@ -394,6 +443,30 @@ function onToggleCursorMenu() {
     } catch {}
   })
 }
+
+function onToggleBgPicker() {
+  showBgPicker.value = !showBgPicker.value
+}
+
+function setLight(v: 'none' | 'aurora' | 'tetris') { uiStore.setBackgroundLight(v) }
+function setDark(v: 'none' | 'neural' | 'meteors') { uiStore.setBackgroundDark(v) }
+
+watch(showBgPicker, async (v: boolean) => {
+  if (!v) return
+  nextTick(() => {
+    try {
+      const el = bgBtnRef.value as HTMLElement
+      const rect = el.getBoundingClientRect()
+      bgMenuStyle.value = {
+        position: 'fixed',
+        top: `${rect.bottom + 10}px`,
+        left: `${Math.max(8, rect.right - 220)}px`,
+        width: '14rem',
+        zIndex: '1000'
+      }
+    } catch {}
+  })
+})
 
 function setCursor(v: 'off' | 'fluid' | 'smooth' | 'tailed') {
   uiStore.setCursorTrailMode(v)

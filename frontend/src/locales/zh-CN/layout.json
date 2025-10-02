@@ -72,7 +72,12 @@
 			"cursorTrailOff": "关闭",
 			"cursorTrailFluid": "流体光标",
             "cursorTrailSmooth": "顺滑光标",
-            "cursorTrailTailed": "带尾迹光标"
+			"cursorTrailTailed": "带尾迹光标",
+			"bgPickerTitle": "背景与主题",
+			"bgPickerDesc": "为明亮和暗黑模式分别选择背景效果。背景为装饰层，不影响内容交互。",
+			"lightMode": "明亮模式",
+			"darkMode": "暗黑模式",
+			"bg": { "none": "无", "meteors": "流星", "aurora": "极光", "tetris": "俄罗斯方块", "neural": "神经网络" }
 		},
 		"teacher": {
 			"title": "学生核心能力培养评估系统",

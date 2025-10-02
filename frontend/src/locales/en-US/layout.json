@@ -72,7 +72,12 @@
 			"cursorTrailOff": "Off",
 			"cursorTrailFluid": "Fluid Cursor",
             "cursorTrailSmooth": "Smooth Cursor",
-            "cursorTrailTailed": "Tailed Cursor"
+			"cursorTrailTailed": "Tailed Cursor",
+			"bgPickerTitle": "Background & Theme",
+			"bgPickerDesc": "Pick backgrounds separately for light and dark modes. Backgrounds are decorative and non-interactive.",
+			"lightMode": "Light Mode",
+			"darkMode": "Dark Mode",
+			"bg": { "none": "None", "meteors": "Meteors", "aurora": "Aurora", "tetris": "Tetris", "neural": "Neural" }
 		},
 		"teacher": {
 			"title": "Student Core Competency Cultivation Assessment System",
