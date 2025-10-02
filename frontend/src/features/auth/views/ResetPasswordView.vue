@@ -9,18 +9,18 @@
       <div>
         <label for="password" class="block text-sm font-medium mb-2">新密码</label>
         <div class="rounded-lg">
-          <glass-input id="password" v-model="password" type="password" :disabled="uiStore.loading" placeholder="请输入新密码（至少6位）" />
+          <glass-input id="password" v-model="password" type="password" :disabled="uiStore.loading" placeholder="请输入新密码（至少6位）" tint="primary" />
         </div>
       </div>
       <div>
         <label for="confirm" class="block text-sm font-medium mb-2">确认新密码</label>
         <div class="rounded-lg">
-          <glass-input id="confirm" v-model="confirm" type="password" :disabled="uiStore.loading" placeholder="请再次输入新密码" />
+          <glass-input id="confirm" v-model="confirm" type="password" :disabled="uiStore.loading" placeholder="请再次输入新密码" tint="primary" />
         </div>
       </div>
 
       <div>
-        <Button class="w-full" variant="primary" type="submit" :disabled="uiStore.loading">
+        <Button class="w-full" variant="info" type="submit" :disabled="uiStore.loading">
           {{ uiStore.loading ? '提交中...' : '重置密码' }}
         </Button>
       </div>

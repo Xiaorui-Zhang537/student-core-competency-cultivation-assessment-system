@@ -44,7 +44,7 @@
       <div>
         <label for="username" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{{ t('auth.register.form.username.label') }}</label>
         <div class="rounded-lg">
-          <glass-input id="username" v-model="form.username" type="text" :disabled="authStore.loading" />
+          <glass-input id="username" v-model="form.username" type="text" :disabled="authStore.loading" tint="primary" />
         </div>
         <p v-if="form.username && !isUsernameValid" class="mt-1 text-xs text-red-600">{{ t('auth.register.error.usernameInvalid') }}</p>
       </div>
@@ -52,7 +52,7 @@
       <div>
         <label for="email" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{{ t('auth.register.form.email.label') }}</label>
         <div class="rounded-lg">
-          <glass-input id="email" v-model="form.email" type="email" :disabled="authStore.loading" />
+          <glass-input id="email" v-model="form.email" type="email" :disabled="authStore.loading" tint="primary" />
         </div>
         <p v-if="form.email && !isEmailValid" class="mt-1 text-xs text-red-600">{{ t('auth.register.error.emailInvalid') }}</p>
       </div>
@@ -60,7 +60,7 @@
       <div>
         <label for="password" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{{ t('auth.register.form.password.label') }}</label>
         <div class="rounded-lg">
-          <glass-password-input id="password" v-model="form.password" :disabled="authStore.loading" />
+          <glass-password-input id="password" v-model="form.password" :disabled="authStore.loading" tint="primary" />
         </div>
         <p v-if="form.password && !isPasswordValid" class="mt-1 text-xs text-red-600">{{ t('auth.register.error.passwordInvalid') }}</p>
       </div>
@@ -68,12 +68,12 @@
       <div>
         <label for="confirmPassword" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{{ t('auth.register.form.confirmPassword.label') }}</label>
         <div class="rounded-lg">
-          <glass-password-input id="confirmPassword" v-model="confirmPassword" :disabled="authStore.loading" />
+          <glass-password-input id="confirmPassword" v-model="confirmPassword" :disabled="authStore.loading" tint="primary" />
         </div>
       </div>
 
       <div>
-        <Button class="w-full" variant="primary" icon="confirm" type="submit" :disabled="authStore.loading || (form.username && !isUsernameValid) || (form.email && !isEmailValid) || (form.password && !isPasswordValid)">
+        <Button class="w-full" variant="info" icon="confirm" type="submit" :disabled="authStore.loading || (form.username && !isUsernameValid) || (form.email && !isEmailValid) || (form.password && !isPasswordValid)">
           {{ authStore.loading ? t('auth.register.action.submitting') : t('auth.register.action.submit') }}
         </Button>
       </div>
@@ -82,7 +82,7 @@
     <div class="mt-6 text-center">
       <p class="text-sm text-gray-600 dark:text-gray-400">
         {{ t('auth.register.link.hasAccount') }}
-        <a href="/auth/login" @click.prevent="goLogin" class="font-medium text-primary-600 hover:text-primary-500">
+        <a href="/auth/login" @click.prevent="goLogin" class="font-medium text-primary hover:text-primary/80">
           {{ t('auth.register.link.toLogin') }}
         </a>
       </p>

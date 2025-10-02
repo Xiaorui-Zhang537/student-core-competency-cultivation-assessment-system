@@ -7,12 +7,46 @@
 			},
 			"subtitle": "AI-powered Core Competency Cultivation & Assessment Platform",
 			"features": {
-				"secure": { "title": "Secure & Reliable", "desc": "Enterprise-grade security" },
-				"analytics": { "title": "Intelligent Analytics", "desc": "AI-driven insights" },
-				"collab": { "title": "Collaborative Learning", "desc": "Community interactions" },
+            "secure": { "title": "Secure & Reliable", "desc": "Enterprise-grade security", "descLong": "End-to-end encryption and fine-grained access control keep your accounts, assessments, and learning data safe in transit and at rest." },
+            "analytics": { "title": "Intelligent Analytics", "desc": "AI-driven insights", "descLong": "Unified modeling across assignments, courses and behavioral data, delivering explainable learner profiles and actionable suggestions." },
+            "collab": { "title": "Growth-Oriented", "desc": "Community interactions", "descLong": "Evidence-based feedback centered on competencies helps learners keep improving through authentic tasks." },
 				"mobile": { "title": "Mobile First", "desc": "Responsive across devices" },
 				"cloud": { "title": "Cloud Sync", "desc": "Real-time data syncing" },
-				"performance": { "title": "High Performance", "desc": "Blazing fast experience" }
+				"performance": { "title": "High Performance", "desc": "Blazing fast experience" },
+				"community": { "title": "Learning Community", "desc": "Grow together with peers", "descLong": "An immersive community to share work and reflections, cross-class/course peer review, and collaborative knowledge building." }
+			},
+			"points": {
+				"radar": {
+					"title": "Five-Dimension Radar Assessment",
+					"desc": "Competency radar",
+					"descLong": "Fuse courses, assignments and behavior data to build a 5D radar: visible dimensions are presented directly, while the remaining implicit ones are inferred and quantified by AI. Time comparisons and per-dimension drill-downs highlight strengths and gaps."
+				},
+				"ai": {
+					"title": "AI TA Grading · 5D Scoring",
+					"desc": "5D scoring & feedback",
+					"descLong": "Deliver 5D scores grounded in task performance: beyond visible dimensions, AI leverages semantic understanding and behavioral signals to infer four hard-to-visualize dimensions, along with evidence chains and actionable advice—our system’s key differentiator."
+				},
+				"growth": {
+					"title": "Growth Portfolio & Compare",
+					"desc": "Process-based growth",
+					"descLong": "Translate 5D outcomes into executable study plans and staged targets. Make the four implicit dimensions ‘visible and improvable’, boosting learning efficiency and academic performance."
+				},
+				"community": {
+					"title": "Learning Community",
+					"desc": "Grow together with peers",
+					"descLong": "Topic-based circles, showcase and cross-class peer review; AI-assisted comments and prompts help surface high-quality knowledge and cases, fostering collaboration and continuous growth."
+				}
+			},
+			"reviews": {
+				"r1": "Speaking and writing feedback is concrete. AI also highlights gaps in collaboration and self-management so I can focus.",
+				"r2": "5D scoring revealed the ‘implicit dimensions’. Following the advice actually improved my final grade.",
+				"r3": "The evidence chain after each task is convincing. I know why I lost points and what to do next time.",
+				"r4": "Peer review in the community is active. With AI-assisted comments, practice quality improved a lot.",
+				"r5": "The growth portfolio is very visual. Weekly trends are clear at a glance.",
+				"r6": "Data can be analyzed across courses, which helps me plan my study rhythm."
+			},
+			"served": {
+				"line": "Served organizations: Dalian University of Technology"
 			},
 			"footer": {
 				"copyright": "Student Core Competency Cultivation Assessment System. All rights reserved.",

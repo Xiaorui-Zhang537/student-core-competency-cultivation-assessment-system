@@ -3,6 +3,21 @@
 @import 'tailwindcss/utilities';
 @import './glass.tokens.postcss';
 @import '../components/ui/pill.postcss';
+@theme inline {
+  --animate-aurora: aurora 60s linear infinite;
+  @keyframes aurora {
+    from {
+      background-position:
+        50% 50%,
+        50% 50%;
+    }
+    to {
+      background-position:
+        350% 50%,
+        350% 50%;
+    }
+  }
+}
 @plugin "daisyui/theme" {
   name: "retro";
   default: false;

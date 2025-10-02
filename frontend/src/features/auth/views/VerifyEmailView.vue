@@ -13,7 +13,7 @@
 
     <div class="text-center" v-else>
       <div v-glass="{ strength: 'ultraThin' }" class="inline-block p-3 rounded-lg">
-        <Button variant="primary" icon="arrow-right" @click="goLogin">{{ t('auth.verify.toLogin') }}</Button>
+        <Button variant="info" icon="arrow-right" @click="goLogin">{{ t('auth.verify.toLogin') }}</Button>
       </div>
     </div>
   </div>

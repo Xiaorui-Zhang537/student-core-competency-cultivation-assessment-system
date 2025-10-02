@@ -2,7 +2,7 @@
   <component
     :is="tag"
     :class="[
-      'inline-flex items-center justify-center rounded-full font-medium transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed',
+      'inline-flex items-center justify-center rounded-full font-medium transition-all duration-200 outline-none ring-0 focus:outline-none focus-visible:outline-none focus:ring-0 focus:ring-offset-0 focus-visible:ring-0 focus-visible:ring-offset-0 disabled:opacity-50 disabled:cursor-not-allowed',
       sizeClasses,
       variantClasses,
       contentGapClass,
@@ -159,7 +159,7 @@ const variantClasses = computed(() => {
     indigo: 'btn-variant-info',
     purple: 'btn-variant-info',
     teal: 'btn-variant-info',
-    menu: 'relative overflow-hidden text-base-content hover:bg-white/10 focus:ring-indigo-500 justify-start items-center text-left !px-0'
+    menu: 'relative overflow-hidden text-base-content hover:bg-white/10 justify-start items-center text-left !px-0 outline-none ring-0 focus:outline-none focus-visible:outline-none focus:ring-0 focus:ring-offset-0 focus-visible:ring-0 focus-visible:ring-offset-0 active:ring-0'
   }
   return variants[props.variant]
 })

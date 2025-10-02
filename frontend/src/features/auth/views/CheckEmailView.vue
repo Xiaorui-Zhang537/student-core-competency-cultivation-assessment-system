@@ -10,7 +10,7 @@
     </div>
 
     <div class="space-y-3">
-      <Button class="w-full" variant="primary" icon="arrow-right" @click="goLogin">{{ t('auth.checkEmail.toLogin') }}</Button>
+      <Button class="w-full" variant="info" icon="arrow-right" @click="goLogin">{{ t('auth.checkEmail.toLogin') }}</Button>
       <Button as="a" href="/auth/register" variant="secondary" icon="user-plus" @click.prevent="goRegister">{{ t('auth.checkEmail.toRegister') }}</Button>
     </div>
   </div>

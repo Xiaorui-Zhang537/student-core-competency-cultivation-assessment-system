@@ -1,30 +1,61 @@
 <template>
-  <div class="overflow-hidden">
-    <div class="whitespace-nowrap animate-marquee will-change-transform" :style="{ animationDuration: duration+'s' }">
-      <span v-for="(it, i) in loopItems" :key="i" class="inline-flex items-center gap-2 mr-10">
-        <span class="font-medium">{{ renderTitle(it) }}</span>
-        <span class="text-subtle">— {{ renderDesc(it) }}</span>
-      </span>
+  <div
+    :class="[
+      'group flex overflow-hidden p-2 [--duration:40s] [--gap:1rem] [gap:var(--gap)]',
+      vertical ? 'flex-col' : 'flex-row',
+      $props.class,
+    ]"
+  >
+    <div
+      v-for="index in repeat"
+      :key="index"
+      :class="[
+        'flex shrink-0 justify-around [gap:var(--gap)]',
+        vertical ? 'animate-marquee-vertical flex-col' : 'animate-marquee flex-row',
+        pauseOnHover ? 'group-hover:[animation-play-state:paused]' : '',
+      ]"
+      :style="{ animationDirection: reverse ? 'reverse' : 'normal' }"
+    >
+      <slot />
     </div>
   </div>
 </template>
 
-<script setup lang="ts">
-import { computed } from 'vue'
-import { useI18n } from 'vue-i18n'
-const props = withDefaults(defineProps<{ items: Array<any>; duration?: number }>(), { duration: 18 })
-const { t } = useI18n()
-const loopItems = computed(() => props.items.concat(props.items))
-function renderTitle(it: any) { return it.titleKey ? t(it.titleKey) : (it.title || '') }
-function renderDesc(it: any) { return it.descKey ? t(it.descKey) : (it.desc || '') }
+<script lang="ts" setup>
+withDefaults(
+  defineProps<{
+    class?: string
+    reverse?: boolean
+    pauseOnHover?: boolean
+    vertical?: boolean
+    repeat?: number
+  }>(),
+  {
+    pauseOnHover: false,
+    vertical: false,
+    repeat: 4,
+  },
+)
 </script>
 
 <style scoped>
-@keyframes marquee {
-  0% { transform: translateX(0); }
-  100% { transform: translateX(-50%); }
+.animate-marquee {
+  animation: marquee var(--duration) linear infinite;
+  animation-direction: reverse;
 }
-.animate-marquee { animation-name: marquee; animation-timing-function: linear; animation-iteration-count: infinite; }
-</style>
 
+.animate-marquee-vertical {
+  animation: marquee-vertical var(--duration) linear infinite;
+}
+
+@keyframes marquee {
+  from { transform: translateX(0); }
+  to { transform: translateX(calc(-100% - var(--gap))); }
+}
+
+@keyframes marquee-vertical {
+  from { transform: translateY(0); }
+  to { transform: translateY(calc(-100% - var(--gap))); }
+}
+</style>
 

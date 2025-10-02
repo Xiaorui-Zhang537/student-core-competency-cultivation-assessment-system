@@ -15,6 +15,7 @@
             type="text"
             :disabled="authStore.loading"
             :placeholder="t('auth.login.form.username.placeholder') as string"
+            tint="primary"
           />
         </div>
       </div>
@@ -27,20 +28,21 @@
             v-model="form.password"
             :disabled="authStore.loading"
             :placeholder="t('auth.login.form.password.placeholder') as string"
+            tint="primary"
           />
         </div>
       </div>
 
       <div class="flex items-center justify-between">
         <div class="text-sm">
-          <a href="/auth/forgot-password" @click.prevent="goForgot" class="font-medium text-primary-600 hover:text-primary-500">
+          <a href="/auth/forgot-password" @click.prevent="goForgot" class="font-medium text-primary hover:text-primary/80">
             {{ t('auth.login.link.forgot') }}
           </a>
         </div>
       </div>
 
       <div>
-        <Button class="w-full" variant="primary" type="submit" :disabled="authStore.loading">
+        <Button class="w-full" variant="info" type="submit" :disabled="authStore.loading">
           {{ authStore.loading ? t('auth.login.action.submitting') : t('auth.login.action.submit') }}
         </Button>
       </div>
@@ -49,7 +51,7 @@
     <div class="mt-6 text-center">
       <p class="text-sm text-gray-600 dark:text-gray-400">
         {{ t('auth.login.link.noAccount') }}
-        <a href="/auth/register" @click.prevent="goRegister" class="font-medium text-primary-600 hover:text-primary-500">
+        <a href="/auth/register" @click.prevent="goRegister" class="font-medium text-primary hover:text-primary/80">
           {{ t('auth.login.link.toRegister') }}
         </a>
       </p>

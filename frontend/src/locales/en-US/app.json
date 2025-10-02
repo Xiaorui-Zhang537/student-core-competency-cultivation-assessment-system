@@ -165,7 +165,8 @@
       "points": {
         "radar": { "title": "Radar across 5 dimensions", "desc": "See strengths and gaps holistically" },
         "ai": { "title": "AI-assisted grading", "desc": "Structured feedback for fairness and efficiency" },
-        "growth": { "title": "Growth records & compare", "desc": "Track progress with class comparison" }
+        "growth": { "title": "Growth records & compare", "desc": "Track progress with class comparison" },
+        "a11y": { "title": "Accessibility & UX", "desc": "High contrast, keyboard access, reduced motion, performance" }
       },
       "trust": { "title": "Trusted by" },
       "footer": {

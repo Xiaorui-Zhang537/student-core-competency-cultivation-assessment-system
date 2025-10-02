@@ -339,7 +339,17 @@ const routes = [
   {
     path: '/docs',
     name: 'Docs',
-    component: () => import('@/features/shared/views/DocsRedirectView.vue')
+    component: () => import('@/features/shared/views/DocsRedirectView.vue'),
+    beforeEnter: (_to: any, _from: any, next: (v?: any) => void) => {
+      try {
+        const url = (import.meta as any).env.VITE_DOCS_URL as string | undefined
+        if (url) {
+          window.location.replace(url)
+          return
+        }
+      } catch {}
+      next()
+    }
   },
   // 顶层兼容：邮件链接 /reset-password?token=xxx → 重定向到 /auth/reset-password 保留查询参数
   {
@@ -411,6 +421,18 @@ router.beforeEach((to, from, next) => {
   }
 
   next();
+});
+
+// 从登录页返回首页时，强制刷新一次，避免浏览器 bfcache 导致的白屏/旧状态
+router.afterEach((to, from) => {
+  try {
+    const toName = (to as any)?.name
+    const fromName = (from as any)?.name
+    const comingBackToHome = toName === 'Home' && (fromName === 'Login')
+    if (comingBackToHome) {
+      setTimeout(() => { try { window.location.reload() } catch {} }, 0)
+    }
+  } catch {}
 });
 
 export default router;

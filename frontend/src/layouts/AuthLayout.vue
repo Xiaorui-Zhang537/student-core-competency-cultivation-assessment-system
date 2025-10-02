@@ -5,84 +5,149 @@
     <div class="absolute inset-0" :style="authBgStyle"></div>
 
     <!-- 主容器：分屏布局 -->
-    <div class="relative z-10 min-h-screen p-6 md:p-10">
-      <!-- 顶部工具栏（右上角） -->
-      <div class="flex items-center justify-end gap-3 mb-6">
-          <!-- 主题切换按钮 -->
-          <button
-            @click="toggleTheme"
-            v-glass="{ strength: 'thin', interactive: true }"
-            class="p-2 rounded-lg transition-all duration-200 group"
-            :title="isDark ? t('layout.auth.theme.switchToLight') : t('layout.auth.theme.switchToDark')"
-          >
-            <sun-icon v-if="isDark" class="w-5 h-5 text-yellow-500 group-hover:rotate-180 transition-transform duration-300" />
-            <moon-icon v-else class="w-5 h-5 text-gray-600 group-hover:-rotate-12 transition-transform duration-300" />
+    <div class="relative z-10 min-h-screen py-8 md:py-10 pl-8 pr-8 md:pl-16 md:pr-16 xl:pl-24 xl:pr-24 2xl:pl-32 2xl:pr-32 max-w-8xl mx-auto">
+      <!-- 顶部导航：右上 Dock，与主页一致 -->
+      <nav class="flex items-center justify-end mb-6">
+        <liquid-glass :radius="30" class="flex items-center justify-center h-full" containerClass="rounded-full h-[56px] px-2">
+          <Dock :magnification="60" :distance="140" variant="transparent" paddingClass="pl-1.5 pr-1.5" heightClass="h-[52px]" roundedClass="rounded-full" gapClass="gap-3" class="!mt-0">
+            <DockIcon>
+              <ripple-button pill :title="t('layout.common.toggleTheme') as string" @click="uiStore.toggleDarkMode()">
+                <sun-icon v-if="uiStore.isDarkMode" class="w-5 h-5" />
+                <moon-icon v-else class="w-5 h-5" />
+              </ripple-button>
+            </DockIcon>
+            <DockIcon>
+              <span ref="cursorBtnRef" class="inline-flex">
+                <ripple-button pill :title="t('layout.common.cursorTrail') as string" @click="onToggleCursorMenu">
+                  <CursorArrowRaysIcon class="w-5 h-5" />
+                </ripple-button>
+              </span>
+            </DockIcon>
+            <DockIcon class="-ml-2">
+              <language-switcher buttonClass="px-4 h-10 flex items-center rounded-full min-w-[64px]" />
+            </DockIcon>
+            <DockIcon>
+              <ripple-button pill class="px-3 h-10" :title="('返回首页')" @click="goHome()">
+                <HomeIcon class="w-5 h-5" />
+              </ripple-button>
+            </DockIcon>
+          </Dock>
+        </liquid-glass>
+      </nav>
+      <!-- 光标菜单弹层 -->
+      <teleport to="body">
+        <div v-if="showCursorMenu" class="fixed inset-0 z-[999]" @click="showCursorMenu = false"></div>
+        <liquid-glass v-if="showCursorMenu" :style="cursorMenuStyle" containerClass="fixed z-[1000] rounded-2xl" class="p-1" :radius="16" :frost="0.05" @click.stop>
+          <div class="px-3 py-2 text-xs text-subtle">
+            <div class="font-medium mb-1">{{ t('layout.common.cursorTrailTitle') }}</div>
+            <div class="opacity-90">{{ t('layout.common.cursorTrailDesc') }}</div>
+          </div>
+          <div class="border-t border-white/10 my-1"></div>
+          <button class="w-full text-left px-3 py-2 rounded-2xl hover:bg-white/10 text-sm flex items-center justify-between" @click="setCursor('fluid')">
+            <span>{{ t('layout.common.cursorTrailFluid') }}</span>
+            <span v-if="uiStore.cursorTrailMode==='fluid'" class="text-theme-primary">✓</span>
           </button>
-      </div>
+          <button class="w-full text-left px-3 py-2 rounded-2xl hover:bg-white/10 text-sm flex items-center justify-between" @click="setCursor('smooth')">
+            <span>{{ t('layout.common.cursorTrailSmooth') }}</span>
+            <span v-if="uiStore.cursorTrailMode==='smooth'" class="text-theme-primary">✓</span>
+          </button>
+          <button class="w-full text-left px-3 py-2 rounded-2xl hover:bg-white/10 text-sm flex items-center justify-between" @click="setCursor('tailed')">
+            <span>{{ t('layout.common.cursorTrailTailed') }}</span>
+            <span v-if="uiStore.cursorTrailMode==='tailed'" class="text-theme-primary">✓</span>
+          </button>
+          <button class="w-full text-left px-3 py-2 rounded-2xl hover:bg-white/10 text-sm flex items-center justify-between" @click="setCursor('off')">
+            <span>{{ t('layout.common.cursorTrailOff') }}</span>
+            <span v-if="uiStore.cursorTrailMode==='off'" class="text-theme-primary">✓</span>
+          </button>
+        </liquid-glass>
+      </teleport>
       <!-- 分屏栅格 -->
-      <div class="grid grid-cols-1 md:grid-cols-12 gap-8 items-center">
+      <div class="grid grid-cols-1 md:grid-cols-12 gap-10 items-start mt-6 md:mt-16 lg:mt-24 lg:translate-y-2">
         <!-- 左侧品牌与卖点 -->
-        <div class="md:col-span-7 order-2 md:order-1">
+        <div class="md:col-span-6 md:col-start-2 order-2 md:order-1 md:pr-6 lg:pr-10">
           <div class="animate-fade-in">
             <!-- Logo 与标题 -->
-            <div class="flex items-center gap-4 mb-6">
-              <div class="relative">
-                <div class="inline-flex items-center justify-center w-16 h-16 md:w-20 md:h-20 bg-gradient-to-br from-primary-500 to-primary-600 rounded-2xl shadow-lg">
-                  <academic-cap-icon class="w-8 h-8 md:w-10 md:h-10 text-white" />
-                </div>
-                <div class="absolute inset-0 bg-gradient-to-br from-primary-400 to-primary-600 rounded-2xl blur-lg opacity-30 -z-10"></div>
-              </div>
+            <div class="flex items-center gap-4 mb-12">
+              <img src="/brand/logo.png" alt="Logo" class="shrink-0 h-20 md:h-24 w-auto select-none" />
               <div>
-                <h1 class="text-2xl md:text-3xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 dark:from-white dark:to-gray-300 bg-clip-text text-transparent leading-tight">
-                  {{ t('app.title') }}
-                </h1>
-                <p class="mt-1 text-sm md:text-base text-gray-600 dark:text-gray-400">{{ t('layout.auth.subtitle') }}</p>
+                <LetterPullup :words="t('app.title') as string" class="bg-gradient-to-r from-gray-900 to-gray-700 dark:from-white dark:to-gray-300 bg-clip-text text-transparent" />
+                <RadiantText :duration="5" :radiantWidth="90" class="mt-1 text-lg md:text-xl text-left">
+                  {{ t('layout.auth.subtitle') }}
+                </RadiantText>
               </div>
             </div>
 
-            <!-- 卖点列表 -->
-            <div class="grid sm:grid-cols-2 gap-4 mb-6">
-              <div v-glass="{ strength: 'thin' }" class="p-4 rounded-xl">
-                <div class="text-sm font-medium text-base-content mb-1">{{ t('layout.auth.points.radar.title') }}</div>
-                <div class="text-xs text-gray-600 dark:text-gray-400">{{ t('layout.auth.points.radar.desc') }}</div>
+            <!-- 卖点列表：2x2 玻璃卡片，带主题底色 -->
+            <div class="grid grid-cols-2 gap-x-4 gap-y-8 mb-8">
+              <!-- primary -->
+              <div class="theme-surface theme-surface--primary rounded-xl border border-white/15 dark:border-white/10"
+                   style="--spotlight-color: color-mix(in oklab, var(--color-primary) 60%, transparent);">
+                <LiquidGlass :radius="16" :frost="0.05" :border="0.07" :alpha="0.93" :blur="11"
+                              :container-class="'glass-regular glass-interactive glass-tint-primary rounded-xl'">
+                  <CardSpotlight slotClass="p-4" :gradientColor="'var(--spotlight-color)'" :gradientOpacity="0.7" :gradientSize="220">
+                    <div class="text-base font-medium text-base-content mb-1">{{ t('layout.auth.points.radar.title') }}</div>
+                    <div class="text-sm text-gray-600 dark:text-gray-400">{{ t('layout.auth.points.radar.descLong') }}</div>
+                  </CardSpotlight>
+                </LiquidGlass>
               </div>
-              <div v-glass="{ strength: 'thin' }" class="p-4 rounded-xl">
-                <div class="text-sm font-medium text-base-content mb-1">{{ t('layout.auth.points.ai.title') }}</div>
-                <div class="text-xs text-gray-600 dark:text-gray-400">{{ t('layout.auth.points.ai.desc') }}</div>
+              <!-- info -->
+              <div class="theme-surface theme-surface--info rounded-xl border border-white/15 dark:border-white/10"
+                   style="--spotlight-color: color-mix(in oklab, var(--color-info) 60%, transparent);">
+                <LiquidGlass :radius="16" :frost="0.05" :border="0.07" :alpha="0.93" :blur="11"
+                              :container-class="'glass-regular glass-interactive glass-tint-info rounded-xl'">
+                  <CardSpotlight slotClass="p-4" :gradientColor="'var(--spotlight-color)'" :gradientOpacity="0.7" :gradientSize="220">
+                    <div class="text-base font-medium text-base-content mb-1">{{ t('layout.auth.points.ai.title') }}</div>
+                    <div class="text-sm text-gray-600 dark:text-gray-400">{{ t('layout.auth.points.ai.descLong') }}</div>
+                  </CardSpotlight>
+                </LiquidGlass>
               </div>
-              <div v-glass="{ strength: 'thin' }" class="p-4 rounded-xl">
-                <div class="text-sm font-medium text-base-content mb-1">{{ t('layout.auth.points.growth.title') }}</div>
-                <div class="text-xs text-gray-600 dark:text-gray-400">{{ t('layout.auth.points.growth.desc') }}</div>
+              <!-- success -->
+              <div class="theme-surface theme-surface--success rounded-xl border border-white/15 dark:border-white/10"
+                   style="--spotlight-color: color-mix(in oklab, var(--color-success) 60%, transparent);">
+                <LiquidGlass :radius="16" :frost="0.05" :border="0.07" :alpha="0.93" :blur="11"
+                              :container-class="'glass-regular glass-interactive glass-tint-success rounded-xl'">
+                  <CardSpotlight slotClass="p-4" :gradientColor="'var(--spotlight-color)'" :gradientOpacity="0.7" :gradientSize="220">
+                    <div class="text-base font-medium text-base-content mb-1">{{ t('layout.auth.points.growth.title') }}</div>
+                    <div class="text-sm text-gray-600 dark:text-gray-400">{{ t('layout.auth.points.growth.descLong') }}</div>
+                  </CardSpotlight>
+                </LiquidGlass>
+              </div>
+              <!-- neutral (新增第4张) -->
+              <div class="theme-surface theme-surface--neutral rounded-xl border border-white/15 dark:border-white/10"
+                   style="--spotlight-color: color-mix(in oklab, var(--color-secondary, var(--color-accent)) 55%, transparent);">
+                <LiquidGlass :radius="16" :frost="0.05" :border="0.07" :alpha="0.93" :blur="11"
+                              :container-class="'glass-regular glass-interactive glass-tint-secondary rounded-xl'">
+                  <CardSpotlight slotClass="p-4" :gradientColor="'var(--spotlight-color)'" :gradientOpacity="0.7" :gradientSize="220">
+                    <div class="text-base font-medium text-base-content mb-1">{{ t('layout.auth.points.community.title') }}</div>
+                    <div class="text-sm text-gray-600 dark:text-gray-400">{{ t('layout.auth.points.community.descLong') }}</div>
+                  </CardSpotlight>
+                </LiquidGlass>
               </div>
             </div>
 
-            <!-- 可信背书条（占位） -->
-            <div class="flex flex-wrap items-center gap-3 text-xs text-gray-500 dark:text-gray-400">
-              <span class="opacity-80">{{ t('layout.auth.trust.title') }}</span>
-              <div class="h-6 w-[1px] bg-gray-300 dark:bg-gray-700"></div>
-              <div class="flex items-center gap-3">
-                <span v-glass="{ strength: 'ultraThin' }" class="px-2 py-1 rounded">Your School</span>
-                <span v-glass="{ strength: 'ultraThin' }" class="px-2 py-1 rounded">Your Institute</span>
-                <span v-glass="{ strength: 'ultraThin' }" class="px-2 py-1 rounded">Project Name</span>
-              </div>
+            <!-- 走马灯评价区 -->
+            <div class="mt-10">
+              <Marquee pauseOnHover class="[--duration:22s] [--gap:1.25rem]">
+                <ReviewCard v-for="r in marqueeRow1" :key="r.username" :img="r.img" :name="r.name" :username="r.username" :mbti="r.mbti" :body="r.body" :tint="r.tint" />
+              </Marquee>
+              <Marquee reverse pauseOnHover class="[--duration:24s] [--gap:1.25rem] mt-4">
+                <ReviewCard v-for="r in marqueeRow2" :key="r.username" :img="r.img" :name="r.name" :username="r.username" :mbti="r.mbti" :body="r.body" :tint="r.tint" />
+              </Marquee>
             </div>
+
           </div>
         </div>
 
         <!-- 右侧表单卡片 -->
-        <div class="md:col-span-5 order-1 md:order-2">
-          <div class="flex justify-between items-center mb-4">
-            <!-- 语言切换放表单上方 -->
-            <div class="ml-auto"><language-switcher /></div>
-          </div>
-          <card :hoverable="false" padding="lg" class="relative">
+        <div class="md:col-span-5 md:col-start-8 order-1 md:order-2 w-full md:pl-6 lg:pl-10 max-w-xl md:ml-12 lg:ml-20 xl:ml-28 mt-12 md:mt-16 lg:mt-20">
+          <card :hoverable="false" padding="lg" tint="primary" class="relative border border-white/15 dark:border-white/10">
             <!-- 加载状态覆盖 -->
             <div v-if="isLoading" class="absolute inset-0 bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm rounded-2xl flex items-center justify-center z-20">
               <div class="text-center">
-                <div class="inline-flex items-center justify-center w-12 h-12 bg-primary-100 dark:bg-primary-900/30 rounded-xl mb-3">
-                  <div class="w-6 h-6 border-2 border-primary-600 border-t-transparent rounded-full animate-spin"></div>
+                <div class="inline-flex items-center justify-center w-12 h-12 rounded-xl mb-3" :style="{ backgroundColor: 'color-mix(in oklab, var(--color-primary) 18%, transparent)' }">
+                  <div class="w-6 h-6 border-2 rounded-full animate-spin" :style="{ borderColor: 'var(--color-primary)', borderTopColor: 'transparent' }"></div>
                 </div>
-                <p class="text-sm text-subtle">{{ loadingText }}</p>
+                <p class="text-sm text-theme-primary">{{ loadingText }}</p>
               </div>
             </div>
 
@@ -103,24 +168,15 @@
             </div>
 
             <template #footer>
-              <div class="flex items-center justify-between text-xs text-gray-500 dark:text-gray-400">
-                <div class="inline-flex items-center gap-2">
-                  <span v-glass="{ strength: 'thin' }" class="inline-flex items-center px-2 py-1 rounded-full font-medium text-primary-700 dark:text-primary-300">
-                    <span class="w-1.5 h-1.5 bg-green-500 rounded-full mr-1.5"></span>
-                    {{ `v${version}` }}
-                  </span>
-                  <span v-glass="{ strength: 'thin' }" class="inline-flex items-center px-2 py-1 rounded-full">
-                    <span class="w-1.5 h-1.5 bg-blue-500 rounded-full mr-1.5"></span>
-                    {{ formattedTime }}
-                  </span>
-                </div>
-                <div class="inline-flex items-center gap-3">
-                  <a href="#" class="hover:text-primary-600 dark:hover:text-primary-400 transition-colors duration-200">{{ t('layout.auth.footer.privacy') }}</a>
-                  <span>•</span>
-                  <a href="#" class="hover:text-primary-600 dark:hover:text-primary-400 transition-colors duration-200">{{ t('layout.auth.footer.terms') }}</a>
-                  <span>•</span>
-                  <button type="button" @click="goAndReload('/help')" class="hover:text-primary-600 dark:hover:text-primary-400 transition-colors duration-200">{{ t('layout.auth.footer.help') }}</button>
-                </div>
+              <div class="flex items-center justify-between text-xs text-info">
+                <span v-glass="{ strength: 'thin' }" class="inline-flex items-center px-2 py-1 rounded-full font-medium bg-info/15 dark:bg-info/20 border border-info/30 dark:border-info/30">
+                  <span class="w-1.5 h-1.5 bg-current rounded-full mr-1.5"></span>
+                  {{ `v${version}` }}
+                </span>
+                <span v-glass="{ strength: 'thin' }" class="inline-flex items-center px-2 py-1 rounded-full bg-info/15 dark:bg-info/20 border border-info/30 dark:border-info/30">
+                  <span class="w-1.5 h-1.5 bg-current rounded-full mr-1.5"></span>
+                  {{ formattedTime }}
+                </span>
               </div>
             </template>
           </card>
@@ -154,8 +210,18 @@ import {
   QuestionMarkCircleIcon
 } from '@heroicons/vue/24/outline'
 import LanguageSwitcher from '@/components/ui/LanguageSwitcher.vue'
+import { LetterPullup, RadiantText } from '@/components/ui/inspira'
+import { DEFAULT_AVATARS } from '@/shared/utils/avatars'
+import Marquee from '@/components/ui/inspira/Marquee.vue'
+import ReviewCard from '@/components/ui/inspira/ReviewCard.vue'
+import LiquidGlass from '@/components/ui/LiquidGlass.vue'
+import RippleButton from '@/components/ui/RippleButton.vue'
+import Dock from '@/components/ui/inspira/Dock.vue'
+import DockIcon from '@/components/ui/inspira/DockIcon.vue'
+import { HomeIcon, CursorArrowRaysIcon } from '@heroicons/vue/24/outline'
 // FuturisticBackground 已移除
 import Card from '@/components/ui/Card.vue'
+import CardSpotlight from '@/components/ui/inspira/CardSpotlight.vue'
 
 // 组合式API
 const route = useRoute()
@@ -167,7 +233,7 @@ const isLoading = ref(false)
 const loadingText = ref('加载中...')
 const showLanguageMenu = ref(false)
 const currentLanguage = ref({ code: 'zh-CN', label: '中文' })
-const version = import.meta.env.VITE_APP_VERSION || '1.0.0'
+const version = '2.1.3'
 const currentTime = ref(new Date())
 let timer: number | null = null
 const { locale, setLocale } = useLocale()
@@ -251,6 +317,29 @@ const features = [
   { icon: CpuChipIcon, titleKey: 'layout.auth.features.performance.title', descKey: 'layout.auth.features.performance.desc' }
 ]
 
+// 走马灯数据：使用注册页默认头像，按索引循环分配；评论正文随语言切换实时更新
+const avatars = (DEFAULT_AVATARS || []) as string[]
+const marqueeBaseKeys = [
+  { name: '王同学', username: '@wang', mbti: 'INTJ', tint: 'primary', bodyKey: 'layout.auth.reviews.r1' },
+  { name: 'Li', username: '@li', mbti: 'ENFP', tint: 'info', bodyKey: 'layout.auth.reviews.r2' },
+  { name: 'Zhang', username: '@zhang', mbti: 'ISTP', tint: 'success', bodyKey: 'layout.auth.reviews.r3' },
+  { name: 'Chen', username: '@chen', mbti: 'ENTJ', tint: 'warning', bodyKey: 'layout.auth.reviews.r4' },
+  { name: 'Liu', username: '@liu', mbti: 'INFJ', tint: 'secondary', bodyKey: 'layout.auth.reviews.r5' },
+  { name: 'Zhao', username: '@zhao', mbti: 'ISTJ', tint: 'accent', bodyKey: 'layout.auth.reviews.r6' },
+]
+const marqueeAll = computed(() =>
+  marqueeBaseKeys.map((r, idx) => ({
+    name: r.name,
+    username: r.username,
+    mbti: r.mbti,
+    tint: r.tint as any,
+    img: avatars.length ? avatars[idx % avatars.length] : '/brand/logo.png',
+    body: t(r.bodyKey as any) as string,
+  }))
+)
+const marqueeRow1 = computed(() => marqueeAll.value.slice(0, Math.ceil(marqueeAll.value.length / 2)))
+const marqueeRow2 = computed(() => marqueeAll.value.slice(Math.ceil(marqueeAll.value.length / 2)))
+
 // 社交链接
 const socialLinks = [
   {
@@ -277,8 +366,38 @@ const socialLinks = [
 ]
 
 // 方法
-const toggleTheme = () => {
-  uiStore.toggleDarkMode()
+function goHome() { router.push('/') }
+
+function goLogin() {
+  router.push('/auth/login')
+}
+
+// 光标选择菜单
+const cursorBtnRef = ref<HTMLElement | null>(null)
+const showCursorMenu = ref(false)
+const cursorMenuStyle = ref<Record<string, string>>({})
+
+function onToggleCursorMenu() {
+  showCursorMenu.value = !showCursorMenu.value
+  if (!showCursorMenu.value) return
+  nextTick(() => {
+    try {
+      const el = cursorBtnRef.value as HTMLElement
+      const rect = el.getBoundingClientRect()
+      cursorMenuStyle.value = {
+        position: 'fixed',
+        top: `${rect.bottom + 10}px`,
+        left: `${Math.max(8, rect.right - 220)}px`,
+        width: '14rem',
+        zIndex: '1000'
+      }
+    } catch {}
+  })
+}
+
+function setCursor(v: 'off' | 'fluid' | 'smooth' | 'tailed') {
+  uiStore.setCursorTrailMode(v)
+  showCursorMenu.value = false
 }
 const goAndReload = async (path: string) => {
   try {
@@ -336,7 +455,7 @@ const handleKeydown = (event: KeyboardEvent) => {
   // Ctrl+Shift+T 切换主题
   if (event.ctrlKey && event.shiftKey && event.key === 'T') {
     event.preventDefault()
-    toggleTheme()
+    uiStore.toggleDarkMode()
   }
   
   // Esc 关闭语言菜单

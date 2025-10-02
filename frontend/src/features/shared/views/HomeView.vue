@@ -104,9 +104,11 @@
       </div>
     </section>
 
-    <!-- 项目结构（FileTree） -->
+    <!-- 项目结构（Tree，无卡片，动态从后端获取） -->
     <section id="structure" class="mt-14 scroll-mt-24">
-      <FileTree :roots="roots" />
+      <Tree :initial-expanded-items="initialExpanded" :initial-selected-id="initialSelected">
+        <RenderElements :elements="tree" prefix="root" />
+      </Tree>
     </section>
 
     <!-- 走马灯（Marquee） -->
@@ -117,6 +119,7 @@
 </template>
 
 <script setup lang="ts">
+import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import RippleButton from '@/components/ui/RippleButton.vue'
@@ -132,7 +135,9 @@ import Marquee from '@/components/ui/inspira/Marquee.vue'
 import Compare from '@/components/ui/inspira/Compare.vue'
 import Timeline from '@/components/ui/inspira/Timeline.vue'
 import TracingBeam from '@/components/ui/inspira/TracingBeam.vue'
-import FileTree from '@/components/ui/inspira/FileTree.vue'
+import { Tree } from '@/components/ui/inspira'
+import RenderElements from '@/components/ui/inspira/RenderElements.vue'
+import { getProjectTree, type ProjectTreeNode } from '@/api/project.api'
 
 const router = useRouter()
 const { t } = useI18n()
@@ -181,11 +186,38 @@ const journeyItems = [
   { title: t('app.home.journey.step4.title'), content: t('app.home.journey.step4.desc') },
 ]
 
-const roots = [
-  { name: 'backend', children: [ { name: 'src/main/java/com/noncore/assessment' }, { name: 'src/main/resources' }, { name: 'pom.xml' }, { name: 'README.md' } ] },
-  { name: 'frontend', children: [ { name: 'src' }, { name: 'package.json' }, { name: 'vite.config.ts' }, { name: 'README.md' } ] },
-  { name: 'docs', children: [ { name: 'architecture-overview.md' }, { name: 'frontend/index.md' }, { name: 'backend/api/auth.md' }, { name: 'README.md' } ] },
-]
+const tree = ref<ProjectTreeNode[]>([])
+const initialExpanded = ref<string[]>([])
+const initialSelected = ref<string>('')
+
+onMounted(async () => {
+  try {
+    tree.value = await getProjectTree({ depth: 0 })
+    initialExpanded.value = collectAllDirectoryIds(tree.value)
+    initialSelected.value = initialExpanded.value[0] || 'root/backend'
+  } catch (e) {
+    // 失败则回退到精简静态
+    tree.value = [
+      { name: 'backend', directory: true, children: [ { name: 'src', directory: true }, { name: 'pom.xml', directory: false } ] },
+      { name: 'frontend', directory: true, children: [ { name: 'src', directory: true }, { name: 'package.json', directory: false } ] },
+      { name: 'docs', directory: true, children: [ { name: 'README.md', directory: false } ] },
+    ]
+  }
+})
+
+function collectAllDirectoryIds(nodes: ProjectTreeNode[], base = 'root'): string[] {
+  const result: string[] = []
+  for (const n of nodes) {
+    const id = `${base}/${n.name}`
+    if (n.directory) {
+      result.push(id)
+      if (Array.isArray(n.children) && n.children.length > 0) {
+        result.push(...collectAllDirectoryIds(n.children, id))
+      }
+    }
+  }
+  return result
+}
 </script>
 
 <style scoped>

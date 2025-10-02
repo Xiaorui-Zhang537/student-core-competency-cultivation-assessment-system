@@ -14,45 +14,62 @@
         <!-- 中间留白 -->
         <div class="flex-1"></div>
 
-        <!-- 右：按钮组（药丸，高度60px） -->
-        <liquid-glass :radius="30" class="flex items-center justify-center gap-1 h-full" containerClass="rounded-full h-[60px] px-4">
-          <ripple-button pill :title="t('layout.common.toggleTheme') as string || '主题'" @click="uiStore.toggleDarkMode()">
-            <sun-icon v-if="uiStore.isDarkMode" class="w-5 h-5" />
-            <moon-icon v-else class="w-5 h-5" />
-          </ripple-button>
-          <!-- 主题家族选择（使用外层 span 捕获 DOM 以正确定位弹层） -->
-          <span ref="themeBtnRef" class="inline-flex">
-            <ripple-button pill :title="t('layout.common.themeFamily') as string || '主题家族'" @click="onToggleThemeMenu">
-              <paint-brush-icon class="w-5 h-5" />
-            </ripple-button>
-          </span>
-          <span ref="cursorBtnRef" class="inline-flex">
-            <ripple-button pill :title="t('layout.common.cursorTrail') as string || '鼠标轨迹'" @click="onToggleCursorMenu">
-              <sparkles-icon class="w-5 h-5" />
-            </ripple-button>
-          </span>
-          <language-switcher buttonClass="px-4 h-11 flex items-center rounded-full" />
-          <notification-bell>
-            <template #trigger="{ toggle }">
-              <ripple-button pill :title="t('notifications.title') as string" @click="toggle">
-                <bell-icon class="w-5 h-5" />
+        <!-- 右：Dock（完全与学生端一致） -->
+        <liquid-glass :radius="30" class="flex items-center justify-center h-full" containerClass="rounded-full h-[60px] px-2">
+          <Dock :magnification="60" :distance="140" variant="transparent" paddingClass="pl-1.5 pr-5" heightClass="h-[56px]" roundedClass="rounded-full" gapClass="gap-3">
+            <DockIcon>
+              <ripple-button pill :title="t('layout.common.toggleTheme') as string || '主题'" @click="uiStore.toggleDarkMode()">
+                <sun-icon v-if="uiStore.isDarkMode" class="w-5 h-5" />
+                <moon-icon v-else class="w-5 h-5" />
               </ripple-button>
-            </template>
-          </notification-bell>
-          <span class="relative inline-flex">
-            <ripple-button pill :title="t('shared.chat.open') as string || '聊天'" @click.stop="toggleChatDrawer($event)">
-              <chat-bubble-left-right-icon class="w-5 h-5" />
-            </ripple-button>
-            <span v-if="chat.totalUnread > 0 && !chat.isOpen" class="absolute -top-0.5 -right-0.5 glass-badge glass-badge-xs text-[10px] leading-none px-[6px]">{{ Math.min(chat.totalUnread as any, 99) }}</span>
-          </span>
-          <span ref="userMenuBtn" class="inline-flex">
-            <ripple-button pill class="pl-2 pr-3 h-11 items-center whitespace-nowrap" :title="t('layout.common.me') as string || '我'" @click="onToggleUserMenu">
-              <user-avatar :avatar="(authStore.user as any)?.avatar" :size="30">
-                <div class="w-[30px] h-[30px] rounded-full bg-gray-200 dark:bg-gray-700"></div>
-              </user-avatar>
-              <span class="text-sm font-medium text-base-content whitespace-nowrap">{{ displayName }}</span>
-            </ripple-button>
-          </span>
+            </DockIcon>
+            <DockIcon>
+              <span ref="themeBtnRef" class="inline-flex">
+                <ripple-button pill :title="t('layout.common.themeFamily') as string || '主题家族'" @click="onToggleThemeMenu">
+                  <paint-brush-icon class="w-5 h-5" />
+                </ripple-button>
+              </span>
+            </DockIcon>
+            <DockIcon>
+              <span ref="cursorBtnRef" class="inline-flex">
+                <ripple-button pill :title="t('layout.common.cursorTrail') as string || '鼠标轨迹'" @click="onToggleCursorMenu">
+                  <CursorArrowRaysIcon class="w-5 h-5" />
+                </ripple-button>
+              </span>
+            </DockIcon>
+            <DockIcon class="-ml-2">
+              <language-switcher buttonClass="px-3 h-10 flex items-center rounded-full min-w-[56px] whitespace-nowrap" />
+            </DockIcon>
+            
+            <DockIcon>
+              <notification-bell>
+                <template #trigger="{ toggle }">
+                  <ripple-button pill :title="t('notifications.title') as string" @click="toggle">
+                    <bell-icon class="w-5 h-5" />
+                  </ripple-button>
+                </template>
+              </notification-bell>
+            </DockIcon>
+            <DockIcon>
+              <span class="relative inline-flex">
+                <ripple-button pill :title="t('shared.chat.open') as string || '聊天'" @click.stop="toggleChatDrawer($event)">
+                  <chat-bubble-left-right-icon class="w-5 h-5" />
+                </ripple-button>
+                <span v-if="chat.totalUnread > 0 && !chat.isOpen" class="absolute -top-0.5 -right-0.5 glass-badge glass-badge-xs text-[10px] leading-none px-[6px]">{{ Math.min(chat.totalUnread as any, 99) }}</span>
+              </span>
+            </DockIcon>
+            
+            <DockIcon :baseSize="56" :ml="8">
+              <span ref="userMenuBtn" class="inline-flex">
+                <ripple-button pill class="pl-2 pr-3 h-full items-center whitespace-nowrap" :title="t('layout.common.me') as string || '我'" @click="onToggleUserMenu">
+                  <user-avatar :avatar="(authStore.user as any)?.avatar" :size="30">
+                    <div class="w-[30px] h-[30px] rounded-full bg-gray-200 dark:bg-gray-700"></div>
+                  </user-avatar>
+                  <span class="text-sm font-medium text-base-content whitespace-nowrap">{{ displayName }}</span>
+                </ripple-button>
+              </span>
+            </DockIcon>
+          </Dock>
         </liquid-glass>
       </div>
     </nav>
@@ -212,6 +229,9 @@ import NotificationBell from '@/components/notifications/NotificationBell.vue'
 import ChatDrawer from '@/features/teacher/components/ChatDrawer.vue'
 import LiquidGlass from '@/components/ui/LiquidGlass.vue'
 import DockBar from '@/components/ui/DockBar.vue'
+import Dock from '@/components/ui/inspira/Dock.vue'
+import DockIcon from '@/components/ui/inspira/DockIcon.vue'
+import DockSeparator from '@/components/ui/inspira/DockSeparator.vue'
 import RippleButton from '@/components/ui/RippleButton.vue'
 import SparklesText from '@/components/ui/SparklesText.vue'
 import LiquidLogo from '@/components/ui/LiquidLogo.vue'
@@ -233,7 +253,7 @@ import {
   ChatBubbleLeftRightIcon,
   QuestionMarkCircleIcon,
   BellIcon,
-  SparklesIcon,
+  CursorArrowRaysIcon,
 } from '@heroicons/vue/24/outline'
 
 // Stores & Router

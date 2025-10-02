@@ -28,12 +28,12 @@
                 :key="c.id"
                 variant="menu"
                 class="w-full px-2 py-3 text-left transition-colors rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700/50 min-h-[64px] focus:outline-none focus:ring-0 focus-visible:ring-0 focus:ring-offset-0"
-                :class="activeConversationId === c.id ? 'conv-selected' : ''"
+                :class="activeConversationId === c.id ? 'conv-selected border-transparent ring-0 outline-none focus:ring-0 focus-visible:ring-0' : ''"
                 @click="open(c.id)"
               >
-                <div class="flex flex-col gap-1">
-                  <div class="flex items-center gap-3">
-                    <div class="truncate font-medium">{{ c.title || (t('teacher.ai.untitled') || '未命名会话') }}</div>
+                <div class="flex flex-col gap-1 w-full px-3">
+                  <div class="flex items-center gap-3 w-full min-w-0">
+                    <div class="font-medium truncate flex-1 min-w-0">{{ c.title || (t('teacher.ai.untitled') || '未命名会话') }}</div>
                     <div class="flex items-center gap-2 shrink-0 ml-auto">
                       <Button variant="ghost" size="xs" class="text-base-content/70 hover:text-base-content" :title="t('common.rename') || '重命名'" @click.stop="rename(c)">
                         <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
@@ -133,7 +133,7 @@
               </Button>
               <span v-if="pendingCount>0" class="text-xs px-2 py-0.5 rounded bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300">已选 {{ pendingCount }} 项</span>
             </div>
-            <Button variant="primary" :disabled="!canSend || sending" @click="send">
+            <Button variant="primary" :disabled="!canSend || sending" :loading="sending" @click="send">
               <span v-if="sending">{{ t('teacher.ai.thinking') || 'AI 正在思考...' }}</span>
               <span v-else>{{ t('teacher.ai.send') || '发送' }}</span>
             </Button>
@@ -305,8 +305,14 @@ const onTextareaInput = () => {}
 .input {
   @apply w-full rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-base-content px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500;
 }
-/* 会话条目选中：柔和加深背景，不使用阴影 */
-.conv-selected { background-color: color-mix(in oklab, var(--color-base-200) 28%, transparent); }
+/* 会话条目选中：去掉边框/描边，仅通过加深背景色表现 */
+.conv-selected {
+  background-color: color-mix(in oklab, var(--color-base-200) 36%, transparent);
+  outline: none;
+  box-shadow: none;
+  border-color: transparent !important; /* 覆盖 divide-y 颜色 */
+  border-top-width: 0 !important;      /* 移除顶部分隔线，看起来像边框 */
+}
 /* 主题主色文本（避免硬编码蓝色） */
 .theme-primary { color: rgb(var(--color-primary)); }
 </style>

@@ -11,12 +11,12 @@
       <div>
         <label for="email" class="block text-sm font-medium mb-2">邮箱地址</label>
         <div class="rounded-lg">
-          <glass-input id="email" v-model="email" type="email" :disabled="uiStore.loading" placeholder="请输入您的邮箱地址" />
+          <glass-input id="email" v-model="email" type="email" :disabled="uiStore.loading" placeholder="请输入您的邮箱地址" tint="primary" />
         </div>
       </div>
 
       <div>
-        <Button class="w-full" variant="primary" type="submit" :disabled="uiStore.loading">
+        <Button class="w-full" variant="info" type="submit" :disabled="uiStore.loading">
           {{ uiStore.loading ? '发送中...' : '发送重置链接' }}
         </Button>
       </div>
@@ -25,7 +25,7 @@
     <div class="mt-6 text-center">
       <p class="text-sm text-gray-600">
         记起密码了？
-        <a href="/auth/login" @click.prevent="goLogin" class="font-medium text-primary-600 hover:text-primary-500">返回登录</a>
+        <a href="/auth/login" @click.prevent="goLogin" class="font-medium text-primary hover:text-primary/80">返回登录</a>
       </p>
     </div>
   </div>
