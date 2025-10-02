@@ -193,8 +193,9 @@ const initialSelected = ref<string>('')
 onMounted(async () => {
   try {
     tree.value = await getProjectTree({ depth: 0 })
-    initialExpanded.value = collectAllDirectoryIds(tree.value)
-    initialSelected.value = initialExpanded.value[0] || 'root/backend'
+    // 默认仅展开根目录，不要全部展开
+    initialExpanded.value = ['root/backend', 'root/frontend', 'root/docs']
+    initialSelected.value = 'root/backend'
   } catch (e) {
     // 失败则回退到精简静态
     tree.value = [
@@ -204,20 +205,6 @@ onMounted(async () => {
     ]
   }
 })
-
-function collectAllDirectoryIds(nodes: ProjectTreeNode[], base = 'root'): string[] {
-  const result: string[] = []
-  for (const n of nodes) {
-    const id = `${base}/${n.name}`
-    if (n.directory) {
-      result.push(id)
-      if (Array.isArray(n.children) && n.children.length > 0) {
-        result.push(...collectAllDirectoryIds(n.children, id))
-      }
-    }
-  }
-  return result
-}
 </script>
 
 <style scoped>

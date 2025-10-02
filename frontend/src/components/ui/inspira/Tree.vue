@@ -9,7 +9,7 @@
 </template>
 
 <script lang="ts" setup>
-import { toRefs, ref, onMounted, provide } from 'vue'
+import { toRefs, ref, onMounted, provide, watch } from 'vue'
 import type { TreeProps, TreeViewElement, TreeContextProps } from './fileTreeTypes'
 import { TREE_CONTEXT_SYMBOL } from './fileTreeTypes'
 
@@ -85,6 +85,11 @@ onMounted(() => {
     }
   } catch {}
 })
+
+// 同步外部传入的初始展开项（支持异步更新）
+watch(initialExpandedItems, (val) => {
+  expandedItems.value = val ? val.map(v => String(v)) : []
+}, { immediate: true })
 
 const rootRef = ref<HTMLElement | null>(null)
 </script>

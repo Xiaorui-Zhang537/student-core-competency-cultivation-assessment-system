@@ -1,5 +1,5 @@
 <template>
-  <div class="relative h-full overflow-hidden">
+  <div class="relative h-full">
     <div
       class="flex cursor-pointer items-center gap-1 rounded-md text-sm transition-all duration-200"
       :class="[

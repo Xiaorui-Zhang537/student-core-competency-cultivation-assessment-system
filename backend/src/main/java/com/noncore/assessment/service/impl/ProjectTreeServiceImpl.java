@@ -42,7 +42,7 @@ public class ProjectTreeServiceImpl implements ProjectTreeService {
             if (hasAnyRoot) return current;
             current = current.getParent();
         }
-        // 兜底：运行目录
+        // 兜底：返回运行目录
         return start;
     }
 

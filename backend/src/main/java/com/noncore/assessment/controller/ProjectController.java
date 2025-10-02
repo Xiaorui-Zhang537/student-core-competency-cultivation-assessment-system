@@ -26,7 +26,7 @@ public class ProjectController {
     @GetMapping("/tree")
     @Operation(summary = "获取项目目录树（公开）", description = "返回 backend/frontend/docs 的目录结构，有限深度")
     public ResponseEntity<ApiResponse<List<ProjectTreeService.Node>>> getTree(
-            @RequestParam(value = "depth", required = false, defaultValue = "5") Integer depth
+            @RequestParam(value = "depth", required = false, defaultValue = "0") Integer depth
     ) {
         // depth=0 => 无限制（谨慎使用）；其余 1..10
         int d = depth == null ? 5 : (depth == 0 ? 0 : Math.max(1, Math.min(depth, 10)));
