@@ -131,7 +131,7 @@
         <Card padding="md" tint="accent">
           <div class="w-full max-w-[420px] mx-auto">
             <div class="text-sm font-semibold text-gray-700 dark:text-gray-200 mb-2 text-center">{{ t('student.analysis.kpiAvgScore') }}</div>
-            <div ref="gaugeRef" class="w-full h-[260px]"></div>
+            <GaugeChart :value="Number(courseAvgScore || 0)" :title="(t('student.analysis.kpiAvgScore') as any)" height="260px" />
           </div>
           <div class="mt-4">
             <div class="flex items-center justify-between mb-2">
@@ -211,6 +211,7 @@ import TrendAreaChart from '@/components/charts/TrendAreaChart.vue'
 import PageHeader from '@/components/ui/PageHeader.vue'
 import Card from '@/components/ui/Card.vue'
 import RadarChart from '@/components/charts/RadarChart.vue'
+import GaugeChart from '@/components/charts/GaugeChart.vue'
 import GlassPopoverSelect from '@/components/ui/filters/GlassPopoverSelect.vue'
 import GlassMultiSelect from '@/components/ui/filters/GlassMultiSelect.vue'
 import { useCourseStore } from '@/stores/course'
@@ -253,6 +254,8 @@ let radarRefreshScheduled = false
 const radarRef = ref<any>(null)
 const latestFeedback = ref<{ title: string; feedback: string; gradedAt?: string } | null>(null)
 const themeVersion = ref(0)
+let themeListenerBound = false
+let themeChangedHandler: (() => void) | null = null
 
 // 对比模式
 const compareEnabled = ref<boolean>(false)
@@ -682,12 +685,7 @@ async function askAiOnRadar() {
   router.push({ path: '/student/assistant' })
 }
 
-const gaugeRef = ref<HTMLElement | null>(null)
-let gaugeChart: echarts.ECharts | null = null
-let gaugeResizeHandler: (() => void) | null = null
-let themeObserver: MutationObserver | null = null
-let themeListenerBound = false
-let themeChangedHandler: (() => void) | null = null
+// 使用封装的 GaugeChart 组件，不再手动管理实例
 
 function runIdle(task: () => void) {
   try {
@@ -697,73 +695,12 @@ function runIdle(task: () => void) {
   } catch { setTimeout(task, 50) }
 }
 
-async function waitForGaugeContainer(maxTries = 10): Promise<boolean> {
-  for (let i = 0; i < maxTries; i++) {
-    await nextTick()
-    if (gaugeRef.value && gaugeRef.value.offsetWidth > 0 && gaugeRef.value.offsetHeight > 0) return true
-    await new Promise(r => requestAnimationFrame(() => r(null)))
-  }
-  return !!gaugeRef.value
-}
-
-function renderGauge(valueNum: number) {
-  if (!gaugeRef.value) return
-  ;(async () => {
-    const ok = await waitForGaugeContainer()
-    if (!ok || !gaugeRef.value) return
-    const theme = resolveEChartsTheme()
-    const isDark = document.documentElement.classList.contains('dark')
-    if (!gaugeChart) {
-      gaugeChart = echarts.init(gaugeRef.value as HTMLDivElement, theme as any)
-    }
-    const v = Math.max(0, Math.min(100, Number(valueNum || 0)))
-    const base = getThemeCoreColors().primary
-    const baseStrong = rgba(base, 1)
-    const baseLight = rgba(base, 0.6)
-    const option = {
-      backgroundColor: 'transparent',
-      series: [
-        { type: 'gauge', startAngle: 200, endAngle: -20, min: 0, max: 100,
-          axisLine: { lineStyle: { width: 14, color: [[1, rgba(getThemeCoreColors().baseContent, isDark ? 0.24 : 0.10)]] } },
-          pointer: { show: false }, axisTick: { show: false }, splitLine: { show: false }, axisLabel: { show: false }, detail: { show: false } },
-        { type: 'gauge', startAngle: 200, endAngle: -20, min: 0, max: 100,
-          progress: { show: true, width: 14, roundCap: true, itemStyle: { color: new (echarts as any).graphic.LinearGradient(0, 0, 1, 0, [ { offset: 0, color: baseLight }, { offset: 1, color: baseStrong } ]), shadowColor: rgba(base, 0.4), shadowBlur: 6 } },
-          axisLine: { lineStyle: { width: 14, color: [[1, 'transparent']] } },
-          pointer: { show: false }, axisTick: { show: false }, splitLine: { show: false }, axisLabel: { show: false },
-          detail: { valueAnimation: true, fontSize: 40, fontWeight: 700, color: baseStrong, offsetCenter: [0, '-4%'], formatter: (val: number) => `${Math.round(val)}` },
-          data: [{ value: v }] },
-        { type: 'gauge', startAngle: 200, endAngle: -20, min: 0, max: 100,
-          axisLine: { lineStyle: { width: 14, color: [[1, 'transparent']] } },
-          pointer: { show: false }, axisTick: { show: false }, splitLine: { show: false }, axisLabel: { show: false },
-          detail: { show: true, valueAnimation: false, fontSize: 12, color: isDark ? '#9ca3af' : '#6b7280', offsetCenter: [0, '34%'], formatter: () => (t('student.analysis.kpiAvgScore') as any) || '平均分' },
-          data: [{ value: 0 }] }
-      ]
-    }
-    try { gaugeChart.setOption(option, true) } catch { try { gaugeChart?.dispose(); gaugeChart = echarts.init(gaugeRef.value as HTMLDivElement, theme as any); gaugeChart.setOption(option, true) } catch {} }
-    if (!gaugeResizeHandler) {
-      gaugeResizeHandler = () => { try { gaugeChart?.resize() } catch {} }
-      window.addEventListener('resize', gaugeResizeHandler)
-    }
-  })()
-}
-
-// 课程切换或 KPI 变化时重绘仪表盘（容器就绪后再渲染）
-watch([() => selectedCourseId.value, () => courseAvgScore.value], () => {
-  nextTick(() => renderGauge(Number(courseAvgScore.value || 0)))
-})
-
-// 课程切换：刷新作业与仪表
+// 课程切换：刷新作业与趋势（仪表盘交由 GaugeChart 自身监听大小/可见性）
 watch(() => selectedCourseId.value, async () => {
   await fetchCourseAssignments()
-  renderGauge(courseAvgScore.value)
   loadScoreTrend()
   runIdle(() => { loadHoursTrend() })
   runIdle(() => { fetchLatestAiFeedback() })
-})
-
-// 在首次加载完成后渲染仪表盘（等待DOM切换完成）
-watch(() => loading.value, (v) => {
-  if (v === false) nextTick(() => renderGauge(Number(courseAvgScore.value || 0)))
 })
 
 async function loadScoreTrend() {
@@ -827,23 +764,20 @@ onMounted(async () => {
   await fetchCourseAssignments()
   // 先不急于渲染，等待一次 tick 确保容器挂载
   await nextTick()
-  renderGauge(courseAvgScore.value)
   await Promise.all([load(), loadRadar(), loadInsights()])
   // 数据入位后再次稳态渲染（避免首次 loading 切换造成实例被销毁）
   await nextTick()
-  renderGauge(courseAvgScore.value)
   await loadScoreTrend()
   runIdle(() => { loadHoursTrend() })
   runIdle(() => { fetchLatestAiFeedback() })
   // 监听全局主题事件：切换中隐藏可能的 tooltip；切换完成后重绘仪表并重算颜色
   if (!themeListenerBound) {
-    themeChangedHandler = () => {
-      themeVersion.value++
-      renderGauge(Number(courseAvgScore.value || 0))
-    }
+    themeChangedHandler = () => { themeVersion.value++ }
     window.addEventListener('theme:changed', themeChangedHandler as any)
     themeListenerBound = true
   }
+  // 兜底：延时再次渲染一次，规避异步布局导致的初始化失败
+  // GaugeChart 内部已包含兜底刷新，无需这里重复
 })
 
 watch(assignmentIdsA, () => { if (compareEnabled.value) scheduleRadarRefresh() }, { deep: true })
@@ -873,13 +807,10 @@ watch(() => i18n.global.locale.value, () => {
   nextTick(() => {
     refreshRadarLocalization()
     recomputeInsightTexts()
-    renderGauge(Number(courseAvgScore.value || 0))
   })
 })
 
 onUnmounted(() => {
-  try { gaugeChart?.dispose() } catch {}
-  if (gaugeResizeHandler) { window.removeEventListener('resize', gaugeResizeHandler); gaugeResizeHandler = null }
   if (themeListenerBound && themeChangedHandler) { try { window.removeEventListener('theme:changed', themeChangedHandler as any) } catch {}; themeListenerBound = false; themeChangedHandler = null }
 })
 </script>

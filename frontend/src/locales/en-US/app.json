@@ -13,6 +13,11 @@
 				"close": "Close"
 			}
 		},
+    "cta": {
+      "ready": "Are you ready to experience a new era of intelligent education?",
+      "docs": "Learn more",
+      "login": "Try now"
+    },
 		"network": {
 			"offline": {
 				"title": "Offline",
@@ -76,16 +81,216 @@
 				"subtitle": "Integrates courses, assignments, community and AI-driven assessment to help students continuously improve in real learning activities."
 			},
 			"cta": {
-				"docs": "View Docs",
-				"login": "Sign In"
+				"ready": "Ready to experience our system?",
+				"docs": "Learn more",
+				"login": "Try now"
 			},
 			"cards": {
-				"assessment": { "title": "Multi-dimensional Assessment", "desc": "Combine grades, engagement and behavior to produce radar and trend insights." },
-				"courses": { "title": "Courses & Assignments", "desc": "Create courses/lessons/assignments, support enrollment, submission and grading." },
-				"ai": { "title": "AI Grading", "desc": "Structured feedback with key points for efficient and fair grading." },
-				"analytics": { "title": "Analytics", "desc": "Class and personal metrics to identify gaps and improvement paths." },
-				"community": { "title": "Community", "desc": "Posts, comments and likes for communication and knowledge sharing." },
-				"chat": { "title": "Chat & Notifications", "desc": "Unified center for conversations and notifications, real-time updates." }
+        "category": "Feature",
+        "assessment": {
+          "title": "Multi-dimensional Assessment",
+          "desc": "Combine grades, engagement and behavior to produce radar and trend insights.",
+          "p1": "Five-dimension radar",
+          "p2": "Trend comparison & grouping",
+          "p3": "Exportable reports",
+          "img1Alt": "Dimension example 1",
+          "img2Alt": "Dimension example 2",
+          "dimensions": {
+            "title": "Five dimensions",
+            "moral": {
+              "title": "Moral Cognition",
+              "key": "MORAL_COGNITION",
+              "desc": "Assesses moral reasoning stage, moral foundation coverage, and argument/counter-argument chains; Demonstrates principled judgment, value trade-offs, critical thinking",
+              "logic": "Scoring: 1A Stage: self-interest/punishment → social norms → universal principles; 1B Breadth: 1 → 2 → ≥3 moral foundations; 1C Argumentation: no evidence → causal + single counter → coherent chains + explicit refutation"
+            },
+            "attitude": {
+              "title": "Learning Attitude",
+              "key": "LEARNING_ATTITUDE",
+              "desc": "Assesses emotional engagement, resilience, and focus/flow; Demonstrates motivation regulation, self-drive, task focus",
+              "logic": "Scoring: 2A Emotion: negative → mixed/neutral → clearly positive; 2B Persistence: give up → one try → multiple iterations with reflection; 2C Focus: off-topic → roughly focused → clear structure and smooth cohesion"
+            },
+            "ability": {
+              "title": "Learning Ability",
+              "key": "LEARNING_ABILITY",
+              "desc": "Assesses Bloom’s level progress, metacognition (plan–monitor–revise), and transfer; Demonstrates higher-order thinking, reflective improvement, cross-domain transfer",
+              "logic": "Scoring: 3A Levels: remember/understand → apply/analyze → evaluate/create; 3B Metacognition: none → 1–2 phases → full cycle with concrete adjustments; 3C Transfer: none → near transfer → clear far transfer"
+            },
+            "method": {
+              "title": "Learning Method",
+              "key": "LEARNING_METHOD",
+              "desc": "Assesses strategy diversity, depth of processing, and self-regulation (before–during–after); Demonstrates strategy integration, deep processing, self-monitoring",
+              "logic": "Scoring: 4A Diversity: single → two loosely integrated → ≥3 effectively combined; 4B Depth: listing/rehearsal → limited explanation → semantic reconstruction with multiple links; 4C Regulation: none → partial → complete before–during–after with concrete next steps"
+            },
+            "grade": {
+              "title": "Academic Grade",
+              "key": "ACADEMIC_GRADE",
+              "desc": "Assesses overall performance in coursework/exams (normalized to percentage)",
+              "logic": "Scoring: aggregated from grade sheet and normalized by score/max to 0–100, displayed on the same scale as the other four dimensions"
+            }
+          }
+          ,
+          "rich": {
+            "subtitle": "Integrating performance, engagement, and behavior data to visualize growth and guide progress.",
+            "h1": {
+              "title": "🌟 Highlight 1 | A Holistic View of Learning",
+              "p1": "Beyond scores. The system unifies grades, activity metrics, behavior logs, and feedback data to build a comprehensive learner profile.",
+              "p2": "Each dimension is measurable, comparable, and traceable."
+            },
+            "h2": {
+              "title": "🌈 Highlight 2 | Radar Visualization & Trend Insights",
+              "p1": "The radar chart compares individual performance with class averages—across learning attitude, strategies, depth, and outcomes.",
+              "p2": "Trend analytics reveal growth trajectories and potential risk zones over time."
+            },
+            "h3": {
+              "title": "💡 Highlight 3 | Personalized Learning Suggestions",
+              "b1": "Learning cognition: maintain strengths and refine focus.",
+              "b2": "Learning strategies: adjust practice hours and focus areas.",
+              "outro": "Clear, actionable advice transforms raw data into personalized learning paths."
+            },
+            "h4": {
+              "title": "📊 Highlight 4 | Risk Alerts & Self-Regulation",
+              "p1": "When anomalies occur—decline in activity, engagement, or progress—the system issues risk alerts.",
+              "p2": "Teachers can act early; students can self-adjust, forming a closed feedback loop for sustainable growth."
+            },
+            "closing": {
+              "title": "🌱 Closing",
+              "p1": "Multi-dimensional assessment isn’t about recording the past —",
+              "p2": "it’s about seeing growth and shaping the future."
+            }
+          }
+        },
+        "courses": {
+          "title": "Courses & Assignments",
+          "desc": "Create courses/lessons/assignments, support enrollment, submission and grading.",
+          "p1": "Rich assignment types",
+          "p2": "Deadlines & reminders",
+          "p3": "Grade sheet & review",
+          "rich": {
+            "imgAlt": "Courses and assignments overview illustration",
+            "subtitle": "From course design to grading feedback — an integrated learning workflow.",
+            "h1": {
+              "title": "🌟 Teaching Workflow · Streamlined & Smart",
+              "p1": "Teachers can create courses, chapters, and assignments with full submission and grading workflows.",
+              "p2": "All learner activities and assignment data are tracked, connecting “instruction → submission → feedback.”"
+            },
+            "h2": {
+              "title": "📚 Versatile Assignment Types",
+              "p1": "Support for text, document, video, code, and image submissions with attachments.",
+              "p2": "Deadlines and notifications are automatically scheduled, ensuring steady learning progress."
+            },
+            "h3": {
+              "title": "🧾 Grades & Review · Transparent and Traceable",
+              "p1": "Each submission generates an AI-enhanced grading report.",
+              "p2": "Students may request a review; instructors can compare drafts with one click — making assessment explainable, consistent, and reusable."
+            },
+            "h4": {
+              "title": "🧠 Multi-Dimensional Insights",
+              "b1": "• Compare class vs. individual performance",
+              "b2": "• Break down competencies (cognition, strategy, methods, engagement)",
+              "b3": "• Generate actionable feedback and intervention goals",
+              "outro": "Empowering teachers to identify learning gaps, and students to see their growth clearly."
+            },
+            "closing": {
+              "title": "🌱 Closing",
+              "p1": "Every class, every submission, every insight —",
+              "p2": "becomes part of a visible learning journey."
+            }
+          }
+        },
+        "ai": { "title": "AI Grading", "desc": "Structured feedback with key points for efficient and fair grading.", "p1": "Configurable rubrics", "p2": "Key-point hit & error locate", "p3": "Traceable comments",
+        "rich": {
+          "imgAlt": "AI grading overview illustration",
+          "subtitle": "Structured feedback + key suggestions for faster, fairer evaluation.",
+          "h1": {
+            "title": "🌟 Highlight 1 | Evidence You Can See",
+            "intro": "Every score is grounded in visible evidence, not assumptions. The system extracts key evidence snippets from student work and generates clear suggestions for improvement:",
+            "b1": "Teachers can see why a score was assigned;",
+            "b2": "Students understand how to improve;",
+            "b3": "Each comment links directly to a sentence — transparent, explainable, reproducible.",
+            "outro": "In short, feedback becomes more than a number — it becomes a learning tool."
+          },
+          "h2": {
+            "title": "🌈 Highlight 2 | From Overview to Detail",
+            "b1": "Overall Summary: quick insight into total score and progress;",
+            "b2": "Dimension Radar: five-ability analysis;",
+            "b3": "Evidence-level Comments: click to reveal the source text and reasoning;",
+            "b4": "Progress Tracking: from class distribution to individual growth curves — all in one dashboard.",
+            "outro": "AI Grading transforms assessment from static results into an evolving story of learning."
+          },
+          "h3": {
+            "title": "💬 Highlight 3 | Explainable by Design",
+            "text": "Click any score to see why it was given. Both teachers and students can trace the logic — ensuring clarity, fairness, and trust."
+          },
+          "closing": {
+            "title": "🌱 Closing",
+            "p1": "It’s more than right or wrong — it’s about what comes next.",
+            "p2": "AI Grading turns evaluation into evolution."
+          }
+        }
+        },
+        "analytics": { "title": "Analytics", "desc": "Class and personal metrics to identify gaps and improvement paths.", "p1": "Class vs personal", "p2": "Competency breakdown", "p3": "Intervention goals" },
+        "community": { "title": "Community", "desc": "Posts, comments and likes for communication and knowledge sharing.", "p1": "Posts with media", "p2": "Topics & tags", "p3": "Moderation & report",
+        "rich": {
+          "imgAlt": "Learning community overview illustration",
+          "subtitle": "A collaborative space for sharing insights, asking questions, and growing together.",
+          "h1": {
+            "title": "💬 Highlight 1 | Open Discussion & Instant Interaction",
+            "p1": "Students can post learning reflections, help requests, and course insights.",
+            "p2": "Threads support comments, likes, tags, and AI responses, turning individual learning into collaborative engagement."
+          },
+          "h2": {
+            "title": "🌟 Highlight 2 | Layered Dialogue & Knowledge Retention",
+            "p1": "Structured threads with main topics and nested replies keep discussions focused and meaningful.",
+            "p2": "The trending-topics section curates quality content—building a student-driven learning knowledge base."
+          },
+          "h3": {
+            "title": "🧠 Highlight 3 | AI Assistance & Teacher Involvement",
+            "p1": "AI Assistants provide instant responses to questions,",
+            "p2": "while instructors can add professional comments, forming a tri-loop interaction among AI, teachers, and students."
+          },
+          "h4": {
+            "title": "🌈 Highlight 4 | Engagement & Influence Metrics",
+            "p1": "The community tracks posts, comments, likes, and activity scores,",
+            "p2": "visualizing each learner’s participation footprint and peer influence."
+          },
+          "closing": {
+            "title": "🌱 Closing",
+            "p1": "The Learning Community is more than Q&A —",
+            "p2": "it’s a space for idea exchange, reflection, and collective growth."
+          }
+        }
+        },
+        "chat": { "title": "Chat & Notifications", "desc": "Unified center for conversations and notifications, real-time updates.", "p1": "Groups & DM", "p2": "System events push", "p3": "Read receipt & mute",
+        "rich": {
+          "imgAlt": "Chat & Notification Center overview illustration",
+          "imgAltBottom": "Chat & Notification Center detailed view illustration",
+          "subtitle": "Unified communication and alerts — stay connected to what matters.",
+          "h1": {
+            "title": "💬 Highlight 1 | Real-Time Communication",
+            "p1": "Integrated course group chats and private messages support text, emojis, and file sharing.",
+            "p2": "Students can message instructors directly or discuss with peers, while teachers can broadcast course updates and resources instantly."
+          },
+          "h2": {
+            "title": "📢 Highlight 2 | Smart Notifications",
+            "p1": "Automatic alerts for assignment deadlines, course updates, post replies, and AI grading results.",
+            "p2": "All notifications are collected in a single view, sortable by type, priority, and status — ensuring you never miss a moment."
+          },
+          "h3": {
+            "title": "🧭 Highlight 3 | Organized & Actionable",
+            "p1": "Filter messages by category (courses, community, direct messages, system).",
+            "p2": "Mark all as read, delete, or refresh with one click — keeping your workspace clean. Important messages are automatically highlighted or pinned for priority attention."
+          },
+          "h4": {
+            "title": "🧠 Highlight 4 | Seamless Learning Integration",
+            "p1": "Notifications are linked directly to learning activities —",
+            "p2": "clicking a reminder jumps you straight to the relevant assignment, post, or report, creating a one-step action loop from alert to engagement."
+          },
+          "closing": {
+            "title": "🌱 Closing",
+            "p1": "Communication unified, feedback accelerated.",
+            "p2": "The Chat & Notification Center keeps learning connected — in real time."
+          }
+        } }
 			},
 			"pages": {
 				"studentDashboard": { "title": "Student Dashboard", "desc": "Overview and to-dos at a glance." },
@@ -94,17 +299,6 @@
 				"analysis": { "title": "Analysis", "desc": "Insights across multiple charts." },
 				"community": { "title": "Community", "desc": "Engagement and knowledge sharing." },
 				"notifications": { "title": "Notifications", "desc": "Never miss important updates." }
-			},
-			"compare": {
-				"studentVsTeacher": "Student vs Teacher",
-				"student": { "title": "Student", "desc": "Focus on learning and submissions." },
-				"teacher": { "title": "Teacher", "desc": "Focus on assigning, grading and class management." },
-				"lightVsDark": "Light vs Dark",
-				"light": "Light",
-				"dark": "Dark",
-				"glassStyles": "Glass Styles",
-				"glassRegular": "Regular Glass",
-				"glassUltra": "Ultra Glass"
 			},
 			"timeline": {
 				"versions": "Version History",
@@ -119,7 +313,72 @@
 				"step2": { "title": "Architecture First", "desc": "Backend as the source of truth. API and types first, frontend aligns." },
 				"step3": { "title": "Unified Experience", "desc": "Glass style and semantic colors unified into /ui components." },
 				"step4": { "title": "Continuous Iteration", "desc": "Improve UX and performance with feedback, complete docs and i18n." }
-			}
+      },
+      "gallery": {
+        "login": "Login",
+        "analytics": "Analytics",
+        "students": "Student Management",
+        "aiReports": "AI Reports",
+        "assistant": "AI Assistant",
+        "community": "Learning Community"
+      }
+      ,
+      "compare": {
+        "studentVsTeacher": "Student vs Teacher",
+        "student": { "title": "Student", "desc": "Focus on learning and submissions." },
+        "teacher": { "title": "Teacher", "desc": "Focus on assigning, grading and class management." },
+        "lightVsDark": "Light vs Dark",
+        "light": "Light",
+        "dark": "Dark",
+        "glassStyles": "Glass Styles",
+        "glassRegular": "Regular Glass",
+        "glassUltra": "Ultra Glass",
+        "zhVsEn": "Chinese vs English",
+        "zh": "Chinese",
+        "en": "English",
+        "teacherVsStudent": "Teacher vs Student"
+      },
+      "compareDesc": {
+        "lightDark": "Toggle light and dark themes instantly — enjoy the sleek glassmorphic interface that stays comfortable and crystal clear in any setting.",
+        "zhEn": "Seamless Chinese–English switching — interface, text, and date formats update instantly for a smooth international experience."
+      },
+      "structureDesc": "Quickly explore the project structure — documentation, frontend, and backend are clearly organized for more efficient collaboration."
+      ,
+      "helpDesc": "Visit the Help Center to learn about system features and usage — browse examples and guides to get started quickly."
+      ,
+      "feedbackDesc": "Student feedback & outcome highlights — discover impact across classes and semesters.",
+      "feedbackSections": {
+        "s1": {
+          "title": "Voice",
+          "badge": "Voice",
+          "p1": "Across multiple surveys and final evaluations: 100% satisfaction",
+          "q1": "Seconds after submission, I get a visual feedback report—like talking to a teacher who truly understands me.",
+          "q2": "Beyond submitting work, I now see the evolution of my expression, logic, and structure."
+        },
+        "s2": {
+          "title": "From Overview to Detail",
+          "badge": "Metrics",
+          "p1": "Course average: 85 vs. 68",
+          "p2": "Non-cognitive growth: +33%",
+          "p3": "Learning behaviors: interactions +40%, study time +25%, task completion +31%",
+          "p4": "Overall satisfaction under course & system synergy: 96.8%"
+        },
+        "s3": {
+          "title": "Mechanism Highlights",
+          "badge": "Mechanism",
+          "p1": "Instant feedback: illustrated reports reveal strengths & blind spots",
+          "p2": "Phase tracking: automatic growth curves capture incremental gains",
+          "p3": "Personalized guidance: AI suggests next steps based on feedback",
+          "p4": "Affective support: detects mood shifts and offers timely encouragement"
+        },
+        "s5": {
+          "title": "Insights",
+          "badge": "Insight",
+          "q1": "Feedback isn’t a conclusion—it’s where growth begins.",
+          "p1": "Data and empathy together drive an instant-to-long-term learning loop of continuous improvement."
+        },
+        "remark": "Ps: These outcomes represent the course with the system integrated, highlighting our system’s applied potential and value in real teaching scenarios."
+      }
 		}
 		,
 		"layout": {

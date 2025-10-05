@@ -1,38 +1,87 @@
 <template>
-  <div ref="root" class="leading-relaxed" :class="cls">
-    <span v-for="(w, i) in words" :key="i" class="inline-block transition-opacity duration-700 will-change-[opacity,transform]"
-      :style="{ opacity: revealIndex >= i ? 1 : 0.2, transform: revealIndex >= i ? 'translateY(0)' : 'translateY(6px)' }">
-      {{ w }}
-    </span>
+  <div
+    ref="textScrollRevealRef"
+    :class="containerClass"
+  >
+    <div :class="innerStickyClass">
+      <p
+        class="flex flex-wrap p-5 text-2xl font-bold text-black/20 xl:text-5xl lg:p-10 lg:text-4xl md:p-8 md:text-3xl dark:text-white/20"
+      >
+        <ScrollWord
+          v-for="(word, i) in words"
+          :key="i"
+          :word="word"
+          :progress="effectiveProgress"
+          :range="[i / words.length, (i + 1) / words.length]"
+        />
+      </p>
+    </div>
   </div>
 </template>
 
-<script setup lang="ts">
-import { ref, onMounted, onUnmounted, computed } from 'vue'
+<script lang="ts" setup>
+import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { cn } from '@/lib/utils'
+import ScrollWord from './ScrollWord.vue'
 
-const props = defineProps<{ text: string; class?: string }>()
-const cls = computed(() => props.class || '')
+interface Props {
+  class?: string;
+  text: string;
+  sticky?: boolean;
+  heightClass?: string; // only used when sticky=true
+  progressContainerId?: string; // optional external container for progress
+  revealPortion?: number; // 0..1 portion of scroll to complete reveal, remainder holds
+}
 
-const words = computed(() => (props.text || '').split(/\s+/))
-const revealIndex = ref(0)
-const root = ref<HTMLElement | null>(null)
+const props = defineProps<Props>()
 
-function onScroll() {
-  const el = root.value
-  if (!el) return
-  const rect = el.getBoundingClientRect()
-  const vh = window.innerHeight || 800
-  const visible = Math.max(0, Math.min(rect.bottom, vh) - Math.max(rect.top, 0))
-  const ratio = Math.min(1, Math.max(0, visible / Math.max(rect.height, 1)))
-  revealIndex.value = Math.floor(ratio * words.value.length)
+const textScrollRevealRef = ref<HTMLElement | null>(null)
+
+const words = computed(() => props.text.split(' '))
+
+const scrollYProgress = ref(0)
+const effectiveProgress = computed(() => {
+  const portion = typeof props.revealPortion === 'number' && props.revealPortion > 0
+    ? Math.min(Math.max(props.revealPortion, 0.1), 1)
+    : 0.6
+  const p = scrollYProgress.value / portion
+  return Math.min(Math.max(p, 0), 1)
+})
+
+const containerClass = computed(() => {
+  const base = props.sticky !== false
+    ? cn('relative z-0', props.heightClass || 'h-[200vh]')
+    : cn('relative z-0 h-auto')
+  return cn(base, props.class)
+})
+
+const innerStickyClass = computed(() => {
+  return props.sticky !== false
+    ? 'sticky top-0 mx-auto flex h-1/2 max-w-4xl items-center bg-transparent px-4 py-20'
+    : 'mx-auto flex max-w-4xl items-center bg-transparent px-4 py-8'
+})
+
+function updateScrollYProgress() {
+  const el = props.progressContainerId
+    ? (document.getElementById(props.progressContainerId) as HTMLElement | null)
+    : textScrollRevealRef.value
+  if (el) {
+    const boundingRect = el.getBoundingClientRect()
+    const windowHeight = window.innerHeight
+
+    scrollYProgress.value = (boundingRect.y / windowHeight) * -1
+  }
 }
 
 onMounted(() => {
-  onScroll()
-  window.addEventListener('scroll', onScroll, { passive: true })
+  window.addEventListener('scroll', updateScrollYProgress)
+  window.addEventListener('resize', updateScrollYProgress)
+  updateScrollYProgress()
 })
+
 onUnmounted(() => {
-  window.removeEventListener('scroll', onScroll)
+  window.removeEventListener('scroll', updateScrollYProgress)
+  window.removeEventListener('resize', updateScrollYProgress)
 })
 </script>
 

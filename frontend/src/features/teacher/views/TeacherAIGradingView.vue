@@ -62,15 +62,16 @@
           </div>
         </div>
         <div class="lg:col-span-2">
-          <div v-if="activeItem" class="card p-4 glass-interactive" v-glass="{ strength: 'thick', interactive: true }">
+          <Card v-if="activeItem" padding="md" tint="primary" class="rounded-2xl glass-interactive" v-glass="{ strength: 'thick', interactive: true }">
             <h3 class="font-medium mb-3">{{ activeItem.name || activeItem.fileName }}</h3>
             <div v-if="activeItem.status==='error'" class="p-3 rounded bg-red-50 text-red-700 text-sm">
               <div class="font-semibold mb-1">{{ t('common.error') || '错误' }}</div>
               <div>{{ activeItem.error || 'Invalid JSON returned by model' }}</div>
             </div>
             <div v-else-if="isJson(activeItem.result)">
-              <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div class="card p-3 md:col-span-2">
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div class="sm:col-span-2">
+                  <Card padding="sm" tint="secondary" class="rounded-xl">
                   <h4 class="font-semibold mb-2">{{ t('teacher.aiGrading.render.overall') }}</h4>
                   <div>
                     <div class="text-sm mb-2 flex items-center gap-3" v-if="getOverall(activeItem.result)?.final_score != null">
@@ -90,23 +91,24 @@
                     </div>
                     <div class="text-sm whitespace-pre-wrap">{{ t('teacher.aiGrading.render.holistic_feedback') }}: {{ overallFeedback(activeItem.result) || (t('common.empty') || '无内容') }}</div>
                   </div>
+                  </Card>
                 </div>
-                <div class="card p-3" v-if="activeItem.result?.moral_reasoning">
+                <Card padding="sm" tint="warning" class="rounded-xl" v-if="activeItem.result?.moral_reasoning">
                   <h4 class="font-semibold mb-2">{{ t('teacher.aiGrading.render.moral_reasoning') }}</h4>
-                  <div v-html="renderCriterion(activeItem.result.moral_reasoning)"></div>
-                </div>
-                <div class="card p-3" v-if="activeItem.result?.attitude_development">
+                  <div v-html="renderCriterion(activeItem.result.moral_reasoning, 'dimension_moral')"></div>
+                </Card>
+                <Card padding="sm" tint="accent" class="rounded-xl" v-if="activeItem.result?.attitude_development">
                   <h4 class="font-semibold mb-2">{{ t('teacher.aiGrading.render.attitude_development') }}</h4>
-                  <div v-html="renderCriterion(activeItem.result.attitude_development)"></div>
-                </div>
-                <div class="card p-3" v-if="activeItem.result?.ability_growth">
+                  <div v-html="renderCriterion(activeItem.result.attitude_development, 'dimension_attitude')"></div>
+                </Card>
+                <Card padding="sm" tint="info" class="rounded-xl" v-if="activeItem.result?.ability_growth">
                   <h4 class="font-semibold mb-2">{{ t('teacher.aiGrading.render.ability_growth') }}</h4>
-                  <div v-html="renderCriterion(activeItem.result.ability_growth)"></div>
-                </div>
-                <div class="card p-3" v-if="activeItem.result?.strategy_optimization">
+                  <div v-html="renderCriterion(activeItem.result.ability_growth, 'dimension_ability')"></div>
+                </Card>
+                <Card padding="sm" tint="success" class="rounded-xl" v-if="activeItem.result?.strategy_optimization">
                   <h4 class="font-semibold mb-2">{{ t('teacher.aiGrading.render.strategy_optimization') }}</h4>
-                  <div v-html="renderCriterion(activeItem.result.strategy_optimization)"></div>
-                </div>
+                  <div v-html="renderCriterion(activeItem.result.strategy_optimization, 'dimension_strategy')"></div>
+                </Card>
               </div>
             </div>
             <div v-else-if="activeItem.status==='grading'" class="card p-4 rounded-xl" v-glass="{ strength: 'regular', interactive: true }">
@@ -119,7 +121,7 @@
               {{ t('teacher.aiGrading.picker.hint') || '已添加到队列，请点击开始批改。' }}
             </div>
             <pre v-else class="card p-3 overflow-auto no-scrollbar text-xs">{{ pretty(activeItem.result?.text || activeItem.result || '') }}</pre>
-          </div>
+          </Card>
           <div v-else class="card p-8 text-center text-gray-500">{{ t('teacher.aiGrading.empty') }}</div>
         </div>
       </div>
@@ -198,6 +200,7 @@ import { fileApi } from '@/api/file.api'
 import GlassPopoverSelect from '@/components/ui/filters/GlassPopoverSelect.vue'
 import GlassTextarea from '@/components/ui/inputs/GlassTextarea.vue'
 import GlassModal from '@/components/ui/GlassModal.vue'
+import Card from '@/components/ui/Card.vue'
 import { PlayIcon, PlusIcon, InboxArrowDownIcon, XMarkIcon, ArrowPathIcon, TrashIcon, ArrowDownTrayIcon, ClockIcon, ChevronRightIcon } from '@heroicons/vue/24/outline'
 import { useRouter } from 'vue-router'
 import { courseApi } from '@/api/course.api'
@@ -551,7 +554,7 @@ function dimensionBars(obj: any): Array<{ key: string; label: string; value: num
 }
 
 // render criterion blocks (score + evidence + suggestions)
-function renderCriterion(block: any) {
+function renderCriterion(block: any, barKind?: 'dimension' | 'dimension_moral' | 'dimension_attitude' | 'dimension_ability' | 'dimension_strategy') {
   try {
     const sections: string[] = []
     for (const [k, v] of Object.entries(block || {})) {
@@ -559,16 +562,23 @@ function renderCriterion(block: any) {
       const score = sec?.score
       const ev = Array.isArray(sec?.evidence) ? sec.evidence : []
       const sug = Array.isArray(sec?.suggestions) ? sec.suggestions : []
-      const bar = typeof score === 'number' ? `<div class=\"h-2 w-40 rounded-md overflow-hidden border border-gray-300/70 dark:border-white/10 bg-gray-200/60 dark:bg-white/10 shadow-inner\"><div class=\"h-full bg-gradient-to-r from-sky-400 to-blue-500\" style=\"width:${score*20}%\"></div></div>` : ''
+      const which = barKind || 'dimension'
+      const bar = typeof score === 'number' ? `<div class=\"h-2 w-40 rounded-md overflow-hidden border border-gray-300/70 dark:border-white/10 bg-gray-200/60 dark:bg-white/10 shadow-inner\"><div class=\"h-full\" data-gradient=\"${which}\" style=\"width:${score*20}%\"></div></div>` : ''
+      const firstReasoning = (ev.find((e: any) => e && String(e.reasoning || '').trim()) || {}).reasoning || ''
+      const firstConclusion = (ev.find((e: any) => e && String(e.conclusion || '').trim()) || {}).conclusion || ''
+      const groupReasoning = String(firstReasoning || (sec?.reasoning || ((sec && !Array.isArray(sec?.evidence) && (sec as any).evidence?.reasoning) || '')) || '')
+      const groupConclusion = String(firstConclusion || (sec?.conclusion || ((sec && !Array.isArray(sec?.evidence) && (sec as any).evidence?.conclusion) || '')) || '')
       const evid = ev
-        .filter((e: any) => (e && (e.quote || e.reasoning || e.conclusion)))
-        .map((e: any) => `<li class="mb-1"><div class="text-xs text-gray-600 dark:text-gray-300">${e.quote ? '"'+escapeHtml(e.quote)+'"' : ''}</div><div class="text-xs">${escapeHtml(e.reasoning || '')}</div>${e.conclusion?`<div class=\"text-xs italic text-gray-500\">${escapeHtml(e.conclusion)}</div>`:''}</li>`) 
+        .filter((e: any) => (e && (e.quote || e.explanation)))
+        .map((e: any) => `<li class=\"mb-1\">\n            <div class=\"text-xs text-gray-600 dark:text-gray-300\">${e.quote ? '\"'+escapeHtml(e.quote)+'\"' : ''}</div>\n            ${e.explanation?`<div class=\\\"text-[11px] text-gray-500\\\">${escapeHtml(e.explanation)}</div>`:''}\n          </li>`) 
         .join('')
-      const sugg = sug.map((s: any) => `<li class="mb-1 text-xs">${escapeHtml(String(s))}</li>`).join('')
-      sections.push(`<div class="space-y-2"><div class="text-sm font-medium">${escapeHtml(String(k))} ${score!=null?`(${score}/5)`:''}</div>${bar}<div><div class="text-xs font-semibold mt-2">Evidence</div><ul>${evid}</ul></div><div><div class="text-xs font-semibold mt-2">Suggestions</div><ul>${sugg}</ul></div></div>`)
+      const reasoningBlock = groupReasoning ? `<div class=\"text-xs\"><span class=\"font-semibold\">Reasoning:</span> ${escapeHtml(groupReasoning)}</div>` : ''
+      const conclusionBlock = groupConclusion ? `<div class=\"text-xs italic text-gray-600 dark:text-gray-300\"><span class=\"not-italic font-semibold\">Conclusion:</span> ${escapeHtml(groupConclusion)}</div>` : ''
+      const sugg = sug.map((s: any) => `<li class=\"mb-1 text-xs\">${escapeHtml(String(s))}</li>`).join('')
+      sections.push(`<div class=\"space-y-2\"><div class=\"text-sm font-medium\">${escapeHtml(String(k))} ${score!=null?`(${score}/5)`:''}</div>${bar}<div><div class=\"text-xs font-semibold mt-2\">Evidence</div><ul>${evid}</ul>${reasoningBlock}${conclusionBlock}</div><div><div class=\"text-xs font-semibold mt-2\">Suggestions</div><ul>${sugg}</ul></div></div>`)
     }
     return sections.join('')
-  } catch { return `<pre class="text-xs">${escapeHtml(pretty(block))}</pre>` }
+  } catch { return `<pre class=\"text-xs\">${escapeHtml(pretty(block))}</pre>` }
 }
 function escapeHtml(s: string) {
   return String(s)
@@ -716,9 +726,19 @@ function normalizeAssessment(obj: any) {
     if (Array.isArray(obj.evaluation_result)) {
       return normalizeFromEvaluationArray(obj.evaluation_result)
     }
+    // 兼容：evaluation.results / evaluation_results 风格
+    if (obj.evaluation_results && typeof obj.evaluation_results === 'object') {
+      return normalizeFromEvaluationResults(obj.evaluation_results)
+    }
     // 兼容：evaluation 对象结构（含 "1) ..." → "1A. ..." 键）
     if (obj.evaluation && typeof obj.evaluation === 'object') {
+      // 若包含 dimensions，则按 dimensions 处理，否则按 loose 对象处理
+      if (obj.evaluation.dimensions) return normalizeFromEvaluationDimensions(obj.evaluation)
       return normalizeFromEvaluationObject(obj.evaluation)
+    }
+    // 兼容：蛇形维度键
+    if (obj.moral_reasoning_maturity || obj.learning_attitude_development || obj.learning_ability_growth || obj.learning_strategy_optimization) {
+      return normalizeFromSnakeDimensions(obj)
     }
     // 已是标准 schema 则直接返回
     const hasCore = (o: any) => !!(o && (o.moral_reasoning || o.attitude_development || o.ability_growth || o.strategy_optimization || o.overall))
@@ -821,6 +841,24 @@ function normalizeFromEvaluationObject(evaluation: any) {
     const suggestions = Array.isArray(sraw) ? sraw : (sraw ? [String(sraw)] : [])
     return { score, evidence, suggestions }
   }
+  const norm = (s: string) => String(s || '').toLowerCase().replace(/[’'`]/g, "'").replace(/[^a-z0-9]/g, '')
+  const pickSub = (group: any, ids: string[], hints: string[]): any => {
+    if (!group || typeof group !== 'object') return undefined
+    const keys = Object.keys(group)
+    const idNorms = ids.map(id => norm(id))
+    const hintNorms = hints.map(h => norm(h))
+    // 1) 前缀匹配（如 3A → 3a...）
+    for (const k of keys) {
+      const nk = norm(k)
+      if (idNorms.some(id => nk.startsWith(id))) return group[k]
+    }
+    // 2) 关键字包含（如 bloom / taxonomy / stage / foundation 等）
+    for (const k of keys) {
+      const nk = norm(k)
+      if (hintNorms.every(h => nk.includes(h))) return group[k]
+    }
+    return undefined
+  }
 
   const findGroup = (obj: any, hint: string) => {
     const k = Object.keys(obj || {}).find(k => k.toLowerCase().includes(hint))
@@ -834,24 +872,24 @@ function normalizeFromEvaluationObject(evaluation: any) {
 
   const out: any = {}
   out.moral_reasoning = {
-    stage_level: toSec(moral['1A. Stage Level Identification'] || moral['1A']),
-    foundations_balance: toSec(moral['1B. Breadth of Moral Foundations'] || moral['1B']),
-    argument_chain: toSec(moral['1C. Argument Chains and Counter-arguments'] || moral['1C'])
+    stage_level: toSec(pickSub(moral, ['1a'], ['stage', 'level']) || {}),
+    foundations_balance: toSec(pickSub(moral, ['1b'], ['foundation']) || {}),
+    argument_chain: toSec(pickSub(moral, ['1c'], ['argument']) || pickSub(moral, ['1c'], ['counter']) || {})
   }
   out.attitude_development = {
-    emotional_engagement: toSec(attitude['2A. Emotional Engagement'] || attitude['2A']),
-    resilience: toSec(attitude['2B. Persistence/Resilience'] || attitude['2B']),
-    focus_flow: toSec(attitude['2C. Task Focus / Flow'] || attitude['2C'])
+    emotional_engagement: toSec(pickSub(attitude, ['2a'], ['emotional']) || {}),
+    resilience: toSec(pickSub(attitude, ['2b'], ['resilience']) || pickSub(attitude, ['2b'], ['persistence']) || {}),
+    focus_flow: toSec(pickSub(attitude, ['2c'], ['task', 'flow']) || pickSub(attitude, ['2c'], ['focus']) || {})
   }
   out.ability_growth = {
-    blooms_level: toSec(ability["3A. Bloom's Taxonomy Progression"] || ability['3A']),
-    metacognition: toSec(ability['3B. Metacognition (Plan–Monitor–Revise)'] || ability['3B']),
-    transfer: toSec(ability['3C. Knowledge Transfer'] || ability['3C'])
+    blooms_level: toSec(pickSub(ability, ['3a'], ['bloom', 'taxonomy']) || {}),
+    metacognition: toSec(pickSub(ability, ['3b'], ['metacognition']) || {}),
+    transfer: toSec(pickSub(ability, ['3c'], ['transfer']) || {})
   }
   out.strategy_optimization = {
-    diversity: toSec(strategy['4A. Strategy Diversity'] || strategy['4A']),
-    depth: toSec(strategy['4B. Depth of Processing'] || strategy['4B']),
-    self_regulation: toSec(strategy['4C. Self-Regulation'] || strategy['4C'])
+    diversity: toSec(pickSub(strategy, ['4a'], ['diversity']) || {}),
+    depth: toSec(pickSub(strategy, ['4b'], ['depth']) || {}),
+    self_regulation: toSec(pickSub(strategy, ['4c'], ['self', 'regulation']) || {})
   }
 
   const avg = (nums: number[]) => {

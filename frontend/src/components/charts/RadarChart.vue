@@ -57,7 +57,8 @@ const buildOption = () => {
       backgroundColor: 'transparent',
       borderColor: 'transparent',
       textStyle: { color: 'var(--color-base-content)' },
-      extraCssText: glassTooltipCss(),
+      // 默认隐藏，避免初始化阶段 body 左上角出现空白容器
+      extraCssText: glassTooltipCss() + ';visibility:hidden;',
       className: 'echarts-glass-tooltip',
       renderMode: 'html',
       enterable: false,
@@ -65,8 +66,9 @@ const buildOption = () => {
       alwaysShowContent: false,
       appendToBody: !!props.appendTooltipToBody,
       transitionDuration: 0,
-      showDelay: 10,
-      hideDelay: 60
+      showDelay: 0,
+      hideDelay: 50,
+      triggerOn: 'mousemove'
     },
     radar: {
       indicator: props.indicators,
@@ -133,6 +135,17 @@ const render = async () => {
   try {
     inst.on('globalout', () => {
       try { inst?.dispatchAction({ type: 'hideTip' } as any) } catch {}
+    })
+    // 控制 tooltip DOM 的可见性（默认隐藏，显示时再显式开启）
+    const tooltipEls = Array.from(document.querySelectorAll('.echarts-tooltip, .echarts-glass-tooltip')) as HTMLElement[]
+    tooltipEls.forEach(el => { el.style.visibility = 'hidden' })
+    inst.on('showTip', () => {
+      const els = Array.from(document.querySelectorAll('.echarts-tooltip, .echarts-glass-tooltip')) as HTMLElement[]
+      els.forEach(el => { el.style.visibility = 'visible' })
+    })
+    inst.on('hideTip', () => {
+      const els = Array.from(document.querySelectorAll('.echarts-tooltip, .echarts-glass-tooltip')) as HTMLElement[]
+      els.forEach(el => { el.style.visibility = 'hidden' })
     })
   } catch {}
 }

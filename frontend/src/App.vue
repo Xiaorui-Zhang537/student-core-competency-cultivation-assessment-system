@@ -100,13 +100,7 @@
       </div>
     </div>
 
-    <!-- 开发模式指示器 -->
-    <div
-      v-if="isDevelopment"
-      class="fixed bottom-4 left-4 bg-blue-100 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-800 rounded-lg px-3 py-1 z-30"
-    >
-      <p class="text-xs font-medium text-blue-800 dark:text-blue-200">{{ t('app.devMode') }}</p>
-    </div>
+    
     
     <!-- 全局挂载聊天抽屉（仅登录后显示） -->
     <chat-drawer
@@ -237,7 +231,7 @@ const routeLoading = ref(false)
 const loadingText = ref('')
 const showErrorModal = ref(false)
 const isOnline = ref(navigator.onLine)
-const isDevelopment = ref(import.meta.env.DEV)
+ 
 const { t } = useI18n()
 
 // 路由加载处理

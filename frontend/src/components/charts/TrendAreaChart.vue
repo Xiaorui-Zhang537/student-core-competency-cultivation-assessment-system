@@ -124,12 +124,13 @@ const buildOption = (): any => {
       backgroundColor: 'transparent',
       borderColor: 'transparent',
       textStyle: { color: 'var(--color-base-content)' },
-      extraCssText: glassTooltipCss(),
+      // 默认隐藏，避免初始化阶段 body 左上角出现空白容器
+      extraCssText: glassTooltipCss() + ';visibility:hidden;pointer-events:none;',
       className: 'echarts-glass-tooltip',
       renderMode: 'html',
       enterable: false,
       confine: true,
-      appendToBody: true,
+      appendToBody: false,
       transitionDuration: 0,
       ...props.tooltip
     },
@@ -172,6 +173,17 @@ const init = async () => {
     try {
       chart.on('globalout', () => {
         try { chart?.dispatchAction({ type: 'hideTip' } as any) } catch {}
+      })
+      // 控制 tooltip DOM 的可见性（默认隐藏，显示时再显式开启）
+      const tooltipEls = Array.from(document.querySelectorAll('.echarts-tooltip, .echarts-glass-tooltip')) as HTMLElement[]
+      tooltipEls.forEach(el => { el.style.visibility = 'hidden'; el.style.pointerEvents = 'none' })
+      chart.on('showTip', () => {
+        const els = Array.from(document.querySelectorAll('.echarts-tooltip, .echarts-glass-tooltip')) as HTMLElement[]
+        els.forEach(el => { el.style.visibility = 'visible'; el.style.pointerEvents = 'auto' })
+      })
+      chart.on('hideTip', () => {
+        const els = Array.from(document.querySelectorAll('.echarts-tooltip, .echarts-glass-tooltip')) as HTMLElement[]
+        els.forEach(el => { el.style.visibility = 'hidden'; el.style.pointerEvents = 'none' })
       })
     } catch {}
     ro = new ResizeObserver(() => {

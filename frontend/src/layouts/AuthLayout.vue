@@ -119,7 +119,7 @@
             <div class="flex items-center gap-4 mb-12">
               <img src="/brand/logo.png" alt="Logo" class="shrink-0 h-20 md:h-24 w-auto select-none" />
               <div>
-                <LetterPullup :words="t('app.title') as string" class="bg-gradient-to-r from-gray-900 to-gray-700 dark:from-white dark:to-gray-300 bg-clip-text text-transparent" />
+                <LetterPullup :words="t('app.title') as string" class="bg-gradient-to-r from-gray-900 to-gray-700 dark:from-white dark:to-gray-300 bg-clip-text text-transparent text-3xl md:text-5xl lg:text-6xl font-extrabold leading-tight" />
                 <RadiantText :duration="5" :radiantWidth="90" class="mt-1 text-lg md:text-xl text-left">
                   {{ t('layout.auth.subtitle') }}
                 </RadiantText>

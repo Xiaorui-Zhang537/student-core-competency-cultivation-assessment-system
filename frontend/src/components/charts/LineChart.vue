@@ -275,12 +275,13 @@ const initChart = async () => {
         backgroundColor: 'transparent',
         borderColor: 'transparent',
         textStyle: { color: 'var(--color-base-content)' },
-        extraCssText: glassTooltipCss(),
+        // 默认隐藏，避免初始化阶段 body 左上角出现空白容器
+        extraCssText: glassTooltipCss() + ';visibility:hidden;pointer-events:none;',
         className: 'echarts-glass-tooltip',
         renderMode: 'html',
         enterable: false,
         confine: true,
-        appendToBody: true,
+        appendToBody: false,
         transitionDuration: 0,
         axisPointer: {
           type: 'cross',
@@ -371,6 +372,25 @@ const updateChart = () => {
   }
 
   chartInstance.value.setOption(option, true)
+  // 初始化后隐藏 tooltip，避免页面左上角残留小空白容器
+  try { chartInstance.value?.dispatchAction({ type: 'hideTip' } as any) } catch {}
+  try { (chartInstance.value as any).off && (chartInstance.value as any).off('globalout') } catch {}
+  try {
+    chartInstance.value?.on('globalout', () => {
+      try { chartInstance.value?.dispatchAction({ type: 'hideTip' } as any) } catch {}
+    })
+    // 控制 tooltip DOM 的可见性（默认隐藏，显示时再显式开启）
+    const tooltipEls = Array.from(document.querySelectorAll('.echarts-tooltip, .echarts-glass-tooltip')) as HTMLElement[]
+    tooltipEls.forEach(el => { el.style.visibility = 'hidden'; el.style.pointerEvents = 'none' })
+    chartInstance.value?.on('showTip', () => {
+      const els = Array.from(document.querySelectorAll('.echarts-tooltip, .echarts-glass-tooltip')) as HTMLElement[]
+      els.forEach(el => { el.style.visibility = 'visible'; el.style.pointerEvents = 'auto' })
+    })
+    chartInstance.value?.on('hideTip', () => {
+      const els = Array.from(document.querySelectorAll('.echarts-tooltip, .echarts-glass-tooltip')) as HTMLElement[]
+      els.forEach(el => { el.style.visibility = 'hidden'; el.style.pointerEvents = 'none' })
+    })
+  } catch {}
   // 移出画布时隐藏 tooltip，避免遗留小空白容器
   try { (chartInstance.value as any).off && (chartInstance.value as any).off('globalout') } catch {}
   try {

@@ -63,6 +63,8 @@ interface Props {
   containerClass?: HTMLAttributes['class']
   tint?: boolean
   bgTransparent?: boolean
+  tintFrom?: string
+  tintTo?: string
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -81,7 +83,9 @@ const props = withDefaults(defineProps<Props>(), {
   frost: 0.05,
   displace: 1,
   tint: true,
-  bgTransparent: false
+  bgTransparent: false,
+  tintFrom: 'var(--color-theme-primary)',
+  tintTo: 'var(--color-theme-accent)'
 })
 
 const liquidGlassRoot = ref<HTMLElement | null>(null)
@@ -100,16 +104,35 @@ const displacementImage = computed(() => {
   const border = Math.min(dimensions.width, dimensions.height) * (props.border * 0.5)
   const yBorder = Math.min(dimensions.width, dimensions.height) * (props.border * 0.5)
 
+  // Resolve CSS variable colors for SVG data URI (CSS vars won't resolve inside embedded SVG)
+  function resolveColor(input?: string): string {
+    try {
+      const v = (input || '').trim()
+      if (!v) return '#ffffff'
+      if (v.startsWith('var(')) {
+        const name = v.slice(4, -1).trim()
+        const rs = getComputedStyle(document.documentElement)
+        const resolved = rs.getPropertyValue(name).trim()
+        return resolved || '#ffffff'
+      }
+      return v
+    } catch {
+      return '#ffffff'
+    }
+  }
+  const tintFrom = resolveColor(props.tintFrom)
+  const tintTo = resolveColor(props.tintTo)
+
   return `
     <svg viewBox="0 0 ${dimensions.width} ${dimensions.height}" xmlns="http://www.w3.org/2000/svg">
       <defs>
         <linearGradient id="red" x1="100%" y1="0%" x2="0%" y2="0%">
           <stop offset="0%" stop-color="#0000"/>
-          <stop offset="100%" stop-color="red"/>
+          <stop offset="100%" stop-color="${tintFrom}"/>
         </linearGradient>
         <linearGradient id="blue" x1="0%" y1="0%" x2="0%" y2="100%">
           <stop offset="0%" stop-color="#0000"/>
-          <stop offset="100%" stop-color="blue"/>
+          <stop offset="100%" stop-color="${tintTo}"/>
         </linearGradient>
       </defs>
       <rect x="0" y="0" width="${dimensions.width}" height="${dimensions.height}" fill="black"></rect>
@@ -196,6 +219,8 @@ onUnmounted(() => {
   height: 100%;
   overflow: hidden;
   border-radius: inherit;
+  position: relative;
+  z-index: 1;
 }
 
 .filter {
@@ -204,6 +229,7 @@ onUnmounted(() => {
   width: 100%;
   height: 100%;
   pointer-events: none;
+  z-index: 0;
 }
 </style>
 

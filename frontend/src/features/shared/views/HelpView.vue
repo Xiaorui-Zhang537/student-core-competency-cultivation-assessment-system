@@ -42,11 +42,11 @@
       <div class="grid grid-cols-1 lg:grid-cols-4 gap-8">
         <!-- 左侧导航 -->
         <div class="lg:col-span-1">
-          <card padding="lg" tint="secondary" class="sticky top-6 glass-thin" v-glass>
+          <card padding="lg" tint="secondary" class="sticky top-6 pt-2">
             <template #header>
               <h2 class="text-lg font-semibold text-base-content">{{ t('shared.help.nav') || '导航' }}</h2>
             </template>
-            <nav class="space-y-2">
+            <nav class="space-y-2 pb-4">
               <Button
                 v-for="section in sections"
                 :key="section.id"
@@ -72,7 +72,7 @@
         <div class="lg:col-span-3 space-y-8">
           <!-- 文章列表 -->
           <section v-if="activeSection === 'articles'" id="articles">
-            <card padding="lg" tint="secondary" class="glass" v-glass>
+            <card padding="lg" tint="secondary">
               <template #header>
                 <div class="flex items-center justify-between gap-3 flex-wrap">
                   <h2 class="text-xl font-semibold text-base-content">{{ t('shared.help.sections.articles') || '帮助文章' }}</h2>
@@ -121,7 +121,7 @@
 
           <!-- 文章详情 -->
           <section v-if="activeSection === 'articleDetail' && helpStore.article" id="articleDetail">
-            <card padding="lg" tint="secondary" class="glass" v-glass>
+            <card padding="lg" tint="secondary">
               <template #header>
                 <div class="flex items-center gap-3 flex-wrap">
                   <h2 class="text-xl font-semibold text-base-content">{{ helpStore.article?.title }}</h2>
@@ -138,7 +138,7 @@
           </section>
           <!-- 常见问题（daisyUI Accordion with plus/minus） -->
           <section v-if="activeSection === 'faq'" id="faq">
-            <card padding="lg" tint="secondary" class="glass" v-glass>
+            <card padding="lg" tint="secondary">
               <template #header>
                 <h2 class="text-xl font-semibold text-base-content">{{ t('shared.help.sections.faq') || '常见问题' }}</h2>
               </template>
@@ -170,7 +170,7 @@
 
           <!-- 使用指南 -->
           <section v-if="activeSection === 'guide'" id="guide">
-            <card padding="lg" tint="secondary" class="glass" v-glass>
+            <card padding="lg" tint="secondary">
               <template #header>
                 <h2 class="text-xl font-semibold text-base-content">{{ t('shared.help.sections.guide') || '使用指南' }}</h2>
               </template>
@@ -216,7 +216,7 @@
           <section v-if="activeSection === 'support'" id="support">
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
               <!-- 联系方式 -->
-              <card padding="lg" tint="secondary" class="glass" v-glass>
+              <card padding="lg" tint="secondary">
                 <template #header>
                 <h2 class="text-xl font-semibold text-base-content">{{ t('shared.help.sections.support') || '联系技术支持' }}</h2>
                 </template>
@@ -244,7 +244,7 @@
               </card>
 
               <!-- 提交工单 -->
-              <card padding="lg" tint="secondary" class="glass" v-glass>
+              <card padding="lg" tint="secondary">
                 <template #header>
                 <h2 class="text-xl font-semibold text-base-content">{{ t('shared.help.sections.ticket') || '提交技术工单' }}</h2>
                 </template>
@@ -313,7 +313,7 @@
               </card>
               
               <!-- 我的工单（仅登录后显示） -->
-              <card v-if="authStore.isAuthenticated" padding="lg" tint="secondary" class="glass md:col-span-2" v-glass>
+              <card v-if="authStore.isAuthenticated" padding="lg" tint="secondary" class="md:col-span-2">
                 <template #header>
                   <div class="flex items-center justify-between">
                     <h2 class="text-xl font-semibold text-base-content">{{ t('shared.help.sections.myTickets') || '我的工单' }}</h2>
@@ -343,7 +343,7 @@
 
           <!-- 反馈 -->
           <section v-if="activeSection === 'feedback'" id="feedback">
-            <card padding="lg" tint="secondary" class="glass" v-glass>
+            <card padding="lg" tint="secondary">
               <template #header>
                 <h2 class="text-xl font-semibold text-gray-900 dark:text-white">{{ t('shared.help.sections.feedback') || '意见反馈' }}</h2>
               </template>
@@ -427,7 +427,6 @@ import Button from '@/components/ui/Button.vue'
 import PageHeader from '@/components/ui/PageHeader.vue'
 import StartCard from '@/components/ui/StartCard.vue'
 // 动态背景已移除
-import GlassDirective from '@/directives/glass'
 import { useI18n } from 'vue-i18n'
 const { t } = useI18n()
 import { useHelpStore } from '@/stores/help'
@@ -453,8 +452,6 @@ import {
   ChartBarIcon
 } from '@heroicons/vue/24/outline'
 
-// 注册指令（局部）
-const vGlass = GlassDirective
 
 // Stores
 const uiStore = useUIStore()
@@ -504,14 +501,14 @@ const newArticles7dCount = computed(() => {
   return cnt
 })
 
-// 导航菜单
-const sections = [
+// 导航菜单（随语言切换动态更新）
+const sections = computed(() => ([
   { id: 'faq', title: t('shared.help.sections.faq') || '常见问题' },
   { id: 'articles', title: t('shared.help.sections.articles') || '帮助文章' },
   { id: 'guide', title: t('shared.help.sections.guide') || '使用指南' },
   { id: 'support', title: t('shared.help.sections.support') || '技术支持' },
   { id: 'feedback', title: t('shared.help.sections.feedback') || '意见反馈' }
-]
+]))
 
 // FAQ数据（i18n 驱动）
 const faqCategories = computed(() => ([

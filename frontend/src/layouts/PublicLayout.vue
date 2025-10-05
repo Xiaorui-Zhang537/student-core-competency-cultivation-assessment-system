@@ -1,7 +1,7 @@
 <template>
   <div class="min-h-screen relative text-base-content" :style="baseBgStyle">
     <BackgroundLayer />
-    <!-- 顶部导航：品牌 + 菜单 + 右上 Dock -->
+    <!-- 顶部导航：品牌 + 右上 Dock（已移除中部菜单） -->
     <nav class="sticky top-0 z-40 px-6 pt-6 pb-6">
       <div class="flex items-center gap-3">
         <!-- 品牌：液态 Logo + 标题 -->
@@ -12,12 +12,7 @@
           </div>
         </liquid-glass>
 
-        <!-- 中部菜单：主页各子页 -->
-        <div class="hidden md:flex items-center gap-1 ml-2">
-          <a v-for="item in menuItems" :key="item.href" :href="item.href" class="px-3 py-2 rounded-full text-sm hover:bg-white/10 dark:hover:bg-white/10 transition">
-            {{ t(item.label) }}
-          </a>
-        </div>
+        <!-- 中部菜单移除：根据需求不再显示“概览/特性”等锚点链接 -->
 
         <div class="flex-1"></div>
 
@@ -69,9 +64,9 @@
       </div>
     </nav>
 
-    <!-- 内容区域 -->
+    <!-- 内容区域（增加左右留白） -->
     <main class="relative z-10">
-      <div class="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+      <div class="w-full max-w-[1920px] mx-auto px-2 sm:px-4 lg:px-6 py-6">
         <router-view />
       </div>
     </main>
@@ -190,15 +185,6 @@ const { t } = useI18n()
 
 const baseBgStyle = computed(() => ({ backgroundColor: 'color-mix(in oklab, var(--color-base-100) 86%, transparent)' }))
 
-const menuItems = [
-  { href: '#overview', label: 'app.home.menu.overview' },
-  { href: '#features', label: 'app.home.menu.features' },
-  { href: '#compare', label: 'app.home.menu.compare' },
-  { href: '#timeline', label: 'app.home.menu.timeline' },
-  { href: '#structure', label: 'app.home.menu.structure' },
-  { href: '#marquee', label: 'app.home.menu.marquee' },
-]
-
 const cursorBtnRef = ref<HTMLElement | null>(null)
 const showCursorMenu = ref(false)
 const cursorMenuStyle = ref<Record<string, string>>({})
@@ -262,12 +248,10 @@ function openExternal(url?: string) {
 
 const docsUrl = (import.meta as any).env.VITE_DOCS_URL as string | undefined
 function goDocs() {
-  if (docsUrl) {
-    try { window.open(docsUrl, '_blank', 'noopener') } catch { window.location.href = docsUrl }
-    return
-  }
-  // 无外部文档地址时，使用站内 /docs，并用 replace 避免多一级返回
-  router.replace('/docs')
+  const target = docsUrl || 'http://localhost:4174'
+  try { sessionStorage.setItem('leavingTo', 'docs') } catch {}
+  // 同窗口跳转到文档服务，避免 Vite 双服务器混用解析导致的别名错误
+  window.location.href = target
 }
 
 function goLogin() {
@@ -282,14 +266,20 @@ function goDashboard() {
 
 const githubUrl = import.meta.env.VITE_GITHUB_URL || 'https://github.com/Xiaorui-Zhang537/student-core-competency-cultivation-assessment-system'
 
-// 修复从登录/Docs/GitHub 返回首页出现白屏：对 bfcache 恢复或带标记的返回触发刷新
+// 返回时自动处理主页恢复：
+// - 若从 Docs 返回（leavingTo==='docs'），自动跳到首页
+// - 其他 back/forward 恢复则刷新以避免白屏
 const onPageShow = (ev: PageTransitionEvent) => {
   try {
     const nav = (performance.getEntriesByType('navigation') as any)[0]
     const isBack = (nav && nav.type === 'back_forward') || (ev as any).persisted
     const leavingTo = sessionStorage.getItem('leavingTo')
-    if (isBack || leavingTo) {
+    if (leavingTo === 'docs') {
       try { sessionStorage.removeItem('leavingTo') } catch {}
+      router.replace('/')
+      return
+    }
+    if (isBack) {
       window.location.reload()
     }
   } catch {}
