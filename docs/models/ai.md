@@ -4,7 +4,7 @@
 - 字段（示例）：`id/userId/title/model/provider/pinned/archived/createdAt`
 
 ## 消息（Message）
-- 字段（示例）：`id/conversationId/role(content)/attachments/createdAt`
+- 字段（示例）：`id/conversationId/role(content)/fileIds/createdAt`
 - 角色：`user/assistant/system`
 
 ## 记忆（Memory）

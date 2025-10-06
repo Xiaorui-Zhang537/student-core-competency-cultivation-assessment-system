@@ -14,6 +14,7 @@
 ```
 
 - `POST /api/grades/{id}/publish`：发布成绩
+- `POST /api/grades/{id}/return`：退回成绩（打回重改，状态变更为 `returned`）
 - `POST /api/grades/batch`：批量打分
 - `POST /api/grades/batch-publish`：批量发布
 
@@ -75,6 +76,12 @@ curl -X POST 'http://localhost:8080/api/grades' \
 发布成绩：
 ```bash
 curl -X POST 'http://localhost:8080/api/grades/g-1/publish' \
+  -H 'Authorization: Bearer <access_jwt>'
+```
+
+退回成绩：
+```bash
+curl -X POST 'http://localhost:8080/api/grades/g-1/return' \
   -H 'Authorization: Bearer <access_jwt>'
 ```
 

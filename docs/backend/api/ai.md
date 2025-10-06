@@ -129,7 +129,10 @@ curl -X PUT -H "Authorization: Bearer $TOKEN" -H "Content-Type: application/json
 - `getMemory()` / `updateMemory(data)`
 
 ## 配置
-- `AI_DEFAULT_PROVIDER`、`OPENROUTER_API_KEY`、`DEEPSEEK_API_KEY`、`DEEPSEEK_MODEL`（见 `application.yml`）
+- `AI_DEFAULT_PROVIDER`（默认 `openrouter`）
+- `OPENROUTER_API_KEY` 或 `DEEPSEEK_API_KEY`
+- `DEEPSEEK_MODEL`（默认 `deepseek/deepseek-chat-v3.1`）
+- `GOOGLE_API_KEY`（使用 Gemini 时）
 
 ### 系统 Prompt 来源与覆盖
 - 后端每次调用大模型前，会自动从 `ai.system-prompt-path` 指定的位置读取系统 Prompt 并作为 `system` 消息注入。
@@ -253,7 +256,7 @@ ai:
 - 扩展参数：
   - `jsonOnly`（可选，布尔）：为 true 时请求上游以 `response_format=json_object` 返回结构化 JSON；失败时返回文本。
   - `useGradingPrompt`（可选，布尔）：为 true 时在会话前注入“作文批改”系统 Prompt；为 false 时不注入。
-- 说明：
+ - 说明：
   - 在“AI 助手”页面，这两个参数由前端开关控制；在“AI 批改作业”页面默认强制 `jsonOnly=true`、`useGradingPrompt=true`。
 
 ---

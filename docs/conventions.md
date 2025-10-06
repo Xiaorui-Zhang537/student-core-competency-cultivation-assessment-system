@@ -36,3 +36,9 @@
 - 新增模块/接口后，更新 `docs/` 中相关章节与侧边栏
 - README/Quickstart 保持可用；FAQ 与术语表同步扩展
 - 发布前：完成端到端自测，确保主要流程与回滚路径明确
+
+## API 与数据约定（补充）
+- 错误码：统一 `code/message/data`，无 `code` 则以 HTTP 为准
+- 枚举大小写：后端 schema/接口返回采用小写（如 `draft/published/archived/scheduled/submitted/graded/returned/late`）
+  - 前端可在视图层映射为大写徽章文案，但请求参数与状态判断请使用小写
+  - 文档示例默认采用小写，除非明确指代 UI 展示文案

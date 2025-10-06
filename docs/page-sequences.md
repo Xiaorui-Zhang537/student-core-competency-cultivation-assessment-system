@@ -148,10 +148,10 @@ sequenceDiagram
 
   V->>SA: POST /assignments/{id}/submit { content, fileIds }
   SA->>SC: 提交作业
-  SC-->>SA: { id, status: SUBMITTED }
-  SA-->>V: 更新状态为 SUBMITTED
+  SC-->>SA: { id, status: submitted }
+  SA-->>V: 更新状态为 submitted
 
-  Note over V,GA: 当状态为 GRADED 时
+  Note over V,GA: 当状态为 graded 时
   V->>GA: GET /grades/student/{sid}/assignment/{id}
   GA->>GC: 查询成绩
   GC-->>GA: { score, feedback, gradedAt }

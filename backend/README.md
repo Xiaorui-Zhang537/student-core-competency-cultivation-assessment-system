@@ -81,7 +81,7 @@ backend/
 |----------------------------------------------------|-------|---------------------------------------------------------|
 | `pom.xml`                                          | Build | 定义依赖与插件；Profile：`dev`、`prod`                            |
 | `src/main/java/com/.../AssessmentApplication.java` | 启动类   | `@SpringBootApplication`、`@EnableCaching`、`@MapperScan` |
-| `config/SecurityConfig.java`                       | 配置    | 密码编码器、CORS、静态资源放行、`JwtAuthenticationFilter`               |
+| `config/SecurityConfig.java`                       | 配置    | 密码编码器、CORS（允许 5173 开发域，预检放行）、取消 `X-Frame-Options` 以支持 IFrame 预览、`JwtAuthenticationFilter` |
 | `config/JwtAuthenticationFilter.java`              | 过滤器   | 解析/校验 JWT + DPoP；设置 `SecurityContext`                   |
 | `config/RedisConfig.java`                          | 配置    | `RedisTemplate` 序列化、缓存失效策略                              |
 | `controller/AuthController.java`                   | 控制器   | 注册、登录、刷新令牌、登出                                           |
@@ -144,12 +144,31 @@ mvn spring-boot:run
 open http://localhost:8080/api/swagger-ui.html
 ```
 
+可选：使用 `spring.profiles.active=dev`，并在 `src/main/resources/application-dev.yml` 中覆盖本地特定配置。
+
 ### 6.2 生产部署
 
 ```bash
 mvn clean package -DskipTests
 java -jar target/student-assessment-system-1.0.0.jar --spring.profiles.active=prod
 ```
+
+部署建议：
+- 通过环境变量注入 DB/JWT/API Key；不要在配置文件硬编码。
+- 收敛 `CORS` 允许来源至生产域；关闭多余暴露头。
+- 结合 Nginx 或 API 网关做前缀 `/api` 与限流、熔断等运维策略。
+
+### 6.3 Maven 坐标与产物
+
+当前坐标：
+
+```xml
+<groupId>com.noncore</groupId>
+<artifactId>student-assessment-system</artifactId>
+<version>1.0.2</version>
+```
+
+构建产物：`target/student-assessment-system-1.0.2.jar`
 
 ---
 
@@ -165,19 +184,35 @@ java -jar target/student-assessment-system-1.0.0.jar --spring.profiles.active=pr
 - 日志：控制台与文件输出
 - AI：`AI_DEFAULT_PROVIDER`、`OPENROUTER_API_KEY` 或 `DEEPSEEK_API_KEY`、`DEEPSEEK_MODEL`、`GOOGLE_API_KEY`
 
-### 7.1 Gemini（Google）配置
+示例（Linux/macOS）：
+```bash
+export DB_HOST=127.0.0.1
+export DB_PORT=3306
+export DB_NAME=student_assessment_system
+export DB_USERNAME=root
+export DB_PASSWORD=xxxxx
 
-后端通过 `ai.providers.google` 节点对接 Gemini。建议仅通过环境变量注入密钥：
+export JWT_SECRET="<random-strong-secret>"
+export JWT_EXPIRATION=3600000
+export JWT_REFRESH_EXPIRATION=2592000000
+
+export OPENROUTER_API_KEY="<your-key>"
+export AI_DEFAULT_PROVIDER=openrouter
+```
+
+### 7.1 AI Provider（OpenRouter/DeepSeek/Google）
+
+默认 Provider 走 `AI_DEFAULT_PROVIDER`（默认 `openrouter`）。建议仅通过环境变量注入密钥：
 
 ```bash
 # 必填：Google Generative Language API Key
-export GOOGLE_API_KEY="xxxx"
+export GOOGLE_API_KEY="xxxx" # 若使用 Google
 
 # 可选：自定义 Base URL（默认 https://generativelanguage.googleapis.com）
 export GOOGLE_API_BASE_URL="https://generativelanguage.googleapis.com"
 
 # 设置默认 Provider 为 Google（可选；也可在前端按需传入 model 覆盖）
-export AI_DEFAULT_PROVIDER="google"
+export AI_DEFAULT_PROVIDER="google" # 或保持 openrouter（默认）
 
 # 代理（如需）：
 export AI_PROXY_ENABLED=true
@@ -197,8 +232,13 @@ ai:
 ```
 
 说明：
-- AI 批改接口默认强制结构化 JSON 输出（`jsonOnly=true`），推荐模型 `google/gemini-2.5-pro`。
+- AI 批改接口默认支持结构化 JSON 输出（`jsonOnly=true`）；DeepSeek 默认模型 `deepseek/deepseek-chat-v3.1`，若使用 Google 推荐 `google/gemini-2.5-pro`。
 - 若环境禁用 DELETE，历史删除提供 POST 兼容路径 `/api/ai/grade/history/{id}/delete`。
+
+### 7.2 公共 URL 与安全
+
+- 预检 `OPTIONS /**`、`/auth/**`、`/users/forgot-password`、`/users/reset-password`、`/users/email/change/confirm` 放行；其余见 `security.jwt.public-urls`。
+- `SecurityConfig` 取消 `X-Frame-Options` 以支持 PDF IFrame 预览；请在生产端仅对可信域使用。
 
 ---
 
@@ -221,6 +261,12 @@ mysql -u root -p student_assessment_system < src/main/resources/data.sql
 | 集成测试 | MockMvc + H2      | Controller 层   |
 | 静态扫描 | SonarQube         | 代码质量 & 覆盖率     |
 | 压测   | Gatling / JMeter  | RPS & P95 延迟   |
+
+运行示例：
+```bash
+mvn -Dtest=*Test test # 仅单元测试
+mvn verify             # 含集成测试（如已配置）
+```
 
 ---
 
@@ -253,3 +299,51 @@ mysql -u root -p student_assessment_system < src/main/resources/data.sql
 
 ## 13 许可证
 本模块遵循 **MIT License**（与仓库一致）。
+
+---
+
+## 附：API 索引与文档
+- 常用 curl 示例：
+
+```bash
+# 登录
+curl -sS -X POST http://localhost:8080/api/auth/login \
+  -H 'Content-Type: application/json' \
+  -d '{"username":"student1","password":"pass"}'
+
+# 获取我的资料
+curl -sS http://localhost:8080/api/users/profile -H "Authorization: Bearer $TOKEN"
+
+# 学生选课（含密钥）
+curl -sS -X POST http://localhost:8080/api/courses/101/enroll \
+  -H "Authorization: Bearer $TOKEN" -H 'Content-Type: application/json' \
+  -d '{"enrollKey":"abcd-1234"}'
+
+# AI 批改文本（jsonOnly）
+curl -sS -X POST http://localhost:8080/api/ai/grade/essay \
+  -H "Authorization: Bearer $TOKEN" -H 'Content-Type: application/json' \
+  -d '{"messages":[{"role":"user","content":"<essay text>"}],"jsonOnly":true}'
+```
+
+- 后端 API 索引：`../../docs/backend/api/index.md`
+- Swagger（本地）：`http://localhost:8080/api/swagger-ui.html`
+
+### 控制器与文档对照表（节选）
+
+| Controller | 文档 |
+| --- | --- |
+| `AuthController` | `../../docs/backend/api/auth.md` |
+| `UserController` | `../../docs/backend/api/auth.md`（用户相关在此） |
+| `CourseController` | `../../docs/backend/api/course.md` |
+| `LessonController` | `../../docs/backend/api/course.md`（课时章节） |
+| `AssignmentController` | `../../docs/backend/api/assignment.md` |
+| `SubmissionController` | `../../docs/backend/api/submission.md` |
+| `GradeController` | `../../docs/backend/api/grade.md` |
+| `StudentController` | `../../docs/backend/api/student.md` |
+| `TeacherController` | `../../docs/backend/api/teacher.md` |
+| `CommunityController` | `../../docs/backend/api/community.md` |
+| `NotificationController` | `../../docs/backend/api/notification.md` |
+| `FileController` | `../../docs/backend/api/file.md` |
+| `ReportController` | `../../docs/backend/api/report.md` |
+| `AiController` | `../../docs/backend/api/ai.md` |
+

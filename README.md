@@ -5,7 +5,7 @@
 ### 项目状态
 - 教师端：已完成
 - 学生端：已完成本次迭代（课程密钥、课程/节次、进度与笔记）
-- UI 主题：已完成 DaisyUI 主题改造与彩色玻璃（v0.3.0）
+- UI 主题：新版 DaisyUI 主题（浅色 retro / 深色 synthwave）与彩色玻璃（v0.3.0）
 
 ---
 
@@ -74,11 +74,15 @@ npm run dev
 - 统一使用 `VITE_API_BASE_URL` 指向后端基础地址（不含 `/api`），例如：
   - `.env.development`：`VITE_API_BASE_URL=http://localhost:8080`
 - 说明：`src/api/config.ts` 会自动在末尾追加 `/api`；若未设置，则默认走本地代理 `/api`。
+ - 代理说明（开发）：`vite.config.ts` 中 `/api` 代理到 `VITE_BACKEND_URL`（默认 `http://localhost:8080`），`/docs` 代理到 `http://localhost:4174` 文档站。
+ - 常用环境变量（前端）：
+   - `VITE_API_BASE_URL`：后端基础地址（不含 `/api`）。
+   - `VITE_BACKEND_URL`：Vite 代理目标（开发时使用）。
 
 ### UI 主题（DaisyUI + Glass）
-- 浅色：`retro`（米黄色 `base-100` 静态底色），深色：`synthwave`。
-- 右上角主题切换：新版（retro/synthwave）vs 旧版（动态背景）。
-- 彩色玻璃工具类：`glass-tint-{primary|secondary|accent|info|success|warning|error}`（仅新版主题生效）。
+- 浅色：`retro`（米黄色 `base-100` 静态底色）；深色：`synthwave`。
+- 主题切换支持新版与 Legacy；动态背景仅在 Legacy 兼容模式下使用，详见 `docs/frontend/ui-backgrounds.md`。
+- 彩色玻璃工具类：`glass-tint-{primary|secondary|accent|info|success|warning|error}`（新版主题生效）。
 - 详见文档：`docs/ui-theming.md`。
 
 ---
@@ -116,6 +120,40 @@ server {
   }
 }
 ```
+
+### 运维建议
+- 仅在受信任域名开放前端站点；后端 API 通过网关或 Nginx 做前缀与鉴权加固。
+- 严格限制 CORS 允许来源为生产域名；不在生产暴露 `*` 的暴露头。
+- 将环境秘密（DB/JWT/API Key）通过系统环境变量或密钥管理器注入，避免入库。
+- 开启日志脱敏（隐藏密码/Token/Key），定期归档应用日志。
+
+---
+
+## 脚本速查（Monorepo）
+
+根目录（`package.json`）：
+
+- `npm run dev`：进入 `frontend/` 并启动前端（仅前端）
+- `npm run build`：进入 `frontend/` 并构建前端产物
+- `npm run preview`：进入 `frontend/` 并本地预览生产构建
+- `npm run lint` / `format` / `type-check`：进入 `frontend/` 执行对应命令
+- `npm run install:frontend`：安装前端依赖
+- `npm run install:backend`：保留脚本位（后端使用 Maven 管理）
+- `npm run install:all`：串行执行前端/后端安装脚本
+
+前端（`frontend/package.json`）：
+
+- `npm run dev`：并行启动前端 + 文档站（Vite + VitePress）
+- `npm run dev:solo`：仅启动前端（不启动文档站）
+- `npm run build`：类型检查 + 打包
+- `npm run preview`：预览前端生产构建
+- `npm run docs:dev`：文档站开发预览（端口 4174）
+- `npm run dev:all`：与 `dev` 等价（前端 + 文档站）
+
+文档（`docs/package.json`）：
+
+- `npm run docs:dev`：本地启动文档站 `http://localhost:4174`
+- `npm run docs:build` / `docs:preview`：构建与预览文档站
 
 ---
 
@@ -179,6 +217,36 @@ server {
 
 ---
 
+## API 清单与文档
+
+- 后端 API 索引：`docs/backend/api/index.md`（控制器维度导航）
+- 前端 API 索引：`docs/frontend/api/index.md`（文件维度导航）
+- 在线 Swagger（本地）：`http://localhost:8080/api/swagger-ui.html`
+
+常用控制器（节选）：
+- 认证/用户：`/api/auth/*`、`/api/users/*`
+- 课程/课时/作业：`/api/courses/*`、`/api/lessons/*`、`/api/assignments/*`
+- 提交/评分：`/api/submissions/*`、`/api/grades/*`
+- 能力评估：`/api/ability/*`
+- 社区/通知：`/api/community/*`、`/api/notifications/*`
+- AI：`/api/ai/*`
+
+---
+
+## 数据模型速览
+
+- 表结构：`backend/src/main/resources/schema.sql`、`backend/src/main/resources/ability_schema.sql`
+- 实体（Entity）：`backend/src/main/java/com/noncore/assessment/entity/*`
+- DTO：`backend/src/main/java/com/noncore/assessment/dto/*`
+- 前端类型：`frontend/src/types/*`
+
+模型文档索引：
+- 课程/作业/提交/评分：`docs/models/courses-assignments.md`
+- 用户与认证：`docs/models/users-auth.md`
+- 能力评估：`docs/models/ability.md`
+- 社区与通知：`docs/models/community-notifications.md`
+- AI：`docs/models/ai.md`
+
 ### 团队公告（可复制）
 
 本次学生端功能已上线：
@@ -190,7 +258,7 @@ server {
   - 可为节次设置“允许拖动/允许倍速”
 
 请老师在发布前设置好密钥策略与节次播放策略；学生若遇到选课提示“需要密钥”，请联系任课老师获取。
-- 国际化：学生端主要页面已统一采用 i18n，无中文兜底硬编码（`frontend/src/features/student/views/AnalyticsView.vue`、`AssignmentsView.vue`、`CourseDetailView.vue`、`GradesView.vue`）。
+- 国际化：学生端主要页面已统一采用 i18n，无中文兜底硬编码（`frontend/src/features/student/views/AnalysisView.vue`、`AssignmentsView.vue`、`CourseDetailView.vue`、`StudentDashboardView.vue` 等）。
 - 语言包：补充 `student.grades.*` 文案键（中英双语）。
 - 品牌统一：统一采用玻璃拟态样式（`glass-*` 与 `v-glass`）、并复用 `components/ui` 组件。
 - 接口对齐：前端 `studentApi` 与后端 `/api/students/*` 路由逐项核对；`CourseDetailView` 的课程进度改用 `studentApi.getCourseProgress`。
@@ -274,6 +342,23 @@ server {
 4) DB 连接失败：数据库已创建+导入 `schema.sql`；`DB_USERNAME/DB_PASSWORD` 正确；URL 特殊字符转义
 5) 文件上传失败：扩展名是否在白名单；大小是否超限；查看 `application.yml` 的 `file.*` 配置
 
+## 错误码速查
+
+- 参考：`docs/error-codes-mapping.md`
+- 基础映射：200/400/401/403/404/409/429/5xx
+- 统一响应体：`{ code, message, data }`（无 `code` 时以 HTTP 为准）
+- UI 策略：401 清理会话跳登录；403 Toast；404 空态；409/429 分别提示冲突/退避重试
+
+## 常见问题（FAQ 摘要）
+- Q: Swagger 打不开或 404？
+  - A: 确认后端运行，地址为 `http://localhost:8080/api/swagger-ui.html`（注意包含 `/api` 前缀）。
+- Q: 前端请求 401/403？
+  - A: 登录状态是否有效；是否命中公共 URL 放行；角色与方法级权限是否满足。
+- Q: 跨域或 502？
+  - A: 检查 Nginx 代理目标与健康探针；确认后端 `CORS` 允许来源与前端域名一致。
+- Q: 文档站无法打开？
+  - A: 开发时 Vite 代理 `/docs` 到 `http://localhost:4174`；生产建议部署独立文档站域名。
+
 ## 新手手册（docs/）
 为“完全小白”准备的分步文档：
 - `docs/README.md`：导航页
@@ -291,6 +376,24 @@ server {
  - Backend/Frontend API Reference、数据模型、配置与安全（站点侧边栏可达）
 
 ---
+
+## 版本与发布
+
+版本矩阵：
+- 前端：`frontend/package.json` → 当前 `0.3.2`
+- 后端：`backend/pom.xml` → 当前 `1.0.2`
+- 根：`package.json` → 当前 `1.0.0`
+
+推荐发布流程：
+1) 确认后端 API 变更与前端已完全对齐（“后端即真理”）
+2) 更新版本号：前端 `package.json`、后端 `pom.xml`
+3) 更新 `docs/CHANGELOG-*` 与根 `README.md` 的“更新日志”摘要
+4) 构建：
+   - 后端：`mvn clean package -DskipTests` → 产物在 `target/*.jar`
+   - 前端：`npm --prefix frontend run build` → 产物在 `frontend/dist/`
+   - 文档（可选）：`npm --prefix docs run docs:build`
+5) 部署：发布前端 `dist/` 与后端 Jar；更新 Nginx 代理与 CORS
+6) 打 Tag：`git tag vX.Y.Z && git push --tags`
 
 ## 贡献
 1. Fork → 分支（feat/xxx）→ 提交 PR
@@ -310,3 +413,15 @@ server {
 - 邮箱: xiaorui537537@Gmail.com
 
 > Made with ❤️ by Student Core Competency Cultivation Assessment System Development Team
+
+## 数据模型关键表速览（节选）
+
+- users：`id`，`username`，`email`，`password`（Hash），`role`（student/teacher/admin），`avatar`，学/工号，姓名/昵称与基础档案字段
+- courses：`id`，`title`，`description`，`teacher_id`，`category`，`difficulty`，`require_enroll_key`，`enroll_key_hash`，`status`，起止日期
+- lessons：`id`，`course_id`，`title`，`video_url`，`allow_scrubbing`，`allow_speed_change`，`order_index`，`duration`
+- assignments：`id`，`course_id`，`teacher_id`，`title`，`max_score`，`due_date`，`status`（draft/scheduled/published/closed），`publish_at`，`assignment_type`，`lesson_id`
+- submissions：`id`，`assignment_id`，`student_id`，`content/text` 与附件关联，`submitted_at`，`status`
+- grades：`id`，`student_id`，`assignment_id`，`score/max_score/percentage`，`grade_level`，`feedback`，`status`（draft/published/returned）
+- notifications：`id`，`user_id`，`title/content`，`type`（system/assignment/grade/course/message/post），`is_read/read_at`，`related_type/related_id`
+
+更多字段请参考 `backend/src/main/resources/schema.sql` 与模型文档 `docs/models/*.md`。

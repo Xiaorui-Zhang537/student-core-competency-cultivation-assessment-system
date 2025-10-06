@@ -25,6 +25,12 @@
 
 - `addLessonNotes(lessonId, notes)` → `POST /lessons/{lessonId}/notes`（学生）
 
+### 角色与权限
+
+- 创建/更新/删除课时：教师或具有相应角色
+- 进度与笔记：学生（需登录），仅能操作/查看自己的进度与笔记
+- 内容编辑字段：`allowScrubbing/allowSpeedChange` 会影响学生端播放器行为
+
 ## 最小示例
 ```ts
 import { lessonApi } from '@/api/lesson.api'

@@ -28,7 +28,7 @@ Authorization: Bearer <token>
 ```
 响应：
 ```json
-{ "code": 200, "data": { "id": 2, "title": "Intro", "status": "DRAFT" } }
+{ "code": 200, "data": { "id": 2, "title": "Intro", "status": "draft" } }
 ```
 - `PUT /api/courses/{id}`：更新
 - `DELETE /api/courses/{id}`：删除
@@ -56,6 +56,7 @@ Authorization: Bearer <token>
 - `PUT /api/courses/{id}/enroll-key`
   - Body: `{ "require": true|false, "key": "明文密钥(可选)" }`
   - 说明：开启后选课必须提供正确密钥；密钥仅保存哈希
+  - Schema 字段：`require_enroll_key`、`enroll_key_hash`
 
 ## 4. 课时（示例端点，具体以 Swagger 为准）
 - `GET /api/lessons?courseId=...`：课程下课时列表

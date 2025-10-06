@@ -93,7 +93,7 @@ graph LR
 - 列表：
   - 过滤区玻璃化（`GlassPopoverSelect`、搜索输入防抖 300ms）
   - 卡片化显示作业，多状态徽标，分页显示文案与下拉玻璃化
-  - 逻辑：`scheduled`（未来 `publishAt`）不展示；未提交过期显示 `LATE`
+- 逻辑：`scheduled`（未来 `publishAt`）不展示；未提交过期显示 `late`（枚举采用小写，与后端 schema 对齐）
 - 详情：
   - 教师附件（可下载）
   - 已评分显示“动态分数+进度条+等级+评分时间”玻璃卡

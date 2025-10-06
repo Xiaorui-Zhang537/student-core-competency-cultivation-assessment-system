@@ -37,8 +37,8 @@ const students = await courseApi.getCourseStudents('1001', { page: 1, size: 50 }
 await courseApi.inviteStudents(1001, [2001, '2002'])
 await courseApi.removeStudent(1001, 2001)
 
-// 批量状态更新（教师）
-await courseApi.updateBatchStatus({ ids: [1,2,3], status: 'PUBLISHED' } as any)
+// 批量状态更新（教师）——与后端 schema 对齐使用小写
+await courseApi.updateBatchStatus({ ids: [1,2,3], status: 'published' } as any)
 ```
 
 ## 错误处理与权限

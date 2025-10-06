@@ -8,8 +8,9 @@
 3. `file-walkthrough.md`：逐文件导览（关键文件逐条说明与调用链）
 4. `e2e-examples.md`：端到端样例（登录/课程/AI/通知等时序图）
 5. 深入：`backend-deep-dive.md`、`frontend-deep-dive.md`
-6. 参考：API 参考、模型与配置、安全配置、Cookbook、FAQ、术语、团队约定
-7. `learning-path.md`：1–2 周成长路线（配实践任务）
+6. 主题与 UI：`ui-theming.md`、`frontend/ui-backgrounds.md`（Legacy 背景指南）
+7. 参考：API 参考、模型与配置、安全配置、Cookbook、FAQ、术语、团队约定
+8. `learning-path.md`：1–2 周成长路线（配实践任务）
 
 ## 角色路线
 - 学生端路线（Beta）：`quickstart` → `frontend-deep-dive` → `student.api.ts` → 完成 Cookbook 任务A/C
@@ -55,7 +56,7 @@
 
 ### 2025-09-25 UI 主题与彩色玻璃（v0.3.0）
 - 采用 DaisyUI 主题（retro/synthwave），Pinia 绑定 `data-theme` 与暗黑。
-- 新版主题下使用米黄色 `base-100` 静态底色；旧版保留动态背景。
+- 新版主题下使用米黄色 `base-100` 静态底色；Legacy 模式保留动态背景（详见 `frontend/ui-backgrounds.md`）。
 - 全量组件/页面改造为主题语义色；新增彩色玻璃 tint 工具类并按页面应用。
 - 新文档：`docs/ui-theming.md`（主题指南、tint 使用规范）。
 
@@ -77,7 +78,7 @@
   - 组件与样式：`GlassPopoverSelect` 新增 `truncateLabel` 属性（默认 true），批改弹窗设置为 `false` 以避免“...” 截断；按钮统一加入图标与主题色背景（主色/靛蓝/蓝绿/红色等）。
 - 接口保持不变（前端复用 `assignmentApi.getAssignments[ByCourse]`、`submissionApi.getSubmissionsByAssignment`、`fileApi.getRelatedFiles`、`aiGradingApi.gradeFiles/gradeEssay`）。
 - i18n：新增/补齐键
-  - 批改弹窗：`teacher.aiGrading.picker.{assignment,student,preview,useText,attachments,selectAllFiles,clearFiles,text,reload}`
+  - 批改弹窗：`teacher.aiGrading.picker.{assignment,student,preview,useText,selectAllFiles,clearFiles,text,reload}`（附件字段统一为 `fileIds`）
   - 学生管理入课密钥：`teacher.students.enrollKey.{title,require,keyLabel,placeholder,tip,save,saved,failed}` 与 `teacher.students.actions.setEnrollKey`
 - 版本控制与上传策略：根 `.gitignore` 合并冲突已修复，并新增忽略上传目录的规则：`/upload/`, `/uploads/`, `backend/uploads/`（避免将实际上传的文件纳入版本控制）。
 

@@ -11,7 +11,7 @@ Authorization: Bearer <token>
 ```
 响应：
 ```json
-{ "code": 200, "data": { "id": "123", "assignmentId": "88", "studentId": "1001", "status": "GRADED" } }
+{ "code": 200, "data": { "id": "123", "assignmentId": "88", "studentId": "1001", "status": "graded" } }
 ```
 
 - `GET /api/assignments/{assignmentId}/submission`：查询我对该作业的提交
@@ -26,7 +26,7 @@ Authorization: Bearer <token>
 ```
 响应：
 ```json
-{ "code": 200, "data": { "id": "123", "status": "SUBMITTED", "submittedAt": "2025-01-01 12:00:00" } }
+{ "code": 200, "data": { "id": "123", "status": "submitted", "submittedAt": "2025-01-01 12:00:00" } }
 ```
 
 - `POST /api/assignments/{assignmentId}/draft`：保存草稿
@@ -77,7 +77,7 @@ sequenceDiagram
   C-->>A: OK
   V->>A: POST /api/assignments/{id}/submit
   A->>C: 提交作业
-  C-->>A: { id, status: SUBMITTED }
+  C-->>A: { id, status: submitted }
   A-->>V: 提交成功
 ```
 

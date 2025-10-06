@@ -19,7 +19,7 @@
 ## 示例
 ```ts
 // 学生提交作业
-await submissionApi.submitAssignment('5001', { content: '答案', attachments: [123] } as any)
+await submissionApi.submitAssignment('5001', { content: '答案', fileIds: [123] } as any)
 
 // 保存草稿
 await submissionApi.saveDraft('5001', { content: '草稿内容' } as any)

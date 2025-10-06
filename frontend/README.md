@@ -52,6 +52,23 @@
     ```
     说明：`src/api/config.ts` 会自动在末尾追加 `/api`；若未设置，则默认走本地代理 `/api`。
 
+3.  开发代理说明（可选）
+
+    `vite.config.ts` 已配置：
+    - `/api` 代理到 `process.env.VITE_BACKEND_URL || http://localhost:8080`
+    - `/docs` 代理到 `http://localhost:4174`（本地文档站）
+
+    在终端设置一次：
+    ```bash
+    export VITE_BACKEND_URL=http://localhost:8080
+    ```
+
+4.  可用环境变量清单（前端）
+
+- `VITE_API_BASE_URL`：后端基础地址（不含 `/api`），如 `http://localhost:8080`
+- `VITE_BACKEND_URL`：开发代理目标（`/api` 代理）
+- `VITE_DOCS_URL`：在应用内访问 `/docs` 时的跳转地址（设置后前端会直接跳转至此 URL）
+
 ### 快速开始
 
 ```bash
@@ -76,6 +93,12 @@ npm run dev
 -   `npm run preview`: 在本地预览生产构建的成果。
 -   `npm run lint`: 使用 ESLint 检查代码中的规范问题。
 -   `npm run type-check`: 使用 `vue-tsc` 进行全局 TypeScript 类型检查，确保类型安全。
+
+### 代码风格与提交
+
+- ESLint + Prettier：建议在编辑器启用保存时自动修复。
+- 提交信息遵循 Conventional Commits（feat/fix/docs/chore/refactor/test 等）。
+- 推荐配置 Husky + lint-staged 作为预提交钩子。
 
 ---
 
@@ -132,6 +155,12 @@ Shared（通用）
 - 401：清理 token 并跳转登录页
 - 其它错误：按 `ApiResponse.code/message` 提示；控制台在开发模式打印错误
 
+### 国际化（i18n）
+
+- 语言包位于 `src/locales/zh-CN` 与 `src/locales/en-US`。
+- 文案键命名采用模块化前缀（如 `student.assignments.*`、`teacher.ai.*`）。
+- 组件内避免硬编码文案；新增文案需同时补齐中英两份。
+
 ---
 
 ## 🧪 联调与排错（三步）
@@ -149,10 +178,39 @@ Shared（通用）
 ---
 
 ## 🎨 主题与彩色玻璃
-- 浅色：`retro`（米黄色 `base-100` 静态底色）；深色：`dracula`。
-- 右上角主题切换：新版（retro/dracula）与旧版（动态背景）。
+- 浅色：`retro`（米黄色 `base-100` 静态底色）；深色：`synthwave`。
+- 主题切换：新版（retro/synthwave）与 Legacy（动态背景），动态背景指南见 `docs/frontend/ui-backgrounds.md`。
 - 彩色玻璃 tint：`glass-tint-{primary|secondary|accent|info|success|warning|error}`（仅新版主题生效）。
 - 详情见 `docs/ui-theming.md`。
+
+### UI/UX 规范
+
+- 统一使用 `components/ui` 下的按钮、卡片、输入类、筛选器等组件。
+- 新页面优先采用 `PageHeader` 放置标题/副标题与操作区。
+- 表单输入统一使用 `GlassInput/GlassTextarea/GlassSearchInput`；筛选使用 `FilterBar`。
+
+#### 组件规范案例
+
+PageHeader（放置标题、简介与操作区）：
+
+```vue
+<PageHeader :title="t('student.courses.title')" :subtitle="t('student.courses.subtitle')">
+  <template #actions>
+    <FilterBar :model-value="filters" @update:model-value="onFiltersChange" tint="secondary" />
+  </template>
+</PageHeader>
+```
+
+Card + Tint（主要内容区统一玻璃卡）：
+
+```vue
+<Card tint="primary" class="mb-6">
+  <template #title>{{ t('student.assignments.detail.title') }}</template>
+  <div class="space-y-4">
+    <!-- 内容 -->
+  </div>
+</Card>
+```
 
 ---
 
@@ -259,6 +317,29 @@ Pinia stores 是应用的“大脑”，负责处理业务逻辑、调用API和�
 ### 通用工具 (`src/utils`)
 -   `api-handler.ts`: 提供了一个名为 `handleApiCall` 的封装函数。它统一处理了API请求中的 `loading` 状态管理、成功/错误通知的显示，简化了Store中的异步操作代码，避免了大量的重复 `try...catch` 块。
 
+### 联调要点
+
+- Axios `baseURL` 在开发模式会打印日志，便于确认代理是否生效。
+- 登录成功后会存储 token；401 时自动清理并跳转登录。
+- 与后端保持“后端即真理”一致：任何前端操作都以现有 API 能力为准。
+
+### API 文档索引
+
+- 前端 API 索引：`../docs/frontend/api/index.md`
+- 后端 API 索引：`../docs/backend/api/index.md`
+
+### 性能与可访问性规范（摘要）
+
+- 性能：
+  - 组件懒加载（路由 `component: () => import(...)` 已默认使用）
+  - 列表分页与虚拟滚动（长列表考虑 `v-virtual-scroll` 或按页加载）
+  - 图片：使用合适尺寸与懒加载；避免无必要的 base64 内联
+  - 避免在 `watch` 中做重计算；复杂计算用 `computed` 与 memoization
+- 可访问性（a11y）：
+  - 表单控件提供 `label`/`aria-label`，组件内加可聚焦状态
+  - 键盘可达：弹层与抽屉提供 `Esc` 关闭与 `Tab` 循环焦点
+  - 颜色对比：遵守文本与背景对比度（WCAG AA），尽量使用主题语义色
+
 ---
 
 ## 🔧 调试与常见问题
@@ -280,73 +361,6 @@ Pinia stores 是应用的“大脑”，负责处理业务逻辑、调用API和�
 
 ---
 
-## 🎆 背景组件 FuturisticBackground 使用
+## 🎆 动态背景（Legacy）
 
-FuturisticBackground 是统一的动态背景组件，默认在三大布局中启用：
-- AuthLayout：默认开启强调模式（emphasis=true）、交互（拖影/涟漪）。
-- StudentLayout / TeacherLayout：默认关闭强调，启用轻量交互。
-
-基础用法：
-
-```vue
-<FuturisticBackground
-  class="absolute inset-0"
-  theme="auto"
-  :intensity="0.18"
-  :parallax="true"
-  :enable3D="true"
-  :logo-glow="true"
-  :emphasis="false"                
-  :interactions="{ mouseTrail: true, clickRipples: true }"
-  :enabled="true"                  
-  :respect-reduced-motion="true"   
-/>
-```
-
-关键 props：
-- theme: 'auto' | 'light' | 'dark'（自动跟随页面主题）
-- emphasis: boolean（强调模式，粒子数=1700；否则=1000）
-- interactions: { mouseTrail?: boolean; clickRipples?: boolean }（是否显示鼠标拖影与点击涟漪）
-- enabled: boolean（全局开关，可通过 UI 顶栏“眼睛”按钮控制）
-- respectReducedMotion: boolean（遵从系统“减少动画”偏好；true 时仅绘制静态背景）
-
-说明：
-- 浅/深色模式自动切换，浅色下拖影与涟漪颜色更柔和；深色下使用更显性的发光混合。
-- 鼠标移动会产生漩涡与散开，按住左键则强化漩涡；点击触发涟漪。
-- 粒子支持多形状（圆、三角、正方、六边、五角星）并随速度方向旋转，带流星尾迹。
-
-在三大布局中集成（示例）：
-
-```vue
-<!-- AuthLayout.vue（强调开启） -->
-<FuturisticBackground
-  class="absolute inset-0"
-  theme="auto"
-  :intensity="0.18"
-  :parallax="true"
-  :enable3D="true"
-  :logo-glow="true"
-  :emphasis="true"
-  :interactions="{ mouseTrail: true, clickRipples: true }"
-  :enabled="uiStore.bgEnabled"
-  :respect-reduced-motion="true"
-/>
-
-<!-- StudentLayout.vue / TeacherLayout.vue（强调关闭） -->
-<FuturisticBackground
-  class="fixed inset-0 z-0 pointer-events-none"
-  theme="auto"
-  :intensity="0.18"
-  :parallax="true"
-  :enable3D="true"
-  :logo-glow="true"
-  :emphasis="false"
-  :interactions="{ mouseTrail: true, clickRipples: true }"
-  :enabled="uiStore.bgEnabled"
-  :respect-reduced-motion="true"
-/>
-```
-
-UI 全局开关（已内置）：
-- 顶栏“眼睛”按钮切换背景开关（持久化到 localStorage）。
-- 主题切换按钮切换浅/深色主题（持久化到 localStorage）。
+动态背景仅在 Legacy 兼容模式下保留，默认不启用；如需使用，请参考：`docs/frontend/ui-backgrounds.md`。

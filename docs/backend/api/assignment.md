@@ -30,8 +30,8 @@
 - `DELETE /api/assignments/{id}`：删除
 
 ## 3. 状态变更
-- `POST /api/assignments/{id}/publish`：发布
-- `POST /api/assignments/{id}/close`：关闭
+- `POST /api/assignments/{id}/publish`：发布（状态从 `draft|scheduled` → `published`）
+- `POST /api/assignments/{id}/close`：关闭（状态从 `published` → `closed`）
 
 ## 4. 统计与提醒
 - `GET /api/assignments/{id}/submission-stats`：提交统计（已交/未交/已评分/未评分）
@@ -66,7 +66,7 @@
 ## 3. 常见错误
 - 400：截止时间/类型约束错误（course_bound 不得设置 dueDate；normal 不得绑定 lessonId）
 - 401：未登录；403：非该课程教师操作
-- 409：重复发布/关闭
+- 409：重复发布/关闭（基于当前状态与目标状态判断）
 
 ---
 

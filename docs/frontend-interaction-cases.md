@@ -266,7 +266,8 @@ import { studentApi } from '@/api/student.api'
 const list = ref<any[]>([])
 const page = ref(1)
 const size = ref(10)
-const status = ref<'ALL'|'PENDING'|'SUBMITTED'|'GRADED'>('ALL')
+// 视图层可显示大写，但请求参数建议小写枚举
+const status = ref<'all'|'pending'|'submitted'|'graded'>('all')
 const courseId = ref<string>('')
 const keyword = ref('')
 
@@ -301,10 +302,10 @@ import { gradeApi } from '@/api/grade.api'
 const route = useRoute()
 const auth = useAuthStore()
 const grade = ref<any | null>(null)
-const displayStatus = computed(() => 'GRADED') // 示例：实际由提交状态归一化得到
+const displayStatus = computed(() => 'graded') // 示例：实际由提交状态归一化得到
 
 onMounted(async () => {
-  if (displayStatus.value === 'GRADED' && auth.user?.id) {
+  if (displayStatus.value === 'graded' && auth.user?.id) {
     const res: any = await gradeApi.getGradeForStudentAssignment(String(auth.user.id), String(route.params.id))
     grade.value = res?.data ?? res
   }
@@ -423,7 +424,8 @@ import { onMounted, ref, watch } from 'vue'
 import { useAssignmentStore } from '@/stores/assignment'
 
 const store = useAssignmentStore()
-const status = ref<'DRAFT'|'PUBLISHED'|'CLOSED'|''>('')
+// 建议与后端 schema 对齐使用小写枚举，若组件需要大写可在视图层做映射
+const status = ref<'draft'|'published'|'closed'|''>('')
 const keyword = ref('')
 const page = ref(1)
 const size = ref(10)

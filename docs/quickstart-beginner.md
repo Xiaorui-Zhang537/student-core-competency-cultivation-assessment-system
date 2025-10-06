@@ -41,6 +41,7 @@ cd frontend
 npm install
 # 建议创建 .env.development 并设置：
 # VITE_API_BASE_URL=http://localhost:8080
+# （可选）若通过 Vite 代理：导出 VITE_BACKEND_URL=http://localhost:8080
 npm run dev
 # 默认地址：http://localhost:5173
 ```
@@ -53,6 +54,7 @@ npm install
 npm run docs:dev
 # 访问 http://localhost:4174
 ```
+- 在应用内访问 `/docs` 时，若设置了 `VITE_DOCS_URL`，前端会直接跳转到该地址。
 - 若 ESM 报错：`docs/package.json` 添加 `"type": "module"`
 - 若首页 404：确保 `docs/index.md` 存在
 

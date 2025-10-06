@@ -67,9 +67,16 @@ sequenceDiagram
 - `/ai` 相关接口由 `AiController` 提供
 - 通过 `AI_DEFAULT_PROVIDER`、`OPENROUTER_API_KEY`/`DEEPSEEK_API_KEY` 启用
 
+## 8. 安全配置概览（与代码一致）
+
+- CORS：允许本地开发来源（localhost/127.0.0.1/0.0.0.0:5173 等），预检 `OPTIONS /**` 放行
+- Headers：为支持 PDF IFrame 预览，`X-Frame-Options` 在后端被关闭（生产请限制可信域）
+- 公共 URL：`/auth/**`、`/users/forgot-password`、`/users/reset-password`、`/users/email/change/confirm` 等放行，其余走鉴权
+- 详见：`docs/security-config.md`
+
 ---
 
-## 8. 首个 PR 计划（First PR Plan）
+## 9. 首个 PR 计划（First PR Plan）
 - 题目：实现“通知中心会话模式”或“文件预览”小功能（二选一）
 - 步骤：
   1) 在 `docs/cookbook.md` 对应任务下列出实现清单
@@ -78,7 +85,7 @@ sequenceDiagram
   4) 更新文档：API 页、前端 API 页、Conventions/Glossary 如有新增
   5) 提交 PR：按照提交规范与评审清单
 
-## 9. PR 检查清单（Checklist）
+## 10. PR 检查清单（Checklist）
 - [ ] 构建通过（后端 Maven、前端 Type Check/Lint）
 - [ ] Swagger 可用，新增/修改端点能调
 - [ ] 页面可用，401/403/404 处理清晰
