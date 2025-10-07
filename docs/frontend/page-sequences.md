@@ -43,7 +43,7 @@
 
 ### 视频播放策略
 
-- 文件ID或受保护直链：优先以 Blob 方式加载，规避 <video> 不带鉴权头导致失败
+- 文件ID或受保护直链：优先以 Blob 方式加载，规避 `<video>` 不带鉴权头导致失败
 - HLS：Safari 原生优先；其它浏览器尝试动态加载 `hls.js`，失败则提示不支持
 - 回退与提示：统一 i18n 文案 `student.courses.video.playFailed` 与 `student.courses.video.hlsNotSupported`
 

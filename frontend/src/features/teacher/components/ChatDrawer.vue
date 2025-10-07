@@ -238,6 +238,10 @@ import GlassTextarea from '@/components/ui/inputs/GlassTextarea.vue'
 import { XMarkIcon, BookmarkIcon, BookmarkSlashIcon, ArrowDownTrayIcon, ArrowUpTrayIcon } from '@heroicons/vue/24/outline'
 import Button from '@/components/ui/Button.vue'
 import EmojiPicker from '@/components/ui/EmojiPicker.vue'
+import { chatApi } from '@/api/chat.api'
+import { notificationAPI } from '@/api/notification.api'
+import { teacherStudentApi } from '@/api/teacher-student.api'
+import { fileApi } from '@/api/file.api'
 
 const props = defineProps<{
   open: boolean
@@ -399,7 +403,6 @@ const ensurePeerAvatar = async (pid: string | number) => {
     // 教师端直接拉取学生资料可能因权限返回 400/403；此处对教师角色跳过远程获取
     const role = String((auth.user as any)?.role || '').toUpperCase()
     if (role === 'TEACHER') return
-    const { teacherStudentApi } = await import('@/api/teacher-student.api')
     const profile: any = await teacherStudentApi.getStudentProfile(idStr)
     const avatar = profile?.avatar || profile?.avatarUrl || profile?.avatar_url || profile?.studentAvatar || profile?.student_avatar || profile?.photo || profile?.image || ''
     if (avatar) peerAvatarMap.value[idStr] = String(avatar)
@@ -484,7 +487,6 @@ async function ensurePreviewBlob(fid: string | number) {
   // 未登录直接标记不可预览，显示文件卡，避免 401
   try { if (!auth.isAuthenticated) { previewBlockedMap.value[key] = true; return } } catch {}
   try {
-    const { fileApi } = await import('@/api/file.api')
     const blob = await fileApi.getPreview(key)
     // 若后端返回 json 错误（400 等），Blob.type 会是 application/json
     if (blob && (blob as any).type && String((blob as any).type).includes('application/json')) {
@@ -507,7 +509,6 @@ async function ensurePreviewBlob(fid: string | number) {
 }
 async function downloadAttachment(fid: string | number) {
   try {
-    const { fileApi } = await import('@/api/file.api')
     const name = fileName(fid) || `file_${String(fid)}`
     await fileApi.downloadFile(String(fid), name || undefined)
   } catch {}
@@ -531,7 +532,6 @@ async function ensureFileMeta(fid: string | number) {
   const key = String(fid)
   if (fileMetaMap.value[key]) return
   try {
-    const { fileApi } = await import('@/api/file.api')
     const info: any = await fileApi.getFileInfo(String(fid))
     fileMetaMap.value[key] = info?.data || info || {}
     // 若是图片则预取 Blob 以加速首屏
@@ -545,7 +545,6 @@ async function ensureFileMeta(fid: string | number) {
 async function markAllReadForCurrentPeer() {
   if (!currentPeerId.value) return
   try {
-    const { chatApi } = await import('@/api/chat.api')
     const pid = String(currentPeerId.value)
     const cid = currentCourseId.value != null && currentCourseId.value !== '' ? String(currentCourseId.value) : ''
     const isStudent = (() => { try { return window.location.pathname.startsWith('/student') } catch { return false } })()
@@ -577,7 +576,6 @@ async function markAllReadForCurrentPeer() {
 const load = async () => {
   if (!currentPeerId.value) return
   loadingMessages.value = true
-  const { chatApi } = await import('@/api/chat.api')
   const paramsBase: any = { page: page.value, size: size.value }
   const courseParam = currentCourseId.value ? Number(currentCourseId.value) : undefined
   const res: any = await chatApi.getMessages(currentPeerId.value as any, { ...paramsBase, courseId: courseParam })
@@ -631,7 +629,6 @@ const load = async () => {
   // 仍为空则进一步回退到 /notifications/conversation 接口合并
   if ((messages.value as any[]).length === 0) {
     try {
-      const { notificationAPI } = await import('@/api/notification.api')
       const res3: any = await notificationAPI.getConversation(currentPeerId.value as any, { page: page.value, size: size.value })
       const items = (res3?.items || res3?.data?.items || [])
       const list3 = items.map((n: any) => ({
@@ -711,7 +708,6 @@ const send = async (contentOverride?: string | unknown, tempIdToResolve?: string
 
   try {
     sending.value = true
-    const { chatApi } = await import('@/api/chat.api')
     const payload: any = {
       recipientId: Number(currentPeerId.value),
       content: content,
@@ -896,7 +892,6 @@ watch(() => props.open, async (v) => {
     await chat.loadLists({ courseId: cid })
     // 再次对所有同 peer 分支逐一标记已读，确保历史分支清零
     try {
-      const { chatApi } = await import('@/api/chat.api')
       const list: any[] = (chat.recentConversations as any[]) || []
       for (const c of list) {
         if (String(c.peerId) === String(currentPeerId.value || '')) {
@@ -955,7 +950,6 @@ async function onFilePicked(ev: Event) {
     const input = ev.target as HTMLInputElement
     const file = input?.files?.[0]
     if (!file) return
-    const { fileApi } = await import('@/api/file.api')
     const uploaded: any = await fileApi.uploadFile(file, { purpose: 'chat', relatedId: String(currentPeerId.value || '') })
     const fileId = uploaded?.id || uploaded?.data?.id
     if (fileId != null) {

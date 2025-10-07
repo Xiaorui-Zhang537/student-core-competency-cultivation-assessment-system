@@ -15,7 +15,6 @@ import com.noncore.assessment.util.JwtUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.dao.DataAccessException;
-import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -33,15 +32,13 @@ public class AuthServiceImpl implements AuthService {
     private final UserMapper userMapper;
     private final PasswordEncoder passwordEncoder;
     private final JwtUtil jwtUtil;
-    private final RedisTemplate<String, Object> redisTemplate;
     private final StudentService studentService;
     private final UserService userService;
 
-    public AuthServiceImpl(UserMapper userMapper, PasswordEncoder passwordEncoder, JwtUtil jwtUtil, RedisTemplate<String, Object> redisTemplate, StudentService studentService, UserService userService) {
+    public AuthServiceImpl(UserMapper userMapper, PasswordEncoder passwordEncoder, JwtUtil jwtUtil, StudentService studentService, UserService userService) {
         this.userMapper = userMapper;
         this.passwordEncoder = passwordEncoder;
         this.jwtUtil = jwtUtil;
-        this.redisTemplate = redisTemplate;
         this.studentService = studentService;
         this.userService = userService;
     }
@@ -120,7 +117,7 @@ public class AuthServiceImpl implements AuthService {
         logger.info("用户注册成功: {} ({})，准备发送验证邮件", user.getUsername(), user.getRole());
 
         // 生成并发送邮箱验证
-        // 复用 UserServiceImpl 的逻辑：生成 token -> Redis 保存 -> 发送验证邮件
+        // 复用 UserServiceImpl 的逻辑：生成 token -> 内存保存 -> 发送验证邮件
         // 优先使用注册请求中的语言，如果未提供则由 UserServiceImpl 使用默认语言
         try {
             String reqLang = null;
@@ -166,31 +163,12 @@ public class AuthServiceImpl implements AuthService {
 
     @Override
     public void logout(String token) {
-        try {
-            logger.info("用户登出，令牌加入黑名单");
-            Date expirationDate = jwtUtil.getExpirationDateFromToken(token);
-            long ttl = expirationDate.getTime() - System.currentTimeMillis();
-            if (ttl > 0) {
-                String blacklistKey = "token_blacklist:" + token;
-                redisTemplate.opsForValue().set(blacklistKey, "blacklisted", ttl, TimeUnit.MILLISECONDS);
-                logger.info("令牌已加入黑名单，过期时间: {} 毫秒", ttl);
-            }
-        } catch (DataAccessException e) {
-            logger.error("添加令牌到黑名单失败 - Redis操作失败", e);
-            throw new BusinessException(ErrorCode.OPERATION_FAILED, "登出失败: " + e.getMessage());
-        }
+        // 不使用集中式黑名单；让 JWT 依赖自身过期时间
+        logger.info("用户登出");
     }
 
     @Override
-    public boolean isTokenBlacklisted(String token) {
-        try {
-            String blacklistKey = "token_blacklist:" + token;
-            return Boolean.TRUE.equals(redisTemplate.hasKey(blacklistKey));
-        } catch (DataAccessException e) {
-            logger.error("检查令牌黑名单状态失败 - Redis操作失败。为安全起见，将令牌视为无效。", e);
-            return true;
-        }
-    }
+    public boolean isTokenBlacklisted(String token) { return false; }
     
     private User findUserByUsernameOrEmail(String identifier) {
         User user = userMapper.selectUserByUsername(identifier);

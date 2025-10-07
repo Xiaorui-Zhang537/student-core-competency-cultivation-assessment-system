@@ -127,7 +127,11 @@ public class SecurityConfig {
             "http://127.0.0.1:5173",
             "http://0.0.0.0:5173",
             "http://*.local:5173",
-            "http://*.lan:5173"
+            "http://*.lan:5173",
+            "https://www.stucoreai.space",
+            "http://www.stucoreai.space",
+            "https://stucoreai.space",
+            "http://stucoreai.space"
         ));
 
         // 允许的HTTP方法
@@ -165,7 +169,11 @@ public class SecurityConfig {
             "http://127.0.0.1:5173",
             "http://0.0.0.0:5173",
             "http://*.local:5173",
-            "http://*.lan:5173"
+            "http://*.lan:5173",
+            "https://www.stucoreai.space",
+            "http://www.stucoreai.space",
+            "https://stucoreai.space",
+            "http://stucoreai.space"
         ));
         config.addAllowedHeader("*");
         config.addExposedHeader("*");

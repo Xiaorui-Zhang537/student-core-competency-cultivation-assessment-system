@@ -8,28 +8,29 @@ server:
       force: true
 
 spring:
-  profiles:
-    active: prod
+  sql:
+    init:
+      mode: never
   
   application:
     name: student-assessment-system
   mail:
     host: ${MAIL_HOST:smtp.qq.com}
     port: ${MAIL_PORT:465}
-    username: ${MAIL_USERNAME}
-    password: ${MAIL_PASSWORD}
+    username: ${MAIL_USERNAME:1519939545@qq.com}
+    password: ${MAIL_PASSWORD:neosiexgnwgjgbjb}
     properties:
       mail:
         smtp:
           auth: true
           ssl:
             enable: true
-    from-address: ${MAIL_FROM_ADDRESS}
-    from-name: ${MAIL_FROM_NAME:Student Core Competence System}
+    from-address: ${MAIL_FROM_ADDRESS:1519939545@qq.com}
+    from-name: ${MAIL_FROM_NAME:学生核心能力培养系统}
   
   # 生产环境数据源配置
   datasource:
-    url: jdbc:mysql://${DB_HOST}:${DB_PORT}/${DB_NAME}?useUnicode=true&characterEncoding=utf8&useSSL=true&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=false
+    url: jdbc:mysql://${DB_HOST}:${DB_PORT}/${DB_NAME}?useUnicode=true&characterEncoding=utf8&useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true
     username: ${DB_USERNAME}
     password: ${DB_PASSWORD}
     driver-class-name: com.mysql.cj.jdbc.Driver
@@ -56,13 +57,12 @@ spring:
     serialization:
       write-dates-as-timestamps: false
     default-property-inclusion: non_null
-  data:
-    redis:
-      host: ${REDIS_HOST}
-      port: ${REDIS_PORT}
-      database: ${REDIS_DATABASE:0}
-      timeout: ${REDIS_TIMEOUT:3000ms}
-      password: ${REDIS_PASSWORD}
+  autoconfigure:
+    exclude:
+      - org.springframework.boot.autoconfigure.data.redis.RedisAutoConfiguration
+      - org.springframework.boot.autoconfigure.data.redis.RedisRepositoriesAutoConfiguration
+  cache:
+    type: simple
 
 # 生产环境MyBatis配置
 mybatis:
@@ -102,7 +102,7 @@ jwt:
   refresh-expiration: ${JWT_REFRESH_EXPIRATION:604800000}
 
 application:
-  base-url: ${APP_BASE_URL:https://example.com}
+  base-url: ${APP_BASE_URL:https://stucoreai.space}
   email:
     default-language: ${EMAIL_DEFAULT_LANGUAGE:zh-CN}
 

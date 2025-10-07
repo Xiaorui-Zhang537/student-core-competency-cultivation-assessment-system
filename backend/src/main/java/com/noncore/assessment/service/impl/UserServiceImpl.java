@@ -11,7 +11,6 @@ import com.noncore.assessment.dto.request.UpdateProfileRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -28,7 +27,7 @@ public class UserServiceImpl implements UserService {
 
     private final UserMapper userMapper;
     private final PasswordEncoder passwordEncoder;
-    private final RedisTemplate<String, Object> redisTemplate;
+    private final java.util.Map<String, Object> inMemoryTokens = new java.util.concurrent.ConcurrentHashMap<>();
     private final EmailService emailService;
 
     @Value("${application.base-url:http://localhost:5173}")
@@ -40,12 +39,11 @@ public class UserServiceImpl implements UserService {
     private final com.noncore.assessment.mapper.FileRecordMapper fileRecordMapper;
     private final com.noncore.assessment.service.FileStorageService fileStorageService;
 
-    public UserServiceImpl(UserMapper userMapper, PasswordEncoder passwordEncoder, RedisTemplate<String, Object> redisTemplate, EmailService emailService,
+    public UserServiceImpl(UserMapper userMapper, PasswordEncoder passwordEncoder, EmailService emailService,
                            com.noncore.assessment.mapper.FileRecordMapper fileRecordMapper,
                            com.noncore.assessment.service.FileStorageService fileStorageService) {
         this.userMapper = userMapper;
         this.passwordEncoder = passwordEncoder;
-        this.redisTemplate = redisTemplate;
         this.emailService = emailService;
         this.fileRecordMapper = fileRecordMapper;
         this.fileStorageService = fileStorageService;
@@ -187,7 +185,7 @@ public class UserServiceImpl implements UserService {
 
         String resetToken = generateResetToken(user.getId());
         String resetKey = "password_reset:" + resetToken;
-        redisTemplate.opsForValue().set(resetKey, user.getId(), 15, TimeUnit.MINUTES);
+        inMemoryTokens.put(resetKey, new TokenHolder(user.getId(), System.currentTimeMillis() + 15 * 60 * 1000));
 
         sendPasswordResetEmail(user.getEmail(), resetToken, defaultEmailLanguage);
         logger.info("密码重置邮件已发送至: {}", email);
@@ -197,7 +195,7 @@ public class UserServiceImpl implements UserService {
     public void resetPassword(String token, String newPassword) {
         logger.info("处理重置密码请求");
         String resetKey = "password_reset:" + token;
-        Object userIdObj = redisTemplate.opsForValue().get(resetKey);
+        Object userIdObj = readToken(resetKey);
 
         if (userIdObj == null) {
             throw new BusinessException(ErrorCode.INVALID_TOKEN, "重置令牌无效或已过期");
@@ -206,7 +204,7 @@ public class UserServiceImpl implements UserService {
         Long userId = Long.parseLong(userIdObj.toString());
         String encodedPassword = passwordEncoder.encode(newPassword);
         userMapper.updatePassword(userId, encodedPassword);
-        redisTemplate.delete(resetKey);
+        inMemoryTokens.remove(resetKey);
         logger.info("用户密码重置成功，用户ID: {}", userId);
     }
 
@@ -214,7 +212,7 @@ public class UserServiceImpl implements UserService {
     public void verifyEmail(String token) {
         logger.info("处理邮箱验证请求");
         String verifyKey = "email_verify:" + token;
-        Object userIdObj = redisTemplate.opsForValue().get(verifyKey);
+        Object userIdObj = readToken(verifyKey);
 
         if (userIdObj == null) {
             throw new BusinessException(ErrorCode.INVALID_TOKEN, "验证令牌无效或已过期");
@@ -222,7 +220,7 @@ public class UserServiceImpl implements UserService {
 
         Long userId = Long.parseLong(userIdObj.toString());
         userMapper.updateEmailVerified(userId, true);
-        redisTemplate.delete(verifyKey);
+        inMemoryTokens.remove(verifyKey);
         logger.info("邮箱验证成功，用户ID: {}", userId);
     }
 
@@ -239,7 +237,7 @@ public class UserServiceImpl implements UserService {
 
         String verifyToken = generateVerifyToken(user.getId());
         String verifyKey = "email_verify:" + verifyToken;
-        redisTemplate.opsForValue().set(verifyKey, user.getId(), 24, TimeUnit.HOURS);
+        inMemoryTokens.put(verifyKey, new TokenHolder(user.getId(), System.currentTimeMillis() + 24 * 60 * 60 * 1000));
         sendVerificationEmail(user.getEmail(), verifyToken, defaultEmailLanguage);
         logger.info("验证邮件已重新发送至: {}", user.getEmail());
     }
@@ -257,7 +255,7 @@ public class UserServiceImpl implements UserService {
         }
         String verifyToken = generateVerifyToken(user.getId());
         String verifyKey = "email_verify:" + verifyToken;
-        redisTemplate.opsForValue().set(verifyKey, user.getId(), 24, TimeUnit.HOURS);
+        inMemoryTokens.put(verifyKey, new TokenHolder(user.getId(), System.currentTimeMillis() + 24 * 60 * 60 * 1000));
         String langToUse = (lang != null && !lang.isBlank()) ? lang : defaultEmailLanguage;
         sendVerificationEmail(user.getEmail(), verifyToken, langToUse);
         logger.info("验证邮件已发送至: {}", email);
@@ -275,7 +273,7 @@ public class UserServiceImpl implements UserService {
         }
         String token = UUID.randomUUID().toString().replace("-", "") + "_change_" + userId;
         String key = "email_change:" + token;
-        redisTemplate.opsForValue().set(key, newEmail, 24, TimeUnit.HOURS);
+        inMemoryTokens.put(key, new TokenHolder(newEmail, System.currentTimeMillis() + 24 * 60 * 60 * 1000));
         sendChangeEmailConfirm(newEmail, token);
     }
 
@@ -283,7 +281,7 @@ public class UserServiceImpl implements UserService {
     public void confirmChangeEmail(String token) {
         logger.info("确认更换邮箱");
         String key = "email_change:" + token;
-        Object newEmailObj = redisTemplate.opsForValue().get(key);
+        Object newEmailObj = readToken(key);
         if (newEmailObj == null) {
             throw new BusinessException(ErrorCode.EMAIL_CHANGE_TOKEN_INVALID);
         }
@@ -300,7 +298,7 @@ public class UserServiceImpl implements UserService {
             user.setEmailVerified(true);
             user.setUpdatedAt(new java.util.Date());
             userMapper.updateUser(user);
-            redisTemplate.delete(key);
+            inMemoryTokens.remove(key);
         } catch (Exception e) {
             throw new BusinessException(ErrorCode.EMAIL_CHANGE_TOKEN_INVALID);
         }
@@ -382,6 +380,20 @@ public class UserServiceImpl implements UserService {
 
     private String generateVerifyToken(Long userId) {
         return UUID.randomUUID().toString().replace("-", "") + "_verify_" + userId;
+    }
+
+    private static final class TokenHolder {
+        final Object value; final long expireAt;
+        TokenHolder(Object value, long expireAt) { this.value = value; this.expireAt = expireAt; }
+        boolean expired() { return System.currentTimeMillis() > expireAt; }
+    }
+    private Object readToken(String key) {
+        Object v = inMemoryTokens.get(key);
+        if (v instanceof TokenHolder th) {
+            if (th.expired()) { inMemoryTokens.remove(key); return null; }
+            return th.value;
+        }
+        return null;
     }
 
     private void sendPasswordResetEmail(String email, String resetToken, String lang) {

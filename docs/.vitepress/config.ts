@@ -1,6 +1,6 @@
 import { defineConfig } from 'vitepress'
 
-const appUrl = process.env.VITE_APP_URL || 'http://localhost:5173'
+const appUrl = process.env.VITE_APP_URL || 'https://stucoreai.space'
 
 export default defineConfig({
   lang: 'zh-CN',

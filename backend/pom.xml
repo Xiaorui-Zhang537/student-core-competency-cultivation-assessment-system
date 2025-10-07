@@ -83,11 +83,7 @@
             <scope>runtime</scope>
         </dependency>
 
-        <!-- Redis支持 -->
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-data-redis</artifactId>
-        </dependency>
+        <!-- Redis支持移除（项目未使用） -->
 
         <!-- JWT支持 -->
         <dependency>
@@ -161,17 +157,7 @@
             <optional>true</optional>
         </dependency>
 
-        <!-- 测试依赖 -->
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-test</artifactId>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.springframework.security</groupId>
-            <artifactId>spring-security-test</artifactId>
-            <scope>test</scope>
-        </dependency>
+        <!-- 测试依赖已移除 -->
     </dependencies>
 
     <build>
@@ -207,6 +193,7 @@
                     <mainClass>com.noncore.assessment.AssessmentApplication</mainClass>
                 </configuration>
             </plugin>
+            <!-- 测试插件配置移除 -->
 
             <!-- MyBatis Generator插件 -->
             <plugin>
@@ -220,5 +207,7 @@
                 </configuration>
             </plugin>
         </plugins>
+        <!-- 测试资源配置移除 -->
     </build>
+
 </project>

@@ -14,8 +14,9 @@
 9. `learning-path.md`：1–2 周成长路线
 
 常用入口：
-- Swagger：`http://localhost:8080/api/swagger-ui.html`
-- 前端开发：`http://localhost:5173`
-- API 根路径：`http://localhost:8080/api`
+- 生产主站：`https://stucoreai.space`
+- 本地 Swagger：`http://localhost:8080/api/swagger-ui.html`
+- 本地前端：`http://localhost:5173`
+- 本地 API 根路径：`http://localhost:8080/api`
 
 > 提示：本手册中的命令默认在 macOS / Linux 环境下执行；Windows 可用 PowerShell 等价命令。

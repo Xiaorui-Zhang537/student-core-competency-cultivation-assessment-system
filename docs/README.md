@@ -31,9 +31,11 @@
 - 风险评估：权限/性能/一致性/可扩展性
 
 ## 常用入口
-- Swagger：`http://localhost:8080/api/swagger-ui.html`
-- 前端开发：`http://localhost:5173`
-- 文档站点（本地）：`http://localhost:4174`
+- 生产主站：`https://stucoreai.space`
+- 文档站（生产，可选）：`https://docs.stucoreai.space`
+- Swagger（本地）：`http://localhost:8080/api/swagger-ui.html`
+- 前端（本地）：`http://localhost:5173`
+- 文档站（本地）：`http://localhost:4174`
 
 ## 相关技术官方链接
 - Java：`https://dev.java/`

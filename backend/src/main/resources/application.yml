@@ -8,9 +8,6 @@ server:
       force: true
 
 spring:
-  profiles:
-    active: dev
-  
   application:
     name: student-assessment-system
     # Default base URL can be overridden per profile
@@ -32,7 +29,6 @@ spring:
       connection-timeout: 30000
       leak-detection-threshold: 60000
 
-  # Redis配置
   servlet:
     multipart:
       enabled: true
@@ -46,13 +42,12 @@ spring:
     serialization:
       write-dates-as-timestamps: false
     default-property-inclusion: non_null
-  data:
-    redis:
-      host: ${REDIS_HOST:localhost}
-      port: ${REDIS_PORT:6379}
-      database: ${REDIS_DATABASE:0}
-      timeout: ${REDIS_TIMEOUT:3000ms}
-      password: ${REDIS_PASSWORD:}
+  autoconfigure:
+    exclude:
+      - org.springframework.boot.autoconfigure.data.redis.RedisAutoConfiguration
+      - org.springframework.boot.autoconfigure.data.redis.RedisRepositoriesAutoConfiguration
+  cache:
+    type: simple
 
 # MyBatis配置
 mybatis:

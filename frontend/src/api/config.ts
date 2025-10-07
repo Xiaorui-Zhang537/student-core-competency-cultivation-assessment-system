@@ -2,9 +2,11 @@ import axios from 'axios';
 import { i18n } from '@/i18n'
 import type { ApiResponse, ApiError } from '@/types/api';
 
-const rawBase = import.meta.env.VITE_API_BASE_URL?.replace(/\/+$/, '') || '';
-const baseURL =
-  rawBase && !rawBase.endsWith('/api') ? `${rawBase}/api` : rawBase || '/api';
+// 支持两种变量名，并在生产环境无显式配置时回退到正式域名
+const envBase = (import.meta.env as any).VITE_API_BASE || (import.meta.env as any).VITE_API_BASE_URL || '';
+const trimmed = String(envBase || '').replace(/\/+$/, '');
+const inferred = trimmed && !trimmed.endsWith('/api') ? `${trimmed}/api` : trimmed;
+const baseURL = inferred || '/api';
 
 const apiClient = axios.create({
   // 主机地址（如需切换生产，只改环境变量即可）
