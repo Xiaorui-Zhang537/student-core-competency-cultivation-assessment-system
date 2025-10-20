@@ -2,7 +2,7 @@
   <div class="dock-wrap" :style="wrapStyle" ref="containerRef">
     <teleport to="body">
       <!-- Dock 主体：液态玻璃药丸容器，固定宽度避免被父级裁剪 -->
-      <div :style="wrapStyle" ref="teleportRoot">
+      <div :style="wrapStyle" ref="teleportRoot" v-show="visible">
         <liquid-glass class="dock" :radius="dockRadius" :frost="0" :alpha="0" :tint="false" :bgTransparent="true" containerClass="dock-container" :style="dockInlineStyle">
           <div class="dock-items">
             <button
@@ -12,7 +12,7 @@
               :ref="itemRefSetter(idx)"
               :class="{ active: isActive(item) }"
               :title="item.label"
-              @click="$emit('select', item.key)"
+              @click="onClick(item.key)"
             >
               <component :is="item.icon" class="icon" />
               <span class="label">{{ item.label }}</span>
@@ -39,10 +39,12 @@ const props = withDefaults(defineProps<{
   modelValue?: string
   bottomOffset?: number
   maxWidth?: number
+  visible?: boolean
 }>(), {
   modelValue: '',
   bottomOffset: 24,
-  maxWidth: Infinity
+  maxWidth: Infinity,
+  visible: true
 })
 
 const emit = defineEmits<{ (e:'update:modelValue', v:string): void; (e:'select', v:string): void }>()
@@ -100,6 +102,11 @@ function setItemRef(el: Element | ComponentPublicInstance | null, idx: number) {
 
 function itemRefSetter(idx: number) {
   return (el: Element | ComponentPublicInstance | null) => setItemRef(el, idx)
+}
+
+function onClick(key: string) {
+  try { emit('update:modelValue', key) } catch {}
+  try { emit('select', key) } catch {}
 }
 
 const activeIndex = computed(() => {

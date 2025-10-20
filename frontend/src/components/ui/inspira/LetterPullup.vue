@@ -1,8 +1,8 @@
 <template>
-  <div :class="['flex flex-wrap max-w-full', justifyClass]">
+  <div :class="['flex flex-wrap w-full min-w-0 max-w-full break-words', justifyClass]">
     <template v-for="(seg, sIdx) in segments" :key="`seg-${sIdx}`">
       <span v-if="seg.type === 'space'"></span>
-      <span v-else class="inline-flex whitespace-nowrap" :class="wordMarginClass(sIdx)">
+      <span v-else class="inline-flex flex-wrap min-w-0 sm:whitespace-nowrap whitespace-normal" :class="wordMarginClass(sIdx)">
         <Motion
           v-for="(ch, idx) in seg.text.split('')"
           :key="`ch-${sIdx}-${idx}`"

@@ -1,5 +1,5 @@
 <template>
-  <div>
+  <div class="max-w-md w-[92%] mx-auto">
     <div class="text-center mb-8">
       <h2 class="text-3xl font-bold text-gray-900 dark:text-white">{{ t('auth.login.title') }}</h2>
       <p class="mt-2 text-sm text-gray-600 dark:text-gray-400">{{ t('auth.login.subtitle') }}</p>
@@ -42,7 +42,7 @@
       </div>
 
       <div>
-        <Button class="w-full" variant="info" type="submit" :disabled="authStore.loading">
+        <Button class="w-full rounded-full" size="xl" variant="info" type="submit" :disabled="authStore.loading">
           {{ authStore.loading ? t('auth.login.action.submitting') : t('auth.login.action.submit') }}
         </Button>
       </div>

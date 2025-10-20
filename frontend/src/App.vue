@@ -111,6 +111,9 @@
       :course-id="chat.courseId as any"
       @close="chat.closeChat()"
     />
+
+    <!-- 全局备案徽章（固定在底部，覆盖所有页面） -->
+    <BeianBadge />
   </div>
 </template>
 
@@ -139,6 +142,7 @@ import {
   XCircleIcon as XCircleSolid,
   InformationCircleIcon as InformationCircleSolid
 } from '@heroicons/vue/24/solid'
+import BeianBadge from '@/components/ui/BeianBadge.vue'
 
 // Stores
 const router = useRouter()

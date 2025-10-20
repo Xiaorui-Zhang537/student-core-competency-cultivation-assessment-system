@@ -17,6 +17,12 @@
         <liquid-glass :radius="30" class="flex items-center justify-center h-full" containerClass="rounded-full h-[60px] px-2">
           <Dock :magnification="60" :distance="140" variant="transparent" paddingClass="pl-1.5 pr-5" heightClass="h-[56px]" roundedClass="rounded-full" gapClass="gap-3">
             <DockIcon>
+              <ripple-button pill :title="t('layout.common.toggleDock') as string || '切换底栏'" @click="isDockVisible = !isDockVisible">
+                <EyeSlashIcon v-if="isDockVisible" class="w-5 h-5" />
+                <EyeIcon v-else class="w-5 h-5" />
+              </ripple-button>
+            </DockIcon>
+            <DockIcon>
               <ripple-button pill :title="t('layout.common.toggleTheme') as string || '主题'" @click="uiStore.toggleDarkMode()">
                 <sun-icon v-if="uiStore.isDarkMode" class="w-5 h-5" />
                 <moon-icon v-else class="w-5 h-5" />
@@ -65,11 +71,11 @@
               </span>
             </DockIcon>
             
-            <DockIcon :baseSize="56" :ml="8">
+            <DockIcon :square="false" :baseSize="56" :ml="8">
               <span ref="userMenuBtn" class="inline-flex">
-                <ripple-button pill class="pl-2 pr-3 h-full items-center whitespace-nowrap" :title="t('layout.common.me') as string || '我'" @click="showUserMenu = !showUserMenu">
+                <ripple-button pill class="pl-2 pr-4 h-full items-center gap-2 whitespace-nowrap" :title="t('layout.common.me') as string || '我'" @click="showUserMenu = !showUserMenu">
                   <user-avatar :avatar="(authStore.user as any)?.avatar" :size="30">
-                    <div class="w-[30px] h-[30px] rounded-full bg-gray-200 dark:bg-gray-700"></div>
+                    <div class="w-[30px] h-[30px] rounded-full bg-gray-200 dark:bg-gray-700 flex-shrink-0"></div>
                   </user-avatar>
                   <span class="text-sm font-medium text-base-content whitespace-nowrap">{{ displayName }}</span>
                 </ripple-button>
@@ -101,6 +107,7 @@
       :items="dockItems"
       v-model="activeDock"
       :bottom-offset="24"
+      :visible="isDockVisible"
       @select="onSelectDock"
     />
 
@@ -274,6 +281,8 @@
 
     <cursor-trail-layer />
   </div>
+
+  
 </template>
 
 <script setup lang="ts">
@@ -329,6 +338,7 @@ const chat = useChatStore()
 const { t } = useI18n()
 
 const baseBgStyle = computed(() => ({ backgroundColor: 'color-mix(in oklab, var(--color-base-100) 86%, transparent)' }))
+const isDockVisible = ref(true)
 
 const showUserMenu = ref(false)
 const userMenuBtn = ref<HTMLElement | null>(null)

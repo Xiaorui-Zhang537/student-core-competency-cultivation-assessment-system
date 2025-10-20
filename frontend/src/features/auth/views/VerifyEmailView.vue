@@ -1,21 +1,23 @@
 <template>
-  <div>
-    <div class="text-center mb-8">
-      <h2 class="text-3xl font-bold">{{ t('auth.verify.title') }}</h2>
-      <p class="mt-2 text-sm text-gray-500">{{ t('auth.verify.subtitle') }}</p>
-    </div>
+  <div class="max-w-lg w-[92%] mx-auto">
+    <LiquidGlass :radius="16" :frost="0.05" class="p-0" :container-class="'rounded-2xl w-full'">
+      <div class="py-8 px-6 md:py-10 md:px-8 text-center">
+        <h2 class="text-2xl md:text-3xl font-bold text-[color:var(--color-base-content)]">{{ t('auth.verify.title') }}</h2>
+        <p class="mt-2 text-sm md:text-base text-subtle">{{ t('auth.verify.subtitle') }}</p>
 
-    <div class="text-center" v-if="verifying">
-      <div v-glass="{ strength: 'ultraThin' }" class="inline-block px-4 py-2 rounded-lg">
-        <span class="text-gray-700 dark:text-gray-200">{{ t('auth.verify.inProgress') }}</span>
-      </div>
-    </div>
+        <div class="mt-6" v-if="verifying">
+          <div class="inline-block px-4 py-2 rounded-lg glass-thin">
+            <span class="text-[color:var(--color-base-content)]">{{ t('auth.verify.inProgress') }}</span>
+          </div>
+        </div>
 
-    <div class="text-center" v-else>
-      <div v-glass="{ strength: 'ultraThin' }" class="inline-block p-3 rounded-lg">
-        <Button variant="info" icon="arrow-right" @click="goLogin">{{ t('auth.verify.toLogin') }}</Button>
+        <div class="mt-6" v-else>
+          <div class="inline-flex flex-wrap gap-3 justify-center">
+            <Button variant="primary" size="xl" class="rounded-full px-6" @click="goLogin">{{ t('auth.verify.toLogin') }}</Button>
+          </div>
+        </div>
       </div>
-    </div>
+    </LiquidGlass>
   </div>
 </template>
 
@@ -26,6 +28,7 @@ import { useUIStore } from '@/stores/ui'
 import { userApi } from '@/api/user.api'
 import { setLocale, i18n } from '@/i18n'
 import Button from '@/components/ui/Button.vue'
+import LiquidGlass from '@/components/ui/LiquidGlass.vue'
 
 const route = useRoute()
 const router = useRouter()

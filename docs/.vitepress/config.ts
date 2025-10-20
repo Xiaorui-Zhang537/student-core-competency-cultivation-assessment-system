@@ -1,6 +1,6 @@
 import { defineConfig } from 'vitepress'
 
-const appUrl = process.env.VITE_APP_URL || 'https://stucoreai.space'
+const appUrl = process.env.VITE_APP_URL || 'http://stucoreai.space'
 
 export default defineConfig({
   lang: 'zh-CN',
@@ -119,6 +119,7 @@ export default defineConfig({
         items: [
           { text: '实战食谱', link: '/cookbook' },
           { text: '图表主题与统一配色', link: '/ui-chart-theme' },
+          { text: '前端适配与首页交互说明', link: '/frontend/responsive-guides' },
           { text: '错误码映射表', link: '/error-codes-mapping' },
           { text: '错误码与空态展示规范', link: '/ui-error-empty-spec' },
           { text: 'FAQ', link: '/faq' },

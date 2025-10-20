@@ -115,40 +115,51 @@
     </select>
 
     <!-- 计算整体进度 -->
-    <select id="calculateOverallProgress" resultType="java.math.BigDecimal">
-        SELECT COALESCE(
-                       SUM(
-                           (CASE WHEN EXISTS (
-                                   SELECT 1 FROM assignments a
-                                   JOIN submissions s ON s.assignment_id = a.id AND s.student_id = lp.student_id
-                                   WHERE a.lesson_id = lp.lesson_id AND a.assignment_type = 'course_bound' AND a.deleted = false
-                                     AND (s.status = 'submitted' OR s.status = 'graded')
-                               ) THEN 100 ELSE lp.progress END) * COALESCE(l.weight, 1.00)
-                       ) / NULLIF(SUM(COALESCE(l.weight, 1.00)), 0)
-                   , 0)
-        FROM lesson_progress lp
-                 JOIN lessons l ON lp.lesson_id = l.id
-        WHERE lp.student_id = #{studentId}
-    </select>
+<select id="calculateOverallProgress" resultType="java.math.BigDecimal">
+  SELECT COALESCE(
+           SUM(
+             (CASE WHEN EXISTS (
+                    SELECT 1
+                    FROM assignments a
+                    JOIN submissions s ON s.assignment_id = a.id
+                    WHERE
+                      s.student_id = lp.student_id
+                      AND a.lesson_id = lp.lesson_id
+                      AND a.assignment_type = 'course_bound'
+                      AND a.deleted = FALSE
+                      AND (s.status = 'submitted' OR s.status = 'graded')
+                  )
+                  THEN 100 ELSE lp.progress END) * COALESCE(l.weight, 1.00)
+           ) / NULLIF(SUM(COALESCE(l.weight, 1.00)), 0)
+         , 0)
+  FROM lesson_progress lp
+  JOIN lessons l ON lp.lesson_id = l.id
+  WHERE lp.student_id = #{studentId}
+</select>
 
     <!-- 计算学生在某课程的整体加权进度（0-100） -->
-    <select id="calculateCourseOverallProgress" resultType="java.math.BigDecimal">
-        SELECT COALESCE(
-                       SUM(
-                           -- 若该课节绑定作业且学生已提交/已评分，则按100%进度计入
-                           (CASE WHEN EXISTS (
-                                   SELECT 1 FROM assignments a
-                                   JOIN submissions s ON s.assignment_id = a.id AND s.student_id = lp.student_id
-                                   WHERE a.lesson_id = lp.lesson_id AND a.assignment_type = 'course_bound' AND a.deleted = false
-                                     AND (s.status = 'submitted' OR s.status = 'graded')
-                               ) THEN 100 ELSE lp.progress END) * COALESCE(l.weight, 1.00)
-                       ) / NULLIF(SUM(COALESCE(l.weight, 1.00)), 0)
-                   , 0)
-        FROM lesson_progress lp
-                 JOIN lessons l ON lp.lesson_id = l.id
-        WHERE lp.student_id = #{studentId}
-          AND l.course_id = #{courseId}
-    </select>
+<select id="calculateCourseOverallProgress" resultType="java.math.BigDecimal">
+  SELECT COALESCE(
+           SUM(
+             (CASE WHEN EXISTS (
+                    SELECT 1
+                    FROM assignments a
+                    JOIN submissions s ON s.assignment_id = a.id
+                    WHERE
+                      s.student_id = lp.student_id
+                      AND a.lesson_id = lp.lesson_id
+                      AND a.assignment_type = 'course_bound'
+                      AND a.deleted = FALSE
+                      AND (s.status = 'submitted' OR s.status = 'graded')
+                  )
+                  THEN 100 ELSE lp.progress END) * COALESCE(l.weight, 1.00)
+           ) / NULLIF(SUM(COALESCE(l.weight, 1.00)), 0)
+         , 0)
+  FROM lesson_progress lp
+  JOIN lessons l ON lp.lesson_id = l.id
+  WHERE lp.student_id = #{studentId}
+    AND l.course_id = #{courseId}
+</select>
 
     <!-- 获取学生学习统计 -->
     <select id="getStudentStudyStats" resultType="map">
@@ -160,23 +171,35 @@
         WHERE student_id = #{studentId}
     </select>
 
-    <!-- 计算课程完成率 -->
-    <select id="calculateCourseCompletionRate" resultType="java.math.BigDecimal">
-        SELECT IF(COUNT(*) = 0, 0,
-                  SUM(
-                      CASE WHEN lp.completed = 1 THEN 1
-                           WHEN EXISTS (
-                               SELECT 1 FROM assignments a
-                               JOIN submissions s ON s.assignment_id = a.id AND s.student_id = lp.student_id
-                               WHERE a.lesson_id = lp.lesson_id AND a.assignment_type = 'course_bound' AND a.deleted = false
-                                 AND (s.status = 'submitted' OR s.status = 'graded')
-                           ) THEN 1 ELSE 0 END
-                  ) * 100.0 / COUNT(*)) as completion_rate
-        FROM lesson_progress lp
-                 JOIN lessons l ON lp.lesson_id = l.id
-        WHERE lp.student_id = #{studentId}
-          AND l.course_id = #{courseId}
-    </select>
+<!-- 计算课程完成率 -->
+<select id="calculateCourseCompletionRate" resultType="java.math.BigDecimal">
+  SELECT
+    IF(
+      COUNT(*) = 0, 0,
+      SUM(
+        CASE
+          WHEN lp.completed = 1 THEN 1
+          WHEN EXISTS (
+            SELECT 1
+            FROM assignments a
+            JOIN submissions s ON s.assignment_id = a.id
+            WHERE
+              s.student_id = lp.student_id
+              AND a.lesson_id = lp.lesson_id
+              AND a.assignment_type = 'course_bound'
+              AND a.deleted = FALSE
+              AND (s.status = 'submitted' OR s.status = 'graded')
+          ) THEN 1
+          ELSE 0
+        END
+      ) * 100.0 / COUNT(*)
+    ) AS completion_rate
+  FROM lesson_progress lp
+  JOIN lessons l ON lp.lesson_id = l.id
+  WHERE
+    lp.student_id = #{studentId}
+    AND l.course_id = #{courseId}
+</select>
 
     <!-- 学习热力图数据 -->
     <select id="getStudyHeatmapData" resultType="map">

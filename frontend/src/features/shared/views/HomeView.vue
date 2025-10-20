@@ -7,20 +7,20 @@
 
         <section class="py-10 md:py-16">
           <div class="grid md:grid-cols-12 gap-8 items-center">
-            <div class="md:col-span-6 min-w-0">
+            <div class="md:col-span-6 min-w-0 relative z-10">
               <div class="mb-8 md:mb-10">
                 <img src="/brand/logo.png" alt="System Logo" class="h-28 md:h-36 w-auto select-none pointer-events-none" />
               </div>
               <LetterPullup
                 :words="t('app.home.hero.title') as string"
                 align="left"
-                class="text-left text-5xl md:text-7xl font-extrabold leading-tight mb-6 text-[color:var(--color-base-content)]"
+                class="text-left text-4xl sm:text-5xl md:text-7xl font-extrabold leading-tight md:leading-[1.1] break-words break-all mb-6 text-[color:var(--color-base-content)]"
               />
-              <TextGenerateEffect :words="t('app.home.hero.subtitle') as string" :duration="0.7" :delay="100" :filter="true" class="text-left text-lg md:text-2xl leading-relaxed text-subtle" />
+              <TextGenerateEffect :words="t('app.home.hero.subtitle') as string" :duration="0.7" :delay="100" :filter="true" class="text-left text-base sm:text-lg md:text-2xl leading-relaxed break-words break-all text-subtle" />
               
             </div>
             <div class="md:col-span-6">
-              <LiquidGlass :radius="16" :frost="0.06" :scale="-100" :tint="true" :tint-from="'var(--color-theme-primary)'" :tint-to="'var(--color-theme-accent)'" :container-class="'relative rounded-2xl w-full aspect-[16/10] overflow-hidden'">
+              <LiquidGlass :radius="16" :frost="0.06" :scale="-100" :tint="true" :tint-from="'var(--color-theme-primary)'" :tint-to="'var(--color-theme-accent)'" :container-class="'relative rounded-2xl w-full aspect-[4/3] sm:aspect-[16/10] max-h-[60vh] overflow-hidden'">
                 <div class="relative w-full h-full">
                   <BendingGallery class="absolute inset-0" :bend="3" :border-radius="0.06" :items="galleryItems" :aspect-ratio="16/9" :dpr="2" :anisotropy="8" :wobble="0.015" />
                 </div>
@@ -314,7 +314,7 @@
     <section id="compare" class="mt-14 scroll-mt-24">
       <div class="space-y-20">
         <!-- 明暗主题对比场景：统一 sticky 行，左右同步 -->
-        <div id="scene-lightdark" class="relative h-[260vh]">
+        <div id="scene-lightdark" class="relative h-[180vh] sm:h-[260vh]">
           <div class="sticky top-0 grid md:grid-cols-2 items-center gap-8 h-screen">
             <div class="px-2">
               <SafariMockup class="w-full aspect-[1203/753]" url="student-competency.com">
@@ -346,7 +346,7 @@
         </div>
 
         <!-- 中英文对比场景：统一 sticky 行，左右同步 -->
-        <div id="scene-zhen" class="relative h-[260vh]">
+        <div id="scene-zhen" class="relative h-[180vh] sm:h-[260vh]">
           <div class="sticky top-0 grid md:grid-cols-2 items-center gap-8 h-screen">
             <div class="px-2">
               <SafariMockup class="w-full aspect-[1203/753]" url="student-competency.com">
@@ -383,7 +383,7 @@
 
     <!-- 项目结构（分为 docs/frontend/backend 三个容器，液态玻璃） -->
     <section id="structure" class="mt-28 scroll-mt-24">
-      <div id="scene-structure" class="relative h-[260vh]">
+      <div id="scene-structure" class="relative h-[180vh] sm:h-[260vh]">
         <div class="sticky top-[14vh]">
       <div class="mb-8">
             <TextScrollReveal :text="t('app.home.structureDesc') as string" :sticky="false" progress-container-id="scene-structure" :reveal-portion="0.5" />
@@ -455,7 +455,7 @@
 
     <!-- 走马灯（Marquee） -->
     <section id="help" class="mt-20 scroll-mt-24">
-      <div id="scene-help" class="relative h-[260vh]">
+      <div id="scene-help" class="relative h-[180vh] sm:h-[260vh]">
         <div class="sticky top-[8vh]">
           <ContainerScroll>
             <template #title>
@@ -471,7 +471,7 @@
 
     <!-- 学生反馈与系统成效展示（Tracing Beam 区块，占位） -->
     <section id="feedback" class="mt-20 scroll-mt-24">
-      <div id="scene-feedback" class="relative h-[200vh]">
+      <div id="scene-feedback" class="relative h-[160vh] sm:h-[200vh]">
         <div class="sticky top-[8vh]">
           <div class="mb-4">
             <TextScrollReveal :text="t('app.home.feedbackDesc') as string" :sticky="false" progress-container-id="scene-feedback" :reveal-portion="0.35" />
@@ -500,7 +500,7 @@
 
     <!-- Ready CTA 滚动文本 + 按钮（自动触发彩带） -->
     <section id="ready" class="mt-28 md:mt-36 scroll-mt-24">
-      <div id="scene-ready" class="relative h-[180vh]">
+      <div id="scene-ready" class="relative h-[160vh] sm:h-[180vh]">
         <div class="sticky top-[16vh]">
           <div class="flex flex-col items-center gap-6">
             <TextScrollReveal

@@ -1,7 +1,7 @@
 <template>
   <div
     ref="containerRef"
-    class="w-full h-full overflow-hidden cursor-grab active:cursor-grabbing"
+    class="w-full h-full overflow-hidden cursor-grab active:cursor-grabbing pointer-events-auto"
   />
   
 </template>
@@ -27,6 +27,7 @@ interface BendingGalleryProps {
   anisotropy?: number // texture anisotropic filtering level
   wobble?: number // image surface wobble amplitude (0 = disable)
   wheelScroll?: boolean // whether mouse wheel scroll drives the gallery
+  dragWithinContainer?: boolean // limit events to container only
   textGap?: number // world units gap between image bottom and text baseline
 }
 
@@ -41,6 +42,7 @@ const props = withDefaults(defineProps<BendingGalleryProps>(), {
   wobble: 0.02,
   wheelScroll: false,
   textGap: 0.12,
+  dragWithinContainer: true,
 })
 
 const containerRef = ref<HTMLDivElement | null>(null)
@@ -462,10 +464,10 @@ class App {
   viewport!: { width: number; height: number }
   raf: number = 0
   boundOnResize!: () => void
-  boundOnWheel!: () => void
+  boundOnWheel!: (e: WheelEvent) => void
   boundOnTouchDown!: (e: MouseEvent | TouchEvent) => void
   boundOnTouchMove!: (e: MouseEvent | TouchEvent) => void
-  boundOnTouchUp!: () => void
+  boundOnTouchUp!: (e?: MouseEvent | TouchEvent) => void
   isDown: boolean = false
   start: number = 0
   constructor(container: HTMLElement, { items, bend = 1, textColor = '#ffffff', borderRadius = 0, font = 'bold 30px DM Sans' }: AppConfig) {
@@ -497,10 +499,27 @@ class App {
     this.mediasImages = galleryItems.concat(galleryItems)
     this.medias = this.mediasImages.map((data, index) => new Media({ geometry: this.planeGeometry, gl: this.gl, image: data.image, index, length: this.mediasImages.length, renderer: this.renderer, scene: this.scene, screen: this.screen, text: data.text, viewport: this.viewport, bend, textColor, borderRadius, font }))
   }
-  onTouchDown(e: MouseEvent | TouchEvent) { this.isDown = true; this.scroll.position = this.scroll.current; this.start = 'touches' in e ? e.touches[0].clientX : e.clientX }
-  onTouchMove(e: MouseEvent | TouchEvent) { if (!this.isDown) return; const x = 'touches' in e ? e.touches[0].clientX : e.clientX; const distance = (this.start - x) * 0.05; this.scroll.target = (this.scroll.position ?? 0) + distance }
+  onTouchDown(e: MouseEvent | TouchEvent) {
+    this.isDown = true
+    this.scroll.position = this.scroll.current
+    const clientX = 'touches' in e ? e.touches[0].clientX : e.clientX
+    this.start = clientX
+  }
+  onTouchMove(e: MouseEvent | TouchEvent) {
+    if (!this.isDown) return
+    const clientX = 'touches' in e ? e.touches[0].clientX : e.clientX
+    const distance = (this.start - clientX) * 0.05
+    this.scroll.target = (this.scroll.position ?? 0) + distance
+  }
   onTouchUp() { this.isDown = false; this.onCheck() }
-  onWheel() { this.scroll.target += 2; this.onCheckDebounce() }
+  onWheel(e: WheelEvent) {
+    if (props.wheelScroll !== true) return
+    // only react when wheel happens over the container
+    const target = e.target as HTMLElement
+    if (!this.container.contains(target)) return
+    this.scroll.target += 2
+    this.onCheckDebounce()
+  }
   onCheck() { if (!this.medias || !this.medias[0]) return; const width = this.medias[0].width; const itemIndex = Math.round(Math.abs(this.scroll.target) / width); const item = width * itemIndex; this.scroll.target = this.scroll.target < 0 ? -item : item }
   onResize() {
     this.screen = { width: this.container.clientWidth, height: this.container.clientHeight }
@@ -520,30 +539,41 @@ class App {
     this.boundOnTouchMove = this.onTouchMove.bind(this)
     this.boundOnTouchUp = this.onTouchUp.bind(this)
     window.addEventListener('resize', this.boundOnResize)
-    if (props.wheelScroll) {
-      window.addEventListener('mousewheel', this.boundOnWheel)
-      window.addEventListener('wheel', this.boundOnWheel)
+    // wheel: use window but check target containment to avoid global effect
+    window.addEventListener('wheel', this.boundOnWheel, { passive: true } as any)
+    // pointer/touch: bind to container only if configured
+    const el = this.container
+    if (props.dragWithinContainer) {
+      el.addEventListener('mousedown', this.boundOnTouchDown)
+      el.addEventListener('mousemove', this.boundOnTouchMove)
+      el.addEventListener('mouseup', this.boundOnTouchUp)
+      el.addEventListener('mouseleave', this.boundOnTouchUp)
+      el.addEventListener('touchstart', this.boundOnTouchDown, { passive: true } as any)
+      el.addEventListener('touchmove', this.boundOnTouchMove, { passive: true } as any)
+      el.addEventListener('touchend', this.boundOnTouchUp)
+      el.addEventListener('touchcancel', this.boundOnTouchUp)
+    } else {
+      window.addEventListener('mousedown', this.boundOnTouchDown)
+      window.addEventListener('mousemove', this.boundOnTouchMove)
+      window.addEventListener('mouseup', this.boundOnTouchUp)
+      window.addEventListener('touchstart', this.boundOnTouchDown)
+      window.addEventListener('touchmove', this.boundOnTouchMove)
+      window.addEventListener('touchend', this.boundOnTouchUp)
     }
-    window.addEventListener('mousedown', this.boundOnTouchDown)
-    window.addEventListener('mousemove', this.boundOnTouchMove)
-    window.addEventListener('mouseup', this.boundOnTouchUp)
-    window.addEventListener('touchstart', this.boundOnTouchDown)
-    window.addEventListener('touchmove', this.boundOnTouchMove)
-    window.addEventListener('touchend', this.boundOnTouchUp)
   }
   destroy() {
     window.cancelAnimationFrame(this.raf)
     window.removeEventListener('resize', this.boundOnResize)
-    if (props.wheelScroll) {
-      window.removeEventListener('mousewheel', this.boundOnWheel)
-      window.removeEventListener('wheel', this.boundOnWheel)
-    }
-    window.removeEventListener('mousedown', this.boundOnTouchDown)
-    window.removeEventListener('mousemove', this.boundOnTouchMove)
-    window.removeEventListener('mouseup', this.boundOnTouchUp)
-    window.removeEventListener('touchstart', this.boundOnTouchDown)
-    window.removeEventListener('touchmove', this.boundOnTouchMove)
-    window.removeEventListener('touchend', this.boundOnTouchUp)
+    window.removeEventListener('wheel', this.boundOnWheel)
+    const el = this.container
+    el.removeEventListener('mousedown', this.boundOnTouchDown)
+    el.removeEventListener('mousemove', this.boundOnTouchMove)
+    el.removeEventListener('mouseup', this.boundOnTouchUp)
+    el.removeEventListener('mouseleave', this.boundOnTouchUp)
+    el.removeEventListener('touchstart', this.boundOnTouchDown as any)
+    el.removeEventListener('touchmove', this.boundOnTouchMove as any)
+    el.removeEventListener('touchend', this.boundOnTouchUp)
+    el.removeEventListener('touchcancel', this.boundOnTouchUp)
     if (this.renderer && this.renderer.gl && this.renderer.gl.canvas.parentNode) {
       this.renderer.gl.canvas.parentNode.removeChild(this.renderer.gl.canvas as HTMLCanvasElement)
     }
