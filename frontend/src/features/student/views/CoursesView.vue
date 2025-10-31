@@ -108,7 +108,7 @@
         </div>
         <div class="p-6">
           <h3 class="text-lg font-semibold line-clamp-2 mb-2">{{ course.title }}</h3>
-          <p class="text-muted text-sm mb-4 line-clamp-2">{{ course.description }}</p>
+          <p class="text-muted text-sm mb-4 line-clamp-2 whitespace-pre-line">{{ course.description }}</p>
           <div class="flex items-center justify-between text-sm">
             <span class="text-muted">{{ t('student.courses.instructor') }}: {{ course.teacherName }}</span>
             <span class="font-medium" :class="course.progress === 100 ? 'text-[var(--color-success)]' : 'text-[var(--color-primary)]'">
@@ -126,7 +126,7 @@
         <div v-else class="grid grid-cols-1 md:grid-cols-2 gap-6">
           <Card v-for="course in courseStore.courses" :key="course.id">
             <h4 class="font-medium mb-2">{{ course.title }}</h4>
-            <p class="text-sm text-gray-600 mb-3">{{ course.description }}</p>
+            <p class="text-sm text-gray-600 mb-3 whitespace-pre-line">{{ course.description }}</p>
             <div class="flex flex-wrap items-center gap-2 mb-2 text-sm">
               <Badge v-if="course.startDate" size="sm" variant="info">
                 <span class="inline-flex items-center gap-1">📅 {{ t('student.courses.detail.startDate') }}: {{ formatDateOnly(course.startDate) }}</span>

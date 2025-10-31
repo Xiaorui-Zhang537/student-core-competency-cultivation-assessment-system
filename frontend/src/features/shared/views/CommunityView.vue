@@ -135,7 +135,7 @@
                       <h3 class="text-sm font-medium text-base-content">{{ post.title }}</h3>
                       <badge size="sm" :variant="categoryVariant(post.category)">{{ displayCategory(post.category) }}</badge>
                     </div>
-                   <p class="text-sm text-subtle line-clamp-2 mb-2" v-html="post.content"></p>
+                   <p class="text-sm text-subtle line-clamp-2 mb-2 whitespace-pre-line" v-html="post.content"></p>
                     <div class="flex items-center space-x-4 text-xs text-subtle">
                       <span>{{ post.author?.nickname || post.author?.username || t('shared.community.list.anonymous') }}</span>
                       <span>{{ formatDate(post.createdAt) }}</span>

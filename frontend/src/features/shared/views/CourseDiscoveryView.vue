@@ -153,7 +153,7 @@
             <div class="course-content">
               <h3 class="course-title">{{ course.title }}</h3>
               <p class="course-instructor">{{ course.teacherName }}</p>
-              <p class="course-description">{{ course.description }}</p>
+              <p class="course-description whitespace-pre-line">{{ course.description }}</p>
               
               <div class="course-tags">
                 <span
@@ -226,7 +226,7 @@
               <div class="course-content">
                 <h3 class="course-title">{{ course.title }}</h3>
                 <p class="course-instructor">{{ course.teacherName }}</p>
-                <p class="course-description">{{ course.description }}</p>
+                <p class="course-description whitespace-pre-line">{{ course.description }}</p>
                 
                 <div class="course-footer">
                   <div class="course-price">

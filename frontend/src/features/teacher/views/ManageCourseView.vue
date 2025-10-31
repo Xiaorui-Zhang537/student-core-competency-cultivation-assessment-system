@@ -81,7 +81,7 @@
           <div class="p-4">
             <h3 class="font-bold text-lg line-clamp-1">{{ course.title }}</h3>
             <p class="text-xs text-gray-500 mb-2">{{ localizeCategory(course.category) }}</p>
-            <p class="text-sm text-gray-600 dark:text-gray-300 line-clamp-2 min-h-[2.5rem]">{{ course.description }}</p>
+            <p class="text-sm text-gray-600 dark:text-gray-300 line-clamp-2 min-h-[2.5rem] whitespace-pre-line">{{ course.description }}</p>
             <div class="mt-4 flex justify-between items-center">
               <div class="flex flex-wrap gap-1.5 items-center min-h-[1.5rem]">
                 <Badge v-for="tag in toTagList(course)" :key="String(tag)" size="sm" :variant="tagVariant(String(tag))">

@@ -10,7 +10,7 @@
     <div class="flex-1">
       <div class="glass-regular glass-interactive rounded-xl p-3" v-glass="{ strength: 'regular', interactive: true }">
         <p class="text-sm font-semibold text-gray-900 dark:text-white">{{ comment.author?.nickname || comment.author?.username || t('shared.community.list.anonymous') }}</p>
-        <p class="text-sm text-gray-700 dark:text-gray-200 mt-1">{{ comment.content }}</p>
+        <p class="text-sm text-gray-700 dark:text-gray-200 mt-1 whitespace-pre-line">{{ comment.content }}</p>
       </div>
       <div class="text-xs text-gray-500 mt-1 flex items-center space-x-3">
         <span>{{ formatDate(comment.createdAt) }}</span>

@@ -31,7 +31,7 @@
 
       <!-- Post Content -->
       <div class="glass-regular glass-tint-info rounded-2xl p-6 mb-6" v-glass="{ strength: 'regular', interactive: true }">
-        <div class="prose dark:prose-invert max-w-none" v-html="currentPost.content"></div>
+        <div class="prose dark:prose-invert max-w-none whitespace-pre-line" v-html="currentPost.content"></div>
         <div v-if="attachments.length" class="mt-6 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
           <div v-for="f in attachments" :key="f.id" class="rounded overflow-hidden glass-ultraThin" v-glass="{ strength: 'ultraThin', interactive: false }">
             <img v-if="isImageAttachment(f)" :src="f._previewUrl || ''" class="w-full h-32 object-cover" @error="loadPreview(f)" />

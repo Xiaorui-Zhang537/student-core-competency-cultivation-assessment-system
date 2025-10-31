@@ -36,7 +36,7 @@
       </div>
       <Card :hoverable="true" :hoverScale="false" padding="md" class="relative overflow-hidden rounded-2xl" tint="info">
         <h2 class="text-xl font-semibold mb-4">{{ t('teacher.courseDetail.sections.description') }}</h2>
-        <p>{{ course.description }}</p>
+        <p class="whitespace-pre-line">{{ course.description }}</p>
       </Card>
       <!-- 按需求：移除冗余的课程内容板块，仅保留描述与节次编辑 -->
 

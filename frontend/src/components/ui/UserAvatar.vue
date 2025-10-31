@@ -12,8 +12,9 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, ref, watch, onMounted, onUnmounted } from 'vue'
 import { baseURL } from '@/api/config'
+import { api } from '@/api/config'
 
 const props = withDefaults(defineProps<{
   avatar?: string | null
@@ -78,12 +79,37 @@ const wrapperStyle = computed(() => ({
 }))
 
 const hadError = ref(false)
+const blobUrl = ref<string | null>(null)
 const finalSrc = computed(() => {
   if (hadError.value) return props.fallbackSrc || null
-  return imgSrc.value
+  return blobUrl.value || imgSrc.value
 })
 
+const tryLoadBlob = async () => {
+  try {
+    const av = props.avatar
+    if (!av) return
+    const isHttp = /^https?:\/\//i.test(String(av))
+    if (isHttp) { blobUrl.value = null; return }
+    // 受保护预览：用带鉴权的 api 获取 blob，避免 <img> 无法带上 Authorization
+    const resp: any = await api.get(`/files/${encodeURIComponent(String(av))}/preview`, { responseType: 'blob' })
+    if (blobUrl.value) {
+      try { URL.revokeObjectURL(blobUrl.value) } catch {}
+    }
+    const url = URL.createObjectURL(resp as Blob)
+    blobUrl.value = url
+    hadError.value = false
+  } catch {
+    // 回退到直接 src（可能为公开链接）或 fallback
+    blobUrl.value = null
+  }
+}
+
 const onImgError = () => { hadError.value = true }
+
+onMounted(() => { tryLoadBlob() })
+watch(() => props.avatar, () => { tryLoadBlob() })
+onUnmounted(() => { if (blobUrl.value) { try { URL.revokeObjectURL(blobUrl.value) } catch {} } })
 </script>
 
 <style scoped></style>

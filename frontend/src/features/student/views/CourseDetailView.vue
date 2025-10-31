@@ -22,7 +22,7 @@
           <card tint="primary">
             <div class="p-5">
               <h1 class="text-2xl font-bold truncate">{{ course.title }}</h1>
-              <p v-if="course.description" class="mt-2 text-muted">{{ course.description }}</p>
+              <p v-if="course.description" class="mt-2 text-muted whitespace-pre-line">{{ course.description }}</p>
               <!-- 1) 先显示开课/结课时间（玻璃Badge） -->
               <div class="mt-3 flex flex-wrap items-center gap-2 text-sm text-muted">
                 <badge v-if="course.startDate" size="sm" variant="accent">
@@ -191,7 +191,7 @@
                                 <badge v-if="getLessonProgress(lesson.id) >= 100" size="sm" variant="success">{{ t('student.courses.detail.completed') }}</badge>
                                 <badge v-else size="sm" variant="secondary">{{ t('common.status.incomplete') || '未完成' }}</badge>
                               </div>
-                              <p class="text-sm text-muted mt-1.5">{{ lesson.description || lesson.content }}</p>
+                              <p class="text-sm text-muted mt-1.5 whitespace-pre-line">{{ lesson.description || lesson.content }}</p>
                             </div>
                             <div class="flex items-center gap-2">
                               <Button size="sm" variant="success" @click="goLessonDetail(lesson.id)">
@@ -223,7 +223,7 @@
                                 <badge v-if="getLessonProgress(lesson.id) >= 100" size="sm" variant="success">{{ t('student.courses.detail.completed') }}</badge>
                                 <badge v-else size="sm" variant="secondary">{{ t('common.status.incomplete') || '未完成' }}</badge>
                               </div>
-                              <p class="text-sm text-muted mt-1.5">{{ lesson.description || lesson.content }}</p>
+                              <p class="text-sm text-muted mt-1.5 whitespace-pre-line">{{ lesson.description || lesson.content }}</p>
                             </div>
                         <div class="flex items-center gap-2">
                           <Button size="sm" variant="success" @click="goLessonDetail(lesson.id)">
