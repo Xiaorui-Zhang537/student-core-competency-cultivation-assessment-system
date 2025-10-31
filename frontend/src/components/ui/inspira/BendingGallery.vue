@@ -553,18 +553,18 @@ class App {
       el.addEventListener('touchend', this.boundOnTouchUp)
       el.addEventListener('touchcancel', this.boundOnTouchUp)
     } else {
-      window.addEventListener('mousedown', this.boundOnTouchDown)
-      window.addEventListener('mousemove', this.boundOnTouchMove)
-      window.addEventListener('mouseup', this.boundOnTouchUp)
-      window.addEventListener('touchstart', this.boundOnTouchDown)
-      window.addEventListener('touchmove', this.boundOnTouchMove)
-      window.addEventListener('touchend', this.boundOnTouchUp)
+    window.addEventListener('mousedown', this.boundOnTouchDown)
+    window.addEventListener('mousemove', this.boundOnTouchMove)
+    window.addEventListener('mouseup', this.boundOnTouchUp)
+    window.addEventListener('touchstart', this.boundOnTouchDown)
+    window.addEventListener('touchmove', this.boundOnTouchMove)
+    window.addEventListener('touchend', this.boundOnTouchUp)
     }
   }
   destroy() {
     window.cancelAnimationFrame(this.raf)
     window.removeEventListener('resize', this.boundOnResize)
-    window.removeEventListener('wheel', this.boundOnWheel)
+      window.removeEventListener('wheel', this.boundOnWheel)
     const el = this.container
     el.removeEventListener('mousedown', this.boundOnTouchDown)
     el.removeEventListener('mousemove', this.boundOnTouchMove)

@@ -8,8 +8,8 @@
         <div class="mt-6" v-if="verifying">
           <div class="inline-block px-4 py-2 rounded-lg glass-thin">
             <span class="text-[color:var(--color-base-content)]">{{ t('auth.verify.inProgress') }}</span>
-          </div>
-        </div>
+      </div>
+    </div>
 
         <div class="mt-6" v-else>
           <div class="inline-flex flex-wrap gap-3 justify-center">

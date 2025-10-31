@@ -65,20 +65,37 @@ import { useAuthStore } from '@/stores/auth'
 import type { LoginRequest } from '@/types/auth'
 import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
+import { i18n } from '@/i18n'
 import GlassInput from '@/components/ui/inputs/GlassInput.vue'
 import GlassPasswordInput from '@/components/ui/inputs/GlassPasswordInput.vue'
 import Button from '@/components/ui/Button.vue'
+import { useUIStore } from '@/stores/ui'
 
 const authStore = useAuthStore()
 const router = useRouter()
 const { t } = useI18n()
+const uiStore = useUIStore()
 
 const form = ref<LoginRequest>({ username: '', password: '' })
 
 const handleLogin = async (credentials: LoginRequest) => {
-  await authStore.login(credentials)
-  // 登录后做一次性刷新，确保状态与资源一致
-  requestAnimationFrame(() => window.location.reload())
+  let notified = false
+  try {
+    await authStore.login(credentials, { notify: false })
+    // 若登录未成功（例如服务端返回错误但未抛异常），给出提示并中止刷新
+    if (!(authStore as any).isAuthenticated) {
+      uiStore.showNotification({ type: 'error', title: i18n.global.t('app.notifications.error.title') as string, message: i18n.global.t('auth.login.error.invalidCredentials') as string })
+      return
+    }
+    // 登录成功：保持原有的刷新逻辑
+    requestAnimationFrame(() => window.location.reload())
+  } catch (e: any) {
+    uiStore.showNotification({
+      type: 'error',
+      title: i18n.global.t('app.notifications.error.title') as string,
+      message: i18n.global.t('auth.login.error.invalidCredentials') as string
+    })
+  }
 }
 
 const goRegister = async () => {

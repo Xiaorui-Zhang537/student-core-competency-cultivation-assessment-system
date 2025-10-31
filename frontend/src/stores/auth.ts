@@ -55,25 +55,36 @@ export const useAuthStore = defineStore('auth', () => {
     return res && res.data !== undefined ? res.data : res;
   }
 
-  const login = async (credentials: LoginRequest) => {
-    const response = await handleApiCall(() => authApi.login(credentials));
-    if (!response) return;
-    const data = unwrap<AuthResponse>(response);
-    setAuthData(data);
-    uiStore.showNotification({
-      type: 'success',
-      title: i18n.global.t('app.auth.loginSuccess.title') as string,
-      message: i18n.global.t('app.auth.loginSuccess.msg', { name: data.user.username }) as string
-    });
-    await nextTick();
-    // 支持 redirect 参数，默认学生到 /student/dashboard，教师到 /teacher/dashboard
-    const queryRedirect = (router.currentRoute.value.query?.redirect as string) || '';
-    if (queryRedirect) {
-      await router.push(queryRedirect);
-      return;
+  const login = async (credentials: LoginRequest, opts?: { notify?: boolean }) => {
+    loading.value = true;
+    error.value = null;
+    try {
+      const response = await authApi.login(credentials);
+      const data = unwrap<AuthResponse>(response);
+      setAuthData(data);
+      if (opts?.notify !== false) {
+        uiStore.showNotification({
+          type: 'success',
+          title: i18n.global.t('app.auth.loginSuccess.title') as string,
+          message: i18n.global.t('app.auth.loginSuccess.msg', { name: data.user.username }) as string
+        });
+      }
+      await nextTick();
+      // 支持 redirect 参数，默认学生到 /student/dashboard，教师到 /teacher/dashboard
+      const queryRedirect = (router.currentRoute.value.query?.redirect as string) || '';
+      if (queryRedirect) {
+        await router.push(queryRedirect);
+        return;
+      }
+      const target = data.user.role === 'TEACHER' ? '/teacher/dashboard' : '/student/dashboard';
+      await router.push(target);
+    } catch (e: any) {
+      // 不在 store 内弹错误提示，交由调用方决定，避免重复弹窗
+      error.value = e?.message || (i18n.global.t('auth.login.error.generic') as string);
+      throw e;
+    } finally {
+      loading.value = false;
     }
-    const target = data.user.role === 'TEACHER' ? '/teacher/dashboard' : '/student/dashboard';
-    await router.push(target);
   };
 
   const register = async (details: RegisterRequest) => {
