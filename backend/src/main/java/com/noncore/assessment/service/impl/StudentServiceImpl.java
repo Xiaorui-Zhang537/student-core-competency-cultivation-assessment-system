@@ -80,7 +80,9 @@ public class StudentServiceImpl implements StudentService {
         CourseParticipantsResponse.Person teacherDto = (teacher == null) ? null :
                 CourseParticipantsResponse.Person.builder()
                         .id(teacher.getId())
-                        .name(teacher.getUsername())
+                        .firstName(teacher.getFirstName())
+                        .lastName(teacher.getLastName())
+                        .name(buildDisplayName(teacher))
                         .username(teacher.getUsername())
                         .nickname(teacher.getNickname())
                         .avatar(teacher.getAvatar())
@@ -110,7 +112,9 @@ public class StudentServiceImpl implements StudentService {
                 .filter(u -> !u.getId().equals(currentStudentId))
                 .map(u -> CourseParticipantsResponse.Person.builder()
                         .id(u.getId())
-                        .name(u.getUsername())
+                        .firstName(u.getFirstName())
+                        .lastName(u.getLastName())
+                        .name(buildDisplayName(u))
                         .username(u.getUsername())
                         .nickname(u.getNickname())
                         .avatar(u.getAvatar())
@@ -135,5 +139,15 @@ public class StudentServiceImpl implements StudentService {
                 .teachers(teacherDto == null ? java.util.Collections.emptyList() : java.util.List.of(teacherDto))
                 .classmates(classmatesDto)
                 .build();
+    }
+
+    private String buildDisplayName(User u) {
+        String ln = u.getLastName() == null ? "" : u.getLastName().trim();
+        String fn = u.getFirstName() == null ? "" : u.getFirstName().trim();
+        if (!ln.isEmpty() || !fn.isEmpty()) {
+            return (ln + fn);
+        }
+        if (u.getNickname() != null && !u.getNickname().isBlank()) return u.getNickname();
+        return u.getUsername();
     }
 }

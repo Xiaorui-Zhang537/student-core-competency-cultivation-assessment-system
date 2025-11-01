@@ -86,7 +86,7 @@
       </div>
     </nav>
 
-    <div class="flex pt-2 pb-20">
+    <div class="flex pt-2 pb-20 relative z-10">
       <main class="flex-1">
         <div class="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
           <router-view />

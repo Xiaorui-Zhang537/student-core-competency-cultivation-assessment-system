@@ -57,6 +57,7 @@
 		},
 		"common": {
 			"help": "帮助",
+			"toggleDock": "切换 Dock",
 			"toggleTheme": "切换主题",
 			"themeFamily": "主题家族",
 			"themeSelectTitle": "主题配色",

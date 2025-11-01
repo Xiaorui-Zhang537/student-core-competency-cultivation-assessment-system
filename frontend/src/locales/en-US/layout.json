@@ -57,6 +57,7 @@
 		},
 		"common": {
 			"help": "Help",
+			"toggleDock": "Toggle Dock",
 			"toggleTheme": "Toggle Theme",
 			"themeFamily": "Theme Family",
 			"themeSelectTitle": "Theme Colors",

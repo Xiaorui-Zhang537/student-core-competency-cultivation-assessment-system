@@ -3,7 +3,7 @@ Created-By: Maven JAR Plugin 3.4.2
 Build-Jdk-Spec: 17
 Implementation-Title: Student Core Competency Cultivation Assessment Sys
  tem
-Implementation-Version: 1.0.2
+Implementation-Version: 1.0.4
 Main-Class: org.springframework.boot.loader.launch.JarLauncher
 Start-Class: com.noncore.assessment.AssessmentApplication
 Spring-Boot-Version: 3.5.4

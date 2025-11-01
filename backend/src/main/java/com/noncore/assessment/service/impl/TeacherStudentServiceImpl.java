@@ -195,9 +195,23 @@ public class TeacherStudentServiceImpl implements TeacherStudentService {
                     break;
                 }
             }
+            String displayName;
+            boolean hasCnName = (u.getLastName() != null && !u.getLastName().isBlank()) || (u.getFirstName() != null && !u.getFirstName().isBlank());
+            if (hasCnName) {
+                // 中文姓名按 姓 + 名 拼接
+                displayName = (u.getLastName() == null ? "" : u.getLastName()) + (u.getFirstName() == null ? "" : u.getFirstName());
+            } else if (u.getNickname() != null && !u.getNickname().isBlank()) {
+                displayName = u.getNickname();
+            } else {
+                displayName = u.getUsername();
+            }
             items.add(CourseStudentBasicItem.builder()
                     .studentId(sid)
-                    .studentName(u.getNickname() != null ? u.getNickname() : u.getUsername())
+                    .studentName(displayName)
+                    .firstName(u.getFirstName())
+                    .lastName(u.getLastName())
+                    .nickname(u.getNickname())
+                    .username(u.getUsername())
                     .studentNo(u.getStudentNo())
                     .avatar(u.getAvatar())
                     .progress(progress)

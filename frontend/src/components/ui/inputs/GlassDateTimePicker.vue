@@ -41,15 +41,15 @@
             </div>
           </div>
           <!-- Time selectors -->
-          <div v-if="!dateOnly" class="px-4 py-2 border-t border-white/10 flex items-center gap-3">
+          <div v-if="!dateOnly" class="px-4 py-3 border-t border-white/10 flex items-center gap-3">
             <div class="flex items-center gap-2">
               <span class="text-xs text-gray-500 dark:text-gray-400">{{ t('shared.time') || '时间' }}</span>
-              <div class="w-20">
-                <GlassPopoverSelect :options="hourOptions" :model-value="hour" @update:modelValue="(v:any)=>hour = Number(v)" size="sm" :tint="tint" />
+              <div class="w-24">
+                <GlassPopoverSelect :options="hourOptions" :model-value="hour" @update:modelValue="(v:any)=>hour = Number(v)" size="sm" :tint="tint" :teleport="true" />
               </div>
               <span class="text-xs text-gray-500">:</span>
-              <div class="w-20">
-                <GlassPopoverSelect :options="minuteSelectOptions" :model-value="minute" @update:modelValue="(v:any)=>minute = Number(v)" size="sm" :tint="tint" />
+              <div class="w-24">
+                <GlassPopoverSelect :options="minuteSelectOptions" :model-value="minute" @update:modelValue="(v:any)=>minute = Number(v)" size="sm" :tint="tint" :teleport="true" />
               </div>
             </div>
             <div class="ml-auto flex items-center gap-2">
@@ -236,13 +236,13 @@ function positionPanel(){
   try {
     const el = anchor.value as HTMLElement
     const rect = el?.getBoundingClientRect()
-    if (!rect) return { left:'20px', top:'20px', width:'360px' }
+    if (!rect) return { left:'20px', top:'20px', width:'560px' }
     // 弹窗宽度略大于输入框但限制最大值，避免在窄表单中过宽
-    const widthBaseline = Math.max(rect.width + 60, 320)
-    const width = Math.min(440, Math.max(widthBaseline, rect.width))
+    const widthBaseline = Math.max(rect.width + 180, 420)
+    const width = Math.min(600, Math.max(widthBaseline, rect.width))
     const left = Math.min(window.innerWidth - width - 8, Math.max(8, rect.left))
     // 允许弹层随滚动：fixed + rect基于视口，无需加 scrollY
-    const desiredHeight = 340
+    const desiredHeight = 520
     const hasSpaceBelow = rect.bottom + 6 + desiredHeight <= window.innerHeight
     const top = hasSpaceBelow ? (rect.bottom + 6) : Math.max(8, rect.top - desiredHeight - 6)
     return { left: left+'px', top: top+'px', width: width+'px' }

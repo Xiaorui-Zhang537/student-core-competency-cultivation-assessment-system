@@ -49,6 +49,7 @@
       "statusOngoing": "Ongoing",
       "progressLabel": "Progress",
       "storeTitle": "Course Store",
+      "enterEnrollKey": "Enter Enroll Key",
       "note": "Notes",
       "notePh": "Record your key points...",
       "save": "Save",
@@ -122,7 +123,15 @@
       "math": "Mathematics",
       "design": "Design / Arts",
       "language": "Language",
-      "engineering": "Engineering"
+      "engineering": "Engineering",
+      "programming": "Programming",
+      "business": "Business",
+      "marketing": "Marketing",
+      "science": "Science",
+      "art": "Arts & Humanities",
+      "other": "Other",
+      "liberal-arts": "Liberal Arts",
+      "science-college": "Science"
     }
     },
     "analysis": {

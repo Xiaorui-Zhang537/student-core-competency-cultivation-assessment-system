@@ -97,9 +97,9 @@ export const useCourseStore = defineStore('course', {
         }
     },
 
-    async enrollInCourse(courseId: string) {
+    async enrollInCourse(courseId: string, enrollKey?: string) {
         const uiStore = useUIStore();
-        await handleApiCall(() => courseApi.enrollInCourse(courseId), uiStore, '课程报名失败', { successMessage: '报名成功！' });
+        await handleApiCall(() => courseApi.enrollInCourse(courseId, enrollKey), uiStore, '课程报名失败', { successMessage: '报名成功！' });
     },
 
     async unenrollFromCourse(courseId: string) {

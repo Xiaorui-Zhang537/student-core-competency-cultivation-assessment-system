@@ -245,9 +245,25 @@ public class SubmissionServiceImpl implements SubmissionService {
 
         // 检查是否已有提交记录
         Submission existingSubmission = submissionMapper.selectByAssignmentAndStudent(assignmentId, studentId);
-        
+
         Submission submission;
-        if (existingSubmission != null && !"draft".equals(existingSubmission.getStatus())) {
+        // 若已存在且不是草稿，判断是否为“已打回”场景；若已打回，则允许转为草稿并更新内容
+        if (existingSubmission != null && !"draft".equalsIgnoreCase(String.valueOf(existingSubmission.getStatus()))) {
+            try {
+                Grade sg = gradeMapper.selectByStudentAndAssignment(studentId, assignmentId);
+                if (sg != null && "returned".equalsIgnoreCase(String.valueOf(sg.getStatus()))) {
+                    submission = existingSubmission;
+                    submission.setContent(content);
+                    submission.setStatus("draft");
+                    submission.setSubmittedAt(null);
+                    submission.setIsLate(false);
+                    submission.setUpdatedAt(LocalDateTime.now());
+                    submissionMapper.updateSubmission(submission);
+                    logger.info("已打回场景，允许保存草稿并将状态置为 draft，ID: {}", submission.getId());
+                    return submission;
+                }
+            } catch (Exception ignored) {}
+            // 非打回场景，仍按原规则禁止保存草稿
             throw new BusinessException(ErrorCode.ASSIGNMENT_ALREADY_SUBMITTED);
         }
 

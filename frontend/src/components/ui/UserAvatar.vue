@@ -42,11 +42,25 @@ const sizeStyle = computed(() => ({
   height: typeof props.size === 'number' ? `${props.size}px` : String(props.size)
 }))
 
+function extractFileIdFromPath(path: string): string | null {
+  try {
+    const m = String(path).match(/\/files\/(\d+)(?:\/|$)/)
+    return m && m[1] ? m[1] : null
+  } catch { return null }
+}
+
 const imgSrc = computed(() => {
   const av = props.avatar
   if (!av) return null
-  const isHttp = /^https?:\/\//i.test(String(av))
-  return isHttp ? String(av) : `${baseURL}/files/${encodeURIComponent(String(av))}/preview`
+  const s = String(av)
+  const isHttp = /^https?:\/\//i.test(s)
+  if (isHttp) return s
+  if (s.startsWith('/')) {
+    // 服务器返回了相对接口路径，如 /api/files/{id}/download
+    return `${baseURL}${s}`
+  }
+  // 视为文件ID
+  return `${baseURL}/files/${encodeURIComponent(s)}/preview`
 })
 
 const isSvgLike = computed(() => {
@@ -89,10 +103,22 @@ const tryLoadBlob = async () => {
   try {
     const av = props.avatar
     if (!av) return
-    const isHttp = /^https?:\/\//i.test(String(av))
+    const s = String(av)
+    const isHttp = /^https?:\/\//i.test(s)
     if (isHttp) { blobUrl.value = null; return }
-    // 受保护预览：用带鉴权的 api 获取 blob，避免 <img> 无法带上 Authorization
-    const resp: any = await api.get(`/files/${encodeURIComponent(String(av))}/preview`, { responseType: 'blob' })
+    // 受保护预览：优先根据文件ID走 /files/{id}/preview
+    const id = s.startsWith('/') ? extractFileIdFromPath(s) : s
+    let resp: any = null
+    if (id && /^\d+$/.test(String(id))) {
+      resp = await api.get(`/files/${encodeURIComponent(String(id))}/preview`, { responseType: 'blob' })
+    } else if (s.startsWith('/')) {
+      // 无法提取ID时，直接请求该相对路径
+      resp = await api.get(s, { responseType: 'blob' })
+    } else {
+      // 非 http 且非路径，但也非纯数字，回退
+      blobUrl.value = null
+      return
+    }
     if (blobUrl.value) {
       try { URL.revokeObjectURL(blobUrl.value) } catch {}
     }

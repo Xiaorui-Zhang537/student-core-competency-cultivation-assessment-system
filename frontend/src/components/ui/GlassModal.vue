@@ -67,14 +67,14 @@ interface Props {
 }
 
 const props = withDefaults(defineProps<Props>(), {
-  maxWidth: 'max-w-lg',
+  maxWidth: 'max-w-xl',
   showClose: true,
   blur: 'sm',
   backdropDark: false,
   reverseHeader: false,
   hideScrollbar: true,
   fillHeight: false,
-  heightVariant: 'normal',
+  heightVariant: 'large',
   tint: null,
   size: undefined,
   clarity: 'default',

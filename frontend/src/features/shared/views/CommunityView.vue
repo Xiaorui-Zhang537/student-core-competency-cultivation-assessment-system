@@ -74,7 +74,7 @@
                   </div>
                 </div>
                 <div class="flex-1 min-w-0">
-                  <p class="text-sm font-medium text-base-content">{{ user.nickname || user.username }}</p>
+                  <p class="text-sm font-medium text-base-content">{{ displayUserName(user) }}</p>
                   <p class="text-xs text-gray-500">{{ user.postCount }} 帖子</p>
                 </div>
               </div>
@@ -137,7 +137,7 @@
                     </div>
                    <p class="text-sm text-subtle line-clamp-2 mb-2 whitespace-pre-line" v-html="post.content"></p>
                     <div class="flex items-center space-x-4 text-xs text-subtle">
-                      <span>{{ post.author?.nickname || post.author?.username || t('shared.community.list.anonymous') }}</span>
+                      <span>{{ displayUserName(post.author) || t('shared.community.list.anonymous') }}</span>
                       <span>{{ formatDate(post.createdAt) }}</span>
                        <div class="flex items-center space-x-1"><eye-icon class="w-3 h-3" /><span>{{ post.viewCount }}</span></div>
                       <div class="flex items-center space-x-1"><chat-bubble-left-icon class="w-3 h-3" /><span>{{ post.commentCount }}</span></div>
@@ -201,6 +201,7 @@
               <glass-popover-select
                 v-model="newPost.category"
                 :options="categoryOptions"
+                :teleport="false"
                 size="md"
               />
             </div>
@@ -246,6 +247,7 @@
               <glass-popover-select
                 v-model="editModal.form.category"
                 :options="categoryOptions"
+                :teleport="false"
                 size="md"
               />
             </div>
@@ -317,6 +319,7 @@ import GlassTextarea from '@/components/ui/inputs/GlassTextarea.vue'
 import Badge from '@/components/ui/Badge.vue'
 import GlassSearchInput from '@/components/ui/inputs/GlassSearchInput.vue'
 import GlassTagsInput from '@/components/ui/inputs/GlassTagsInput.vue'
+import { resolveUserDisplayName } from '@/shared/utils/user'
 
 import { useAuthStore } from '@/stores/auth';
 import FileUpload from '@/components/forms/FileUpload.vue';
@@ -334,6 +337,10 @@ const { t } = useI18n()
 
 
 const { posts, totalPosts, stats, hotTopics, activeUsers, loading } = storeToRefs(communityStore);
+// 统一用户名展示
+function displayUserName(u: any): string {
+  return resolveUserDisplayName(u) || String(u?.nickname || u?.username || '')
+}
 const safeStats = computed(() => ({
   totalPosts: stats.value?.totalPosts ?? 0,
   totalUsers: stats.value?.totalUsers ?? 0,

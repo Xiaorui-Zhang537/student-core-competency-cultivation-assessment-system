@@ -19,7 +19,7 @@
       </button>
       <!-- local (non-teleport) dropdown -->
       <div v-if="open && !teleport"
-           class="absolute z-[9999] ui-popover-menu p-1 max-h-80 overflow-y-auto overscroll-contain left-0 w-full top-full mt-1"
+           class="absolute z-[9999] ui-popover-menu p-1 max-h-96 overflow-y-auto overscroll-contain left-0 w-full top-full mt-1"
            :class="tintClass">
         <button v-for="(opt, idx) in options"
                 :key="String(opt.value)"
@@ -41,7 +41,7 @@
   </div>
   <teleport to="body" v-if="teleport">
     <div v-if="open"
-         class="fixed z-[9999] ui-popover-menu p-1 max-h-80 overflow-y-auto overscroll-contain"
+         class="fixed z-[10000] ui-popover-menu p-1 max-h-96 overflow-y-auto overscroll-contain"
          :class="tintClass"
          :style="{ left: pos.left + 'px', top: pos.top + 'px', width: pos.width + 'px' }"
          @keydown.stop.prevent="onKeydown"
@@ -100,7 +100,7 @@ const emit = defineEmits<{ (e:'update:modelValue', v:string|number|null):void; (
 const rootRef = ref<HTMLElement | null>(null)
 const open = ref(false)
 const pos = ref({ left: 0, top: 0, width: 280 })
-const PANEL_MAX_HEIGHT = 320 // px (matches max-h-80)
+const PANEL_MAX_HEIGHT = 420 // px (matches max-h-96)
 const activeIndex = ref(0)
 let scrollParents: HTMLElement[] = []
 

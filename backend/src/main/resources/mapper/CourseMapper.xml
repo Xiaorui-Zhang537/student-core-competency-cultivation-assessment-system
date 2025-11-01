@@ -36,7 +36,7 @@
     <sql id="Base_Column_List">
         c.id, c.title, c.description, c.content, c.cover_image, c.teacher_id, c.category, c.difficulty,
         c.duration, c.max_students, c.status, c.start_date, c.end_date, c.objectives,
-        c.requirements, c.price, c.tags, c.enrollment_count, c.rating, c.review_count,
+        c.requirements, c.price, c.tags, c.require_enroll_key, c.enroll_key_hash, c.enrollment_count, c.rating, c.review_count,
         c.created_at, c.updated_at, c.deleted
     </sql>
 

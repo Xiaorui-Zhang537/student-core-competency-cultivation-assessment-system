@@ -109,7 +109,7 @@
             <div v-for="m in currentMessages" :key="m.id" class="flex" :class="m.role === 'user' ? 'justify-end' : 'justify-start'">
               <div class="max-w-[80%] rounded-2xl px-4 py-2 text-sm"
                    :class="m.role === 'user' ? 'glass-bubble glass-bubble-mine rounded-br-none text-white' : 'glass-bubble glass-bubble-peer rounded-bl-none text-base-content'">
-                <p class="whitespace-pre-wrap">{{ m.content }}</p>
+                <div class="prose prose-sm dark:prose-invert max-w-none ai-md" v-html="renderMarkdown(m.content)"></div>
               </div>
             </div>
           </div>
@@ -296,6 +296,82 @@ onMounted(async () => {
 })
 
 const onTextareaInput = () => {}
+
+function escapeHtml(input = '') {
+  return String(input)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;')
+}
+
+function renderMarkdown(raw: string): string {
+  const text = escapeHtml(raw || '')
+
+  // 使用占位符保护块元素（代码块/表格）
+  const blocks: string[] = []
+  const keep = (html: string) => { const i = blocks.length; blocks.push(html); return `@@BLOCK_${i}@@` }
+
+  // 1) 代码块 ```
+  let work = text.replace(/```([\s\S]*?)```/g, (_m, p1) => keep(`<pre><code>${p1}</code></pre>`))
+
+  // 2) 表格（简单 GFM）
+  const lines = work.split('\n')
+  const out: string[] = []
+  const isSep = (s: string) => /^\s*\|?\s*:?-{3,}:?\s*(\|\s*:?-{3,}:?\s*)+\|?\s*$/.test(s)
+  const parseRow = (s: string) => s.replace(/^\s*\||\|\s*$/g, '').split('|').map(c => c.trim())
+  for (let i = 0; i < lines.length; ) {
+    const l = lines[i]
+    const n = lines[i + 1]
+    if (l && l.includes('|') && n && isSep(n)) {
+      const headers = parseRow(l)
+      const aligns = parseRow(n).map(seg => {
+        const left = /^:\-+/.test(seg)
+        const right = /\-+:$/.test(seg)
+        if (left && right) return 'center'
+        if (right) return 'right'
+        return 'left'
+      })
+      const rows: string[][] = []
+      let j = i + 2
+      while (j < lines.length && lines[j].includes('|') && !/^\s*$/.test(lines[j])) {
+        rows.push(parseRow(lines[j]))
+        j++
+      }
+      const thead = `<thead><tr>${headers.map((h, idx) => `<th style=\"text-align:${aligns[idx] || 'left'}\">${h}</th>`).join('')}</tr></thead>`
+      const tbody = `<tbody>${rows.map(r => `<tr>${r.map((c, idx) => `<td style=\"text-align:${aligns[idx] || 'left'}\">${c}</td>`).join('')}</tr>`).join('')}</tbody>`
+      out.push(keep(`<table class=\"ai-table\">${thead}${tbody}</table>`))
+      i = j
+      continue
+    }
+    out.push(l)
+    i++
+  }
+  work = out.join('\n')
+
+  // 3) 标题 (#, ##, ... ######)
+  work = work.replace(/^([#]{1,6})\s+(.+)$/gm, (_m, h, t) => {
+    const level = Math.max(1, Math.min(6, String(h).length))
+    return `<h${level}>${t}</h${level}>`
+  })
+
+  // 4) 分割线 --- *** ___
+  work = work.replace(/^\s{0,3}(-{3,}|\*{3,}|_{3,})\s*$/gm, '<hr/>')
+
+  // 5) 行内格式
+  work = work.replace(/`([^`]+?)`/g, (_m, p1) => `<code>${p1}</code>`)
+  work = work.replace(/\*\*([^*]+?)\*\*/g, '<strong>$1</strong>').replace(/__([^_]+?)__/g, '<strong>$1</strong>')
+  work = work.replace(/(?<!\*)\*([^*]+?)\*(?!\*)/g, '<em>$1</em>').replace(/(?<!_)_([^_]+?)_(?!_)/g, '<em>$1</em>')
+  work = work.replace(/\[([^\]]+?)\]\((https?:[^)\s]+)\)/g, '<a href=\"$2\" target=\"_blank\" rel=\"noopener noreferrer\">$1</a>')
+
+  // 6) 换行
+  work = work.replace(/\n/g, '<br/>')
+
+  // 7) 还原块
+  work = work.replace(/@@BLOCK_(\d+)@@/g, (_m, idx) => blocks[Number(idx)] || '')
+  return work
+}
 </script>
 
 <style lang="postcss" scoped>
@@ -315,6 +391,15 @@ const onTextareaInput = () => {}
 }
 /* 主题主色文本（避免硬编码蓝色） */
 .theme-primary { color: rgb(var(--color-primary)); }
+/* AI markdown 渲染微调：代码块/行内代码/链接随主题 */
+.ai-md :is(pre, code) { background-color: color-mix(in oklab, var(--color-base-200) 55%, transparent); padding: 0.125rem 0.25rem; border-radius: 0.375rem; }
+.ai-md pre code { display: block; padding: 0.5rem 0.75rem; }
+.ai-md a { color: var(--color-primary); text-decoration: underline; }
+/* 表格主题化样式 */
+.ai-md table.ai-table { width: 100%; border-collapse: collapse; margin: 0.25rem 0; }
+.ai-md table.ai-table th, .ai-md table.ai-table td { border: 1px solid var(--glass-border-color); padding: 0.5rem 0.75rem; }
+.ai-md table.ai-table thead th { background-color: color-mix(in oklab, var(--color-base-200) 45%, transparent); }
+.dark .ai-md table.ai-table thead th { background-color: color-mix(in oklab, var(--color-base-200) 25%, transparent); }
 </style>
 
 

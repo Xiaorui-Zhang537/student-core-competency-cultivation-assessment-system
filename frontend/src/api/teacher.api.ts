@@ -55,7 +55,7 @@ export const teacherApi = {
   },
 
   // Ability radar & weights
-  getAbilityRadar: (params: { courseId: string; classId?: string; studentId?: string; startDate: string; endDate: string }) => {
+  getAbilityRadar: (params: { courseId: string; classId?: string; studentId?: string; startDate?: string; endDate?: string }) => {
     return api.get('/teachers/ability/radar', { params });
   },
   getAbilityWeights: (courseId: string) => {
@@ -64,7 +64,7 @@ export const teacherApi = {
   updateAbilityWeights: (payload: { courseId: string; weights: Record<string, number> }) => {
     return api.put('/teachers/ability/weights', payload);
   },
-  exportAbilityRadarCsv: (params: { courseId: string; classId?: string; studentId?: string; startDate: string; endDate: string }) => {
+  exportAbilityRadarCsv: (params: { courseId: string; classId?: string; studentId?: string; startDate?: string; endDate?: string }) => {
     return api.get('/teachers/ability/radar/export', { params, responseType: 'blob' as any });
   },
   // Compare APIs (POST)

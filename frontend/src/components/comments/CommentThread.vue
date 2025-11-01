@@ -9,10 +9,10 @@
     </div>
     <div class="flex-1">
       <div class="glass-regular glass-interactive rounded-xl p-3" v-glass="{ strength: 'regular', interactive: true }">
-        <p class="text-sm font-semibold text-gray-900 dark:text-white">{{ comment.author?.nickname || comment.author?.username || t('shared.community.list.anonymous') }}</p>
+        <p class="text-sm font-semibold text-gray-900 dark:text-white">{{ displayUserName(comment.author) || t('shared.community.list.anonymous') }}</p>
         <p class="text-sm text-gray-700 dark:text-gray-200 mt-1 whitespace-pre-line">{{ comment.content }}</p>
       </div>
-      <div class="text-xs text-gray-500 mt-1 flex items-center space-x-3">
+      <div class="text-xs text-gray-500 mt-3 flex items-center space-x-4">
         <span>{{ formatDate(comment.createdAt) }}</span>
         <Button size="xs" variant="ghost" class="!px-1 !py-0.5" :class="comment.isLiked ? 'text-red-500' : ''" @click="onLikeComment" :disabled="likeBusy">
           <template #icon>
@@ -40,9 +40,9 @@
         </Button>
       </div>
       <!-- 回复输入框 -->
-      <div v-if="showReplyBox" class="mt-2">
+      <div v-if="showReplyBox" class="mt-4">
         <glass-textarea v-model="replyContent" :rows="2" class="w-full" :placeholder="t('shared.community.detail.writeComment') as string" />
-        <div class="mt-1 flex items-center gap-3">
+        <div class="mt-4 flex items-center gap-4">
           <emoji-picker variant="secondary" tint="primary" size="sm" @select="(e: string) => { replyContent = (replyContent || '') + e }" />
           <Button variant="primary" size="sm" :disabled="!replyContent.trim()" @click="submitReply">
             <template #icon>
@@ -55,7 +55,7 @@
       </div>
 
       <!-- 子评论列表（递归） -->
-      <div class="mt-2 pl-4 border-l border-gray-200 dark:border-gray-600" v-if="replies.items.length">
+      <div class="mt-4 pl-4 border-l border-gray-200 dark:border-gray-600" v-if="replies.items.length">
         <CommentThread
           v-for="rc in replies.items"
           :key="rc.id"
@@ -63,7 +63,7 @@
           :post-id="postId"
           @deleted="handleChildDeleted"
         />
-        <Button v-if="replies.items.length < replies.total" variant="ghost" size="sm" class="mt-1" @click="loadMoreReplies">{{ t('shared.community.detail.more') }}</Button>
+        <Button v-if="replies.items.length < replies.total" variant="ghost" size="sm" class="mt-3" @click="loadMoreReplies">{{ t('shared.community.detail.more') }}</Button>
       </div>
     </div>
   </div>
@@ -81,6 +81,7 @@ import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import GlassTextarea from '@/components/ui/inputs/GlassTextarea.vue'
 import Button from '@/components/ui/Button.vue'
+import { resolveUserDisplayName } from '@/shared/utils/user'
 
 defineOptions({ name: 'CommentThread' })
 
@@ -91,6 +92,8 @@ const authStore = useAuthStore()
 const communityStore = useCommunityStore()
 const router = useRouter()
 const { t } = useI18n()
+
+function displayUserName(u: any): string { return resolveUserDisplayName(u) || String(u?.nickname || u?.username || '') }
 
 const showReplyBox = ref(false)
 const replyContent = ref('')

@@ -52,7 +52,7 @@
               </user-avatar>
             </div>
             <div class="min-w-0">
-              <div class="font-medium truncate max-w-[60vw]">{{ row.studentName || row.studentId }}</div>
+              <div class="font-medium truncate max-w-[60vw]">{{ row.displayName || row.studentName || row.studentId }}</div>
               <div class="text-sm text-gray-500 mt-0.5">
                 <template v-if="row.status && row.status !== 'unsubmitted'">
                   {{ t('teacher.submissions.submittedAt', { time: formatDate(row.submittedAt) }) }}
@@ -116,6 +116,7 @@ import { ChevronRightIcon } from '@heroicons/vue/24/outline';
 import { useI18n } from 'vue-i18n'
 import GlassPopoverSelect from '@/components/ui/filters/GlassPopoverSelect.vue'
 import PageHeader from '@/components/ui/PageHeader.vue'
+import { resolveUserDisplayName } from '@/shared/utils/user'
 
 const route = useRoute();
 const router = useRouter();
@@ -196,7 +197,7 @@ async function fetch() {
       if (courseId.value) {
         const res: any = await import('@/api/course.api').then(m => m.courseApi.getCourseStudents(String(courseId.value), { page: 1, size: 1000 }))
         const list: any[] = (res?.data?.items || res?.items || res || []) as any[]
-        students.value = list.map((u: any) => ({ id: String(u?.id || ''), name: u?.nickname || u?.username || String(u?.id || ''), avatar: u?.avatar || '' }))
+        students.value = list.map((u: any) => ({ id: String(u?.id || ''), name: resolveUserDisplayName(u) || u?.nickname || u?.username || String(u?.id || ''), avatar: u?.avatar || '' }))
       }
     } catch {}
     // 拉取该作业的成绩（用于无提交但已评分的场景）
@@ -260,7 +261,7 @@ const displayRows = computed(() => {
       } else if (gStatusRaw === 'published') {
         existed.status = 'graded'
       }
-      rows.push(existed)
+      rows.push({ ...existed, displayName: u.name })
     } else {
       const g = gradesByStudent.value[sid]
       const gStatusRaw = String((g as any)?.status || (g as any)?.gradeStatus || '').toLowerCase()
@@ -277,6 +278,7 @@ const displayRows = computed(() => {
         submissionId: null,
         studentId: sid,
         studentName: u.name || sid,
+        displayName: u.name || sid,
         avatar: u.avatar || '',
         submittedAt: null,
         isLate: false,

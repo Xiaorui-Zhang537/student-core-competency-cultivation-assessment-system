@@ -41,7 +41,7 @@
             <div class="space-y-4">
               <div>
                 <h3 class="font-medium text-gray-900 dark:text-white mb-2">{{ assignment.title }}</h3>
-                <p class="text-gray-600 dark:text-gray-400">{{ assignment.description }}</p>
+                <p class="text-gray-600 dark:text-gray-400 whitespace-pre-line break-words prose-readable">{{ assignment.description }}</p>
               </div>
               
               <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
@@ -437,7 +437,7 @@
                 </div>
                 <div class="flex items-center justify-between" v-if="gradeForm.allowResubmit">
                   <span class="text-sm text-gray-700 dark:text-gray-300">{{ t('teacher.grading.form.resubmitUntil') || '重交截止时间' }}</span>
-                  <glass-date-time-picker v-model="gradeForm.resubmitUntil" size="md" />
+                  <glass-date-time-picker v-model="gradeForm.resubmitUntil" size="md" :minute-step="5" tint="info" />
                 </div>
               </div>
 
@@ -479,12 +479,12 @@
               </div>
             </form>
           </card>
-      <glass-modal v-if="showReturn" :title="(t('teacher.grading.actions.returnForResubmit') as string) || '打回重做'" size="sm" heightVariant="compact" solidBody @close="showReturn=false">
+      <glass-modal v-if="showReturn" :title="(t('teacher.grading.actions.returnForResubmit') as string) || '打回重做'" size="lg" heightVariant="tall" solidBody @close="showReturn=false">
         <div class="space-y-3">
           <label class="text-sm">{{ t('teacher.grading.form.reason') || '原因' }}</label>
           <glass-textarea v-model="returnForm.reason" :rows="4" />
           <label class="text-sm">{{ t('teacher.grading.form.resubmitUntil') || '重交截止时间' }}</label>
-          <glass-date-time-picker v-model="returnForm.resubmitUntil" />
+          <glass-date-time-picker v-model="returnForm.resubmitUntil" size="md" :minute-step="5" tint="info" />
         </div>
         <template #footer>
           <Button variant="secondary" size="sm" @click="showReturn=false">{{ t('common.cancel') || '取消' }}</Button>
@@ -1795,7 +1795,7 @@ const submitGrade = async () => {
       // 仅调用发布接口，通知改为由后端自动触发
       await gradeApi.publishGrade(String(gradeId))
       try {
-        // 随提交评分：若存在AI规范化结果，则写入四个AI维度分
+        // 随提交评分：优先使用本次会话的 AI 结果；否则回退读取最近AI报告
         if (lastAiNormalized.value) {
           const ov: any = getOverall(lastAiNormalized.value)
           const dm: any = (ov && ov.dimension_averages) ? ov.dimension_averages : {}
@@ -1829,6 +1829,50 @@ const submitGrade = async () => {
             submissionId: submission.id || undefined,
             aiHistoryId: lastAiHistoryId.value || undefined
           } as any)
+        } else {
+          // 回退：拉取最近AI报告解析四维并写入
+          try {
+            const repResp: any = await abilityApi.getTeacherLatestReportOfStudent({
+              studentId: String(submission.studentId),
+              courseId: assignment.courseId || undefined,
+              assignmentId: assignment.id || undefined,
+              submissionId: submission.id || undefined
+            })
+            const rep = repResp?.data || repResp
+            // 从 trendsAnalysis / normalizedJson 读取完整规范化 JSON
+            const raw = String(
+              rep?.normalizedJson || rep?.normalized_json ||
+              rep?.trendsAnalysis || rep?.trends_analysis ||
+              rep?.rawJson || rep?.raw_json || ''
+            )
+            if (raw) {
+              let obj: any = null
+              try { obj = JSON.parse(raw) } catch { obj = null }
+              if (obj) {
+                const ov: any = getOverall(obj)
+                const dm: any = (ov && ov.dimension_averages) ? ov.dimension_averages : {}
+                const dimResp: any = await abilityApi.getAbilityDimensions()
+                const dims: any[] = Array.isArray(dimResp?.data) ? dimResp.data : (Array.isArray(dimResp) ? dimResp : [])
+                const codeToId = new Map<string, any>()
+                for (const d of dims) {
+                  const code = String((d?.code || '').toString() || '')
+                  if (code && d?.id != null) codeToId.set(code, d.id)
+                }
+                const pairs: Array<{ code: string; value: number }> = [
+                  { code: 'LEARNING_ABILITY', value: Number(dm.ability || 0) },
+                  { code: 'LEARNING_ATTITUDE', value: Number(dm.attitude || 0) },
+                  { code: 'LEARNING_METHOD', value: Number(dm.strategy || 0) },
+                  { code: 'MORAL_COGNITION', value: Number(dm.moral_reasoning || 0) }
+                ]
+                const evidence = String(ov?.holistic_feedback || '')
+                await Promise.all(pairs.map(p => {
+                  const did = codeToId.get(p.code); if (!did) return Promise.resolve()
+                  const score5 = Math.max(0, Math.min(5, Math.round((Number(p.value || 0)) * 10) / 10))
+                  return abilityApi.recordTeacherAssessment({ studentId: submission.studentId, dimensionId: did, score: score5, assessmentType: 'assignment', relatedId: assignment.id, evidence }) as any
+                }))
+              }
+            }
+          } catch {}
         }
         // 无论是否有AI结果，都将学业成绩写入第五维（ACADEMIC_GRADE）
         const dimResp2: any = await abilityApi.getAbilityDimensions()
@@ -1842,7 +1886,7 @@ const submitGrade = async () => {
             dimensionId: target.id,
             score: score5,
             assessmentType: 'assignment',
-            relatedId: gradeId,
+            relatedId: assignment.id,
             evidence: String(payload.feedback || '')
           })
         }
@@ -2174,10 +2218,39 @@ const returnForm = reactive({ reason: '', resubmitUntil: '' as any })
 const openReturnModal = () => { showReturn.value = true }
 const confirmReturn = async () => {
   try {
-    const gid = (gradingHistory.value?.[0] as any)?.id || (await (async ()=>{
-      const g: any = await gradeApi.getGradeForStudentAssignment(String(submission.studentId), String(assignment.id))
-      return (g as any)?.id
+    if (!returnForm.reason || !returnForm.reason.trim()) {
+      uiStore.showNotification({ type: 'error', title: t('teacher.grading.actions.returnForResubmit') as any, message: (t('teacher.grading.errors.feedbackRequired') as any) || '请填写打回原因' })
+      return
+    }
+    if (!returnForm.resubmitUntil) {
+      uiStore.showNotification({ type: 'error', title: t('teacher.grading.actions.returnForResubmit') as any, message: (t('teacher.grading.errors.resubmitUntilRequired') as any) || '请选择重交截止时间' })
+      return
+    }
+    let gid = (gradingHistory.value?.[0] as any)?.id || (await (async ()=>{
+      try {
+        const g: any = await gradeApi.getGradeForStudentAssignment(String(submission.studentId), String(assignment.id))
+        return (g as any)?.id
+      } catch { return null }
     })())
+    // 若尚无成绩记录，则先创建一条“草稿”成绩作为载体
+    if (!gid) {
+      const payload: any = {
+        studentId: String(submission.studentId),
+        assignmentId: String(assignment.id),
+        submissionId: String(submission.id || ''),
+        score: 0,
+        maxScore: Number(assignment.totalScore || 100),
+        feedback: returnForm.reason || '',
+        allowResubmit: true,
+        status: 'draft',
+        publishImmediately: false
+      }
+      if (returnForm.resubmitUntil) payload.resubmitUntil = String(returnForm.resubmitUntil).replace('T',' ') + ':00'
+      try {
+        const gr: any = await gradeApi.gradeSubmission(payload)
+        gid = (gr as any)?.id || (gr as any)?.data?.id || null
+      } catch {}
+    }
     if (!gid) throw new Error('no gradeId')
     const data: any = { reason: returnForm.reason }
     if (returnForm.resubmitUntil) data.resubmitUntil = String(returnForm.resubmitUntil).replace('T',' ') + ':00'

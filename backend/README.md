@@ -150,7 +150,7 @@ open http://localhost:8080/api/swagger-ui.html
 
 ```bash
 mvn clean package -DskipTests
-java -jar target/student-assessment-system-1.0.0.jar --spring.profiles.active=prod
+java -jar target/student-assessment-system-1.0.4.jar --spring.profiles.active=prod
 ```
 
 部署建议：
@@ -165,10 +165,10 @@ java -jar target/student-assessment-system-1.0.0.jar --spring.profiles.active=pr
 ```xml
 <groupId>com.noncore</groupId>
 <artifactId>student-assessment-system</artifactId>
-<version>1.0.2</version>
+<version>1.0.4</version>
 ```
 
-构建产物：`target/student-assessment-system-1.0.2.jar`
+构建产物：`target/student-assessment-system-1.0.4.jar`
 
 ---
 

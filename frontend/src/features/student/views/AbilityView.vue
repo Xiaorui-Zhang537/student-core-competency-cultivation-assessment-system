@@ -152,6 +152,15 @@ function localizeDimensionName(serverName: string): string {
   return code ? t(`teacher.analytics.weights.dimensions.${code}`) : serverName
 }
 
+function normalizeScores(raw: any): number[] {
+  if (!Array.isArray(raw)) return []
+  return raw.map((v: any) => {
+    const num = Number(v)
+    if (!Number.isFinite(num)) return 0
+    return Math.round(num * 10) / 10
+  })
+}
+
 const rawRadarLabels = ref<string[]>([])
 const radarValues = ref<number[]>([])
 const compareEnabled = ref<boolean>(false)
@@ -177,7 +186,7 @@ async function loadStudentRadar() {
   const data = res?.data ?? res
   const dims: string[] = data?.dimensions || []
   rawRadarLabels.value = Array.isArray(dims) ? [...dims] : []
-  radarValues.value = Array.isArray(data?.studentScores) ? data.studentScores as number[] : []
+  radarValues.value = normalizeScores(data?.studentScores)
   nextTick(initRadarChart)
 }
 
@@ -210,8 +219,8 @@ async function applyCompare() {
     const dCmp = rCmp?.data ?? rCmp
     const dims: string[] = dCmp?.dimensions || []
     rawRadarLabels.value = Array.isArray(dims) ? [...dims] : []
-    const seriesA: number[] = dCmp?.seriesA?.studentScores || []
-    const seriesB: number[] = dCmp?.seriesB?.studentScores || []
+    const seriesA: number[] = normalizeScores(dCmp?.seriesA?.studentScores)
+    const seriesB: number[] = normalizeScores(dCmp?.seriesB?.studentScores)
     radarValues.value = seriesA
     // 绘制 A/B 两条曲线
     if (radarChartRef.value) {

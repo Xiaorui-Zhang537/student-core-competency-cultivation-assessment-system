@@ -1,6 +1,6 @@
 <template>
-  <div class="w-full flex justify-center px-4 pb-6">
-    <LiquidGlass :radius="16" :frost="0.04" class="px-3 py-2" containerClass="rounded-full">
+  <div class="fixed left-4 bottom-4 z-30">
+    <LiquidGlass :radius="28" :frost="0.04" class="px-4 py-2" containerClass="rounded-full shadow-lg">
       <a
         href="https://beian.mps.gov.cn/#/query/webSearch?code=21021702000814"
         target="_blank"

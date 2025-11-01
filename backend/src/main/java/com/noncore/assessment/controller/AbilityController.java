@@ -91,12 +91,6 @@ public class AbilityController extends BaseController {
             @RequestParam(required = false) java.time.LocalDate endDate
     ) {
         Long studentId = getCurrentUserId();
-        if (startDate == null || endDate == null) {
-            java.time.LocalDate end = java.time.LocalDate.now();
-            java.time.LocalDate start = end.minusDays(29);
-            startDate = start;
-            endDate = end;
-        }
         AbilityRadarQuery q = new AbilityRadarQuery();
         q.setCourseId(courseId);
         q.setClassId(classId);

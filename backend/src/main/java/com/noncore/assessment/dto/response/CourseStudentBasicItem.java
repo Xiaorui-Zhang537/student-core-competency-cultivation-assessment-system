@@ -12,6 +12,10 @@ import lombok.NoArgsConstructor;
 public class CourseStudentBasicItem {
     private Long studentId;
     private String studentName;
+    private String firstName;
+    private String lastName;
+    private String nickname;
+    private String username;
     private String studentNo;
     private String avatar;
     private Double progress;      // 0-100

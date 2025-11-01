@@ -388,6 +388,7 @@ import UserAvatar from '@/components/ui/UserAvatar.vue'
 import { useChatStore } from '@/stores/chat'
 // @ts-ignore shim for vue-i18n types in this project
 import { useI18n } from 'vue-i18n'
+import { resolveUserDisplayName } from '@/shared/utils/user'
 
 // Router and Stores
 const route = useRoute()
@@ -460,6 +461,7 @@ const stats = reactive({
 
 // 学生数据（从后端拉取）
 const students = ref<any[]>([])
+const serverTotal = ref<number>(0)
 
 const fetchCourseStudents = async () => {
   try {
@@ -483,7 +485,7 @@ const fetchCourseStudents = async () => {
     const items = payload?.items || []
     students.value = items.map((i: any) => ({
       id: String(i.studentId),
-      name: i.studentName || `学生${i.studentId}`,
+      name: resolveUserDisplayName(i) || i.studentName || `学生${i.studentId}`,
       studentId: i.studentNo || String(i.studentId),
       avatar: i.avatar || '',
       progress: i.progress ?? 0,
@@ -495,7 +497,8 @@ const fetchCourseStudents = async () => {
       lastActiveAt: i.lastActiveAt || new Date().toISOString(),
       joinedAt: new Date().toISOString()
     }))
-    stats.totalStudents = payload?.total || students.value.length
+    serverTotal.value = Number(payload?.total || items.length || 0)
+    stats.totalStudents = serverTotal.value
     // 汇总统计（后端返回全集过滤统计）
     stats.averageProgress = payload?.averageProgress ?? 0
     stats.averageGrade = payload?.averageGrade ?? 0
@@ -557,12 +560,11 @@ const filteredStudents = computed(() => {
   return arr
 })
 
-const totalPages = computed(() => Math.max(1, Math.ceil((filteredStudents.value.length || 0) / pageSize.value)))
+const totalPages = computed(() => Math.max(1, Math.ceil((serverTotal.value || 0) / pageSize.value)))
 
 const paginatedStudents = computed(() => {
-  const start = (currentPage.value - 1) * pageSize.value
-  const end = start + pageSize.value
-  return filteredStudents.value.slice(start, end)
+  // 服务器已分页返回本页数据，这里仅做本地二次过滤（关键词/兜底）
+  return filteredStudents.value
 })
 
 const pageNumbers = computed(() => {
@@ -584,10 +586,16 @@ const pageNumbers = computed(() => {
 // 基于筛选后的统计（前端兜底）
 watch(filteredStudents, (arr) => {
   const avg = (ns: number[]) => (ns.length ? Math.round((ns.reduce((a, b) => a + b, 0) / ns.length) * 100) / 100 : 0)
-  stats.totalStudents = arr.length
-  stats.averageProgress = avg(arr.map((s: any) => Number(s.progress || 0)))
+  // 总人数使用服务端 total，避免被当前页数量覆盖
+  stats.totalStudents = serverTotal.value
+  // 若服务端未提供平均值，可用当前页作兜底
+  if (stats.averageProgress === 0 && arr.length > 0) {
+    stats.averageProgress = avg(arr.map((s: any) => Number(s.progress || 0)))
+  }
   const grades = arr.map((s: any) => Number(s.averageGrade)).filter((n) => Number.isFinite(n))
-  stats.averageGrade = grades.length ? avg(grades) : 0
+  if ((stats.averageGrade ?? 0) === 0 && grades.length > 0) {
+    stats.averageGrade = avg(grades)
+  }
 }, { immediate: true })
 
 // 方法

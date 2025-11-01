@@ -1,6 +1,6 @@
 <template>
   <div class="w-full">
-    <div class="relative w-full rounded-full px-2 py-1.5 glass-regular glass-interactive border border-white/30 dark:border-white/12 focus-within:ring-2 focus-within:ring-primary-500/60 focus-within:border-primary-500/40" v-glass="{ strength: 'regular', interactive: true }">
+    <div class="relative w-full rounded-full px-2 py-1.5 glass-regular glass-interactive border border-white/30 dark:border-white/12 tags-input-box" v-glass="{ strength: 'regular', interactive: true }">
       <div class="flex flex-wrap gap-1.5 items-center">
         <span v-for="(tag, idx) in internal" :key="idx" class="ui-chip">
           <span>{{ tag }}</span>
@@ -10,7 +10,7 @@
           ref="inputRef"
           v-model="draft"
           :placeholder="placeholder"
-          :class="['bg-transparent outline-none text-sm flex-1 min-w-[6rem]', draft ? 'text-gray-900 dark:text-gray-100' : 'text-gray-400']"
+          :class="['bg-transparent outline-none focus:outline-none focus-visible:outline-none ring-0 focus:ring-0 focus-visible:ring-0 text-sm flex-1 min-w-[6rem]', draft ? 'text-gray-900 dark:text-gray-100' : 'text-gray-400']"
           @keydown="onKeydown"
           @blur="commit()"
         />
@@ -63,6 +63,35 @@ onMounted(() => { /* no-op */ })
 </script>
 
 <style scoped>
+/* 去除点击话题标签后的默认蓝色选中框（focus outline） */
+:deep(.ui-chip:focus),
+:deep(.ui-chip:focus-visible),
+:deep(.ui-chip button:focus),
+:deep(.ui-chip button:focus-visible) {
+  outline: none !important;
+  box-shadow: none !important;
+}
+/* 去除输入框的默认蓝色内侧矩形 */
+:deep(input:focus),
+:deep(input:focus-visible) {
+  outline: none !important;
+  box-shadow: none !important;
+}
+
+/* 自定义聚焦高亮：使用主题主色，而非系统蓝色 */
+.tags-input-box:focus-within {
+  border-color: color-mix(in oklab, var(--color-primary) 45%, transparent) !important;
+  box-shadow: 0 0 0 2px color-mix(in oklab, var(--color-primary) 35%, transparent) !important;
+}
+
+/* 强制覆盖全局 input:focus 的 ring 与浏览器默认蓝色描边 */
+.tags-input-box input,
+.tags-input-box input:focus,
+.tags-input-box input:focus-visible {
+  outline: none !important;
+  box-shadow: none !important;
+  -webkit-tap-highlight-color: transparent;
+}
 </style>
 
 

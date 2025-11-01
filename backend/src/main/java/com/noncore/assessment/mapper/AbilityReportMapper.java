@@ -5,6 +5,7 @@ import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 
 /**
@@ -120,5 +121,14 @@ public interface AbilityReportMapper {
      * 按作业/提交上下文获取最新AI报告
      */
     AbilityReport selectLatestReportByContext(java.util.Map<String, Object> params);                                         
+
+    /**
+     * 雷达统计使用：按课程/学生/作业筛选AI报告
+     */
+    List<AbilityReport> selectReportsForRadar(@Param("studentId") Long studentId,
+                                              @Param("courseId") Long courseId,
+                                              @Param("start") LocalDateTime start,
+                                              @Param("end") LocalDateTime end,
+                                              @Param("assignmentIds") List<Long> assignmentIds);
 } 
 

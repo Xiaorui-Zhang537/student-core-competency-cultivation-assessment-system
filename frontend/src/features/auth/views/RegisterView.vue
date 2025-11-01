@@ -46,6 +46,7 @@
         <div class="rounded-lg">
           <glass-input id="username" v-model="form.username" type="text" :disabled="authStore.loading" tint="primary" />
         </div>
+        <p class="mt-1 text-xs text-subtle">{{ usernameHint }}</p>
         <p v-if="form.username && !isUsernameValid" class="mt-1 text-xs text-red-600">{{ t('auth.register.error.usernameInvalid') }}</p>
       </div>
 
@@ -62,6 +63,7 @@
         <div class="rounded-lg">
           <glass-password-input id="password" v-model="form.password" :disabled="authStore.loading" tint="primary" />
         </div>
+        <p class="mt-1 text-xs text-subtle">{{ passwordHint }}</p>
         <p v-if="form.password && !isPasswordValid" class="mt-1 text-xs text-red-600">{{ t('auth.register.error.passwordInvalid') }}</p>
       </div>
 
@@ -124,9 +126,21 @@ const form = reactive<RegisterRequest & { avatar?: string }>({
   lang: i18n.global.locale.value as any,
 });
 const confirmPassword = ref('');
-const isUsernameValid = computed(() => /^[A-Za-z0-9]+$/.test(form.username || ''))
+const USERNAME_MIN = 4
+const PASSWORD_MIN = 8
+const isUsernameValid = computed(() => {
+  const v = form.username || ''
+  return v.length >= USERNAME_MIN && /^[A-Za-z0-9]+$/.test(v)
+})
 const isEmailValid = computed(() => /^[\w.!#$%&'*+/=?^`{|}~-]+@[\w-]+(?:\.[\w-]+)+$/.test(form.email || ''))
-const isPasswordValid = computed(() => /^[A-Za-z0-9@#$%^&*!._-]+$/.test(form.password || ''))
+const isPasswordValid = computed(() => {
+  const v = form.password || ''
+  return v.length >= PASSWORD_MIN && /^[A-Za-z0-9@#$%^&*!._-]+$/.test(v)
+})
+
+// i18n 提示（使用 useI18n 的 t，确保参数插值与语言切换生效）
+const usernameHint = computed(() => i18n.global.t('auth.register.form.hint.usernameMin', { min: String(USERNAME_MIN) }) as string)
+const passwordHint = computed(() => i18n.global.t('auth.register.form.hint.passwordMin', { min: String(PASSWORD_MIN) }) as string)
 
 const defaultAvatars = DEFAULT_AVATARS as string[]
 

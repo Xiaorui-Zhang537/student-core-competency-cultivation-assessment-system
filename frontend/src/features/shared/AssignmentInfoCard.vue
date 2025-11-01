@@ -4,7 +4,7 @@
       <div class="flex items-start gap-3">
         <div class="flex-1 min-w-0">
           <div class="text-xl font-semibold truncate">{{ assignment?.title }}</div>
-          <div v-if="assignment?.description" class="text-sm text-gray-600 dark:text-gray-300 mt-1 line-clamp-2">{{ assignment?.description }}</div>
+          <div v-if="assignment?.description" class="text-sm text-gray-600 dark:text-gray-300 mt-1 whitespace-pre-line break-words prose-readable">{{ assignment?.description }}</div>
         </div>
         <span class="px-2 py-0.5 rounded-full text-xs" :class="statusBadgeClass">{{ statusText }}</span>
       </div>

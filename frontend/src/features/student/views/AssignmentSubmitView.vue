@@ -8,15 +8,15 @@
         <chevron-right-icon class="w-4 h-4 opacity-70 !text-gray-900 dark:!text-gray-100" />
         <span class="truncate flex-1 font-medium !text-gray-900 dark:!text-gray-100">{{ assignment.title }}</span>
       </nav>
-      <page-header :title="assignment.title" :subtitle="assignment.description" />
+      <page-header :title="assignment.title" />
       <!-- 顶部：信息卡 + 附件卡 并排 -->
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-2">
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-2 mb-6 md:mb-8">
         <assignment-info-card :assignment="assignment" :effectiveDue="effectiveDue" :status="displayStatus" />
         <Card tint="accent"><attachment-list :files="teacherAttachments" :title="i18nText('student.assignments.detail.attachmentsTitle', '附件')" :noCard="true" :hideHeader="false" /></Card>
       </div>
       
       <!-- 统一垂直间距栈 -->
-      <div class="space-y-6">
+      <div class="mt-6 md:mt-8 space-y-8">
         <!-- Readonly Banner (Glass + Tint) -->
         <div v-if="readOnly" class="p-3 rounded-xl glass-ultraThin glass-tint-warning text-sm mt-4" v-glass="{ strength: 'ultraThin', interactive: false }">
           {{ pastDue ? (t('student.assignments.submit.readOnlyBannerDue') as string) : (t('student.assignments.submit.readOnlyBannerSubmitted') as string) }}
@@ -68,8 +68,8 @@
         </div>
 
         <!-- Actions (moved up, unique) -->
-        <div v-if="!readOnly" class="flex justify-end space-x-4">
-          <Button variant="outline" @click="handleSaveDraft" :disabled="disableActions || pastDue">
+      <div v-if="!readOnly" class="flex justify-end space-x-4 pointer-events-auto relative z-10">
+          <Button variant="outline" @click="handleSaveDraft" :disabled="disableActions || pastDue || !(form.content && form.content.trim())">
             <template #icon>
               <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3H3v14h14V3zM5 5h10v10H5V5zm2 2h6v2H7V7z" /></svg>
             </template>
@@ -463,6 +463,10 @@ const removeFile = async (fileId: string) => {
 };
 
 const handleSaveDraft = async () => {
+  if (!form.content || !form.content.trim()) {
+    uiStore.showNotification({ type: 'error', title: t('app.notifications.error.title') as string, message: (t('student.assignments.submit.errors.contentEmptyMsg') as string) || '请输入内容后再保存草稿' })
+    return
+  }
   const assignmentId = route.params.id as string;
   await submissionStore.saveDraft(assignmentId, form);
   await submissionStore.fetchSubmissionForAssignment(assignmentId);
@@ -535,11 +539,14 @@ onMounted(async () => {
     }
     // 无 fileIds 或补充：直接按 submission 关联读取（确保刷新后也能看到附件）
     try {
-      const rel: any = await fileApi.getRelatedFiles('submission', String((submission.value as any)?.id))
-      const list: any[] = (rel?.data || rel || []) as any[]
-      if (Array.isArray(list) && list.length) {
-        uploadedFiles.value = list
-        form.fileIds = list.map((f: any) => String(f?.id || ''))
+      const sid = String((submission.value as any)?.id || '')
+      if (sid) {
+        const rel: any = await fileApi.getRelatedFiles('submission', sid)
+        const list: any[] = (rel?.data || rel || []) as any[]
+        if (Array.isArray(list) && list.length) {
+          uploadedFiles.value = list
+          form.fileIds = list.map((f: any) => String(f?.id || ''))
+        }
       }
     } catch {}
   }

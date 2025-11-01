@@ -352,6 +352,15 @@ function localizeDimensionName(serverName: string): string {
   return code ? ((t(`shared.radarLegend.dimensions.${code}.title`) as any) || serverName) : serverName
 }
 
+function normalizeScores(raw: any): number[] {
+  if (!Array.isArray(raw)) return []
+  return raw.map((v: any) => {
+    const num = Number(v)
+    if (!Number.isFinite(num)) return 0
+    return Math.round(num * 10) / 10
+  })
+}
+
 function getInsightTexts(it: any): { analysis: string; suggestion: string } {
   try {
     const serverName = String(it?.name || '')
@@ -562,8 +571,8 @@ async function loadRadar() {
       const dims: string[] = data?.dimensions || []
       const nextDims = [...dims]
       const nextIndicators = nextDims.map(n => ({ name: localizeDimensionName(n), max: 100 }))
-      const student = (data?.studentScores || []) as number[]
-      const clazz = (data?.classAvgScores || []) as number[]
+      const student = normalizeScores(data?.studentScores)
+      const clazz = normalizeScores(data?.classAvgScores)
       const nextSeries = [
         { name: t('teacher.analytics.charts.series.student') as string, values: student },
         { name: t('teacher.analytics.charts.series.class') as string, values: clazz },
@@ -584,10 +593,10 @@ async function loadRadar() {
       const nextDims = [...dims]
       const nextIndicators = nextDims.map(n => ({ name: localizeDimensionName(n), max: 100 }))
       const series: { name: string; values: number[] }[] = []
-      const aStu = (dCmp?.seriesA?.studentScores || []) as number[]
-      const aCls = (dCmp?.seriesA?.classAvgScores || []) as number[]
-      const bStu = (dCmp?.seriesB?.studentScores || []) as number[]
-      const bCls = (dCmp?.seriesB?.classAvgScores || []) as number[]
+      const aStu = normalizeScores(dCmp?.seriesA?.studentScores)
+      const aCls = normalizeScores(dCmp?.seriesA?.classAvgScores)
+      const bStu = normalizeScores(dCmp?.seriesB?.studentScores)
+      const bCls = normalizeScores(dCmp?.seriesB?.classAvgScores)
       series.push({ name: 'A - ' + (t('teacher.analytics.charts.series.student') || '学生'), values: aStu })
       if (Array.isArray(aCls) && aCls.length) series.push({ name: 'A - ' + (t('teacher.analytics.charts.series.class') || '班级'), values: aCls })
       series.push({ name: 'B - ' + (t('teacher.analytics.charts.series.student') || '学生'), values: bStu })

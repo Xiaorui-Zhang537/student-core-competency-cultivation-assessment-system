@@ -191,8 +191,34 @@ export const useAIStore = defineStore('ai', () => {
       
     }), ui, '发送失败')
 
-    const answer = resp?.answer || (resp?.data?.answer)
-    messagesByConvId[key].push({ id: Date.now() + 1, role: 'assistant', content: String(answer || '...') })
+    let finalResp: any = resp
+    // 若失败（null）且疑似配额/频率问题，尝试自动切换更稳模型并重试一次
+    if (!finalResp) {
+      const currentConv = conversations.value.find(c => c.id === convId)
+      const currentModel = (currentConv?.model || model.value || '').toLowerCase()
+      const isGemini = currentModel.includes('gemini')
+      if (isGemini) {
+        const fallback = 'deepseek/deepseek-chat-v3.1'
+        try {
+          await handleApiCall(() => aiApi.updateConversation(Number(convId), { model: fallback }), ui, '切换模型失败')
+          const idx = conversations.value.findIndex(c => c.id === convId)
+          if (idx >= 0) conversations.value[idx].model = fallback
+          ui.showNotification({ type: 'info', title: '模型已切换', message: '检测到 Gemini 配额受限，已自动切换至 DeepSeek 并重试。' })
+          finalResp = await handleApiCall(() => aiApi.chat({
+            messages: [{ role: 'user', content: payload.content }],
+            courseId: payload.courseId,
+            studentIds: payload.studentIds,
+            conversationId: convId,
+            ...(attachments.length ? { attachmentFileIds: attachments } : {}),
+          }), ui, '发送失败')
+        } catch {}
+      }
+    }
+
+    const answer = finalResp?.answer || (finalResp?.data?.answer)
+    if (answer !== undefined) {
+      messagesByConvId[key].push({ id: Date.now() + 1, role: 'assistant', content: String(answer || '...') })
+    }
     // 一旦该会话产生（即使失败也已入列用户消息），锁定其模型显示：若会话对象缺少模型信息，则补齐为当前选择模型
     const idx = conversations.value.findIndex(c => c.id === convId)
     if (idx >= 0 && !conversations.value[idx].model) {

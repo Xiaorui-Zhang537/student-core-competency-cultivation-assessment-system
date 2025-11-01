@@ -2,11 +2,15 @@ package com.noncore.assessment.service.impl;
 
 import com.noncore.assessment.entity.Assignment;
 import com.noncore.assessment.entity.Grade;
+import com.noncore.assessment.entity.AbilityReport;
+import com.noncore.assessment.entity.AbilityDimension;
 import com.noncore.assessment.exception.BusinessException;
 import com.noncore.assessment.exception.ErrorCode;
 import com.noncore.assessment.mapper.AssignmentMapper;
 import com.noncore.assessment.mapper.GradeMapper;
 import com.noncore.assessment.service.GradeService;
+import com.noncore.assessment.service.AbilityService;
+import com.noncore.assessment.mapper.AbilityDimensionMapper;
 import com.noncore.assessment.util.PageResult;
 import com.noncore.assessment.dto.response.GradeListItem;
 import org.slf4j.Logger;
@@ -24,6 +28,8 @@ import static com.noncore.assessment.entity.Grade.getString;
 import com.noncore.assessment.dto.response.GradeStatsResponse;
 import com.github.pagehelper.PageHelper;
 import com.github.pagehelper.PageInfo;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.core.type.TypeReference;
 
 /**
  * 成绩管理服务实现类
@@ -43,16 +49,25 @@ public class GradeServiceImpl implements GradeService {
     private final com.noncore.assessment.mapper.UserMapper userMapper;
     private final com.noncore.assessment.service.SubmissionService submissionService;
     private final com.noncore.assessment.service.NotificationService notificationService;
+    private final AbilityService abilityService;
+    private final AbilityDimensionMapper abilityDimensionMapper;
+    private final ObjectMapper objectMapper;
 
     public GradeServiceImpl(GradeMapper gradeMapper, AssignmentMapper assignmentMapper,
                             com.noncore.assessment.service.SubmissionService submissionService,
                             com.noncore.assessment.service.NotificationService notificationService,
-                            com.noncore.assessment.mapper.UserMapper userMapper) {
+                            com.noncore.assessment.mapper.UserMapper userMapper,
+                            AbilityService abilityService,
+                            AbilityDimensionMapper abilityDimensionMapper,
+                            ObjectMapper objectMapper) {
         this.gradeMapper = gradeMapper;
         this.assignmentMapper = assignmentMapper;
         this.submissionService = submissionService;
         this.notificationService = notificationService;
         this.userMapper = userMapper;
+        this.abilityService = abilityService;
+        this.abilityDimensionMapper = abilityDimensionMapper;
+        this.objectMapper = objectMapper;
     }
 
     @Override
@@ -405,6 +420,12 @@ public class GradeServiceImpl implements GradeService {
                     logger.warn("发布成绩成功但同步提交状态失败，submissionId={}", existing.getSubmissionId(), e);
                 }
             }
+            // 成绩发布兜底：尝试基于最新AI报告将四个非成绩维度写入 ability_assessments
+            try {
+                ensureAbilityAssessmentsAfterPublish(existing);
+            } catch (Exception e) {
+                logger.warn("成绩已发布，但四维兜底写入失败（忽略不阻断发布），gradeId={}", existing.getId(), e);
+            }
             try {
                 // 自动发送成绩发布通知（使用后端统一服务，type=grade_published）
                 notificationService.sendGradeNotification(existing.getId(), "grade_published", null);
@@ -415,6 +436,103 @@ public class GradeServiceImpl implements GradeService {
         }
         throw new BusinessException(ErrorCode.OPERATION_FAILED, "发布成绩失败");
     }
+
+    /**
+     * 成绩发布后兜底：从最新AI报告解析四维（0-5）并写入 ability_assessments。
+     * 支持正常评分、打回重做后重新发布的场景。
+     */
+    private void ensureAbilityAssessmentsAfterPublish(Grade existing) {
+        // 基本上下文
+        Long studentId = existing.getStudentId();
+        Long assignmentId = existing.getAssignmentId();
+        if (studentId == null || assignmentId == null) return;
+        Assignment assignment = assignmentMapper.selectAssignmentById(assignmentId);
+        Long courseId = assignment == null ? null : assignment.getCourseId();
+
+        // 拉取该上下文下的最新AI报告
+        AbilityReport report = abilityService.getLatestAbilityReportByContext(
+                studentId,
+                courseId,
+                assignmentId,
+                existing.getSubmissionId()
+        );
+        if (report == null) return;
+
+        // 双重校验：确保报告属于同一学生，且若存在 assignmentId/submissionId 则必须与当前一致
+        if (report.getStudentId() == null || !report.getStudentId().equals(studentId)) return;
+        if (report.getAssignmentId() != null && !report.getAssignmentId().equals(assignmentId)) return;
+        if (existing.getSubmissionId() != null && report.getSubmissionId() != null &&
+                !report.getSubmissionId().equals(existing.getSubmissionId())) return;
+
+        // 优先从 trendsAnalysis 读取规范化JSON；其次尝试 dimensionScores
+        Map<String, Object> normalized = null;
+        try {
+            String raw = safeFirstNonBlank(report.getTrendsAnalysis());
+            if (raw != null && !raw.isBlank()) {
+                normalized = objectMapper.readValue(raw, new TypeReference<Map<String, Object>>(){});
+            }
+        } catch (Exception ignored) {}
+
+        Map<String, Object> overall = null;
+        Map<String, Object> dimAvg = null;
+        String holistic = null;
+        if (normalized != null) {
+            Object ov = normalized.get("overall");
+            if (ov instanceof Map<?,?> m) {
+                overall = (Map<String, Object>) m;
+                Object dm = overall.get("dimension_averages");
+                if (dm instanceof Map<?,?>) {
+                    dimAvg = (Map<String, Object>) dm;
+                }
+                Object h = overall.get("holistic_feedback");
+                if (h != null) holistic = String.valueOf(h);
+            }
+        }
+
+        // 若未读到规范化JSON中的维度均分，退化为从 dimensionScores 读取
+        if (dimAvg == null) {
+            try {
+                String ds = report.getDimensionScores();
+                if (ds != null && !ds.isBlank()) {
+                    dimAvg = objectMapper.readValue(ds, new TypeReference<Map<String, Object>>(){});
+                }
+            } catch (Exception ignored) {}
+        }
+        if (dimAvg == null || dimAvg.isEmpty()) return;
+
+        // 维度映射：code -> id
+        List<AbilityDimension> dims = abilityDimensionMapper.selectActiveDimensions();
+        Map<String, Long> codeToId = new HashMap<>();
+        for (AbilityDimension d : dims) {
+            if (d.getCode() != null && d.getId() != null) {
+                codeToId.put(d.getCode(), d.getId());
+            }
+        }
+
+        // 提取与规范化（0-5，保留1位，0~5截断）
+        Map<String, Double> pairs = new LinkedHashMap<>();
+        pairs.put("LEARNING_ABILITY", clamp05(toDouble(dimAvg.get("ability"))));
+        pairs.put("LEARNING_ATTITUDE", clamp05(toDouble(dimAvg.get("attitude"))));
+        pairs.put("LEARNING_METHOD", clamp05(toDouble(dimAvg.get("strategy"))));
+        pairs.put("MORAL_COGNITION", clamp05(toDouble(dimAvg.get("moral_reasoning"))));
+
+        // 写入四维（assessmentType=assignment，relatedId=assignmentId）
+        String evidence = holistic == null ? null : holistic;
+        for (Map.Entry<String, Double> e : pairs.entrySet()) {
+            Long did = codeToId.get(e.getKey());
+            if (did == null) continue;
+            java.math.BigDecimal score5 = java.math.BigDecimal.valueOf(e.getValue());
+            try {
+                abilityService.recordAbilityAssessment(studentId, did, score5, "assignment", assignmentId, evidence);
+            } catch (Exception ex) {
+                logger.warn("写入四维评估失败 studentId={}, dimensionCode={}, assignmentId={}", studentId, e.getKey(), assignmentId, ex);
+            }
+        }
+    }
+
+    private String safeFirstNonBlank(String v) { return (v == null || v.isBlank()) ? null : v; }
+    private double toDouble(Object v) { try { return v == null ? 0.0 : Double.parseDouble(String.valueOf(v)); } catch (Exception e) { return 0.0; } }
+    private double clamp05(double v) { double x = Math.round(v * 10.0) / 10.0; if (x < 0) x = 0; if (x > 5) x = 5; return x; }
 
     @Override
     public Map<String, Object> batchPublishGrades(List<Long> gradeIds) {
@@ -602,6 +720,14 @@ public class GradeServiceImpl implements GradeService {
         
         int result = gradeMapper.updateGrade(grade);
         if(result > 0) {
+            // 若该成绩已发布，则在重新评分后也执行四维兜底，覆盖晚评分/重评分场景
+            try {
+                if ("published".equalsIgnoreCase(grade.getStatus())) {
+                    ensureAbilityAssessmentsAfterPublish(gradeMapper.selectGradeById(gradeId));
+                }
+            } catch (Exception e) {
+                logger.warn("重新评分成功，但四维兜底写入失败（忽略不阻断），gradeId={}", gradeId, e);
+            }
             return;
         }
         throw new BusinessException(ErrorCode.OPERATION_FAILED, "重新评分失败");

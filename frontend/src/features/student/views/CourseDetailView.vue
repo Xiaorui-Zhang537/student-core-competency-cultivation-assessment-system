@@ -63,17 +63,17 @@
                     v-for="s in students"
                     :key="String(s.id)"
                     variant="menu"
-                    class="w-full text-left p-2 border justify-start"
+                    class="w-full text-left px-3 py-2 border rounded-xl justify-start h-14 overflow-visible"
                     type="button"
-                    :aria-label="resolveName(s)"
+                    :aria-label="resolveStudentName(s)"
                     @click="openStudentProfile(s)"
                   >
-                    <div class="flex items-center gap-2">
-                      <user-avatar :avatar="s.avatar" :size="40" :alt="resolveName(s)">
-                        <span class="text-base font-medium text-muted">{{ resolveName(s).charAt(0) }}</span>
+                    <div class="flex items-center gap-3 h-full">
+                      <user-avatar :avatar="s.avatar" :size="44" :alt="resolveStudentName(s)">
+                        <span class="text-base font-medium text-muted">{{ resolveStudentName(s).charAt(0) }}</span>
                       </user-avatar>
-                      <div class="min-w-0">
-                        <div class="truncate text-sm font-medium text-strong">{{ resolveName(s) }}</div>
+                      <div class="min-w-0 flex-1">
+                        <div class="truncate text-sm font-medium text-strong">{{ resolveStudentName(s) }}</div>
                       </div>
                     </div>
                   </Button>
@@ -295,6 +295,7 @@ import { getDifficultyVariant, getCategoryVariant, getTagVariant } from '@/share
 import { localizeDifficulty, localizeCategory } from '@/shared/utils/localize'
 import apiClient, { baseURL } from '@/api/config'
 import { userApi } from '@/api/user.api'
+import { resolveUserDisplayName } from '@/shared/utils/user'
 // 学生端不直接请求章节接口，基于课时列表推断章节结构
 
 const route = useRoute()
@@ -464,6 +465,9 @@ function toggleChapter(key: string) {
 function resolveName(user: any): string {
   return String(user?.username || user?.userName || user?.name || user?.nickname || `#${user?.id || ''}`)
 }
+
+// 学生展示名优先级：姓氏+名字 > 昵称 > 用户名
+function resolveStudentName(user: any): string { return resolveUserDisplayName(user) || resolveName(user) }
 
 function formatDateOnly(v: any): string {
   try {
@@ -673,7 +677,11 @@ async function loadTeacher(courseId: string) {
     })()
     const normalized = (classmates || []).map((s: any) => ({
       id: String(s.id || s.studentId || s.student_id || ''),
-      username: s.username || s.userName || s.name || s.nickname,
+      name: s.name,
+      firstName: s.firstName || s.first_name,
+      lastName: s.lastName || s.last_name,
+      nickname: s.nickname || s.nickName,
+      username: s.username || s.userName || s.name,
       avatar: s.avatar || null
     })).filter((s: any) => s.id)
     students.value = normalized.filter((s: any) => !myId || String(s.id) !== myId)

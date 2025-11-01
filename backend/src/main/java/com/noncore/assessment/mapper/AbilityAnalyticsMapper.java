@@ -80,5 +80,20 @@ public interface AbilityAnalyticsMapper {
             @Param("end") LocalDateTime end,
             @Param("assignmentIds") List<Long> assignmentIds
     );
+
+    /**
+     * 学生能力快照（student_abilities），用于当 ability_assessments 暂无数据时兜底
+     */
+    List<Map<String, Object>> selectStudentAbilitySnapshot(
+            @Param("studentId") Long studentId,
+            @Param("courseId") Long courseId
+    );
+
+    /**
+     * 班级/课程能力快照（student_abilities 聚合）
+     */
+    List<Map<String, Object>> selectClassAbilitySnapshot(
+            @Param("courseId") Long courseId
+    );
 }
 

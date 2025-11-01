@@ -64,6 +64,25 @@
         WHERE r.id = #{id}
     </select>
 
+    <!-- 雷达统计：按课程/学生/作业筛选 AI 报告 -->
+    <select id="selectReportsForRadar" resultMap="AbilityReportResultMap">
+        SELECT <include refid="abilityReportColumns"/>
+        FROM ability_reports r
+        <where>
+            <if test="courseId != null">r.course_id = #{courseId}</if>
+            <if test="studentId != null">AND r.student_id = #{studentId}</if>
+            <if test="assignmentIds != null and assignmentIds.size > 0">
+                AND r.assignment_id IN
+                <foreach collection="assignmentIds" item="id" open="(" separator="," close=")">
+                    #{id}
+                </foreach>
+            </if>
+            <if test="start != null and end != null">AND r.created_at BETWEEN #{start} AND #{end}</if>
+            AND r.report_type = 'ai'
+        </where>
+        ORDER BY r.created_at DESC
+    </select>
+
     <!-- 更新能力报告 -->
     <update id="updateReport" parameterType="com.noncore.assessment.entity.AbilityReport">
         UPDATE ability_reports

@@ -32,8 +32,12 @@ export const submissionApi = {
   },
 
   saveDraft: (assignmentId: string, data: DraftRequest): Promise<ApiResponse<void>> => {
-    // 后端使用 @RequestParam String content，需以表单/查询参数传递
-    return api.post(`/assignments/${assignmentId}/draft`, undefined as any, { params: { content: data.content } });
+    // 优先使用 x-www-form-urlencoded 作为 POST body 传参，兼容部分后端仅从 request body 取 @RequestParam 的实现
+    const body = new URLSearchParams();
+    body.set('content', String(data?.content ?? ''));
+    return api.post(`/assignments/${assignmentId}/draft`, body, {
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    });
   },
 
   // Get grade summary for a submission (map with grade_id etc.)

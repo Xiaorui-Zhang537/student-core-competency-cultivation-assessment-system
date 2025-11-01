@@ -510,6 +510,10 @@ const handleSubmit = async () => {
   if (isEditing.value && editingCourseId.value) {
     const { id, ...updateData } = payload;
     await courseStore.updateCourse(editingCourseId.value, updateData as CourseUpdateRequest);
+    // 若目标状态为已发布，调用发布接口确保后端切换
+    if (String(form.status).toLowerCase() === 'published') {
+      try { await courseStore.publishCourse(String(editingCourseId.value) as any) } catch {}
+    }
     {
       const { useUIStore } = await import('@/stores/ui')
       const ui = useUIStore()
@@ -517,7 +521,14 @@ const handleSubmit = async () => {
     }
   } else {
     const { id, ...createData } = payload;
-    await courseStore.createCourse(createData as CourseCreationRequest);
+    const created: any = await courseStore.createCourse(createData as CourseCreationRequest);
+    // 立即发布：创建成功后调用发布接口
+    try {
+      const newId = (created?.id || created?.data?.id || (created && created.data && created.data.id)) as any
+      if (newId && String(form.status).toLowerCase() === 'published') {
+        await courseStore.publishCourse(String(newId) as any)
+      }
+    } catch {}
     {
       const { useUIStore } = await import('@/stores/ui')
       const ui = useUIStore()

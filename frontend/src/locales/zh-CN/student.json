@@ -50,6 +50,7 @@
       "statusOngoing": "进行中",
       "progressLabel": "学习进度",
       "storeTitle": "课程商店",
+      "enterEnrollKey": "输入入课密钥",
       "processing": "处理中...",
       "note": "学习笔记",
       "notePh": "记录你的要点...",
@@ -123,7 +124,15 @@
       "math": "数学",
       "design": "设计/艺术",
       "language": "语言",
-      "engineering": "工程"
+      "engineering": "工程",
+      "programming": "编程开发",
+      "business": "商业管理",
+      "marketing": "市场营销",
+      "science": "科学技术",
+      "art": "艺术人文",
+      "other": "其他",
+      "liberal-arts": "文科",
+      "science-college": "理科"
     }
     },
     "analysis": {
@@ -189,6 +198,7 @@
         "submitted": "已提交",
         "late": "未提交",
         "graded": "已评分",
+        "returned": "已退回",
         "unknown": "未知"
       },
       "actions": {

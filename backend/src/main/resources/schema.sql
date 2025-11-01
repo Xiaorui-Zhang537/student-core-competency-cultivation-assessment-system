@@ -1153,7 +1153,7 @@ create table if not exists student_assessment_system.submissions
     file_name        varchar(200)                                                                           null comment '文件名',
     file_size        int                                                                                    null comment '文件大小（字节）',
     submission_count int                                                          default 1                 null comment '提交次数',
-    status           enum ('submitted', 'graded', 'late', 'rejected', 'returned') default 'submitted'       not null,
+    status           enum ('draft', 'submitted', 'graded', 'late', 'rejected', 'returned') default 'submitted'       not null,
     submitted_at     timestamp                                                                              null comment '提交时间',
     is_late          tinyint(1)                                                   default 0                 null comment '是否迟交',
     created_at       timestamp                                                    default CURRENT_TIMESTAMP null comment '创建时间',

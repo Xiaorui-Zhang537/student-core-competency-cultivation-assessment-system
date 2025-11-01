@@ -236,7 +236,11 @@
                c.description      AS description,
                c.category         AS category,
                c.cover_image      AS coverImageUrl,
-               COALESCE(t.nickname, t.username) AS teacherName,
+               CASE
+                   WHEN (COALESCE(t.last_name, '') != '' OR COALESCE(t.first_name, '') != '')
+                       THEN CONCAT(COALESCE(t.last_name, ''), COALESCE(t.first_name, ''))
+                   ELSE COALESCE(t.nickname, t.username)
+               END AS teacherName,
                e.progress         AS progress,
                e.enrolled_at      AS enrolledAt
         FROM enrollments e

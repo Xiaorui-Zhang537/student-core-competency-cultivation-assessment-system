@@ -83,7 +83,7 @@
                       <user-avatar :avatar="p.avatar" :size="28">
                         <div class="w-7 h-7 rounded-full bg-gray-200 dark:bg-gray-700"></div>
                       </user-avatar>
-                      <div class="text-sm font-medium text-gray-900 dark:text-white truncate text-left">{{ p.nickname || p.nickName || p.displayName || p.display_name || p.name || p.fullName || p.username || p.userName || ('#'+p.id) }}</div>
+                      <div class="text-sm font-medium text-gray-900 dark:text-white truncate text-left">{{ displayUserName(p) || ('#'+p.id) }}</div>
                     </div>
                   </Button>
                 </div>
@@ -242,6 +242,7 @@ import { chatApi } from '@/api/chat.api'
 import { notificationAPI } from '@/api/notification.api'
 import { teacherStudentApi } from '@/api/teacher-student.api'
 import { fileApi } from '@/api/file.api'
+import { resolveUserDisplayName } from '@/shared/utils/user'
 
 const props = defineProps<{
   open: boolean
@@ -293,6 +294,8 @@ const headerTitle = computed(() => {
   if (hasActivePeer.value) return (t('teacher.students.chat.title', { name: currentPeerName.value || title.value }) as string)
   return t('shared.chat.open') as string || '聊天'
 })
+
+function displayUserName(u: any): string { return resolveUserDisplayName(u) || String(u?.nickname || u?.username || u?.name || '') }
 
 const recentList = computed(() => {
   const base = (chat.recentConversations || []).map((n: any, idx: number) => ({

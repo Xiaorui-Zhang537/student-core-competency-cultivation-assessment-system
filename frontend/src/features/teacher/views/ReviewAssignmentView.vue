@@ -530,6 +530,8 @@ const handleSubmit = async () => {
       ;(updateData as any).publishAt = toServerTime(publishAt)
     } else if (publishMode.value === 'draft') {
       (updateData as any).status = 'draft'
+    } else if (publishMode.value === 'publish') {
+      (updateData as any).status = 'published'
     }
     const updated = await assignmentStore.updateAssignment(editingAssignmentId.value, updateData);
     // 编辑时，如有新文件被选择，则上传
@@ -576,6 +578,14 @@ const handleSubmit = async () => {
       // 若选择立即发布，则在附件上传完成后发布
       if (assignmentId && publishMode.value === 'publish') {
         try { await assignmentStore.publishAssignment(String(assignmentId)) } catch {}
+        // 发布后刷新列表，避免仍显示为草稿
+        try {
+          if (selectedCourseId.value) {
+            await assignmentStore.fetchAssignments({ courseId: selectedCourseId.value, page: currentPage.value, size: pageSize.value })
+          } else {
+            await assignmentStore.fetchAssignments({ page: currentPage.value, size: pageSize.value })
+          }
+        } catch {}
       }
     }
   }

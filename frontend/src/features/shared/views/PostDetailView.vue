@@ -6,10 +6,10 @@
     <div v-if="currentPost" class="max-w-4xl mx-auto">
       <page-header :title="currentPost.title" :subtitle="t('shared.community.detail.postedAt', { datetime: formatDate(currentPost.createdAt) })" />
       <!-- Back Button -->
-      <router-link :to="backToCommunity" class="inline-flex items-center text-sm text-subtle hover:text-primary-600 mb-4">
+      <a href="#" role="button" tabindex="0" @click.stop.prevent="goBackCommunity" @keydown.enter.stop.prevent="goBackCommunity" class="inline-flex items-center text-sm text-subtle mb-4 cursor-pointer relative z-20 pointer-events-auto hover-theme-primary">
         <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
         {{ t('shared.community.detail.back') }}
-      </router-link>
+      </a>
 
       <!-- Post Header -->
       <div class="glass-regular glass-tint-secondary rounded-2xl p-6 mb-6" v-glass="{ strength: 'regular', interactive: true }">
@@ -18,7 +18,7 @@
             <user-avatar :avatar="currentPost.author?.avatar" :size="20">
               <user-icon class="w-5 h-5" />
             </user-avatar>
-            <span>{{ currentPost.author?.nickname || currentPost.author?.username || t('shared.community.list.anonymous') }}</span>
+            <span>{{ displayUserName(currentPost.author) || t('shared.community.list.anonymous') }}</span>
           </div>
           <span>{{ t('shared.community.detail.postedAt', { datetime: formatDate(currentPost.createdAt) }) }}</span>
            <div class="flex items-center space-x-1"><eye-icon class="w-4 h-4" /><span>{{ currentPost.viewCount }}</span></div>
@@ -32,7 +32,7 @@
       <!-- Post Content -->
       <div class="glass-regular glass-tint-info rounded-2xl p-6 mb-6" v-glass="{ strength: 'regular', interactive: true }">
         <div class="prose dark:prose-invert max-w-none whitespace-pre-line" v-html="currentPost.content"></div>
-        <div v-if="attachments.length" class="mt-6 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+        <div v-if="attachments.length" class="mt-7 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
           <div v-for="f in attachments" :key="f.id" class="rounded overflow-hidden glass-ultraThin" v-glass="{ strength: 'ultraThin', interactive: false }">
             <img v-if="isImageAttachment(f)" :src="f._previewUrl || ''" class="w-full h-32 object-cover" @error="loadPreview(f)" />
             <div class="p-2 text-xs flex items-center justify-between">
@@ -41,7 +41,7 @@
             </div>
           </div>
         </div>
-         <div class="mt-6 pt-4 border-t border-gray-200 dark:border-gray-700 flex items-center space-x-4">
+         <div class="mt-8 pt-5 border-t border-gray-200 dark:border-gray-700 flex items-center space-x-6">
            <Button size="sm" variant="secondary" @click="communityStore.toggleLikePost(currentPost.id)" :class="currentPost.isLiked ? (isDark ? 'text-red-400' : 'text-red-500') : (isDark ? 'text-gray-300' : 'text-gray-600')" class="flex items-center space-x-2">
             <hand-thumb-up-icon class="w-5 h-5" />
             <span>{{ t('shared.community.detail.like', { count: currentPost.likeCount }) }}</span>
@@ -49,8 +49,7 @@
             <Button variant="primary" size="sm" @click="askAiForCurrentPost">
               <sparkles-icon class="w-4 h-4 mr-2" />{{ t('shared.community.detail.askAi') }}
             </Button>
-            <Button v-if="authStore.user?.id && String(authStore.user.id) === String(currentPost.author?.id || currentPost.authorId)" size="sm" variant="secondary" icon="edit" @click="openEditCurrentPost">{{ t('shared.community.detail.edit') }}</Button>
-            <Button v-if="authStore.user?.id && String(authStore.user.id) === String(currentPost.author?.id || currentPost.authorId)" size="sm" variant="danger" icon="delete" @click="onDeleteCurrentPost">{{ t('shared.community.detail.delete') }}</Button>
+            
         </div>
       </div>
 
@@ -59,9 +58,9 @@
         <h2 class="text-xl font-bold text-base-content mb-4">{{ t('shared.community.detail.comments', { count: totalComments }) }}</h2>
         
         <!-- Post Comment Form -->
-        <div class="mb-6">
+        <div class="mb-7">
             <glass-textarea v-model="newComment" :rows="3" :placeholder="t('shared.community.detail.writeComment') as string" class="w-full" />
-            <div class="mt-2 flex items-center gap-3">
+            <div class="mt-4 md:mt-5 flex items-center gap-4">
               <emoji-picker size="sm" variant="secondary" tint="primary" @select="onEmojiSelect" />
               <Button size="sm" variant="primary" @click="handlePostComment" :disabled="!newComment.trim() || loading">
                 <paper-airplane-icon class="w-4 h-4 mr-2" />
@@ -71,8 +70,8 @@
         </div>
 
         <!-- Comments List -->
-        <div class="space-y-4">
-            <div class="flex items-center justify-between mb-2">
+        <div class="space-y-6">
+            <div class="flex items-center justify-between mb-4">
             <div class="text-xs text-subtle">{{ t('shared.community.detail.order') }}</div>
             <div class="space-x-2">
               <Button size="xs" variant="ghost" :class="commentOrderBy==='time' ? 'font-semibold selected-accent' : (isDark ? 'text-gray-400' : '')" @click="setOrder('time')">
@@ -178,6 +177,7 @@ import GlassTextarea from '@/components/ui/inputs/GlassTextarea.vue'
 import GlassInput from '@/components/ui/inputs/GlassInput.vue'
 import GlassPopoverSelect from '@/components/ui/filters/GlassPopoverSelect.vue'
 import Badge from '@/components/ui/Badge.vue'
+import { resolveUserDisplayName } from '@/shared/utils/user'
 
 const route = useRoute();
 const router = useRouter();
@@ -185,6 +185,8 @@ const authStore = useAuthStore();
 const communityStore = useCommunityStore();
 const { t, locale } = useI18n()
 const isDark = computed(() => document.documentElement.classList.contains('dark'))
+
+function displayUserName(u: any): string { return resolveUserDisplayName(u) || String(u?.nickname || u?.username || '') }
 
 // 分类映射：保持前端选项值使用稳定 id，提交与回显时与后端中文互转
 const categoryIdToLabel: Record<string, string> = {
@@ -213,6 +215,26 @@ const commentsPage = ref(1);
 const commentsSize = ref(20);
 const commentOrderBy = ref<'time' | 'hot'>('time')
 const backToCommunity = computed(() => authStore.userRole === 'TEACHER' ? '/teacher/community' : '/student/community');
+
+function goBackCommunity() {
+  const target = String(backToCommunity.value || '/student/community')
+  try {
+    const current = router.currentRoute.value.path
+    if (current === target) {
+      router.replace({ path: target, query: { t: Date.now().toString() } })
+    } else {
+      router.push(target)
+    }
+  } catch {}
+  // 最终兜底：若 120ms 后仍未跳转，强制 location
+  setTimeout(() => {
+    try {
+      if (router.currentRoute.value.path !== target) window.location.href = target
+    } catch {
+      window.location.href = target
+    }
+  }, 120)
+}
 const categoryOptions = computed(() => [
   { label: t('shared.community.categories.study') as string, value: 'study' },
   { label: t('shared.community.categories.help') as string, value: 'help' },
@@ -431,4 +453,7 @@ const loadPreview = async (f: any) => {
 <style scoped>
 .selected-accent svg { color: var(--color-accent) !important; }
 .selected-accent svg * { stroke: currentColor !important; fill: none !important; }
+/* 面包屑 hover 跟随主题主色 */
+.hover-theme-primary:hover { color: var(--color-primary) !important; }
+.hover-theme-primary:focus-visible { outline: none; box-shadow: 0 0 0 2px color-mix(in oklab, var(--color-primary) 40%, transparent); border-radius: 8px; }
 </style>

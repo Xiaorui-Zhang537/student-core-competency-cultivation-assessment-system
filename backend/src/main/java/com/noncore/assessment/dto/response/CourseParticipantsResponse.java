@@ -21,7 +21,9 @@ public class CourseParticipantsResponse {
     @AllArgsConstructor
     public static class Person {
         private Long id;
-        private String name;      // 显示名（默认 username）
+        private String name;      // 显示名（优先 lastName+firstName，其次 nickname，最后 username）
+        private String firstName; // 名
+        private String lastName;  // 姓
         private String username;  // 登录名/用户名
         private String nickname;  // 昵称
         private String avatar;

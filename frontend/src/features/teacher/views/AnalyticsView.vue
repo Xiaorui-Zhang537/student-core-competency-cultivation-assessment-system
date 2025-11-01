@@ -132,12 +132,7 @@
                     :disabled="!compareEnabled"
                   />
               </div>
-              <div v-if="!compareEnabled" class="flex items-center gap-2">
-                <span class="text-xs font-medium leading-tight text-gray-700 dark:text-gray-300">{{ t('teacher.analytics.settings.timeFilter') }}</span>
-                <GlassDateTimePicker v-model="startDate" :dateOnly="true" size="sm" tint="accent" />
-                <span class="text-xs text-gray-500">-</span>
-                <GlassDateTimePicker v-model="endDate" :dateOnly="true" size="sm" tint="accent" />
-              </div>
+              <!-- 已移除时间筛选器：后端支持全量聚合，无需日期过滤 -->
             </div>
               <div v-if="compareEnabled" class="flex flex-col gap-2">
               <div class="flex flex-wrap items-center gap-2">
@@ -240,9 +235,9 @@ import { useI18n } from 'vue-i18n'
 import GlassSelect from '@/components/ui/filters/GlassSelect.vue'
 import GlassPopoverSelect from '@/components/ui/filters/GlassPopoverSelect.vue'
 import PageHeader from '@/components/ui/PageHeader.vue'
-import GlassDateTimePicker from '@/components/ui/inputs/GlassDateTimePicker.vue'
 import GlassMultiSelect from '@/components/ui/filters/GlassMultiSelect.vue'
 import GlassSwitch from '@/components/ui/inputs/GlassSwitch.vue'
+import { resolveUserDisplayName } from '@/shared/utils/user'
 
 // Stores
 const teacherStore = useTeacherStore()
@@ -256,24 +251,14 @@ const selectedCourseId = ref<string | null>(null)
 const topStudents = ref<CourseStudentPerformanceItem[]>([])
 const studentTotal = ref<number>(0)
 const selectedStudentId = ref<string | null>(null)
-function fmt(d: Date): string {
-  const y = d.getFullYear()
-  const m = String(d.getMonth() + 1).padStart(2, '0')
-  const day = String(d.getDate()).padStart(2, '0')
-  return `${y}-${m}-${day}`
-}
-const today = new Date()
-const start30 = new Date(today)
-start30.setDate(start30.getDate() - 29)
-const startDate = ref<string>(fmt(start30))
-const endDate = ref<string>(fmt(today))
 // Compare mode states
 const compareEnabled = ref<boolean>(false)
 const includeClassAvg = ref<'none'|'A'|'B'|'both'>('both')
-const startDateA = ref<string>(fmt(start30))
-const endDateA = ref<string>(fmt(today))
-const startDateB = ref<string>(fmt(start30))
-const endDateB = ref<string>(fmt(today))
+// 保留A/B日期变量占位，但不再使用日期筛选
+const startDateA = ref<string>('')
+const endDateA = ref<string>('')
+const startDateB = ref<string>('')
+const endDateB = ref<string>('')
 const assignmentOptions = ref<{ id: string; title: string }[]>([])
 const assignmentIdsA = ref<string[]>([])
 const assignmentIdsB = ref<string[]>([])
@@ -298,6 +283,15 @@ function localizeDimensionName(serverName: string): string {
   const code = NAME_ZH_TO_CODE[serverName]
   // 与学生端统一，改用共享维度标题
   return code ? (t(`shared.radarLegend.dimensions.${code}.title`) as any) : serverName
+}
+
+function normalizeScores(raw: any): number[] {
+  if (!Array.isArray(raw)) return []
+  return raw.map((v: any) => {
+    const num = Number(v)
+    if (!Number.isFinite(num)) return 0
+    return Math.round(num * 10) / 10
+  })
 }
 
 // 图表引用
@@ -468,7 +462,11 @@ const onCourseChange = () => {
   // 获取课程全部学生，用于雷达图下拉选择任意学生
   teacherApi.getAllCourseStudentsBasic(selectedCourseId.value)
     .then((data: any) => {
-      topStudents.value = (data?.items ?? []) as CourseStudentPerformanceItem[]
+      const items = (data?.items ?? []) as CourseStudentPerformanceItem[]
+      topStudents.value = items.map((i: any) => ({
+        ...i,
+        studentName: resolveUserDisplayName(i) || i.studentName || i.nickname || i.username || `#${i.studentId}`
+      }))
       if (typeof data?.total === 'number') studentTotal.value = data.total
       // 若路由携带 studentId，则自动选中该学生
       const routeStudentId: any = (route.query as any)?.studentId || null
@@ -630,19 +628,18 @@ const loadRadar = async () => {
   try {
     if (!selectedCourseId.value) return
     if (!compareEnabled.value) {
-      if (!startDate.value || !endDate.value) return
-    if (new Date(startDate.value) > new Date(endDate.value)) {
-      return uiStore.showNotification({ type: 'warning', title: t('teacher.analytics.messages.timeRangeError'), message: t('teacher.analytics.messages.timeRangeMsg') })
+    const params: any = { courseId: selectedCourseId.value }
+    if (selectedStudentId.value != null && selectedStudentId.value !== '') {
+      const sid = Number(selectedStudentId.value)
+      if (Number.isFinite(sid) && sid > 0) params.studentId = sid
     }
-    const params: any = { courseId: selectedCourseId.value, startDate: startDate.value, endDate: endDate.value }
-    if (selectedStudentId.value) params.studentId = selectedStudentId.value
     const r: any = await teacherApi.getAbilityRadar(params)
     const data: any = r?.data?.data ?? r?.data ?? r
     const dims: string[] = data?.dimensions || []
     rawRadarDimensions.value = [...dims]
     radarIndicators.value = dims.map(n => ({ name: localizeDimensionName(n), max: 100 }))
-    const student = (data?.studentScores || []) as number[]
-    const clazz = (data?.classAvgScores || []) as number[]
+    const student = normalizeScores(data?.studentScores)
+    const clazz = normalizeScores(data?.classAvgScores)
     radarSeries.value = [
       { name: t('teacher.analytics.charts.series.student'), values: student },
       { name: t('teacher.analytics.charts.series.class'), values: clazz },
@@ -666,10 +663,10 @@ const loadRadar = async () => {
       rawRadarDimensions.value = [...dims]
       radarIndicators.value = dims.map(n => ({ name: localizeDimensionName(n), max: 100 }))
       const series: { name: string; values: number[] }[] = []
-      const aStu = (data?.seriesA?.studentScores || []) as number[]
-      const aCls = (data?.seriesA?.classAvgScores || []) as number[]
-      const bStu = (data?.seriesB?.studentScores || []) as number[]
-      const bCls = (data?.seriesB?.classAvgScores || []) as number[]
+      const aStu = normalizeScores(data?.seriesA?.studentScores)
+      const aCls = normalizeScores(data?.seriesA?.classAvgScores)
+      const bStu = normalizeScores(data?.seriesB?.studentScores)
+      const bCls = normalizeScores(data?.seriesB?.classAvgScores)
       series.push({ name: 'A - ' + (t('teacher.analytics.charts.series.student') || '学生'), values: aStu })
       if (Array.isArray(aCls) && aCls.length) series.push({ name: 'A - ' + (t('teacher.analytics.charts.series.class') || '班级'), values: aCls })
       series.push({ name: 'B - ' + (t('teacher.analytics.charts.series.student') || '学生'), values: bStu })
@@ -682,8 +679,8 @@ const loadRadar = async () => {
 }
 
 const exportRadar = async () => {
-  if (!selectedCourseId.value || !startDate.value || !endDate.value) return
-  const params: any = { courseId: selectedCourseId.value, startDate: startDate.value, endDate: endDate.value }
+  if (!selectedCourseId.value) return
+  const params: any = { courseId: selectedCourseId.value }
   if (selectedStudentId.value) params.studentId = selectedStudentId.value
   const res = await teacherApi.exportAbilityRadarCsv(params)
   const blob = new Blob([res as any], { type: 'text/csv;charset=utf-8;' })
@@ -720,7 +717,7 @@ const exportAnalytics = async () => {
     a.click()
     window.URL.revokeObjectURL(url)
   } else {
-    const params: any = { courseId: selectedCourseId.value, startDate: startDate.value, endDate: endDate.value }
+    const params: any = { courseId: selectedCourseId.value }
     if (selectedStudentId.value) params.studentId = selectedStudentId.value
     const res = await teacherApi.exportAbilityRadarCsv(params)
     const blob = new Blob([res as any], { type: 'text/csv;charset=utf-8;' })

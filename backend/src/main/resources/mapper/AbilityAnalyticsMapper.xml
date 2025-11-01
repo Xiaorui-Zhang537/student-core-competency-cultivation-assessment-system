@@ -5,45 +5,56 @@
     <!-- 学生在时间范围内的各维度平均分（ability_assessments） -->
     <select id="selectStudentDimensionAvg" resultType="map">
         SELECT ad.name AS dimensionName,
-               COALESCE(AVG(aa.score), 0) AS avgScore,
-               COALESCE(MAX(aa.max_score), 100) AS maxScore
+               aa.score AS score,
+               aa.max_score AS maxScore,
+               aa.student_id AS studentId,
+               aa.related_id AS relatedId,
+               aa.assessed_at AS assessedAt
         FROM ability_assessments aa
                  JOIN ability_dimensions ad ON aa.dimension_id = ad.id
                  LEFT JOIN assignments a ON aa.related_id = a.id
+                 LEFT JOIN grades g ON aa.related_id = g.id
+                 LEFT JOIN assignments ax ON g.assignment_id = ax.id
+                 LEFT JOIN submissions s ON aa.related_id = s.id
+                 LEFT JOIN assignments asub ON s.assignment_id = asub.id
         WHERE aa.student_id = #{studentId}
           <if test="courseId != null">
-              AND a.course_id = #{courseId}
+              AND COALESCE(a.course_id, ax.course_id, asub.course_id) = #{courseId}
           </if>
           <if test="start != null and end != null">
               AND aa.assessed_at BETWEEN #{start} AND #{end}
           </if>
-        GROUP BY ad.name
     </select>
 
     <!-- 班级/课程层面的各维度平均分（按选课与评估汇总） -->
     <select id="selectClassOrCourseDimensionAvg" resultType="map">
         SELECT ad.name AS dimensionName,
-               COALESCE(AVG(aa.score), 0) AS avgScore,
-               COALESCE(MAX(aa.max_score), 100) AS maxScore
+               aa.score AS score,
+               aa.max_score AS maxScore,
+               aa.student_id AS studentId,
+               aa.related_id AS relatedId,
+               aa.assessed_at AS assessedAt
         FROM ability_assessments aa
                  JOIN ability_dimensions ad ON aa.dimension_id = ad.id
                  LEFT JOIN assignments a ON aa.related_id = a.id
+                 LEFT JOIN grades g ON aa.related_id = g.id
+                 LEFT JOIN assignments ax ON g.assignment_id = ax.id
+                 LEFT JOIN submissions s ON aa.related_id = s.id
+                 LEFT JOIN assignments asub ON s.assignment_id = asub.id
                  <if test="classId != null">
-                     JOIN enrollments e ON e.student_id = aa.student_id AND e.course_id = a.course_id
+                     JOIN enrollments e ON e.student_id = aa.student_id AND e.course_id = COALESCE(a.course_id, ax.course_id, asub.course_id)
                  </if>
         WHERE 1=1
-          <if test="courseId != null">AND a.course_id = #{courseId}</if>
+          <if test="courseId != null">AND COALESCE(a.course_id, ax.course_id, asub.course_id) = #{courseId}</if>
           <if test="classId != null">AND e.status = 'active'</if>
           <if test="start != null and end != null">
               AND aa.assessed_at BETWEEN #{start} AND #{end}
           </if>
-        GROUP BY ad.name
     </select>
 
     <!-- 成绩均分（课程/学生/班级口径），使用 grades + assignments -->
     <select id="selectCourseGradeAvg" resultType="map">
-        SELECT COALESCE(AVG(g.score), 0) AS avgScore,
-               COALESCE(MAX(g.max_score), 100) AS maxScore
+        SELECT COALESCE(AVG(CASE WHEN g.max_score IS NOT NULL AND g.max_score > 0 THEN g.score / g.max_score ELSE NULL END), 0) AS avgRatio
         FROM grades g
                  JOIN assignments a ON g.assignment_id = a.id
                  <if test="classId != null">
@@ -77,51 +88,70 @@
     <!-- ===== 扩展：带作业集合过滤 ===== -->
     <select id="selectStudentDimensionAvgWithAssignments" resultType="map">
         SELECT ad.name AS dimensionName,
-               COALESCE(AVG(aa.score), 0) AS avgScore,
-               COALESCE(MAX(aa.max_score), 100) AS maxScore
+               aa.score AS score,
+               aa.max_score AS maxScore,
+               aa.student_id AS studentId,
+               aa.related_id AS relatedId,
+               aa.assessed_at AS assessedAt
         FROM ability_assessments aa
                  JOIN ability_dimensions ad ON aa.dimension_id = ad.id
                  LEFT JOIN assignments a ON aa.related_id = a.id
+                 LEFT JOIN grades g ON aa.related_id = g.id
+                 LEFT JOIN assignments ax ON g.assignment_id = ax.id
+                 LEFT JOIN submissions s ON aa.related_id = s.id
+                 LEFT JOIN assignments asub ON s.assignment_id = asub.id
         WHERE aa.student_id = #{studentId}
           <if test="courseId != null">
-              AND a.course_id = #{courseId}
+              AND COALESCE(a.course_id, ax.course_id, asub.course_id) = #{courseId}
           </if>
           <if test="start != null and end != null">
               AND aa.assessed_at BETWEEN #{start} AND #{end}
           </if>
           <if test="assignmentIds != null and assignmentIds.size > 0">
-              AND aa.related_id IN
+              AND (aa.related_id IN
               <foreach collection="assignmentIds" item="id" open="(" separator="," close=")">#{id}</foreach>
+               OR g.assignment_id IN
+              <foreach collection="assignmentIds" item="id" open="(" separator="," close=")">#{id}</foreach>
+               OR s.assignment_id IN
+              <foreach collection="assignmentIds" item="id" open="(" separator="," close=")">#{id}</foreach>)
           </if>
-        GROUP BY ad.name
     </select>
 
     <select id="selectClassOrCourseDimensionAvgWithAssignments" resultType="map">
         SELECT ad.name AS dimensionName,
-               COALESCE(AVG(aa.score), 0) AS avgScore,
-               COALESCE(MAX(aa.max_score), 100) AS maxScore
+               aa.score AS score,
+               aa.max_score AS maxScore,
+               aa.student_id AS studentId,
+               aa.related_id AS relatedId,
+               aa.assessed_at AS assessedAt
         FROM ability_assessments aa
                  JOIN ability_dimensions ad ON aa.dimension_id = ad.id
                  LEFT JOIN assignments a ON aa.related_id = a.id
+                 LEFT JOIN grades g ON aa.related_id = g.id
+                 LEFT JOIN assignments ax ON g.assignment_id = ax.id
+                 LEFT JOIN submissions s ON aa.related_id = s.id
+                 LEFT JOIN assignments asub ON s.assignment_id = asub.id
                  <if test="classId != null">
-                     JOIN enrollments e ON e.student_id = aa.student_id AND e.course_id = a.course_id
+                     JOIN enrollments e ON e.student_id = aa.student_id AND e.course_id = COALESCE(a.course_id, ax.course_id, asub.course_id)
                  </if>
         WHERE 1=1
-          <if test="courseId != null">AND a.course_id = #{courseId}</if>
+          <if test="courseId != null">AND COALESCE(a.course_id, ax.course_id, asub.course_id) = #{courseId}</if>
           <if test="classId != null">AND e.status = 'active'</if>
           <if test="start != null and end != null">
               AND aa.assessed_at BETWEEN #{start} AND #{end}
           </if>
           <if test="assignmentIds != null and assignmentIds.size > 0">
-              AND aa.related_id IN
+              AND (aa.related_id IN
               <foreach collection="assignmentIds" item="id" open="(" separator="," close=")">#{id}</foreach>
+               OR g.assignment_id IN
+              <foreach collection="assignmentIds" item="id" open="(" separator="," close=")">#{id}</foreach>
+               OR s.assignment_id IN
+              <foreach collection="assignmentIds" item="id" open="(" separator="," close=")">#{id}</foreach>)
           </if>
-        GROUP BY ad.name
     </select>
 
     <select id="selectCourseGradeAvgWithAssignments" resultType="map">
-        SELECT COALESCE(AVG(g.score), 0) AS avgScore,
-               COALESCE(MAX(g.max_score), 100) AS maxScore
+        SELECT COALESCE(AVG(CASE WHEN g.max_score IS NOT NULL AND g.max_score > 0 THEN g.score / g.max_score ELSE NULL END), 0) AS avgRatio
         FROM grades g
                  JOIN assignments a ON g.assignment_id = a.id
                  <if test="classId != null">
@@ -138,6 +168,41 @@
           </if>
           AND (g.deleted = false OR g.deleted = 0)
           AND (g.status = 'published' OR g.status = 'PUBLISHED' OR g.status = 1)
+    </select>
+
+    <!-- ====== 兜底：student_abilities 快照（当 ability_assessments 暂无数据时使用） ====== -->
+    <select id="selectStudentAbilitySnapshot" resultType="map">
+        SELECT ad.name AS dimensionName,
+               <![CDATA[CASE
+                   WHEN sa.current_score IS NULL THEN 0
+                   WHEN sa.current_score <= 5 THEN sa.current_score * 20
+                   ELSE sa.current_score
+               END]]> AS score,
+               100 AS maxScore
+        FROM student_abilities sa
+                 JOIN ability_dimensions ad ON sa.dimension_id = ad.id
+                 JOIN enrollments e ON e.student_id = sa.student_id AND e.course_id = #{courseId}
+        WHERE sa.student_id = #{studentId}
+          AND sa.current_score IS NOT NULL
+          AND sa.current_score > 0
+        ORDER BY ad.sort_order, ad.id
+    </select>
+
+    <select id="selectClassAbilitySnapshot" resultType="map">
+        SELECT ad.name AS dimensionName,
+               AVG(<![CDATA[CASE
+                       WHEN sa.current_score IS NULL THEN 0
+                       WHEN sa.current_score <= 5 THEN sa.current_score * 20
+                       ELSE sa.current_score
+                   END]]>) AS score,
+               100 AS maxScore
+        FROM student_abilities sa
+                 JOIN ability_dimensions ad ON sa.dimension_id = ad.id
+                 JOIN enrollments e ON e.student_id = sa.student_id AND e.course_id = #{courseId}
+        WHERE sa.current_score IS NOT NULL
+          AND sa.current_score > 0
+        GROUP BY ad.name, ad.sort_order, ad.id
+        ORDER BY ad.sort_order, ad.id
     </select>
 
 </mapper>

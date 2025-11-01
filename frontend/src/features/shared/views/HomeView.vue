@@ -314,7 +314,7 @@
     <section id="compare" class="mt-14 scroll-mt-24">
       <div class="space-y-20">
         <!-- 明暗主题对比场景：统一 sticky 行，左右同步 -->
-        <div id="scene-lightdark" class="relative h-[180vh] sm:h-[260vh]">
+        <div id="scene-lightdark" class="relative h-[140vh] sm:h-[200vh]">
           <div class="sticky top-0 grid md:grid-cols-2 items-center gap-8 h-screen">
             <div class="px-2">
               <SafariMockup class="w-full aspect-[1203/753]" url="student-competency.com">
@@ -339,14 +339,14 @@
                 :text="t('app.home.compareDesc.lightDark') as string"
                 :sticky="false"
                 progress-container-id="scene-lightdark"
-                :reveal-portion="0.5"
+                :reveal-portion="0.3"
               />
             </div>
           </div>
         </div>
 
         <!-- 中英文对比场景：统一 sticky 行，左右同步 -->
-        <div id="scene-zhen" class="relative h-[180vh] sm:h-[260vh]">
+        <div id="scene-zhen" class="relative h-[140vh] sm:h-[200vh]">
           <div class="sticky top-0 grid md:grid-cols-2 items-center gap-8 h-screen">
             <div class="px-2">
               <SafariMockup class="w-full aspect-[1203/753]" url="student-competency.com">
@@ -371,7 +371,7 @@
                 :text="t('app.home.compareDesc.zhEn') as string"
                 :sticky="false"
                 progress-container-id="scene-zhen"
-                :reveal-portion="0.5"
+                :reveal-portion="0.3"
               />
             </div>
           </div>
@@ -383,10 +383,10 @@
 
     <!-- 项目结构（分为 docs/frontend/backend 三个容器，液态玻璃） -->
     <section id="structure" class="mt-28 scroll-mt-24">
-      <div id="scene-structure" class="relative h-[180vh] sm:h-[260vh]">
+      <div id="scene-structure" class="relative h-[150vh] sm:h-[220vh]">
         <div class="sticky top-[14vh]">
       <div class="mb-8">
-            <TextScrollReveal :text="t('app.home.structureDesc') as string" :sticky="false" progress-container-id="scene-structure" :reveal-portion="0.5" />
+            <TextScrollReveal :text="t('app.home.structureDesc') as string" :sticky="false" progress-container-id="scene-structure" :reveal-portion="0.3" />
       </div>
       <div class="grid md:grid-cols-3 gap-8">
         <!-- docs 容器 -->

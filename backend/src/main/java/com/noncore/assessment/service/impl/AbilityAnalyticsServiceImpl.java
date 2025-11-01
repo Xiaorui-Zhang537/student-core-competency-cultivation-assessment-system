@@ -7,20 +7,24 @@ import com.noncore.assessment.dto.response.AbilityRadarResponse;
 import com.noncore.assessment.dto.response.AbilityWeightsResponse;
 import com.noncore.assessment.dto.response.AbilityCompareResponse;
 import com.noncore.assessment.dto.response.AbilityDimensionInsightsResponse;
+import com.noncore.assessment.entity.AbilityReport;
 import com.noncore.assessment.entity.Course;
 import com.noncore.assessment.exception.BusinessException;
 import com.noncore.assessment.exception.ErrorCode;
 import com.noncore.assessment.mapper.AbilityAnalyticsMapper;
+import com.noncore.assessment.mapper.AbilityReportMapper;
 import com.noncore.assessment.mapper.CourseMapper;
 import com.noncore.assessment.mapper.EnrollmentMapper;
 import com.noncore.assessment.service.AbilityAnalyticsService;
 import com.noncore.assessment.service.CacheService;
+import com.noncore.assessment.service.AbilityService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.time.ZoneId;
 import java.util.*;
 
 @Service
@@ -42,16 +46,22 @@ public class AbilityAnalyticsServiceImpl implements AbilityAnalyticsService {
     private final AbilityAnalyticsMapper analyticsMapper;
     private final CourseMapper courseMapper;
     private final CacheService cacheService;
+    private final AbilityService abilityService;
     private final EnrollmentMapper enrollmentMapper;
+    private final AbilityReportMapper abilityReportMapper;
 
     public AbilityAnalyticsServiceImpl(AbilityAnalyticsMapper analyticsMapper,
                                        CourseMapper courseMapper,
                                        CacheService cacheService,
-                                       EnrollmentMapper enrollmentMapper) {
+                                       EnrollmentMapper enrollmentMapper,
+                                       AbilityService abilityService,
+                                       AbilityReportMapper abilityReportMapper) {
         this.analyticsMapper = analyticsMapper;
         this.courseMapper = courseMapper;
         this.cacheService = cacheService;
         this.enrollmentMapper = enrollmentMapper;
+        this.abilityService = abilityService;
+        this.abilityReportMapper = abilityReportMapper;
     }
 
     @Override
@@ -61,23 +71,34 @@ public class AbilityAnalyticsServiceImpl implements AbilityAnalyticsService {
             throw new BusinessException(ErrorCode.COURSE_ACCESS_DENIED);
         }
 
-        validateDates(query.getStartDate(), query.getEndDate());
+        // 允许日期为空：为空则不做时间过滤
+        validateOptionalDates(query.getStartDate(), query.getEndDate());
         String cacheKey = buildCacheKey("radar", teacherId, query);
         Optional<AbilityRadarResponse> cached = cacheService.get(cacheKey, AbilityRadarResponse.class);
         if (cached.isPresent()) {
-            return cached.get();
+            AbilityRadarResponse resp = cached.get();
+            boolean classOk = resp.getClassAvgScores() != null && !isNonGradeAllZero(resp.getClassAvgScores());
+            boolean studentRequired = query.getStudentId() != null;
+            boolean studentOk = !studentRequired || (resp.getStudentScores() != null && !isNonGradeAllZero(resp.getStudentScores()));
+            if (classOk && studentOk) {
+                return resp;
+            }
         }
 
-        LocalDateTime start = query.getStartDate().atStartOfDay();
-        LocalDateTime end = query.getEndDate().atTime(LocalTime.MAX);
+        LocalDateTime start = query.getStartDate() == null ? null : query.getStartDate().atStartOfDay();
+        LocalDateTime end = query.getEndDate() == null ? null : query.getEndDate().atTime(LocalTime.MAX);
 
         // 班级或课程均值
         Map<String, Double> classAvg = aggregateDimensions(null, query.getCourseId(), query.getClassId(), start, end);
+        enrichClassScores(classAvg, query.getCourseId());
 
         // 学生成绩（若传 studentId）
         Map<String, Double> student = query.getStudentId() == null
-                ? Collections.emptyMap()
+                ? new HashMap<>()
                 : aggregateDimensions(query.getStudentId(), query.getCourseId(), query.getClassId(), start, end);
+        if (query.getStudentId() != null) {
+            enrichStudentScores(student, query.getStudentId(), query.getCourseId(), query.getClassId());
+        }
 
         // 成绩维度（课程/班级/学生）
         double classGrade = normalizeGradeAvg(query.getCourseId(), query.getClassId(), null, start, end);
@@ -96,6 +117,8 @@ public class AbilityAnalyticsServiceImpl implements AbilityAnalyticsService {
             }
         }
 
+        // 取消兜底：教师端总体雷达不再用“任一作业的最近AI报告”填充，避免不同作业报告混淆
+
         List<Double> deltas = new ArrayList<>();
         for (int i = 0; i < DIMENSIONS.size(); i++) {
             deltas.add(round(studentScores.get(i) - classScores.get(i)));
@@ -106,7 +129,7 @@ public class AbilityAnalyticsServiceImpl implements AbilityAnalyticsService {
         double classComposite = weightedComposite(classScores, weights);
 
         // 上一对等周期
-        AbilityRadarResponse.PreviousPeriod prev = buildPreviousPeriod(query);
+        AbilityRadarResponse.PreviousPeriod prev = (query.getStartDate() == null || query.getEndDate() == null) ? null : buildPreviousPeriod(query);
 
         // 弱项：<60 或 delta<-10
         List<String> weak = new ArrayList<>();
@@ -140,13 +163,27 @@ public class AbilityAnalyticsServiceImpl implements AbilityAnalyticsService {
     public AbilityRadarResponse getRadarForStudent(AbilityRadarQuery query, Long studentId) {
         // 学生态不校验课程归属教师，但要求 studentId 不为空
         Objects.requireNonNull(studentId, "studentId required");
-        validateDates(query.getStartDate(), query.getEndDate());
+        validateOptionalDates(query.getStartDate(), query.getEndDate());
 
-        LocalDateTime start = query.getStartDate().atStartOfDay();
-        LocalDateTime end = query.getEndDate().atTime(LocalTime.MAX);
+        LocalDateTime start = query.getStartDate() == null ? null : query.getStartDate().atStartOfDay();
+        LocalDateTime end = query.getEndDate() == null ? null : query.getEndDate().atTime(LocalTime.MAX);
+
+        String studentCacheKey = buildCacheKey("student_radar", studentId, query);
+        Optional<AbilityRadarResponse> studentCached = cacheService.get(studentCacheKey, AbilityRadarResponse.class);
+        if (studentCached.isPresent()) {
+            AbilityRadarResponse resp = studentCached.get();
+            boolean classOk = resp.getClassAvgScores() != null && !isNonGradeAllZero(resp.getClassAvgScores());
+            boolean studentOk = resp.getStudentScores() != null && !isNonGradeAllZero(resp.getStudentScores());
+            if (classOk && studentOk) {
+                return resp;
+            }
+        }
 
         Map<String, Double> classAvg = aggregateDimensions(null, query.getCourseId(), query.getClassId(), start, end);
+        enrichClassScores(classAvg, query.getCourseId());
+
         Map<String, Double> student = aggregateDimensions(studentId, query.getCourseId(), query.getClassId(), start, end);
+        enrichStudentScores(student, studentId, query.getCourseId(), query.getClassId());
         double classGrade = normalizeGradeAvg(query.getCourseId(), query.getClassId(), null, start, end);
         double studentGrade = normalizeGradeAvg(query.getCourseId(), query.getClassId(), studentId, start, end);
 
@@ -161,6 +198,8 @@ public class AbilityAnalyticsServiceImpl implements AbilityAnalyticsService {
                 studentScores.add(student.getOrDefault(name, 0.0));
             }
         }
+
+        // 取消兜底：学生端总体雷达同样不使用“最近AI报告”填充
         List<Double> deltas = new ArrayList<>();
         for (int i = 0; i < DIMENSIONS.size(); i++) {
             deltas.add(round(studentScores.get(i) - classScores.get(i)));
@@ -169,7 +208,7 @@ public class AbilityAnalyticsServiceImpl implements AbilityAnalyticsService {
         double studentComposite = round(weightedComposite(studentScores, weights));
         double classComposite = round(weightedComposite(classScores, weights));
 
-        AbilityRadarResponse.PreviousPeriod prev = buildPreviousPeriod(query);
+        AbilityRadarResponse.PreviousPeriod prev = (query.getStartDate() == null || query.getEndDate() == null) ? null : buildPreviousPeriod(query);
 
         List<String> weak = new ArrayList<>();
         for (int i = 0; i < DIMENSIONS.size(); i++) {
@@ -180,7 +219,7 @@ public class AbilityAnalyticsServiceImpl implements AbilityAnalyticsService {
             }
         }
 
-        return AbilityRadarResponse.builder()
+        AbilityRadarResponse resp = AbilityRadarResponse.builder()
                 .dimensions(DIMENSIONS)
                 .studentScores(studentScores)
                 .classAvgScores(classScores)
@@ -192,6 +231,9 @@ public class AbilityAnalyticsServiceImpl implements AbilityAnalyticsService {
                 .prevPeriod(prev)
                 .weakDimensions(weak)
                 .build();
+
+        cacheService.set(studentCacheKey, resp, 600);
+        return resp;
     }
 
     @Override
@@ -361,6 +403,10 @@ public class AbilityAnalyticsServiceImpl implements AbilityAnalyticsService {
 
         Map<String, Double> classAvg = aggregateDimensionsWithAssignments(null, courseId, classId, start, end, assignmentIds);
         Map<String, Double> student = aggregateDimensionsWithAssignments(studentId, courseId, classId, start, end, assignmentIds);
+        enrichClassScores(classAvg, courseId);
+        if (studentId != null) {
+            enrichStudentScores(student, studentId, courseId, classId);
+        }
         double classGrade = normalizeGradeAvgWithAssignments(courseId, classId, null, start, end, assignmentIds);
         double studentGrade = normalizeGradeAvgWithAssignments(courseId, classId, studentId, start, end, assignmentIds);
 
@@ -384,14 +430,10 @@ public class AbilityAnalyticsServiceImpl implements AbilityAnalyticsService {
         List<Map<String, Object>> rows = (studentId == null)
                 ? analyticsMapper.selectClassOrCourseDimensionAvgWithAssignments(courseId, classId, start, end, assignmentIds)
                 : analyticsMapper.selectStudentDimensionAvgWithAssignments(studentId, courseId, classId, start, end, assignmentIds);
-        Map<String, Double> result = new java.util.HashMap<>();
-        for (Map<String, Object> r : rows) {
-            String name = String.valueOf(r.get("dimensionName"));
-            double score = toDouble(r.get("avgScore"));
-            double max = toDouble(r.get("maxScore"));
-            result.put(name, normalize(score, max));
-        }
-        return result;
+        Map<String, Double> base = reduceDimensionRows(rows, studentId == null);
+        Map<String, Double> reportAvg = aggregateDimensionsFromReports(studentId, courseId, classId, start, end, assignmentIds);
+        overrideDimensionScores(base, reportAvg);
+        return base;
     }
 
     private double normalizeGradeAvgWithAssignments(Long courseId, Long classId, Long studentId,
@@ -399,18 +441,291 @@ public class AbilityAnalyticsServiceImpl implements AbilityAnalyticsService {
                                                     java.util.List<Long> assignmentIds) {
         Map<String, Object> row = analyticsMapper.selectCourseGradeAvgWithAssignments(courseId, classId, studentId, start, end, assignmentIds);
         if (row == null) return 0.0;
-        double score = toDouble(row.get("avgScore"));
-        double max = toDouble(row.get("maxScore"));
-        return normalize(score, max);
+        Double ratio = toDouble(row.get("avgRatio"));
+        if (ratio == null) {
+            return 0.0;
+        }
+        return round(ratio * 100.0);
+    }
+
+    private Map<String, Double> reduceDimensionRows(List<Map<String, Object>> rows) {
+        return reduceDimensionRows(rows, false);
+    }
+
+    private Map<String, Double> reduceDimensionRows(List<Map<String, Object>> rows, boolean equalWeightPerStudent) {
+        Map<String, Map<Object, Map<Object, ScoreEntry>>> latestTree = new HashMap<>();
+        Map<String, List<Double>> fallbackBucket = new HashMap<>();
+
+        if (rows != null) {
+            for (Map<String, Object> r : rows) {
+                if (r == null) continue;
+                Object nameObj = r.get("dimensionName");
+                if (nameObj == null) continue;
+                String name = String.valueOf(nameObj);
+                if (name.isBlank()) continue;
+
+                Double score = toDouble(r.get("score"));
+                Double max = toDouble(r.get("maxScore"));
+                if (score == null) continue;
+                double denom = (max == null || max <= 0) ? (score <= 5.0 ? 5.0 : 100.0) : max;
+                if (denom <= 0) continue;
+                double pct = (score / denom) * 100.0;
+
+                Object studentKey = r.get("studentId");
+                Object relatedKey = r.get("relatedId");
+                LocalDateTime assessedAt = toDateTime(r.get("assessedAt"));
+
+                if (studentKey != null && relatedKey != null) {
+                    Map<Object, Map<Object, ScoreEntry>> perStudent = latestTree.computeIfAbsent(name, k -> new HashMap<>());
+                    Map<Object, ScoreEntry> perAssignment = perStudent.computeIfAbsent(studentKey, k -> new HashMap<>());
+                    ScoreEntry existing = perAssignment.get(relatedKey);
+                    if (shouldReplace(existing, assessedAt)) {
+                        perAssignment.put(relatedKey, new ScoreEntry(pct, assessedAt));
+                    }
+                } else {
+                    fallbackBucket.computeIfAbsent(name, k -> new ArrayList<>()).add(pct);
+            }
+        }
+        }
+
+        Map<String, Double> out = new HashMap<>();
+
+        for (Map.Entry<String, Map<Object, Map<Object, ScoreEntry>>> entry : latestTree.entrySet()) {
+            Map<Object, Map<Object, ScoreEntry>> perStudent = entry.getValue();
+            if (perStudent == null || perStudent.isEmpty()) continue;
+
+            List<Double> studentAverages = new ArrayList<>();
+            for (Map<Object, ScoreEntry> perAssignment : perStudent.values()) {
+                if (perAssignment == null || perAssignment.isEmpty()) continue;
+                double sum = 0.0;
+                int count = 0;
+                for (ScoreEntry se : perAssignment.values()) {
+                    if (se == null || se.value <= 0.0) continue;
+                    sum += se.value;
+                    count++;
+                }
+                if (count > 0) {
+                    studentAverages.add(sum / count);
+                }
+            }
+            if (studentAverages.isEmpty()) continue;
+
+            double finalAvg = studentAverages.stream().mapToDouble(Double::doubleValue).average().orElse(0.0);
+            if (finalAvg > 0.0) {
+                out.put(entry.getKey(), round(finalAvg));
+            }
+        }
+
+        for (Map.Entry<String, List<Double>> entry : fallbackBucket.entrySet()) {
+            if (out.containsKey(entry.getKey())) continue;
+            List<Double> list = entry.getValue();
+            if (list == null || list.isEmpty()) continue;
+            double sum = 0.0;
+            int count = 0;
+            for (Double v : list) {
+                if (v == null) continue;
+                sum += v;
+                count++;
+            }
+            if (count > 0) {
+                out.put(entry.getKey(), round(sum / count));
+            }
+        }
+
+        return out;
+    }
+
+    private void enrichClassScores(Map<String, Double> classScores, Long courseId) {
+        if (classScores == null || courseId == null) {
+            return;
+        }
+        if (!needsNonGradeSupplement(classScores)) {
+            return;
+        }
+        List<Map<String, Object>> rows = analyticsMapper.selectClassAbilitySnapshot(courseId);
+        Map<String, Double> snapshot = reduceDimensionRows(rows);
+        mergeDimensionScores(classScores, snapshot);
+    }
+
+    private void enrichStudentScores(Map<String, Double> studentScores, Long studentId, Long courseId, Long classId) {
+        if (studentScores == null || studentId == null) {
+            return;
+        }
+        if (!needsNonGradeSupplement(studentScores)) {
+            return;
+        }
+        if (courseId != null) {
+            List<Map<String, Object>> rows = analyticsMapper.selectStudentAbilitySnapshot(studentId, courseId);
+            Map<String, Double> snapshot = reduceDimensionRows(rows);
+            mergeDimensionScores(studentScores, snapshot);
+        }
+        if (!needsNonGradeSupplement(studentScores)) {
+            return;
+        }
+        Map<String, Double> latestReport = loadFourDimsFromLatestReport(studentId, courseId, null, null);
+        if (latestReport == null || latestReport.isEmpty()) {
+            return;
+        }
+        Map<String, Double> converted = new HashMap<>();
+        for (Map.Entry<String, Double> entry : latestReport.entrySet()) {
+            String name = CODE_TO_NAME.get(entry.getKey());
+            if (name == null || "学习成绩".equals(name)) continue;
+            Double val = entry.getValue();
+            if (val == null || val <= 0.0) continue;
+            converted.put(name, val);
+        }
+        mergeDimensionScores(studentScores, converted);
+    }
+
+    private void mergeDimensionScores(Map<String, Double> target, Map<String, Double> source) {
+        if (target == null || source == null || source.isEmpty()) {
+            return;
+        }
+        for (String name : DIMENSIONS) {
+            if ("学习成绩".equals(name)) continue;
+            Double incoming = source.get(name);
+            if (incoming == null || incoming <= 0.0) continue;
+            Double existing = target.get(name);
+            if (existing == null || existing <= 0.0) {
+                target.put(name, round(incoming));
+            }
+        }
+    }
+
+    private void overrideDimensionScores(Map<String, Double> target, Map<String, Double> source) {
+        if (target == null || source == null || source.isEmpty()) {
+            return;
+        }
+        for (Map.Entry<String, Double> entry : source.entrySet()) {
+            String name = entry.getKey();
+            if (name == null || "学习成绩".equals(name)) {
+                continue;
+            }
+            Double incoming = entry.getValue();
+            if (incoming == null || incoming <= 0.0) {
+                continue;
+            }
+            target.put(name, round(incoming));
+        }
+    }
+
+    private Map<String, Double> aggregateDimensionsFromReports(Long studentId, Long courseId, Long classId,
+                                                               LocalDateTime start, LocalDateTime end,
+                                                               List<Long> assignmentIds) {
+        if (courseId == null) {
+            return Collections.emptyMap();
+        }
+        List<AbilityReport> reports = abilityReportMapper.selectReportsForRadar(studentId, courseId, start, end, assignmentIds);
+        if (reports == null || reports.isEmpty()) {
+            return Collections.emptyMap();
+        }
+        Map<String, List<Double>> bucket = new HashMap<>();
+        for (AbilityReport report : reports) {
+            Map<String, Double> extracted = extractDimensionPercentages(report.getTrendsAnalysis());
+            if (extracted.isEmpty()) {
+                extracted = extractDimensionPercentages(report.getDimensionScores());
+            }
+            if (extracted.isEmpty()) {
+                continue;
+            }
+            for (Map.Entry<String, Double> entry : extracted.entrySet()) {
+                String code = entry.getKey();
+                Double percent = entry.getValue();
+                if (code == null || percent == null || percent <= 0.0) {
+                    continue;
+                }
+                bucket.computeIfAbsent(code, k -> new ArrayList<>()).add(percent);
+            }
+        }
+        Map<String, Double> out = new HashMap<>();
+        for (Map.Entry<String, List<Double>> entry : bucket.entrySet()) {
+            List<Double> values = entry.getValue();
+            if (values == null || values.isEmpty()) {
+                continue;
+            }
+            double sum = 0.0;
+            int count = 0;
+            for (Double v : values) {
+                if (v == null || v <= 0.0) {
+                    continue;
+                }
+                sum += v;
+                count++;
+            }
+            if (count == 0) {
+                continue;
+            }
+            double avg = sum / count;
+            if (avg <= 0.0) {
+                continue;
+            }
+            String name = CODE_TO_NAME.get(entry.getKey());
+            if (name == null || "学习成绩".equals(name)) {
+                continue;
+            }
+            out.put(name, round(avg));
+        }
+        return out;
+    }
+
+    private boolean shouldReplace(ScoreEntry existing, LocalDateTime assessedAt) {
+        if (existing == null) {
+            return true;
+        }
+        if (assessedAt == null) {
+            return existing.assessedAt == null;
+        }
+        if (existing.assessedAt == null) {
+            return true;
+        }
+        return !assessedAt.isBefore(existing.assessedAt);
+    }
+
+    private LocalDateTime toDateTime(Object value) {
+        if (value == null) {
+            return null;
+        }
+        if (value instanceof LocalDateTime dt) {
+            return dt;
+        }
+        if (value instanceof java.sql.Timestamp ts) {
+            return ts.toLocalDateTime();
+        }
+        if (value instanceof java.util.Date date) {
+            return LocalDateTime.ofInstant(date.toInstant(), ZoneId.systemDefault());
+        }
+        return null;
+    }
+
+    private static final class ScoreEntry {
+        final double value;
+        final LocalDateTime assessedAt;
+
+        ScoreEntry(double value, LocalDateTime assessedAt) {
+            this.value = value;
+            this.assessedAt = assessedAt;
+        }
+    }
+
+    private boolean needsNonGradeSupplement(Map<String, Double> scores) {
+        if (scores == null || scores.isEmpty()) {
+            return true;
+        }
+        for (String name : DIMENSIONS) {
+            if ("学习成绩".equals(name)) continue;
+            Double val = scores.get(name);
+            if (val == null || val <= 0.0) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private void validateOptionalDates(java.time.LocalDate start, java.time.LocalDate end) {
-        if (start == null && end == null) return;
-        if (start == null || end == null || end.isBefore(start)) {
-            throw new BusinessException(ErrorCode.INVALID_PARAMETER);
-        }
-        long span = java.time.temporal.ChronoUnit.DAYS.between(start, end) + 1;
-        if (span > 365) {
+        // 放宽：任一为空则视为不启用时间过滤，不做校验
+        if (start == null || end == null) return;
+        // 仅当两者都存在时校验顺序
+        if (end.isBefore(start)) {
             throw new BusinessException(ErrorCode.INVALID_PARAMETER);
         }
     }
@@ -498,27 +813,20 @@ public class AbilityAnalyticsServiceImpl implements AbilityAnalyticsService {
         List<Map<String, Object>> rows = (studentId == null)
                 ? analyticsMapper.selectClassOrCourseDimensionAvg(courseId, classId, start, end)
                 : analyticsMapper.selectStudentDimensionAvg(studentId, courseId, classId, start, end);
-        Map<String, Double> result = new HashMap<>();
-        for (Map<String, Object> r : rows) {
-            String name = String.valueOf(r.get("dimensionName"));
-            double score = toDouble(r.get("avgScore"));
-            double max = toDouble(r.get("maxScore"));
-            result.put(name, normalize(score, max));
-        }
-        return result;
+        Map<String, Double> base = reduceDimensionRows(rows, studentId == null);
+        Map<String, Double> reportAvg = aggregateDimensionsFromReports(studentId, courseId, classId, start, end, null);
+        overrideDimensionScores(base, reportAvg);
+        return base;
     }
 
     private double normalizeGradeAvg(Long courseId, Long classId, Long studentId, LocalDateTime start, LocalDateTime end) {
         Map<String, Object> row = analyticsMapper.selectCourseGradeAvg(courseId, classId, studentId, start, end);
         if (row == null) return 0.0;
-        double score = toDouble(row.get("avgScore"));
-        double max = toDouble(row.get("maxScore"));
-        return normalize(score, max);
-    }
-
-    private double normalize(double score, double max) {
-        if (max <= 0) return 0.0;
-        return round(score * 100.0 / max);
+        Double ratio = toDouble(row.get("avgRatio"));
+        if (ratio == null) {
+            return 0.0;
+        }
+        return round(ratio * 100.0);
     }
 
     private double weightedComposite(List<Double> scores, Map<String, Double> weights) {
@@ -580,6 +888,162 @@ public class AbilityAnalyticsServiceImpl implements AbilityAnalyticsService {
 
     private double round(double v) {
         return Math.round(v * 10.0) / 10.0;
+    }
+
+    private boolean isNonGradeAllZero(List<Double> scores) {
+        if (scores == null || scores.size() != DIMENSIONS.size()) return true;
+        for (int i = 0; i < DIMENSIONS.size(); i++) {
+            if ("学习成绩".equals(DIMENSIONS.get(i))) continue;
+            double s = scores.get(i) == null ? 0.0 : scores.get(i);
+            if (s > 0.0) return false;
+        }
+        return true;
+    }
+
+    // 从最新 AI 报告读取四维（返回百分制0..100）。仅在学生四维均为0时作为显示兜底使用
+    private Map<String, Double> loadFourDimsFromLatestReport(Long studentId, Long courseId, Long assignmentId, Long submissionId) {
+        Map<String, Double> out = new HashMap<>();
+        try {
+            com.noncore.assessment.entity.AbilityReport rep = abilityService.getLatestAbilityReportByContext(studentId, courseId, assignmentId, submissionId);
+            if (rep == null) {
+                return out;
+            }
+            boolean merged = mergeReportDimensionJson(out, rep.getTrendsAnalysis());
+            if (!merged) {
+                mergeReportDimensionJson(out, rep.getDimensionScores());
+            }
+        } catch (Exception ignored) {}
+        return out;
+    }
+
+    private boolean mergeReportDimensionJson(Map<String, Double> target, String rawJson) {
+        Map<String, Double> extracted = extractDimensionPercentages(rawJson);
+        if (extracted.isEmpty()) {
+            return false;
+        }
+        boolean updated = false;
+        for (Map.Entry<String, Double> entry : extracted.entrySet()) {
+            Double value = entry.getValue();
+            if (value == null || value <= 0) {
+                continue;
+            }
+            double rounded = round(value);
+            Double existing = target.get(entry.getKey());
+            if (existing == null || rounded > existing) {
+                target.put(entry.getKey(), rounded);
+                updated = true;
+            }
+        }
+        return updated;
+    }
+
+    private Map<String, Double> extractDimensionPercentages(String rawJson) {
+        Map<String, Double> result = new HashMap<>();
+        if (rawJson == null || rawJson.isBlank()) {
+            return result;
+        }
+        try {
+            Object parsed = new com.fasterxml.jackson.databind.ObjectMapper().readValue(rawJson, Object.class);
+            Map<?, ?> dims = resolveDimensionMap(parsed);
+            mergeDimensionEntries(result, dims);
+        } catch (Exception ignored) {}
+        return result;
+    }
+
+    private Map<?, ?> resolveDimensionMap(Object parsed) {
+        if (!(parsed instanceof Map<?, ?> map)) {
+            return null;
+        }
+        Object overall = map.get("overall");
+        if (overall instanceof Map<?, ?> overallMap) {
+            Object dm = overallMap.get("dimension_averages");
+            if (dm instanceof Map<?, ?> dims) {
+                return dims;
+            }
+        }
+        Object direct = map.get("dimension_averages");
+        if (direct instanceof Map<?, ?> dims) {
+            return dims;
+        }
+        Object camel = map.get("dimensionAverages");
+        if (camel instanceof Map<?, ?> dims) {
+            return dims;
+        }
+        Object snake = map.get("dimension_scores");
+        if (snake instanceof Map<?, ?> dims) {
+            return dims;
+        }
+        Object camelScore = map.get("dimensionScores");
+        if (camelScore instanceof Map<?, ?> dims) {
+            return dims;
+        }
+        boolean looksLikeDim = map.keySet().stream().anyMatch(key -> normalizeDimensionKey(key) != null);
+        return looksLikeDim ? map : null;
+    }
+
+    private void mergeDimensionEntries(Map<String, Double> target, Map<?, ?> dims) {
+        if (dims == null || dims.isEmpty()) {
+            return;
+        }
+        for (Map.Entry<?, ?> entry : dims.entrySet()) {
+            String code = normalizeDimensionKey(entry.getKey());
+            if (code == null) {
+                continue;
+            }
+            Double rawValue = toDouble(entry.getValue());
+            if (rawValue == null) {
+                continue;
+            }
+            double percent = toPercentScale(rawValue);
+            if (percent <= 0) {
+                continue;
+            }
+            double rounded = round(percent);
+            target.merge(code, rounded, (prev, curr) -> prev.doubleValue() >= curr.doubleValue() ? prev : curr);
+        }
+    }
+
+    private String normalizeDimensionKey(Object rawKey) {
+        if (rawKey == null) {
+            return null;
+        }
+        String key = String.valueOf(rawKey).trim();
+        if (key.isEmpty()) {
+            return null;
+        }
+        if ("道德认知".equals(key)) return "MORAL_COGNITION";
+        if ("学习态度".equals(key)) return "LEARNING_ATTITUDE";
+        if ("学习能力".equals(key)) return "LEARNING_ABILITY";
+        if ("学习方法".equals(key)) return "LEARNING_METHOD";
+        if ("学习成绩".equals(key)) return "ACADEMIC_GRADE";
+        String upper = key.toUpperCase(java.util.Locale.ROOT);
+        String ascii = upper.replaceAll("[^A-Z]", "");
+        return switch (ascii) {
+            case "MORALCOGNITION", "MORALREASONING", "MORALREASONINGSCORE", "MORALITY" -> "MORAL_COGNITION";
+            case "LEARNINGATTITUDE", "ATTITUDE", "ATTITUDEDEVELOPMENT" -> "LEARNING_ATTITUDE";
+            case "LEARNINGABILITY", "ABILITY", "ABILITYGROWTH" -> "LEARNING_ABILITY";
+            case "LEARNINGMETHOD", "STRATEGY", "STRATEGYOPTIMIZATION" -> "LEARNING_METHOD";
+            case "ACADEMICGRADE", "LEARNINGGRADE", "GRADE", "SCORE" -> "ACADEMIC_GRADE";
+            default -> null;
+        };
+    }
+
+    private double toPercentScale(double raw) {
+        if (Double.isNaN(raw)) {
+            return 0.0;
+        }
+        double value = raw;
+        double abs = Math.abs(value);
+        if (abs <= 5.5) {
+            value = value * 20.0;
+        }
+        if (value < 0) {
+            value = 0;
+        }
+        if (value > 100) {
+            value = 100;
+        }
+        return value;
     }
 }
 

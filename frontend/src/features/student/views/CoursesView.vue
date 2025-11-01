@@ -165,7 +165,7 @@
                   variant="primary"
                   :loading="enrollingId === String(course.id)"
                   :disabled="isEnrollClosed(course) || enrollingId === String(course.id)"
-                  @click.stop="handleEnroll(String(course.id))"
+                  @click.stop="startEnroll(course)"
                 >
                   {{ isEnrollClosed(course) ? (t('student.courses.enrollClosed') || '报名已截止') : (t('student.courses.enroll') ) }}
                 </Button>
@@ -176,6 +176,36 @@
       </div>
       <template #footer>
         <Button variant="secondary" @click="showCourseStore=false">{{ t('common.close') || '关闭' }}</Button>
+      </template>
+    </GlassModal>
+
+    <!-- 入课密钥输入弹窗 -->
+    <GlassModal
+      v-if="enrollKeyModalVisible"
+      :title="(t('student.courses.enterEnrollKey') as string) || '输入入课密钥'"
+      size="sm"
+      heightVariant="compact"
+      @close="closeEnrollKeyModal"
+    >
+      <div class="space-y-4">
+        <div class="text-sm text-muted">{{ t('teacher.students.enrollKey.tip') }}</div>
+        <label class="block text-sm mb-1">{{ t('teacher.students.enrollKey.keyLabel') }}</label>
+        <GlassInput
+          v-model="enrollKeyInput"
+          type="password"
+          :placeholder="t('teacher.students.enrollKey.placeholder') as string"
+        />
+      </div>
+      <template #footer>
+        <Button variant="secondary" @click="closeEnrollKeyModal">{{ t('common.cancel') || '取消' }}</Button>
+        <Button
+          variant="primary"
+          :loading="enrollingId === String(enrollKeyCourseId)"
+          :disabled="!enrollKeyInput"
+          @click="confirmEnrollWithKey"
+        >
+          {{ t('student.courses.enroll') }}
+        </Button>
       </template>
     </GlassModal>
   </div>
@@ -198,6 +228,7 @@ import FilterBar from '@/components/ui/filters/FilterBar.vue'
 import GlassModal from '@/components/ui/GlassModal.vue'
 import GlassSearchInput from '@/components/ui/inputs/GlassSearchInput.vue'
 import Progress from '@/components/ui/Progress.vue'
+import GlassInput from '@/components/ui/inputs/GlassInput.vue'
 import Badge from '@/components/ui/Badge.vue'
 import { getDifficultyVariant, getCategoryVariant, getTagVariant } from '@/shared/utils/badgeColor'
 import { localizeDifficulty, localizeCategory } from '@/shared/utils/localize'
@@ -212,6 +243,9 @@ const courseStore = useCourseStore();
 // State
 const showCourseStore = ref(false);
 const enrollingId = ref<string | null>(null);
+const enrollKeyModalVisible = ref(false)
+const enrollKeyCourseId = ref<string | null>(null)
+const enrollKeyInput = ref('')
 const searchQuery = ref('');
 const debouncedQuery = ref('');
 const pageLoaded = ref(false);
@@ -309,13 +343,45 @@ const enterCourse = (course: StudentCourse) => {
 };
 
 
+function startEnroll(course: any) {
+  const id = String(course?.id || '')
+  if (!id) return
+  if (course && course.requireEnrollKey) {
+    enrollKeyCourseId.value = id
+    enrollKeyInput.value = ''
+    enrollKeyModalVisible.value = true
+  } else {
+    handleEnroll(id)
+  }
+}
+
 const handleEnroll = async (courseId: string) => {
   enrollingId.value = courseId;
   await courseStore.enrollInCourse(courseId);
-  // After enrollment, refresh the student's course list to reflect the change.
   await studentStore.fetchMyCourses();
   enrollingId.value = null;
 };
+
+function closeEnrollKeyModal() {
+  enrollKeyModalVisible.value = false
+  enrollKeyInput.value = ''
+  enrollKeyCourseId.value = null
+}
+
+const confirmEnrollWithKey = async () => {
+  const id = String(enrollKeyCourseId.value || '')
+  if (!id || !enrollKeyInput.value) return
+  enrollingId.value = id
+  try {
+    await courseStore.enrollInCourse(id, enrollKeyInput.value)
+    await studentStore.fetchMyCourses()
+    enrollKeyModalVisible.value = false
+  } finally {
+    enrollingId.value = null
+    enrollKeyInput.value = ''
+    enrollKeyCourseId.value = null
+  }
+}
 
 const isEnrolled = (courseId: string) => {
   // Assuming myCourses contains course objects with string IDs
