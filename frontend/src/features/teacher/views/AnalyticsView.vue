@@ -55,43 +55,73 @@
         <template #header>
           <h3 class="text-lg font-semibold text-gray-900 dark:text-white">{{ t('teacher.analytics.tables.studentRanking') }}</h3>
         </template>
-          <div v-if="!topStudents.length" class="space-y-4 text-center text-gray-500 dark:text-gray-400">
+          <div v-if="rankingLoading" class="py-6 text-center text-sm text-gray-500 dark:text-gray-400">
+            {{ t('common.loading') }}
+          </div>
+          <div v-else-if="!topStudents.length" class="space-y-4 text-center text-gray-500 dark:text-gray-400">
             {{ t('teacher.analytics.tables.noRanking') }}
           </div>
-          <ul v-else class="divide-y divide-gray-200 dark:divide-gray-700">
-            <li v-for="(s, idx) in topStudents" :key="s.studentId" class="py-3 flex flex-col gap-2">
-              <div class="flex items-start justify-between gap-4">
-                <div class="flex items-start gap-3">
-                  <span class="text-sm w-6 text-right font-semibold text-gray-600 dark:text-gray-300 pt-0.5">{{ idx + 1 }}</span>
-                  <div class="flex flex-col gap-1">
-                    <div class="flex items-center gap-2">
-                      <span class="text-sm font-semibold text-gray-900 dark:text-gray-100">{{ s.studentName }}</span>
-                      <Badge :variant="getRadarBadgeVariant(s.radarClassification)" size="xs" class="px-2 text-xs font-semibold uppercase tracking-wide">
-                        {{ formatRadarBadgeLabel(s.radarClassification) }}
-                      </Badge>
-                    </div>
-                    <div v-if="s.dimensionScores && Object.keys(s.dimensionScores || {}).length" class="grid grid-cols-2 gap-x-3 gap-y-1 text-xs text-gray-600 dark:text-gray-400 mt-1">
-                      <span
-                        v-for="([code, value], didx) in Object.entries(s.dimensionScores || {})"
-                        :key="`${s.studentId}-${code}-${didx}`"
-                        class="inline-flex items-center gap-1 uppercase"
-                      >
-                        <span class="font-medium">{{ formatDimensionLabel(code) }}</span>
-                        <span class="text-gray-400">·</span>
-                        <span>{{ formatRadarValue(value) }}</span>
-                      </span>
-                    </div>
-                    <div v-else class="text-xs text-gray-400 dark:text-gray-500">
-                      {{ t('teacher.students.table.noRadarData') }}
+          <div v-else class="flex flex-col">
+            <ul class="divide-y divide-gray-200 dark:divide-gray-700">
+              <li v-for="(s, idx) in topStudents" :key="s.studentId" class="py-3 flex flex-col gap-2">
+                <div class="flex items-start justify-between gap-4">
+                  <div class="flex items-start gap-3">
+                    <span class="text-sm w-6 text-right font-semibold text-gray-600 dark:text-gray-300 pt-0.5">{{ (rankingPage - 1) * rankingPageSize + idx + 1 }}</span>
+                    <div class="flex flex-col gap-1">
+                      <div class="flex items-center gap-2">
+                        <span class="text-sm font-semibold text-gray-900 dark:text-gray-100">{{ s.studentName }}</span>
+                        <Badge :variant="getRadarBadgeVariant(s.radarClassification)" size="xs" class="px-2 text-xs font-semibold uppercase tracking-wide">
+                          {{ formatRadarBadgeLabel(s.radarClassification) }}
+                        </Badge>
+                      </div>
+                      <div v-if="s.dimensionScores && Object.keys(s.dimensionScores || {}).length" class="grid grid-cols-2 gap-x-3 gap-y-1 text-xs text-gray-600 dark:text-gray-400 mt-1">
+                        <span
+                          v-for="([code, value], didx) in Object.entries(s.dimensionScores || {})"
+                          :key="`${s.studentId}-${code}-${didx}`"
+                          class="inline-flex items-center gap-1 uppercase"
+                        >
+                          <span class="font-medium">{{ formatDimensionLabel(code) }}</span>
+                          <span class="text-gray-400">·</span>
+                          <span>{{ formatRadarValue(value) }}</span>
+                        </span>
+                      </div>
+                      <div v-else class="text-xs text-gray-400 dark:text-gray-500">
+                        {{ t('teacher.students.table.noRadarData') }}
+                      </div>
                     </div>
                   </div>
+                  <div class="flex flex-col items-end text-sm text-gray-700 dark:text-gray-200">
+                    <span class="text-sm font-semibold whitespace-nowrap text-gray-900 dark:text-gray-100">{{ t('teacher.analytics.tables.radarAreaValue', { value: formatRadarArea(s.radarArea) }) }}</span>
+                  </div>
                 </div>
-                <div class="flex flex-col items-end text-sm text-gray-700 dark:text-gray-200">
-                  <span class="text-sm font-semibold whitespace-nowrap text-gray-900 dark:text-gray-100">{{ t('teacher.analytics.tables.radarAreaValue', { value: formatRadarArea(s.radarArea) }) }}</span>
-                </div>
+              </li>
+            </ul>
+            <div class="pt-4 mt-4 border-t border-white/20 dark:border-white/10 flex flex-wrap items-center justify-between gap-3">
+              <div class="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300 whitespace-nowrap">
+                <span>{{ t('teacher.assignments.pagination.perPagePrefix') }}</span>
+                <GlassPopoverSelect
+                  :model-value="rankingPageSize"
+                  :options="rankingPageOptions"
+                  size="sm"
+                  width="80px"
+                  @update:modelValue="handleRankingPageSizeChange"
+                />
+                <span>{{ t('teacher.assignments.pagination.perPageSuffix') }}</span>
               </div>
-            </li>
-          </ul>
+              <div class="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300 whitespace-nowrap">
+                <Button variant="outline" size="sm" class="whitespace-nowrap" @click="handleRankingPrev" :disabled="rankingPage === 1">
+                  {{ t('teacher.assignments.pagination.prev') }}
+                </Button>
+                <span class="text-sm">
+                  {{ t('teacher.assignments.pagination.page', { page: rankingPage }) }}
+                  <span class="ml-1 text-gray-400 dark:text-gray-500">/ {{ t('teacher.assignments.pagination.page', { page: rankingTotalPages }) }}</span>
+                </span>
+                <Button variant="outline" size="sm" class="whitespace-nowrap" @click="handleRankingNext" :disabled="rankingPage >= rankingTotalPages">
+                  {{ t('teacher.assignments.pagination.next') }}
+                </Button>
+              </div>
+            </div>
+          </div>
       </Card>
       </div>
 
@@ -276,6 +306,21 @@ const selectedCourseId = ref<string | null>(null)
 const topStudents = ref<CourseStudentPerformanceItem[]>([])
 const radarStudentPool = ref<CourseStudentPerformanceItem[]>([])
 const studentTotal = ref<number>(0)
+const rankingPage = ref(1)
+const rankingPageSize = ref(10)
+const rankingTotal = ref(0)
+const rankingLoading = ref(false)
+const rankingPageOptions = [
+  { label: '10', value: 10 },
+  { label: '20', value: 20 },
+  { label: '50', value: 50 }
+]
+const rankingTotalPages = computed(() => {
+  const total = Math.max(0, Number(rankingTotal.value || 0))
+  const size = Math.max(1, Number(rankingPageSize.value || 1))
+  const pages = Math.ceil(total / size)
+  return pages > 0 ? pages : 1
+})
 const selectedStudentId = ref<string | null>(null)
 // Compare mode states
 const compareEnabled = ref<boolean>(false)
@@ -318,6 +363,97 @@ function normalizeScores(raw: any): number[] {
     if (!Number.isFinite(num)) return 0
     return Math.round(num * 10) / 10
   })
+}
+
+function normalizePerformanceItems(items: CourseStudentPerformanceItem[] | any[]): CourseStudentPerformanceItem[] {
+  return (items || []).map((i: any) => ({
+    ...i,
+    studentName: resolveUserDisplayName(i) || i?.studentName || i?.nickname || i?.username || `#${i?.studentId}`,
+    dimensionScores: i?.dimensionScores || {},
+  }))
+}
+
+const handleRankingPageSizeChange = (value: any) => {
+  const parsed = Number(value)
+  const normalized = Number.isFinite(parsed) && parsed > 0 ? parsed : 10
+  if (rankingPageSize.value === normalized) return
+  rankingPageSize.value = normalized
+  rankingPage.value = 1
+}
+
+const handleRankingPrev = () => {
+  if (rankingPage.value <= 1) return
+  rankingPage.value -= 1
+}
+
+const handleRankingNext = () => {
+  if (rankingPage.value >= rankingTotalPages.value) return
+  rankingPage.value += 1
+}
+
+const loadStudentRanking = async () => {
+  if (!selectedCourseId.value) {
+    topStudents.value = []
+    rankingTotal.value = 0
+    return
+  }
+  rankingLoading.value = true
+  try {
+    const requestPage = rankingPage.value
+    const requestSize = rankingPageSize.value
+    const payload: any = await teacherApi.getCourseStudentPerformance(selectedCourseId.value, {
+      page: requestPage,
+      size: requestSize,
+      sortBy: 'radar'
+    } as any)
+    if (rankingPage.value !== requestPage || rankingPageSize.value !== requestSize) {
+      return
+    }
+    const items = normalizePerformanceItems(payload?.items ?? [])
+    let resolvedTotal = items.length ?? 0
+    if (Number.isFinite(Number(payload?.total))) {
+      resolvedTotal = Number(payload?.total)
+    }
+    rankingTotal.value = Math.max(0, resolvedTotal)
+    studentTotal.value = rankingTotal.value
+    const effectiveTotalPages = Math.max(1, Math.ceil((rankingTotal.value || 0) / Math.max(1, rankingPageSize.value || 1)))
+    if (rankingPage.value > effectiveTotalPages) {
+      rankingPage.value = effectiveTotalPages
+      return
+    }
+    topStudents.value = items
+  } catch (e: any) {
+    topStudents.value = []
+    rankingTotal.value = 0
+    uiStore.showNotification({
+      type: 'error',
+      title: t('teacher.analytics.messages.refreshFailed'),
+      message: e?.message || t('teacher.analytics.messages.refreshFailedMsg')
+    })
+  } finally {
+    rankingLoading.value = false
+  }
+}
+
+const loadRadarStudentPool = async () => {
+  if (!selectedCourseId.value) {
+    radarStudentPool.value = []
+    return
+  }
+  try {
+    const payload: any = await teacherApi.getCourseStudentPerformance(selectedCourseId.value, {
+      page: 1,
+      size: 1000,
+      sortBy: 'radar'
+    } as any)
+    radarStudentPool.value = normalizePerformanceItems(payload?.items ?? [])
+    if (!rankingTotal.value && Number.isFinite(Number(payload?.total))) {
+      rankingTotal.value = Number(payload?.total)
+      studentTotal.value = Number(payload?.total)
+    }
+  } catch {
+    radarStudentPool.value = []
+  }
 }
 
 // 图表引用
@@ -477,32 +613,26 @@ function scheduleReinitScoreDistribution() {
 
 // 删除课程表现图，保留接口位置以便后续启用
 
-const onCourseChange = () => {
+const onCourseChange = async () => {
   if (!selectedCourseId.value) return
   // 切换课程时重置本地总学生兜底值，避免显示上一个课程数据
   studentTotal.value = 0
+  rankingTotal.value = 0
+  if (rankingPage.value !== 1) rankingPage.value = 1
+  topStudents.value = []
+  radarStudentPool.value = []
   // 同步URL query，统一入口 /teacher/analytics?courseId=
   router.replace({ name: 'TeacherAnalytics', query: { courseId: selectedCourseId.value, studentId: selectedStudentId.value || undefined } })
   teacherStore.fetchCourseAnalytics(selectedCourseId.value)
   teacherStore.fetchClassPerformance(selectedCourseId.value)
   // 初始化权重
   teacherApi.getAbilityWeights(selectedCourseId.value).then((r: any) => { weights.value = r?.weights || r?.data?.weights || null }).catch(() => {})
-  teacherApi.getCourseStudentPerformance(selectedCourseId.value, { page: 1, size: 1000, sortBy: 'radar' } as any)
-    .then((data: any) => {
-      const items = (data?.items ?? []) as CourseStudentPerformanceItem[]
-      const normalized = items.map((i: any) => ({
-        ...i,
-        studentName: resolveUserDisplayName(i) || i.studentName || i.nickname || i.username || `#${i.studentId}`
-      }))
-      radarStudentPool.value = normalized
-      topStudents.value = normalized.slice(0, 10)
-      if (typeof data?.total === 'number') studentTotal.value = data.total
-      const routeStudentId: any = (route.query as any)?.studentId || null
-      if (routeStudentId) {
-        selectedStudentId.value = String(routeStudentId)
-      }
-    })
-    .catch(() => { topStudents.value = []; radarStudentPool.value = [] })
+  await loadStudentRanking()
+  await loadRadarStudentPool()
+  const routeStudentId: any = (route.query as any)?.studentId || null
+  if (routeStudentId) {
+    selectedStudentId.value = String(routeStudentId)
+  }
   nextTick(() => { 
     initCharts()
     loadRadar()
@@ -518,6 +648,12 @@ const onCourseChange = () => {
       .catch(() => { assignmentOptions.value = [] })
   }
 }
+
+watch([rankingPage, rankingPageSize], ([newPage, newSize], [oldPage, oldSize]) => {
+  if (!selectedCourseId.value) return
+  if (newPage === oldPage && newSize === oldSize) return
+  loadStudentRanking()
+})
 
 // 当路由中的 courseId 改变（例如从其它页面跳转）时，自动同步当前课程并刷新数据
 watch(() => route.query.courseId, (cid) => {
@@ -630,7 +766,8 @@ const askAiForAnalytics = () => {
   if (!selectedCourseId.value) return
   const ca = safeCourseAnalytics.value
   const dist: any[] = (teacherStore.classPerformance as any)?.gradeDistribution || []
-  const top = (topStudents.value || []).map(s => ({
+  const rankingSource = radarStudentPool.value.length ? radarStudentPool.value : topStudents.value
+  const top = (rankingSource || []).slice(0, 10).map(s => ({
     studentId: s.studentId,
     studentName: s.studentName,
     averageGrade: s.averageGrade,

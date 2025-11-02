@@ -19,6 +19,7 @@
       </button>
       <!-- local (non-teleport) dropdown -->
       <div v-if="open && !teleport"
+           ref="menuRef"
            class="absolute z-[9999] ui-popover-menu p-1 max-h-96 overflow-y-auto overscroll-contain left-0 w-full top-full mt-1"
            :class="tintClass">
         <button v-for="(opt, idx) in options"
@@ -41,7 +42,8 @@
   </div>
   <teleport to="body" v-if="teleport">
     <div v-if="open"
-         class="fixed z-[10000] ui-popover-menu p-1 max-h-96 overflow-y-auto overscroll-contain"
+         ref="menuRef"
+         class="absolute z-[10000] ui-popover-menu p-1 max-h-96 overflow-y-auto overscroll-contain"
          :class="tintClass"
          :style="{ left: pos.left + 'px', top: pos.top + 'px', width: pos.width + 'px' }"
          @keydown.stop.prevent="onKeydown"
@@ -66,7 +68,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, onBeforeUnmount, watch, CSSProperties } from 'vue'
+import { ref, computed, onMounted, onBeforeUnmount, watch, CSSProperties, nextTick } from 'vue'
 
 interface Option { label: string; value: string | number; disabled?: boolean }
 interface Props {
@@ -101,8 +103,11 @@ const rootRef = ref<HTMLElement | null>(null)
 const open = ref(false)
 const pos = ref({ left: 0, top: 0, width: 280 })
 const PANEL_MAX_HEIGHT = 420 // px (matches max-h-96)
+const VIEWPORT_MARGIN = 8
+const MENU_GAP = 6
 const activeIndex = ref(0)
 let scrollParents: HTMLElement[] = []
+const menuRef = ref<HTMLElement | null>(null)
 
 const tintClass = computed(() => props.tint ? `glass-tint-${props.tint}` : '')
 
@@ -126,22 +131,49 @@ function isSelected(v: string | number) {
   return String(v) === String(props.modelValue ?? '')
 }
 
+function getPanelHeight(): number {
+  if (menuRef.value) {
+    const h = menuRef.value.offsetHeight || 0
+    if (h > 0) {
+      return Math.min(h, PANEL_MAX_HEIGHT)
+    }
+  }
+  const viewportH = window.innerHeight || document.documentElement.clientHeight || 0
+  return Math.min(PANEL_MAX_HEIGHT, Math.max(0, viewportH - VIEWPORT_MARGIN * 2))
+}
+
 function computePos() {
   const el = rootRef.value
   if (!el) return
   const rect = el.getBoundingClientRect()
   const viewportH = window.innerHeight || document.documentElement.clientHeight || 0
   const viewportW = window.innerWidth || document.documentElement.clientWidth || 0
-  // Open downward if enough room; otherwise open upward with a safe margin
-  const downTop = rect.bottom + 6
-  const upTop = Math.max(8, rect.top - PANEL_MAX_HEIGHT - 6)
-  const spaceBelow = Math.max(0, viewportH - rect.bottom - 6)
-  const openDown = spaceBelow >= PANEL_MAX_HEIGHT / 1.5 // allow partial but prefer up if too cramped
-  const top = openDown ? downTop : upTop
-  // clamp left within viewport
-  const desiredLeft = rect.left
-  const maxLeft = Math.max(8, viewportW - rect.width - 8)
-  const left = Math.min(Math.max(8, desiredLeft), maxLeft)
+  const scrollY = window.scrollY || window.pageYOffset || document.documentElement.scrollTop || 0
+  const scrollX = window.scrollX || window.pageXOffset || document.documentElement.scrollLeft || 0
+  const panelHeight = getPanelHeight()
+  const downSpace = Math.max(0, viewportH - rect.bottom - MENU_GAP)
+  const upSpace = Math.max(0, rect.top - MENU_GAP)
+  let openDown = true
+  if (downSpace < panelHeight && upSpace > downSpace) {
+    openDown = false
+  }
+  const desiredLeft = rect.left + scrollX
+  const minLeft = scrollX + VIEWPORT_MARGIN
+  const maxLeft = Math.max(minLeft, scrollX + viewportW - rect.width - VIEWPORT_MARGIN)
+  const left = Math.min(Math.max(desiredLeft, minLeft), maxLeft)
+  let top: number
+  if (openDown) {
+    top = rect.bottom + scrollY + MENU_GAP
+    const maxTop = scrollY + viewportH - panelHeight - VIEWPORT_MARGIN
+    if (top > maxTop) {
+      top = Math.max(scrollY + VIEWPORT_MARGIN, maxTop)
+    }
+  } else {
+    top = rect.top + scrollY - panelHeight - MENU_GAP
+    if (top < scrollY + VIEWPORT_MARGIN) {
+      top = scrollY + VIEWPORT_MARGIN
+    }
+  }
   pos.value = { left, top, width: rect.width }
 }
 
@@ -154,6 +186,7 @@ function openMenu() {
   activeIndex.value = i >= 0 ? i : 0
   // attach scroll listeners to scrollable ancestors so popover follows within scrollable containers
   attachScrollParents()
+  nextTick(() => computePos())
 }
 
 function closeMenu() {

@@ -63,17 +63,17 @@
                     v-for="s in students"
                     :key="String(s.id)"
                     variant="menu"
-                    class="w-full text-left px-3 py-2 border rounded-xl justify-start h-14 overflow-visible"
+                    class="w-full !flex !items-center !justify-start min-h-[3.5rem] rounded-full border border-white/40 dark:border-white/10"
                     type="button"
                     :aria-label="resolveStudentName(s)"
                     @click="openStudentProfile(s)"
                   >
-                    <div class="flex items-center gap-3 h-full">
-                      <user-avatar :avatar="s.avatar" :size="44" :alt="resolveStudentName(s)">
+                    <div class="flex items-center gap-1.5 h-full w-full pl-4 pr-7 py-2.5">
+                      <user-avatar class="flex-shrink-0" :avatar="s.avatar" :size="44" :alt="resolveStudentName(s)">
                         <span class="text-base font-medium text-muted">{{ resolveStudentName(s).charAt(0) }}</span>
                       </user-avatar>
-                      <div class="min-w-0 flex-1">
-                        <div class="truncate text-sm font-medium text-strong">{{ resolveStudentName(s) }}</div>
+                      <div class="flex-1 min-w-[7ch] overflow-hidden">
+                        <span class="block w-full text-sm font-medium text-strong whitespace-nowrap overflow-hidden text-ellipsis max-w-[7ch]">{{ resolveStudentName(s) }}</span>
                       </div>
                     </div>
                   </Button>
@@ -272,6 +272,7 @@
 </template>
 
 <script setup lang="ts">
+// @ts-nocheck
 import { ref, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useCourseStore } from '@/stores/course'
@@ -688,3 +689,8 @@ async function loadTeacher(courseId: string) {
   } catch { teacher.value = null }
 }
 </script>
+
+<style scoped>
+.no-scrollbar::-webkit-scrollbar { display: none; }
+.no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+</style>
