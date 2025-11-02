@@ -526,7 +526,9 @@
             },
 			"tables": {
 				"studentRanking": "学生表现排行",
-				"noRanking": "暂无学生排行数据"
+				"noRanking": "暂无学生排行数据",
+				"radarAreaValue": "面积 {value}",
+				"averageGradeShort": "成绩 {value}"
 			},
 			"messages": {
 				"chooseCourse": "请选择课程",
@@ -629,6 +631,7 @@
 					"inactive": "不活跃"
 				},
 				"sort": {
+					"radar": "按雷达面积排序",
 					"name": "按姓名排序",
 					"progress": "按进度排序",
 					"grade": "按成绩排序",
@@ -668,8 +671,9 @@
 				"placeholder": "输入消息..."
 			},
 			"table": {
-				"student": "学生信息",
-				"progress": "学习进度",
+				"student": "学生",
+				"progress": "进度",
+				"radar": "五维能力",
 				"grade": "成绩",
 				"activity": "活跃度",
 				"lastActive": "最后活动",
@@ -678,12 +682,12 @@
 					"excellent": "优秀",
 					"good": "良好",
 					"average": "中等",
-					"improve": "需提高",
+					"improve": "待提升",
 					"unknown": "未知"
 				},
-				"studyHours": "{hours}小时/周",
-				"view": "详情",
-				"message": "聊天",
+				"studyHours": "每周 {hours} 小时",
+				"view": "查看",
+				"message": "私信",
 				"viewGrades": "查看成绩",
 				"reset": "重置进度",
 				"export": "导出数据",
@@ -691,6 +695,7 @@
 				"confirmReset": "确定要重置该学生在本课程的学习进度吗？",
 				"resetSuccess": "进度已重置",
 				"resetFailed": "重置失败",
+				"noRadarData": "暂无能力数据",
 				"list": "学生列表",
 				"total": "共 {count} 名学生",
 				"empty": "暂无资料",
@@ -702,7 +707,16 @@
 				"removeSuccess": "移除成功",
 				"removeSuccessMsg": "学生已从课程中移除",
 				"removeFail": "移除失败",
-				"removeFailMsg": "移除学生时发生错误"
+				"removeFailMsg": "移除学生时发生错误",
+				"radarAreaLabel": "面积·{value}"
+			},
+			"radar": {
+				"classification": {
+					"A": "综合优秀",
+					"B": "能力强、需提升成绩",
+					"C": "成绩好、需加强能力",
+					"D": "需要重点关注"
+				}
 			},
 			"export": {
 				"failTitle": "导出失败",

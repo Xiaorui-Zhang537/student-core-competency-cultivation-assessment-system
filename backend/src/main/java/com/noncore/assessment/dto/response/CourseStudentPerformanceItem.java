@@ -5,6 +5,8 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.Map;
+
 @Data
 @Builder
 @NoArgsConstructor
@@ -21,5 +23,8 @@ public class CourseStudentPerformanceItem {
     private String activityLevel; // high/medium/low/inactive
     private Integer studyTimePerWeek; // hours
     private String lastActiveAt;
+    private Map<String, Double> dimensionScores;
+    private Double radarArea;
+    private String radarClassification;
 }
 

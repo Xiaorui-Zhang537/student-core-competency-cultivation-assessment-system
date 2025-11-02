@@ -59,12 +59,37 @@
             {{ t('teacher.analytics.tables.noRanking') }}
           </div>
           <ul v-else class="divide-y divide-gray-200 dark:divide-gray-700">
-            <li v-for="(s, idx) in topStudents" :key="s.studentId" class="py-2 flex items-center justify-between">
-              <div class="flex items-center gap-3">
-                <span class="text-sm w-6 text-center font-semibold text-gray-600 dark:text-gray-300">{{ idx + 1 }}</span>
-                <span class="text-sm text-gray-900 dark:text-gray-100">{{ s.studentName }}</span>
+            <li v-for="(s, idx) in topStudents" :key="s.studentId" class="py-3 flex flex-col gap-2">
+              <div class="flex items-start justify-between gap-4">
+                <div class="flex items-start gap-3">
+                  <span class="text-sm w-6 text-right font-semibold text-gray-600 dark:text-gray-300 pt-0.5">{{ idx + 1 }}</span>
+                  <div class="flex flex-col gap-1">
+                    <div class="flex items-center gap-2">
+                      <span class="text-sm font-semibold text-gray-900 dark:text-gray-100">{{ s.studentName }}</span>
+                      <Badge :variant="getRadarBadgeVariant(s.radarClassification)" size="xs" class="px-2 text-xs font-semibold uppercase tracking-wide">
+                        {{ formatRadarBadgeLabel(s.radarClassification) }}
+                      </Badge>
+                    </div>
+                    <div v-if="s.dimensionScores && Object.keys(s.dimensionScores || {}).length" class="grid grid-cols-2 gap-x-3 gap-y-1 text-xs text-gray-600 dark:text-gray-400 mt-1">
+                      <span
+                        v-for="([code, value], didx) in Object.entries(s.dimensionScores || {})"
+                        :key="`${s.studentId}-${code}-${didx}`"
+                        class="inline-flex items-center gap-1 uppercase"
+                      >
+                        <span class="font-medium">{{ formatDimensionLabel(code) }}</span>
+                        <span class="text-gray-400">·</span>
+                        <span>{{ formatRadarValue(value) }}</span>
+                      </span>
+                    </div>
+                    <div v-else class="text-xs text-gray-400 dark:text-gray-500">
+                      {{ t('teacher.students.table.noRadarData') }}
+                    </div>
+                  </div>
+                </div>
+                <div class="flex flex-col items-end text-sm text-gray-700 dark:text-gray-200">
+                  <span class="text-sm font-semibold whitespace-nowrap text-gray-900 dark:text-gray-100">{{ t('teacher.analytics.tables.radarAreaValue', { value: formatRadarArea(s.radarArea) }) }}</span>
+                </div>
               </div>
-              <div class="text-sm text-gray-700 dark:text-gray-200">{{ (s.averageGrade ?? 0).toFixed(1) }}</div>
             </li>
           </ul>
       </Card>
@@ -249,6 +274,7 @@ const { t, n, locale } = useI18n()
 // 状态
 const selectedCourseId = ref<string | null>(null)
 const topStudents = ref<CourseStudentPerformanceItem[]>([])
+const radarStudentPool = ref<CourseStudentPerformanceItem[]>([])
 const studentTotal = ref<number>(0)
 const selectedStudentId = ref<string | null>(null)
 // Compare mode states
@@ -313,7 +339,10 @@ const teacherCourses = computed(() => {
 })
 
 const courseSelectOptions = computed(() => teacherCourses.value.map((c: any) => ({ label: String(c.title || ''), value: String(c.id) })))
-const studentSelectOptions = computed(() => [{ label: t('teacher.analytics.charts.selectStudent') as string, value: null as any }, ...topStudents.value.map((s: CourseStudentPerformanceItem) => ({ label: s.studentName, value: String(s.studentId) }))])
+const studentSelectOptions = computed(() => {
+  const base = radarStudentPool.value.length ? radarStudentPool.value : topStudents.value
+  return [{ label: t('teacher.analytics.charts.selectStudent') as string, value: null as any }, ...base.map((s: CourseStudentPerformanceItem) => ({ label: s.studentName, value: String(s.studentId) }))]
+})
 const assignmentSelectOptions = computed(() => assignmentOptions.value.map((a: { id: string; title: string }) => ({ label: a.title, value: String(a.id) })))
 
 const route = useRoute()
@@ -458,23 +487,22 @@ const onCourseChange = () => {
   teacherStore.fetchClassPerformance(selectedCourseId.value)
   // 初始化权重
   teacherApi.getAbilityWeights(selectedCourseId.value).then((r: any) => { weights.value = r?.weights || r?.data?.weights || null }).catch(() => {})
-  // 获取学生表现排行（前5名，按成绩）
-  // 获取课程全部学生，用于雷达图下拉选择任意学生
-  teacherApi.getAllCourseStudentsBasic(selectedCourseId.value)
+  teacherApi.getCourseStudentPerformance(selectedCourseId.value, { page: 1, size: 1000, sortBy: 'radar' } as any)
     .then((data: any) => {
       const items = (data?.items ?? []) as CourseStudentPerformanceItem[]
-      topStudents.value = items.map((i: any) => ({
+      const normalized = items.map((i: any) => ({
         ...i,
         studentName: resolveUserDisplayName(i) || i.studentName || i.nickname || i.username || `#${i.studentId}`
       }))
+      radarStudentPool.value = normalized
+      topStudents.value = normalized.slice(0, 10)
       if (typeof data?.total === 'number') studentTotal.value = data.total
-      // 若路由携带 studentId，则自动选中该学生
       const routeStudentId: any = (route.query as any)?.studentId || null
       if (routeStudentId) {
         selectedStudentId.value = String(routeStudentId)
       }
     })
-    .catch(() => { topStudents.value = [] })
+    .catch(() => { topStudents.value = []; radarStudentPool.value = [] })
   nextTick(() => { 
     initCharts()
     loadRadar()
@@ -622,6 +650,36 @@ const askAiForAnalytics = () => {
   }
   const q = t('teacher.analytics.messages.aiPromptHeader') + "\n" + JSON.stringify(payload, null, 2)
   router.push({ path: '/teacher/assistant', query: { q } })
+}
+
+const formatRadarArea = (area?: number) => {
+  if (!Number.isFinite(Number(area))) return '--'
+  return `${Number(area).toFixed(1)}%`
+}
+
+const getRadarBadgeVariant = (classification?: string) => {
+  switch ((classification || '').toUpperCase()) {
+    case 'A': return 'success'
+    case 'B': return 'warning'
+    case 'C': return 'info'
+    default: return 'danger'
+  }
+}
+
+const formatRadarBadgeLabel = (classification?: string) => {
+  const key = (classification || 'D').toUpperCase() as 'A' | 'B' | 'C' | 'D'
+  const desc = t(`teacher.students.radar.classification.${key}`)
+  return `${key} · ${desc}`
+}
+
+const formatDimensionLabel = (code: string) => {
+  const label = t(`shared.radarLegend.dimensions.${code}.title`) as any
+  return label || code
+}
+
+const formatRadarValue = (value?: number) => {
+  if (!Number.isFinite(Number(value))) return '--'
+  return Number(value).toFixed(1)
 }
 
 const loadRadar = async () => {

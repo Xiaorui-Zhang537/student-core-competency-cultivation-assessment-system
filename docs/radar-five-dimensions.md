@@ -31,6 +31,20 @@
 - 雷达图组件 `RadarChart.vue` 以 `indicators.max=100` 与 `series` 百分制值渲染；支持 Tooltip。
 - 教师端 `AnalyticsView.vue`、学生端 `AnalysisView.vue` 从接口 `dimensions` 数组构建指标，顺序保持与后端一致。
 
+### 发布兜底策略（打回重做/补发场景，v1.2+）
+
+- 后端：`GradeServiceImpl.publishGrade` 在成绩发布成功后，兜底读取该上下文最近一份 AI 报告（优先 `submissionId`，其次 `assignmentId`，再次 `courseId`），解析 `overall.dimension_averages`（0–5），按如下映射写入四维到 `ability_assessments`：
+  - `MORAL_COGNITION` ← `moral_reasoning`
+  - `LEARNING_ATTITUDE` ← `attitude`
+  - `LEARNING_ABILITY` ← `ability`
+  - `LEARNING_METHOD` ← `strategy`
+  - `assessment_type='assignment'`，`related_id=assignment.id`，`assessed_at=NOW()`，`max_score=5`
+- 前端：教师发布时若本次会话无 `lastAiNormalized`，会回退请求“最近AI报告”并同样写入四维；成绩维度（`ACADEMIC_GRADE`）写入时 `relatedId` 与四维保持一致使用 `assignment.id`。
+- 2025-11-01 更新：分析服务新增两级兜底。若 `ability_assessments` 在查询区间内缺失四维，则先回退至 `student_abilities` 最新快照填充，再尝试解析最近一份 AI 能力报告 (`ability_reports`) 的 `overall.dimension_averages`，确保教师端与学生端雷达图都能呈现完整五维数据。
+- 2025-11-01 后续修复：若 AI 报告仅在 `dimension_scores` 字段保留四维均分（或使用旧版中文键名/0-1、0-5 刻度），分析服务会自动将其转换为百分制补齐四维，避免因缺失 `trendsAnalysis` 导致雷达图仅显示学习成绩。
+- 2025-11-02 修复：默认统计/班级平均统一改为“学生个人平均的平均值”。学生维度分数=课程下所有作业的维度分平均；班级维度分=课程下所有学生维度平均的平均，避免单个学生高频作业产生权重偏差。作业对比模式会在所选作业集合内应用同样的平均策略。
+- 2025-11-02 新增：教师端“学生表现排行”根据五维雷达面积（百分制）由大到小排序，面积计算基于最新发布成绩均值。系统按照四维/成绩高低组合自动打上 `A/B/C/D` 徽章：A=四维与成绩均高，B=四维高但成绩低，C=四维低但成绩高，D=四维与成绩均低。
+
 ### 新增：中英图例说明（v1.2）
 
 - 共享组件：`frontend/src/shared/views/AbilityRadarLegend.vue`
@@ -52,6 +66,7 @@
 
 ## 兼容性与历史数据
 - 历史写入若使用了 `submission.id` 或 `grade.id`，课程过滤下不会计入四维均分。可视需要通过一次性脚本迁移 `ability_assessments.related_id` → 对应的 `assignment.id`。
+- 若雷达图仍仅显示“学习成绩”维度，请确认学生存在有效的 `student_abilities` 快照或最新 AI 报告；两者皆缺失时需要补录能力评估或生成 AI 报告。系统会在补充数据后自动恢复展示。
 
 ## 五维能力雷达数据规范（v1.1）
 

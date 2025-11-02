@@ -56,6 +56,9 @@ export interface CourseStudentPerformanceItem {
   studyTimePerWeek?: number;
   lastActiveAt?: string;
   joinedAt?: string;
+  dimensionScores?: Record<string, number>;
+  radarArea?: number;
+  radarClassification?: string;
 }
 
 export interface CourseStudentPerformanceResponse {

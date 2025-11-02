@@ -524,7 +524,17 @@
             },
 			"tables": {
 				"studentRanking": "Student Ranking",
-				"noRanking": "No ranking data"
+				"noRanking": "No ranking data",
+				"radarAreaValue": "Area {value}",
+				"averageGradeShort": "Grade {value}"
+			},
+			"radar": {
+				"classification": {
+					"A": "Balanced excellence",
+					"B": "Strong abilities, lower grades",
+					"C": "High grades, weaker abilities",
+					"D": "Needs attention"
+				}
 			},
 			"messages": {
 				"chooseCourse": "Please select a course",
@@ -626,6 +636,7 @@
 					"inactive": "Inactive"
 				},
 				"sort": {
+					"radar": "Sort by radar area",
 					"name": "Sort by name",
 					"progress": "Sort by progress",
 					"grade": "Sort by grade",
@@ -667,6 +678,7 @@
 			"table": {
 				"student": "Student",
 				"progress": "Progress",
+				"radar": "Radar",
 				"grade": "Grade",
 				"activity": "Activity",
 				"lastActive": "Last Active",
@@ -685,6 +697,7 @@
 				"reset": "Reset Progress",
 				"export": "Export",
 				"remove": "Remove",
+				"noRadarData": "No radar data",
 				"list": "Students",
 				"total": "Total {count}",
 				"empty": "No data",
@@ -696,7 +709,16 @@
 				"removeSuccess": "Removed",
 				"removeSuccessMsg": "Student removed",
 				"removeFail": "Remove failed",
-				"removeFailMsg": "Error while removing"
+				"removeFailMsg": "Error while removing",
+				"radarAreaLabel": "Area · {value}"
+			},
+			"radar": {
+				"classification": {
+					"A": "Balanced excellence",
+					"B": "Strong abilities, lower grades",
+					"C": "High grades, weaker abilities",
+					"D": "Needs attention"
+				}
 			},
 			"export": {
 				"failTitle": "Export failed",

@@ -1,5 +1,7 @@
 package com.noncore.assessment.service.impl;
 
+import com.noncore.assessment.dto.request.AbilityRadarQuery;
+import com.noncore.assessment.dto.response.AbilityRadarResponse;
 import com.noncore.assessment.dto.response.AssignmentAnalyticsResponse;
 import com.noncore.assessment.dto.response.ClassPerformanceResponse;
 import com.noncore.assessment.dto.response.CourseAnalyticsResponse;
@@ -12,6 +14,7 @@ import com.noncore.assessment.entity.User;
 import com.noncore.assessment.exception.BusinessException;
 import com.noncore.assessment.exception.ErrorCode;
 import com.noncore.assessment.mapper.*;
+import com.noncore.assessment.service.AbilityAnalyticsService;
 import com.noncore.assessment.service.AnalyticsQueryService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -20,8 +23,12 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -42,8 +49,22 @@ public class AnalyticsQueryServiceImpl implements AnalyticsQueryService {
     private final LessonMapper lessonMapper;
     private final EnrollmentMapper enrollmentMapper;
     private final SubmissionMapper submissionMapper;
+    private final AbilityAnalyticsService abilityAnalyticsService;
 
-    public AnalyticsQueryServiceImpl(UserMapper userMapper, CourseMapper courseMapper, AssignmentMapper assignmentMapper, GradeMapper gradeMapper, LessonProgressMapper lessonProgressMapper, LessonMapper lessonMapper, EnrollmentMapper enrollmentMapper, SubmissionMapper submissionMapper) {
+    private static final Map<String, String> DIMENSION_NAME_TO_CODE;
+    private static final double HIGH_THRESHOLD = 75.0;
+
+    static {
+        Map<String, String> map = new HashMap<>();
+        map.put("道德认知", "MORAL_COGNITION");
+        map.put("学习态度", "LEARNING_ATTITUDE");
+        map.put("学习能力", "LEARNING_ABILITY");
+        map.put("学习方法", "LEARNING_METHOD");
+        map.put("学习成绩", "ACADEMIC_GRADE");
+        DIMENSION_NAME_TO_CODE = Collections.unmodifiableMap(map);
+    }
+
+    public AnalyticsQueryServiceImpl(UserMapper userMapper, CourseMapper courseMapper, AssignmentMapper assignmentMapper, GradeMapper gradeMapper, LessonProgressMapper lessonProgressMapper, LessonMapper lessonMapper, EnrollmentMapper enrollmentMapper, SubmissionMapper submissionMapper, AbilityAnalyticsService abilityAnalyticsService) {
         this.userMapper = userMapper;
         this.courseMapper = courseMapper;
         this.assignmentMapper = assignmentMapper;
@@ -52,6 +73,7 @@ public class AnalyticsQueryServiceImpl implements AnalyticsQueryService {
         this.lessonMapper = lessonMapper;
         this.enrollmentMapper = enrollmentMapper;
         this.submissionMapper = submissionMapper;
+        this.abilityAnalyticsService = abilityAnalyticsService;
     }
 
     // Removed legacy single-student progress report implementation
@@ -231,10 +253,33 @@ public class AnalyticsQueryServiceImpl implements AnalyticsQueryService {
             if (enrollmentLastAccess != null && (lastActiveAt == null || enrollmentLastAccess.isAfter(lastActiveAt))) {
                 lastActiveAt = enrollmentLastAccess;
             }
+            Map<String, Double> dimensionScores = Collections.emptyMap();
+            double radarArea = 0.0;
+            String radarClassification = "D";
+
+            try {
+                AbilityRadarQuery radarQuery = new AbilityRadarQuery();
+                radarQuery.setCourseId(courseId);
+                radarQuery.setStudentId(s.getId());
+                AbilityRadarResponse radarResponse = abilityAnalyticsService.getRadar(radarQuery, teacherId);
+                dimensionScores = buildDimensionScoreMap(radarResponse);
+                if (!dimensionScores.isEmpty()) {
+                    List<Double> radarValues = new ArrayList<>(dimensionScores.values());
+                    radarArea = calculateRadarAreaPercent(radarValues);
+                    radarClassification = classifyRadar(radarValues);
+                    Double radarGrade = dimensionScores.get("ACADEMIC_GRADE");
+                    if (radarGrade != null) {
+                        averageScore = radarGrade;
+                    }
+                }
+            } catch (Exception e) {
+                logger.warn("生成学生雷达评分失败 studentId={}, courseId={}", s.getId(), courseId, e);
+            }
+
             CourseStudentPerformanceItem item = CourseStudentPerformanceItem.builder()
                     .studentId(s.getId())
-                    .studentName(s.getUsername())
-                    .studentNo(s.getUsername())
+                    .studentName(resolveDisplayName(s))
+                    .studentNo(resolveStudentIdentifier(s))
                     .avatar(s.getAvatar())
                     .progress(lessonProgressMapper.calculateCourseCompletionRate(s.getId(), courseId) != null ?
                             lessonProgressMapper.calculateCourseCompletionRate(s.getId(), courseId).intValue() : 0)
@@ -244,6 +289,9 @@ public class AnalyticsQueryServiceImpl implements AnalyticsQueryService {
                     .activityLevel(activity)
                     .studyTimePerWeek(weekly / 60)
                     .lastActiveAt(lastActiveAt != null ? lastActiveAt.toString() : null)
+                    .dimensionScores(dimensionScores)
+                    .radarArea(radarArea)
+                    .radarClassification(radarClassification)
                     .build();
             items.add(item);
         }
@@ -288,28 +336,37 @@ public class AnalyticsQueryServiceImpl implements AnalyticsQueryService {
             }).toList();
         }
 
-        // 排序扩展：grade | progress | lastActive | activity | name(默认)
-        if ("grade".equalsIgnoreCase(sortBy)) {
+        String effectiveSort = (sortBy == null || sortBy.isBlank()) ? "radar" : sortBy;
+
+        if ("radar".equalsIgnoreCase(effectiveSort)) {
+            items = items.stream().sorted((a, b) -> Double.compare(
+                    b.getRadarArea() == null ? 0.0 : b.getRadarArea(),
+                    a.getRadarArea() == null ? 0.0 : a.getRadarArea())).toList();
+        } else if ("grade".equalsIgnoreCase(effectiveSort)) {
             items = items.stream().sorted((a, b) -> Double.compare(b.getAverageGrade() == null ? 0 : b.getAverageGrade(), a.getAverageGrade() == null ? 0 : a.getAverageGrade())).toList();
-        } else if ("progress".equalsIgnoreCase(sortBy)) {
+        } else if ("progress".equalsIgnoreCase(effectiveSort)) {
             items = items.stream().sorted((a, b) -> Integer.compare(b.getProgress() == null ? 0 : b.getProgress(), a.getProgress() == null ? 0 : a.getProgress())).toList();
-        } else if ("lastActive".equalsIgnoreCase(sortBy)) {
+        } else if ("lastActive".equalsIgnoreCase(effectiveSort)) {
             java.util.function.Function<String, Long> toEpoch = (s) -> {
                 if (s == null || s.isBlank()) return 0L;
                 try { return java.time.LocalDateTime.parse(s).atZone(java.time.ZoneId.systemDefault()).toInstant().toEpochMilli(); } catch (Exception e) { return 0L; }
             };
             items = items.stream().sorted((a, b) -> Long.compare(toEpoch.apply(b.getLastActiveAt()), toEpoch.apply(a.getLastActiveAt()))).toList();
-        } else if ("activity".equalsIgnoreCase(sortBy)) {
+        } else if ("activity".equalsIgnoreCase(effectiveSort)) {
             java.util.Map<String, Integer> rank = new java.util.HashMap<>();
             rank.put("high", 4); rank.put("medium", 3); rank.put("low", 2); rank.put("inactive", 1);
             java.util.function.Function<String, Integer> score = (lv) -> rank.getOrDefault(lv == null ? "inactive" : lv.toLowerCase(), 1);
             items = items.stream().sorted((a, b) -> Integer.compare(score.apply(b.getActivityLevel()), score.apply(a.getActivityLevel()))).toList();
-        } else {
+        } else if ("name".equalsIgnoreCase(effectiveSort)) {
             items = items.stream().sorted((a, b) -> {
                 String an = a.getStudentName() == null ? "" : a.getStudentName();
                 String bn = b.getStudentName() == null ? "" : b.getStudentName();
                 return an.compareToIgnoreCase(bn);
             }).toList();
+        } else {
+            items = items.stream().sorted((a, b) -> Double.compare(
+                    b.getRadarArea() == null ? 0.0 : b.getRadarArea(),
+                    a.getRadarArea() == null ? 0.0 : a.getRadarArea())).toList();
         }
 
         // 分页
@@ -348,6 +405,154 @@ public class AnalyticsQueryServiceImpl implements AnalyticsQueryService {
                 .build();
     }
 
+    private String resolveDisplayName(User user) {
+        if (user == null) {
+            return "";
+        }
+        StringBuilder sb = new StringBuilder();
+        if (hasText(user.getLastName())) {
+            sb.append(user.getLastName());
+        }
+        if (hasText(user.getFirstName())) {
+            sb.append(user.getFirstName());
+        }
+        if (sb.length() > 0) {
+            return sb.toString();
+        }
+        if (hasText(user.getNickname())) {
+            return user.getNickname();
+        }
+        if (hasText(user.getUsername())) {
+            return user.getUsername();
+        }
+        if (user.getId() != null) {
+            return "#" + user.getId();
+        }
+        return "";
+    }
+
+    private String resolveStudentIdentifier(User user) {
+        if (user == null) {
+            return "";
+        }
+        if (hasText(user.getStudentNo())) {
+            return user.getStudentNo();
+        }
+        if (hasText(user.getUsername())) {
+            return user.getUsername();
+        }
+        if (user.getId() != null) {
+            return String.valueOf(user.getId());
+        }
+        return "";
+    }
+
+    private Map<String, Double> buildDimensionScoreMap(AbilityRadarResponse radarResponse) {
+        if (radarResponse == null || radarResponse.getDimensions() == null) {
+            return Collections.emptyMap();
+        }
+        List<String> dimensions = radarResponse.getDimensions();
+        List<Double> scores = radarResponse.getStudentScores();
+        Map<String, Double> map = new LinkedHashMap<>();
+        for (int i = 0; i < dimensions.size(); i++) {
+            String name = dimensions.get(i);
+            String code = DIMENSION_NAME_TO_CODE.getOrDefault(name, name);
+            Double raw = (scores != null && i < scores.size()) ? scores.get(i) : null;
+            map.put(code, Math.round(safeScore(raw) * 10.0) / 10.0);
+        }
+        return map;
+    }
+
+    private double calculateRadarAreaPercent(List<Double> scores) {
+        if (scores == null || scores.size() < 3) {
+            return 0.0;
+        }
+        int n = scores.size();
+        double angle = (2 * Math.PI) / n;
+        double sum = 0.0;
+        for (int i = 0; i < n; i++) {
+            double r1 = safeScore(scores.get(i)) / 100.0;
+            double r2 = safeScore(scores.get((i + 1) % n)) / 100.0;
+            sum += r1 * r2 * Math.sin(angle);
+        }
+        double area = 0.5 * sum;
+        double maxArea = 0.5 * n * Math.sin(angle);
+        if (maxArea <= 0) {
+            return 0.0;
+        }
+        double percent = (area / maxArea) * 100.0;
+        if (percent < 0) percent = 0;
+        if (percent > 100) percent = 100;
+        return Math.round(percent * 10.0) / 10.0;
+    }
+
+    private String classifyRadar(List<Double> scores) {
+        if (scores == null || scores.isEmpty()) {
+            return "D";
+        }
+        int n = scores.size();
+        if (n == 0) {
+            return "D";
+        }
+        double gradeScore = safeScore(scores.get(n - 1));
+        double nonGradeSum = 0.0;
+        int count = 0;
+        for (int i = 0; i < n - 1; i++) {
+            nonGradeSum += safeScore(scores.get(i));
+            count++;
+        }
+        double nonGradeAvg = count == 0 ? 0.0 : nonGradeSum / count;
+        boolean abilityHigh = nonGradeAvg >= HIGH_THRESHOLD;
+        boolean gradeHigh = gradeScore >= HIGH_THRESHOLD;
+        if (abilityHigh && gradeHigh) return "A";
+        if (abilityHigh) return "B";
+        if (gradeHigh) return "C";
+        return "D";
+    }
+
+    private double safeScore(Double value) {
+        return value == null ? 0.0 : value;
+    }
+
+    private boolean shouldReplace(ScoreEntry existing, LocalDateTime assessedAt) {
+        if (existing == null) {
+            return true;
+        }
+        if (assessedAt == null) {
+            return existing.assessedAt == null;
+        }
+        if (existing.assessedAt == null) {
+            return true;
+        }
+        return !assessedAt.isBefore(existing.assessedAt);
+    }
+
+    private LocalDateTime toDateTime(Object value) {
+        if (value == null) {
+            return null;
+        }
+        if (value instanceof LocalDateTime dt) {
+            return dt;
+        }
+        if (value instanceof java.sql.Timestamp ts) {
+            return ts.toLocalDateTime();
+        }
+        if (value instanceof java.util.Date date) {
+            return LocalDateTime.ofInstant(date.toInstant(), ZoneId.systemDefault());
+        }
+        return null;
+    }
+
+    private static final class ScoreEntry {
+        final double value;
+        final LocalDateTime assessedAt;
+
+        ScoreEntry(double value, LocalDateTime assessedAt) {
+            this.value = value;
+            this.assessedAt = assessedAt;
+        }
+    }
+
     private List<Map<String, Object>> generateTimeSeriesData(String timeRange) {
         List<Map<String, Object>> data = new ArrayList<>();
         for (int i = 0; i < 7; i++) {
@@ -366,5 +571,9 @@ public class AnalyticsQueryServiceImpl implements AnalyticsQueryService {
         stats.put("assignmentsSubmitted", 45);
         stats.put("averageSessionTime", 25); // minutes
         return stats;
+    }
+
+    private boolean hasText(String value) {
+        return value != null && !value.trim().isEmpty();
     }
 } 

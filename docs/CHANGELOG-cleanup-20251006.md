@@ -1,3 +1,20 @@
+# 雷达图兜底修复（2025-11-01）
+
+## 版本同步
+- 后端版本：1.0.4（`backend/pom.xml`）
+- 前端版本：0.3.3（`frontend/package.json`）
+
+## 功能与数据修复
+- 后端 `AbilityAnalyticsServiceImpl` 增加 `student_abilities` 与 AI 报告兜底，确保教师端/学生端雷达图五维数据完整可见。
+- MyBatis 映射新增 `selectStudentAbilitySnapshot`、`selectClassAbilitySnapshot` 支持快照拉取。
+- Radar 文档补充兜底说明，强调缺失数据时的排查路径。
+- 登录/注册界面页脚展示的版本号同步更新为 `v2.3.1`，与最新前端构建版本保持一致。
+
+## 文档
+- 更新 `docs/radar-five-dimensions.md`、`README.md`、`backend/README.md`、`docs/deploy-production.md` 与 `系统论文型说明.md` 中的版本信息与兜底说明。
+
+---
+
 # 清理与修复说明（2025-10-06）
 
 ## 版本同步

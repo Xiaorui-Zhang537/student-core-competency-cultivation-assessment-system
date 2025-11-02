@@ -15,7 +15,7 @@
 
 1. 打包
    - 服务器或本地执行：`cd backend && mvn -DskipTests clean package`
-   - 产物：`target/student-assessment-system-1.0.2.jar`
+   - 产物：`target/student-assessment-system-1.0.4.jar`
 
 2. 服务器目录建议
    - 应用目录：`/opt/student-assessment/backend`
@@ -32,7 +32,7 @@ nohup java -Xms512m -Xmx1024m \
   -Duser.timezone=Asia/Shanghai \
   -Dspring.profiles.active=prod \
   -Dfile.upload-dir=/opt/student-assessment/uploads \
-  -jar /opt/student-assessment/backend/student-assessment-system-1.0.2.jar \
+-jar /opt/student-assessment/backend/student-assessment-system-1.0.4.jar \
   > /opt/student-assessment/backend/app.out 2>&1 &
 ```
 

@@ -122,7 +122,7 @@
           <table class="min-w-full divide-y divide-white/10">
             <thead class="bg-white/5 dark:bg-white/5 backdrop-blur-sm">
               <tr>
-                <th class="px-6 py-3 text-left">
+                <th class="px-8 py-3 text-center w-14">
                   <input
                     type="checkbox"
                     :checked="selectedStudents.length === filteredStudents.length"
@@ -133,34 +133,39 @@
                 <th class="px-6 py-3 text-left text-xs font-semibold text-gray-700 dark:text-gray-200 tracking-wide">
                   {{ t('teacher.students.table.student') }}
                 </th>
-                <th class="px-6 py-3 text-left text-xs font-semibold text-gray-700 dark:text-gray-200 tracking-wide">
+                <th class="px-7 py-3 text-left text-xs font-semibold text-gray-700 dark:text-gray-200 tracking-wide w-48">
                   {{ t('teacher.students.table.progress') }}
                 </th>
-                <th class="px-6 py-3 text-left text-xs font-semibold text-gray-700 dark:text-gray-200 tracking-wide">
+                <th class="px-9 py-3 text-left text-xs font-semibold text-gray-700 dark:text-gray-200 tracking-wide w-[260px]">
+                  {{ t('teacher.students.table.radar') }}
+                </th>
+                <th class="px-8 py-3 text-left text-xs font-semibold text-gray-700 dark:text-gray-200 tracking-wide">
                   {{ t('teacher.students.table.grade') }}
                 </th>
-                <th class="px-6 py-3 text-left text-xs font-semibold text-gray-700 dark:text-gray-200 tracking-wide">
+                <th class="px-7 py-3 text-left text-xs font-semibold text-gray-700 dark:text-gray-200 tracking-wide w-28">
                   {{ t('teacher.students.table.activity') }}
                 </th>
-                <th class="px-6 py-3 text-left text-xs font-semibold text-gray-700 dark:text-gray-200 tracking-wide">
+                <th class="px-7 py-3 text-left text-xs font-semibold text-gray-700 dark:text-gray-200 tracking-wide w-28">
                   {{ t('teacher.students.table.lastActive') }}
                 </th>
-                <th class="px-6 py-3 text-right pr-24 md:pr-32 text-xs font-semibold text-gray-700 dark:text-gray-200 tracking-wide">
+                <th class="px-4 py-3 text-right text-xs font-semibold text-gray-700 dark:text-gray-200 tracking-wide w-16">
                   {{ t('teacher.students.table.actions') }}
                 </th>
               </tr>
             </thead>
             <tbody class="bg-transparent divide-y divide-white/10">
               <tr v-for="student in paginatedStudents" :key="student.id" class="hover:bg-white/10 transition-colors duration-150">
-                <td class="px-6 py-4">
-                  <input
-                    type="checkbox"
-                    :value="student.id"
-                    v-model="selectedStudents"
-                    class="rounded border-gray-300 text-primary-600 focus:ring-primary-500"
-                  />
+                <td class="px-8 py-3 text-center">
+                  <div class="inline-flex items-center justify-center">
+                    <input
+                      type="checkbox"
+                      :value="student.id"
+                      v-model="selectedStudents"
+                      class="rounded border-gray-300 text-primary-600 focus:ring-primary-500"
+                    />
+                  </div>
                 </td>
-                <td class="px-6 py-4">
+                <td class="px-6 py-3">
                   <div class="flex items-center">
                     <div class="flex-shrink-0 w-10 h-10">
                       <user-avatar :avatar="student.avatar" :size="40">
@@ -179,8 +184,8 @@
                     </div>
                   </div>
                 </td>
-                <td class="px-6 py-4">
-                  <div class="flex items-center">
+                <td class="px-7 py-3">
+                  <div class="flex items-center max-w-[180px]">
                     <div class="flex-1">
                       <div class="flex justify-between items-center mb-1">
                         <span class="text-sm font-medium text-gray-900 dark:text-white">
@@ -198,21 +203,48 @@
                     </div>
                   </div>
                 </td>
-                <td class="px-6 py-4">
+                <td class="px-9 py-3 min-w-[260px]">
+                  <div class="flex flex-col gap-2">
+                    <div class="flex items-center gap-2">
+                      <Badge :variant="getRadarBadgeVariant(student.radarClassification)" size="sm" class="px-2 font-semibold uppercase tracking-wide">
+                        {{ formatRadarBadgeLabel(student.radarClassification) }}
+                      </Badge>
+                      <span class="text-sm font-semibold text-gray-900 dark:text-white">
+                        {{ t('teacher.students.table.radarAreaLabel', { value: formatRadarArea(student.radarArea) }) }}
+                      </span>
+                    </div>
+                    <div v-if="student.dimensionScores && Object.keys(student.dimensionScores).length" class="flex flex-wrap gap-x-3 gap-y-1 text-xs text-gray-600 dark:text-gray-400">
+                      <span
+                        v-for="([code, value], idx) in Object.entries(student.dimensionScores || {})"
+                        :key="`${student.id}-${code}-${idx}`"
+                        class="inline-flex items-center gap-1 uppercase"
+                      >
+                        <span class="font-medium">{{ formatDimensionLabel(code) }}</span>
+                        <span class="text-gray-400">·</span>
+                        <span>{{ formatRadarValue(value) }}</span>
+                      </span>
+                    </div>
+                    <div v-else class="text-xs text-gray-400 dark:text-gray-500">
+                      {{ t('teacher.students.table.noRadarData') }}
+                    </div>
+                  </div>
+                </td>
+                <td class="px-8 py-3 min-w-[120px]">
                   <div class="flex items-center">
                     <span class="text-sm font-medium text-gray-900 dark:text-white">
                       {{ student.averageGrade || '--' }}
                     </span>
-                     <badge 
+                     <Badge 
                       v-if="student.averageGrade"
                       :variant="getGradeBadgeVariant(student.averageGrade)"
                       size="sm"
+                      class="ml-2 whitespace-nowrap"
                     >
                       {{ getGradeLevel(student.averageGrade) }}
-                     </badge>
+                     </Badge>
                   </div>
                 </td>
-                <td class="px-6 py-4">
+                <td class="px-7 py-3 min-w-[135px]">
                   <div class="flex items-center">
                     <div class="flex-1">
                       <div class="flex items-center space-x-2">
@@ -230,19 +262,11 @@
                     </div>
                   </div>
                 </td>
-                <td class="px-6 py-4 text-sm text-gray-500 dark:text-gray-400">
+                <td class="px-7 py-3 text-sm text-gray-500 dark:text-gray-400">
                   {{ formatRelativeTime(student.lastActiveAt) }}
                 </td>
-                <td class="px-6 py-4 text-right">
-                  <div class="inline-flex items-center gap-2 justify-end">
-                    <Button variant="outline" size="sm" class="whitespace-nowrap" @click="viewStudentDetail(student.id)">
-                      <eye-icon class="w-4 h-4 mr-1" />
-                      {{ t('teacher.students.table.view') }}
-                    </Button>
-                    <Button variant="info" size="sm" class="whitespace-nowrap" @click="sendMessage(student.id)">
-                      <chat-bubble-left-icon class="w-4 h-4 mr-1" />
-                      {{ t('teacher.students.table.message') }}
-                    </Button>
+                <td class="px-4 py-4 text-right">
+                  <div class="flex justify-end">
                     <div class="relative" @click.stop :ref="(el: Element | ComponentPublicInstance | null) => setMenuButtonRef((el as HTMLElement) ?? null, student.id)">
                       <Button
                         variant="ghost"
@@ -256,20 +280,28 @@
                           v-if="showStudentMenu === student.id"
                           ref="menuRef"
                           class="fixed z-[9999] rounded-2xl shadow-lg popover-glass border border-white/25 dark:border-white/10 overflow-y-auto no-scrollbar p-1"
-                          :style="{ left: menuPos.left + 'px', top: menuPos.top + 'px', width: menuPos.width + 'px', maxHeight: '180px' }"
+                          :style="{ left: menuPos.left + 'px', top: menuPos.top + 'px', width: menuPos.width + 'px', maxHeight: '200px' }"
                           @click.stop
                         >
                           <div class="py-1 space-y-1">
-                            <Button variant="menu" size="sm" class="w-full justify-start" @click="resetProgress(student.id)">
+                            <Button variant="menu" size="sm" class="w-full justify-start gap-2" @click="handleStudentView(student.id)">
+                              <eye-icon class="w-4 h-4" />
+                              {{ t('teacher.students.table.view') }}
+                            </Button>
+                            <Button variant="menu" size="sm" class="w-full justify-start gap-2" @click="handleStudentMessage(student.id)">
+                              <chat-bubble-left-icon class="w-4 h-4" />
+                              {{ t('teacher.students.table.message') }}
+                            </Button>
+                            <Button variant="menu" size="sm" class="w-full justify-start gap-2" @click="resetProgress(student.id)">
                                <arrow-path-icon class="w-4 h-4" />
                                {{ t('teacher.students.table.reset') }}
                             </Button>
-                            <Button variant="menu" size="sm" class="w-full justify-start" @click="exportStudentData(student.id)">
+                            <Button variant="menu" size="sm" class="w-full justify-start gap-2" @click="exportStudentData(student.id)">
                                <arrow-down-tray-icon class="w-4 h-4" />
                                {{ t('teacher.students.table.export') }}
                             </Button>
                             <hr class="my-1 border-white/10" />
-                            <Button variant="danger" size="sm" class="w-full justify-start" @click="removeStudent(student.id)">
+                            <Button variant="danger" size="sm" class="w-full justify-start gap-2" @click="removeStudent(student.id)">
                                <user-minus-icon class="w-4 h-4" />
                                {{ t('teacher.students.table.remove') }}
                             </Button>
@@ -385,10 +417,10 @@ import GlassSwitch from '@/components/ui/inputs/GlassSwitch.vue'
 import GlassInput from '@/components/ui/inputs/GlassInput.vue'
 import GlassTextarea from '@/components/ui/inputs/GlassTextarea.vue'
 import UserAvatar from '@/components/ui/UserAvatar.vue'
+import { useCourseStore } from '@/stores/course'
 import { useChatStore } from '@/stores/chat'
 // @ts-ignore shim for vue-i18n types in this project
 import { useI18n } from 'vue-i18n'
-import { resolveUserDisplayName } from '@/shared/utils/user'
 
 // Router and Stores
 const route = useRoute()
@@ -403,7 +435,7 @@ const searchQuery = ref('')
 const progressFilter = ref('')
 const gradeFilter = ref('')
 const activityFilter = ref('')
-const sortBy = ref('name')
+const sortBy = ref('radar')
 const viewMode = ref('table')
 const selectedStudents = ref<string[]>([])
 const showStudentMenu = ref<string | null>(null)
@@ -442,6 +474,7 @@ const activityOptions = computed(() => ([
 ]))
 
 const sortOptions = computed(() => ([
+  { label: t('teacher.students.filters.sort.radar') as string, value: 'radar' },
   { label: t('teacher.students.filters.sort.name') as string, value: 'name' },
   { label: t('teacher.students.filters.sort.progress') as string, value: 'progress' },
   { label: t('teacher.students.filters.sort.grade') as string, value: 'grade' },
@@ -477,7 +510,7 @@ const fetchCourseStudents = async () => {
       page: currentPage.value,
       size: pageSize.value,
       search: searchQuery.value || undefined,
-      sortBy: sortBy.value || 'name',
+      sortBy: sortBy.value || 'radar',
       activity: activityFilter.value || undefined,
       grade: gradeFilter.value || undefined,
       progress: progressFilter.value || undefined
@@ -485,8 +518,8 @@ const fetchCourseStudents = async () => {
     const items = payload?.items || []
     students.value = items.map((i: any) => ({
       id: String(i.studentId),
-      name: resolveUserDisplayName(i) || i.studentName || `学生${i.studentId}`,
-      studentId: i.studentNo || String(i.studentId),
+      name: buildDisplayName(i),
+      studentId: buildStudentIdentifier(i),
       avatar: i.avatar || '',
       progress: i.progress ?? 0,
       completedLessons: i.completedLessons ?? 0,
@@ -495,7 +528,10 @@ const fetchCourseStudents = async () => {
       activityLevel: i.activityLevel || 'medium',
       studyTime: i.studyTimePerWeek || 0,
       lastActiveAt: i.lastActiveAt || new Date().toISOString(),
-      joinedAt: new Date().toISOString()
+      joinedAt: new Date().toISOString(),
+      radarArea: i.radarArea ?? 0,
+      radarClassification: i.radarClassification || 'D',
+      dimensionScores: i.dimensionScores || {}
     }))
     serverTotal.value = Number(payload?.total || items.length || 0)
     stats.totalStudents = serverTotal.value
@@ -550,6 +586,7 @@ const filteredStudents = computed(() => {
   const by = sortBy.value
   arr.sort((a: any, b: any) => {
     switch (by) {
+      case 'radar': return Number(b.radarArea || 0) - Number(a.radarArea || 0)
       case 'progress': return Number(b.progress || 0) - Number(a.progress || 0)
       case 'grade': return Number(b.averageGrade || 0) - Number(a.averageGrade || 0)
       case 'lastActive': return new Date(b.lastActiveAt || 0).getTime() - new Date(a.lastActiveAt || 0).getTime()
@@ -613,8 +650,8 @@ const getGradeLevel = (grade: number) => {
   return t('teacher.students.table.level.improve')
 }
 
-const getActivityColor = (level: string) => {
-  switch (level) {
+const getActivityColor = (level?: string) => {
+  switch ((level || '').toLowerCase()) {
     case 'high': return 'bg-green-500'
     case 'medium': return 'bg-yellow-500'
     case 'low': return 'bg-orange-500'
@@ -623,14 +660,66 @@ const getActivityColor = (level: string) => {
   }
 }
 
-const getActivityText = (level: string) => {
-  switch (level) {
+const getActivityText = (level?: string) => {
+  switch ((level || '').toLowerCase()) {
     case 'high': return t('teacher.students.filters.activity.high')
     case 'medium': return t('teacher.students.filters.activity.medium')
     case 'low': return t('teacher.students.filters.activity.low')
     case 'inactive': return t('teacher.students.filters.activity.inactive')
     default: return t('teacher.students.table.level.unknown')
   }
+}
+
+const getRadarBadgeVariant = (classification?: string) => {
+  switch ((classification || '').toUpperCase()) {
+    case 'A': return 'success'
+    case 'B': return 'warning'
+    case 'C': return 'info'
+    default: return 'danger'
+  }
+}
+
+const formatRadarBadgeLabel = (classification?: string) => {
+  const key = (classification || 'D').toUpperCase() as 'A' | 'B' | 'C' | 'D'
+  const desc = t(`teacher.students.radar.classification.${key}`)
+  return `${key} · ${desc}`
+}
+
+const formatRadarArea = (area?: number) => {
+  if (!Number.isFinite(Number(area))) return '--'
+  return `${Number(area).toFixed(1)}%`
+}
+
+const formatDimensionLabel = (code: string) => {
+  const label = t(`shared.radarLegend.dimensions.${code}.title`) as any
+  return label || code
+}
+
+const formatRadarValue = (value?: number) => {
+  if (!Number.isFinite(Number(value))) return '--'
+  return Number(value).toFixed(1)
+}
+
+const buildDisplayName = (user: any) => {
+  if (!user) return ''
+  const lastName = String(user.lastName || '').trim()
+  const firstName = String(user.firstName || '').trim()
+  const combined = `${lastName}${firstName}`.trim()
+  if (combined) return combined
+  const nickname = String(user.nickname || '').trim()
+  if (nickname) return nickname
+  const username = String(user.studentName || user.username || user.studentNo || '').trim()
+  if (username) return username
+  return `#${user.studentId ?? ''}`
+}
+
+const buildStudentIdentifier = (user: any) => {
+  if (!user) return ''
+  const studentNo = String(user.studentNo || '').trim()
+  if (studentNo) return studentNo
+  const username = String(user.username || user.studentName || '').trim()
+  if (username) return username
+  return String(user.studentId ?? '')
 }
 
 const formatRelativeTime = (timestamp: string) => {
@@ -660,6 +749,10 @@ const toggleStudentMenu = (studentId: string) => {
   showStudentMenu.value = studentId
   nextTick(() => { computeMenuPos(studentId); ensureFollowHandler() })
 }
+ 
+ const closeStudentMenu = () => {
+   showStudentMenu.value = null
+}
 
 const viewStudentDetail = (studentId: string) => {
   const s = students.value.find(x => x.id === studentId)
@@ -673,9 +766,19 @@ const viewStudentDetail = (studentId: string) => {
   })
 }
 
-const sendMessage = async (studentId: string) => {
+const openStudentChat = async (studentId: string) => {
   const stu = students.value.find((s: any) => s.id === studentId)
   chat.openChat(studentId, stu?.name || '', courseId)
+}
+
+const handleStudentView = (studentId: string) => {
+  closeStudentMenu()
+  viewStudentDetail(studentId)
+}
+
+const handleStudentMessage = (studentId: string) => {
+  closeStudentMenu()
+  openStudentChat(studentId)
 }
 
 const viewGrades = (studentId: string) => {
@@ -705,7 +808,7 @@ const exportStudentData = async (_studentId: string) => {
   if (!s) return
   // 生成单个学生的CSV（前端导出）
   const headers = [
-    'student_id','name','progress','completed_lessons','total_lessons','average_grade','activity_level','study_time_per_week','last_active_at','joined_at'
+    'student_id','name','progress','completed_lessons','total_lessons','average_grade','activity_level','study_time_per_week','last_active_at','joined_at','radar_area','radar_classification','dimension_scores'
   ]
   const row = [
     `"${String(s.studentId ?? '')}"`,
@@ -717,7 +820,10 @@ const exportStudentData = async (_studentId: string) => {
     `"${String(s.activityLevel ?? '')}"`,
     String(s.studyTime ?? ''),
     `"${String(s.lastActiveAt ?? '')}"`,
-    `"${String(s.joinedAt ?? '')}"`
+    `"${String(s.joinedAt ?? '')}"`,
+    String(s.radarArea ?? ''),
+    `"${String(s.radarClassification ?? '')}"`,
+    `"${JSON.stringify(s.dimensionScores || {})}"`
   ]
   const csv = `${headers.join(',')}\n${row.join(',')}\n`
   const blob = new Blob([csv], { type: 'text/csv;charset=UTF-8' })

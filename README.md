@@ -381,7 +381,7 @@ server {
 
 版本矩阵：
 - 前端：`frontend/package.json` → 当前 `0.3.2`
-- 后端：`backend/pom.xml` → 当前 `1.0.2`
+- 后端：`backend/pom.xml` → 当前 `1.0.4`
 - 根：`package.json` → 当前 `1.0.0`
 
 推荐发布流程：
