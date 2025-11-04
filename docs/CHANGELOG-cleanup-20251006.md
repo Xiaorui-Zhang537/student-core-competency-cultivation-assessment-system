@@ -9,6 +9,7 @@
 - MyBatis 映射新增 `selectStudentAbilitySnapshot`、`selectClassAbilitySnapshot` 支持快照拉取。
 - Radar 文档补充兜底说明，强调缺失数据时的排查路径。
 - 登录/注册界面页脚展示的版本号同步更新为 `v2.3.1`，与最新前端构建版本保持一致。
+- 教师端数据分析视图的“学生表现排行”支持完整数据分页浏览，分页交互与学生管理列表保持一致，可自定义每页条数。
 
 ## 文档
 - 更新 `docs/radar-five-dimensions.md`、`README.md`、`backend/README.md`、`docs/deploy-production.md` 与 `系统论文型说明.md` 中的版本信息与兜底说明。

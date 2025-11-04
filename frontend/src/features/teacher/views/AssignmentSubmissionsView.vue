@@ -101,7 +101,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, computed } from 'vue';
+import { ref, onMounted, computed, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { submissionApi } from '@/api/submission.api';
 import { gradeApi } from '@/api/grade.api';
@@ -131,8 +131,6 @@ const loading = ref(false);
 const errorMessage = ref('');
 const currentPage = ref(1);
 const pageSize = ref(10);
-const total = ref(0);
-const totalPages = ref(1);
 const courseId = ref<string | null>(null)
 const courseTitle = ref<string | null>(null)
 const stats = ref<{ totalEnrolled: number; submittedCount: number; unsubmittedCount: number }>({ totalEnrolled: 0, submittedCount: 0, unsubmittedCount: 0 })
@@ -178,10 +176,10 @@ async function fetch() {
   loading.value = true;
   errorMessage.value = '';
   try {
-    const data: any = await submissionApi.getSubmissionsByAssignment(assignmentId, { page: currentPage.value, size: pageSize.value });
-    submissions.value = data?.items || [];
-    total.value = data?.total ?? 0;
-    totalPages.value = data?.totalPages ?? 1;
+    const resp: any = await submissionApi.getSubmissionsByAssignment(assignmentId, { page: 1, size: 1000 });
+    const payload: any = resp?.data ?? resp;
+    const items = payload?.items ?? payload?.data ?? payload?.list ?? payload ?? [];
+    submissions.value = Array.isArray(items) ? items : [];
     // 刷新统计
     try {
       const st = await assignmentApi.getAssignmentSubmissionStats(assignmentId)
@@ -219,7 +217,7 @@ async function fetch() {
 }
 
 // 合并“所有学生”与“已提交”生成显示行
-const displayRows = computed(() => {
+const allRows = computed(() => {
   const submissionByStudent: Record<string, any> = {}
   for (const s of (submissions.value || [])) {
     const sid = String(s.studentId || s.student_id || '')
@@ -289,6 +287,20 @@ const displayRows = computed(() => {
   return rows
 })
 
+const totalRows = computed(() => allRows.value.length)
+const totalPages = computed(() => Math.max(1, Math.ceil(totalRows.value / pageSize.value)))
+const displayRows = computed(() => {
+  const start = (currentPage.value - 1) * pageSize.value
+  const end = start + pageSize.value
+  return allRows.value.slice(start, end)
+})
+
+watch([pageSize, totalPages], () => {
+  if (currentPage.value > totalPages.value) {
+    currentPage.value = totalPages.value
+  }
+})
+
 function goGrade(row: any) {
   if (row.submissionId) {
     router.push(`/teacher/assignments/${assignmentId}/submissions/${row.submissionId}/grade`)
@@ -305,20 +317,17 @@ function goCourse() {
 function prevPage() {
   if (currentPage.value > 1) {
     currentPage.value -= 1;
-    fetch();
   }
 }
 
 function nextPage() {
   if (currentPage.value < totalPages.value) {
     currentPage.value += 1;
-    fetch();
   }
 }
 
 function changePageSize() {
   currentPage.value = 1;
-  fetch();
 }
 
 onMounted(async () => {
