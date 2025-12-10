@@ -1,6 +1,6 @@
 <template>
   <div :class="stacked ? ['flex flex-col gap-1', fullWidth ? 'w-full' : 'w-auto'] : ['inline-flex items-center gap-2', fullWidth ? 'w-full' : 'w-auto']">
-    <span v-if="label" class="text-xs text-gray-500 dark:text-gray-400">{{ label }}</span>
+    <span v-if="label" class="text-xs text-gray-500 dark:text-gray-400 whitespace-nowrap">{{ label }}</span>
     <div ref="rootRef" :class="['relative', width ? '' : 'w-full']" :style="{ width: width || undefined }">
       <button
         type="button"

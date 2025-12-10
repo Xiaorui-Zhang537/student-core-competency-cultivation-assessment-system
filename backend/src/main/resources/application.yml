@@ -142,12 +142,14 @@ ai:
   providers:
     openrouter:
       base-url: ${OPENROUTER_BASE_URL:https://openrouter.ai/api}
-      api-key: ${OPENROUTER_API_KEY:${DEEPSEEK_API_KEY:}}
+      api-key: ${OPENROUTER_API_KEY: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}
+      referer: ${OPENROUTER_REFERER:https://stucoreai.space}
+      title: ${OPENROUTER_TITLE:StudentCoreAI}
     google:
       base-url: ${GOOGLE_API_BASE_URL:https://generativelanguage.googleapis.com}
-      api-key: ${GOOGLE_API_KEY:}
+      api-key: ${GOOGLE_API_KEY:AIzaSyAbK4-_QLcaWwmADkdxG4xNBb_J61XYhtY}
   deepseek:
-    model: ${DEEPSEEK_MODEL:deepseek/deepseek-chat-v3.1}
+    model: ${DEEPSEEK_MODEL:z-ai/glm-4.5-air:free}
 
 # 安全配置
 security:

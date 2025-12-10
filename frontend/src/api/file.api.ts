@@ -2,6 +2,20 @@ import apiClient, { api, baseURL } from './config';
 import type { ApiResponse } from '@/types/api';
 import type { FileInfo } from '@/types/file';
 
+const normalizeBase = () => String(apiClient.defaults.baseURL || baseURL || '/api').replace(/\/+$/, '');
+const buildUrl = (path: string) => {
+  if (/^https?:\/\//i.test(path)) return path;
+  const cleanPath = path.startsWith('/') ? path : `/${path}`;
+  return `${normalizeBase()}${cleanPath}`;
+};
+
+const authHeaders = (): Record<string, string> => {
+  const token = (() => {
+    try { return localStorage.getItem('token'); } catch { return null; }
+  })();
+  return token ? { Authorization: `Bearer ${token}` } : {};
+};
+
 export const fileApi = {
   // 返回值已被 axios 拦截器解包为 data
   uploadFile: (file: File, extra?: { purpose?: string; relatedId?: string | number }): Promise<FileInfo | any> => {
@@ -36,28 +50,42 @@ export const fileApi = {
   
   // 下载文件（带鉴权，避免 <a> 直链 401）
   downloadFile: async (fileId: string | number, filename?: string): Promise<void> => {
-    const res: any = await apiClient.get(`/files/${encodeURIComponent(String(fileId))}/download`, { responseType: 'blob' });
-    const blob: Blob = res instanceof Blob ? res : new Blob([res]);
-    const url = URL.createObjectURL(blob);
+    const url = buildUrl(`/files/${encodeURIComponent(String(fileId))}/download`);
+    const headers: HeadersInit = {
+      Accept: 'application/octet-stream',
+      ...authHeaders()
+    };
+    const res = await fetch(url, {
+      method: 'GET',
+      headers,
+      credentials: 'include'
+    });
+    if (!res.ok) {
+      const err: any = new Error('Download failed');
+      err.code = res.status;
+      throw err;
+    }
+    const blob: Blob = await res.blob();
+    const blobUrl = URL.createObjectURL(blob);
     const a = document.createElement('a');
-    a.href = url;
+    a.href = blobUrl;
     a.download = filename || `file_${fileId}`;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
-    URL.revokeObjectURL(url);
+    URL.revokeObjectURL(blobUrl);
   }
   ,
   // 预览图片（Blob，带鉴权）- 使用 fetch 避免 axios 错误日志刷屏
   getPreview: async (fileId: string | number): Promise<Blob> => {
-    const token = ((): string | null => { try { return localStorage.getItem('token') } catch { return null } })();
-    const url = `${baseURL || '/api'}/files/${encodeURIComponent(String(fileId))}/preview`;
+    const url = buildUrl(`/files/${encodeURIComponent(String(fileId))}/preview`);
+    const headers: HeadersInit = {
+      Accept: 'image/*,application/pdf,application/octet-stream',
+      ...authHeaders()
+    };
     const res = await fetch(url, {
       method: 'GET',
-      headers: {
-        ...(token ? { Authorization: `Bearer ${token}` } : {}),
-        'Accept': 'image/*,application/pdf,application/octet-stream'
-      },
+      headers,
       credentials: 'include'
     });
     if (!res.ok) {

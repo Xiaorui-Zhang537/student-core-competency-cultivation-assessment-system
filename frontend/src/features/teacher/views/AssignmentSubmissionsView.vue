@@ -16,7 +16,23 @@
         </nav>
         <page-header :title="t('teacher.submissions.title')" :subtitle="t('teacher.submissions.subtitle')">
           <template #actions>
-            <div class="flex items-center gap-4">
+            <div class="flex flex-wrap items-center gap-4">
+              <div class="flex items-center gap-2 w-full md:w-auto">
+                <GlassSearchInput
+                  v-model="searchText"
+                  :placeholder="(t('teacher.submissions.searchPlaceholder') as string) || '搜索学生姓名'"
+                  size="sm"
+                  tint="primary"
+                />
+                <GlassPopoverSelect
+                  :label="t('teacher.submissions.filters.statusLabel') || '提交状态'"
+                  :options="statusOptions"
+                  v-model="statusFilter"
+                  size="sm"
+                  width="clamp(160px,20vw,200px)"
+                  tint="primary"
+                />
+              </div>
               <!-- 统计摘要 -->
               <div class="hidden md:flex items-center gap-4 text-sm text-gray-600 dark:text-gray-300">
                 <div>{{ t('teacher.submissions.stats.totalEnrolled') }}: <span class="font-semibold">{{ stats.totalEnrolled }}</span></div>
@@ -116,12 +132,13 @@ import { ChevronRightIcon } from '@heroicons/vue/24/outline';
 import { useI18n } from 'vue-i18n'
 import GlassPopoverSelect from '@/components/ui/filters/GlassPopoverSelect.vue'
 import PageHeader from '@/components/ui/PageHeader.vue'
+import GlassSearchInput from '@/components/ui/inputs/GlassSearchInput.vue'
 import { resolveUserDisplayName } from '@/shared/utils/user'
 
 const route = useRoute();
 const router = useRouter();
 const ui = useUIStore();
-const { t } = useI18n()
+const { t, locale } = useI18n()
 
 const assignmentId = route.params.assignmentId as string;
 const submissions = ref<any[]>([]);
@@ -136,6 +153,14 @@ const courseTitle = ref<string | null>(null)
 const stats = ref<{ totalEnrolled: number; submittedCount: number; unsubmittedCount: number }>({ totalEnrolled: 0, submittedCount: 0, unsubmittedCount: 0 })
 const reminding = ref(false)
 const isPastDue = ref(false)
+const searchText = ref('')
+const statusFilter = ref<'all' | 'submitted' | 'unsubmitted'>('all')
+
+const statusOptions = [
+  { label: (t('teacher.submissions.filters.all') as string) || '全部', value: 'all' },
+  { label: (t('teacher.submissions.filters.submitted') as string) || '已提交', value: 'submitted' },
+  { label: (t('teacher.submissions.filters.unsubmitted') as string) || '未提交', value: 'unsubmitted' }
+]
 
 function parseDateLoose(v: any): number {
   if (!v) return NaN
@@ -176,8 +201,8 @@ async function fetch() {
   loading.value = true;
   errorMessage.value = '';
   try {
-    const resp: any = await submissionApi.getSubmissionsByAssignment(assignmentId, { page: 1, size: 1000 });
-    const payload: any = resp?.data ?? resp;
+    const res: any = await submissionApi.getSubmissionsByAssignment(assignmentId, { page: 1, size: 1000 });
+    const payload: any = res?.data ?? res;
     const items = payload?.items ?? payload?.data ?? payload?.list ?? payload ?? [];
     submissions.value = Array.isArray(items) ? items : [];
     // 刷新统计
@@ -234,8 +259,11 @@ const allRows = computed(() => {
     }
   }
   const rows: any[] = []
+  const seenStudentIds = new Set<string>()
   for (const u of (students.value || [])) {
     const sid = String(u.id || '')
+    if (!sid) continue
+    seenStudentIds.add(sid)
     const existed = submissionByStudent[sid]
     if (existed) {
       // 若有成绩态覆盖（returned/graded 优先于提交态）
@@ -284,21 +312,44 @@ const allRows = computed(() => {
       })
     }
   }
+  // 确保提交列表中的学生即使未出现在课程学生列表中也能展示
+  for (const sid of Object.keys(submissionByStudent)) {
+    if (seenStudentIds.has(sid)) continue
+    rows.push({ ...submissionByStudent[sid], displayName: submissionByStudent[sid].studentName })
+  }
   return rows
 })
 
-const totalRows = computed(() => allRows.value.length)
+const filteredRows = computed(() => {
+  const keyword = searchText.value.trim().toLowerCase()
+  return allRows.value.filter(r => {
+    const matchesName = !keyword || String(r.displayName || r.studentName || '').toLowerCase().includes(keyword)
+    const isSubmitted = String(r.status || '').toLowerCase() !== 'unsubmitted'
+    const matchesStatus = statusFilter.value === 'all'
+      ? true
+      : statusFilter.value === 'submitted'
+        ? isSubmitted
+        : !isSubmitted
+    return matchesName && matchesStatus
+  })
+})
+
+const totalRows = computed(() => filteredRows.value.length)
 const totalPages = computed(() => Math.max(1, Math.ceil(totalRows.value / pageSize.value)))
 const displayRows = computed(() => {
   const start = (currentPage.value - 1) * pageSize.value
   const end = start + pageSize.value
-  return allRows.value.slice(start, end)
+  return filteredRows.value.slice(start, end)
 })
 
 watch([pageSize, totalPages], () => {
   if (currentPage.value > totalPages.value) {
     currentPage.value = totalPages.value
   }
+})
+
+watch([searchText, statusFilter], () => {
+  currentPage.value = 1
 })
 
 function goGrade(row: any) {

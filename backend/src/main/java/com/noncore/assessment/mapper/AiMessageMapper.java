@@ -5,6 +5,7 @@ import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
 import java.util.List;
+import java.time.LocalDateTime;
 
 @Mapper
 public interface AiMessageMapper {
@@ -16,6 +17,10 @@ public interface AiMessageMapper {
     int deleteOldestExceeding(@Param("conversationId") Long conversationId,
                               @Param("keep") int keep);
     int deleteByConversation(@Param("conversationId") Long conversationId);
+
+    long countAssistantMessagesByModelSince(@Param("userId") Long userId,
+                                            @Param("modelPrefix") String modelPrefix,
+                                            @Param("since") LocalDateTime since);
 }
 
 

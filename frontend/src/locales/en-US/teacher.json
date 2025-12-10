@@ -215,25 +215,32 @@
 				"self": "Submissions"
 			},
 			"title": "Submissions",
-			"subtitle": "View and go to grading",
-			"back": "Back to Assignments",
-			"loading": "Loading...",
-			"retry": "Retry",
-			"empty": "No submissions",
-			"submittedAt": "Submitted at: {time}",
-			"late": "Late",
-			"status": {
-				"submitted": "Submitted",
-				"graded": "Graded",
-				"returned": "Returned",
-				"draft": "Draft",
-				"late": "Late",
-				"unsubmitted": "Unsubmitted"
-			},
-			"actions": {
-				"grade": "Grade",
-				"remindUnsubmitted": "Remind Unsubmitted"
-			},
+                        "subtitle": "View and go to grading",
+                        "back": "Back to Assignments",
+                        "loading": "Loading...",
+                        "retry": "Retry",
+                        "searchPlaceholder": "Search by student name",
+                        "empty": "No submissions",
+                        "submittedAt": "Submitted at: {time}",
+                        "late": "Late",
+                        "status": {
+                                "submitted": "Submitted",
+								"graded": "Graded",
+								"returned": "Returned",
+								"draft": "Draft",
+								"late": "Late",
+								"unsubmitted": "Unsubmitted"
+							},
+							"filters": {
+									"statusLabel": "Status",
+									"all": "All",
+									"submitted": "Submitted",
+									"unsubmitted": "Unsubmitted"
+							},
+							"actions": {
+									"grade": "Grade",
+									"remindUnsubmitted": "Remind Unsubmitted"
+							},
 			"pagination": {
 				"perPage": "Per page",
 				"items": "items",
@@ -572,20 +579,21 @@
 				"applied": "Context applied: course {course}, {count} students"
 			},
 			"model": {
-				"title": "Model Settings",
-				"label": "Model",
-				"default": "DeepSeek V3.1"
-			},
+                "title": "Model Settings",
+                "label": "Model",
+                "default": "GLM-4.5 Air"
+            },
 			"greeting": "Hello, I'm the AI assistant. Ask me about course analytics, assignment design, and learning recommendations.",
 			"sendFailed": "Send failed. Please try again.",
 			"untitled": "Untitled conversation",
 			"modelsInfo": {
-				"title": "Models Info",
-				"deepseek": "DeepSeek V3.1: Hybrid reasoning model supporting both thinking and non-thinking modes; controllable via the 'reasoning' parameter. Long context (up to 128K), strong tool use, code generation, and structured calling.",
-				"gemini": "Gemini 2.5 Flash Image Preview: State-of-the-art multimodal model for image input, generation and edits, with multi-turn conversations—ideal for image-centric tasks.",
-				"gptoss": "OpenAI gpt-oss-120b: 117B-parameter open-weight MoE model focused on high reasoning and agentic use cases; supports configurable reasoning depth, function calling, browsing, and structured outputs."
-			}
-		},
+                "title": "Models Info",
+                "glm": "GLM-4.5 Air: Lightweight reasoning model with fast responses, great for everyday Q&A and teaching scenarios while balancing speed and quality.",
+                "chimera": "DeepSeek R1T2 Chimera: Hybrid model with enhanced reasoning and chain-of-thought style outputs, suitable for deeper analysis plus tool or code use.",
+                 "qwen": "Qwen3 Coder: Code-focused model optimized for programming help, debugging, and structured technical outputs.",
+				 "gemini": "Gemini 2.5 Pro: Google reasoning model. Students can use it up to 10 times per day; teachers have unlimited access."
+            }
+        },
 		"students": {
 			"breadcrumb": {
 				"courses": "Course Management",

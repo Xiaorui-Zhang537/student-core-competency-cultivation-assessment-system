@@ -3,6 +3,7 @@ package com.noncore.assessment.service.impl;
 import com.github.pagehelper.PageHelper;
 import com.github.pagehelper.PageInfo;
 import com.noncore.assessment.entity.AiConversation;
+import com.noncore.assessment.config.AiConfigProperties;
 import com.noncore.assessment.entity.AiMessage;
 import com.noncore.assessment.exception.BusinessException;
 import com.noncore.assessment.exception.ErrorCode;
@@ -17,6 +18,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 @Service
 @RequiredArgsConstructor
@@ -26,13 +29,15 @@ public class AiConversationServiceImpl implements AiConversationService {
     private final AiConversationMapper conversationMapper;
     private final AiMessageMapper messageMapper;
     private final FileStorageService fileStorageService;
+    private final com.noncore.assessment.config.AiConfigProperties aiConfigProperties;
 
     @Override
     public AiConversation createConversation(Long userId, String title, String model, String provider) {
+        String normalizedModel = normalizeModel(model);
         AiConversation c = AiConversation.builder()
                 .userId(userId)
                 .title(title == null || title.isBlank() ? "新对话" : title.trim())
-                .model(model)
+                .model(normalizedModel)
                 .provider(provider)
                 .pinned(false)
                 .archived(false)
@@ -57,7 +62,19 @@ public class AiConversationServiceImpl implements AiConversationService {
     public AiConversation getConversation(Long userId, Long conversationId) {
         AiConversation c = conversationMapper.selectByIdAndUser(conversationId, userId);
         if (c == null) throw new BusinessException(ErrorCode.DATA_NOT_FOUND, "会话不存在");
+        String normalized = normalizeModel(c.getModel());
+        if (!normalized.equals(c.getModel())) {
+            c.setModel(normalized);
+            conversationMapper.update(c);
+        }
         return c;
+    }
+
+    @Override
+    public void updateConversationModel(Long userId, Long conversationId, String model) {
+        AiConversation c = getConversation(userId, conversationId);
+        c.setModel(normalizeModel(model));
+        conversationMapper.update(c);
     }
 
     @Override
@@ -110,6 +127,37 @@ public class AiConversationServiceImpl implements AiConversationService {
         // 裁剪为最新100条
         try { messageMapper.deleteOldestExceeding(conversationId, 100); } catch (Exception ignored) {}
         return m;
+    }
+    
+
+    @Override
+    public long countAssistantMessagesByModelSince(Long userId, String modelPrefix, LocalDateTime since) {
+        return messageMapper.countAssistantMessagesByModelSince(userId, modelPrefix, since);
+    }
+
+    @Override
+    public String normalizeModel(String model) {
+        String defaultModel = aiConfigProperties.getDeepseek().getModel();
+        if (model == null || model.isBlank()) return defaultModel;
+
+        String trimmed = model.trim();
+        Map<String, String> aliases = Map.of(
+                "z-ai/glm-4.5-air", "z-ai/glm-4.5-air:free",
+                "tngtech/deepseek-r1t2-chimera", "tngtech/deepseek-r1t2-chimera:free",
+                "qwen/qwen3-coder", "qwen/qwen3-coder:free",
+                "google/gemini-2.5-pro", "google/gemini-2.5-pro",
+                "gemini-2.5-pro", "google/gemini-2.5-pro"
+        );
+        if (aliases.containsKey(trimmed)) {
+            trimmed = aliases.get(trimmed);
+        }
+        Set<String> allowed = Set.of(
+                "z-ai/glm-4.5-air:free",
+                "tngtech/deepseek-r1t2-chimera:free",
+                "qwen/qwen3-coder:free",
+                "google/gemini-2.5-pro"
+        );
+        return allowed.contains(trimmed) ? trimmed : defaultModel;
     }
 }
 

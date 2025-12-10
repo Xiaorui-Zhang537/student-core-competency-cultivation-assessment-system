@@ -92,7 +92,8 @@ public class SubmissionServiceImpl implements SubmissionService {
             // 更新现有提交
             submission = existingSubmission;
             submission.setContent(content);
-            submission.setSubmissionCount(submission.getSubmissionCount() + 1);
+            int currentCount = submission.getSubmissionCount() == null ? 0 : submission.getSubmissionCount();
+            submission.setSubmissionCount(currentCount + 1);
             submission.setStatus("submitted");  // 重新提交后状态变为已提交
             submission.setSubmittedAt(LocalDateTime.now());
             submission.setIsLate(isLate);
@@ -180,7 +181,8 @@ public class SubmissionServiceImpl implements SubmissionService {
         if (existingSubmission != null) {
             submission = existingSubmission;
             submission.setContent(content);
-            submission.setSubmissionCount(submission.getSubmissionCount() + 1);
+            int currentCount = submission.getSubmissionCount() == null ? 0 : submission.getSubmissionCount();
+            submission.setSubmissionCount(currentCount + 1);
             submission.setStatus("submitted");
             submission.setSubmittedAt(LocalDateTime.now());
             submission.setIsLate(isLate);

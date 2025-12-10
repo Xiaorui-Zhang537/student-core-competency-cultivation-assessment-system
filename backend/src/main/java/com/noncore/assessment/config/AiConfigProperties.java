@@ -28,12 +28,20 @@ public class AiConfigProperties {
     @Data
     public static class Provider {
         private String baseUrl;
-        private String apiKey;
-    }
+        private String apiKey;/**
+        * OpenRouter 免费模型要求携带的来源站点，写入 HTTP-Referer。
+        * 对其它兼容渠道无副作用。
+        */
+       private String referer;
+       /**
+        * OpenRouter 推荐的站点名称，写入 X-Title，便于通过免费通道校验。
+        */
+       private String title;
+   }
 
     @Data
     public static class Deepseek {
-        private String model = "deepseek/deepseek-chat-v3.1";
+        private String model = "z-ai/glm-4.5-air:free";
     }
 
     @Data

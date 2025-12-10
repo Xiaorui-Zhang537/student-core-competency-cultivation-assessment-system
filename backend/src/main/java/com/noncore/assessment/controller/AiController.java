@@ -33,13 +33,15 @@ public class AiController extends BaseController {
     private final AiMemoryService memoryService;
     private final FileStorageService fileStorageService;
     private final DocumentTextExtractor documentTextExtractor;
+    private final com.noncore.assessment.config.AiConfigProperties aiConfigProperties;
 
     public AiController(AiService aiService, UserService userService,
                         AiConversationService conversationService,
                         AiMemoryService memoryService,
                         FileStorageService fileStorageService,
                         DocumentTextExtractor documentTextExtractor,
-                        com.noncore.assessment.service.AiGradingHistoryService historyService) {
+                        com.noncore.assessment.service.AiGradingHistoryService historyService,
+                        com.noncore.assessment.config.AiConfigProperties aiConfigProperties) {
         super(userService);
         this.aiService = aiService;
         this.conversationService = conversationService;
@@ -47,6 +49,7 @@ public class AiController extends BaseController {
         this.fileStorageService = fileStorageService;
         this.documentTextExtractor = documentTextExtractor;
         this.historyService = historyService;
+        this.aiConfigProperties = aiConfigProperties;
     }
 
     private final com.noncore.assessment.service.AiGradingHistoryService historyService;
@@ -59,6 +62,15 @@ public class AiController extends BaseController {
             throw new BusinessException(ErrorCode.INVALID_PARAMETER, "最多选择 5 名学生");
         }
         Long userId = getCurrentUserId();
+        String targetModel = resolveModel(request, userId);
+
+        if (hasRole("STUDENT") && targetModel != null && targetModel.startsWith("google/")) {
+            java.time.LocalDateTime startOfDay = java.time.LocalDate.now().atStartOfDay();
+            long used = conversationService.countAssistantMessagesByModelSince(userId, "google/gemini", startOfDay);
+            if (used >= 10) {
+                throw new BusinessException(ErrorCode.PERMISSION_DENIED, "今日 Gemini 使用次数已达上限（10次），请切换其它模型或明日再试");
+            }
+        }
 
         // 确定会话
         Long convId = request.getConversationId();
@@ -71,7 +83,7 @@ public class AiController extends BaseController {
                     title = c.length() > 20 ? c.substring(0, 20) : c;
                 }
             }
-            var created = conversationService.createConversation(userId, title, request.getModel(), request.getProvider());
+            var created = conversationService.createConversation(userId, title, targetModel, request.getProvider());
             convId = created.getId();
         } else {
             // 校验会话归属
@@ -92,6 +104,21 @@ public class AiController extends BaseController {
         var assistant = conversationService.appendMessage(userId, convId, "assistant", answer, null);
 
         return ResponseEntity.ok(ApiResponse.success(new AiChatResponse(answer, convId, assistant.getId())));
+    }
+
+    private String resolveModel(AiChatRequest request, Long userId) {
+        String defaultModel = aiConfigProperties.getDeepseek().getModel();
+        if (request.getConversationId() != null) {
+            try {
+                AiConversation conv = conversationService.getConversation(userId, request.getConversationId());
+                if (conv != null) {
+                    return conversationService.normalizeModel(conv.getModel());
+                }
+            } catch (Exception ignored) { }
+        }
+        String requested = request.getModel();
+        if (requested == null || requested.isBlank()) return defaultModel;
+        return conversationService.normalizeModel(requested);
     }
 
     @PostMapping("/grade/files")

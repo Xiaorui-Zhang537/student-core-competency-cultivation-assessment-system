@@ -280,24 +280,31 @@
 			},
 			"title": "提交列表",
 			"subtitle": "查看并前往评分",
-			"back": "返回作业",
-			"loading": "正在加载...",
-			"retry": "重试",
-			"empty": "暂无提交",
-			"submittedAt": "提交时间：{time}",
-			"late": "迟交",
-			"status": {
-				"submitted": "已提交",
+                        "back": "返回作业",
+                        "loading": "正在加载...",
+                        "retry": "重试",
+                        "searchPlaceholder": "搜索学生姓名",
+                        "empty": "暂无提交",
+                        "submittedAt": "提交时间：{time}",
+                        "late": "迟交",
+                        "status": {
+                                "submitted": "已提交",
 				"graded": "已评分",
 				"returned": "已退回",
 				"draft": "草稿",
 				"late": "迟交",
 				"unsubmitted": "未提交"
 			},
+			"filters": {
+					"statusLabel": "提交状态",
+					"all": "全部",
+					"submitted": "已提交",
+					"unsubmitted": "未提交"
+			},
 			"actions": {
-				"grade": "评分",
-				"remindUnsubmitted": "提醒未提交",
-				"returnForResubmit": "打回重做"
+					"grade": "评分",
+					"remindUnsubmitted": "提醒未提交",
+					"returnForResubmit": "打回重做"
 			},
 			"pagination": {
 				"perPage": "每页",
@@ -567,19 +574,20 @@
 				"applied": "上下文已生效：课程 {course}，学生 {count} 名"
 			},
 			"model": {
-				"title": "模型设置",
-				"label": "模型",
-				"default": "DeepSeek V3.1"
-			},
+                 "title": "模型设置",
+                 "label": "模型",
+                 "default": "GLM-4.5 Air"
+             },
 			"greeting": "你好，我是 AI 助理。你可以向我咨询课程分析、作业设计、学习建议等问题。",
 			"sendFailed": "发送失败，请稍后重试。",
 			"untitled": "未命名会话",
 			"modelsInfo": {
-				"title": "模型说明",
-				"deepseek": "DeepSeek V3.1：混合推理大模型，支持“思考/非思考”两种模式，可通过 reasoning 参数控制；长上下文（最高可至 128K），工具使用/代码生成/结构化调用表现优秀。",
-				"gemini": "Gemini 2.5 Flash Image Preview：前沿多模态模型，支持图片输入、生成与编辑，以及多轮对话，适合图像相关任务。",
-				"gptoss": "OpenAI gpt-oss-120b：117B 参数 MoE 开源权重模型，强调高推理与 Agent 能力，支持可配置推理深度、函数调用/浏览器/结构化输出等。"
-			}
+                 "title": "模型说明",
+                 "glm": "GLM-4.5 Air：响应快速的轻量推理模型，适合日常问答与教学场景，能够兼顾效率与质量。",
+                 "chimera": "DeepSeek R1T2 Chimera：强化推理的混合模型，支持链式思考与代码/工具调用，适合需要更深入分析的对话。",
+                 "qwen": "Qwen3 Coder：面向编程与技术问答的模型，在代码生成、调试与结构化输出方面表现突出。",
+				 "gemini": "Gemini 2.5 Pro：Google 推理模型，学生每日最多可用 10 次，教师不受限制。"
+            }
 		},
 		"students": {
 			"breadcrumb": {

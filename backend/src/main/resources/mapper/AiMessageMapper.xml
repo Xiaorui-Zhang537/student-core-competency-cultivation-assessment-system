@@ -54,6 +54,19 @@
         DELETE FROM ai_messages WHERE conversation_id = #{conversationId}
     </delete>
 
+    <select id="countAssistantMessagesByModelSince" resultType="long">
+        SELECT COUNT(*)
+        FROM ai_messages m
+        JOIN ai_conversations c ON m.conversation_id = c.id
+        WHERE m.user_id = #{userId}
+          AND c.user_id = #{userId}
+          AND c.model LIKE CONCAT(#{modelPrefix}, '%')
+          AND m.role = 'assistant'
+        <if test="since != null">
+          AND m.created_at &gt;= #{since}
+        </if>
+    </select>
+
 </mapper>
 
 

@@ -64,6 +64,11 @@ ai:
   providers:
     openrouter:
       base-url: https://openrouter.ai/api
-      # api-key 走环境变量 OPENROUTER_API_KEY
+      api-key: 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
+      referer: https://stucoreai.space
+      title: StudentCoreAI
+    google:
+      base-url: https://generativelanguage.googleapis.com
+      api-key: AIzaSyAbK4-_QLcaWwmADkdxG4xNBb_J61XYhtY
   deepseek:
-    model: deepseek/deepseek-chat-v3.1
+    model: z-ai/glm-4.5-air:free

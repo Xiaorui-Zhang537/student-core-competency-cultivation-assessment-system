@@ -5,12 +5,14 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.noncore.assessment.dto.request.AiChatRequest.Message;
 import com.noncore.assessment.exception.BusinessException;
 import com.noncore.assessment.exception.ErrorCode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.*;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
+import org.springframework.web.client.HttpStatusCodeException;
 
 import java.util.List;
 import java.util.Map;
@@ -32,6 +34,8 @@ public class LlmClient {
         this.aiConfig = aiConfig;
         this.restTemplate = buildRestTemplate(false);
     }
+
+    private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
 
     private RestTemplate buildRestTemplate(boolean useProxy) {
         SimpleClientHttpRequestFactory factory = new SimpleClientHttpRequestFactory();
@@ -68,6 +72,8 @@ public class LlmClient {
             headers.set("Authorization", "Bearer " + apiKey);
         }
 
+        applyOpenRouterHeaders(headers, baseUrl);
+
         // 不启用 reasoning，确保广泛兼容
         RequestBody body = buildBody(payloadMessages, model, false, false);
         return doRequest(url, headers, body);
@@ -84,6 +90,8 @@ public class LlmClient {
         if (apiKey != null && !apiKey.isBlank()) {
             headers.set("Authorization", "Bearer " + apiKey);
         }
+
+        applyOpenRouterHeaders(headers, baseUrl);
 
         RequestBody body = buildBody(payloadMessages, model, false, true);
         return doRequest(url, headers, body);
@@ -129,6 +137,13 @@ public class LlmClient {
             throw new BusinessException(ErrorCode.SYSTEM_ERROR, "无法解析大模型返回");
         } catch (RestClientException e) {
             log.error("LLM request error", e);
+            if (e instanceof HttpStatusCodeException statusEx) {
+                String message = buildFriendlyError(statusEx, url);
+                // 对于 4xx 客户端错误（如 401/402），无需走代理重试，直接提示
+                if (statusEx.getStatusCode().is4xxClientError()) {
+                    throw new BusinessException(ErrorCode.SYSTEM_ERROR, message);
+                }
+            }
             AiConfigProperties.ProxyConfig pc = aiConfig.getProxy();
             if (pc.isEnabled() && pc.isAutoRetryWithProxy() && !pc.isAlwaysUseProxy()) {
                 try {
@@ -162,9 +177,86 @@ public class LlmClient {
         }
     }
 
+    private String buildFriendlyError(HttpStatusCodeException ex, String url) {
+        String provider = url != null && url.contains("openrouter.ai") ? "OpenRouter" : "LLM";
+        String upstreamMessage = extractErrorMessage(ex.getResponseBodyAsString());
+    
+        HttpStatusCode status = ex.getStatusCode();
+        String reason;
+    
+        // 兼容 Spring Boot 3：HttpStatusCode 不再有 getReasonPhrase()，必须判断类型
+        if (status instanceof HttpStatus httpStatus) {
+            reason = status.value() + " " + httpStatus.getReasonPhrase();
+        } else {
+            reason = String.valueOf(status.value());
+        }
+    
+        // 余额不足（402）
+        if (status == HttpStatus.PAYMENT_REQUIRED) {
+            return provider + " 请求失败：余额不足或密钥无效（" 
+                + (upstreamMessage != null ? upstreamMessage : reason) + ")";
+        }
+    
+        // 未通过认证（401）
+        if (status == HttpStatus.UNAUTHORIZED) {
+            return provider + " 请求失败：未通过认证，请检查 API Key（" 
+                + (upstreamMessage != null ? upstreamMessage : reason) + ")";
+        }
+    
+        // 禁止访问（403）
+        if (status == HttpStatus.FORBIDDEN) {
+            return provider + " 请求失败：访问被拒绝（" 
+                + (upstreamMessage != null ? upstreamMessage : reason) + ")";
+        }
+    
+        // 其他错误
+        return provider + " 请求失败：" + (upstreamMessage != null ? upstreamMessage : reason);
+    } 
+
+    @SuppressWarnings("unchecked")
+    private String extractErrorMessage(String body) {
+        if (body == null || body.isBlank()) {
+            return null;
+        }
+        try {
+            Map<String, Object> parsed = OBJECT_MAPPER.readValue(body, Map.class);
+            Object err = parsed.get("error");
+            if (err instanceof Map<?,?> m) {
+                Object msg = m.get("message");
+                if (msg != null) {
+                    return String.valueOf(msg);
+                }
+            }
+        } catch (Exception ignored) {
+        }
+        return body.strip();
+    }
+
+
     private String normalizeBaseUrl(String v) {
         if (v == null) return "";
         return v.endsWith("/") ? v.substring(0, v.length()-1) : v;
+    }
+
+    private boolean isOpenRouter(String baseUrl) {
+        return baseUrl != null && baseUrl.contains("openrouter.ai");
+    }
+
+    private void applyOpenRouterHeaders(HttpHeaders headers, String baseUrl) {
+        // OpenRouter: 显式声明不采集数据，避免命中“Paid model training”隐私策略导致 404
+        if (!isOpenRouter(baseUrl)) return;
+
+        headers.set("X-OpenAI-Data-Collection-Opt-Out", "true");
+
+        AiConfigProperties.Provider orProvider = aiConfig.getProviders().getOpenrouter();
+        if (orProvider != null) {
+            if (orProvider.getReferer() != null && !orProvider.getReferer().isBlank()) {
+                headers.set("HTTP-Referer", orProvider.getReferer());
+            }
+            if (orProvider.getTitle() != null && !orProvider.getTitle().isBlank()) {
+                headers.set("X-Title", orProvider.getTitle());
+            }
+        }
     }
 
     @Data

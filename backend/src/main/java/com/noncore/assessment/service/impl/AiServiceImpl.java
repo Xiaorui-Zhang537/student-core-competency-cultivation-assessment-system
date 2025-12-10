@@ -135,11 +135,9 @@ public class AiServiceImpl implements AiService {
             // 强制单会话单模型：读取会话模型并忽略请求中的 model
             AiConversation conv = conversationService.getConversation(teacherId, convId);
             String m = conv != null ? conv.getModel() : null;
-            model = (m == null || m.isBlank()) ? aiConfigProperties.getDeepseek().getModel() : m;
+            model = normalizeModel(m);
         } else {
-            model = (request.getModel() == null || request.getModel().isBlank())
-                    ? aiConfigProperties.getDeepseek().getModel()
-                    : request.getModel();
+            model = normalizeModel(request.getModel());
         }
 
         String baseUrl;
@@ -218,9 +216,7 @@ public class AiServiceImpl implements AiService {
             }
         }
 
-        String model = (request.getModel() == null || request.getModel().isBlank())
-                ? aiConfigProperties.getDeepseek().getModel()
-                : request.getModel();
+        String model = conversationService.normalizeModel(request.getModel());
 
         String baseUrl = aiConfigProperties.getProviders().getOpenrouter().getBaseUrl();
         String apiKey = aiConfigProperties.getProviders().getOpenrouter().getApiKey();
@@ -236,6 +232,26 @@ public class AiServiceImpl implements AiService {
             return geminiClient.generate(payloadMessages, model.replaceFirst("^google/", ""), true, baseUrl, apiKey);
         }
         return deepseekClient.createChatCompletionJsonOnly(payloadMessages, model, false, baseUrl, apiKey);
+    }
+    private String normalizeModel(String model) {
+        String defaultModel = aiConfigProperties.getDeepseek().getModel();
+        if (model == null || model.isBlank()) return defaultModel;
+
+        String trimmed = model.trim();
+        Map<String, String> aliases = Map.of(
+                "z-ai/glm-4.5-air", "z-ai/glm-4.5-air:free",
+                "tngtech/deepseek-r1t2-chimera", "tngtech/deepseek-r1t2-chimera:free",
+                "qwen/qwen3-coder", "qwen/qwen3-coder:free"
+        );
+        if (aliases.containsKey(trimmed)) {
+            trimmed = aliases.get(trimmed);
+        }
+        Set<String> allowed = Set.of(
+                "z-ai/glm-4.5-air:free",
+                "tngtech/deepseek-r1t2-chimera:free",
+                "qwen/qwen3-coder:free"
+        );
+        return allowed.contains(trimmed) ? trimmed : defaultModel;
     }
 }
 

@@ -359,33 +359,11 @@ const displayGradedAt = computed(() => {
   return ts ? new Date(ts).toLocaleString() : '-'
 })
 
-// 进入只读：过期或已提交或已评分（但若被打回且未过重交截止，则可编辑）
-const readOnly = computed(() => {
-  const s = ((submission.value as any)?.status || '').toUpperCase()
-  const gstatus = String((grade.value as any)?.status || '').toUpperCase()
-  // 被打回且未过重交截止：可编辑
-  if (gstatus === 'RETURNED' && !pastDue.value) return false
-  // 已过截止：只读
-  if (pastDue.value) return true
-  // 已评分：只读
-  if (s === 'GRADED') return true
-  // 已提交但被打回：可编辑（注意此时 s 可能仍是 SUBMITTED，但以 gstatus 为准）
-  if (s === 'SUBMITTED' && gstatus === 'RETURNED' && !pastDue.value) return false
-  // 其他已提交：只读
-  if (s === 'SUBMITTED') return true
-  return false
-})
+// 进入只读：仅过期时不可编辑，其余时间允许反复提交覆盖
+const readOnly = computed(() => pastDue.value)
 
-// 禁用条件：正在加载 或 已提交/已评分（但若被打回且未过重交截止，则可操作）
-const disableActions = computed(() => {
-  const s = (submission.value as any)?.status || ''
-  const upper = String(s || '').toUpperCase()
-  const gstatus = String((grade.value as any)?.status || '').toUpperCase()
-  if (submissionStore.loading) return true
-  if (gstatus === 'RETURNED' && !pastDue.value) return false
-  if (upper === 'SUBMITTED' || upper === 'GRADED') return true
-  return false
-})
+// 禁用条件：加载或过期
+const disableActions = computed(() => submissionStore.loading || pastDue.value)
 
 // 归一化状态到前端显示语义（含被打回）
 const normalizeStatus = (raw?: string) => {

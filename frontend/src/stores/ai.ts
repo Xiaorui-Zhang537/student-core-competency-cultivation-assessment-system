@@ -30,7 +30,7 @@ export const useAIStore = defineStore('ai', () => {
   const draftsByConvId = reactive<Record<string, string>>({})
   const pendingAttachmentIds = reactive<Record<string, number[]>>({})
   const searchQuery = ref('')
-  const model = ref('deepseek/deepseek-chat-v3.1')
+  const model = ref('z-ai/glm-4.5-air')
 
   const fetchConversations = async (params?: { q?: string; pinned?: boolean; archived?: boolean; page?: number; size?: number }) => {
     const res: any = await handleApiCall(() => aiApi.listConversations(params), ui, '加载会话失败')
@@ -198,12 +198,12 @@ export const useAIStore = defineStore('ai', () => {
       const currentModel = (currentConv?.model || model.value || '').toLowerCase()
       const isGemini = currentModel.includes('gemini')
       if (isGemini) {
-        const fallback = 'deepseek/deepseek-chat-v3.1'
+        const fallback = 'z-ai/glm-4.5-air'
         try {
           await handleApiCall(() => aiApi.updateConversation(Number(convId), { model: fallback }), ui, '切换模型失败')
           const idx = conversations.value.findIndex(c => c.id === convId)
           if (idx >= 0) conversations.value[idx].model = fallback
-          ui.showNotification({ type: 'info', title: '模型已切换', message: '检测到 Gemini 配额受限，已自动切换至 DeepSeek 并重试。' })
+          ui.showNotification({ type: 'info', title: '模型已切换', message: '检测到 Gemini 配额受限，已自动切换至 GLM-4.5 Air 并重试。' })
           finalResp = await handleApiCall(() => aiApi.chat({
             messages: [{ role: 'user', content: payload.content }],
             courseId: payload.courseId,
