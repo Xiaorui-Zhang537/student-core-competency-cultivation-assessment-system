@@ -592,9 +592,9 @@ function escapeHtml(s: string) {
 // Load courses and assignments options
 const courseOptions = ref<{label: string; value: string}[]>([])
 const assignmentOptions = ref<{label: string; value: string}[]>([])
-const gradingModel = ref('google/gemini-2.5-pro')
+const gradingModel = ref('google/gemini-3-pro-preview')
 const gradingModelOptions = [
-  { label: 'Gemini 2.5 Pro', value: 'google/gemini-2.5-pro' }
+  { label: 'Gemini 3 Pro', value: 'google/gemini-3-pro-preview' }
 ]
 onMounted(async () => {
   try {

@@ -1399,9 +1399,9 @@ const previewSingleFile = async () => {
 }
 
 // ---- AI 弹窗逻辑 ----
-const gradingModel = ref('google/gemini-2.5-pro')
+const gradingModel = ref('google/gemini-3-pro-preview')
 const gradingModelOptions = [
-  { label: 'Gemini 2.5 Pro', value: 'google/gemini-2.5-pro' }
+{ label: 'Gemini 3 Pro', value: 'google/gemini-3-pro-preview' }
 ]
 const aiSource = ref<'text'|'files'>('text')
 const aiPicker = reactive({ previewText: '', files: [] as any[], selectedFileIds: [] as number[] })

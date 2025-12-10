@@ -19,8 +19,6 @@ import java.util.Map;
 import com.noncore.assessment.config.AiConfigProperties;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.client.SimpleClientHttpRequestFactory;
-import java.net.InetSocketAddress;
-import java.net.Proxy;
 
 @Slf4j
 @Component
@@ -32,22 +30,16 @@ public class LlmClient {
     @Autowired
     public LlmClient(AiConfigProperties aiConfig) {
         this.aiConfig = aiConfig;
-        this.restTemplate = buildRestTemplate(false);
+        this.restTemplate = buildRestTemplate();
     }
 
     private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
 
-    private RestTemplate buildRestTemplate(boolean useProxy) {
+    private RestTemplate buildRestTemplate() {
         SimpleClientHttpRequestFactory factory = new SimpleClientHttpRequestFactory();
         AiConfigProperties.ProxyConfig pc = aiConfig.getProxy();
         factory.setConnectTimeout(pc.getConnectTimeoutMs());
         factory.setReadTimeout(pc.getReadTimeoutMs());
-        if (useProxy || pc.isAlwaysUseProxy()) {
-            Proxy proxy = new Proxy(
-                    "SOCKS".equalsIgnoreCase(pc.getType()) ? Proxy.Type.SOCKS : Proxy.Type.HTTP,
-                    new InetSocketAddress(pc.getHost(), pc.getPort()));
-            factory.setProxy(proxy);
-        }
         return new RestTemplate(factory);
     }
 
@@ -142,35 +134,6 @@ public class LlmClient {
                 // 对于 4xx 客户端错误（如 401/402），无需走代理重试，直接提示
                 if (statusEx.getStatusCode().is4xxClientError()) {
                     throw new BusinessException(ErrorCode.SYSTEM_ERROR, message);
-                }
-            }
-            AiConfigProperties.ProxyConfig pc = aiConfig.getProxy();
-            if (pc.isEnabled() && pc.isAutoRetryWithProxy() && !pc.isAlwaysUseProxy()) {
-                try {
-                    log.warn("Retrying LLM request via proxy {}:{}", pc.getHost(), pc.getPort());
-                    RestTemplate proxyRt = buildRestTemplate(true);
-                    HttpEntity<RequestBody> entity = new HttpEntity<>(body, headers);
-                    @SuppressWarnings("unchecked")
-                    ResponseEntity<Map<String, Object>> resp = (ResponseEntity<Map<String, Object>>) (ResponseEntity<?>) proxyRt.exchange(url, HttpMethod.POST, entity, Map.class);
-                    if (!resp.getStatusCode().is2xxSuccessful() || resp.getBody() == null) {
-                        log.error("LLM (proxy) non-2xx or empty body: status={}, body={}", resp.getStatusCode(), resp.getBody());
-                        throw new BusinessException(ErrorCode.SYSTEM_ERROR, "LLM错误(代理): " + resp.getStatusCode());
-                    }
-                    Map<String, Object> respBody = resp.getBody();
-                    Object choices = respBody != null ? respBody.get("choices") : null;
-                    if (choices instanceof List<?> list && !list.isEmpty()) {
-                        Object first = list.get(0);
-                        if (first instanceof Map<?,?> m) {
-                            Object message = m.get("message");
-                            if (message instanceof Map<?,?> mm) {
-                                Object content = mm.get("content");
-                                if (content != null) return String.valueOf(content);
-                            }
-                        }
-                    }
-                    throw new BusinessException(ErrorCode.SYSTEM_ERROR, "无法解析大模型返回(代理)");
-                } catch (RestClientException e2) {
-                    log.error("LLM proxy request error", e2);
                 }
             }
             throw new BusinessException(ErrorCode.SYSTEM_ERROR, "LLM请求异常: " + e.getMessage());

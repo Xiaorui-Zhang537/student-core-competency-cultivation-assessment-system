@@ -67,8 +67,8 @@ public class AiController extends BaseController {
         if (hasRole("STUDENT") && targetModel != null && targetModel.startsWith("google/")) {
             java.time.LocalDateTime startOfDay = java.time.LocalDate.now().atStartOfDay();
             long used = conversationService.countAssistantMessagesByModelSince(userId, "google/gemini", startOfDay);
-            if (used >= 10) {
-                throw new BusinessException(ErrorCode.PERMISSION_DENIED, "今日 Gemini 使用次数已达上限（10次），请切换其它模型或明日再试");
+            if (used >= 20) {
+                throw new BusinessException(ErrorCode.PERMISSION_DENIED, "今日 Gemini 使用次数已达上限（20次），请切换其它模型或明日再试");
             }
         }
 
@@ -130,7 +130,7 @@ public class AiController extends BaseController {
         java.util.List<Long> fileIds = ids.stream().map(Integer::longValue).toList();
         String model = (String) body.get("model");
         if (model == null || !model.startsWith("google/")) {
-            model = "google/gemini-2.5-pro";
+            model = "google/gemini-3-pro-preview";
         }
         // 批改场景：默认强制 JSON-only
         Boolean jsonOnly = (Boolean) body.get("jsonOnly");

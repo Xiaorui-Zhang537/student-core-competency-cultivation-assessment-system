@@ -69,6 +69,6 @@ ai:
       title: StudentCoreAI
     google:
       base-url: https://generativelanguage.googleapis.com
-      api-key: AIzaSyAbK4-_QLcaWwmADkdxG4xNBb_J61XYhtY
+      api-key: ${GOOGLE_API_KEY:}
   deepseek:
     model: z-ai/glm-4.5-air:free

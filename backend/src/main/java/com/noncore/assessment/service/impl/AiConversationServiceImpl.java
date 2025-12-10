@@ -141,23 +141,25 @@ public class AiConversationServiceImpl implements AiConversationService {
         if (model == null || model.isBlank()) return defaultModel;
 
         String trimmed = model.trim();
-        Map<String, String> aliases = Map.of(
-                "z-ai/glm-4.5-air", "z-ai/glm-4.5-air:free",
-                "tngtech/deepseek-r1t2-chimera", "tngtech/deepseek-r1t2-chimera:free",
-                "qwen/qwen3-coder", "qwen/qwen3-coder:free",
-                "google/gemini-2.5-pro", "google/gemini-2.5-pro",
-                "gemini-2.5-pro", "google/gemini-2.5-pro"
-        );
+        Map<String, String> aliases = new java.util.HashMap<>();
+        aliases.put("z-ai/glm-4.5-air", "z-ai/glm-4.5-air:free");
+        aliases.put("tngtech/deepseek-r1t2-chimera", "tngtech/deepseek-r1t2-chimera:free");
+        aliases.put("qwen/qwen3-coder", "qwen/qwen3-coder:free");
+        aliases.put("gemini-3-pro", "gemini-3-pro-preview");
+        aliases.put("google/gemini-3-pro", "google/gemini-3-pro-preview");
         if (aliases.containsKey(trimmed)) {
             trimmed = aliases.get(trimmed);
         }
+        if (trimmed.startsWith("gemini-")) {
+            trimmed = "google/" + trimmed;
+        }
+        boolean allowedGoogle = trimmed.startsWith("google/");
         Set<String> allowed = Set.of(
                 "z-ai/glm-4.5-air:free",
                 "tngtech/deepseek-r1t2-chimera:free",
-                "qwen/qwen3-coder:free",
-                "google/gemini-2.5-pro"
+                "qwen/qwen3-coder:free"
         );
-        return allowed.contains(trimmed) ? trimmed : defaultModel;
+        return allowedGoogle || allowed.contains(trimmed) ? trimmed : defaultModel;
     }
 }
 

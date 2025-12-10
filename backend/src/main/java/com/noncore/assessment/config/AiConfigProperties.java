@@ -47,14 +47,16 @@ public class AiConfigProperties {
     @Data
     public static class ProxyConfig {
         private boolean enabled = true;
-        private boolean alwaysUseProxy = false;
-        private boolean autoRetryWithProxy = true;
+        private boolean alwaysUseProxy = true;
         private String host = "127.0.0.1";
-        private int port = 7897;
+        private int port = 7890;
         /** HTTP 或 SOCKS */
         private String type = "HTTP";
         private int connectTimeoutMs = 10000;
         private int readTimeoutMs = 60000;
+         // 显式提供布尔 getter，避免缺少 Lombok 注解处理时出现编译错误
+         public boolean isEnabled() { return enabled; }
+         public boolean isAlwaysUseProxy() { return alwaysUseProxy; }
     }
 
     @Data

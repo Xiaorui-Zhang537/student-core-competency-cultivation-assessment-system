@@ -33,22 +33,27 @@ public class GeminiClient {
     @Autowired
     public GeminiClient(AiConfigProperties aiConfig) {
         this.aiConfig = aiConfig;
-        this.restTemplate = buildRestTemplate(false);
+        this.restTemplate = buildRestTemplate();
     }
 
-    private RestTemplate buildRestTemplate(boolean useProxy) {
+    private RestTemplate buildRestTemplate() {
         SimpleClientHttpRequestFactory factory = new SimpleClientHttpRequestFactory();
         AiConfigProperties.ProxyConfig pc = aiConfig.getProxy();
         factory.setConnectTimeout(pc.getConnectTimeoutMs());
         factory.setReadTimeout(pc.getReadTimeoutMs());
-        if (useProxy || pc.isAlwaysUseProxy()) {
-            Proxy proxy = new Proxy(
-                    "SOCKS".equalsIgnoreCase(pc.getType()) ? Proxy.Type.SOCKS : Proxy.Type.HTTP,
-                    new InetSocketAddress(pc.getHost(), pc.getPort()));
-            factory.setProxy(proxy);
-        }
+        Proxy proxy = new Proxy(
+            "SOCKS".equalsIgnoreCase(pc.getType()) ? Proxy.Type.SOCKS : Proxy.Type.HTTP,
+            new InetSocketAddress("127.0.0.1", 7890));
+        factory.setProxy(proxy);
         return new RestTemplate(factory);
     }
+
+        /**
+     * 兼容旧调用签名，参数不再生效（Gemini 永远使用固定代理）。
+     */
+        private RestTemplate buildRestTemplate(boolean ignoredAlwaysUseProxy) {
+            return buildRestTemplate();
+        }
 
     public String generate(List<Map<String, Object>> partsMessages, String model, boolean jsonOnly, String baseUrl, String apiKey) {
         // 将 OpenAI 风格的 messages（数组，包含 {type:'text', text:'...'}） 转为 Gemini 的 contents 结构
@@ -76,10 +81,11 @@ public class GeminiClient {
             ));
         }
 
-        String url = normalizeBaseUrl(baseUrl) + "/v1beta/models/" + model + ":generateContent?key=" + apiKey;
+        String url = normalizeBaseUrl(baseUrl) + "/v1beta/models/" + model + ":generateContent";
 
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
+        headers.set("x-goog-api-key", apiKey);
 
         RequestBody body = new RequestBody();
         body.setContents(contents);
@@ -93,12 +99,15 @@ public class GeminiClient {
         long baseBackoff = Math.max(0, rc.getBackoffMs());
         long jitter = Math.max(0, rc.getJitterMs());
 
+        boolean preferProxy = shouldUseProxy(baseUrl);
+        RestTemplate primaryRt = preferProxy ? buildRestTemplate(true) : restTemplate;
+
         RestClientException last = null;
         for (int i = 1; i <= attempts; i++) {
             try {
                 HttpEntity<RequestBody> entity = new HttpEntity<>(body, headers);
                 @SuppressWarnings("unchecked")
-                ResponseEntity<Map<String, Object>> resp = (ResponseEntity<Map<String, Object>>) (ResponseEntity<?>) restTemplate.exchange(url, HttpMethod.POST, entity, Map.class);
+                ResponseEntity<Map<String, Object>> resp = (ResponseEntity<Map<String, Object>>) (ResponseEntity<?>) primaryRt.exchange(url, HttpMethod.POST, entity, Map.class);
                 if (!resp.getStatusCode().is2xxSuccessful() || resp.getBody() == null) {
                     log.error("Gemini non-2xx or empty body: status={}, body={}", resp.getStatusCode(), resp.getBody());
                     throw new BusinessException(ErrorCode.SYSTEM_ERROR, "Gemini错误: " + resp.getStatusCode());
@@ -136,52 +145,28 @@ public class GeminiClient {
 
                 log.error("Gemini request error", e);
 
-                // 代理重试（仅一次），仍失败则抛出
-                AiConfigProperties.ProxyConfig pc = aiConfig.getProxy();
-                if (pc.isEnabled() && pc.isAutoRetryWithProxy() && !pc.isAlwaysUseProxy()) {
-                    try {
-                        log.warn("Retrying Gemini request via proxy {}:{}", pc.getHost(), pc.getPort());
-                        RestTemplate proxyRt = buildRestTemplate(true);
-                        HttpEntity<RequestBody> entity = new HttpEntity<>(body, headers);
-                        @SuppressWarnings("unchecked")
-                        ResponseEntity<Map<String, Object>> resp = (ResponseEntity<Map<String, Object>>) (ResponseEntity<?>) proxyRt.exchange(url, HttpMethod.POST, entity, Map.class);
-                        if (!resp.getStatusCode().is2xxSuccessful() || resp.getBody() == null) {
-                            log.error("Gemini (proxy) non-2xx or empty body: status={}, body={}", resp.getStatusCode(), resp.getBody());
-                            throw new BusinessException(ErrorCode.SYSTEM_ERROR, "Gemini错误(代理): " + resp.getStatusCode());
-                        }
-                        Map<String, Object> bodyMap = resp.getBody();
-                        Object cands = bodyMap.get("candidates");
-                        if (cands instanceof List<?> list && !list.isEmpty()) {
-                            Object first = list.get(0);
-                            if (first instanceof Map<?,?> mm) {
-                                Object content = mm.get("content");
-                                if (content instanceof Map<?,?> cm) {
-                                    Object parts = cm.get("parts");
-                                    if (parts instanceof List<?> pl && !pl.isEmpty()) {
-                                        Object p0 = pl.get(0);
-                                        if (p0 instanceof Map<?,?> pm) {
-                                            Object text = pm.get("text");
-                                            if (text != null) return String.valueOf(text);
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                        throw new BusinessException(ErrorCode.SYSTEM_ERROR, "无法解析大模型返回(代理)");
-                    } catch (RestClientException e2) {
-                        log.error("Gemini proxy request error", e2);
-                    }
-                }
                 break;
             }
         }
-        throw new BusinessException(ErrorCode.SYSTEM_ERROR, "Gemini请求异常: " + (last != null ? last.getMessage() : "unknown"));
+        String msg = last != null ? last.getMessage() : "unknown";
+        throw new BusinessException(ErrorCode.SYSTEM_ERROR, "Gemini请求异常(model=" + model + "): " + msg);
     }
 
     private String mapRole(String role) {
         // Gemini 采用 user/model 两类角色，system 可并入 user（由 PromptBuilder 注入在最前）
         if ("assistant".equals(role)) return "model";
         return "user";
+    }
+
+    private boolean shouldUseProxy(String baseUrl) {
+        AiConfigProperties.ProxyConfig pc = aiConfig.getProxy();
+        if (!pc.isEnabled()) {
+            return false;
+        }
+        if (pc.isAlwaysUseProxy()) {
+            return true;
+        }
+        return baseUrl != null && baseUrl.contains("googleapis.com");
     }
 
     private String normalizeBaseUrl(String v) { return (v == null) ? "" : (v.endsWith("/") ? v.substring(0, v.length()-1) : v); }
