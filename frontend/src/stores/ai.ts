@@ -30,7 +30,7 @@ export const useAIStore = defineStore('ai', () => {
   const draftsByConvId = reactive<Record<string, string>>({})
   const pendingAttachmentIds = reactive<Record<string, number[]>>({})
   const searchQuery = ref('')
-  const model = ref('z-ai/glm-4.5-air')
+  const model = ref('google/gemini-2.5-pro')
 
   const fetchConversations = async (params?: { q?: string; pinned?: boolean; archived?: boolean; page?: number; size?: number }) => {
     const res: any = await handleApiCall(() => aiApi.listConversations(params), ui, '加载会话失败')
@@ -76,7 +76,7 @@ export const useAIStore = defineStore('ai', () => {
     if (existed) {
       if (title && existed.title !== title) {
         try {
-          await handleApiCall(() => aiApi.updateConversation(existed.id, { title }), ui)
+          await handleApiCall(() => aiApi.updateConversation(existed.id, { title }), ui, '更新会话失败')
           const idx = conversations.value.findIndex(c => c.id === existed.id)
           if (idx >= 0) conversations.value[idx].title = title
         } catch {}
@@ -196,14 +196,20 @@ export const useAIStore = defineStore('ai', () => {
     if (!finalResp) {
       const currentConv = conversations.value.find(c => c.id === convId)
       const currentModel = (currentConv?.model || model.value || '').toLowerCase()
-      const isGemini = currentModel.includes('gemini')
-      if (isGemini) {
-        const fallback = 'z-ai/glm-4.5-air'
+      const order = ['gemini-2.5-pro', 'gemini-2.5-flash', 'gemini-2.5-flash-lite']
+      const normalized = currentModel.replace(/^google\//, '')
+      const next = (() => {
+        const idx = order.findIndex(m => normalized.startsWith(m))
+        if (idx === -1) return `google/${order[0]}`
+        if (idx < order.length - 1) return `google/${order[idx + 1]}`
+        return null
+      })()
+      if (next) {
         try {
-          await handleApiCall(() => aiApi.updateConversation(Number(convId), { model: fallback }), ui, '切换模型失败')
+          await handleApiCall(() => aiApi.updateConversation(Number(convId), { model: next }), ui, '切换模型失败')
           const idx = conversations.value.findIndex(c => c.id === convId)
-          if (idx >= 0) conversations.value[idx].model = fallback
-          ui.showNotification({ type: 'info', title: '模型已切换', message: '检测到 Gemini 配额受限，已自动切换至 GLM-4.5 Air 并重试。' })
+          if (idx >= 0) conversations.value[idx].model = next
+          ui.showNotification({ type: 'info', title: '模型已切换', message: '检测到 Gemini 配额受限，已自动降级模型并重试。' })
           finalResp = await handleApiCall(() => aiApi.chat({
             messages: [{ role: 'user', content: payload.content }],
             courseId: payload.courseId,

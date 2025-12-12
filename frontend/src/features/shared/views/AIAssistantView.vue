@@ -66,7 +66,7 @@
             <glass-popover-select
               v-model="model"
               :options="[
-                { label: 'Gemini 3 Pro', value: 'google/gemini-3-pro-preview' },
+                { label: 'Gemini 2.5 Pro', value: 'google/gemini-2.5-pro' },
                 { label: 'GLM-4.5 Air', value: 'z-ai/glm-4.5-air:free' },
                 { label: 'DeepSeek R1T2 Chimera', value: 'tngtech/deepseek-r1t2-chimera:free' },
                 { label: 'Qwen3 Coder', value: 'qwen/qwen3-coder:free' }

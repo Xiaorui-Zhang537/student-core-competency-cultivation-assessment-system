@@ -581,7 +581,7 @@
 			"model": {
                 "title": "Model Settings",
                 "label": "Model",
-                "default": "GLM-4.5 Air"
+                "default": "Gemini 2.5 Pro"
             },
 			"greeting": "Hello, I'm the AI assistant. Ask me about course analytics, assignment design, and learning recommendations.",
 			"sendFailed": "Send failed. Please try again.",
@@ -591,7 +591,7 @@
                 "glm": "GLM-4.5 Air: Lightweight reasoning model with fast responses, great for everyday Q&A and teaching scenarios while balancing speed and quality.",
                 "chimera": "DeepSeek R1T2 Chimera: Hybrid model with enhanced reasoning and chain-of-thought style outputs, suitable for deeper analysis plus tool or code use.",
                  "qwen": "Qwen3 Coder: Code-focused model optimized for programming help, debugging, and structured technical outputs.",
-				 "gemini": "Gemini 3 Pro: Google's next-gen reasoning model. Students can use it up to 10 times per day; teachers have unlimited access."
+				 "gemini": "Gemini 2.5 Pro: Google's flagship reasoning model. Students can use it up to 20 times per day; teachers have unlimited access."
             }
         },
 		"students": {

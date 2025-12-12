@@ -34,11 +34,12 @@ public class AiConversationServiceImpl implements AiConversationService {
     @Override
     public AiConversation createConversation(Long userId, String title, String model, String provider) {
         String normalizedModel = normalizeModel(model);
+        String normalizedProvider = (provider == null || provider.isBlank()) ? aiConfigProperties.getDefaultProvider() : provider.trim();
         AiConversation c = AiConversation.builder()
                 .userId(userId)
                 .title(title == null || title.isBlank() ? "新对话" : title.trim())
                 .model(normalizedModel)
-                .provider(provider)
+                .provider(normalizedProvider)
                 .pinned(false)
                 .archived(false)
                 .deleted(false)
@@ -73,7 +74,11 @@ public class AiConversationServiceImpl implements AiConversationService {
     @Override
     public void updateConversationModel(Long userId, Long conversationId, String model) {
         AiConversation c = getConversation(userId, conversationId);
-        c.setModel(normalizeModel(model));
+        String normalizedModel = normalizeModel(model);
+        c.setModel(normalizedModel);
+        if (normalizedModel != null && normalizedModel.startsWith("google/")) {
+            c.setProvider(aiConfigProperties.getDefaultProvider());
+        }
         conversationMapper.update(c);
     }
 
@@ -138,6 +143,9 @@ public class AiConversationServiceImpl implements AiConversationService {
     @Override
     public String normalizeModel(String model) {
         String defaultModel = aiConfigProperties.getDeepseek().getModel();
+        if (defaultModel == null || defaultModel.isBlank()) {
+            defaultModel = "google/gemini-2.5-pro";
+        }
         if (model == null || model.isBlank()) return defaultModel;
 
         String trimmed = model.trim();
@@ -145,8 +153,11 @@ public class AiConversationServiceImpl implements AiConversationService {
         aliases.put("z-ai/glm-4.5-air", "z-ai/glm-4.5-air:free");
         aliases.put("tngtech/deepseek-r1t2-chimera", "tngtech/deepseek-r1t2-chimera:free");
         aliases.put("qwen/qwen3-coder", "qwen/qwen3-coder:free");
-        aliases.put("gemini-3-pro", "gemini-3-pro-preview");
-        aliases.put("google/gemini-3-pro", "google/gemini-3-pro-preview");
+        aliases.put("gemini-3-pro", "google/gemini-2.5-pro");
+        aliases.put("google/gemini-3-pro", "google/gemini-2.5-pro");
+        aliases.put("gemini-2.5-pro", "google/gemini-2.5-pro");
+        aliases.put("gemini-2.5-flash", "google/gemini-2.5-flash");
+        aliases.put("gemini-2.5-flash-lite", "google/gemini-2.5-flash-lite");
         if (aliases.containsKey(trimmed)) {
             trimmed = aliases.get(trimmed);
         }

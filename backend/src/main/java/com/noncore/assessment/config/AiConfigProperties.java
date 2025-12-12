@@ -10,7 +10,7 @@ import org.springframework.stereotype.Component;
 public class AiConfigProperties {
 
     private Providers providers = new Providers();
-    private String defaultProvider = "openrouter";
+    private String defaultProvider = "google";
     // 系统 Prompt 文件路径，支持 classpath: 或文件系统路径
     private String systemPromptPath = "classpath:/prompts/essay_evaluation_system_prompt.txt";
 
@@ -41,7 +41,7 @@ public class AiConfigProperties {
 
     @Data
     public static class Deepseek {
-        private String model = "z-ai/glm-4.5-air:free";
+        private String model = "google/gemini-2.5-pro";
     }
 
     @Data

@@ -60,7 +60,7 @@ jwt:
 
 # 开发环境默认走 OpenRouter（OpenAI 兼容）。密钥请用环境变量 DEEPSEEK_API_KEY 注入。
 ai:
-  default-provider: openrouter
+  default-provider: google
   providers:
     openrouter:
       base-url: https://openrouter.ai/api
@@ -71,4 +71,4 @@ ai:
       base-url: https://generativelanguage.googleapis.com
       api-key: ${GOOGLE_API_KEY:}
   deepseek:
-    model: z-ai/glm-4.5-air:free
+    model: google/gemini-2.5-pro

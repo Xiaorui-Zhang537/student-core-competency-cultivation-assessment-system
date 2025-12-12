@@ -130,7 +130,7 @@ public class AiController extends BaseController {
         java.util.List<Long> fileIds = ids.stream().map(Integer::longValue).toList();
         String model = (String) body.get("model");
         if (model == null || !model.startsWith("google/")) {
-            model = "google/gemini-3-pro-preview";
+            model = "google/gemini-2.5-pro";
         }
         // 批改场景：默认强制 JSON-only
         Boolean jsonOnly = (Boolean) body.get("jsonOnly");

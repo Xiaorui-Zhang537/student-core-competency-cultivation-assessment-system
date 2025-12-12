@@ -124,7 +124,7 @@ springdoc:
 
 # AI 集成配置（DeepSeek/OpenAI 兼容）
 ai:
-  default-provider: ${AI_DEFAULT_PROVIDER:openrouter}
+  default-provider: ${AI_DEFAULT_PROVIDER:google}
   system-prompt-path: ${AI_SYSTEM_PROMPT_PATH:classpath:/prompts/essay_evaluation_system_prompt.txt}
   proxy:
     enabled: ${AI_PROXY_ENABLED:true}
@@ -149,7 +149,7 @@ ai:
       base-url: ${GOOGLE_API_BASE_URL:https://generativelanguage.googleapis.com}
       api-key: ${GOOGLE_API_KEY:}
   deepseek:
-    model: ${DEEPSEEK_MODEL:z-ai/glm-4.5-air:free}
+    model: ${DEEPSEEK_MODEL:google/gemini-2.5-pro}
 
 # 安全配置
 security:
