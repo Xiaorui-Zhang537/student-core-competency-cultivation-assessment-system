@@ -20,7 +20,7 @@ public class AiConfigProperties {
 
     @Data
     public static class Providers {
-        private Provider openrouter = new Provider();
+        private Provider glm = new Provider();
         private Provider deepseek = new Provider();
         private Provider google = new Provider();
     }
@@ -28,16 +28,8 @@ public class AiConfigProperties {
     @Data
     public static class Provider {
         private String baseUrl;
-        private String apiKey;/**
-        * OpenRouter 免费模型要求携带的来源站点，写入 HTTP-Referer。
-        * 对其它兼容渠道无副作用。
-        */
-       private String referer;
-       /**
-        * OpenRouter 推荐的站点名称，写入 X-Title，便于通过免费通道校验。
-        */
-       private String title;
-   }
+        private String apiKey;
+    }
 
     @Data
     public static class Deepseek {

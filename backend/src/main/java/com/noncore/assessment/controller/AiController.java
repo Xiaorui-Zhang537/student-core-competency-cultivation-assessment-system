@@ -71,7 +71,13 @@ public class AiController extends BaseController {
                 throw new BusinessException(ErrorCode.PERMISSION_DENIED, "今日 Gemini 使用次数已达上限（20次），请切换其它模型或明日再试");
             }
         }
-
+        if (hasRole("STUDENT") && targetModel != null && targetModel.startsWith("glm-")) {
+            java.time.LocalDateTime sevenDaysAgo = java.time.LocalDateTime.now().minusDays(7);
+            long used = conversationService.countAssistantMessagesByModelSince(userId, "glm-", sevenDaysAgo);
+            if (used >= 20) {
+                throw new BusinessException(ErrorCode.PERMISSION_DENIED, "过去7天 GLM 使用次数已达上限（20次），请稍后再试");
+            }
+        }
         // 确定会话
         Long convId = request.getConversationId();
         if (convId == null) {

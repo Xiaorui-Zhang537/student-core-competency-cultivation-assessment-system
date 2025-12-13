@@ -192,12 +192,12 @@ export const useAIStore = defineStore('ai', () => {
     }), ui, '发送失败')
 
     let finalResp: any = resp
+    const currentConv = conversations.value.find(c => c.id === convId)
+    const currentModelValue = (currentConv?.model || model.value || '').toLowerCase()
     // 若失败（null）且疑似配额/频率问题，尝试自动切换更稳模型并重试一次
     if (!finalResp) {
-      const currentConv = conversations.value.find(c => c.id === convId)
-      const currentModel = (currentConv?.model || model.value || '').toLowerCase()
       const order = ['gemini-2.5-pro', 'gemini-2.5-flash', 'gemini-2.5-flash-lite']
-      const normalized = currentModel.replace(/^google\//, '')
+      const normalized = currentModelValue.replace(/^google\//, '')
       const next = (() => {
         const idx = order.findIndex(m => normalized.startsWith(m))
         if (idx === -1) return `google/${order[0]}`
@@ -210,6 +210,30 @@ export const useAIStore = defineStore('ai', () => {
           const idx = conversations.value.findIndex(c => c.id === convId)
           if (idx >= 0) conversations.value[idx].model = next
           ui.showNotification({ type: 'info', title: '模型已切换', message: '检测到 Gemini 配额受限，已自动降级模型并重试。' })
+          finalResp = await handleApiCall(() => aiApi.chat({
+            messages: [{ role: 'user', content: payload.content }],
+            courseId: payload.courseId,
+            studentIds: payload.studentIds,
+            conversationId: convId,
+            ...(attachments.length ? { attachmentFileIds: attachments } : {}),
+          }), ui, '发送失败')
+        } catch {}
+      }
+    }
+    if (!finalResp && currentModelValue.includes('glm')) {
+      const glmOrder = ['glm-4.6', 'glm-4.5-air']
+      const nextGlm = (() => {
+        const idx = glmOrder.findIndex(m => currentModelValue.startsWith(m))
+        if (idx === -1) return glmOrder[0]
+        if (idx < glmOrder.length - 1) return glmOrder[idx + 1]
+        return null
+      })()
+      if (nextGlm) {
+        try {
+          await handleApiCall(() => aiApi.updateConversation(Number(convId), { model: nextGlm }), ui, '切换模型失败')
+          const idx = conversations.value.findIndex(c => c.id === convId)
+          if (idx >= 0) conversations.value[idx].model = nextGlm
+          ui.showNotification({ type: 'info', title: '模型已切换', message: '检测到 GLM 调用失败，已自动降级并重试。' })
           finalResp = await handleApiCall(() => aiApi.chat({
             messages: [{ role: 'user', content: payload.content }],
             courseId: payload.courseId,

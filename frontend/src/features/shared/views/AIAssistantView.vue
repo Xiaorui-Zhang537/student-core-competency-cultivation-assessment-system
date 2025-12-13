@@ -67,9 +67,8 @@
               v-model="model"
               :options="[
                 { label: 'Gemini 2.5 Pro', value: 'google/gemini-2.5-pro' },
-                { label: 'GLM-4.5 Air', value: 'z-ai/glm-4.5-air:free' },
-                { label: 'DeepSeek R1T2 Chimera', value: 'tngtech/deepseek-r1t2-chimera:free' },
-                { label: 'Qwen3 Coder', value: 'qwen/qwen3-coder:free' }
+                { label: 'GLM-4.6', value: 'glm-4.6' },
+                { label: 'GLM-4.5 Air', value: 'glm-4.5-air' }
               ]"
               size="sm"
             />
@@ -88,9 +87,8 @@
             <div class="font-semibold mb-1">{{ t('teacher.ai.modelsInfo.title') || '模型说明' }}</div>
             <ul class="list-disc pl-4 space-y-1">
               <li>{{ t('teacher.ai.modelsInfo.gemini') }}</li>
-              <li>{{ t('teacher.ai.modelsInfo.glm') }}</li>
-              <li>{{ t('teacher.ai.modelsInfo.chimera') }}</li>
-              <li>{{ t('teacher.ai.modelsInfo.qwen') }}</li>
+              <li>{{ t('teacher.ai.modelsInfo.glm46') }}</li>
+              <li>{{ t('teacher.ai.modelsInfo.glm45') }}</li>
             </ul>
           </div>
         </aside>

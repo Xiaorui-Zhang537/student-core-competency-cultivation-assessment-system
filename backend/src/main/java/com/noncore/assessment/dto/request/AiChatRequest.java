@@ -23,7 +23,7 @@ public class AiChatRequest {
 
     private String model;
 
-    private String provider; // openrouter | deepseek (official)
+    private String provider; // provider is derived by model
 
     private Long conversationId; // 可选：指定会话
 

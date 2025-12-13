@@ -62,11 +62,9 @@ jwt:
 ai:
   default-provider: google
   providers:
-    openrouter:
-      base-url: https://openrouter.ai/api
-      api-key: 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
-      referer: https://stucoreai.space
-      title: StudentCoreAI
+    glm:
+      base-url: https://open.bigmodel.cn/api/paas/v4
+      api-key: ${GLM_API_KEY:}
     google:
       base-url: https://generativelanguage.googleapis.com
       api-key: ${GOOGLE_API_KEY:}

@@ -150,9 +150,8 @@ public class AiConversationServiceImpl implements AiConversationService {
 
         String trimmed = model.trim();
         Map<String, String> aliases = new java.util.HashMap<>();
-        aliases.put("z-ai/glm-4.5-air", "z-ai/glm-4.5-air:free");
-        aliases.put("tngtech/deepseek-r1t2-chimera", "tngtech/deepseek-r1t2-chimera:free");
-        aliases.put("qwen/qwen3-coder", "qwen/qwen3-coder:free");
+        aliases.put("z-ai/glm-4.5-air", "glm-4.5-air");
+        aliases.put("z-ai/glm-4.5-air:free", "glm-4.5-air");
         aliases.put("gemini-3-pro", "google/gemini-2.5-pro");
         aliases.put("google/gemini-3-pro", "google/gemini-2.5-pro");
         aliases.put("gemini-2.5-pro", "google/gemini-2.5-pro");
@@ -166,9 +165,9 @@ public class AiConversationServiceImpl implements AiConversationService {
         }
         boolean allowedGoogle = trimmed.startsWith("google/");
         Set<String> allowed = Set.of(
-                "z-ai/glm-4.5-air:free",
-                "tngtech/deepseek-r1t2-chimera:free",
-                "qwen/qwen3-coder:free"
+                "glm-4.6",
+                "glm-4.5-air",
+                "glm-4.6v"
         );
         return allowedGoogle || allowed.contains(trimmed) ? trimmed : defaultModel;
     }

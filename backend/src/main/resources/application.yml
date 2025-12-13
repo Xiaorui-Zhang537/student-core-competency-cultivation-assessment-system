@@ -140,11 +140,9 @@ ai:
     backoff-ms: ${AI_RETRY_BACKOFF_MS:800}
     jitter-ms: ${AI_RETRY_JITTER_MS:200}
   providers:
-    openrouter:
-      base-url: ${OPENROUTER_BASE_URL:https://openrouter.ai/api}
-      api-key: ${OPENROUTER_API_KEY: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}
-      referer: ${OPENROUTER_REFERER:https://stucoreai.space}
-      title: ${OPENROUTER_TITLE:StudentCoreAI}
+    glm:
+      base-url: ${GLM_API_BASE_URL:https://open.bigmodel.cn/api/paas/v4}
+      api-key: ${GLM_API_KEY:}
     google:
       base-url: ${GOOGLE_API_BASE_URL:https://generativelanguage.googleapis.com}
       api-key: ${GOOGLE_API_KEY:}

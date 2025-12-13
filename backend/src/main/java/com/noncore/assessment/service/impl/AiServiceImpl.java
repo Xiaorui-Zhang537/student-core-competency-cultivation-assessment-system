@@ -143,15 +143,21 @@ public class AiServiceImpl implements AiService {
         String baseUrl;
         String apiKey;
         boolean useGoogle = model != null && model.startsWith("google/");
+        boolean useGlm = model != null && model.startsWith("glm-");
         if (useGoogle) {
             baseUrl = aiConfigProperties.getProviders().getGoogle().getBaseUrl();
             apiKey = aiConfigProperties.getProviders().getGoogle().getApiKey();
             if (apiKey == null || apiKey.isBlank()) {
                 throw new BusinessException(ErrorCode.INVALID_PARAMETER, "Google Gemini API Key 未配置，请先在后台配置");
             }
+        } else if (useGlm) {
+            baseUrl = aiConfigProperties.getProviders().getGlm().getBaseUrl();
+            apiKey = aiConfigProperties.getProviders().getGlm().getApiKey();
+            if (apiKey == null || apiKey.isBlank()) {
+                throw new BusinessException(ErrorCode.INVALID_PARAMETER, "GLM API Key 未配置，请先在后台配置");
+            }
         } else {
-            baseUrl = aiConfigProperties.getProviders().getOpenrouter().getBaseUrl();
-            apiKey = aiConfigProperties.getProviders().getOpenrouter().getApiKey();
+            throw new BusinessException(ErrorCode.INVALID_PARAMETER, "仅支持 Google Gemini 或 GLM 模型");
         }
 
         if (baseUrl == null || baseUrl.isBlank()) {
@@ -221,12 +227,18 @@ public class AiServiceImpl implements AiService {
 
         String model = conversationService.normalizeModel(request.getModel());
 
-        String baseUrl = aiConfigProperties.getProviders().getOpenrouter().getBaseUrl();
-        String apiKey = aiConfigProperties.getProviders().getOpenrouter().getApiKey();
+        String baseUrl;
+        String apiKey;
         boolean useGoogle2 = model != null && model.startsWith("google/");
+        boolean useGlm = model != null && model.startsWith("glm-");
         if (useGoogle2) {
             baseUrl = aiConfigProperties.getProviders().getGoogle().getBaseUrl();
             apiKey = aiConfigProperties.getProviders().getGoogle().getApiKey();
+        } else if (useGlm) {
+            baseUrl = aiConfigProperties.getProviders().getGlm().getBaseUrl();
+            apiKey = aiConfigProperties.getProviders().getGlm().getApiKey();
+        } else {
+            throw new BusinessException(ErrorCode.INVALID_PARAMETER, "仅支持 Google Gemini 或 GLM 模型");
         }
         if (baseUrl == null || baseUrl.isBlank()) {
             throw new BusinessException(ErrorCode.INVALID_PARAMETER, "LLM base-url 未配置");

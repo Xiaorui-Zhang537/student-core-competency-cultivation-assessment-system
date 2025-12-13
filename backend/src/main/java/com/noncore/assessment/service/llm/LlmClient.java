@@ -56,15 +56,13 @@ public class LlmClient {
      * 直接发送 OpenAI 兼容的消息结构。支持 content 为字符串或数组（image_url 等多模态）。
      */
     public String createChatCompletionRaw(List<Map<String, Object>> payloadMessages, String model, boolean stream, String baseUrl, String apiKey) {
-        String url = normalizeBaseUrl(baseUrl) + "/v1/chat/completions";
+        String url = buildChatUrl(baseUrl);
 
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
         if (apiKey != null && !apiKey.isBlank()) {
             headers.set("Authorization", "Bearer " + apiKey);
         }
-
-        applyOpenRouterHeaders(headers, baseUrl);
 
         // 不启用 reasoning，确保广泛兼容
         RequestBody body = buildBody(payloadMessages, model, false, false);
@@ -75,15 +73,13 @@ public class LlmClient {
      * JSON-only 变体：强制上游以 JSON 对象返回（OpenAI 兼容 response_format）。
      */
     public String createChatCompletionJsonOnly(List<Map<String, Object>> payloadMessages, String model, boolean stream, String baseUrl, String apiKey) {
-        String url = normalizeBaseUrl(baseUrl) + "/v1/chat/completions";
+        String url = buildChatUrl(baseUrl);
 
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
         if (apiKey != null && !apiKey.isBlank()) {
             headers.set("Authorization", "Bearer " + apiKey);
         }
-
-        applyOpenRouterHeaders(headers, baseUrl);
 
         RequestBody body = buildBody(payloadMessages, model, false, true);
         return doRequest(url, headers, body);
@@ -141,7 +137,7 @@ public class LlmClient {
     }
 
     private String buildFriendlyError(HttpStatusCodeException ex, String url) {
-        String provider = url != null && url.contains("openrouter.ai") ? "OpenRouter" : "LLM";
+        String provider = url != null && url.contains("open.bigmodel.cn") ? "GLM" : "LLM";
         String upstreamMessage = extractErrorMessage(ex.getResponseBodyAsString());
     
         HttpStatusCode status = ex.getStatusCode();
@@ -201,25 +197,12 @@ public class LlmClient {
         return v.endsWith("/") ? v.substring(0, v.length()-1) : v;
     }
 
-    private boolean isOpenRouter(String baseUrl) {
-        return baseUrl != null && baseUrl.contains("openrouter.ai");
-    }
-
-    private void applyOpenRouterHeaders(HttpHeaders headers, String baseUrl) {
-        // OpenRouter: 显式声明不采集数据，避免命中“Paid model training”隐私策略导致 404
-        if (!isOpenRouter(baseUrl)) return;
-
-        headers.set("X-OpenAI-Data-Collection-Opt-Out", "true");
-
-        AiConfigProperties.Provider orProvider = aiConfig.getProviders().getOpenrouter();
-        if (orProvider != null) {
-            if (orProvider.getReferer() != null && !orProvider.getReferer().isBlank()) {
-                headers.set("HTTP-Referer", orProvider.getReferer());
-            }
-            if (orProvider.getTitle() != null && !orProvider.getTitle().isBlank()) {
-                headers.set("X-Title", orProvider.getTitle());
-            }
+    private String buildChatUrl(String baseUrl) {
+        String normalized = normalizeBaseUrl(baseUrl);
+        if (normalized.matches(".*/v\\d+")) {
+            return normalized + "/chat/completions";
         }
+        return normalized + "/v1/chat/completions";
     }
 
     @Data
