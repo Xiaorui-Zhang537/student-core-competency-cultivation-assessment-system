@@ -2,9 +2,11 @@ import { api } from './config'
 
 type ChatRole = 'user' | 'assistant' | 'system'
 
+const AI_CHAT_TIMEOUT = 120000
+
 export const aiApi = {
   chat: (data: { messages: { role: ChatRole; content: string }[]; courseId?: number; studentIds?: number[]; model?: string; conversationId?: number; attachmentFileIds?: number[]; jsonOnly?: boolean; useGradingPrompt?: boolean }): Promise<{ answer: string }> => {
-    return api.post('/ai/chat', data)
+    return api.post('/ai/chat', data, { timeout: AI_CHAT_TIMEOUT })
   },
   // Conversations
   createConversation: (data: { title?: string; model?: string; provider?: string }) => api.post('/ai/conversations', data),
