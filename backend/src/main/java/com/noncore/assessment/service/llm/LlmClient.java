@@ -92,7 +92,7 @@ public class LlmClient {
         body.setMessages(payloadMessages);
         body.setStream(false);
         body.setTemperature(0.2);
-        body.setMaxTokens(1024);
+        body.setMaxTokens(8192);
         // 不附带 reasoning，避免通道不兼容
         if (jsonOnly) {
             body.setResponseFormat(java.util.Map.of("type", "json_object"));
@@ -259,6 +259,12 @@ public class LlmClient {
         if (message instanceof Map<?,?> mm) {
             resolved = extractContentText(mm.get("content"));
             if (resolved != null && !resolved.isBlank()) return resolved;
+            Object reasoning = mm.get("reasoning_content");
+            if (reasoning == null) {
+                reasoning = mm.get("reasoningcontent");
+            }
+            resolved = extractContentText(reasoning);
+            if (resolved != null && !resolved.isBlank()) return resolved;
         } else if (message != null && !(message instanceof Map)) {
             String msg = String.valueOf(message);
             if (!msg.isBlank()) return msg;
@@ -270,6 +276,22 @@ public class LlmClient {
                 if (obj instanceof Map<?,?> mm) {
                     String msg = extractFromMap(mm);
                     if (msg != null && !msg.isBlank()) return msg;
+                }
+            }
+        }
+
+        // OpenAI/GLM choices 列表
+        Object choices = map.get("choices");
+        if (choices instanceof List<?> cl && !cl.isEmpty()) {
+            for (Object obj : cl) {
+                if (obj instanceof Map<?,?> cm) {
+                    String msg = extractFromMap(cm);
+                    if (msg != null && !msg.isBlank()) return msg;
+                    Object delta = cm.get("delta");
+                    if (delta instanceof Map<?,?> dm) {
+                        msg = extractFromMap(dm);
+                        if (msg != null && !msg.isBlank()) return msg;
+                    }
                 }
             }
         }

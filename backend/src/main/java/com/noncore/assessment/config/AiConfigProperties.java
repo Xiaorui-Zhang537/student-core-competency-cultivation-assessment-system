@@ -45,7 +45,7 @@ public class AiConfigProperties {
         /** HTTP 或 SOCKS */
         private String type = "HTTP";
         private int connectTimeoutMs = 10000;
-        private int readTimeoutMs = 60000;
+        private int readTimeoutMs = 120000;
          // 显式提供布尔 getter，避免缺少 Lombok 注解处理时出现编译错误
          public boolean isEnabled() { return enabled; }
          public boolean isAlwaysUseProxy() { return alwaysUseProxy; }
