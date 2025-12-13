@@ -5,8 +5,11 @@ import type { FileInfo } from '@/types/file';
 const normalizeBase = () => String(apiClient.defaults.baseURL || baseURL || '/api').replace(/\/+$/, '');
 const buildUrl = (path: string) => {
   if (/^https?:\/\//i.test(path)) return path;
+  const base = normalizeBase();
   const cleanPath = path.startsWith('/') ? path : `/${path}`;
-  return `${normalizeBase()}${cleanPath}`;
+  if (cleanPath.startsWith(base)) return cleanPath;
+  if (base.endsWith('/api') && cleanPath.startsWith('/api/')) return `${base}${cleanPath.replace(/^\/api/, '')}`;
+  return `${base}${cleanPath}`;
 };
 
 const authHeaders = (): Record<string, string> => {

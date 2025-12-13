@@ -180,7 +180,12 @@ public class AiServiceImpl implements AiService {
         }
 
         // 默认使用“作文批改”系统 Prompt
-        List<Message> built = promptBuilder.buildWithDefaultSystemPrompt(messages);
+        String systemPrompt = null;
+        Boolean usePrompt = request.getUseGradingPrompt();
+        if (usePrompt == null || usePrompt) {
+            systemPrompt = promptLoader.loadSystemPrompt(request.getSystemPromptPath());
+        }
+        List<Message> built = promptBuilder.buildMessages(messages, systemPrompt);
 
         List<Map<String, Object>> payloadMessages = new java.util.ArrayList<>();
         for (Message m : built) {

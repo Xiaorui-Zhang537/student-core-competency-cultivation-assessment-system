@@ -1401,7 +1401,9 @@ const previewSingleFile = async () => {
 // ---- AI 弹窗逻辑 ----
 const gradingModel = ref('google/gemini-2.5-pro')
 const gradingModelOptions = [
-{ label: 'Gemini 2.5 Pro', value: 'google/gemini-2.5-pro' }
+  { label: 'Gemini 2.5 Pro', value: 'google/gemini-2.5-pro' },
+  { label: 'GLM-4.6', value: 'glm-4.6' },
+  { label: 'GLM-4.6v', value: 'glm-4.6v' }
 ]
 const aiSource = ref<'text'|'files'>('text')
 const aiPicker = reactive({ previewText: '', files: [] as any[], selectedFileIds: [] as number[] })
@@ -1470,16 +1472,23 @@ async function startAiGradingFromModal() {
         const name = info?.originalName || info?.fileName || info?.name || `file_${id}`
         return { id, name, status: 'grading' as const }
       }))
-      const resp: any = await aiGradingApi.gradeFiles({ fileIds: ids as number[], model: gradingModel.value, jsonOnly: true, useGradingPrompt: true })
-      const results = (resp?.data?.results || resp?.results || []) as any[]
-      for (const r of results) {
-        const target = aiProgress.items.find(it => Number(it.id) === Number(r.fileId))
-        if (!target) continue
-        if (r.error) { target.status = 'error'; target.error = r.error } else {
-          // 接口可能包裹 { result: { evaluation: {...} } }
-          const result = (r?.result?.evaluation ? r.result : (r?.result ?? r))
-          target.status = 'done'; target.result = result; (target as any).historyId = (r?.historyId ?? resp?.data?.historyId)
+      try {
+        const resp: any = await aiGradingApi.gradeFiles({ fileIds: ids as number[], model: gradingModel.value, jsonOnly: true, useGradingPrompt: true })
+        const results = (resp?.data?.results || resp?.results || []) as any[]
+        for (const r of results) {
+          const target = aiProgress.items.find(it => Number(it.id) === Number(r.fileId))
+          if (!target) continue
+          if (r.error) { target.status = 'error'; target.error = r.error || (resp?.message) || (resp?.data?.message) || t('common.unknownError') }
+          else {
+            // 接口可能包裹 { result: { evaluation: {...} } }
+            const result = (r?.result?.evaluation ? r.result : (r?.result ?? r))
+            target.status = 'done'; target.result = result; (target as any).historyId = (r?.historyId ?? resp?.data?.historyId)
+          }
         }
+      } catch (err: any) {
+        const errMsg = err?.response?.data?.message || err?.message || t('common.unknownError')
+        aiProgress.items.forEach(it => { if (ids.includes(Number(it.id))) { it.status = 'error'; it.error = errMsg } })
+        throw err
       }
     }
 
