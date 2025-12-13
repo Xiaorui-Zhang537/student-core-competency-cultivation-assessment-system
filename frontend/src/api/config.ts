@@ -12,7 +12,7 @@ const apiClient = axios.create({
   // 主机地址（如需切换生产，只改环境变量即可）
   // 若未指定则默认走本地代理 /api
   baseURL,
-  timeout: 30000,
+  timeout: 120000,
   withCredentials: true,
   headers: {
     'Content-Type': 'application/json'
