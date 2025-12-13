@@ -3,14 +3,24 @@ import type { ApiResponse } from '@/types/api';
 import type { FileInfo } from '@/types/file';
 
 const normalizeBase = () => String(apiClient.defaults.baseURL || baseURL || '/api').replace(/\/+$/, '');
+const dedupApi = (v: string) => {
+  let out = v;
+  // 折叠任意重复的 /api 片段，直到不再出现
+  while (/\/api\/api/i.test(out)) {
+    out = out.replace(/\/api\/api/ig, '/api');
+  }
+  return out;
+};
 const buildUrl = (path: string) => {
   if (/^https?:\/\//i.test(path)) return path;
   const base = normalizeBase();
   const cleanPath = path.startsWith('/') ? path : `/${path}`;
-  if (cleanPath.startsWith(base)) return cleanPath;
-  if (base.endsWith('/api') && cleanPath.startsWith('/api/')) return `${base}${cleanPath.replace(/^\/api/, '')}`;
-  return `${base}${cleanPath}`;
+  if (cleanPath.startsWith(base)) return dedupApi(cleanPath);
+  if (base.endsWith('/api') && cleanPath.startsWith('/api/')) return dedupApi(`${base}${cleanPath.replace(/^\/api/, '')}`);
+  return dedupApi(`${base}${cleanPath}`);
 };
+
+export const buildFileUrl = buildUrl;
 
 const authHeaders = (): Record<string, string> => {
   const token = (() => {
@@ -54,10 +64,11 @@ export const fileApi = {
   // 下载文件（带鉴权，避免 <a> 直链 401）
   downloadFile: async (fileId: string | number, filename?: string): Promise<void> => {
     const url = buildUrl(`/files/${encodeURIComponent(String(fileId))}/download`);
-    const headers: HeadersInit = {
-      Accept: 'application/octet-stream',
-      ...authHeaders()
+    const headers: Record<string, string> = {
+      Accept: 'application/octet-stream'
     };
+    const token = authHeaders();
+    if (token.Authorization) headers.Authorization = token.Authorization;
     const res = await fetch(url, {
       method: 'GET',
       headers,
@@ -82,10 +93,11 @@ export const fileApi = {
   // 预览图片（Blob，带鉴权）- 使用 fetch 避免 axios 错误日志刷屏
   getPreview: async (fileId: string | number): Promise<Blob> => {
     const url = buildUrl(`/files/${encodeURIComponent(String(fileId))}/preview`);
-    const headers: HeadersInit = {
-      Accept: 'image/*,application/pdf,application/octet-stream',
-      ...authHeaders()
+    const headers: Record<string, string> = {
+      Accept: 'image/*,application/pdf,application/octet-stream'
     };
+    const token = authHeaders();
+    if (token.Authorization) headers.Authorization = token.Authorization;
     const res = await fetch(url, {
       method: 'GET',
       headers,

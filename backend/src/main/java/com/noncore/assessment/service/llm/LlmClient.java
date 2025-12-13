@@ -14,6 +14,7 @@ import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.client.HttpStatusCodeException;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import com.noncore.assessment.config.AiConfigProperties;
@@ -110,17 +111,39 @@ public class LlmClient {
                 throw new BusinessException(ErrorCode.SYSTEM_ERROR, "LLM错误: " + resp.getStatusCode());
             }
 
+
             Map<String, Object> respBody = resp.getBody();
-            Object choices = respBody != null ? respBody.get("choices") : null;
+            // GLM 有时会包裹一层 data，或在顶层返回 output_text/text
+            Map<?,?> root = unwrapData(respBody);
+
+            String direct = extractFromMap(root);
+            if (direct != null && !direct.isBlank()) {
+                return direct;
+            }
+
+            // 兼容 data 数组/未解包的顶层字段
+            String fallbackBody = extractFromMap(respBody);
+            if (fallbackBody != null && !fallbackBody.isBlank()) {
+                return fallbackBody;
+            }
+
+            Object choices = root != null ? root.get("choices") : null;
             if (choices instanceof List<?> list && !list.isEmpty()) {
                 Object first = list.get(0);
                 if (first instanceof Map<?,?> m) {
-                    Object message = m.get("message");
-                    if (message instanceof Map<?,?> mm) {
-                        Object content = mm.get("content");
-                        if (content != null) return String.valueOf(content);
+                    String fromChoice = extractFromMap(m);
+                    if (fromChoice != null && !fromChoice.isBlank()) {
+                        return fromChoice;
                     }
                 }
+            }
+            // 尝试返回原始 JSON 字符串，避免前端收到空结果
+             try {
+                return OBJECT_MAPPER.writeValueAsString(respBody);
+            } catch (Exception ignored) {}
+            String asString = String.valueOf(respBody);
+            if (asString != null && !asString.isBlank()) {
+                return asString;
             }
             throw new BusinessException(ErrorCode.SYSTEM_ERROR, "无法解析大模型返回");
         } catch (RestClientException e) {
@@ -189,6 +212,81 @@ public class LlmClient {
         } catch (Exception ignored) {
         }
         return body.strip();
+    }
+
+    private String extractContentText(Object content) {
+        if (content == null) return null;
+        if (content instanceof String s) return s;
+        if (content instanceof List<?> list) {
+            for (Object it : list) {
+                if (it instanceof Map<?,?> m) {
+                    Object text = m.get("text");
+                    if (text != null && !String.valueOf(text).isBlank()) {
+                        return String.valueOf(text);
+                    }
+                    Object innerContent = m.get("content");
+                    if (innerContent != null && !String.valueOf(innerContent).isBlank()) {
+                        return String.valueOf(innerContent);
+                    }
+                }
+            }
+        }
+        return null;
+    }
+
+    private Map<?,?> unwrapData(Map<String, Object> body) {
+        if (body == null) return java.util.Collections.emptyMap();
+        Object data = body.get("data");
+        if (data instanceof Map<?,?> dm) {
+            return dm;
+        } else if (data instanceof List<?> dl && !dl.isEmpty()) {
+            Object first = dl.get(0);
+            if (first instanceof Map<?,?> fm) {
+                return fm;
+            }
+        }
+        return body;
+    }
+
+    private String extractFromMap(Map<?,?> map) {
+        if (map == null) return null;
+        // 先尝试标准 content/message 字段
+        Object content = map.get("content");
+        String resolved = extractContentText(content);
+        if (resolved != null && !resolved.isBlank()) return resolved;
+
+        Object message = map.get("message");
+        if (message instanceof Map<?,?> mm) {
+            resolved = extractContentText(mm.get("content"));
+            if (resolved != null && !resolved.isBlank()) return resolved;
+        } else if (message != null && !(message instanceof Map)) {
+            String msg = String.valueOf(message);
+            if (!msg.isBlank()) return msg;
+        }
+
+        Object messages = map.get("messages");
+        if (messages instanceof List<?> ml && !ml.isEmpty()) {
+            for (Object obj : ml) {
+                if (obj instanceof Map<?,?> mm) {
+                    String msg = extractFromMap(mm);
+                    if (msg != null && !msg.isBlank()) return msg;
+                }
+            }
+        }
+
+        // 常见文本字段：output_text/text/result
+        for (String key : new String[] {"output_text", "text", "result", "output"}) {
+            Object v = map.get(key);
+            if (v instanceof Map<?,?> mv) {
+                String nested = extractFromMap(mv);
+                if (nested != null && !nested.isBlank()) return nested;
+            } else if (v != null) {
+                String s = String.valueOf(v);
+                if (!s.isBlank()) return s;
+            }
+        }
+
+        return null;
     }
 
 

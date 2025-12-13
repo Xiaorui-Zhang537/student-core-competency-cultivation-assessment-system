@@ -905,14 +905,13 @@ const isFormValid = computed(() => {
 // 方法
 import { assignmentApi } from '@/api/assignment.api'
 import { gradeApi } from '@/api/grade.api'
-import { baseURL } from '@/api/config'
 import { teacherStudentApi } from '@/api/teacher-student.api'
 import { reportApi } from '@/api/report.api'
 import { useChatStore } from '@/stores/chat'
 import { submissionApi } from '@/api/submission.api'
 import { notificationAPI } from '@/api/notification.api'
 import { aiGradingApi } from '@/api/aiGrading.api'
-import { fileApi } from '@/api/file.api'
+import { fileApi, buildFileUrl } from '@/api/file.api'
 import { abilityApi } from '@/api/ability.api'
 import { onMounted as vueOnMounted } from 'vue'
 
@@ -1402,6 +1401,7 @@ const previewSingleFile = async () => {
 const gradingModel = ref('google/gemini-2.5-pro')
 const gradingModelOptions = [
   { label: 'Gemini 2.5 Pro', value: 'google/gemini-2.5-pro' },
+  { label: 'Gemini 3 Pro Preview', value: 'google/gemini-3-pro-preview' },
   { label: 'GLM-4.6', value: 'glm-4.6' },
   { label: 'GLM-4.6v', value: 'glm-4.6v' }
 ]
@@ -1420,7 +1420,17 @@ function openAiModal() {
       const res: any = await fileApi.getRelatedFiles('submission', String(submission.id))
       const list: any[] = Array.isArray(res?.data) ? res.data : (Array.isArray(res) ? res : [])
       aiPicker.files = list
-    } catch { aiPicker.files = [] }
+      if ((!aiPicker.files || aiPicker.files.length === 0) && (submission as any)?.fileId) {
+        aiPicker.files = [{
+          id: (submission as any).fileId,
+          originalName: submission.fileName,
+          fileName: submission.fileName,
+          size: (submission as any).fileSize
+        }]
+      }
+    } catch {
+      aiPicker.files = (submission as any)?.fileId ? [{ id: (submission as any).fileId, originalName: submission.fileName, fileName: submission.fileName, size: (submission as any).fileSize }] : []
+    }
   })()
   aiModalOpen.value = true
 }
@@ -1675,6 +1685,13 @@ async function exportAiDetailAsPdf() {
   await exportNodeAsPdf(cloned, (assignment.title || 'grading').toString().replace(/\s+/g, '_'))
   document.body.removeChild(wrapper)
 }
+const authHeaders = () => {
+  try {
+    const token = localStorage.getItem('token')
+    return token ? { Authorization: `Bearer ${token}` } : {}
+  } catch { return {} }
+}
+
 const downloadSingleFile = async () => {
   const name = submission.fileName || 'attachment'
   try {
@@ -1695,18 +1712,37 @@ const downloadSingleFile = async () => {
 
     // 3) 兼容：从 filePath 中提取 /files/{id}/...
     const path = String(submission.filePath || '')
-    const m = path.match(/\/files\/(\d+)\/(?:download|preview|stream)/)
+    const m = path.match(/\/files\/(\d+)(?:\/[\w-]+)?/)
     if (m && m[1]) { await fileApi.downloadFile(m[1], name); return }
 
     // 4) 兜底：直链（可能 401，尽量避免）
     if (!path) return
-    const url = path.startsWith('http') ? path : `${baseURL}${path}`
-    const a = document.createElement('a')
-    a.href = url
-    a.download = name
-    document.body.appendChild(a)
-    a.click()
-    a.remove()
+    const tryAuthFetch = async (raw: string) => {
+      const normPath = raw.startsWith('http') ? raw : (raw.startsWith('/') ? raw : `/${raw}`)
+      const url = buildFileUrl(normPath)
+      const headers: Record<string, string> = { ...authHeaders(), Accept: 'application/octet-stream' }
+      const res = await fetch(url, { headers, credentials: 'include' })
+      if (!res.ok) throw new Error('download failed')
+      const blob = await res.blob()
+      const blobUrl = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = blobUrl
+      a.download = name
+      document.body.appendChild(a)
+      a.click()
+      a.remove()
+      URL.revokeObjectURL(blobUrl)
+    }
+    try {
+      await tryAuthFetch(path)
+    } catch {
+      const a = document.createElement('a')
+      a.href = buildFileUrl(path)
+      a.download = name
+      document.body.appendChild(a)
+      a.click()
+      a.remove()
+    }
   } catch {}
 }
 

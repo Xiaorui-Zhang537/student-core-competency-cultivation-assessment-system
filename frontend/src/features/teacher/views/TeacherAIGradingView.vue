@@ -595,6 +595,7 @@ const assignmentOptions = ref<{label: string; value: string}[]>([])
 const gradingModel = ref('google/gemini-2.5-pro')
 const gradingModelOptions = [
   { label: 'Gemini 2.5 Pro', value: 'google/gemini-2.5-pro' },
+  { label: 'Gemini 3 Pro Preview', value: 'google/gemini-3-pro-preview' },
   { label: 'GLM-4.6', value: 'glm-4.6' },
   { label: 'GLM-4.6v', value: 'glm-4.6v' }
 ]

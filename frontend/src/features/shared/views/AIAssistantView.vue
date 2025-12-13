@@ -65,11 +65,7 @@
             <h3 class="text-sm font-semibold text-gray-700 dark:text-gray-200">{{ t('teacher.ai.model.title') || '模型' }}</h3>
             <glass-popover-select
               v-model="model"
-              :options="[
-                { label: 'Gemini 2.5 Pro', value: 'google/gemini-2.5-pro' },
-                { label: 'GLM-4.6', value: 'glm-4.6' },
-                { label: 'GLM-4.5 Air', value: 'glm-4.5-air' }
-              ]"
+              :options="modelOptions"
               size="sm"
             />
           </div>
@@ -162,7 +158,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, ref, watch } from 'vue'
+import { computed, onMounted, ref, watch, watchEffect } from 'vue'
 import { useAIStore } from '@/stores/ai'
 import { useI18n } from 'vue-i18n'
 import { fileApi } from '@/api/file.api'
@@ -176,9 +172,12 @@ import GlassInput from '@/components/ui/inputs/GlassInput.vue'
 import GlassSwitch from '@/components/ui/inputs/GlassSwitch.vue'
 import Card from '@/components/ui/Card.vue'
 import GlassModal from '@/components/ui/GlassModal.vue'
+import { useAuthStore } from '@/stores/auth'
+
 
 const { t } = useI18n()
 const ai = useAIStore()
+const auth = useAuthStore()
 const q = ref('')
 const showUpload = ref(true)
 const fileInput = ref<HTMLInputElement | null>(null)
@@ -195,6 +194,27 @@ const conversations = computed(() => {
 })
 const activeConversationId = computed({ get: () => ai.activeConversationId, set: v => (ai.activeConversationId = v as any) })
 const model = computed({ get: () => ai.model, set: v => (ai.model = v as any) })
+const userRole = computed(() => auth.userRole)
+const modelOptions = computed(() => {
+  const base = [
+    { label: 'GLM-4.6', value: 'glm-4.6' },
+    { label: 'GLM-4.5 Air', value: 'glm-4.5-air' }
+  ]
+  if (userRole.value === 'TEACHER') {
+    return [
+      { label: 'Gemini 2.5 Pro', value: 'google/gemini-2.5-pro' },
+      ...base
+    ]
+  }
+  return base
+})
+
+watchEffect(() => {
+  const allowed = modelOptions.value.map(o => o.value)
+  if (allowed.length && !allowed.includes(model.value as any)) {
+    model.value = modelOptions.value[0].value as any
+  }
+})
 const currentMessages = computed(() => ai.messagesByConvId[String(activeConversationId.value || '')] || [])
 const activeModel = computed(() => {
   const c = conversations.value.find(c => c.id === activeConversationId.value)
