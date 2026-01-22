@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.noncore.assessment.mapper.BehaviorSummarySnapshotMapper">
+    <resultMap id="BaseMap" type="com.noncore.assessment.entity.BehaviorSummarySnapshot">
+        <id column="id" property="id"/>
+        <result column="schema_version" property="schemaVersion"/>
+        <result column="student_id" property="studentId"/>
+        <result column="course_id" property="courseId"/>
+        <result column="range_key" property="rangeKey"/>
+        <result column="period_from" property="periodFrom"/>
+        <result column="period_to" property="periodTo"/>
+        <result column="input_event_count" property="inputEventCount"/>
+        <result column="event_types_included" property="eventTypesIncluded"/>
+        <result column="summary_json" property="summaryJson"/>
+        <result column="generated_at" property="generatedAt"/>
+        <result column="created_at" property="createdAt"/>
+    </resultMap>
+
+    <insert id="insert" parameterType="com.noncore.assessment.entity.BehaviorSummarySnapshot" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO behavior_summary_snapshots(schema_version, student_id, course_id, range_key, period_from, period_to,
+                                              input_event_count, event_types_included, summary_json, generated_at, created_at)
+        VALUES(#{schemaVersion}, #{studentId}, #{courseId}, #{rangeKey}, #{periodFrom}, #{periodTo},
+               #{inputEventCount}, #{eventTypesIncluded}, #{summaryJson}, #{generatedAt}, #{createdAt})
+    </insert>
+
+    <select id="getLatest" resultMap="BaseMap">
+        SELECT * FROM behavior_summary_snapshots
+        WHERE student_id = #{studentId}
+        <if test="courseId != null">
+            AND course_id = #{courseId}
+        </if>
+        AND range_key = #{rangeKey}
+        AND schema_version = #{schemaVersion}
+        <if test="from != null">
+            AND period_from = #{from}
+        </if>
+        <if test="to != null">
+            AND period_to = #{to}
+        </if>
+        ORDER BY generated_at DESC, id DESC
+        LIMIT 1
+    </select>
+
+    <select id="getById" resultMap="BaseMap">
+        SELECT * FROM behavior_summary_snapshots WHERE id = #{id}
+    </select>
+</mapper>
+

@@ -313,9 +313,10 @@ public class FileStorageServiceImpl implements FileStorageService {
             } catch (Exception ignore) {}
         }
         return switch (purpose) {
-            case "avatar" ->
-                // 头像：允许任何已登录用户访问（控制器已要求 isAuthenticated）
-                    true;
+            case "avatar", "profile", "user_profile" ->
+                // 头像/个人资料图片：允许任何已登录用户访问（控制器已要求 isAuthenticated）
+                // 兼容历史数据：部分旧记录使用 profile 作为 related_type
+                true;
             case "assignment" ->
                 // 作业附件：仅限上传者/相关者（当前实现保守为否）
                     false;

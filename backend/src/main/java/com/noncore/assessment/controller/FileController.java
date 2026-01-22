@@ -1,5 +1,7 @@
 package com.noncore.assessment.controller;
 
+import com.noncore.assessment.behavior.BehaviorEventRecorder;
+import com.noncore.assessment.behavior.BehaviorEventType;
 import com.noncore.assessment.entity.FileRecord;
 import com.noncore.assessment.service.FileStorageService;
 import com.noncore.assessment.service.UserService;
@@ -34,10 +36,14 @@ import java.util.Map;
 public class FileController extends BaseController {
 
     private final FileStorageService fileStorageService;
+    private final BehaviorEventRecorder behaviorEventRecorder;
 
-    public FileController(FileStorageService fileStorageService, UserService userService) {
+    public FileController(FileStorageService fileStorageService,
+                          BehaviorEventRecorder behaviorEventRecorder,
+                          UserService userService) {
         super(userService);
         this.fileStorageService = fileStorageService;
+        this.behaviorEventRecorder = behaviorEventRecorder;
     }
 
     /**
@@ -69,6 +75,25 @@ public class FileController extends BaseController {
         }
 
         byte[] fileBytes = fileStorageService.downloadFile(fileId, userId);
+        // 行为记录：资源访问（只记录不评价）
+        try {
+            if (hasRole("STUDENT")) {
+                String mime = safeMimeType(fileRecord);
+                java.util.Map<String, Object> meta = new java.util.HashMap<>();
+                meta.put("mimeType", mime);
+                meta.put("resourceType", inferResourceType(mime));
+                meta.put("relatedType", fileRecord.getRelatedType());
+                meta.put("relatedId", fileRecord.getRelatedId());
+                behaviorEventRecorder.record(
+                        userId,
+                        null,
+                        BehaviorEventType.RESOURCE_VIEW,
+                        "file",
+                        fileId,
+                        meta
+                );
+            }
+        } catch (Exception ignored) {}
 
         HttpHeaders headers = new HttpHeaders();
         String mime = safeMimeType(fileRecord);
@@ -181,6 +206,24 @@ public class FileController extends BaseController {
         if (!previewable) return ResponseEntity.badRequest().build();
 
         byte[] fileBytes = fileStorageService.downloadFile(fileId, userId);
+        // 行为记录：资源访问（只记录不评价）
+        try {
+            if (hasRole("STUDENT")) {
+                java.util.Map<String, Object> meta = new java.util.HashMap<>();
+                meta.put("mimeType", mimeType);
+                meta.put("resourceType", inferResourceType(mimeType));
+                meta.put("relatedType", fileRecord.getRelatedType());
+                meta.put("relatedId", fileRecord.getRelatedId());
+                behaviorEventRecorder.record(
+                        userId,
+                        null,
+                        BehaviorEventType.RESOURCE_VIEW,
+                        "file_preview",
+                        fileId,
+                        meta
+                );
+            }
+        } catch (Exception ignored) {}
 
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.parseMediaType(mimeType));
@@ -214,6 +257,25 @@ public class FileController extends BaseController {
         }
 
         byte[] all = fileStorageService.downloadFile(fileId, userId);
+        // 行为记录：资源访问（只记录不评价）
+        try {
+            if (hasRole("STUDENT")) {
+                String mime = safeMimeType(fileRecord);
+                java.util.Map<String, Object> meta = new java.util.HashMap<>();
+                meta.put("mimeType", mime);
+                meta.put("resourceType", inferResourceType(mime));
+                meta.put("relatedType", fileRecord.getRelatedType());
+                meta.put("relatedId", fileRecord.getRelatedId());
+                behaviorEventRecorder.record(
+                        userId,
+                        null,
+                        BehaviorEventType.RESOURCE_VIEW,
+                        "file_stream",
+                        fileId,
+                        meta
+                );
+            }
+        } catch (Exception ignored) {}
         int total = all.length;
 
         HttpHeaders headers = new HttpHeaders();
@@ -283,6 +345,23 @@ public class FileController extends BaseController {
             case "pptx" -> "application/vnd.openxmlformats-officedocument.presentationml.presentation";
             default -> MediaType.APPLICATION_OCTET_STREAM_VALUE;
         };
+    }
+
+    /**
+     * 粗略推断资源类型（用于统计展示；不用于评价）。
+     *
+     * @param mimeType MIME 类型
+     * @return resourceType（image/video/audio/pdf/doc/text/file）
+     */
+    private String inferResourceType(String mimeType) {
+        String mt = mimeType == null ? "" : mimeType.toLowerCase();
+        if (mt.startsWith("image/")) return "image";
+        if (mt.startsWith("video/")) return "video";
+        if (mt.startsWith("audio/")) return "audio";
+        if (mt.contains("pdf")) return "pdf";
+        if (mt.contains("word") || mt.contains("officedocument")) return "doc";
+        if (mt.startsWith("text/")) return "text";
+        return "file";
     }
 
     // 私有辅助方法

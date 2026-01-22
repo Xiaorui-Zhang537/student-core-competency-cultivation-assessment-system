@@ -41,19 +41,36 @@ public class GeminiClient {
         AiConfigProperties.ProxyConfig pc = aiConfig.getProxy();
         factory.setConnectTimeout(pc.getConnectTimeoutMs());
         factory.setReadTimeout(pc.getReadTimeoutMs());
-        Proxy proxy = new Proxy(
-            "SOCKS".equalsIgnoreCase(pc.getType()) ? Proxy.Type.SOCKS : Proxy.Type.HTTP,
-            new InetSocketAddress("127.0.0.1", 7890));
-        factory.setProxy(proxy);
+        if (pc != null && pc.isEnabled()) {
+            Proxy proxy = new Proxy(
+                    "SOCKS".equalsIgnoreCase(pc.getType()) ? Proxy.Type.SOCKS : Proxy.Type.HTTP,
+                    new InetSocketAddress(pc.getHost(), pc.getPort())
+            );
+            factory.setProxy(proxy);
+        }
         return new RestTemplate(factory);
     }
 
-        /**
-     * 兼容旧调用签名，参数不再生效（Gemini 永远使用固定代理）。
+    /**
+     * 根据当前配置构建 RestTemplate（用于在“需要代理/不需要代理”之间切换）。
+     *
+     * @param alwaysUseProxy 若为 true，将强制启用代理（即使配置中 enabled=false 也会临时启用）
      */
-        private RestTemplate buildRestTemplate(boolean ignoredAlwaysUseProxy) {
+    private RestTemplate buildRestTemplate(boolean alwaysUseProxy) {
+        if (!alwaysUseProxy) {
             return buildRestTemplate();
         }
+        SimpleClientHttpRequestFactory factory = new SimpleClientHttpRequestFactory();
+        AiConfigProperties.ProxyConfig pc = aiConfig.getProxy();
+        factory.setConnectTimeout(pc.getConnectTimeoutMs());
+        factory.setReadTimeout(pc.getReadTimeoutMs());
+        Proxy proxy = new Proxy(
+                "SOCKS".equalsIgnoreCase(pc.getType()) ? Proxy.Type.SOCKS : Proxy.Type.HTTP,
+                new InetSocketAddress(pc.getHost(), pc.getPort())
+        );
+        factory.setProxy(proxy);
+        return new RestTemplate(factory);
+    }
 
     public String generate(List<Map<String, Object>> partsMessages, String model, boolean jsonOnly, String baseUrl, String apiKey) {
         // 将 OpenAI 风格的 messages（数组，包含 {type:'text', text:'...'}） 转为 Gemini 的 contents 结构

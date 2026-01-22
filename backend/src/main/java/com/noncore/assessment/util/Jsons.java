@@ -1,14 +1,24 @@
 package com.noncore.assessment.util;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
 
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public final class Jsons {
-    private static final ObjectMapper MAPPER = new ObjectMapper();
+    /**
+     * 独立的 JSON 工具 ObjectMapper：
+     * - 必须支持 java.time.*（用于行为摘要/快照序列化）
+     * - 与 Spring Boot 默认行为保持一致：不输出时间戳数组
+     */
+    private static final ObjectMapper MAPPER = new ObjectMapper()
+            .findAndRegisterModules()
+            .disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS)
+            .disable(DeserializationFeature.ADJUST_DATES_TO_CONTEXT_TIME_ZONE);
 
     private Jsons() {}
 
@@ -25,6 +35,21 @@ public final class Jsons {
             } catch (Exception ignored) {
                 throw new IllegalArgumentException("Invalid JSON returned by LLM", e);
             }
+        }
+    }
+
+    /**
+     * 将对象序列化为 JSON 字符串。
+     *
+     * @param obj 任意对象
+     * @return JSON 字符串（序列化失败则抛出 IllegalArgumentException）
+     */
+    public static String toJson(Object obj) {
+        if (obj == null) return null;
+        try {
+            return MAPPER.writeValueAsString(obj);
+        } catch (Exception e) {
+            throw new IllegalArgumentException("Failed to serialize object to JSON", e);
         }
     }
 

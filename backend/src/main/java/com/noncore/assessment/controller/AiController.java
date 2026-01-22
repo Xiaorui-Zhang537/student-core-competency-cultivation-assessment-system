@@ -12,6 +12,8 @@ import com.noncore.assessment.service.AiConversationService;
 import com.noncore.assessment.service.AiMemoryService;
 import com.noncore.assessment.util.PageResult;
 import com.noncore.assessment.util.ApiResponse;
+import com.noncore.assessment.behavior.BehaviorEventRecorder;
+import com.noncore.assessment.behavior.BehaviorEventType;
 import com.noncore.assessment.exception.BusinessException;
 import com.noncore.assessment.exception.ErrorCode;
 import com.noncore.assessment.service.AiService;
@@ -34,6 +36,7 @@ public class AiController extends BaseController {
     private final FileStorageService fileStorageService;
     private final DocumentTextExtractor documentTextExtractor;
     private final com.noncore.assessment.config.AiConfigProperties aiConfigProperties;
+    private final BehaviorEventRecorder behaviorEventRecorder;
 
     public AiController(AiService aiService, UserService userService,
                         AiConversationService conversationService,
@@ -41,7 +44,8 @@ public class AiController extends BaseController {
                         FileStorageService fileStorageService,
                         DocumentTextExtractor documentTextExtractor,
                         com.noncore.assessment.service.AiGradingHistoryService historyService,
-                        com.noncore.assessment.config.AiConfigProperties aiConfigProperties) {
+                        com.noncore.assessment.config.AiConfigProperties aiConfigProperties,
+                        BehaviorEventRecorder behaviorEventRecorder) {
         super(userService);
         this.aiService = aiService;
         this.conversationService = conversationService;
@@ -50,6 +54,7 @@ public class AiController extends BaseController {
         this.documentTextExtractor = documentTextExtractor;
         this.historyService = historyService;
         this.aiConfigProperties = aiConfigProperties;
+        this.behaviorEventRecorder = behaviorEventRecorder;
     }
 
     private final com.noncore.assessment.service.AiGradingHistoryService historyService;
@@ -99,7 +104,30 @@ public class AiController extends BaseController {
         if (request.getMessages() != null && !request.getMessages().isEmpty()) {
             var last = request.getMessages().get(request.getMessages().size() - 1);
             if (last != null && last.getContent() != null) {
+                // 关键：判定“首次提问/追问”不能依赖 request.conversationId（前端通常总会携带 conversationId）
+                long msgCountBefore = 0;
+                try {
+                    msgCountBefore = conversationService.countMessages(userId, convId);
+                } catch (Exception ignored) { }
                 var m = conversationService.appendMessage(userId, convId, last.getRole(), last.getContent(), request.getAttachmentFileIds());
+                // 行为记录：AI 提问/追问（仅记录事实，不评价，不算分）
+                try {
+                    if (hasRole("STUDENT") && "user".equalsIgnoreCase(last.getRole())) {
+                        boolean isFirstTurn = msgCountBefore <= 0;
+                        java.util.Map<String, Object> meta = new java.util.HashMap<>();
+                        meta.put("messageId", m != null ? m.getId() : null);
+                        meta.put("provider", request.getProvider());
+                        meta.put("model", request.getModel());
+                        behaviorEventRecorder.record(
+                                userId,
+                                request.getCourseId(),
+                                isFirstTurn ? BehaviorEventType.AI_QUESTION : BehaviorEventType.AI_FOLLOW_UP,
+                                "ai_conversation",
+                                convId,
+                                meta
+                        );
+                    }
+                } catch (Exception ignored) {}
             }
         }
 

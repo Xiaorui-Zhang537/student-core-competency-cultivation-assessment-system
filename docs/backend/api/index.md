@@ -14,5 +14,6 @@
 - 文件：`/backend/api/file.md`
 - 报表：`/backend/api/report.md`
 - AI：`/backend/api/ai.md`
+- 行为证据评价：`/backend/api/behavior.md`
 
 > 端点详情请以 Swagger 为准：`http://localhost:8080/api/swagger-ui.html`

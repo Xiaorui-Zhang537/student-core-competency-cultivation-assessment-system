@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.noncore.assessment.mapper.BehaviorEventMapper">
+    <resultMap id="BaseMap" type="com.noncore.assessment.entity.BehaviorEvent">
+        <id column="id" property="id"/>
+        <result column="student_id" property="studentId"/>
+        <result column="course_id" property="courseId"/>
+        <result column="event_type" property="eventType"/>
+        <result column="related_type" property="relatedType"/>
+        <result column="related_id" property="relatedId"/>
+        <result column="metadata" property="metadata"/>
+        <result column="occurred_at" property="occurredAt"/>
+        <result column="created_at" property="createdAt"/>
+    </resultMap>
+
+    <insert id="insert" parameterType="com.noncore.assessment.entity.BehaviorEvent" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO behavior_events(student_id, course_id, event_type, related_type, related_id, metadata, occurred_at, created_at)
+        VALUES(#{studentId}, #{courseId}, #{eventType}, #{relatedType}, #{relatedId}, #{metadata}, #{occurredAt}, #{createdAt})
+    </insert>
+
+    <select id="listByStudentCourseRange" resultMap="BaseMap">
+        SELECT * FROM behavior_events
+        WHERE student_id = #{studentId}
+        <if test="courseId != null">
+            AND (course_id = #{courseId} OR course_id IS NULL)
+        </if>
+        <if test="from != null">
+            AND occurred_at &gt;= #{from}
+        </if>
+        <if test="to != null">
+            AND occurred_at &lt; #{to}
+        </if>
+        ORDER BY occurred_at DESC, id DESC
+        <if test="limit != null">
+            LIMIT #{limit}
+        </if>
+    </select>
+
+    <select id="existsAfter" resultType="int">
+        SELECT 1 FROM behavior_events
+        WHERE student_id = #{studentId}
+        <if test="courseId != null">
+            AND (course_id = #{courseId} OR course_id IS NULL)
+        </if>
+        AND occurred_at &gt; #{since}
+        LIMIT 1
+    </select>
+</mapper>
+

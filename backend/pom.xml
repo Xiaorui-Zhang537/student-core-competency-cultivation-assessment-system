@@ -24,7 +24,7 @@
         <pagehelper.version>2.1.0</pagehelper.version>
         <jwt.version>0.12.3</jwt.version>
         <springdoc.version>2.3.0</springdoc.version>
-        <lombok.version>1.18.32</lombok.version>
+        <lombok.version>1.18.42</lombok.version>
     </properties>
 
     <dependencyManagement>

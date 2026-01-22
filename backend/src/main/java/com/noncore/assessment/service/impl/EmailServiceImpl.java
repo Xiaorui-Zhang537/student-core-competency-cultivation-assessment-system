@@ -27,7 +27,7 @@ public class EmailServiceImpl implements EmailService {
     private final JavaMailSender emailSender;
     private final SpringTemplateEngine templateEngine;
 
-    @Value("${spring.mail.from-address}")
+    @Value("${spring.mail.from-address:}")
     private String fromEmail;
 
     @Value("${spring.mail.from-name:Student Core Competence System}")

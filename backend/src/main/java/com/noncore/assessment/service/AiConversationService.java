@@ -21,6 +21,15 @@ public interface AiConversationService {
     String normalizeModel(String model);
 
     long countAssistantMessagesByModelSince(Long userId, String modelPrefix, LocalDateTime since);
+
+    /**
+     * 统计会话消息数（用于判定“首次提问/追问”等行为口径）。
+     *
+     * @param userId 当前用户ID
+     * @param conversationId 会话ID
+     * @return 消息条数
+     */
+    long countMessages(Long userId, Long conversationId);
 }
 
 

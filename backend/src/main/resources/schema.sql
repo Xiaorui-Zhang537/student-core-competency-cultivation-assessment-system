@@ -1393,4 +1393,119 @@ alter table student_assessment_system.users
     add constraint username
         unique (username);
 
+-- =========================
+-- 行为证据评价（两阶段）- 行为事件与快照存储
+-- 注意：
+-- 1) 行为数据不算分，不参与任何成绩计算
+-- 2) 阶段一聚合必须纯代码生成（禁止调用 AI）
+-- 3) 阶段二 AI 只读摘要快照，只负责解释/总结，不负责计算
+-- =========================
+
+create table student_assessment_system.behavior_events
+(
+    id           bigint auto_increment comment '事件ID'
+        primary key,
+    student_id   bigint                                 not null comment '学生ID（行为主体）',
+    course_id    bigint                                 null comment '课程ID（可选）',
+    event_type   varchar(64)                            not null comment '事件类型code（ai_question/assignment_submit/...)',
+    related_type varchar(64)                            null comment '关联对象类型（assignment/submission/post/...）',
+    related_id   bigint                                 null comment '关联对象ID',
+    metadata     json                                   null comment '事件元数据(JSON)',
+    occurred_at  datetime                               not null comment '事件发生时间',
+    created_at   datetime default CURRENT_TIMESTAMP      not null comment '记录创建时间'
+)
+    comment '行为事件表（事实记录，append-only）' charset = utf8mb4;
+
+create index idx_behavior_events_student_time
+    on student_assessment_system.behavior_events (student_id, occurred_at);
+
+create index idx_behavior_events_course_time
+    on student_assessment_system.behavior_events (course_id, occurred_at);
+
+create index idx_behavior_events_type_time
+    on student_assessment_system.behavior_events (event_type, occurred_at);
+
+alter table student_assessment_system.behavior_events
+    add constraint fk_behavior_events_student
+        foreign key (student_id) references student_assessment_system.users (id)
+            on delete cascade;
+
+alter table student_assessment_system.behavior_events
+    add constraint fk_behavior_events_course
+        foreign key (course_id) references student_assessment_system.courses (id)
+            on delete set null;
+
+create table student_assessment_system.behavior_summary_snapshots
+(
+    id                  bigint auto_increment comment '摘要快照ID'
+        primary key,
+    schema_version      varchar(64)                            not null comment '摘要schema版本（behavior_summary.v1）',
+    student_id          bigint                                 not null comment '学生ID',
+    course_id           bigint                                 null comment '课程ID（可选）',
+    range_key           varchar(32)                            not null comment '时间窗标识（7d/custom）',
+    period_from         datetime                               not null comment '时间窗起始（包含）',
+    period_to           datetime                               not null comment '时间窗结束（不包含）',
+    input_event_count   int                                    not null comment '输入事件数量',
+    event_types_included json                                  null comment '包含的事件类型code列表(JSON数组)',
+    summary_json        longtext                               not null comment '阶段一摘要JSON（纯代码生成）',
+    generated_at        datetime                               not null comment '生成时间',
+    created_at          datetime default CURRENT_TIMESTAMP      not null comment '入库时间'
+)
+    comment '行为摘要快照表（阶段一产物，禁止AI）' charset = utf8mb4;
+
+create index idx_behavior_snapshots_student_range_period
+    on student_assessment_system.behavior_summary_snapshots (student_id, range_key, period_from, period_to, generated_at);
+
+create index idx_behavior_snapshots_course
+    on student_assessment_system.behavior_summary_snapshots (course_id, generated_at);
+
+alter table student_assessment_system.behavior_summary_snapshots
+    add constraint fk_behavior_snapshots_student
+        foreign key (student_id) references student_assessment_system.users (id)
+            on delete cascade;
+
+alter table student_assessment_system.behavior_summary_snapshots
+    add constraint fk_behavior_snapshots_course
+        foreign key (course_id) references student_assessment_system.courses (id)
+            on delete set null;
+
+create table student_assessment_system.behavior_insights
+(
+    id            bigint auto_increment comment '洞察ID'
+        primary key,
+    schema_version varchar(64)                            not null comment '洞察schema版本（behavior_insight.v1）',
+    snapshot_id   bigint                                 not null comment '关联摘要快照ID',
+    student_id    bigint                                 not null comment '学生ID',
+    course_id     bigint                                 null comment '课程ID（可选）',
+    model         varchar(128)                           null comment '模型标识（审计用）',
+    prompt_version varchar(64)                           null comment 'prompt版本（审计用）',
+    status        varchar(16)                            not null comment '生成状态(success/failed/partial)',
+    insight_json  longtext                               not null comment '阶段二AI输出JSON（不得含新分数）',
+    error_message varchar(500)                           null comment '失败原因（可选）',
+    generated_at  datetime                               not null comment '生成时间',
+    created_at    datetime default CURRENT_TIMESTAMP      not null comment '入库时间'
+)
+    comment '行为洞察表（阶段二AI解读结果，仅解释总结）' charset = utf8mb4;
+
+create index idx_behavior_insights_snapshot
+    on student_assessment_system.behavior_insights (snapshot_id, generated_at);
+
+create index idx_behavior_insights_student_course
+    on student_assessment_system.behavior_insights (student_id, course_id, generated_at);
+
+alter table student_assessment_system.behavior_insights
+    add constraint fk_behavior_insights_snapshot
+        foreign key (snapshot_id) references student_assessment_system.behavior_summary_snapshots (id)
+            on delete cascade;
+
+alter table student_assessment_system.behavior_insights
+    add constraint fk_behavior_insights_student
+        foreign key (student_id) references student_assessment_system.users (id)
+            on delete cascade;
+
+alter table student_assessment_system.behavior_insights
+    add constraint fk_behavior_insights_course
+        foreign key (course_id) references student_assessment_system.courses (id)
+            on delete set null;
+
 

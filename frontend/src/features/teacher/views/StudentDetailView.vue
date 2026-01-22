@@ -174,6 +174,22 @@
             </Card>
           </div>
 
+          <!-- 行为洞察（阶段二：AI解释与建议，不算分；学生7天仅一次，教师可重跑） -->
+          <BehaviorInsightSection
+            v-if="studentId"
+            :student-id="String(studentId)"
+            :course-id="selectedCourseId || (route.query.courseId ? String(route.query.courseId) : undefined)"
+            range="7d"
+            :allow-teacher-generate="true"
+          />
+
+          <!-- 行为证据（阶段一：纯代码聚合，不调用AI，不算分） -->
+          <BehaviorEvidenceSection
+            :student-id="studentId || undefined"
+            :course-id="selectedCourseId || (route.query.courseId ? String(route.query.courseId) : undefined)"
+            range="7d"
+          />
+
           <!-- 风险预警与个性化建议 -->
           <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
             <Card padding="md" tint="warning">
@@ -320,6 +336,8 @@ import Badge from '@/components/ui/Badge.vue'
 import { getMbtiVariant } from '@/shared/utils/badgeColor'
 import { userApi } from '@/api/user.api'
 import UserAvatar from '@/components/ui/UserAvatar.vue'
+import BehaviorEvidenceSection from '@/features/shared/views/BehaviorEvidenceSection.vue'
+import BehaviorInsightSection from '@/features/shared/views/BehaviorInsightSection.vue'
 const route = useRoute();
 const router = useRouter();
 const gradeStore = useGradeStore();

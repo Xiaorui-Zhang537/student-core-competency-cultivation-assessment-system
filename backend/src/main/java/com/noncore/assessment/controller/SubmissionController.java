@@ -14,6 +14,8 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import com.noncore.assessment.dto.request.SubmissionRequest;
+import com.noncore.assessment.behavior.BehaviorEventRecorder;
+import com.noncore.assessment.behavior.BehaviorEventType;
 
 import java.util.Map;
 import com.noncore.assessment.util.PageResult;
@@ -24,10 +26,14 @@ import com.noncore.assessment.util.PageResult;
 public class SubmissionController extends BaseController {
 
     private final SubmissionService submissionService;
+    private final BehaviorEventRecorder behaviorEventRecorder;
 
-    public SubmissionController(SubmissionService submissionService, UserService userService) {
+    public SubmissionController(SubmissionService submissionService,
+                                BehaviorEventRecorder behaviorEventRecorder,
+                                UserService userService) {
         super(userService);
         this.submissionService = submissionService;
+        this.behaviorEventRecorder = behaviorEventRecorder;
     }
 
     @GetMapping("/submissions/{submissionId}")
@@ -65,6 +71,21 @@ public class SubmissionController extends BaseController {
             @RequestParam(required = false) String content,
             @RequestParam(required = false) MultipartFile file) {
         Submission submission = submissionService.submitAssignment(assignmentId, getCurrentUserId(), content, file);
+        // 行为记录：作业提交/修改（仅记录事实，不评价，不算分）
+        try {
+            boolean isResubmit = submission != null && submission.getSubmissionCount() != null && submission.getSubmissionCount() > 1;
+            java.util.Map<String, Object> meta = new java.util.HashMap<>();
+            meta.put("submissionId", submission != null ? submission.getId() : null);
+            meta.put("submissionCount", submission != null ? submission.getSubmissionCount() : null);
+            behaviorEventRecorder.record(
+                    getCurrentUserId(),
+                    null,
+                    isResubmit ? BehaviorEventType.ASSIGNMENT_RESUBMIT : BehaviorEventType.ASSIGNMENT_SUBMIT,
+                    "assignment",
+                    assignmentId,
+                    meta
+            );
+        } catch (Exception ignored) {}
         return ResponseEntity.ok(ApiResponse.success(submission));
     }
 
@@ -75,6 +96,21 @@ public class SubmissionController extends BaseController {
             @PathVariable Long assignmentId,
             @RequestBody SubmissionRequest request) {
         Submission submission = submissionService.submitAssignment(assignmentId, getCurrentUserId(), request);
+        // 行为记录：作业提交/修改（仅记录事实，不评价，不算分）
+        try {
+            boolean isResubmit = submission != null && submission.getSubmissionCount() != null && submission.getSubmissionCount() > 1;
+            java.util.Map<String, Object> meta = new java.util.HashMap<>();
+            meta.put("submissionId", submission != null ? submission.getId() : null);
+            meta.put("submissionCount", submission != null ? submission.getSubmissionCount() : null);
+            behaviorEventRecorder.record(
+                    getCurrentUserId(),
+                    null,
+                    isResubmit ? BehaviorEventType.ASSIGNMENT_RESUBMIT : BehaviorEventType.ASSIGNMENT_SUBMIT,
+                    "assignment",
+                    assignmentId,
+                    meta
+            );
+        } catch (Exception ignored) {}
         return ResponseEntity.ok(ApiResponse.success(submission));
     }
 
@@ -95,6 +131,17 @@ public class SubmissionController extends BaseController {
             @RequestParam(defaultValue = "1") Integer page,
             @RequestParam(defaultValue = "10") Integer size) {
         PageResult<Map<String, Object>> grades = submissionService.getStudentGrades(getCurrentUserId(), page, size);
+        // 行为记录：查看反馈（成绩列表）
+        try {
+            behaviorEventRecorder.record(
+                    getCurrentUserId(),
+                    null,
+                    BehaviorEventType.FEEDBACK_VIEW,
+                    "grade_list",
+                    null,
+                    java.util.Map.of("page", page, "size", size)
+            );
+        } catch (Exception ignored) {}
         return ResponseEntity.ok(ApiResponse.success(grades));
     }
 
@@ -103,6 +150,25 @@ public class SubmissionController extends BaseController {
     @PreAuthorize("hasAnyRole('STUDENT', 'TEACHER')")
     public ResponseEntity<ApiResponse<Map<String, Object>>> getSubmissionGrade(@PathVariable Long submissionId) {
         Map<String, Object> grade = submissionService.getSubmissionGrade(submissionId);
+        // 行为记录：查看反馈（成绩详情）
+        try {
+            if (hasRole("STUDENT")) {
+                java.util.Map<String, Object> meta = new java.util.HashMap<>();
+                meta.put("kind", "submission_grade");
+                if (grade != null) {
+                    Object aid = grade.get("assignmentId");
+                    if (aid != null) meta.put("assignmentId", aid);
+                }
+                behaviorEventRecorder.record(
+                        getCurrentUserId(),
+                        null,
+                        BehaviorEventType.FEEDBACK_VIEW,
+                        "submission",
+                        submissionId,
+                        meta
+                );
+            }
+        } catch (Exception ignored) {}
         return ResponseEntity.ok(ApiResponse.success(grade));
     }
 

@@ -29,6 +29,7 @@ import java.util.stream.Collectors;
 public class NotificationServiceImpl implements NotificationService {
 
     private static final Logger logger = LoggerFactory.getLogger(NotificationServiceImpl.class);
+    private static final int DEFAULT_EXPIRED_NOTIFICATION_DAYS = 30;
 
     private final NotificationMapper notificationMapper;
     private final com.noncore.assessment.mapper.ChatMapper chatMapper;
@@ -509,7 +510,6 @@ public class NotificationServiceImpl implements NotificationService {
     }
 
     @Override
-    @Scheduled(cron = "0 0 2 * * ?") // 每天凌晨2点执行
     @Transactional
     public Map<String, Object> cleanupExpiredNotifications(int days) {
         Map<String, Object> result = new HashMap<>();
@@ -524,6 +524,15 @@ public class NotificationServiceImpl implements NotificationService {
             result.put("error", e.getMessage());
         }
         return result;
+    }
+
+    /**
+     * 定时清理过期通知（无参方法，满足 @Scheduled 约束）
+     */
+    @Scheduled(cron = "0 0 2 * * ?") // 每天凌晨2点执行
+    @Transactional
+    public void cleanupExpiredNotificationsScheduled() {
+        cleanupExpiredNotifications(DEFAULT_EXPIRED_NOTIFICATION_DAYS);
     }
 
     @Override

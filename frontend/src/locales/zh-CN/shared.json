@@ -431,6 +431,68 @@
     "file": {
       "unknownSize": "未知"
     },
+    "behaviorEvidence": {
+      "title": "行为证据（不算分）",
+      "subtitle": "基于行为事件的事实摘要，用于解释作业成绩与形成性反馈（不参与任何加权/平均）",
+      "loading": "加载中...",
+      "refresh": "刷新",
+      "stats": {
+        "ai": "AI 提问",
+        "aiQuestions": "提问次数",
+        "aiFollowUps": "追问",
+        "assignment": "作业行为",
+        "submits": "提交",
+        "resubmits": "修改/重交",
+        "community": "社区互动",
+        "asks": "发问",
+        "answers": "回答",
+        "feedback": "查看反馈",
+        "views": "次数"
+      },
+      "evidence": {
+        "title": "证据条目",
+        "empty": "暂无可展示的证据条目",
+        "eventRefs": "关联事件 {count} 条"
+      },
+      "nonEvaluative": {
+        "title": "只记录不评价",
+        "byCategory": "按类别"
+      }
+    },
+    "behaviorInsight": {
+      "title": "行为洞察（AI解释，不算分）",
+      "subtitle": "基于阶段一行为摘要生成的解释与建议（不产生任何分数/权重）",
+      "loading": "加载中...",
+      "refresh": "刷新",
+      "generate": "生成洞察",
+      "regenerate": "重新生成",
+      "cooldown": "冷却中：7天内仅允许生成一次",
+      "cooldownUntil": "下次可生成时间：{time}",
+      "empty": "暂无洞察结果（可先查看阶段一行为摘要）",
+      "status": {
+        "success": "已生成",
+        "partial": "部分可用",
+        "failed": "生成失败"
+      },
+      "sections": {
+        "explain": "成绩解释（不含分数）",
+        "judgement": "阶段性能力判断（非分数）",
+        "suggestions": "形成性建议"
+      },
+      "levels": {
+        "EMERGING": "萌芽",
+        "DEVELOPING": "发展",
+        "PROFICIENT": "熟练",
+        "ADVANCED": "卓越"
+      },
+      "dimensions": {
+        "MORAL_COGNITION": "道德认知",
+        "LEARNING_ATTITUDE": "学习态度",
+        "LEARNING_ABILITY": "学习能力",
+        "LEARNING_METHOD": "学习方法"
+      },
+      "evidenceLabel": "证据"
+    },
     "radarLegend": {
       "labels": {
         "title": "五维能力说明",

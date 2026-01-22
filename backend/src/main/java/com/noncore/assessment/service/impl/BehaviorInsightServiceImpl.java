@@ -1,0 +1,56 @@
+package com.noncore.assessment.service.impl;
+
+import com.noncore.assessment.entity.BehaviorInsight;
+import com.noncore.assessment.mapper.BehaviorInsightMapper;
+import com.noncore.assessment.service.BehaviorInsightService;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
+
+import java.time.LocalDateTime;
+
+/**
+ * 行为洞察服务实现（阶段二结果存取）。
+ */
+@Service
+@RequiredArgsConstructor
+public class BehaviorInsightServiceImpl implements BehaviorInsightService {
+
+    private final BehaviorInsightMapper mapper;
+
+    /**
+     * 保存洞察结果（入库）。
+     *
+     * @param insight 洞察记录
+     */
+    @Override
+    public void save(BehaviorInsight insight) {
+        if (insight == null) return;
+        if (insight.getGeneratedAt() == null) {
+            insight.setGeneratedAt(LocalDateTime.now());
+        }
+        if (insight.getCreatedAt() == null) {
+            insight.setCreatedAt(LocalDateTime.now());
+        }
+        mapper.insert(insight);
+    }
+
+    /**
+     * 获取指定快照的最新洞察结果。
+     */
+    @Override
+    public BehaviorInsight getLatestBySnapshot(Long snapshotId, String schemaVersion) {
+        return mapper.getLatestBySnapshot(snapshotId, schemaVersion);
+    }
+
+    @Override
+    public BehaviorInsight getLatestByStudentCourse(Long studentId, Long courseId, String schemaVersion) {
+        return mapper.getLatestByStudentCourse(studentId, courseId, schemaVersion);
+    }
+
+    @Override
+    public long countByStudentSince(Long studentId, String schemaVersion, LocalDateTime since) {
+        if (studentId == null) return 0L;
+        return mapper.countByStudentSince(studentId, schemaVersion, since);
+    }
+}
+

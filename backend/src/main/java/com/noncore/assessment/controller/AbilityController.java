@@ -9,6 +9,8 @@ import com.noncore.assessment.dto.response.AbilityRadarResponse;
 import com.noncore.assessment.dto.response.AbilityCompareResponse;
 import com.noncore.assessment.dto.response.AbilityDimensionInsightsResponse;
 import com.noncore.assessment.service.UserService;
+import com.noncore.assessment.behavior.BehaviorEventRecorder;
+import com.noncore.assessment.behavior.BehaviorEventType;
 import com.noncore.assessment.util.ApiResponse;
 import com.noncore.assessment.util.PageResult;
 import io.swagger.v3.oas.annotations.Operation;
@@ -39,11 +41,16 @@ public class AbilityController extends BaseController {
 
     private final AbilityService abilityService;
     private final AbilityAnalyticsService abilityAnalyticsService;
+    private final BehaviorEventRecorder behaviorEventRecorder;
 
-    public AbilityController(AbilityService abilityService, AbilityAnalyticsService abilityAnalyticsService, UserService userService) {
+    public AbilityController(AbilityService abilityService,
+                             AbilityAnalyticsService abilityAnalyticsService,
+                             BehaviorEventRecorder behaviorEventRecorder,
+                             UserService userService) {
         super(userService);
         this.abilityService = abilityService;
         this.abilityAnalyticsService = abilityAnalyticsService;
+        this.behaviorEventRecorder = behaviorEventRecorder;
     }
 
     /**
@@ -244,6 +251,23 @@ public class AbilityController extends BaseController {
     ) {
         Long studentId = getCurrentUserId();
         AbilityReport latestReport = abilityService.getLatestAbilityReportByContext(studentId, courseId, assignmentId, submissionId);
+        // 行为记录：查看反馈（能力报告）
+        try {
+            java.util.Map<String, Object> meta = new java.util.HashMap<>();
+            meta.put("kind", "ability_report_latest_by_context");
+            meta.put("reportId", latestReport != null ? latestReport.getId() : null);
+            meta.put("courseId", latestReport != null ? latestReport.getCourseId() : courseId);
+            meta.put("assignmentId", latestReport != null ? latestReport.getAssignmentId() : assignmentId);
+            meta.put("submissionId", latestReport != null ? latestReport.getSubmissionId() : submissionId);
+            behaviorEventRecorder.record(
+                    studentId,
+                    latestReport != null ? latestReport.getCourseId() : courseId,
+                    BehaviorEventType.FEEDBACK_VIEW,
+                    "ability_report",
+                    latestReport != null ? latestReport.getId() : null,
+                    meta
+            );
+        } catch (Exception ignored) {}
         return ResponseEntity.ok(ApiResponse.success(latestReport));
     }
 
@@ -272,6 +296,25 @@ public class AbilityController extends BaseController {
     @PreAuthorize("hasRole('STUDENT')")
     public ResponseEntity<ApiResponse<AbilityReport>> getAbilityReport(@Parameter(description = "报告ID") @PathVariable Long reportId) {
         AbilityReport report = abilityService.getAbilityReportById(reportId);
+        // 行为记录：查看反馈（能力报告详情）
+        try {
+            java.util.Map<String, Object> meta = new java.util.HashMap<>();
+            meta.put("kind", "ability_report_detail");
+            meta.put("reportId", reportId);
+            if (report != null) {
+                meta.put("courseId", report.getCourseId());
+                meta.put("assignmentId", report.getAssignmentId());
+                meta.put("submissionId", report.getSubmissionId());
+            }
+            behaviorEventRecorder.record(
+                    getCurrentUserId(),
+                    report != null ? report.getCourseId() : null,
+                    BehaviorEventType.FEEDBACK_VIEW,
+                    "ability_report",
+                    reportId,
+                    meta
+            );
+        } catch (Exception ignored) {}
         return ResponseEntity.ok(ApiResponse.success(report));
     }
 

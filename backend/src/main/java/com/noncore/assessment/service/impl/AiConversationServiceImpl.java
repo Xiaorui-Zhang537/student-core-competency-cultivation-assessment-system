@@ -141,6 +141,14 @@ public class AiConversationServiceImpl implements AiConversationService {
     }
 
     @Override
+    @Transactional(readOnly = true)
+    public long countMessages(Long userId, Long conversationId) {
+        if (userId == null || conversationId == null) return 0L;
+        getConversation(userId, conversationId); // 所有权校验
+        return messageMapper.countByConversation(conversationId);
+    }
+
+    @Override
     public String normalizeModel(String model) {
         String defaultModel = aiConfigProperties.getDeepseek().getModel();
         if (defaultModel == null || defaultModel.isBlank()) {

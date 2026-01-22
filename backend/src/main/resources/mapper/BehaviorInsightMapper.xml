@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.noncore.assessment.mapper.BehaviorInsightMapper">
+    <resultMap id="BaseMap" type="com.noncore.assessment.entity.BehaviorInsight">
+        <id column="id" property="id"/>
+        <result column="schema_version" property="schemaVersion"/>
+        <result column="snapshot_id" property="snapshotId"/>
+        <result column="student_id" property="studentId"/>
+        <result column="course_id" property="courseId"/>
+        <result column="model" property="model"/>
+        <result column="prompt_version" property="promptVersion"/>
+        <result column="status" property="status"/>
+        <result column="insight_json" property="insightJson"/>
+        <result column="error_message" property="errorMessage"/>
+        <result column="generated_at" property="generatedAt"/>
+        <result column="created_at" property="createdAt"/>
+    </resultMap>
+
+    <insert id="insert" parameterType="com.noncore.assessment.entity.BehaviorInsight" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO behavior_insights(schema_version, snapshot_id, student_id, course_id, model, prompt_version,
+                                      status, insight_json, error_message, generated_at, created_at)
+        VALUES(#{schemaVersion}, #{snapshotId}, #{studentId}, #{courseId}, #{model}, #{promptVersion},
+               #{status}, #{insightJson}, #{errorMessage}, #{generatedAt}, #{createdAt})
+    </insert>
+
+    <select id="getLatestBySnapshot" resultMap="BaseMap">
+        SELECT * FROM behavior_insights
+        WHERE snapshot_id = #{snapshotId}
+        AND schema_version = #{schemaVersion}
+        ORDER BY generated_at DESC, id DESC
+        LIMIT 1
+    </select>
+
+    <select id="getLatestByStudentCourse" resultMap="BaseMap">
+        SELECT * FROM behavior_insights
+        WHERE student_id = #{studentId}
+        AND schema_version = #{schemaVersion}
+        <if test="courseId != null">
+            AND course_id = #{courseId}
+        </if>
+        <if test="courseId == null">
+            AND course_id IS NULL
+        </if>
+        ORDER BY generated_at DESC, id DESC
+        LIMIT 1
+    </select>
+
+    <select id="countByStudentSince" resultType="long">
+        SELECT COUNT(*)
+        FROM behavior_insights
+        WHERE student_id = #{studentId}
+          AND schema_version = #{schemaVersion}
+          AND status &lt;&gt; 'partial'
+        <if test="since != null">
+          AND generated_at &gt;= #{since}
+        </if>
+    </select>
+</mapper>
+

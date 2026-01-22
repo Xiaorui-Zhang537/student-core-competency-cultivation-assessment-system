@@ -7,6 +7,8 @@ import com.noncore.assessment.service.CommunityService;
 import com.noncore.assessment.service.UserService;
 import com.noncore.assessment.util.ApiResponse;
 import com.noncore.assessment.util.PageResult;
+import com.noncore.assessment.behavior.BehaviorEventRecorder;
+import com.noncore.assessment.behavior.BehaviorEventType;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.ResponseEntity;
@@ -31,10 +33,12 @@ import java.util.Map;
 public class CommunityController extends BaseController {
 
     private final CommunityService communityService;
+    private final BehaviorEventRecorder behaviorEventRecorder;
 
-    public CommunityController(CommunityService communityService, UserService userService) {
+    public CommunityController(CommunityService communityService, BehaviorEventRecorder behaviorEventRecorder, UserService userService) {
         super(userService);
         this.communityService = communityService;
+        this.behaviorEventRecorder = behaviorEventRecorder;
     }
 
     @PostMapping("/posts")
@@ -50,6 +54,20 @@ public class CommunityController extends BaseController {
         post.setPinned(Boolean.TRUE.equals(req.getPinned()));
         post.setAuthorId(getCurrentUserId());
         Post createdPost = communityService.createPost(post, req.getTags());
+        // 行为记录：社区发问（仅记录事实，不评价，不算分）
+        try {
+            java.util.Map<String, Object> meta = new java.util.HashMap<>();
+            meta.put("category", req.getCategory());
+            meta.put("anonymous", Boolean.TRUE.equals(req.getAnonymous()));
+            behaviorEventRecorder.record(
+                    getCurrentUserId(),
+                    null,
+                    BehaviorEventType.COMMUNITY_ASK,
+                    "post",
+                    createdPost != null ? createdPost.getId() : null,
+                    meta
+            );
+        } catch (Exception ignored) {}
         return ResponseEntity.ok(ApiResponse.success(createdPost));
     }
 
@@ -114,6 +132,20 @@ public class CommunityController extends BaseController {
         comment.setPostId(id);
         comment.setAuthorId(getCurrentUserId());
         PostComment createdComment = communityService.createComment(comment);
+        // 行为记录：社区回答（评论/回复）
+        try {
+            java.util.Map<String, Object> meta = new java.util.HashMap<>();
+            meta.put("postId", id);
+            meta.put("parentId", comment.getParentId());
+            behaviorEventRecorder.record(
+                    getCurrentUserId(),
+                    null,
+                    BehaviorEventType.COMMUNITY_ANSWER,
+                    "post_comment",
+                    createdComment != null ? createdComment.getId() : null,
+                    meta
+            );
+        } catch (Exception ignored) {}
         return ResponseEntity.ok(ApiResponse.success(createdComment));
     }
 
