@@ -130,25 +130,34 @@
                     class="rounded border-gray-300 text-primary-600 focus:ring-primary-500"
                   />
                 </th>
-                <th class="px-6 py-3 text-left text-xs font-semibold text-gray-700 dark:text-gray-200 tracking-wide">
+                <th class="px-6 py-3 text-center text-xs font-semibold text-gray-700 dark:text-gray-200 tracking-wide">
                   {{ t('teacher.students.table.student') }}
                 </th>
-                <th class="px-7 py-3 text-left text-xs font-semibold text-gray-700 dark:text-gray-200 tracking-wide w-48">
+                <th class="px-7 py-3 text-center text-xs font-semibold text-gray-700 dark:text-gray-200 tracking-wide w-48">
                   {{ t('teacher.students.table.progress') }}
                 </th>
-                <th class="px-9 py-3 text-left text-xs font-semibold text-gray-700 dark:text-gray-200 tracking-wide w-[260px]">
+                <th class="px-9 py-3 text-center text-xs font-semibold text-gray-700 dark:text-gray-200 tracking-wide w-[260px]">
                   {{ t('teacher.students.table.radar') }}
                 </th>
-                <th class="px-8 py-3 text-left text-xs font-semibold text-gray-700 dark:text-gray-200 tracking-wide">
+                <!-- 成绩列：缩小一点横向占用（避免英文版挤不下），但不换行；不调整标题字号 -->
+                <th class="px-5 py-3 text-center text-xs font-semibold text-gray-700 dark:text-gray-200 tracking-wide whitespace-nowrap">
                   {{ t('teacher.students.table.grade') }}
                 </th>
-                <th class="px-7 py-3 text-left text-xs font-semibold text-gray-700 dark:text-gray-200 tracking-wide w-28">
+                <!-- 活跃度列：缩小一点横向占用（避免英文版挤不下），但不换行；不调整标题字号 -->
+                <th class="px-4 py-3 text-center text-xs font-semibold text-gray-700 dark:text-gray-200 tracking-wide whitespace-nowrap w-24">
                   {{ t('teacher.students.table.activity') }}
                 </th>
-                <th class="px-7 py-3 text-left text-xs font-semibold text-gray-700 dark:text-gray-200 tracking-wide w-28">
-                  {{ t('teacher.students.table.lastActive') }}
+                <th class="px-7 py-3 text-center text-xs font-semibold text-gray-700 dark:text-gray-200 tracking-wide w-28">
+                  <!-- 中文：两字一行（最后/活动）；英文：保持单行 -->
+                  <span v-if="isZhLocale" class="inline-block leading-tight">
+                    {{ lastActiveHeaderLine1 }}<br />
+                    {{ lastActiveHeaderLine2 }}
+                  </span>
+                  <span v-else class="whitespace-nowrap">
+                    {{ t('teacher.students.table.lastActive') }}
+                  </span>
                 </th>
-                <th class="px-4 py-3 text-right text-xs font-semibold text-gray-700 dark:text-gray-200 tracking-wide w-16">
+                <th class="px-4 py-3 text-center text-xs font-semibold text-gray-700 dark:text-gray-200 tracking-wide w-16">
                   {{ t('teacher.students.table.actions') }}
                 </th>
               </tr>
@@ -165,8 +174,8 @@
                     />
                   </div>
                 </td>
-                <td class="px-6 py-3">
-                  <div class="flex items-center">
+                <td class="px-6 py-3 text-center">
+                  <div class="flex items-center justify-center gap-3">
                     <div class="flex-shrink-0 w-10 h-10">
                       <user-avatar :avatar="student.avatar" :size="40">
                         <div class="w-10 h-10 rounded-full bg-gray-200 dark:bg-gray-600 ring-1 ring-white/20 flex items-center justify-center">
@@ -174,7 +183,7 @@
                         </div>
                       </user-avatar>
                     </div>
-                    <div class="ml-4">
+                    <div class="text-center">
                       <div class="text-sm font-medium text-gray-900 dark:text-white">
                         {{ student.name }}
                       </div>
@@ -184,8 +193,8 @@
                     </div>
                   </div>
                 </td>
-                <td class="px-7 py-3">
-                  <div class="flex items-center max-w-[180px]">
+                <td class="px-7 py-3 text-center">
+                  <div class="flex items-center justify-center max-w-[180px] mx-auto">
                     <div class="flex-1">
                       <div class="flex justify-between items-center mb-1">
                         <span class="text-sm font-medium text-gray-900 dark:text-white">
@@ -203,9 +212,9 @@
                     </div>
                   </div>
                 </td>
-                <td class="px-9 py-3 min-w-[260px]">
-                  <div class="flex flex-col gap-2">
-                    <div class="flex items-center gap-2">
+                <td class="px-9 py-3 min-w-[260px] text-center">
+                  <div class="flex flex-col gap-2 items-center">
+                    <div class="flex items-center justify-center gap-2">
                       <Badge :variant="getRadarBadgeVariant(student.radarClassification)" size="sm" class="px-2 font-semibold uppercase tracking-wide">
                         {{ formatRadarBadgeLabel(student.radarClassification) }}
                       </Badge>
@@ -213,7 +222,7 @@
                         {{ t('teacher.students.table.radarAreaLabel', { value: formatRadarArea(student.radarArea) }) }}
                       </span>
                     </div>
-                    <div v-if="student.dimensionScores && Object.keys(student.dimensionScores).length" class="flex flex-wrap gap-x-3 gap-y-1 text-xs text-gray-600 dark:text-gray-400">
+                    <div v-if="student.dimensionScores && Object.keys(student.dimensionScores).length" class="flex flex-wrap justify-center gap-x-3 gap-y-1 text-xs text-gray-600 dark:text-gray-400">
                       <span
                         v-for="([code, value], idx) in Object.entries(student.dimensionScores || {})"
                         :key="`${student.id}-${code}-${idx}`"
@@ -224,13 +233,13 @@
                         <span>{{ formatRadarValue(value) }}</span>
                       </span>
                     </div>
-                    <div v-else class="text-xs text-gray-400 dark:text-gray-500">
+                    <div v-else class="text-xs text-gray-400 dark:text-gray-500 text-center">
                       {{ t('teacher.students.table.noRadarData') }}
                     </div>
                   </div>
                 </td>
-                <td class="px-8 py-3 min-w-[120px]">
-                  <div class="flex items-center">
+                <td class="px-5 py-3 min-w-[112px] text-center">
+                  <div class="flex items-center justify-center">
                     <span class="text-sm font-medium text-gray-900 dark:text-white">
                       {{ student.averageGrade || '--' }}
                     </span>
@@ -244,8 +253,8 @@
                      </Badge>
                   </div>
                 </td>
-                <td class="px-7 py-3 min-w-[135px]">
-                  <div class="flex items-center">
+                <td class="px-4 py-3 min-w-[120px] text-center">
+                  <div class="flex items-center justify-center">
                     <div class="flex-1">
                       <div class="flex items-center space-x-2">
                         <div
@@ -262,11 +271,11 @@
                     </div>
                   </div>
                 </td>
-                <td class="px-7 py-3 text-sm text-gray-500 dark:text-gray-400">
+                <td class="px-7 py-3 text-sm text-gray-500 dark:text-gray-400 text-center">
                   {{ formatRelativeTime(student.lastActiveAt) }}
                 </td>
-                <td class="px-4 py-4 text-right">
-                  <div class="flex justify-end">
+                <td class="px-4 py-4 text-center">
+                  <div class="flex justify-center">
                     <div class="relative" @click.stop :ref="(el: Element | ComponentPublicInstance | null) => setMenuButtonRef((el as HTMLElement) ?? null, student.id)">
                       <Button
                         variant="ghost"
@@ -339,7 +348,14 @@
       </div>
 
       <!-- 邀请学生弹窗（复用 GlassModal） -->
-      <glass-modal v-if="showInviteModal" :title="t('teacher.students.invite.title') as string" size="sm" heightVariant="compact" @close="closeInviteModal">
+      <glass-modal
+        v-if="showInviteModal"
+        :title="t('teacher.students.invite.title') as string"
+        size="xl"
+        heightVariant="tall"
+        :solidBody="true"
+        @close="closeInviteModal"
+      >
         <div class="space-y-4">
           <p class="text-sm text-gray-600 dark:text-gray-400">{{ t('teacher.students.invite.desc') }}</p>
           <glass-textarea v-model="inviteRaw" :rows="6" :placeholder="t('teacher.students.invite.placeholder') as string" />
@@ -352,7 +368,14 @@
       </glass-modal>
 
       <!-- 课程入课密钥设置弹窗（复用 GlassModal） -->
-      <glass-modal v-if="showKeyModal" :title="t('teacher.students.enrollKey.title') as string" size="sm" heightVariant="compact" @close="closeKeyModal">
+      <glass-modal
+        v-if="showKeyModal"
+        :title="t('teacher.students.enrollKey.title') as string"
+        size="lg"
+        heightVariant="tall"
+        :solidBody="true"
+        @close="closeKeyModal"
+      >
         <div class="space-y-4">
           <div class="flex items-center gap-3">
             <span class="text-sm text-gray-700 dark:text-gray-300">{{ t('teacher.students.enrollKey.require') }}</span>
@@ -427,6 +450,11 @@ const route = useRoute()
 const router = useRouter()
 const uiStore = useUIStore()
 const { t, locale } = useI18n()
+
+// 表头细节：仅中文将“最后活动”拆成两行（最后/活动），英文保持单行
+const isZhLocale = computed(() => String(locale.value || '').toLowerCase().startsWith('zh'))
+const lastActiveHeaderLine1 = computed(() => '最后')
+const lastActiveHeaderLine2 = computed(() => '活动')
 
 // 状态
 const courseId = route.params.id as string
@@ -807,9 +835,20 @@ const exportStudentData = async (_studentId: string) => {
   const s = students.value.find(x => x.id === _studentId)
   if (!s) return
   // 生成单个学生的CSV（前端导出）
+  const dimCodes = ['MORAL_COGNITION','LEARNING_ATTITUDE','LEARNING_ABILITY','LEARNING_METHOD','ACADEMIC_GRADE'] as const
   const headers = [
-    'student_id','name','progress','completed_lessons','total_lessons','average_grade','activity_level','study_time_per_week','last_active_at','joined_at','radar_area','radar_classification','dimension_scores'
+    'student_id','name','progress','completed_lessons','total_lessons','average_grade','activity_level','study_time_per_week','last_active_at','joined_at',
+    'radar_area','radar_classification',
+    ...dimCodes.flatMap(c => [`${c}_score`, `${c}_rating`])
   ]
+  const dimRating = (v: any) => {
+    const n = Number(v)
+    if (!Number.isFinite(n)) return ''
+    if (n >= 85) return 'A'
+    if (n >= 70) return 'B'
+    if (n >= 60) return 'C'
+    return 'D'
+  }
   const row = [
     `"${String(s.studentId ?? '')}"`,
     `"${String(s.name ?? '').replace(/"/g, '""')}"`,
@@ -823,7 +862,10 @@ const exportStudentData = async (_studentId: string) => {
     `"${String(s.joinedAt ?? '')}"`,
     String(s.radarArea ?? ''),
     `"${String(s.radarClassification ?? '')}"`,
-    `"${JSON.stringify(s.dimensionScores || {})}"`
+    ...dimCodes.flatMap((c) => {
+      const score = (s.dimensionScores || {})[c]
+      return [String(score ?? ''), dimRating(score)]
+    })
   ]
   const csv = `${headers.join(',')}\n${row.join(',')}\n`
   const blob = new Blob([csv], { type: 'text/csv;charset=UTF-8' })
@@ -873,13 +915,24 @@ const batchSendMessage = async () => {
 
 const batchExport = async () => {
   if (selectedStudents.value.length === 0) return
-  // headers 与单个导出保持一致
+  // headers 与后端导出保持一致（增加雷达面积/总评级 + 五维分数/评级）
+  const dimCodes = ['MORAL_COGNITION','LEARNING_ATTITUDE','LEARNING_ABILITY','LEARNING_METHOD','ACADEMIC_GRADE'] as const
   const headers = [
-    'student_id','name','progress','completed_lessons','total_lessons','average_grade','activity_level','study_time_per_week','last_active_at','joined_at'
+    'student_id','name','progress','completed_lessons','total_lessons','average_grade','activity_level','study_time_per_week','last_active_at','joined_at',
+    'radar_area','radar_classification',
+    ...dimCodes.flatMap(c => [`${c}_score`, `${c}_rating`])
   ]
   const selected = students.value.filter(s => selectedStudents.value.includes(s.id))
   if (selected.length === 0) return
   const escape = (v: any) => `"${String(v ?? '').replace(/"/g, '""')}"`
+  const dimRating = (v: any) => {
+    const n = Number(v)
+    if (!Number.isFinite(n)) return ''
+    if (n >= 85) return 'A'
+    if (n >= 70) return 'B'
+    if (n >= 60) return 'C'
+    return 'D'
+  }
   const rows = selected.map((s) => [
     escape(s.studentId),
     escape(s.name),
@@ -890,7 +943,13 @@ const batchExport = async () => {
     escape(s.activityLevel),
     String(s.studyTime ?? ''),
     escape(s.lastActiveAt),
-    escape(s.joinedAt)
+    escape(s.joinedAt),
+    String(s.radarArea ?? ''),
+    escape(s.radarClassification ?? ''),
+    ...dimCodes.flatMap((c) => {
+      const score = (s.dimensionScores || {})[c]
+      return [String(score ?? ''), dimRating(score)]
+    })
   ].join(','))
   const csv = `${headers.join(',')}\n${rows.join('\n')}\n`
   const blob = new Blob([csv], { type: 'text/csv;charset=UTF-8' })

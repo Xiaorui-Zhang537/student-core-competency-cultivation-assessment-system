@@ -50,15 +50,18 @@
           </Button>
         </div>
         <!-- Chapters Toolbar -->
-        <Card padding="md" tint="info" class="mb-4">
-          <div class="grid grid-cols-1 md:grid-cols-3 gap-3 items-end">
-            <div>
-              <label class="block text-sm mb-1">{{ t('teacher.courseDetail.sections.newChapterTitle') }}</label>
-              <GlassInput class="input-sm w-full" v-model="newChapterTitle" :placeholder="t('teacher.courseDetail.sections.newChapterTitlePh') as string" />
-            </div>
-            <div class="md:col-span-2">
-              <label class="block text-sm mb-1">{{ t('teacher.courseDetail.sections.chapterDesc') }}</label>
-              <GlassInput class="input-sm w-full" v-model="newChapterDesc" :placeholder="t('teacher.courseDetail.sections.chapterDescPh') as string" />
+        <Card padding="md" tint="info" class="mb-6">
+          <!-- 新章节：输入分组容器（更聚合、更好看） -->
+          <div class="rounded-2xl p-3" v-glass="{ strength: 'ultraThin', interactive: false }">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-3 items-end">
+              <div>
+                <label class="block text-sm mb-1">{{ t('teacher.courseDetail.sections.newChapterTitle') }}</label>
+                <GlassInput class="input-sm w-full" v-model="newChapterTitle" :placeholder="t('teacher.courseDetail.sections.newChapterTitlePh') as string" />
+              </div>
+              <div class="md:col-span-2">
+                <label class="block text-sm mb-1">{{ t('teacher.courseDetail.sections.chapterDesc') }}</label>
+                <GlassInput class="input-sm w-full" v-model="newChapterDesc" :placeholder="t('teacher.courseDetail.sections.chapterDescPh') as string" />
+              </div>
             </div>
           </div>
           <div class="mt-3 flex items-center gap-2">
@@ -69,11 +72,12 @@
           </div>
           <div class="mt-4">
             <div class="text-sm mb-2">{{ t('teacher.courseDetail.sections.chapterList') }}</div>
-            <ul class="rounded-2xl border overflow-hidden" style="background-color: color-mix(in oklab, var(--color-info) 12%, transparent);">
+            <!-- 外层容器圆角更大；内层章节项圆角略小，避免“内层像药丸、外层像矩形”的不协调 -->
+            <ul class="rounded-2xl border p-2 space-y-2" style="background-color: color-mix(in oklab, var(--color-info) 12%, transparent);">
               <li v-for="c in chapters" :key="c.id"
-                  class="p-3 flex items-center justify-between cursor-move relative"
+                  class="p-3 flex items-center justify-between cursor-move relative rounded-xl"
+                  v-glass
                   draggable="true" @dragstart="onChapterDragStart(c)" @dragover.prevent @drop="onChapterDrop(c)">
-                <div class="absolute inset-0 rounded-2xl" v-glass></div>
                 <div class="min-w-0 relative">
                   <div class="text-sm font-medium truncate">{{ c.title }}</div>
                   <div class="text-xs text-gray-500 truncate">{{ c.description }}</div>
@@ -89,17 +93,29 @@
             </ul>
           </div>
         </Card>
+        <!-- 章节区（蓝）与新节次区（黄）之间的“独立空白”间隔 -->
+        <div class="h-6"></div>
         <div class="space-y-4">
           <!-- New lesson inline form -->
-          <Card padding="md" tint="info">
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-3 items-end">
-              <div>
-                <label class="block text-sm mb-1">{{ t('teacher.courseDetail.sections.newLessonTitle') }}</label>
-                <GlassInput class="input-sm w-full" v-model="newLessonTitle" :placeholder="t('teacher.courseDetail.sections.newLessonTitlePh') as string" />
-              </div>
-              <div class="md:col-span-2">
-                <label class="block text-sm mb-1">{{ t('teacher.courseDetail.sections.lessonIntro') }}</label>
-                <GlassTextarea class="w-full" :rows="2" v-model="newLessonIntro" :placeholder="t('teacher.courseDetail.sections.lessonIntroPh') as string" />
+          <!-- 与“新增章节(info)”区分：新节次使用 accent 色系 -->
+          <Card padding="md" tint="accent">
+            <!-- 新节次：输入分组容器（更聚合、更好看） -->
+            <div class="rounded-2xl p-3" v-glass="{ strength: 'ultraThin', interactive: false }">
+              <div class="grid grid-cols-1 md:grid-cols-3 gap-3 items-end">
+                <div>
+                  <label class="block text-sm mb-1">{{ t('teacher.courseDetail.sections.newLessonTitle') }}</label>
+                  <GlassInput class="input-sm w-full" v-model="newLessonTitle" :placeholder="t('teacher.courseDetail.sections.newLessonTitlePh') as string" />
+                </div>
+                <div class="md:col-span-2">
+                  <label class="block text-sm mb-1">{{ t('teacher.courseDetail.sections.lessonIntro') }}</label>
+                  <!-- 本节说明：与“新节标题”输入同高度（单行），避免视觉不齐 -->
+                  <GlassTextarea
+                    class="w-full !h-9 !py-1.5 !leading-5 resize-none"
+                    :rows="1"
+                    v-model="newLessonIntro"
+                    :placeholder="t('teacher.courseDetail.sections.lessonIntroPh') as string"
+                  />
+                </div>
               </div>
             </div>
             <div class="mt-3">

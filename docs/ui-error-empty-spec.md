@@ -28,6 +28,8 @@
 - 列表/详情错误：全局通知或页面级提示条
 - 上传错误：就近提示（文件项旁）
 
+### 3.1 右上角通知弹窗（Toast）去重与关闭
+- **去重规则**：同一通知按 `type + title + message` 生成 key，在 **3 秒窗口内只展示 1 条**（多入口重复触发也只会出现一次）。实现收口在 `frontend/src/stores/ui.ts` 的 `showNotification()`。\n+- **关闭规则**：每条通知卡片右上角都有“×”关闭按钮，点击仅移除该条（不影响其他通知）。UI 渲染在 `frontend/src/App.vue`。\n+- **建议**：业务层尽量只在一个层级弹错（页面/封装/全局择一），但即使重复调用，UIStore 会兜底去重，避免右上角出现多条同样报错。\n+
 Axios 统一处理示例：
 ```ts
 instance.interceptors.response.use(

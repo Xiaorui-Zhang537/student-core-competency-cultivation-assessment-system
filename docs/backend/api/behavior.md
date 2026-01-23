@@ -75,5 +75,5 @@
 
 **返回**
 
-- `BehaviorInsightResponse`（`schemaVersion=behavior_insight.v1`）
+- `BehaviorInsightResponse`（`schemaVersion=behavior_insight.v2`，包含结构化 `riskAlerts`/`actionRecommendations`）
 

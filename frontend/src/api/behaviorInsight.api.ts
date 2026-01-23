@@ -16,6 +16,21 @@ export type BehaviorInsightResponse = {
     nextActions?: string[]
     evidenceIds?: string[]
   }>
+  // v2：结构化预警/建议（用于前端直接展示）
+  riskAlerts?: Array<{
+    severity?: 'info' | 'warn' | 'critical'
+    title?: string
+    message?: string
+    dimensionCode?: 'MORAL_COGNITION' | 'LEARNING_ATTITUDE' | 'LEARNING_ABILITY' | 'LEARNING_METHOD' | null
+    evidenceIds?: string[]
+  }>
+  actionRecommendations?: Array<{
+    title?: string
+    description?: string
+    nextActions?: string[]
+    dimensionCode?: 'MORAL_COGNITION' | 'LEARNING_ATTITUDE' | 'LEARNING_ABILITY' | 'LEARNING_METHOD' | null
+    evidenceIds?: string[]
+  }>
   meta?: {
     generatedAt?: string
     model?: string

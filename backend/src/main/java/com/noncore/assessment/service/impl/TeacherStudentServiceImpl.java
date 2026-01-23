@@ -303,14 +303,14 @@ public class TeacherStudentServiceImpl implements TeacherStudentService {
                     .link(null)
                     .build());
         }
-        // 社区发帖/回复：取最近一条帖子与评论
+        // 社区发问/回答：取最近一条帖子与评论
         try {
             var myPosts = communityService.getUserPosts(studentId, 1, 1);
             if (myPosts != null && myPosts.getItems() != null && !myPosts.getItems().isEmpty()) {
                 var p = myPosts.getItems().get(0);
                 java.util.Date created = p.getCreatedAt() == null ? null : java.util.Date.from(p.getCreatedAt().atZone(java.time.ZoneId.systemDefault()).toInstant());
                 events.add(TeacherStudentActivityResponse.ActivityEventDto.builder()
-                        .eventType("post")
+                        .eventType("community_ask")
                         .title(String.valueOf(p.getTitle()))
                         .courseId(null)
                         .courseTitle(null)
@@ -326,7 +326,7 @@ public class TeacherStudentServiceImpl implements TeacherStudentService {
                 if (snippet != null && snippet.length() > 32) snippet = snippet.substring(0, 32);
                 java.util.Date created = c.getCreatedAt() == null ? null : java.util.Date.from(c.getCreatedAt().atZone(java.time.ZoneId.systemDefault()).toInstant());
                 events.add(TeacherStudentActivityResponse.ActivityEventDto.builder()
-                        .eventType("reply")
+                        .eventType("community_answer")
                         .title(snippet)
                         .courseId(null)
                         .courseTitle(null)
@@ -336,7 +336,42 @@ public class TeacherStudentServiceImpl implements TeacherStudentService {
                         .build());
             }
         } catch (Exception ignore) {}
-        // AI 对话：无直接按学生过滤的接口，这里暂不调用，避免错误归属；后续若提供“按学生ID取会话/消息”，可在此加入 eventType='ai'
+        // AI 对话：按学生ID读取其最近对话与消息（教师端已做课程交集校验）
+        try {
+            var convs = aiConversationService.listConversations(studentId, null, null, null, 1, 1);
+            if (convs != null && convs.getItems() != null && !convs.getItems().isEmpty()) {
+                var c = convs.getItems().get(0);
+                String title = c.getTitle();
+                java.util.Date occurredAt = c.getLastMessageAt() == null ? null : java.util.Date.from(c.getLastMessageAt().atZone(java.time.ZoneId.systemDefault()).toInstant());
+                // 尝试拿到最近一次 user 提问内容片段
+                try {
+                    var msgs = aiConversationService.listMessages(studentId, c.getId(), 1, 100);
+                    if (msgs != null && msgs.getItems() != null && !msgs.getItems().isEmpty()) {
+                        String lastUser = null;
+                        for (int i = msgs.getItems().size() - 1; i >= 0; i--) {
+                            var m = msgs.getItems().get(i);
+                            if (m != null && "user".equalsIgnoreCase(m.getRole()) && m.getContent() != null && !m.getContent().isBlank()) {
+                                lastUser = m.getContent().trim();
+                                break;
+                            }
+                        }
+                        if (lastUser != null) {
+                            if (lastUser.length() > 32) lastUser = lastUser.substring(0, 32);
+                            title = lastUser;
+                        }
+                    }
+                } catch (Exception ignored) {}
+                events.add(TeacherStudentActivityResponse.ActivityEventDto.builder()
+                        .eventType("ai")
+                        .title(title)
+                        .courseId(null)
+                        .courseTitle(null)
+                        .occurredAt(occurredAt)
+                        .durationSeconds(null)
+                        .link(null)
+                        .build());
+            }
+        } catch (Exception ignore) {}
         // TODO: 若后续需要引入 submission/quiz/discussion，可在此处追加 Mapper 查询并合并排序
         events.sort((a, b) -> {
             long ta = a.getOccurredAt() == null ? 0L : a.getOccurredAt().getTime();

@@ -24,6 +24,11 @@ export const useUIStore = defineStore('ui', () => {
     message: string
     timeout?: number
   }>>([])
+  // 通知去重：同一(type+title+message)在短时间窗口内只展示一次
+  const dedupeWindowMs = 3000
+  const dedupeCache = new Map<string, { lastAt: number; notificationId: string }>()
+  // 记录自动移除的 timer，便于在手动关闭/清空时清理，避免泄漏
+  const removeTimers = new Map<string, number>()
   // 旧主题背景与玻璃强度已移除
 
   // 初始化暗黑模式
@@ -206,19 +211,45 @@ export const useUIStore = defineStore('ui', () => {
     message: string
     timeout?: number
   }) => {
-    const id = Date.now().toString()
-    const newNotification = { id, ...notification }
+    const type = notification.type
+    const title = String(notification.title || '').trim()
+    const message = String(notification.message || '').trim()
+
+    // 兜底屏蔽：在课程创建/删除流程中出现的冗余“成功/课程已发布”提示（只保留页面上的“课程已创建…”等语义提示）
+    if (type === 'success' && message === '课程已发布' && (title === '成功' || title.toLowerCase() === 'success')) {
+      return
+    }
+
+    const key = `${type}|${title}|${message}`
+    const now = Date.now()
+
+    // 3s 窗口内去重：如果上一条仍存在，则不重复 push
+    const cached = dedupeCache.get(key)
+    if (cached && now - cached.lastAt <= dedupeWindowMs) {
+      const exists = notifications.value.some(n => n.id === cached.notificationId)
+      if (exists) return
+    }
+
+    const id = `${now}-${Math.random().toString(36).slice(2)}`
+    const newNotification = { id, ...notification, title, message }
     notifications.value.push(newNotification)
+    dedupeCache.set(key, { lastAt: now, notificationId: id })
 
     // 自动移除通知
     if (notification.timeout !== 0) {
-      setTimeout(() => {
+      const t = window.setTimeout(() => {
         removeNotification(id)
       }, notification.timeout || 5000)
+      removeTimers.set(id, t)
     }
   }
 
   const removeNotification = (id: string) => {
+    const timer = removeTimers.get(id)
+    if (timer) {
+      window.clearTimeout(timer)
+      removeTimers.delete(id)
+    }
     const index = notifications.value.findIndex(n => n.id === id)
     if (index > -1) {
       notifications.value.splice(index, 1)
@@ -226,6 +257,10 @@ export const useUIStore = defineStore('ui', () => {
   }
 
   const clearNotifications = () => {
+    for (const [, timer] of removeTimers) {
+      try { window.clearTimeout(timer) } catch {}
+    }
+    removeTimers.clear()
     notifications.value = []
   }
 

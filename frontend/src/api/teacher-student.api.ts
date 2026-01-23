@@ -51,7 +51,7 @@ export const teacherStudentApi = {
       lastAccessTime: string | number | null;
       weeklyStudyMinutes: number | null;
       recentLessons: Array<{ lessonId: number; lessonTitle: string; courseId: number; courseTitle: string; studiedAt: string | number; }>;
-      recentEvents?: Array<{ eventType: 'lesson'|'submission'|'quiz'|'discussion'|'visit'; title?: string; courseId?: number; courseTitle?: string; occurredAt: string | number; durationSeconds?: number; link?: string; }>;
+      recentEvents?: Array<{ eventType: 'lesson'|'submission'|'quiz'|'discussion'|'visit'|'community_ask'|'community_answer'|'ai'; title?: string; courseId?: number; courseTitle?: string; occurredAt: string | number; durationSeconds?: number; link?: string; }>;
     }>(`/teachers/students/${studentId}/activity`, { params: { days, limit } });
   },
   getStudentAlerts(studentId: string) {

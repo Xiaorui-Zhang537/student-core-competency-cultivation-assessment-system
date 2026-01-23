@@ -2,8 +2,9 @@
   <div class="fixed inset-0 z-[13000] flex items-center justify-center p-4">
     <div class="absolute inset-0" :class="backdropDark ? 'bg-black/50' : 'bg-transparent'" @click="$emit('close')"></div>
     <liquid-glass
-      class="relative w-full rounded-2xl overflow-hidden flex flex-col max-w-[95vw]"
+      class="relative w-full rounded-2xl overflow-hidden flex flex-col"
       :class="[resolvedMaxWidthClass, containerMaxHClass]"
+      :style="resolvedMaxWidthStyle"
       :radius="16"
       :frost="resolvedFrost"
       :border="0.07"
@@ -124,8 +125,9 @@ const contentSurfaceStyle = computed(() => {
   // solidBody: 完全不折射（叠加实体底），用于高密度表单/预览
   if (props.solidBody) {
     return {
-      backgroundColor: 'color-mix(in oklab, var(--color-base-100) 96%, transparent)',
-      boxShadow: 'inset 0 0 0 1px color-mix(in oklab, var(--color-base-content) 10%, transparent)',
+      // 不透明正文底：避免弹窗正文“透底”影响可读性
+      backgroundColor: 'var(--color-base-100)',
+      boxShadow: 'inset 0 0 0 1px rgba(15, 23, 42, 0.08)',
       backdropFilter: 'none',
       WebkitBackdropFilter: 'none'
     } as Record<string, string>
@@ -151,6 +153,24 @@ const resolvedMaxWidthClass = computed(() => {
     }
   }
   return props.maxWidth || 'max-w-lg'
+})
+
+// 用 style 强制 max-width，避免 Tailwind class 顺序导致的“看起来还是很小”
+const resolvedMaxWidthStyle = computed(() => {
+  if (!props.size) return undefined
+  const px = (() => {
+    switch (props.size) {
+      case 'xs': return 360
+      case 'sm': return 560
+      case 'md': return 760
+      case 'lg': return 980
+      case 'xl': return 1120
+      default: return 760
+    }
+  })()
+  return {
+    maxWidth: `min(95vw, ${px}px)`
+  } as Record<string, string>
 })
 
 const containerMaxHClass = computed(() => {

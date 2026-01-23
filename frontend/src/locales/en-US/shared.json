@@ -432,8 +432,8 @@
       "unknownSize": "Unknown"
     },
     "behaviorEvidence": {
-      "title": "Behavior Evidence (Not Scored)",
-      "subtitle": "A factual summary aggregated from behavior events for explaining assignment grades and formative feedback (not used in any weighting/averaging)",
+      "title": "Behavior Evidence",
+      "subtitle": "A factual summary aggregated from behavior events for explaining assignment grades and formative feedback",
       "loading": "Loading...",
       "refresh": "Refresh",
       "stats": {
@@ -452,16 +452,24 @@
       "evidence": {
         "title": "Evidence Items",
         "empty": "No evidence items yet",
-        "eventRefs": "{count} linked events"
+        "eventRefs": "{count} linked events",
+        "idsLabel": "IDs"
+      },
+      "records": {
+        "ai": { "title": "AI Interaction", "desc": "In this stage: {q} questions, {f} follow-ups." },
+        "community": { "title": "Community Activity", "desc": "In this stage: {ask} asks, {ans} replies." },
+        "assignment": { "title": "Assignment Submissions", "desc": "In this stage: {submit} submissions, {resub} resubmits." },
+        "feedback": { "title": "Feedback Views", "desc": "In this stage: {fb} feedback views." },
+        "feedbackIteration": { "title": "Post-feedback revision", "desc": "Revised an assignment after viewing feedback." }
       },
       "nonEvaluative": {
-        "title": "Logged Only (Not Evaluated)",
+        "title": "Resource views",
         "byCategory": "By category"
       }
     },
     "behaviorInsight": {
-      "title": "Behavior Insight (AI Explain, Not Scored)",
-      "subtitle": "AI-generated explanations and suggestions based on Stage-1 summary (no scores/weights)",
+      "title": "Behavior Insight (AI Explain)",
+      "subtitle": "AI-generated explanations and suggestions based on Stage-1 summary",
       "loading": "Loading...",
       "refresh": "Refresh",
       "generate": "Generate",
@@ -475,9 +483,16 @@
         "failed": "Failed"
       },
       "sections": {
-        "explain": "Explain grade (no score)",
-        "judgement": "Stage judgement (non-scored)",
-        "suggestions": "Formative suggestions"
+        "explain": "Explain grade",
+        "judgement": "Stage judgement",
+        "suggestions": "Formative suggestions",
+        "riskAlerts": "Risk alerts",
+        "actionRecommendations": "Action recommendations"
+      },
+      "severity": {
+        "info": "Info",
+        "warn": "Warning",
+        "critical": "Critical"
       },
       "levels": {
         "EMERGING": "Emerging",

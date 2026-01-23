@@ -40,6 +40,12 @@ public class BehaviorInsightResponse {
     @Schema(description = "形成性建议（可执行动作），每条建议建议引用 evidenceIds")
     private List<FormativeSuggestion> formativeSuggestions;
 
+    @Schema(description = "结构化风险预警（用于前端直接展示），每条必须引用 evidenceIds")
+    private List<RiskAlert> riskAlerts;
+
+    @Schema(description = "结构化行动建议（用于前端直接展示），每条建议必须引用 evidenceIds")
+    private List<ActionRecommendation> actionRecommendations;
+
     @Schema(description = "生成元信息（用于审计）")
     private Meta meta;
 
@@ -91,6 +97,48 @@ public class BehaviorInsightResponse {
         private List<String> nextActions;
 
         @Schema(description = "证据引用列表（可选但推荐）")
+        private List<String> evidenceIds;
+    }
+
+    @Data
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class RiskAlert {
+        @Schema(description = "严重程度", example = "warn", allowableValues = {"info", "warn", "critical"})
+        private String severity;
+
+        @Schema(description = "标题（短句）", example = "近7天学习节奏不稳定")
+        private String title;
+
+        @Schema(description = "说明（可读文本）")
+        private String message;
+
+        @Schema(description = "关联维度（可选）", example = "LEARNING_ATTITUDE")
+        private BehaviorAbilityDimensionCode dimensionCode;
+
+        @Schema(description = "证据引用列表（必须存在于摘要中）")
+        private List<String> evidenceIds;
+    }
+
+    @Data
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class ActionRecommendation {
+        @Schema(description = "标题（短句）", example = "把反馈迭代固化成自查清单")
+        private String title;
+
+        @Schema(description = "建议描述（尽量可执行）")
+        private String description;
+
+        @Schema(description = "下一步行动（可选，清单形式）")
+        private List<String> nextActions;
+
+        @Schema(description = "关联维度（可选）", example = "LEARNING_METHOD")
+        private BehaviorAbilityDimensionCode dimensionCode;
+
+        @Schema(description = "证据引用列表（必须存在于摘要中）")
         private List<String> evidenceIds;
     }
 

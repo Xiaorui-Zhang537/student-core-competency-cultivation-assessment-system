@@ -82,18 +82,39 @@ export const useCourseStore = defineStore('course', {
         return response;
     },
 
-    async deleteCourse(id: string) {
+    async deleteCourse(id: string, opts?: { notify?: boolean }) {
         const uiStore = useUIStore();
-        await handleApiCall(() => courseApi.deleteCourse(id), uiStore, '删除课程失败', { successMessage: '课程已删除' });
+        if (opts?.notify === false) {
+            await handleApiCall(() => courseApi.deleteCourse(id), uiStore, '删除课程失败');
+        } else {
+            await handleApiCall(() => courseApi.deleteCourse(id), uiStore, '删除课程失败', { successMessage: '课程已删除' });
+        }
         // Optionally refetch courses
         await this.fetchCourses({ page: this.pagination.page, size: this.pagination.size });
     },
 
-    async publishCourse(id: string) {
+    async publishCourse(id: string, opts?: { notify?: boolean }) {
         const uiStore = useUIStore();
-        const response = await handleApiCall(() => courseApi.publishCourse(id), uiStore, '发布课程失败', { successMessage: '课程已发布' });
-        if (response && this.currentCourse) {
-            this.currentCourse.isPublished = true;
+        uiStore.setLoading(true)
+        try {
+            await courseApi.publishCourse(Number(id) as any)
+            if (this.currentCourse) this.currentCourse.isPublished = true;
+            return true
+        } catch (e: any) {
+            const msg = String(e?.message || '发布课程失败')
+            // 幂等：后端提示“已发布”时视为成功，避免弹出错误影响体验
+            if (/已发布/.test(msg)) {
+                if (this.currentCourse) this.currentCourse.isPublished = true;
+                return true
+            }
+            uiStore.showNotification({
+                type: 'error',
+                title: '发布失败',
+                message: msg
+            })
+            return false
+        } finally {
+            uiStore.setLoading(false)
         }
     },
 

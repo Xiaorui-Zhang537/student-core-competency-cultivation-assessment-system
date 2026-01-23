@@ -19,7 +19,7 @@ public class TeacherStudentActivityResponse {
     private Long weeklyStudyMinutes;
     /** 最近学习的章节列表（最多 N 条） */
     private List<RecentLessonDto> recentLessons;
-    /** 统一事件流（lesson|submission|quiz|discussion|visit） */
+    /** 统一事件流（lesson|submission|quiz|discussion|visit|community_ask|community_answer|ai） */
     private List<ActivityEventDto> recentEvents;
 
     @Data
@@ -39,7 +39,7 @@ public class TeacherStudentActivityResponse {
     @NoArgsConstructor
     @AllArgsConstructor
     public static class ActivityEventDto {
-        private String eventType; // lesson|submission|quiz|discussion|visit
+        private String eventType; // lesson|submission|quiz|discussion|visit|community_ask|community_answer|ai
         private String title;
         private Long courseId;
         private String courseTitle;

@@ -144,7 +144,7 @@
 			"loading": "Loading assignments...",
 			"actions": {
 				"create": "Create Assignment",
-				"viewSubmissions": "View Submissions",
+				"viewSubmissions": "View",
 				"edit": "Edit",
 				"delete": "Delete",
 				"save": "Save Changes"
@@ -757,7 +757,8 @@
 				"contact": "Contact",
 				"overview": "Overview",
 				"export": "Export",
-				"viewSubmissions": "View Submissions",
+				"exportReport": "Export Report",
+				"viewSubmissions": "View",
 				"regrade": "Regrade"
 			},
 			"filter": {
@@ -784,7 +785,18 @@
 				"birthday": "Birthday"
 			},
 			"recentStudy": "Recent Study",
-			"radar": { "title": "Capability Radar", "viewInsights": "View Insights", "student": "Student", "classAvg": "Class" },
+			"recentEventTypes": {
+				"lesson": "Lesson",
+				"submission": "Submission",
+				"quiz": "Quiz",
+				"discussion": "Discussion",
+				"visit": "Visit",
+				"ai": "AI",
+				"communityAsk": "Community ask",
+				"communityAnswer": "Community reply",
+				"default": "Activity"
+			},
+			"radar": { "title": "Capability Radar", "viewInsights": "View Insights", "student": "Student", "classAvg": "Class", "classAvgNoDataHint": "Class average data is missing for some dimensions (requires assessments/reports to be generated)." },
 			"alerts": { "title": "Alerts" },
 			"recommendations": { "title": "Recommendations" },
 			"table": {

@@ -41,11 +41,24 @@
       <AnimatedList :items="notifications" :delay="120" :reverse="true">
         <template #item="{ item }">
           <div
-            class="rounded-full pointer-events-auto overflow-hidden glass-thin glass-interactive border border-white/20 dark:border-white/12 shadow-md"
+            class="relative rounded-2xl pointer-events-auto overflow-hidden glass-thin glass-interactive border border-white/20 dark:border-white/12 shadow-md"
             :class="tintClass(item.type)"
             v-glass="{ strength: 'thin', interactive: true }"
           >
-            <div class="p-4 sm:p-5 flex items-center">
+            <!-- 关闭叉：每条通知独立关闭 -->
+            <div class="absolute top-2 right-2">
+              <Button
+                variant="glass-ghost"
+                size="xs"
+                icon="close"
+                :title="t('common.close') as string"
+                :aria-label="t('common.close') as string"
+                class="!h-7 !w-7 !px-0"
+                @click.stop="uiStore.removeNotification(item.id)"
+              />
+            </div>
+
+            <div class="p-4 sm:p-5 flex items-start">
               <div class="flex-shrink-0 w-7 h-7 mr-4 flex items-center justify-start">
                 <CheckCircleSolid v-if="item.type === 'success'" class="h-7 w-7" :style="iconStyle('success')" />
                 <ExclamationTriangleSolid v-else-if="item.type === 'warning'" class="h-7 w-7" :style="iconStyle('warning')" />
@@ -55,9 +68,6 @@
               <div class="min-w-0 flex-1">
                 <p class="text-[15px] sm:text-[17px] font-semibold break-words whitespace-normal">{{ item.title }}</p>
                 <p v-if="item.message" class="mt-1 text-[14px] sm:text-[15px] break-words whitespace-normal leading-6 opacity-90">{{ item.message }}</p>
-              </div>
-              <div class="ml-3 flex-shrink-0 flex">
-                <button size="sm" variant="glass" icon="close" @click="uiStore.removeNotification(item.id)" />
               </div>
             </div>
           </div>

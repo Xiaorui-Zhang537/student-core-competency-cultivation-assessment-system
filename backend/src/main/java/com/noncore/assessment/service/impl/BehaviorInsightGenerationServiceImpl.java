@@ -30,7 +30,7 @@ import java.util.*;
 public class BehaviorInsightGenerationServiceImpl implements BehaviorInsightGenerationService {
 
     private static final String PROMPT_PATH = "classpath:/prompts/behavior_insight_system_prompt.txt";
-    private static final String PROMPT_VERSION = "behavior_insight_prompt.v1";
+    private static final String PROMPT_VERSION = "behavior_insight_prompt.v2";
     private static final String DEFAULT_MODEL = "google/gemini-2.5-pro";
     // 测试策略：学生每天最多触发 N 次（仅限制“真正调用AI”的次数；partial/NO_EVIDENCE 不计入）
     private static final int STUDENT_DAILY_LIMIT = 7;
@@ -72,21 +72,31 @@ public class BehaviorInsightGenerationServiceImpl implements BehaviorInsightGene
         // - 学生自助触发（测试）：每日最多 7 次（仅统计 status!=partial 的记录）
         // - 教师/管理员：默认复用 7 天内 success；force=true 可重跑
         try {
+            // 兼容：优先读取 v2；若未生成过 v2，则回退读取 v1（避免升级后“历史洞察全丢失”）
             BehaviorInsight existing = studentSelfTrigger
-                    ? insightService.getLatestByStudentCourse(studentId, courseId, BehaviorSchemaVersions.INSIGHT_V1)
-                    : insightService.getLatestBySnapshot(snapshot.getId(), BehaviorSchemaVersions.INSIGHT_V1);
+                    ? firstNonNull(
+                        insightService.getLatestByStudentCourse(studentId, courseId, BehaviorSchemaVersions.INSIGHT_V2),
+                        insightService.getLatestByStudentCourse(studentId, courseId, BehaviorSchemaVersions.INSIGHT_V1)
+                    )
+                    : firstNonNull(
+                        insightService.getLatestBySnapshot(snapshot.getId(), BehaviorSchemaVersions.INSIGHT_V2),
+                        insightService.getLatestBySnapshot(snapshot.getId(), BehaviorSchemaVersions.INSIGHT_V1)
+                    );
 
             LocalDateTime now = LocalDateTime.now();
 
             if (studentSelfTrigger) {
                 LocalDateTime startOfDay = java.time.LocalDate.now().atStartOfDay();
-                long usedToday = insightService.countByStudentSince(studentId, BehaviorSchemaVersions.INSIGHT_V1, startOfDay);
+                // 兼容：额度统计同时覆盖 v1 + v2，避免通过“切版本”绕过限流
+                long usedToday =
+                        insightService.countByStudentSince(studentId, BehaviorSchemaVersions.INSIGHT_V2, startOfDay)
+                      + insightService.countByStudentSince(studentId, BehaviorSchemaVersions.INSIGHT_V1, startOfDay);
                 if (usedToday >= STUDENT_DAILY_LIMIT) {
                     // 达到每日上限：返回最近一次结果 + cooldown 到明日 00:00
                     BehaviorInsightResponse cached = (existing != null && existing.getInsightJson() != null)
                             ? parseAndValidate(existing.getInsightJson(), snapshot.getId(), null)
                             : BehaviorInsightResponse.builder()
-                                .schemaVersion(BehaviorSchemaVersions.INSIGHT_V1)
+                                .schemaVersion(BehaviorSchemaVersions.INSIGHT_V2)
                                 .snapshotId(snapshot.getId())
                                 .meta(BehaviorInsightResponse.Meta.builder()
                                         .generatedAt(now)
@@ -96,7 +106,7 @@ public class BehaviorInsightGenerationServiceImpl implements BehaviorInsightGene
                                         .build())
                                 .build();
                     cached.setSnapshotId(snapshot.getId());
-                    cached.setSchemaVersion(BehaviorSchemaVersions.INSIGHT_V1);
+                    cached.setSchemaVersion(BehaviorSchemaVersions.INSIGHT_V2);
                     if (cached.getMeta() == null) cached.setMeta(new BehaviorInsightResponse.Meta());
                     cached.getMeta().setStatus(cached.getMeta().getStatus() == null ? "partial" : cached.getMeta().getStatus());
                     java.time.LocalDateTime resetAt = java.time.LocalDate.now().plusDays(1).atStartOfDay();
@@ -120,7 +130,7 @@ public class BehaviorInsightGenerationServiceImpl implements BehaviorInsightGene
                 if (!force && "success".equalsIgnoreCase(existing.getStatus()) && withinCooldown) {
                     BehaviorInsightResponse cached = parseAndValidate(existing.getInsightJson(), snapshot.getId(), null);
                     cached.setSnapshotId(snapshot.getId());
-                    cached.setSchemaVersion(BehaviorSchemaVersions.INSIGHT_V1);
+                    cached.setSchemaVersion(BehaviorSchemaVersions.INSIGHT_V2);
                     if (cached.getMeta() == null) cached.setMeta(new BehaviorInsightResponse.Meta());
                     cached.getMeta().setGeneratedAt(existing.getGeneratedAt());
                     cached.getMeta().setModel(existing.getModel());
@@ -134,7 +144,7 @@ public class BehaviorInsightGenerationServiceImpl implements BehaviorInsightGene
         // 治理：若阶段一没有任何可引用证据，则不调用 AI，直接降级输出“证据不足”
         if (summary.getEvidenceItems() == null || summary.getEvidenceItems().isEmpty()) {
             BehaviorInsightResponse degraded = BehaviorInsightResponse.builder()
-                    .schemaVersion(BehaviorSchemaVersions.INSIGHT_V1)
+                    .schemaVersion(BehaviorSchemaVersions.INSIGHT_V2)
                     .snapshotId(snapshot.getId())
                     .explainScore(BehaviorInsightResponse.ExplainScore.builder()
                             .text("证据不足：当前时间窗内未生成可引用的行为证据条目，无法做进一步解释。")
@@ -183,7 +193,7 @@ public class BehaviorInsightGenerationServiceImpl implements BehaviorInsightGene
                     .build();
 
             BehaviorInsight rec = new BehaviorInsight();
-            rec.setSchemaVersion(BehaviorSchemaVersions.INSIGHT_V1);
+            rec.setSchemaVersion(BehaviorSchemaVersions.INSIGHT_V2);
             rec.setSnapshotId(snapshot.getId());
             rec.setStudentId(studentId);
             rec.setCourseId(courseId);
@@ -226,7 +236,7 @@ public class BehaviorInsightGenerationServiceImpl implements BehaviorInsightGene
         }
 
         BehaviorInsight rec = new BehaviorInsight();
-        rec.setSchemaVersion(BehaviorSchemaVersions.INSIGHT_V1);
+        rec.setSchemaVersion(BehaviorSchemaVersions.INSIGHT_V2);
         rec.setSnapshotId(snapshot.getId());
         rec.setStudentId(studentId);
         rec.setCourseId(courseId);
@@ -242,7 +252,7 @@ public class BehaviorInsightGenerationServiceImpl implements BehaviorInsightGene
         if (parsed == null) {
             // 失败返回一个最小结构，便于前端显示“暂不可用”
             return BehaviorInsightResponse.builder()
-                    .schemaVersion(BehaviorSchemaVersions.INSIGHT_V1)
+                    .schemaVersion(BehaviorSchemaVersions.INSIGHT_V2)
                     .snapshotId(snapshot.getId())
                     .explainScore(BehaviorInsightResponse.ExplainScore.builder()
                             .text(err == null || err.isBlank() ? "洞察生成失败：AI 服务暂不可用" : ("洞察生成失败：" + err))
@@ -269,12 +279,14 @@ public class BehaviorInsightGenerationServiceImpl implements BehaviorInsightGene
         parsed.getMeta().setModel(targetModel);
         parsed.getMeta().setPromptVersion(PROMPT_VERSION);
         parsed.getMeta().setStatus("success");
-        parsed.setSchemaVersion(BehaviorSchemaVersions.INSIGHT_V1);
+        parsed.setSchemaVersion(BehaviorSchemaVersions.INSIGHT_V2);
         parsed.setSnapshotId(snapshot.getId());
         if (studentSelfTrigger) {
             // 学生测试策略：不再强制 7 天冷却，仅展示每日额度信息
             LocalDateTime startOfDay = java.time.LocalDate.now().atStartOfDay();
-            long usedToday = insightService.countByStudentSince(studentId, BehaviorSchemaVersions.INSIGHT_V1, startOfDay);
+            long usedToday =
+                    insightService.countByStudentSince(studentId, BehaviorSchemaVersions.INSIGHT_V2, startOfDay)
+                  + insightService.countByStudentSince(studentId, BehaviorSchemaVersions.INSIGHT_V1, startOfDay);
             java.time.LocalDateTime resetAt = java.time.LocalDate.now().plusDays(1).atStartOfDay();
             parsed.setExtra(java.util.Map.of(
                     "quota", java.util.Map.of(
@@ -299,12 +311,16 @@ public class BehaviorInsightGenerationServiceImpl implements BehaviorInsightGene
         BehaviorSummarySnapshot snapshot = snapshotService.getLatest(studentId, courseId, rk, BehaviorSchemaVersions.SUMMARY_V1, null, null);
         if (snapshot == null || snapshot.getId() == null) return null;
 
-        BehaviorInsight latest = insightService.getLatestBySnapshot(snapshot.getId(), BehaviorSchemaVersions.INSIGHT_V1);
+        // 兼容：优先 v2，回退 v1
+        BehaviorInsight latest = firstNonNull(
+                insightService.getLatestBySnapshot(snapshot.getId(), BehaviorSchemaVersions.INSIGHT_V2),
+                insightService.getLatestBySnapshot(snapshot.getId(), BehaviorSchemaVersions.INSIGHT_V1)
+        );
         if (latest == null || latest.getInsightJson() == null) return null;
         try {
             BehaviorInsightResponse resp = parseAndValidate(latest.getInsightJson(), snapshot.getId(), null);
             resp.setSnapshotId(snapshot.getId());
-            resp.setSchemaVersion(BehaviorSchemaVersions.INSIGHT_V1);
+            resp.setSchemaVersion(BehaviorSchemaVersions.INSIGHT_V2);
             if (resp.getMeta() == null) resp.setMeta(new BehaviorInsightResponse.Meta());
             resp.getMeta().setModel(latest.getModel());
             resp.getMeta().setPromptVersion(latest.getPromptVersion());
@@ -313,7 +329,9 @@ public class BehaviorInsightGenerationServiceImpl implements BehaviorInsightGene
             // 学生查看自己的洞察：注入每日额度/冷却信息（达到上限才冷却）
             if (operatorId != null && operatorId.equals(studentId)) {
                 LocalDateTime startOfDay = java.time.LocalDate.now().atStartOfDay();
-                long usedToday = insightService.countByStudentSince(studentId, BehaviorSchemaVersions.INSIGHT_V1, startOfDay);
+                long usedToday =
+                        insightService.countByStudentSince(studentId, BehaviorSchemaVersions.INSIGHT_V2, startOfDay)
+                      + insightService.countByStudentSince(studentId, BehaviorSchemaVersions.INSIGHT_V1, startOfDay);
                 java.time.LocalDateTime resetAt = java.time.LocalDate.now().plusDays(1).atStartOfDay();
                 java.util.Map<String, Object> extra = resp.getExtra() == null ? new java.util.HashMap<>() : new java.util.HashMap<>(resp.getExtra());
                 extra.put("quota", java.util.Map.of(
@@ -333,6 +351,15 @@ public class BehaviorInsightGenerationServiceImpl implements BehaviorInsightGene
         } catch (Exception e) {
             return null;
         }
+    }
+
+    @SafeVarargs
+    private static <T> T firstNonNull(T... items) {
+        if (items == null) return null;
+        for (T it : items) {
+            if (it != null) return it;
+        }
+        return null;
     }
 
     /**
@@ -360,7 +387,7 @@ public class BehaviorInsightGenerationServiceImpl implements BehaviorInsightGene
         }
 
         BehaviorInsightResponse out = new BehaviorInsightResponse();
-        out.setSchemaVersion(BehaviorSchemaVersions.INSIGHT_V1);
+        out.setSchemaVersion(BehaviorSchemaVersions.INSIGHT_V2);
         out.setSnapshotId(snapshotId);
 
         Object explain = root.get("explainScore");
@@ -408,6 +435,47 @@ public class BehaviorInsightGenerationServiceImpl implements BehaviorInsightGene
             out.setFormativeSuggestions(items);
         }
 
+        // v2: 结构化风险预警
+        Object ra = root.get("riskAlerts");
+        if (ra instanceof List<?> list) {
+            List<BehaviorInsightResponse.RiskAlert> items = new ArrayList<>();
+            for (Object o : list) {
+                if (!(o instanceof Map<?, ?> m)) continue;
+                BehaviorInsightResponse.RiskAlert it = new BehaviorInsightResponse.RiskAlert();
+                it.setSeverity(m.get("severity") == null ? null : String.valueOf(m.get("severity")));
+                it.setTitle(m.get("title") == null ? null : String.valueOf(m.get("title")));
+                it.setMessage(m.get("message") == null ? null : String.valueOf(m.get("message")));
+                String dim = m.get("dimensionCode") == null ? null : String.valueOf(m.get("dimensionCode"));
+                it.setDimensionCode(BehaviorAbilityDimensionCode.fromCode(dim).orElse(null));
+                it.setEvidenceIds(extractEvidenceIds(m.get("evidenceIds")));
+                items.add(it);
+            }
+            out.setRiskAlerts(items);
+        }
+
+        // v2: 结构化行动建议
+        Object ar = root.get("actionRecommendations");
+        if (ar instanceof List<?> list) {
+            List<BehaviorInsightResponse.ActionRecommendation> items = new ArrayList<>();
+            for (Object o : list) {
+                if (!(o instanceof Map<?, ?> m)) continue;
+                BehaviorInsightResponse.ActionRecommendation it = new BehaviorInsightResponse.ActionRecommendation();
+                it.setTitle(m.get("title") == null ? null : String.valueOf(m.get("title")));
+                it.setDescription(m.get("description") == null ? null : String.valueOf(m.get("description")));
+                Object na = m.get("nextActions");
+                if (na instanceof List<?> nl) {
+                    List<String> ns = new ArrayList<>();
+                    for (Object x : nl) if (x != null) ns.add(String.valueOf(x));
+                    it.setNextActions(ns);
+                }
+                String dim = m.get("dimensionCode") == null ? null : String.valueOf(m.get("dimensionCode"));
+                it.setDimensionCode(BehaviorAbilityDimensionCode.fromCode(dim).orElse(null));
+                it.setEvidenceIds(extractEvidenceIds(m.get("evidenceIds")));
+                items.add(it);
+            }
+            out.setActionRecommendations(items);
+        }
+
         // 若 provided summary，强制 evidenceIds 都在白名单（否则拒绝）
         if (summary != null) {
             validateEvidenceIds(out, allowedEvidenceIds);
@@ -448,6 +516,16 @@ public class BehaviorInsightGenerationServiceImpl implements BehaviorInsightGene
         }
         if (out.getFormativeSuggestions() != null) {
             for (var it : out.getFormativeSuggestions()) {
+                if (it != null) check.accept(it.getEvidenceIds());
+            }
+        }
+        if (out.getRiskAlerts() != null) {
+            for (var it : out.getRiskAlerts()) {
+                if (it != null) check.accept(it.getEvidenceIds());
+            }
+        }
+        if (out.getActionRecommendations() != null) {
+            for (var it : out.getActionRecommendations()) {
                 if (it != null) check.accept(it.getEvidenceIds());
             }
         }

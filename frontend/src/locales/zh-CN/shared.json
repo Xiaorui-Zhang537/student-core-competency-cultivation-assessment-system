@@ -432,13 +432,13 @@
       "unknownSize": "未知"
     },
     "behaviorEvidence": {
-      "title": "行为证据（不算分）",
-      "subtitle": "基于行为事件的事实摘要，用于解释作业成绩与形成性反馈（不参与任何加权/平均）",
+      "title": "行为证据",
+      "subtitle": "基于行为事件的事实摘要，用于解释作业成绩与形成性反馈",
       "loading": "加载中...",
       "refresh": "刷新",
       "stats": {
         "ai": "AI 提问",
-        "aiQuestions": "提问次数",
+        "aiQuestions": "提问",
         "aiFollowUps": "追问",
         "assignment": "作业行为",
         "submits": "提交",
@@ -452,16 +452,24 @@
       "evidence": {
         "title": "证据条目",
         "empty": "暂无可展示的证据条目",
-        "eventRefs": "关联事件 {count} 条"
+        "eventRefs": "关联事件 {count} 条",
+        "idsLabel": "IDs"
+      },
+      "records": {
+        "ai": { "title": "AI 交流记录", "desc": "本阶段内产生 AI 提问 {q} 次，追问 {f} 次。" },
+        "community": { "title": "社区互动记录", "desc": "本阶段内社区发问 {ask} 次，回答/回复 {ans} 次。" },
+        "assignment": { "title": "作业提交记录", "desc": "本阶段内作业提交 {submit} 次，修改/重交 {resub} 次。" },
+        "feedback": { "title": "反馈查看记录", "desc": "本阶段内查看反馈 {fb} 次（如成绩评语/能力报告等）。" },
+        "feedbackIteration": { "title": "查看反馈后进行修改", "desc": "本阶段内在查看反馈后对作业进行了修改。" }
       },
       "nonEvaluative": {
-        "title": "只记录不评价",
+        "title": "资源访问",
         "byCategory": "按类别"
       }
     },
     "behaviorInsight": {
-      "title": "行为洞察（AI解释，不算分）",
-      "subtitle": "基于阶段一行为摘要生成的解释与建议（不产生任何分数/权重）",
+      "title": "行为洞察（AI解释）",
+      "subtitle": "基于阶段一行为摘要生成的解释与建议",
       "loading": "加载中...",
       "refresh": "刷新",
       "generate": "生成洞察",
@@ -475,9 +483,16 @@
         "failed": "生成失败"
       },
       "sections": {
-        "explain": "成绩解释（不含分数）",
-        "judgement": "阶段性能力判断（非分数）",
-        "suggestions": "形成性建议"
+        "explain": "成绩解释",
+        "judgement": "阶段性能力判断",
+        "suggestions": "形成性建议",
+        "riskAlerts": "风险预警",
+        "actionRecommendations": "行动建议"
+      },
+      "severity": {
+        "info": "提示",
+        "warn": "预警",
+        "critical": "严重"
       },
       "levels": {
         "EMERGING": "萌芽",

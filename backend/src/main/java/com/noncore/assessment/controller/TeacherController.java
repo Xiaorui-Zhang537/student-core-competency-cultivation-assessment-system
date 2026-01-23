@@ -98,9 +98,19 @@ public class TeacherController extends BaseController {
         // 取全部数据（设置大尺寸）
         CourseStudentPerformanceResponse resp = analyticsQueryService.getCourseStudentPerformance(teacherId, courseId, 1, 100000, search, sortBy, activity, grade, progress);
         StringBuilder sb = new StringBuilder();
-        sb.append("studentId,studentName,studentNo,progress,averageGrade,activityLevel,studyTimePerWeek,completedLessons,totalLessons,lastActiveAt\n");
+        // 维度列（分数 + ABCD 评级） + 雷达面积/总评级
+        final java.util.List<String> dimCodes = java.util.List.of(
+                "MORAL_COGNITION", "LEARNING_ATTITUDE", "LEARNING_ABILITY", "LEARNING_METHOD", "ACADEMIC_GRADE"
+        );
+        sb.append("studentId,studentName,studentNo,progress,averageGrade,activityLevel,studyTimePerWeek,completedLessons,totalLessons,lastActiveAt,radarArea,radarClassification");
+        for (String code : dimCodes) {
+            sb.append(',').append(code).append("_score");
+            sb.append(',').append(code).append("_rating");
+        }
+        sb.append('\n');
         if (resp.getItems() != null) {
             for (CourseStudentPerformanceItem i : resp.getItems()) {
+                java.util.Map<String, Double> ds = i.getDimensionScores() == null ? java.util.Collections.emptyMap() : i.getDimensionScores();
                 sb.append(com.noncore.assessment.util.CsvUtils.nullToEmpty(i.getStudentId()))
                   .append(',').append(com.noncore.assessment.util.CsvUtils.escape(i.getStudentName()))
                   .append(',').append(com.noncore.assessment.util.CsvUtils.escape(i.getStudentNo()))
@@ -111,7 +121,15 @@ public class TeacherController extends BaseController {
                   .append(',').append(com.noncore.assessment.util.CsvUtils.nullToEmpty(i.getCompletedLessons()))
                   .append(',').append(com.noncore.assessment.util.CsvUtils.nullToEmpty(i.getTotalLessons()))
                   .append(',').append(com.noncore.assessment.util.CsvUtils.escape(i.getLastActiveAt()))
-                  .append('\n');
+                  .append(',').append(com.noncore.assessment.util.CsvUtils.nullToEmpty(i.getRadarArea()))
+                  .append(',').append(com.noncore.assessment.util.CsvUtils.escape(i.getRadarClassification()))
+                  ;
+                for (String code : dimCodes) {
+                    Double v = ds.get(code);
+                    sb.append(',').append(com.noncore.assessment.util.CsvUtils.nullToEmpty(v));
+                    sb.append(',').append(com.noncore.assessment.util.CsvUtils.escape(dimensionRating(v)));
+                }
+                sb.append('\n');
             }
         }
         byte[] bytes = sb.toString().getBytes(java.nio.charset.StandardCharsets.UTF_8);
@@ -119,6 +137,19 @@ public class TeacherController extends BaseController {
         headers.setContentType(MediaType.parseMediaType("text/csv;charset=UTF-8"));
         headers.set(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=course_" + courseId + "_students.csv");
         return ResponseEntity.ok().headers(headers).body(bytes);
+    }
+
+    /**
+     * 维度分数评级（ABCD）。用于导出报表字段，便于筛选/透视。
+     * A: >=85, B: >=70, C: >=60, D: <60
+     */
+    private String dimensionRating(Double score) {
+        if (score == null) return "";
+        double s = score;
+        if (s >= 85.0) return "A";
+        if (s >= 70.0) return "B";
+        if (s >= 60.0) return "C";
+        return "D";
     }
 
     // CSV helpers moved to CsvUtils

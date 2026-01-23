@@ -13,6 +13,8 @@ public final class BehaviorSchemaVersions {
 
     /** 阶段二：行为洞察（AI 解读）schema 版本 */
     public static final String INSIGHT_V1 = "behavior_insight.v1";
+    /** 阶段二：行为洞察（AI 解读）schema 版本（新增结构化预警/建议输出） */
+    public static final String INSIGHT_V2 = "behavior_insight.v2";
 
     private BehaviorSchemaVersions() {
         // 工具类不允许实例化

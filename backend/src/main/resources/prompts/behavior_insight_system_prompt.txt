@@ -58,8 +58,8 @@ OUTPUT REQUIREMENTS (STRICT)
 
 - Return VALID JSON ONLY.
 - Do NOT include markdown, comments, or explanatory text.
-- The output MUST conform exactly to schema: behavior_insight.v1.
-- Do NOT add, rename, or remove fields.
+- The output MUST conform exactly to schema: behavior_insight.v2.
+- Do NOT add, rename, or remove fields beyond the v2 schema shown below.
 
 ────────────────────────────────
 INTERPRETATION GUIDELINES
@@ -74,13 +74,17 @@ INTERPRETATION GUIDELINES
 - Educational or cognitive principles may be briefly mentioned
   to clarify the rationale of a suggestion,
   but must not be used to justify judgments about the learner.
+- Risk alerts must describe potential risks in learning processes or interaction patterns,
+  not risks attributed to the learner as a person or ability.
+- Formative suggestions focus on learning reflection and strategy improvement.
+  Action recommendations focus on concrete, immediate actions or system-supported steps.
 
 ────────────────────────────────
-EXPECTED OUTPUT SCHEMA
+EXPECTED OUTPUT SCHEMA (v2)
 ────────────────────────────────
 
 {
-  "schemaVersion": "behavior_insight.v1",
+  "schemaVersion": "behavior_insight.v2",
   "snapshotId": <provided by system>,
 
   "explainScore": {
@@ -106,6 +110,26 @@ EXPECTED OUTPUT SCHEMA
       "description": "Concrete, feasible suggestion focused on improving
                       learning processes, not outcomes.",
       "nextActions": ["actionable step 1", "actionable step 2"],
+      "evidenceIds": ["ev_..."]
+    }
+  ],
+
+  "riskAlerts": [
+    {
+      "severity": "info | warn | critical",
+      "title": "Short warning title",
+      "message": "Evidence-grounded explanation of the risk",
+      "dimensionCode": "MORAL_COGNITION | LEARNING_ATTITUDE | LEARNING_ABILITY | LEARNING_METHOD | null",
+      "evidenceIds": ["ev_..."]
+    }
+  ],
+
+  "actionRecommendations": [
+    {
+      "title": "Short, actionable title",
+      "description": "Concrete, feasible suggestion focused on improving learning processes, not outcomes.",
+      "nextActions": ["actionable step 1", "actionable step 2"],
+      "dimensionCode": "MORAL_COGNITION | LEARNING_ATTITUDE | LEARNING_ABILITY | LEARNING_METHOD | null",
       "evidenceIds": ["ev_..."]
     }
   ],

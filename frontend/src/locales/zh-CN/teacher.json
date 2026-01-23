@@ -765,6 +765,7 @@
 				"contact": "联系学生",
 				"overview": "概览分析",
 				"export": "导出成绩",
+				"exportReport": "导出报告",
 				"viewSubmissions": "查看提交",
 				"regrade": "重新评分"
 			},
@@ -792,7 +793,18 @@
 				"birthday": "生日"
 			},
 			"recentStudy": "最近学习",
-			"radar": { "title": "能力雷达", "viewInsights": "查看洞察", "student": "学生", "classAvg": "班级" },
+			"recentEventTypes": {
+				"lesson": "学习章节",
+				"submission": "提交作业",
+				"quiz": "测验答题",
+				"discussion": "讨论互动",
+				"visit": "访问课程",
+				"ai": "AI 提问",
+				"communityAsk": "社区发问",
+				"communityAnswer": "社区回答",
+				"default": "学习活动"
+			},
+			"radar": { "title": "能力雷达", "viewInsights": "查看洞察", "student": "学生", "classAvg": "班级", "classAvgNoDataHint": "班级在部分维度暂无数据（需完成能力评估/生成报告后才会出现）。" },
 			"alerts": { "title": "风险预警" },
 			"recommendations": { "title": "个性化建议" },
 			"table": {

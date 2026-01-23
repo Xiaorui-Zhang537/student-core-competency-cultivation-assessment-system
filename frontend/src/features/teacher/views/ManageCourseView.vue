@@ -241,6 +241,11 @@ const { t } = useI18n()
 const showModal = ref(false);
 const isEditing = ref(false);
 const editingCourseId = ref<string | null>(null);
+// 编辑态：记录打开编辑弹窗时的原始状态，用于判断是否需要调用发布接口、避免重复调用
+const editingOriginalStatus = ref<'draft'|'published'|'archived'>('draft')
+// 防止重复提交/重复删除导致重复弹窗
+const submitting = ref(false)
+const deletingIds = ref<Set<string>>(new Set())
 
 const form = reactive<Omit<CourseCreationRequest, 'tags'> & { id?: string; tags: string[]; coverImage?: string; content?: string; status?: 'draft'|'published'|'archived' }>({
   title: '',
@@ -459,6 +464,7 @@ const navigateToCourse = (course: Course) => {
 const openCreateModal = () => {
   isEditing.value = false;
   editingCourseId.value = null;
+  editingOriginalStatus.value = 'draft'
   Object.assign(form, { title: '', description: '', content: '', category: '', tags: [], coverImage: '', status: 'draft', difficulty: 'beginner', duration: undefined as any, maxStudents: undefined as any, startDate: '', endDate: '' });
   selectedTagsStr.value = [];
   startDate.value = ''
@@ -471,7 +477,9 @@ const openCreateModal = () => {
 const openEditModal = (course: Course) => {
   isEditing.value = true;
   editingCourseId.value = String(course.id);
-  Object.assign(form, { ...course, status: normalizeStatus((course as any).status) });
+  const s = normalizeStatus((course as any).status)
+  editingOriginalStatus.value = s
+  Object.assign(form, { ...course, status: s });
   selectedTagsStr.value = Array.isArray(course.tags)
     ? (course.tags as string[])
     : (typeof (course as any).tags === 'string' && (course as any).tags.trim().length
@@ -489,9 +497,12 @@ const closeModal = () => {
 };
 
 const handleSubmit = async () => {
+  if (submitting.value) return
+  submitting.value = true
   const teacherId = authStore.user?.id;
   if (!teacherId) {
       console.error("User not authenticated");
+      submitting.value = false
       return;
   }
   
@@ -509,10 +520,14 @@ const handleSubmit = async () => {
 
   if (isEditing.value && editingCourseId.value) {
     const { id, ...updateData } = payload;
-    await courseStore.updateCourse(editingCourseId.value, updateData as CourseUpdateRequest);
-    // 若目标状态为已发布，调用发布接口确保后端切换
-    if (String(form.status).toLowerCase() === 'published') {
-      try { await courseStore.publishCourse(String(editingCourseId.value) as any) } catch {}
+    const updated = await courseStore.updateCourse(editingCourseId.value, updateData as CourseUpdateRequest);
+    // 更新失败时不再弹“修改成功”（避免 success + error 同时出现）
+    if (!updated) { submitting.value = false; return }
+
+    // 若从非已发布切换为已发布，调用发布接口确保后端切换
+    if (String(form.status).toLowerCase() === 'published' && editingOriginalStatus.value !== 'published') {
+      // 该操作整体会弹“修改成功”，这里避免再弹“课程已发布”成功提示
+      await courseStore.publishCourse(String(editingCourseId.value) as any, { notify: false })
     }
     {
       const { useUIStore } = await import('@/stores/ui')
@@ -522,11 +537,13 @@ const handleSubmit = async () => {
   } else {
     const { id, ...createData } = payload;
     const created: any = await courseStore.createCourse(createData as CourseCreationRequest);
+    if (!created) { submitting.value = false; return }
     // 立即发布：创建成功后调用发布接口
     try {
       const newId = (created?.id || created?.data?.id || (created && created.data && created.data.id)) as any
       if (newId && String(form.status).toLowerCase() === 'published') {
-        await courseStore.publishCourse(String(newId) as any)
+        // 该操作整体会弹“创建成功”，这里避免再弹“课程已发布”成功提示
+        await courseStore.publishCourse(String(newId) as any, { notify: false })
       }
     } catch {}
     {
@@ -540,6 +557,7 @@ const handleSubmit = async () => {
     closeModal();
     fetchTeacherCourses();
   }
+  submitting.value = false
 };
 
 const onCoverUploaded = (response: any) => {
@@ -559,8 +577,11 @@ const onCoverUploadError = async (message: string) => {
 };
 
 const handleDeleteCourse = async (id: string) => {
+  if (deletingIds.value.has(id)) return
   if (confirm(t('teacher.courses.confirm.deleteCourse'))) {
-    await courseStore.deleteCourse(id);
+    deletingIds.value.add(id)
+    // Store 默认会弹“课程已删除”，本页会弹一次“删除成功”，避免重复
+    await courseStore.deleteCourse(id, { notify: false });
     {
       const { useUIStore } = await import('@/stores/ui')
       const ui = useUIStore()
@@ -568,6 +589,7 @@ const handleDeleteCourse = async (id: string) => {
     }
     fetchTeacherCourses();
   }
+  deletingIds.value.delete(id)
 };
 
 const fetchTeacherCourses = () => {
