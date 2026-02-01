@@ -134,6 +134,7 @@
 			},
 			"searchPlaceholder": "搜索作业",
 			"status": {
+				"persistent": "长期",
 				"pendingReview": "待批改",
 				"ended": "已结束"
 			},
@@ -299,6 +300,7 @@
 					"statusLabel": "提交状态",
 					"all": "全部",
 					"submitted": "已提交",
+					"graded": "已评分",
 					"unsubmitted": "未提交"
 			},
 			"actions": {

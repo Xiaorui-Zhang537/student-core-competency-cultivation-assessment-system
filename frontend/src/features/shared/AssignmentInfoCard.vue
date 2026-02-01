@@ -55,6 +55,8 @@ const displayPublished = computed(() => {
 })
 
 const displayDue = computed(() => {
+  const at = String((props.assignment as any)?.assignmentType || '').toLowerCase()
+  if (at === 'course_bound') return i18nText('shared.noDeadline', '无截止')
   const ts = props.effectiveDue || (props.assignment as any)?.dueDate
   if (!ts) return '-'
   const d = new Date(ts as any)

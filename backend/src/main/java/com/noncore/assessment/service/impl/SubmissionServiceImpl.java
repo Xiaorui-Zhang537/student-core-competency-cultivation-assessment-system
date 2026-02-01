@@ -9,6 +9,8 @@ import com.noncore.assessment.mapper.AssignmentMapper;
 import com.noncore.assessment.mapper.SubmissionMapper;
 import com.noncore.assessment.mapper.GradeMapper;
 import com.noncore.assessment.entity.Grade;
+import com.noncore.assessment.entity.AbilityReport;
+import com.noncore.assessment.mapper.AbilityReportMapper;
 import com.noncore.assessment.service.FileStorageService;
 import com.noncore.assessment.service.SubmissionService;
 import com.noncore.assessment.util.PageResult;
@@ -26,6 +28,9 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 import java.io.ByteArrayOutputStream;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import com.github.pagehelper.PageHelper;
 import com.github.pagehelper.PageInfo;
 
@@ -46,13 +51,16 @@ public class SubmissionServiceImpl implements SubmissionService {
     private final AssignmentMapper assignmentMapper;
     private final FileStorageService fileStorageService;
     private final GradeMapper gradeMapper;
+    private final AbilityReportMapper abilityReportMapper;
 
     public SubmissionServiceImpl(SubmissionMapper submissionMapper, AssignmentMapper assignmentMapper,
-                                 FileStorageService fileStorageService, GradeMapper gradeMapper) {
+                                 FileStorageService fileStorageService, GradeMapper gradeMapper,
+                                 AbilityReportMapper abilityReportMapper) {
         this.submissionMapper = submissionMapper;
         this.assignmentMapper = assignmentMapper;
         this.fileStorageService = fileStorageService;
         this.gradeMapper = gradeMapper;
+        this.abilityReportMapper = abilityReportMapper;
     }
 
     @Override
@@ -78,9 +86,13 @@ public class SubmissionServiceImpl implements SubmissionService {
                 effectiveDeadline = sg.getResubmitUntil();
             }
         } catch (Exception ignored) {}
-        boolean isLate = now.isAfter(effectiveDeadline);
-        if (isLate && !assignment.getAllowLate()) {
-            throw new BusinessException(ErrorCode.ASSIGNMENT_EXPIRED);
+        // 规则：只要在截止时间之前都可以重复提交；若无截止时间（如课程作业），视为永不过期
+        boolean isLate = false;
+        if (effectiveDeadline != null) {
+            isLate = now.isAfter(effectiveDeadline);
+            if (isLate && !assignment.getAllowLate()) {
+                throw new BusinessException(ErrorCode.ASSIGNMENT_EXPIRED);
+            }
         }
 
         // 检查是否已提交
@@ -168,9 +180,13 @@ public class SubmissionServiceImpl implements SubmissionService {
                 effectiveDeadline = sg.getResubmitUntil();
             }
         } catch (Exception ignored) {}
-        boolean isLate = now.isAfter(effectiveDeadline);
-        if (isLate && !assignment.getAllowLate()) {
-            throw new BusinessException(ErrorCode.ASSIGNMENT_EXPIRED);
+        // 规则：只要在截止时间之前都可以重复提交；若无截止时间（如课程作业），视为永不过期
+        boolean isLate = false;
+        if (effectiveDeadline != null) {
+            isLate = now.isAfter(effectiveDeadline);
+            if (isLate && !assignment.getAllowLate()) {
+                throw new BusinessException(ErrorCode.ASSIGNMENT_EXPIRED);
+            }
         }
 
         // 查是否已有提交
@@ -405,19 +421,69 @@ public class SubmissionServiceImpl implements SubmissionService {
         if (submission == null) {
             throw new BusinessException(ErrorCode.SUBMISSION_NOT_FOUND);
         }
-        Map<String, Object> grade = null;
+        // 评分：优先从 grades 表取完整字段（含 strengths/improvements 等）
+        Grade gradeEntity = null;
         try {
-            grade = submissionMapper.selectSubmissionGrade(submissionId);
+            if (submission.getStudentId() != null && submission.getAssignmentId() != null) {
+                gradeEntity = gradeMapper.selectByStudentAndAssignment(submission.getStudentId(), submission.getAssignmentId());
+            }
         } catch (Exception e) {
-            logger.warn("获取提交成绩失败，继续仅导出提交内容。submissionId={}", submissionId, e);
+            logger.warn("获取成绩实体失败，继续导出提交内容。submissionId={}", submissionId, e);
+        }
+
+        // AI 报告（若有）：优先 submissionId 上下文，其次 assignmentId/课程
+        AbilityReport aiReport = null;
+        try {
+            Long studentId = submission.getStudentId();
+            Long assignmentId = submission.getAssignmentId();
+            Long courseId = null;
+            try {
+                Assignment a = assignmentMapper.selectAssignmentById(assignmentId);
+                courseId = a != null ? a.getCourseId() : null;
+            } catch (Exception ignored) {}
+            if (studentId != null) {
+                java.util.Map<String, Object> params = new java.util.HashMap<>();
+                params.put("studentId", studentId);
+                // 1) submissionId
+                params.put("submissionId", submissionId);
+                aiReport = abilityReportMapper.selectLatestReportByContext(params);
+                // 2) assignmentId
+                if (aiReport == null) {
+                    params.remove("submissionId");
+                    if (assignmentId != null) params.put("assignmentId", assignmentId);
+                    aiReport = abilityReportMapper.selectLatestReportByContext(params);
+                }
+                // 3) courseId
+                if (aiReport == null) {
+                    params.remove("assignmentId");
+                    if (courseId != null) params.put("courseId", courseId);
+                    aiReport = abilityReportMapper.selectLatestReportByContext(params);
+                }
+            }
+        } catch (Exception e) {
+            logger.warn("获取AI报告失败，继续仅导出提交/附件/评分。submissionId={}", submissionId, e);
         }
 
         try (ByteArrayOutputStream baos = new ByteArrayOutputStream(); ZipOutputStream zos = new ZipOutputStream(baos)) {
+            // 小工具：安全的 zip entry 文件名（防止 ../ 与绝对路径）
+            java.util.function.Function<String, String> safeName = (raw) -> {
+                String s = raw == null ? "" : raw.trim();
+                if (s.isEmpty()) return "unknown";
+                // 只保留文件名，不允许路径
+                try { s = Paths.get(s).getFileName().toString(); } catch (Exception ignored) {}
+                s = s.replace('\\', '_').replace('/', '_');
+                while (s.contains("..")) s = s.replace("..", "_");
+                return s.isEmpty() ? "unknown" : s;
+            };
+
             // 元数据
             String metaJson = "{" +
                     "\"submissionId\":" + submission.getId() + "," +
                     "\"assignmentId\":" + submission.getAssignmentId() + "," +
                     "\"studentId\":" + submission.getStudentId() + "," +
+                    "\"assignmentTitle\":\"" + (submission.getAssignmentTitle() == null ? "" : submission.getAssignmentTitle().replace("\"", "\\\"")) + "\"," +
+                    "\"studentName\":\"" + (submission.getStudentName() == null ? "" : submission.getStudentName().replace("\"", "\\\"")) + "\"," +
+                    "\"courseName\":\"" + (submission.getCourseName() == null ? "" : submission.getCourseName().replace("\"", "\\\"")) + "\"," +
                     "\"submittedAt\":\"" + (submission.getSubmittedAt() == null ? "" : submission.getSubmittedAt()) + "\"," +
                     "\"status\":\"" + (submission.getStatus() == null ? "" : submission.getStatus()) + "\"" +
                     "}";
@@ -426,31 +492,89 @@ public class SubmissionServiceImpl implements SubmissionService {
             zos.closeEntry();
 
             // 提交文本
-            if (submission.getContent() != null && !submission.getContent().isEmpty()) {
-                zos.putNextEntry(new ZipEntry("submission.txt"));
-                zos.write(submission.getContent().getBytes(StandardCharsets.UTF_8));
+            String content = submission.getContent() == null ? "" : submission.getContent();
+            zos.putNextEntry(new ZipEntry("submission.txt"));
+            zos.write(content.getBytes(StandardCharsets.UTF_8));
+            zos.closeEntry();
+
+            // 评分结果（如存在记录且有内容）
+            if (gradeEntity != null) {
+                String fb = gradeEntity.getFeedback() == null ? "" : gradeEntity.getFeedback();
+                String stg = gradeEntity.getStrengths() == null ? "" : gradeEntity.getStrengths();
+                String imp = gradeEntity.getImprovements() == null ? "" : gradeEntity.getImprovements();
+                boolean hasAny = (gradeEntity.getScore() != null)
+                        || !fb.isBlank()
+                        || !stg.isBlank()
+                        || !imp.isBlank()
+                        || (gradeEntity.getGradeLevel() != null && !gradeEntity.getGradeLevel().isBlank());
+                if (hasAny) {
+                    StringBuilder sb = new StringBuilder();
+                    sb.append("分数：").append(gradeEntity.getScore() == null ? "" : gradeEntity.getScore()).append('\n');
+                    sb.append("满分：").append(gradeEntity.getMaxScore() == null ? "" : gradeEntity.getMaxScore()).append('\n');
+                    sb.append("得分率：").append(gradeEntity.getPercentage() == null ? "" : gradeEntity.getPercentage()).append('\n');
+                    sb.append("等级：").append(gradeEntity.getGradeLevel() == null ? "" : gradeEntity.getGradeLevel()).append('\n');
+                    sb.append("状态：").append(gradeEntity.getStatus() == null ? "" : gradeEntity.getStatus()).append('\n');
+                    sb.append("批改时间：").append(gradeEntity.getPublishedAt() != null ? gradeEntity.getPublishedAt() : (gradeEntity.getUpdatedAt() != null ? gradeEntity.getUpdatedAt() : "")).append('\n');
+                    sb.append("\n评语：\n").append(fb).append('\n');
+                    if (!stg.isBlank()) sb.append("\n优点：\n").append(stg).append('\n');
+                    if (!imp.isBlank()) sb.append("\n改进建议：\n").append(imp).append('\n');
+                    zos.putNextEntry(new ZipEntry("grade_result.txt"));
+                    zos.write(sb.toString().getBytes(StandardCharsets.UTF_8));
+                    zos.closeEntry();
+                }
+            }
+
+            // AI 报告（如存在）
+            if (aiReport != null) {
+                String raw = aiReport.getTrendsAnalysis();
+                if (raw == null || raw.isBlank()) raw = aiReport.getRecommendations();
+                if (raw == null) raw = "";
+                // 尝试格式化为更易读的 JSON（失败则原样输出）
+                String out = raw;
+                try {
+                    Object obj = new com.fasterxml.jackson.databind.ObjectMapper().readValue(raw, Object.class);
+                    out = new com.fasterxml.jackson.databind.ObjectMapper().writerWithDefaultPrettyPrinter().writeValueAsString(obj);
+                } catch (Exception ignored) {}
+                zos.putNextEntry(new ZipEntry("ai_report.json"));
+                zos.write(out.getBytes(StandardCharsets.UTF_8));
                 zos.closeEntry();
             }
 
-            // 评分摘要
-            if (grade != null && !grade.isEmpty()) {
-                StringBuilder sb = new StringBuilder();
-                sb.append("Score: ").append(grade.getOrDefault("score", "")).append('\n');
-                sb.append("Max Score: ").append(grade.getOrDefault("max_score", "")).append('\n');
-                sb.append("Feedback: ").append(grade.getOrDefault("feedback", "")).append('\n');
-                sb.append("Teacher: ").append(grade.getOrDefault("teacher_name", "")).append('\n');
-                zos.putNextEntry(new ZipEntry("grade_summary.txt"));
-                zos.write(sb.toString().getBytes(StandardCharsets.UTF_8));
-                zos.closeEntry();
+            // 附件：打包提交关联的所有文件（file_records: purpose=submission, relatedId=submissionId）
+            try {
+                List<FileRecord> files = fileStorageService.getRelatedFiles("submission", submissionId);
+                java.util.Map<String, Integer> used = new java.util.HashMap<>();
+                if (files != null) {
+                    for (FileRecord f : files) {
+                        if (f == null || f.getFilePath() == null) continue;
+                        String name = safeName.apply(f.getOriginalName());
+                        // 去重：同名文件追加序号
+                        int idx = used.getOrDefault(name, 0);
+                        used.put(name, idx + 1);
+                        String finalName = (idx <= 0) ? name : (name + "(" + idx + ")");
+                        Path fp = Paths.get(f.getFilePath());
+                        if (!Files.exists(fp)) continue;
+                        zos.putNextEntry(new ZipEntry("files/" + finalName));
+                        zos.write(Files.readAllBytes(fp));
+                        zos.closeEntry();
+                    }
+                }
+            } catch (Exception e) {
+                logger.warn("打包提交附件失败，继续导出其他内容。submissionId={}", submissionId, e);
             }
 
-            // 附件（若 filePath 可直接访问本地/远程存储，当前仅打包占位说明）
-            if (submission.getFileName() != null) {
-                String note = "Attachment not embedded. Please download via system file management. File: " + submission.getFileName();
-                zos.putNextEntry(new ZipEntry("attachment.README.txt"));
-                zos.write(note.getBytes(StandardCharsets.UTF_8));
-                zos.closeEntry();
-            }
+            // 兼容旧字段：submissions.file_path 单文件（若存在且未被关联文件覆盖）
+            try {
+                if (submission.getFilePath() != null && !submission.getFilePath().isBlank()) {
+                    Path fp = Paths.get(submission.getFilePath());
+                    if (Files.exists(fp)) {
+                        String name = safeName.apply(submission.getFileName() != null ? submission.getFileName() : fp.getFileName().toString());
+                        zos.putNextEntry(new ZipEntry("files/" + name));
+                        zos.write(Files.readAllBytes(fp));
+                        zos.closeEntry();
+                    }
+                }
+            } catch (Exception ignored) {}
 
             zos.finish();
             return baos.toByteArray();

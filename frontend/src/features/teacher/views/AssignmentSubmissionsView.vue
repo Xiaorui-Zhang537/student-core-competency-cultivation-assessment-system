@@ -16,36 +16,60 @@
         </nav>
         <page-header :title="t('teacher.submissions.title')" :subtitle="t('teacher.submissions.subtitle')">
           <template #actions>
-            <div class="flex flex-wrap items-center gap-4">
-              <div class="flex items-center gap-2 w-full md:w-auto">
-                <GlassSearchInput
-                  v-model="searchText"
-                  :placeholder="(t('teacher.submissions.searchPlaceholder') as string) || '搜索学生姓名'"
-                  size="sm"
-                  tint="primary"
-                />
-                <GlassPopoverSelect
-                  :label="t('teacher.submissions.filters.statusLabel') || '提交状态'"
-                  :options="statusOptions"
-                  v-model="statusFilter"
-                  size="sm"
-                  width="clamp(160px,20vw,200px)"
-                  tint="primary"
-                />
-              </div>
-              <!-- 统计摘要 -->
-              <div class="hidden md:flex items-center gap-4 text-sm text-gray-600 dark:text-gray-300">
-                <div>{{ t('teacher.submissions.stats.totalEnrolled') }}: <span class="font-semibold">{{ stats.totalEnrolled }}</span></div>
-                <div>{{ t('teacher.submissions.stats.submitted') }}: <span class="font-semibold">{{ stats.submittedCount }}</span></div>
-                <div>{{ t('teacher.submissions.stats.unsubmitted') }}: <span class="font-semibold">{{ stats.unsubmittedCount }}</span></div>
-              </div>
-              <Button variant="primary" @click="remindUnsubmitted" :loading="reminding" :disabled="reminding || stats.unsubmittedCount === 0 || isPastDue">
-                {{ t('teacher.submissions.actions.remindUnsubmitted') }}
-              </Button>
-            </div>
+            <Button
+              variant="primary"
+              @click="remindUnsubmitted"
+              :loading="reminding"
+              :disabled="reminding || stats.unsubmittedCount === 0 || isPastDue"
+            >
+              {{ t('teacher.submissions.actions.remindUnsubmitted') }}
+            </Button>
           </template>
         </page-header>
       </div>
+
+      <!-- Filters（与作业管理页一致：容器放在标题下方） -->
+      <FilterBar tint="info" align="center" :dense="false" class="mb-6 h-19">
+        <template #left>
+          <div class="flex items-center gap-3 flex-wrap">
+            <div class="w-auto flex items-center gap-2">
+              <span class="text-sm font-semibold leading-tight text-gray-700 dark:text-gray-300">
+                {{ t('teacher.submissions.filters.statusLabel') || '提交状态' }}
+              </span>
+              <div class="w-50">
+                <GlassPopoverSelect
+                  v-model="statusFilter"
+                  :options="statusOptions"
+                  size="sm"
+                  :fullWidth="false"
+                  width="10rem"
+                  tint="primary"
+                />
+              </div>
+            </div>
+
+            <!-- 统计摘要 -->
+            <div class="hidden md:flex items-center gap-4 text-sm text-gray-600 dark:text-gray-300">
+              <div>{{ t('teacher.submissions.stats.totalEnrolled') }}: <span class="font-semibold">{{ stats.totalEnrolled }}</span></div>
+              <div>{{ t('teacher.submissions.stats.submitted') }}: <span class="font-semibold">{{ stats.submittedCount }}</span></div>
+              <div>{{ t('teacher.submissions.stats.unsubmitted') }}: <span class="font-semibold">{{ stats.unsubmittedCount }}</span></div>
+            </div>
+          </div>
+        </template>
+
+        <template #right>
+          <div class="flex items-center gap-3 flex-wrap justify-end">
+            <div class="w-56">
+              <GlassSearchInput
+                v-model="searchText"
+                :placeholder="(t('teacher.submissions.searchPlaceholder') as string) || '搜索学生姓名'"
+                size="sm"
+                tint="primary"
+              />
+            </div>
+          </div>
+        </template>
+      </FilterBar>
 
     <div v-if="loading" class="text-center py-12">{{ t('teacher.submissions.loading') }}</div>
     <div v-else>
@@ -133,6 +157,7 @@ import { useI18n } from 'vue-i18n'
 import GlassPopoverSelect from '@/components/ui/filters/GlassPopoverSelect.vue'
 import PageHeader from '@/components/ui/PageHeader.vue'
 import GlassSearchInput from '@/components/ui/inputs/GlassSearchInput.vue'
+import FilterBar from '@/components/ui/filters/FilterBar.vue'
 import { resolveUserDisplayName } from '@/shared/utils/user'
 
 const route = useRoute();
@@ -154,13 +179,14 @@ const stats = ref<{ totalEnrolled: number; submittedCount: number; unsubmittedCo
 const reminding = ref(false)
 const isPastDue = ref(false)
 const searchText = ref('')
-const statusFilter = ref<'all' | 'submitted' | 'unsubmitted'>('all')
+const statusFilter = ref<'all' | 'submitted' | 'graded' | 'unsubmitted'>('all')
 
-const statusOptions = [
+const statusOptions = computed(() => ([
   { label: (t('teacher.submissions.filters.all') as string) || '全部', value: 'all' },
   { label: (t('teacher.submissions.filters.submitted') as string) || '已提交', value: 'submitted' },
+  { label: (t('teacher.submissions.filters.graded') as string) || '已评分', value: 'graded' },
   { label: (t('teacher.submissions.filters.unsubmitted') as string) || '未提交', value: 'unsubmitted' }
-]
+]))
 
 function parseDateLoose(v: any): number {
   if (!v) return NaN
@@ -324,12 +350,16 @@ const filteredRows = computed(() => {
   const keyword = searchText.value.trim().toLowerCase()
   return allRows.value.filter(r => {
     const matchesName = !keyword || String(r.displayName || r.studentName || '').toLowerCase().includes(keyword)
-    const isSubmitted = String(r.status || '').toLowerCase() !== 'unsubmitted'
-    const matchesStatus = statusFilter.value === 'all'
-      ? true
-      : statusFilter.value === 'submitted'
-        ? isSubmitted
-        : !isSubmitted
+    const st = String(r.status || '').toLowerCase()
+    const matchesStatus =
+      statusFilter.value === 'all'
+        ? true
+        : statusFilter.value === 'unsubmitted'
+          ? st === 'unsubmitted'
+          : statusFilter.value === 'graded'
+            ? st === 'graded'
+            // “已提交”不包含“已评分”（避免混在一起）
+            : (st !== 'unsubmitted' && st !== 'graded')
     return matchesName && matchesStatus
   })
 })

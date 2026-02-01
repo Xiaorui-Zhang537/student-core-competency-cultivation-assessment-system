@@ -216,9 +216,9 @@
           </card>
 
           <!-- AI 批改弹窗（选择附件或文本 + 模型 + 进度） -->
-           <glass-modal v-if="aiModalOpen" :title="t('teacher.aiGrading.picker.title') as string" size="sm" heightVariant="tall" solidBody @close="aiModalOpen=false">
+           <glass-modal v-if="aiModalOpen" :title="t('teacher.aiGrading.picker.title') as string" size="md" heightVariant="tall" solidBody @close="aiModalOpen=false">
             <div class="space-y-3">
-            <div class="flex items-center gap-3 flex-nowrap">
+            <div class="flex items-center gap-3 flex-wrap md:flex-nowrap">
               <div class="flex items-center gap-2">
                 <span class="text-xs text-gray-600 dark:text-gray-300 whitespace-nowrap">{{ t('teacher.ai.model.label') || '模型' }}</span>
                   <glass-popover-select v-model="gradingModel" :options="gradingModelOptions" size="sm" />
@@ -229,7 +229,7 @@
                   :options="[{ label: '文本', value: 'text' }, { label: '附件', value: 'files' }]"
                   size="sm"
                 />
-                <div class="flex items-center gap-2 ml-auto">
+                <div class="flex items-center gap-2 md:ml-auto">
                   <Button size="sm" variant="primary" :disabled="hasOngoing || !canStartAi" @click="startAiGradingFromModal">
                     <sparkles-icon class="w-4 h-4 mr-1" />{{ t('teacher.aiGrading.start') || '开始批改' }}
                   </Button>
@@ -424,20 +424,12 @@
               <!-- 评分选项 -->
               <div class="space-y-3">
                 <div class="flex items-center justify-between">
-                  <span class="text-sm text-gray-700 dark:text-gray-300">{{ t('teacher.grading.form.allowResubmit') }}</span>
-                  <glass-switch v-model="(gradeForm.allowResubmit as any)" size="sm" />
-                </div>
-                <div class="flex items-center justify-between">
                   <span class="text-sm text-gray-700 dark:text-gray-300">{{ t('teacher.grading.form.sendNotification') }}</span>
                   <glass-switch v-model="(gradeForm.sendNotification as any)" size="sm" />
                 </div>
                 <div class="flex items-center justify-between">
                   <span class="text-sm text-gray-700 dark:text-gray-300">{{ t('teacher.grading.form.publishImmediately') }}</span>
                   <glass-switch v-model="(gradeForm.publishImmediately as any)" size="sm" />
-                </div>
-                <div class="flex items-center justify-between" v-if="gradeForm.allowResubmit">
-                  <span class="text-sm text-gray-700 dark:text-gray-300">{{ t('teacher.grading.form.resubmitUntil') || '重交截止时间' }}</span>
-                  <glass-date-time-picker v-model="gradeForm.resubmitUntil" size="md" :minute-step="5" tint="info" />
                 </div>
               </div>
 
@@ -453,18 +445,6 @@
                 >
                    <check-icon class="w-4 h-4 mr-2" />
                    {{ t('teacher.grading.form.submit') }}
-                </Button>
-                
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="lg"
-                  class="w-full"
-                  @click="saveDraft"
-                  :loading="isDraftSaving"
-                >
-                   <document-duplicate-icon class="w-4 h-4 mr-2" />
-                   {{ t('teacher.grading.form.saveDraft') }}
                 </Button>
                 <Button
                   type="button"
@@ -604,31 +584,14 @@
                 <document-text-icon class="w-4 h-4 mr-3" />
                 {{ t('teacher.grading.sidebar.otherSubmissions') || '查看其它提交' }}
               </Button>
-              <Button variant="outline" class="w-full justify-start" @click="exportSubmission">
+              <Button variant="outline" class="w-full justify-start" @click="exportSubmission" :loading="isExporting" :disabled="isExporting">
                 <arrow-down-tray-icon class="w-4 h-4 mr-3" />
                 {{ t('teacher.grading.sidebar.export') || '导出提交' }}
-              </Button>
-              <Button variant="outline" class="w-full justify-start" @click="reportPlagiarism">
-                <exclamation-triangle-icon class="w-4 h-4 mr-3" />
-                {{ t('teacher.grading.sidebar.report') || '举报疑似抄袭' }}
               </Button>
             </div>
           </card>
         </div>
       </div>
-      <!-- 举报弹窗 (GlassModal) -->
-      <glass-modal v-if="showReport" :title="t('teacher.grading.quick.report') as string" size="sm" heightVariant="compact" solidBody @close="showReport=false">
-        <div class="space-y-2">
-          <label class="text-sm">{{ t('teacher.studentDetail.table.reason') || '原因' }}</label>
-          <glass-input v-model="reportForm.reason" />
-          <label class="text-sm">{{ t('teacher.studentDetail.table.details') || '详情' }}</label>
-          <glass-textarea v-model="reportForm.details" :rows="4" />
-        </div>
-        <template #footer>
-          <Button variant="secondary" size="sm" @click="showReport=false">{{ t('common.cancel') || '取消' }}</Button>
-          <Button variant="primary" size="sm" @click="submitReport">{{ t('common.submit') || '提交' }}</Button>
-        </template>
-      </glass-modal>
 
       <!-- AI 历史详情弹窗 -->
       <glass-modal v-if="aiHistoryDetailOpen" :title="t('teacher.aiGrading.historyDetail') as string || 'AI 批改详情'" size="2xl" heightVariant="max" solidBody @close="aiHistoryDetailOpen=false">
@@ -712,7 +675,8 @@ import GlassModal from '@/components/ui/GlassModal.vue'
 import GlassSwitch from '@/components/ui/inputs/GlassSwitch.vue'
 import GlassDateTimePicker from '@/components/ui/inputs/GlassDateTimePicker.vue'
 import SegmentedPills from '@/components/ui/SegmentedPills.vue'
-import { exportNodeAsPng, exportNodeAsPdf, applyExportGradientsInline } from '@/shared/utils/exporters'
+import { exportNodeAsPng, exportNodeAsPdf, exportNodeAsPdfBlob, applyExportGradientsInline } from '@/shared/utils/exporters'
+import JSZip from 'jszip'
 import { getMbtiVariant } from '@/shared/utils/badgeColor'
 import { userApi } from '@/api/user.api'
 
@@ -725,7 +689,7 @@ const { t } = useLocale()
 // 状态
 const isLoading = ref(true)
 const isSubmitting = ref(false)
-const isDraftSaving = ref(false)
+const isExporting = ref(false)
 const aiLoading = ref(false)
 const aiModalOpen = ref(false)
 
@@ -880,10 +844,8 @@ const gradeForm = reactive({
   feedback: '',
   strengths: '',
   improvements: '',
-  allowResubmit: false,
   sendNotification: true,
-  publishImmediately: true,
-  resubmitUntil: '' as any
+  publishImmediately: true
 })
 
 // 错误状态
@@ -1401,9 +1363,7 @@ const previewSingleFile = async () => {
 const gradingModel = ref('google/gemini-2.5-pro')
 const gradingModelOptions = [
   { label: 'Gemini 2.5 Pro', value: 'google/gemini-2.5-pro' },
-  { label: 'Gemini 3 Pro Preview', value: 'google/gemini-3-pro-preview' },
-  { label: 'GLM-4.6', value: 'glm-4.6' },
-  { label: 'GLM-4.6v', value: 'glm-4.6v' }
+  { label: 'Gemini 3 Pro Preview', value: 'google/gemini-3-pro-preview' }
 ]
 const aiSource = ref<'text'|'files'>('text')
 const aiPicker = reactive({ previewText: '', files: [] as any[], selectedFileIds: [] as number[] })
@@ -1772,39 +1732,6 @@ watch(() => gradeForm.score, (target) => {
 // 初始化 animatedScore
 onMounted(() => { animatedScore.value = Number(gradeForm.score || 0) })
 
-const saveDraft = async () => {
-  isDraftSaving.value = true
-  try {
-    const payload: any = {
-      submissionId: String(submission.id),
-      studentId: String(submission.studentId),
-      assignmentId: String(assignment.id),
-      score: Number(gradeForm.score || 0),
-      maxScore: Number(assignment.totalScore || 100),
-      feedback: gradeForm.feedback || '',
-      strengths: gradeForm.strengths || '',
-      improvements: gradeForm.improvements || '',
-      allowResubmit: !!gradeForm.allowResubmit,
-      status: 'draft' as const,
-      publishImmediately: false
-    }
-    await gradeApi.gradeSubmission(payload)
-    uiStore.showNotification({
-      type: 'success',
-      title: t('teacher.grading.notify.draftSaved'),
-      message: t('teacher.grading.notify.draftSavedMsg')
-    })
-  } catch (error) {
-    uiStore.showNotification({
-      type: 'error',
-      title: t('teacher.grading.notify.saveFailed'),
-      message: t('teacher.grading.notify.saveFailedMsg')
-    })
-  } finally {
-    isDraftSaving.value = false
-  }
-}
-
 const submitGrade = async () => {
   validateScore()
   validateFeedback()
@@ -1828,12 +1755,10 @@ const submitGrade = async () => {
       feedback: gradeForm.feedback || '',
       strengths: gradeForm.strengths || '',
       improvements: gradeForm.improvements || '',
-      allowResubmit: !!gradeForm.allowResubmit,
       publishImmediately: !!gradeForm.publishImmediately,
       status: (gradeForm.publishImmediately ? 'published' : 'draft') as 'published' | 'draft'
     }
     if (submission.id) payload.submissionId = String(submission.id)
-    if (gradeForm.allowResubmit && gradeForm.resubmitUntil) payload.resubmitUntil = String(gradeForm.resubmitUntil).replace('T',' ') + ':00'
     const gr = await gradeApi.gradeSubmission(payload)
     const gradeId = (gr as any)?.id
     if (gradeForm.publishImmediately && gradeId) {
@@ -1984,19 +1909,80 @@ const viewOtherSubmissions = () => {
 }
 
 const exportSubmission = async () => {
-  if (!submission.id) return
+  if (!submission.id) {
+    uiStore.showNotification({
+      type: 'error',
+      title: t('teacher.analytics.messages.exportFailed') || '导出失败',
+      message: '该学生尚未提交，暂无可导出的提交内容。'
+    })
+    return
+  }
   try {
-    const blob = await submissionApi.exportSubmission(String(submission.id))
-    const url = URL.createObjectURL(blob)
+    isExporting.value = true
+    // 1) 先取后端生成的基础 ZIP（包含：提交文本/附件/批改文本/AI JSON）
+    const baseZipBlob: Blob = await submissionApi.exportSubmission(String(submission.id))
+
+    // 2) 解压：先转 ArrayBuffer（更稳），若失败则尝试把返回体当文本读出来展示
+    let zip: JSZip
+    try {
+      const buf = await baseZipBlob.arrayBuffer()
+      zip = await JSZip.loadAsync(buf)
+    } catch (e: any) {
+      try {
+        const txt = await baseZipBlob.text()
+        throw new Error(txt || (e?.message || 'export zip parse failed'))
+      } catch {
+        throw e
+      }
+    }
+
+    // 2) 复用前端的 AI 报告导出 DOM → PDF Blob，然后追加进 ZIP
+    // 仅当页面已有 AI 报告可渲染时才附加
+    try {
+      if (aiDetailParsed.value) {
+        // 复用 exportAiDetailAsPdf 的“克隆节点导出”策略，避免污染页面样式
+        // 注意：aiDetailRef 在弹窗内渲染；即使弹窗未打开，只要 computed 有数据，也可以临时渲染一份
+        const source = aiDetailRef.value
+        if (source) {
+          const cloned = source.cloneNode(true) as HTMLElement
+          applyExportGradientsInline(cloned)
+          const wrapper = document.createElement('div')
+          wrapper.style.position = 'fixed'
+          wrapper.style.left = '-10000px'
+          wrapper.style.top = '0'
+          wrapper.style.width = `${source.getBoundingClientRect().width || 900}px`
+          wrapper.style.background = '#fff'
+          wrapper.appendChild(cloned)
+          document.body.appendChild(wrapper)
+          const pdfBlob = await exportNodeAsPdfBlob(cloned)
+          document.body.removeChild(wrapper)
+          zip.file('ai_report.pdf', pdfBlob)
+        }
+      }
+    } catch {
+      // AI PDF 非关键，失败不阻断主导出
+    }
+
+    // 3) 下载最终 ZIP
+    const finalBlob = await zip.generateAsync({ type: 'blob' })
+    const url = URL.createObjectURL(finalBlob)
     const a = document.createElement('a')
     a.href = url
     a.download = `submission_${submission.id}.zip`
     document.body.appendChild(a)
-    a.click()
+    // 某些浏览器对异步下载较严格：优先 click，失败则 open 新窗口
+    try { a.click() } catch { try { window.open(url, '_blank') } catch {} }
     a.remove()
     URL.revokeObjectURL(url)
   } catch (e) {
-    uiStore.showNotification({ type: 'error', title: t('teacher.analytics.messages.exportFailed') || 'Export failed', message: t('teacher.analytics.messages.exportFailedMsg') || 'Please try again later' })
+    const msg = (e as any)?.message ? String((e as any).message) : ''
+    uiStore.showNotification({
+      type: 'error',
+      title: t('teacher.analytics.messages.exportFailed') || '导出失败',
+      message: msg || (t('teacher.analytics.messages.exportFailedMsg') as any) || '请稍后重试'
+    })
+  } finally {
+    isExporting.value = false
   }
 }
 
@@ -2256,9 +2242,7 @@ function goCourse() {
   }
 }
 
-const showReport = ref(false)
 const showReturn = ref(false)
-const reportForm = reactive({ reason: '', details: '' })
 const returnForm = reactive({ reason: '', resubmitUntil: '' as any })
 const openReturnModal = () => { showReturn.value = true }
 const confirmReturn = async () => {
@@ -2286,11 +2270,9 @@ const confirmReturn = async () => {
         score: 0,
         maxScore: Number(assignment.totalScore || 100),
         feedback: returnForm.reason || '',
-        allowResubmit: true,
         status: 'draft',
         publishImmediately: false
       }
-      if (returnForm.resubmitUntil) payload.resubmitUntil = String(returnForm.resubmitUntil).replace('T',' ') + ':00'
       try {
         const gr: any = await gradeApi.gradeSubmission(payload)
         gid = (gr as any)?.id || (gr as any)?.data?.id || null
@@ -2307,30 +2289,6 @@ const confirmReturn = async () => {
     uiStore.showNotification({ type: 'error', title: t('teacher.grading.actions.returnForResubmit') as any, message: e?.message || 'Failed' })
   }
 }
-const reportPlagiarism = () => { showReport.value = true }
-const submitReport = async () => {
-  if (!reportForm.reason.trim()) {
-    uiStore.showNotification({ type: 'error', title: t('teacher.grading.quick.report'), message: t('teacher.grading.errors.feedbackRequired') })
-    return
-  }
-  try {
-    await reportApi.createReport({
-      reportedStudentId: String(submission.studentId || ''),
-      courseId: String(assignment.courseId || ''),
-      assignmentId: String(assignment.id || ''),
-      submissionId: String(submission.id || ''),
-      reason: reportForm.reason,
-      details: reportForm.details || ''
-    })
-    uiStore.showNotification({ type: 'success', title: t('teacher.grading.quick.report'), message: t('teacher.grading.notify.submitSuccess') })
-    showReport.value = false
-    reportForm.reason = ''
-    reportForm.details = ''
-  } catch (e) {
-    uiStore.showNotification({ type: 'error', title: t('teacher.grading.quick.report'), message: t('teacher.grading.notify.submitFailed') })
-  }
-}
-
 // 生命周期：先加载提交与作业，再按上下文加载最新AI报告
 onMounted(async () => {
   await loadSubmission()

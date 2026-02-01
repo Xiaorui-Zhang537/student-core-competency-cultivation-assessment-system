@@ -61,7 +61,15 @@
               <Badge size="sm" :variant="statusVariant(displayStatus(a))">{{ statusText(displayStatus(a)) }}</Badge>
             </div>
             <div class="text-sm text-subtle mt-1 truncate">{{ a.courseTitle || a.courseName || a.course?.title }}</div>
-            <div class="text-xs text-subtle mt-1">{{ t('student.assignments.due') }}{{ formatTime(a.dueDate || a.dueAt) }}</div>
+            <div class="text-xs text-subtle mt-1">
+              {{ t('student.assignments.due') }}
+              <span v-if="String(a?.assignmentType || '').toLowerCase()==='course_bound'">
+                {{ t('shared.noDeadline') || '无截止' }}
+              </span>
+              <span v-else>
+                {{ formatTime(a.dueDate || a.dueAt) }}
+              </span>
+            </div>
           </div>
           <div class="absolute right-4 top-1/2 -translate-y-1/2 flex items-center gap-2">
             <Button v-if="displayStatus(a)==='PENDING' && !isPastDue(a.dueDate || a.dueAt)" variant="success" size="sm" @click="submit(a.id)">{{ t('student.assignments.actions.submit') }}</Button>

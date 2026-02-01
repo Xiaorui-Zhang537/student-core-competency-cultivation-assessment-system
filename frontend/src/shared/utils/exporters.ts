@@ -154,6 +154,55 @@ export async function exportNodeAsPdf(node: HTMLElement, fileBase: string) {
   pdf.save(`${fileBase}.pdf`)
 }
 
+// 与 exportNodeAsPdf 逻辑一致，但返回 Blob（用于打包到ZIP等场景）
+export async function exportNodeAsPdfBlob(node: HTMLElement): Promise<Blob> {
+  const canvas = await html2canvas(node, {
+    backgroundColor: '#ffffff',
+    scale: 2,
+    useCORS: true,
+    logging: false,
+    onclone: (doc) => {
+      try {
+        const style = doc.createElement('style')
+        style.setAttribute('data-export-fallback', 'oklch')
+        style.innerHTML = EXPORT_FALLBACK_STYLE + EXPORT_THEME_CSS
+        doc.head.appendChild(style)
+        const root = doc.querySelector('[data-export-root="1"]') as HTMLElement | null
+        if (root) root.setAttribute('data-export-skin', 'history-v1')
+        const fixColor = (s: string) => s
+          .replace(/color-mix\([^)]*\)/gi, '#111827')
+          .replace(/oklch\([^)]*\)/gi, '#111827')
+          .replace(/oklab\([^)]*\)/gi, '#111827')
+        ;(doc.querySelectorAll('*') as NodeListOf<HTMLElement>).forEach(el => {
+          const st = el.getAttribute('style')
+          if (st && (/oklch|oklab|color-mix/i.test(st))) el.setAttribute('style', fixColor(st))
+        })
+        ;(['fill','stroke','stop-color'] as const).forEach(attr => {
+          (doc.querySelectorAll(`svg *[${attr}]`) as NodeListOf<HTMLElement>).forEach(el => {
+            const v = el.getAttribute(attr) || ''
+            if (/oklch|oklab|color-mix|var\(/i.test(v)) el.setAttribute(attr, '#111827')
+          })
+        })
+        const fills = doc.querySelectorAll('[data-export-root="1"] .h-2 > div, [data-export-root="1"] .export-bar > div, [data-export-root="1"] .h-2 div.h-full') as NodeListOf<HTMLElement>
+        fills.forEach(f => {
+          const st = f.getAttribute('style') || ''
+          const hasWidth = /width\s*:\s*\d/.test(st)
+          if (!hasWidth) return
+          const mark = (f.getAttribute('data-gradient') || '').toLowerCase()
+          if (mark === 'overall') {
+            f.style.backgroundColor = '#10b981'
+            return
+          }
+          f.style.backgroundColor = '#60a5fa'
+        })
+      } catch {}
+    }
+  })
+  const pdf = new jsPDF({ orientation: 'p', unit: 'px', format: [canvas.width, canvas.height], compress: true })
+  pdf.addImage(canvas.toDataURL('image/png'), 'PNG', 0, 0, canvas.width, canvas.height, undefined, 'FAST')
+  return pdf.output('blob')
+}
+
 export function applyExportGradientsInline(el: HTMLElement) {
   try {
     el.querySelectorAll('[data-gradient="overall"]').forEach((n) => (n as HTMLElement).style.background = GRADIENTS.overall)

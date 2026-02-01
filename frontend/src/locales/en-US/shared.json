@@ -1,6 +1,7 @@
 {
   "shared": {
     "date": "Date",
+    "noDeadline": "No deadline",
     "common": {
       "latest": "Latest",
       "hot": "Hottest",

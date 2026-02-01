@@ -88,8 +88,14 @@
           </div>
           <div class="text-sm text-gray-600 mt-1 truncate max-w-[60vw]">{{ assignment.description }}</div>
           <div class="text-xs text-gray-500 mt-1">
-            {{ t('teacher.assignments.list.dueDate') }}: {{ formatMinute(assignment.dueDate) }}
-            <span v-if="String(assignment.status).toLowerCase()==='scheduled' && assignment.publishAt" class="ml-2">
+            {{ t('teacher.assignments.list.dueDate') }}:
+            <span v-if="String((assignment as any)?.assignmentType || '').toLowerCase()==='course_bound'">
+              {{ t('shared.noDeadline') || '无截止' }}
+            </span>
+            <span v-else>
+              {{ formatMinute(assignment.dueDate) }}
+            </span>
+            <span v-if="String((assignment as any)?.assignmentType || '').toLowerCase()!=='course_bound' && String(assignment.status).toLowerCase()==='scheduled' && assignment.publishAt" class="ml-2">
               {{ (t('teacher.assignments.modal.publishAt') as string) }}: {{ formatMinute(assignment.publishAt) }}
             </span>
           </div>
@@ -174,7 +180,7 @@
           <GlassTextarea id="description" v-model="form.description" :rows="3" />
         </div>
         <div class="grid grid-cols-1 gap-3">
-          <div v-if="publishMode==='scheduled'" class="glass-thin rounded-lg p-3" v-glass="{ strength: 'thin', interactive: true }">
+          <div v-if="assignmentType==='normal' && publishMode==='scheduled'" class="glass-thin rounded-lg p-3" v-glass="{ strength: 'thin', interactive: true }">
             <GlassDateTimePicker :label="(t('teacher.assignments.modal.publishAt') as string) || '发布时间'" v-model="form.publishAt" />
           </div>
           <div class="glass-thin rounded-lg p-3" v-glass="{ strength: 'thin', interactive: true }" v-if="assignmentType!=='course_bound'">
@@ -362,6 +368,7 @@ const statusClass = (status: string) => {
 
 const statusVariantByDisplay = (key: string) => {
   const k = String(key || '').toLowerCase()
+  if (k === 'persistent') return 'info'
   if (k === 'published') return 'success'
   if (k === 'draft' || k === 'scheduled' || k === 'pending_review') return 'warning'
   if (k === 'ended' || k === 'closed') return 'secondary'
@@ -370,6 +377,7 @@ const statusVariantByDisplay = (key: string) => {
 
 function renderStatus(a: any) {
   const k = displayStatusKey(a)
+  if (k === 'persistent') return (t('teacher.assignments.status.persistent') as string) || '长期'
   if (k === 'scheduled') return (t('teacher.assignments.modal.schedule') as string) || '定时发布'
   if (k === 'draft') return (t('teacher.courses.status.draft') as string) || '草稿'
   if (k === 'published') return (t('teacher.courses.status.published') as string) || '已发布'
@@ -402,7 +410,10 @@ async function ensureStats(a: any) {
   } catch { /* ignore */ }
 }
 
-function displayStatusKey(a: any): 'draft'|'published'|'scheduled'|'closed'|'pending_review'|'ended' {
+function displayStatusKey(a: any): 'persistent'|'draft'|'published'|'scheduled'|'closed'|'pending_review'|'ended' {
+  const at = String((a as any)?.assignmentType || '').toLowerCase()
+  // 课程作业：无截止/无发布时间，语义上应显示“长期”（而不是草稿/定时）
+  if (at === 'course_bound') return 'persistent'
   const raw = String(a?.status || '').toLowerCase()
   if (raw === 'draft' || raw === 'scheduled' || raw === 'closed') return raw as any
   if (raw === 'published') {
@@ -451,7 +462,8 @@ const openCreateModal = () => {
   if (!form.courseId && courseStore.courses.length > 0) {
       form.courseId = String(courseStore.courses[0].id);
   }
-  publishMode.value = 'draft'
+  // 创建时默认“立即发布”
+  publishMode.value = 'publish'
   assignmentType.value = 'normal'
   showModal.value = true;
 };
@@ -490,9 +502,16 @@ const openEditModal = (assignment: Assignment) => {
   // 加载已有附件
   refreshAttachments(assignment.id);
   const stLower = originalStatus.value
-  if (stLower === 'published') publishMode.value = 'publish'
-  else if (stLower === 'scheduled') publishMode.value = 'scheduled'
-  else publishMode.value = 'draft'
+  if (assignmentType.value === 'course_bound') {
+    // 课程作业不走“草稿/定时”，语义上应为长期可用
+    publishMode.value = 'publish'
+    form.publishAt = ''
+    form.dueDate = ''
+  } else {
+    if (stLower === 'published') publishMode.value = 'publish'
+    else if (stLower === 'scheduled') publishMode.value = 'scheduled'
+    else publishMode.value = 'draft'
+  }
 };
 
 const closeModal = () => {
@@ -516,6 +535,7 @@ const handleSubmit = async () => {
   } else {
     // 课程作业：无截止，强制清空
     form.dueDate = ''
+    form.publishAt = ''
   }
   if (isEditing.value && editingAssignmentId.value) {
     const { title, description, dueDate, publishAt } = form;
@@ -525,13 +545,19 @@ const handleSubmit = async () => {
     // 提供默认满分，避免后端校验失败（若后端允许不更新可移除）
     (updateData as any).maxScore = (updateData as any).maxScore || 100;
     (updateData as any).assignmentType = assignmentType.value
-    if (publishMode.value === 'scheduled') {
-      (updateData as any).status = 'scheduled'
-      ;(updateData as any).publishAt = toServerTime(publishAt)
-    } else if (publishMode.value === 'draft') {
-      (updateData as any).status = 'draft'
-    } else if (publishMode.value === 'publish') {
-      (updateData as any).status = 'published'
+    if (assignmentType.value === 'course_bound') {
+      // 课程作业：不支持草稿/定时发布，保持长期可用
+      ;(updateData as any).status = 'published'
+      ;(updateData as any).publishAt = ''
+    } else {
+      if (publishMode.value === 'scheduled') {
+        (updateData as any).status = 'scheduled'
+        ;(updateData as any).publishAt = toServerTime(publishAt)
+      } else if (publishMode.value === 'draft') {
+        (updateData as any).status = 'draft'
+      } else if (publishMode.value === 'publish') {
+        (updateData as any).status = 'published'
+      }
     }
     const updated = await assignmentStore.updateAssignment(editingAssignmentId.value, updateData);
     // 编辑时，如有新文件被选择，则上传
@@ -541,7 +567,7 @@ const handleSubmit = async () => {
       await refreshAttachments(editingAssignmentId.value);
     }
     // 若选择立即发布且之前不是已发布，则调用发布接口
-    if (publishMode.value === 'publish' && originalStatus.value !== 'published') {
+    if (assignmentType.value === 'normal' && publishMode.value === 'publish' && originalStatus.value !== 'published') {
       try { await assignmentStore.publishAssignment(String(editingAssignmentId.value)) } catch {}
     }
     // 强制刷新列表以获取后端归一化后的时间
@@ -557,7 +583,11 @@ const handleSubmit = async () => {
     // 默认满分 100 分
     (createData as any).maxScore = 100;
     (createData as any).assignmentType = assignmentType.value
-    if (publishMode.value === 'scheduled') {
+    if (assignmentType.value === 'course_bound') {
+      // 课程作业默认长期可用：直接创建为已发布（无发布时间/截止时间）
+      ;(createData as any).status = 'published'
+      ;(createData as any).publishAt = ''
+    } else if (publishMode.value === 'scheduled') {
       (createData as any).status = 'scheduled'
       ;(createData as any).publishAt = toServerTime(form.publishAt)
     } else {
@@ -576,7 +606,7 @@ const handleSubmit = async () => {
         }
       }
       // 若选择立即发布，则在附件上传完成后发布
-      if (assignmentId && publishMode.value === 'publish') {
+      if (assignmentId && assignmentType.value === 'normal' && publishMode.value === 'publish') {
         try { await assignmentStore.publishAssignment(String(assignmentId)) } catch {}
         // 发布后刷新列表，避免仍显示为草稿
         try {
@@ -694,6 +724,20 @@ onMounted(async () => {
 watch([selectedCourseId, statusFilter, pageSize], () => {
   currentPage.value = 1
   handleCourseFilterChange()
+})
+
+// 切换作业类型时，避免普通作业的“定时发布/发布时间”残留到课程作业
+watch(assignmentType, (nv, ov) => {
+  if (nv === ov) return
+  if (nv === 'course_bound') {
+    // 课程作业：长期可用，不显示/不提交发布时间与截止时间
+    publishMode.value = 'publish'
+    form.publishAt = ''
+    form.dueDate = ''
+  } else if (nv === 'normal') {
+    // 从课程作业切回普通作业：给一个安全默认值
+    if (!isEditing.value) publishMode.value = 'draft'
+  }
 })
 
 let searchTimer: any = null

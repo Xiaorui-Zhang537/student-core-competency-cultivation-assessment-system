@@ -1,6 +1,7 @@
 {
   "shared": {
     "date": "选择日期",
+    "noDeadline": "无截止",
     "common": {
       "latest": "最新",
       "hot": "最热",

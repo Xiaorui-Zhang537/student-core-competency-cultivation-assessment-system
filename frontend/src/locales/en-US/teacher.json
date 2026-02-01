@@ -138,6 +138,7 @@
 			},
 			"searchPlaceholder": "Search assignments",
 			"status": {
+				"persistent": "Persistent",
 				"pendingReview": "Pending review",
 				"ended": "Ended"
 			},
@@ -235,6 +236,7 @@
 									"statusLabel": "Status",
 									"all": "All",
 									"submitted": "Submitted",
+									"graded": "Graded",
 									"unsubmitted": "Unsubmitted"
 							},
 							"actions": {

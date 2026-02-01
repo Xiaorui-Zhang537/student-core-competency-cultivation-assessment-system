@@ -47,10 +47,11 @@ export const submissionApi = {
 
   // Export submission as ZIP (authorized blob)
   exportSubmission: (submissionId: string): Promise<Blob> => {
+    // 注意：本项目 axios response interceptor 会“解包”response.data 并直接返回，
+    // 对于文件流（blob）这里拿到的就是 Blob 本身，不要再取 response.data
     return import('./config').then(({ default: apiClient }: any) =>
-      apiClient.get(`/submissions/${submissionId}/export`, { responseType: 'blob' })
-        .then((response: any) => response as Blob)
-    );
+      apiClient.get(`/submissions/${submissionId}/export`, { responseType: 'blob', suppressLog: true }) as unknown as Blob
+    ) as unknown as Promise<Blob>;
   },
 
   // NOTE: These endpoints are related to grades, and will be used when Grade module is refactored.

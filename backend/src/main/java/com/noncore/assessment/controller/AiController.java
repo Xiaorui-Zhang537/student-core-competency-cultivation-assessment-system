@@ -19,6 +19,8 @@ import com.noncore.assessment.exception.ErrorCode;
 import com.noncore.assessment.service.AiService;
 import com.noncore.assessment.service.FileStorageService;
 import com.noncore.assessment.service.file.DocumentTextExtractor;
+import com.noncore.assessment.service.ai.AiGradingEnsembler;
+import com.noncore.assessment.service.ai.AiGradingNormalizer;
 import io.swagger.v3.oas.annotations.Operation;
 import jakarta.validation.Valid;
 import com.noncore.assessment.service.UserService;
@@ -163,7 +165,10 @@ public class AiController extends BaseController {
         java.util.List<Integer> ids = (java.util.List<Integer>) body.getOrDefault("fileIds", java.util.List.of());
         java.util.List<Long> fileIds = ids.stream().map(Integer::longValue).toList();
         String model = (String) body.get("model");
-        if (model == null || !model.startsWith("google/")) {
+        // 允许 google/* 与 glm-*，其余回退默认（避免前端选了 GLM 但后端被强制改为 Gemini）
+        if (model == null || model.isBlank()) {
+            model = "google/gemini-2.5-pro";
+        } else if (!(model.startsWith("google/") || model.startsWith("glm-"))) {
             model = "google/gemini-2.5-pro";
         }
         // 批改场景：默认强制 JSON-only
@@ -171,6 +176,13 @@ public class AiController extends BaseController {
         if (jsonOnly == null) jsonOnly = Boolean.TRUE;
         Boolean usePrompt = (Boolean) body.get("useGradingPrompt");
         if (usePrompt == null) usePrompt = Boolean.TRUE;
+        // 稳定化参数（可选）：默认保持旧行为（samples=1）
+        int samplesRequested = toInt(body.get("samples"), 1);
+        if (samplesRequested < 1) samplesRequested = 1;
+        if (samplesRequested > 3) samplesRequested = 3;
+        double diffThreshold = toDouble(body.get("diffThreshold"), 0.8);
+        if (diffThreshold < 0) diffThreshold = 0;
+        if (diffThreshold > 5) diffThreshold = 5;
 
         java.util.List<java.util.Map<String, Object>> results = new java.util.ArrayList<>();
         for (Long fid : fileIds) {
@@ -185,19 +197,32 @@ public class AiController extends BaseController {
                 req.setModel(model);
                 req.setJsonOnly(jsonOnly);
                 req.setUseGradingPrompt(usePrompt);
-                String resp = jsonOnly ? aiService.generateAnswerJsonOnly(req, userId) : aiService.generateAnswer(req, userId);
-                java.util.Map<String, Object> parsed = jsonOnly
-                        ? com.noncore.assessment.util.Jsons.parseObject(resp)
-                        : java.util.Map.of("text", resp);
+                // JSON-only：支持稳定化取样；非 JSON-only 保持一次调用（供前端 fallback 调试用）
+                String respText;
+                java.util.Map<String, Object> parsed;
+                if (Boolean.TRUE.equals(jsonOnly) && samplesRequested > 1) {
+                    var stable = generateStableJsonOnly(req, userId, samplesRequested, diffThreshold);
+                    parsed = stable.get("result") instanceof java.util.Map<?,?> m ? (java.util.Map<String, Object>) m : java.util.Map.of();
+                    respText = String.valueOf(stable.getOrDefault("rawJson", ""));
+                } else {
+                    respText = Boolean.TRUE.equals(jsonOnly)
+                            ? aiService.generateAnswerJsonOnly(req, userId)
+                            : aiService.generateAnswer(req, userId);
+                    java.util.Map<String, Object> p = Boolean.TRUE.equals(jsonOnly)
+                            ? com.noncore.assessment.util.Jsons.parseObject(respText)
+                            : java.util.Map.of("text", respText);
+                    // 单次也补齐 overall，保持输出一致（并同步 rawJson）
+                    if (Boolean.TRUE.equals(jsonOnly)) {
+                        p = AiGradingNormalizer.normalize(p);
+                        respText = com.noncore.assessment.util.Jsons.toJson(p);
+                    }
+                    parsed = p;
+                }
                 // save history when jsonOnly
                 if (jsonOnly) {
                     Double finalScore = null;
                     try {
-                        Object ov = ((java.util.Map<?,?>)parsed).get("overall");
-                        if (ov instanceof java.util.Map<?,?> ovm) {
-                            Object fs = ovm.get("final_score");
-                            if (fs != null) finalScore = Double.valueOf(String.valueOf(fs));
-                        }
+                        finalScore = AiGradingNormalizer.extractFinalScore05(parsed);
                     } catch (Exception ignored) {}
                     var rec = new com.noncore.assessment.entity.AiGradingHistory();
                     rec.setTeacherId(userId);
@@ -205,15 +230,15 @@ public class AiController extends BaseController {
                     rec.setFileName(fileName);
                     rec.setModel(model);
                     rec.setFinalScore(finalScore);
-                    rec.setRawJson(resp);
+                    rec.setRawJson(respText);
                     rec.setCreatedAt(java.time.LocalDateTime.now());
                     historyService.save(rec);
-                    results.add(new java.util.HashMap<>() {{
-                        put("fileId", fid);
-                        put("fileName", fileName);
-                        put("result", parsed);
-                        put("historyId", rec.getId());
-                    }});
+                    java.util.Map<String, Object> row = new java.util.HashMap<>();
+                    row.put("fileId", fid);
+                    row.put("fileName", fileName);
+                    row.put("result", parsed);
+                    row.put("historyId", rec.getId());
+                    results.add(row);
                 } else {
                     results.add(java.util.Map.of(
                             "fileId", fid,
@@ -242,17 +267,33 @@ public class AiController extends BaseController {
     @Operation(summary = "AI 批改单篇作文（强制 JSON 输出）")
     public ResponseEntity<ApiResponse<java.util.Map<String, Object>>> gradeEssay(@Valid @RequestBody AiChatRequest request) {
         Long userId = getCurrentUserId();
-        String json = aiService.generateAnswerJsonOnly(request, userId);
+        // 稳定化参数：默认保持旧行为（samples=1）
+        int samplesRequested = request.getSamples() == null ? 1 : request.getSamples();
+        if (samplesRequested < 1) samplesRequested = 1;
+        if (samplesRequested > 3) samplesRequested = 3;
+        double diffThreshold = request.getDiffThreshold() == null ? 0.8 : request.getDiffThreshold();
+        if (diffThreshold < 0) diffThreshold = 0;
+        if (diffThreshold > 5) diffThreshold = 5;
+
+        // 强制 JSON-only（与接口语义一致）
+        request.setJsonOnly(Boolean.TRUE);
+
+        String json;
+        java.util.Map<String, Object> parsed;
+        if (samplesRequested > 1) {
+            var stable = generateStableJsonOnly(request, userId, samplesRequested, diffThreshold);
+            parsed = stable.get("result") instanceof java.util.Map<?,?> m ? (java.util.Map<String, Object>) m : java.util.Map.of();
+            json = String.valueOf(stable.getOrDefault("rawJson", ""));
+        } else {
+            json = aiService.generateAnswerJsonOnly(request, userId);
+            parsed = AiGradingNormalizer.normalize(com.noncore.assessment.util.Jsons.parseObject(json));
+            json = com.noncore.assessment.util.Jsons.toJson(parsed);
+        }
         try {
-            java.util.Map<String, Object> parsed = com.noncore.assessment.util.Jsons.parseObject(json);
             // 写入 AI 批改历史（essay 无文件ID）
             try {
                 Double finalScore = null;
-                Object ov = parsed.get("overall");
-                if (ov instanceof java.util.Map<?,?> ovm) {
-                    Object fs = ovm.get("final_score");
-                    if (fs != null) finalScore = Double.valueOf(String.valueOf(fs));
-                }
+                finalScore = AiGradingNormalizer.extractFinalScore05(parsed);
                 var rec = new com.noncore.assessment.entity.AiGradingHistory();
                 rec.setTeacherId(userId);
                 rec.setFileId(null);
@@ -277,6 +318,84 @@ public class AiController extends BaseController {
         }
     }
 
+    /**
+     * 对 JSON-only 批改执行“2 次均值 + 分差大则第 3 次 + 取最近对”的稳定化算法，并输出聚合后的 JSON。
+     *
+     * @param baseRequest 已构造好的请求（messages/model/useGradingPrompt/jsonOnly 等）
+     * @param userId 当前教师ID
+     * @param samplesRequested 请求的取样次数（建议 2）
+     * @param diffThreshold 触发第 3 次的阈值（0~5 标尺，推荐 0.8）
+     * @return { result: Map, rawJson: String }
+     */
+    private java.util.Map<String, Object> generateStableJsonOnly(AiChatRequest baseRequest, Long userId, int samplesRequested, double diffThreshold) {
+        // 仅允许 1~3
+        int req = Math.max(1, Math.min(samplesRequested, 3));
+
+        java.util.List<java.util.Map<String, Object>> runs = new java.util.ArrayList<>();
+        java.util.List<String> rawRuns = new java.util.ArrayList<>();
+
+        // 1) 先跑两次（或一次）
+        int firstBatch = Math.min(req, 2);
+        for (int i = 0; i < firstBatch; i++) {
+            String json = aiService.generateAnswerJsonOnly(baseRequest, userId);
+            rawRuns.add(json);
+            try {
+                java.util.Map<String, Object> parsed = com.noncore.assessment.util.Jsons.parseObject(json);
+                runs.add(AiGradingNormalizer.normalize(parsed));
+            } catch (Exception ignored) {
+                // 忽略无效 JSON（后续若无可用结果则整体返回 INVALID_JSON）
+            }
+        }
+
+        // 2) 若两次都有效且分差过大，则补第 3 次（即使 samplesRequested=2，也允许触发一次“稳定补采样”）
+        if (runs.size() >= 2 && runs.size() < 3) {
+            double s1 = AiGradingNormalizer.extractFinalScore05(runs.get(0));
+            double s2 = AiGradingNormalizer.extractFinalScore05(runs.get(1));
+            if (Math.abs(s1 - s2) > diffThreshold) {
+                try {
+                    String json3 = aiService.generateAnswerJsonOnly(baseRequest, userId);
+                    rawRuns.add(json3);
+                    java.util.Map<String, Object> parsed3 = com.noncore.assessment.util.Jsons.parseObject(json3);
+                    runs.add(AiGradingNormalizer.normalize(parsed3));
+                } catch (Exception ignored) {}
+            }
+        }
+
+        // 3) 聚合：至少 1 条有效结果
+        if (runs.isEmpty()) {
+            // 将最后一次 raw 透出，便于排障
+            String raw = rawRuns.isEmpty() ? "" : rawRuns.get(rawRuns.size() - 1);
+            return java.util.Map.of(
+                    "result", java.util.Map.of("error", "INVALID_JSON", "message", "Invalid JSON returned by model", "raw", raw),
+                    "rawJson", raw
+            );
+        }
+
+        java.util.Map<String, Object> merged = AiGradingEnsembler.ensemble(runs, req, diffThreshold);
+        String rawJson = com.noncore.assessment.util.Jsons.toJson(merged);
+        return java.util.Map.of("result", merged, "rawJson", rawJson);
+    }
+
+    private int toInt(Object v, int def) {
+        if (v == null) return def;
+        try {
+            if (v instanceof Number n) return n.intValue();
+            return Integer.parseInt(String.valueOf(v));
+        } catch (Exception ignored) {
+            return def;
+        }
+    }
+
+    private double toDouble(Object v, double def) {
+        if (v == null) return def;
+        try {
+            if (v instanceof Number n) return n.doubleValue();
+            return Double.parseDouble(String.valueOf(v));
+        } catch (Exception ignored) {
+            return def;
+        }
+    }
+
     @PostMapping("/grade/essay/batch")
     @PreAuthorize("hasRole('TEACHER')")
     @Operation(summary = "AI 批量批改作文（强制 JSON 输出）")
@@ -284,18 +403,33 @@ public class AiController extends BaseController {
         Long userId = getCurrentUserId();
         java.util.List<java.util.Map<String, Object>> results = new java.util.ArrayList<>();
         for (AiChatRequest req : requests) {
-            String json = aiService.generateAnswerJsonOnly(req, userId);
+            // 稳定化参数：默认保持旧行为（samples=1）
+            int samplesRequested = req.getSamples() == null ? 1 : req.getSamples();
+            if (samplesRequested < 1) samplesRequested = 1;
+            if (samplesRequested > 3) samplesRequested = 3;
+            double diffThreshold = req.getDiffThreshold() == null ? 0.8 : req.getDiffThreshold();
+            if (diffThreshold < 0) diffThreshold = 0;
+            if (diffThreshold > 5) diffThreshold = 5;
+
+            req.setJsonOnly(Boolean.TRUE);
+
+            String json;
+            java.util.Map<String, Object> parsed;
+            if (samplesRequested > 1) {
+                var stable = generateStableJsonOnly(req, userId, samplesRequested, diffThreshold);
+                parsed = stable.get("result") instanceof java.util.Map<?,?> m ? (java.util.Map<String, Object>) m : java.util.Map.of();
+                json = String.valueOf(stable.getOrDefault("rawJson", ""));
+            } else {
+                json = aiService.generateAnswerJsonOnly(req, userId);
+                parsed = AiGradingNormalizer.normalize(com.noncore.assessment.util.Jsons.parseObject(json));
+                json = com.noncore.assessment.util.Jsons.toJson(parsed);
+            }
             try {
-                var parsed = com.noncore.assessment.util.Jsons.parseObject(json);
                 results.add(parsed);
                 // history
                 Double finalScore = null;
                 try {
-                    Object ov = ((java.util.Map<?,?>)parsed).get("overall");
-                    if (ov instanceof java.util.Map<?,?> ovm) {
-                        Object fs = ovm.get("final_score");
-                        if (fs != null) finalScore = Double.valueOf(String.valueOf(fs));
-                    }
+                    finalScore = AiGradingNormalizer.extractFinalScore05(parsed);
                 } catch (Exception ignored) {}
                 var rec = new com.noncore.assessment.entity.AiGradingHistory();
                 rec.setTeacherId(userId);
