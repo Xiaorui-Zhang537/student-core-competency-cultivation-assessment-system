@@ -89,8 +89,8 @@ jwt:
 file:
   upload-dir: ./uploads
   max-size: 50MB
-  allowed-extensions: jpg,jpeg,png,gif,pdf,doc,docx,xls,xlsx,ppt,pptx,txt,zip,rar,mp4,mov,avi,mkv,webm
-  purpose-max-sizes: course_material=1GB,course_video=1GB
+  allowed-extensions: jpg,jpeg,png,gif,pdf,doc,docx,xls,xlsx,ppt,pptx,txt,zip,rar,mp4,mov,avi,mkv,webm,wav,mp3,m4a,ogg
+  purpose-max-sizes: course_material=1GB,course_video=1GB,ai_voice=50MB
 
 # 日志配置
 logging:

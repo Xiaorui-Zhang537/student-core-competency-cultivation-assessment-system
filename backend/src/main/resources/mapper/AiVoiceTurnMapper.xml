@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.noncore.assessment.mapper.AiVoiceTurnMapper">
+
+    <resultMap id="BaseResultMap" type="com.noncore.assessment.entity.AiVoiceTurn">
+        <id column="id" property="id"/>
+        <result column="session_id" property="sessionId"/>
+        <result column="user_id" property="userId"/>
+        <result column="user_transcript" property="userTranscript"/>
+        <result column="assistant_text" property="assistantText"/>
+        <result column="user_audio_file_id" property="userAudioFileId"/>
+        <result column="assistant_audio_file_id" property="assistantAudioFileId"/>
+        <result column="created_at" property="createdAt"/>
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        id, session_id, user_id, user_transcript, assistant_text, user_audio_file_id, assistant_audio_file_id, created_at
+    </sql>
+
+    <insert id="insert" parameterType="com.noncore.assessment.entity.AiVoiceTurn" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO ai_voice_turns (session_id, user_id, user_transcript, assistant_text, user_audio_file_id, assistant_audio_file_id, created_at)
+        VALUES (#{sessionId}, #{userId}, #{userTranscript}, #{assistantText}, #{userAudioFileId}, #{assistantAudioFileId}, NOW())
+    </insert>
+
+    <select id="listBySession" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM ai_voice_turns
+        WHERE session_id = #{sessionId}
+          AND user_id = #{userId}
+        ORDER BY created_at ASC
+        LIMIT #{offset}, #{size}
+    </select>
+
+</mapper>
+

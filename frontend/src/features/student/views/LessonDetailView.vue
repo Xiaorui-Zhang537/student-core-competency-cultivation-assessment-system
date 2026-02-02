@@ -212,8 +212,17 @@ const blockScrub = computed(() => {
   return (l.allowScrubbing ?? true) === false
 })
 
+function buildAuthedFileUrl(path: string): string {
+  const token = (() => { try { return localStorage.getItem('token') } catch { return null } })()
+  const cleanBase = String(baseURL || '/api').replace(/\/+$/, '')
+  const cleanPath = path.startsWith('/') ? path : `/${path}`
+  if (!token) return `${cleanBase}${cleanPath}`
+  const join = cleanPath.includes('?') ? '&' : '?'
+  return `${cleanBase}${cleanPath}${join}token=${encodeURIComponent(String(token))}`
+}
+
 function resolveVideo(v: string) {
-  return /^\d+$/.test(String(v)) ? `${baseURL}/files/${v}/stream` : v
+  return /^\d+$/.test(String(v)) ? buildAuthedFileUrl(`/files/${encodeURIComponent(String(v))}/stream`) : v
 }
 
 function guessMimeFromUrl(url: string): string {
@@ -278,7 +287,7 @@ async function loadAll(lessonId: string) {
         videoSrc.value = url
         videoError.value = ''
       } catch {
-        videoSrc.value = `${baseURL}/files/${id}/preview?inline=1`
+        videoSrc.value = buildAuthedFileUrl(`/files/${encodeURIComponent(String(id))}/preview?inline=1`)
         videoType.value = 'video/mp4'
         videoError.value = ''
       }
@@ -295,7 +304,7 @@ async function loadAll(lessonId: string) {
           videoError.value = ''
         } catch {
           const id = m[1]
-          videoSrc.value = `${baseURL}/files/${id}/stream`
+          videoSrc.value = buildAuthedFileUrl(`/files/${encodeURIComponent(String(id))}/stream`)
           videoType.value = guessMimeFromUrl(direct)
           videoError.value = ''
         }

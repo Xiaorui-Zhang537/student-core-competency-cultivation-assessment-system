@@ -30,6 +30,8 @@
   - [i18n 示例](../i18n-examples.md)
 - API 约定
   - [前端 API 索引](./api/index.md)
+- 口语训练
+  - [实时语音口语训练](./voice-practice.md)
 - 组件与样式
   - [UI 统一规范](./ui-unification.md)
   - UI 变更摘要：本次引入药丸样式与玻璃徽章（Badge），并统一全局选择器/搜索/过滤器到 `/ui` 组件；详情见“UI 统一规范”。

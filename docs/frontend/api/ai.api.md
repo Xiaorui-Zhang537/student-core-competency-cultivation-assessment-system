@@ -2,6 +2,7 @@
 
 ## 方法签名
 - `chat(data: { messages: { role:'user'|'assistant'|'system'; content: string }[]; courseId?; studentIds?; model? })`
+- `saveVoiceTurn(data: { conversationId: number; model?; userTranscript?; assistantText?; userAudioFileId?; assistantAudioFileId?; scenario?; locale? })`
 - `createConversation(data)` / `listConversations(params)` / `updateConversation(id, data)` / `removeConversation(id)`
 - `listMessages(id, params)`
 - `getMemory()` / `updateMemory(data)`

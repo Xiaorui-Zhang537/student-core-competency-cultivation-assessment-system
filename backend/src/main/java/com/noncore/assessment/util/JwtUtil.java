@@ -119,7 +119,16 @@ public class JwtUtil {
      * @return 用户ID
      */
     public Long getUserIdFromToken(String token) {
-        return getClaimFromToken(token, claims -> claims.get("userId", Long.class));
+        return getClaimFromToken(token, claims -> {
+            Object v = claims.get("userId");
+            if (v == null) return null;
+            if (v instanceof Number n) return n.longValue();
+            try {
+                return Long.parseLong(String.valueOf(v));
+            } catch (Exception e) {
+                return null;
+            }
+        });
     }
 
     /**

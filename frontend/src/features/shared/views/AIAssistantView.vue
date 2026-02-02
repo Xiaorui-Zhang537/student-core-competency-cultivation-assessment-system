@@ -2,7 +2,13 @@
   <div class="relative">
     <div class="min-h-screen p-4 md:p-6">
       <div class="max-w-6xl mx-auto mb-4 md:mb-6">
-        <page-header :title="t('teacher.ai.title')" :subtitle="t('teacher.ai.subtitle')" />
+        <page-header :title="t('teacher.ai.title')" :subtitle="t('teacher.ai.subtitle')">
+          <template #actions>
+            <Button variant="success" icon="user-plus" class="whitespace-nowrap shrink-0" @click="goVoicePractice">
+              {{ t('shared.voicePractice.entry') }}
+            </Button>
+          </template>
+        </page-header>
       </div>
 
       <div class="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-12 gap-4">
@@ -106,6 +112,15 @@
               <div class="max-w-[80%] rounded-2xl px-4 py-2 text-sm"
                    :class="m.role === 'user' ? 'glass-bubble glass-bubble-mine rounded-br-none text-white' : 'glass-bubble glass-bubble-peer rounded-bl-none text-base-content'">
                 <div class="prose prose-sm dark:prose-invert max-w-none ai-md" v-html="renderMarkdown(m.content)"></div>
+                <div v-if="m.attachments && m.attachments.length" class="mt-2 space-y-2">
+                  <div class="text-xs text-gray-500 dark:text-gray-400">{{ t('shared.voicePractice.attachments') || '附件' }}</div>
+                  <div class="space-y-2">
+                    <div v-for="fid in m.attachments" :key="fid" class="flex items-center gap-2">
+                      <audio :src="buildAuthedStreamUrl(fid)" controls class="w-full" />
+                      <Button size="xs" variant="ghost" class="shrink-0" @click="download(fid)">{{ t('common.download') || '下载' }}</Button>
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
@@ -129,7 +144,13 @@
               </Button>
               <span v-if="pendingCount>0" class="text-xs px-2 py-0.5 rounded bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300">已选 {{ pendingCount }} 项</span>
             </div>
-            <Button variant="primary" :disabled="!canSend || sending" :loading="sending" @click="send">
+            <Button
+              variant="primary"
+              class="shrink-0 whitespace-nowrap min-w-[96px]"
+              :disabled="!canSend || sending"
+              :loading="sending"
+              @click="send"
+            >
               <span v-if="sending">{{ t('teacher.ai.thinking') || 'AI 正在思考...' }}</span>
               <span v-else>{{ t('teacher.ai.send') || '发送' }}</span>
             </Button>
@@ -159,6 +180,7 @@
 
 <script setup lang="ts">
 import { computed, onMounted, ref, watch, watchEffect } from 'vue'
+import { useRouter } from 'vue-router'
 import { useAIStore } from '@/stores/ai'
 import { useI18n } from 'vue-i18n'
 import { fileApi } from '@/api/file.api'
@@ -176,6 +198,7 @@ import { useAuthStore } from '@/stores/auth'
 
 
 const { t } = useI18n()
+const router = useRouter()
 const ai = useAIStore()
 const auth = useAuthStore()
 const q = ref('')
@@ -282,6 +305,27 @@ const send = async () => {
   }
   if (activeConversationId.value) ai.saveDraft(activeConversationId.value, '')
   else newDraft.value = ''
+}
+
+const goVoicePractice = () => {
+  try {
+    const role = userRole.value
+    if (role === 'TEACHER') return router.push('/teacher/assistant/voice')
+    return router.push('/student/assistant/voice')
+  } catch {}
+}
+
+const buildAuthedStreamUrl = (fileId: number) => {
+  const token = (() => { try { return localStorage.getItem('token') } catch { return null } })()
+  const base = `/files/${encodeURIComponent(String(fileId))}/stream`
+  const url = token ? `${base}?token=${encodeURIComponent(String(token))}` : base
+  return fileApi.buildFileUrl(url)
+}
+
+const download = async (fileId: number) => {
+  try {
+    await fileApi.downloadFile(fileId)
+  } catch {}
 }
 const triggerPick = () => fileInput.value?.click()
 const handlePickFiles = async (e: Event) => {

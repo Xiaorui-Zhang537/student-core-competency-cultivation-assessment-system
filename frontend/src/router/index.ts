@@ -157,6 +157,13 @@ const routes = [
       }
       ,
       {
+        path: 'assistant/voice',
+        name: 'StudentAssistantVoice',
+        component: () => import('@/features/shared/views/VoicePracticeView.vue'),
+        meta: { requiresAuth: true }
+      }
+      ,
+      {
         path: 'help',
         name: 'StudentHelp',
         component: () => import('@/features/shared/views/HelpView.vue'),
@@ -258,6 +265,12 @@ const routes = [
         path: 'assistant',
         name: 'TeacherAssistant',
         component: () => import('@/features/shared/views/AIAssistantView.vue'),
+        meta: { requiresAuth: true, role: 'TEACHER' }
+      },
+      {
+        path: 'assistant/voice',
+        name: 'TeacherAssistantVoice',
+        component: () => import('@/features/shared/views/VoicePracticeView.vue'),
         meta: { requiresAuth: true, role: 'TEACHER' }
       },
       {

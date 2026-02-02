@@ -59,7 +59,7 @@ import { computed, useSlots } from 'vue'
 import LiquidGlass from '@/components/ui/LiquidGlass.vue'
 
 interface Props {
-  variant?: 'glass' | 'glass-ghost' | 'primary' | 'secondary' | 'outline' | 'ghost' | 'danger' | 'success' | 'warning' | 'indigo' | 'purple' | 'teal'
+  variant?: 'glass' | 'glass-ghost' | 'menu' | 'primary' | 'secondary' | 'outline' | 'ghost' | 'danger' | 'success' | 'warning' | 'indigo' | 'purple' | 'teal' | 'info'
   size?: 'xs' | 'sm' | 'md' | 'lg' | 'xl'
   loading?: boolean
   disabled?: boolean
@@ -97,7 +97,10 @@ const sizeClasses = computed(() => {
 })
 
 const contentGapClass = computed(() => {
-  return (props.loading || slots.icon || slots.suffix) ? 'gap-2' : ''
+  // 兼容两种图标用法：
+  // - 通过 slot `icon`
+  // - 通过 props.icon（常用）
+  return (props.loading || !!props.icon || slots.icon || slots.suffix) ? 'gap-2' : ''
 })
 
 const tag = computed(() => props.as || 'button')

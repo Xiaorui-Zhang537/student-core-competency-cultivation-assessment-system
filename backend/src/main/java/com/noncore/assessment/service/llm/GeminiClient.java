@@ -10,6 +10,7 @@ import org.springframework.http.*;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
+import org.springframework.web.client.HttpStatusCodeException;
 
 import java.util.List;
 import java.util.Map;
@@ -27,49 +28,32 @@ import java.net.Proxy;
 @Component
 public class GeminiClient {
 
-    private final RestTemplate restTemplate;
+    private final RestTemplate directRestTemplate;
     private final AiConfigProperties aiConfig;
 
     @Autowired
     public GeminiClient(AiConfigProperties aiConfig) {
         this.aiConfig = aiConfig;
-        this.restTemplate = buildRestTemplate();
+        this.directRestTemplate = buildRestTemplate(false);
     }
 
-    private RestTemplate buildRestTemplate() {
+    private RestTemplate buildRestTemplate(boolean useProxy) {
         SimpleClientHttpRequestFactory factory = new SimpleClientHttpRequestFactory();
         AiConfigProperties.ProxyConfig pc = aiConfig.getProxy();
         factory.setConnectTimeout(pc.getConnectTimeoutMs());
         factory.setReadTimeout(pc.getReadTimeoutMs());
-        if (pc != null && pc.isEnabled()) {
+        if (useProxy && pc != null && pc.isEnabled()) {
             Proxy proxy = new Proxy(
-                    "SOCKS".equalsIgnoreCase(pc.getType()) ? Proxy.Type.SOCKS : Proxy.Type.HTTP,
-                    new InetSocketAddress(pc.getHost(), pc.getPort())
+                "SOCKS".equalsIgnoreCase(pc.getType()) ? Proxy.Type.SOCKS : Proxy.Type.HTTP,
+                new InetSocketAddress(pc.getHost(), pc.getPort())
             );
             factory.setProxy(proxy);
         }
         return new RestTemplate(factory);
     }
 
-    /**
-     * 根据当前配置构建 RestTemplate（用于在“需要代理/不需要代理”之间切换）。
-     *
-     * @param alwaysUseProxy 若为 true，将强制启用代理（即使配置中 enabled=false 也会临时启用）
-     */
-    private RestTemplate buildRestTemplate(boolean alwaysUseProxy) {
-        if (!alwaysUseProxy) {
-            return buildRestTemplate();
-        }
-        SimpleClientHttpRequestFactory factory = new SimpleClientHttpRequestFactory();
-        AiConfigProperties.ProxyConfig pc = aiConfig.getProxy();
-        factory.setConnectTimeout(pc.getConnectTimeoutMs());
-        factory.setReadTimeout(pc.getReadTimeoutMs());
-        Proxy proxy = new Proxy(
-                "SOCKS".equalsIgnoreCase(pc.getType()) ? Proxy.Type.SOCKS : Proxy.Type.HTTP,
-                new InetSocketAddress(pc.getHost(), pc.getPort())
-        );
-        factory.setProxy(proxy);
-        return new RestTemplate(factory);
+    private RestTemplate buildProxyRestTemplate() {
+        return buildRestTemplate(true);
     }
 
     public String generate(List<Map<String, Object>> partsMessages, String model, boolean jsonOnly, String baseUrl, String apiKey) {
@@ -116,15 +100,32 @@ public class GeminiClient {
         long baseBackoff = Math.max(0, rc.getBackoffMs());
         long jitter = Math.max(0, rc.getJitterMs());
 
-        boolean preferProxy = shouldUseProxy(baseUrl);
-        RestTemplate primaryRt = preferProxy ? buildRestTemplate(true) : restTemplate;
+        AiConfigProperties.ProxyConfig pc = aiConfig.getProxy();
+        boolean proxyEnabled = pc != null && pc.isEnabled();
+        boolean alwaysProxy = proxyEnabled && pc.isAlwaysUseProxy();
+        boolean allowRetryWithProxy = proxyEnabled && pc.isAutoRetryWithProxy() && !alwaysProxy;
+
+        // 默认直连；仅在 alwaysUseProxy=true 时强制走代理；否则直连失败后再切代理重试一次
+        RestTemplate rt = alwaysProxy ? buildProxyRestTemplate() : directRestTemplate;
+        boolean usingProxy = alwaysProxy;
+        boolean switchedToProxy = alwaysProxy;
+
+        int maxAttempts = attempts + (allowRetryWithProxy ? 1 : 0);
 
         RestClientException last = null;
-        for (int i = 1; i <= attempts; i++) {
+        for (int i = 1; i <= maxAttempts; i++) {
             try {
+                if (i == 1) {
+                    if (usingProxy) {
+                        log.info("Gemini generateContent via proxy {}:{} (type={}, model={}, jsonOnly={})",
+                            pc.getHost(), pc.getPort(), pc.getType(), model, jsonOnly);
+                    } else {
+                        log.info("Gemini generateContent direct (model={}, jsonOnly={})", model, jsonOnly);
+                    }
+                }
                 HttpEntity<RequestBody> entity = new HttpEntity<>(body, headers);
                 @SuppressWarnings("unchecked")
-                ResponseEntity<Map<String, Object>> resp = (ResponseEntity<Map<String, Object>>) (ResponseEntity<?>) primaryRt.exchange(url, HttpMethod.POST, entity, Map.class);
+                ResponseEntity<Map<String, Object>> resp = (ResponseEntity<Map<String, Object>>) (ResponseEntity<?>) rt.exchange(url, HttpMethod.POST, entity, Map.class);
                 if (!resp.getStatusCode().is2xxSuccessful() || resp.getBody() == null) {
                     log.error("Gemini non-2xx or empty body: status={}, body={}", resp.getStatusCode(), resp.getBody());
                     throw new BusinessException(ErrorCode.SYSTEM_ERROR, "Gemini错误: " + resp.getStatusCode());
@@ -150,10 +151,34 @@ public class GeminiClient {
                 throw new BusinessException(ErrorCode.SYSTEM_ERROR, "无法解析大模型返回");
             } catch (RestClientException e) {
                 last = e;
+
+                // 认证/权限/配额等错误：把 Google 的返回原因透出（便于定位“Key 限制/未启用 API/无权限”）
+                if (e instanceof HttpStatusCodeException he) {
+                    String raw = he.getResponseBodyAsString();
+                    String brief = raw == null ? "" : raw.trim();
+                    if (brief.length() > 800) {
+                        brief = brief.substring(0, 800) + "...(truncated)";
+                    }
+                    int sc = he.getStatusCode().value();
+                    log.warn("Gemini http error status={}, body={}", sc, brief);
+                    throw new BusinessException(ErrorCode.SYSTEM_ERROR,
+                        "Gemini HTTP " + sc + (brief.isBlank() ? "" : (": " + brief)));
+                }
+
+                // 直连失败时（网络/握手类错误）自动切代理重试一次
+                if (!switchedToProxy && allowRetryWithProxy && looksLikeNetworkIssue(e)) {
+                    switchedToProxy = true;
+                    usingProxy = true;
+                    rt = buildProxyRestTemplate();
+                    log.warn("Gemini direct failed, retrying with proxy {}:{} (type={}) ... err={}",
+                        pc.getHost(), pc.getPort(), pc.getType(), safeErr(e));
+                    continue;
+                }
+
                 // 判断是否 429/503，若是则指数退避重试
                 int sc = extractStatusCode(e);
                 boolean retryable = (sc == 429 || sc == 503);
-                if (retryable && i < attempts) {
+                if (retryable && i < maxAttempts) {
                     long sleep = (long) (baseBackoff * Math.pow(2, i - 1) + Math.random() * jitter);
                     log.warn("Gemini {} received (status={}), retrying in {} ms... (attempt {}/{})", sc, sc, sleep, i + 1, attempts);
                     try { Thread.sleep(sleep); } catch (InterruptedException ignored) { }
@@ -175,15 +200,31 @@ public class GeminiClient {
         return "user";
     }
 
-    private boolean shouldUseProxy(String baseUrl) {
-        AiConfigProperties.ProxyConfig pc = aiConfig.getProxy();
-        if (!pc.isEnabled()) {
-            return false;
+    private boolean looksLikeNetworkIssue(RestClientException e) {
+        Throwable t = e;
+        // unwrap common wrappers
+        for (int i = 0; i < 4 && t != null; i++) {
+            if (t instanceof org.springframework.web.client.ResourceAccessException rae && rae.getCause() != null) {
+                t = rae.getCause();
+                continue;
+            }
+            if (t.getCause() == null) break;
+            t = t.getCause();
         }
-        if (pc.isAlwaysUseProxy()) {
-            return true;
+        if (t == null) return false;
+        return (t instanceof java.net.ConnectException)
+            || (t instanceof java.net.UnknownHostException)
+            || (t instanceof java.net.SocketTimeoutException)
+            || (t instanceof javax.net.ssl.SSLHandshakeException)
+            || (t instanceof java.io.EOFException);
+    }
+
+    private String safeErr(Exception e) {
+        try {
+            return e.getClass().getSimpleName() + ": " + (e.getMessage() == null ? "" : e.getMessage());
+        } catch (Exception ignore) {
+            return "unknown";
         }
-        return baseUrl != null && baseUrl.contains("googleapis.com");
     }
 
     private String normalizeBaseUrl(String v) { return (v == null) ? "" : (v.endsWith("/") ? v.substring(0, v.length()-1) : v); }

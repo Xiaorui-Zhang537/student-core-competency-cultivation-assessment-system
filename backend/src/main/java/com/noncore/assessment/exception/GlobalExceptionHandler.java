@@ -5,6 +5,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.core.env.Environment;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.core.AuthenticationException;
@@ -35,6 +36,11 @@ import java.util.Set;
 public class GlobalExceptionHandler {
 
     private static final Logger logger = LoggerFactory.getLogger(GlobalExceptionHandler.class);
+    private final Environment environment;
+
+    public GlobalExceptionHandler(Environment environment) {
+        this.environment = environment;
+    }
 
     /**
      * 处理自定义业务异常
@@ -204,6 +210,31 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ApiResponse<Object>> handleGenericException(Exception e, HttpServletRequest request) {
         logger.error("未知异常: {} - {}", request.getRequestURI(), e.getMessage(), e);
+        // 开发环境：返回更可诊断的信息（不包含敏感内容；长度截断）
+        boolean isDev = false;
+        try {
+            String[] profiles = environment != null ? environment.getActiveProfiles() : new String[0];
+            if (profiles != null) {
+                for (String p : profiles) {
+                    if ("dev".equalsIgnoreCase(p)) {
+                        isDev = true;
+                        break;
+                    }
+                }
+            }
+        } catch (Exception ignore) { }
+
+        if (isDev) {
+            String msg = e.getMessage() == null ? "" : e.getMessage();
+            if (msg.length() > 800) msg = msg.substring(0, 800) + "...(truncated)";
+            String detail = e.getClass().getName() + (msg.isBlank() ? "" : (": " + msg));
+            Map<String, Object> data = new HashMap<>();
+            data.put("path", request.getRequestURI());
+            data.put("detail", detail);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(ApiResponse.error(500, "系统发生未知错误（dev 诊断模式）", data));
+        }
+
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                 .body(ApiResponse.error(500, "系统发生未知错误，请联系管理员"));
     }

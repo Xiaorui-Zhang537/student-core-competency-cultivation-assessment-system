@@ -115,6 +115,13 @@ const tryLoadBlob = async () => {
     const s = String(av)
     const isHttp = /^https?:\/\//i.test(s)
     if (isHttp) { blobUrl.value = null; hadError.value = false; return }
+    // 未登录时，不去请求受保护的 /files/*，避免控制台刷 401；直接走 fallback/slot
+    const token = (() => { try { return localStorage.getItem('token') } catch { return null } })()
+    if (!token) {
+      blobUrl.value = null
+      hadError.value = true
+      return
+    }
     // 受保护预览：优先根据文件ID走 /files/{id}/preview
     const id = s.startsWith('/') ? extractFileIdFromPath(s) : s
     let resp: any = null

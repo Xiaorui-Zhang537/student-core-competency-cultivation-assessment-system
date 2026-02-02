@@ -3,6 +3,8 @@ package com.noncore.assessment.controller;
 import com.noncore.assessment.behavior.BehaviorEventRecorder;
 import com.noncore.assessment.behavior.BehaviorEventType;
 import com.noncore.assessment.entity.FileRecord;
+import com.noncore.assessment.exception.BusinessException;
+import com.noncore.assessment.exception.ErrorCode;
 import com.noncore.assessment.service.FileStorageService;
 import com.noncore.assessment.service.UserService;
 import com.noncore.assessment.util.ApiResponse;
@@ -19,8 +21,10 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
+import java.util.Base64;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 /**
  * 文件管理控制器
@@ -37,6 +41,13 @@ public class FileController extends BaseController {
 
     private final FileStorageService fileStorageService;
     private final BehaviorEventRecorder behaviorEventRecorder;
+
+    /**
+     * 1x1 透明 PNG（用于头像等图片丢失时的降级显示，避免前端反复 4xx 报错刷屏）
+     */
+    private static final byte[] TRANSPARENT_PNG_1X1 = Base64.getDecoder().decode(
+            "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO3Z5nQAAAAASUVORK5CYII="
+    );
 
     public FileController(FileStorageService fileStorageService,
                           BehaviorEventRecorder behaviorEventRecorder,
@@ -205,7 +216,23 @@ public class FileController extends BaseController {
         boolean previewable = mt.startsWith("image/") || mt.startsWith("application/pdf");
         if (!previewable) return ResponseEntity.badRequest().build();
 
-        byte[] fileBytes = fileStorageService.downloadFile(fileId, userId);
+        byte[] fileBytes;
+        try {
+            fileBytes = fileStorageService.downloadFile(fileId, userId);
+        } catch (BusinessException e) {
+            // 图片文件丢失：返回透明占位图，避免前端头像请求持续刷 4xx
+            if (mt.startsWith("image/") && (
+                    Objects.equals(e.getCode(), ErrorCode.FILE_LOST.getCode())
+                            || Objects.equals(e.getCode(), ErrorCode.FILE_NOT_FOUND.getCode())
+            )) {
+                HttpHeaders headers = new HttpHeaders();
+                headers.setContentType(MediaType.IMAGE_PNG);
+                headers.setContentLength(TRANSPARENT_PNG_1X1.length);
+                return ResponseEntity.ok().headers(headers).body(TRANSPARENT_PNG_1X1);
+            }
+            // 其他情况：保持原业务异常语义
+            throw e;
+        }
         // 行为记录：资源访问（只记录不评价）
         try {
             if (hasRole("STUDENT")) {
@@ -339,6 +366,10 @@ public class FileController extends BaseController {
             case "avi" -> "video/x-msvideo";
             case "mkv" -> "video/x-matroska";
             case "webm" -> "video/webm";
+            case "wav" -> "audio/wav";
+            case "mp3" -> "audio/mpeg";
+            case "m4a" -> "audio/mp4";
+            case "ogg" -> "audio/ogg";
             case "doc" -> "application/msword";
             case "docx" -> "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
             case "ppt" -> "application/vnd.ms-powerpoint";

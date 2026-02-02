@@ -29,7 +29,18 @@ const authHeaders = (): Record<string, string> => {
   return token ? { Authorization: `Bearer ${token}` } : {};
 };
 
+const appendTokenQuery = (url: string): string => {
+  const token = (() => {
+    try { return localStorage.getItem('token'); } catch { return null; }
+  })();
+  if (!token) return url;
+  const join = url.includes('?') ? '&' : '?';
+  return `${url}${join}token=${encodeURIComponent(String(token))}`;
+};
+
 export const fileApi = {
+  // 兼容：部分旧代码以 fileApi.buildFileUrl(...) 调用
+  buildFileUrl: buildUrl,
   // 返回值已被 axios 拦截器解包为 data
   uploadFile: (file: File, extra?: { purpose?: string; relatedId?: string | number }): Promise<FileInfo | any> => {
     const formData = new FormData();
@@ -92,9 +103,12 @@ export const fileApi = {
   ,
   // 预览图片（Blob，带鉴权）- 使用 fetch 避免 axios 错误日志刷屏
   getPreview: async (fileId: string | number): Promise<Blob> => {
-    const url = buildUrl(`/files/${encodeURIComponent(String(fileId))}/preview`);
+    // 双保险：既带 Authorization，也把 token 拼到 query（避免某些环境 Authorization 被拦截）
+    const url = appendTokenQuery(buildUrl(`/files/${encodeURIComponent(String(fileId))}/preview`));
     const headers: Record<string, string> = {
-      Accept: 'image/*,application/pdf,application/octet-stream'
+      // 关键：必须包含 application/json，否则后端在抛出 BusinessException（JSON）时可能因为 Accept 不匹配而触发 406，
+      // 随后走 /error 分发，前端最终看到的会是误导性的 401。
+      Accept: 'image/*,application/pdf,application/octet-stream,application/json'
     };
     const token = authHeaders();
     if (token.Authorization) headers.Authorization = token.Authorization;

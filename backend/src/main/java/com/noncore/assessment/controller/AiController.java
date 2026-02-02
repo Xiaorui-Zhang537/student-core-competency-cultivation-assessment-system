@@ -1,15 +1,19 @@
 package com.noncore.assessment.controller;
 
 import com.noncore.assessment.dto.request.AiChatRequest;
+import com.noncore.assessment.dto.request.AiVoiceTurnRequest;
 import com.noncore.assessment.dto.response.AiChatResponse;
+import com.noncore.assessment.dto.response.AiVoiceTurnResponse;
 import com.noncore.assessment.dto.request.CreateConversationRequest;
 import com.noncore.assessment.dto.request.UpdateConversationRequest;
 import com.noncore.assessment.dto.request.UpdateMemoryRequest;
 import com.noncore.assessment.entity.AiConversation;
 import com.noncore.assessment.entity.AiMessage;
 import com.noncore.assessment.entity.AiMemory;
+import com.noncore.assessment.entity.AiVoiceTurn;
 import com.noncore.assessment.service.AiConversationService;
 import com.noncore.assessment.service.AiMemoryService;
+import com.noncore.assessment.service.AiVoicePracticeService;
 import com.noncore.assessment.util.PageResult;
 import com.noncore.assessment.util.ApiResponse;
 import com.noncore.assessment.behavior.BehaviorEventRecorder;
@@ -35,6 +39,7 @@ public class AiController extends BaseController {
     private final AiService aiService;
     private final AiConversationService conversationService;
     private final AiMemoryService memoryService;
+    private final AiVoicePracticeService voicePracticeService;
     private final FileStorageService fileStorageService;
     private final DocumentTextExtractor documentTextExtractor;
     private final com.noncore.assessment.config.AiConfigProperties aiConfigProperties;
@@ -43,6 +48,7 @@ public class AiController extends BaseController {
     public AiController(AiService aiService, UserService userService,
                         AiConversationService conversationService,
                         AiMemoryService memoryService,
+                        AiVoicePracticeService voicePracticeService,
                         FileStorageService fileStorageService,
                         DocumentTextExtractor documentTextExtractor,
                         com.noncore.assessment.service.AiGradingHistoryService historyService,
@@ -52,6 +58,7 @@ public class AiController extends BaseController {
         this.aiService = aiService;
         this.conversationService = conversationService;
         this.memoryService = memoryService;
+        this.voicePracticeService = voicePracticeService;
         this.fileStorageService = fileStorageService;
         this.documentTextExtractor = documentTextExtractor;
         this.historyService = historyService;
@@ -140,6 +147,35 @@ public class AiController extends BaseController {
         var assistant = conversationService.appendMessage(userId, convId, "assistant", answer, null);
 
         return ResponseEntity.ok(ApiResponse.success(new AiChatResponse(answer, convId, assistant.getId())));
+    }
+
+    /**
+     * 口语训练：将一次“用户转写/音频 + AI 回复文本/音频”写入 AI 会话消息中。
+     * <p>
+     * 说明：音频文件需先通过 /files/upload 上传，获得 fileId 后再绑定到本接口。
+     */
+    @PostMapping("/voice/turns")
+    @PreAuthorize("isAuthenticated()")
+    @Operation(summary = "口语训练回合入库", description = "将语音训练的一次回合（转写+音频附件）写入独立的语音记录（不写入 AI 聊天会话）")
+    public ResponseEntity<ApiResponse<AiVoiceTurnResponse>> saveVoiceTurn(@Valid @RequestBody AiVoiceTurnRequest req) {
+        Long userId = getCurrentUserId();
+        Long sessionId = req.getSessionId();
+        if (sessionId == null) {
+            throw new BusinessException(ErrorCode.INVALID_PARAMETER, "sessionId 不能为空");
+        }
+        AiVoiceTurn turn = voicePracticeService.appendTurn(
+                userId,
+                sessionId,
+                req.getModel(),
+                req.getUserTranscript(),
+                req.getAssistantText(),
+                req.getUserAudioFileId(),
+                req.getAssistantAudioFileId(),
+                req.getLocale(),
+                req.getScenario()
+        );
+        AiVoiceTurnResponse resp = new AiVoiceTurnResponse(sessionId, sessionId, turn != null ? turn.getId() : null);
+        return ResponseEntity.ok(ApiResponse.success(resp));
     }
 
     private String resolveModel(AiChatRequest request, Long userId) {

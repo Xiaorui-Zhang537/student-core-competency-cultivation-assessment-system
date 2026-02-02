@@ -1508,4 +1508,65 @@ alter table student_assessment_system.behavior_insights
         foreign key (course_id) references student_assessment_system.courses (id)
             on delete set null;
 
+-- =========================
+-- AI 口语训练（独立于 AI 聊天会话）
+-- 说明：语音训练记录仅在语音界面展示，不写入 ai_conversations/ai_messages
+-- =========================
+
+create table student_assessment_system.ai_voice_sessions
+(
+    id          bigint auto_increment comment '语音会话ID' primary key,
+    user_id     bigint                                 not null comment '用户ID',
+    title       varchar(255)                           null comment '会话标题（可选）',
+    model       varchar(128)                           null comment '模型（审计用）',
+    mode        varchar(16)                            null comment '模式(text/audio/both)',
+    locale      varchar(32)                            null comment '语言偏好（en-US/zh-CN）',
+    scenario    varchar(255)                           null comment '训练场景（可选）',
+    pinned      tinyint(1) default 0                   not null comment '是否置顶',
+    deleted     tinyint(1) default 0                   not null comment '是否删除',
+    created_at  datetime default CURRENT_TIMESTAMP      not null comment '创建时间',
+    updated_at  datetime default CURRENT_TIMESTAMP      not null on update CURRENT_TIMESTAMP comment '更新时间'
+)
+    comment 'AI 口语训练会话表' charset = utf8mb4;
+
+create index idx_ai_voice_sessions_user_created
+    on student_assessment_system.ai_voice_sessions (user_id, created_at);
+
+create index idx_ai_voice_sessions_user_pinned_updated
+    on student_assessment_system.ai_voice_sessions (user_id, pinned, updated_at);
+
+alter table student_assessment_system.ai_voice_sessions
+    add constraint fk_ai_voice_sessions_user
+        foreign key (user_id) references student_assessment_system.users (id)
+            on delete cascade;
+
+create table student_assessment_system.ai_voice_turns
+(
+    id                    bigint auto_increment comment '语音回合ID' primary key,
+    session_id            bigint                                 not null comment '语音会话ID',
+    user_id               bigint                                 not null comment '用户ID',
+    user_transcript       text                                   null comment '用户转写文本',
+    assistant_text        text                                   null comment 'AI 回复文本/转写',
+    user_audio_file_id    bigint                                 null comment '用户音频文件ID',
+    assistant_audio_file_id bigint                               null comment 'AI 音频文件ID',
+    created_at            datetime default CURRENT_TIMESTAMP      not null comment '创建时间'
+)
+    comment 'AI 口语训练回合表' charset = utf8mb4;
+
+create index idx_ai_voice_turns_session_created
+    on student_assessment_system.ai_voice_turns (session_id, created_at);
+
+create index idx_ai_voice_turns_user_created
+    on student_assessment_system.ai_voice_turns (user_id, created_at);
+
+alter table student_assessment_system.ai_voice_turns
+    add constraint fk_ai_voice_turns_session
+        foreign key (session_id) references student_assessment_system.ai_voice_sessions (id)
+            on delete cascade;
+
+alter table student_assessment_system.ai_voice_turns
+    add constraint fk_ai_voice_turns_user
+        foreign key (user_id) references student_assessment_system.users (id)
+            on delete cascade;
+
 

@@ -35,7 +35,12 @@ export const useAIStore = defineStore('ai', () => {
   const fetchConversations = async (params?: { q?: string; pinned?: boolean; archived?: boolean; page?: number; size?: number }) => {
     const res: any = await handleApiCall(() => aiApi.listConversations(params), ui, '加载会话失败')
     const data = res?.data ?? res
-    conversations.value = data?.items || data?.list || data || []
+    const raw = data?.items || data?.list || data || []
+    // 语音会话已独立到“口语训练”模块；这里过滤掉历史遗留的“语音练习-*”自动会话，避免出现在 AI 助理的“我的会话”。
+    conversations.value = (Array.isArray(raw) ? raw : []).filter((c: any) => {
+      const title = String(c?.title || '')
+      return !title.startsWith('语音练习')
+    })
   }
 
   const createConversation = async (payload?: { title?: string; model?: string; provider?: string }) => {
@@ -136,7 +141,30 @@ export const useAIStore = defineStore('ai', () => {
   const fetchMessages = async (id: number, params?: { page?: number; size?: number }) => {
     const res: any = await handleApiCall(() => aiApi.listMessages(id, { page: params?.page || 1, size: params?.size || 100 }), ui, '加载消息失败')
     const data = res?.data ?? res
-    const items: AiMessage[] = data?.items || data?.list || data || []
+    const rawItems: any[] = data?.items || data?.list || data || []
+    const items: AiMessage[] = rawItems.map((m: any) => {
+      const out: AiMessage = {
+        id: Number(m?.id || 0),
+        role: (m?.role || 'assistant') as any,
+        content: String(m?.content || ''),
+        createdAt: m?.createdAt
+      }
+      // 后端 AiMessage.attachments 是 JSON 字符串（如 "[1,2]"），前端统一转为 number[]
+      const a = m?.attachments
+      if (Array.isArray(a)) {
+        out.attachments = a.map((x: any) => Number(x)).filter((x: any) => Number.isFinite(x))
+      } else if (typeof a === 'string' && a.trim()) {
+        try {
+          const parsed = JSON.parse(a)
+          if (Array.isArray(parsed)) {
+            out.attachments = parsed.map((x: any) => Number(x)).filter((x: any) => Number.isFinite(x))
+          }
+        } catch {
+          // 兼容：若是 "[1,2]" 之外的格式，忽略
+        }
+      }
+      return out
+    })
     messagesByConvId[String(id)] = items
   }
 

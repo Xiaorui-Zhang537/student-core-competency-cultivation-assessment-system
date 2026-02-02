@@ -39,7 +39,17 @@ public class AiConfigProperties {
     @Data
     public static class ProxyConfig {
         private boolean enabled = true;
-        private boolean alwaysUseProxy = true;
+        /**
+         * 是否强制所有 AI 出站请求都走代理。
+         * <p>
+         * 说明：若为 false，则默认直连；当启用 {@link #autoRetryWithProxy} 时，直连失败会自动切代理重试一次。
+         */
+        private boolean alwaysUseProxy = false;
+        /**
+         * 直连失败时是否自动重试代理（用于国内/受限网络环境）。
+         * 对应配置：ai.proxy.auto-retry-with-proxy
+         */
+        private boolean autoRetryWithProxy = true;
         private String host = "127.0.0.1";
         private int port = 7890;
         /** HTTP 或 SOCKS */
@@ -49,6 +59,7 @@ public class AiConfigProperties {
          // 显式提供布尔 getter，避免缺少 Lombok 注解处理时出现编译错误
          public boolean isEnabled() { return enabled; }
          public boolean isAlwaysUseProxy() { return alwaysUseProxy; }
+         public boolean isAutoRetryWithProxy() { return autoRetryWithProxy; }
     }
 
     @Data

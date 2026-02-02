@@ -4,6 +4,8 @@
 
 ## 1. 端点总览（与后端对齐）
 - `POST /api/ai/chat`：AI 聊天（非流式）
+- `GET /api/ai/live/ws`：AI 实时语音（WebSocket，见 `docs/backend/api/ai-live.md`）
+- `POST /api/ai/voice/turns`：口语训练回合入库（绑定音频附件，见 `docs/backend/api/ai-live.md`）
 - `POST /api/ai/conversations`：新建会话
 - `GET /api/ai/conversations?q=&pinned=&archived=&page=&size=`：会话列表
 - `PUT /api/ai/conversations/{id}`：更新会话（标题/置顶/归档）

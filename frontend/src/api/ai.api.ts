@@ -8,6 +8,17 @@ export const aiApi = {
   chat: (data: { messages: { role: ChatRole; content: string }[]; courseId?: number; studentIds?: number[]; model?: string; conversationId?: number; attachmentFileIds?: number[]; jsonOnly?: boolean; useGradingPrompt?: boolean }): Promise<{ answer: string }> => {
     return api.post('/ai/chat', data, { timeout: AI_CHAT_TIMEOUT })
   },
+  // Voice practice turn persistence
+  saveVoiceTurn: (data: {
+    conversationId: number
+    model?: string
+    userTranscript?: string
+    assistantText?: string
+    userAudioFileId?: number
+    assistantAudioFileId?: number
+    scenario?: string
+    locale?: string
+  }) => api.post('/ai/voice/turns', data),
   // Conversations
   createConversation: (data: { title?: string; model?: string; provider?: string }) => api.post('/ai/conversations', data),
   listConversations: (params?: { q?: string; pinned?: boolean; archived?: boolean; page?: number; size?: number }) => api.get('/ai/conversations', { params }),
