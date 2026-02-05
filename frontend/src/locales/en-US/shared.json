@@ -468,6 +468,11 @@
     "behaviorEvidence": {
       "title": "Behavior Evidence",
       "subtitle": "A factual summary aggregated from behavior events for explaining assignment grades and formative feedback",
+      "range": "Behavior window",
+      "range7d": "Last 7 days",
+      "range30d": "Last 30 days",
+      "range180d": "Last 180 days",
+      "range365d": "Last 365 days",
       "loading": "Loading...",
       "refresh": "Refresh",
       "stats": {
@@ -481,7 +486,9 @@
         "asks": "Asks",
         "answers": "Answers",
         "feedback": "Feedback Views",
-        "views": "Count"
+        "views": "Count",
+        "voice": "Speaking practice",
+        "voiceTurns": "Turns"
       },
       "evidence": {
         "title": "Evidence Items",
@@ -508,6 +515,13 @@
       "refresh": "Refresh",
       "generate": "Generate",
       "regenerate": "Regenerate",
+      "history": {
+        "button": "History",
+        "title": "Insight history",
+        "subtitle": "View all your previously generated behavioral insight reports (not graded)",
+        "empty": "No insight history yet",
+        "detailTitle": "Insight report detail"
+      },
       "cooldown": "Cooldown: only once within 7 days",
       "cooldownUntil": "Next available at: {time}",
       "empty": "No insight yet (you can view the Stage-1 summary first)",

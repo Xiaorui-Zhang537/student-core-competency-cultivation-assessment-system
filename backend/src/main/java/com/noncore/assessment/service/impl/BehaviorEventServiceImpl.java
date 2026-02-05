@@ -52,6 +52,16 @@ public class BehaviorEventServiceImpl implements BehaviorEventService {
         return mapper.listByStudentCourseRange(studentId, courseId, from, to, limit);
     }
 
+    @Override
+    public List<BehaviorEvent> listByStudentCourseRangePaged(Long studentId,
+                                                             Long courseId,
+                                                             LocalDateTime from,
+                                                             LocalDateTime to,
+                                                             Integer offset,
+                                                             Integer limit) {
+        return mapper.listByStudentCourseRangePaged(studentId, courseId, from, to, offset, limit);
+    }
+
     /**
      * 判断是否存在晚于指定时间点的事件（用于判断摘要快照是否过期）。
      */

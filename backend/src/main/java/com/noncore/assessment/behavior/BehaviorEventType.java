@@ -15,6 +15,21 @@ public enum BehaviorEventType {
     /** AI 追问（基于上一轮进一步追问/澄清） */
     AI_FOLLOW_UP("ai_follow_up", false),
 
+    /**
+     * 口语训练回合（语音聊天的一次完整回合入库）。
+     *
+     * <p>说明：该事件属于“可作为阶段一证据引用”的事实记录（非 nonEvaluative）。</p>
+     */
+    VOICE_PRACTICE_TURN("voice_practice_turn", false),
+
+    /**
+     * 口语训练音频复听/回放（按播放时长累计上报）。
+     *
+     * <p>说明：该事件用于记录“复听复盘”的事实线索（例如累计复听秒数），可作为阶段一证据引用。</p>
+     * <p>注意：该事件仍不代表评价或分数，阶段二需结合抗噪信号避免“刷量=质量”。</p>
+     */
+    VOICE_PRACTICE_AUDIO_REPLAY("voice_practice_audio_replay", false),
+
     /** 作业提交（首次/一次提交动作） */
     ASSIGNMENT_SUBMIT("assignment_submit", false),
     /** 作业修改/重交（对已提交作业进行修改后再次提交） */

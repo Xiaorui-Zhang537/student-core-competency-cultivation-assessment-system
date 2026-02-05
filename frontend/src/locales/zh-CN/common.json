@@ -12,6 +12,7 @@
     "preview": "浏览",
     "verified": "已验证",
     "none": "无",
+    "all": "全部",
     "status": {
       "completed": "已完成",
       "incomplete": "未完成"

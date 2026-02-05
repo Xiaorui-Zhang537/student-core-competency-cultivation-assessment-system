@@ -16,6 +16,16 @@ public interface BehaviorEventService {
     List<BehaviorEvent> listByStudentCourseRange(Long studentId, Long courseId, LocalDateTime from, LocalDateTime to, Integer limit);
 
     /**
+     * 按学生/课程/时间窗分页查询事件（按时间倒序）。
+     */
+    List<BehaviorEvent> listByStudentCourseRangePaged(Long studentId,
+                                                      Long courseId,
+                                                      LocalDateTime from,
+                                                      LocalDateTime to,
+                                                      Integer offset,
+                                                      Integer limit);
+
+    /**
      * 判断是否存在晚于指定时间点的事件（用于判断摘要快照是否过期）。
      *
      * @param studentId 学生ID

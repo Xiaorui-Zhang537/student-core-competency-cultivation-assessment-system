@@ -60,6 +60,17 @@
               <GlassMultiSelect v-model="assignmentIdsB" :options="assignmentSelectOptions" :placeholder="t('common.pleaseSelect') as string" tint="accent" />
             </div>
           </div>
+
+          <div class="flex items-center gap-2">
+            <span class="whitespace-nowrap text-sm text-gray-700 dark:text-gray-300">{{ t('shared.behaviorEvidence.range') || '行为时间窗' }}</span>
+            <GlassPopoverSelect
+              v-model="behaviorRange"
+              :options="behaviorRangeOptions"
+              size="sm"
+              width="160px"
+              tint="secondary"
+            />
+          </div>
         </div>
       </Card>
 
@@ -129,12 +140,16 @@
       <BehaviorInsightSection
         :student-id="String(auth?.user?.id || '')"
         :course-id="selectedCourseId || undefined"
-        range="7d"
+        :range="behaviorRange"
         :allow-student-generate="true"
       />
 
       <!-- 行为证据（阶段一：纯代码聚合，不调用AI，不算分） -->
-      <BehaviorEvidenceSection :course-id="selectedCourseId || undefined" range="7d" />
+      <BehaviorEvidenceSection
+        :student-id="String(auth?.user?.id || '')"
+        :course-id="selectedCourseId || undefined"
+        :range="behaviorRange"
+      />
 
       <!-- Trends 区域：左侧仪表盘，右侧两张趋势图（去掉完成率） -->
       <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -245,6 +260,15 @@ const { t } = useI18n()
 const router = useRouter()
 const ai = useAIStore()
 const auth = useAuthStore()
+
+// 行为证据/洞察时间窗（固定窗口，与后端一致）
+const behaviorRange = ref<'7d' | '30d' | '180d' | '365d'>('7d')
+const behaviorRangeOptions = computed(() => ([
+  { label: (t('shared.behaviorEvidence.range7d') as any) || '近一周', value: '7d' },
+  { label: (t('shared.behaviorEvidence.range30d') as any) || '近一月', value: '30d' },
+  { label: (t('shared.behaviorEvidence.range180d') as any) || '近半年', value: '180d' },
+  { label: (t('shared.behaviorEvidence.range365d') as any) || '近一年', value: '365d' }
+]))
 
 type Point = { x: string; y: number }
 

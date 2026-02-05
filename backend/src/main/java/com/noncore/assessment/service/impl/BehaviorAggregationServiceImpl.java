@@ -27,6 +27,8 @@ import java.util.*;
 public class BehaviorAggregationServiceImpl implements BehaviorAggregationService {
 
     private static final int DEFAULT_EVENT_LIMIT = 5000;
+    private static final int PAGE_SIZE = 5000;
+    private static final int MAX_EVENTS_HARD_CAP = 100_000;
     private static final DateTimeFormatter EVIDENCE_DATE = DateTimeFormatter.ofPattern("yyyyMMdd");
 
     private final BehaviorEventService behaviorEventService;
@@ -64,15 +66,48 @@ public class BehaviorAggregationServiceImpl implements BehaviorAggregationServic
         }
 
         LocalDateTime now = LocalDateTime.now();
-        LocalDateTime from = now.minusDays(7);
         LocalDateTime to = now;
+        LocalDateTime from = to.minusDays(rangeToDays(rk));
 
-        List<BehaviorEvent> events = behaviorEventService.listByStudentCourseRange(studentId, courseId, from, to, DEFAULT_EVENT_LIMIT);
+        // 重要：避免长时间窗内事件过多导致“只取最新 N 条”，从而出现“久远行为证据不读取”
+        // 这里使用分页拉取（倒序），并设置硬上限避免极端情况下内存压力。
+        boolean truncated = false;
+        List<BehaviorEvent> events = new ArrayList<>();
+        try {
+            int offset = 0;
+            while (events.size() < MAX_EVENTS_HARD_CAP) {
+                int limit = Math.min(PAGE_SIZE, MAX_EVENTS_HARD_CAP - events.size());
+                List<BehaviorEvent> page = behaviorEventService.listByStudentCourseRangePaged(studentId, courseId, from, to, offset, limit);
+                if (page == null || page.isEmpty()) break;
+                events.addAll(page);
+                if (page.size() < limit) break;
+                offset += page.size();
+            }
+            if (events.size() >= MAX_EVENTS_HARD_CAP) truncated = true;
+        } catch (Exception ignored) {
+            // 回退：保持旧行为（最多取最新 DEFAULT_EVENT_LIMIT 条）
+            try {
+                List<BehaviorEvent> fallback = behaviorEventService.listByStudentCourseRange(studentId, courseId, from, to, DEFAULT_EVENT_LIMIT);
+                events = new ArrayList<>(fallback == null ? List.of() : fallback);
+                truncated = true;
+            } catch (Exception ignored2) {
+                events = new ArrayList<>();
+            }
+        }
         List<BehaviorEvent> asc = new ArrayList<>(events == null ? List.of() : events);
         asc.sort(Comparator.comparing(BehaviorEvent::getOccurredAt, Comparator.nullsLast(Comparator.naturalOrder()))
                 .thenComparing(BehaviorEvent::getId, Comparator.nullsLast(Comparator.naturalOrder())));
 
         BehaviorSummaryResponse summary = aggregate(studentId, courseId, rk, from, to, asc, now);
+        // 若发生截断，追加提示信号（不影响 schemaVersion；仅 signals 扩展字段）
+        try {
+            if (truncated) {
+                Map<String, Object> sig = summary.getSignals() == null ? new HashMap<>() : new HashMap<>(summary.getSignals());
+                sig.put("truncated", true);
+                sig.put("truncatedMaxEvents", MAX_EVENTS_HARD_CAP);
+                summary.setSignals(sig);
+            }
+        } catch (Exception ignored) {}
 
         BehaviorSummarySnapshot snapshot = new BehaviorSummarySnapshot();
         snapshot.setSchemaVersion(BehaviorSchemaVersions.SUMMARY_V1);
@@ -99,8 +134,8 @@ public class BehaviorAggregationServiceImpl implements BehaviorAggregationServic
     public BehaviorSummarySnapshot buildAndSaveSnapshot(Long studentId, Long courseId, String range) {
         String rk = normalizeRange(range);
         LocalDateTime now = LocalDateTime.now();
-        LocalDateTime from = now.minusDays(7);
         LocalDateTime to = now;
+        LocalDateTime from = to.minusDays(rangeToDays(rk));
 
         List<BehaviorEvent> events = behaviorEventService.listByStudentCourseRange(studentId, courseId, from, to, DEFAULT_EVENT_LIMIT);
         List<BehaviorEvent> asc = new ArrayList<>(events == null ? List.of() : events);
@@ -128,10 +163,24 @@ public class BehaviorAggregationServiceImpl implements BehaviorAggregationServic
     private String normalizeRange(String range) {
         if (range == null || range.isBlank()) return "7d";
         String r = range.trim().toLowerCase();
-        if (!"7d".equals(r)) {
-            throw new BusinessException(ErrorCode.INVALID_PARAMETER, "当前仅支持 range=7d");
+        // 约定：只支持固定区间（避免自定义区间引入不可控复杂度）
+        if (!"7d".equals(r) && !"30d".equals(r) && !"180d".equals(r) && !"365d".equals(r)) {
+            throw new BusinessException(ErrorCode.INVALID_PARAMETER, "当前仅支持 range=7d/30d/180d/365d");
         }
         return r;
+    }
+
+    /**
+     * 将 rangeKey 映射为天数（仅固定窗口）。
+     */
+    private int rangeToDays(String rangeKey) {
+        String r = rangeKey == null ? "7d" : rangeKey.trim().toLowerCase();
+        return switch (r) {
+            case "30d" -> 30;
+            case "180d" -> 180;
+            case "365d" -> 365;
+            default -> 7;
+        };
     }
 
     private BehaviorSummaryResponse aggregate(Long studentId,
@@ -148,6 +197,10 @@ public class BehaviorAggregationServiceImpl implements BehaviorAggregationServic
         int resubmitAfterFeedbackCount = 0;
         BehaviorEvent firstFeedbackForResubmit = null;
         BehaviorEvent firstResubmitAfterFeedback = null;
+
+        // 口语训练复听/回放：按秒累计（来自 metadata.deltaSeconds + metadata.audioRole）
+        long voiceReplaySecondsUser = 0;
+        long voiceReplaySecondsAssistant = 0;
 
         // 先分离 feedback_view 与 resubmit，做简单“反馈驱动迭代”检测（24h 内）
         List<BehaviorEvent> feedbackViews = new ArrayList<>();
@@ -173,6 +226,19 @@ public class BehaviorAggregationServiceImpl implements BehaviorAggregationServic
                         : (meta.get("category") != null ? String.valueOf(meta.get("category")) : null);
                 if (cat != null && !cat.isBlank()) {
                     resourceByCategory.put(cat, resourceByCategory.getOrDefault(cat, 0) + 1);
+                }
+            }
+
+            // 口语复听/回放：累计秒数（事实统计，用于阶段二解释/建议；不算分、不评价）
+            if (BehaviorEventType.VOICE_PRACTICE_AUDIO_REPLAY.getCode().equalsIgnoreCase(t)) {
+                Map<String, Object> meta = safeParseMeta(e.getMetadata());
+                String role = meta.get("audioRole") == null ? "" : String.valueOf(meta.get("audioRole")).trim().toLowerCase();
+                long delta = toLong(meta.get("deltaSeconds"));
+                if (delta <= 0) continue;
+                if ("user".equals(role)) {
+                    voiceReplaySecondsUser += delta;
+                } else if ("assistant".equals(role)) {
+                    voiceReplaySecondsAssistant += delta;
                 }
             }
         }
@@ -285,6 +351,42 @@ public class BehaviorAggregationServiceImpl implements BehaviorAggregationServic
                     .build());
         }
 
+        int voiceTurns = countsByType.getOrDefault(BehaviorEventType.VOICE_PRACTICE_TURN.getCode(), 0);
+        if (voiceTurns > 0) {
+            String eid = buildEvidenceId(generatedAt, evidenceSeq++);
+            evidences.add(BehaviorSummaryResponse.EvidenceItem.builder()
+                    .evidenceId(eid)
+                    .evidenceType("voice_practice_activity")
+                    .title("口语练习记录")
+                    .description("本阶段内完成口语训练回合 " + voiceTurns + " 次。")
+                    .eventRefs(lastEventIdsByTypes(eventsAsc, java.util.Set.of(
+                            BehaviorEventType.VOICE_PRACTICE_TURN.getCode()
+                    ), 8))
+                    .occurredAt(latestOccurredAtByTypes(eventsAsc, java.util.Set.of(
+                            BehaviorEventType.VOICE_PRACTICE_TURN.getCode()
+                    )))
+                    .build());
+        }
+
+        long voiceReplaySecondsTotal = Math.max(0, voiceReplaySecondsUser) + Math.max(0, voiceReplaySecondsAssistant);
+        if (voiceReplaySecondsTotal > 0) {
+            String eid = buildEvidenceId(generatedAt, evidenceSeq++);
+            evidences.add(BehaviorSummaryResponse.EvidenceItem.builder()
+                    .evidenceId(eid)
+                    .evidenceType("voice_practice_review")
+                    .title("口语复听记录")
+                    .description("本阶段累计复听 " + formatDurationCn(voiceReplaySecondsTotal)
+                            + "（自己 " + formatDurationCn(voiceReplaySecondsUser)
+                            + "，AI " + formatDurationCn(voiceReplaySecondsAssistant) + "）。")
+                    .eventRefs(lastEventIdsByTypes(eventsAsc, java.util.Set.of(
+                            BehaviorEventType.VOICE_PRACTICE_AUDIO_REPLAY.getCode()
+                    ), 10))
+                    .occurredAt(latestOccurredAtByTypes(eventsAsc, java.util.Set.of(
+                            BehaviorEventType.VOICE_PRACTICE_AUDIO_REPLAY.getCode()
+                    )))
+                    .build());
+        }
+
         int commAsk = countsByType.getOrDefault(BehaviorEventType.COMMUNITY_ASK.getCode(), 0);
         int commAns = countsByType.getOrDefault(BehaviorEventType.COMMUNITY_ANSWER.getCode(), 0);
         if ((commAsk + commAns) > 0) {
@@ -359,6 +461,11 @@ public class BehaviorAggregationServiceImpl implements BehaviorAggregationServic
         signals.put("lowCommunityEngagement",
                 (countsByType.getOrDefault(BehaviorEventType.COMMUNITY_ASK.getCode(), 0)
                         + countsByType.getOrDefault(BehaviorEventType.COMMUNITY_ANSWER.getCode(), 0)) == 0);
+        // 语音聊天/口语训练（事实统计，用于阶段二引用与抗噪，不作为评分/评价）
+        signals.put("voiceTurnCount", voiceTurns);
+        signals.put("voiceReplaySecondsUser", voiceReplaySecondsUser);
+        signals.put("voiceReplaySecondsAssistant", voiceReplaySecondsAssistant);
+        signals.put("voiceReplaySecondsTotal", voiceReplaySecondsTotal);
 
         // =========================
         // 时间维度 + 抗刷/抗噪信号（纯事实，不评价）
@@ -377,6 +484,8 @@ public class BehaviorAggregationServiceImpl implements BehaviorAggregationServic
                     Set.of(BehaviorEventType.ASSIGNMENT_SUBMIT.getCode(), BehaviorEventType.ASSIGNMENT_RESUBMIT.getCode())));
             timeSignals.put("aiMaxDailyShare", maxDailyShare(eventsAsc,
                     Set.of(BehaviorEventType.AI_QUESTION.getCode(), BehaviorEventType.AI_FOLLOW_UP.getCode())));
+            timeSignals.put("voiceMaxDailyShare", maxDailyShare(eventsAsc,
+                    Set.of(BehaviorEventType.VOICE_PRACTICE_TURN.getCode())));
 
             // burst：滑窗内事件数异常（提示可能“短时间刷记录”，不直接作为能力证据）
             Map<String, Object> burstAll = detectBurst(eventsAsc, null, 5, 8); // 5分钟>=8条（全类型）
@@ -386,6 +495,9 @@ public class BehaviorAggregationServiceImpl implements BehaviorAggregationServic
             Map<String, Object> burstSubmit = detectBurst(eventsAsc,
                     Set.of(BehaviorEventType.ASSIGNMENT_SUBMIT.getCode(), BehaviorEventType.ASSIGNMENT_RESUBMIT.getCode()),
                     10, 3); // 10分钟>=3条（提交相关）
+            Map<String, Object> burstVoice = detectBurst(eventsAsc,
+                    Set.of(BehaviorEventType.VOICE_PRACTICE_TURN.getCode()),
+                    10, 6); // 10分钟>=6条（语音回合）
 
             Map<String, Object> antiSpam = new HashMap<>();
             Map<String, Integer> caps = defaultDailyCaps();
@@ -395,10 +507,12 @@ public class BehaviorAggregationServiceImpl implements BehaviorAggregationServic
             antiSpam.put("burstAll", burstAll);
             antiSpam.put("burstAi", burstAi);
             antiSpam.put("burstSubmit", burstSubmit);
+            antiSpam.put("burstVoice", burstVoice);
 
             timeSignals.put("burstAny", Boolean.TRUE.equals(burstAll.get("burst")));
             timeSignals.put("burstAi", Boolean.TRUE.equals(burstAi.get("burst")));
             timeSignals.put("burstSubmit", Boolean.TRUE.equals(burstSubmit.get("burst")));
+            timeSignals.put("burstVoice", Boolean.TRUE.equals(burstVoice.get("burst")));
 
             signals.put("timeSignals", timeSignals);
             signals.put("antiSpam", antiSpam);
@@ -517,6 +631,7 @@ public class BehaviorAggregationServiceImpl implements BehaviorAggregationServic
         Map<String, Integer> caps = new HashMap<>();
         caps.put(BehaviorEventType.AI_QUESTION.getCode(), 10);
         caps.put(BehaviorEventType.AI_FOLLOW_UP.getCode(), 20);
+        caps.put(BehaviorEventType.VOICE_PRACTICE_TURN.getCode(), 30);
         caps.put(BehaviorEventType.COMMUNITY_ASK.getCode(), 5);
         caps.put(BehaviorEventType.COMMUNITY_ANSWER.getCode(), 10);
         caps.put(BehaviorEventType.FEEDBACK_VIEW.getCode(), 30);
@@ -773,6 +888,23 @@ public class BehaviorAggregationServiceImpl implements BehaviorAggregationServic
     private Double toDouble(Object v) {
         if (v == null) return null;
         try { return Double.valueOf(String.valueOf(v)); } catch (Exception ignored) { return null; }
+    }
+
+    private long toLong(Object v) {
+        if (v == null) return 0;
+        try { return Long.parseLong(String.valueOf(v)); } catch (Exception ignored) { return 0; }
+    }
+
+    /**
+     * 将秒数格式化为中文时长（用于阶段一摘要展示，纯事实描述）。
+     */
+    private String formatDurationCn(long seconds) {
+        long s = Math.max(0, seconds);
+        long m = s / 60;
+        long r = s % 60;
+        if (m <= 0) return r + "秒";
+        if (r <= 0) return m + "分钟";
+        return m + "分钟" + r + "秒";
     }
 }
 

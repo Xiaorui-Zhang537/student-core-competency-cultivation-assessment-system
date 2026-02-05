@@ -468,6 +468,11 @@
     "behaviorEvidence": {
       "title": "行为证据",
       "subtitle": "基于行为事件的事实摘要，用于解释作业成绩与形成性反馈",
+      "range": "行为时间窗",
+      "range7d": "近7天",
+      "range30d": "近30天",
+      "range180d": "近半年",
+      "range365d": "近一年",
       "loading": "加载中...",
       "refresh": "刷新",
       "stats": {
@@ -481,7 +486,9 @@
         "asks": "发问",
         "answers": "回答",
         "feedback": "查看反馈",
-        "views": "次数"
+        "views": "次数",
+        "voice": "口语练习",
+        "voiceTurns": "回合"
       },
       "evidence": {
         "title": "证据条目",
@@ -508,6 +515,13 @@
       "refresh": "刷新",
       "generate": "生成洞察",
       "regenerate": "重新生成",
+      "history": {
+        "button": "历史报告",
+        "title": "历史洞见报告",
+        "subtitle": "查看自己历史生成的行为洞见报告（不算分）",
+        "empty": "暂无历史洞见报告",
+        "detailTitle": "洞见报告详情"
+      },
       "cooldown": "冷却中：7天内仅允许生成一次",
       "cooldownUntil": "下次可生成时间：{time}",
       "empty": "暂无洞察结果（可先查看阶段一行为摘要）",

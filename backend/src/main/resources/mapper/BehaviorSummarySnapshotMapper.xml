@@ -29,6 +29,9 @@
         <if test="courseId != null">
             AND course_id = #{courseId}
         </if>
+        <if test="courseId == null">
+            AND course_id IS NULL
+        </if>
         AND range_key = #{rangeKey}
         AND schema_version = #{schemaVersion}
         <if test="from != null">

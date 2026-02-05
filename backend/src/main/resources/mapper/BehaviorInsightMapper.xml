@@ -45,6 +45,23 @@
         LIMIT 1
     </select>
 
+    <select id="getLatestByStudentCourseRange" resultMap="BaseMap">
+        SELECT bi.*
+        FROM behavior_insights bi
+                 JOIN behavior_summary_snapshots bs ON bs.id = bi.snapshot_id
+        WHERE bi.student_id = #{studentId}
+          AND bi.schema_version = #{schemaVersion}
+          AND bs.range_key = #{rangeKey}
+        <if test="courseId != null">
+            AND bi.course_id = #{courseId}
+        </if>
+        <if test="courseId == null">
+            AND bi.course_id IS NULL
+        </if>
+        ORDER BY bi.generated_at DESC, bi.id DESC
+        LIMIT 1
+    </select>
+
     <select id="countByStudentSince" resultType="long">
         SELECT COUNT(*)
         FROM behavior_insights

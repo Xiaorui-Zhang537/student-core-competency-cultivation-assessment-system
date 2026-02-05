@@ -24,6 +24,15 @@ export interface VoiceTurn {
   createdAt?: string
 }
 
+export type VoiceReplayReportRequest = {
+  sessionId?: number
+  turnId?: number
+  audioRole: 'user' | 'assistant'
+  deltaSeconds: number
+  fileId?: number
+  messageId?: string
+}
+
 export const voicePracticeApi = {
   createSession: (data: { title?: string; model?: string; mode?: string; locale?: string; scenario?: string }) =>
     api.post('/ai/voice/sessions', data),
@@ -52,6 +61,13 @@ export const voicePracticeApi = {
     assistantAudioFileId?: number
     scenario?: string
     locale?: string
-  }) => api.post('/ai/voice/turns', data)
+  }) => api.post('/ai/voice/turns', data),
+
+  /**
+   * 口语训练：上报音频复听/回放的增量时长（按秒）。
+   *
+   * 注意：仅用于行为证据事实记录，不代表评价/分数。
+   */
+  reportReplay: (data: VoiceReplayReportRequest) => api.post('/ai/voice/replay', data)
 }
 

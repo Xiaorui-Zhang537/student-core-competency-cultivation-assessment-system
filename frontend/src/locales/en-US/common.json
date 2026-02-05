@@ -12,6 +12,7 @@
     "view": "View",
     "preview": "Preview",
     "none": "None",
+    "all": "All",
     "status": {
       "completed": "Completed",
       "incomplete": "Incomplete"

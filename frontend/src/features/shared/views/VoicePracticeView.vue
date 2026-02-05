@@ -140,7 +140,17 @@
                    :class="m.role === 'user' ? 'glass-bubble glass-bubble-mine rounded-br-none text-white' : 'glass-bubble glass-bubble-peer rounded-bl-none text-base-content'">
                 <div class="whitespace-pre-wrap break-words">{{ m.text }}</div>
                 <div v-if="m.audioUrl" class="mt-2">
-                  <audio :src="m.audioUrl" controls class="w-full" />
+                  <audio
+                    :src="m.audioUrl"
+                    controls
+                    class="w-full"
+                    @play="onAudioPlay(m, $event)"
+                    @pause="onAudioPause(m, $event)"
+                    @ended="onAudioEnded(m, $event)"
+                    @timeupdate="onAudioTimeUpdate(m, $event)"
+                    @seeking="onAudioSeeking(m)"
+                    @seeked="onAudioSeeked(m, $event)"
+                  />
                 </div>
               </div>
             </div>
@@ -278,8 +288,125 @@ const statusText = computed(() => {
   return t('shared.voicePractice.statusError') as string
 })
 
-type UiMsg = { id: string; role: 'user' | 'assistant'; text: string; audioUrl?: string | null }
+type UiMsg = {
+  id: string
+  role: 'user' | 'assistant'
+  text: string
+  audioUrl?: string | null
+  /** 音频文件ID（若来自文件流/上传结果，用于行为审计定位） */
+  audioFileId?: number | null
+  /** 回合ID（若已入库，用于行为审计定位） */
+  turnId?: number | null
+}
 const messages = ref<UiMsg[]>([])
+
+// ======================
+// 复听/回放：按播放时长累计（秒）
+// ======================
+type ReplayTracker = {
+  playing: boolean
+  seeking: boolean
+  lastTime: number
+  pendingSeconds: number
+}
+
+const replayTrackers = new Map<string, ReplayTracker>()
+const REPLAY_FLUSH_THRESHOLD_SECONDS = 10
+
+const getReplayTracker = (msgId: string) => {
+  if (!replayTrackers.has(msgId)) {
+    replayTrackers.set(msgId, { playing: false, seeking: false, lastTime: 0, pendingSeconds: 0 })
+  }
+  return replayTrackers.get(msgId)!
+}
+
+const getMediaEl = (ev: Event) => {
+  const el = (ev?.target || null) as HTMLMediaElement | null
+  return el && typeof el.currentTime === 'number' ? el : null
+}
+
+const addReplayDeltaFromEl = (m: UiMsg, el: HTMLMediaElement | null) => {
+  if (!el) return
+  const tr = getReplayTracker(m.id)
+  const now = Number(el.currentTime || 0)
+  if (tr.seeking || !tr.playing) {
+    tr.lastTime = now
+    return
+  }
+  const delta = now - (tr.lastTime || 0)
+  tr.lastTime = now
+  // 过滤：拖拽/跳转产生的大 delta、或异常负值
+  // timeupdate 间隔不稳定，保守允许到 15s；seek 主要由 seeking/seeked 兜底
+  if (!(delta > 0) || delta > 15) return
+  tr.pendingSeconds += delta
+  if (tr.pendingSeconds >= REPLAY_FLUSH_THRESHOLD_SECONDS) {
+    void flushReplay(m)
+  }
+}
+
+const flushReplay = async (m: UiMsg) => {
+  const sid = activeSessionId.value || null
+  if (!sid) return
+  if (!m || !m.id) return
+  if (m.role !== 'user' && m.role !== 'assistant') return
+  const tr = getReplayTracker(m.id)
+  const seconds = Math.floor(tr.pendingSeconds || 0)
+  if (seconds <= 0) return
+  tr.pendingSeconds -= seconds
+  try {
+    await voicePracticeApi.reportReplay({
+      sessionId: sid,
+      turnId: m.turnId != null ? Number(m.turnId) : undefined,
+      audioRole: m.role,
+      deltaSeconds: seconds,
+      fileId: m.audioFileId != null ? Number(m.audioFileId) : undefined,
+      messageId: String(m.id)
+    })
+  } catch {
+    // 上报失败不影响用户播放；保守处理：不回滚 pending（避免重复上报）
+  }
+}
+
+const onAudioPlay = (m: UiMsg, ev: Event) => {
+  const el = getMediaEl(ev)
+  const tr = getReplayTracker(m.id)
+  tr.playing = true
+  tr.seeking = false
+  tr.lastTime = Number(el?.currentTime || 0)
+}
+
+const onAudioPause = (m: UiMsg, ev: Event) => {
+  const el = getMediaEl(ev)
+  addReplayDeltaFromEl(m, el)
+  const tr = getReplayTracker(m.id)
+  tr.playing = false
+  void flushReplay(m)
+}
+
+const onAudioEnded = (m: UiMsg, ev: Event) => {
+  const el = getMediaEl(ev)
+  addReplayDeltaFromEl(m, el)
+  const tr = getReplayTracker(m.id)
+  tr.playing = false
+  void flushReplay(m)
+}
+
+const onAudioTimeUpdate = (m: UiMsg, ev: Event) => {
+  const el = getMediaEl(ev)
+  addReplayDeltaFromEl(m, el)
+}
+
+const onAudioSeeking = (m: UiMsg) => {
+  const tr = getReplayTracker(m.id)
+  tr.seeking = true
+}
+
+const onAudioSeeked = (m: UiMsg, ev: Event) => {
+  const el = getMediaEl(ev)
+  const tr = getReplayTracker(m.id)
+  tr.seeking = false
+  tr.lastTime = Number(el?.currentTime || 0)
+}
 
 // runtime holders
 let ws: WebSocket | null = null
@@ -440,14 +567,18 @@ const loadTurns = async (sid: number) => {
         id: `turn_${tid}_u`,
         role: 'user',
         text: userText,
-        audioUrl: uFid ? buildAuthedStreamUrl(uFid) : null
+        audioUrl: uFid ? buildAuthedStreamUrl(uFid) : null,
+        audioFileId: uFid,
+        turnId: tid || null
       })
       if (asText || aFid) {
         ui.push({
           id: `turn_${tid}_a`,
           role: 'assistant',
           text: asText,
-          audioUrl: aFid ? buildAuthedStreamUrl(aFid) : null
+          audioUrl: aFid ? buildAuthedStreamUrl(aFid) : null,
+          audioFileId: aFid,
+          turnId: tid || null
         })
       }
     }
@@ -698,7 +829,10 @@ const persistTurn = async () => {
 
     if (turnUserMsgId) {
       const u = messages.value.find(m => m.id === turnUserMsgId)
-      if (u) u.audioUrl = userUrl
+      if (u) {
+        u.audioUrl = userUrl
+        u.audioFileId = userAudioFileId || null
+      }
     }
 
     // upload assistant audio (WAV)
@@ -712,11 +846,14 @@ const persistTurn = async () => {
 
       if (turnAssistantMsgId) {
         const a = messages.value.find(m => m.id === turnAssistantMsgId)
-        if (a) a.audioUrl = assistantUrl
+        if (a) {
+          a.audioUrl = assistantUrl
+          a.audioFileId = assistantAudioFileId || null
+        }
       }
     }
 
-    await voicePracticeApi.saveTurn({
+    const saved: any = await voicePracticeApi.saveTurn({
       sessionId: sid,
       model: model.value,
       userTranscript: userFinalTranscript || '',
@@ -726,6 +863,17 @@ const persistTurn = async () => {
       scenario: scenario.value,
       locale: locale.value
     })
+    const savedTurnId = Number(saved?.turnId || 0) || null
+    if (savedTurnId) {
+      if (turnUserMsgId) {
+        const u = messages.value.find(m => m.id === turnUserMsgId)
+        if (u) u.turnId = savedTurnId
+      }
+      if (turnAssistantMsgId) {
+        const a = messages.value.find(m => m.id === turnAssistantMsgId)
+        if (a) a.turnId = savedTurnId
+      }
+    }
   } catch (e) {
     try { console.error(e) } catch {}
   } finally {
@@ -852,7 +1000,7 @@ const formatEmojiBulletsForUi = (raw: string) => {
   // 避免重复插入：只把这些 emoji 视为“条目起始”，在它们前插入换行
   // 支持变体选择符（\uFE0F）与部分复合 emoji
   const bullets = [
-    '✅','💡','❓','⚠️','⚠','📌','📝','🎯','⭐️','⭐','🔍','🔎','👉','➡️','➡','🔸','🔹','•','-'
+    '✅','💡','❓','⚠️','⚠','📌','📝','🎯','🧾','⭐️','⭐','🔍','🔎','👉','➡️','➡','🔸','🔹','•','-'
   ]
   const bulletGroup = bullets
     .map(e => e.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'))
@@ -1000,6 +1148,12 @@ const goBack = () => {
 }
 
 onBeforeUnmount(() => {
+  // 尽量把复听秒数冲刷上报（不阻塞卸载）
+  try {
+    for (const m of messages.value) {
+      void flushReplay(m)
+    }
+  } catch {}
   try { void closeSession() } catch {}
 })
 </script>

@@ -53,8 +53,8 @@ public class BehaviorInsightGenerationServiceImpl implements BehaviorInsightGene
         }
 
         String rk = (range == null || range.isBlank()) ? "7d" : range.trim().toLowerCase();
-        if (!"7d".equals(rk)) {
-            throw new BusinessException(ErrorCode.INVALID_PARAMETER, "当前仅支持 range=7d");
+        if (!"7d".equals(rk) && !"30d".equals(rk) && !"180d".equals(rk) && !"365d".equals(rk)) {
+            throw new BusinessException(ErrorCode.INVALID_PARAMETER, "当前仅支持 range=7d/30d/180d/365d");
         }
 
         if (studentSelfTrigger && force) {
@@ -305,21 +305,32 @@ public class BehaviorInsightGenerationServiceImpl implements BehaviorInsightGene
             throw new BusinessException(ErrorCode.INVALID_PARAMETER, "operatorId/studentId 必填");
         }
         String rk = (range == null || range.isBlank()) ? "7d" : range.trim().toLowerCase();
-        if (!"7d".equals(rk)) {
-            throw new BusinessException(ErrorCode.INVALID_PARAMETER, "当前仅支持 range=7d");
+        if (!"7d".equals(rk) && !"30d".equals(rk) && !"180d".equals(rk) && !"365d".equals(rk)) {
+            throw new BusinessException(ErrorCode.INVALID_PARAMETER, "当前仅支持 range=7d/30d/180d/365d");
         }
         BehaviorSummarySnapshot snapshot = snapshotService.getLatest(studentId, courseId, rk, BehaviorSchemaVersions.SUMMARY_V1, null, null);
         if (snapshot == null || snapshot.getId() == null) return null;
 
         // 兼容：优先 v2，回退 v1
+        // 注意：摘要快照可能因“有新事件”而刷新（snapshotId 变化），此时洞察未必已重新生成。
+        // 为避免前端每次都要点“生成”，这里增加回退：按 student+course+rangeKey 返回最近一次洞察。
         BehaviorInsight latest = firstNonNull(
                 insightService.getLatestBySnapshot(snapshot.getId(), BehaviorSchemaVersions.INSIGHT_V2),
                 insightService.getLatestBySnapshot(snapshot.getId(), BehaviorSchemaVersions.INSIGHT_V1)
         );
+        boolean fallbackUsed = false;
+        if (latest == null || latest.getInsightJson() == null) {
+            latest = firstNonNull(
+                    insightService.getLatestByStudentCourseRange(studentId, courseId, rk, BehaviorSchemaVersions.INSIGHT_V2),
+                    insightService.getLatestByStudentCourseRange(studentId, courseId, rk, BehaviorSchemaVersions.INSIGHT_V1)
+            );
+            fallbackUsed = latest != null && latest.getInsightJson() != null;
+        }
         if (latest == null || latest.getInsightJson() == null) return null;
         try {
-            BehaviorInsightResponse resp = parseAndValidate(latest.getInsightJson(), snapshot.getId(), null);
-            resp.setSnapshotId(snapshot.getId());
+            Long usedSnapshotId = latest.getSnapshotId() != null ? latest.getSnapshotId() : snapshot.getId();
+            BehaviorInsightResponse resp = parseAndValidate(latest.getInsightJson(), usedSnapshotId, null);
+            resp.setSnapshotId(usedSnapshotId);
             resp.setSchemaVersion(BehaviorSchemaVersions.INSIGHT_V2);
             if (resp.getMeta() == null) resp.setMeta(new BehaviorInsightResponse.Meta());
             resp.getMeta().setModel(latest.getModel());
@@ -345,6 +356,10 @@ public class BehaviorInsightGenerationServiceImpl implements BehaviorInsightGene
                             "nextAvailableAt", resetAt
                     ));
                 }
+                if (fallbackUsed && snapshot.getId() != null && !snapshot.getId().equals(usedSnapshotId)) {
+                    extra.put("latestSummarySnapshotId", snapshot.getId());
+                    extra.put("notice", "当前展示为最近一次已生成的洞察；最新摘要快照尚未生成洞察。");
+                }
                 resp.setExtra(extra);
             }
             return resp;
@@ -365,8 +380,8 @@ public class BehaviorInsightGenerationServiceImpl implements BehaviorInsightGene
     /**
      * 解析并校验 AI 输出：
      * - 必须是 JSON 对象
-     * - evidenceIds 必须来自阶段一 evidenceItems
-     * - 不得出现明显的“新分数”字段（弱校验）
+     * - evidenceIds 必须来自阶段一 evidenceItems（当 summary 非空时）
+     * - 不得出现明显的“新分数/权重”字段（弱校验）
      */
     @SuppressWarnings("unchecked")
     private BehaviorInsightResponse parseAndValidate(String rawJson, Long snapshotId, BehaviorSummaryResponse summary) {
@@ -579,5 +594,6 @@ public class BehaviorInsightGenerationServiceImpl implements BehaviorInsightGene
         }
         return false;
     }
+
 }
 

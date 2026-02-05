@@ -174,6 +174,33 @@ public class AiController extends BaseController {
                 req.getLocale(),
                 req.getScenario()
         );
+
+        // 行为记录：口语训练回合（仅记录事实，不评价，不算分）
+        try {
+            if (hasRole("STUDENT")) {
+                java.util.Map<String, Object> meta = new java.util.HashMap<>();
+                meta.put("sessionId", sessionId);
+                meta.put("turnId", turn != null ? turn.getId() : null);
+                meta.put("model", req.getModel());
+                meta.put("locale", req.getLocale());
+                meta.put("scenario", req.getScenario());
+                meta.put("hasUserAudio", req.getUserAudioFileId() != null);
+                meta.put("hasAssistantAudio", req.getAssistantAudioFileId() != null);
+                String ut = req.getUserTranscript() == null ? "" : req.getUserTranscript().trim();
+                String at = req.getAssistantText() == null ? "" : req.getAssistantText().trim();
+                meta.put("userTranscriptChars", ut.length());
+                meta.put("assistantTextChars", at.length());
+                behaviorEventRecorder.record(
+                        userId,
+                        null, // 按约定：语音证据不绑定 courseId（全局学习行为）
+                        BehaviorEventType.VOICE_PRACTICE_TURN,
+                        "ai_voice_session",
+                        sessionId,
+                        meta
+                );
+            }
+        } catch (Exception ignored) { }
+
         AiVoiceTurnResponse resp = new AiVoiceTurnResponse(sessionId, sessionId, turn != null ? turn.getId() : null);
         return ResponseEntity.ok(ApiResponse.success(resp));
     }

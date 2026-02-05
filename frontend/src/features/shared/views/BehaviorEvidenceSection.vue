@@ -26,7 +26,7 @@
 
     <div v-else class="space-y-4">
       <!-- 事实统计 -->
-      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-3">
         <div class="rounded-2xl p-4 glass-ultraThin glass-tint-primary border border-white/20 dark:border-white/10" v-glass="{ strength: 'ultraThin', interactive: false }">
           <div class="flex items-center gap-2 text-xs text-gray-600 dark:text-gray-300">
             <sparkles-icon class="w-4 h-4 text-fuchsia-600 dark:text-fuchsia-400" />
@@ -80,6 +80,17 @@
           <div class="mt-1 text-sm">
             <span class="text-gray-700 dark:text-gray-200">
               {{ tf('shared.behaviorEvidence.stats.views', '次数') }}：<span class="font-medium">{{ n(summary?.activityStats?.feedback?.viewCount) }}</span>
+            </span>
+          </div>
+        </div>
+        <div class="rounded-2xl p-4 glass-ultraThin glass-tint-accent border border-white/20 dark:border-white/10" v-glass="{ strength: 'ultraThin', interactive: false }">
+          <div class="flex items-center gap-2 text-xs text-gray-600 dark:text-gray-300">
+            <microphone-icon class="w-4 h-4 text-violet-600 dark:text-violet-400" />
+            <span>{{ tf('shared.behaviorEvidence.stats.voice', '口语练习') }}</span>
+          </div>
+          <div class="mt-1 text-sm">
+            <span class="text-gray-700 dark:text-gray-200">
+              {{ tf('shared.behaviorEvidence.stats.voiceTurns', '回合') }}：<span class="font-medium">{{ n(summary?.signals?.voiceTurnCount) }}</span>
             </span>
           </div>
         </div>
@@ -162,7 +173,8 @@ import {
   ChatBubbleLeftRightIcon,
   DocumentTextIcon,
   ClipboardDocumentListIcon,
-  InformationCircleIcon
+  InformationCircleIcon,
+  MicrophoneIcon
 } from '@heroicons/vue/24/outline'
 
 const props = defineProps<{
@@ -221,6 +233,8 @@ function evidenceTitle(it: any): string {
     switch (type) {
       case 'ai_activity':
         return tf('shared.behaviorEvidence.records.ai.title', 'AI Interaction')
+      case 'voice_practice_activity':
+        return tf('shared.behaviorEvidence.records.voice.title', 'Speaking Practice')
       case 'community_activity':
         return tf('shared.behaviorEvidence.records.community.title', 'Community Activity')
       case 'assignment_activity':
@@ -242,6 +256,7 @@ function evidenceDescription(it: any): string {
   if (isEnLocale.value) {
     const q = Number(summary.value?.activityStats?.ai?.questionCount ?? 0)
     const f = Number(summary.value?.activityStats?.ai?.followUpCount ?? 0)
+    const voice = Number(summary.value?.signals?.voiceTurnCount ?? 0)
     const ask = Number(summary.value?.activityStats?.community?.askCount ?? 0)
     const ans = Number(summary.value?.activityStats?.community?.answerCount ?? 0)
     const submit = Number(summary.value?.activityStats?.assignment?.submitCount ?? 0)
@@ -252,6 +267,9 @@ function evidenceDescription(it: any): string {
         return tf('shared.behaviorEvidence.records.ai.desc', 'In this stage: {q} questions, {f} follow-ups.')
           .replace('{q}', String(q))
           .replace('{f}', String(f))
+      case 'voice_practice_activity':
+        return tf('shared.behaviorEvidence.records.voice.desc', 'In this stage: {n} speaking practice turns.')
+          .replace('{n}', String(voice))
       case 'community_activity':
         return tf('shared.behaviorEvidence.records.community.desc', 'In this stage: {ask} asks, {ans} replies.')
           .replace('{ask}', String(ask))

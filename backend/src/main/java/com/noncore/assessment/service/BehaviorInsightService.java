@@ -32,6 +32,11 @@ public interface BehaviorInsightService {
     BehaviorInsight getLatestByStudentCourse(Long studentId, Long courseId, String schemaVersion);
 
     /**
+     * 获取学生在课程（可空）+ 时间窗(rangeKey) 下的最新洞察（通过 snapshot_id 关联快照过滤 rangeKey）。
+     */
+    BehaviorInsight getLatestByStudentCourseRange(Long studentId, Long courseId, String rangeKey, String schemaVersion);
+
+    /**
      * 统计学生在指定时间点之后生成的洞察次数（用于限流）。
      *
      * @param studentId 学生ID
