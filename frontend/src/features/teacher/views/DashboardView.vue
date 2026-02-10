@@ -70,16 +70,16 @@ import { useUIStore } from '@/stores/ui'
 import { useTeacherStore } from '@/stores/teacher'
 import { useCourseStore } from '@/stores/course'
 import { useAuthStore } from '@/stores/auth' // 1. 导入 useAuthStore
-import * as echarts from 'echarts'
+import type * as echarts from 'echarts'
 import { resolveEChartsTheme, glassTooltipCss, resolveThemePalette } from '@/charts/echartsTheme'
 import { getEChartsThemedTokens } from '@/utils/theme'
+import { getOrInitChart, bindHideTipOnGlobalOut, bindTooltipVisibility, bindThemeChangeEvents } from '@/charts/echartsHelpers'
 import { useI18n } from 'vue-i18n'
 import { loadLocaleMessages } from '@/i18n'
 import { PlusIcon, CheckBadgeIcon, UserGroupIcon, CheckCircleIcon, StarIcon, ClipboardDocumentListIcon } from '@heroicons/vue/24/outline'
 import Button from '@/components/ui/Button.vue'
 import Card from '@/components/ui/Card.vue'
 import StartCard from '@/components/ui/StartCard.vue'
-import GlassSelect from '@/components/ui/filters/GlassSelect.vue'
 import GlassPopoverSelect from '@/components/ui/filters/GlassPopoverSelect.vue'
 import PageHeader from '@/components/ui/PageHeader.vue'
 
@@ -95,7 +95,6 @@ const chartRef = ref<HTMLElement | null>(null)
 let chart: echarts.ECharts | null = null
 let resizeBound = false
 let darkObserver: { disconnect: () => void } | null = null
-let lastIsDark: boolean | null = null
 let reRenderScheduled = false
 const onResize = () => chart?.resize()
 
@@ -120,8 +119,6 @@ const safeAnalytics = computed(() => ({
   totalAssignments: (courseAnalytics.value as any).totalAssignments ?? courseAnalytics.value.assignmentCount ?? 0,
 }))
 
-const toggleSidebar = () => uiStore.toggleSidebar()
-
 const onCourseSelect = () => {
   if (selectedCourseId.value) {
     teacherStore.fetchCourseAnalytics(selectedCourseId.value)
@@ -145,9 +142,9 @@ const goGradeAssignments = () => {
 const initChart = () => {
   const dist: any[] = (classPerformance.value as any).gradeDistribution || []
   if (!chartRef.value) return
-  // 复用已存在的实例，避免重复 init 警告
-  const theme = resolveEChartsTheme()
-  chart = echarts.getInstanceByDom(chartRef.value) || echarts.init(chartRef.value as HTMLDivElement, theme as any)
+  // 复用实例，避免重复 init 警告
+  chart = getOrInitChart(chartRef.value, resolveEChartsTheme())
+  if (!chart) return
   if (!dist.length) {
     chart.clear()
     return
@@ -226,43 +223,8 @@ const initChart = () => {
     }]
   }, { notMerge: true, lazyUpdate: false })
 
-  // 与其它图表组件一致：在 showTip/hideTip 时同步 tooltip DOM 的可见性（否则可能被其它图表全局 hide 影响）
-  try { (chart as any).off && (chart as any).off('showTip') } catch {}
-  try { (chart as any).off && (chart as any).off('hideTip') } catch {}
-  try { (chart as any).off && (chart as any).off('globalout') } catch {}
-  try {
-    // 初始化后先隐藏，避免残留在左上角
-    const tooltipEls = Array.from(document.querySelectorAll('.echarts-tooltip, .echarts-glass-tooltip')) as HTMLElement[]
-    tooltipEls.forEach(el => { el.style.visibility = 'hidden'; el.style.opacity = '1' })
-    chart.on('showTip', () => {
-      const els = Array.from(document.querySelectorAll('.echarts-tooltip, .echarts-glass-tooltip')) as HTMLElement[]
-      els.forEach(el => { el.style.visibility = 'visible'; el.style.opacity = '1' })
-    })
-    chart.on('hideTip', () => {
-      const els = Array.from(document.querySelectorAll('.echarts-tooltip, .echarts-glass-tooltip')) as HTMLElement[]
-      els.forEach(el => { el.style.visibility = 'hidden' })
-    })
-    // 鼠标移出画布：确保 tooltip 关闭
-    chart.on('globalout', () => {
-      try { chart?.dispatchAction({ type: 'hideTip' } as any) } catch {}
-      const els = Array.from(document.querySelectorAll('.echarts-tooltip, .echarts-glass-tooltip')) as HTMLElement[]
-      els.forEach(el => { el.style.visibility = 'hidden' })
-    })
-  } catch {}
-}
-
-// 主题轻量刷新：不销毁实例，仅更新颜色与文字样式
-function refreshForTheme() {
-  if (!chart) return
-  try {
-    const tokens = getEChartsThemedTokens()
-    const palette = resolveThemePalette()
-    chart.setOption({
-      xAxis: { axisLine: { lineStyle: { color: tokens.axisLine } }, axisLabel: { color: tokens.axisLabel } },
-      yAxis: { axisLine: { lineStyle: { color: tokens.axisLine } }, axisLabel: { color: tokens.axisLabel }, splitLine: { lineStyle: { color: tokens.splitLine } } },
-      series: [{ itemStyle: { color: (params: any) => palette[params.dataIndex % palette.length] } }]
-    }, false)
-  } catch {}
+  bindTooltipVisibility(chart)
+  bindHideTipOnGlobalOut(chart)
 }
 
 function scheduleReinit() {
@@ -301,14 +263,7 @@ onMounted(async () => {
   if (!darkObserver) {
     const onChanging = () => { try { chart?.dispatchAction({ type: 'hideTip' } as any) } catch {} }
     const onChanged = () => scheduleReinit()
-    darkObserver = {
-      disconnect() {
-        try { window.removeEventListener('theme:changing', onChanging) } catch {}
-        try { window.removeEventListener('theme:changed', onChanged) } catch {}
-      }
-    }
-    try { window.addEventListener('theme:changing', onChanging) } catch {}
-    try { window.addEventListener('theme:changed', onChanged) } catch {}
+    darkObserver = bindThemeChangeEvents({ onChanging, onChanged })
   }
 })
 

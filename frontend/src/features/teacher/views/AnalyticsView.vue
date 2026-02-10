@@ -272,27 +272,27 @@ import { useCourseStore } from '@/stores/course'
 import { useAuthStore } from '@/stores/auth'
 import { useUIStore } from '@/stores/ui'
 import { teacherApi } from '@/api/teacher.api'
-import { assignmentApi } from '@/api/assignment.api'
 import type { CourseStudentPerformanceItem } from '@/types/teacher'
 import Card from '@/components/ui/Card.vue'
 import StartCard from '@/components/ui/StartCard.vue'
 import Button from '@/components/ui/Button.vue'
 import Badge from '@/components/ui/Badge.vue'
-import Progress from '@/components/ui/Progress.vue'
-import * as echarts from 'echarts'
+import type * as echarts from 'echarts'
 import { resolveEChartsTheme, glassTooltipCss, resolveThemePalette } from '@/charts/echartsTheme'
+import { getOrInitChart, bindHideTipOnGlobalOut, bindTooltipVisibility, bindThemeChangeEvents } from '@/charts/echartsHelpers'
 import RadarChart from '@/components/charts/RadarChart.vue'
 import AbilityRadarLegend from '@/shared/views/AbilityRadarLegend.vue'
 import AbilityWeightsDialog from '@/features/teacher/components/AbilityWeightsDialog.vue'
 import { DocumentArrowDownIcon, SparklesIcon, ArrowPathIcon, UserGroupIcon, CheckCircleIcon, StarIcon, ClipboardDocumentListIcon } from '@heroicons/vue/24/outline'
 // @ts-ignore shim for vue-i18n types in this project
 import { useI18n } from 'vue-i18n'
-import GlassSelect from '@/components/ui/filters/GlassSelect.vue'
 import GlassPopoverSelect from '@/components/ui/filters/GlassPopoverSelect.vue'
 import PageHeader from '@/components/ui/PageHeader.vue'
 import GlassMultiSelect from '@/components/ui/filters/GlassMultiSelect.vue'
 import GlassSwitch from '@/components/ui/inputs/GlassSwitch.vue'
 import { resolveUserDisplayName } from '@/shared/utils/user'
+import { downloadCsv } from '@/utils/download'
+import { useCourseAssignmentsOptions } from '@/features/teacher/composables/useCourseAssignmentsOptions'
 
 // Stores
 const teacherStore = useTeacherStore()
@@ -325,12 +325,7 @@ const selectedStudentId = ref<string | null>(null)
 // Compare mode states
 const compareEnabled = ref<boolean>(false)
 const includeClassAvg = ref<'none'|'A'|'B'|'both'>('both')
-// 保留A/B日期变量占位，但不再使用日期筛选
-const startDateA = ref<string>('')
-const endDateA = ref<string>('')
-const startDateB = ref<string>('')
-const endDateB = ref<string>('')
-const assignmentOptions = ref<{ id: string; title: string }[]>([])
+const { assignmentOptions, loadAssignments } = useCourseAssignmentsOptions(selectedCourseId, compareEnabled)
 const assignmentIdsA = ref<string[]>([])
 const assignmentIdsB = ref<string[]>([])
 const insightsItems = ref<any[]>([])
@@ -456,17 +451,12 @@ const loadRadarStudentPool = async () => {
   }
 }
 
-// 图表引用
-const learningTrendRef = ref<HTMLElement>()
+// 图表引用（仅保留成绩分布图）
 const scoreDistributionRef = ref<HTMLElement>()
-const coursePerformanceRef = ref<HTMLElement>()
 
-let learningTrendChart: echarts.ECharts | null = null
 let scoreDistributionChart: echarts.ECharts | null = null
-let darkObserver: MutationObserver | null = null
-let lastIsDark: boolean | null = null
+let darkObserver: { disconnect: () => void } | null = null
 let reRenderScheduled = false
-let coursePerformanceChart: echarts.ECharts | null = null
 
 // 计算属性：当前教师的课程列表
 const teacherCourses = computed(() => {
@@ -484,13 +474,6 @@ const assignmentSelectOptions = computed(() => assignmentOptions.value.map((a: {
 const route = useRoute()
 const router = useRouter()
 
-const currentCourseTitle = computed(() => {
-  const cid = (route.params as any)?.id || null
-  if (!cid) return ''
-  const found = courseStore.courses.find(c => String(c.id) === String(cid))
-  return found?.title || ''
-})
-
 const safeCourseAnalytics = computed(() => {
   const ca: any = teacherStore.courseAnalytics as any
   const cp: any = teacherStore.classPerformance as any
@@ -504,38 +487,16 @@ const safeCourseAnalytics = computed(() => {
   }
 })
 
-const safeClassPerformance = computed(() => {
-  const cp: any = teacherStore.classPerformance as any
-  return {
-    totalStudents: cp?.totalStudents ?? 0,
-    gradeStats: cp?.gradeStats ?? null,
-  }
-})
-
 // 方法
 const initCharts = () => {
   // 仅保留成绩分布图
   initScoreDistributionChart()
 }
 
-function getOrCreateChart(el: HTMLElement | undefined, existing: echarts.ECharts | null): echarts.ECharts | null {
-  if (!el) return null
-  let inst = echarts.getInstanceByDom(el)
-  if (!inst) {
-    const theme = resolveEChartsTheme()
-    inst = echarts.init(el as HTMLDivElement, theme as any)
-  } else {
-    inst.clear()
-  }
-  return inst
-}
-
-// 删除学习趋势图，保留接口位置以便后续启用
-
 const initScoreDistributionChart = () => {
   if (!scoreDistributionRef.value) return
 
-  scoreDistributionChart = getOrCreateChart(scoreDistributionRef.value, scoreDistributionChart)
+  scoreDistributionChart = getOrInitChart(scoreDistributionRef.value, resolveEChartsTheme())
 
   const dist: any[] = (teacherStore.classPerformance as any)?.gradeDistribution || []
   const palette = resolveThemePalette()
@@ -597,12 +558,8 @@ const initScoreDistributionChart = () => {
   scoreDistributionChart && scoreDistributionChart.setOption(option, true)
   // 初始化后立即隐藏 tooltip，避免左上角残留小空白容器
   try { scoreDistributionChart?.dispatchAction({ type: 'hideTip' } as any) } catch {}
-  try { (scoreDistributionChart as any).off && (scoreDistributionChart as any).off('globalout') } catch {}
-  try {
-    scoreDistributionChart?.on('globalout', () => {
-      try { scoreDistributionChart?.dispatchAction({ type: 'hideTip' } as any) } catch {}
-    })
-  } catch {}
+  bindTooltipVisibility(scoreDistributionChart)
+  bindHideTipOnGlobalOut(scoreDistributionChart)
 }
 
 function scheduleReinitScoreDistribution() {
@@ -643,13 +600,7 @@ const onCourseChange = async () => {
   })
   // 若开启对比，切课时同步加载作业列表，避免选项为空
   if (compareEnabled.value && selectedCourseId.value) {
-    assignmentOptions.value = []
-    assignmentApi.getAssignmentsByCourse(selectedCourseId.value, { page: 1, size: 1000 } as any)
-      .then((res: any) => {
-        const items = res?.data?.items?.items || res?.data?.items || res?.items || []
-        assignmentOptions.value = (items || []).map((it: any) => ({ id: String(it.id), title: it.title || (`#${it.id}`) }))
-      })
-      .catch(() => { assignmentOptions.value = [] })
+    loadAssignments()
   }
 }
 
@@ -689,16 +640,7 @@ watch(selectedStudentId, () => {
 
 watch(compareEnabled, () => {
   if (compareEnabled.value) {
-    // 加载课程作业
-    if (selectedCourseId.value) {
-      assignmentOptions.value = []
-      assignmentApi.getAssignmentsByCourse(selectedCourseId.value, { page: 1, size: 1000 } as any)
-        .then((res: any) => {
-          const items = res?.data?.items?.items || res?.data?.items || res?.items || []
-          assignmentOptions.value = (items || []).map((it: any) => ({ id: String(it.id), title: it.title || (`#${it.id}`) }))
-        })
-        .catch(() => { assignmentOptions.value = [] })
-    }
+    if (selectedCourseId.value) loadAssignments()
     loadInsights()
   }
   loadRadar()
@@ -710,13 +652,7 @@ const exportReport = async () => {
   }
   try {
     const res = await teacherApi.exportCourseStudents(selectedCourseId.value)
-    const blob = new Blob([res as any], { type: 'text/csv;charset=utf-8;' })
-    const url = window.URL.createObjectURL(blob)
-    const a = document.createElement('a')
-    a.href = url
-    a.download = `course_${selectedCourseId.value}_students.csv`
-    a.click()
-    window.URL.revokeObjectURL(url)
+    downloadCsv(res as any, `course_${selectedCourseId.value}_students.csv`)
   } catch (e: any) {
     uiStore.showNotification({ type: 'error', title: t('teacher.analytics.messages.exportFailed'), message: e?.message || t('teacher.analytics.messages.exportFailedMsg') })
   }
@@ -747,16 +683,10 @@ onMounted(async () => {
   // 监听浅/深色切换，自动重建饼图以应用主题色
   // 使用全局主题事件，避免每个页面/组件都创建 MutationObserver 造成抖动
   if (!darkObserver) {
-    const onChanging = () => { try { scoreDistributionChart?.dispatchAction({ type: 'hideTip' } as any) } catch {} }
-    const onChanged = () => scheduleReinitScoreDistribution()
-    darkObserver = {
-      disconnect() {
-        try { window.removeEventListener('theme:changing', onChanging) } catch {}
-        try { window.removeEventListener('theme:changed', onChanged) } catch {}
-      }
-    } as any
-    try { window.addEventListener('theme:changing', onChanging) } catch {}
-    try { window.addEventListener('theme:changed', onChanged) } catch {}
+    darkObserver = bindThemeChangeEvents({
+      onChanging: () => { try { scoreDistributionChart?.dispatchAction({ type: 'hideTip' } as any) } catch {} },
+      onChanged: () => scheduleReinitScoreDistribution()
+    })
   }
 })
 
@@ -823,72 +753,78 @@ const formatRadarValue = (value?: number) => {
   return Number(value).toFixed(1)
 }
 
+function setRadarDimensions(dims: string[]) {
+  rawRadarDimensions.value = Array.isArray(dims) ? [...dims] : []
+  radarIndicators.value = rawRadarDimensions.value.map(n => ({ name: localizeDimensionName(n), max: 100 }))
+}
+
+function buildRadarSingleParams(): any {
+  const params: any = { courseId: selectedCourseId.value }
+  if (selectedStudentId.value != null && selectedStudentId.value !== '') {
+    const sid = Number(selectedStudentId.value)
+    if (Number.isFinite(sid) && sid > 0) params.studentId = sid
+  }
+  return params
+}
+
+async function loadRadarSingle() {
+  const r: any = await teacherApi.getAbilityRadar(buildRadarSingleParams())
+  const data: any = r?.data?.data ?? r?.data ?? r
+  setRadarDimensions(data?.dimensions || [])
+  const student = normalizeScores(data?.studentScores)
+  const clazz = normalizeScores(data?.classAvgScores)
+  radarSeries.value = [
+    { name: t('teacher.analytics.charts.series.student'), values: student },
+    { name: t('teacher.analytics.charts.series.class'), values: clazz },
+  ]
+}
+
+function buildRadarCompareBody(): any {
+  return {
+    courseId: selectedCourseId.value,
+    studentId: selectedStudentId.value,
+    includeClassAvg: includeClassAvg.value,
+    ...(assignmentIdsA.value?.length ? { assignmentIdsA: assignmentIdsA.value } : {}),
+    ...(assignmentIdsB.value?.length ? { assignmentIdsB: assignmentIdsB.value } : {}),
+  }
+}
+
+async function loadRadarCompare() {
+  if (!selectedStudentId.value) {
+    uiStore.showNotification({
+      type: 'warning',
+      title: t('teacher.analytics.messages.chooseStudent') || '请选择学生',
+      message: t('teacher.analytics.messages.chooseStudentMsg') || '在对比模式下需先选择学生'
+    })
+    return
+  }
+  const r: any = await teacherApi.postAbilityRadarCompare(buildRadarCompareBody())
+  const data: any = r?.data?.data ?? r?.data ?? r
+  setRadarDimensions(data?.dimensions || [])
+
+  const series: { name: string; values: number[] }[] = []
+  const aStu = normalizeScores(data?.seriesA?.studentScores)
+  const aCls = normalizeScores(data?.seriesA?.classAvgScores)
+  const bStu = normalizeScores(data?.seriesB?.studentScores)
+  const bCls = normalizeScores(data?.seriesB?.classAvgScores)
+  series.push({ name: 'A - ' + (t('teacher.analytics.charts.series.student') || '学生'), values: aStu })
+  if (Array.isArray(aCls) && aCls.length) series.push({ name: 'A - ' + (t('teacher.analytics.charts.series.class') || '班级'), values: aCls })
+  series.push({ name: 'B - ' + (t('teacher.analytics.charts.series.student') || '学生'), values: bStu })
+  if (Array.isArray(bCls) && bCls.length) series.push({ name: 'B - ' + (t('teacher.analytics.charts.series.class') || '班级'), values: bCls })
+  radarSeries.value = series
+}
+
 const loadRadar = async () => {
   try {
     if (!selectedCourseId.value) return
     if (!compareEnabled.value) {
-    const params: any = { courseId: selectedCourseId.value }
-    if (selectedStudentId.value != null && selectedStudentId.value !== '') {
-      const sid = Number(selectedStudentId.value)
-      if (Number.isFinite(sid) && sid > 0) params.studentId = sid
-    }
-    const r: any = await teacherApi.getAbilityRadar(params)
-    const data: any = r?.data?.data ?? r?.data ?? r
-    const dims: string[] = data?.dimensions || []
-    rawRadarDimensions.value = [...dims]
-    radarIndicators.value = dims.map(n => ({ name: localizeDimensionName(n), max: 100 }))
-    const student = normalizeScores(data?.studentScores)
-    const clazz = normalizeScores(data?.classAvgScores)
-    radarSeries.value = [
-      { name: t('teacher.analytics.charts.series.student'), values: student },
-      { name: t('teacher.analytics.charts.series.class'), values: clazz },
-    ]
+      await loadRadarSingle()
     } else {
-      if (!selectedStudentId.value) {
-        return uiStore.showNotification({ type: 'warning', title: t('teacher.analytics.messages.chooseStudent') || '请选择学生', message: t('teacher.analytics.messages.chooseStudentMsg') || '在对比模式下需先选择学生' })
-      }
-      const body: any = {
-        courseId: selectedCourseId.value,
-        studentId: selectedStudentId.value,
-        includeClassAvg: includeClassAvg.value,
-      }
-      if (startDateA.value && endDateA.value) { body.startDateA = startDateA.value; body.endDateA = endDateA.value }
-      if (startDateB.value && endDateB.value) { body.startDateB = startDateB.value; body.endDateB = endDateB.value }
-      if (assignmentIdsA.value?.length) body.assignmentIdsA = assignmentIdsA.value
-      if (assignmentIdsB.value?.length) body.assignmentIdsB = assignmentIdsB.value
-      const r: any = await teacherApi.postAbilityRadarCompare(body)
-      const data: any = r?.data?.data ?? r?.data ?? r
-      const dims: string[] = data?.dimensions || []
-      rawRadarDimensions.value = [...dims]
-      radarIndicators.value = dims.map(n => ({ name: localizeDimensionName(n), max: 100 }))
-      const series: { name: string; values: number[] }[] = []
-      const aStu = normalizeScores(data?.seriesA?.studentScores)
-      const aCls = normalizeScores(data?.seriesA?.classAvgScores)
-      const bStu = normalizeScores(data?.seriesB?.studentScores)
-      const bCls = normalizeScores(data?.seriesB?.classAvgScores)
-      series.push({ name: 'A - ' + (t('teacher.analytics.charts.series.student') || '学生'), values: aStu })
-      if (Array.isArray(aCls) && aCls.length) series.push({ name: 'A - ' + (t('teacher.analytics.charts.series.class') || '班级'), values: aCls })
-      series.push({ name: 'B - ' + (t('teacher.analytics.charts.series.student') || '学生'), values: bStu })
-      if (Array.isArray(bCls) && bCls.length) series.push({ name: 'B - ' + (t('teacher.analytics.charts.series.class') || '班级'), values: bCls })
-      radarSeries.value = series
+      await loadRadarCompare()
     }
   } catch (e: any) {
     uiStore.showNotification({ type: 'error', title: t('teacher.analytics.messages.refreshFailed'), message: e?.message || t('teacher.analytics.messages.refreshFailedMsg') })
   }
-}
-
-const exportRadar = async () => {
-  if (!selectedCourseId.value) return
-  const params: any = { courseId: selectedCourseId.value }
-  if (selectedStudentId.value) params.studentId = selectedStudentId.value
-  const res = await teacherApi.exportAbilityRadarCsv(params)
-  const blob = new Blob([res as any], { type: 'text/csv;charset=utf-8;' })
-  const url = window.URL.createObjectURL(blob)
-  const a = document.createElement('a')
-  a.href = url
-  a.download = `radar_${selectedCourseId.value}.csv`
-  a.click()
-  window.URL.revokeObjectURL(url)
 }
 
 const onRefreshAnalytics = async () => {
@@ -908,46 +844,38 @@ const exportAnalytics = async () => {
     if (assignmentIdsA.value?.length) body.assignmentIdsA = assignmentIdsA.value
     if (assignmentIdsB.value?.length) body.assignmentIdsB = assignmentIdsB.value
     const res = await teacherApi.exportAbilityRadarCompareCsv(body)
-    const blob = new Blob([res as any], { type: 'text/csv;charset=utf-8;' })
-    const url = window.URL.createObjectURL(blob)
-    const a = document.createElement('a')
-    a.href = url
-    a.download = `radar_compare_${selectedCourseId.value}_${selectedStudentId.value}.csv`
-    a.click()
-    window.URL.revokeObjectURL(url)
+    downloadCsv(res as any, `radar_compare_${selectedCourseId.value}_${selectedStudentId.value}.csv`)
   } else {
     const params: any = { courseId: selectedCourseId.value }
     if (selectedStudentId.value) params.studentId = selectedStudentId.value
     const res = await teacherApi.exportAbilityRadarCsv(params)
-    const blob = new Blob([res as any], { type: 'text/csv;charset=utf-8;' })
-    const url = window.URL.createObjectURL(blob)
-    const a = document.createElement('a')
-    a.href = url
-    a.download = `radar_${selectedCourseId.value}.csv`
-    a.click()
-    window.URL.revokeObjectURL(url)
+    downloadCsv(res as any, `radar_${selectedCourseId.value}.csv`)
   }
+}
+
+function buildInsightsBody(): any {
+  const base: any = {
+    courseId: selectedCourseId.value,
+    studentId: selectedStudentId.value,
+    includeClassAvg: includeClassAvg.value,
+  }
+  // compare 开启：带上A/B作业集；未开启：仅用A作业集或留空（后端将用同组对比）
+  if (compareEnabled.value) {
+    if (assignmentIdsA.value?.length) base.assignmentIdsA = assignmentIdsA.value
+    if (assignmentIdsB.value?.length) base.assignmentIdsB = assignmentIdsB.value
+  } else {
+    if (assignmentIdsA.value?.length) base.assignmentIdsA = assignmentIdsA.value
+    base.assignmentIdsB = assignmentIdsA.value && assignmentIdsA.value.length ? assignmentIdsA.value : undefined
+  }
+  return base
 }
 
 const loadInsights = async () => {
   try {
     if (!selectedCourseId.value || !selectedStudentId.value) return
-    const body: any = {
-      courseId: selectedCourseId.value,
-      studentId: selectedStudentId.value,
-      includeClassAvg: includeClassAvg.value,
-    }
-    // compare 开启：带上A/B作业集；未开启：仅用A作业集或留空（后端将用同组对比）
-    if (compareEnabled.value) {
-      if (assignmentIdsA.value?.length) body.assignmentIdsA = assignmentIdsA.value
-      if (assignmentIdsB.value?.length) body.assignmentIdsB = assignmentIdsB.value
-    } else {
-      if (assignmentIdsA.value?.length) body.assignmentIdsA = assignmentIdsA.value
-      body.assignmentIdsB = assignmentIdsA.value && assignmentIdsA.value.length ? assignmentIdsA.value : undefined
-    }
-    const r: any = await teacherApi.postAbilityDimensionInsights(body)
+    const r: any = await teacherApi.postAbilityDimensionInsights(buildInsightsBody())
     insightsItems.value = (r?.data?.data?.items ?? r?.data?.items ?? r?.items ?? []) as any[]
-  } catch (e: any) {
+  } catch {
     insightsItems.value = []
   }
 }
