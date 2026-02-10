@@ -30,86 +30,78 @@
       <!-- 页面副标题 -->
       <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">{{ t('notifications.subtitle') }}</p>
 
-      <!-- 过滤器容器：玻璃样式（主题主色），与列表宽度对齐 -->
+      <!-- 过滤器容器：对齐“我的课程”界面 FilterBar 样式与选择器配色 -->
       <div class="mt-4">
-        <LiquidGlass
-          class="rounded-2xl"
-          :radius="16"
-          :frost="0.05"
-          :border="0.08"
-          :lightness="50"
-          :alpha="0.92"
-          :blur="10"
-          :scale="-120"
-          :rOffset="0"
-          :gOffset="8"
-          :bOffset="16"
-          container-class="glass-regular glass-tint-primary"
-        >
-          <div class="p-3">
-        <div class="flex flex-wrap items-center gap-4">
-          <div class="w-auto flex items-center gap-2">
-            <span class="text-xs font-medium leading-tight text-gray-700 dark:text-gray-300">{{ t('notifications.filters.type') }}</span>
-            <div class="w-36">
-              <glass-popover-select
-                v-model="filters.type"
-                :options="[
-                  { label: t('notifications.filters.all') as string, value: '' },
-                  { label: t('notifications.types.system') as string, value: 'system' },
-                  { label: t('notifications.types.assignment') as string, value: 'assignment' },
-                  { label: t('notifications.types.grade') as string, value: 'grade' },
-                  { label: t('notifications.types.course') as string, value: 'course' },
-                  { label: t('notifications.types.message') as string, value: 'message' }
-                ]"
-                size="sm"
-                @change="handleFilterChange"
-              />
-            </div>
-          </div>
+        <FilterBar tint="secondary" class="rounded-full">
+          <template #left>
+            <div class="flex items-center gap-4 flex-wrap">
+              <div class="w-auto flex items-center gap-2">
+                <span class="text-xs font-medium leading-tight text-gray-700 dark:text-gray-300">{{ t('notifications.filters.type') }}</span>
+                <div class="w-56">
+                  <glass-popover-select
+                    v-model="filters.type"
+                    :options="[
+                      { label: t('notifications.filters.all') as string, value: '' },
+                      { label: t('notifications.types.system') as string, value: 'system' },
+                      { label: t('notifications.types.assignment') as string, value: 'assignment' },
+                      { label: t('notifications.types.grade') as string, value: 'grade' },
+                      { label: t('notifications.types.course') as string, value: 'course' },
+                      { label: t('notifications.types.message') as string, value: 'message' }
+                    ]"
+                    size="sm"
+                    tint="primary"
+                    @change="handleFilterChange"
+                  />
+                </div>
+              </div>
 
-          <div class="w-auto flex items-center gap-2">
-            <span class="text-xs font-medium leading-tight text-gray-700 dark:text-gray-300">{{ t('notifications.filters.status') }}</span>
-            <div class="w-32">
-              <glass-popover-select
-                :options="[
-                  { label: t('notifications.filters.all') as string, value: 'all' },
-                  { label: t('notifications.status.unread') as string, value: 'unread' },
-                  { label: t('notifications.status.read') as string, value: 'read' }
-                ]"
-                :model-value="filters.isRead===undefined ? 'all' : (filters.isRead ? 'read' : 'unread')"
-                @update:modelValue="(v:any)=>{ filters.isRead = (v==='all') ? undefined : (v==='read'); handleFilterChange() }"
-                size="sm"
-              />
-            </div>
-          </div>
+              <div class="w-auto flex items-center gap-2">
+                <span class="text-xs font-medium leading-tight text-gray-700 dark:text-gray-300">{{ t('notifications.filters.status') }}</span>
+                <div class="w-44">
+                  <glass-popover-select
+                    :options="[
+                      { label: t('notifications.filters.all') as string, value: 'all' },
+                      { label: t('notifications.status.unread') as string, value: 'unread' },
+                      { label: t('notifications.status.read') as string, value: 'read' }
+                    ]"
+                    :model-value="filters.isRead===undefined ? 'all' : (filters.isRead ? 'read' : 'unread')"
+                    @update:modelValue="(v:any)=>{ filters.isRead = (v==='all') ? undefined : (v==='read'); handleFilterChange() }"
+                    size="sm"
+                    tint="accent"
+                  />
+                </div>
+              </div>
 
-          <div class="w-auto flex items-center gap-2">
-            <span class="text-xs font-medium leading-tight text-gray-700 dark:text-gray-300">{{ t('notifications.filters.priority') }}</span>
-            <div class="w-28">
-              <glass-popover-select
-                v-model="filters.priority"
-                :options="[
-                  { label: t('notifications.filters.all') as string, value: '' },
-                  { label: t('notifications.priority.urgent') as string, value: 'urgent' },
-                  { label: t('notifications.priority.high') as string, value: 'high' },
-                  { label: t('notifications.priority.normal') as string, value: 'normal' },
-                  { label: t('notifications.priority.low') as string, value: 'low' }
-                ]"
-                size="sm"
-                @change="handleFilterChange"
-              />
+              <div class="w-auto flex items-center gap-2">
+                <span class="text-xs font-medium leading-tight text-gray-700 dark:text-gray-300">{{ t('notifications.filters.priority') }}</span>
+                <div class="w-48">
+                  <glass-popover-select
+                    v-model="filters.priority"
+                    :options="[
+                      { label: t('notifications.filters.all') as string, value: '' },
+                      { label: t('notifications.priority.urgent') as string, value: 'urgent' },
+                      { label: t('notifications.priority.high') as string, value: 'high' },
+                      { label: t('notifications.priority.normal') as string, value: 'normal' },
+                      { label: t('notifications.priority.low') as string, value: 'low' }
+                    ]"
+                    size="sm"
+                    tint="secondary"
+                    @change="handleFilterChange"
+                  />
+                </div>
+              </div>
             </div>
-          </div>
+          </template>
 
-          <div v-if="hasActiveFilters" class="ml-auto">
-            <Button size="sm" variant="ghost" @click="handleClearFilters">
-              <x-mark-icon class="w-4 h-4 mr-1" />
-              {{ t('notifications.actions.clearFilters') }}
-            </Button>
+          <template #right>
+            <div v-if="hasActiveFilters" class="ml-auto">
+              <Button size="sm" variant="ghost" @click="handleClearFilters">
+                <x-mark-icon class="w-4 h-4 mr-1" />
+                {{ t('notifications.actions.clearFilters') }}
+              </Button>
             </div>
-          </div>
-          </div>
-        </LiquidGlass>
+          </template>
+        </FilterBar>
       </div>
     </div>
 
@@ -216,7 +208,6 @@
 
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
-import LiquidGlass from '@/components/ui/LiquidGlass.vue'
 import Card from '@/components/ui/Card.vue'
 import { useNotificationsStore } from '@/stores/notifications'
 import { storeToRefs } from 'pinia'
@@ -237,6 +228,7 @@ import {
   ChevronDownIcon
 } from '@heroicons/vue/24/outline'
 import GlassPopoverSelect from '@/components/ui/filters/GlassPopoverSelect.vue'
+import FilterBar from '@/components/ui/filters/FilterBar.vue'
 import Button from '@/components/ui/Button.vue'
 import Badge from '@/components/ui/Badge.vue'
 

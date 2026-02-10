@@ -325,25 +325,15 @@
           </table>
         </div>
 
-        <!-- 分页（移除额外容器样式，保留简洁行） -->
-        <div class="mt-6 px-4 py-3 flex items-center justify-between">
-          <div class="flex items-center gap-2">
-            <span class="text-sm text-gray-700 dark:text-gray-300 whitespace-nowrap">{{ t('teacher.assignments.pagination.perPagePrefix') }}</span>
-            <glass-popover-select
-              :model-value="pageSize"
-              :options="[{label:'10',value:10},{label:'20',value:20},{label:'50',value:50}]"
-              size="sm"
-              width="80px"
-              @update:modelValue="(v:any)=>{ pageSize = Number(v||10) }"
-            />
-            <span class="text-sm text-gray-700 dark:text-gray-300 whitespace-nowrap">{{ t('teacher.assignments.pagination.perPageSuffix') }}</span>
-          </div>
-          <div class="flex items-center gap-2">
-            <Button variant="outline" size="sm" class="whitespace-nowrap" @click="currentPage = Math.max(1, currentPage - 1)" :disabled="currentPage === 1">{{ t('teacher.assignments.pagination.prev') }}</Button>
-            <span class="text-sm">{{ t('teacher.assignments.pagination.page', { page: currentPage }) }}</span>
-            <Button variant="outline" size="sm" class="whitespace-nowrap" @click="currentPage = Math.min(totalPages, currentPage + 1)" :disabled="currentPage >= totalPages">{{ t('teacher.assignments.pagination.next') }}</Button>
-          </div>
-        </div>
+        <!-- 分页（抽离为统一组件） -->
+        <PaginationBar
+          :page="currentPage"
+          :page-size="pageSize"
+          :total-pages="totalPages"
+          :page-size-options="[10, 20, 50]"
+          @update:page="(p:number)=> currentPage = p"
+          @update:pageSize="(s:number)=> pageSize = s"
+        />
         </card>
       </div>
 
@@ -395,6 +385,16 @@
       <!-- 已移除卡片视图 -->
 
       <!-- 改为调用全局抽屉：删除本地 Teleport -->
+      <ConfirmDialog
+        :open="confirmOpen"
+        :title="confirmDialog.state.title"
+        :message="confirmDialog.state.message"
+        :confirm-text="confirmDialog.state.confirmText || ((t('common.confirm') as string) || '确定')"
+        :cancel-text="confirmDialog.state.cancelText || ((t('common.cancel') as string) || '取消')"
+        :confirm-variant="confirmDialog.state.confirmVariant"
+        @confirm="confirmDialog.onConfirm"
+        @cancel="confirmDialog.onCancel"
+      />
     </div>
   </div>
 </template>
@@ -440,16 +440,27 @@ import GlassSwitch from '@/components/ui/inputs/GlassSwitch.vue'
 import GlassInput from '@/components/ui/inputs/GlassInput.vue'
 import GlassTextarea from '@/components/ui/inputs/GlassTextarea.vue'
 import UserAvatar from '@/components/ui/UserAvatar.vue'
+import PaginationBar from '@/components/ui/PaginationBar.vue'
+import ConfirmDialog from '@/components/ui/ConfirmDialog.vue'
+import { useConfirmDialog } from '@/shared/composables/useConfirmDialog'
 import { useCourseStore } from '@/stores/course'
 import { useChatStore } from '@/stores/chat'
 // @ts-ignore shim for vue-i18n types in this project
 import { useI18n } from 'vue-i18n'
+import { debounce } from '@/shared/utils/debounce'
 
 // Router and Stores
 const route = useRoute()
 const router = useRouter()
 const uiStore = useUIStore()
 const { t, locale } = useI18n()
+
+const confirmDialog = useConfirmDialog({
+  confirmText: (t('common.confirm') as string) || '确定',
+  cancelText: (t('common.cancel') as string) || '取消',
+  confirmVariant: 'danger',
+})
+const confirmOpen = computed(() => confirmDialog.open.value)
 
 // 表头细节：仅中文将“最后活动”拆成两行（最后/活动），英文保持单行
 const isZhLocale = computed(() => String(locale.value || '').toLowerCase().startsWith('zh'))
@@ -460,6 +471,8 @@ const lastActiveHeaderLine2 = computed(() => '活动')
 const courseId = route.params.id as string
 const courseName = ref('')
 const searchQuery = ref('')
+// 搜索输入做“本地防抖”，避免每次按键都触发前端重算
+const debouncedSearchQuery = ref('')
 const progressFilter = ref('')
 const gradeFilter = ref('')
 const activityFilter = ref('')
@@ -474,8 +487,25 @@ const chat = useChatStore()
 // 三点菜单定位
 const menuButtonMap = new Map<string, HTMLElement>()
 const menuPos = ref({ left: 0, top: 0, width: 160 })
-let scrollListenerBound = false
 const menuRef = ref<HTMLElement | null>(null)
+
+// 仅当菜单打开时绑定 scroll/resize，避免泄漏与无意义回调
+let followHandler: (() => void) | null = null
+function bindMenuFollowHandler() {
+  if (followHandler) return
+  followHandler = () => {
+    if (!showStudentMenu.value) return
+    computeMenuPos(showStudentMenu.value)
+  }
+  window.addEventListener('scroll', followHandler, { passive: true })
+  window.addEventListener('resize', followHandler, { passive: true })
+}
+function unbindMenuFollowHandler() {
+  if (!followHandler) return
+  window.removeEventListener('scroll', followHandler)
+  window.removeEventListener('resize', followHandler)
+  followHandler = null
+}
 
 // Glass 选项
 const progressOptions = computed(() => ([
@@ -524,14 +554,20 @@ const stats = reactive({
 const students = ref<any[]>([])
 const serverTotal = ref<number>(0)
 
-const fetchCourseStudents = async () => {
+let fetchSeq = 0
+
+const fetchCourseNameOnce = async () => {
+  if (courseName.value) return
   try {
-    // 拉取课程名
     const { courseApi } = await import('@/api/course.api')
     const courseRes: any = await courseApi.getCourseById(Number(courseId))
-    // Axios 拦截器已解包，直接是课程对象
     courseName.value = courseRes?.title || ''
   } catch { /* empty */ }
+}
+
+const fetchCourseStudents = async () => {
+  const seq = ++fetchSeq
+  await fetchCourseNameOnce()
   try {
     const { teacherApi } = await import('@/api/teacher.api')
     const payload: any = await teacherApi.getCourseStudentPerformance(courseId, {
@@ -543,6 +579,8 @@ const fetchCourseStudents = async () => {
       grade: gradeFilter.value || undefined,
       progress: progressFilter.value || undefined
     })
+    // 仅应用“最新一次”请求结果，避免快速切换筛选导致的乱序覆盖
+    if (seq !== fetchSeq) return
     const items = payload?.items || []
     students.value = items.map((i: any) => ({
       id: String(i.studentId),
@@ -569,6 +607,7 @@ const fetchCourseStudents = async () => {
     stats.activeStudents = payload?.activeStudents ?? 0
     stats.passRate = payload?.passRate ?? 0
   } catch (e: any) {
+    if (seq !== fetchSeq) return
     uiStore.showNotification({ type: 'error', title: t('teacher.students.load.failTitle'), message: e?.message || t('teacher.students.load.failMsg') })
   }
 }
@@ -577,8 +616,8 @@ const fetchCourseStudents = async () => {
 const filteredStudents = computed(() => {
   let arr = students.value.slice()
   // 关键字（本地）补充过滤
-  if (searchQuery.value) {
-    const q = searchQuery.value.trim().toLowerCase()
+  if (debouncedSearchQuery.value) {
+    const q = debouncedSearchQuery.value
     arr = arr.filter((s) =>
       String(s.name || '').toLowerCase().includes(q) ||
       String(s.studentId || '').toLowerCase().includes(q)
@@ -649,7 +688,7 @@ const pageNumbers = computed(() => {
 })
 
 // 基于筛选后的统计（前端兜底）
-watch(filteredStudents, (arr) => {
+watch(students, (arr) => {
   const avg = (ns: number[]) => (ns.length ? Math.round((ns.reduce((a, b) => a + b, 0) / ns.length) * 100) / 100 : 0)
   // 总人数使用服务端 total，避免被当前页数量覆盖
   stats.totalStudents = serverTotal.value
@@ -775,7 +814,7 @@ const toggleStudentMenu = (studentId: string) => {
     return
   }
   showStudentMenu.value = studentId
-  nextTick(() => { computeMenuPos(studentId); ensureFollowHandler() })
+  nextTick(() => { computeMenuPos(studentId); bindMenuFollowHandler() })
 }
  
  const closeStudentMenu = () => {
@@ -815,7 +854,11 @@ const viewGrades = (studentId: string) => {
 
 // 移除模拟重置逻辑，保留空函数
 const resetProgress = async (studentId: string) => {
-  if (!confirm(t('teacher.students.table.confirmReset') as string)) return
+  const ok = await confirmDialog.confirm({
+    title: (t('common.confirm') as string) || '确定',
+    message: (t('teacher.students.table.confirmReset') as string) || '确认重置该学生进度？'
+  })
+  if (!ok) return
   try {
     const { teacherApi } = await import('@/api/teacher.api')
     await teacherApi.resetStudentCourseProgress(courseId, studentId)
@@ -878,7 +921,11 @@ const exportStudentData = async (_studentId: string) => {
 }
 
 const removeStudent = async (studentId: string) => {
-  if (!confirm(t('teacher.students.table.confirmRemove') as string)) return
+  const ok = await confirmDialog.confirm({
+    title: (t('common.confirm') as string) || '确定',
+    message: (t('teacher.students.table.confirmRemove') as string) || '确认移除该学生？'
+  })
+  if (!ok) return
   try {
     const { courseApi } = await import('@/api/course.api')
     await courseApi.removeStudent(courseId, studentId)
@@ -964,7 +1011,11 @@ const batchExport = async () => {
 
 const batchRemove = async () => {
   if (selectedStudents.value.length === 0) return
-  if (!confirm(t('teacher.students.table.confirmRemove') as string)) return
+  const ok = await confirmDialog.confirm({
+    title: (t('common.confirm') as string) || '确定',
+    message: (t('teacher.students.table.confirmRemove') as string) || '确认移除所选学生？'
+  })
+  if (!ok) return
   try {
     const { courseApi } = await import('@/api/course.api')
     const ids = [...selectedStudents.value]
@@ -1093,36 +1144,47 @@ const submitInvite = async () => {
 
 // 生命周期
 const handleDocClick = () => { showStudentMenu.value = null }
-let followHandlerBound = false
-function ensureFollowHandler() {
-  if (followHandlerBound) return
-  const handler = () => {
-    if (!showStudentMenu.value) return
-    const curId = showStudentMenu.value
-    if (!curId) return
-    computeMenuPos(curId)
-  }
-  window.addEventListener('scroll', handler, { passive: true })
-  window.addEventListener('resize', handler, { passive: true })
-  followHandlerBound = true
-}
 
 onMounted(async () => {
   document.addEventListener('click', handleDocClick)
+  // 初始化本地防抖搜索值，避免首次渲染与输入时的抖动
+  debouncedSearchQuery.value = String(searchQuery.value || '').trim().toLowerCase()
   await fetchCourseStudents()
 })
 
-// 监听筛选/分页/排序/搜索，服务端拉取
-watch([currentPage, pageSize, sortBy, progressFilter, gradeFilter, activityFilter], () => {
-  fetchCourseStudents()
+// 监听筛选/分页/排序/搜索，服务端拉取（统一做 debounce，避免连发请求）
+const debouncedFetchStudents = debounce(() => { fetchCourseStudents() }, 250)
+const syncDebouncedSearch = debounce(() => {
+  debouncedSearchQuery.value = String(searchQuery.value || '').trim().toLowerCase()
+}, 200)
+
+watch(currentPage, () => {
+  debouncedFetchStudents()
 })
+
+watch([pageSize, sortBy, progressFilter, gradeFilter, activityFilter], () => {
+  // 过滤/排序/每页条数改变时回到第一页，减少“空页”与无意义请求
+  currentPage.value = 1
+  debouncedFetchStudents()
+})
+
 watch(searchQuery, () => {
   currentPage.value = 1
-  fetchCourseStudents()
+  syncDebouncedSearch()
+  debouncedFetchStudents()
 })
 
 onUnmounted(() => {
   document.removeEventListener('click', handleDocClick)
+  unbindMenuFollowHandler()
+  debouncedFetchStudents.cancel()
+  syncDebouncedSearch.cancel()
+})
+
+// 菜单关闭时立即解绑跟随监听，避免后台持续触发
+watch(showStudentMenu, (v) => {
+  if (v) bindMenuFollowHandler()
+  else unbindMenuFollowHandler()
 })
 
 function setMenuButtonRef(el: HTMLElement | null, id: string) {

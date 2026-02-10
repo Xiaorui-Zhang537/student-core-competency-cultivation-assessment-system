@@ -3,6 +3,9 @@
     <PageHeader :title="t('teacher.analytics.title')" :subtitle="t('teacher.analytics.subtitle')">
       <template #actions>
         <div class="flex items-center space-x-4">
+          <span class="text-sm font-medium text-gray-700 dark:text-gray-300 whitespace-nowrap">
+            {{ t('teacher.analytics.courseSelector.label') || '选择课程' }}
+          </span>
           <GlassPopoverSelect
             v-model="selectedCourseId"
             :options="courseSelectOptions"
@@ -96,31 +99,15 @@
                 </div>
               </li>
             </ul>
-            <div class="pt-4 mt-4 border-t border-white/20 dark:border-white/10 flex flex-wrap items-center justify-between gap-3">
-              <div class="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300 whitespace-nowrap">
-                <span>{{ t('teacher.assignments.pagination.perPagePrefix') }}</span>
-                <GlassPopoverSelect
-                  :model-value="rankingPageSize"
-                  :options="rankingPageOptions"
-                  size="sm"
-                  width="80px"
-                  @update:modelValue="handleRankingPageSizeChange"
-                />
-                <span>{{ t('teacher.assignments.pagination.perPageSuffix') }}</span>
-              </div>
-              <div class="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300 whitespace-nowrap">
-                <Button variant="outline" size="sm" class="whitespace-nowrap" @click="handleRankingPrev" :disabled="rankingPage === 1">
-                  {{ t('teacher.assignments.pagination.prev') }}
-                </Button>
-                <span class="text-sm">
-                  {{ t('teacher.assignments.pagination.page', { page: rankingPage }) }}
-                  <span class="ml-1 text-gray-400 dark:text-gray-500">/ {{ t('teacher.assignments.pagination.page', { page: rankingTotalPages }) }}</span>
-                </span>
-                <Button variant="outline" size="sm" class="whitespace-nowrap" @click="handleRankingNext" :disabled="rankingPage >= rankingTotalPages">
-                  {{ t('teacher.assignments.pagination.next') }}
-                </Button>
-              </div>
-            </div>
+            <PaginationBar
+              :page="rankingPage"
+              :page-size="rankingPageSize"
+              :total-pages="rankingTotalPages"
+              :page-size-options="rankingPageOptions.map((o:any)=>Number(o.value || o))"
+              :show-total-pages="true"
+              @update:page="(p:number)=> rankingPage = p"
+              @update:pageSize="handleRankingPageSizeChange"
+            />
           </div>
       </Card>
       </div>
@@ -137,13 +124,6 @@
                   <span class="text-sm text-gray-700 dark:text-gray-300">{{ t('teacher.analytics.charts.enableCompare') }}</span>
                   <GlassSwitch v-model="compareEnabled" size="sm" />
                 </div>
-                <Button size="sm" variant="info" @click="openWeights = true" :disabled="!selectedCourseId" class="shadow-sm">
-                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-4 h-4 mr-1">
-                    <path d="M11.25 3.5a.75.75 0 0 1 .75-.75h1.5a.75.75 0 0 1 .75.75v1.19a5.25 5.25 0 0 1 2.56 1.06l.84-.84a.75.75 0 0 1 1.06 0l1.06 1.06a.75.75 0 0 1 0 1.06l-.84.84a5.25 5.25 0 0 1 1.06 2.56h1.19a.75.75 0 0 1 .75.75v1.5a.75.75 0 0 1-.75.75h-1.19a5.25 5.25 0 0 1-1.06 2.56l.84.84a.75.75 0 0 1 0 1.06l-1.06 1.06a.75.75 0 0 1-1.06 0l-.84-.84a5.25 5.25 0 0 1-2.56 1.06v1.19a.75.75 0 0 1-.75.75h-1.5a.75.75 0 0 1-.75-.75v-1.19a5.25 5.25 0 0 1-2.56-1.06l-.84.84a.75.75 0 0 1-1.06 0L5.27 17a.75.75 0 0 1 0-1.06l.84-.84a5.25 5.25 0 0 1-1.06-2.56H3.86a.75.75 0 0 1-.75-.75v-1.5c0-.414.336-.75.75-.75h1.19a5.25 5.25 0 0 1 1.06-2.56l-.84-.84a.75.75 0 0 1 0-1.06l1.06-1.06a.75.75 0 0 1 1.06 0l.84.84a5.25 5.25 0 0 1 2.56-1.06V3.5Z"/>
-                    <path d="M12 8.75a3.25 3.25 0 1 0 0 6.5 3.25 3.25 0 0 0 0-6.5Z"/>
-                  </svg>
-                  {{ t('teacher.analytics.charts.setWeights') }}
-                </Button>
                 <Button size="sm" variant="info" :title="t('teacher.analytics.charts.refresh')" @click="onRefreshAnalytics" :disabled="!selectedCourseId" class="shadow-sm">
                   <ArrowPathIcon class="w-4 h-4 mr-1" />
                   {{ t('teacher.analytics.charts.refresh') }}
@@ -259,8 +239,7 @@
       </div>
     
     </div>
-    <!-- 权重设置弹窗（保持在同一 <template> 内） -->
-    <ability-weights-dialog :open="openWeights" :weights="weights" @close="openWeights=false" @saved="onWeightsSaved" />
+    <!-- 权重设置已废弃：移除入口与弹窗 -->
   </div>
 </template>
 
@@ -282,17 +261,18 @@ import { resolveEChartsTheme, glassTooltipCss, resolveThemePalette } from '@/cha
 import { getOrInitChart, bindHideTipOnGlobalOut, bindTooltipVisibility, bindThemeChangeEvents } from '@/charts/echartsHelpers'
 import RadarChart from '@/components/charts/RadarChart.vue'
 import AbilityRadarLegend from '@/shared/views/AbilityRadarLegend.vue'
-import AbilityWeightsDialog from '@/features/teacher/components/AbilityWeightsDialog.vue'
 import { DocumentArrowDownIcon, SparklesIcon, ArrowPathIcon, UserGroupIcon, CheckCircleIcon, StarIcon, ClipboardDocumentListIcon } from '@heroicons/vue/24/outline'
 // @ts-ignore shim for vue-i18n types in this project
 import { useI18n } from 'vue-i18n'
 import GlassPopoverSelect from '@/components/ui/filters/GlassPopoverSelect.vue'
 import PageHeader from '@/components/ui/PageHeader.vue'
+import PaginationBar from '@/components/ui/PaginationBar.vue'
 import GlassMultiSelect from '@/components/ui/filters/GlassMultiSelect.vue'
 import GlassSwitch from '@/components/ui/inputs/GlassSwitch.vue'
 import { resolveUserDisplayName } from '@/shared/utils/user'
 import { downloadCsv } from '@/utils/download'
 import { useCourseAssignmentsOptions } from '@/features/teacher/composables/useCourseAssignmentsOptions'
+import { debounce } from '@/shared/utils/debounce'
 
 // Stores
 const teacherStore = useTeacherStore()
@@ -329,8 +309,7 @@ const { assignmentOptions, loadAssignments } = useCourseAssignmentsOptions(selec
 const assignmentIdsA = ref<string[]>([])
 const assignmentIdsB = ref<string[]>([])
 const insightsItems = ref<any[]>([])
-const openWeights = ref(false)
-const weights = ref<Record<string, number> | null>(null)
+// 权重设置已废弃：保留后端接口但本页不再使用
 const radarIndicators = ref<{ name: string; max: number }[]>([])
 const radarSeries = ref<{ name: string; values: number[] }[]>([])
 // 保留后端原始维度名称以便在语言切换时重新本地化
@@ -465,9 +444,19 @@ const teacherCourses = computed(() => {
 })
 
 const courseSelectOptions = computed(() => teacherCourses.value.map((c: any) => ({ label: String(c.title || ''), value: String(c.id) })))
+// 学生下拉选项：对 1000 条 map 做简单缓存，避免频繁重算造成卡顿
+const studentOptionsCache = ref<{ key: string; options: Array<{ label: string; value: any }> }>({ key: '', options: [] })
+function studentListKey(list: CourseStudentPerformanceItem[]): string {
+  // 仅用 studentId 作为稳定 key，降低计算成本
+  return (list || []).map(s => String(s?.studentId ?? '')).join('|')
+}
 const studentSelectOptions = computed(() => {
-  const base = radarStudentPool.value.length ? radarStudentPool.value : topStudents.value
-  return [{ label: t('teacher.analytics.charts.selectStudent') as string, value: null as any }, ...base.map((s: CourseStudentPerformanceItem) => ({ label: s.studentName, value: String(s.studentId) }))]
+  const base = (radarStudentPool.value.length ? radarStudentPool.value : topStudents.value) as CourseStudentPerformanceItem[]
+  const k = `${String(locale.value)}::${studentListKey(base)}`
+  if (studentOptionsCache.value.key === k && studentOptionsCache.value.options.length) return studentOptionsCache.value.options
+  const options = [{ label: t('teacher.analytics.charts.selectStudent') as string, value: null as any }, ...base.map((s: CourseStudentPerformanceItem) => ({ label: s.studentName, value: String(s.studentId) }))]
+  studentOptionsCache.value = { key: k, options }
+  return options
 })
 const assignmentSelectOptions = computed(() => assignmentOptions.value.map((a: { id: string; title: string }) => ({ label: a.title, value: String(a.id) })))
 
@@ -586,8 +575,7 @@ const onCourseChange = async () => {
   router.replace({ name: 'TeacherAnalytics', query: { courseId: selectedCourseId.value, studentId: selectedStudentId.value || undefined } })
   teacherStore.fetchCourseAnalytics(selectedCourseId.value)
   teacherStore.fetchClassPerformance(selectedCourseId.value)
-  // 初始化权重
-  teacherApi.getAbilityWeights(selectedCourseId.value).then((r: any) => { weights.value = r?.weights || r?.data?.weights || null }).catch(() => {})
+  // 权重设置已废弃：不再初始化权重
   await loadStudentRanking()
   await loadRadarStudentPool()
   const routeStudentId: any = (route.query as any)?.studentId || null
@@ -622,29 +610,36 @@ watch(() => route.query.courseId, (cid) => {
 watch(() => route.query.studentId, (sid) => {
   selectedStudentId.value = sid ? String(sid) : null
   if (selectedCourseId.value) {
-    loadRadar()
+    scheduleRadarAndInsights()
   }
 })
 
 // 监听班级表现数据变化以刷新成绩分布图
-watch(() => teacherStore.classPerformance, () => {
+function gradeDistributionKey(dist: any[]): string {
+  const arr = Array.isArray(dist) ? dist : []
+  return arr.map(d => `${String(d?.gradeLevel ?? d?.level ?? '')}:${Number(d?.count ?? 0)}`).join('|')
+}
+watch(() => gradeDistributionKey(((teacherStore.classPerformance as any)?.gradeDistribution || []) as any[]), () => {
   nextTick(() => initScoreDistributionChart())
-}, { deep: true })
+})
 
 // 学生切换时自动刷新雷达图
 watch(selectedStudentId, () => {
-  loadRadar()
-  // 学生选择变化时，自动刷新维度解析
-  loadInsights()
+  scheduleRadarAndInsights()
 })
 
 watch(compareEnabled, () => {
   if (compareEnabled.value) {
     if (selectedCourseId.value) loadAssignments()
-    loadInsights()
   }
-  loadRadar()
+  scheduleRadarAndInsights()
 })
+
+const scheduleRadarAndInsights = debounce(() => {
+  // 合并多处 watch 触发，避免同一次交互下重复请求
+  try { loadRadar() } catch {}
+  try { loadInsights() } catch {}
+}, 120)
 
 const exportReport = async () => {
   if (!selectedCourseId.value) {
@@ -694,6 +689,7 @@ onUnmounted(() => {
   scoreDistributionChart?.dispose()
   window.removeEventListener('resize', resizeCharts)
   if (darkObserver) { try { darkObserver.disconnect() } catch {}; darkObserver = null }
+  scheduleRadarAndInsights.cancel()
 })
 
 const askAiForAnalytics = () => {
@@ -906,12 +902,7 @@ function getInsightTexts(it: any): { analysis: string; suggestion: string } {
   }
 }
 
-const onWeightsSaved = async (w: Record<string, number>) => {
-  if (!selectedCourseId.value) return
-  weights.value = { ...w }
-  await teacherApi.updateAbilityWeights({ courseId: selectedCourseId.value, weights: weights.value as any })
-  await loadRadar()
-}
+// 权重设置已废弃：移除保存逻辑
 
 // 语言切换时，仅根据缓存的原始维度与当前 series 数值重新本地化显示文本
 function refreshRadarLocalization() {

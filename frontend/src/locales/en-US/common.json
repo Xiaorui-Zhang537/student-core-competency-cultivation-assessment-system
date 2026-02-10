@@ -1,6 +1,9 @@
 {
   "common": {
     "error": "Error",
+    "warning": "Warning",
+    "unknown": "Unknown",
+    "loading": "Loading...",
     "empty": "Empty",
     "cancel": "Cancel",
     "close": "Close",

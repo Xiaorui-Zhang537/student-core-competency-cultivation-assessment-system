@@ -32,7 +32,7 @@
         </template>
       </PageHeader>
       <div class="w-full h-56 bg-gray-200 rounded-2xl overflow-hidden" v-if="course.coverImage">
-        <img v-if="coverSrc" :src="coverSrc" :alt="t('teacher.courses.card.coverAlt')" class="w-full h-full object-cover rounded-2xl" @error="coverSrc='';" />
+        <img v-if="coverSrc" :src="coverSrc" :alt="t('teacher.courses.card.coverAlt')" class="w-full h-full object-cover rounded-2xl" @error="clearCoverSrc()" />
       </div>
       <Card :hoverable="true" :hoverScale="false" padding="md" class="relative overflow-hidden rounded-2xl" tint="info">
         <h2 class="text-xl font-semibold mb-4">{{ t('teacher.courseDetail.sections.description') }}</h2>
@@ -367,10 +367,21 @@
       <Button size="sm" variant="outline" @click="materialPickerVisible = false">{{ t('teacher.courseDetail.actions.close') }}</Button>
     </template>
   </GlassModal>
+
+  <ConfirmDialog
+    :open="confirmOpen"
+    :title="confirmDialog.state.title"
+    :message="confirmDialog.state.message"
+    :confirm-text="confirmDialog.state.confirmText || ((t('common.confirm') as string) || '确定')"
+    :cancel-text="confirmDialog.state.cancelText || ((t('common.cancel') as string) || '取消')"
+    :confirm-variant="confirmDialog.state.confirmVariant"
+    @confirm="confirmDialog.onConfirm"
+    @cancel="confirmDialog.onCancel"
+  />
 </template>
 
 <script setup lang="ts">
-import { onMounted, computed, ref, watch } from 'vue';
+import { onMounted, onUnmounted, computed, ref, watch } from 'vue';
 import { useCourseStore } from '@/stores/course';
 import { lessonApi } from '@/api/lesson.api';
 import { assignmentApi } from '@/api/assignment.api';
@@ -384,6 +395,9 @@ import { chapterApi } from '@/api/chapter.api'
 import { DocumentIcon, PhotoIcon, FilmIcon, ArchiveBoxIcon, ChevronRightIcon, UserGroupIcon, ClipboardDocumentListIcon, PresentationChartBarIcon, ArrowPathIcon, PlusIcon, TrashIcon, ArrowDownTrayIcon } from '@heroicons/vue/24/outline'
 // @ts-ignore shim for vue-i18n types in this project
 import { useI18n } from 'vue-i18n'
+import ConfirmDialog from '@/components/ui/ConfirmDialog.vue'
+import { useConfirmDialog } from '@/shared/composables/useConfirmDialog'
+import { useUIStore } from '@/stores/ui'
 import GlassPopoverSelect from '@/components/ui/filters/GlassPopoverSelect.vue'
 import GlassMultiSelect from '@/components/ui/filters/GlassMultiSelect.vue'
 import PageHeader from '@/components/ui/PageHeader.vue'
@@ -394,9 +408,17 @@ import GlassSwitch from '@/components/ui/inputs/GlassSwitch.vue'
 import GlassModal from '@/components/ui/GlassModal.vue'
 
 const courseStore = useCourseStore();
+const uiStore = useUIStore()
 const route = useRoute();
 const router = useRouter();
 const { t } = useI18n()
+
+const confirmDialog = useConfirmDialog({
+  confirmText: (t('common.confirm') as string) || '确定',
+  cancelText: (t('common.cancel') as string) || '取消',
+  confirmVariant: 'danger',
+})
+const confirmOpen = computed(() => confirmDialog.open.value)
 async function downloadById(id: string | number, f?: any) {
   try {
     await fileApi.downloadFile(String(id), f?.originalName || f?.fileName || `file_${id}`)
@@ -523,20 +545,34 @@ const uploadHeaders = {
   Authorization: localStorage.getItem('token') ? `Bearer ${localStorage.getItem('token')}` : ''
 };
 const coverSrc = ref('');
+let coverObjectUrl: string | null = null
 const isHttpUrl = (v?: string) => !!v && /^(http|https):\/\//i.test(v);
+const clearCoverSrc = () => {
+  try {
+    if (coverObjectUrl) URL.revokeObjectURL(coverObjectUrl)
+  } catch {}
+  coverObjectUrl = null
+  coverSrc.value = ''
+}
 const loadCover = async () => {
   const v: any = course.value?.coverImage;
-  if (!v) { coverSrc.value = ''; return; }
+  if (!v) { clearCoverSrc(); return; }
   // 外链在本地网络环境可能被拦截，直接不加载，由占位显示
-  if (isHttpUrl(v)) { coverSrc.value = ''; return; }
+  if (isHttpUrl(v)) { clearCoverSrc(); return; }
   try {
     const blob: any = await apiClient.get(`/files/${encodeURIComponent(String(v))}/preview`, { responseType: 'blob' });
-    coverSrc.value = URL.createObjectURL(blob);
+    clearCoverSrc()
+    coverObjectUrl = URL.createObjectURL(blob)
+    coverSrc.value = coverObjectUrl
   } catch {
-    coverSrc.value = '';
+    clearCoverSrc()
   }
 };
-watch(course, loadCover, { immediate: true, deep: true });
+watch(() => course.value?.coverImage, () => loadCover(), { immediate: true });
+
+onUnmounted(() => {
+  clearCoverSrc()
+})
 
 const formatSize = (bytes?: number) => {
   if (!bytes || bytes <= 0) return t('teacher.analytics.charts.unknown') as string;
@@ -558,7 +594,11 @@ const refreshVideos = async () => {
 };
 
 const confirmDelete = async (fileId: string | number, kind: 'material'|'video') => {
-  if (!confirm(t('teacher.courseDetail.confirm.deleteFile'))) return;
+  const ok = await confirmDialog.confirm({
+    title: (t('common.confirm') as string) || '确定',
+    message: (t('teacher.courseDetail.confirm.deleteFile') as string) || '确认删除该文件？'
+  })
+  if (!ok) return
   await fileApi.deleteFile(String(fileId));
   if (kind === 'material') {
     await refreshMaterials();
@@ -790,7 +830,11 @@ const bindAssignment = async (l: any) => {
   // 前端保护：仅允许 course_bound 类型
   const found = (courseAssignments.value||[]).find((x:any)=> String(x.id)===String(aId))
   if (!found || String(found.assignmentType||'').toLowerCase()!=='course_bound') {
-    alert(String(t('teacher.courseDetail.sections.bindConstraint')||'仅支持绑定课程绑定-无截止类型的作业'))
+    uiStore.showNotification({
+      type: 'warning',
+      title: (t('app.notifications.warning.title') as string) || (t('common.warning') as string) || '提示',
+      message: String(t('teacher.courseDetail.sections.bindConstraint') || '仅支持绑定课程绑定-无截止类型的作业')
+    })
     l._assignmentId = ''
     return
   }
@@ -869,7 +913,11 @@ const onChapterDrop = async (target: any) => {
   chapterDragItem = null;
 };
 const deleteLessonRow = async (l: any) => {
-  if (!confirm(t('teacher.courseDetail.confirm.deleteLesson') || '确认删除该节次？')) return
+  const ok = await confirmDialog.confirm({
+    title: (t('common.confirm') as string) || '确定',
+    message: String(t('teacher.courseDetail.confirm.deleteLesson') || '确认删除该节次？')
+  })
+  if (!ok) return
   try {
     await lessonApi.deleteLesson(String(l.id))
     lessons.value = lessons.value.filter(x => x.id !== l.id)
@@ -880,7 +928,11 @@ const deleteLessonRow = async (l: any) => {
 
 // 删除章节
 const deleteChapterRow = async (c: any) => {
-  if (!confirm(t('teacher.courseDetail.confirm.deleteChapter') || '确认删除该章节？')) return
+  const ok = await confirmDialog.confirm({
+    title: (t('common.confirm') as string) || '确定',
+    message: String(t('teacher.courseDetail.confirm.deleteChapter') || '确认删除该章节？')
+  })
+  if (!ok) return
   try {
     await chapterApi.remove(String(c.id))
     chapters.value = chapters.value.filter(x => x.id !== c.id)

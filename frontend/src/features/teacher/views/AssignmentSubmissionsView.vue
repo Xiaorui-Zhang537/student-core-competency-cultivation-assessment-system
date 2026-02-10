@@ -116,32 +116,22 @@
         </Card>
       </div>
 
-      <div class="mt-6 flex items-center justify-between">
-        <div class="flex items-center space-x-2">
-          <span class="text-sm text-gray-700">{{ t('teacher.assignments.pagination.perPagePrefix') }}</span>
-          <div class="w-24">
-            <glass-popover-select
-              :options="[{label:'10', value:10},{label:'20', value:20},{label:'50', value:50}]"
-              :model-value="pageSize"
-              @update:modelValue="(v:any)=>{ pageSize = Number(v||10); changePageSize() }"
-              size="sm"
-            />
-          </div>
-          <span class="text-sm text-gray-700">{{ t('teacher.assignments.pagination.perPageSuffix') }}</span>
-        </div>
-        <div class="flex items-center space-x-2">
-          <Button variant="outline" size="sm" :disabled="loading || currentPage===1" @click="prevPage">{{ t('teacher.assignments.pagination.prev') }}</Button>
-          <span class="text-sm">{{ t('teacher.assignments.pagination.page', { page: currentPage }) }}</span>
-          <Button variant="outline" size="sm" :disabled="loading || currentPage>=totalPages" @click="nextPage">{{ t('teacher.assignments.pagination.next') }}</Button>
-        </div>
-      </div>
+      <PaginationBar
+        :page="currentPage"
+        :page-size="pageSize"
+        :total-pages="totalPages"
+        :disabled="loading"
+        :page-size-options="[10, 20, 50]"
+        @update:page="(p:number)=> currentPage = p"
+        @update:pageSize="(s:number)=>{ pageSize = s; changePageSize() }"
+      />
     </div>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, computed, watch } from 'vue';
+import { ref, onMounted, onUnmounted, computed, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { submissionApi } from '@/api/submission.api';
 import { gradeApi } from '@/api/grade.api';
@@ -159,6 +149,8 @@ import PageHeader from '@/components/ui/PageHeader.vue'
 import GlassSearchInput from '@/components/ui/inputs/GlassSearchInput.vue'
 import FilterBar from '@/components/ui/filters/FilterBar.vue'
 import { resolveUserDisplayName } from '@/shared/utils/user'
+import PaginationBar from '@/components/ui/PaginationBar.vue'
+import { debounce } from '@/shared/utils/debounce'
 
 const route = useRoute();
 const router = useRouter();
@@ -179,6 +171,8 @@ const stats = ref<{ totalEnrolled: number; submittedCount: number; unsubmittedCo
 const reminding = ref(false)
 const isPastDue = ref(false)
 const searchText = ref('')
+// 搜索防抖：避免每次按键都触发全量过滤
+const debouncedSearchText = ref('')
 const statusFilter = ref<'all' | 'submitted' | 'graded' | 'unsubmitted'>('all')
 
 const statusOptions = computed(() => ([
@@ -269,6 +263,7 @@ async function fetch() {
 
 // 合并“所有学生”与“已提交”生成显示行
 const allRows = computed(() => {
+  const nowMs = Date.now()
   const submissionByStudent: Record<string, any> = {}
   for (const s of (submissions.value || [])) {
     const sid = String(s.studentId || s.student_id || '')
@@ -299,7 +294,6 @@ const allRows = computed(() => {
         // 若重交截止已过，且未在打回之后重新提交，则视为未提交；
         // 若已在打回之后重新提交，则显示为已提交；否则显示已退回
         const untilMs = parseDateLoose((g as any)?.resubmitUntil || (g as any)?.resubmit_until)
-        const nowMs = Date.now()
         const updatedMs = parseDateLoose((g as any)?.updatedAt || (g as any)?.updated_at)
         const submittedMs = parseDateLoose(existed.submittedAt)
         const resubmittedAfterReturn = Number.isFinite(submittedMs) && Number.isFinite(updatedMs) && submittedMs > updatedMs
@@ -313,14 +307,14 @@ const allRows = computed(() => {
       } else if (gStatusRaw === 'published') {
         existed.status = 'graded'
       }
-      rows.push({ ...existed, displayName: u.name })
+      const displayName = u.name
+      rows.push({ ...existed, displayName, _searchKey: String(displayName || existed.studentName || existed.studentId || '').toLowerCase() })
     } else {
       const g = gradesByStudent.value[sid]
       const gStatusRaw = String((g as any)?.status || (g as any)?.gradeStatus || '').toLowerCase()
       let derivedStatus = 'unsubmitted'
       if (gStatusRaw === 'returned') {
         const untilMs = parseDateLoose((g as any)?.resubmitUntil || (g as any)?.resubmit_until)
-        const nowMs = Date.now()
         derivedStatus = (Number.isFinite(untilMs) && nowMs > untilMs) ? 'unsubmitted' : 'returned'
       } else if (gStatusRaw) {
         derivedStatus = 'graded'
@@ -331,6 +325,7 @@ const allRows = computed(() => {
         studentId: sid,
         studentName: u.name || sid,
         displayName: u.name || sid,
+        _searchKey: String(u.name || sid).toLowerCase(),
         avatar: u.avatar || '',
         submittedAt: null,
         isLate: false,
@@ -341,15 +336,16 @@ const allRows = computed(() => {
   // 确保提交列表中的学生即使未出现在课程学生列表中也能展示
   for (const sid of Object.keys(submissionByStudent)) {
     if (seenStudentIds.has(sid)) continue
-    rows.push({ ...submissionByStudent[sid], displayName: submissionByStudent[sid].studentName })
+    const displayName = submissionByStudent[sid].studentName
+    rows.push({ ...submissionByStudent[sid], displayName, _searchKey: String(displayName || sid).toLowerCase() })
   }
   return rows
 })
 
 const filteredRows = computed(() => {
-  const keyword = searchText.value.trim().toLowerCase()
+  const keyword = debouncedSearchText.value
   return allRows.value.filter(r => {
-    const matchesName = !keyword || String(r.displayName || r.studentName || '').toLowerCase().includes(keyword)
+    const matchesName = !keyword || String((r as any)._searchKey || '').includes(keyword)
     const st = String(r.status || '').toLowerCase()
     const matchesStatus =
       statusFilter.value === 'all'
@@ -378,8 +374,17 @@ watch([pageSize, totalPages], () => {
   }
 })
 
-watch([searchText, statusFilter], () => {
+const syncDebouncedSearch = debounce(() => {
+  debouncedSearchText.value = String(searchText.value || '').trim().toLowerCase()
+}, 250)
+
+watch(statusFilter, () => {
   currentPage.value = 1
+})
+
+watch(searchText, () => {
+  currentPage.value = 1
+  syncDebouncedSearch()
 })
 
 function goGrade(row: any) {
@@ -395,23 +400,12 @@ function goCourse() {
   router.push(`/teacher/courses/${courseId.value}`)
 }
 
-function prevPage() {
-  if (currentPage.value > 1) {
-    currentPage.value -= 1;
-  }
-}
-
-function nextPage() {
-  if (currentPage.value < totalPages.value) {
-    currentPage.value += 1;
-  }
-}
-
 function changePageSize() {
   currentPage.value = 1;
 }
 
 onMounted(async () => {
+  debouncedSearchText.value = String(searchText.value || '').trim().toLowerCase()
   // 先获取作业信息以解析 courseId 用于面包屑
   try {
     const a: any = await assignmentApi.getAssignmentById(assignmentId)
@@ -430,6 +424,10 @@ onMounted(async () => {
   } catch {}
   await fetch()
 });
+
+onUnmounted(() => {
+  syncDebouncedSearch.cancel()
+})
 
 async function remindUnsubmitted() {
   if (reminding.value) return

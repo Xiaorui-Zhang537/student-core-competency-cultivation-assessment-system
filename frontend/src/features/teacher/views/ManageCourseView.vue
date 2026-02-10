@@ -192,6 +192,17 @@
           </Button>
         </template>
       </GlassModal>
+
+      <ConfirmDialog
+        :open="confirmOpen"
+        :title="confirmDialog.state.title"
+        :message="confirmDialog.state.message"
+        :confirm-text="confirmDialog.state.confirmText || ((t('common.confirm') as string) || '确定')"
+        :cancel-text="confirmDialog.state.cancelText || ((t('common.cancel') as string) || '取消')"
+        :confirm-variant="confirmDialog.state.confirmVariant"
+        @confirm="confirmDialog.onConfirm"
+        @cancel="confirmDialog.onCancel"
+      />
     
     <!-- root wrapper close -->
     </div>
@@ -204,14 +215,7 @@ import { useCourseStore } from '@/stores/course';
 import { useAuthStore } from '@/stores/auth';
 import { useRouter, useRoute } from 'vue-router';
 import type { Course, CourseCreationRequest, CourseUpdateRequest } from '@/types/course';
-// 轻量去依赖：局部实现 debounce，避免引入 lodash-es
-const debounce = (fn: (...args: any[]) => void, delay = 300) => {
-  let timer: any = null
-  return (...args: any[]) => {
-    if (timer) clearTimeout(timer)
-    timer = setTimeout(() => fn(...args), delay)
-  }
-}
+import { debounce } from '@/shared/utils/debounce'
 import FileUpload from '@/components/forms/FileUpload.vue';
 import apiClient, { baseURL } from '@/api/config';
 import Button from '@/components/ui/Button.vue'
@@ -231,12 +235,21 @@ import SegmentedPills from '@/components/ui/SegmentedPills.vue'
 import GlassTagsInput from '@/components/ui/inputs/GlassTagsInput.vue'
 import GlassDateTimePicker from '@/components/ui/inputs/GlassDateTimePicker.vue'
 import Card from '@/components/ui/Card.vue'
+import ConfirmDialog from '@/components/ui/ConfirmDialog.vue'
+import { useConfirmDialog } from '@/shared/composables/useConfirmDialog'
 
 const courseStore = useCourseStore();
 const authStore = useAuthStore();
 const router = useRouter();
 const route = useRoute();
 const { t } = useI18n()
+
+const confirmDialog = useConfirmDialog({
+  confirmText: (t('common.confirm') as string) || '确定',
+  cancelText: (t('common.cancel') as string) || '取消',
+  confirmVariant: 'danger',
+})
+const confirmOpen = computed(() => confirmDialog.open.value)
 
 const showModal = ref(false);
 const isEditing = ref(false);
@@ -578,7 +591,11 @@ const onCoverUploadError = async (message: string) => {
 
 const handleDeleteCourse = async (id: string) => {
   if (deletingIds.value.has(id)) return
-  if (confirm(t('teacher.courses.confirm.deleteCourse'))) {
+  const ok = await confirmDialog.confirm({
+    title: (t('common.confirm') as string) || '确定',
+    message: (t('teacher.courses.confirm.deleteCourse') as string) || '确认删除该课程？'
+  })
+  if (ok) {
     deletingIds.value.add(id)
     // Store 默认会弹“课程已删除”，本页会弹一次“删除成功”，避免重复
     await courseStore.deleteCourse(id, { notify: false });

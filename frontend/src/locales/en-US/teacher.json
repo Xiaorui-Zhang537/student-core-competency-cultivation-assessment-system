@@ -287,7 +287,17 @@
 				"content": "Submitted Content",
 				"answer": "Answer",
 				"attachment": "Attachment",
-				"selfEvaluation": "Self-evaluation"
+				"selfEvaluation": "Self-evaluation",
+				"returnedHint": "This submission was returned. The original content is hidden until the student resubmits."
+			},
+			"fileType": {
+				"pdf": "PDF document",
+				"word": "Word document",
+				"image": "Image",
+				"text": "Text file",
+				"archive": "Archive",
+				"video": "Video",
+				"unknown": "Unknown type"
 			},
 			"ai": {
 				"title": "AI Suggestions",
@@ -420,6 +430,14 @@
 			"history": "History",
 			"historyTitle": "AI Grading History",
 			"historySubtitle": "Browse past grading records",
+			"historySearchPlaceholder": "Search file/model",
+			"historyTable": {
+				"fileName": "File name",
+				"model": "Model",
+				"finalScore": "Final score",
+				"time": "Time",
+				"actions": "Actions"
+			},
 			"view": "View",
 			"delete": "Delete",
 			"confirmDelete": "Delete this record? This cannot be undone.",
@@ -502,6 +520,7 @@
 		"analytics": {
 			"title": "Analytics",
 			"subtitle": "Understand teaching outcomes and student learning",
+			"courseSelector": { "label": "Select course" },
 			"selectCourse": "Select a course",
 			"askAi": "Ask AI",
 			"exportReport": "Export Report",

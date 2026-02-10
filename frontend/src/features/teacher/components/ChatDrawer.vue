@@ -193,15 +193,17 @@
               </div>
             </div>
 
-            <div class="flex items-center gap-2">
-            <emoji-picker :variant="'primary'" :size="'sm'" :buttonClass="'!text-white'" @select="pickEmoji" />
+          <div class="flex items-center gap-2 flex-nowrap min-w-0">
+            <emoji-picker :variant="'primary'" :size="'sm'" :hideLabelOnSmall="true" :buttonClass="'!text-white whitespace-nowrap shrink-0'" @select="pickEmoji" />
             <input ref="fileInput" type="file" class="hidden" @change="onFilePicked" />
-            <Button variant="success" size="sm" class="inline-flex items-center" @click="triggerPickFile">
+            <Button variant="success" size="sm" class="inline-flex items-center whitespace-nowrap shrink-0" @click="triggerPickFile">
               <ArrowUpTrayIcon class="w-4 h-4 mr-1" />
-              {{ t('shared.uploadLabel') || '上传' }}
+              <span class="whitespace-nowrap">{{ t('shared.uploadLabel') || '上传' }}</span>
             </Button>
             <glass-textarea ref="draftInput" v-model="(draft as any)" :rows="2" :placeholder="t('teacher.students.chat.placeholder') as string" class="flex-1 w-full min-h-[44px] max-h-36 resize-none" @keydown="onDraftKeydown" />
-            <Button variant="primary" :disabled="sending || (!draft && attachmentFileIds.length===0)" @click="send()">{{ t('teacher.ai.send') }}</Button>
+            <Button variant="primary" size="sm" class="whitespace-nowrap shrink-0" :disabled="sending || (!draft && attachmentFileIds.length===0)" @click="send()">
+              <span class="whitespace-nowrap">{{ t('teacher.ai.send') }}</span>
+            </Button>
           </div>
         </div>
         </div>

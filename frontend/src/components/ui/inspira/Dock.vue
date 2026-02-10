@@ -27,6 +27,7 @@ interface DockProps {
   direction?: Direction
   orientation?: DataOrientation
   variant?: 'glass' | 'transparent'
+  animate?: boolean
   paddingClass?: string
   heightClass?: string
   roundedClass?: string
@@ -39,6 +40,7 @@ const props = withDefaults(defineProps<DockProps>(), {
   direction: 'middle',
   orientation: 'horizontal',
   variant: 'glass',
+  animate: true,
   paddingClass: 'p-2',
   heightClass: 'h-[58px]',
   roundedClass: 'rounded-full',
@@ -50,6 +52,7 @@ const mouseX = ref(Infinity)
 const mouseY = ref(Infinity)
 const magnification = computed(() => props.magnification)
 const distance = computed(() => props.distance)
+const enableMagnify = computed(() => (Number(magnification.value) > 0) && (Number(distance.value) > 0))
 
 const dockClass = computed(() => ({
   'items-start': props.direction === 'top',
@@ -58,7 +61,7 @@ const dockClass = computed(() => ({
 }))
 
 const baseClass = computed(() => [
-  'transition-all select-none flex w-max backdrop-blur-md',
+  `${props.animate ? 'transition-all ' : ''}select-none flex w-max backdrop-blur-md`,
   props.gapClass,
   props.roundedClass,
   props.heightClass,
@@ -67,6 +70,7 @@ const baseClass = computed(() => [
 ].join(' '))
 
 function onMouseMove(e: MouseEvent) {
+  if (!enableMagnify.value) return
   requestAnimationFrame(() => {
     mouseX.value = e.pageX
     mouseY.value = e.pageY

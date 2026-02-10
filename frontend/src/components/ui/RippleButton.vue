@@ -73,6 +73,7 @@ function handleClick(event: MouseEvent) {
 }
 
 function createRipple(event: MouseEvent) {
+  if ((props.duration ?? 0) <= 0) return
   const button = rippleButtonRef.value
   if (!button) return
   const rect = button.getBoundingClientRect()

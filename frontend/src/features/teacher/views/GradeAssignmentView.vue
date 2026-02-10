@@ -117,7 +117,7 @@
               <h2 class="text-lg font-semibold text-gray-900 dark:text-white">{{ t('teacher.grading.submission.content') }}</h2>
             </template>
             <div class="text-sm text-gray-600 dark:text-gray-300">
-              作业已退回，原提交内容不再展示，等待学生重新提交。
+              {{ t('teacher.grading.submission.returnedHint') || '作业已退回，原提交内容不再展示，等待学生重新提交。' }}
             </div>
           </card>
 
@@ -499,16 +499,11 @@
                 </div>
                 <p v-if="errors.score" class="mt-1 text-sm text-red-600">{{ errors.score }}</p>
                 
-                <!-- 动画分数展示（玻璃超薄风格） -->
-                <div class="mt-4 glass-ultraThin rounded-xl p-4" v-glass="{ strength: 'ultraThin', interactive: true }">
-                  <div class="flex items-center justify-between">
-                    <div class="text-2xl font-bold text-gray-900 dark:text-gray-100">{{ animatedScore.toFixed(1) }}</div>
-                    <div class="text-sm text-gray-500 dark:text-gray-400">/ {{ assignment.totalScore }}{{ t('teacher.grading.history.scoreSuffix') }}</div>
-                  </div>
-                  <div class="mt-2 h-2 rounded-full bg-gray-200/60 dark:bg-gray-700/60 overflow-hidden">
-                    <div class="h-full rounded-full bg-primary-500/70 backdrop-blur-sm transition-all duration-300" :style="{ width: scorePercent + '%' }"></div>
-                  </div>
-                </div>
+                <AnimatedScoreBar
+                  :value="animatedScore"
+                  :max="assignment.totalScore"
+                  :suffix="t('teacher.grading.history.scoreSuffix') as string"
+                />
               </div>
 
               <!-- 等级评定 -->
@@ -602,18 +597,20 @@
               </div>
             </form>
           </card>
-      <glass-modal v-if="showReturn" :title="(t('teacher.grading.actions.returnForResubmit') as string) || '打回重做'" size="lg" heightVariant="tall" solidBody @close="showReturn=false">
-        <div class="space-y-3">
-          <label class="text-sm">{{ t('teacher.grading.form.reason') || '原因' }}</label>
-          <glass-textarea v-model="returnForm.reason" :rows="4" />
-          <label class="text-sm">{{ t('teacher.grading.form.resubmitUntil') || '重交截止时间' }}</label>
-          <glass-date-time-picker v-model="returnForm.resubmitUntil" size="md" :minute-step="5" tint="info" />
-        </div>
-        <template #footer>
-          <Button variant="secondary" size="sm" @click="showReturn=false">{{ t('common.cancel') || '取消' }}</Button>
-          <Button variant="danger" size="sm" @click="confirmReturn">{{ t('common.confirm') || '确定' }}</Button>
-        </template>
-      </glass-modal>
+      <ReturnForResubmitModal
+        :open="showReturn"
+        :title="((t('teacher.grading.actions.returnForResubmit') as string) || '打回重做')"
+        :reason-label="(t('teacher.grading.form.reason') as string) || '原因'"
+        :until-label="(t('teacher.grading.form.resubmitUntil') as string) || '重交截止时间'"
+        :cancel-text="(t('common.cancel') as string) || '取消'"
+        :confirm-text="(t('common.confirm') as string) || '确定'"
+        :reason="returnForm.reason"
+        :resubmit-until="returnForm.resubmitUntil"
+        @update:open="(v:boolean)=> showReturn = v"
+        @update:reason="(v:string)=> returnForm.reason = v"
+        @update:resubmitUntil="(v:string)=> returnForm.resubmitUntil = v"
+        @confirm="confirmReturn"
+      />
 
       <!-- AI 报告详情弹窗（与历史页一致的样式与渲染） -->
       <glass-modal v-if="aiDetailOpen" :title="assignment.title || (t('teacher.aiGrading.viewDetail') as string) || 'AI 能力报告'" size="xl" :hideScrollbar="true" heightVariant="max" solidBody @close="aiDetailOpen=false">
@@ -818,6 +815,9 @@ import GlassModal from '@/components/ui/GlassModal.vue'
 import GlassSwitch from '@/components/ui/inputs/GlassSwitch.vue'
 import GlassDateTimePicker from '@/components/ui/inputs/GlassDateTimePicker.vue'
 import SegmentedPills from '@/components/ui/SegmentedPills.vue'
+import AnimatedScoreBar from '@/features/teacher/components/grading/AnimatedScoreBar.vue'
+import ReturnForResubmitModal from '@/features/teacher/components/grading/ReturnForResubmitModal.vue'
+import { useRafTweenNumber } from '@/shared/composables/useRafTweenNumber'
 import { exportNodeAsPng, exportNodeAsPdf, exportNodeAsPdfBlob, applyExportGradientsInline } from '@/shared/utils/exporters'
 import JSZip from 'jszip'
 import { getMbtiVariant } from '@/shared/utils/badgeColor'
@@ -1009,24 +1009,48 @@ const aiHistoryDetailPretty = computed(() => { try { return JSON.stringify(aiHis
 const aiDetailOpen = ref(false)
 const aiDetailRef = ref<HTMLElement | null>(null)
 const aiRawJson = ref<any>(null)
-const aiDetailParsed = computed(() => {
+const aiDetailParsed = ref<any | null>(null)
+const aiDetailCacheKey = ref<string>('')
+
+function parseJsonLoose(raw: any): any | null {
   try {
-    if (!aiRawJson.value) return null
-    // lastAiNormalized 已是标准schema，兼容直接传对象/字符串
-    const raw = typeof aiRawJson.value === 'string' ? aiRawJson.value : JSON.stringify(aiRawJson.value)
-    const obj = (function(s: string){
-      try { return JSON.parse(s) } catch {
-        try {
-          let t = String(s || '')
-          const m = t.match(/```(?:json)?\s*([\s\S]*?)```/i)
-          if (m && m[1]) t = m[1]
-          t = t.replace(/,\s*}/g, '}').replace(/,\s*]/g, ']')
-          return JSON.parse(t)
-        } catch { return null }
-      }
-    })(raw)
-    return obj ? normalizeAssessment(obj) : null
-  } catch { return null }
+    const s = typeof raw === 'string' ? raw : JSON.stringify(raw)
+    try { return JSON.parse(s) } catch {
+      try {
+        let t = String(s || '')
+        const m = t.match(/```(?:json)?\s*([\s\S]*?)```/i)
+        if (m && m[1]) t = m[1]
+        t = t.replace(/,\s*}/g, '}').replace(/,\s*]/g, ']')
+        return JSON.parse(t)
+      } catch { return null }
+    }
+  } catch {
+    return null
+  }
+}
+
+function refreshAiDetailParsed() {
+  try {
+    if (!aiDetailOpen.value) return
+    if (!aiRawJson.value) { aiDetailParsed.value = null; return }
+    const key = typeof aiRawJson.value === 'string' ? aiRawJson.value : JSON.stringify(aiRawJson.value)
+    if (aiDetailCacheKey.value === key && aiDetailParsed.value) return
+    const obj = parseJsonLoose(aiRawJson.value)
+    aiDetailParsed.value = obj ? normalizeAssessment(obj) : null
+    aiDetailCacheKey.value = key
+  } catch {
+    aiDetailParsed.value = null
+  }
+}
+
+watch(aiDetailOpen, (v) => {
+  if (!v) return
+  try { refreshAiDetailParsed() } catch {}
+})
+
+watch(aiRawJson, () => {
+  if (!aiDetailOpen.value) return
+  try { refreshAiDetailParsed() } catch {}
 })
 const pretty = (v: any) => { try { return JSON.stringify(typeof v === 'string' ? JSON.parse(v) : v, null, 2) } catch { return String(v || '') } }
 
@@ -1465,16 +1489,14 @@ const formatFileSize = (bytes: number) => {
 
 const getFileType = (filename: string) => {
   const extension = filename.split('.').pop()?.toLowerCase()
-  const typeMap: Record<string, string> = {
-    pdf: 'PDF文档',
-    doc: 'Word文档',
-    docx: 'Word文档',
-    jpg: '图片',
-    jpeg: '图片',
-    png: '图片',
-    txt: '文本文件'
-  }
-  return typeMap[extension || ''] || '未知类型'
+  if (!extension) return (t('teacher.grading.fileType.unknown') as string) || '未知类型'
+  if (extension === 'pdf') return (t('teacher.grading.fileType.pdf') as string) || 'PDF'
+  if (extension === 'doc' || extension === 'docx') return (t('teacher.grading.fileType.word') as string) || 'Word'
+  if (extension === 'txt') return (t('teacher.grading.fileType.text') as string) || '文本文件'
+  if (['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(extension)) return (t('teacher.grading.fileType.image') as string) || '图片'
+  if (['zip', 'rar', '7z'].includes(extension)) return (t('teacher.grading.fileType.archive') as string) || '压缩包'
+  if (['mp4', 'mov', 'avi', 'mkv', 'webm'].includes(extension)) return (t('teacher.grading.fileType.video') as string) || '视频'
+  return (t('teacher.grading.fileType.unknown') as string) || '未知类型'
 }
 
 const validateScore = () => {
@@ -2043,6 +2065,8 @@ async function viewAiDetail() {
     aiRawJson.value = ''
   }
   aiDetailOpen.value = true
+  // 懒解析：仅在弹窗打开后解析并缓存，避免页面常驻 JSON.parse/normalize 成本
+  try { refreshAiDetailParsed() } catch {}
   setTimeout(() => {
     const el = document.querySelector('[data-export-root="1"]') as HTMLElement | null
     if (el) aiDetailRef.value = el
@@ -2193,31 +2217,9 @@ const downloadSingleFile = async () => {
   } catch {}
 }
 
-// 动画分数：在分数变化时平滑过渡
-const animatedScore = ref(0)
-const scorePercent = computed(() => {
-  const max = Number(assignment.totalScore || 100)
-  const val = Math.max(0, Math.min(max, Number(animatedScore.value || 0)))
-  return max > 0 ? (val / max) * 100 : 0
-})
-
-let animRaf: number | null = null
-watch(() => gradeForm.score, (target) => {
-  const start = Number(animatedScore.value || 0)
-  const end = Number(target || 0)
-  const duration = 300
-  const startTs = performance.now()
-  if (animRaf) cancelAnimationFrame(animRaf)
-  const tick = (now: number) => {
-    const p = Math.min(1, (now - startTs) / duration)
-    animatedScore.value = start + (end - start) * p
-    if (p < 1) animRaf = requestAnimationFrame(tick)
-  }
-  animRaf = requestAnimationFrame(tick)
-})
-
-// 初始化 animatedScore
-onMounted(() => { animatedScore.value = Number(gradeForm.score || 0) })
+// 动画分数：在分数变化时平滑过渡（内部含 onUnmounted 清理）
+const scoreTarget = computed(() => Number((gradeForm as any)?.score || 0))
+const { value: animatedScore } = useRafTweenNumber(scoreTarget, { duration: 300, initial: 0 })
 
 const submitGrade = async () => {
   validateScore()

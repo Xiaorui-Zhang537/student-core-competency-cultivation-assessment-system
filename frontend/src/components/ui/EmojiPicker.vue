@@ -2,7 +2,9 @@
   <div class="relative inline-block" ref="btnRef">
     <Button :size="size" :variant="btnVariant" :class="['flex items-center', buttonClass]" @click="toggle">
       <face-smile-icon class="w-5 h-5 mr-1" />
-      {{ t('shared.emojiPicker.button') }}
+      <span :class="[hideLabelOnSmall ? 'hidden sm:inline' : '', 'whitespace-nowrap']">
+        {{ t('shared.emojiPicker.button') }}
+      </span>
     </Button>
   </div>
   <teleport to="body">
@@ -29,11 +31,12 @@ import LiquidGlass from '@/components/ui/LiquidGlass.vue'
 
 const emit = defineEmits<{ (e: 'emoji', emoji: string): void; (e: 'select', emoji: string): void }>()
 
-const props = withDefaults(defineProps<{ size?: 'xs'|'sm'|'md'; variant?: 'ghost'|'outline'|'secondary'|'primary'; tint?: 'primary'|'secondary'|'accent'|'info'|'success'|'warning'|'danger'|null; buttonClass?: string }>(), {
+const props = withDefaults(defineProps<{ size?: 'xs'|'sm'|'md'; variant?: 'ghost'|'outline'|'secondary'|'primary'; tint?: 'primary'|'secondary'|'accent'|'info'|'success'|'warning'|'danger'|null; buttonClass?: string; hideLabelOnSmall?: boolean }>(), {
   size: 'sm',
   variant: 'ghost',
   tint: 'primary',
-  buttonClass: ''
+  buttonClass: '',
+  hideLabelOnSmall: false
 })
 
 const open = ref(false)
@@ -41,6 +44,7 @@ const btnRef = ref<HTMLElement | null>(null)
 const panelRef = ref<HTMLElement | null>(null)
 const pos = ref({ left: 0, top: 0 })
 const { t } = useI18n()
+const hideLabelOnSmall = computed(() => !!props.hideLabelOnSmall)
 const btnVariant = computed(() => props.variant || 'ghost')
 const tintClass = computed(() => props.tint ? `glass-tint-${props.tint}` : '')
 const emojis = [

@@ -40,15 +40,26 @@ import LiquidGlass from '@/components/ui/LiquidGlass.vue'
 
 const open = ref(false)
 function toggleOpen() {
+  // 已打开时，二次点击应直接关闭（不要再广播全局关闭事件，否则会出现“关了又开”的感觉）
+  if (open.value) {
+    open.value = false
+    return
+  }
   try { window.dispatchEvent(new CustomEvent('ui:close-topbar-popovers')) } catch {}
-  open.value = !open.value
+  open.value = true
 }
 const host = ref<HTMLElement | null>(null)
 const styleObj = ref<Record<string, string>>({})
 const { locale, setLocale } = useLocale()
 const { t } = useI18n()
 const props = withDefaults(defineProps<{ buttonClass?: string }>(), { buttonClass: '' })
-const baseBtn = 'px-4 h-11 flex items-center rounded-full text-sm bg-transparent'
+const baseBtn = [
+  'px-4 h-11 flex items-center rounded-full text-sm bg-transparent',
+  // hover 仅“轻微加深底色”，不要浮起/阴影（避免突出来）
+  'hover:bg-black/5 active:bg-black/10',
+  'dark:hover:bg-white/10 dark:active:bg-white/15',
+  'focus-visible:shadow-[0_0_0_2px_rgba(59,130,246,0.35)]',
+].join(' ')
 const buttonClassMerged = computed(() => [baseBtn, props.buttonClass].filter(Boolean).join(' '))
 
 const currentShortLabel = computed(() => {

@@ -18,7 +18,7 @@
       <page-header :title="t('teacher.aiGrading.historyTitle') || 'AI 批改历史'" :subtitle="t('teacher.aiGrading.historySubtitle') || '查看过往批改记录'">
         <template #actions>
           <div class="flex items-center gap-2">
-            <glass-search-input v-model="q" :placeholder="t('common.search') || '搜索文件/模型'" size="sm" class="w-64" />
+            <glass-search-input v-model="q" :placeholder="t('teacher.aiGrading.historySearchPlaceholder') || (t('common.search') as string) || '搜索'" size="sm" class="w-64" />
             <Button size="sm" variant="primary" class="w-auto px-3 whitespace-nowrap shrink-0" @click="load"><magnifying-glass-icon class="w-4 h-4 mr-1" />{{ t('common.search') || '搜索' }}</Button>
           </div>
         </template>
@@ -29,11 +29,11 @@
           <table class="min-w-full text-sm glass-interactive bg-white/15 dark:bg-gray-800/15 rounded-lg">
             <thead>
               <tr class="text-left text-gray-600 dark:text-gray-300">
-                <th class="py-2 pr-4">文件名</th>
-                <th class="py-2 pr-4">模型</th>
-                <th class="py-2 pr-4">最终分</th>
-                <th class="py-2 pr-4">时间</th>
-                <th class="py-2 pr-4">操作</th>
+                <th class="py-2 pr-4">{{ t('teacher.aiGrading.historyTable.fileName') || '文件名' }}</th>
+                <th class="py-2 pr-4">{{ t('teacher.aiGrading.historyTable.model') || '模型' }}</th>
+                <th class="py-2 pr-4">{{ t('teacher.aiGrading.historyTable.finalScore') || '最终分' }}</th>
+                <th class="py-2 pr-4">{{ t('teacher.aiGrading.historyTable.time') || '时间' }}</th>
+                <th class="py-2 pr-4">{{ t('teacher.aiGrading.historyTable.actions') || '操作' }}</th>
               </tr>
             </thead>
             <tbody>
@@ -60,20 +60,32 @@
             </tbody>
           </table>
         </div>
-        <div class="flex items-center justify-between mt-3 text-xs text-gray-500">
-          <div class="flex items-center gap-3 whitespace-nowrap">
-            <span class="whitespace-nowrap">{{ t('teacher.assignments.pagination.perPagePrefix') || '每页显示' }}</span>
-            <glass-popover-select v-model="sizeStr" :options="pageSizeOptions" size="sm" width="80px" />
-            <span class="whitespace-nowrap">{{ t('teacher.assignments.pagination.perPageSuffix') || '条' }}</span>
-          </div>
-          <div class="flex items-center gap-2">
-            <Button size="xs" variant="ghost" @click="prev" :disabled="page<=1">{{ t('teacher.assignments.pagination.prev') || '上一页' }}</Button>
-            <span>{{ t('teacher.assignments.pagination.page', { page }) || `第 ${page} 页` }}</span>
-            <Button size="xs" variant="ghost" @click="next" :disabled="page*size>=total">{{ t('teacher.assignments.pagination.next') || '下一页' }}</Button>
-          </div>
-        </div>
+        <PaginationBar
+          :page="page"
+          :page-size="size"
+          :total-items="total"
+          :button-size="'xs'"
+          :button-variant="'ghost'"
+          :select-size="'sm'"
+          :select-width="'80px'"
+          :page-size-options="[10, 20, 50]"
+          :show-total-pages="true"
+          @update:page="onPageChange"
+          @update:pageSize="onPageSizeChange"
+        />
       </div>
     </div>
+
+    <ConfirmDialog
+      :open="confirmOpen"
+      :title="confirmDialog.state.title"
+      :message="confirmDialog.state.message"
+      :confirm-text="confirmDialog.state.confirmText || ((t('common.confirm') as string) || '确定')"
+      :cancel-text="confirmDialog.state.cancelText || ((t('common.cancel') as string) || '取消')"
+      :confirm-variant="confirmDialog.state.confirmVariant"
+      @confirm="confirmDialog.onConfirm"
+      @cancel="confirmDialog.onCancel"
+    />
 
     <glass-modal v-if="detail" :title="detail.fileName || '记录'" size="xl" :hideScrollbar="true" heightVariant="max" solidBody @close="detail=null">
       <div v-if="parsed" ref="detailRef" data-export-root="1" class="space-y-4">
@@ -136,27 +148,38 @@ import PageHeader from '@/components/ui/PageHeader.vue'
 import Button from '@/components/ui/Button.vue'
 import Card from '@/components/ui/Card.vue'
 import GlassSearchInput from '@/components/ui/inputs/GlassSearchInput.vue'
-import GlassPopoverSelect from '@/components/ui/filters/GlassPopoverSelect.vue'
+import PaginationBar from '@/components/ui/PaginationBar.vue'
+import { usePagination } from '@/shared/composables/usePagination'
 import { aiGradingApi } from '@/api/aiGrading.api'
 // 引入批改页的归一化与渲染逻辑（直接内嵌一份必要函数，避免循环依赖）
 import { XMarkIcon, ArrowDownTrayIcon, MagnifyingGlassIcon, EyeIcon, ChevronLeftIcon, ChevronRightIcon, TrashIcon } from '@heroicons/vue/24/outline'
 import GlassModal from '@/components/ui/GlassModal.vue'
 import { useRouter } from 'vue-router'
 import { courseApi } from '@/api/course.api'
+import ConfirmDialog from '@/components/ui/ConfirmDialog.vue'
+import { useConfirmDialog } from '@/shared/composables/useConfirmDialog'
+import { useUIStore } from '@/stores/ui'
 
 const { t } = useI18n()
+const uiStore = useUIStore()
 const router = useRouter()
 const courseId = ref<string>('')
 const courseTitle = ref<string>('')
 
 const q = ref('')
-const page = ref(1)
-const size = ref(20)
 const total = ref(0)
+const { page, pageSize: size } = usePagination(total, { initialPage: 1, initialPageSize: 20 })
 const items = ref<any[]>([])
 const detail = ref<any|null>(null)
 const deleting = ref(false)
 const detailRef = ref<HTMLElement | null>(null)
+
+const confirmDialog = useConfirmDialog({
+  confirmText: (t('common.confirm') as string) || '确定',
+  cancelText: (t('common.cancel') as string) || '取消',
+  confirmVariant: 'danger',
+})
+const confirmOpen = computed(() => confirmDialog.open.value)
 const parsed = computed(() => {
   try {
     if (!detail.value?.rawJson) return null
@@ -166,28 +189,22 @@ const parsed = computed(() => {
   } catch { return null }
 })
 
-const pageInfo = computed(() => `第 ${page.value} 页 / 共 ${Math.ceil(total.value/size.value)||1} 页`)
-
 const load = async () => {
   const resp: any = await aiGradingApi.listHistory({ q: q.value, page: page.value, size: size.value })
   const data = resp?.data ?? resp
   total.value = Number(data?.total || 0)
   items.value = data?.items || data?.list || []
 }
-const prev = async () => { if (page.value>1){ page.value--; await load() } }
-const next = async () => { if (page.value*size.value < total.value){ page.value++; await load() } }
-const onSizeChange = async () => { page.value = 1; await load() }
 
-// 玻璃选择器：每页大小
-const pageSizeOptions = [
-  { label: '10', value: '10' },
-  { label: '20', value: '20' },
-  { label: '50', value: '50' }
-]
-const sizeStr = computed({
-  get: () => String(size.value),
-  set: (v: string) => { size.value = Number(v || 20); onSizeChange() }
-})
+async function onPageChange(p: number) {
+  page.value = Math.max(1, Number(p || 1))
+  await load()
+}
+async function onPageSizeChange(s: number) {
+  size.value = Math.max(1, Number(s || 20))
+  page.value = 1
+  await load()
+}
 const openDetail = async (it: any) => {
   const resp: any = await aiGradingApi.getHistoryDetail(it.id)
   detail.value = (resp?.data ?? resp) || it
@@ -211,7 +228,10 @@ const pretty = (v: any) => { try { return JSON.stringify(JSON.parse(String(v||''
 
 async function confirmDelete(it: any) {
   if (deleting.value) return
-  const ok = window.confirm((t('teacher.aiGrading.confirmDelete') as string) || '确认删除该记录？此操作不可恢复。')
+  const ok = await confirmDialog.confirm({
+    title: (t('common.confirm') as string) || '确定',
+    message: (t('teacher.aiGrading.confirmDelete') as string) || '确认删除该记录？此操作不可恢复。'
+  })
   if (!ok) return
   try {
     deleting.value = true
@@ -219,7 +239,11 @@ async function confirmDelete(it: any) {
     // 删除本地列表项
     items.value = items.value.filter(x => x.id !== it.id)
   } catch (e) {
-    alert((t('teacher.aiGrading.deleteFailed') as string) || '删除失败，请稍后重试')
+    uiStore.showNotification({
+      type: 'error',
+      title: (t('app.notifications.error.title') as string) || (t('common.error') as string) || '错误',
+      message: (t('teacher.aiGrading.deleteFailed') as string) || '删除失败，请稍后重试'
+    })
   } finally {
     deleting.value = false
   }

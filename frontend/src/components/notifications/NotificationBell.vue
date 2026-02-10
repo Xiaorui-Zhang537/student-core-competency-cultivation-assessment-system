@@ -27,16 +27,26 @@
           :style="dropdownStyle"
           containerClass="notification-dropdown fixed z-[1000] rounded-2xl border border-white/20 overflow-hidden shadow"
           :radius="16"
-          :frost="0.05"
+          :frost="0.14"
+          :alpha="0.96"
+          :blur="14"
+          :tint="false"
         >
           <!-- 下拉面板头部 -->
-          <div class="dropdown-header" style="box-shadow: inset 0 -1px 0 rgba(255,255,255,0.14);">
-            <h3 class="text-lg font-semibold text-base-content flex items-center">
+          <div class="dropdown-header px-4 py-3 bg-white/5 dark:bg-white/5" style="box-shadow: inset 0 -1px 0 rgba(255,255,255,0.14);">
+            <h3 class="text-[15px] font-semibold text-base-content flex items-center">
               <span>{{ t('notifications.title') }}</span>
               <span v-if="unreadCount > 0" class="text-sm font-normal text-gray-500 dark:text-gray-400 ml-2">
                 ({{ unreadCount }}{{ t('notifications.unreadSuffix') }})
               </span>
-              <ripple-button v-if="hasUnread" class="ml-3 px-3 py-1 text-xs rounded-full" :title="t('notifications.actions.markAll') as string" @click="handleMarkAllAsRead">
+              <ripple-button
+                v-if="hasUnread"
+                class="ml-3 px-3 py-1 text-xs rounded-full"
+                :duration="0"
+                :aria-label="t('notifications.actions.markAll') as string"
+                :title="t('notifications.actions.markAll') as string"
+                @click="handleMarkAllAsRead"
+              >
                 {{ t('notifications.actions.markAll') }}
               </ripple-button>
             </h3>
@@ -106,8 +116,14 @@
           </div>
 
           <!-- 下拉面板底部 -->
-          <div class="dropdown-footer" style="box-shadow: inset 0 1px 0 rgba(255,255,255,0.14);">
-            <Button variant="secondary" class="w-full justify-center rounded-xl py-2" :title="t('notifications.actions.viewAll') as string" @click="openNotificationCenter">
+          <div class="dropdown-footer bg-white/5 dark:bg-white/5" style="box-shadow: inset 0 1px 0 rgba(255,255,255,0.14);">
+            <Button
+              variant="primary"
+              class="w-full justify-center !rounded-none !rounded-b-2xl py-3"
+              :title="t('notifications.actions.viewAll') as string"
+              :aria-label="t('notifications.actions.viewAll') as string"
+              @click="openNotificationCenter"
+            >
               {{ t('notifications.actions.viewAll') }}
             </Button>
           </div>
@@ -170,8 +186,13 @@ const recentNotifications = computed(() => {
 
 // 方法
 const toggleDropdown = async () => {
+  // 已打开时，二次点击应直接关闭（不要再广播全局关闭事件，否则会出现“关了又开”）
+  if (isDropdownOpen.value) {
+    closeDropdown()
+    return
+  }
   try { window.dispatchEvent(new CustomEvent('ui:close-topbar-popovers')) } catch {}
-  isDropdownOpen.value = !isDropdownOpen.value
+  isDropdownOpen.value = true
   
   if (isDropdownOpen.value) {
     // 打开下拉框时刷新未读数量
@@ -442,6 +463,10 @@ const vClickOutside = {
   /* Hide scrollbars but keep scroll (Firefox/IE/Edge legacy) */
   -ms-overflow-style: none; /* IE 10+ */
   scrollbar-width: none; /* Firefox */
+}
+
+.dropdown-footer {
+  padding: 0; /* 让底部按钮贴合容器边框 */
 }
 
 /* Hide scrollbars but keep scroll (WebKit) */

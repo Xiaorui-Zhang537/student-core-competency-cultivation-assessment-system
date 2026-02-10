@@ -5,18 +5,23 @@
       <div :style="wrapStyle" ref="teleportRoot" v-show="visible">
         <liquid-glass class="dock" :radius="dockRadius" :frost="0" :alpha="0" :tint="false" :bgTransparent="true" containerClass="dock-container" :style="dockInlineStyle">
           <div class="dock-items">
-            <button
+            <glass-tooltip
               v-for="(item, idx) in items"
               :key="item.key"
-              class="dock-item"
-              :ref="itemRefSetter(idx)"
-              :class="{ active: isActive(item) }"
-              :title="item.label"
-              @click="onClick(item.key)"
+              :content="item.label"
+              placement="top"
             >
-              <component :is="item.icon" class="icon" />
-              <span class="label">{{ item.label }}</span>
-            </button>
+              <button
+                class="dock-item"
+                :ref="itemRefSetter(idx)"
+                :class="{ active: isActive(item) }"
+                :aria-label="item.label"
+                @click="onClick(item.key)"
+              >
+                <component :is="item.icon" class="icon" />
+                <span class="label">{{ item.label }}</span>
+              </button>
+            </glass-tooltip>
           </div>
         </liquid-glass>
       </div>
@@ -27,6 +32,7 @@
 <script setup lang="ts">
 import { computed, onMounted, onUnmounted, ref, watch, nextTick, type ComponentPublicInstance } from 'vue'
 import LiquidGlass from '@/components/ui/LiquidGlass.vue'
+import GlassTooltip from '@/components/ui/GlassTooltip.vue'
 
 export interface DockItem {
   key: string

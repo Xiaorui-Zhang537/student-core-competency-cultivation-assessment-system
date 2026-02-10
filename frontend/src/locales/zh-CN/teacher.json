@@ -224,6 +224,14 @@
 			"history": "历史记录",
 			"historyTitle": "AI 批改历史",
 			"historySubtitle": "查看过往批改记录",
+			"historySearchPlaceholder": "搜索文件/模型",
+			"historyTable": {
+				"fileName": "文件名",
+				"model": "模型",
+				"finalScore": "最终分",
+				"time": "时间",
+				"actions": "操作"
+			},
 			"view": "查看",
 			"delete": "删除",
 			"confirmDelete": "确认删除该记录？此操作不可恢复。",
@@ -383,7 +391,17 @@
 				"content": "学生提交内容",
 				"answer": "作业答案",
 				"attachment": "附件文件",
-				"selfEvaluation": "学生自评"
+				"selfEvaluation": "学生自评",
+				"returnedHint": "作业已退回，原提交内容不再展示，等待学生重新提交。"
+			},
+			"fileType": {
+				"pdf": "PDF文档",
+				"word": "Word文档",
+				"image": "图片",
+				"text": "文本文件",
+				"archive": "压缩包",
+				"video": "视频",
+				"unknown": "未知类型"
 			},
 			"ai": {
 				"title": "AI评分建议",
@@ -504,6 +522,7 @@
 		"analytics": {
 			"title": "数据分析",
 			"subtitle": "全面了解教学效果和学生学习情况",
+			"courseSelector": { "label": "选择课程" },
 			"selectCourse": "请选择课程",
 			"askAi": "询问AI",
 			"exportReport": "导出报告",

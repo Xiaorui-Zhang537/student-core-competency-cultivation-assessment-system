@@ -58,7 +58,10 @@
 		"common": {
 			"help": "Help",
 			"toggleDock": "Toggle Dock",
+			"showDock": "Show Dock",
+			"hideDock": "Hide Dock",
 			"toggleTheme": "Toggle Theme",
+			"language": "Language",
 			"themeFamily": "Theme Family",
 			"themeSelectTitle": "Theme Colors",
 			"themeSelectDesc": "Pick a theme palette you love. Each theme is a light+dark paired set so the app looks consistent in both modes.",

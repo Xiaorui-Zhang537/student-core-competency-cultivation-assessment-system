@@ -124,27 +124,15 @@
         <h3 class="text-lg font-medium">{{ t('teacher.assignments.list.emptyTitle') }}</h3>
         <p class="text-gray-500">{{ selectedCourseId ? t('teacher.assignments.list.emptyDescWithCourse') : t('teacher.assignments.list.emptyDescNoCourse') }}</p>
       </card>
-      <!-- Pagination -->
-      <div class="mt-6 flex items-center justify-between">
-        <div class="flex items-center space-x-2">
-          <span class="text-sm text-gray-700">{{ t('teacher.assignments.pagination.perPagePrefix') }}</span>
-          <div class="w-24">
-            <glass-popover-select
-              :model-value="pageSize"
-              :options="[{label:'10', value:10}, {label:'20', value:20}, {label:'50', value:50}]"
-              size="sm"
-              @update:modelValue="(v:any)=>{ pageSize = Number(v||10); handleCourseFilterChange() }"
-            />
-          </div>
-          <span class="text-sm text-gray-700">{{ t('teacher.assignments.pagination.perPageSuffix') }}</span>
-        </div>
-
-        <div class="flex items-center space-x-2">
-          <Button variant="outline" size="sm" @click="prevPage" :disabled="currentPage === 1">{{ t('teacher.assignments.pagination.prev') }}</Button>
-          <span class="text-sm">{{ t('teacher.assignments.pagination.page', { page: currentPage }) }}</span>
-          <Button variant="outline" size="sm" @click="nextPage" :disabled="currentPage >= totalPages">{{ t('teacher.assignments.pagination.next') }}</Button>
-        </div>
-      </div>
+      <!-- Pagination（抽离为统一组件） -->
+      <PaginationBar
+        :page="currentPage"
+        :page-size="pageSize"
+        :total-pages="totalPages"
+        :page-size-options="[10, 20, 50]"
+        @update:page="(p:number)=>{ currentPage = p; handleCourseFilterChange() }"
+        @update:pageSize="(s:number)=>{ pageSize = s }"
+      />
     </div>
 
     <!-- Create/Edit Modal (GlassModal) -->
@@ -232,6 +220,17 @@
         </Button>
       </template>
     </glass-modal>
+
+    <ConfirmDialog
+      :open="confirmOpen"
+      :title="confirmDialog.state.title"
+      :message="confirmDialog.state.message"
+      :confirm-text="confirmDialog.state.confirmText || ((t('common.confirm') as string) || '确定')"
+      :cancel-text="confirmDialog.state.cancelText || ((t('common.cancel') as string) || '取消')"
+      :confirm-variant="confirmDialog.state.confirmVariant"
+      @confirm="confirmDialog.onConfirm"
+      @cancel="confirmDialog.onCancel"
+    />
     </div>
   </div>
 </template>
@@ -263,13 +262,25 @@ import { assignmentApi } from '@/api/assignment.api'
 import AttachmentList from '@/features/shared/AttachmentList.vue'
 import FilterBar from '@/components/ui/filters/FilterBar.vue'
 import Card from '@/components/ui/Card.vue'
+import PaginationBar from '@/components/ui/PaginationBar.vue'
+import ConfirmDialog from '@/components/ui/ConfirmDialog.vue'
+import { useConfirmDialog } from '@/shared/composables/useConfirmDialog'
+import { useUIStore } from '@/stores/ui'
 
 const assignmentStore = useAssignmentStore();
 const courseStore = useCourseStore();
 const authStore = useAuthStore();
+const uiStore = useUIStore()
 const route = useRoute();
 const router = useRouter();
 const { t } = useI18n()
+
+const confirmDialog = useConfirmDialog({
+  confirmText: (t('common.confirm') as string) || '确定',
+  cancelText: (t('common.cancel') as string) || '取消',
+  confirmVariant: 'danger',
+})
+const confirmOpen = computed(() => confirmDialog.open.value)
 
 const showModal = ref(false);
 const isEditing = ref(false);
@@ -335,13 +346,17 @@ const refreshAttachments = async (assignmentId: string | number) => {
 
 const confirmDeleteAttachment = async (fileId: string | number) => {
   if (!editingAssignmentId.value) return;
-  if (!confirm(t('teacher.assignments.confirm.deleteAttachment'))) return;
+  const ok = await confirmDialog.confirm({
+    title: (t('common.confirm') as string) || '确定',
+    message: (t('teacher.assignments.confirm.deleteAttachment') as string) || '确认删除该附件？'
+  })
+  if (!ok) return
   await fileApi.deleteFile(String(fileId));
   await refreshAttachments(editingAssignmentId.value);
 };
 
 const formatSize = (bytes?: number) => {
-  if (!bytes || bytes <= 0) return '未知';
+  if (!bytes || bytes <= 0) return (t('common.unknown') as string) || '未知';
   const units = ['B','KB','MB','GB'];
   let i = 0; let n = bytes;
   while (n >= 1024 && i < units.length - 1) { n /= 1024; i++; }
@@ -465,8 +480,12 @@ const resetForm = () => {
 
 const openCreateModal = () => {
   if (!courseStore.courses.length) {
-      alert('请先创建一门课程。');
-      return;
+    uiStore.showNotification({
+      type: 'warning',
+      title: (t('app.notifications.warning.title') as string) || (t('common.warning') as string) || '提示',
+      message: (t('teacher.assignments.alerts.createCourseFirst') as string) || '请先创建一门课程。'
+    })
+    return
   }
   isEditing.value = false;
   editingAssignmentId.value = null;
@@ -541,7 +560,11 @@ const handleSubmit = async () => {
   const due = form.dueDate ? new Date(form.dueDate).getTime() : 0
   if (assignmentType.value !== 'course_bound') {
     if (!due || due <= baseTime) {
-      alert(String(t('teacher.assignments.modal.validation.publishBeforeDue') || '截止时间必须晚于发布时间/当前时间'))
+      uiStore.showNotification({
+        type: 'error',
+        title: (t('teacher.assignments.modal.validation.title') as string) || (t('common.error') as string) || '错误',
+        message: String(t('teacher.assignments.modal.validation.publishBeforeDue') || '截止时间必须晚于发布时间/当前时间')
+      })
       return
     }
   } else {
@@ -658,9 +681,12 @@ const onFilesUpdate = (files: any[]) => {
 };
 
 const handleDeleteAssignment = async (assignment: Assignment) => {
-  if (confirm(t('teacher.assignments.confirm.deleteAssignment'))) {
-    await assignmentStore.deleteAssignment(assignment.id, String(assignment.courseId));
-  }
+  const ok = await confirmDialog.confirm({
+    title: (t('common.confirm') as string) || '确定',
+    message: (t('teacher.assignments.confirm.deleteAssignment') as string) || '确认删除该作业？'
+  })
+  if (!ok) return
+  await assignmentStore.deleteAssignment(assignment.id, String(assignment.courseId));
 };
 
   const viewSubmissions = (assignment: Assignment) => {
@@ -674,20 +700,6 @@ const handleCourseFilterChange = () => {
   if (searchText.value) base.search = searchText.value
   if (statusFilter.value) base.status = statusFilter.value
   assignmentStore.fetchAssignments(base)
-};
-
-const prevPage = () => {
-  if (currentPage.value > 1) {
-    currentPage.value--;
-    handleCourseFilterChange();
-  }
-};
-
-const nextPage = () => {
-  if (currentPage.value < totalPages.value) {
-    currentPage.value++;
-    handleCourseFilterChange();
-  }
 };
 
 function goAiGrading() {

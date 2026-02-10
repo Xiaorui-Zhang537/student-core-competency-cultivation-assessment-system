@@ -3,16 +3,21 @@
     <page-header :title="t('teacher.dashboard.header.title')" :subtitle="t('teacher.dashboard.header.subtitle')">
       <template #actions>
         <div class="flex items-end gap-4 w-full sm:w-auto">
-          <div class="w-full sm:w-64">
-            <glass-popover-select
-              :label="t('teacher.dashboard.course.select.label') as string"
-              v-model="selectedCourseId"
-              :options="teacherCourseOptions"
-              :placeholder="t('teacher.dashboard.course.select.placeholder') as string"
-              size="md"
-              stacked
-              @change="onCourseSelect"
-            />
+          <div class="w-full sm:w-auto flex items-center gap-3">
+            <span class="text-sm font-semibold text-gray-700 dark:text-gray-300 whitespace-nowrap">
+              {{ t('teacher.dashboard.course.select.label') as string }}
+            </span>
+            <div class="w-full sm:w-64">
+              <glass-popover-select
+                v-model="selectedCourseId"
+                :options="teacherCourseOptions"
+                :placeholder="t('teacher.dashboard.course.select.placeholder') as string"
+                size="md"
+                :fullWidth="false"
+                width="260px"
+                @change="onCourseSelect"
+              />
+            </div>
           </div>
           <div class="hidden sm:flex items-center gap-2">
             <Button variant="primary" @click="goPublishAssignment">
@@ -98,6 +103,11 @@ let darkObserver: { disconnect: () => void } | null = null
 let reRenderScheduled = false
 const onResize = () => chart?.resize()
 
+function gradeDistributionKey(dist: any[]): string {
+  const arr = Array.isArray(dist) ? dist : []
+  return arr.map(d => `${String(d?.gradeLevel ?? d?.level ?? '')}:${Number(d?.count ?? 0)}`).join('|')
+}
+
 // 3. 创建 teacherCourses 计算属性
 const teacherCourses = computed(() => {
   if (!authStore.user?.id) return []
@@ -119,11 +129,18 @@ const safeAnalytics = computed(() => ({
   totalAssignments: (courseAnalytics.value as any).totalAssignments ?? courseAnalytics.value.assignmentCount ?? 0,
 }))
 
-const onCourseSelect = () => {
-  if (selectedCourseId.value) {
-    teacherStore.fetchCourseAnalytics(selectedCourseId.value)
-    teacherStore.fetchClassPerformance(selectedCourseId.value)
-  }
+const onCourseSelect = async () => {
+  if (!selectedCourseId.value) return
+  try {
+    await Promise.all([
+      teacherStore.fetchCourseAnalytics(selectedCourseId.value),
+      teacherStore.fetchClassPerformance(selectedCourseId.value),
+    ])
+  } catch { /* errors are handled in store */ }
+  // 关键：即便数据“看起来没变”（key 相同），切回页面后也要确保图表会 init/setOption
+  await nextTick()
+  initChart()
+  chart?.resize()
 }
 
 const goPublishAssignment = () => {
@@ -238,9 +255,12 @@ function scheduleReinit() {
   })
 }
 
-watch(classPerformance, () => nextTick(initChart), { deep: true })
+watch(() => gradeDistributionKey((classPerformance.value as any)?.gradeDistribution || []), () => nextTick(initChart), { immediate: true })
 // 当语言切换时，重绘图表以应用新文案
-watch(() => locale.value, () => nextTick(initChart))
+watch(() => locale.value, () => nextTick(initChart), { immediate: true })
+// 当从其它页面切回工作台时，本次组件会重新挂载，但数据可能未变化（watch 不触发）；
+// 这里监听 DOM ref 挂载，确保图表必定初始化一次。
+watch(chartRef, () => nextTick(() => { initChart(); chart?.resize() }))
 
 onMounted(async () => {
   // 确保在获取课程之前，用户信息是可用的
@@ -251,7 +271,7 @@ onMounted(async () => {
   // 5. 使用过滤后的列表
   if (teacherCourses.value.length) {
     selectedCourseId.value = String(teacherCourses.value[0].id)
-    onCourseSelect()
+    await onCourseSelect()
   }
   // 预加载教师端命名空间
   await loadLocaleMessages(locale.value as 'zh-CN' | 'en-US', ['teacher'])

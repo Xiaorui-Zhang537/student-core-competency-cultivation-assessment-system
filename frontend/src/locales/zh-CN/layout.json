@@ -58,7 +58,10 @@
 		"common": {
 			"help": "帮助",
 			"toggleDock": "切换 Dock",
+			"showDock": "显示 Dock",
+			"hideDock": "隐藏 Dock",
 			"toggleTheme": "切换主题",
+			"language": "语言",
 			"themeFamily": "主题家族",
 			"themeSelectTitle": "主题配色",
 			"themeSelectDesc": "选择你喜欢的主题配色。每个主题由一组明暗配色组成，系统会在浅色和深色之间自如切换。",

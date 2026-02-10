@@ -2,7 +2,7 @@
   <div
     ref="iconRef"
     :class="[
-      'flex cursor-pointer items-center justify-center rounded-full transition-all duration-200 ease-out',
+      `flex cursor-pointer items-center justify-center rounded-full ${props.animate ? 'transition-all duration-200 ease-out' : ''}`,
       square && 'aspect-square'
     ]"
     :style="styleObject"
@@ -15,7 +15,7 @@
 import { ref, inject, computed } from 'vue'
 import { MOUSE_X_INJECTION_KEY, MOUSE_Y_INJECTION_KEY, MAGNIFICATION_INJECTION_KEY, DISTANCE_INJECTION_KEY, ORIENTATION_INJECTION_KEY } from './injectionKeys'
 
-const props = withDefaults(defineProps<{ square?: boolean; baseSize?: number; ml?: number; mr?: number }>(), { square: true, baseSize: 40, ml: 0, mr: 0 })
+const props = withDefaults(defineProps<{ square?: boolean; baseSize?: number; ml?: number; mr?: number; animate?: boolean }>(), { square: true, baseSize: 40, ml: 0, mr: 0, animate: true })
 const square = computed(() => props.square)
 const iconRef = ref<HTMLDivElement | null>(null)
 const mouseX = inject(MOUSE_X_INJECTION_KEY, ref(Infinity))

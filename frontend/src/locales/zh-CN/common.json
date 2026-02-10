@@ -1,6 +1,9 @@
 {
   "common": {
     "error": "错误",
+    "warning": "提示",
+    "unknown": "未知",
+    "loading": "加载中...",
     "empty": "无内容",
     "cancel": "取消",
     "confirm": "确定",
