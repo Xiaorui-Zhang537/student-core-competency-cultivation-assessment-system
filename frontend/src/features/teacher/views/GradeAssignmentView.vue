@@ -737,7 +737,7 @@
       </div>
 
       <!-- AI 历史详情弹窗 -->
-      <glass-modal v-if="aiHistoryDetailOpen" :title="t('teacher.aiGrading.historyDetail') as string || 'AI 批改详情'" size="2xl" heightVariant="max" solidBody @close="aiHistoryDetailOpen=false">
+      <glass-modal v-if="aiHistoryDetailOpen" :title="t('teacher.aiGrading.historyDetail') as string || 'AI 批改详情'" size="xl" heightVariant="max" solidBody @close="aiHistoryDetailOpen=false">
         <div class="space-y-3">
           <div class="flex flex-wrap items-center gap-3 text-sm">
             <badge variant="secondary">{{ aiHistoryDetail?.model || '-' }}</badge>
@@ -1424,7 +1424,8 @@ async function openAiHistoryDetail(h: any) {
 }
 
 const getSubmissionStatusVariant = (status: string) => {
-  const variantMap: Record<string, string> = {
+  type BadgeVariant = 'primary' | 'secondary' | 'accent' | 'success' | 'warning' | 'danger' | 'info'
+  const variantMap: Record<string, BadgeVariant> = {
     submitted: 'success',
     graded: 'secondary',
     returned: 'warning',
@@ -2131,7 +2132,7 @@ async function exportAiDetailAsPdf() {
   await exportNodeAsPdf(cloned, (assignment.title || 'grading').toString().replace(/\s+/g, '_'))
   document.body.removeChild(wrapper)
 }
-const authHeaders = () => {
+const authHeaders = (): Record<string, string> => {
   try {
     const token = localStorage.getItem('token')
     return token ? { Authorization: `Bearer ${token}` } : {}

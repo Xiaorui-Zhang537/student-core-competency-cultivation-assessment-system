@@ -157,6 +157,13 @@ const initChart = () => {
   const tokens = getEChartsThemedTokens()
   const categories = dist.map(d => d.gradeLevel ?? d.level ?? t('teacher.dashboard.chart.level.unknown'))
   const values = dist.map(d => d.count ?? 0)
+  const seriesData = values.map((v, idx) => {
+    const base = palette[idx % palette.length]
+    return {
+      value: v,
+      itemStyle: { color: base }
+    }
+  })
   // 动态计算更粗的柱宽（默认近似直方图，仍保留一定间隔）
   const containerWidth = (chartRef.value as HTMLElement).clientWidth || 800
   const innerWidth = Math.floor(containerWidth * 0.94) // 近似减去 grid 边距
@@ -171,11 +178,20 @@ const initChart = () => {
   chart.setOption({
     tooltip: {
       trigger: 'item',
+      triggerOn: 'mousemove',
       backgroundColor: 'transparent',
       borderColor: 'transparent',
       textStyle: { color: 'var(--color-base-content)' },
-      extraCssText: glassTooltipCss(),
-      appendToBody: false,
+      // 默认隐藏，由 showTip/hideTip 控制可见性（避免残留）
+      extraCssText: glassTooltipCss() + ';visibility:hidden;pointer-events:none;',
+      className: 'echarts-glass-tooltip',
+      renderMode: 'html',
+      enterable: false,
+      // appendToBody 时不再 confine，避免浅色模式下定位异常导致“看似不显示”
+      confine: false,
+      // 关键：tooltip 需要挂到 body，避免被 LiquidGlass 的 overflow:hidden 裁剪
+      appendToBody: true,
+      transitionDuration: 0,
       showDelay: 0,
       hideDelay: 30,
       formatter: (p: any) => `${p.name}<br/>${t('teacher.dashboard.chart.series.students')}: ${p.value}`
@@ -197,26 +213,42 @@ const initChart = () => {
     series: [{
       name: t('teacher.dashboard.chart.series.students'),
       type: 'bar',
-      data: values,
+      data: seriesData,
       barWidth: computedBarWidth,
       barCategoryGap: '8%',
       // 重放动画：首次渲染或主题切换后，提供短促进入动画
       animation: true,
       animationDuration: 420,
       animationEasing: 'cubicOut',
-      // 默认颜色 + 悬停加深
-      itemStyle: {
-        color: (params: any) => palette[params.dataIndex % palette.length]
-      },
-      emphasis: {
-        focus: 'none',
-        itemStyle: {
-          // 仅降低不透明度表现“变暗”，不改变色相
-          opacity: 0.85
-        }
-      }
+      // 禁用 hover/emphasis 状态，避免任何“变暗/变色”行为
+      emphasis: { disabled: true },
+      // hover/emphasis 样式在 data 内逐条定义，避免 params.dataIndex 缺失导致“跳色”
     }]
   }, { notMerge: true, lazyUpdate: false })
+
+  // 与其它图表组件一致：在 showTip/hideTip 时同步 tooltip DOM 的可见性（否则可能被其它图表全局 hide 影响）
+  try { (chart as any).off && (chart as any).off('showTip') } catch {}
+  try { (chart as any).off && (chart as any).off('hideTip') } catch {}
+  try { (chart as any).off && (chart as any).off('globalout') } catch {}
+  try {
+    // 初始化后先隐藏，避免残留在左上角
+    const tooltipEls = Array.from(document.querySelectorAll('.echarts-tooltip, .echarts-glass-tooltip')) as HTMLElement[]
+    tooltipEls.forEach(el => { el.style.visibility = 'hidden'; el.style.opacity = '1' })
+    chart.on('showTip', () => {
+      const els = Array.from(document.querySelectorAll('.echarts-tooltip, .echarts-glass-tooltip')) as HTMLElement[]
+      els.forEach(el => { el.style.visibility = 'visible'; el.style.opacity = '1' })
+    })
+    chart.on('hideTip', () => {
+      const els = Array.from(document.querySelectorAll('.echarts-tooltip, .echarts-glass-tooltip')) as HTMLElement[]
+      els.forEach(el => { el.style.visibility = 'hidden' })
+    })
+    // 鼠标移出画布：确保 tooltip 关闭
+    chart.on('globalout', () => {
+      try { chart?.dispatchAction({ type: 'hideTip' } as any) } catch {}
+      const els = Array.from(document.querySelectorAll('.echarts-tooltip, .echarts-glass-tooltip')) as HTMLElement[]
+      els.forEach(el => { el.style.visibility = 'hidden' })
+    })
+  } catch {}
 }
 
 // 主题轻量刷新：不销毁实例，仅更新颜色与文字样式
@@ -238,31 +270,9 @@ function scheduleReinit() {
   reRenderScheduled = true
   requestAnimationFrame(() => {
     reRenderScheduled = false
-    // 主题切换后进行一次带动画的轻量重绘（不销毁实例），并更新坐标/网格线颜色
+    // 主题切换后：直接走 initChart 的“完整配置重绘”（包含 tooltip），避免 clear 后丢失 tooltip 配置
     try { chart?.dispatchAction({ type: 'hideTip' } as any) } catch {}
-    const dist: any[] = (classPerformance.value as any).gradeDistribution || []
-    if (!chartRef.value || !chart || !dist.length) { initChart(); return }
-    const palette = resolveThemePalette()
-    const tokens = getEChartsThemedTokens()
-    const categories = dist.map(d => d.gradeLevel ?? d.level ?? t('teacher.dashboard.chart.level.unknown'))
-    const values = dist.map(d => d.count ?? 0)
-    const containerWidth = (chartRef.value as HTMLElement).clientWidth || 800
-    const innerWidth = Math.floor(containerWidth * 0.94)
-    const n = Math.max(categories.length, 1)
-    const minGapPx = 12
-    const computedBarWidth = (() => {
-      const widthIfDense = Math.floor(innerWidth / (n * 1.2))
-      const widthIfFew = Math.floor((innerWidth - (n + 1) * minGapPx) / n)
-      const base = n <= 6 ? widthIfFew : widthIfDense
-      return Math.min(140, Math.max(36, base))
-    })()
-    chart.clear()
-    chart.setOption({
-      grid: { left: '4%', right: '2%', bottom: '5%', containLabel: true },
-      xAxis: { type: 'category', data: categories, axisTick: { alignWithLabel: true }, axisLine: { lineStyle: { color: tokens.axisLine } }, axisLabel: { color: tokens.axisLabel } },
-      yAxis: { type: 'value', axisLine: { lineStyle: { color: tokens.axisLine } }, axisLabel: { color: tokens.axisLabel }, splitLine: { lineStyle: { color: tokens.splitLine } } },
-      series: [{ name: t('teacher.dashboard.chart.series.students'), type: 'bar', data: values, barWidth: computedBarWidth, barCategoryGap: '8%', animation: true, animationDuration: 420, animationEasing: 'cubicOut', itemStyle: { color: (params: any) => palette[params.dataIndex % palette.length] }, emphasis: { focus: 'none', itemStyle: { opacity: 0.85 } } }]
-    }, { notMerge: true, lazyUpdate: false })
+    initChart()
   })
 }
 

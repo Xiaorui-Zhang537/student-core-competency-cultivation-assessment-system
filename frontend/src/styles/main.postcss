@@ -1014,7 +1014,8 @@
 
   /* ECharts 玻璃风格 Tooltip（统一类名） */
   .echarts-glass-tooltip {
-    background: rgb(var(--glass-bg-rgb) / 0.22);
+    /* 浅色主题（含 retro）下提高可见度，避免 hover 详情“消失/看不见” */
+    background: rgb(var(--glass-bg-rgb) / 0.32);
     border: 1px solid var(--glass-border-color);
     backdrop-filter: blur(10px) saturate(1.5);
     -webkit-backdrop-filter: blur(10px) saturate(1.5);
@@ -1023,12 +1024,13 @@
     color: var(--color-base-content);
     padding: 8px 10px;
     pointer-events: none;
+    z-index: 9999;
     will-change: transform, filter, backdrop-filter;
     line-height: 1.25rem;
   position: fixed; left: 0; top: 0; /* 避免占据布局空间，防止底部出现空白占位 */
   }
   html.dark .echarts-glass-tooltip {
-    background: rgb(var(--glass-bg-rgb) / 0.20);
+    background: rgb(var(--glass-bg-rgb) / 0.22);
     backdrop-filter: blur(8px) saturate(1.5);
     -webkit-backdrop-filter: blur(8px) saturate(1.5);
   }

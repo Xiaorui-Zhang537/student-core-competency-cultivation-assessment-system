@@ -14,7 +14,11 @@ export function resolveCssVarColor(variable: CssVarName): string {
 
 export function parseRgb(rgb: string): { r: number; g: number; b: number } {
   // Accept rgb/rgba strings
-  const m = rgb.match(/rgba?\((\d+)\s*,\s*(\d+)\s*,\s*(\d+)/i)
+  // Support both comma-separated and space-separated CSS Color 4 formats:
+  // - rgb(12, 34, 56)
+  // - rgb(12 34 56)
+  // - rgba(12 34 56 / 0.5)
+  const m = rgb.match(/rgba?\(\s*(\d+)\s*(?:,|\s)\s*(\d+)\s*(?:,|\s)\s*(\d+)/i)
   if (!m) return { r: 0, g: 0, b: 0 }
   return { r: Number(m[1]), g: Number(m[2]), b: Number(m[3]) }
 }

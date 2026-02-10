@@ -538,6 +538,7 @@ const initScoreDistributionChart = () => {
   scoreDistributionChart = getOrCreateChart(scoreDistributionRef.value, scoreDistributionChart)
 
   const dist: any[] = (teacherStore.classPerformance as any)?.gradeDistribution || []
+  const palette = resolveThemePalette()
   const pieData = Array.isArray(dist)
     ? dist.map(d => ({ name: d.gradeLevel ?? d.level ?? t('teacher.analytics.charts.unknown'), value: d.count ?? 0 }))
     : []
@@ -581,16 +582,19 @@ const initScoreDistributionChart = () => {
         hoverAnimation: false,
         data: pieData.map((item: any, idx: number) => ({
           ...item,
-          itemStyle: { color: resolveThemePalette()[idx % resolveThemePalette().length] },
-          emphasis: { itemStyle: { opacity: 0.85 } },
-          blur: { itemStyle: { opacity: 1 } }
+          itemStyle: { color: palette[idx % palette.length] },
+          // 禁用 hover/emphasis 状态，避免任何“变暗/变色”行为
+          emphasis: { disabled: true },
+          blur: { disabled: true },
+          select: { disabled: true }
         })),
-        emphasis: { focus: 'none', scale: false },
+        emphasis: { disabled: true, focus: 'none', scale: false },
       }
     ]
   }
 
-  scoreDistributionChart && scoreDistributionChart.setOption(option)
+  // 完整替换 option，避免主题切换后旧状态（emphasis/颜色）残留导致 hover 变白
+  scoreDistributionChart && scoreDistributionChart.setOption(option, true)
   // 初始化后立即隐藏 tooltip，避免左上角残留小空白容器
   try { scoreDistributionChart?.dispatchAction({ type: 'hideTip' } as any) } catch {}
   try { (scoreDistributionChart as any).off && (scoreDistributionChart as any).off('globalout') } catch {}
