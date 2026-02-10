@@ -45,18 +45,18 @@
                 :class="['group w-full text-left px-0 py-3 min-h-[52px] rounded-lg transition-colors outline-none focus:outline-none focus-visible:outline-none ring-0 focus:ring-0 focus-visible:ring-0 focus:ring-offset-0 focus:shadow-none focus-visible:shadow-none hover:bg-transparent !justify-start !items-center', String(c.peerId)===String(peerActiveId) ? 'chat-selected' : '']"
                 @click="choosePeer(c.peerId, c.displayName, c.courseId)"
               >
-                <div class="flex items-center gap-4 pl-2">
+                <div class="flex items-center gap-4 pl-2 w-full min-w-0">
                   <user-avatar :avatar="c.avatar || getContactAvatar(c.peerId)" :size="28">
                     <div class="w-7 h-7 rounded-full bg-gray-200 dark:bg-gray-700"></div>
                   </user-avatar>
-                  <div class="flex-1 min-w-0">
-                    <div class="flex items-center gap-2 text-left">
-                      <div class="text-sm font-medium text-gray-900 dark:text-white truncate">{{ c.displayName }}</div>
+                  <div class="flex-1 min-w-0 overflow-hidden">
+                    <div class="flex items-center gap-2 text-left min-w-0">
+                      <div class="text-sm font-medium text-gray-900 dark:text-white truncate min-w-0 flex-1">{{ c.displayName }}</div>
                       <span v-if="c.unread > 0" class="glass-badge glass-badge-sm text-[11px] leading-none px-[6px]">{{ Math.min(Number(c.unread||0), 99) }}</span>
                     </div>
                     <div class="text-xs text-gray-500 dark:text-gray-300 truncate text-left">{{ c.content || c.preview }}</div>
                   </div>
-                  <div class="flex items-center gap-1 ml-auto opacity-0 group-hover:opacity-100 transition-opacity">
+                  <div class="flex items-center gap-1 ml-auto mr-1 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
                     <Button :title="(chat.isPinned(c.peerId, props.courseId||null) ? t('shared.chat.unpin') : t('shared.chat.pin')) as string" size="xs" variant="ghost" @click.stop="togglePinAction(c.peerId)">
                       <component :is="chat.isPinned(c.peerId, props.courseId||null) ? BookmarkIcon : BookmarkSlashIcon" class="w-4 h-4" />
                     </Button>

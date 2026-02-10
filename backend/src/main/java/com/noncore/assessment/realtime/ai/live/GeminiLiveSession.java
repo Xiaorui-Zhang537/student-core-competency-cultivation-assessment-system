@@ -791,7 +791,7 @@ public class GeminiLiveSession {
                     @SuppressWarnings("unchecked")
                     Map<String, Object> msg = mapper.readValue(p, Map.class);
                     // 读取一个对象后，当前位置已在对象结束之后
-                    lastConsumed = p.getCurrentLocation().getCharOffset();
+                    lastConsumed = p.currentLocation().getCharOffset();
                     handleGeminiServerMessage(msg);
                 } else {
                     p.skipChildren();

@@ -103,6 +103,7 @@
               :page="rankingPage"
               :page-size="rankingPageSize"
               :total-pages="rankingTotalPages"
+              :total-items="rankingTotal"
               :page-size-options="rankingPageOptions.map((o:any)=>Number(o.value || o))"
               :show-total-pages="true"
               @update:page="(p:number)=> rankingPage = p"

@@ -87,27 +87,17 @@
         <div v-if="loading" class="col-span-full p-8 text-center text-subtle rounded-xl glass-regular glass-tint-secondary" v-glass>{{ t('shared.loading') }}</div>
       </div>
 
-      <!-- 分页控制（文案与布局对齐教师端） -->
-      <div class="mt-6 flex items-center justify-between relative z-10">
-        <div class="flex items-center space-x-2">
-          <span class="text-sm text-base-content">{{ perPagePrefixText }}</span>
-          <div class="w-28">
-            <glass-popover-select
-              v-model="pageSize"
-              :options="[{label: '10', value: 10}, {label: '20', value: 20}, {label: '50', value: 50}]"
-              size="sm"
-              tint="accent"
-              @change="(v:any)=>{ pageSize = Number(v||10); changePageSize() }"
-            />
-          </div>
-          <span class="text-sm text-base-content">{{ perPageSuffixText }}</span>
-        </div>
-        <div class="flex items-center space-x-2">
-          <Button variant="outline" size="sm" :disabled="loading || currentPage===1" @click="prevPage">{{ t('student.assignments.pagination.prev') || '上一页' }}</Button>
-          <span class="text-sm text-base-content">{{ pageText }}</span>
-          <Button variant="outline" size="sm" :disabled="loading || currentPage>=totalPages" @click="nextPage">{{ t('student.assignments.pagination.next') || '下一页' }}</Button>
-        </div>
-      </div>
+      <!-- 分页：左侧总数+每页选择，右侧统一分页组件 -->
+      <PaginationBar
+        :page="currentPage"
+        :page-size="pageSize"
+        :total-pages="totalPages"
+        :total-items="total"
+        :disabled="loading"
+        :page-size-options="[10, 20, 50]"
+        @update:page="handlePageChange"
+        @update:pageSize="handlePageSizeChange"
+      />
     </div>
   </div>
 </template>
@@ -127,6 +117,7 @@ import { MagnifyingGlassIcon, EyeIcon } from '@heroicons/vue/24/outline'
 import { useSubmissionStore } from '@/stores/submission'
 import GlassSearchInput from '@/components/ui/inputs/GlassSearchInput.vue'
 import GlassSwitch from '@/components/ui/inputs/GlassSwitch.vue'
+import PaginationBar from '@/components/ui/PaginationBar.vue'
 
 const { t } = useI18n()
 const router = useRouter()
@@ -142,10 +133,6 @@ const pageSize = ref(10)
 const total = ref(0)
 const totalPages = ref(1)
 const onlyPending = ref(false)
-
-const perPagePrefixText = computed(() => (t('student.assignments.pagination.perPagePrefix') as string) || '每页显示')
-const perPageSuffixText = computed(() => (t('student.assignments.pagination.perPageSuffix') as string) || '条')
-const pageText = computed(() => (t('student.assignments.pagination.page', { page: currentPage.value }) as string) || (`第 ${currentPage.value} 页`))
 
 const statusOptions = computed(() => [
   { label: t('student.assignments.filters.all'), value: 'ALL' },
@@ -313,19 +300,15 @@ onMounted(async () => {
   await loadList()
 })
 
-function prevPage() {
-  if (currentPage.value > 1) {
-    currentPage.value -= 1
-  }
+function handlePageChange(page: number) {
+  if (page === currentPage.value) return
+  currentPage.value = page
 }
 
-function nextPage() {
-  if (currentPage.value < totalPages.value) {
-    currentPage.value += 1
-  }
-}
-
-function changePageSize() {
+function handlePageSizeChange(size: number) {
+  const n = Math.max(1, Math.floor(Number(size || 10)))
+  if (n === pageSize.value) return
+  pageSize.value = n
   currentPage.value = 1
 }
 </script>

@@ -110,11 +110,6 @@
         <template #header>
           <div class="flex justify-between items-center">
             <h2 class="text-lg font-semibold text-gray-900 dark:text-white">{{ t('teacher.students.table.list') }}</h2>
-            <div class="flex items-center space-x-2">
-              <span class="text-sm text-gray-500 dark:text-gray-400">
-                {{ t('teacher.students.table.total', { count: stats.totalStudents }) }}
-              </span>
-            </div>
           </div>
         </template>
 
@@ -330,6 +325,7 @@
           :page="currentPage"
           :page-size="pageSize"
           :total-pages="totalPages"
+          :total-items="serverTotal"
           :page-size-options="[10, 20, 50]"
           @update:page="(p:number)=> currentPage = p"
           @update:pageSize="(s:number)=> pageSize = s"

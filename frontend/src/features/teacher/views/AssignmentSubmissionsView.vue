@@ -120,6 +120,7 @@
         :page="currentPage"
         :page-size="pageSize"
         :total-pages="totalPages"
+        :total-items="totalRows"
         :disabled="loading"
         :page-size-options="[10, 20, 50]"
         @update:page="(p:number)=> currentPage = p"

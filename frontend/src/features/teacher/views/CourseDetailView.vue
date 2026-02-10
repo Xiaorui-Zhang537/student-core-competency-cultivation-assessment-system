@@ -243,11 +243,16 @@
             </li>
             <li v-if="!materials.length" class="py-6 text-center text-sm text-gray-500">{{ t('teacher.courseDetail.sections.noMaterials') }}</li>
           </ul>
-          <div v-if="materials.length > pageSize" class="mt-3 flex items-center justify-end gap-2">
-            <Button size="sm" variant="outline" :disabled="materialsPage===1" @click="materialsPage--">{{ t('teacher.courseDetail.sections.prev') }}</Button>
-            <span class="text-xs text-gray-500">{{ materialsPage }} / {{ materialsTotalPages }}</span>
-            <Button size="sm" variant="outline" :disabled="materialsPage===materialsTotalPages" @click="materialsPage++">{{ t('teacher.courseDetail.sections.next') }}</Button>
-          </div>
+          <PaginationBar
+            class="mt-3"
+            :page="materialsPage"
+            :page-size="pageSize"
+            :total-pages="materialsTotalPages"
+            :total-items="filteredMaterials.length"
+            :page-size-options="[10, 20, 50]"
+            @update:page="(p:number)=> materialsPage = p"
+            @update:pageSize="onMaterialsPageSizeChange"
+          />
         </Card>
         <Card padding="md" :hoverScale="false" class="order-1 sm:order-2 h-full relative overflow-hidden rounded-2xl" tint="warning">
           <div class="flex items-center justify-between mb-4">
@@ -284,11 +289,16 @@
             </li>
             <li v-if="!videos.length" class="py-6 text-center text-sm text-gray-500">{{ t('teacher.courseDetail.sections.noVideos') }}</li>
           </ul>
-          <div v-if="videos.length > pageSize" class="mt-3 flex items-center justify-end gap-2">
-            <Button size="sm" variant="secondary" :disabled="videosPage===1" @click="videosPage--">{{ t('teacher.courseDetail.sections.prev') }}</Button>
-            <span class="text-xs text-gray-500">{{ videosPage }} / {{ videosTotalPages }}</span>
-            <Button size="sm" variant="secondary" :disabled="videosPage===videosTotalPages" @click="videosPage++">{{ t('teacher.courseDetail.sections.next') }}</Button>
-          </div>
+          <PaginationBar
+            class="mt-3"
+            :page="videosPage"
+            :page-size="pageSize"
+            :total-pages="videosTotalPages"
+            :total-items="filteredVideos.length"
+            :page-size-options="[10, 20, 50]"
+            @update:page="(p:number)=> videosPage = p"
+            @update:pageSize="onVideosPageSizeChange"
+          />
         </Card>
       </div>
     </div>
@@ -319,11 +329,16 @@
         </li>
         <li v-if="!videos.length" class="py-6 text-center text-sm text-gray-500">{{ t('teacher.courseDetail.sections.noVideos') }}</li>
       </ul>
-      <div v-if="videos.length > pageSize" class="mt-3 flex items-center justify-end gap-2">
-        <Button size="sm" variant="outline" :disabled="videosPage===1" @click="videosPage--">{{ t('teacher.courseDetail.sections.prev') }}</Button>
-        <span class="text-xs text-gray-500">{{ videosPage }} / {{ videosTotalPages }}</span>
-        <Button size="sm" variant="outline" :disabled="videosPage===videosTotalPages" @click="videosPage++">{{ t('teacher.courseDetail.sections.next') }}</Button>
-      </div>
+      <PaginationBar
+        class="mt-3"
+        :page="videosPage"
+        :page-size="pageSize"
+        :total-pages="videosTotalPages"
+        :total-items="filteredVideos.length"
+        :page-size-options="[10, 20, 50]"
+        @update:page="(p:number)=> videosPage = p"
+        @update:pageSize="onVideosPageSizeChange"
+      />
     </div>
     <template #footer>
       <Button size="sm" variant="outline" @click="videoPickerVisible = false">{{ t('teacher.courseDetail.actions.close') }}</Button>
@@ -357,11 +372,16 @@
         </li>
         <li v-if="!materials.length" class="py-6 text-center text-sm text-gray-500">{{ t('teacher.courseDetail.sections.noMaterials') }}</li>
       </ul>
-      <div v-if="materials.length > pageSize" class="mt-3 flex items-center justify-end gap-2">
-        <Button size="sm" variant="outline" :disabled="materialsPage===1" @click="materialsPage--">{{ t('teacher.courseDetail.sections.prev') }}</Button>
-        <span class="text-xs text-gray-500">{{ materialsPage }} / {{ materialsTotalPages }}</span>
-        <Button size="sm" variant="outline" :disabled="materialsPage===materialsTotalPages" @click="materialsPage++">{{ t('teacher.courseDetail.sections.next') }}</Button>
-      </div>
+      <PaginationBar
+        class="mt-3"
+        :page="materialsPage"
+        :page-size="pageSize"
+        :total-pages="materialsTotalPages"
+        :total-items="filteredMaterials.length"
+        :page-size-options="[10, 20, 50]"
+        @update:page="(p:number)=> materialsPage = p"
+        @update:pageSize="onMaterialsPageSizeChange"
+      />
     </div>
     <template #footer>
       <Button size="sm" variant="outline" @click="materialPickerVisible = false">{{ t('teacher.courseDetail.actions.close') }}</Button>
@@ -406,6 +426,7 @@ import GlassTextarea from '@/components/ui/inputs/GlassTextarea.vue'
 import GlassSearchInput from '@/components/ui/inputs/GlassSearchInput.vue'
 import GlassSwitch from '@/components/ui/inputs/GlassSwitch.vue'
 import GlassModal from '@/components/ui/GlassModal.vue'
+import PaginationBar from '@/components/ui/PaginationBar.vue'
 
 const courseStore = useCourseStore();
 const uiStore = useUIStore()
@@ -466,8 +487,6 @@ const videoQuery = ref('');
 const pageSize = ref(10);
 const materialsPage = ref(1);
 const videosPage = ref(1);
-const materialsTotalPages = computed(() => Math.max(1, Math.ceil(materials.value.length / pageSize.value)));
-const videosTotalPages = computed(() => Math.max(1, Math.ceil(videos.value.length / pageSize.value)));
 const chapters = ref<any[]>([]);
 const newChapterTitle = ref('');
 const newChapterDesc = ref('');
@@ -485,6 +504,8 @@ const filteredVideos = computed(() => {
   const q = videoQuery.value.toLowerCase();
   return videos.value.filter((f: any) => (f.originalName || f.fileName || '').toLowerCase().includes(q));
 });
+const materialsTotalPages = computed(() => Math.max(1, Math.ceil(filteredMaterials.value.length / pageSize.value)));
+const videosTotalPages = computed(() => Math.max(1, Math.ceil(filteredVideos.value.length / pageSize.value)));
 const paginatedMaterials = computed(() => {
   const start = (materialsPage.value - 1) * pageSize.value;
   return filteredMaterials.value.slice(start, start + pageSize.value);
@@ -975,6 +996,25 @@ const chooseMaterial = (file: any) => {
   saveMaterials(target)
   materialPickerVisible.value = false
 };
+
+function onMaterialsPageSizeChange(size: number) {
+  const n = Math.max(1, Math.floor(Number(size || 10)))
+  if (n === pageSize.value) return
+  pageSize.value = n
+  materialsPage.value = 1
+}
+
+function onVideosPageSizeChange(size: number) {
+  const n = Math.max(1, Math.floor(Number(size || 10)))
+  if (n === pageSize.value) return
+  pageSize.value = n
+  videosPage.value = 1
+}
+
+watch(materialQuery, () => { materialsPage.value = 1 })
+watch(videoQuery, () => { videosPage.value = 1 })
+watch(materialsTotalPages, (tp) => { if (materialsPage.value > tp) materialsPage.value = tp })
+watch(videosTotalPages, (tp) => { if (videosPage.value > tp) videosPage.value = tp })
 
 // helpers
 function getCourseId(): string {

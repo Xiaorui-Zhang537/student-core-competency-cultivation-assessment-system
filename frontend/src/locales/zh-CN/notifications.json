@@ -6,7 +6,22 @@
       "markAll": "全部标记已读",
       "refresh": "刷新",
       "loadMore": "加载更多",
-      "clearFilters": "清空筛选"
+      "clearFilters": "清空筛选",
+      "markRead": "标记已读",
+      "goRelated": "查看详情",
+      "backToCenter": "返回通知中心",
+      "viewAll": "查看全部"
+    },
+    "detail": {
+      "title": "通知详情",
+      "from": "来自",
+      "assignment": "作业",
+      "course": "课程",
+      "score": "成绩"
+    },
+    "badge": {
+      "reminder": "提醒",
+      "published": "发布"
     },
     "filters": {
       "type": "类型",
@@ -31,10 +46,6 @@
       "high": "高",
       "normal": "普通",
       "low": "低"
-    },
-    "badge": {
-      "published": "发布",
-      "reminder": "提醒"
     },
     "categoryTitles": {
       "systemAnnouncement": "系统公告",

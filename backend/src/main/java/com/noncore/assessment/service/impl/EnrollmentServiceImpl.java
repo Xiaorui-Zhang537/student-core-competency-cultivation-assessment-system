@@ -81,7 +81,7 @@ public class EnrollmentServiceImpl implements EnrollmentService {
         // 通知教师：有新学生加入课程
         try {
             if (course.getTeacherId() != null) {
-                User student = userMapper.selectById(studentId);
+                User student = userMapper.selectUserById(studentId);
                 String sName = student != null ? (student.getNickname() != null ? student.getNickname() : student.getUsername()) : "#" + studentId;
                 notificationService.sendNotification(course.getTeacherId(), studentId,
                     "学生选课", sName + " 加入了课程《" + course.getTitle() + "》",
@@ -134,7 +134,7 @@ public class EnrollmentServiceImpl implements EnrollmentService {
         // 通知教师：有新学生加入课程
         try {
             if (course.getTeacherId() != null) {
-                User student = userMapper.selectById(studentId);
+                User student = userMapper.selectUserById(studentId);
                 String sName = student != null ? (student.getNickname() != null ? student.getNickname() : student.getUsername()) : "#" + studentId;
                 notificationService.sendNotification(course.getTeacherId(), studentId,
                     "学生选课", sName + " 加入了课程《" + course.getTitle() + "》",
@@ -159,7 +159,7 @@ public class EnrollmentServiceImpl implements EnrollmentService {
         try {
             Course course = courseMapper.selectCourseById(courseId);
             if (course != null && course.getTeacherId() != null) {
-                User student = userMapper.selectById(studentId);
+                User student = userMapper.selectUserById(studentId);
                 String sName = student != null ? (student.getNickname() != null ? student.getNickname() : student.getUsername()) : "#" + studentId;
                 notificationService.sendNotification(course.getTeacherId(), studentId,
                     "学生退课", sName + " 退出了课程《" + course.getTitle() + "》",

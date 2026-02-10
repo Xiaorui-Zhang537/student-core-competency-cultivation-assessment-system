@@ -222,26 +222,26 @@ public class CommunityServiceImpl implements CommunityService {
 
         // 发送通知：评论/回复
         try {
-            Long commenterId = comment.getUserId();
+            Long commenterId = comment.getAuthorId();
             Long postId = comment.getPostId();
             Post post = postMapper.selectById(postId);
             if (post != null) {
                 // 1) 通知帖子作者（如果评论者不是作者本人）
-                if (post.getUserId() != null && !post.getUserId().equals(commenterId)) {
+                if (post.getAuthorId() != null && !post.getAuthorId().equals(commenterId)) {
                     String snippet = comment.getContent() != null && comment.getContent().length() > 30
                             ? comment.getContent().substring(0, 30) + "..."
                             : (comment.getContent() != null ? comment.getContent() : "");
-                    notificationService.sendNotification(post.getUserId(), commenterId,
+                    notificationService.sendNotification(post.getAuthorId(), commenterId,
                         "帖子被评论", "你的帖子收到了新评论：" + snippet,
                         "post", "general", "normal", "post", postId);
                 }
                 // 2) 如果是回复评论，通知父评论作者（如果不是同一人且不是帖子作者）
                 if (comment.getParentId() != null) {
                     PostComment parent = postCommentMapper.selectById(comment.getParentId());
-                    if (parent != null && parent.getUserId() != null
-                            && !parent.getUserId().equals(commenterId)
-                            && !parent.getUserId().equals(post.getUserId())) {
-                        notificationService.sendNotification(parent.getUserId(), commenterId,
+                    if (parent != null && parent.getAuthorId() != null
+                            && !parent.getAuthorId().equals(commenterId)
+                            && !parent.getAuthorId().equals(post.getAuthorId())) {
+                        notificationService.sendNotification(parent.getAuthorId(), commenterId,
                             "评论被回复", "你的评论收到了新回复",
                             "post", "general", "normal", "post", postId);
                     }

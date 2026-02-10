@@ -192,16 +192,17 @@
         </Card>
       </div>
 
-      <!-- 加载更多 -->
-      <div
-        v-if="pagination.page < pagination.totalPages"
-        class="load-more"
-      >
-        <Button variant="secondary" @click="handleLoadMore" :disabled="loading">
-          <template v-if="loading">{{ t('notifications.loading') }}</template>
-          <template v-else>{{ t('notifications.actions.loadMore') }}</template>
-        </Button>
-      </div>
+      <!-- 分页 -->
+      <PaginationBar
+        :page="pagination.page"
+        :page-size="pagination.size || 20"
+        :total-pages="pagination.totalPages"
+        :total-items="pagination.total"
+        :disabled="loading"
+        :page-size-options="[10, 20, 50]"
+        @update:page="handlePageChange"
+        @update:pageSize="handlePageSizeChange"
+      />
     </div>
   </div>
 </template>
@@ -231,6 +232,7 @@ import GlassPopoverSelect from '@/components/ui/filters/GlassPopoverSelect.vue'
 import FilterBar from '@/components/ui/filters/FilterBar.vue'
 import Button from '@/components/ui/Button.vue'
 import Badge from '@/components/ui/Badge.vue'
+import PaginationBar from '@/components/ui/PaginationBar.vue'
 
 // Store
 const notificationsStore = useNotificationsStore()
@@ -304,6 +306,18 @@ const handleClearFilters = () => {
 
 const handleLoadMore = () => {
   notificationsStore.loadMore()
+}
+
+const handlePageChange = async (p: number) => {
+  if (p === pagination.value.page) return
+  notificationsStore.pagination.page = p
+  await notificationsStore.fetchNotifications({ append: false })
+}
+
+const handlePageSizeChange = async (s: number) => {
+  if (s === pagination.value.size) return
+  notificationsStore.pagination.size = s
+  await notificationsStore.fetchNotifications({ resetPage: true, append: false })
 }
 
 const openDetail = async (id: string) => {

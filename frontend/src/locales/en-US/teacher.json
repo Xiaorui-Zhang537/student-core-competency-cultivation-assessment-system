@@ -185,7 +185,7 @@
 				"dueAt": "Due At",
 				"quickHint": "Quick set:",
 				"quickRanges": {"1d": "+1 day", "7d": "+7 days", "14d": "+14 days", "30d": "+30 days"},
-				"validation": {"publishBeforeDue": "Due time must be after publish time/now"},
+				"validation": {"title": "Validation Error", "publishBeforeDue": "Due time must be after publish time/now"},
 				"visibilityHint": "Drafts are hidden from students; only published assignments are visible.",
 				"course": "Course",
 				"title": "Title",

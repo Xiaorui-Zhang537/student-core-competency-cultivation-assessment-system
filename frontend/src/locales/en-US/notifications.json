@@ -6,7 +6,22 @@
       "markAll": "Mark all as read",
       "refresh": "Refresh",
       "loadMore": "Load more",
-      "clearFilters": "Clear filters"
+      "clearFilters": "Clear filters",
+      "markRead": "Mark as Read",
+      "goRelated": "View Details",
+      "backToCenter": "Back to Notifications",
+      "viewAll": "View All"
+    },
+    "detail": {
+      "title": "Notification Detail",
+      "from": "From",
+      "assignment": "Assignment",
+      "course": "Course",
+      "score": "Score"
+    },
+    "badge": {
+      "reminder": "Reminder",
+      "published": "Published"
     },
     "filters": {
       "type": "Type",
@@ -31,10 +46,6 @@
       "high": "High",
       "normal": "Normal",
       "low": "Low"
-    },
-    "badge": {
-      "published": "Published",
-      "reminder": "Reminder"
     },
     "categoryTitles": {
       "systemAnnouncement": "System Announcement",

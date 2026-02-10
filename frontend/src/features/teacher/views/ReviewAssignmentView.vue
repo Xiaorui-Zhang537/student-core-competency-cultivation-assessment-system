@@ -129,6 +129,8 @@
         :page="currentPage"
         :page-size="pageSize"
         :total-pages="totalPages"
+        :total-items="assignmentStore.totalAssignments || 0"
+        :disabled="assignmentStore.loading"
         :page-size-options="[10, 20, 50]"
         @update:page="(p:number)=>{ currentPage = p; handleCourseFilterChange() }"
         @update:pageSize="(s:number)=>{ pageSize = s }"

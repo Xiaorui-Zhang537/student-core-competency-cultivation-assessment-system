@@ -305,26 +305,18 @@
               {{ t('teacher.studentDetail.table.empty') }}
             </div>
 
-            <!-- 分页：收紧间距，和其他卡片的内容区域统一 -->
-            <div class="mt-4 flex items-center justify-between">
-              <div class="flex items-center gap-2">
-                <span class="text-sm text-gray-700 dark:text-gray-300 whitespace-nowrap">{{ t('teacher.assignments.pagination.perPagePrefix') }}</span>
-                <glass-popover-select
-                  :model-value="pageSize"
-                  :options="[{label:'10',value:10},{label:'20',value:20},{label:'50',value:50}]"
-                  size="sm"
-                  width="80px"
-                  :teleport="false"
-                  @update:modelValue="(v:any)=>{ pageSize = Number(v||10); fetchPage(1) }"
-                />
-                <span class="text-sm text-gray-700 dark:text-gray-300 whitespace-nowrap">{{ t('teacher.assignments.pagination.perPageSuffix') }}</span>
-              </div>
-              <div class="flex items-center gap-2">
-                <Button variant="outline" size="sm" class="whitespace-nowrap" :disabled="currentPage===1" @click="fetchPage(Math.max(1, currentPage-1))">{{ t('teacher.assignments.pagination.prev') }}</Button>
-                <span class="text-sm">{{ t('teacher.assignments.pagination.page', { page: currentPage }) }}</span>
-                <Button variant="outline" size="sm" class="whitespace-nowrap" :disabled="currentPage>=totalPages" @click="fetchPage(Math.min(totalPages, currentPage+1))">{{ t('teacher.assignments.pagination.next') }}</Button>
-              </div>
-            </div>
+            <!-- 分页：左侧总数+每页选择，右侧统一分页组件 -->
+            <PaginationBar
+              class="mt-4"
+              :page="currentPage"
+              :page-size="pageSize"
+              :total-pages="totalPages"
+              :total-items="total"
+              :disabled="gradeStore.loading"
+              :page-size-options="[10, 20, 50]"
+              @update:page="handleGradePageChange"
+              @update:pageSize="handleGradePageSizeChange"
+            />
           </Card>
           </div>
       </div>
@@ -359,6 +351,7 @@ import { userApi } from '@/api/user.api'
 import UserAvatar from '@/components/ui/UserAvatar.vue'
 import BehaviorEvidenceSection from '@/features/shared/views/BehaviorEvidenceSection.vue'
 import BehaviorInsightSection from '@/features/shared/views/BehaviorInsightSection.vue'
+import PaginationBar from '@/components/ui/PaginationBar.vue'
 import html2canvas from 'html2canvas'
 import jsPDF from 'jspdf'
 import { gradeApi } from '@/api/grade.api'
@@ -439,6 +432,18 @@ async function fetchPage(page: number) {
   if (!studentId.value) return;
   currentPage.value = page;
   await gradeStore.fetchGradesByStudent(studentId.value, { page: currentPage.value, size: pageSize.value, courseId: selectedCourseId.value || undefined });
+}
+
+function handleGradePageChange(page: number) {
+  if (page === currentPage.value) return
+  fetchPage(page)
+}
+
+function handleGradePageSizeChange(size: number) {
+  const n = Math.max(1, Math.floor(Number(size || 10)))
+  if (n === pageSize.value) return
+  pageSize.value = n
+  fetchPage(1)
 }
 
 function onCourseChange() {
