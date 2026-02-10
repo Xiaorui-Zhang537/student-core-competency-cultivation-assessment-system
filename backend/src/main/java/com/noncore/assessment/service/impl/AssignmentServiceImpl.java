@@ -104,7 +104,17 @@ public class AssignmentServiceImpl implements AssignmentService {
         }
 
         logger.info("作业更新成功: ID={}, 标题={}", assignmentId, assignment.getTitle());
-        return assignmentMapper.selectAssignmentById(assignmentId);
+
+        // 仅已发布的作业更新时通知学生
+        Assignment updated = assignmentMapper.selectAssignmentById(assignmentId);
+        if (updated != null && "published".equals(updated.getStatus())) {
+            try {
+                notificationService.sendAssignmentNotification(assignmentId, "assignment_updated", null);
+            } catch (Exception e) {
+                logger.warn("发送作业更新通知失败: assignmentId={}, error={}", assignmentId, e.getMessage());
+            }
+        }
+        return updated;
     }
 
     @Override
@@ -241,6 +251,13 @@ public class AssignmentServiceImpl implements AssignmentService {
         
         updateAssignmentStatus(assignment, "published");
         logger.info("作业发布成功: ID={}", assignmentId);
+
+        // 通知课程全体学生：新作业已发布
+        try {
+            notificationService.sendAssignmentNotification(assignmentId, "assignment_created", null);
+        } catch (Exception e) {
+            logger.warn("发送作业发布通知失败: assignmentId={}, error={}", assignmentId, e.getMessage());
+        }
     }
 
     @Override

@@ -1,6 +1,7 @@
 import { ref } from 'vue'
 import { baseURL } from '@/api/config'
 import { useNotificationsStore } from '@/stores/notifications'
+import { useUIStore } from '@/stores/ui'
 
 // Factory to create a stream controller. Caller decides when to connect/disconnect.
 export function createNotificationStream() {
@@ -27,6 +28,18 @@ export function createNotificationStream() {
         const payload = ev?.data ? JSON.parse(ev.data) : null
         if (payload && typeof payload === 'object') {
           notificationsStore.insertOrUpdateFromSse(payload)
+          // 弹出右上角 toast（排除聊天消息，聊天由 ChatDrawer 自行处理）
+          const pType = String(payload.type || '').toLowerCase()
+          if (pType !== 'message') {
+            try {
+              const uiStore = useUIStore()
+              uiStore.showNotification({
+                type: 'info',
+                title: String(payload.title || '新通知'),
+                message: String(payload.content || '').slice(0, 100),
+              })
+            } catch {}
+          }
         }
       } catch {}
       await notificationsStore.fetchUnreadCount()

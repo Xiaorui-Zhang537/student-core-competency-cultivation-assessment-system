@@ -320,11 +320,9 @@
   
 </template>
 
+
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted, nextTick, watch, computed } from 'vue'
-import { useRouter } from 'vue-router'
-import { useUIStore } from '@/stores/ui'
-import { useAuthStore } from '@/stores/auth'
+import { computed } from 'vue'
 import Button from '@/components/ui/Button.vue'
 import UserAvatar from '@/components/ui/UserAvatar.vue'
 import LanguageSwitcher from '@/components/ui/LanguageSwitcher.vue'
@@ -341,210 +339,39 @@ import LiquidLogo from '@/components/ui/LiquidLogo.vue'
 import CursorTrailLayer from '@/components/ui/CursorTrailLayer.vue'
 import BackgroundLayer from '@/components/ui/BackgroundLayer.vue'
 import GlassTooltip from '@/components/ui/GlassTooltip.vue'
-import { useChatStore } from '@/stores/chat'
-import { useI18n } from 'vue-i18n'
+import { useLayoutCommon } from './useLayoutCommon'
 import {
-  Bars3Icon,
-  SunIcon,
-  MoonIcon,
-  ChevronDownIcon,
-  PaintBrushIcon,
-  PhotoIcon,
-  UserIcon,
-  ArrowRightOnRectangleIcon,
-  HomeIcon,
-  AcademicCapIcon,
-  ChartBarIcon,
-  UsersIcon,
-  ChatBubbleLeftRightIcon,
-  QuestionMarkCircleIcon,
-  BellIcon,
-  CursorArrowRaysIcon,
-  EyeIcon,
-  EyeSlashIcon,
+  SunIcon, MoonIcon, PaintBrushIcon, PhotoIcon,
+  UserIcon, ArrowRightOnRectangleIcon,
+  HomeIcon, AcademicCapIcon, ChartBarIcon, UsersIcon,
+  ChatBubbleLeftRightIcon, QuestionMarkCircleIcon,
+  BellIcon, CursorArrowRaysIcon, EyeIcon, EyeSlashIcon,
 } from '@heroicons/vue/24/outline'
 
-// Stores & Router
-const router = useRouter()
-const uiStore = useUIStore()
-const authStore = useAuthStore()
-const chat = useChatStore()
-const { t } = useI18n()
-
-// 状态
-const baseBgStyle = computed(() => ({ backgroundColor: 'color-mix(in oklab, var(--color-base-100) 86%, transparent)' }))
-const isDockVisible = ref(true)
-const showUserMenu = ref(false)
-const userMenuBtn = ref<HTMLElement | null>(null)
-const userMenuStyle = ref<Record<string, string>>({})
-// 玻璃强度菜单移除
-const showThemeMenu = ref(false)
-const themeBtnRef = ref<HTMLElement | null>(null)
-const themeMenuStyle = ref<Record<string, string>>({})
-const showCursorMenu = ref(false)
-const cursorBtnRef = ref<HTMLElement | null>(null)
-const cursorMenuStyle = ref<Record<string, string>>({})
-const showBgPicker = ref(false)
-const bgBtnRef = ref<HTMLElement | null>(null)
-const bgMenuStyle = ref<Record<string, string>>({})
-const displayName = computed(() => (authStore.user as any)?.nickname || (authStore.user as any)?.name || (authStore.user as any)?.username || t('layout.common.me') || 'Me')
-
-// 顶栏按钮统一 hover “加深外框 + 阴影浮起感”（比 ring 更像可点击的浮层按钮）
-// - 浅色：暗色 1px 描边 + 轻外投影
-// - 暗色：亮色 1px 描边 + 更强外投影
-const topbarBtnClass = [
-  // hover 仅“轻微加深底色”，不要浮起/阴影（避免突出来）
-  'hover:bg-black/5 active:bg-black/10',
-  'dark:hover:bg-white/10 dark:active:bg-white/15',
-  // 保留键盘可达性的 focus-visible 提示（只在 focus 时出现）
-  'focus-visible:shadow-[0_0_0_2px_rgba(59,130,246,0.35)]',
-].join(' ')
-
-const handleLogout = async () => {
-  showUserMenu.value = false
-  await authStore.logout()
-  router.push('/auth/login')
-}
-
-// 生命周期
-onMounted(() => {
-  try {
-    window.addEventListener('ui:close-topbar-popovers', closeTopbarPopovers)
-  } catch {}
-})
-onUnmounted(() => {
-  try {
-    window.removeEventListener('ui:close-topbar-popovers', closeTopbarPopovers)
-  } catch {}
-})
-
-watch(showUserMenu, async (v: boolean) => {
-  if (!v) return
-  await nextTick()
-  try {
-    const el = userMenuBtn.value as HTMLElement
-    const rect = el.getBoundingClientRect()
-    userMenuStyle.value = {
-      position: 'fixed',
-      top: `${rect.bottom + 8}px`,
-      left: `${Math.max(8, rect.right - 192)}px`,
-      width: '12rem',
-      zIndex: '1000'
-    }
-  } catch {}
-})
-
-
-watch(showThemeMenu, async (v: boolean) => {
-  if (!v) return
-  await nextTick()
-  try {
-    const el = themeBtnRef.value as HTMLElement
-    const rect = el.getBoundingClientRect()
-    themeMenuStyle.value = {
-      position: 'fixed',
-      top: `${rect.bottom + 10}px`,
-      left: `${Math.max(8, rect.right - 224)}px`,
-      width: '14rem',
-      zIndex: '1000'
-    }
-  } catch {}
-})
-watch(showCursorMenu, async (v: boolean) => {
-  if (!v) return
-  await nextTick()
-  try {
-    const el = cursorBtnRef.value as HTMLElement
-    const rect = el.getBoundingClientRect()
-    cursorMenuStyle.value = {
-      position: 'fixed',
-      top: `${rect.bottom + 10}px`,
-      left: `${Math.max(8, rect.right - 220)}px`,
-      width: '14rem',
-      zIndex: '1000'
-    }
-  } catch {}
-})
-watch(showBgPicker, async (v: boolean) => {
-  if (!v) return
-  await nextTick()
-  try {
-    const el = bgBtnRef.value as HTMLElement
-    const rect = el.getBoundingClientRect()
-    bgMenuStyle.value = {
-      position: 'fixed',
-      top: `${rect.bottom + 10}px`,
-      left: `${Math.max(8, rect.right - 224)}px`,
-      width: '14rem',
-      zIndex: '1000'
-    }
-  } catch {}
-})
-
-// setGlass 移除：旧主题强制 more，新主题强制 normal（由 store 控制）
-
-function setTheme(v: 'retro' | 'dracula' | 'light' | 'dark' | 'cupcake' | 'coffee') {
-  uiStore.setTheme(v)
-  showThemeMenu.value = false
-}
-
-function setCursor(v: 'off' | 'fluid' | 'smooth' | 'tailed') {
-  uiStore.setCursorTrailMode(v)
-  showThemeMenu.value = false
-}
-
-function setLight(v: 'none' | 'aurora' | 'tetris') { uiStore.setBackgroundLight(v) }
-function setDark(v: 'none' | 'neural' | 'meteors') { uiStore.setBackgroundDark(v) }
-
-// 主题切换刷新交由图表组件或页面内图表自行处理
-
-// 由 store 提供响应式主题名，避免读取非响应式 DOM
-const currentTheme = computed(() => uiStore.themeName)
-function isTheme(v: 'retro'|'dracula'|'light'|'dark'|'cupcake'|'coffee') { return currentTheme.value === v }
-
-function emitCloseNotification() {
-  try { window.dispatchEvent(new CustomEvent('ui:close-notification-dropdown')) } catch {}
-}
-
-function onToggleThemeMenu() {
-  try { window.dispatchEvent(new CustomEvent('ui:close-topbar-popovers')) } catch {}
-  showThemeMenu.value = !showThemeMenu.value
-}
-
-function onToggleCursorMenu() {
-  try { window.dispatchEvent(new CustomEvent('ui:close-topbar-popovers')) } catch {}
-  showCursorMenu.value = !showCursorMenu.value
-}
-
-function onToggleBgPicker() {
-  try { window.dispatchEvent(new CustomEvent('ui:close-topbar-popovers')) } catch {}
-  showBgPicker.value = !showBgPicker.value
-}
-
-function onToggleUserMenu() {
-  try { window.dispatchEvent(new CustomEvent('ui:close-topbar-popovers')) } catch {}
-  showUserMenu.value = !showUserMenu.value
-}
-
-function closeTopbarPopovers() {
-  showThemeMenu.value = false
-  showUserMenu.value = false
-  showCursorMenu.value = false
-  showBgPicker.value = false
-}
-
-// Dock 配置
-const activeDock = computed<string>({
-  get() {
-    const p = router.currentRoute.value.path
-    if (p.startsWith('/teacher/courses')) return 'courses'
-    if (p.startsWith('/teacher/analytics')) return 'analytics'
-    if (p.startsWith('/teacher/assistant')) return 'assistant'
-    if (p.startsWith('/teacher/community')) return 'community'
-    if (p.startsWith('/teacher/dashboard')) return 'dashboard'
-    return ''
+const {
+  uiStore, authStore, chat, t,
+  baseBgStyle, isDockVisible,
+  showUserMenu, userMenuBtn, userMenuStyle,
+  showThemeMenu, themeBtnRef, themeMenuStyle,
+  showCursorMenu, cursorBtnRef, cursorMenuStyle,
+  showBgPicker, bgBtnRef, bgMenuStyle,
+  displayName, topbarBtnClass,
+  activeDock,
+  handleLogout,
+  setTheme, setCursor, setLight, setDark,
+  onToggleThemeMenu, onToggleCursorMenu, onToggleBgPicker, onToggleUserMenu,
+  toggleChatDrawer,
+  onSelectDock,
+} = useLayoutCommon({
+  rolePrefix: 'teacher',
+  dockItems: [],
+  dockRoutes: {
+    dashboard: '/teacher/dashboard',
+    courses: '/teacher/courses',
+    analytics: '/teacher/analytics',
+    assistant: '/teacher/assistant',
+    community: '/teacher/community',
   },
-  set(v: string) { /* no-op, handled in onSelectDock */ }
 })
 
 const dockItems = computed(() => ([
@@ -554,25 +381,6 @@ const dockItems = computed(() => ([
   { key: 'assistant', label: t('layout.teacher.sidebar.ai') as string, icon: UsersIcon },
   { key: 'community', label: t('layout.teacher.sidebar.community') as string, icon: ChatBubbleLeftRightIcon },
 ]))
-
-function onSelectDock(k: string) {
-  const map: Record<string, string> = {
-    dashboard: '/teacher/dashboard',
-    courses: '/teacher/courses',
-    analytics: '/teacher/analytics',
-    assistant: '/teacher/assistant',
-    community: '/teacher/community',
-  }
-  const to = map[k] || '/teacher/dashboard'
-  if (router.currentRoute.value.path !== to) router.push(to)
-}
-
-function toggleChatDrawer(ev?: Event) {
-  try { ev?.stopPropagation(); ev?.preventDefault() } catch {}
-  try { window.dispatchEvent(new CustomEvent('ui:close-topbar-popovers')) } catch {}
-  if (chat.isOpen) return chat.closeChat()
-  chat.openChat()
-}
 </script>
 
 <style scoped>

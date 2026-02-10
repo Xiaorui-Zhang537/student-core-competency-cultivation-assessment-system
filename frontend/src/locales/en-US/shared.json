@@ -65,7 +65,10 @@
       "delete": "Delete",
       "sending": "Sending",
       "failed": "Send failed",
-      "retry": "Retry"
+      "retry": "Retry",
+      "quote": "Quote",
+      "replyTo": "Reply to",
+      "pickSomeone": "Pick a contact from the left to start chatting"
     },
     "uploadLabel": "Upload",
     "attachment": "Attachment",

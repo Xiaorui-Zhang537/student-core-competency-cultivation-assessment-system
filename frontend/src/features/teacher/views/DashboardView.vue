@@ -41,7 +41,7 @@
 
     <!-- Analytics Content -->
     <div v-else-if="selectedCourseId && courseAnalytics" class="space-y-8">
-        <!-- Stats Cards (统一为工作台小卡片组件) -->
+        <!-- Stats Cards -->
         <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
           <start-card :label="t('teacher.dashboard.cards.totalStudents') as string" :value="n(safeAnalytics.totalStudents, 'integer')" tone="blue" :icon="UserGroupIcon" />
           <start-card :label="t('teacher.dashboard.cards.completionRate') as string" :value="n((safeAnalytics.completionRate || 0) / 100, 'percent')" tone="emerald" :icon="CheckCircleIcon" />

@@ -180,6 +180,129 @@ public class AiController extends BaseController {
     }
 
     /**
+     * AI 聊天（SSE 流式）：后端调用 LLM 后通过 SSE 分句推送，前端逐句渲染打字机效果。
+     *
+     * 事件约定：
+     * meta  -> { conversationId, model }
+     * token -> { text }
+     * done  -> { messageId, fullText }
+     * error -> { message }
+     */
+    @PostMapping(value = "/chat/stream", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
+    @PreAuthorize("isAuthenticated()")
+    @Operation(summary = "AI 聊天（SSE 流式）", description = "与 /chat 相同逻辑，通过 SSE 推送回答")
+    public SseEmitter chatStream(@Valid @RequestBody AiChatRequest request) {
+        if (request.getStudentIds() != null && request.getStudentIds().size() > 5) {
+            throw new BusinessException(ErrorCode.INVALID_PARAMETER, "最多选择 5 名学生");
+        }
+        Long userId = getCurrentUserId();
+        String targetModel = resolveModel(request, userId);
+
+        // 配额检查
+        if (hasRole("STUDENT") && targetModel != null && targetModel.startsWith("google/")) {
+            java.time.LocalDate today = java.time.LocalDate.now();
+            java.time.LocalDate monday = today.with(java.time.temporal.TemporalAdjusters.previousOrSame(java.time.DayOfWeek.MONDAY));
+            java.time.LocalDateTime startOfWeek = monday.atStartOfDay();
+            long used = conversationService.countAssistantMessagesByModelSince(userId, "google/gemini", startOfWeek);
+            if (used >= 10) throw new BusinessException(ErrorCode.PERMISSION_DENIED, "本周 Gemini 使用次数已达上限（10次）");
+        }
+        if (hasRole("STUDENT") && targetModel != null && targetModel.startsWith("glm-")) {
+            java.time.LocalDate today = java.time.LocalDate.now();
+            java.time.LocalDate monday = today.with(java.time.temporal.TemporalAdjusters.previousOrSame(java.time.DayOfWeek.MONDAY));
+            java.time.LocalDateTime startOfWeek = monday.atStartOfDay();
+            long used = conversationService.countAssistantMessagesByModelSince(userId, "glm-", startOfWeek);
+            if (used >= 20) throw new BusinessException(ErrorCode.PERMISSION_DENIED, "本周 GLM 使用次数已达上限（20次）");
+        }
+
+        Long convId = request.getConversationId();
+        if (convId == null) {
+            String title = null;
+            if (request.getMessages() != null && !request.getMessages().isEmpty()) {
+                var last = request.getMessages().get(request.getMessages().size() - 1);
+                if (last != null && last.getContent() != null) {
+                    String c = last.getContent().trim();
+                    title = c.length() > 20 ? c.substring(0, 20) : c;
+                }
+            }
+            var created = conversationService.createConversation(userId, title, targetModel, request.getProvider());
+            convId = created.getId();
+        } else {
+            conversationService.getConversation(userId, convId);
+        }
+
+        if (request.getMessages() != null && !request.getMessages().isEmpty()) {
+            var last = request.getMessages().get(request.getMessages().size() - 1);
+            if (last != null && last.getContent() != null) {
+                long msgCountBefore = 0;
+                try { msgCountBefore = conversationService.countMessages(userId, convId); } catch (Exception ignored) {}
+                var m = conversationService.appendMessage(userId, convId, last.getRole(), last.getContent(), request.getAttachmentFileIds());
+                try {
+                    if (hasRole("STUDENT") && "user".equalsIgnoreCase(last.getRole())) {
+                        boolean isFirstTurn = msgCountBefore <= 0;
+                        java.util.Map<String, Object> meta = new java.util.HashMap<>();
+                        meta.put("messageId", m != null ? m.getId() : null);
+                        behaviorEventRecorder.record(userId, request.getCourseId(),
+                                isFirstTurn ? BehaviorEventType.AI_QUESTION : BehaviorEventType.AI_FOLLOW_UP,
+                                "ai_conversation", convId, meta);
+                    }
+                } catch (Exception ignored) {}
+            }
+        }
+
+        SseEmitter emitter = new SseEmitter(0L);
+        AtomicBoolean aborted = new AtomicBoolean(false);
+        final Long fConvId = convId;
+        final String fModel = targetModel;
+
+        ScheduledFuture<?> hb = SSE_HEARTBEAT.scheduleAtFixedRate(() -> {
+            if (aborted.get()) return;
+            try { emitter.send(SseEmitter.event().name("ping").data(java.util.Map.of("ts", System.currentTimeMillis()))); }
+            catch (Exception ignored) { aborted.set(true); }
+        }, 15, 15, TimeUnit.SECONDS);
+
+        Runnable stop = () -> { aborted.set(true); try { hb.cancel(true); } catch (Exception ignored) {} };
+        emitter.onCompletion(stop);
+        emitter.onTimeout(stop);
+        emitter.onError(e -> stop.run());
+
+        SSE_EXECUTOR.submit(() -> {
+            try {
+                emitter.send(SseEmitter.event().name("meta").data(java.util.Map.of(
+                        "conversationId", fConvId, "model", fModel != null ? fModel : "")));
+
+                String answer = aiService.generateAnswer(request, userId);
+
+                if (answer == null || answer.trim().isEmpty()) {
+                    emitter.send(SseEmitter.event().name("error").data(java.util.Map.of("message", "大模型未返回有效文本")));
+                    emitter.complete();
+                    return;
+                }
+
+                // 分句推送（不做 sleep，让前端控制打字机节奏）
+                String[] paragraphs = answer.split("(?<=\\n)");
+                for (String para : paragraphs) {
+                    if (aborted.get()) break;
+                    String[] sentences = para.split("(?<=[。！？；.!?;\\n])");
+                    for (String s : sentences) {
+                        if (aborted.get()) break;
+                        if (s.isEmpty()) continue;
+                        emitter.send(SseEmitter.event().name("token").data(java.util.Map.of("text", s)));
+                    }
+                }
+
+                var assistantMsg = conversationService.appendMessage(userId, fConvId, "assistant", answer, null);
+                emitter.send(SseEmitter.event().name("done").data(java.util.Map.of(
+                        "messageId", assistantMsg != null ? assistantMsg.getId() : 0, "fullText", answer)));
+                emitter.complete();
+            } catch (Exception e) {
+                try { emitter.send(SseEmitter.event().name("error").data(java.util.Map.of("message", e.getMessage() != null ? e.getMessage() : "AI request failed"))); } catch (Exception ignored) {}
+                try { emitter.completeWithError(e); } catch (Exception ignored) { try { emitter.complete(); } catch (Exception i2) {} }
+            } finally { stop.run(); }
+        });
+        return emitter;
+    }
+
+    /**
      * 口语训练：将一次“用户转写/音频 + AI 回复文本/音频”写入 AI 会话消息中。
      * <p>
      * 说明：音频文件需先通过 /files/upload 上传，获得 fileId 后再绑定到本接口。

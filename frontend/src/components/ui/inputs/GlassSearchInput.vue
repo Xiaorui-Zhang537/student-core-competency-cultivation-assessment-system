@@ -1,21 +1,21 @@
 <template>
-  <div class="relative w-full rounded-full focus-within:ring-[1.5px] focus-within:ring-primary-500/40 focus-within:outline-none">
-    <!-- 颜色使用 base-content，避免某些主题下主色过浅导致“看不见图标” -->
-    <svg class="pointer-events-none w-4 h-4 absolute left-2 top-1/2 -translate-y-1/2 mt-0.5 text-base-content/60" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l3.817 3.817a.75.75 0 11-1.06 1.06l-3.818-3.816A6 6 0 012 8z" clip-rule="evenodd"/></svg>
+  <div class="search-wrap">
     <input
       :id="id"
       type="text"
-      class="ui-pill--input ui-pill--pl w-full pl-8"
+      class="ui-pill--input w-full search-field"
       :placeholder="placeholder"
       :disabled="disabled"
       :value="modelValue as any"
       @input="onInput"
       :class="[size==='sm' ? 'ui-pill--sm' : 'ui-pill--md', tintClass]"
     />
+    <!-- 搜索图标：渲染在 input 之后，用 z-index 保证始终可见 -->
+    <svg class="search-icon" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l3.817 3.817a.75.75 0 11-1.06 1.06l-3.818-3.816A6 6 0 012 8z" clip-rule="evenodd"/></svg>
     <button
       v-if="showClear"
       type="button"
-      class="absolute right-2 top-1/2 -translate-y-1/2 w-7 h-7 rounded-full flex items-center justify-center text-gray-500 hover:text-gray-700 dark:text-gray-300 dark:hover:text-gray-100 hover:bg-white/10 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/50"
+      class="search-clear"
       :aria-label="clearLabel"
       @click="clear"
     >
@@ -68,6 +68,55 @@ function clear() {
 </script>
 
 <style scoped>
+.search-wrap {
+  position: relative;
+  width: 100%;
+  border-radius: 9999px;
+}
+.search-wrap:focus-within {
+  box-shadow: 0 0 0 1.5px rgba(59, 130, 246, 0.4);
+}
+
+/* 输入框左侧留出图标空间 */
+.search-field {
+  padding-left: 2.25rem !important;
+}
+
+/* 搜索图标：absolute 定位 + 高 z-index 保证始终在 input 背景之上 */
+.search-icon {
+  position: absolute;
+  left: 0.75rem;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 1rem;
+  height: 1rem;
+  pointer-events: none;
+  z-index: 10;
+  color: var(--color-base-content, #666);
+  opacity: 0.5;
+}
+
+/* 清除按钮 */
+.search-clear {
+  position: absolute;
+  right: 0.5rem;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 1.75rem;
+  height: 1.75rem;
+  border-radius: 9999px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-base-content, #999);
+  opacity: 0.6;
+  z-index: 10;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+}
+.search-clear:hover {
+  opacity: 1;
+  background: rgba(255, 255, 255, 0.1);
+}
 </style>
-
-

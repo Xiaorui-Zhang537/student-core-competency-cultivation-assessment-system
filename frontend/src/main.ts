@@ -81,8 +81,17 @@ async function initializeApp() {
     }
   }
   setupSse()
-  window.addEventListener('storage', (e) => { if (e.key === 'token') setupSse() })
-  window.addEventListener('beforeunload', () => { if (notificationStream) notificationStream.disconnect() })
+  window.addEventListener('storage', (e) => {
+    if (e.key === 'token') {
+      setupSse()
+      // 登出时也断开聊天 SSE
+      try { if (!e.newValue) { const cs = useChatStore(pinia); cs.disconnectChatSse() } } catch {}
+    }
+  })
+  window.addEventListener('beforeunload', () => {
+    if (notificationStream) notificationStream.disconnect()
+    try { const cs = useChatStore(pinia); cs.disconnectChatSse() } catch {}
+  })
 }
 
 initializeApp()

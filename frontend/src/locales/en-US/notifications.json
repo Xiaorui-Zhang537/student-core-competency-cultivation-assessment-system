@@ -64,6 +64,20 @@
     "notify": {
       "deletedTitle": "Notification deleted",
       "deletedMsg": "The notification has been deleted."
+    },
+    "toast": {
+      "assignmentPublished": "A new assignment has been published",
+      "assignmentUpdated": "Assignment updated, please check the latest requirements",
+      "submissionReceived": "A student submitted an assignment",
+      "studentEnrolled": "A new student joined the course",
+      "studentUnenrolled": "A student left the course",
+      "addedToCourse": "You have been added to a course",
+      "removedFromCourse": "You have been removed from a course",
+      "postCommented": "Your post received a new comment",
+      "commentReplied": "Your comment received a new reply",
+      "gradePublished": "Your assignment has been graded",
+      "assignmentReturned": "Your assignment was returned for resubmission",
+      "deadlineReminder": "Assignment deadline approaching, please submit soon"
     }
   }
 }

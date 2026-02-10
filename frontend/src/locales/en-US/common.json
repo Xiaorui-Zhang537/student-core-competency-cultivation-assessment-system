@@ -26,6 +26,7 @@
     "pin": "Pin",
     "unpin": "Unpin",
     "delete": "Delete",
+    "copy": "Copy",
     "uploadImage": "Upload Image",
     "refresh": "Refresh",
     "exportCsv": "Export CSV",
@@ -124,6 +125,11 @@
       "markReadError": "Failed to mark as read.",
       "deleteError": "Failed to delete notification."
     }
+  },
+  "pagination": {
+    "total": "{n} items",
+    "first": "First",
+    "last": "Last"
   }
 }
 

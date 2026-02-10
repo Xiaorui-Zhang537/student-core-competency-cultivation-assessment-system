@@ -322,16 +322,10 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted, watch, nextTick, computed } from 'vue'
-import { useRouter } from 'vue-router'
-import { useUIStore } from '@/stores/ui'
-import { useAuthStore } from '@/stores/auth'
+import { computed } from 'vue'
 import Button from '@/components/ui/Button.vue'
 import NotificationBell from '@/components/notifications/NotificationBell.vue'
-import FuturisticBackground from '@/components/ui/FuturisticBackground.vue'
 import ChatDrawer from '@/features/teacher/components/ChatDrawer.vue'
-import { useChatStore } from '@/stores/chat'
-import LanguageSwitcher from '@/components/ui/LanguageSwitcher.vue'
 import LiquidGlass from '@/components/ui/LiquidGlass.vue'
 import DockBar from '@/components/ui/DockBar.vue'
 import Dock from '@/components/ui/inspira/Dock.vue'
@@ -343,200 +337,43 @@ import LiquidLogo from '@/components/ui/LiquidLogo.vue'
 import CursorTrailLayer from '@/components/ui/CursorTrailLayer.vue'
 import BackgroundLayer from '@/components/ui/BackgroundLayer.vue'
 import GlassTooltip from '@/components/ui/GlassTooltip.vue'
-import {
-  Bars3Icon,
-  SunIcon,
-  MoonIcon,
-  ChevronDownIcon,
-  UserIcon,
-  ArrowRightOnRectangleIcon,
-  HomeIcon,
-  AcademicCapIcon,
-  ClipboardDocumentListIcon,
-  ClipboardDocumentCheckIcon,
-  ChartBarIcon,
-  ChatBubbleLeftRightIcon,
-  SparklesIcon,
-  BellIcon,
-  EyeIcon,
-  EyeSlashIcon,
-  PaintBrushIcon,
-  PhotoIcon,
-  QuestionMarkCircleIcon,
-  CursorArrowRaysIcon,
-} from '@heroicons/vue/24/outline'
+import LanguageSwitcher from '@/components/ui/LanguageSwitcher.vue'
 import UserAvatar from '@/components/ui/UserAvatar.vue'
-import { useI18n } from 'vue-i18n'
+import { useLayoutCommon } from './useLayoutCommon'
+import {
+  SunIcon, MoonIcon, PaintBrushIcon, PhotoIcon,
+  UserIcon, ArrowRightOnRectangleIcon,
+  HomeIcon, AcademicCapIcon, ChartBarIcon,
+  ClipboardDocumentListIcon, SparklesIcon,
+  ChatBubbleLeftRightIcon, QuestionMarkCircleIcon,
+  BellIcon, CursorArrowRaysIcon, EyeIcon, EyeSlashIcon,
+} from '@heroicons/vue/24/outline'
 
-const router = useRouter()
-const uiStore = useUIStore()
-const authStore = useAuthStore()
-const chat = useChatStore()
-const { t } = useI18n()
-
-const baseBgStyle = computed(() => ({ backgroundColor: 'color-mix(in oklab, var(--color-base-100) 86%, transparent)' }))
-const isDockVisible = ref(true)
-
-const showUserMenu = ref(false)
-const userMenuBtn = ref<HTMLElement | null>(null)
-const userMenuStyle = ref<Record<string, string>>({})
-const showThemeMenu = ref(false)
-const themeBtnRef = ref<HTMLElement | null>(null)
-const themeMenuStyle = ref<Record<string, string>>({})
-const showBgPicker = ref(false)
-const bgBtnRef = ref<HTMLElement | null>(null)
-const bgMenuStyle = ref<Record<string, string>>({})
-const showCursorMenu = ref(false)
-const cursorBtnRef = ref<HTMLElement | null>(null)
-const cursorMenuStyle = ref<Record<string, string>>({})
-
-const displayName = computed(() => (authStore.user as any)?.nickname || (authStore.user as any)?.name || (authStore.user as any)?.username || t('layout.common.me') || 'Me')
-
-// 顶栏按钮统一 hover “加深外框 + 阴影浮起感”（比 ring 更像可点击的浮层按钮）
-const topbarBtnClass = [
-  // hover 仅“轻微加深底色”，不要浮起/阴影（避免突出来）
-  'hover:bg-black/5 active:bg-black/10',
-  'dark:hover:bg-white/10 dark:active:bg-white/15',
-  // 保留键盘可达性的 focus-visible 提示（只在 focus 时出现）
-  'focus-visible:shadow-[0_0_0_2px_rgba(59,130,246,0.35)]',
-].join(' ')
-
-const handleLogout = async () => {
-  showUserMenu.value = false
-  await authStore.logout()
-  router.push('/auth/login')
-}
-
-onMounted(() => { try { window.addEventListener('ui:close-topbar-popovers', closeTopbarPopovers) } catch {} })
-onUnmounted(() => { try { window.removeEventListener('ui:close-topbar-popovers', closeTopbarPopovers) } catch {} })
-
-watch(showUserMenu, async (v: boolean) => {
-  if (!v) return
-  await nextTick()
-  try {
-    const el = userMenuBtn.value as HTMLElement
-    const rect = el.getBoundingClientRect()
-    userMenuStyle.value = {
-      position: 'fixed',
-      top: `${rect.bottom + 8}px`,
-      left: `${Math.max(8, rect.right - 192)}px`,
-      width: '12rem',
-      zIndex: '1100'
-    }
-  } catch {}
-})
-
-
-watch(showThemeMenu, async (v: boolean) => {
-  if (!v) return
-  await nextTick()
-  try {
-    const el = themeBtnRef.value as HTMLElement
-    const rect = el.getBoundingClientRect()
-    themeMenuStyle.value = {
-      position: 'fixed',
-      top: `${rect.bottom + 6}px`,
-      left: `${Math.max(8, rect.right - 224)}px`,
-      width: '14rem',
-      zIndex: '1000'
-    }
-  } catch {}
-})
-
-watch(showCursorMenu, async (v: boolean) => {
-  if (!v) return
-  await nextTick()
-  try {
-    const el = cursorBtnRef.value as HTMLElement
-    const rect = el.getBoundingClientRect()
-    cursorMenuStyle.value = {
-      position: 'fixed',
-      top: `${rect.bottom + 6}px`,
-      left: `${Math.max(8, rect.right - 220)}px`,
-      width: '14rem',
-      zIndex: '1000'
-    }
-  } catch {}
-})
-watch(showBgPicker, async (v: boolean) => {
-  if (!v) return
-  await nextTick()
-  try {
-    const el = bgBtnRef.value as HTMLElement
-    const rect = el.getBoundingClientRect()
-    bgMenuStyle.value = {
-      position: 'fixed',
-      top: `${rect.bottom + 6}px`,
-      left: `${Math.max(8, rect.right - 220)}px`,
-      width: '14rem',
-      zIndex: '1000'
-    }
-  } catch {}
-})
-
-function setTheme(v: 'retro' | 'dracula' | 'light' | 'dark' | 'cupcake' | 'coffee') {
-  uiStore.setTheme(v)
-  showThemeMenu.value = false
-}
-
-function setCursor(v: 'off' | 'fluid' | 'smooth' | 'tailed') {
-  uiStore.setCursorTrailMode(v)
-  showCursorMenu.value = false
-}
-
-function setLight(v: 'none' | 'aurora' | 'tetris') {
-  uiStore.setBackgroundLight(v)
-}
-function setDark(v: 'none' | 'neural' | 'meteors') {
-  uiStore.setBackgroundDark(v)
-}
-
-// setGlass 移除：旧主题强制 more，新主题强制 normal（由 store 控制）
-
-function toggleUserMenu() {
-  showUserMenu.value = !showUserMenu.value
-}
-
-function emitCloseNotification() {
-  try { window.dispatchEvent(new CustomEvent('ui:close-notification-dropdown')) } catch {}
-}
-function closeTopbarPopovers() {
-  showThemeMenu.value = false
-  showUserMenu.value = false
-  showCursorMenu.value = false
-  showBgPicker.value = false
-}
-
-function onToggleThemeMenu() {
-  try { window.dispatchEvent(new CustomEvent('ui:close-topbar-popovers')) } catch {}
-  showThemeMenu.value = !showThemeMenu.value
-}
-
-function onToggleBgPicker() {
-  try { window.dispatchEvent(new CustomEvent('ui:close-topbar-popovers')) } catch {}
-  showBgPicker.value = !showBgPicker.value
-}
-
-function onToggleCursorMenu() {
-  try { window.dispatchEvent(new CustomEvent('ui:close-topbar-popovers')) } catch {}
-  showCursorMenu.value = !showCursorMenu.value
-}
-
-// 主题切换刷新交由图表组件或页面内图表自行处理
-
-// Dock 配置
-const activeDock = computed<string>({
-  get() {
-    const p = router.currentRoute.value.path
-    if (p.startsWith('/student/assignments')) return 'assignments'
-    if (p.startsWith('/student/courses')) return 'courses'
-    if (p.startsWith('/student/analysis')) return 'analysis'
-    if (p.startsWith('/student/assistant')) return 'assistant'
-    if (p.startsWith('/student/community')) return 'community'
-    if (p.startsWith('/student/dashboard')) return 'dashboard'
-    return ''
+const {
+  uiStore, authStore, chat, t,
+  baseBgStyle, isDockVisible,
+  showUserMenu, userMenuBtn, userMenuStyle,
+  showThemeMenu, themeBtnRef, themeMenuStyle,
+  showCursorMenu, cursorBtnRef, cursorMenuStyle,
+  showBgPicker, bgBtnRef, bgMenuStyle,
+  displayName, topbarBtnClass,
+  activeDock,
+  handleLogout,
+  setTheme, setCursor, setLight, setDark,
+  onToggleThemeMenu, onToggleCursorMenu, onToggleBgPicker, onToggleUserMenu,
+  toggleChatDrawer,
+  onSelectDock,
+} = useLayoutCommon({
+  rolePrefix: 'student',
+  dockItems: [],
+  dockRoutes: {
+    dashboard: '/student/dashboard',
+    assignments: '/student/assignments',
+    courses: '/student/courses',
+    analysis: '/student/analysis',
+    assistant: '/student/assistant',
+    community: '/student/community',
   },
-  set(v: string) {}
 })
 
 const dockItems = computed(() => ([
@@ -547,34 +384,9 @@ const dockItems = computed(() => ([
   { key: 'assistant', label: (t('layout.student.sidebar.ai') as string) || '助手', icon: SparklesIcon },
   { key: 'community', label: (t('layout.student.sidebar.community') as string) || '社区', icon: ChatBubbleLeftRightIcon },
 ]))
-
-function onSelectDock(k: string) {
-  const map: Record<string, string> = {
-    dashboard: '/student/dashboard',
-    assignments: '/student/assignments',
-    courses: '/student/courses',
-    analysis: '/student/analysis',
-    assistant: '/student/assistant',
-    community: '/student/community',
-  }
-  const to = map[k] || '/student/dashboard'
-  if (router.currentRoute.value.path !== to) router.push(to)
-}
-
-function toggleChatDrawer(ev?: Event) {
-  try { ev?.stopPropagation(); ev?.preventDefault() } catch {}
-  try { window.dispatchEvent(new CustomEvent('ui:close-topbar-popovers')) } catch {}
-  if (chat.isOpen) return chat.closeChat()
-  chat.openChat()
-}
-
-// 关闭调试输出，避免生产环境噪音与性能浪费
-
-// 主题家族弹层（与教师端一致）
 </script>
 
 <style scoped>
-/* 仅在学生端提高玻璃卡片的圆角，避免影响顶部导航与侧边栏等容器 */
 :deep(.glass-ultraThin[class*="rounded"]),
 :deep(.glass-thin[class*="rounded"]),
 :deep(.glass-regular[class*="rounded"]),

@@ -599,8 +599,9 @@ watch([rankingPage, rankingPageSize], ([newPage, newSize], [oldPage, oldSize]) =
 })
 
 // 当路由中的 courseId 改变（例如从其它页面跳转）时，自动同步当前课程并刷新数据
-watch(() => route.query.courseId, (cid) => {
-  if (cid) {
+// 添加防重复触发：若 courseId 未实际改变则跳过
+watch(() => route.query.courseId, (cid, oldCid) => {
+  if (cid && String(cid) !== String(oldCid || '')) {
     selectedCourseId.value = String(cid)
     onCourseChange()
   }

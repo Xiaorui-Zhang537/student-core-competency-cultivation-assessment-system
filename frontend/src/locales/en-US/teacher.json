@@ -34,6 +34,13 @@
 			"empty": {
 				"title": "Select a course",
 				"description": "Stats and charts will appear after selecting a course"
+			},
+			"quickActions": {
+				"title": "Quick Actions",
+				"publish": "Publish Assignment",
+				"grade": "Grade Assignments",
+				"aiGrade": "AI Grading",
+				"analytics": "Analytics"
 			}
 		},
 		"courses": {
@@ -650,7 +657,11 @@
                 "glm46": "GLM-4.6: Text-only model (no images/files). Students: up to 20 uses per week.",
                 "glm45": "GLM-4.5 Air: Text-only model (no images/files), faster responses. Students: up to 20 uses per week.",
 				 "gemini": "Gemini 2.5 Pro: Supports images and documents (pdf/doc/docx/txt). Students: up to 10 uses per week."
-            }
+            },
+			"stop": "Stop generating",
+			"chars": "chars",
+			"regenerate": "Regenerate",
+			"emptyHint": "Type a question to start"
         },
 		"students": {
 			"breadcrumb": {

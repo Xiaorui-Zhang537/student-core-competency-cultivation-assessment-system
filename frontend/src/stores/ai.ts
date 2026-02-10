@@ -20,6 +20,8 @@ export interface AiMessage {
   content: string
   attachments?: number[]
   createdAt?: string
+  /** 标记：流式生成中 */
+  streaming?: boolean
 }
 
 export interface PendingAttachmentMeta {
@@ -205,6 +207,155 @@ export const useAIStore = defineStore('ai', () => {
     draftsByConvId[String(id)] = text
   }
 
+  /** 流式生成状态 */
+  const streaming = ref(false)
+  let _streamAbort: AbortController | null = null
+
+  /** 中断当前流式生成 */
+  const abortStream = () => {
+    if (_streamAbort) {
+      try { _streamAbort.abort() } catch {}
+      _streamAbort = null
+    }
+    streaming.value = false
+  }
+
+  /**
+   * 流式发送消息：通过 SSE 逐句接收 AI 回答并实时更新消息列表
+   */
+  const sendMessageStream = async (payload: { conversationId?: number; content: string; courseId?: number; studentIds?: number[] }) => {
+    let convId = payload.conversationId || activeConversationId.value
+    if (convId) {
+      const curr = conversations.value.find(c => c.id === convId)
+      const currModel = curr?.model || ''
+      if (currModel && currModel !== model.value) {
+        const created = await createConversation({ title: payload.content?.slice(0, 20) || '新对话', model: model.value })
+        convId = created?.id
+      }
+    }
+    if (!convId) {
+      const created = await createConversation({ title: payload.content?.slice(0, 20) || '新对话', model: model.value })
+      convId = created?.id
+    }
+    if (!convId) return null
+    const key = String(convId)
+    messagesByConvId[key] = messagesByConvId[key] || []
+
+    // 添加用户消息
+    messagesByConvId[key].push({ id: Date.now(), role: 'user', content: payload.content })
+
+    // 锁定模型
+    const idxBefore = conversations.value.findIndex(c => c.id === convId)
+    if (idxBefore >= 0 && !conversations.value[idxBefore].model) {
+      conversations.value[idxBefore].model = model.value
+    }
+
+    const attachments = (pendingAttachmentIds[key] || []).slice()
+
+    // 添加占位 assistant 消息（流式填充）
+    const placeholderId = Date.now() + 1
+    messagesByConvId[key].push({ id: placeholderId, role: 'assistant', content: '', streaming: true })
+    streaming.value = true
+
+    // 打字机队列：后端快速推送所有句子，前端缓冲后逐字追加
+    const tokenQueue: string[] = []
+    let typewriterRunning = false
+    let streamDoneData: { messageId: number; fullText: string } | null = null
+
+    function runTypewriter() {
+      if (typewriterRunning) return
+      typewriterRunning = true
+      const step = () => {
+        if (tokenQueue.length === 0) {
+          typewriterRunning = false
+          // 如果流已结束且队列已空，立即完成
+          if (streamDoneData) finishStream()
+          return
+        }
+        const chunk = tokenQueue.shift()!
+        const msgs = messagesByConvId[key]
+        if (msgs) {
+          const last = msgs[msgs.length - 1]
+          if (last && last.id === placeholderId) {
+            last.content += chunk
+          }
+        }
+        // 根据句子长度调整延迟：短句快，长句慢，模拟自然打字节奏
+        const delay = Math.min(80, Math.max(15, chunk.length * 3))
+        setTimeout(step, delay)
+      }
+      step()
+    }
+
+    function finishStream() {
+      const data = streamDoneData
+      if (!data) return
+      const msgs = messagesByConvId[key]
+      if (msgs) {
+        const last = msgs[msgs.length - 1]
+        if (last && last.id === placeholderId) {
+          last.content = data.fullText || last.content
+          last.id = data.messageId || last.id
+          last.streaming = false
+        }
+      }
+      streaming.value = false
+      _streamAbort = null
+      draftsByConvId[key] = ''
+      clearPendingAttachments(convId!)
+    }
+
+    return new Promise<void>((resolve) => {
+      _streamAbort = aiApi.chatStream(
+        {
+          messages: [{ role: 'user', content: payload.content }],
+          courseId: payload.courseId,
+          studentIds: payload.studentIds,
+          ...(convId ? { conversationId: convId } : {}),
+          ...(attachments.length ? { attachmentFileIds: attachments } : {}),
+        },
+        {
+          onMeta: (meta) => {
+            if (meta.conversationId && meta.conversationId !== convId) {
+              const newKey = String(meta.conversationId)
+              if (messagesByConvId[key]) {
+                messagesByConvId[newKey] = messagesByConvId[key]
+                delete messagesByConvId[key]
+              }
+            }
+          },
+          onToken: (text) => {
+            tokenQueue.push(text)
+            runTypewriter()
+          },
+          onDone: (data) => {
+            streamDoneData = data
+            // 如果打字机队列已空，立即完成；否则等队列消耗完
+            if (tokenQueue.length === 0 && !typewriterRunning) {
+              finishStream()
+            }
+            resolve()
+          },
+          onError: (message) => {
+            const msgs = messagesByConvId[key]
+            if (msgs) {
+              const last = msgs[msgs.length - 1]
+              if (last && last.id === placeholderId && !last.content) {
+                msgs.pop()
+              } else if (last && last.id === placeholderId) {
+                last.streaming = false
+              }
+            }
+            streaming.value = false
+            _streamAbort = null
+            ui.showNotification({ type: 'warning', title: 'AI 回复失败', message })
+            resolve()
+          },
+        }
+      )
+    })
+  }
+
   const sendMessage = async (payload: { conversationId?: number; content: string; courseId?: number; studentIds?: number[] }) => {
     let convId = payload.conversationId || activeConversationId.value
     // 若存在激活会话但其模型与当前选择不一致，则新建会话（单会话单模型）
@@ -325,6 +476,7 @@ export const useAIStore = defineStore('ai', () => {
     pendingAttachmentsMeta,
     searchQuery,
     model,
+    streaming,
     fetchConversations,
     createConversation,
     openConversation,
@@ -340,6 +492,8 @@ export const useAIStore = defineStore('ai', () => {
     getUnsentConversation,
     ensureDraftConversation,
     setDraftForActive,
-    sendMessage
+    sendMessage,
+    sendMessageStream,
+    abortStream,
   }
 })

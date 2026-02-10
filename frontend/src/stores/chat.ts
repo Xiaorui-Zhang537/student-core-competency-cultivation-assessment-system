@@ -29,7 +29,19 @@ export const useChatStore = defineStore('chat', () => {
 
   // SSE：聊天事件连接状态
   const sseConnected = ref(false)
+  /** 连接状态：'connected' | 'reconnecting' | 'offline' */
+  const sseStatus = ref<'connected' | 'reconnecting' | 'offline'>('offline')
   let es: EventSource | null = null
+  /** 单例锁：防止并发调用 connectChatSse */
+  let _sseConnecting = false
+  /** 重连计数与定时器 */
+  let _sseRetryCount = 0
+  let _sseRetryTimer: ReturnType<typeof setTimeout> | null = null
+  const SSE_MAX_RETRIES = 15
+  const SSE_BASE_DELAY = 1000
+  const SSE_MAX_DELAY = 30000
+  /** 心跳定时器 */
+  let _sseHeartbeatTimer: ReturnType<typeof setInterval> | null = null
   // 用户隔离的本地存储键：chat:ROLE:USERID:name
   const getStorageKey = (name: 'recent' | 'pinned') => {
     try {
@@ -418,39 +430,103 @@ export const useChatStore = defineStore('chat', () => {
     try { window.dispatchEvent(new CustomEvent('chat:new-message', { detail: { peerId: pid, courseId: cid, content } })) } catch {}
   }
 
+  /** 断开 SSE 连接并清理所有定时器 */
+  function disconnectChatSse() {
+    if (_sseRetryTimer) { clearTimeout(_sseRetryTimer); _sseRetryTimer = null }
+    if (_sseHeartbeatTimer) { clearInterval(_sseHeartbeatTimer); _sseHeartbeatTimer = null }
+    try { es?.close() } catch {}
+    es = null
+    sseConnected.value = false
+    sseStatus.value = 'offline'
+    _sseConnecting = false
+  }
+
   function connectChatSse() {
-    if (sseConnected.value || es) return
+    // 单例锁：防止重复连接
+    if (_sseConnecting || (es && sseConnected.value)) return
+    _sseConnecting = true
+
     const token = (() => {
       try { return (localStorage.getItem('token') || '').replace(/^Bearer\s+/i, '') } catch { return '' }
     })()
-    if (!token) return
+    if (!token) { _sseConnecting = false; return }
+
+    // 清理旧连接
+    if (es) { try { es.close() } catch {}; es = null }
+    if (_sseHeartbeatTimer) { clearInterval(_sseHeartbeatTimer); _sseHeartbeatTimer = null }
+
     const url = `${baseURL.replace(/\/$/, '')}/notifications/stream?token=${encodeURIComponent(token)}`
     try {
       es = new EventSource(url, { withCredentials: true })
-    } catch { es = null; return }
-    sseConnected.value = true
+    } catch { es = null; _sseConnecting = false; return }
+
+    es.addEventListener('connected', () => {
+      sseConnected.value = true
+      sseStatus.value = 'connected'
+      _sseConnecting = false
+      _sseRetryCount = 0 // 重置重连计数
+      // 启动心跳：每 25 秒检查连接活性
+      if (_sseHeartbeatTimer) clearInterval(_sseHeartbeatTimer)
+      _sseHeartbeatTimer = setInterval(() => {
+        if (!es || es.readyState === EventSource.CLOSED) {
+          sseConnected.value = false
+          sseStatus.value = 'reconnecting'
+          scheduleReconnect()
+        }
+      }, 25000)
+    })
+
     es.addEventListener('new', (ev: MessageEvent) => {
       try {
         const payload = ev?.data ? JSON.parse(ev.data) : null
         if (!payload || typeof payload !== 'object') return
-        // 仅处理聊天消息
         const t = String(payload.type || '').toLowerCase()
         if (t !== 'message') return
         const senderId = payload.senderId ?? payload.sender_id
-        const peerId = senderId != null ? String(senderId) : ''
+        const pid = senderId != null ? String(senderId) : ''
         const course = payload.relatedId ?? payload.related_id ?? ''
         const content = String(payload.content || '')
-        const name = payload.data ? (function () { try { const d = typeof payload.data === 'string' ? JSON.parse(payload.data) : payload.data; return d?.senderName || d?.username || '' } catch { return '' } })() : ''
-        if (peerId) applyIncomingMessage(peerId, course ? String(course) : '', content, name)
+        const name = payload.data ? (() => { try { const d = typeof payload.data === 'string' ? JSON.parse(payload.data) : payload.data; return d?.senderName || d?.username || '' } catch { return '' } })() : ''
+        if (pid) applyIncomingMessage(pid, course ? String(course) : '', content, name)
       } catch {}
     })
+
+    // 连接成功后如果未收到 connected 事件，也标记为已连接
+    es.onopen = () => {
+      if (!sseConnected.value) {
+        sseConnected.value = true
+        sseStatus.value = 'connected'
+        _sseConnecting = false
+        _sseRetryCount = 0
+      }
+    }
+
     es.onerror = () => {
       try { es?.close() } catch {}
       es = null
       sseConnected.value = false
-      // 退避重连
-      setTimeout(() => { try { connectChatSse() } catch {} }, 3000)
+      _sseConnecting = false
+      if (_sseHeartbeatTimer) { clearInterval(_sseHeartbeatTimer); _sseHeartbeatTimer = null }
+      scheduleReconnect()
     }
+  }
+
+  /** 指数退避重连调度 */
+  function scheduleReconnect() {
+    if (_sseRetryTimer) return // 已有定时器在等待
+    if (_sseRetryCount >= SSE_MAX_RETRIES) {
+      sseStatus.value = 'offline'
+      console.warn('[chat SSE] 达到最大重连次数，停止重连')
+      return
+    }
+    sseStatus.value = 'reconnecting'
+    // 指数退避：1s, 2s, 4s, 8s, 16s, 30s(max)
+    const delay = Math.min(SSE_BASE_DELAY * Math.pow(2, _sseRetryCount), SSE_MAX_DELAY)
+    _sseRetryCount++
+    _sseRetryTimer = setTimeout(() => {
+      _sseRetryTimer = null
+      try { connectChatSse() } catch {}
+    }, delay)
   }
 
   function toggleContactGroup(targetCourseId: string | number) {
@@ -463,7 +539,7 @@ export const useChatStore = defineStore('chat', () => {
     suppressPreviewOnce.value = true
   }
 
-  return { isOpen, peerId, peerName, courseId, recentConversations, contacts, contactGroups, systemMessages, loadingLists, totalUnread, sseConnected, openChat, setPeer, closeChat, loadLists, removeRecent, togglePin, isPinned, upsertRecentAfterSend, toggleContactGroup, suppressNextPreviewUpdateOnce, markPeerRead, connectChatSse }
+  return { isOpen, peerId, peerName, courseId, recentConversations, contacts, contactGroups, systemMessages, loadingLists, totalUnread, sseConnected, sseStatus, openChat, setPeer, closeChat, loadLists, removeRecent, togglePin, isPinned, upsertRecentAfterSend, toggleContactGroup, suppressNextPreviewUpdateOnce, markPeerRead, connectChatSse, disconnectChatSse }
 })
 
 

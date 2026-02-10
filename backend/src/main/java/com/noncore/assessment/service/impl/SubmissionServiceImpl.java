@@ -52,15 +52,21 @@ public class SubmissionServiceImpl implements SubmissionService {
     private final FileStorageService fileStorageService;
     private final GradeMapper gradeMapper;
     private final AbilityReportMapper abilityReportMapper;
+    private final com.noncore.assessment.service.NotificationService notificationService;
+    private final com.noncore.assessment.service.CourseService courseService;
 
     public SubmissionServiceImpl(SubmissionMapper submissionMapper, AssignmentMapper assignmentMapper,
                                  FileStorageService fileStorageService, GradeMapper gradeMapper,
-                                 AbilityReportMapper abilityReportMapper) {
+                                 AbilityReportMapper abilityReportMapper,
+                                 com.noncore.assessment.service.NotificationService notificationService,
+                                 com.noncore.assessment.service.CourseService courseService) {
         this.submissionMapper = submissionMapper;
         this.assignmentMapper = assignmentMapper;
         this.fileStorageService = fileStorageService;
         this.gradeMapper = gradeMapper;
         this.abilityReportMapper = abilityReportMapper;
+        this.notificationService = notificationService;
+        this.courseService = courseService;
     }
 
     @Override
@@ -149,6 +155,26 @@ public class SubmissionServiceImpl implements SubmissionService {
         }
 
         logger.info("作业提交成功，提交ID: {}", submission.getId());
+
+        // 通知课程教师：学生提交了作业
+        try {
+            Long courseId = assignment.getCourseId();
+            if (courseId != null) {
+                var course = courseService.getCourseById(courseId);
+                if (course != null && course.getTeacherId() != null) {
+                    String title = "作业提交";
+                    String msg = "学生提交了作业《" + (assignment.getTitle() != null ? assignment.getTitle() : "#" + assignmentId) + "》";
+                    notificationService.sendNotification(
+                        course.getTeacherId(), studentId, title, msg,
+                        "assignment", "academic", "normal",
+                        "assignment", assignmentId
+                    );
+                }
+            }
+        } catch (Exception e) {
+            logger.warn("发送作业提交通知失败: submissionId={}, error={}", submission.getId(), e.getMessage());
+        }
+
         return submission;
     }
 

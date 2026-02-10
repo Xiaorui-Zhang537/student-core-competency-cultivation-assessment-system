@@ -35,13 +35,15 @@ public class EnrollmentServiceImpl implements EnrollmentService {
     private final UserMapper userMapper;
     private final LessonProgressMapper lessonProgressMapper;
     private final PasswordEncoder passwordEncoder;
+    private final com.noncore.assessment.service.NotificationService notificationService;
 
-    public EnrollmentServiceImpl(EnrollmentMapper enrollmentMapper, CourseMapper courseMapper, UserMapper userMapper, LessonProgressMapper lessonProgressMapper, PasswordEncoder passwordEncoder) {
+    public EnrollmentServiceImpl(EnrollmentMapper enrollmentMapper, CourseMapper courseMapper, UserMapper userMapper, LessonProgressMapper lessonProgressMapper, PasswordEncoder passwordEncoder, com.noncore.assessment.service.NotificationService notificationService) {
         this.enrollmentMapper = enrollmentMapper;
         this.courseMapper = courseMapper;
         this.userMapper = userMapper;
         this.lessonProgressMapper = lessonProgressMapper;
         this.passwordEncoder = passwordEncoder;
+        this.notificationService = notificationService;
     }
 
     @Override
@@ -76,6 +78,16 @@ public class EnrollmentServiceImpl implements EnrollmentService {
         }
         courseMapper.updateEnrollmentCount(courseId, 1);
         logger.info("选课成功: courseId={}, studentId={}", courseId, studentId);
+        // 通知教师：有新学生加入课程
+        try {
+            if (course.getTeacherId() != null) {
+                User student = userMapper.selectById(studentId);
+                String sName = student != null ? (student.getNickname() != null ? student.getNickname() : student.getUsername()) : "#" + studentId;
+                notificationService.sendNotification(course.getTeacherId(), studentId,
+                    "学生选课", sName + " 加入了课程《" + course.getTitle() + "》",
+                    "course", "academic", "low", "course", courseId);
+            }
+        } catch (Exception e) { logger.warn("发送选课通知失败: {}", e.getMessage()); }
     }
 
     @Override
@@ -119,6 +131,16 @@ public class EnrollmentServiceImpl implements EnrollmentService {
         }
         courseMapper.updateEnrollmentCount(courseId, 1);
         logger.info("选课成功(密钥): courseId={}, studentId={}", courseId, studentId);
+        // 通知教师：有新学生加入课程
+        try {
+            if (course.getTeacherId() != null) {
+                User student = userMapper.selectById(studentId);
+                String sName = student != null ? (student.getNickname() != null ? student.getNickname() : student.getUsername()) : "#" + studentId;
+                notificationService.sendNotification(course.getTeacherId(), studentId,
+                    "学生选课", sName + " 加入了课程《" + course.getTitle() + "》",
+                    "course", "academic", "low", "course", courseId);
+            }
+        } catch (Exception e) { logger.warn("发送选课通知失败: {}", e.getMessage()); }
     }
 
     @Override
@@ -133,6 +155,17 @@ public class EnrollmentServiceImpl implements EnrollmentService {
         }
         courseMapper.updateEnrollmentCount(courseId, -1);
         logger.info("退课成功: courseId={}, studentId={}", courseId, studentId);
+        // 通知教师：学生退出课程
+        try {
+            Course course = courseMapper.selectCourseById(courseId);
+            if (course != null && course.getTeacherId() != null) {
+                User student = userMapper.selectById(studentId);
+                String sName = student != null ? (student.getNickname() != null ? student.getNickname() : student.getUsername()) : "#" + studentId;
+                notificationService.sendNotification(course.getTeacherId(), studentId,
+                    "学生退课", sName + " 退出了课程《" + course.getTitle() + "》",
+                    "course", "academic", "low", "course", courseId);
+            }
+        } catch (Exception e) { logger.warn("发送退课通知失败: {}", e.getMessage()); }
     }
 
     @Override
@@ -166,6 +199,14 @@ public class EnrollmentServiceImpl implements EnrollmentService {
             logger.warn("移除学生失败，未找到对应的选课记录: courseId={}, studentId={}", courseId, studentId);
             throw new BusinessException(ErrorCode.STUDENT_NOT_ENROLLED);
         }
+        // 通知被移除的学生
+        try {
+            Course course = courseMapper.selectCourseById(courseId);
+            String cTitle = course != null ? course.getTitle() : "#" + courseId;
+            notificationService.sendNotification(studentId, teacherId,
+                "课程移除", "你已被移出课程《" + cTitle + "》",
+                "course", "academic", "normal", "course", courseId);
+        } catch (Exception e) { logger.warn("发送移除通知失败: {}", e.getMessage()); }
     }
 
     @Override
@@ -207,6 +248,14 @@ public class EnrollmentServiceImpl implements EnrollmentService {
         // 5. 更新课程总人数
         courseMapper.updateEnrollmentCount(courseId, toEnrollIds.size());
         logger.info("成功添加 {} 名学生到课程 {}", toEnrollIds.size(), courseId);
+        // 通知被添加的学生
+        try {
+            Course course = courseMapper.selectCourseById(courseId);
+            String cTitle = course != null ? course.getTitle() : "#" + courseId;
+            notificationService.batchSendNotification(toEnrollIds, teacherId,
+                "加入课程", "你已被添加到课程《" + cTitle + "》",
+                "course", "academic", "normal", "course", courseId);
+        } catch (Exception e) { logger.warn("发送批量添加通知失败: {}", e.getMessage()); }
     }
 
     @Override

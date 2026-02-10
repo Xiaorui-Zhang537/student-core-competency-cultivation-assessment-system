@@ -64,6 +64,20 @@
     "notify": {
       "deletedTitle": "通知已删除",
       "deletedMsg": "该通知已删除。"
+    },
+    "toast": {
+      "assignmentPublished": "课程发布了新作业",
+      "assignmentUpdated": "作业已更新，请查看最新要求",
+      "submissionReceived": "学生提交了作业",
+      "studentEnrolled": "有新学生加入课程",
+      "studentUnenrolled": "有学生退出课程",
+      "addedToCourse": "你已被添加到课程",
+      "removedFromCourse": "你已被移出课程",
+      "postCommented": "你的帖子收到了新评论",
+      "commentReplied": "你的评论收到了新回复",
+      "gradePublished": "作业已评分，请查看成绩",
+      "assignmentReturned": "作业被打回，请重新提交",
+      "deadlineReminder": "作业即将截止，请尽快提交"
     }
   }
 }

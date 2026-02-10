@@ -34,6 +34,13 @@
 			"empty": {
 				"title": "请选择一门课程",
 				"description": "选择一门课程后，将显示相关的统计数据与图表"
+			},
+			"quickActions": {
+				"title": "快捷操作",
+				"publish": "发布作业",
+				"grade": "批改作业",
+				"aiGrade": "AI 批改",
+				"analytics": "数据分析"
 			}
 		},
 		"courses": {
@@ -645,7 +652,11 @@
                 "glm46": "GLM-4.6：文本模型（不支持图片/文件）。学生每周最多可用 20 次。",
                  "glm45": "GLM-4.5 Air：文本模型（不支持图片/文件），响应更快。学生每周最多可用 20 次。",
 				 "gemini": "Gemini 2.5 Pro：支持图片与文档（pdf/doc/docx/txt）理解。学生每周最多可用 10 次。"
-            }
+            },
+			"stop": "停止生成",
+			"chars": "字",
+			"regenerate": "重新生成",
+			"emptyHint": "输入问题开始对话"
 		},
 		"students": {
 			"breadcrumb": {

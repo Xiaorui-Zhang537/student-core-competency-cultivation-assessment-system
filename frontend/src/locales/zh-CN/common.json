@@ -27,6 +27,7 @@
     "pin": "置顶",
     "unpin": "取消置顶",
     "delete": "删除",
+    "copy": "复制",
     "uploadImage": "上传图片",
     "refresh": "刷新",
     "exportCsv": "导出CSV",
@@ -125,6 +126,11 @@
       "markReadError": "标记已读失败。",
       "deleteError": "删除通知失败。"
     }
+  },
+  "pagination": {
+    "total": "共 {n} 条",
+    "first": "首页",
+    "last": "末页"
   }
 }
 

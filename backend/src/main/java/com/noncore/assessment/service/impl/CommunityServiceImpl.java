@@ -29,12 +29,13 @@ public class CommunityServiceImpl implements CommunityService {
     private final CommentLikeMapper commentLikeMapper;
     private final PostTagMapper postTagMapper;
     private final FileRecordMapper fileRecordMapper;
-
+    private final com.noncore.assessment.service.NotificationService notificationService;
 
     public CommunityServiceImpl(PostMapper postMapper, PostCommentMapper postCommentMapper,
                                 PostLikeMapper postLikeMapper, TagMapper tagMapper,
                                 CommentLikeMapper commentLikeMapper, PostTagMapper postTagMapper,
-                                FileRecordMapper fileRecordMapper) {
+                                FileRecordMapper fileRecordMapper,
+                                com.noncore.assessment.service.NotificationService notificationService) {
         this.postMapper = postMapper;
         this.postCommentMapper = postCommentMapper;
         this.postLikeMapper = postLikeMapper;
@@ -42,6 +43,7 @@ public class CommunityServiceImpl implements CommunityService {
         this.commentLikeMapper = commentLikeMapper;
         this.postTagMapper = postTagMapper;
         this.fileRecordMapper = fileRecordMapper;
+        this.notificationService = notificationService;
     }
 
     @Override
@@ -217,6 +219,37 @@ public class CommunityServiceImpl implements CommunityService {
 
         // 增加帖子评论数
         postMapper.incrementComments(comment.getPostId());
+
+        // 发送通知：评论/回复
+        try {
+            Long commenterId = comment.getUserId();
+            Long postId = comment.getPostId();
+            Post post = postMapper.selectById(postId);
+            if (post != null) {
+                // 1) 通知帖子作者（如果评论者不是作者本人）
+                if (post.getUserId() != null && !post.getUserId().equals(commenterId)) {
+                    String snippet = comment.getContent() != null && comment.getContent().length() > 30
+                            ? comment.getContent().substring(0, 30) + "..."
+                            : (comment.getContent() != null ? comment.getContent() : "");
+                    notificationService.sendNotification(post.getUserId(), commenterId,
+                        "帖子被评论", "你的帖子收到了新评论：" + snippet,
+                        "post", "general", "normal", "post", postId);
+                }
+                // 2) 如果是回复评论，通知父评论作者（如果不是同一人且不是帖子作者）
+                if (comment.getParentId() != null) {
+                    PostComment parent = postCommentMapper.selectById(comment.getParentId());
+                    if (parent != null && parent.getUserId() != null
+                            && !parent.getUserId().equals(commenterId)
+                            && !parent.getUserId().equals(post.getUserId())) {
+                        notificationService.sendNotification(parent.getUserId(), commenterId,
+                            "评论被回复", "你的评论收到了新回复",
+                            "post", "general", "normal", "post", postId);
+                    }
+                }
+            }
+        } catch (Exception e) {
+            // 通知失败不影响评论创建
+        }
 
         return comment;
     }

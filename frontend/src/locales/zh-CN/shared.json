@@ -65,7 +65,10 @@
       "delete": "删除",
       "sending": "发送中",
       "failed": "发送失败",
-      "retry": "重试"
+      "retry": "重试",
+      "quote": "引用",
+      "replyTo": "回复",
+      "pickSomeone": "从左侧选择一位联系人开始聊天"
     },
     "uploadLabel": "上传",
     "download": "下载",

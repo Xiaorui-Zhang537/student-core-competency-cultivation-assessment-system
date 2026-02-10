@@ -42,7 +42,9 @@ public class NotificationServiceImpl implements NotificationService {
     @org.springframework.beans.factory.annotation.Autowired(required = false)
     private com.noncore.assessment.realtime.NotificationSseService sseService;
     private static final String UNREAD_COUNT_CACHE_PREFIX = "notification:unread_count:";
-
+    /** 通知去重窗口（毫秒）：同一 recipient+type+relatedId 在此窗口内不重复发送 */
+    private static final long DEDUP_WINDOW_MS = 60_000;
+    private final java.util.concurrent.ConcurrentHashMap<String, Long> dedupCache = new java.util.concurrent.ConcurrentHashMap<>();
 
     public NotificationServiceImpl(NotificationMapper notificationMapper, UserMapper userMapper,
                                  CourseMapper courseMapper, AssignmentMapper assignmentMapper,
@@ -63,6 +65,20 @@ public class NotificationServiceImpl implements NotificationService {
     public Notification sendNotification(Long recipientId, Long senderId, String title, String content, 
                                        String type, String category, String priority, 
                                        String relatedType, Long relatedId) {
+        // 去重：同一 recipient + type + relatedType + relatedId 在 60 秒内不重复
+        String dedupKey = recipientId + "|" + type + "|" + relatedType + "|" + relatedId;
+        long now = System.currentTimeMillis();
+        Long lastSent = dedupCache.get(dedupKey);
+        if (lastSent != null && (now - lastSent) < DEDUP_WINDOW_MS) {
+            logger.debug("通知去重跳过: key={}", dedupKey);
+            return null;
+        }
+        dedupCache.put(dedupKey, now);
+        // 定期清理过期条目（超过 5 分钟的）
+        if (dedupCache.size() > 500) {
+            dedupCache.entrySet().removeIf(e -> (now - e.getValue()) > 300_000);
+        }
+
         logger.info("发送通知，接收者ID: {}, 发送者ID: {}, 标题: {}", recipientId, senderId, title);
 
         Notification notification = new Notification();
