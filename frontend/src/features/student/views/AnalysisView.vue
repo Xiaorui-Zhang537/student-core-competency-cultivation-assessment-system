@@ -2,7 +2,7 @@
   <div class="p-6">
     <PageHeader :title="t('student.analysis.title')" :subtitle="t('student.analysis.subtitle')" />
 
-    <div v-if="loading" class="text-center py-12">{{ t('student.analysis.loading') }}</div>
+    <loading-overlay v-if="loading" :text="String(t('student.analysis.loading'))" />
 
     <div v-else class="space-y-8">
       <!-- KPIs -->
@@ -220,7 +220,7 @@
         </div>
       </div>
       
-      <div v-if="empty" class="text-center text-gray-500">{{ t('student.analysis.empty') }}</div>
+      <empty-state v-if="empty" :title="String(t('student.analysis.empty'))" tint="info" />
     </div>
   </div>
 </template>
@@ -255,6 +255,8 @@ import { api as http } from '@/api/config'
 import GlassSwitch from '@/components/ui/inputs/GlassSwitch.vue'
 import AbilityRadarLegend from '@/shared/views/AbilityRadarLegend.vue'
 import { getThemeCoreColors, rgba } from '@/utils/theme'
+import EmptyState from '@/components/ui/EmptyState.vue'
+import LoadingOverlay from '@/components/ui/LoadingOverlay.vue'
 
 const { t } = useI18n()
 const router = useRouter()

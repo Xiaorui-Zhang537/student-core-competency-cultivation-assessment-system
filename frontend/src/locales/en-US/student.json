@@ -2,7 +2,7 @@
   "student": {
     "dashboard": {
       "title": "Student Dashboard",
-      "subtitle": "Overview of your learning progress and tasks",
+      "subtitle": "A gentle glance at your progress—one step at a time.",
       "loading": "Loading dashboard...",
       "upcomingAssignments": "Upcoming Assignments",
       "noUpcoming": "No upcoming assignments.",
@@ -25,7 +25,7 @@
     },
     "courses": {
       "title": "My Courses",
-      "subtitle": "Browse and manage your learning courses",
+      "subtitle": "Every lesson you finish brings you closer to your goal.",
       "detailTitle": "Course Detail",
       "browse": "Browse Courses",
       "active": "Active",
@@ -111,7 +111,11 @@
         "fullscreen": "Fullscreen",
         "noInlinePreview": "This file type cannot be previewed inline. Please download it.",
         "detailTitle": "Course Detail",
-        "sectionIntro": "Section Intro"
+        "sectionIntro": "Section Intro",
+        "subtitleAi": "Let AI organize the key points—save your time for real practice. Start from the next unfinished lesson.",
+        "continueLearning": "Continue Learning",
+        "courseAssignments": "Course Assignments",
+        "assignmentSummary": "Assignments total/pending"
       },
       "video": {
         "playFailed": "Video failed to play. Please check your network or file format.",
@@ -136,7 +140,7 @@
     },
     "analysis": {
       "title": "Performance Analysis",
-      "subtitle": "Understand your learning performance and trends",
+      "subtitle": "See your growth in numbers—and keep going.",
       "kpiAvgScore": "Avg Score",
       "kpiCompletion": "Completion",
       "kpiHours": "Study Hours",
@@ -174,11 +178,18 @@
     },
   "lesson": {
     "videoTitle": "Video",
-    "materialsTitle": "Materials"
+    "materialsTitle": "Materials",
+    "prev": "Previous",
+    "next": "Next",
+    "subtitleStart": "Take it slow—ten focused minutes is still progress.",
+    "subtitleDone": "You’ve finished this lesson. Take a small moment to celebrate.",
+    "subtitleProgress": "Steady progress—{progress}% completed.",
+    "notesSaved": "Notes saved",
+    "notesSaveFailed": "Failed to save notes, please try again later"
   },
     "assignments": {
       "title": "Assignments",
-      "subtitle": "View and submit assignments",
+      "subtitle": "Tackle what’s due, and keep your momentum.",
       "viewAll": "View All",
       "search": "Search assignments",
       "searchPlaceholder": "Search by title, course or status…",

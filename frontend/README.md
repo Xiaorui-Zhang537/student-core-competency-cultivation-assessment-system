@@ -173,7 +173,7 @@ Shared（通用）
 
 ## 🧭 项目状态
 - 教师端：已完成
-- 学生端：开发中（Beta）；主题改造完成（v0.3.0）。
+- 学生端：开发中（Beta）；主题改造完成（v0.3.0），UI微优化迭代完成（v0.3.1）。
 
 ---
 
@@ -188,6 +188,7 @@ Shared（通用）
 - 统一使用 `components/ui` 下的按钮、卡片、输入类、筛选器等组件。
 - 新页面优先采用 `PageHeader` 放置标题/副标题与操作区。
 - 表单输入统一使用 `GlassInput/GlassTextarea/GlassSearchInput`；筛选使用 `FilterBar`。
+- 页面状态统一复用 `Breadcrumb`、`EmptyState`、`ErrorState`、`LoadingOverlay` 组件。
 
 #### 组件规范案例
 

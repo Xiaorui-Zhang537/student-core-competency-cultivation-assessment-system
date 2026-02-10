@@ -1,13 +1,10 @@
 <template>
   <div class="p-6">
     <div v-if="assignment" class="max-w-4xl mx-auto">
-      <nav class="relative z-30 flex items-center space-x-2 text-sm !text-gray-900 dark:!text-gray-100 mb-2">
-        <span class="hover:!text-gray-900 dark:hover:!text-gray-100 cursor-pointer font-medium" @click="router.push({ name: 'StudentAssignments' })">
-          {{ i18nText('student.assignments.title', 'Assignments') }}
-        </span>
-        <chevron-right-icon class="w-4 h-4 opacity-70 !text-gray-900 dark:!text-gray-100" />
-        <span class="truncate flex-1 font-medium !text-gray-900 dark:!text-gray-100">{{ assignment.title }}</span>
-      </nav>
+      <breadcrumb
+        class="mb-2"
+        :items="breadcrumbItems"
+      />
       <page-header :title="assignment.title" />
       <!-- 顶部：信息卡 + 附件卡 并排 -->
       <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-2 mb-6 md:mb-8">
@@ -225,6 +222,7 @@ import { useAuthStore } from '@/stores/auth';
 import { fileApi } from '@/api/file.api';
 import { gradeApi } from '@/api/grade.api';
 import { submissionApi } from '@/api/submission.api';
+import { lessonApi } from '@/api/lesson.api'
 import type { FileInfo } from '@/types/file';
 import { useUIStore } from '@/stores/ui';
 import FileUpload from '@/components/forms/FileUpload.vue'
@@ -232,7 +230,7 @@ import FileUpload from '@/components/forms/FileUpload.vue'
 import { useI18n } from 'vue-i18n'
 import PageHeader from '@/components/ui/PageHeader.vue'
 import { baseURL } from '@/api/config'
-import { ChevronRightIcon, ArrowDownTrayIcon } from '@heroicons/vue/24/outline'
+import { ArrowDownTrayIcon } from '@heroicons/vue/24/outline'
 import GlassTextarea from '@/components/ui/inputs/GlassTextarea.vue'
 import Button from '@/components/ui/Button.vue'
 import { abilityApi } from '@/api/ability.api'
@@ -241,6 +239,7 @@ import { exportNodeAsPng, exportNodeAsPdf, applyExportGradientsInline } from '@/
 import Card from '@/components/ui/Card.vue'
 import AssignmentInfoCard from '@/features/shared/AssignmentInfoCard.vue'
 import AttachmentList from '@/features/shared/AttachmentList.vue'
+import Breadcrumb from '@/components/ui/Breadcrumb.vue'
 
 const route = useRoute();
 const router = useRouter();
@@ -307,10 +306,49 @@ const submission = computed(() => {
     return submissionStore.submissions.get(assignmentId);
 });
 
+// 课程作业（course_bound）默认无截止时间
+const isCourseBoundAssignment = computed(() => {
+  const at = String((assignment.value as any)?.assignmentType || '').toLowerCase()
+  return at === 'course_bound'
+})
+const lessonBreadcrumbTitle = ref('')
+const courseBoundLessonId = computed(() => {
+  const raw = (assignment.value as any)?.lessonId
+    ?? (assignment.value as any)?.lesson_id
+    ?? route.query.lessonId
+  return raw == null ? '' : String(raw)
+})
+
+const breadcrumbItems = computed(() => {
+  const currentTitle = String((assignment.value as any)?.title || '')
+  if (isCourseBoundAssignment.value) {
+    const cid = String((assignment.value as any)?.courseId || '')
+    const ctitle = String((assignment.value as any)?.courseTitle || (assignment.value as any)?.courseName || (assignment.value as any)?.course?.title || i18nText('student.courses.detailTitle', '课程详情'))
+    const lid = courseBoundLessonId.value
+    const ltitle = String(
+      lessonBreadcrumbTitle.value
+      || (assignment.value as any)?.lessonTitle
+      || (assignment.value as any)?.lesson?.title
+      || i18nText('student.courses.detail.sectionIntro', '节次详情')
+    )
+    return [
+      { label: i18nText('student.courses.title', 'My Courses'), to: '/student/courses' },
+      ...(cid ? [{ label: ctitle, to: `/student/courses/${cid}` }] : []),
+      ...(lid ? [{ label: ltitle, to: `/student/lessons/${lid}` }] : []),
+      { label: currentTitle }
+    ]
+  }
+  return [
+    { label: i18nText('student.assignments.title', 'Assignments'), to: '/student/assignments' },
+    { label: currentTitle }
+  ]
+})
+
 // 有“打回重做”则以个性化重交截止覆盖 dueDate
 const effectiveDue = computed(() => {
   const g: any = grade.value
   if (g && String(g.status || '').toLowerCase() === 'returned' && g.resubmitUntil) return g.resubmitUntil
+  if (isCourseBoundAssignment.value) return null
   return (assignment.value as any)?.dueDate
 })
 const dueLabel = computed(() => {
@@ -319,6 +357,14 @@ const dueLabel = computed(() => {
   return t('student.assignments.due') as any
 })
 const pastDue = computed(() => {
+  // 课程作业默认无截止，不应触发“已过期”
+  if (isCourseBoundAssignment.value) {
+    const g: any = grade.value
+    // 仅当被打回且明确设置了重交截止时，才按截止控制
+    if (!(g && String(g.status || '').toLowerCase() === 'returned' && g.resubmitUntil)) {
+      return false
+    }
+  }
   const ts = effectiveDue.value as any
   if (!ts) return false
   const d = new Date(ts)
@@ -496,6 +542,7 @@ onMounted(async () => {
     uiStore.showNotification({ type: 'error', title: i18nText('student.assignments.detail.notFoundTitle', '作业不存在'), message: i18nText('student.assignments.detail.notFoundMsg', '该作业可能已被删除或不可访问。') })
     return router.push('/student/assignments')
   }
+  await loadLessonBreadcrumbTitle()
   await submissionStore.fetchSubmissionForAssignment(resolvedId);
 
   // 拉取教师附件
@@ -609,6 +656,19 @@ onMounted(async () => {
     }
   } catch {}
 });
+
+async function loadLessonBreadcrumbTitle() {
+  if (!isCourseBoundAssignment.value) return
+  const lid = courseBoundLessonId.value
+  if (!lid) return
+  try {
+    const res: any = await lessonApi.getLesson(lid)
+    const row = (res?.data || res || {}) as any
+    lessonBreadcrumbTitle.value = String(row?.title || '').trim()
+  } catch {
+    lessonBreadcrumbTitle.value = ''
+  }
+}
 
 // 打开完整AI报告弹窗
 function openAiDetail() {

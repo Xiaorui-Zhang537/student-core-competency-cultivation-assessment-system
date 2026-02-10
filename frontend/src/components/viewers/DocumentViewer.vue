@@ -19,6 +19,15 @@
         <slot name="fallback">
           {{ t('student.courses.detail.noInlinePreview') || '该文件不支持在线预览，请下载查看。' }}
         </slot>
+        <div class="mt-3">
+          <a
+            :href="downloadHref"
+            class="btn btn-sm btn-primary rounded-full"
+            :download="displayName"
+          >
+            {{ t('student.courses.detail.download') || '下载' }}
+          </a>
+        </div>
       </div>
     </liquid-glass>
   </div>
@@ -26,7 +35,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, watch } from 'vue'
+import { computed, ref, onMounted, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import apiClient, { baseURL } from '@/api/config'
 import LiquidGlass from '@/components/ui/LiquidGlass.vue'
@@ -44,6 +53,11 @@ const pdfSrc = ref('')
 const docxHtml = ref('')
 const containerRef = ref<HTMLElement | null>(null)
 const displayName = ref('')
+const downloadHref = computed(() => {
+  const token = localStorage.getItem('token')
+  const qs = token ? `?token=${encodeURIComponent(token)}` : ''
+  return `${baseURL}/files/${encodeURIComponent(String(props.file.id))}/download${qs}`
+})
 
 let urlRevoke: string | null = null
 

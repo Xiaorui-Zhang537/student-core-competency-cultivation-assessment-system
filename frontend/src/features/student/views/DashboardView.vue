@@ -3,9 +3,7 @@
     <PageHeader :title="t('student.dashboard.title')" :subtitle="t('student.dashboard.subtitle')" />
 
     <!-- Loading State -->
-    <div v-if="studentStore.loading" class="text-center py-12">
-      <p>{{ t('student.dashboard.loading') }}</p>
-    </div>
+    <loading-overlay v-if="studentStore.loading" :text="String(t('student.dashboard.loading'))" />
 
     <!-- Main Content -->
     <div v-else-if="dashboardReady && !studentStore.loading" class="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -92,10 +90,13 @@
       </div>
     </div>
      <!-- Empty State -->
-    <Card v-else padding="md" tint="info" class="text-center py-12">
-      <h3 class="text-lg font-medium">{{ t('student.dashboard.errorTitle') }}</h3>
-      <p class="text-gray-500">{{ t('student.dashboard.errorDesc') }}</p>
-    </Card>
+    <error-state
+      v-else
+      :title="String(t('student.dashboard.errorTitle'))"
+      :message="String(t('student.dashboard.errorDesc'))"
+      :retry-label="String(t('teacher.submissions.retry') || '重试')"
+      @retry="studentStore.fetchDashboardData()"
+    />
   </div>
 </template>
 
@@ -113,6 +114,8 @@ import Progress from '@/components/ui/Progress.vue'
 import SpringCalendar from '@/components/ui/SpringCalendar.vue'
 import { useSubmissionStore } from '@/stores/submission'
 import Button from '@/components/ui/Button.vue'
+import ErrorState from '@/components/ui/ErrorState.vue'
+import LoadingOverlay from '@/components/ui/LoadingOverlay.vue'
 
 const uiStore = useUIStore()
 const studentStore = useStudentStore()

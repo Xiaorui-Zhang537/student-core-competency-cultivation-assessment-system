@@ -3,7 +3,7 @@
 		"dashboard": {
 			"header": {
 				"title": "工作台",
-				"subtitle": "快捷掌握课程核心指标与近期动态"
+				"subtitle": "把班级动态握在手里，心里更有数。"
 			},
 			"course": {
 				"select": {
@@ -46,7 +46,7 @@
 		"courses": {
 			"breadcrumb": "课程管理",
 			"title": "课程管理",
-			"subtitle": "管理您的所有课程",
+			"subtitle": "把课程打磨得更清晰，学生学得更踏实。",
 			"loading": "正在加载课程...",
 			"filters": {
 				"searchPlaceholder": "搜索课程标题/描述...",
@@ -131,7 +131,7 @@
 				"self": "作业管理"
 			},
 			"title": "作业管理",
-			"subtitle": "创建、查看和管理课程作业",
+			"subtitle": "布置得清楚，收得省心，改得更准。",
 			"filters": {
 				"byCourse": "按课程筛选",
 				"selectCourse": "请选择课程",
@@ -528,7 +528,7 @@
         },
 		"analytics": {
 			"title": "数据分析",
-			"subtitle": "全面了解教学效果和学生学习情况",
+			"subtitle": "看见趋势，也看见每个学生的努力。",
 			"courseSelector": { "label": "选择课程" },
 			"selectCourse": "请选择课程",
 			"askAi": "询问AI",
@@ -613,7 +613,7 @@
 		},
 		"ai": {
 			"title": "AI 助理",
-			"subtitle": "与智能体对话，获取教学建议与分析洞察",
+			"subtitle": "让 AI 处理琐碎，把心力留给教学本身。",
 			"thinking": "AI 正在思考...",
 			"placeholder": "输入你的问题，按 Enter 发送",
 			"send": "发送",

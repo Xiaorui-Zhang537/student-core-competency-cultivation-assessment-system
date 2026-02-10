@@ -362,6 +362,19 @@ public class LessonController extends BaseController {
     }
 
     /**
+     * 获取章节笔记
+     */
+    @GetMapping("/{lessonId}/notes")
+    @PreAuthorize("hasRole('STUDENT')")
+    @Operation(summary = "获取章节笔记", description = "获取当前学生在指定章节的学习笔记")
+    public ResponseEntity<ApiResponse<Map<String, String>>> getLessonNotes(@PathVariable Long lessonId) {
+        String notes = lessonService.getLessonNotes(getCurrentUserId(), lessonId);
+        Map<String, String> data = new java.util.HashMap<>();
+        data.put("notes", notes == null ? "" : notes);
+        return ResponseEntity.ok(ApiResponse.success(data));
+    }
+
+    /**
      * 添加章节笔记
      */
     @PostMapping("/{lessonId}/notes")

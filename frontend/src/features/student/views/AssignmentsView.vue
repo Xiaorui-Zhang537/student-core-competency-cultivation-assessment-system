@@ -1,7 +1,7 @@
 <template>
   <div class="min-h-screen p-6">
     <div class="max-w-7xl mx-auto">
-      <page-header :title="t('student.assignments.title') || '我的作业'" :subtitle="t('student.assignments.subtitle') || '查看与提交作业'" />
+      <page-header :title="t('student.assignments.title')" :subtitle="t('student.assignments.subtitle')" />
 
       <!-- 过滤条（取消外层嵌套容器，仅保留 FilterBar） -->
       <filter-bar tint="info" align="center" :dense="false" class="mb-6 rounded-full h-19">
@@ -49,10 +49,13 @@
 
       <!-- 列表（每行一个卡片） -->
       <div class="grid grid-cols-1 gap-4">
-        <div v-if="errorMessage" class="col-span-full p-6 text-center text-red-600 rounded-xl">
-          <p class="mb-3">{{ errorMessage }}</p>
-          <Button variant="info" @click="loadList">{{ t('teacher.submissions.retry') }}</Button>
-        </div>
+        <error-state
+          v-if="errorMessage"
+          title="加载失败"
+          :message="errorMessage"
+          :retry-label="String(t('teacher.submissions.retry') || '重试')"
+          @retry="loadList"
+        />
 
         <card v-for="a in list" :key="a.id" padding="md" tint="info" class="relative">
           <div class="min-w-0 pr-44">
@@ -83,8 +86,12 @@
           </div>
         </card>
 
-        <div v-if="!loading && !errorMessage && list.length===0" class="col-span-full p-8 text-center text-subtle rounded-xl glass-regular glass-tint-info" v-glass>{{ t('student.assignments.empty') }}</div>
-        <div v-if="loading" class="col-span-full p-8 text-center text-subtle rounded-xl glass-regular glass-tint-secondary" v-glass>{{ t('shared.loading') }}</div>
+        <empty-state
+          v-if="!loading && !errorMessage && list.length===0"
+          :title="String(t('student.assignments.empty'))"
+          tint="info"
+        />
+        <loading-overlay v-if="loading" :text="String(t('shared.loading'))" />
       </div>
 
       <!-- 分页：左侧总数+每页选择，右侧统一分页组件 -->
@@ -105,7 +112,7 @@
 <script setup lang="ts">
 import { ref, computed, watch, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { useRouter } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import Button from '@/components/ui/Button.vue'
 import FilterBar from '@/components/ui/filters/FilterBar.vue'
 import Card from '@/components/ui/Card.vue'
@@ -118,8 +125,12 @@ import { useSubmissionStore } from '@/stores/submission'
 import GlassSearchInput from '@/components/ui/inputs/GlassSearchInput.vue'
 import GlassSwitch from '@/components/ui/inputs/GlassSwitch.vue'
 import PaginationBar from '@/components/ui/PaginationBar.vue'
+import EmptyState from '@/components/ui/EmptyState.vue'
+import ErrorState from '@/components/ui/ErrorState.vue'
+import LoadingOverlay from '@/components/ui/LoadingOverlay.vue'
 
 const { t } = useI18n()
+const route = useRoute()
 const router = useRouter()
 const submissionStore = useSubmissionStore()
 
@@ -296,6 +307,10 @@ watch([currentPage, pageSize], () => loadList())
 watch(onlyPending, () => { currentPage.value = 1; loadList() })
 
 onMounted(async () => {
+  const initialCourseId = String(route.query.courseId || '')
+  if (initialCourseId) {
+    filters.value.courseId = initialCourseId
+  }
   await loadCourses()
   await loadList()
 })

@@ -2,7 +2,7 @@
   "student": {
     "dashboard": {
       "title": "学生仪表盘",
-      "subtitle": "总览您的学习进度和任务",
+      "subtitle": "把今天的学习安排得明明白白。",
       "loading": "正在加载仪表盘数据...",
       "upcomingAssignments": "即将到期的作业",
       "noUpcoming": "暂无即将到期的作业。",
@@ -26,7 +26,7 @@
     
     "courses": {
       "title": "我的课程",
-      "subtitle": "浏览和管理您的学习课程",
+      "subtitle": "每一门课，都在靠近你想成为的自己。",
       "detailTitle": "课程详情",
       "browse": "浏览课程",
       "active": "进行中",
@@ -112,7 +112,11 @@
         "fullscreen": "全屏",
         "noInlinePreview": "该文件不支持在线预览，请下载查看。",
         "detailTitle": "课程详情",
-        "sectionIntro": "本节说明"
+        "sectionIntro": "本节说明",
+        "subtitleAi": "把重点交给 AI 整理，把时间留给真正的练习——从未完成的小节开始就好。",
+        "continueLearning": "继续学习",
+        "courseAssignments": "课程作业",
+        "assignmentSummary": "作业总计/待完成"
       },
       "video": {
         "playFailed": "视频播放失败，请检查网络或文件格式。",
@@ -137,7 +141,7 @@
     },
     "analysis": {
       "title": "成绩分析",
-      "subtitle": "了解您的学习表现与趋势",
+      "subtitle": "用数据看见你的进步，下一步更稳。",
       "kpiAvgScore": "平均分",
       "kpiCompletion": "完成率",
       "kpiHours": "学习时长(小时)",
@@ -175,11 +179,18 @@
     },
   "lesson": {
     "videoTitle": "视频",
-    "materialsTitle": "资料"
+    "materialsTitle": "资料",
+    "prev": "上一节",
+    "next": "下一节",
+    "subtitleStart": "慢慢来，把今天这 10 分钟学扎实就很好。",
+    "subtitleDone": "你已经学完这一节了，给自己一个小小的肯定。",
+    "subtitleProgress": "稳稳推进中，已完成 {progress}%。",
+    "notesSaved": "笔记已保存",
+    "notesSaveFailed": "笔记保存失败，请稍后重试"
   },
     "assignments": {
       "title": "我的作业",
-      "subtitle": "查看与提交作业",
+      "subtitle": "把该交的都交上，把该学的都学会。",
       "viewAll": "查看全部",
       "search": "搜索作业",
       "searchPlaceholder": "搜索作业标题、课程或状态…",

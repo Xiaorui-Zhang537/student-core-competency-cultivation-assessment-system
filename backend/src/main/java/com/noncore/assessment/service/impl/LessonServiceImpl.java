@@ -343,6 +343,16 @@ public class LessonServiceImpl implements LessonService {
     }
 
     @Override
+    public String getLessonNotes(Long studentId, Long lessonId) {
+        logger.info("获取章节笔记，学生ID: {}, 章节ID: {}", studentId, lessonId);
+        LessonProgress progress = lessonProgressMapper.selectByStudentAndLesson(studentId, lessonId);
+        if (progress == null) {
+            return "";
+        }
+        return progress.getNotes() == null ? "" : progress.getNotes();
+    }
+
+    @Override
     public boolean rateLessons(Long studentId, Long lessonId, Integer rating) {
         logger.info("为章节评分，学生ID: {}, 章节ID: {}, 评分: {}", studentId, lessonId, rating);
         if (rating < 1 || rating > 5) {

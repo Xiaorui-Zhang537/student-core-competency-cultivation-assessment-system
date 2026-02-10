@@ -141,7 +141,7 @@
                       <span>{{ formatDate(post.createdAt) }}</span>
                        <div class="flex items-center space-x-1"><eye-icon class="w-3 h-3" /><span>{{ post.viewCount }}</span></div>
                       <div class="flex items-center space-x-1"><chat-bubble-left-icon class="w-3 h-3" /><span>{{ post.commentCount }}</span></div>
-                      <Button size="xs" variant="secondary" @click.stop="communityStore.toggleLikePost(post.id)" :class="post.isLiked ? 'text-red-500' : ''">
+                      <Button size="xs" variant="reaction" @click.stop="communityStore.toggleLikePost(post.id)" :class="post.isLiked ? 'reaction-liked' : ''">
                         <hand-thumb-up-icon class="w-3 h-3 mr-1" />
                         <span>{{ post.likeCount }}</span>
                       </Button>
@@ -152,7 +152,7 @@
                   </div>
                   <div class="flex-shrink-0 space-x-2">
                     <Button v-if="post.attachments?.length" variant="secondary" size="sm" icon="download" @click.stop="downloadFirstAttachment(post)">下载附件</Button>
-                    <Button v-if="authStore.user?.id && String(authStore.user.id) === String(post.author?.id || post.authorId)" variant="secondary" size="sm" icon="edit" @click.stop="onEditPost(post)">{{ t('shared.community.list.edit') }}</Button>
+                    <Button v-if="authStore.user?.id && String(authStore.user.id) === String(post.author?.id || post.authorId)" variant="outline" size="sm" icon="edit" @click.stop="onEditPost(post)">{{ t('shared.community.list.edit') }}</Button>
                     <Button v-if="authStore.user?.id && String(authStore.user.id) === String(post.author?.id || post.authorId)" variant="danger" size="sm" icon="delete" @click.stop="onDeletePost(post.id)">{{ t('shared.community.list.delete') }}</Button>
                   </div>
                 </div>

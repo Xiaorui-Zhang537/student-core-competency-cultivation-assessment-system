@@ -4,7 +4,7 @@
       "entry": "Speaking Practice",
       "attachments": "Attachments",
       "title": "Live Speaking Practice",
-      "subtitle": "Practice with a speaking agent in real time: speak English, get instant feedback, with voice or text replies",
+      "subtitle": "Speak it out—progress follows.",
       "back": "Back",
       "settings": "Settings",
       "mode": "Output mode",
@@ -93,7 +93,7 @@
     },
     "profile": {
       "title": "Profile",
-      "subtitle": "Manage your personal information and account settings",
+      "subtitle": "Keep your profile tidy, so learning stays smooth.",
       "section": {
         "profileInfo": "Profile Info",
         "accountSecurity": "Account Security",
@@ -161,7 +161,7 @@
     },
     "community": {
       "title": "Community",
-      "subtitle": "Share knowledge and connect with peers",
+      "subtitle": "Share, ask, and grow together.",
       "createPost": "New Post",
       "stats": {
         "posts": "Posts",
@@ -298,7 +298,7 @@
     },
     "help": {
       "title": "Help Center",
-      "subtitle": "Find FAQs, user guides, or contact support",
+      "subtitle": "When you’re stuck, you’re not alone—we’ll figure it out together.",
       "searchPlaceholder": "Search help content...",
       "nav": "Navigation",
       "sections": {
@@ -455,7 +455,7 @@
     },
     "discovery": {
       "title": "Course Discovery",
-      "subtitle": "Discover quality courses and start learning"
+      "subtitle": "Find the next course that sparks your curiosity."
     },
     "emojiPicker": {
       "button": "Emoji"

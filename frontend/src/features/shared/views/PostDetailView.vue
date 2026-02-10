@@ -42,7 +42,13 @@
           </div>
         </div>
          <div class="mt-8 pt-5 border-t border-gray-200 dark:border-gray-700 flex items-center space-x-6">
-           <Button size="sm" variant="secondary" @click="communityStore.toggleLikePost(currentPost.id)" :class="currentPost.isLiked ? (isDark ? 'text-red-400' : 'text-red-500') : (isDark ? 'text-gray-300' : 'text-gray-600')" class="flex items-center space-x-2">
+           <Button
+            size="sm"
+            variant="reaction"
+            @click="communityStore.toggleLikePost(currentPost.id)"
+            :class="currentPost.isLiked ? 'reaction-liked' : ''"
+            class="flex items-center space-x-2"
+          >
             <hand-thumb-up-icon class="w-5 h-5" />
             <span>{{ t('shared.community.detail.like', { count: currentPost.likeCount }) }}</span>
           </Button>
@@ -61,7 +67,7 @@
         <div class="mb-7">
             <glass-textarea v-model="newComment" :rows="3" :placeholder="t('shared.community.detail.writeComment') as string" class="w-full" />
             <div class="mt-4 md:mt-5 flex items-center gap-4">
-              <emoji-picker size="sm" variant="secondary" tint="primary" @select="onEmojiSelect" />
+              <emoji-picker size="sm" variant="outline" tint="accent" @select="onEmojiSelect" />
               <Button size="sm" variant="primary" @click="handlePostComment" :disabled="!newComment.trim() || loading">
                 <paper-airplane-icon class="w-4 h-4 mr-2" />
                 {{ t('shared.community.detail.postComment') }}

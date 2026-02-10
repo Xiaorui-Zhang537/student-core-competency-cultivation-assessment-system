@@ -59,7 +59,7 @@ import { computed, useSlots } from 'vue'
 import LiquidGlass from '@/components/ui/LiquidGlass.vue'
 
 interface Props {
-  variant?: 'glass' | 'glass-ghost' | 'menu' | 'primary' | 'secondary' | 'outline' | 'ghost' | 'danger' | 'success' | 'warning' | 'indigo' | 'purple' | 'teal' | 'info'
+  variant?: 'glass' | 'glass-ghost' | 'menu' | 'primary' | 'secondary' | 'outline' | 'ghost' | 'danger' | 'success' | 'warning' | 'indigo' | 'purple' | 'teal' | 'info' | 'reaction'
   size?: 'xs' | 'sm' | 'md' | 'lg' | 'xl'
   loading?: boolean
   disabled?: boolean
@@ -153,6 +153,7 @@ const variantClasses = computed(() => {
     'glass-ghost': baseGhost,
     primary: 'btn-variant-primary',
     secondary: 'btn-variant-secondary',
+    reaction: 'btn-variant-reaction',
     outline: 'btn-variant-outline',
     ghost: 'btn-variant-ghost',
     danger: 'btn-variant-danger',

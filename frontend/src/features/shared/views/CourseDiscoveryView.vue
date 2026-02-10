@@ -5,7 +5,7 @@
       <div class="max-w-7xl mx-auto px-4 py-6">
         <div class="flex flex-col md:flex-row md:items-center md:justify-between">
           <div class="w-full">
-            <page-header :title="t('shared.discovery.title') || '课程发现'" :subtitle="t('shared.discovery.subtitle') || '发现优质课程，开启学习之旅'" />
+            <page-header :title="t('shared.discovery.title')" :subtitle="t('shared.discovery.subtitle')" />
           </div>
           
           <!-- 搜索框（玻璃样式统一） -->

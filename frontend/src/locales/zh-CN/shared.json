@@ -4,7 +4,7 @@
       "entry": "口语训练",
       "attachments": "附件",
       "title": "实时口语训练",
-      "subtitle": "与口语智能体实时对练：说英语、即时反馈，支持语音与文字回复",
+      "subtitle": "开口说出来，进步就会发生。",
       "back": "返回",
       "settings": "设置",
       "mode": "输出方式",
@@ -90,7 +90,7 @@
     },
     "profile": {
       "title": "个人资料",
-      "subtitle": "管理您的个人信息和账户设置",
+      "subtitle": "把你的信息照顾好，学习也会更顺。",
       "section": {
         "profileInfo": "个人信息",
         "accountSecurity": "账户安全",
@@ -158,7 +158,7 @@
     },
     "community": {
       "title": "学习社区",
-      "subtitle": "与同学交流学习心得，分享知识经验",
+      "subtitle": "一起讨论、一起进步，把灵感留在这里。",
       "createPost": "发布帖子",
       "stats": {
         "posts": "讨论帖子",
@@ -295,7 +295,7 @@
     },
     "help": {
       "title": "帮助中心",
-      "subtitle": "查找常见问题、查看使用指南或联系技术支持",
+      "subtitle": "卡住的时候别硬扛，我们一起把问题解决掉。",
       "searchPlaceholder": "搜索帮助内容...",
       "nav": "导航",
       "sections": {
@@ -452,7 +452,7 @@
     },
     "discovery": {
       "title": "课程发现",
-      "subtitle": "发现优质课程，开启学习之旅"
+      "subtitle": "在这里遇见下一门想学的课。"
     },
     "emojiPicker": {
       "button": "表情"

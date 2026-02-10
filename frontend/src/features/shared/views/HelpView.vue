@@ -3,7 +3,7 @@
     <div class="relative z-10 max-w-6xl mx-auto p-6">
       <!-- 页面标题 -->
       <div class="mb-8">
-        <page-header :title="t('shared.help.title') || '帮助中心'" :subtitle="t('shared.help.subtitle') || '在这里找到常见问题的答案，查看使用指南，或联系技术支持获得帮助'" />
+        <page-header :title="t('shared.help.title')" :subtitle="t('shared.help.subtitle')" />
       </div>
 
       

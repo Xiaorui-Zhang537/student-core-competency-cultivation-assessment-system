@@ -3,7 +3,7 @@
 		"dashboard": {
 			"header": {
 				"title": "Dashboard",
-				"subtitle": "Quick insights into key metrics and recent activities"
+				"subtitle": "Stay on top of class signals and daily changes."
 			},
 			"course": {
 				"select": {
@@ -46,7 +46,7 @@
 		"courses": {
 			"breadcrumb": "Course Management",
 			"title": "Course Management",
-			"subtitle": "Manage all your courses",
+			"subtitle": "Shape your course with clarity—students learn with confidence.",
 			"loading": "Loading courses...",
 			"filters": {
 				"searchPlaceholder": "Search by title/description...",
@@ -135,7 +135,7 @@
 				"self": "Assignments"
 			},
 			"title": "Assignments",
-			"subtitle": "Create, view and manage course assignments",
+			"subtitle": "Clear tasks in, meaningful feedback out.",
 			"filters": {
 				"byCourse": "Filter by Course",
 				"selectCourse": "Select a course",
@@ -526,7 +526,7 @@
 		},
 		"analytics": {
 			"title": "Analytics",
-			"subtitle": "Understand teaching outcomes and student learning",
+			"subtitle": "Spot trends, celebrate progress, guide the next step.",
 			"courseSelector": { "label": "Select course" },
 			"selectCourse": "Select a course",
 			"askAi": "Ask AI",
@@ -619,7 +619,7 @@
 		},
 		"ai": {
 			"title": "AI Assistant",
-			"subtitle": "Chat with AI for teaching suggestions and insights",
+			"subtitle": "Let AI handle the busywork—save your energy for teaching.",
 			"thinking": "AI is thinking...",
 			"placeholder": "Type your question and press Enter",
 			"send": "Send",

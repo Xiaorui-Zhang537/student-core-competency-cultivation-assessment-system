@@ -1,28 +1,26 @@
 <template>
   <div class="p-6">
-    <div v-if="courseStore.loading || lessonStore.loading" class="text-center py-12">
-      <p>{{ t('student.courses.loading') }}</p>
-    </div>
+    <loading-overlay
+      v-if="courseStore.loading || lessonStore.loading"
+      :text="(t('student.courses.loading') as string)"
+    />
 
-    <div v-else-if="course" class="max-w-7xl mx-auto space-y-8">
-      <!-- 面包屑 -->
-      <nav class="relative z-10 mb-2">
-        <ol class="flex items-center space-x-2 text-sm">
-          <li>
-            <router-link to="/student/courses" class="text-[var(--color-base-content)] hover:text-[var(--color-primary)]">{{ t('student.courses.title') }}</router-link>
-          </li>
-          <li><span class="text-[color-mix(in_oklab,var(--color-base-content)_45%,transparent)]">&gt;</span></li>
-          <li class="font-medium text-[var(--color-base-content)] truncate">{{ course.title }}</li>
-        </ol>
-      </nav>
+    <div v-else-if="course" class="space-y-8">
+      <page-scaffold
+        :title="String(course.title || t('student.courses.detailTitle'))"
+        :subtitle="String(course.description || t('student.courses.detail.subtitleAi') || t('student.courses.subtitle'))"
+        :breadcrumb-items="[
+          { label: String(t('student.courses.title')), to: '/student/courses' },
+          { label: String(course.title || '') }
+        ]"
+        wrapper-class="mb-2"
+      />
 
       <!-- 自适应网格：左列信息 + 内容；右列教师信息可跨行，去除左列上方空白 -->
-      <div class="grid grid-cols-1 lg:grid-cols-10 gap-6 items-start">
+      <div class="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-10 gap-6 items-start">
         <div class="lg:col-span-7">
           <card tint="primary">
             <div class="p-5">
-              <h1 class="text-2xl font-bold truncate">{{ course.title }}</h1>
-              <p v-if="course.description" class="mt-2 text-muted whitespace-pre-line">{{ course.description }}</p>
               <!-- 1) 先显示开课/结课时间（玻璃Badge） -->
               <div class="mt-3 flex flex-wrap items-center gap-2 text-sm text-muted">
                 <badge v-if="course.startDate" size="sm" variant="accent">
@@ -47,6 +45,17 @@
               <!-- 3) 进度条（/ui/Progress） -->
               <div class="mt-3">
                 <Progress v-if="typeof displayProgress === 'number'" :value="Math.round(displayProgress)" size="md" :color="Number(displayProgress)>=100 ? 'info' : 'primary'" />
+              </div>
+              <div class="mt-3 flex flex-wrap items-center gap-2">
+                <Button variant="primary" size="sm" @click="continueLearning">
+                  {{ t('student.courses.detail.continueLearning') || '继续学习' }}
+                </Button>
+                <Button variant="secondary" size="sm" @click="goCourseAssignments">
+                  {{ t('student.courses.detail.courseAssignments') || '课程作业' }}
+                </Button>
+                <span class="text-xs text-muted">
+                  {{ t('student.courses.detail.assignmentSummary') || '作业总计/待完成' }}: {{ assignmentSummary.total }} / {{ assignmentSummary.pending }}
+                </span>
               </div>
               <!-- 4) 报名学生：头像+姓名，可点击查看资料/联系 -->
               <div class="mt-4">
@@ -245,16 +254,13 @@
       </div>
     </div>
 
-    <card v-else class="text-center py-12" tint="info">
-      <h3 class="text-lg font-medium">{{ t('student.courses.detail.notFoundTitle') }}</h3>
-      <p class="text-muted mt-2">{{ t('student.courses.detail.notFoundDesc') }}</p>
-      <Button as="a" href="/student/courses" class="mt-4" variant="primary">
-        <template #icon>
-          <svg class="w-4 h-4" viewBox="0 0 20 20" fill="currentColor"><path d="M7 10l5 5V5l-5 5z"/></svg>
-        </template>
-        {{ t('student.courses.detail.backToList') }}
-      </Button>
-    </card>
+    <error-state
+      v-else
+      :title="String(t('student.courses.detail.notFoundTitle'))"
+      :message="String(t('student.courses.detail.notFoundDesc'))"
+      :retry-label="String(t('student.courses.detail.backToList'))"
+      @retry="router.push('/student/courses')"
+    />
 
     <!-- 学生资料弹窗挂载到页面根容器内 -->
     <student-profile-modal
@@ -290,6 +296,8 @@ import Button from '@/components/ui/Button.vue'
 import Card from '@/components/ui/Card.vue'
 import UserAvatar from '@/components/ui/UserAvatar.vue'
 import Progress from '@/components/ui/Progress.vue'
+import ErrorState from '@/components/ui/ErrorState.vue'
+import LoadingOverlay from '@/components/ui/LoadingOverlay.vue'
 import StudentProfileModal from '@/shared/views/StudentProfileModal.vue'
 import AttachmentList from '@/features/shared/AttachmentList.vue'
 import { getDifficultyVariant, getCategoryVariant, getTagVariant } from '@/shared/utils/badgeColor'
@@ -297,6 +305,7 @@ import { localizeDifficulty, localizeCategory } from '@/shared/utils/localize'
 import apiClient, { baseURL } from '@/api/config'
 import { userApi } from '@/api/user.api'
 import { resolveUserDisplayName } from '@/shared/utils/user'
+import PageScaffold from '@/components/ui/PageScaffold.vue'
 // 学生端不直接请求章节接口，基于课时列表推断章节结构
 
 const route = useRoute()
@@ -315,6 +324,7 @@ const students = ref<any[]>([])
 const studentsLoading = ref<boolean>(false)
 const showProfile = ref(false)
 const activeStudent = ref<any | null>(null)
+const assignmentSummary = ref({ total: 0, pending: 0 })
 
 // Computed
 const course = computed(() => courseStore.currentCourse as any)
@@ -492,6 +502,17 @@ function formatDateOnly(v: any): string {
 // Methods
 function goLessonDetail(lessonId: string) { router.push(`/student/lessons/${lessonId}`) }
 
+function continueLearning() {
+  const sorted = [...(lessons.value || [])].sort((a: any, b: any) => Number(a?.orderIndex ?? a?.order ?? a?.id ?? 0) - Number(b?.orderIndex ?? b?.order ?? b?.id ?? 0))
+  const target = sorted.find((l: any) => getLessonProgress(l.id) < 100) || sorted[0]
+  if (target?.id) goLessonDetail(String(target.id))
+}
+
+function goCourseAssignments() {
+  const cid = String(course.value?.id || '')
+  router.push({ path: '/student/assignments', query: cid ? { courseId: cid } : {} })
+}
+
 function contactTeacher() {
   const c = course.value
   if (!c) return
@@ -532,10 +553,30 @@ onMounted(async () => {
   ])
   try { await loadStudentProgress(courseId) } catch {}
   await fetchCourseProgress(courseId)
+  await loadAssignmentSummary(courseId)
   await loadCourseMaterials(courseId)
   studentsLoading.value = true
   try { await loadTeacher(courseId) } finally { studentsLoading.value = false }
 })
+
+async function loadAssignmentSummary(courseId: string) {
+  try {
+    const res: any = await studentApi.getAssignments({ page: 1, size: 200, courseId })
+    const pageData = res?.data || res || {}
+    const rows = pageData?.items || pageData?.rows || []
+    const list = Array.isArray(rows) ? rows : (rows?.items || [])
+    const pending = list.filter((item: any) => {
+      const status = String(item?.status || item?.submissionStatus || '').toLowerCase()
+      return status === 'pending' || status === 'published'
+    }).length
+    assignmentSummary.value = {
+      total: Number(pageData?.total || list.length || 0),
+      pending: Number(pending || 0)
+    }
+  } catch {
+    assignmentSummary.value = { total: 0, pending: 0 }
+  }
+}
 
 async function loadStudentProgress(courseId: string) {
   try {

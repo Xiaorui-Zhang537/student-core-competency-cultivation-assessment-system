@@ -14,7 +14,7 @@
       </div>
       <div class="text-xs text-gray-500 mt-3 flex items-center space-x-4">
         <span>{{ formatDate(comment.createdAt) }}</span>
-        <Button size="xs" variant="ghost" class="!px-1 !py-0.5" :class="comment.isLiked ? 'text-red-500' : ''" @click="onLikeComment" :disabled="likeBusy">
+        <Button size="xs" variant="reaction" class="!px-1 !py-0.5" :class="comment.isLiked ? 'reaction-liked' : ''" @click="onLikeComment" :disabled="likeBusy">
           <template #icon>
             <hand-thumb-up-icon class="w-3.5 h-3.5" />
           </template>
@@ -43,7 +43,7 @@
       <div v-if="showReplyBox" class="mt-4">
         <glass-textarea v-model="replyContent" :rows="2" class="w-full" :placeholder="t('shared.community.detail.writeComment') as string" />
         <div class="mt-4 flex items-center gap-4">
-          <emoji-picker variant="secondary" tint="primary" size="sm" @select="(e: string) => { replyContent = (replyContent || '') + e }" />
+          <emoji-picker variant="outline" tint="accent" size="sm" @select="(e: string) => { replyContent = (replyContent || '') + e }" />
           <Button variant="primary" size="sm" :disabled="!replyContent.trim()" @click="submitReply">
             <template #icon>
               <paper-airplane-icon class="w-4 h-4" />

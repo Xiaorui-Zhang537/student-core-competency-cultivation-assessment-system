@@ -1131,6 +1131,21 @@
   }
   .btn-variant-secondary:hover { background-color: color-mix(in oklab, var(--color-secondary) 32%, transparent); }
 
+  /* Reaction/Like: neutral by default, stronger when liked */
+  .btn-variant-reaction {
+    color: color-mix(in oklab, var(--color-base-content) 78%, transparent);
+    background-color: color-mix(in oklab, var(--color-base-content) 8%, transparent);
+    border: 1px solid color-mix(in oklab, var(--color-base-content) 14%, transparent);
+  }
+  .btn-variant-reaction:hover { background-color: color-mix(in oklab, var(--color-base-content) 12%, transparent); }
+  .btn-variant-reaction:focus { outline: none; box-shadow: 0 0 0 2px color-mix(in oklab, var(--color-primary) 35%, transparent); }
+  .btn-variant-reaction.reaction-liked {
+    color: color-mix(in oklab, var(--color-error) 88%, var(--color-base-content));
+    background-color: color-mix(in oklab, var(--color-error) 18%, transparent);
+    border-color: color-mix(in oklab, var(--color-error) 26%, transparent);
+  }
+  .btn-variant-reaction.reaction-liked:hover { background-color: color-mix(in oklab, var(--color-error) 24%, transparent); }
+
   .btn-variant-success {
     color: var(--color-success-content);
     background-color: color-mix(in oklab, var(--color-success) 26%, transparent);

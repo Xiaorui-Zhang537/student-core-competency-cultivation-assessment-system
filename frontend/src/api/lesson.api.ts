@@ -63,5 +63,9 @@ export const lessonApi = {
 
   addLessonNotes(lessonId: string, notes: string): Promise<ApiResponse<void>> {
     return api.post(`/lessons/${lessonId}/notes`, { notes });
+  },
+
+  getLessonNotes(lessonId: string): Promise<ApiResponse<{ notes: string }>> {
+    return api.get(`/lessons/${lessonId}/notes`);
   }
 };

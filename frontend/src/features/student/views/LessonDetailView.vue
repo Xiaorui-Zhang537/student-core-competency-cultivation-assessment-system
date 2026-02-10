@@ -1,22 +1,33 @@
 <template>
   <div class="p-4 lg:p-6">
-    <!-- 面包屑 -->
-    <nav class="mb-4 relative z-10">
-      <ol class="flex items-center space-x-2 text-sm">
-        <li>
-          <router-link to="/student/courses" class="text-[var(--color-base-content)] hover:text-[var(--color-primary)]">{{ t('student.courses.title') }}</router-link>
-        </li>
-        <li v-if="lesson?.courseId"><span class="text-[color-mix(in_oklab,var(--color-base-content)_45%,transparent)]">&gt;</span></li>
-        <li v-if="lesson?.courseId">
-          <router-link :to="`/student/courses/${lesson.courseId}`" class="text-[var(--color-base-content)] hover:text-[var(--color-primary)]">{{ courseTitle }}</router-link>
-        </li>
-        <li><span class="text-[color-mix(in_oklab,var(--color-base-content)_45%,transparent)]">&gt;</span></li>
-        <li class="font-medium text-[var(--color-base-content)] truncate">{{ lesson?.title }}</li>
-      </ol>
-    </nav>
-    <div v-if="loading" class="text-center py-12">{{ t('student.courses.loading') }}</div>
-    <div v-else-if="!lesson" class="text-center py-12 card">{{ t('student.courses.detail.notFoundTitle') }}</div>
-    <div v-else class="grid grid-cols-1 lg:grid-cols-4 gap-6">
+    <div class="max-w-7xl mx-auto">
+      <page-scaffold
+        :breadcrumb-items="breadcrumbItems"
+        :title="String(lesson?.title || t('student.courses.detailTitle') || '')"
+        :subtitle="pageSubtitle"
+        wrapper-class="mb-4"
+      >
+        <template #actions>
+          <div class="flex items-center gap-2">
+            <Button size="sm" variant="secondary" :disabled="loading || !prevLessonId" @click="goToSiblingLesson(prevLessonId)">
+              {{ t('student.lesson.prev') || '上一节' }}
+            </Button>
+            <Button size="sm" variant="primary" :disabled="loading || !nextLessonId" @click="goToSiblingLesson(nextLessonId)">
+              {{ t('student.lesson.next') || '下一节' }}
+            </Button>
+          </div>
+        </template>
+      </page-scaffold>
+
+      <loading-overlay v-if="loading" :text="(t('student.courses.loading') as string)" />
+      <error-state
+        v-else-if="!lesson"
+        :title="String(t('student.courses.detail.notFoundTitle'))"
+        :message="String(t('student.courses.detail.notFoundDesc') || '')"
+        :retry-label="String(t('student.courses.detail.backToList'))"
+        @retry="router.push('/student/courses')"
+      />
+      <div v-else class="grid grid-cols-1 lg:grid-cols-4 gap-6">
       <!-- 目录 -->
       <aside class="lg:col-span-1">
         <card padding="sm" class="max-h-[70vh] overflow-auto" tint="secondary">
@@ -146,6 +157,7 @@
       </section>
     </div>
   </div>
+  </div>
 </template>
 
 <script setup lang="ts">
@@ -155,20 +167,24 @@ import { lessonApi } from '@/api/lesson.api'
 import { fileApi } from '@/api/file.api'
 import { baseURL } from '@/api/config'
 import { studentApi } from '@/api/student.api'
-import PageHeader from '@/components/ui/PageHeader.vue'
 import Button from '@/components/ui/Button.vue'
 import Card from '@/components/ui/Card.vue'
 import GlassTextarea from '@/components/ui/inputs/GlassTextarea.vue'
+import ErrorState from '@/components/ui/ErrorState.vue'
+import LoadingOverlay from '@/components/ui/LoadingOverlay.vue'
 // @ts-ignore
 import { useI18n } from 'vue-i18n'
 import DocumentViewer from '@/components/viewers/DocumentViewer.vue'
 import ProgressCircle from '@/components/ui/ProgressCircle.vue'
 import { courseApi } from '@/api/course.api'
 import { EyeIcon } from '@heroicons/vue/24/outline'
+import { useUIStore } from '@/stores/ui'
+import PageScaffold from '@/components/ui/PageScaffold.vue'
 
 const { t } = useI18n()
 const route = useRoute()
 const router = useRouter()
+const uiStore = useUIStore()
 const loading = ref(false)
 const lesson = ref<any>(null)
 const toc = ref<any[]>([])
@@ -198,6 +214,12 @@ let lastAllowedTime = 0
 let guardsBoundForSrc = ''
 
 const courseTitle = ref('')
+const breadcrumbItems = computed(() => {
+  const base = [{ label: String(t('student.courses.title')), to: '/student/courses' }]
+  if (lesson.value?.courseId) base.push({ label: String(courseTitle.value || t('student.courses.detailTitle')), to: `/student/courses/${lesson.value.courseId}` })
+  base.push({ label: String(lesson.value?.title || '') })
+  return base
+})
 
 const controlsList = computed(() => {
   const l = lesson.value || {}
@@ -210,6 +232,21 @@ const controlsList = computed(() => {
 const blockScrub = computed(() => {
   const l = lesson.value || {}
   return (l.allowScrubbing ?? true) === false
+})
+const flattenedLessons = computed(() => {
+  const list = Array.isArray(toc.value) ? [...toc.value] : []
+  return list.sort((a: any, b: any) => Number(a?.orderIndex ?? a?.order ?? a?.id ?? 0) - Number(b?.orderIndex ?? b?.order ?? b?.id ?? 0))
+})
+const currentLessonIndex = computed(() => flattenedLessons.value.findIndex((it: any) => String(it?.id) === String(lesson.value?.id || '')))
+const prevLessonId = computed(() => {
+  const idx = currentLessonIndex.value
+  if (idx <= 0) return ''
+  return String(flattenedLessons.value[idx - 1]?.id || '')
+})
+const nextLessonId = computed(() => {
+  const idx = currentLessonIndex.value
+  if (idx < 0 || idx >= flattenedLessons.value.length - 1) return ''
+  return String(flattenedLessons.value[idx + 1]?.id || '')
 })
 
 function buildAuthedFileUrl(path: string): string {
@@ -268,6 +305,12 @@ async function loadAll(lessonId: string) {
     lesson.value = data
     // 先读取后端持久化进度，避免初次进入显示为 0 的闪烁
     try { await syncStoredProgressOnce(String(lessonId)) } catch {}
+    try {
+      const noteResp: any = await lessonApi.getLessonNotes(String(lessonId))
+      notes.value = String(noteResp?.data?.notes || noteResp?.notes || '')
+    } catch {
+      notes.value = ''
+    }
     // 初始化材料勾选状态
     try {
       const res: any = await lessonApi.getLessonMaterials(String(lessonId))
@@ -431,6 +474,17 @@ async function saveNotes() {
   saving.value = true
   try {
     await lessonApi.addLessonNotes(String(lesson.value.id), notes.value.trim())
+    uiStore.showNotification({
+      type: 'success',
+      title: '保存成功',
+      message: String(t('student.lesson.notesSaved') || '笔记已保存')
+    })
+  } catch {
+    uiStore.showNotification({
+      type: 'error',
+      title: '保存失败',
+      message: String(t('student.lesson.notesSaveFailed') || '笔记保存失败，请稍后重试')
+    })
   } finally {
     saving.value = false
   }
@@ -677,6 +731,11 @@ function goAssignment(id: string | number) {
   router.push(`/student/assignments/${id}/submit`)
 }
 
+function goToSiblingLesson(lessonId: string) {
+  if (!lessonId) return
+  router.push(`/student/lessons/${lessonId}`)
+}
+
 function formatDate(v: any) {
   try { const d = new Date(v); if (isNaN(d.getTime())) return ''; return d.toLocaleString() } catch { return '' }
 }
@@ -803,6 +862,15 @@ const myProgressPercent = computed(() => {
   const v = progressMap.value[id]
   if (Number.isFinite(v)) return Math.round(v)
   return Math.min(100, Math.max(0, computeCombinedProgress()))
+})
+
+// 页面级子标题：以“温暖鼓励”为基调（后续 copy-i18n 会统一收敛到 i18n keys）
+const pageSubtitle = computed(() => {
+  const p = Math.round(Number(myProgressPercent.value || 0))
+  if (!Number.isFinite(p) || p <= 0) return String(t('student.lesson.subtitleStart'))
+  if (p >= 100) return String(t('student.lesson.subtitleDone'))
+  // 统一用 i18n 模板句
+  return String(t('student.lesson.subtitleProgress', { progress: p }))
 })
 </script>
 

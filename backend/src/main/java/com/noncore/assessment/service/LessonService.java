@@ -205,6 +205,15 @@ public interface LessonService {
     boolean addLessonNotes(Long studentId, Long lessonId, String notes);
 
     /**
+     * 获取章节笔记
+     *
+     * @param studentId 学生ID
+     * @param lessonId 章节ID
+     * @return 笔记内容
+     */
+    String getLessonNotes(Long studentId, Long lessonId);
+
+    /**
      * 为章节评分
      *
      * @param studentId 学生ID

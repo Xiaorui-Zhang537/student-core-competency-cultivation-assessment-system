@@ -11,6 +11,7 @@ import GlassDirective from '@/directives/glass'
 import ClickOutsideDirective from '@/directives/clickOutside'
 import { i18n, loadLocaleMessages, REQUIRED_NAMESPACES, setLocale } from '@/i18n'
 import PageHeader from '@/components/ui/PageHeader.vue'
+import PageScaffold from '@/components/ui/PageScaffold.vue'
 
 async function initializeApp() {
   const app = createApp(App)
@@ -22,6 +23,7 @@ async function initializeApp() {
   app.directive('click-outside', ClickOutsideDirective)
   // 全局注册常用 UI 组件，避免各页面重复导入遗漏
   app.component('PageHeader', PageHeader)
+  app.component('PageScaffold', PageScaffold)
 
   // 辅助调试：在控制台暴露聊天 store（开发/生产均可，用后可移除）
   try {
