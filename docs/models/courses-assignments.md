@@ -19,6 +19,12 @@
   - 绑定节次：`assignment_type`（normal/course_bound）与 `lesson_id`（当 course_bound 时使用）
   - 变更影响：`assignment.api.ts`、作业相关视图
 
+## 学生端可见性规则（与业务一致）
+- `assignment_type='course_bound'`（课程作业-无截止/长期）：
+  - **未绑定** `lesson_id`：学生端不应在「我的作业」中看到
+  - **已绑定** `lesson_id`：应在对应课节详情页的「关联作业」中展示（按 `lesson_id` 关联）
+- 普通作业 `normal`：正常出现在学生端「我的作业」列表中（受发布状态/选课状态/截止时间等影响）
+
 ## 提交（Submission）
 - TS：`types/submission.ts` → `Submission`、`SubmissionRequest`、`DraftRequest`
 - 字段要点：

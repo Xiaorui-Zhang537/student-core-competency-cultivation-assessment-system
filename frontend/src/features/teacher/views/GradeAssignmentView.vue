@@ -155,22 +155,22 @@
                 <div class="flex-1 grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div class="space-y-2">
                     <div class="text-xs text-gray-500">{{ t('teacher.aiGrading.render.moral_reasoning') }}</div>
-                    <Progress :value="(aiSuggestion.dims?.moral ?? 0) * 20" size="sm" />
+                    <Progress :value="(aiSuggestion.dims?.moral ?? 0) * 20" size="sm" color="primary" />
                     <div class="text-xs text-right text-gray-500">{{ (aiSuggestion.dims?.moral ?? 0).toFixed(1) }}/5</div>
                 </div>
                   <div class="space-y-2">
                     <div class="text-xs text-gray-500">{{ t('teacher.aiGrading.render.attitude_development') }}</div>
-                    <Progress :value="(aiSuggestion.dims?.attitude ?? 0) * 20" size="sm" />
+                    <Progress :value="(aiSuggestion.dims?.attitude ?? 0) * 20" size="sm" color="primary" />
                     <div class="text-xs text-right text-gray-500">{{ (aiSuggestion.dims?.attitude ?? 0).toFixed(1) }}/5</div>
                     </div>
                   <div class="space-y-2">
                     <div class="text-xs text-gray-500">{{ t('teacher.aiGrading.render.ability_growth') }}</div>
-                    <Progress :value="(aiSuggestion.dims?.ability ?? 0) * 20" size="sm" />
+                    <Progress :value="(aiSuggestion.dims?.ability ?? 0) * 20" size="sm" color="primary" />
                     <div class="text-xs text-right text-gray-500">{{ (aiSuggestion.dims?.ability ?? 0).toFixed(1) }}/5</div>
                     </div>
                   <div class="space-y-2">
                     <div class="text-xs text-gray-500">{{ t('teacher.aiGrading.render.strategy_optimization') }}</div>
-                    <Progress :value="(aiSuggestion.dims?.strategy ?? 0) * 20" size="sm" />
+                    <Progress :value="(aiSuggestion.dims?.strategy ?? 0) * 20" size="sm" color="primary" />
                     <div class="text-xs text-right text-gray-500">{{ (aiSuggestion.dims?.strategy ?? 0).toFixed(1) }}/5</div>
                     </div>
                   </div>
@@ -260,6 +260,149 @@
                   </ul>
                 </Card>
               </div>
+
+              <!-- 稳定化取样结果（展示 run1/run2(/run3) + 分差 + 最终采用策略） -->
+              <Card v-if="(aiStable.status!=='idle' || aiStable.runs.length || aiStable.final?.meta?.ensemble)" padding="sm" tint="warning">
+                <div class="flex items-center justify-between mb-2">
+                  <div class="text-xs text-gray-600 dark:text-gray-300">{{ t('teacher.aiGrading.stable.title') || '取样结果' }}</div>
+                  <Badge size="sm" :variant="aiStable.status==='running' ? 'warning' : (aiStable.status==='done' ? 'warning' : (aiStable.status==='error' ? 'danger' : 'secondary'))">
+                    {{ aiStable.status==='running' ? (t('teacher.aiGrading.stable.status.running') || '进行中') : (aiStable.status==='done' ? (t('teacher.aiGrading.stable.status.done') || '已完成') : (aiStable.status==='error' ? (t('teacher.aiGrading.stable.status.error') || '失败') : (t('teacher.aiGrading.stable.status.idle') || '未开始'))) }}
+                  </Badge>
+                </div>
+
+                <!-- 分制说明（0-5 小分 → 作业满分 大分） -->
+                <div class="mb-2 text-[11px] leading-4 text-gray-600 dark:text-gray-300">
+                  {{
+                    (t('teacher.aiGrading.stable.scaleExplain', { total: stableTotalScore }) as any)
+                    || ('说明：小分(0-5)来自模型输出；大分(' + stableTotalScore + '分制)=小分/5×' + stableTotalScore + '。')
+                  }}
+                </div>
+
+                <div class="space-y-2 text-xs">
+                  <div v-for="r in aiStable.runs" :key="r.index" class="flex items-center gap-3 p-2 rounded-lg glass-ultraThin border border-white/20 dark:border-white/10">
+                    <div class="w-7 h-7 rounded-full flex items-center justify-center text-[11px] font-bold bg-white/40 dark:bg-white/10 text-gray-700 dark:text-gray-200">
+                      {{ r.index }}
+                    </div>
+                    <div class="min-w-0 flex-1">
+                      <div class="flex items-center justify-between gap-2">
+                        <div class="text-gray-700 dark:text-gray-300 truncate">
+                          {{ (t('teacher.aiGrading.stable.runPrefix') || '第') + r.index + (t('teacher.aiGrading.stable.runSuffix') || '次') }}
+                        </div>
+                        <div class="flex items-center gap-3 flex-shrink-0">
+                          <template v-if="r.ok && r.finalScore05!=null">
+                            <div class="flex items-center gap-2">
+                              <Badge size="sm" variant="warning">
+                                {{ (t('teacher.aiGrading.stable.score05Label') || '小分') }}: {{ Number(r.finalScore05).toFixed(1) }}/5
+                              </Badge>
+                              <Badge size="sm" variant="accent">
+                                {{ (t('teacher.aiGrading.stable.scoreFullLabel') || '换算') }}: {{ score05ToFull(r.finalScore05) }}/{{ stableTotalScore }}
+                              </Badge>
+                            </div>
+                          </template>
+                          <template v-else>
+                            <Badge size="sm" variant="danger">{{ t('teacher.aiGrading.stable.invalidJson') || '输出非JSON' }}</Badge>
+                          </template>
+                        </div>
+                      </div>
+                      <div class="mt-1" v-if="r.ok && r.finalScore05!=null">
+                        <Progress :value="Number(r.finalScore05 || 0) * 20" size="sm" color="accent" />
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- 分差 vs 阈值（可视化） -->
+                  <div v-if="aiStable.diff.diff12!=null" class="pt-2 border-t border-white/20 dark:border-white/10">
+                    <div class="flex items-start justify-between gap-3">
+                      <div class="min-w-0">
+                        <div class="text-xs font-semibold text-gray-800 dark:text-gray-200">
+                          {{ t('teacher.aiGrading.stable.diff') || '分差' }}
+                          <span class="font-semibold">{{ Number(aiStable.diff.diff12 || 0).toFixed(2) }}</span>
+                          <span class="text-gray-500 dark:text-gray-400">
+                            （{{ t('teacher.aiGrading.stable.threshold') || '阈值' }}: {{ Number(stableDiffThreshold || 0).toFixed(2) }}）
+                          </span>
+                        </div>
+                        <div class="text-[11px] text-gray-600 dark:text-gray-300 mt-1">
+                          {{
+                            (t('teacher.aiGrading.stable.diffExplain') as any)
+                            || '分差/阈值均在 0-5 分制上计算；当分差 > 阈值时会追加第 3 次取样以降低波动。'
+                          }}
+                        </div>
+                      </div>
+                      <Badge size="sm" :variant="aiStable.diff.triggeredThird ? 'warning' : 'accent'">
+                        {{ aiStable.diff.triggeredThird ? (t('teacher.aiGrading.stable.thirdTriggered') || '触发第3次') : (t('teacher.aiGrading.stable.thirdNotTriggered') || '无需第3次') }}
+                      </Badge>
+                    </div>
+                    <div class="mt-2 rounded-lg glass-ultraThin border border-white/20 dark:border-white/10 p-2">
+                      <div class="flex items-center justify-between text-[11px] text-gray-600 dark:text-gray-300 mb-1">
+                        <span>
+                          {{ Number(aiStable.diff.diff12 || 0).toFixed(2) }} / {{ Number(stableDiffThreshold || 0).toFixed(2) }}
+                        </span>
+                        <span class="font-semibold">
+                          {{ Math.round(stableDiffPercent) }}%
+                        </span>
+                      </div>
+                      <Progress
+                        :value="stableDiffPercent"
+                        size="sm"
+                        color="accent"
+                      />
+                    </div>
+                  </div>
+
+                  <!-- 最终得分 + 聚合说明（更完整） -->
+                  <div v-if="aiStable.final?.meta?.ensemble" class="pt-2 border-t border-white/20 dark:border-white/10">
+                    <div class="flex items-center justify-between gap-3">
+                      <div class="text-xs font-semibold text-gray-800 dark:text-gray-200">
+                        {{ t('teacher.aiGrading.render.final_score') || '最终得分' }}
+                      </div>
+                      <Badge size="sm" variant="accent">
+                        {{ t('teacher.aiGrading.stable.method') || '聚合' }}: {{ aiStable.final.meta.ensemble.method }}
+                      </Badge>
+                    </div>
+
+                    <div class="mt-2 rounded-lg glass-ultraThin border border-white/20 dark:border-white/10 p-2">
+                      <div class="flex flex-wrap items-center gap-2 text-xs">
+                        <Badge size="sm" variant="warning" v-if="stableFinalScore05!=null">
+                          {{ (t('teacher.aiGrading.stable.score05Label') || '小分') }}: {{ Number(stableFinalScore05 || 0).toFixed(1) }}/5
+                        </Badge>
+                        <Badge size="sm" variant="accent" v-if="stableFinalScore05!=null">
+                          {{ (t('teacher.aiGrading.stable.scoreFullLabel') || '换算') }}: {{ score05ToFull(Number(stableFinalScore05 || 0)) }}/{{ stableTotalScore }}
+                        </Badge>
+                        <span class="text-[11px] text-gray-600 dark:text-gray-300">
+                          {{
+                            (t('teacher.aiGrading.stable.scoreFormula', { total: stableTotalScore }) as any)
+                            || ('换算公式：大分=小分/5×' + stableTotalScore)
+                          }}
+                        </span>
+                      </div>
+
+                      <div class="mt-2" v-if="stableFinalScore05!=null">
+                        <Progress :value="Number(stableFinalScore05 || 0) * 20" size="sm" color="accent" />
+                      </div>
+
+                      <div class="mt-2 flex flex-wrap items-center gap-2 text-[11px] text-gray-600 dark:text-gray-300">
+                        <span v-if="aiStable.final.meta.ensemble.chosenPair">
+                          <span class="font-semibold">{{ t('teacher.aiGrading.stable.chosenPair') || '采用' }}:</span>
+                          {{ aiStable.final.meta.ensemble.chosenPair.join('-') }}
+                        </span>
+                        <span v-if="aiStable.final.meta.ensemble.confidence!=null">
+                          <span class="font-semibold">{{ t('teacher.aiGrading.stable.confidence') || '置信度' }}:</span>
+                          {{ Number(aiStable.final.meta.ensemble.confidence).toFixed(2) }}
+                          <span class="text-gray-500 dark:text-gray-400">
+                            {{ (t('teacher.aiGrading.stable.confidenceHint') as any) || '（越接近 1 越稳定）' }}
+                          </span>
+                        </span>
+                      </div>
+
+                      <div class="mt-1 text-[11px] text-gray-600 dark:text-gray-300">
+                        {{ stableEnsembleExplain }}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div v-if="aiStable.error" class="text-red-600 pt-1">{{ aiStable.error }}</div>
+                </div>
+              </Card>
 
               <Card v-if="aiProgress.items.length" padding="sm" tint="warning">
                 <div class="text-xs text-gray-600 dark:text-gray-300 mb-2">{{ t('teacher.aiGrading.progress.label') || '进度' }}</div>
@@ -679,6 +822,7 @@ import { exportNodeAsPng, exportNodeAsPdf, exportNodeAsPdfBlob, applyExportGradi
 import JSZip from 'jszip'
 import { getMbtiVariant } from '@/shared/utils/badgeColor'
 import { userApi } from '@/api/user.api'
+import { baseURL } from '@/api/config'
 
 // Router and Stores
 const route = useRoute()
@@ -725,6 +869,131 @@ const aiSuggestion = ref<any | null>(null)
 const lastAiNormalized = ref<any | null>(null)
 const lastAiHistoryId = ref<any>(null)
 const aiHistory = ref<any[]>([])
+
+// AI 稳定化取样（逐次展示）
+type AiStableRun = { index: number; ok: boolean; finalScore05?: number; finalScore?: number; error?: string }
+const aiStable = reactive({
+  status: 'idle' as 'idle' | 'running' | 'done' | 'error',
+  meta: { samplesRequested: 2, diffThreshold: 0.8 },
+  runs: [] as AiStableRun[],
+  diff: { s1: null as number | null, s2: null as number | null, diff12: null as number | null, threshold: null as number | null, triggeredThird: null as boolean | null },
+  final: null as any,
+  error: ''
+})
+const aiStreamAbort = ref<AbortController | null>(null)
+
+function resetAiStable() {
+  aiStable.status = 'idle'
+  aiStable.meta = { samplesRequested: 2, diffThreshold: 0.8 }
+  aiStable.runs = []
+  aiStable.diff = { s1: null, s2: null, diff12: null, threshold: null, triggeredThird: null }
+  aiStable.final = null
+  aiStable.error = ''
+}
+
+function abortAiStream() {
+  try { aiStreamAbort.value?.abort() } catch {}
+  aiStreamAbort.value = null
+}
+
+watch(aiModalOpen, (open) => {
+  if (!open) {
+    abortAiStream()
+    // 不强制 reset，允许老师关闭后再打开还能看到刚才结果；下一次开始批改会主动 reset
+  }
+})
+
+function score05ToFull(score05?: number | null): number {
+  const s = Number(score05 ?? NaN)
+  if (!Number.isFinite(s)) return 0
+  const total = Number(assignment.totalScore || 100)
+  return Math.round(((s / 5) * total) * 10) / 10
+}
+
+const stableTotalScore = computed(() => {
+  const n = Number(assignment.totalScore || 100)
+  return Number.isFinite(n) && n > 0 ? n : 100
+})
+
+const stableDiffThreshold = computed(() => {
+  const a = aiStable.diff.threshold
+  const b = aiStable.meta.diffThreshold
+  const n = Number(a ?? b ?? 0)
+  return Number.isFinite(n) ? n : 0
+})
+
+const stableDiffPercent = computed(() => {
+  const diff = Number(aiStable.diff.diff12 ?? NaN)
+  const th = Number(stableDiffThreshold.value ?? NaN)
+  if (!Number.isFinite(diff) || !Number.isFinite(th) || th <= 0) return 0
+  // 以阈值为 100%：diff/th * 100（超过阈值也封顶为 100，避免 UI 溢出）
+  return Math.min(100, Math.max(0, (diff / th) * 100))
+})
+
+const stableFinalScore05 = computed(() => {
+  const ov = getOverall(aiStable.final)
+  const n = Number(ov?.final_score)
+  return Number.isFinite(n) ? n : null
+})
+
+const stableEnsembleExplain = computed(() => {
+  try {
+    const ens = (aiStable.final as any)?.meta?.ensemble
+    const method = String(ens?.method || '').toLowerCase()
+    if (method.includes('mean2')) {
+      return (t('teacher.aiGrading.stable.ensembleExplain.mean2') as any)
+        || 'mean2：对“采用”的两次取样得分求平均，作为最终得分。'
+    }
+    if (method.includes('closest2of3')) {
+      return (t('teacher.aiGrading.stable.ensembleExplain.closest2of3') as any)
+        || 'closest2of3：从 3 次取样中挑选分差最小的两次求平均，降低偶发波动影响。'
+    }
+    return (t('teacher.aiGrading.stable.ensembleExplain.generic') as any)
+      || '聚合：对多次取样结果进行合成，得到更稳定的最终得分。'
+  } catch {
+    return ''
+  }
+})
+
+function hydrateStableFromEnsemble(result: any) {
+  try {
+    const ens = result?.meta?.ensemble
+    if (!ens) return false
+    const runs = Array.isArray(ens?.runs) ? ens.runs : []
+    const mapped: AiStableRun[] = runs
+      .map((r: any) => {
+        const idx = Number(r?.index)
+        const s05 = Number(r?.finalScore)
+        if (!Number.isFinite(idx) || idx <= 0) return null
+        if (!Number.isFinite(s05)) return { index: idx, ok: false, error: 'INVALID_JSON' }
+        return { index: idx, ok: true, finalScore05: s05, finalScore: score05ToFull(s05) }
+      })
+      .filter(Boolean) as any
+    if (mapped.length) {
+      aiStable.runs = mapped.sort((a, b) => Number(a.index) - Number(b.index))
+    }
+    // diff12：优先用 run1/run2 计算“是否触发第3次”的分差；若无则回退 pairDiff
+    const s1 = aiStable.runs[0]?.finalScore05
+    const s2 = aiStable.runs[1]?.finalScore05
+    const diff12 = (Number.isFinite(Number(s1)) && Number.isFinite(Number(s2))) ? Math.abs(Number(s1) - Number(s2)) : null
+    aiStable.meta = {
+      samplesRequested: Number(ens?.samplesRequested || aiStable.meta.samplesRequested || 2),
+      diffThreshold: Number(ens?.diffThreshold ?? aiStable.meta.diffThreshold ?? 0.8)
+    }
+    aiStable.diff = {
+      s1: Number.isFinite(Number(s1)) ? Number(s1) : null,
+      s2: Number.isFinite(Number(s2)) ? Number(s2) : null,
+      diff12: diff12 != null ? diff12 : (ens?.pairDiff != null ? Number(ens.pairDiff) : null),
+      threshold: ens?.diffThreshold != null ? Number(ens.diffThreshold) : null,
+      triggeredThird: ens?.triggeredThird != null ? Boolean(ens.triggeredThird) : null
+    }
+    aiStable.final = result
+    if (aiStable.status === 'idle') aiStable.status = 'done'
+    return true
+  } catch {
+    return false
+  }
+}
 const analysisLines = computed(() => {
   const txt = String(aiSuggestion.value?.analysis || '').trim()
   if (!txt) return []
@@ -787,6 +1056,16 @@ function renderCriterion(block: any, barKind?: 'dimension' | 'dimension_moral' |
       const ev = Array.isArray(sec?.evidence) ? sec.evidence : []
       const sug = Array.isArray(sec?.suggestions) ? sec.suggestions : []
       const which = barKind || 'dimension'
+      const labelInline = (txt: string) =>
+        `<span class="inline-flex items-center gap-2 font-semibold mr-1">
+          <span class="inline-block w-2 h-2 rounded-full" data-gradient="${which}"></span>
+          <span>${escapeHtml(txt)}:</span>
+        </span>`
+      const labelBlock = (txt: string) =>
+        `<div class="mt-2 mb-1 inline-flex items-center gap-2 text-xs font-semibold">
+          <span class="inline-block w-2 h-2 rounded-full" data-gradient="${which}"></span>
+          <span>${escapeHtml(txt)}</span>
+        </div>`
       const bar = typeof score === 'number' ? `<div class=\"h-2 w-40 rounded-md overflow-hidden border border-gray-300/70 dark:border-white/10 bg-gray-200/60 dark:bg-white/10 shadow-inner\"><div class=\"h-full\" data-gradient=\"${which}\" style=\"width:${score*20}%\"></div></div>` : ''
       const firstReasoning = (ev.find((e: any) => e && String(e.reasoning || '').trim()) || {}).reasoning || ''
       const firstConclusion = (ev.find((e: any) => e && String(e.conclusion || '').trim()) || {}).conclusion || ''
@@ -796,10 +1075,10 @@ function renderCriterion(block: any, barKind?: 'dimension' | 'dimension_moral' |
         .filter((e: any) => (e && (e.quote || e.explanation)))
         .map((e: any) => `<li class=\"mb-1\">\n            <div class=\"text-xs text-gray-600 dark:text-gray-300\">${e.quote ? '\"'+escapeHtml(e.quote)+'\"' : ''}</div>\n            ${e.explanation?`<div class=\\\"text-[11px] text-gray-500\\\">${escapeHtml(e.explanation)}</div>`:''}\n          </li>`) 
         .join('')
-      const reasoningBlock = groupReasoning ? `<div class=\"text-xs\"><span class=\"font-semibold\">Reasoning:</span> ${escapeHtml(groupReasoning)}</div>` : ''
-      const conclusionBlock = groupConclusion ? `<div class=\"text-xs italic text-gray-600 dark:text-gray-300\"><span class=\"not-italic font-semibold\">Conclusion:</span> ${escapeHtml(groupConclusion)}</div>` : ''
+      const reasoningBlock = groupReasoning ? `<div class="text-xs mt-1">${labelInline('Reasoning')} ${escapeHtml(groupReasoning)}</div>` : ''
+      const conclusionBlock = groupConclusion ? `<div class="text-xs italic text-gray-600 dark:text-gray-300 mt-1"><span class="not-italic">${labelInline('Conclusion')}</span> ${escapeHtml(groupConclusion)}</div>` : ''
       const sugg = sug.map((s: any) => `<li class=\"mb-1 text-xs\">${escapeHtml(String(s))}</li>`).join('')
-      sections.push(`<div class=\"space-y-2\"><div class=\"text-sm font-medium\">${escapeHtml(String(k))} ${score!=null?`(${score}/5)`:''}</div>${bar}<div><div class=\"text-xs font-semibold mt-2\">Evidence</div><ul>${evid}</ul>${reasoningBlock}${conclusionBlock}</div><div><div class=\"text-xs font-semibold mt-2\">Suggestions</div><ul>${sugg}</ul></div></div>`)
+      sections.push(`<div class="space-y-2"><div class="text-sm font-medium">${escapeHtml(String(k))} ${score!=null?`(${score}/5)`:''}</div>${bar}<div>${labelBlock('Evidence')}<ul>${evid}</ul>${reasoningBlock}${conclusionBlock}</div><div>${labelBlock('Suggestions')}<ul>${sugg}</ul></div></div>`)
     }
     return sections.join('')
   } catch { return `<pre class=\"text-xs\">${escapeHtml(JSON.stringify(block, null, 2))}</pre>` }
@@ -1039,7 +1318,14 @@ async function loadLatestAiReportForStudent() {
         } catch { return {} }
       }
     })(raw)
-        const normalized = normalizeAssessment(obj)
+    const normalized = normalizeAssessment(obj)
+    // 进入页面时也能恢复展示：保存最近一次 AI 结果（含 meta.ensemble 的取样信息）
+    lastAiNormalized.value = normalized
+    try {
+      resetAiStable()
+      aiStable.status = 'done'
+      hydrateStableFromEnsemble(normalized)
+    } catch {}
     const ov = getOverall(normalized) || {}
     const nd = (ov?.dimension_averages || {}) as any
     const final5 = Number(ov?.final_score || 0)
@@ -1418,24 +1704,190 @@ async function startAiGradingFromModal() {
   if (!canStartAi.value) return
   aiLoading.value = true
   aiProgress.items = []
+  // 新一次开始前，终止旧 SSE，并清空取样展示
+  abortAiStream()
+  resetAiStable()
   try {
     if (aiSource.value === 'text') {
       // 仅文本
       const tempId = Date.now()
       aiProgress.items.push({ id: tempId, name: 'text_item', status: 'grading' })
-      try {
-        const payload = { messages: [{ role: 'user', content: String(aiPicker.previewText) }], model: gradingModel.value, jsonOnly: true, useGradingPrompt: true }
-      const resp: any = await aiGradingApi.gradeEssay(payload as any)
-        const result = (resp?.data?.results?.[0]?.result) ?? (resp?.data ?? resp)
-      const historyId = (resp?.data?.historyId ?? resp?.historyId)
-        const target = aiProgress.items.find(it => it.id === tempId)
-      if (target) { target.status = 'done'; target.result = result; (target as any).historyId = historyId }
-      } catch (e: any) {
-        const target = aiProgress.items.find(it => it.id === tempId)
-        if (target) { target.status = 'error'; target.error = e?.message || 'Failed' }
-      }
+      await (async () => {
+        const token = localStorage.getItem('token') || ''
+        const locale = localStorage.getItem('locale') || 'zh-CN'
+        const controller = new AbortController()
+        aiStreamAbort.value = controller
+        aiStable.status = 'running'
+        aiStable.meta = { samplesRequested: 2, diffThreshold: 0.8 }
+
+        const payload: any = {
+          messages: [{ role: 'user', content: String(aiPicker.previewText) }],
+          model: gradingModel.value,
+          jsonOnly: true,
+          useGradingPrompt: true,
+          samples: 2,
+          diffThreshold: 0.8
+        }
+
+        const res = await fetch(`${String(baseURL || '/api')}/ai/grade/essay/stream`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            ...(token ? { Authorization: `Bearer ${token}` } : {}),
+            ...(locale ? { 'Accept-Language': String(locale), 'X-Locale': String(locale) } : {})
+          },
+          body: JSON.stringify(payload),
+          signal: controller.signal
+        })
+        if (!res.ok || !res.body) {
+          throw new Error(`HTTP ${res.status}`)
+        }
+
+        const decoder = new TextDecoder('utf-8')
+        const reader = res.body.getReader()
+        let buffer = ''
+
+        const upsertRun = (run: any) => {
+          const idx = Number(run?.index || 0)
+          if (!Number.isFinite(idx) || idx <= 0) return
+          const ok = !!run?.ok
+          const s05 = run?.finalScore05
+          const item: AiStableRun = ok && s05 != null
+            ? { index: idx, ok: true, finalScore05: Number(s05), finalScore: score05ToFull(Number(s05)) }
+            : { index: idx, ok: false, error: String(run?.error || 'INVALID_JSON') }
+          const at = aiStable.runs.findIndex(r => Number(r.index) === idx)
+          if (at >= 0) aiStable.runs.splice(at, 1, item)
+          else aiStable.runs.push(item)
+          aiStable.runs.sort((a, b) => Number(a.index) - Number(b.index))
+        }
+
+        const handleEvent = (eventName: string, dataText: string) => {
+          const parse = () => {
+            const s = String(dataText || '').trim()
+            if (!s) return null
+            try { return JSON.parse(s) } catch { return s }
+          }
+          const data: any = parse()
+          if (eventName === 'meta' && data && typeof data === 'object') {
+            aiStable.meta = {
+              samplesRequested: Number(data.samplesRequested || aiStable.meta.samplesRequested || 2),
+              diffThreshold: Number(data.diffThreshold || aiStable.meta.diffThreshold || 0.8)
+            }
+            return
+          }
+          if (eventName === 'run') {
+            upsertRun(data)
+            return
+          }
+          if (eventName === 'diff' && data && typeof data === 'object') {
+            aiStable.diff = {
+              s1: data?.s1 != null ? Number(data.s1) : null,
+              s2: data?.s2 != null ? Number(data.s2) : null,
+              diff12: data?.diff12 != null ? Number(data.diff12) : null,
+              threshold: data?.threshold != null ? Number(data.threshold) : null,
+              triggeredThird: data?.triggeredThird != null ? Boolean(data.triggeredThird) : null
+            }
+            return
+          }
+          if (eventName === 'final' && data && typeof data === 'object') {
+            const result = data?.result
+            const historyId = data?.historyId
+            aiStable.final = result
+            aiStable.status = 'done'
+            const target = aiProgress.items.find(it => it.id === tempId)
+            if (target) { target.status = 'done'; target.result = result; (target as any).historyId = historyId }
+
+            // 复用既有：result -> lastAiNormalized/aiSuggestion/lastAiHistoryId
+            try { lastAiNormalized.value = normalizeAssessment(result) } catch { lastAiNormalized.value = null }
+            try { lastAiHistoryId.value = historyId || null } catch { lastAiHistoryId.value = null }
+            try {
+              const ov = getOverall(lastAiNormalized.value)
+              const dim = (ov?.dimension_averages || {}) as any
+              const final5 = Number(ov?.final_score ?? 0)
+              const suggested = Math.round(((final5 / 5) * Number(assignment.totalScore || 100)) * 10) / 10
+              const improvements: string[] = []
+              const holistic = String(ov?.holistic_feedback || '')
+              if (holistic) {
+                const lines = holistic.replace(/\r/g, '\n').split(/\n+/)
+                let inKeys = false
+                for (const l of lines) {
+                  const ln = String(l || '').trim()
+                  if (!ln) continue
+                  if (!inKeys) { if (ln.toLowerCase().includes('key suggestions')) { inKeys = true } continue }
+                  let item = ln
+                  if (item.startsWith('- ')) item = item.substring(2).trim()
+                  if (item.startsWith('• ')) item = item.substring(2).trim()
+                  if (item) improvements.push(item)
+                  if (improvements.length >= 12) break
+                }
+              }
+              if (!improvements.length) {
+                const collect = (grp: any) => {
+                  if (!grp) return
+                  for (const k of Object.keys(grp)) {
+                    const sec = (grp as any)[k]
+                    const arr = Array.isArray(sec?.suggestions) ? sec.suggestions : []
+                    for (const s of arr) { const v = String(s || '').trim(); if (v) improvements.push(v); if (improvements.length >= 12) break }
+                    if (improvements.length >= 12) break
+                  }
+                }
+                collect(lastAiNormalized.value?.moral_reasoning); collect(lastAiNormalized.value?.attitude_development); collect(lastAiNormalized.value?.ability_growth); collect(lastAiNormalized.value?.strategy_optimization)
+              }
+              aiSuggestion.value = {
+                suggestedScore: suggested,
+                dims: {
+                  moral: Number(dim.moral_reasoning || 0),
+                  attitude: Number(dim.attitude || 0),
+                  ability: Number(dim.ability || 0),
+                  strategy: Number(dim.strategy || 0)
+                },
+                analysis: holistic,
+                improvements
+              }
+            } catch {}
+            return
+          }
+          if (eventName === 'error') {
+            aiStable.status = 'error'
+            aiStable.error = (data && typeof data === 'object' && (data.message || data.error)) ? String(data.message || data.error) : String(data || 'Failed')
+            const target = aiProgress.items.find(it => it.id === tempId)
+            if (target && target.status !== 'done') { target.status = 'error'; target.error = aiStable.error || 'Failed' }
+            return
+          }
+          // ignore ping/unknown
+        }
+
+        try {
+          while (true) {
+            const { value, done } = await reader.read()
+            if (done) break
+            buffer += decoder.decode(value, { stream: true })
+            // SSE 事件以空行分隔
+            while (buffer.includes('\n\n')) {
+              const idx = buffer.indexOf('\n\n')
+              const chunk = buffer.slice(0, idx)
+              buffer = buffer.slice(idx + 2)
+              const lines = chunk.split('\n').map(s => s.replace(/\r/g, ''))
+              let eventName = 'message'
+              const dataLines: string[] = []
+              for (const line of lines) {
+                if (line.startsWith('event:')) eventName = line.slice('event:'.length).trim()
+                else if (line.startsWith('data:')) dataLines.push(line.slice('data:'.length).trimStart())
+              }
+              const dataText = dataLines.join('\n')
+              handleEvent(eventName, dataText)
+            }
+          }
+        } finally {
+          try { reader.releaseLock() } catch {}
+          aiStreamAbort.value = null
+          if (aiStable.status === 'running') aiStable.status = 'done'
+        }
+      })()
     } else if (aiSource.value === 'files') {
       // 仅附件
+      aiStable.status = 'running'
+      aiStable.meta = { samplesRequested: 2, diffThreshold: 0.8 }
       const ids = aiPicker.selectedFileIds.slice()
       aiProgress.items.push(...ids.map(id => {
         const info = (aiPicker.files || []).find((x: any) => Number(x.id) === Number(id))
@@ -1464,6 +1916,15 @@ async function startAiGradingFromModal() {
 
     // 使用首个成功结果作为当前界面展示依据（不立即保存到历史/报告）
     const firstOk = aiProgress.items.find(it => it.status === 'done' && it.result)
+    if (!firstOk?.result) {
+      // SSE/批量/回退都应至少产生一个可用结果；否则视为失败（避免误报成功）
+      throw new Error(String(t('teacher.aiGrading.stable.noResult') || 'AI 未返回有效结果'))
+    }
+    // 若后端已在最终结果中返回 meta.ensemble，则将 run1/run2(/run3)+分差+聚合信息灌入弹窗展示（附件模式也能看）
+    try {
+      aiStable.status = 'done'
+      hydrateStableFromEnsemble(firstOk.result)
+    } catch {}
     if (firstOk?.result) {
       try {
         const rawRes: any = firstOk.result
@@ -1519,9 +1980,34 @@ async function startAiGradingFromModal() {
       } catch {}
     }
 
+    // 关键：即使老师不提交成绩，也要把本次 AI 取样分数与最终分数入库（ability_reports）
+    // 以后重新进入该页面，可通过 abilityApi.getTeacherLatestReportOfStudent 恢复“AI评分建议 + 取样结果”
+    try {
+      if (submission.studentId && assignment.id && lastAiNormalized.value) {
+        const normalizedJson = (() => {
+          try { return JSON.stringify(firstOk?.result ?? lastAiNormalized.value) } catch { return '' }
+        })()
+        if (normalizedJson) {
+          await abilityApi.createReportFromAi({
+            studentId: String(submission.studentId),
+            normalizedJson,
+            title: `AI批改-${String(assignment.title || assignment.id || '')}`,
+            courseId: assignment.courseId || undefined,
+            assignmentId: assignment.id || undefined,
+            submissionId: submission.id || undefined,
+            aiHistoryId: (lastAiHistoryId.value || (firstOk as any)?.historyId || undefined) as any
+          })
+        }
+      }
+    } catch { /* ignore */ }
+
     uiStore.showNotification({ type: 'success', title: t('teacher.grading.ai.title'), message: t('teacher.grading.notify.aiApplied') })
   } catch (e: any) {
-    uiStore.showNotification({ type: 'error', title: t('teacher.grading.ai.title'), message: e?.message || t('teacher.grading.notify.loadFailed') })
+    // 用户关闭弹窗会触发 Abort；此时不弹错误提示
+    const aborted = (e && (e.name === 'AbortError' || /aborted/i.test(String(e?.message || ''))))
+    if (!aborted) {
+      uiStore.showNotification({ type: 'error', title: t('teacher.grading.ai.title'), message: e?.message || t('teacher.grading.notify.loadFailed') })
+    }
   } finally {
     aiLoading.value = false
   }

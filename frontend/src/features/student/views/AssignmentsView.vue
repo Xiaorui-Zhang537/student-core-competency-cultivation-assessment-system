@@ -1,16 +1,16 @@
 <template>
   <div class="min-h-screen p-6">
     <div class="max-w-7xl mx-auto">
-      <PageHeader :title="t('student.assignments.title') || '我的作业'" :subtitle="t('student.assignments.subtitle') || '查看与提交作业'" />
+      <page-header :title="t('student.assignments.title') || '我的作业'" :subtitle="t('student.assignments.subtitle') || '查看与提交作业'" />
 
       <!-- 过滤条（取消外层嵌套容器，仅保留 FilterBar） -->
-      <FilterBar tint="info" align="center" :dense="false" class="mb-6 rounded-full h-19">
+      <filter-bar tint="info" align="center" :dense="false" class="mb-6 rounded-full h-19">
         <template #left>
           <div class="flex items-center gap-4">
             <div class="w-auto flex items-center gap-2">
               <span class="text-xs font-medium leading-tight text-subtle">{{ (t('student.assignments.filters.statusLabel') as string) || '状态' }}</span>
               <div class="w-48">
-                <GlassPopoverSelect
+                <glass-popover-select
                   v-model="filters.status"
                   :options="statusOptions"
                   size="sm"
@@ -21,7 +21,7 @@
             <div class="w-auto flex items-center gap-2">
               <span class="text-xs font-medium leading-tight text-subtle">{{ (t('student.assignments.filters.courseLabel') as string) || '课程' }}</span>
               <div class="w-56">
-                <GlassPopoverSelect
+                <glass-popover-select
                   v-model="filters.courseId"
                   :options="courseOptions"
                   size="sm"
@@ -31,13 +31,13 @@
             </div>
             <div class="w-auto flex items-center gap-2">
               <span class="text-xs font-medium leading-tight text-subtle">{{ (t('student.assignments.filters.onlyPending') as string) || '仅显示待处理' }}</span>
-              <GlassSwitch v-model="onlyPending" size="sm" />
+              <glass-switch v-model="onlyPending" size="sm" />
             </div>
           </div>
         </template>
         <template #right>
           <div class="w-64">
-            <GlassSearchInput
+            <glass-search-input
               v-model="searchText"
               :placeholder="(t('student.assignments.searchPlaceholder') as string) || (t('student.assignments.search') as string) || '搜索作业'"
               size="sm"
@@ -45,7 +45,7 @@
             />
           </div>
         </template>
-      </FilterBar>
+      </filter-bar>
 
       <!-- 列表（每行一个卡片） -->
       <div class="grid grid-cols-1 gap-4">
@@ -54,11 +54,11 @@
           <Button variant="info" @click="loadList">{{ t('teacher.submissions.retry') }}</Button>
         </div>
 
-        <Card v-for="a in list" :key="a.id" padding="md" tint="info" class="relative">
+        <card v-for="a in list" :key="a.id" padding="md" tint="info" class="relative">
           <div class="min-w-0 pr-44">
             <div class="flex items-center gap-2">
               <span class="text-base font-semibold text-base-content truncate">{{ a.title }}</span>
-              <Badge size="sm" :variant="statusVariant(displayStatus(a))">{{ statusText(displayStatus(a)) }}</Badge>
+              <badge size="sm" :variant="statusVariant(displayStatus(a))">{{ statusText(displayStatus(a)) }}</badge>
             </div>
             <div class="text-sm text-subtle mt-1 truncate">{{ a.courseTitle || a.courseName || a.course?.title }}</div>
             <div class="text-xs text-subtle mt-1">
@@ -75,13 +75,13 @@
             <Button v-if="displayStatus(a)==='PENDING' && !isPastDue(a.dueDate || a.dueAt)" variant="success" size="sm" @click="submit(a.id)">{{ t('student.assignments.actions.submit') }}</Button>
             <Button v-else-if="displayStatus(a)==='SUBMITTED' || isPastDue(a.dueDate || a.dueAt)" variant="info" size="sm" class="gap-3" @click="view(a.id)">
               <template #icon>
-                <EyeIcon class="h-4 w-4" />
+                <eye-icon class="h-4 w-4" />
               </template>
               {{ t('student.assignments.actions.view') }}
             </Button>
             <Button v-else variant="secondary" icon="confirm" size="sm" class="gap-3" @click="view(a.id)">{{ t('student.assignments.actions.review') }}</Button>
           </div>
-        </Card>
+        </card>
 
         <div v-if="!loading && !errorMessage && list.length===0" class="col-span-full p-8 text-center text-subtle rounded-xl glass-regular glass-tint-info" v-glass>{{ t('student.assignments.empty') }}</div>
         <div v-if="loading" class="col-span-full p-8 text-center text-subtle rounded-xl glass-regular glass-tint-secondary" v-glass>{{ t('shared.loading') }}</div>
@@ -92,7 +92,7 @@
         <div class="flex items-center space-x-2">
           <span class="text-sm text-base-content">{{ perPagePrefixText }}</span>
           <div class="w-28">
-            <GlassPopoverSelect
+            <glass-popover-select
               v-model="pageSize"
               :options="[{label: '10', value: 10}, {label: '20', value: 20}, {label: '50', value: 50}]"
               size="sm"
@@ -247,6 +247,8 @@ async function loadList() {
     // 默认包含历史课程作业；仅显示待处理由后端过滤
     params.includeHistory = true
     params.onlyPending = !!onlyPending.value
+    // 课程作业-长期（course_bound）应仅在课节详情里展示，不出现在“我的作业”
+    params.excludeCourseBound = true
     const res: any = await studentApi.getAssignments(params)
     const items = res?.items || res?.data?.items || res || []
     const rawList = Array.isArray(items) ? items : (items.items || [])

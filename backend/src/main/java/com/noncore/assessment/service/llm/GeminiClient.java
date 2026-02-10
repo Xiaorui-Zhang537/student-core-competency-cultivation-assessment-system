@@ -72,6 +72,26 @@ public class GeminiClient {
                         String type = String.valueOf(mm.get("type"));
                         if ("text".equals(type)) {
                             parts.add(Map.of("text", String.valueOf(mm.get("text"))));
+                        } else if ("image_url".equals(type)) {
+                            // OpenAI 兼容结构：{ type:'image_url', image_url:{ url:'data:image/png;base64,...' } }
+                            try {
+                                Object img = mm.get("image_url");
+                                String url = null;
+                                if (img instanceof Map<?, ?> im) {
+                                    Object u = im.get("url");
+                                    if (u != null) url = String.valueOf(u);
+                                }
+                                InlineData id = parseInlineDataFromUrl(url);
+                                if (id != null && id.mimeType != null && id.dataBase64 != null) {
+                                    // Gemini proto JSON 使用 camelCase：inlineData/mimeType
+                                    parts.add(Map.of(
+                                            "inlineData", Map.of(
+                                                    "mimeType", id.mimeType,
+                                                    "data", id.dataBase64
+                                            )
+                                    ));
+                                }
+                            } catch (Exception ignored) { }
                         }
                     }
                 }
@@ -192,6 +212,30 @@ public class GeminiClient {
         }
         String msg = last != null ? last.getMessage() : "unknown";
         throw new BusinessException(ErrorCode.SYSTEM_ERROR, "Gemini请求异常(model=" + model + "): " + msg);
+    }
+
+    private static class InlineData {
+        final String mimeType;
+        final String dataBase64;
+        InlineData(String mimeType, String dataBase64) {
+            this.mimeType = mimeType;
+            this.dataBase64 = dataBase64;
+        }
+    }
+
+    private InlineData parseInlineDataFromUrl(String url) {
+        if (url == null) return null;
+        String u = url.trim();
+        if (u.isEmpty()) return null;
+        // 仅支持 data URL（后端会内联，避免外网不可达与鉴权问题）
+        // 形如：data:image/png;base64,AAAA...
+        if (!u.startsWith("data:")) return null;
+        int semi = u.indexOf(";base64,");
+        if (semi <= "data:".length()) return null;
+        String mime = u.substring("data:".length(), semi).trim();
+        String b64 = u.substring(semi + ";base64,".length()).trim();
+        if (mime.isEmpty() || b64.isEmpty()) return null;
+        return new InlineData(mime, b64);
     }
 
     private String mapRole(String role) {

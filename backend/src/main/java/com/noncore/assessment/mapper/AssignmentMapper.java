@@ -151,7 +151,8 @@ public interface AssignmentMapper {
                                                         @Param("status") String status,
                                                         @Param("keyword") String keyword,
                                                         @Param("includeHistory") boolean includeHistory,
-                                                        @Param("onlyPending") boolean onlyPending);
+                                                        @Param("onlyPending") boolean onlyPending,
+                                                        @Param("excludeCourseBound") boolean excludeCourseBound);
 
     /**
      * 获取作业统计信息

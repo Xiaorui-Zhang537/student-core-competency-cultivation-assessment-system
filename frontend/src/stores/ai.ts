@@ -22,6 +22,12 @@ export interface AiMessage {
   createdAt?: string
 }
 
+export interface PendingAttachmentMeta {
+  id: number
+  name?: string
+  mimeType?: string
+}
+
 export const useAIStore = defineStore('ai', () => {
   const ui = useUIStore()
   const conversations = ref<AiConversation[]>([])
@@ -29,6 +35,7 @@ export const useAIStore = defineStore('ai', () => {
   const messagesByConvId = reactive<Record<string, AiMessage[]>>({})
   const draftsByConvId = reactive<Record<string, string>>({})
   const pendingAttachmentIds = reactive<Record<string, number[]>>({})
+  const pendingAttachmentsMeta = reactive<Record<string, PendingAttachmentMeta[]>>({})
   const searchQuery = ref('')
   const model = ref('google/gemini-2.5-pro')
 
@@ -52,6 +59,7 @@ export const useAIStore = defineStore('ai', () => {
       messagesByConvId[String(c.id)] = []
       draftsByConvId[String(c.id)] = ''
       pendingAttachmentIds[String(c.id)] = []
+      pendingAttachmentsMeta[String(c.id)] = []
     }
     return c
   }
@@ -91,6 +99,7 @@ export const useAIStore = defineStore('ai', () => {
       if (!messagesByConvId[key]) messagesByConvId[key] = []
       if (!draftsByConvId[key]) draftsByConvId[key] = ''
       if (!pendingAttachmentIds[key]) pendingAttachmentIds[key] = []
+      if (!pendingAttachmentsMeta[key]) pendingAttachmentsMeta[key] = []
       return existed
     }
     const created = await createConversation({ title, model: model.value })
@@ -135,6 +144,7 @@ export const useAIStore = defineStore('ai', () => {
     delete messagesByConvId[String(id)]
     delete draftsByConvId[String(id)]
     delete pendingAttachmentIds[String(id)]
+    delete pendingAttachmentsMeta[String(id)]
     if (activeConversationId.value === id) activeConversationId.value = conversations.value[0]?.id || null
   }
 
@@ -168,14 +178,27 @@ export const useAIStore = defineStore('ai', () => {
     messagesByConvId[String(id)] = items
   }
 
-  const addPendingAttachment = (id: number, fileId: number) => {
+  const addPendingAttachment = (id: number, fileId: number, meta?: { name?: string; mimeType?: string }) => {
     const key = String(id)
     pendingAttachmentIds[key] = pendingAttachmentIds[key] || []
-    pendingAttachmentIds[key].push(fileId)
+    if (!pendingAttachmentIds[key].includes(fileId)) {
+      pendingAttachmentIds[key].push(fileId)
+    }
+    pendingAttachmentsMeta[key] = pendingAttachmentsMeta[key] || []
+    if (!pendingAttachmentsMeta[key].some(a => a.id === fileId)) {
+      pendingAttachmentsMeta[key].push({ id: fileId, name: meta?.name, mimeType: meta?.mimeType })
+    }
   }
 
   const clearPendingAttachments = (id: number) => {
     pendingAttachmentIds[String(id)] = []
+    pendingAttachmentsMeta[String(id)] = []
+  }
+
+  const removePendingAttachment = (id: number, fileId: number) => {
+    const key = String(id)
+    pendingAttachmentIds[key] = (pendingAttachmentIds[key] || []).filter(x => x !== fileId)
+    pendingAttachmentsMeta[key] = (pendingAttachmentsMeta[key] || []).filter(a => a.id !== fileId)
   }
 
   const saveDraft = (id: number, text: string) => {
@@ -273,9 +296,15 @@ export const useAIStore = defineStore('ai', () => {
       }
     }
 
-    const answer = finalResp?.answer || (finalResp?.data?.answer)
-    if (answer !== undefined) {
-      messagesByConvId[key].push({ id: Date.now() + 1, role: 'assistant', content: String(answer || '...') })
+    const rawAnswer = finalResp?.answer ?? finalResp?.data?.answer
+    const answerText = typeof rawAnswer === 'string' ? rawAnswer : (rawAnswer == null ? '' : String(rawAnswer))
+    if (typeof answerText === 'string' && answerText.trim().length > 0) {
+      messagesByConvId[key].push({ id: Date.now() + 1, role: 'assistant', content: answerText })
+    } else if (!finalResp) {
+      // 完全失败：不插入占位，避免误导用户（也避免用户误以为已计次）
+      ui.showNotification({ type: 'warning', title: 'AI 未返回', message: '本次请求未获得有效回复，请稍后重试或切换模型。' })
+    } else {
+      ui.showNotification({ type: 'warning', title: 'AI 回复异常', message: '模型返回为空或格式异常，请稍后重试。' })
     }
     // 一旦该会话产生（即使失败也已入列用户消息），锁定其模型显示：若会话对象缺少模型信息，则补齐为当前选择模型
     const idx = conversations.value.findIndex(c => c.id === convId)
@@ -293,6 +322,7 @@ export const useAIStore = defineStore('ai', () => {
     messagesByConvId,
     draftsByConvId,
     pendingAttachmentIds,
+    pendingAttachmentsMeta,
     searchQuery,
     model,
     fetchConversations,
@@ -305,6 +335,7 @@ export const useAIStore = defineStore('ai', () => {
     fetchMessages,
     addPendingAttachment,
     clearPendingAttachments,
+    removePendingAttachment,
     saveDraft,
     getUnsentConversation,
     ensureDraftConversation,

@@ -272,6 +272,37 @@
 				"label": "进度"
 			}
 			,
+			"stable": {
+				"title": "取样结果",
+				"scaleExplain": "说明：小分(0-5)来自模型输出；大分({total}分制)=小分/5×{total}。",
+				"score05Label": "小分",
+				"scoreFullLabel": "换算",
+				"scoreFormula": "换算公式：大分=小分/5×{total}",
+				"status": {
+					"idle": "未开始",
+					"running": "进行中",
+					"done": "已完成",
+					"error": "失败"
+				},
+				"runPrefix": "第",
+				"runSuffix": "次",
+				"invalidJson": "输出非JSON",
+				"diff": "分差",
+				"threshold": "阈值",
+				"diffExplain": "分差/阈值均在 0-5 分制上计算；当分差 > 阈值时会追加第 3 次取样以降低波动。",
+				"thirdTriggered": "触发第3次",
+				"thirdNotTriggered": "无需第3次",
+				"method": "聚合",
+				"chosenPair": "采用",
+				"confidence": "置信度",
+				"confidenceHint": "（越接近 1 越稳定）",
+				"ensembleExplain": {
+					"mean2": "mean2：对“采用”的两次取样得分求平均，作为最终得分。",
+					"closest2of3": "closest2of3：从 3 次取样中挑选分差最小的两次求平均，降低偶发波动影响。",
+					"generic": "聚合：对多次取样结果进行合成，得到更稳定的最终得分。"
+				},
+				"noResult": "AI 未返回有效结果"
+			},
 			"viewDetail": "查看详情"
 		},
 		"submissions": {
@@ -560,9 +591,16 @@
 			"thinking": "AI 正在思考...",
 			"placeholder": "输入你的问题，按 Enter 发送",
 			"send": "发送",
-			"conversations": "我的会话",
+			"conversations": "会话",
 			"memory": "长期记忆",
 			"memoryPlaceholder": "个性化偏好、口吻等...",
+			"uploadTitle": "上传图片/文档",
+			"memoryTips": {
+				"title": "推荐写法",
+				"tip1": "我希望你用中文回答，语气简洁、分点。",
+				"tip2": "我当前的学习目标是：____；我更偏好：示例/步骤/对比表。",
+				"tip3": "当我上传图片/文档时，请先总结要点，再给出建议。"
+			},
 			"renameTitle": "重命名对话",
 			"model": { "label": "模型" },
 			"context": {
@@ -585,9 +623,9 @@
 			"untitled": "未命名会话",
 			"modelsInfo": {
                  "title": "模型说明",
-                "glm46": "GLM-4.6：高阶推理模型，适合需要高质量答案的场景。",
-                 "glm45": "GLM-4.5 Air：响应快速的轻量模型，适合日常问答与教学场景。",
-				 "gemini": "Gemini 2.5 Pro：Google 旗舰推理模型，学生每日最多可用 20 次，教师不受限制。"
+                "glm46": "GLM-4.6：文本模型（不支持图片/文件）。学生每周最多可用 20 次。",
+                 "glm45": "GLM-4.5 Air：文本模型（不支持图片/文件），响应更快。学生每周最多可用 20 次。",
+				 "gemini": "Gemini 2.5 Pro：支持图片与文档（pdf/doc/docx/txt）理解。学生每周最多可用 10 次。"
             }
 		},
 		"students": {

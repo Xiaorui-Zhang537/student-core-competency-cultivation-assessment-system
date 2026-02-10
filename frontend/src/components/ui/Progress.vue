@@ -35,7 +35,7 @@ interface Props {
   label?: string
   showLabel?: boolean
   size?: 'sm' | 'md' | 'lg'
-  color?: 'primary' | 'info' | 'success' | 'warning' | 'danger'
+  color?: 'primary' | 'secondary' | 'accent' | 'info' | 'success' | 'warning' | 'danger'
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -57,6 +57,8 @@ const sizeClasses = computed(() => {
 const colorClasses = computed(() => {
   const colors: Record<NonNullable<Props['color']>, string> = {
     primary: 'bg-[color-mix(in_oklab,var(--color-primary)_70%,transparent)]',
+    secondary: 'bg-[color-mix(in_oklab,var(--color-secondary)_70%,transparent)]',
+    accent: 'bg-[color-mix(in_oklab,var(--color-accent)_70%,transparent)]',
     info: 'bg-[color-mix(in_oklab,var(--color-info)_70%,transparent)]',
     success: 'bg-[color-mix(in_oklab,var(--color-success)_70%,transparent)]',
     warning: 'bg-[color-mix(in_oklab,var(--color-warning)_70%,transparent)]',

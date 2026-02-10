@@ -2,22 +2,22 @@
   <div class="relative">
     <div class="min-h-screen p-4 md:p-6">
       <div class="max-w-6xl mx-auto mb-4 md:mb-6">
-        <PageHeader :title="t('shared.voicePractice.title')" :subtitle="t('shared.voicePractice.subtitle')">
+        <page-header :title="t('shared.voicePractice.title')" :subtitle="t('shared.voicePractice.subtitle')">
           <template #actions>
-            <Button variant="secondary" icon="arrow-left" class="whitespace-nowrap shrink-0" @click="goBack">
+            <Button variant="info" icon="arrow-left" class="whitespace-nowrap shrink-0" @click="goBack">
               {{ t('shared.voicePractice.back') }}
             </Button>
           </template>
-        </PageHeader>
+        </page-header>
       </div>
 
       <div class="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-12 gap-4">
         <aside class="md:col-span-4 lg:col-span-4 xl:col-span-3 filter-container p-4 space-y-4 rounded-xl glass-tint-secondary" v-glass="{ strength: 'thin', interactive: false }">
-          <div>
-            <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">{{ t('common.search') || '搜索' }}</label>
-            <div class="flex items-center gap-2">
-              <div class="flex-1 min-w-0">
-                <glass-search-input v-model="q" :placeholder="t('common.search') || '搜索会话'" />
+          <div class="rounded-2xl p-4 glass-ultraThin glass-tint-secondary border border-white/20 dark:border-white/10" v-glass="{ strength: 'ultraThin', interactive: false }">
+            <div class="flex items-center justify-between gap-3 mb-2">
+              <div class="flex items-center gap-2 min-w-0">
+                <h3 class="text-sm font-semibold text-gray-700 dark:text-gray-200 truncate">{{ t('shared.voicePractice.mySessions') }}</h3>
+                <span class="text-xs text-gray-500 shrink-0">{{ sessions.length }}</span>
               </div>
               <Button
                 size="sm"
@@ -30,12 +30,11 @@
                 {{ t('common.new') || t('shared.voicePractice.newSession') }}
               </Button>
             </div>
-          </div>
 
-          <div>
-            <div class="flex items-center justify-between mb-2">
-              <h3 class="text-sm font-semibold text-gray-700 dark:text-gray-200">{{ t('shared.voicePractice.mySessions') }}</h3>
-              <span class="text-xs text-gray-500">{{ sessions.length }}</span>
+            <div class="flex items-center gap-2 mb-3">
+              <div class="flex-1 min-w-0">
+                <glass-search-input v-model="q" :placeholder="t('common.search') || '搜索会话'" />
+              </div>
             </div>
 
             <div v-if="sessions.length === 0" class="text-xs text-gray-500 dark:text-gray-400">
@@ -89,29 +88,30 @@
             </div>
           </div>
 
-          <div class="space-y-2">
+          <div class="rounded-2xl p-4 glass-ultraThin glass-tint-primary border border-white/20 dark:border-white/10 space-y-3" v-glass="{ strength: 'ultraThin', interactive: false }">
             <h3 class="text-sm font-semibold text-gray-700 dark:text-gray-200">{{ t('shared.voicePractice.settings') }}</h3>
-          </div>
-
-          <div class="space-y-3">
             <div>
               <label class="block text-xs text-gray-500 mb-1">{{ t('shared.voicePractice.mode') }}</label>
-              <GlassPopoverSelect v-model="mode" :options="modeOptions" size="sm" />
+              <glass-popover-select v-model="mode" :options="modeOptions" size="sm" />
             </div>
 
             <div>
               <label class="block text-xs text-gray-500 mb-1">{{ t('shared.voicePractice.locale') }}</label>
-              <GlassPopoverSelect v-model="locale" :options="localeOptions" size="sm" />
-            </div>
-
-            <div>
-              <label class="block text-xs text-gray-500 mb-1">{{ t('shared.voicePractice.scenario') }}</label>
-              <GlassInput v-model="scenario" :placeholder="t('shared.voicePractice.scenarioPlaceholder')" />
+              <glass-popover-select v-model="locale" :options="localeOptions" size="sm" />
             </div>
 
             <div>
               <label class="block text-xs text-gray-500 mb-1">{{ t('shared.voicePractice.model') }}</label>
-              <GlassPopoverSelect v-model="model" :options="modelOptions" size="sm" />
+              <glass-popover-select v-model="model" :options="modelOptions" size="sm" />
+            </div>
+
+            <div>
+              <label class="block text-xs text-gray-500 mb-1">{{ t('shared.voicePractice.scenario') }}</label>
+              <glass-input v-model="scenario" :placeholder="t('shared.voicePractice.scenarioPlaceholder')" />
+              <div class="mt-2 text-xs text-gray-500 dark:text-gray-400 whitespace-pre-line">
+                <span class="font-medium text-gray-600 dark:text-gray-300">{{ t('shared.voicePractice.scenarioHelpTitle') }}</span>
+                <span class="ml-1">{{ t('shared.voicePractice.scenarioHelp') }}</span>
+              </div>
             </div>
           </div>
         </aside>
@@ -160,7 +160,7 @@
             <Button variant="primary" :disabled="starting || status === 'connecting' || status === 'recording' || status === 'waiting' || status === 'saving'" :loading="starting" @click="startSession">
               {{ t('shared.voicePractice.start') }}
             </Button>
-            <Button variant="secondary" :disabled="status !== 'recording'" @click="stopSession">
+            <Button variant="warning" :disabled="status !== 'recording'" @click="stopSession">
               {{ t('shared.voicePractice.stop') }}
             </Button>
             <div class="ml-auto text-xs text-gray-500 dark:text-gray-400">
@@ -170,7 +170,7 @@
         </section>
       </div>
       <!-- Rename Modal -->
-      <GlassModal
+      <glass-modal
         v-if="showRename"
         :title="(t('common.rename') as string) || '重命名'"
         :backdropDark="false"
@@ -185,7 +185,7 @@
           <Button size="sm" variant="secondary" @click="showRename=false">{{ t('common.cancel') || '取消' }}</Button>
           <Button size="sm" variant="primary" @click="confirmRename">{{ t('teacher.courses.actions.save') || '保存' }}</Button>
         </template>
-      </GlassModal>
+      </glass-modal>
     </div>
   </div>
 </template>
@@ -248,10 +248,17 @@ const modeOptions = computed(() => [
   { label: t('shared.voicePractice.modeAudio') as string, value: 'audio' }
 ])
 
+// 当前产品策略：语音训练仅开放英文口语训练（功能保留，但不提供中文选项）
 const localeOptions = computed(() => [
-  { label: 'English (en-US)', value: 'en-US' },
-  { label: '中文 (zh-CN)', value: 'zh-CN' }
+  { label: 'English (en-US)', value: 'en-US' }
 ])
+
+// 兜底：若被意外设置为非 en-US，则强制拉回（避免旧状态/历史代码导致 UI 出现不可选值）
+watch(locale, (v) => {
+  if (String(v || '').toLowerCase() !== 'en-us') {
+    locale.value = 'en-US'
+  }
+}, { immediate: true })
 
 const modelOptions = computed(() => {
   if (mode.value === 'text') {

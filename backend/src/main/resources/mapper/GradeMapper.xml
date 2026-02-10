@@ -107,6 +107,8 @@
         WHERE student_id = #{studentId}
         AND assignment_id = #{assignmentId}
         AND deleted = false
+        ORDER BY IFNULL(updated_at, created_at) DESC, created_at DESC
+        LIMIT 1
     </select>
 
     <!-- 根据学生和课程查询成绩 -->

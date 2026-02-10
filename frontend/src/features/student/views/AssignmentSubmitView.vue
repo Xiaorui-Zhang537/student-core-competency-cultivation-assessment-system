@@ -680,6 +680,16 @@ function renderCriterion(block: any, barKind?: 'dimension' | 'dimension_moral' |
       const ev = Array.isArray(sec?.evidence) ? sec.evidence : []
       const sug = Array.isArray(sec?.suggestions) ? sec.suggestions : []
       const which = barKind || 'dimension'
+      const labelInline = (txt: string) =>
+        `<span class="inline-flex items-center gap-2 font-semibold mr-1">
+          <span class="inline-block w-2 h-2 rounded-full" data-gradient="${which}"></span>
+          <span>${escapeHtml(txt)}:</span>
+        </span>`
+      const labelBlock = (txt: string) =>
+        `<div class="mt-2 mb-1 inline-flex items-center gap-2 text-xs font-semibold">
+          <span class="inline-block w-2 h-2 rounded-full" data-gradient="${which}"></span>
+          <span>${escapeHtml(txt)}</span>
+        </div>`
       const bar = typeof score === 'number' ? `<div class=\"h-2 w-40 rounded-md overflow-hidden border border-gray-300/70 dark:border-white/10 bg-gray-200/60 dark:bg-white/10 shadow-inner\"><div class=\"h-full\" data-gradient=\"${which}\" style=\"width:${score*20}%\"></div></div>` : ''
       const firstReasoning = (ev.find((e: any) => e && String(e.reasoning || '').trim()) || {}).reasoning || ''
       const firstConclusion = (ev.find((e: any) => e && String(e.conclusion || '').trim()) || {}).conclusion || ''
@@ -689,10 +699,10 @@ function renderCriterion(block: any, barKind?: 'dimension' | 'dimension_moral' |
             <div class="text-xs text-gray-600 dark:text-gray-300">${e.quote ? '“'+escapeHtml(e.quote)+'”' : ''}</div>
             ${e.explanation?`<div class="text-[11px] text-gray-500">${escapeHtml(e.explanation)}</div>`:''}</li>`) 
         .join('')
-      const reasoningBlock = firstReasoning ? `<div class="text-xs"><span class="font-semibold">Reasoning:</span> ${escapeHtml(firstReasoning)}</div>` : ''
-      const conclusionBlock = firstConclusion ? `<div class="text-xs italic text-gray-600 dark:text-gray-300"><span class="not-italic font-semibold">Conclusion:</span> ${escapeHtml(firstConclusion)}</div>` : ''
+      const reasoningBlock = firstReasoning ? `<div class="text-xs mt-1">${labelInline('Reasoning')} ${escapeHtml(firstReasoning)}</div>` : ''
+      const conclusionBlock = firstConclusion ? `<div class="text-xs italic text-gray-600 dark:text-gray-300 mt-1"><span class="not-italic">${labelInline('Conclusion')}</span> ${escapeHtml(firstConclusion)}</div>` : ''
       const sugg = sug.map((s: any) => `<li class="mb-1 text-xs">${escapeHtml(String(s))}</li>`).join('')
-      sections.push(`<div class="space-y-2"><div class="text-sm font-medium">${escapeHtml(String(k))} ${score!=null?`(${score}/5)`:''}</div>${bar}<div><div class="text-xs font-semibold mt-2">Evidence</div><ul>${evid}</ul>${reasoningBlock}${conclusionBlock}</div><div><div class="text-xs font-semibold mt-2">Suggestions</div><ul>${sugg}</ul></div></div>`)
+      sections.push(`<div class="space-y-2"><div class="text-sm font-medium">${escapeHtml(String(k))} ${score!=null?`(${score}/5)`:''}</div>${bar}<div>${labelBlock('Evidence')}<ul>${evid}</ul>${reasoningBlock}${conclusionBlock}</div><div>${labelBlock('Suggestions')}<ul>${sugg}</ul></div></div>`)
     }
     return sections.join('')
   } catch { return `<pre class="text-xs">${escapeHtml(pretty(block))}</pre>` }

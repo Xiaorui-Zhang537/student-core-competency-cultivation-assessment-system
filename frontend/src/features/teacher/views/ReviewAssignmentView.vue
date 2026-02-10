@@ -8,38 +8,38 @@
           <span class="hover:text-gray-700 dark:hover:text-gray-200 cursor-pointer" @click="router.push('/teacher/courses')">
             {{ t('teacher.assignments.breadcrumb.courses') }}
           </span>
-          <ChevronRightIcon class="w-4 h-4" />
+          <chevron-right-icon class="w-4 h-4" />
           <template v-if="hasCourseContext">
             <span class="hover:text-gray-700 dark:hover:text-gray-200 cursor-pointer" @click="router.push({ name: 'TeacherCourseDetail', params: { id: effectiveCourseId } })">
               {{ currentCourseTitle }}
             </span>
-            <ChevronRightIcon class="w-4 h-4" />
+            <chevron-right-icon class="w-4 h-4" />
           </template>
           <span>{{ t('teacher.assignments.breadcrumb.self') }}</span>
         </nav>
-        <PageHeader :title="t('teacher.assignments.title')" :subtitle="t('teacher.assignments.subtitle')">
+        <page-header :title="t('teacher.assignments.title')" :subtitle="t('teacher.assignments.subtitle')">
           <template #actions>
             <Button variant="primary" @click="openCreateModal" :disabled="!courseStore.courses.length">
-              <PlusIcon class="w-4 h-4 mr-2" />
+              <plus-icon class="w-4 h-4 mr-2" />
               {{ t('teacher.assignments.actions.create') }}
             </Button>
             <Button variant="success" class="ml-2" @click="goAiGrading()">
-              <InboxArrowDownIcon class="w-4 h-4 mr-1" />
+              <inbox-arrow-down-icon class="w-4 h-4 mr-1" />
               {{ t('teacher.aiGrading.entry') }}
             </Button>
           </template>
-        </PageHeader>
+        </page-header>
       </div>
     </div>
 
     <!-- Filters: 标题-选择器一排 + 状态选择器 + 右侧搜索器 -->
-    <FilterBar tint="info" align="center" :dense="false" class="mb-6 h-19">
+    <filter-bar tint="info" align="center" :dense="false" class="mb-6 h-19">
       <template #left>
         <div class="flex items-center gap-3 flex-wrap">
           <div class="w-auto flex items-center gap-2">
             <span class="text-sm font-semibold leading-tight text-gray-700 dark:text-gray-300">{{ t('teacher.assignments.filters.byCourse') }}</span>
             <div class="w-60">
-            <GlassPopoverSelect
+            <glass-popover-select
               v-model="selectedCourseId"
               :options="teacherCourses.map((c: any) => ({ label: c.title, value: String(c.id) }))"
                 :placeholder="(t('teacher.assignments.filters.selectCourse') as string)"
@@ -54,7 +54,7 @@
           <div class="w-auto flex items-center gap-2">
             <span class="text-sm font-semibold leading-tight text-gray-700 dark:text-gray-300">{{ t('teacher.assignments.filters.statusLabel') || '状态' }}</span>
             <div class="w-50">
-              <GlassPopoverSelect
+              <glass-popover-select
                 v-model="statusFilter"
                 :options="statusOptions"
                 :placeholder="(t('teacher.assignments.filters.statusPlaceholder') as string) || '请选择状态'"
@@ -70,21 +70,21 @@
 
       <template #right>
         <div class="w-56">
-          <GlassSearchInput v-model="searchText" :placeholder="(t('teacher.assignments.searchPlaceholder') as string) || '搜索作业'" size="sm" />
+          <glass-search-input v-model="searchText" :placeholder="(t('teacher.assignments.searchPlaceholder') as string) || '搜索作业'" size="sm" />
         </div>
       </template>
-    </FilterBar>
+    </filter-bar>
 
     <!-- Assignment List -->
     <div v-if="assignmentStore.loading" class="text-center py-12">
       <p>{{ t('teacher.assignments.loading') }}</p>
     </div>
       <div v-else class="space-y-4 mt-4">
-      <Card v-for="assignment in assignmentStore.assignments" :key="assignment.id" padding="md" tint="secondary" class="relative">
+      <card v-for="assignment in assignmentStore.assignments" :key="assignment.id" padding="md" tint="secondary" class="relative">
         <div class="min-w-0 pr-48">
           <div class="flex items-center gap-2">
             <h3 class="font-bold text-base truncate max-w-[52vw]">{{ assignment.title }}</h3>
-            <Badge class="ml-1" size="sm" :variant="statusVariantByDisplay(displayStatusKey(assignment))">{{ renderStatus(assignment) }}</Badge>
+            <badge class="ml-1" size="sm" :variant="statusVariantByDisplay(displayStatusKey(assignment))">{{ renderStatus(assignment) }}</badge>
           </div>
           <div class="text-sm text-gray-600 mt-1 truncate max-w-[60vw]">{{ assignment.description }}</div>
           <div class="text-xs text-gray-500 mt-1">
@@ -95,36 +95,41 @@
             <span v-else>
               {{ formatMinute(assignment.dueDate) }}
             </span>
-            <span v-if="String((assignment as any)?.assignmentType || '').toLowerCase()!=='course_bound' && String(assignment.status).toLowerCase()==='scheduled' && assignment.publishAt" class="ml-2">
-              {{ (t('teacher.assignments.modal.publishAt') as string) }}: {{ formatMinute(assignment.publishAt) }}
+            <span
+              v-if="String((assignment as any)?.assignmentType || '').toLowerCase()!=='course_bound'
+                && String(assignment.status).toLowerCase()==='scheduled'
+                && ((assignment as any).publishAt || (assignment as any).publish_at)"
+              class="ml-2"
+            >
+              {{ (t('teacher.assignments.modal.publishAt') as string) }}: {{ formatMinute((assignment as any).publishAt || (assignment as any).publish_at) }}
             </span>
           </div>
         </div>
         <div class="absolute right-4 top-1/2 -translate-y-1/2 flex items-center gap-2">
           <Button size="sm" variant="success" @click="() => viewSubmissions(assignment)">
-            <InboxArrowDownIcon class="w-4 h-4 mr-1" />
+            <inbox-arrow-down-icon class="w-4 h-4 mr-1" />
             {{ t('teacher.assignments.actions.viewSubmissions') }}
           </Button>
           <Button size="sm" variant="outline" @click="openEditModal(assignment)">
-            <PencilSquareIcon class="w-4 h-4 mr-1" />
+            <pencil-square-icon class="w-4 h-4 mr-1" />
             {{ t('teacher.assignments.actions.edit') }}
           </Button>
           <Button size="sm" variant="danger" @click="handleDeleteAssignment(assignment)">
-            <TrashIcon class="w-4 h-4 mr-1" />
+            <trash-icon class="w-4 h-4 mr-1" />
             {{ t('teacher.assignments.actions.delete') }}
           </Button>
         </div>
-      </Card>
-       <Card v-if="!assignmentStore.loading && assignmentStore.assignments.length === 0" class="text-center py-12" tint="info">
+      </card>
+       <card v-if="!assignmentStore.loading && assignmentStore.assignments.length === 0" class="text-center py-12" tint="info">
         <h3 class="text-lg font-medium">{{ t('teacher.assignments.list.emptyTitle') }}</h3>
         <p class="text-gray-500">{{ selectedCourseId ? t('teacher.assignments.list.emptyDescWithCourse') : t('teacher.assignments.list.emptyDescNoCourse') }}</p>
-      </Card>
+      </card>
       <!-- Pagination -->
       <div class="mt-6 flex items-center justify-between">
         <div class="flex items-center space-x-2">
           <span class="text-sm text-gray-700">{{ t('teacher.assignments.pagination.perPagePrefix') }}</span>
           <div class="w-24">
-            <GlassPopoverSelect
+            <glass-popover-select
               :model-value="pageSize"
               :options="[{label:'10', value:10}, {label:'20', value:20}, {label:'50', value:50}]"
               size="sm"
@@ -143,25 +148,25 @@
     </div>
 
     <!-- Create/Edit Modal (GlassModal) -->
-    <GlassModal v-if="showModal" :title="(isEditing ? t('teacher.assignments.modal.editTitle') : t('teacher.assignments.modal.createTitle')) as string" size="lg" heightVariant="normal" solidBody @close="closeModal">
+    <glass-modal v-if="showModal" :title="(isEditing ? t('teacher.assignments.modal.editTitle') : t('teacher.assignments.modal.createTitle')) as string" size="lg" heightVariant="normal" solidBody @close="closeModal">
       <div class="mb-3">
         <label class="block text-sm font-medium mb-1">{{ t('teacher.assignments.modal.typeLabel') || '作业类型' }}</label>
         <div class="flex items-center gap-4 text-sm">
-          <SegmentedPills :model-value="assignmentType" :options="assignmentTypeOptions" size="sm" @update:modelValue="(v:any)=> assignmentType = v" />
+          <segmented-pills :model-value="assignmentType" :options="assignmentTypeOptions" size="sm" @update:modelValue="(v:any)=> assignmentType = v" />
         </div>
         <p class="mt-1 text-xs text-gray-500" v-if="assignmentType==='course_bound'">{{ t('teacher.assignments.modal.typeHintCourseBound') || '课程作业：无截止时间，可绑定到课程节次。' }}</p>
       </div>
       <div class="mb-3" v-if="assignmentType==='normal'">
         <label class="block text-sm font-medium mb-1">{{ t('teacher.assignments.modal.visibility') || '可见性' }}</label>
         <div class="flex items-center gap-4 text-sm">
-          <SegmentedPills :model-value="publishMode" :options="publishOptions" size="sm" @update:modelValue="(v:any)=> publishMode = v" />
+          <segmented-pills :model-value="publishMode" :options="publishOptions" size="sm" @update:modelValue="(v:any)=> publishMode = v" />
         </div>
         <p class="mt-1 text-xs text-gray-500">{{ t('teacher.assignments.modal.visibilityHint') || '草稿不会对学生可见；仅发布后学生才能看到并提交。' }}</p>
       </div>
       <form id="assignmentForm" @submit.prevent="handleSubmit" class="space-y-4">
         <div>
           <label for="courseId" class="block text-sm font-medium mb-1">{{ t('teacher.assignments.modal.course') }}</label>
-          <GlassPopoverSelect
+          <glass-popover-select
             :model-value="form.courseId"
             :options="courseStore.courses.map((c: any) => ({ label: c.title, value: String(c.id) }))"
             :placeholder="(t('teacher.assignments.filters.selectCourse') as string)"
@@ -173,30 +178,30 @@
         </div>
         <div>
           <label for="title" class="block text-sm font-medium mb-1">{{ t('teacher.assignments.modal.title') }}</label>
-          <GlassInput id="title" v-model="form.title" type="text" required />
+          <glass-input id="title" v-model="form.title" type="text" required />
         </div>
         <div>
           <label for="description" class="block text-sm font-medium mb-1">{{ t('teacher.assignments.modal.description') }}</label>
-          <GlassTextarea id="description" v-model="form.description" :rows="3" />
+          <glass-textarea id="description" v-model="form.description" :rows="3" />
         </div>
         <div class="grid grid-cols-1 gap-3">
           <div v-if="assignmentType==='normal' && publishMode==='scheduled'" class="glass-thin rounded-lg p-3" v-glass="{ strength: 'thin', interactive: true }">
-            <GlassDateTimePicker :label="(t('teacher.assignments.modal.publishAt') as string) || '发布时间'" v-model="form.publishAt" />
+            <glass-date-time-picker :label="(t('teacher.assignments.modal.publishAt') as string) || '发布时间'" v-model="form.publishAt" />
           </div>
           <div class="glass-thin rounded-lg p-3" v-glass="{ strength: 'thin', interactive: true }" v-if="assignmentType!=='course_bound'">
-            <GlassDateTimePicker :label="(t('teacher.assignments.modal.dueAt') as string) || (t('teacher.assignments.modal.dueDate') as string)" v-model="form.dueDate" />
+            <glass-date-time-picker :label="(t('teacher.assignments.modal.dueAt') as string) || (t('teacher.assignments.modal.dueDate') as string)" v-model="form.dueDate" />
             <div class="mt-2 flex flex-wrap items-center gap-2 text-xs text-gray-600 dark:text-gray-300">
               <span>{{ t('teacher.assignments.modal.quickHint') || '快捷设置：' }}</span>
-              <Button size="xs" variant="outline" @click="quickSetDue(1)">{{ t('teacher.assignments.modal.quickRanges.1d') || '+1 天' }}</Button>
-              <Button size="xs" variant="outline" @click="quickSetDue(7)">{{ t('teacher.assignments.modal.quickRanges.7d') || '+7 天' }}</Button>
-              <Button size="xs" variant="outline" @click="quickSetDue(14)">{{ t('teacher.assignments.modal.quickRanges.14d') || '+14 天' }}</Button>
-              <Button size="xs" variant="outline" @click="quickSetDue(30)">{{ t('teacher.assignments.modal.quickRanges.30d') || '+30 天' }}</Button>
+              <Button type="button" size="xs" variant="outline" @click="quickSetDue(1)">{{ t('teacher.assignments.modal.quickRanges.1d') || '+1 天' }}</Button>
+              <Button type="button" size="xs" variant="outline" @click="quickSetDue(7)">{{ t('teacher.assignments.modal.quickRanges.7d') || '+7 天' }}</Button>
+              <Button type="button" size="xs" variant="outline" @click="quickSetDue(14)">{{ t('teacher.assignments.modal.quickRanges.14d') || '+14 天' }}</Button>
+              <Button type="button" size="xs" variant="outline" @click="quickSetDue(30)">{{ t('teacher.assignments.modal.quickRanges.30d') || '+30 天' }}</Button>
             </div>
           </div>
         </div>
         <div>
           <label class="block text-sm font-medium mb-1">{{ t('teacher.assignments.modal.attachments') }}</label>
-          <FileUpload
+          <file-upload
             ref="assignmentUploader"
             :multiple="true"
             :autoUpload="false"
@@ -210,11 +215,11 @@
           <!-- 已关联附件：复用共享 AttachmentList（无卡片模式，自定义删除操作） -->
           <div v-if="editingAssignmentId && attachments.length" class="mt-4">
             <h4 class="text-sm font-medium mb-2">{{ t('teacher.assignments.modal.existing') }}</h4>
-            <AttachmentList :files="attachments" :noCard="true" :showDefaultDownload="true" :hideHeader="true">
+            <attachment-list :files="attachments" :noCard="true" :showDefaultDownload="true" :hideHeader="true">
               <template #actions="{ file }">
-                <Button size="sm" variant="danger" @click="confirmDeleteAttachment((file as any).id)">{{ t('teacher.assignments.modal.delete') }}</Button>
+                <Button type="button" size="sm" variant="danger" @click="confirmDeleteAttachment((file as any).id)">{{ t('teacher.assignments.modal.delete') }}</Button>
               </template>
-            </AttachmentList>
+            </attachment-list>
           </div>
         </div>
       </form>
@@ -226,7 +231,7 @@
           {{ isEditing ? t('teacher.assignments.actions.save') : t('teacher.assignments.modal.create') }}
         </Button>
       </template>
-    </GlassModal>
+    </glass-modal>
     </div>
   </div>
 </template>
@@ -301,7 +306,14 @@ const totalPages = computed(() => {
   return Math.max(1, Math.ceil(total / (size || 1)))
 })
 
-const form = reactive<AssignmentCreationRequest & { id?: string; publishAt?: string; assignmentType?: 'normal'|'course_bound' }>({
+// 表单字段保持 string，避免与组件 v-model（string）类型冲突
+type AssignmentFormModel = Omit<AssignmentCreationRequest, 'dueDate' | 'publishAt' | 'assignmentType'> & {
+  id?: string
+  dueDate: string
+  publishAt: string
+  assignmentType: 'normal' | 'course_bound'
+}
+const form = reactive<AssignmentFormModel>({
   courseId: '',
   title: '',
   description: '',
@@ -519,7 +531,7 @@ const closeModal = () => {
 };
 
 const handleSubmit = async () => {
-  const toServerTime = (v?: string) => {
+  const toServerTime = (v?: string | null) => {
     if (!v) return ''
     // datetime-local: YYYY-MM-DDTHH:mm → YYYY-MM-DD HH:mm:00
     return String(v).replace('T', ' ') + ':00'
@@ -653,7 +665,7 @@ const handleDeleteAssignment = async (assignment: Assignment) => {
 
   const viewSubmissions = (assignment: Assignment) => {
     // 跳转到提交列表页
-    window.location.href = `/teacher/assignments/${assignment.id}/submissions`;
+    router.push(`/teacher/assignments/${assignment.id}/submissions`);
   };
 
 const handleCourseFilterChange = () => {

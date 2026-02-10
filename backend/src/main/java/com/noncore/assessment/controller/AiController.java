@@ -28,9 +28,18 @@ import com.noncore.assessment.service.ai.AiGradingNormalizer;
 import io.swagger.v3.oas.annotations.Operation;
 import jakarta.validation.Valid;
 import com.noncore.assessment.service.UserService;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
+
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 @RestController
 @RequestMapping("/ai")
@@ -68,6 +77,18 @@ public class AiController extends BaseController {
 
     private final com.noncore.assessment.service.AiGradingHistoryService historyService;
 
+    /**
+     * SSE 线程池：用于将长耗时的 LLM 调用从请求线程中移出。
+     * <p>
+     * 注意：该线程池仅用于 SSE 推送，不承诺顺序执行；每个请求会在独立线程中运行。
+     */
+    private static final ExecutorService SSE_EXECUTOR = Executors.newCachedThreadPool();
+
+    /**
+     * SSE 心跳线程池：用于在模型耗时较长时保持连接活跃（降低部分代理 idle timeout 风险）。
+     */
+    private static final ScheduledExecutorService SSE_HEARTBEAT = Executors.newScheduledThreadPool(1);
+
     @PostMapping("/chat")
     @PreAuthorize("isAuthenticated()")
     @Operation(summary = "AI聊天", description = "基于课程与学生上下文的AI聊天（非流式）")
@@ -79,17 +100,21 @@ public class AiController extends BaseController {
         String targetModel = resolveModel(request, userId);
 
         if (hasRole("STUDENT") && targetModel != null && targetModel.startsWith("google/")) {
-            java.time.LocalDateTime startOfDay = java.time.LocalDate.now().atStartOfDay();
-            long used = conversationService.countAssistantMessagesByModelSince(userId, "google/gemini", startOfDay);
-            if (used >= 20) {
-                throw new BusinessException(ErrorCode.PERMISSION_DENIED, "今日 Gemini 使用次数已达上限（20次），请切换其它模型或明日再试");
+            java.time.LocalDate today = java.time.LocalDate.now();
+            java.time.LocalDate monday = today.with(java.time.temporal.TemporalAdjusters.previousOrSame(java.time.DayOfWeek.MONDAY));
+            java.time.LocalDateTime startOfWeek = monday.atStartOfDay();
+            long used = conversationService.countAssistantMessagesByModelSince(userId, "google/gemini", startOfWeek);
+            if (used >= 10) {
+                throw new BusinessException(ErrorCode.PERMISSION_DENIED, "本周 Gemini 使用次数已达上限（10次），请切换其它模型或下周再试");
             }
         }
         if (hasRole("STUDENT") && targetModel != null && targetModel.startsWith("glm-")) {
-            java.time.LocalDateTime sevenDaysAgo = java.time.LocalDateTime.now().minusDays(7);
-            long used = conversationService.countAssistantMessagesByModelSince(userId, "glm-", sevenDaysAgo);
+            java.time.LocalDate today = java.time.LocalDate.now();
+            java.time.LocalDate monday = today.with(java.time.temporal.TemporalAdjusters.previousOrSame(java.time.DayOfWeek.MONDAY));
+            java.time.LocalDateTime startOfWeek = monday.atStartOfDay();
+            long used = conversationService.countAssistantMessagesByModelSince(userId, "glm-", startOfWeek);
             if (used >= 20) {
-                throw new BusinessException(ErrorCode.PERMISSION_DENIED, "过去7天 GLM 使用次数已达上限（20次），请稍后再试");
+                throw new BusinessException(ErrorCode.PERMISSION_DENIED, "本周 GLM 使用次数已达上限（20次），请下周再试");
             }
         }
         // 确定会话
@@ -142,6 +167,11 @@ public class AiController extends BaseController {
 
         // 生成答案
         String answer = aiService.generateAnswer(request, userId);
+
+        if (answer == null || answer.trim().isEmpty()) {
+            // 保护：无有效文本不写入 assistant 消息，也不计入配额统计（按 assistant 消息计次）
+            throw new BusinessException(ErrorCode.SYSTEM_ERROR, "大模型未返回有效文本，请稍后重试");
+        }
 
         // 记录助手消息
         var assistant = conversationService.appendMessage(userId, convId, "assistant", answer, null);
@@ -379,6 +409,200 @@ public class AiController extends BaseController {
                     "raw", json
             )));
         }
+    }
+
+    /**
+     * AI 批改单篇作文（SSE 流式：逐次取样）。
+     * <p>
+     * 用于解决稳定化算法（多次取样）导致的“前端等待超时”问题：
+     * 后端每完成一次 run 就通过 SSE 推送该次分数，让前端弹窗逐次展示；最后推送聚合后的最终结果，并仅落库 1 条历史记录。
+     * <p>
+     * 事件约定：\n
+     * - event: meta -> { samplesRequested, diffThreshold }\n
+     * - event: run -> { index, ok, finalScore05?, error? }\n
+     * - event: diff -> { s1, s2, diff12, threshold, triggeredThird }\n
+     * - event: final -> { result: <mergedNormalized>, historyId }\n
+     * - event: error -> { message }\n
+     */
+    @PostMapping(value = "/grade/essay/stream", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
+    @PreAuthorize("hasRole('TEACHER')")
+    @Operation(summary = "AI 批改单篇作文（SSE 流式：逐次取样）")
+    public SseEmitter gradeEssayStream(@Valid @RequestBody AiChatRequest request) {
+        Long userId = getCurrentUserId();
+
+        // 稳定化参数：允许 1~3；默认沿用旧行为（samples=1）
+        int samplesRequested = request.getSamples() == null ? 1 : request.getSamples();
+        if (samplesRequested < 1) samplesRequested = 1;
+        if (samplesRequested > 3) samplesRequested = 3;
+        int req = Math.max(1, Math.min(samplesRequested, 3));
+
+        double diffThreshold = request.getDiffThreshold() == null ? 0.8 : request.getDiffThreshold();
+        if (diffThreshold < 0) diffThreshold = 0;
+        if (diffThreshold > 5) diffThreshold = 5;
+
+        // Java lambda 要求捕获变量为 final/有效 final：将可能被修正过的局部变量固化为 final 副本
+        final int reqFinal = req;
+        final double diffThresholdFinal = diffThreshold;
+
+        // 强制 JSON-only（与批改接口语义一致）
+        request.setJsonOnly(Boolean.TRUE);
+
+        // 0 表示不由 Spring 触发超时；由心跳与前端 Abort 控制生命周期
+        SseEmitter emitter = new SseEmitter(0L);
+        AtomicBoolean done = new AtomicBoolean(false);
+
+        // 心跳：每 15 秒发送一次 ping，直到 done
+        ScheduledFuture<?> hb = SSE_HEARTBEAT.scheduleAtFixedRate(() -> {
+            if (done.get()) return;
+            try {
+                emitter.send(SseEmitter.event()
+                        .name("ping")
+                        .data(java.util.Map.of("ts", System.currentTimeMillis())));
+            } catch (Exception ignored) {
+                // 客户端断开/网络异常：不再继续心跳
+                done.set(true);
+            }
+        }, 15, 15, TimeUnit.SECONDS);
+
+        // 客户端关闭时，停止心跳
+        Runnable stop = () -> {
+            done.set(true);
+            try { hb.cancel(true); } catch (Exception ignored) {}
+        };
+        emitter.onCompletion(stop);
+        emitter.onTimeout(stop);
+        emitter.onError((e) -> stop.run());
+
+        SSE_EXECUTOR.submit(() -> {
+            try {
+                // meta
+                emitter.send(SseEmitter.event().name("meta").data(java.util.Map.of(
+                        "samplesRequested", reqFinal,
+                        "diffThreshold", diffThresholdFinal
+                )));
+
+                java.util.List<java.util.Map<String, Object>> runs = new java.util.ArrayList<>();
+                java.util.List<String> rawRuns = new java.util.ArrayList<>();
+
+                // 1) 先跑两次（或一次）
+                int firstBatch = Math.min(reqFinal, 2);
+                for (int i = 0; i < firstBatch; i++) {
+                    int attemptIndex = i + 1;
+                    String json = aiService.generateAnswerJsonOnly(request, userId);
+                    rawRuns.add(json);
+                    try {
+                        java.util.Map<String, Object> parsed = com.noncore.assessment.util.Jsons.parseObject(json);
+                        java.util.Map<String, Object> normalized = AiGradingNormalizer.normalize(parsed);
+                        runs.add(normalized);
+                        double score05 = AiGradingNormalizer.extractFinalScore05(normalized);
+                        emitter.send(SseEmitter.event().name("run").data(java.util.Map.of(
+                                "index", attemptIndex,
+                                "ok", true,
+                                "finalScore05", score05
+                        )));
+                    } catch (Exception ex) {
+                        emitter.send(SseEmitter.event().name("run").data(java.util.Map.of(
+                                "index", attemptIndex,
+                                "ok", false,
+                                "error", "INVALID_JSON"
+                        )));
+                    }
+                }
+
+                // 2) 两次都有效时，计算分差，必要时触发第 3 次
+                boolean triggeredThird = false;
+                if (runs.size() >= 2 && runs.size() < 3) {
+                    double s1 = AiGradingNormalizer.extractFinalScore05(runs.get(0));
+                    double s2 = AiGradingNormalizer.extractFinalScore05(runs.get(1));
+                    double diff12 = Math.abs(s1 - s2);
+                    triggeredThird = diff12 > diffThresholdFinal;
+                    emitter.send(SseEmitter.event().name("diff").data(java.util.Map.of(
+                            "s1", s1,
+                            "s2", s2,
+                            "diff12", diff12,
+                            "threshold", diffThresholdFinal,
+                            "triggeredThird", triggeredThird
+                    )));
+                    if (triggeredThird) {
+                        try {
+                            String json3 = aiService.generateAnswerJsonOnly(request, userId);
+                            rawRuns.add(json3);
+                            java.util.Map<String, Object> parsed3 = com.noncore.assessment.util.Jsons.parseObject(json3);
+                            java.util.Map<String, Object> normalized3 = AiGradingNormalizer.normalize(parsed3);
+                            runs.add(normalized3);
+                            double s3 = AiGradingNormalizer.extractFinalScore05(normalized3);
+                            emitter.send(SseEmitter.event().name("run").data(java.util.Map.of(
+                                    "index", 3,
+                                    "ok", true,
+                                    "finalScore05", s3
+                            )));
+                        } catch (Exception ex) {
+                            emitter.send(SseEmitter.event().name("run").data(java.util.Map.of(
+                                    "index", 3,
+                                    "ok", false,
+                                    "error", "INVALID_JSON"
+                            )));
+                        }
+                    }
+                }
+
+                // 3) 聚合：至少 1 条有效结果
+                if (runs.isEmpty()) {
+                    String raw = rawRuns.isEmpty() ? "" : rawRuns.get(rawRuns.size() - 1);
+                    emitter.send(SseEmitter.event().name("error").data(java.util.Map.of(
+                            "message", "Invalid JSON returned by model",
+                            "raw", raw
+                    )));
+                    emitter.complete();
+                    stop.run();
+                    return;
+                }
+
+                java.util.Map<String, Object> merged = AiGradingEnsembler.ensemble(runs, reqFinal, diffThresholdFinal);
+
+                // 仅最终落库历史（避免 run1/run2 也落库导致历史污染）
+                String rawJson = com.noncore.assessment.util.Jsons.toJson(merged);
+                Double finalScore = null;
+                try { finalScore = AiGradingNormalizer.extractFinalScore05(merged); } catch (Exception ignored) {}
+                Long historyId = null;
+                try {
+                    var rec = new com.noncore.assessment.entity.AiGradingHistory();
+                    rec.setTeacherId(userId);
+                    rec.setFileId(null);
+                    rec.setFileName(null);
+                    rec.setModel(request.getModel());
+                    rec.setFinalScore(finalScore);
+                    rec.setRawJson(rawJson);
+                    rec.setCreatedAt(java.time.LocalDateTime.now());
+                    historyService.save(rec);
+                    historyId = rec.getId();
+                } catch (Exception ignored) {}
+
+                java.util.Map<String, Object> out = new java.util.HashMap<>(merged);
+                if (historyId != null) out.put("historyId", historyId);
+
+                emitter.send(SseEmitter.event().name("final").data(java.util.Map.of(
+                        "result", out,
+                        "historyId", historyId
+                )));
+                emitter.complete();
+            } catch (Exception e) {
+                try {
+                    emitter.send(SseEmitter.event().name("error").data(java.util.Map.of(
+                            "message", e.getMessage() == null ? "Failed" : e.getMessage()
+                    )));
+                } catch (Exception ignored) {}
+                try {
+                    emitter.completeWithError(e);
+                } catch (Exception ignored) {
+                    try { emitter.complete(); } catch (Exception ignore2) {}
+                }
+            } finally {
+                stop.run();
+            }
+        });
+
+        return emitter;
     }
 
     /**

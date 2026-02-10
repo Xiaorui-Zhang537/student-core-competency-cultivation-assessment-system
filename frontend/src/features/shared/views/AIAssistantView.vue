@@ -13,21 +13,31 @@
 
       <div class="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-12 gap-4">
         <aside class="md:col-span-4 lg:col-span-4 xl:col-span-3 filter-container p-4 space-y-4 rounded-xl glass-tint-secondary" v-glass="{ strength: 'thin', interactive: false }">
-          <div>
-            <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">{{ t('common.search') || '搜索' }}</label>
-            <div class="flex items-center gap-2">
-              <div class="flex-1 min-w-0">
-                <glass-search-input v-model="q" :placeholder="t('common.search') || '搜索会话'" />
+          <div class="rounded-2xl p-4 glass-ultraThin glass-tint-secondary border border-white/20 dark:border-white/10" v-glass="{ strength: 'ultraThin', interactive: false }">
+            <div class="flex items-center justify-between gap-3 mb-2">
+              <div class="flex items-center gap-2 min-w-0">
+                <h3 class="text-sm font-semibold text-gray-700 dark:text-gray-200 truncate">{{ t('teacher.ai.conversations') || '会话' }}</h3>
+                <span class="text-xs text-gray-500 shrink-0">{{ conversations.length }}</span>
               </div>
               <Button size="sm" variant="primary" icon="plus" class="whitespace-nowrap shrink-0" @click="newConv">{{ t('common.new') || '新建' }}</Button>
             </div>
-          </div>
-
-          <div>
-            <div class="flex items-center justify-between mb-2">
-              <h3 class="text-sm font-semibold text-gray-700 dark:text-gray-200">{{ t('teacher.ai.conversations') || '我的会话' }}</h3>
-              <span class="text-xs text-gray-500">{{ conversations.length }}</span>
+            <div class="flex items-center gap-2 mb-3">
+              <div class="flex-1 min-w-0">
+                <glass-search-input v-model="q" :placeholder="t('common.search') || '搜索会话'" />
+              </div>
             </div>
+
+            <div class="pt-3 mb-3 border-t border-white/15 dark:border-white/10">
+              <div class="space-y-2">
+                <div class="text-sm font-semibold text-gray-700 dark:text-gray-200">{{ t('teacher.ai.model.title') || '模型' }}</div>
+                <glass-popover-select
+                  v-model="model"
+                  :options="modelOptions"
+                  size="sm"
+                />
+              </div>
+            </div>
+
             <div class="divide-y divide-gray-100 dark:divide-gray-700 rounded-lg border border-gray-100 dark:border-gray-700 overflow-hidden max-h-[50vh] overflow-y-auto">
               <Button
                 v-for="c in conversations"
@@ -67,25 +77,23 @@
             </div>
           </div>
 
-          <div class="space-y-2">
-            <h3 class="text-sm font-semibold text-gray-700 dark:text-gray-200">{{ t('teacher.ai.model.title') || '模型' }}</h3>
-            <glass-popover-select
-              v-model="model"
-              :options="modelOptions"
-              size="sm"
-            />
-          </div>
-
-          <div class="space-y-2">
-            <h3 class="text-sm font-semibold text-gray-700 dark:text-gray-200">{{ t('teacher.ai.memory') || '长期记忆' }}</h3>
-            <div class="flex items-center gap-2">
-              <label class="text-xs text-gray-500">{{ t('common.enable') || '启用' }}</label>
-              <glass-switch v-model="memory.enabled" size="sm" @update:modelValue="saveMemory" />
+          <div class="space-y-2 rounded-2xl p-4 glass-ultraThin glass-tint-accent border border-white/20 dark:border-white/10" v-glass="{ strength: 'ultraThin', interactive: false }">
+            <div class="flex items-center justify-between gap-3">
+              <h3 class="text-sm font-semibold text-gray-700 dark:text-gray-200">{{ t('teacher.ai.memory') || '长期记忆' }}</h3>
+              <glass-switch v-model="memory.enabled" size="sm" class="shrink-0" @update:modelValue="saveMemory" />
             </div>
             <glass-textarea v-model="memory.content" :rows="4" :disabled="!memory.enabled" :placeholder="t('teacher.ai.memoryPlaceholder') || '个性化偏好、口吻等...'" @blur="saveMemory" />
+            <div class="space-y-1 text-xs text-gray-500 dark:text-gray-400">
+              <div class="font-medium text-gray-600 dark:text-gray-300">{{ t('teacher.ai.memoryTips.title') || '推荐写法' }}</div>
+              <ul class="list-disc pl-4 space-y-1">
+                <li>{{ t('teacher.ai.memoryTips.tip1') || '我希望你用中文回答，语气简洁、分点。' }}</li>
+                <li>{{ t('teacher.ai.memoryTips.tip2') || '我当前的学习目标是：____；我更偏好：示例/步骤/对比表。' }}</li>
+                <li>{{ t('teacher.ai.memoryTips.tip3') || '当我上传图片/文档时，请先总结要点，再给出建议。' }}</li>
+              </ul>
+            </div>
           </div>
 
-          <div class="space-y-3 text-xs text-gray-600 dark:text-gray-300 rounded-lg p-3 border border-gray-100 dark:border-gray-700/60" v-glass="{ strength: 'ultraThin', interactive: false }">
+          <div class="space-y-3 text-xs text-gray-600 dark:text-gray-300 rounded-2xl p-4 glass-ultraThin glass-tint-success border border-white/20 dark:border-white/10" v-glass="{ strength: 'ultraThin', interactive: false }">
             <div class="font-semibold mb-1">{{ t('teacher.ai.modelsInfo.title') || '模型说明' }}</div>
             <ul class="list-disc pl-4 space-y-1">
               <li>{{ t('teacher.ai.modelsInfo.gemini') }}</li>
@@ -124,41 +132,82 @@
               </div>
             </div>
           </div>
-          <div class="border-t border-white/25 dark:border-white/10 p-3 bg-transparent flex items-center gap-3">
-            <glass-textarea
-              v-model="draft"
-              @keydown.enter.exact.prevent="send"
-              :rows="3"
-              :placeholder="t('teacher.ai.placeholder') || '输入问题...'"
-              class="flex-1"
-              :disabled="sending"
-            />
-            <div v-if="showUpload" class="flex items-center gap-2">
-              <input ref="fileInput" type="file" class="hidden" accept="image/*" multiple @change="handlePickFiles" />
-              <Button variant="ghost" size="sm" :title="t('common.uploadImage') || '上传图片'" @click.prevent="triggerPick">
-                <svg class="w-5 h-5 text-gray-700 dark:text-gray-200" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
-                  <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
-                  <circle cx="8.5" cy="8.5" r="1.5"/>
-                  <path d="M21 15l-4.5-4.5L9 18"/>
-                </svg>
-              </Button>
-              <span v-if="pendingCount>0" class="text-xs px-2 py-0.5 rounded bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300">已选 {{ pendingCount }} 项</span>
+          <div class="border-t border-white/25 dark:border-white/10 p-3 bg-transparent space-y-3">
+            <!-- Pending attachments (ChatGPT-like) -->
+            <div v-if="pendingAttachments.length" class="flex flex-wrap gap-2">
+              <div
+                v-for="a in pendingAttachments"
+                :key="a.id"
+                class="group flex items-center gap-2 px-2.5 py-1.5 rounded-xl glass-ultraThin glass-tint-secondary border border-white/20 dark:border-white/10"
+                v-glass="{ strength: 'ultraThin', interactive: false }"
+              >
+                <!-- icon -->
+                <div class="shrink-0">
+                  <svg v-if="String(a.mimeType||'').startsWith('image/')" class="w-4 h-4 text-gray-700 dark:text-gray-200" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+                    <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+                    <circle cx="8.5" cy="8.5" r="1.5"/>
+                    <path d="M21 15l-4.5-4.5L9 18"/>
+                  </svg>
+                  <svg v-else class="w-4 h-4 text-gray-700 dark:text-gray-200" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                    <path d="M14 2v6h6"/>
+                    <path d="M8 13h8"/>
+                    <path d="M8 17h8"/>
+                  </svg>
+                </div>
+                <div class="text-xs text-gray-700 dark:text-gray-200 max-w-[180px] truncate">
+                  {{ a.name || ('#' + a.id) }}
+                </div>
+                <Button
+                  size="xs"
+                  variant="ghost"
+                  class="shrink-0 opacity-70 group-hover:opacity-100"
+                  :title="t('common.delete') || '删除'"
+                  @click.prevent="removePending(a.id)"
+                >
+                  <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M18 6L6 18"/>
+                    <path d="M6 6l12 12"/>
+                  </svg>
+                </Button>
+              </div>
             </div>
-            <Button
-              variant="primary"
-              class="shrink-0 whitespace-nowrap min-w-[96px]"
-              :disabled="!canSend || sending"
-              :loading="sending"
-              @click="send"
-            >
-              <span v-if="sending">{{ t('teacher.ai.thinking') || 'AI 正在思考...' }}</span>
-              <span v-else>{{ t('teacher.ai.send') || '发送' }}</span>
-            </Button>
+
+            <div class="flex items-center gap-3">
+              <glass-textarea
+                v-model="draft"
+                @keydown.enter.exact.prevent="send"
+                :rows="3"
+                :placeholder="t('teacher.ai.placeholder') || '输入问题...'"
+                class="flex-1"
+                :disabled="sending"
+              />
+              <div v-if="showUpload" class="flex items-center gap-2">
+                <input ref="fileInput" type="file" class="hidden" accept="image/*,.pdf,.doc,.docx,.txt" multiple @change="handlePickFiles" />
+                <Button variant="ghost" size="sm" :title="t('teacher.ai.uploadTitle') || (t('common.uploadImage') || '上传')" @click.prevent="triggerPick">
+                  <svg class="w-5 h-5 text-gray-700 dark:text-gray-200" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M12 3v12"/>
+                    <path d="M7 8l5-5 5 5"/>
+                    <path d="M4 17v3h16v-3"/>
+                  </svg>
+                </Button>
+              </div>
+              <Button
+                variant="primary"
+                class="shrink-0 whitespace-nowrap min-w-[96px]"
+                :disabled="!canSend || sending"
+                :loading="sending"
+                @click="send"
+              >
+                <span v-if="sending">{{ t('teacher.ai.thinking') || 'AI 正在思考...' }}</span>
+                <span v-else>{{ t('teacher.ai.send') || '发送' }}</span>
+              </Button>
+            </div>
           </div>
         </section>
       </div>
       <!-- Rename Modal -->
-      <GlassModal
+      <glass-modal
         v-if="showRename"
         :title="(t('teacher.ai.renameTitle') as string) || '重命名对话'"
         :backdropDark="false"
@@ -173,7 +222,7 @@
           <Button size="sm" variant="secondary" @click="showRename=false">{{ t('common.cancel') || '取消' }}</Button>
           <Button size="sm" variant="primary" @click="confirmRename">{{ t('teacher.courses.actions.save') || '保存' }}</Button>
         </template>
-      </GlassModal>
+      </glass-modal>
     </div>
   </div>
 </template>
@@ -202,7 +251,6 @@ const router = useRouter()
 const ai = useAIStore()
 const auth = useAuthStore()
 const q = ref('')
-const showUpload = ref(true)
 const fileInput = ref<HTMLInputElement | null>(null)
 // 采用 GlassTextarea 自适应，不再手动高度控制
 
@@ -223,13 +271,11 @@ const modelOptions = computed(() => {
     { label: 'GLM-4.6', value: 'glm-4.6' },
     { label: 'GLM-4.5 Air', value: 'glm-4.5-air' }
   ]
-  if (userRole.value === 'TEACHER') {
-    return [
-      { label: 'Gemini 2.5 Pro', value: 'google/gemini-2.5-pro' },
-      ...base
-    ]
-  }
-  return base
+  // 学生也允许使用 Gemini（配额由后端控制）
+  return [
+    { label: 'Gemini 2.5 Pro', value: 'google/gemini-2.5-pro' },
+    ...base
+  ]
 })
 
 watchEffect(() => {
@@ -242,6 +288,10 @@ const currentMessages = computed(() => ai.messagesByConvId[String(activeConversa
 const activeModel = computed(() => {
   const c = conversations.value.find(c => c.id === activeConversationId.value)
   return c?.model || null
+})
+const showUpload = computed(() => {
+  const m = String(activeModel.value || model.value || '').toLowerCase()
+  return m.startsWith('google/')
 })
 const activeTitle = computed(() => {
   const c = conversations.value.find(c => c.id === activeConversationId.value)
@@ -274,8 +324,29 @@ const pendingCount = computed(() => {
   const list = ai.pendingAttachmentIds[String(id)] || []
   return list.length
 })
+const pendingAttachments = computed(() => {
+  const id = activeConversationId.value
+  if (!id) return []
+  return ai.pendingAttachmentsMeta[String(id)] || []
+})
 const sending = ref(false)
 // 已移除 JSON 输出与批改 Prompt 开关
+
+watch(showUpload, (enabled) => {
+  // 若切换到不支持附件的模型，清空已选附件，避免“已选 N 项”残留
+  if (!enabled && activeConversationId.value) {
+    ai.clearPendingAttachments(activeConversationId.value)
+    if (fileInput.value) fileInput.value.value = ''
+  }
+})
+
+const removePending = (fileId: number) => {
+  try {
+    const id = activeConversationId.value
+    if (!id) return
+    ai.removePendingAttachment(id, fileId)
+  } catch {}
+}
 
 const search = async () => { await ai.fetchConversations({ q: q.value }) }
 // 输入自动搜索（防抖）
@@ -342,7 +413,7 @@ const handlePickFiles = async (e: Event) => {
     try {
       const info: any = await fileApi.uploadFile(f as File, { purpose: 'ai_chat', relatedId: String(convId) })
       const fid = info?.id || info?.fileId
-      if (fid) ai.addPendingAttachment(convId, Number(fid))
+      if (fid) ai.addPendingAttachment(convId, Number(fid), { name: (f as File)?.name, mimeType: (f as File)?.type })
     } catch {}
   }
   if (fileInput.value) fileInput.value.value = ''

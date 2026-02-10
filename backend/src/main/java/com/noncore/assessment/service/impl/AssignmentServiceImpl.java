@@ -206,7 +206,15 @@ public class AssignmentServiceImpl implements AssignmentService {
 
     @Override
     @Transactional(readOnly = true)
-    public PageResult<Assignment> getAssignmentsForStudent(Long studentId, Integer page, Integer size, Long courseId, String status, String keyword, Boolean includeHistory, Boolean onlyPending) {
+    public PageResult<Assignment> getAssignmentsForStudent(Long studentId,
+                                                           Integer page,
+                                                           Integer size,
+                                                           Long courseId,
+                                                           String status,
+                                                           String keyword,
+                                                           Boolean includeHistory,
+                                                           Boolean onlyPending,
+                                                           Boolean excludeCourseBound) {
         PageHelper.startPage(page != null ? page : 1, size != null ? size : 10);
         // 仅查询学生已选课程内的作业；当 includeHistory=true 时，不限制 enrollment 状态
         List<Assignment> list = assignmentMapper.selectAssignmentsForEnrolledStudent(
@@ -215,7 +223,8 @@ public class AssignmentServiceImpl implements AssignmentService {
                 status,
                 keyword,
                 includeHistory != null ? includeHistory : Boolean.FALSE,
-                onlyPending != null ? onlyPending : Boolean.FALSE
+                onlyPending != null ? onlyPending : Boolean.FALSE,
+                excludeCourseBound != null ? excludeCourseBound : Boolean.FALSE
         );
         PageInfo<Assignment> pageInfo = new PageInfo<>(list);
         return PageResult.of(pageInfo.getList(), pageInfo.getPageNum(), pageInfo.getPageSize(), pageInfo.getTotal(), pageInfo.getPages());

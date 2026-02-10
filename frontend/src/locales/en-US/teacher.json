@@ -466,6 +466,37 @@
 			"progress": {
 				"label": "Progress"
 			},
+			"stable": {
+				"title": "Sampling",
+				"scaleExplain": "Scale: 0–5 is the model score; scaled ({total}) = (0–5)/5×{total}.",
+				"score05Label": "0–5",
+				"scoreFullLabel": "Scaled",
+				"scoreFormula": "Formula: scaled = (0–5)/5×{total}",
+				"status": {
+					"idle": "Idle",
+					"running": "Running",
+					"done": "Done",
+					"error": "Error"
+				},
+				"runPrefix": "Run ",
+				"runSuffix": "",
+				"invalidJson": "Non-JSON output",
+				"diff": "Diff",
+				"threshold": "Threshold",
+				"diffExplain": "Diff/threshold are computed on the 0–5 scale. When diff > threshold, a 3rd run is added to reduce variance.",
+				"thirdTriggered": "3rd run triggered",
+				"thirdNotTriggered": "No 3rd run",
+				"method": "Ensemble",
+				"chosenPair": "Chosen",
+				"confidence": "Confidence",
+				"confidenceHint": "(closer to 1 = more stable)",
+				"ensembleExplain": {
+					"mean2": "mean2: average the two chosen runs as the final score.",
+					"closest2of3": "closest2of3: pick the two closest scores among 3 runs, then average them to reduce variance.",
+					"generic": "Ensemble: aggregate multiple runs into a more stable final score."
+				},
+				"noResult": "No valid AI result"
+			},
 			"viewDetail": "Details"
 		},
 		"analytics": {
@@ -566,9 +597,16 @@
 			"thinking": "AI is thinking...",
 			"placeholder": "Type your question and press Enter",
 			"send": "Send",
-			"conversations": "My Conversations",
+			"conversations": "Conversations",
 			"memory": "Long-term Memory",
 			"memoryPlaceholder": "Preferences, tone, etc...",
+			"uploadTitle": "Upload image/document",
+			"memoryTips": {
+				"title": "Recommended templates",
+				"tip1": "Please answer in Chinese, concise, in bullet points.",
+				"tip2": "My current goal is: ____; I prefer: examples / steps / comparison tables.",
+				"tip3": "When I upload images/documents, summarize first, then give suggestions."
+			},
 			"renameTitle": "Rename Conversation",
 			"context": {
 				"title": "Context",
@@ -590,9 +628,9 @@
 			"untitled": "Untitled conversation",
 			"modelsInfo": {
                 "title": "Models Info",
-                "glm46": "GLM-4.6: High-quality reasoning model for detailed answers.",
-                "glm45": "GLM-4.5 Air: Fast lightweight model for everyday Q&A and teaching scenarios.",
-				 "gemini": "Gemini 2.5 Pro: Google's flagship reasoning model. Students can use it up to 20 times per day; teachers have unlimited access."
+                "glm46": "GLM-4.6: Text-only model (no images/files). Students: up to 20 uses per week.",
+                "glm45": "GLM-4.5 Air: Text-only model (no images/files), faster responses. Students: up to 20 uses per week.",
+				 "gemini": "Gemini 2.5 Pro: Supports images and documents (pdf/doc/docx/txt). Students: up to 10 uses per week."
             }
         },
 		"students": {

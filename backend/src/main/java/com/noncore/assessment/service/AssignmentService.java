@@ -96,7 +96,15 @@ public interface AssignmentService {
      * @param includeHistory 是否包含历史课程（非 active 的选课记录）。
      *                       为 true 时不过滤 enrollment 的状态；默认为 false，仅返回在读(active)课程作业。
      */
-    PageResult<Assignment> getAssignmentsForStudent(Long studentId, Integer page, Integer size, Long courseId, String status, String keyword, Boolean includeHistory, Boolean onlyPending);
+    PageResult<Assignment> getAssignmentsForStudent(Long studentId,
+                                                    Integer page,
+                                                    Integer size,
+                                                    Long courseId,
+                                                    String status,
+                                                    String keyword,
+                                                    Boolean includeHistory,
+                                                    Boolean onlyPending,
+                                                    Boolean excludeCourseBound);
 
     /**
      * 发布作业

@@ -219,8 +219,14 @@
         INNER JOIN enrollments e ON a.course_id = e.course_id
         WHERE a.deleted = false
           AND e.student_id = #{studentId}
+          <!-- 课程绑定-无截止（长期作业）：仅在绑定到具体节次后才可见 -->
+          AND (a.assignment_type != 'course_bound' OR a.lesson_id IS NOT NULL)
         <if test="includeHistory == false">
             AND e.status = 'active'
+        </if>
+        <!-- 学生端“我的作业”页可选择隐藏课程绑定-无截止作业（只在课节详情里展示） -->
+        <if test="excludeCourseBound == true">
+            AND a.assignment_type != 'course_bound'
         </if>
         <!-- 仅显示待处理：作业需为已发布，且该学生尚未提交（或未评分，可根据需要调整） -->
         <if test="onlyPending == true">
@@ -270,6 +276,7 @@
                  LEFT JOIN submissions s ON a.id = s.assignment_id AND s.student_id = e.student_id
         WHERE e.student_id = #{studentId}
           AND a.deleted = false
+          AND a.assignment_type != 'course_bound'
           AND (a.status = 'published' OR a.status = 'PUBLISHED' OR a.status = 1)
           AND (a.due_date IS NULL OR a.due_date > NOW())
           AND (s.id IS NULL OR s.status NOT IN ('submitted','SUBMITTED',1))
@@ -287,6 +294,7 @@
                  LEFT JOIN submissions s ON a.id = s.assignment_id AND s.student_id = e.student_id
         WHERE e.student_id = #{studentId}
           AND a.deleted = false
+          AND a.assignment_type != 'course_bound'
           AND (s.id IS NULL OR s.status != 'submitted')
         ORDER BY a.due_date
         LIMIT #{limit}
@@ -298,6 +306,7 @@
         FROM assignments a
                  JOIN enrollments e ON a.course_id = e.course_id
         WHERE e.student_id = #{studentId} AND a.deleted = false
+          AND a.assignment_type != 'course_bound'
         ORDER BY a.created_at DESC
     </select>
 
@@ -319,6 +328,7 @@
         LEFT JOIN submissions s ON a.id = s.assignment_id AND s.student_id = e.student_id
         WHERE e.student_id = #{studentId}
         AND a.deleted = false
+        AND a.assignment_type != 'course_bound'
         AND a.status = 'published'
         AND (s.id IS NULL OR s.status != 'submitted')
         ORDER BY a.due_date

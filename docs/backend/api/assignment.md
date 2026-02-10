@@ -23,6 +23,19 @@
 ## 1. 列表与检索
 - `GET /api/assignments`：分页列表（支持 `courseId/teacherId/status/keyword/page/size/sort`，若需仅取可绑定类型，可在前端以 `assignment_type==='course_bound'` 过滤）
 
+## 1.1 学生端「我的作业」列表（重要业务规则）
+- `GET /api/students/assignments`：学生端分页查询可见作业（仅本人已选课程内）
+  - **默认规则**：
+    - `assignment_type='course_bound'`（课程作业-无截止/长期）**必须先绑定到具体节次**（`lesson_id` 非空）才允许对学生可见
+  - **参数**：
+    - `page`/`size`：分页
+    - `courseId`：可选，按课程过滤
+    - `status`：作业生命周期（`draft/published/closed`），通常仅在筛“待完成”时由前端映射到 `published`
+    - `q`：关键词（标题/描述）
+    - `includeHistory`：是否包含历史课程（非 active 的选课记录）
+    - `onlyPending`：仅显示待处理（后端排除已提交/已评分）
+    - `excludeCourseBound`：是否从该列表中**完全排除** `course_bound` 作业（用于“我的作业”页只展示普通作业；课节详情页再展示绑定作业）
+
 ## 2. CRUD
 - `GET /api/assignments/{id}`：详情
 - `POST /api/assignments`：创建（含截止时间 `dueDate` 格式 `yyyy-MM-dd HH:mm:ss`；当 `assignmentType='course_bound'` 时不得携带 `dueDate`）

@@ -17,7 +17,7 @@
 import { computed } from 'vue'
 
 interface Props {
-  variant?: 'primary' | 'secondary' | 'success' | 'warning' | 'danger' | 'info'
+  variant?: 'primary' | 'secondary' | 'accent' | 'success' | 'warning' | 'danger' | 'info'
   size?: 'sm' | 'md' | 'lg'
 }
 
@@ -40,6 +40,7 @@ const variantClasses = computed(() => {
   const variants: Record<NonNullable<Props['variant']>, string> = {
     primary: 'glass-tint-primary text-[var(--color-primary-content)]',
     secondary: 'glass-tint-secondary text-[var(--color-secondary-content)]',
+    accent: 'glass-tint-accent text-[var(--color-accent-content)]',
     success: 'glass-tint-success text-[var(--color-success-content)]',
     warning: 'glass-tint-warning text-[var(--color-warning-content)]',
     danger: 'glass-tint-error text-[var(--color-error-content)]',

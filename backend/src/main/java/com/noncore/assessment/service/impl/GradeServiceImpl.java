@@ -104,6 +104,11 @@ public class GradeServiceImpl implements GradeService {
             grade.setStatus("draft");
         }
 
+        // allowResubmit 为 NOT NULL；若前端未传则兜底为 false（避免插入 NULL 触发数据库异常）
+        if (grade.getAllowResubmit() == null) {
+            grade.setAllowResubmit(Boolean.FALSE);
+        }
+
         // upsert：如已存在该学生在该作业的成绩，则走更新
         Grade existing = gradeMapper.selectByStudentAndAssignment(grade.getStudentId(), grade.getAssignmentId());
         calculateGradeMetrics(grade);

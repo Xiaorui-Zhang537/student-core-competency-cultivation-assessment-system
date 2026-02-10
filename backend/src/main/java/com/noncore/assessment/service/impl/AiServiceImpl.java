@@ -8,10 +8,12 @@ import com.noncore.assessment.exception.BusinessException;
 import com.noncore.assessment.exception.ErrorCode;
 import com.noncore.assessment.service.AiService;
 import com.noncore.assessment.service.AiConversationService;
+import com.noncore.assessment.service.AiMemoryService;
 import com.noncore.assessment.entity.AiConversation;
 import com.noncore.assessment.service.CourseService;
 import com.noncore.assessment.service.EnrollmentService;
 import com.noncore.assessment.service.FileStorageService;
+import com.noncore.assessment.service.file.DocumentTextExtractor;
 import com.noncore.assessment.service.llm.LlmClient;
 import com.noncore.assessment.service.llm.PromptBuilder;
 import com.noncore.assessment.config.AiConfigProperties;
@@ -27,6 +29,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.Map;
 import java.util.Base64;
+import java.nio.charset.StandardCharsets;
 
 @Service
 @RequiredArgsConstructor
@@ -41,6 +44,12 @@ public class AiServiceImpl implements AiService {
     private final PromptLoader promptLoader;
     private final FileStorageService fileStorageService;
     private final AiConversationService conversationService;
+    private final AiMemoryService memoryService;
+    private final DocumentTextExtractor documentTextExtractor;
+
+    // 保护：避免用户写过长记忆/附件导致上下文溢出
+    private static final int MEMORY_MAX_CHARS = 3000;
+    private static final int ATTACHMENT_TEXT_MAX_CHARS = 20000;
 
     @Override
     public String generateAnswer(AiChatRequest request, Long teacherId) {
@@ -83,7 +92,40 @@ public class AiServiceImpl implements AiService {
         if (Boolean.TRUE.equals(request.getUseGradingPrompt())) {
             systemPrompt = promptLoader.loadSystemPrompt(request.getSystemPromptPath());
         }
+
+        // 长期记忆：仅在“普通聊天”（非批改 Prompt）时注入
+        if (!Boolean.TRUE.equals(request.getUseGradingPrompt())) {
+            try {
+                var mem = memoryService.getMemory(teacherId);
+                if (mem != null && Boolean.TRUE.equals(mem.getEnabled())) {
+                    String content = safeTrimToMax(mem.getContent(), MEMORY_MAX_CHARS);
+                    if (content != null && !content.isBlank()) {
+                        String memPrompt = buildMemorySystemPrompt(content);
+                        systemPrompt = (systemPrompt == null || systemPrompt.isBlank())
+                                ? memPrompt
+                                : (systemPrompt + "\n\n" + memPrompt);
+                    }
+                }
+            } catch (Exception ignored) {
+                // 记忆不可用不应影响聊天主流程
+            }
+        }
         List<Message> built = promptBuilder.buildMessages(messages, systemPrompt);
+
+        // 先确定模型（会话优先），再决定是否支持附件等能力
+        String model;
+        Long convId = request.getConversationId();
+        if (convId != null) {
+            // 强制单会话单模型：读取会话模型并忽略请求中的 model
+            AiConversation conv = conversationService.getConversation(teacherId, convId);
+            String m = conv != null ? conv.getModel() : null;
+            model = conversationService.normalizeModel(m);
+        } else {
+            model = conversationService.normalizeModel(request.getModel());
+        }
+
+        boolean useGoogle = model != null && model.startsWith("google/");
+        boolean useGlm = model != null && model.startsWith("glm-");
 
         // 将附件（如有）注入多模态消息结构：将最近一条 user 消息的 content 替换为 content[]，附加 image_url
         List<Map<String, Object>> payloadMessages = new java.util.ArrayList<>();
@@ -94,7 +136,8 @@ public class AiServiceImpl implements AiService {
             ));
         }
         List<Long> attachments = request.getAttachmentFileIds();
-        if (attachments != null && !attachments.isEmpty()) {
+        // 附件仅对 Gemini（google/*）开放；GLM 不展示上传入口，这里也直接忽略，避免意外大上下文。
+        if (useGoogle && attachments != null && !attachments.isEmpty()) {
             // 找到最后一条 user 消息
             for (int i = payloadMessages.size() - 1; i >= 0; i--) {
                 Object role = payloadMessages.get(i).get("role");
@@ -104,7 +147,33 @@ public class AiServiceImpl implements AiService {
                     if (content != null && !String.valueOf(content).isBlank()) {
                         contentList.add(java.util.Map.of("type", "text", "text", String.valueOf(content)));
                     }
-                    // 将图片以 data URL 内联，避免外网不可达与鉴权问题
+                    // 1) 文档抽取文本（pdf/doc/docx/txt）：作为 text part 注入（限制总长度）
+                    int remaining = ATTACHMENT_TEXT_MAX_CHARS;
+                    for (Long fid : attachments) {
+                        if (remaining <= 0) break;
+                        try {
+                            var info = fileStorageService.getFileInfo(fid);
+                            if (info == null) continue;
+                            String mime = info.getMimeType();
+                            String name = (info.getOriginalName() != null && !info.getOriginalName().isBlank())
+                                    ? info.getOriginalName()
+                                    : (info.getStoredName() != null ? info.getStoredName() : ("#" + fid));
+                            if (!isSupportedDocMime(mime, name)) continue;
+                            byte[] bytes = fileStorageService.downloadFile(fid, teacherId);
+                            String extracted = documentTextExtractor.extractText(new java.io.ByteArrayInputStream(bytes), name, mime);
+                            extracted = normalizeExtractedText(extracted);
+                            if (extracted == null || extracted.isBlank()) continue;
+                            String chunk = "【附件文本：" + name + "】\n" + extracted + "\n";
+                            if (chunk.length() > remaining) {
+                                chunk = chunk.substring(0, Math.max(0, remaining));
+                            }
+                            remaining -= chunk.length();
+                            if (!chunk.isBlank()) {
+                                contentList.add(java.util.Map.of("type", "text", "text", chunk));
+                            }
+                        } catch (Exception ignored) { }
+                    }
+                    // 2) 图片：以 data URL 内联（后续在 GeminiClient 转换为 inlineData）
                     for (Long fid : attachments) {
                         try {
                             var info = fileStorageService.getFileInfo(fid);
@@ -129,21 +198,8 @@ public class AiServiceImpl implements AiService {
             }
         }
 
-        String model;
-        Long convId = request.getConversationId();
-        if (convId != null) {
-            // 强制单会话单模型：读取会话模型并忽略请求中的 model
-            AiConversation conv = conversationService.getConversation(teacherId, convId);
-            String m = conv != null ? conv.getModel() : null;
-            model = conversationService.normalizeModel(m);
-        } else {
-            model = conversationService.normalizeModel(request.getModel());
-        }
-
         String baseUrl;
         String apiKey;
-        boolean useGoogle = model != null && model.startsWith("google/");
-        boolean useGlm = model != null && model.startsWith("glm-");
         if (useGoogle) {
             baseUrl = aiConfigProperties.getProviders().getGoogle().getBaseUrl();
             apiKey = aiConfigProperties.getProviders().getGoogle().getApiKey();
@@ -252,6 +308,53 @@ public class AiServiceImpl implements AiService {
             return geminiClient.generate(payloadMessages, model.replaceFirst("^google/", ""), true, baseUrl, apiKey);
         }
         return deepseekClient.createChatCompletionJsonOnly(payloadMessages, model, false, baseUrl, apiKey);
+    }
+
+    private String buildMemorySystemPrompt(String memoryContent) {
+        // 尽量用“系统级约束”表达，让模型在回答时自然参考；同时明确优先级，避免与当前问题冲突时“死守记忆”。
+        return """
+你正在为同一位用户提供长期帮助。下面是该用户的【长期记忆】（偏好/背景/约束）。
+你必须在不与用户当前问题冲突的前提下遵循这些记忆；如果冲突，以用户当前问题为准。
+不要逐字复述记忆，除非用户明确要求。
+
+【长期记忆】
+""" + memoryContent;
+    }
+
+    private String safeTrimToMax(String s, int maxChars) {
+        if (s == null) return null;
+        String v = s.trim();
+        if (v.isEmpty()) return v;
+        int max = Math.max(0, maxChars);
+        if (v.length() <= max) return v;
+        // 兼容多字节字符：按 code unit 截断足够（这里主要保护上下文长度）
+        return v.substring(0, max);
+    }
+
+    private boolean isSupportedDocMime(String mimeType, String fileName) {
+        String mt = mimeType == null ? "" : mimeType.toLowerCase();
+        String fn = fileName == null ? "" : fileName.toLowerCase();
+        if (mt.startsWith("image/")) return false;
+        // mime 优先
+        if (mt.contains("pdf")) return true;
+        if (mt.contains("word") || mt.contains("officedocument")) return true;
+        if (mt.startsWith("text/")) return true;
+        // 后缀兜底
+        return fn.endsWith(".pdf") || fn.endsWith(".doc") || fn.endsWith(".docx") || fn.endsWith(".txt");
+    }
+
+    private String normalizeExtractedText(String text) {
+        if (text == null) return null;
+        // Tika 可能带大量空行/不可见字符
+        String v = text.replace("\u0000", " ").trim();
+        if (v.isBlank()) return v;
+        // 压缩连续空行（保持可读性）
+        v = v.replaceAll("\\n{4,}", "\n\n\n");
+        // 轻度截断（总长度在上游调用处统一控制，这里再做一次保险）
+        if (v.length() > ATTACHMENT_TEXT_MAX_CHARS) {
+            v = v.substring(0, ATTACHMENT_TEXT_MAX_CHARS);
+        }
+        return v;
     }
 }
 

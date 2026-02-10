@@ -2,7 +2,7 @@ import { api } from './config';
 import type { ApiResponse, PaginatedResponse } from '@/types/api';
 import type { Assignment, AssignmentCreationRequest, AssignmentUpdateRequest } from '@/types/assignment';
 
-const normalizeDueDate = (v?: string): string | undefined => {
+const normalizeDueDate = (v?: string | null): string | undefined => {
   if (!v) return v;
   // 如果是日期字符串（YYYY-MM-DD），补全为一天结束时间，匹配后端 yyyy-MM-dd HH:mm:ss
   if (/^\d{4}-\d{2}-\d{2}$/.test(v)) return `${v} 23:59:59`;

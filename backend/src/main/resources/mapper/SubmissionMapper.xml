@@ -177,7 +177,7 @@
         FROM submissions s
                  LEFT JOIN assignments a ON s.assignment_id = a.id
                  LEFT JOIN courses c ON a.course_id = c.id
-                 LEFT JOIN grades g ON g.student_id = s.student_id AND g.assignment_id = s.assignment_id
+                 LEFT JOIN grades g ON g.submission_id = s.id
         WHERE s.student_id = #{studentId}
         ORDER BY s.created_at DESC
         LIMIT #{offset}, #{size}
@@ -185,9 +185,7 @@
 
     <!-- 统计学生成绩数量 -->
     <select id="countStudentGrades" resultType="long">
-        SELECT COUNT(*) FROM submissions s
-                                 LEFT JOIN grades g ON g.student_id = s.student_id AND g.assignment_id = s.assignment_id
-        WHERE s.student_id = #{studentId}
+        SELECT COUNT(*) FROM submissions s WHERE s.student_id = #{studentId}
     </select>
 
     <!-- 统计作业提交（排除软删除），如无deleted字段则与 countByAssignmentId 等价 -->
@@ -224,7 +222,7 @@
         FROM submissions s
                  LEFT JOIN assignments a ON s.assignment_id = a.id
                  LEFT JOIN courses c ON a.course_id = c.id
-                 LEFT JOIN grades g ON g.student_id = s.student_id AND g.assignment_id = s.assignment_id
+                 LEFT JOIN grades g ON g.submission_id = s.id
                  LEFT JOIN users t ON a.teacher_id = t.id
                  LEFT JOIN users u ON s.student_id = u.id
                  LEFT JOIN (

@@ -34,12 +34,17 @@ curl -H "Authorization: Bearer $TOKEN" -H "Content-Type: application/json" \
 curl -H "Authorization: Bearer $TOKEN" -H "Content-Type: application/json" \
   -d '{
     "messages": [ { "role": "user", "content": "请描述图片" } ],
-    "model": "google/gemini-2.5-flash-image-preview:free",
+    "model": "google/gemini-2.5-pro",
     "attachmentFileIds": [12345]
   }' \
   http://localhost:8080/api/ai/chat
 ```
-说明：后端会将 `attachmentFileIds` 转换为 OpenAI 兼容消息结构中的 `image_url`，通过统一下载接口注入到最后一条用户消息。
+说明：
+- 上传文件请先调用 `POST /api/files/upload` 得到 `fileId`，再把它放入 `attachmentFileIds`。
+- 后端会将附件注入到最后一条用户消息中：
+  - **图片**：以内联 base64 形式发送给 Gemini（Gemini `inlineData` parts）
+  - **文档**（pdf/doc/docx/txt）：后端抽取文本后作为额外 `text` 片段注入（有长度截断保护）
+- GLM 模型为文本模型，不提供附件入口（即使传入附件参数也会被忽略）。
 
 ### 其他模型示例（OpenAI: gpt-oss-120b）
 ```bash
@@ -64,6 +69,16 @@ curl -H "Authorization: Bearer $TOKEN" -H "Content-Type: application/json" \
 - 说明：未传 `conversationId` 时，后端会自动创建会话，标题取最近一条用户消息的前缀（最多 20 字符）。若传入 `conversationId`，会校验归属后直接写入消息并生成应答。
 
 ---
+
+## 2.1 学生端使用限额（配额）
+
+> 配额由后端强制执行，前端仅做展示。
+
+- **Gemini（`google/*`）**：学生 **每周最多 10 次**（按 assistant 成功回复计次；失败/报错/空返回不计次）
+- **GLM（`glm-*`）**：学生 **每周最多 20 次**（同上规则）
+- **教师**：默认不限制（如需限制请在后端统一配置/扩展策略）
+
+计次口径说明：当前按 `ai_messages.role='assistant'` 的成功落库条数统计，因此上游报错或后端抛异常不会新增 assistant 消息，自然不会消耗配额。
 
 ## 3. 会话管理
 - 创建会话：
@@ -113,6 +128,13 @@ curl -X PUT -H "Authorization: Bearer $TOKEN" -H "Content-Type: application/json
 { "code": 200, "data": { "enabled": true, "content": "..." } }
 ```
 
+### 4.1 记忆如何生效
+
+- AI 助理聊天（`POST /api/ai/chat`）在生成模型请求前，会读取 `ai_memories` 并将其作为 **system prompt** 注入。
+  - 仅对“普通聊天”生效（不会影响作文批改等专用 prompt 的场景）。
+  - 记忆内容有长度上限与截断保护。
+- 你可以把长期偏好/背景信息写在记忆中，例如：输出语言、输出格式、学习目标、需要避免的内容等。
+
 ---
 
 ## 5. 返回码对照
@@ -150,6 +172,22 @@ curl -X PUT -H "Authorization: Bearer $TOKEN" -H "Content-Type: application/json
   { "messages": [ { "role": "user", "content": "<essay text>" } ], "model": "deepseek/deepseek-chat-v3.1", "jsonOnly": true, "useGradingPrompt": true }
   ```
   - 返回：JSON 对象（按作文批改 schema）。
+
+- 单篇文本批改（SSE 流式：逐次取样 + 最终聚合）
+  - `POST /api/ai/grade/essay/stream`
+  - 用途：当启用稳定化算法（`samples>1`）时，避免前端等待超时；后端每次 run 完成就推送一次分数，最终推送聚合结果（并仅落库 1 条历史记录）。
+  - 入参：与 `/api/ai/grade/essay` 一致，额外支持：
+    - `samples`：取样次数（1~3，推荐 2）
+    - `diffThreshold`：触发第 3 次的阈值（0~5 标尺，推荐 0.8）
+  - 响应：`text/event-stream`（SSE），事件约定：
+    - `event: meta`：`{ samplesRequested, diffThreshold }`
+    - `event: run`：`{ index, ok, finalScore05?, error? }`
+    - `event: diff`：`{ s1, s2, diff12, threshold, triggeredThird }`
+    - `event: final`：`{ result: <mergedNormalized>, historyId }`
+    - `event: error`：`{ message, raw? }`
+  - 说明：
+    - `finalScore05` 为 0~5 标尺的总体分（用于前端换算到作业满分：`finalScore05/5*assignmentTotalScore`）。
+    - `final.result` 中会包含后端聚合的 `meta.ensemble`（method/chosenPair/confidence/runs 等），用于可视化“最终采用哪两次/置信度”。
 
 - 批量文本批改（强制 JSON 输出）
   - `POST /api/ai/grade/essay/batch`
