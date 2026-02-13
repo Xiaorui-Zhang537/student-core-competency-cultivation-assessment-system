@@ -55,7 +55,7 @@
     - `scoring`（评分逻辑 / Scoring logic）
   - 集成位置：
     - 教师端：`features/teacher/views/AnalyticsView.vue` 雷达图下方
-    - 学生端：`features/student/views/AbilityView.vue` 雷达图下方
+    - 学生端：`features/student/views/AnalysisView.vue` 雷达图下方
 
 ### i18n 键位
 

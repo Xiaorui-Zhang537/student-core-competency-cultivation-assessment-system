@@ -495,12 +495,12 @@ sequenceDiagram
 
 ## 示例 15：学生能力雷达/趋势（GET /api/ability/student/{id}）
 
-- 前端：`StudentAbilityView.vue` → `useStudentStore` → `ability.api.ts`
+- 前端：`AnalysisView.vue`（学生端）→ `useStudentStore` → `ability.api.ts`
 - 后端：`AbilityController`/相关服务
 
 ```mermaid
 sequenceDiagram
-  participant V as Vue(StudentAbilityView)
+  participant V as Vue(StudentAnalysisView)
   participant ST as Store(useStudentStore)
   participant A as Axios
   participant C as AbilityController

@@ -1,16 +1,18 @@
 # 前端页面序列（关键页面结构）
 
-## 学生端 · 课程/小节/作业 路由串联（v0.2.4）
+## 学生端 · 课程/小节/作业 路由串联（v0.3.4）
 
 - 我的课程：`/student/courses`
 - 课程详情：`/student/courses/:id`
   - 布局：两行双列（7/3 + 7/3）
     - 第一排：
       - 左（7）：课程元信息卡 `CourseMetaCard`
-        - 标题、描述
+        - 顶部统一 `PageScaffold（Breadcrumb + PageHeader）`
+        - 智能学习副标题文案（i18n）
         - 开课时间/结课时间（玻璃 Badge）
         - 难度/分类/标签（统一玻璃 Badge，标签无标题）
         - 进度条（复用 `/components/ui/Progress.vue`）
+        - 快捷动作：`继续学习`、`课程作业`（含总计/待完成）
         - 已报名学生（头像+姓名；点击打开资料弹窗，含“联系TA”→聊天抽屉）
       - 右（3）：教师信息卡 `TeacherInfoCard`（头像、姓名、头衔/简介、联系老师跳转聊天）
     - 第二排：
@@ -29,8 +31,11 @@
   - 小节详情：左侧目录树条目圆角（选中态描边）、章行 `py-2.5` 与标题 `pl-2`；右侧卡片标题与正文 `mb-4`
   - 进度：视频+资料合成并“只增不减”上报；进入优先显示后端持久化；无视频与资料首次进入自动完成
 - 小节详情：`/student/lessons/:id`
+  - 顶部统一 `PageScaffold（Breadcrumb + PageHeader）`
   - 中部卡片：视频（支持文件ID/直链/HLS，失败回退 Blob）、资料列表、学习笔记、关联作业
+  - 上一节/下一节：收敛到标题区 actions（按当前目录顺序）
   - 关联作业：跳转 `/student/assignments/:assignmentId/submit`，即使过期仍可进入查看
+  - 笔记：支持读取 + 保存反馈
 - 我的作业：`/student/assignments`
   - 过滤：状态、课程、关键字
   - 查看/提交：`/student/assignments/:id/submit`
@@ -46,6 +51,12 @@
 - 文件ID或受保护直链：优先以 Blob 方式加载，规避 `<video>` 不带鉴权头导致失败
 - HLS：Safari 原生优先；其它浏览器尝试动态加载 `hls.js`，失败则提示不支持
 - 回退与提示：统一 i18n 文案 `student.courses.video.playFailed` 与 `student.courses.video.hlsNotSupported`
+
+### 本轮新增接口与交互补齐
+
+- 节次笔记读取：`GET /api/lessons/{lessonId}/notes`
+- 节次笔记保存：`POST /api/lessons/{lessonId}/notes`
+- 资料预览降级：不可在线预览文件提供“立即下载”按钮（`DocumentViewer`）
 
 ## 学生端 · 作业提交页（v0.2.2）
 

@@ -177,6 +177,10 @@
       },
       "hotTopics": "热门话题",
       "activeUsers": "活跃用户",
+      "sidebar": {
+        "postsCount": "{count} 帖子",
+        "userPosts": "{count} 帖子"
+      },
       "list": {
         "searchPlaceholder": "搜索帖子...",
         "edit": "编辑",
@@ -228,6 +232,8 @@
         "back": "返回社区",
         "postedAt": "发布于 {datetime}",
         "download": "下载",
+        "attachments": "资料",
+        "attachmentHint": "点击下载或预览",
         "like": "{count} 点赞",
         "askAi": "询问AI",
         "edit": "编辑帖子",
@@ -244,6 +250,9 @@
         "total": "共 {count} 条",
         "notFound": "帖子未找到。",
         "loading": "加载中..."
+      },
+      "comment": {
+        "more": "更多"
       },
       "notify": {
         "postCreatedTitle": "帖子已发布",

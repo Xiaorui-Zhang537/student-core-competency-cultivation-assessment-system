@@ -104,7 +104,12 @@
 - 兼容策略：Chromium 优先启用 Liquid Glass；Safari/Firefox 可通过条件判断降级为 `.glass-*` 或纯色/半透明背景。
 # 前端 UI 统一规范
 
-> 版本：v0.2.4（与 frontend/package.json 对齐）
+> 版本：v0.3.4（与 frontend/package.json 对齐）
+
+## 页面标题区（Breadcrumb + Title + Subtitle）
+
+- 统一使用 `PageScaffold` 作为页面骨架：`Breadcrumb（可选） + PageHeader(title/subtitle/actions)`
+- 目的：让全站标题、子标题、面包屑位置与间距一致，避免每个页面重复拼装造成风格漂移。
 
 ## 目标
 - 统一按钮风格为药丸形，所有交互按钮均带图标与明确底色。
@@ -123,6 +128,7 @@
 - 颜色（variant）：
   - 主操作：`primary`
   - 次操作：`secondary`
+  - 互动/反应（点赞等）：`reaction`（默认中性；配合类名 `reaction-liked` 表示已点赞状态）
   - 危险操作：`danger`
   - 信息类：`info|teal|indigo|purple`（按场景）
   - 菜单项：`menu`（左对齐、轻量交互，适合下拉菜单）

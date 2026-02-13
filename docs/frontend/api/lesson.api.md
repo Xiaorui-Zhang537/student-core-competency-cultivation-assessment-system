@@ -24,6 +24,7 @@
   - 课程详情统计：通过 `GET /lessons/course/{courseId}/student-progress` 拉取整课节次的进度，用于“已完成计数”和每节徽章
 
 - `addLessonNotes(lessonId, notes)` → `POST /lessons/{lessonId}/notes`（学生）
+- `getLessonNotes(lessonId)` → `GET /lessons/{lessonId}/notes`（学生）
 
 ### 角色与权限
 
@@ -55,6 +56,10 @@ await lessonApi.updateLessonProgress('3001', { progress: 80, lastPosition: 120, 
 
 // 保存笔记
 await lessonApi.addLessonNotes('3001', '本节重点：……')
+
+// 读取笔记
+const noteResp = await lessonApi.getLessonNotes('3001')
+console.log(noteResp.data.notes)
 ```
 
 ## 注意事项

@@ -180,6 +180,10 @@
       },
       "hotTopics": "Hot Topics",
       "activeUsers": "Active Users",
+      "sidebar": {
+        "postsCount": "{count} posts",
+        "userPosts": "{count} posts"
+      },
       "list": {
         "searchPlaceholder": "Search posts...",
         "edit": "Edit",
@@ -231,6 +235,8 @@
         "back": "Back to Community",
         "postedAt": "Posted {datetime}",
         "download": "Download",
+        "attachments": "Resources",
+        "attachmentHint": "Download or preview",
         "like": "{count} Likes",
         "askAi": "Ask AI",
         "edit": "Edit Post",
@@ -247,6 +253,9 @@
         "total": "Total {count}",
         "notFound": "Post not found.",
         "loading": "Loading..."
+      },
+      "comment": {
+        "more": "More"
       },
       "notify": {
         "postCreatedTitle": "Post published",

@@ -33,7 +33,7 @@
                 variant="menu"
                 class="w-full justify-between pl-4 pr-3 py-3 text-sm rounded-xl transition-colors"
                 @click="onCategoryChange(category.id)"
-                :class="filterOptions.category === category.id ? 'bg-primary-100 dark:bg-primary-900 text-primary-700 dark:text-primary-300' : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700'"
+                :class="filterOptions.category === category.id ? 'bg-soft-primary ring-soft-primary text-strong' : 'text-subtle hover-bg-soft'"
               >
                 <span class="flex items-center ml-2">
                   <component :is="category.icon" class="w-5 h-5 mr-3" />
@@ -44,26 +44,26 @@
           </div>
 
           <!-- Hot Topics -->
-          <div v-if="hotTopics.length" class="p-4 filter-container rounded-2xl glass-tint-accent" v-glass="{ strength: 'thin', interactive: false }">
+          <div v-if="hotTopics.length" class="p-4 filter-container rounded-2xl glass-tint-secondary" v-glass="{ strength: 'thin', interactive: false }">
             <h3 class="text-lg font-semibold text-base-content mb-4">{{ t('shared.community.hotTopics') }}</h3>
             <div class="space-y-3">
               <div
                 v-for="(topic, index) in hotTopics"
                 :key="topic.topic"
                 @click="searchByTopic(topic.topic)"
-                class="flex items-center justify-between p-2 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-lg cursor-pointer"
+                class="flex items-center justify-between p-2 rounded-xl cursor-pointer hover-bg-soft"
               >
                 <div class="flex items-center space-x-2">
-                  <span class="w-6 h-6 bg-red-500 text-white rounded text-xs flex items-center justify-center">{{ index + 1 }}</span>
+                  <span class="glass-badge glass-badge-primary glass-badge-sm">{{ index + 1 }}</span>
                   <span class="text-sm text-base-content">#{{ topic.topic }}</span>
                 </div>
-                <span class="text-xs text-gray-500">{{ topic.postCount }}</span>
+                <span class="text-xs text-subtle">{{ t('shared.community.sidebar.postsCount', { count: topic.postCount }) }}</span>
               </div>
             </div>
           </div>
 
           <!-- Active Users -->
-          <div v-if="activeUsers.length" class="p-4 filter-container rounded-2xl glass-tint-info" v-glass="{ strength: 'thin', interactive: false }">
+          <div v-if="activeUsers.length" class="p-4 filter-container rounded-2xl glass-tint-secondary" v-glass="{ strength: 'thin', interactive: false }">
             <h3 class="text-lg font-semibold text-base-content mb-4">{{ t('shared.community.activeUsers') }}</h3>
             <div class="space-y-3">
               <div v-for="user in activeUsers" :key="user.userId" class="flex items-center space-x-3">
@@ -75,7 +75,7 @@
                 </div>
                 <div class="flex-1 min-w-0">
                   <p class="text-sm font-medium text-base-content">{{ displayUserName(user) }}</p>
-                  <p class="text-xs text-gray-500">{{ user.postCount }} 帖子</p>
+                  <p class="text-xs text-subtle">{{ t('shared.community.sidebar.userPosts', { count: user.postCount }) }}</p>
                 </div>
               </div>
             </div>
@@ -85,12 +85,15 @@
         <!-- Main Content: Posts List -->
         <div class="lg:col-span-3">
           <div class="p-4 glass-regular glass-tint-primary rounded-2xl" v-glass="{ strength: 'regular', interactive: true }">
-            <div class="flex justify-between items-center mb-4">
-              <h2 class="text-lg font-semibold text-base-content">
-                {{ categories.find((c: { id: string; name: string; icon: any; }) => c.id === filterOptions.category)?.name || '全部帖子' }}
-              </h2>
-              <div class="flex items-center space-x-3">
-                <div class="relative w-64">
+            <filter-bar dense tint="primary" align="center" class="mb-4">
+              <template #left>
+                <div class="flex items-center gap-2 min-w-0">
+                  <h2 class="text-base md:text-lg font-semibold text-base-content truncate">{{ currentCategoryName }}</h2>
+                  <span class="text-xs text-subtle whitespace-nowrap">{{ t('shared.community.list.total', { count: totalPosts }) }}</span>
+                </div>
+              </template>
+              <template #right>
+                <div class="relative w-64 max-w-full">
                   <glass-search-input
                     v-model="filterOptions.keyword"
                     :placeholder="t('shared.community.list.searchPlaceholder') as string"
@@ -113,15 +116,16 @@
                     @change="applyFilters"
                   />
                 </div>
-              </div>
-            </div>
+              </template>
+            </filter-bar>
 
             <!-- Posts List -->
             <div v-if="!loading && posts.length" class="space-y-4">
               <div
                 v-for="post in posts"
                 :key="post.id"
-                class="p-4 border border-gray-200 dark:border-gray-600 rounded-lg transition-colors"
+                class="glass-ultraThin glass-interactive rounded-2xl p-4"
+                v-glass="{ strength: 'ultraThin', interactive: true }"
               >
                   <div class="flex items-start space-x-4">
                   <div class="flex-shrink-0">
@@ -130,30 +134,64 @@
                       <user-icon class="w-5 h-5 text-gray-400" />
                     </div>
                   </div>
-                  <div class="flex-1 min-w-0" @click="viewPost(post.id)">
-                   <div class="flex items-center space-x-2 mb-1">
-                      <h3 class="text-sm font-medium text-base-content">{{ post.title }}</h3>
-                      <badge size="sm" :variant="categoryVariant(post.category)">{{ displayCategory(post.category) }}</badge>
+                  <div class="flex-1 min-w-0">
+                    <div
+                      class="cursor-pointer"
+                      role="button"
+                      tabindex="0"
+                      @click="viewPost(post.id)"
+                      @keydown.enter.prevent="viewPost(post.id)"
+                    >
+                      <div class="flex items-start justify-between gap-3">
+                        <div class="min-w-0">
+                          <div class="flex items-center gap-2 mb-1 min-w-0">
+                            <h3 class="text-base font-semibold text-base-content line-clamp-2">{{ post.title }}</h3>
+                            <badge size="sm" class="shrink-0" :variant="categoryVariant(post.category)">{{ displayCategory(post.category) }}</badge>
+                          </div>
+                          <p class="text-sm text-subtle line-clamp-2 mb-2 whitespace-pre-line" v-html="post.content"></p>
+                        </div>
+                        <div class="flex-shrink-0 flex items-center gap-1.5">
+                          <Button v-if="post.attachments?.length" variant="ghost" size="xs" icon="download" class="text-subtle" @click.stop="downloadFirstAttachment(post)">
+                            {{ t('shared.download') }}
+                          </Button>
+                          <Button
+                            v-if="authStore.user?.id && String(authStore.user.id) === String(post.author?.id || post.authorId)"
+                            variant="outline"
+                            size="xs"
+                            icon="edit"
+                            class="text-subtle"
+                            @click.stop="onEditPost(post)"
+                          >
+                            {{ t('shared.community.list.edit') }}
+                          </Button>
+                          <Button
+                            v-if="authStore.user?.id && String(authStore.user.id) === String(post.author?.id || post.authorId)"
+                            variant="outline"
+                            size="xs"
+                            icon="delete"
+                            class="text-subtle"
+                            @click.stop="onDeletePost(post.id)"
+                          >
+                            {{ t('shared.community.list.delete') }}
+                          </Button>
+                        </div>
+                      </div>
                     </div>
-                   <p class="text-sm text-subtle line-clamp-2 mb-2 whitespace-pre-line" v-html="post.content"></p>
-                    <div class="flex items-center space-x-4 text-xs text-subtle">
+                    <div class="flex items-center flex-wrap gap-x-4 gap-y-2 text-xs text-subtle mt-2">
                       <span>{{ displayUserName(post.author) || t('shared.community.list.anonymous') }}</span>
                       <span>{{ formatDate(post.createdAt) }}</span>
-                       <div class="flex items-center space-x-1"><eye-icon class="w-3 h-3" /><span>{{ post.viewCount }}</span></div>
-                      <div class="flex items-center space-x-1"><chat-bubble-left-icon class="w-3 h-3" /><span>{{ post.commentCount }}</span></div>
+                      <div class="flex items-center gap-1"><eye-icon class="w-3.5 h-3.5" /><span>{{ post.viewCount }}</span></div>
+                      <div class="flex items-center gap-1"><chat-bubble-left-icon class="w-3.5 h-3.5" /><span>{{ post.commentCount }}</span></div>
                       <Button size="xs" variant="reaction" @click.stop="communityStore.toggleLikePost(post.id)" :class="post.isLiked ? 'reaction-liked' : ''">
-                        <hand-thumb-up-icon class="w-3 h-3 mr-1" />
+                        <template #icon>
+                          <hand-thumb-up-icon class="w-3.5 h-3.5" />
+                        </template>
                         <span>{{ post.likeCount }}</span>
                       </Button>
                     </div>
                     <div v-if="post.tags?.length" class="flex items-center flex-wrap gap-2 mt-2">
                       <badge v-for="tag in post.tags" :key="tag.id" size="sm" :variant="tagVariantByName(tag.name)">#{{ tag.name }}</badge>
                     </div>
-                  </div>
-                  <div class="flex-shrink-0 space-x-2">
-                    <Button v-if="post.attachments?.length" variant="secondary" size="sm" icon="download" @click.stop="downloadFirstAttachment(post)">下载附件</Button>
-                    <Button v-if="authStore.user?.id && String(authStore.user.id) === String(post.author?.id || post.authorId)" variant="outline" size="sm" icon="edit" @click.stop="onEditPost(post)">{{ t('shared.community.list.edit') }}</Button>
-                    <Button v-if="authStore.user?.id && String(authStore.user.id) === String(post.author?.id || post.authorId)" variant="danger" size="sm" icon="delete" @click.stop="onDeletePost(post.id)">{{ t('shared.community.list.delete') }}</Button>
                   </div>
                 </div>
               </div>
@@ -320,6 +358,7 @@ import Badge from '@/components/ui/Badge.vue'
 import GlassSearchInput from '@/components/ui/inputs/GlassSearchInput.vue'
 import GlassTagsInput from '@/components/ui/inputs/GlassTagsInput.vue'
 import { resolveUserDisplayName } from '@/shared/utils/user'
+import FilterBar from '@/components/ui/filters/FilterBar.vue'
 
 import { useAuthStore } from '@/stores/auth';
 import FileUpload from '@/components/forms/FileUpload.vue';
@@ -333,7 +372,7 @@ const communityStore = useCommunityStore();
 const authStore = useAuthStore();
 // @ts-ignore shim for vue-i18n types in this project
 import { useI18n } from 'vue-i18n'
-const { t } = useI18n()
+const { t, locale } = useI18n()
 
 
 const { posts, totalPosts, stats, hotTopics, activeUsers, loading } = storeToRefs(communityStore);
@@ -395,6 +434,9 @@ const categories = computed(() => ([
   { id: 'qa', name: t('shared.community.categories.qa') as string, icon: AcademicCapIcon },
   { id: 'chat', name: t('shared.community.categories.chat') as string, icon: ChatBubbleOvalLeftEllipsisIcon }
 ]));
+const currentCategoryName = computed(() => {
+  return categories.value.find((c: any) => c.id === filterOptions.category)?.name || (t('shared.community.categories.all') as string)
+})
 
 const categoryIdToLabel: Record<string, string> = {
   study: '学习讨论',
@@ -569,13 +611,14 @@ const formatDate = (dateString: string) => {
   const now = new Date();
   const diff = now.getTime() - date.getTime();
   const minutes = Math.floor(diff / 60000);
-  if (minutes < 1) return '刚刚';
-  if (minutes < 60) return `${minutes}分钟前`;
+  if (minutes < 1) return t('shared.community.list.justNow') as string;
+  if (minutes < 60) return t('shared.community.list.minutesAgo', { count: minutes }) as string;
   const hours = Math.floor(minutes / 60);
-  if (hours < 24) return `${hours}小时前`;
+  if (hours < 24) return t('shared.community.list.hoursAgo', { count: hours }) as string;
   const days = Math.floor(hours / 24);
-  if (days < 7) return `${days}天前`;
-  return date.toLocaleDateString('zh-CN');
+  if (days < 7) return t('shared.community.list.daysAgo', { count: days }) as string;
+  const loc = String(locale.value || 'zh-CN')
+  return date.toLocaleDateString(loc.startsWith('zh') ? 'zh-CN' : 'en-US');
 };
 
 const getCategoryClass = (category: string) => {

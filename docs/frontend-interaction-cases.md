@@ -674,7 +674,7 @@ export const useDashboardStore = defineStore('dashboard', {
 })
 ```
 
-## 13. 学生能力雷达/趋势（StudentAbilityView → useStudentStore → ability.api.ts）
+## 13. 学生能力雷达/趋势（StudentAnalysisView → useStudentStore → ability.api.ts）
 
 组件片段：
 ```ts

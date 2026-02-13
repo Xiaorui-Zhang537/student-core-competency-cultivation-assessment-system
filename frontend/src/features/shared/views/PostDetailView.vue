@@ -4,58 +4,99 @@
     <div v-if="!loading && !currentPost" class="text-center">{{ t('shared.community.detail.notFound') }}</div>
     
     <div v-if="currentPost" class="max-w-4xl mx-auto">
-      <page-header :title="currentPost.title" :subtitle="t('shared.community.detail.postedAt', { datetime: formatDate(currentPost.createdAt) })" />
       <!-- Back Button -->
-      <a href="#" role="button" tabindex="0" @click.stop.prevent="goBackCommunity" @keydown.enter.stop.prevent="goBackCommunity" class="inline-flex items-center text-sm text-subtle mb-4 cursor-pointer relative z-20 pointer-events-auto hover-theme-primary">
+      <a
+        href="#"
+        role="button"
+        tabindex="0"
+        @click.stop.prevent="goBackCommunity"
+        @keydown.enter.stop.prevent="goBackCommunity"
+        class="inline-flex items-center text-sm text-subtle mb-4 cursor-pointer relative z-20 pointer-events-auto hover-theme-primary"
+      >
         <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
         {{ t('shared.community.detail.back') }}
       </a>
 
+      <page-header
+        :container="false"
+        :title="currentPost.title"
+        class="mb-6"
+      />
+
       <!-- Post Header -->
       <div class="glass-regular glass-tint-secondary rounded-2xl p-6 mb-6" v-glass="{ strength: 'regular', interactive: true }">
-        <div class="flex items-center space-x-4 text-sm text-subtle">
-          <div class="flex items-center space-x-2">
-            <user-avatar :avatar="currentPost.author?.avatar" :size="20">
-              <user-icon class="w-5 h-5" />
-            </user-avatar>
-            <span>{{ displayUserName(currentPost.author) || t('shared.community.list.anonymous') }}</span>
+        <div class="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
+          <div class="min-w-0">
+            <div class="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-subtle">
+              <div class="flex items-center gap-2">
+                <user-avatar :avatar="currentPost.author?.avatar" :size="20">
+                  <user-icon class="w-5 h-5" />
+                </user-avatar>
+                <span class="text-base-content">{{ displayUserName(currentPost.author) || t('shared.community.list.anonymous') }}</span>
+              </div>
+              <span>{{ t('shared.community.detail.postedAt', { datetime: formatDate(currentPost.createdAt) }) }}</span>
+              <div class="flex items-center gap-1"><eye-icon class="w-4 h-4" /><span>{{ currentPost.viewCount }}</span></div>
+              <div class="flex items-center gap-1"><chat-bubble-left-icon class="w-4 h-4" /><span>{{ currentPost.commentCount }}</span></div>
+            </div>
+            <div v-if="currentPost.tags?.length" class="flex items-center flex-wrap gap-2 mt-4">
+              <badge v-for="tag in currentPost.tags" :key="tag.id" size="sm" variant="secondary">#{{ tag.name }}</badge>
+            </div>
           </div>
-          <span>{{ t('shared.community.detail.postedAt', { datetime: formatDate(currentPost.createdAt) }) }}</span>
-           <div class="flex items-center space-x-1"><eye-icon class="w-4 h-4" /><span>{{ currentPost.viewCount }}</span></div>
-           <div class="flex items-center space-x-1"><chat-bubble-left-icon class="w-4 h-4" /><span>{{ currentPost.commentCount }}</span></div>
-        </div>
-         <div v-if="currentPost.tags?.length" class="flex items-center space-x-2 mt-4">
-            <badge v-for="tag in currentPost.tags" :key="tag.id" size="sm" variant="secondary">#{{ tag.name }}</badge>
+
+          <div class="flex items-center gap-3 shrink-0">
+            <Button
+              size="sm"
+              variant="reaction"
+              @click="communityStore.toggleLikePost(currentPost.id)"
+              :class="currentPost.isLiked ? 'reaction-liked' : ''"
+            >
+              <template #icon>
+                <hand-thumb-up-icon class="w-4 h-4" />
+              </template>
+              <span>{{ currentPost.likeCount }}</span>
+            </Button>
+            <Button variant="primary" size="sm" @click="askAiForCurrentPost">
+              <sparkles-icon class="w-4 h-4 mr-2" />{{ t('shared.community.detail.askAi') }}
+            </Button>
+          </div>
         </div>
       </div>
 
       <!-- Post Content -->
-      <div class="glass-regular glass-tint-info rounded-2xl p-6 mb-6" v-glass="{ strength: 'regular', interactive: true }">
-        <div class="prose dark:prose-invert max-w-none whitespace-pre-line" v-html="currentPost.content"></div>
-        <div v-if="attachments.length" class="mt-7 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
-          <div v-for="f in attachments" :key="f.id" class="rounded overflow-hidden glass-ultraThin" v-glass="{ strength: 'ultraThin', interactive: false }">
-            <img v-if="isImageAttachment(f)" :src="f._previewUrl || ''" class="w-full h-32 object-cover" @error="loadPreview(f)" />
-            <div class="p-2 text-xs flex items-center justify-between">
-              <span class="truncate" :title="f.originalName || f.fileName">{{ f.originalName || f.fileName || ('#' + f.id) }}</span>
-              <Button size="xs" variant="secondary" icon="download" @click="downloadAttachment(f)">{{ t('shared.community.detail.download') }}</Button>
+      <div class="glass-regular rounded-2xl p-6 mb-6" v-glass="{ strength: 'regular', interactive: true }">
+        <div class="prose prose-readable dark:prose-invert max-w-none whitespace-pre-line" v-html="currentPost.content"></div>
+
+        <!-- Attachments: resources-style -->
+        <div v-if="attachments.length" class="mt-8">
+          <div class="flex items-center justify-between mb-3">
+            <h3 class="text-sm font-semibold text-base-content">{{ t('shared.community.detail.attachments') }}</h3>
+          </div>
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+            <div
+              v-for="f in attachments"
+              :key="f.id"
+              class="rounded-xl overflow-hidden glass-ultraThin"
+              v-glass="{ strength: 'ultraThin', interactive: true }"
+            >
+              <img
+                v-if="isImageAttachment(f)"
+                :src="f._previewUrl || ''"
+                class="w-full h-32 object-cover glass-img-border"
+                @error="loadPreview(f)"
+              />
+              <div class="p-3 flex items-center justify-between gap-3">
+                <div class="min-w-0">
+                  <div class="text-sm text-base-content truncate" :title="f.originalName || f.fileName">
+                    {{ f.originalName || f.fileName || ('#' + f.id) }}
+                  </div>
+                  <div class="text-xs text-subtle truncate">{{ t('shared.community.detail.attachmentHint') }}</div>
+                </div>
+                <Button size="xs" variant="outline" icon="download" class="shrink-0" @click="downloadAttachment(f)">
+                  {{ t('shared.community.detail.download') }}
+                </Button>
+              </div>
             </div>
           </div>
-        </div>
-         <div class="mt-8 pt-5 border-t border-gray-200 dark:border-gray-700 flex items-center space-x-6">
-           <Button
-            size="sm"
-            variant="reaction"
-            @click="communityStore.toggleLikePost(currentPost.id)"
-            :class="currentPost.isLiked ? 'reaction-liked' : ''"
-            class="flex items-center space-x-2"
-          >
-            <hand-thumb-up-icon class="w-5 h-5" />
-            <span>{{ t('shared.community.detail.like', { count: currentPost.likeCount }) }}</span>
-          </Button>
-            <Button variant="primary" size="sm" @click="askAiForCurrentPost">
-              <sparkles-icon class="w-4 h-4 mr-2" />{{ t('shared.community.detail.askAi') }}
-            </Button>
-            
         </div>
       </div>
 

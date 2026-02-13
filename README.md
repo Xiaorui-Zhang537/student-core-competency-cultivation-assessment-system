@@ -165,6 +165,14 @@ server {
 ---
 
 ## 更新日志（学生端改造）
+### 2026-02-10 学生端界面微优化（v0.3.1）
+- 新增通用状态组件：`Breadcrumb`、`EmptyState`、`ErrorState`、`LoadingOverlay`；
+- 课程详情统一 `PageHeader + Breadcrumb`，补充“继续学习/课程作业”快捷入口；
+- 小节详情新增“上一节/下一节”导航，笔记支持读取与保存反馈；
+- 文档预览降级时支持直接下载；
+- 统一学生端关键页面加载/空态/错误态交互；
+- 能力页冗余实现 `AbilityView.vue` 已下线，统一能力分析入口为 `AnalysisView`。
+
 ### 2025-09-25 UI 主题与彩色玻璃（v0.3.0）
 - 集成 DaisyUI 并采用 `retro/synthwave` 主题；
 - 新版主题使用 `base-100` 米黄色纯色底（移除动态背景组件）；

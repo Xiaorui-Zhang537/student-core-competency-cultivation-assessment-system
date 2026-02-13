@@ -12,7 +12,7 @@
         <p class="text-sm font-semibold text-gray-900 dark:text-white">{{ displayUserName(comment.author) || t('shared.community.list.anonymous') }}</p>
         <p class="text-sm text-gray-700 dark:text-gray-200 mt-1 whitespace-pre-line">{{ comment.content }}</p>
       </div>
-      <div class="text-xs text-gray-500 mt-3 flex items-center space-x-4">
+      <div class="text-xs text-gray-500 mt-3 flex items-center gap-3">
         <span>{{ formatDate(comment.createdAt) }}</span>
         <Button size="xs" variant="reaction" class="!px-1 !py-0.5" :class="comment.isLiked ? 'reaction-liked' : ''" @click="onLikeComment" :disabled="likeBusy">
           <template #icon>
@@ -20,30 +20,56 @@
           </template>
           <span>{{ safeLikeCount }}</span>
         </Button>
-        <Button size="xs" variant="primary" class="!px-1.5 !py-0.5" @click="askAiForComment">
-          <template #icon>
-            <sparkles-icon class="w-3.5 h-3.5" />
-          </template>
-          {{ t('shared.community.detail.askAi') }}
-        </Button>
-        <Button size="xs" variant="success" class="!px-1.5 !py-0.5" @click="toggleReply">
+        <Button size="xs" variant="ghost" class="!px-1.5 !py-0.5" @click="toggleReply">
           <template #icon>
             <chat-bubble-left-icon class="w-3.5 h-3.5" />
           </template>
           {{ t('shared.community.detail.reply') }}
         </Button>
-        <Button v-if="authStore.user?.id && String(authStore.user.id) === String(comment.authorId)" size="xs" variant="danger" class="!px-1.5 !py-0.5" @click="handleDeleteSelf">
-          <template #icon>
-            <trash-icon class="w-3.5 h-3.5" />
-          </template>
-          {{ t('shared.community.list.delete') }}
-        </Button>
+
+        <div class="ml-auto relative" ref="menuAnchorRef">
+          <Button
+            size="xs"
+            variant="ghost"
+            class="!px-1.5 !py-0.5"
+            :aria-label="t('shared.community.comment.more') as string"
+            @click="toggleMenu"
+          >
+            <template #icon>
+              <ellipsis-vertical-icon class="w-4 h-4" />
+            </template>
+          </Button>
+          <div
+            v-if="showMenu"
+            ref="menuPanelRef"
+            class="absolute right-0 mt-2 min-w-[10rem] rounded-2xl p-2 ui-popover-menu z-20"
+            v-glass="{ strength: 'thin', interactive: false }"
+          >
+            <button type="button" class="w-full text-left px-3 py-2 rounded-xl text-sm hover-bg-soft" @click="onAskAiFromMenu">
+              <span class="inline-flex items-center gap-2">
+                <sparkles-icon class="w-4 h-4" />
+                <span>{{ t('shared.community.detail.askAi') }}</span>
+              </span>
+            </button>
+            <button
+              v-if="canDelete"
+              type="button"
+              class="w-full text-left px-3 py-2 rounded-xl text-sm hover-bg-soft"
+              @click="onDeleteFromMenu"
+            >
+              <span class="inline-flex items-center gap-2">
+                <trash-icon class="w-4 h-4" />
+                <span>{{ t('shared.community.list.delete') }}</span>
+              </span>
+            </button>
+          </div>
+        </div>
       </div>
       <!-- 回复输入框 -->
       <div v-if="showReplyBox" class="mt-4">
         <glass-textarea v-model="replyContent" :rows="2" class="w-full" :placeholder="t('shared.community.detail.writeComment') as string" />
         <div class="mt-4 flex items-center gap-4">
-          <emoji-picker variant="outline" tint="accent" size="sm" @select="(e: string) => { replyContent = (replyContent || '') + e }" />
+          <emoji-picker variant="outline" tint="accent" size="sm" @select="onReplyEmojiSelect" />
           <Button variant="primary" size="sm" :disabled="!replyContent.trim()" @click="submitReply">
             <template #icon>
               <paper-airplane-icon class="w-4 h-4" />
@@ -70,10 +96,10 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, computed } from 'vue'
+import { ref, onMounted, onBeforeUnmount, computed } from 'vue'
 import { useAuthStore } from '@/stores/auth'
 import { useCommunityStore } from '@/stores/community'
-import { UserIcon, HandThumbUpIcon, SparklesIcon, ChatBubbleLeftIcon, TrashIcon, PaperAirplaneIcon } from '@heroicons/vue/24/outline'
+import { UserIcon, HandThumbUpIcon, SparklesIcon, ChatBubbleLeftIcon, TrashIcon, PaperAirplaneIcon, EllipsisVerticalIcon } from '@heroicons/vue/24/outline'
 import UserAvatar from '@/components/ui/UserAvatar.vue'
 import EmojiPicker from '@/components/ui/EmojiPicker.vue'
 import { useRouter } from 'vue-router'
@@ -104,6 +130,16 @@ const safeLikeCount = computed(() => {
   return Number.isFinite(n) ? Math.max(0, n) : 0
 })
 const likeBusy = ref(false)
+
+const canDelete = computed(() => {
+  const uid = authStore.user?.id
+  if (!uid) return false
+  return String(uid) === String((props.comment as any).author?.id || (props.comment as any).authorId)
+})
+
+const showMenu = ref(false)
+const menuAnchorRef = ref<HTMLElement | null>(null)
+const menuPanelRef = ref<HTMLElement | null>(null)
 
 const formatDate = (dateString: string) => {
   if (!dateString) return ''
@@ -172,7 +208,30 @@ const handleDeleteSelf = async () => {
 
 onMounted(async () => {
   await loadReplies(true)
+  document.addEventListener('click', onDocClick)
 })
+
+onBeforeUnmount(() => {
+  document.removeEventListener('click', onDocClick)
+})
+
+const toggleMenu = () => {
+  showMenu.value = !showMenu.value
+}
+
+const closeMenu = () => {
+  showMenu.value = false
+}
+
+const onDocClick = (ev: MouseEvent) => {
+  if (!showMenu.value) return
+  const target = ev.target as Node
+  const anchor = menuAnchorRef.value
+  const panel = menuPanelRef.value
+  if (anchor && anchor.contains(target)) return
+  if (panel && panel.contains(target)) return
+  closeMenu()
+}
 
 const onLikeComment = async () => {
   if (likeBusy.value) return
@@ -199,6 +258,20 @@ const onLikeComment = async () => {
 const askAiForComment = () => {
   const content = (props.comment?.content ? `【评论内容】${props.comment.content}` : '')
   router.push({ path: '/teacher/assistant', query: { q: content } })
+}
+
+const onAskAiFromMenu = () => {
+  closeMenu()
+  askAiForComment()
+}
+
+const onDeleteFromMenu = async () => {
+  closeMenu()
+  await handleDeleteSelf()
+}
+
+const onReplyEmojiSelect = (e: string) => {
+  replyContent.value = (replyContent.value || '') + e
 }
 </script>
 
