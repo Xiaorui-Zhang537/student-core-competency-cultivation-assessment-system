@@ -99,7 +99,7 @@
                     :placeholder="t('shared.community.list.searchPlaceholder') as string"
                     size="sm"
                     @keyup.enter="applyFilters"
-                    @update:modelValue="(v: string) => { if (String(v || '').trim() === '') { applyFilters() } }"
+                    @update:modelValue="(v: string | null) => { if (String(v ?? '').trim() === '') { applyFilters() } }"
                   />
                 </div>
                 <div class="w-36">
@@ -151,7 +151,7 @@
                           <p class="text-sm text-subtle line-clamp-2 mb-2 whitespace-pre-line" v-html="post.content"></p>
                         </div>
                         <div class="flex-shrink-0 flex items-center gap-1.5">
-                          <Button v-if="post.attachments?.length" variant="ghost" size="xs" icon="download" class="text-subtle" @click.stop="downloadFirstAttachment(post)">
+                          <Button v-if="(post as any).attachments?.length" variant="ghost" size="xs" icon="download" class="text-subtle" @click.stop="downloadFirstAttachment(post)">
                             {{ t('shared.download') }}
                           </Button>
                           <Button
@@ -190,7 +190,7 @@
                       </Button>
                     </div>
                     <div v-if="post.tags?.length" class="flex items-center flex-wrap gap-2 mt-2">
-                      <badge v-for="tag in post.tags" :key="tag.id" size="sm" :variant="tagVariantByName(tag.name)">#{{ tag.name }}</badge>
+                      <badge v-for="tag in post.tags" :key="tag.id" size="sm" :variant="(tagVariantByName(tag.name) as 'primary' | 'secondary' | 'success' | 'warning' | 'info' | 'danger' | 'accent')">#{{ tag.name }}</badge>
                     </div>
                   </div>
                 </div>
