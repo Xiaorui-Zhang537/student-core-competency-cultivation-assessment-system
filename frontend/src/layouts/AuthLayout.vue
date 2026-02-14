@@ -43,7 +43,7 @@
       <!-- 光标菜单弹层 -->
       <teleport to="body">
         <div v-if="showCursorMenu" class="fixed inset-0 z-[999]" @click="showCursorMenu = false"></div>
-        <liquid-glass v-if="showCursorMenu" :style="cursorMenuStyle" containerClass="fixed z-[1000] rounded-2xl" class="p-1" :radius="16" :frost="0.05" @click.stop>
+        <liquid-glass v-if="showCursorMenu" effect="occlusionBlur" :style="cursorMenuStyle" containerClass="fixed z-[1000] rounded-2xl" class="p-1" :radius="16" :frost="0.05" @click.stop>
           <div class="px-3 py-2 text-xs text-subtle">
             <div class="font-medium mb-1">{{ t('layout.common.cursorTrailTitle') }}</div>
             <div class="opacity-90">{{ t('layout.common.cursorTrailDesc') }}</div>
@@ -68,7 +68,7 @@
         </liquid-glass>
         <!-- 背景选择悬浮菜单（与主题菜单一致样式） -->
         <div v-if="showBgPicker" class="fixed inset-0 z-[999]" @click="showBgPicker = false"></div>
-        <liquid-glass v-if="showBgPicker" :style="bgMenuStyle" containerClass="fixed z-[1000] rounded-2xl" class="p-1" :radius="16" :frost="0.05" @click.stop>
+        <liquid-glass v-if="showBgPicker" effect="occlusionBlur" :style="bgMenuStyle" containerClass="fixed z-[1000] rounded-2xl" class="p-1" :radius="16" :frost="0.05" @click.stop>
           <div class="px-3 py-2 text-xs text-subtle">
             <div class="font-medium mb-1">{{ t('layout.common.bgPickerTitle') }}</div>
             <div class="opacity-90">{{ t('layout.common.bgPickerDesc') }}</div>

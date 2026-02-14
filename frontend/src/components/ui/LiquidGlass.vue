@@ -44,6 +44,8 @@
 <script setup lang="ts">
 import { computed, onMounted, onUnmounted, reactive, ref, type HTMLAttributes } from 'vue'
 
+type LiquidGlassEffect = 'refract' | 'occlusionBlur'
+
 interface Props {
   radius?: number
   border?: number
@@ -65,6 +67,11 @@ interface Props {
   bgTransparent?: boolean
   tintFrom?: string
   tintTo?: string
+  /**
+   * refract: 使用 SVG displacement filter 产生折射/位移效果（默认）
+   * occlusionBlur: 仅做遮蔽 + 背景模糊，不产生折射/扭曲（更接近苹果官网 glass）
+   */
+  effect?: LiquidGlassEffect
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -85,7 +92,8 @@ const props = withDefaults(defineProps<Props>(), {
   tint: true,
   bgTransparent: false,
   tintFrom: 'var(--color-theme-primary)',
-  tintTo: 'var(--color-theme-accent)'
+  tintTo: 'var(--color-theme-accent)',
+  effect: 'refract'
 })
 
 const liquidGlassRoot = ref<HTMLElement | null>(null)
@@ -93,8 +101,12 @@ const dimensions = reactive({ width: 0, height: 0 })
 let observer: ResizeObserver | null = null
 
 const baseStyle = computed(() => {
+  const isOcclusion = props.effect === 'occlusionBlur'
   return {
     '--frost': String(props.frost),
+    '--liquid-backdrop-filter': isOcclusion
+      ? `blur(var(--glass-blur-regular, 18px)) saturate(var(--glass-saturate-regular, 1.8)) contrast(var(--glass-contrast-regular, 1.12))`
+      : 'url(#displacementFilter)',
     'border-radius': `${props.radius}px`,
     ...(props.bgTransparent ? { background: 'transparent' } : {})
   } as Record<string, string>
@@ -192,7 +204,8 @@ onUnmounted(() => {
   display: block;
   opacity: 1;
   border-radius: inherit;
-  backdrop-filter: url(#displacementFilter);
+  backdrop-filter: var(--liquid-backdrop-filter, url(#displacementFilter));
+  -webkit-backdrop-filter: var(--liquid-backdrop-filter, url(#displacementFilter));
   background: light-dark(hsl(0 0% 100% / var(--frost, 0)), hsl(0 0% 0% / var(--frost, 0)));
   box-shadow:
     0 0 1px 0

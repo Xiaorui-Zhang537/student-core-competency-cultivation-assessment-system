@@ -3,6 +3,7 @@
     <div class="absolute inset-0" :class="backdropDark ? 'bg-black/50' : 'bg-transparent'" @click="$emit('close')"></div>
     <liquid-glass
       class="relative w-full rounded-2xl overflow-hidden flex flex-col"
+      effect="occlusionBlur"
       :class="[resolvedMaxWidthClass, containerMaxHClass]"
       :style="resolvedMaxWidthStyle"
       :radius="16"
@@ -37,7 +38,7 @@
           </template>
         </div>
       </div>
-      <div class="p-4 overflow-auto min-h-0 no-scrollbar modal-body-surface" :class="[fillHeight ? 'flex-1' : '', contentMaxHClass, solidBody ? 'modal-body-solid' : '']" :style="contentSurfaceStyle">
+      <div class="p-4 overflow-auto min-h-0 no-scrollbar" :class="[fillHeight ? 'flex-1' : '', contentMaxHClass]">
         <slot />
       </div>
       <div v-if="$slots.footer" class="p-4 flex justify-end gap-2 modal-footer-glass">
@@ -94,7 +95,7 @@ const wrapperStyle = computed(() => {
 
 const tintClass = computed(() => '')
 
-// 根据 clarity 调整 LiquidGlass 参数，降低折射与提高可读性
+// clarity 在“无折射”模式下，用于控制遮蔽强度（frost）
 const resolvedScale = computed(() => {
   // scale 越接近 0，折射越弱；负值表示反向偏移
   if (props.clarity === 'max') return -40
@@ -114,31 +115,13 @@ const resolvedAlpha = computed(() => {
   return 0.93
 })
 const resolvedFrost = computed(() => {
-  // 减少霜度，减少泛白
-  if (props.clarity === 'max') return 0.03
-  if (props.clarity === 'high') return 0.04
-  return 0.05
+  // 统一弹窗为 Dock 同款“遮蔽+blur”质感：通过 frost 控制遮蔽程度
+  if (props.clarity === 'max') return 0.18
+  if (props.clarity === 'high') return 0.16
+  return 0.14
 })
 
-// 内容区增加中性玻璃底色，确保文本与控件可读
-const contentSurfaceStyle = computed(() => {
-  // solidBody: 完全不折射（叠加实体底），用于高密度表单/预览
-  if (props.solidBody) {
-    return {
-      // 不透明正文底：避免弹窗正文“透底”影响可读性
-      backgroundColor: 'var(--color-base-100)',
-      boxShadow: 'inset 0 0 0 1px rgba(15, 23, 42, 0.08)',
-      backdropFilter: 'none',
-      WebkitBackdropFilter: 'none'
-    } as Record<string, string>
-  }
-  if (props.clarity === 'default') return undefined
-  // clarity≥high：增加浅底，提升文字与控件对比
-  return {
-    backgroundColor: 'color-mix(in oklab, var(--color-base-100) 72%, transparent)',
-    boxShadow: 'inset 0 0 0 1px color-mix(in oklab, var(--color-base-content) 10%, transparent)'
-  } as Record<string, string>
-})
+// 注意：按“只有遮蔽感”的需求，内容区不再叠加任何自带底色（solidBody/clarity 不再影响内容背景）
 
 const resolvedMaxWidthClass = computed(() => {
   // 若提供固定尺寸，则优先使用固定映射

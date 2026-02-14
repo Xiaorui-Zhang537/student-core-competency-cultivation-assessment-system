@@ -4,7 +4,6 @@
     :title="title"
     size="lg"
     heightVariant="tall"
-    solidBody
     @close="emit('update:open', false)"
   >
     <div class="space-y-3">

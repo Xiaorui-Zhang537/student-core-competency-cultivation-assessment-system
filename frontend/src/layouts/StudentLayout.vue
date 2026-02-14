@@ -140,6 +140,7 @@
       <div v-if="showUserMenu" class="fixed inset-0 z-[999]" @click="showUserMenu = false"></div>
       <liquid-glass
         v-if="showUserMenu"
+        effect="occlusionBlur"
         :style="userMenuStyle"
         containerClass="fixed z-[1000] rounded-xl shadow-lg border border-white/20 dark:border-white/12 overflow-hidden"
         :radius="16"
@@ -189,6 +190,7 @@
       <div v-if="showBgPicker" class="fixed inset-0 z-[999]" @click="showBgPicker = false"></div>
       <liquid-glass
         v-if="showBgPicker"
+        effect="occlusionBlur"
         :style="bgMenuStyle"
         containerClass="fixed z-[1000] rounded-2xl border border-white/20 dark:border-white/12 overflow-hidden shadow-lg"
         class="p-1"
@@ -246,6 +248,7 @@
       <div v-if="showThemeMenu" class="fixed inset-0 z-[999]" @click="showThemeMenu = false"></div>
       <liquid-glass
         v-if="showThemeMenu"
+        effect="occlusionBlur"
         :style="themeMenuStyle"
         containerClass="fixed z-[1000] rounded-2xl border border-white/20 dark:border-white/12 overflow-hidden shadow-lg"
         class="p-1"
@@ -281,6 +284,7 @@
       <div v-if="showCursorMenu" class="fixed inset-0 z-[999]" @click="showCursorMenu = false"></div>
       <liquid-glass
         v-if="showCursorMenu"
+        effect="occlusionBlur"
         :style="cursorMenuStyle"
         containerClass="fixed z-[1000] rounded-2xl border border-white/20 dark:border-white/12 overflow-hidden shadow-lg"
         class="p-1"

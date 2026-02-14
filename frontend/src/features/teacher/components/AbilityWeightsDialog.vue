@@ -1,5 +1,5 @@
 <template>
-  <glass-modal v-if="open" :title="t('teacher.analytics.weights.title') as string" :maxWidth="'max-w-[1600px]'" heightVariant="normal" solidBody @close="$emit('close')">
+  <glass-modal v-if="open" :title="t('teacher.analytics.weights.title') as string" :maxWidth="'max-w-[1600px]'" heightVariant="normal" @close="$emit('close')">
     <div class="space-y-3">
       <div v-for="d in dims" :key="d.code" class="flex items-center justify-between">
         <span class="text-sm">{{ t(`teacher.analytics.weights.dimensions.${d.code}`) }}</span>

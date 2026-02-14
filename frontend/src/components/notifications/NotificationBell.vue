@@ -24,6 +24,7 @@
       <teleport to="body">
         <liquid-glass
           v-if="isDropdownOpen"
+          effect="occlusionBlur"
           :style="dropdownStyle"
           containerClass="notification-dropdown fixed z-[1000] rounded-2xl border border-white/20 overflow-hidden shadow"
           :radius="16"
@@ -86,12 +87,9 @@
                       <p class="notification-title font-semibold">
                         {{ getLocalizedTitle(notification) }}
                       </p>
-                      <span
-                        class="priority-badge"
-                        :class="getPriorityClass(notification.priority)"
-                      >
+                      <Badge size="sm" :variant="priorityVariant(notification.priority)">
                         {{ getPriorityText(notification.priority) }}
-                      </span>
+                      </Badge>
                     </div>
                     
                     <!-- 内容预览 -->
@@ -141,6 +139,7 @@ import { useNotificationsStore } from '@/stores/notifications'
 import { storeToRefs } from 'pinia'
 import RippleButton from '@/components/ui/RippleButton.vue'
 import Button from '@/components/ui/Button.vue'
+import Badge from '@/components/ui/Badge.vue'
 import LiquidGlass from '@/components/ui/LiquidGlass.vue'
 import {
   BellIcon,
@@ -341,6 +340,14 @@ const normalizePriority = (priority?: string): 'urgent'|'high'|'normal'|'low' =>
   const p = String(priority || '').toLowerCase()
   if (p === 'urgent' || p === 'high' || p === 'normal' || p === 'low') return p as any
   return 'low'
+}
+
+const priorityVariant = (priority?: string) => {
+  const p = normalizePriority(priority)
+  if (p === 'urgent') return 'danger'
+  if (p === 'high') return 'warning'
+  if (p === 'normal') return 'info'
+  return 'secondary'
 }
 
 const getPriorityClass = (priority?: string) => {

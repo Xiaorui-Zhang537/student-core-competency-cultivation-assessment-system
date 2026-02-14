@@ -107,7 +107,7 @@
       </Card>
 
       <!-- Create/Edit Modal (GlassModal) -->
-      <GlassModal v-if="showModal" :title="(isEditing ? t('teacher.courses.modal.editTitle') : t('teacher.courses.modal.createTitle')) as string" size="md" heightVariant="tall" solidBody @close="closeModal">
+      <GlassModal v-if="showModal" :title="(isEditing ? t('teacher.courses.modal.editTitle') : t('teacher.courses.modal.createTitle')) as string" size="md" heightVariant="tall" @close="closeModal">
         <form id="courseForm" @submit.prevent="handleSubmit" class="space-y-4">
           <div>
             <label for="title" class="block text-sm font-medium mb-1">{{ t('teacher.courses.modal.title') }}</label>

@@ -6,6 +6,7 @@
     <teleport to="body">
       <liquid-glass
         v-if="open"
+        effect="occlusionBlur"
         :style="styleObj"
         containerClass="fixed z-[1000] rounded-2xl border border-white/20 overflow-hidden"
         :radius="16"

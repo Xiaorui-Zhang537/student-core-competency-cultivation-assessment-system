@@ -87,7 +87,7 @@
       @cancel="confirmDialog.onCancel"
     />
 
-    <glass-modal v-if="detail" :title="detail.fileName || '记录'" size="xl" :hideScrollbar="true" heightVariant="max" solidBody @close="detail=null">
+    <glass-modal v-if="detail" :title="detail.fileName || '记录'" size="xl" :hideScrollbar="true" heightVariant="max" @close="detail=null">
       <div v-if="parsed" ref="detailRef" data-export-root="1" class="space-y-4">
         <Card padding="sm" tint="secondary">
           <h4 class="font-semibold mb-2">{{ t('teacher.aiGrading.render.overall') }}</h4>

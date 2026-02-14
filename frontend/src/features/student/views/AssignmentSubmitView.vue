@@ -152,7 +152,7 @@
         </card>
 
         <!-- AI Report Detail Modal (full report, reuse teacher history rendering/export) -->
-        <glass-modal v-if="aiDetailOpen" :title="i18nText('student.ability.latestReport', 'AI 能力报告（最近一次）')" size="xl" :hideScrollbar="true" heightVariant="max" solidBody @close="aiDetailOpen=false">
+        <glass-modal v-if="aiDetailOpen" :title="i18nText('student.ability.latestReport', 'AI 能力报告（最近一次）')" size="xl" :hideScrollbar="true" heightVariant="max" @close="aiDetailOpen=false">
           <div v-if="parsedAi" ref="aiDetailRef" data-export-root="1" class="space-y-4">
             <Card padding="sm" tint="secondary">
               <h4 class="font-semibold mb-2">{{ i18nText('teacher.aiGrading.render.overall', '总体') }}</h4>

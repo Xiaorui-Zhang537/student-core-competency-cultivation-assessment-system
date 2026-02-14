@@ -138,7 +138,7 @@
     </div>
 
     <!-- Create/Edit Modal (GlassModal) -->
-    <glass-modal v-if="showModal" :title="(isEditing ? t('teacher.assignments.modal.editTitle') : t('teacher.assignments.modal.createTitle')) as string" size="lg" heightVariant="normal" solidBody @close="closeModal">
+    <glass-modal v-if="showModal" :title="(isEditing ? t('teacher.assignments.modal.editTitle') : t('teacher.assignments.modal.createTitle')) as string" size="lg" heightVariant="normal" @close="closeModal">
       <div class="mb-3">
         <label class="block text-sm font-medium mb-1">{{ t('teacher.assignments.modal.typeLabel') || '作业类型' }}</label>
         <div class="flex items-center gap-4 text-sm">

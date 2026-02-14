@@ -228,7 +228,7 @@
       </div>
 
       <!-- Create Post Modal (GlassModal) -->
-      <glass-modal v-if="showCreatePostModal" :title="t('shared.community.modal.createTitle') as string" size="md" heightVariant="tall" solidBody @close="showCreatePostModal=false">
+      <glass-modal v-if="showCreatePostModal" :title="t('shared.community.modal.createTitle') as string" size="md" heightVariant="tall" @close="showCreatePostModal=false">
         <form id="createPostForm" @submit.prevent="handleCreatePost" class="space-y-4">
             <div>
               <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{{ t('shared.community.modal.title') }}</label>
@@ -274,7 +274,7 @@
       </glass-modal>
 
       <!-- Edit Post Modal (GlassModal) -->
-      <glass-modal v-if="editModal.visible" :title="t('shared.community.modal.editTitle') as string" size="md" heightVariant="tall" solidBody @close="editModal.visible=false">
+      <glass-modal v-if="editModal.visible" :title="t('shared.community.modal.editTitle') as string" size="md" heightVariant="tall" @close="editModal.visible=false">
         <form id="editPostForm" @submit.prevent="handleUpdatePost" class="space-y-4">
             <div>
               <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{{ t('shared.community.modal.title') }}</label>

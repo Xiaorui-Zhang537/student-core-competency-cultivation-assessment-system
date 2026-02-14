@@ -120,7 +120,7 @@
     </div>
 
     <!-- Course Store Modal (GlassModal) -->
-    <GlassModal v-if="showCourseStore" :title="t('student.courses.storeTitle') as string" size="md" heightVariant="tall" solidBody @close="showCourseStore=false">
+    <GlassModal v-if="showCourseStore" :title="t('student.courses.storeTitle') as string" size="md" heightVariant="tall" @close="showCourseStore=false">
       <div class="overflow-y-auto" style="max-height:70vh;">
         <div v-if="courseStore.loading" class="text-center"><p>{{ t('student.courses.loading') }}</p></div>
         <div v-else class="grid grid-cols-1 md:grid-cols-2 gap-6">

@@ -1,5 +1,5 @@
 <template>
-  <glass-modal v-if="open" :title="modalTitle" size="md" height-variant="large" :backdrop-dark="false" solidBody @close="$emit('close')">
+  <glass-modal v-if="open" :title="modalTitle" size="md" height-variant="large" :backdrop-dark="false" @close="$emit('close')">
     <div class="flex items-start gap-4">
       <user-avatar :avatar="userAvatar || profile?.avatar" :size="80" :alt="displayName">
         <span class="text-2xl font-medium text-gray-600">{{ displayName.charAt(0) || '#' }}</span>

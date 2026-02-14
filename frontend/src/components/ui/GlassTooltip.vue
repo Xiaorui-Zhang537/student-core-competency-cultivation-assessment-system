@@ -20,6 +20,7 @@
       :style="layerStyle"
     >
       <liquid-glass
+        effect="occlusionBlur"
         :radius="12"
         :frost="0.06"
         containerClass="rounded-xl shadow-lg"

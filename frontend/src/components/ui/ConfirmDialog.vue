@@ -1,5 +1,5 @@
 <template>
-  <glass-modal v-if="open" :title="title" size="md" heightVariant="normal" solidBody @close="emit('cancel')">
+  <glass-modal v-if="open" :title="title" size="md" heightVariant="normal" @close="emit('cancel')">
     <div class="text-sm text-gray-700 dark:text-gray-300 whitespace-pre-wrap">
       {{ message }}
     </div>

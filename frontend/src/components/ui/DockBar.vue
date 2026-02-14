@@ -3,7 +3,15 @@
     <teleport to="body">
       <!-- Dock 主体：液态玻璃药丸容器，固定宽度避免被父级裁剪 -->
       <div :style="wrapStyle" ref="teleportRoot" v-show="visible">
-        <liquid-glass class="dock" :radius="dockRadius" :frost="0" :alpha="0" :tint="false" :bgTransparent="true" containerClass="dock-container" :style="dockInlineStyle">
+        <liquid-glass
+          class="dock"
+          effect="occlusionBlur"
+          :radius="dockRadius"
+          :frost="0.14"
+          :tint="false"
+          containerClass="dock-container"
+          :style="dockInlineStyle"
+        >
           <div class="dock-items">
             <glass-tooltip
               v-for="(item, idx) in items"
@@ -189,17 +197,17 @@ watch(() => props.modelValue, async () => { await nextTick(); updateMeasurements
 :deep(.dock) { pointer-events: auto; position: relative; display: inline-flex; }
 :deep(.dock-container) { display: inline-flex; align-items: center; padding: 12px 16px; min-height: 72px; overflow: visible; width: max-content; white-space: nowrap; }
 :deep(.dock-container.effect) {
-  background: transparent !important;
+  /* background 由 LiquidGlass 提供（遮蔽层），不要强制透明 */
   /* 移除 LiquidGlass 默认的内阴影（内框线），仅保留柔和外投影 */
+  background: light-dark(hsl(0 0% 100% / var(--frost, 0)), hsl(0 0% 0% / var(--frost, 0))) !important;
   box-shadow:
     0px 2px 10px rgba(17, 17, 26, 0.04),
     0px 6px 16px rgba(17, 17, 26, 0.04),
     0px 12px 28px rgba(17, 17, 26, 0.04) !important;
-  border: 0 !important;
+  border: 1px solid var(--glass-border-color) !important;
 }
 :deep(.dock .slot-container) {
   background: transparent !important;
-  border: 0 !important;
   box-shadow: none !important;
 }
 .dock-items { position: relative; z-index: 1; display: inline-flex; flex-direction: row; align-items: center; gap: 12px; background: transparent; white-space: nowrap; }
@@ -233,7 +241,7 @@ watch(() => props.modelValue, async () => { await nextTick(); updateMeasurements
   box-shadow: inset 0 0 0 9999px color-mix(in oklab, var(--color-base-content) 18%, transparent);
 }
 
-/* Dock 容器及子元素去白底，保持液态玻璃折射可见 */
+/* Dock 内部元素去白底：避免按钮/子元素自己再盖一层底色 */
 :deep(.dock-container),
 :deep(.dock-container *),
 :deep(.dock .slot-container) {

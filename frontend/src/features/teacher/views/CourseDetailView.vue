@@ -309,7 +309,7 @@
   </div>
 
   <!-- Video Picker Modal (GlassModal) -->
-  <GlassModal v-if="videoPickerVisible" :title="t('teacher.courseDetail.actions.selectVideoTitle') as string" size="sm" heightVariant="normal" solidBody @close="videoPickerVisible = false">
+  <GlassModal v-if="videoPickerVisible" :title="t('teacher.courseDetail.actions.selectVideoTitle') as string" size="sm" heightVariant="normal" @close="videoPickerVisible = false">
     <div>
       <GlassSearchInput v-model="videoQuery" :placeholder="t('teacher.courseDetail.sections.searchVideo') as string" size="sm" />
       <ul class="divide-y divide-gray-200 overflow-y-auto" style="max-height: 55vh;">
@@ -346,7 +346,7 @@
   </GlassModal>
   
   <!-- Material Picker Modal (GlassModal) -->
-  <GlassModal v-if="materialPickerVisible" :title="t('teacher.courseDetail.sections.materials') as string" size="lg" heightVariant="compact" solidBody @close="materialPickerVisible = false">
+  <GlassModal v-if="materialPickerVisible" :title="t('teacher.courseDetail.sections.materials') as string" size="lg" heightVariant="compact" @close="materialPickerVisible = false">
     <div>
       <GlassSearchInput v-model="materialQuery" :placeholder="t('teacher.courseDetail.sections.searchMaterial') as string" size="sm" />
       <ul class="divide-y divide-gray-200 overflow-y-auto" style="max-height: 55vh;">

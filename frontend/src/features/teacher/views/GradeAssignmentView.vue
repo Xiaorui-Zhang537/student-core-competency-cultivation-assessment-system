@@ -216,7 +216,7 @@
           </card>
 
           <!-- AI 批改弹窗（选择附件或文本 + 模型 + 进度） -->
-           <glass-modal v-if="aiModalOpen" :title="t('teacher.aiGrading.picker.title') as string" size="md" heightVariant="tall" solidBody @close="aiModalOpen=false">
+           <glass-modal v-if="aiModalOpen" :title="t('teacher.aiGrading.picker.title') as string" size="md" heightVariant="tall" @close="aiModalOpen=false">
             <div class="space-y-3">
             <div class="flex items-center gap-3 flex-wrap md:flex-nowrap">
               <div class="flex items-center gap-2">
@@ -613,7 +613,7 @@
       />
 
       <!-- AI 报告详情弹窗（与历史页一致的样式与渲染） -->
-      <glass-modal v-if="aiDetailOpen" :title="assignment.title || (t('teacher.aiGrading.viewDetail') as string) || 'AI 能力报告'" size="xl" :hideScrollbar="true" heightVariant="max" solidBody @close="aiDetailOpen=false">
+      <glass-modal v-if="aiDetailOpen" :title="assignment.title || (t('teacher.aiGrading.viewDetail') as string) || 'AI 能力报告'" size="xl" :hideScrollbar="true" heightVariant="max" @close="aiDetailOpen=false">
         <div v-if="aiDetailParsed" ref="aiDetailRef" data-export-root="1" class="space-y-4">
           <Card padding="sm" tint="secondary">
             <h4 class="font-semibold mb-2">{{ t('teacher.aiGrading.render.overall') }}</h4>
@@ -734,7 +734,7 @@
       </div>
 
       <!-- AI 历史详情弹窗 -->
-      <glass-modal v-if="aiHistoryDetailOpen" :title="t('teacher.aiGrading.historyDetail') as string || 'AI 批改详情'" size="xl" heightVariant="max" solidBody @close="aiHistoryDetailOpen=false">
+      <glass-modal v-if="aiHistoryDetailOpen" :title="t('teacher.aiGrading.historyDetail') as string || 'AI 批改详情'" size="xl" heightVariant="max" @close="aiHistoryDetailOpen=false">
         <div class="space-y-3">
           <div class="flex flex-wrap items-center gap-3 text-sm">
             <badge variant="secondary">{{ aiHistoryDetail?.model || '-' }}</badge>
