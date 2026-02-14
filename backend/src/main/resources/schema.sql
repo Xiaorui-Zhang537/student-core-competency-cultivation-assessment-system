@@ -1108,6 +1108,39 @@ create index idx_pinned
 create index idx_status
     on student_assessment_system.posts (status);
 
+create table student_assessment_system.reports
+(
+    id                  bigint auto_increment comment '举报ID'
+        primary key,
+    reporter_id         bigint                                not null comment '举报者ID',
+    reported_student_id bigint                                null comment '被举报学生ID',
+    course_id           bigint                                null comment '课程ID',
+    assignment_id       bigint                                null comment '作业ID',
+    submission_id       bigint                                null comment '提交ID',
+    reason              varchar(200)                          not null comment '举报原因',
+    details             text                                  null comment '补充说明',
+    evidence_file_id    bigint                                null comment '证据文件ID（file_records.id）',
+    status              varchar(20) default 'pending'         null comment '状态：pending,in_review,resolved,rejected',
+    created_at          timestamp   default CURRENT_TIMESTAMP null comment '创建时间',
+    updated_at          timestamp   default CURRENT_TIMESTAMP null on update CURRENT_TIMESTAMP comment '更新时间'
+)
+    comment '举报表' charset = utf8mb4;
+
+create index idx_created_at
+    on student_assessment_system.reports (created_at);
+
+create index idx_course_id
+    on student_assessment_system.reports (course_id);
+
+create index idx_reported_student_id
+    on student_assessment_system.reports (reported_student_id);
+
+create index idx_reporter_id
+    on student_assessment_system.reports (reporter_id);
+
+create index idx_status
+    on student_assessment_system.reports (status);
+
 create table if not exists student_assessment_system.student_abilities
 (
     id                 bigint auto_increment comment '记录ID'
@@ -1226,6 +1259,7 @@ create table if not exists student_assessment_system.users
     email          varchar(100)                                                   not null comment '邮箱',
     password       varchar(255)                                                   not null comment '密码（BCrypt加密）',
     role           enum ('student', 'teacher', 'admin') default 'student'         not null comment '用户角色',
+    status         varchar(20)                          default 'active'          not null comment '状态：active,disabled',
     avatar         varchar(500)                                                   null comment '头像URL',
     nickname       varchar(50)                                                    null,
     first_name     varchar(50)                                                    null comment '姓氏',
@@ -1249,6 +1283,33 @@ create table if not exists student_assessment_system.users
     teacher_no     varchar(50)                                                    null
 )
     comment '用户表' charset = utf8mb4;
+
+create table student_assessment_system.admin_audit_logs
+(
+    id          bigint auto_increment comment '审计ID'
+        primary key,
+    actor_id    bigint                                not null comment '操作人ID',
+    action      varchar(80)                           not null comment '动作标识',
+    target_type varchar(50)                           null comment '目标类型',
+    target_id   bigint                                null comment '目标ID',
+    detail_json json                                  null comment '详情(JSON)',
+    ip          varchar(45)                           null comment 'IP',
+    user_agent  varchar(255)                          null comment 'User-Agent',
+    created_at  timestamp default CURRENT_TIMESTAMP   null comment '创建时间'
+)
+    comment '管理员审计日志' charset = utf8mb4;
+
+create index idx_action
+    on student_assessment_system.admin_audit_logs (action);
+
+create index idx_actor_id
+    on student_assessment_system.admin_audit_logs (actor_id);
+
+create index idx_created_at
+    on student_assessment_system.admin_audit_logs (created_at);
+
+create index idx_target
+    on student_assessment_system.admin_audit_logs (target_type, target_id);
 
 alter table student_assessment_system.ability_assessments
     add constraint ability_assessments_ibfk_1
@@ -1353,6 +1414,41 @@ alter table student_assessment_system.post_likes
 alter table student_assessment_system.posts
     add constraint posts_ibfk_1
         foreign key (author_id) references student_assessment_system.users (id)
+            on delete cascade;
+
+alter table student_assessment_system.reports
+    add constraint reports_ibfk_1
+        foreign key (reporter_id) references student_assessment_system.users (id)
+            on delete cascade;
+
+alter table student_assessment_system.reports
+    add constraint reports_ibfk_2
+        foreign key (reported_student_id) references student_assessment_system.users (id)
+            on delete set null;
+
+alter table student_assessment_system.reports
+    add constraint reports_ibfk_3
+        foreign key (course_id) references student_assessment_system.courses (id)
+            on delete set null;
+
+alter table student_assessment_system.reports
+    add constraint reports_ibfk_4
+        foreign key (assignment_id) references student_assessment_system.assignments (id)
+            on delete set null;
+
+alter table student_assessment_system.reports
+    add constraint reports_ibfk_5
+        foreign key (submission_id) references student_assessment_system.submissions (id)
+            on delete set null;
+
+alter table student_assessment_system.reports
+    add constraint reports_ibfk_6
+        foreign key (evidence_file_id) references student_assessment_system.file_records (id)
+            on delete set null;
+
+alter table student_assessment_system.admin_audit_logs
+    add constraint admin_audit_logs_ibfk_1
+        foreign key (actor_id) references student_assessment_system.users (id)
             on delete cascade;
 
 alter table student_assessment_system.student_abilities

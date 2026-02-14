@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.noncore.assessment.mapper.AdminAnalyticsMapper">
+
+    <!-- 活跃用户（日） -->
+    <select id="activeUsersDaily" resultType="map">
+        SELECT DATE(e.occurred_at) AS day,
+               COUNT(DISTINCT e.student_id) AS value
+        FROM behavior_events e
+        WHERE e.occurred_at &gt;= DATE_SUB(NOW(), INTERVAL #{days} DAY)
+        GROUP BY DATE(e.occurred_at)
+        ORDER BY day ASC
+    </select>
+
+    <!-- 新增用户（日） -->
+    <select id="newUsersDaily" resultType="map">
+        SELECT DATE(u.created_at) AS day,
+               COUNT(1) AS value
+        FROM users u
+        WHERE u.deleted = false
+          AND u.created_at &gt;= DATE_SUB(NOW(), INTERVAL #{days} DAY)
+        GROUP BY DATE(u.created_at)
+        ORDER BY day ASC
+    </select>
+
+    <!-- 选课（日） -->
+    <select id="enrollmentsDaily" resultType="map">
+        SELECT DATE(e.enrolled_at) AS day,
+               COUNT(1) AS value
+        FROM enrollments e
+        WHERE e.enrolled_at &gt;= DATE_SUB(NOW(), INTERVAL #{days} DAY)
+        GROUP BY DATE(e.enrolled_at)
+        ORDER BY day ASC
+    </select>
+
+</mapper>
+

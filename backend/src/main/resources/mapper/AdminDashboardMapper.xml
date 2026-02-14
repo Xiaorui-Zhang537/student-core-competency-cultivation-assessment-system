@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.noncore.assessment.mapper.AdminDashboardMapper">
+
+    <select id="countUsersAll" resultType="long">
+        SELECT COUNT(1)
+        FROM users u
+        <if test="includeDeleted == false">
+            WHERE u.deleted = false
+        </if>
+    </select>
+
+    <select id="countUsersByRole" resultType="long">
+        SELECT COUNT(1)
+        FROM users u
+        <where>
+            <if test="includeDeleted == false">
+                u.deleted = false
+            </if>
+            <if test="role != null and role != ''">
+                <if test="includeDeleted == false">
+                    AND
+                </if>
+                u.role = #{role}
+            </if>
+        </where>
+    </select>
+
+    <select id="countCoursesAll" resultType="long">
+        SELECT COUNT(1) FROM courses c WHERE c.deleted = false
+    </select>
+
+    <select id="countCoursesByStatus" resultType="long">
+        SELECT COUNT(1)
+        FROM courses c
+        WHERE c.deleted = false AND c.status = #{status}
+    </select>
+
+    <select id="countPostsAll" resultType="long">
+        SELECT COUNT(1) FROM posts p WHERE p.deleted = false
+    </select>
+
+    <select id="countPostCommentsAll" resultType="long">
+        SELECT COUNT(1) FROM post_comments c WHERE c.deleted = false
+    </select>
+
+    <select id="countReportsAll" resultType="long">
+        SELECT COUNT(1) FROM reports
+    </select>
+
+    <select id="countReportsByStatus" resultType="long">
+        SELECT COUNT(1) FROM reports r WHERE r.status = #{status}
+    </select>
+
+    <select id="countActiveUsersSince" resultType="long">
+        SELECT COUNT(DISTINCT e.student_id)
+        FROM behavior_events e
+        WHERE e.occurred_at &gt;= #{since}
+    </select>
+
+</mapper>
+

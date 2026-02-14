@@ -30,11 +30,12 @@ SET FOREIGN_KEY_CHECKS = 1;
 -- =========================
 -- 用户表：存储所有用户（学生、教师、管理员）
 -- =========================
-INSERT INTO users (id, username, email, password, role, avatar, first_name, last_name, display_name, bio, grade, subject, school, phone, created_at, updated_at, deleted, email_verified)
+-- 初始登录密码（开发/演示数据）：12345678
+INSERT INTO users (id, username, email, password, role, status, avatar, nickname, first_name, last_name, bio, grade, subject, school, phone, created_at, updated_at, deleted, email_verified)
 VALUES
-    (1, 'admin', 'admin@example.com', '$2a$10$hash1', 'admin', '', '系统', '管理员', '系统管理员', '负责系统管理', NULL, NULL, '信息中心', '13800000000', NOW(), NOW(), 0, 1),
-    (2, 'teacher', 'teacher@example.com', '$2a$10$hash2', 'teacher', '', '张', '老师', '张老师', '专注教学', NULL, '计算机', '软件学院', '13800000001', NOW(), NOW(), 0, 1),
-    (3, 'student1', 'student1@example.com', '$2a$10$hash3', 'student', '', '李', '雷', '李雷', '2023级学生', '2023级', '软件工程', '软件学院', '13800000002', NOW(), NOW(), 0, 1);
+    (1, 'admin', 'admin+seed-20260214@local.test', '$2y$10$w/WC3WahuiIUzyg/uJEEU.JvfEIGdWqy7BZvQwsDTSvoL4yssEJ.y', 'admin', 'active', '', '系统管理员', '系统', '管理员', '负责系统管理', NULL, NULL, '信息中心', '13800000000', NOW(), NOW(), 0, 1),
+    (2, 'teacher', 'teacher@example.com', '$2y$10$w/WC3WahuiIUzyg/uJEEU.JvfEIGdWqy7BZvQwsDTSvoL4yssEJ.y', 'teacher', 'active', '', '张老师', '张', '老师', '专注教学', NULL, '计算机', '软件学院', '13800000001', NOW(), NOW(), 0, 1),
+    (3, 'student1', 'student1@example.com', '$2y$10$w/WC3WahuiIUzyg/uJEEU.JvfEIGdWqy7BZvQwsDTSvoL4yssEJ.y', 'student', 'active', '', '李雷', '李', '雷', '2023级学生', '2023级', '软件工程', '软件学院', '13800000002', NOW(), NOW(), 0, 1);
 
 -- =========================
 -- 能力维度表：定义能力的维度类型

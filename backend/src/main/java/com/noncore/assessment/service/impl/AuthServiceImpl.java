@@ -57,6 +57,12 @@ public class AuthServiceImpl implements AuthService {
             throw new BusinessException(ErrorCode.LOGIN_FAILED);
         }
 
+        // 用户禁用校验（管理员可在后台置为 disabled）
+        if ("disabled".equalsIgnoreCase(String.valueOf(user.getStatus()))) {
+            logger.warn("登录失败: 账号已禁用 - {}", loginRequest.getUsername());
+            throw new BusinessException(ErrorCode.PERMISSION_DENIED, "账号已被禁用");
+        }
+
         if (!passwordEncoder.matches(loginRequest.getPassword(), user.getPassword())) {
             logger.warn("登录失败: 密码错误 - {}", loginRequest.getUsername());
             throw new BusinessException(ErrorCode.LOGIN_FAILED);
@@ -152,6 +158,9 @@ public class AuthServiceImpl implements AuthService {
         User user = userMapper.selectUserById(userId);
         if (user == null) {
             throw new BusinessException(ErrorCode.USER_NOT_FOUND, "用户不存在");
+        }
+        if ("disabled".equalsIgnoreCase(String.valueOf(user.getStatus()))) {
+            throw new BusinessException(ErrorCode.PERMISSION_DENIED, "账号已被禁用");
         }
 
         String newAccessToken = jwtUtil.generateAccessToken(user.getId(), user.getUsername(), user.getRole());

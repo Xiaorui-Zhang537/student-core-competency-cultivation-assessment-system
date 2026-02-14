@@ -36,7 +36,7 @@
     <sql id="abilityReportDetailColumns">
         <include refid="abilityReportColumns"/>,
         COALESCE(u.nickname, u.username) AS student_name,
-        u.student_number AS student_number
+        u.student_no AS student_number
     </sql>
 
     <!-- 插入能力报告 -->
@@ -157,6 +157,45 @@
         </where>
     </select>
 
+    <!-- 管理员：跨学生检索报告（分页） -->
+    <select id="selectAdminReports" resultMap="AbilityReportResultMap">
+        SELECT <include refid="abilityReportColumns"/>,
+               COALESCE(u.nickname, u.username) AS student_name,
+               u.student_no AS student_number
+        FROM ability_reports r
+        LEFT JOIN users u ON r.student_id = u.id
+        <where>
+            1 = 1
+            <if test="studentId != null">AND r.student_id = #{studentId}</if>
+            <if test="reportType != null and reportType != ''">AND r.report_type = #{reportType}</if>
+            <if test="isPublished != null">AND r.is_published = #{isPublished}</if>
+            <if test="courseId != null">AND r.course_id = #{courseId}</if>
+            <if test="assignmentId != null">AND r.assignment_id = #{assignmentId}</if>
+            <if test="submissionId != null">AND r.submission_id = #{submissionId}</if>
+            <if test="start != null">AND r.created_at &gt;= #{start}</if>
+            <if test="end != null">AND r.created_at &lt;= #{end}</if>
+        </where>
+        ORDER BY r.created_at DESC
+        LIMIT #{offset}, #{size}
+    </select>
+
+    <!-- 管理员：跨学生检索报告（计数） -->
+    <select id="countAdminReports" resultType="integer">
+        SELECT COUNT(1)
+        FROM ability_reports r
+        <where>
+            1 = 1
+            <if test="studentId != null">AND r.student_id = #{studentId}</if>
+            <if test="reportType != null and reportType != ''">AND r.report_type = #{reportType}</if>
+            <if test="isPublished != null">AND r.is_published = #{isPublished}</if>
+            <if test="courseId != null">AND r.course_id = #{courseId}</if>
+            <if test="assignmentId != null">AND r.assignment_id = #{assignmentId}</if>
+            <if test="submissionId != null">AND r.submission_id = #{submissionId}</if>
+            <if test="start != null">AND r.created_at &gt;= #{start}</if>
+            <if test="end != null">AND r.created_at &lt;= #{end}</if>
+        </where>
+    </select>
+
     <!-- 获取学生最新的报告 -->
     <select id="selectLatestReportByStudent" resultMap="AbilityReportResultMap">
         SELECT <include refid="abilityReportColumns"/>
@@ -174,7 +213,7 @@
         <include refid="abilityReportColumns"/>
         <![CDATA[
         , COALESCE(u.nickname, u.username) AS student_name,
-      u.student_number AS student_number
+      u.student_no AS student_number
     FROM ability_reports r
     LEFT JOIN users u ON r.student_id = u.id
     WHERE r.student_id = #{studentId}

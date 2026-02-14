@@ -56,6 +56,17 @@
 
 ## 变更记录（Changelog）
 
+### 2026-02-14 管理员系统（前端 v0.3.5 / 后端 v1.0.5）
+- 新增管理员端 `/admin/*` 路由分组与 `AdminLayout`，UI 延续系统玻璃风格并接入 `vue-i18n`（新增 `admin` namespace）。
+- 新增管理员端能力：仪表盘总览、课程总览/详情、用户管理（含创建管理员/禁用账号/重置密码邮件）、学生/教师详情聚合、能力报告中心、分析看板、CSV 导出、社区内容治理。
+- 新增后端管理员聚合端点（统一前缀 `/api/admin/*`），并通过 `@PreAuthorize("hasRole('ADMIN')")` 做权限保护。
+- 安全与审计：
+  - `users.status` 支持 `active/disabled`，禁用账号不可登录/刷新令牌。
+  - 新增 `admin_audit_logs` 表，记录创建用户/权限变更/导出/治理/更新举报状态等高风险操作（含 IP、User-Agent、详情 JSON）。
+- 文档：
+  - 新增：`docs/backend/api/admin.md`、`docs/frontend/api/admin.api.md`
+  - 更新索引：`docs/backend/api/index.md`、`docs/frontend/api/index.md`
+
 ### 2025-09-25 UI 主题与彩色玻璃（v0.3.0）
 - 采用 DaisyUI 主题（retro/synthwave），Pinia 绑定 `data-theme` 与暗黑。
 - 新版主题下使用米黄色 `base-100` 静态底色；Legacy 模式保留动态背景（详见 `frontend/ui-backgrounds.md`）。

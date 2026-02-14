@@ -17,10 +17,11 @@
 - `notification.api.ts` → 通知
 - `file.api.ts` → 文件上传/下载
 - `report.api.ts` → 举报/报表
+- `admin.api.ts` → 管理员（仪表盘/课程/用户/数据中心/报告/治理/导出）
 - `ai.api.ts` → AI 聊天
 - `ability.api.ts` → 能力评估（学生端）
 
-> 详细方法在对应子页查看（如 `frontend/api/lesson.api.md` 等）。
+> 详细方法在对应子页查看（如 `frontend/api/lesson.api.md`、`frontend/api/admin.api.md` 等）。
 
 ## 学生端成绩分析（新增：雷达图与维度评语）
 

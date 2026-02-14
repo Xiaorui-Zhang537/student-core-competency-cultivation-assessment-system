@@ -35,6 +35,9 @@ public class User implements Serializable {
     @Schema(description = "角色", example = "student")
     private String role;
 
+    @Schema(description = "状态", example = "active")
+    private String status;
+
     @Schema(description = "头像URL")
     private String avatar;
 
@@ -103,6 +106,7 @@ public class User implements Serializable {
         this.updatedAt = new Date();
         this.deleted = false;
         this.emailVerified = false;
+        this.status = "active";
     }
 
     public void updateTimestamp() {

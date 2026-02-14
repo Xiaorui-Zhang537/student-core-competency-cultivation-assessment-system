@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.noncore.assessment.mapper.AdminPeopleMapper">
+
+    <select id="countEnrolledCourses" resultType="long">
+        SELECT COUNT(1)
+        FROM enrollments e
+        WHERE e.student_id = #{studentId}
+          AND e.status IN ('active', 'completed')
+    </select>
+
+    <select id="avgGradePercentage" resultType="double">
+        SELECT AVG(g.percentage)
+        FROM grades g
+        WHERE g.student_id = #{studentId}
+          AND g.deleted = false
+    </select>
+
+    <select id="lastActiveAt" resultType="string">
+        SELECT DATE_FORMAT(MAX(e.occurred_at), '%Y-%m-%d %H:%i:%s')
+        FROM behavior_events e
+        WHERE e.student_id = #{userId}
+    </select>
+
+    <select id="countAbilityReports" resultType="long">
+        SELECT COUNT(1)
+        FROM ability_reports r
+        WHERE r.student_id = #{studentId}
+    </select>
+
+    <select id="countCoursesByTeacher" resultType="long">
+        SELECT COUNT(1)
+        FROM courses c
+        WHERE c.teacher_id = #{teacherId}
+          AND c.deleted = false
+    </select>
+
+    <select id="countAssignmentsByTeacher" resultType="long">
+        SELECT COUNT(1)
+        FROM assignments a
+        WHERE a.teacher_id = #{teacherId}
+          AND a.deleted = false
+    </select>
+
+    <select id="countActiveEnrollmentsForTeacher" resultType="long">
+        SELECT COUNT(1)
+        FROM enrollments e
+        INNER JOIN courses c ON c.id = e.course_id
+        WHERE c.teacher_id = #{teacherId}
+          AND c.deleted = false
+          AND e.status = 'active'
+    </select>
+
+</mapper>
+

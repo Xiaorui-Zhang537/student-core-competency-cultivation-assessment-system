@@ -1,0 +1,21 @@
+{
+  "admin": {
+    "title": "管理员中心",
+    "sidebar": {
+      "dashboard": "仪表盘",
+      "courses": "课程总览",
+      "analytics": "数据看板",
+      "users": "用户管理",
+      "students": "学生数据中心",
+      "teachers": "教师数据中心",
+      "reports": "报告中心",
+      "exports": "数据导出",
+      "community": "内容治理"
+    },
+    "common": {
+      "comingSoon": "功能开发中",
+      "adminOnly": "仅管理员可访问"
+    }
+  }
+}
+

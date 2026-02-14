@@ -70,9 +70,9 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onBeforeUnmount, watch, CSSProperties, nextTick } from 'vue'
 
-interface Option { label: string; value: string | number; disabled?: boolean }
+interface Option { label: string; value: string | number | boolean; disabled?: boolean }
 interface Props {
-  modelValue: string | number | null
+  modelValue: string | number | boolean | null
   options: Option[]
   placeholder?: string
   label?: string
@@ -97,7 +97,7 @@ const props = withDefaults(defineProps<Props>(), {
   tint: null
 })
 
-const emit = defineEmits<{ (e:'update:modelValue', v:string|number|null):void; (e:'change', v:string|number|null):void; (e:'open'):void; (e:'close'):void }>()
+const emit = defineEmits<{ (e:'update:modelValue', v:string|number|boolean|null):void; (e:'change', v:string|number|boolean|null):void; (e:'open'):void; (e:'close'):void }>()
 
 const rootRef = ref<HTMLElement | null>(null)
 const open = ref(false)
@@ -127,7 +127,7 @@ const selectedLabel = computed(() => {
   return cur?.label
 })
 
-function isSelected(v: string | number) {
+function isSelected(v: string | number | boolean) {
   return String(v) === String(props.modelValue ?? '')
 }
 
@@ -203,7 +203,7 @@ function toggle() {
   }
 }
 
-function choose(v: string | number) {
+function choose(v: string | number | boolean) {
   emit('update:modelValue', v)
   emit('change', v)
   closeMenu()

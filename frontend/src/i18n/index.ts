@@ -89,18 +89,19 @@ function getInitialLocale(): SupportedLocale {
 const localeModules: Record<string, any> = import.meta.glob('../locales/*/*.json', { eager: true }) as Record<string, any>
 
 // Namespaces required across the app (ensure consistent loading on init and language switch)
-export const REQUIRED_NAMESPACES = ['common', 'app', 'layout', 'teacher', 'shared', 'auth', 'student', 'notifications'] as const
+export const REQUIRED_NAMESPACES = ['common', 'app', 'layout', 'teacher', 'shared', 'auth', 'student', 'admin', 'notifications'] as const
 
-export async function loadLocaleMessages(locale: SupportedLocale, namespaces: string[]): Promise<void> {
+export async function loadLocaleMessages(locale: SupportedLocale | string, namespaces: string[]): Promise<void> {
+  const normalized = normalizeLocale(String(locale)) || DEFAULT_LOCALE
   const loaded: Record<string, boolean> = (i18n.global as any).__loaded || {}
   // 同步合并到别名（防止外部将 locale 设为 zh/en 而非标准码）
-  const aliasLocales: string[] = locale === 'zh-CN' ? ['zh-CN', 'zh'] : locale === 'en-US' ? ['en-US', 'en'] : [locale]
+  const aliasLocales: string[] = normalized === 'zh-CN' ? ['zh-CN', 'zh'] : normalized === 'en-US' ? ['en-US', 'en'] : [normalized]
   for (const ns of namespaces) {
     for (const loc of aliasLocales) {
       const key = `${loc}:${ns}`
       if (loaded[key]) continue
       try {
-        const path = `../locales/${locale}/${ns}.json`
+        const path = `../locales/${normalized}/${ns}.json`
         const mod = localeModules[path]
         if (!mod) {
           console.warn(`[i18n] Missing locale module: ${path}`)

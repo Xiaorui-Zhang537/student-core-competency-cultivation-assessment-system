@@ -159,6 +159,7 @@
     "community": {
       "title": "学习社区",
       "subtitle": "一起讨论、一起进步，把灵感留在这里。",
+      "comments": "评论",
       "createPost": "发布帖子",
       "stats": {
         "posts": "讨论帖子",

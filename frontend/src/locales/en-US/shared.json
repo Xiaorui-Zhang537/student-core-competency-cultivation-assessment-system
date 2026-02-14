@@ -162,6 +162,7 @@
     "community": {
       "title": "Community",
       "subtitle": "Share, ask, and grow together.",
+      "comments": "Comments",
       "createPost": "New Post",
       "stats": {
         "posts": "Posts",

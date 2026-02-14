@@ -1,0 +1,21 @@
+{
+  "admin": {
+    "title": "Admin Center",
+    "sidebar": {
+      "dashboard": "Dashboard",
+      "courses": "Courses",
+      "analytics": "Analytics",
+      "users": "Users",
+      "students": "Students",
+      "teachers": "Teachers",
+      "reports": "Reports",
+      "exports": "Exports",
+      "community": "Moderation"
+    },
+    "common": {
+      "comingSoon": "Coming soon",
+      "adminOnly": "Admin only"
+    }
+  }
+}
+

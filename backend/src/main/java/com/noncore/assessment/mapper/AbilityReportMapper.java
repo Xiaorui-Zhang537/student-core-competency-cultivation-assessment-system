@@ -130,5 +130,31 @@ public interface AbilityReportMapper {
                                               @Param("start") LocalDateTime start,
                                               @Param("end") LocalDateTime end,
                                               @Param("assignmentIds") List<Long> assignmentIds);
+
+    /**
+     * 管理员：跨学生检索能力报告（分页）。
+     */
+    List<AbilityReport> selectAdminReports(@Param("studentId") Long studentId,
+                                           @Param("reportType") String reportType,
+                                           @Param("isPublished") Boolean isPublished,
+                                           @Param("courseId") Long courseId,
+                                           @Param("assignmentId") Long assignmentId,
+                                           @Param("submissionId") Long submissionId,
+                                           @Param("start") LocalDateTime start,
+                                           @Param("end") LocalDateTime end,
+                                           @Param("offset") int offset,
+                                           @Param("size") Integer size);
+
+    /**
+     * 管理员：跨学生检索能力报告（计数）。
+     */
+    Integer countAdminReports(@Param("studentId") Long studentId,
+                              @Param("reportType") String reportType,
+                              @Param("isPublished") Boolean isPublished,
+                              @Param("courseId") Long courseId,
+                              @Param("assignmentId") Long assignmentId,
+                              @Param("submissionId") Long submissionId,
+                              @Param("start") LocalDateTime start,
+                              @Param("end") LocalDateTime end);
 } 
 

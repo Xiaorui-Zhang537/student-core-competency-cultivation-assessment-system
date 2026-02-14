@@ -1,0 +1,133 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.noncore.assessment.mapper.AdminCommunityMapper">
+
+    <!-- 复用 PostMapper 的 DetailResultMap 风格（包含作者信息） -->
+    <resultMap id="AdminPostDetailResultMap" type="com.noncore.assessment.entity.Post">
+        <id column="id" property="id" jdbcType="BIGINT"/>
+        <result column="title" property="title" jdbcType="VARCHAR"/>
+        <result column="content" property="content" jdbcType="LONGVARCHAR"/>
+        <result column="category" property="category" jdbcType="VARCHAR"/>
+        <result column="author_id" property="authorId" jdbcType="BIGINT"/>
+        <result column="pinned" property="pinned" jdbcType="BOOLEAN"/>
+        <result column="anonymous" property="anonymous" jdbcType="BOOLEAN"/>
+        <result column="allow_comments" property="allowComments" jdbcType="BOOLEAN"/>
+        <result column="views" property="views" jdbcType="INTEGER"/>
+        <result column="likes_count" property="likesCount" jdbcType="INTEGER"/>
+        <result column="comments_count" property="commentsCount" jdbcType="INTEGER"/>
+        <result column="status" property="status" jdbcType="VARCHAR"/>
+        <result column="created_at" property="createdAt" jdbcType="TIMESTAMP"/>
+        <result column="updated_at" property="updatedAt" jdbcType="TIMESTAMP"/>
+        <result column="deleted" property="deleted" jdbcType="BOOLEAN"/>
+        <association property="author" javaType="com.noncore.assessment.entity.User">
+            <id column="author_id" property="id"/>
+            <result column="author_username" property="username"/>
+            <result column="author_nickname" property="nickname"/>
+            <result column="author_avatar" property="avatar"/>
+        </association>
+    </resultMap>
+
+    <sql id="postColumns">
+        p.id, p.title, p.content, p.category, p.author_id, p.pinned, p.anonymous, p.allow_comments,
+        p.views, p.likes_count, p.comments_count, p.status, p.created_at, p.updated_at, p.deleted,
+        u.username AS author_username, u.nickname AS author_nickname, u.avatar AS author_avatar
+    </sql>
+
+    <sql id="postWhere">
+        <where>
+            <if test="includeDeleted == false">
+                p.deleted = false
+            </if>
+            <if test="category != null and category != ''">
+                <if test="includeDeleted == false">AND</if>
+                p.category = #{category}
+            </if>
+            <if test="status != null and status != ''">
+                AND p.status = #{status}
+            </if>
+            <if test="pinned != null">
+                AND p.pinned = #{pinned}
+            </if>
+            <if test="keyword != null and keyword != ''">
+                AND (p.title LIKE CONCAT('%', #{keyword}, '%') OR p.content LIKE CONCAT('%', #{keyword}, '%'))
+            </if>
+        </where>
+    </sql>
+
+    <select id="pagePosts" resultMap="AdminPostDetailResultMap">
+        SELECT <include refid="postColumns"/>
+        FROM posts p
+        LEFT JOIN users u ON p.author_id = u.id
+        <include refid="postWhere"/>
+        ORDER BY p.created_at DESC
+        LIMIT #{offset}, #{size}
+    </select>
+
+    <select id="countPosts" resultType="long">
+        SELECT COUNT(1)
+        FROM posts p
+        <include refid="postWhere"/>
+    </select>
+
+    <!-- 评论（包含作者信息） -->
+    <resultMap id="AdminCommentDetailResultMap" type="com.noncore.assessment.entity.PostComment">
+        <id column="id" property="id" jdbcType="BIGINT"/>
+        <result column="post_id" property="postId" jdbcType="BIGINT"/>
+        <result column="author_id" property="authorId" jdbcType="BIGINT"/>
+        <result column="parent_id" property="parentId" jdbcType="BIGINT"/>
+        <result column="content" property="content" jdbcType="LONGVARCHAR"/>
+        <result column="likes_count" property="likesCount" jdbcType="INTEGER"/>
+        <result column="status" property="status" jdbcType="VARCHAR"/>
+        <result column="created_at" property="createdAt" jdbcType="TIMESTAMP"/>
+        <result column="updated_at" property="updatedAt" jdbcType="TIMESTAMP"/>
+        <result column="deleted" property="deleted" jdbcType="BOOLEAN"/>
+        <association property="author" javaType="com.noncore.assessment.entity.User">
+            <id column="author_id" property="id"/>
+            <result column="author_username" property="username"/>
+            <result column="author_nickname" property="nickname"/>
+            <result column="author_avatar" property="avatar"/>
+        </association>
+    </resultMap>
+
+    <sql id="commentColumns">
+        c.id, c.post_id, c.author_id, c.parent_id, c.content, c.likes_count, c.status, c.created_at, c.updated_at, c.deleted,
+        u.username AS author_username, u.nickname AS author_nickname, u.avatar AS author_avatar
+    </sql>
+
+    <sql id="commentWhere">
+        <where>
+            <if test="includeDeleted == false">
+                c.deleted = false
+            </if>
+            <if test="postId != null">
+                <if test="includeDeleted == false">AND</if>
+                c.post_id = #{postId}
+            </if>
+            <if test="status != null and status != ''">
+                AND c.status = #{status}
+            </if>
+            <if test="keyword != null and keyword != ''">
+                AND c.content LIKE CONCAT('%', #{keyword}, '%')
+            </if>
+        </where>
+    </sql>
+
+    <select id="pageComments" resultMap="AdminCommentDetailResultMap">
+        SELECT <include refid="commentColumns"/>
+        FROM post_comments c
+        LEFT JOIN users u ON c.author_id = u.id
+        <include refid="commentWhere"/>
+        ORDER BY c.created_at DESC
+        LIMIT #{offset}, #{size}
+    </select>
+
+    <select id="countComments" resultType="long">
+        SELECT COUNT(1)
+        FROM post_comments c
+        <include refid="commentWhere"/>
+    </select>
+
+</mapper>
+

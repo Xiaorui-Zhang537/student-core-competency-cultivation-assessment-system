@@ -13,6 +13,7 @@
 - 通知：`/backend/api/notification.md`
 - 文件：`/backend/api/file.md`
 - 报表：`/backend/api/report.md`
+- 管理员：`/backend/api/admin.md`
 - AI：`/backend/api/ai.md`
 - 行为证据评价：`/backend/api/behavior.md`
 

@@ -1,6 +1,7 @@
 import AuthLayout from '@/layouts/AuthLayout.vue'
 import StudentLayout from '@/layouts/StudentLayout.vue'
 import TeacherLayout from '@/layouts/TeacherLayout.vue'
+import AdminLayout from '@/layouts/AdminLayout.vue'
 import NotFoundView from '@/components/layout/NotFoundView.vue'
 import { createRouter, createWebHistory } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
@@ -314,6 +315,82 @@ const routes = [
       // ... 其他教师路由
     ]
   },
+  {
+    path: '/admin',
+    component: AdminLayout,
+    meta: { requiresAuth: true, role: 'ADMIN' },
+    children: [
+      { path: '', redirect: '/admin/dashboard' },
+      {
+        path: 'dashboard',
+        name: 'AdminDashboard',
+        component: () => import('@/features/admin/views/DashboardView.vue')
+      },
+      {
+        path: 'courses',
+        name: 'AdminCourses',
+        component: () => import('@/features/admin/views/CoursesView.vue')
+      },
+      {
+        path: 'analytics',
+        name: 'AdminAnalytics',
+        component: () => import('@/features/admin/views/AnalyticsView.vue')
+      },
+      {
+        path: 'users',
+        name: 'AdminUsers',
+        component: () => import('@/features/admin/views/UsersView.vue')
+      },
+      {
+        path: 'students',
+        name: 'AdminStudents',
+        component: () => import('@/features/admin/views/StudentsView.vue')
+      },
+      {
+        path: 'students/:id',
+        name: 'AdminStudentDetail',
+        component: () => import('@/features/admin/views/StudentDetailView.vue'),
+        props: true
+      },
+      {
+        path: 'teachers',
+        name: 'AdminTeachers',
+        component: () => import('@/features/admin/views/TeachersView.vue')
+      },
+      {
+        path: 'teachers/:id',
+        name: 'AdminTeacherDetail',
+        component: () => import('@/features/admin/views/TeacherDetailView.vue'),
+        props: true
+      },
+      {
+        path: 'reports',
+        name: 'AdminReports',
+        component: () => import('@/features/admin/views/ReportsView.vue')
+      },
+      {
+        path: 'exports',
+        name: 'AdminExports',
+        component: () => import('@/features/admin/views/ExportsView.vue')
+      },
+      {
+        path: 'community',
+        name: 'AdminCommunityModeration',
+        component: () => import('@/features/admin/views/CommunityModerationView.vue')
+      },
+      {
+        path: 'profile',
+        name: 'AdminProfile',
+        component: () => import('@/features/shared/views/ProfileView.vue')
+      },
+      {
+        path: 'help',
+        name: 'AdminHelp',
+        component: () => import('@/features/shared/views/HelpView.vue'),
+        meta: { requiresAuth: true }
+      },
+    ]
+  },
   // 兼容旧路径：/assistant → 按角色重定向到嵌套路由，保留查询参数
   {
     path: '/assistant',
@@ -423,13 +500,23 @@ router.beforeEach((to, from, next) => {
       return next({ name: 'Login', query: { redirect: to.fullPath } });
     }
     if (to.meta.role && to.meta.role !== userRole) {
-      const dashboard = userRole === 'TEACHER' ? '/teacher/dashboard' : '/student/dashboard';
+      const dashboard =
+        userRole === 'TEACHER'
+          ? '/teacher/dashboard'
+          : userRole === 'ADMIN'
+            ? '/admin/dashboard'
+            : '/student/dashboard';
       return next(dashboard);
     }
   }
 
   if (to.meta.requiresGuest && isAuthenticated) {
-    const dashboard = userRole === 'TEACHER' ? '/teacher/dashboard' : '/student/dashboard';
+    const dashboard =
+      userRole === 'TEACHER'
+        ? '/teacher/dashboard'
+        : userRole === 'ADMIN'
+          ? '/admin/dashboard'
+          : '/student/dashboard';
     return next(dashboard);
   }
 

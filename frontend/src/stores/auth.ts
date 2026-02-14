@@ -76,7 +76,8 @@ export const useAuthStore = defineStore('auth', () => {
         await router.push(queryRedirect);
         return;
       }
-      const target = data.user.role === 'TEACHER' ? '/teacher/dashboard' : '/student/dashboard';
+      const role = String(data.user.role || '').toUpperCase()
+      const target = role === 'TEACHER' ? '/teacher/dashboard' : role === 'ADMIN' ? '/admin/dashboard' : '/student/dashboard';
       await router.push(target);
     } catch (e: any) {
       // 不在 store 内弹错误提示，交由调用方决定，避免重复弹窗

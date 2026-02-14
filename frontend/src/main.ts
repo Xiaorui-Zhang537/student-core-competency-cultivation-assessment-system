@@ -12,6 +12,7 @@ import ClickOutsideDirective from '@/directives/clickOutside'
 import { i18n, loadLocaleMessages, REQUIRED_NAMESPACES, setLocale } from '@/i18n'
 import PageHeader from '@/components/ui/PageHeader.vue'
 import PageScaffold from '@/components/ui/PageScaffold.vue'
+import LoadingOverlay from '@/components/ui/LoadingOverlay.vue'
 
 async function initializeApp() {
   const app = createApp(App)
@@ -24,6 +25,7 @@ async function initializeApp() {
   // 全局注册常用 UI 组件，避免各页面重复导入遗漏
   app.component('PageHeader', PageHeader)
   app.component('PageScaffold', PageScaffold)
+  app.component('LoadingOverlay', LoadingOverlay)
 
   // 辅助调试：在控制台暴露聊天 store（开发/生产均可，用后可移除）
   try {
@@ -41,6 +43,11 @@ async function initializeApp() {
   const uiStore = useUIStore()
   let notificationStream: ReturnType<typeof createNotificationStream> | null = null
 
+  // 初始化国际化：在安装路由前完成语言归一化与命名空间加载，避免首次进入路由时出现 zh/en 缺键告警
+  const raw = String(i18n.global.locale.value)
+  const normalized = raw === 'zh' ? 'zh-CN' : raw === 'en' ? 'en-US' : raw
+  await setLocale(normalized as any)
+
   try {
     if (authStore.token) {
       await authStore.fetchUser()
@@ -56,15 +63,6 @@ async function initializeApp() {
 
   // 初始化UI相关的store
   uiStore.initDarkMode()
-
-  // 初始化国际化：归一化语言代码并加载命名空间，避免出现 zh/en 缺键
-  const raw = String(i18n.global.locale.value)
-  const normalized = raw === 'zh' ? 'zh-CN' : raw === 'en' ? 'en-US' : (raw as 'zh-CN' | 'en-US')
-  if (normalized !== raw) {
-    await setLocale(normalized)
-  } else {
-    await loadLocaleMessages(normalized, [...REQUIRED_NAMESPACES])
-  }
   
   // 最后挂载应用
   app.mount('#app')

@@ -9,6 +9,7 @@
         <result column="email" property="email"/>
         <result column="password" property="password"/>
         <result column="role" property="role"/>
+        <result column="status" property="status"/>
         <result column="avatar" property="avatar"/>
         <result column="nickname" property="nickname"/>
         <result column="first_name" property="firstName"/>
@@ -34,14 +35,14 @@
 
     <!-- 基础查询字段 -->
     <sql id="userColumns">
-        id, username, email, password, role, avatar, nickname, first_name, last_name,
+        id, username, email, password, role, status, avatar, nickname, first_name, last_name,
         student_no, teacher_no, gender, mbti, bio, birthday, country, province, city, phone, school, subject, grade, email_verified, deleted,
         created_at, updated_at
     </sql>
 
     <!-- 带别名的基础查询字段 -->
     <sql id="aliasedUserColumns">
-        u.id, u.username, u.email, u.password, u.role, u.avatar, u.nickname, u.first_name, u.last_name,
+        u.id, u.username, u.email, u.password, u.role, u.status, u.avatar, u.nickname, u.first_name, u.last_name,
         u.student_no, u.teacher_no, u.gender, u.mbti, u.bio, u.birthday, u.country, u.province, u.city, u.phone, u.school, u.subject, u.grade,
         u.email_verified, u.deleted, u.created_at, u.updated_at
     </sql>
@@ -49,11 +50,11 @@
     <!-- 插入用户 -->
     <insert id="insertUser" parameterType="com.noncore.assessment.entity.User" useGeneratedKeys="true" keyProperty="id">
         INSERT INTO users (
-            username, email, password, role, avatar, nickname, first_name, last_name,
+            username, email, password, role, status, avatar, nickname, first_name, last_name,
             student_no, teacher_no, gender, mbti, bio, birthday, country, province, city, phone, school, subject, grade,
             email_verified, deleted, created_at, updated_at
         ) VALUES (
-            #{username}, #{email}, #{password}, #{role}, #{avatar}, #{nickname}, #{firstName}, #{lastName},
+            #{username}, #{email}, #{password}, #{role}, #{status}, #{avatar}, #{nickname}, #{firstName}, #{lastName},
             #{studentNo}, #{teacherNo}, #{gender}, #{mbti}, #{bio}, #{birthday}, #{country}, #{province}, #{city}, #{phone}, #{school}, #{subject}, #{grade},
             #{emailVerified}, #{deleted}, #{createdAt}, #{updatedAt}
         )
