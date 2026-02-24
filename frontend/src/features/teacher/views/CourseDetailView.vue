@@ -9,66 +9,66 @@
         <span class="hover:text-gray-700 dark:hover:text-gray-200 cursor-pointer" @click="router.push('/teacher/courses')">
           {{ t('teacher.courseDetail.breadcrumb.courses') }}
         </span>
-        <ChevronRightIcon class="w-4 h-4" />
+        <chevron-right-icon class="w-4 h-4" />
         <span>{{ course.title }}</span>
       </nav>
 
-<PageHeader :title="course.title" :subtitle="localizeCategory2(course.category)">
+<page-header :title="course.title" :subtitle="localizeCategory2(course.category)">
         <template #actions>
           <div class="flex items-center gap-2">
-            <Button variant="teal" @click="router.push(`/teacher/courses/${course.id}/students`)">
-              <UserGroupIcon class="w-4 h-4 mr-2" />
+            <button variant="teal" @click="router.push(`/teacher/courses/${course.id}/students`)">
+              <user-group-icon class="w-4 h-4 mr-2" />
               {{ t('teacher.courseDetail.buttons.students') }}
-            </Button>
-            <Button variant="secondary" @click="router.push({ name: 'TeacherAssignments' })">
-              <ClipboardDocumentListIcon class="w-4 h-4 mr-2" />
+            </button>
+            <button variant="secondary" @click="router.push({ name: 'TeacherAssignments' })">
+              <clipboard-document-list-icon class="w-4 h-4 mr-2" />
               {{ t('teacher.courseDetail.buttons.assignments') }}
-            </Button>
-            <Button variant="primary" @click="router.push(`/teacher/analytics?courseId=${course.id}`)">
-              <PresentationChartBarIcon class="w-4 h-4 mr-2" />
+            </button>
+            <button variant="primary" @click="router.push(`/teacher/analytics?courseId=${course.id}`)">
+              <presentation-chart-bar-icon class="w-4 h-4 mr-2" />
               {{ t('teacher.courseDetail.buttons.analytics') }}
-            </Button>
+            </button>
           </div>
         </template>
-      </PageHeader>
+      </page-header>
       <div class="w-full h-56 bg-gray-200 rounded-2xl overflow-hidden" v-if="course.coverImage">
         <img v-if="coverSrc" :src="coverSrc" :alt="t('teacher.courses.card.coverAlt')" class="w-full h-full object-cover rounded-2xl" @error="clearCoverSrc()" />
       </div>
-      <Card :hoverable="true" :hoverScale="false" padding="md" class="relative overflow-hidden rounded-2xl" tint="info">
+      <card :hoverable="true" :hoverScale="false" padding="md" class="relative overflow-hidden rounded-2xl" tint="info">
         <h2 class="text-xl font-semibold mb-4">{{ t('teacher.courseDetail.sections.description') }}</h2>
         <p class="whitespace-pre-line">{{ course.description }}</p>
-      </Card>
+      </card>
       <!-- 按需求：移除冗余的课程内容板块，仅保留描述与节次编辑 -->
 
       <!-- Lessons Editor: inline per-lesson editing for weight/video/materials/assignment binding -->
-      <Card :hoverable="true" :hoverScale="false" padding="md" class="relative overflow-hidden rounded-2xl" tint="secondary">
+      <card :hoverable="true" :hoverScale="false" padding="md" class="relative overflow-hidden rounded-2xl" tint="secondary">
         <div class="flex items-center justify-between mb-4">
           <h2 class="text-xl font-semibold">{{ t('teacher.courseDetail.sections.lessons') || '课程节次' }}</h2>
-          <Button size="sm" variant="outline" @click="reloadLessons">
-            <ArrowPathIcon class="w-4 h-4 mr-1" />
+          <button size="sm" variant="outline" @click="reloadLessons">
+            <arrow-path-icon class="w-4 h-4 mr-1" />
             {{ t('teacher.courseDetail.actions.reloadLessons') || '刷新' }}
-          </Button>
+          </button>
         </div>
         <!-- Chapters Toolbar -->
-        <Card padding="md" tint="info" class="mb-6">
+        <card padding="md" tint="info" class="mb-6">
           <!-- 新章节：输入分组容器（更聚合、更好看） -->
           <div class="rounded-2xl p-3" v-glass="{ strength: 'ultraThin', interactive: false }">
             <div class="grid grid-cols-1 md:grid-cols-3 gap-3 items-end">
               <div>
                 <label class="block text-sm mb-1">{{ t('teacher.courseDetail.sections.newChapterTitle') }}</label>
-                <GlassInput class="input-sm w-full" v-model="newChapterTitle" :placeholder="t('teacher.courseDetail.sections.newChapterTitlePh') as string" />
+                <glass-input class="input-sm w-full" v-model="newChapterTitle" :placeholder="t('teacher.courseDetail.sections.newChapterTitlePh') as string" />
               </div>
               <div class="md:col-span-2">
                 <label class="block text-sm mb-1">{{ t('teacher.courseDetail.sections.chapterDesc') }}</label>
-                <GlassInput class="input-sm w-full" v-model="newChapterDesc" :placeholder="t('teacher.courseDetail.sections.chapterDescPh') as string" />
+                <glass-input class="input-sm w-full" v-model="newChapterDesc" :placeholder="t('teacher.courseDetail.sections.chapterDescPh') as string" />
               </div>
             </div>
           </div>
           <div class="mt-3 flex items-center gap-2">
-            <Button size="sm" variant="primary" @click="createChapter">
-              <PlusIcon class="w-4 h-4 mr-1" />
+            <button size="sm" variant="primary" @click="createChapter">
+              <plus-icon class="w-4 h-4 mr-1" />
               {{ t('teacher.courseDetail.actions.addChapter') }}
-            </Button>
+            </button>
           </div>
           <div class="mt-4">
             <div class="text-sm mb-2">{{ t('teacher.courseDetail.sections.chapterList') }}</div>
@@ -84,32 +84,32 @@
                 </div>
                 <div class="relative inline-flex items-center gap-2">
                   <span class="text-xs text-gray-400">#{{ c.orderIndex }}</span>
-                  <Button size="xs" variant="danger" icon="delete" @click.stop="deleteChapterRow(c)">
+                  <button size="xs" variant="danger" icon="delete" @click.stop="deleteChapterRow(c)">
                     {{ t('teacher.courseDetail.actions.deleteChapter') || '删除章节' }}
-                  </Button>
+                  </button>
                 </div>
               </li>
               <li v-if="!chapters.length" class="p-3 text-center text-xs text-gray-500">{{ t('teacher.courseDetail.sections.noChapters') }}</li>
             </ul>
           </div>
-        </Card>
+        </card>
         <!-- 章节区（蓝）与新节次区（黄）之间的“独立空白”间隔 -->
         <div class="h-6"></div>
         <div class="space-y-4">
           <!-- New lesson inline form -->
           <!-- 与“新增章节(info)”区分：新节次使用 accent 色系 -->
-          <Card padding="md" tint="accent">
+          <card padding="md" tint="accent">
             <!-- 新节次：输入分组容器（更聚合、更好看） -->
             <div class="rounded-2xl p-3" v-glass="{ strength: 'ultraThin', interactive: false }">
               <div class="grid grid-cols-1 md:grid-cols-3 gap-3 items-end">
                 <div>
                   <label class="block text-sm mb-1">{{ t('teacher.courseDetail.sections.newLessonTitle') }}</label>
-                  <GlassInput class="input-sm w-full" v-model="newLessonTitle" :placeholder="t('teacher.courseDetail.sections.newLessonTitlePh') as string" />
+                  <glass-input class="input-sm w-full" v-model="newLessonTitle" :placeholder="t('teacher.courseDetail.sections.newLessonTitlePh') as string" />
                 </div>
                 <div class="md:col-span-2">
                   <label class="block text-sm mb-1">{{ t('teacher.courseDetail.sections.lessonIntro') }}</label>
                   <!-- 本节说明：与“新节标题”输入同高度（单行），避免视觉不齐 -->
-                  <GlassTextarea
+                  <glass-textarea
                     class="w-full !h-9 !py-1.5 !leading-5 resize-none"
                     :rows="1"
                     v-model="newLessonIntro"
@@ -119,24 +119,24 @@
               </div>
             </div>
             <div class="mt-3">
-              <Button size="sm" variant="primary" @click="createLesson">
-                <PlusIcon class="w-4 h-4 mr-1" />
+              <button size="sm" variant="primary" @click="createLesson">
+                <plus-icon class="w-4 h-4 mr-1" />
                 {{ t('teacher.courseDetail.actions.addLesson') }}
-              </Button>
+              </button>
             </div>
-          </Card>
-          <Card v-for="l in lessons" :key="l.id" padding="md" tint="accent" class="border border-transparent relative overflow-hidden group" draggable="true" @dragstart="onDragStart(l)" @dragover.prevent @drop="onDrop(l)">
+          </card>
+          <card v-for="l in lessons" :key="l.id" padding="md" tint="accent" class="border border-transparent relative overflow-hidden group" draggable="true" @dragstart="onDragStart(l)" @dragover.prevent @drop="onDrop(l)">
             <div class="flex items-center gap-3">
               <div class="font-medium flex-1 truncate">{{ l.title }}</div>
-              <Button size="xs" variant="danger" @click="deleteLessonRow(l)">
-                <TrashIcon class="w-4 h-4 mr-1" />
+              <button size="xs" variant="danger" @click="deleteLessonRow(l)">
+                <trash-icon class="w-4 h-4 mr-1" />
                 {{ t('teacher.courseDetail.actions.deleteLesson') || '删除' }}
-              </Button>
+              </button>
               <div class="w-full md:w-1/2 flex items-center justify-end gap-3">
                 <div class="flex items-center gap-2 whitespace-nowrap">
                   <label class="text-sm whitespace-nowrap">{{ t('teacher.courseDetail.sections.chapterSelect') }}</label>
                   <div class="w-56">
-                    <GlassPopoverSelect
+                    <glass-popover-select
                       :options="chapterOptions"
                       size="sm"
                       :label="undefined"
@@ -147,7 +147,7 @@
                 </div>
                 <div class="flex items-center gap-2 whitespace-nowrap">
                   <label class="text-sm whitespace-nowrap">{{ t('teacher.courseDetail.sections.weight') }}</label>
-                  <GlassInput class="input-sm w-20" :fullWidth="false" type="number" step="0.1" v-model="(l._weight as any)" @change="() => onWeightChange(l)" />
+                  <glass-input class="input-sm w-20" :fullWidth="false" type="number" step="0.1" v-model="(l._weight as any)" @change="() => onWeightChange(l)" />
                 </div>
               </div>
             </div>
@@ -155,14 +155,14 @@
               <div>
                 <div class="flex items-center gap-2 whitespace-nowrap">
                   <label class="text-sm whitespace-nowrap">{{ t('teacher.courseDetail.sections.video') }}</label>
-                  <GlassInput class="w-80 md:w-96 flex-1 min-w-0 h-9 text-sm" :fullWidth="false" v-model="l._videoUrl" :placeholder="t('teacher.courseDetail.sections.videoUrlPh') as string" @change="() => saveVideoUrl(l)" />
-                  <Button size="sm" variant="primary" icon="search" class="whitespace-nowrap" @click="openVideoPicker(l)">{{ t('teacher.courseDetail.actions.selectVideoShort') }}</Button>
+                  <glass-input class="w-80 md:w-96 flex-1 min-w-0 h-9 text-sm" :fullWidth="false" v-model="l._videoUrl" :placeholder="t('teacher.courseDetail.sections.videoUrlPh') as string" @change="() => saveVideoUrl(l)" />
+                  <button size="sm" variant="primary" icon="search" class="whitespace-nowrap" @click="openVideoPicker(l)">{{ t('teacher.courseDetail.actions.selectVideoShort') }}</button>
                 </div>
                 <!-- 资料选择（独立一行，位于视频下方） -->
                 <div class="mt-3 flex items-center gap-2 whitespace-nowrap min-w-0">
                   <label class="text-sm whitespace-nowrap">{{ t('teacher.courseDetail.sections.materials') }}</label>
                   <div class="w-[28rem] max-w-full">
-                    <GlassMultiSelect
+                    <glass-multi-select
                       :options="materialSelectOptions"
                       :model-value="(l._materialFileIds || []).map((v:any)=>String(v))"
                       @update:modelValue="(vals:any[]) => onMaterialMultiChange(l, vals)"
@@ -175,7 +175,7 @@
                 <div class="flex items-center gap-2">
                   <label class="text-sm">{{ t('teacher.courseDetail.sections.bindAssignment') }}</label>
                   <div class="w-56">
-                    <GlassPopoverSelect
+                    <glass-popover-select
                       :options="assignmentOptions"
                       size="sm"
                       :label="undefined"
@@ -188,30 +188,30 @@
               <div class="md:col-span-2">
                 <div class="mt-2">
                   <label class="block text-sm mb-1">{{ t('teacher.courseDetail.sections.lessonIntro') }}</label>
-                  <GlassTextarea class="w-full" :rows="2" v-model="l._content" :placeholder="t('teacher.courseDetail.sections.lessonIntroPh') as string" @update:modelValue="() => onContentInput(l)" />
+                  <glass-textarea class="w-full" :rows="2" v-model="l._content" :placeholder="t('teacher.courseDetail.sections.lessonIntroPh') as string" @update:modelValue="() => onContentInput(l)" />
                 </div>
                 <!-- 播放设置：独立一行，右对齐，位于“绑定作业”下面且资料行之后 -->
                 <div class="mt-3 flex items-center gap-6 justify-end">
                   <div class="inline-flex items-center gap-2 text-sm">
                     <span>{{ t('teacher.courseDetail.sections.allowScrubbing') || '允许拖动进度条' }}</span>
-                    <GlassSwitch v-model="(l._allowScrubbing as any)" size="sm" @update:modelValue="() => schedulePlaybackSave(l)" />
+                    <glass-switch v-model="(l._allowScrubbing as any)" size="sm" @update:modelValue="() => schedulePlaybackSave(l)" />
                   </div>
                   <div class="inline-flex items-center gap-2 text-sm">
                     <span>{{ t('teacher.courseDetail.sections.allowSpeed') || '允许倍速' }}</span>
-                    <GlassSwitch v-model="(l._allowSpeedChange as any)" size="sm" @update:modelValue="() => schedulePlaybackSave(l)" />
+                    <glass-switch v-model="(l._allowSpeedChange as any)" size="sm" @update:modelValue="() => schedulePlaybackSave(l)" />
                   </div>
                 </div>
               </div>
             </div>
-          </Card>
+          </card>
           <div v-if="!lessons.length" class="text-sm text-gray-500">{{ t('teacher.courseDetail.sections.noLessons') }}</div>
         </div>
-      </Card>
+      </card>
       <div class="grid grid-cols-1 md:grid-cols-2 gap-6 items-stretch">
-        <Card padding="md" :hoverScale="false" class="order-2 sm:order-1 h-full relative overflow-hidden rounded-2xl" tint="accent">
+        <card padding="md" :hoverScale="false" class="order-2 sm:order-1 h-full relative overflow-hidden rounded-2xl" tint="accent">
           <div class="flex items-center justify-between mb-4">
             <h2 class="text-xl font-semibold leading-tight break-all">{{ t('teacher.courseDetail.sections.materials') }}</h2>
-            <FileUpload
+            <file-upload
               ref="materialUploader"
               :multiple="true"
               :autoUpload="true"
@@ -225,7 +225,7 @@
             />
           </div>
           <div class="mb-3">
-            <GlassSearchInput v-model="materialQuery" :placeholder="t('teacher.courseDetail.sections.searchMaterial') as string" size="sm" />
+            <glass-search-input v-model="materialQuery" :placeholder="t('teacher.courseDetail.sections.searchMaterial') as string" size="sm" />
           </div>
           <ul class="divide-y divide-gray-200">
             <li v-for="f in paginatedMaterials" :key="f.id" class="py-2 flex items-center justify-between">
@@ -237,13 +237,13 @@
                 </div>
               </div>
               <div class="flex items-center gap-2">
-                <Button size="sm" variant="success" icon="download" class="whitespace-nowrap" @click="downloadById(f.id, f)">{{ t('teacher.courseDetail.sections.download') }}</Button>
-                <Button size="sm" variant="danger" icon="delete" @click="confirmDelete(f.id, 'material')">{{ t('teacher.courseDetail.sections.delete') }}</Button>
+                <button size="sm" variant="success" icon="download" class="whitespace-nowrap" @click="downloadById(f.id, f)">{{ t('teacher.courseDetail.sections.download') }}</button>
+                <button size="sm" variant="danger" icon="delete" @click="confirmDelete(f.id, 'material')">{{ t('teacher.courseDetail.sections.delete') }}</button>
               </div>
             </li>
             <li v-if="!materials.length" class="py-6 text-center text-sm text-gray-500">{{ t('teacher.courseDetail.sections.noMaterials') }}</li>
           </ul>
-          <PaginationBar
+          <pagination-bar
             class="mt-3"
             :page="materialsPage"
             :page-size="pageSize"
@@ -253,11 +253,11 @@
             @update:page="(p:number)=> materialsPage = p"
             @update:pageSize="onMaterialsPageSizeChange"
           />
-        </Card>
-        <Card padding="md" :hoverScale="false" class="order-1 sm:order-2 h-full relative overflow-hidden rounded-2xl" tint="warning">
+        </card>
+        <card padding="md" :hoverScale="false" class="order-1 sm:order-2 h-full relative overflow-hidden rounded-2xl" tint="warning">
           <div class="flex items-center justify-between mb-4">
             <h2 class="text-xl font-semibold leading-tight break-all">{{ t('teacher.courseDetail.sections.videos') }}</h2>
-            <FileUpload
+            <file-upload
               ref="videoUploader"
               :multiple="true"
               :autoUpload="true"
@@ -271,7 +271,7 @@
             />
           </div>
           <div class="mb-3">
-            <GlassSearchInput v-model="videoQuery" :placeholder="t('teacher.courseDetail.sections.searchVideo') as string" size="sm" />
+            <glass-search-input v-model="videoQuery" :placeholder="t('teacher.courseDetail.sections.searchVideo') as string" size="sm" />
           </div>
           <ul class="divide-y divide-gray-200">
             <li v-for="f in paginatedVideos" :key="f.id" class="py-2 flex items-center justify-between">
@@ -283,13 +283,13 @@
                 </div>
               </div>
               <div class="flex items-center gap-2">
-                <Button size="sm" variant="success" icon="download" class="whitespace-nowrap" @click="downloadById(f.id, f)">{{ t('teacher.courseDetail.sections.download') }}</Button>
-                <Button size="sm" variant="danger" icon="delete" @click="confirmDelete(f.id, 'video')">{{ t('teacher.courseDetail.sections.delete') }}</Button>
+                <button size="sm" variant="success" icon="download" class="whitespace-nowrap" @click="downloadById(f.id, f)">{{ t('teacher.courseDetail.sections.download') }}</button>
+                <button size="sm" variant="danger" icon="delete" @click="confirmDelete(f.id, 'video')">{{ t('teacher.courseDetail.sections.delete') }}</button>
               </div>
             </li>
             <li v-if="!videos.length" class="py-6 text-center text-sm text-gray-500">{{ t('teacher.courseDetail.sections.noVideos') }}</li>
           </ul>
-          <PaginationBar
+          <pagination-bar
             class="mt-3"
             :page="videosPage"
             :page-size="pageSize"
@@ -299,7 +299,7 @@
             @update:page="(p:number)=> videosPage = p"
             @update:pageSize="onVideosPageSizeChange"
           />
-        </Card>
+        </card>
       </div>
     </div>
     <div v-else class="text-center py-12">
@@ -309,9 +309,9 @@
   </div>
 
   <!-- Video Picker Modal (GlassModal) -->
-  <GlassModal v-if="videoPickerVisible" :title="t('teacher.courseDetail.actions.selectVideoTitle') as string" size="sm" heightVariant="normal" @close="videoPickerVisible = false">
+  <glass-modal v-if="videoPickerVisible" :title="t('teacher.courseDetail.actions.selectVideoTitle') as string" size="sm" heightVariant="normal" @close="videoPickerVisible = false">
     <div>
-      <GlassSearchInput v-model="videoQuery" :placeholder="t('teacher.courseDetail.sections.searchVideo') as string" size="sm" />
+      <glass-search-input v-model="videoQuery" :placeholder="t('teacher.courseDetail.sections.searchVideo') as string" size="sm" />
       <ul class="divide-y divide-gray-200 overflow-y-auto" style="max-height: 55vh;">
         <li v-for="f in paginatedVideos" :key="f.id" class="py-2 flex items-center justify-between">
           <div class="flex items-center min-w-0 mr-3 gap-2">
@@ -322,14 +322,14 @@
             </div>
           </div>
           <div class="flex items-center gap-2">
-            <Button size="sm" variant="primary" icon="confirm" class="whitespace-nowrap" @click="chooseVideo(f)">{{ t('teacher.courseDetail.actions.useThisVideo') }}</Button>
-            <Button size="sm" variant="success" icon="download" class="whitespace-nowrap" @click="downloadById(f.id, f)">{{ t('teacher.courseDetail.sections.download') }}</Button>
-            <Button size="sm" variant="success" icon="download" class="whitespace-nowrap" @click="downloadById(f.id, f)">{{ t('teacher.courseDetail.sections.download') }}</Button>
+            <button size="sm" variant="primary" icon="confirm" class="whitespace-nowrap" @click="chooseVideo(f)">{{ t('teacher.courseDetail.actions.useThisVideo') }}</button>
+            <button size="sm" variant="success" icon="download" class="whitespace-nowrap" @click="downloadById(f.id, f)">{{ t('teacher.courseDetail.sections.download') }}</button>
+            <button size="sm" variant="success" icon="download" class="whitespace-nowrap" @click="downloadById(f.id, f)">{{ t('teacher.courseDetail.sections.download') }}</button>
           </div>
         </li>
         <li v-if="!videos.length" class="py-6 text-center text-sm text-gray-500">{{ t('teacher.courseDetail.sections.noVideos') }}</li>
       </ul>
-      <PaginationBar
+      <pagination-bar
         class="mt-3"
         :page="videosPage"
         :page-size="pageSize"
@@ -341,14 +341,14 @@
       />
     </div>
     <template #footer>
-      <Button size="sm" variant="outline" @click="videoPickerVisible = false">{{ t('teacher.courseDetail.actions.close') }}</Button>
+      <button size="sm" variant="outline" @click="videoPickerVisible = false">{{ t('teacher.courseDetail.actions.close') }}</button>
     </template>
-  </GlassModal>
+  </glass-modal>
   
   <!-- Material Picker Modal (GlassModal) -->
-  <GlassModal v-if="materialPickerVisible" :title="t('teacher.courseDetail.sections.materials') as string" size="lg" heightVariant="compact" @close="materialPickerVisible = false">
+  <glass-modal v-if="materialPickerVisible" :title="t('teacher.courseDetail.sections.materials') as string" size="lg" heightVariant="compact" @close="materialPickerVisible = false">
     <div>
-      <GlassSearchInput v-model="materialQuery" :placeholder="t('teacher.courseDetail.sections.searchMaterial') as string" size="sm" />
+      <glass-search-input v-model="materialQuery" :placeholder="t('teacher.courseDetail.sections.searchMaterial') as string" size="sm" />
       <ul class="divide-y divide-gray-200 overflow-y-auto" style="max-height: 55vh;">
         <li v-for="f in paginatedMaterials" :key="f.id" class="py-2 flex items-center justify-between">
           <div class="flex items-center min-w-0 mr-3 gap-2">
@@ -359,20 +359,20 @@
             </div>
           </div>
           <div class="flex items-center gap-2">
-            <Button
+            <button
               size="sm"
               :variant="isMaterialSelectedForTarget(f) ? 'success' : 'primary'"
               class="whitespace-nowrap shrink-0 min-w-max"
               @click="chooseMaterial(f)"
             >
               {{ t('teacher.courseDetail.actions.selectMaterialShort') }}
-            </Button>
-            <Button size="sm" variant="outline" @click="downloadById(f.id, f)">{{ t('teacher.courseDetail.sections.download') }}</Button>
+            </button>
+            <button size="sm" variant="outline" @click="downloadById(f.id, f)">{{ t('teacher.courseDetail.sections.download') }}</button>
           </div>
         </li>
         <li v-if="!materials.length" class="py-6 text-center text-sm text-gray-500">{{ t('teacher.courseDetail.sections.noMaterials') }}</li>
       </ul>
-      <PaginationBar
+      <pagination-bar
         class="mt-3"
         :page="materialsPage"
         :page-size="pageSize"
@@ -384,11 +384,11 @@
       />
     </div>
     <template #footer>
-      <Button size="sm" variant="outline" @click="materialPickerVisible = false">{{ t('teacher.courseDetail.actions.close') }}</Button>
+      <button size="sm" variant="outline" @click="materialPickerVisible = false">{{ t('teacher.courseDetail.actions.close') }}</button>
     </template>
-  </GlassModal>
+  </glass-modal>
 
-  <ConfirmDialog
+  <confirm-dialog
     :open="confirmOpen"
     :title="confirmDialog.state.title"
     :message="confirmDialog.state.message"

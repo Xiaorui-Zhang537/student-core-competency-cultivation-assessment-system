@@ -11,19 +11,19 @@
         </h3>
         <div class="flex items-center gap-2 flex-nowrap justify-end">
           <!-- 顶部：全部已读 + 刷新（遵循仪表盘按钮主题样式） -->
-          <Button size="sm" variant="primary"
+          <button size="sm" variant="primary"
             @click="handleMarkAllAsRead"
             :disabled="loading || !hasUnread"
             :title="t('notifications.actions.markAll') as string"
           >
             <check-icon class="w-4 h-4 mr-2" />
             {{ t('notifications.actions.markAll') }}
-          </Button>
+          </button>
 
-          <Button size="sm" variant="secondary" @click="handleRefresh" :disabled="loading">
+          <button size="sm" variant="secondary" @click="handleRefresh" :disabled="loading">
             <arrow-path-icon class="w-4 h-4 mr-2" :class="{ 'animate-spin': loading }" />
             {{ t('notifications.actions.refresh') }}
-          </Button>
+          </button>
         </div>
       </div>
 
@@ -32,7 +32,7 @@
 
       <!-- 过滤器容器：对齐“我的课程”界面 FilterBar 样式与选择器配色 -->
       <div class="mt-4">
-        <FilterBar tint="secondary" class="rounded-full">
+        <filter-bar tint="secondary" class="rounded-full">
           <template #left>
             <div class="flex items-center gap-4 flex-wrap">
               <div class="w-auto flex items-center gap-2">
@@ -95,13 +95,13 @@
 
           <template #right>
             <div v-if="hasActiveFilters" class="ml-auto">
-              <Button size="sm" variant="ghost" @click="handleClearFilters">
+              <button size="sm" variant="ghost" @click="handleClearFilters">
                 <x-mark-icon class="w-4 h-4 mr-1" />
                 {{ t('notifications.actions.clearFilters') }}
-              </Button>
+              </button>
             </div>
           </template>
-        </FilterBar>
+        </filter-bar>
       </div>
     </div>
 
@@ -118,7 +118,7 @@
       </div>
 
       <div v-else class="space-y-3">
-        <Card
+        <card
           v-for="notification in notifications"
           :key="notification.id"
           padding="sm"
@@ -159,9 +159,9 @@
 
               <!-- 操作按钮 -->
               <div class="flex items-center space-x-1">
-                <Button size="xs" variant="ghost" class="text-red-600" title="删除" @click.stop="handleDeleteNotification(notification.id)">
+                <button size="xs" variant="ghost" class="text-red-600" title="删除" @click.stop="handleDeleteNotification(notification.id)">
                   <trash-icon class="w-4 h-4" />
-                </Button>
+                </button>
               </div>
             </div>
 
@@ -189,11 +189,11 @@
               </span>
             </div>
           </div>
-        </Card>
+        </card>
       </div>
 
       <!-- 分页 -->
-      <PaginationBar
+      <pagination-bar
         :page="pagination.page"
         :page-size="pagination.size || 20"
         :total-pages="pagination.totalPages"

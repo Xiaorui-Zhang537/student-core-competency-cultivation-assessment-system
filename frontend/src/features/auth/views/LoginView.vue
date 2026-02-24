@@ -42,9 +42,9 @@
       </div>
 
       <div>
-        <Button class="w-full rounded-full" size="xl" variant="info" type="submit" :disabled="authStore.loading">
+        <button class="w-full rounded-full" size="xl" variant="info" type="submit" :disabled="authStore.loading">
           {{ authStore.loading ? t('auth.login.action.submitting') : t('auth.login.action.submit') }}
-        </Button>
+        </button>
       </div>
     </form>
 

@@ -1,30 +1,30 @@
 <template>
   <div class="p-6">
-    <PageHeader :title="t('student.courses.title')" :subtitle="t('student.courses.subtitle')">
+    <page-header :title="t('student.courses.title')" :subtitle="t('student.courses.subtitle')">
       <template #actions>
-        <Button variant="primary" @click="showCourseStore = true">
+        <button variant="primary" @click="showCourseStore = true">
           <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" /></svg>
           {{ t('student.courses.browse') }}
-        </Button>
+        </button>
       </template>
-    </PageHeader>
+    </page-header>
 
     <!-- Stats (StatCard, 复用工作台四卡样式) -->
     <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-      <StartCard :label="t('student.courses.active') as string" :value="activeCoursesCount" tone="blue" :icon="AcademicCapIcon" />
-      <StartCard :label="t('student.courses.completed') as string" :value="completedCoursesCount" tone="emerald" :icon="CheckCircleIcon" />
-      <StartCard :label="t('student.courses.avgProgress') as string" :value="`${averageProgress.toFixed(1)}%`" tone="violet" :icon="ChartBarIcon" />
+      <start-card :label="t('student.courses.active') as string" :value="activeCoursesCount" tone="blue" :icon="AcademicCapIcon" />
+      <start-card :label="t('student.courses.completed') as string" :value="completedCoursesCount" tone="emerald" :icon="CheckCircleIcon" />
+      <start-card :label="t('student.courses.avgProgress') as string" :value="`${averageProgress.toFixed(1)}%`" tone="violet" :icon="ChartBarIcon" />
     </div>
 
     <!-- Search and Filter (aligned with Assignments FilterBar) -->
     <div class="mb-8">
-      <FilterBar tint="secondary" class="rounded-full">
+      <filter-bar tint="secondary" class="rounded-full">
         <template #left>
           <div class="flex items-center gap-4">
             <div class="w-auto flex items-center gap-2">
               <span class="text-xs font-medium leading-tight text-gray-700 dark:text-gray-300">{{ t('student.courses.categoryLabel') || '分类' }}</span>
               <div class="w-56">
-                <GlassPopoverSelect
+                <glass-popover-select
                   v-model="selectedCategory"
                   :options="[{ label: t('student.courses.allCategories') as string, value: '' }, ...categoryOptions]"
                   size="sm"
@@ -36,7 +36,7 @@
             <div class="w-auto flex items-center gap-2">
               <span class="text-xs font-medium leading-tight text-gray-700 dark:text-gray-300">{{ t('student.courses.statusFilterLabel') || '状态' }}</span>
               <div class="w-44">
-                <GlassPopoverSelect
+                <glass-popover-select
                   v-model="selectedStatus"
                   :options="statusFilterOptions"
                   size="sm"
@@ -47,7 +47,7 @@
             <div class="w-auto flex items-center gap-2">
               <span class="text-xs font-medium leading-tight text-gray-700 dark:text-gray-300">{{ t('student.courses.sortDifficultyLabel') || '难度排序' }}</span>
               <div class="w-48">
-                <GlassPopoverSelect
+                <glass-popover-select
                   v-model="difficultyOrder"
                   :options="difficultyOrderOptions"
                   size="sm"
@@ -59,23 +59,23 @@
         </template>
         <template #right>
           <div class="relative w-56 ml-auto">
-            <GlassSearchInput v-model="searchQuery" :placeholder="t('student.courses.searchPlaceholder') as string" size="sm" tint="info" @keyup.enter="applyImmediateSearch()" />
+            <glass-search-input v-model="searchQuery" :placeholder="t('student.courses.searchPlaceholder') as string" size="sm" tint="info" @keyup.enter="applyImmediateSearch()" />
           </div>
         </template>
-      </FilterBar>
+      </filter-bar>
     </div>
     
     <!-- Loading or Empty State -->
     <div v-if="!pageLoaded" class="text-center py-12">
       <p>{{ t('student.courses.loading') }}</p>
     </div>
-    <Card v-else-if="filteredCourses.length === 0" class="text-center py-12" tint="info">
+    <card v-else-if="filteredCourses.length === 0" class="text-center py-12" tint="info">
       <h3 class="text-lg font-medium">{{ t('student.courses.emptyTitle') }}</h3>
       <p class="text-gray-500 mt-2">{{ t('student.courses.emptyDesc') }}</p>
-      <Button class="mt-4" variant="primary" @click="showCourseStore = true">{{ t('student.courses.goStore') }}</Button>
-    </Card>
+      <button class="mt-4" variant="primary" @click="showCourseStore = true">{{ t('student.courses.goStore') }}</button>
+    </card>
     <div v-else class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-      <Card
+      <card
         v-for="course in filteredCourses"
         :key="course.id"
         class="overflow-hidden cursor-pointer group rounded-2xl"
@@ -99,7 +99,7 @@
               <span>{{ t('student.courses.progressLabel') }}</span>
               <span>{{ (Number(course.progress) || 0).toFixed(0) }}%</span>
             </div>
-            <Progress
+            <progress
               :value="Number(course.progress || 0)"
               size="sm"
               :color="Number(course.progress || 0) >= 100 ? 'success' : 'primary'"
@@ -116,41 +116,41 @@
             </span>
           </div>
         </div>
-      </Card>
+      </card>
     </div>
 
     <!-- Course Store Modal (GlassModal) -->
-    <GlassModal v-if="showCourseStore" :title="t('student.courses.storeTitle') as string" size="md" heightVariant="tall" @close="showCourseStore=false">
+    <glass-modal v-if="showCourseStore" :title="t('student.courses.storeTitle') as string" size="md" heightVariant="tall" @close="showCourseStore=false">
       <div class="overflow-y-auto" style="max-height:70vh;">
         <div v-if="courseStore.loading" class="text-center"><p>{{ t('student.courses.loading') }}</p></div>
         <div v-else class="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <Card v-for="course in courseStore.courses" :key="course.id">
+          <card v-for="course in courseStore.courses" :key="course.id">
             <h4 class="font-medium mb-2">{{ course.title }}</h4>
             <p class="text-sm text-gray-600 mb-3 whitespace-pre-line">{{ course.description }}</p>
             <div class="flex flex-wrap items-center gap-2 mb-2 text-sm">
-              <Badge v-if="course.startDate" size="sm" variant="info">
+              <badge v-if="course.startDate" size="sm" variant="info">
                 <span class="inline-flex items-center gap-1">📅 {{ t('student.courses.detail.startDate') }}: {{ formatDateOnly(course.startDate) }}</span>
-              </Badge>
-              <Badge v-if="course.endDate" size="sm" variant="info">
+              </badge>
+              <badge v-if="course.endDate" size="sm" variant="info">
                 <span class="inline-flex items-center gap-1">⏳ {{ t('student.courses.detail.endDate') }}: {{ formatDateOnly(course.endDate) }}</span>
-              </Badge>
+              </badge>
             </div>
             <div class="flex flex-wrap items-center gap-2 mb-3 text-sm">
-              <Badge v-if="course.difficulty" size="sm" :variant="getDifficultyVariant(course.difficulty)">
+              <badge v-if="course.difficulty" size="sm" :variant="getDifficultyVariant(course.difficulty)">
                 {{ t('student.courses.detail.difficulty') }}: {{ localizeDifficulty(course.difficulty, t) }}
-              </Badge>
-              <Badge v-if="course.category" size="sm" :variant="getCategoryVariant(course.category)">
+              </badge>
+              <badge v-if="course.category" size="sm" :variant="getCategoryVariant(course.category)">
                 {{ t('student.courses.detail.category') }}: {{ localizeCategory(course.category, t) }}
-              </Badge>
+              </badge>
               <template v-for="tag in toTagArray(course.tags)" :key="`${course.id}-${tag}`">
-                <Badge size="sm" :variant="getTagVariant(tag)">#{{ tag }}</Badge>
+                <badge size="sm" :variant="getTagVariant(tag)">#{{ tag }}</badge>
               </template>
             </div>
             <div class="flex justify-between items-center">
               <span class="text-sm text-gray-500">{{ t('student.courses.instructor') }}: {{ course.teacherName }}</span>
               <div class="flex items-center gap-2">
-                <Badge v-if="isEnrollClosed(course)" size="sm" variant="warning">{{ t('student.courses.enrollClosed') || '报名已截止' }}</Badge>
-                <Button
+                <badge v-if="isEnrollClosed(course)" size="sm" variant="warning">{{ t('student.courses.enrollClosed') || '报名已截止' }}</badge>
+                <button
                   v-if="isEnrolled(String(course.id))"
                   size="sm"
                   variant="danger"
@@ -158,8 +158,8 @@
                   @click.stop="handleUnenroll(String(course.id))"
                 >
                   {{ t('student.courses.unenroll') || '退课' }}
-                </Button>
-                <Button
+                </button>
+                <button
                   v-else
                   size="sm"
                   variant="primary"
@@ -168,19 +168,19 @@
                   @click.stop="startEnroll(course)"
                 >
                   {{ isEnrollClosed(course) ? (t('student.courses.enrollClosed') || '报名已截止') : (t('student.courses.enroll') ) }}
-                </Button>
+                </button>
               </div>
             </div>
-          </Card>
+          </card>
         </div>
       </div>
       <template #footer>
-        <Button variant="secondary" @click="showCourseStore=false">{{ t('common.close') || '关闭' }}</Button>
+        <button variant="secondary" @click="showCourseStore=false">{{ t('common.close') || '关闭' }}</button>
       </template>
-    </GlassModal>
+    </glass-modal>
 
     <!-- 入课密钥输入弹窗 -->
-    <GlassModal
+    <glass-modal
       v-if="enrollKeyModalVisible"
       :title="(t('student.courses.enterEnrollKey') as string) || '输入入课密钥'"
       size="sm"
@@ -190,24 +190,24 @@
       <div class="space-y-4">
         <div class="text-sm text-muted">{{ t('teacher.students.enrollKey.tip') }}</div>
         <label class="block text-sm mb-1">{{ t('teacher.students.enrollKey.keyLabel') }}</label>
-        <GlassInput
+        <glass-input
           v-model="enrollKeyInput"
           type="password"
           :placeholder="t('teacher.students.enrollKey.placeholder') as string"
         />
       </div>
       <template #footer>
-        <Button variant="secondary" @click="closeEnrollKeyModal">{{ t('common.cancel') || '取消' }}</Button>
-        <Button
+        <button variant="secondary" @click="closeEnrollKeyModal">{{ t('common.cancel') || '取消' }}</button>
+        <button
           variant="primary"
           :loading="enrollingId === String(enrollKeyCourseId)"
           :disabled="!enrollKeyInput"
           @click="confirmEnrollWithKey"
         >
           {{ t('student.courses.enroll') }}
-        </Button>
+        </button>
       </template>
-    </GlassModal>
+    </glass-modal>
   </div>
 </template>
 

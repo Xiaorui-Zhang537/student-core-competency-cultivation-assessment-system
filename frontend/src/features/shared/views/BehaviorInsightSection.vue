@@ -1,5 +1,5 @@
 <template>
-  <Card padding="md" tint="secondary">
+  <card padding="md" tint="secondary">
     <div class="flex items-center justify-between gap-3 mb-3">
       <div class="min-w-0">
         <h3 class="text-lg font-semibold truncate">{{ t('shared.behaviorInsight.title') }}</h3>
@@ -9,10 +9,10 @@
       </div>
 
       <div class="flex items-center gap-2">
-        <Badge v-if="insight?.meta?.status" size="sm" :variant="statusVariant">
+        <badge v-if="insight?.meta?.status" size="sm" :variant="statusVariant">
           {{ t(`shared.behaviorInsight.status.${insight.meta.status}`) }}
-        </Badge>
-        <Button
+        </badge>
+        <button
           v-if="canOperate"
           :variant="actionVariant"
           size="sm"
@@ -20,7 +20,7 @@
           @click="onClickAction"
         >
           {{ actionLabel }}
-        </Button>
+        </button>
       </div>
     </div>
 
@@ -76,7 +76,7 @@
                   <span class="w-2.5 h-2.5 rounded-full flex-shrink-0" :class="dimensionDotClass(it.dimensionCode)"></span>
                   <div class="font-medium truncate">{{ dimensionLabel(it.dimensionCode) }}</div>
                 </div>
-                <Badge size="sm" variant="info">{{ levelLabel(it.level) }}</Badge>
+                <badge size="sm" variant="info">{{ levelLabel(it.level) }}</badge>
               </div>
               <div class="text-sm text-gray-500 mt-1 whitespace-pre-wrap">{{ it.rationale || '-' }}</div>
               <div v-if="it.evidenceIds?.length" class="text-xs text-gray-400 mt-2">
@@ -102,9 +102,9 @@
             >
               <div class="flex items-center justify-between gap-2">
                 <div class="font-medium truncate">{{ a.title || '-' }}</div>
-                <Badge size="sm" :variant="severityVariant(a.severity)">
+                <badge size="sm" :variant="severityVariant(a.severity)">
                   {{ severityLabel(a.severity) }}
-                </Badge>
+                </badge>
               </div>
               <div class="text-sm text-gray-500 mt-1 whitespace-pre-wrap">{{ a.message || '-' }}</div>
               <div v-if="a.evidenceIds?.length" class="text-xs text-gray-400 mt-2">
@@ -165,7 +165,7 @@
         </div>
       </template>
     </div>
-  </Card>
+  </card>
 </template>
 
 <script setup lang="ts">

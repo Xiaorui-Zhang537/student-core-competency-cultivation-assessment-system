@@ -4,9 +4,9 @@
       <div class="max-w-6xl mx-auto mb-4 md:mb-6">
         <page-header :title="t('shared.voicePractice.title')" :subtitle="t('shared.voicePractice.subtitle')">
           <template #actions>
-            <Button variant="info" icon="arrow-left" class="whitespace-nowrap shrink-0" @click="goBack">
+            <button variant="info" icon="arrow-left" class="whitespace-nowrap shrink-0" @click="goBack">
               {{ t('shared.voicePractice.back') }}
-            </Button>
+            </button>
           </template>
         </page-header>
       </div>
@@ -19,7 +19,7 @@
                 <h3 class="text-sm font-semibold text-gray-700 dark:text-gray-200 truncate">{{ t('shared.voicePractice.mySessions') }}</h3>
                 <span class="text-xs text-gray-500 shrink-0">{{ sessions.length }}</span>
               </div>
-              <Button
+              <button
                 size="sm"
                 variant="primary"
                 icon="plus"
@@ -28,7 +28,7 @@
                 @click="createNewSession"
               >
                 {{ t('common.new') || t('shared.voicePractice.newSession') }}
-              </Button>
+              </button>
             </div>
 
             <div class="flex items-center gap-2 mb-3">
@@ -41,7 +41,7 @@
               {{ t('shared.voicePractice.noSessions') }}
             </div>
             <div v-else class="divide-y divide-gray-100 dark:divide-gray-700 rounded-lg border border-gray-100 dark:border-gray-700 overflow-hidden max-h-[50vh] overflow-y-auto">
-              <Button
+              <button
                 v-for="s in sessions"
                 :key="s.id"
                 variant="menu"
@@ -56,13 +56,13 @@
                       {{ s.title || `#${s.id}` }}
                     </div>
                     <div class="flex items-center gap-2 shrink-0 ml-auto">
-                      <Button variant="ghost" size="xs" class="text-base-content/70 hover:text-base-content" :title="t('common.rename') || '重命名'" @click.stop="openRename(s)">
+                      <button variant="ghost" size="xs" class="text-base-content/70 hover:text-base-content" :title="t('common.rename') || '重命名'" @click.stop="openRename(s)">
                         <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
                           <path d="M12 20h9"/>
                           <path d="M16.5 3.5l4 4-11 11H5.5v-4.5l11-10.5z"/>
                         </svg>
-                      </Button>
-                      <Button
+                      </button>
+                      <button
                         variant="ghost"
                         size="xs"
                         :class="(s as any).pinned ? 'theme-primary' : 'text-base-content/60 hover:text-base-content'"
@@ -72,19 +72,19 @@
                         <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
                           <path :fill="(s as any).pinned ? 'currentColor' : 'none'" d="M12 17l-5.878 3.09 1.123-6.545L2.49 8.91l6.561-.953L12 2l2.949 5.957 6.561.953-4.755 4.635 1.123 6.545z"/>
                         </svg>
-                      </Button>
-                      <Button variant="danger" size="xs" :title="t('common.delete') || '删除'" @click.stop="removeSession(Number(s.id))">
+                      </button>
+                      <button variant="danger" size="xs" :title="t('common.delete') || '删除'" @click.stop="removeSession(Number(s.id))">
                         <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
                           <polyline points="3 6 5 6 21 6"/>
                           <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>
                           <path d="M10 11v6M14 11v6M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/>
                         </svg>
-                      </Button>
+                      </button>
                     </div>
                   </div>
                   <div class="text-xs text-gray-500 truncate" v-if="s.model">{{ s.model }}</div>
                 </div>
-              </Button>
+              </button>
             </div>
           </div>
 
@@ -157,12 +157,12 @@
           </div>
 
           <div class="border-t border-white/25 dark:border-white/10 p-3 bg-transparent flex items-center gap-2">
-            <Button variant="primary" :disabled="starting || status === 'connecting' || status === 'recording' || status === 'waiting' || status === 'saving'" :loading="starting" @click="startSession">
+            <button variant="primary" :disabled="starting || status === 'connecting' || status === 'recording' || status === 'waiting' || status === 'saving'" :loading="starting" @click="startSession">
               {{ t('shared.voicePractice.start') }}
-            </Button>
-            <Button variant="warning" :disabled="status !== 'recording'" @click="stopSession">
+            </button>
+            <button variant="warning" :disabled="status !== 'recording'" @click="stopSession">
               {{ t('shared.voicePractice.stop') }}
-            </Button>
+            </button>
             <div class="ml-auto text-xs text-gray-500 dark:text-gray-400">
               {{ t('shared.voicePractice.saveTip') }}
             </div>
@@ -182,8 +182,8 @@
       >
         <glass-input v-model="renameTitle" class="mb-4" :placeholder="t('common.rename') || '请输入新的标题'" />
         <template #footer>
-          <Button size="sm" variant="secondary" @click="showRename=false">{{ t('common.cancel') || '取消' }}</Button>
-          <Button size="sm" variant="primary" @click="confirmRename">{{ t('teacher.courses.actions.save') || '保存' }}</Button>
+          <button size="sm" variant="secondary" @click="showRename=false">{{ t('common.cancel') || '取消' }}</button>
+          <button size="sm" variant="primary" @click="confirmRename">{{ t('teacher.courses.actions.save') || '保存' }}</button>
         </template>
       </glass-modal>
     </div>

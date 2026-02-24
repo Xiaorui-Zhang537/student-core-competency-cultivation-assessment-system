@@ -1,5 +1,5 @@
 <template>
-  <LiquidGlass
+  <liquid-glass
     :container-class="containerClass"
     :class="[
       'rounded-2xl transition-all duration-200',
@@ -36,7 +36,7 @@
     <footer v-if="$slots.footer" class="pt-4 mt-4" style="box-shadow: inset 0 1px 0 rgba(255,255,255,0.18);">
       <slot name="footer" />
     </footer>
-  </LiquidGlass>
+  </liquid-glass>
 </template>
 
 <script setup lang="ts">

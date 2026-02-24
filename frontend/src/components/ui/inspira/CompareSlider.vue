@@ -37,7 +37,7 @@
         <div
           class="absolute -right-10 top-1/2 h-3/4 w-10 -translate-y-1/2 [mask-image:radial-gradient(100px_at_left,white,transparent)]"
         >
-          <StarField :stars-count="120" class="size-full" />
+          <star-field :stars-count="120" class="size-full" />
         </div>
 
         <!-- Custom Handle Slot -->
@@ -46,7 +46,7 @@
             v-if="props.showHandlebar"
             class="pointer-events-auto absolute -right-2.5 top-1/2 z-30 flex size-5 -translate-y-1/2 cursor-grab items-center justify-center rounded-md bg-white shadow-[0px_-1px_0px_0px_#FFFFFF40]"
           >
-            <Icon name="heroicons:ellipsis-vertical" class="size-4 text-black" />
+            <icon name="heroicons:ellipsis-vertical" class="size-4 text-black" />
           </div>
         </slot>
       </div>

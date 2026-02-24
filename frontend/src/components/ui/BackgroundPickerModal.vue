@@ -1,5 +1,5 @@
 <template>
-  <GlassModal :title="t('layout.common.bgPickerTitle')" :maxWidth="'max-w-xl'" :backdropDark="true" @close="$emit('close')">
+  <glass-modal :title="t('layout.common.bgPickerTitle')" :maxWidth="'max-w-xl'" :backdropDark="true" @close="$emit('close')">
     <div class="space-y-5">
       <div>
         <div class="text-sm font-medium mb-2">{{ t('layout.common.lightMode') }}</div>
@@ -19,7 +19,7 @@
       </div>
       <div class="pt-1 text-xs text-subtle">{{ t('layout.common.bgPickerDesc') }}</div>
     </div>
-  </GlassModal>
+  </glass-modal>
 </template>
 
 <script setup lang="ts">

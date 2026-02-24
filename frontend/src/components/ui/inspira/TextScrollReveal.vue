@@ -7,7 +7,7 @@
       <p
         class="flex flex-wrap p-5 text-2xl font-bold text-black/20 xl:text-5xl lg:p-10 lg:text-4xl md:p-8 md:text-3xl dark:text-white/20"
       >
-        <ScrollWord
+        <scroll-word
           v-for="(word, i) in words"
           :key="i"
           :word="word"

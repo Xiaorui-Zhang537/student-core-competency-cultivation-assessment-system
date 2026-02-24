@@ -65,7 +65,7 @@
         </div>
 
         <!-- 上传按钮 -->
-        <Button 
+        <button 
           v-if="!uploading"
           variant="primary"
           :size="dense ? 'sm' : (compact ? 'sm' : 'md')"
@@ -75,7 +75,7 @@
         >
           <photo-icon :class="[dense ? 'w-3 h-3' : (compact ? 'w-3 h-3' : 'w-4 h-4'), 'mr-2']" />
           {{ t('shared.upload.select') }}
-        </Button>
+        </button>
 
         <!-- 上传进度 -->
         <div v-if="uploading && progress > 0" class="mt-4">
@@ -156,7 +156,7 @@
           </div>
           
           <!-- 删除按钮 -->
-          <Button
+          <button
             v-if="!disabled"
             @click="removeFile(index)"
             variant="ghost"
@@ -166,7 +166,7 @@
             :title="t('shared.upload.removeWithName', { name: file.name })"
           >
             <x-mark-icon class="w-4 h-4" />
-          </Button>
+          </button>
         </div>
       </div>
     </div>
@@ -185,7 +185,7 @@
             :alt="file.name"
             class="w-full h-24 object-cover rounded-lg border border-gray-200 dark:border-gray-700"
           />
-          <Button
+          <button
             v-if="!disabled"
             @click="removeFile(files.indexOf(file))"
             variant="danger"
@@ -194,7 +194,7 @@
             type="button"
           >
             <x-mark-icon class="w-3 h-3" />
-          </Button>
+          </button>
         </div>
       </div>
     </div>

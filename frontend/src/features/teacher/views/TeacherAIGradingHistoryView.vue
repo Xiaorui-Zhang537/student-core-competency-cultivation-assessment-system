@@ -19,7 +19,7 @@
         <template #actions>
           <div class="flex items-center gap-2">
             <glass-search-input v-model="q" :placeholder="t('teacher.aiGrading.historySearchPlaceholder') || (t('common.search') as string) || '搜索'" size="sm" class="w-64" />
-            <Button size="sm" variant="primary" class="w-auto px-3 whitespace-nowrap shrink-0" @click="load"><magnifying-glass-icon class="w-4 h-4 mr-1" />{{ t('common.search') || '搜索' }}</Button>
+            <button size="sm" variant="primary" class="w-auto px-3 whitespace-nowrap shrink-0" @click="load"><magnifying-glass-icon class="w-4 h-4 mr-1" />{{ t('common.search') || '搜索' }}</button>
           </div>
         </template>
       </page-header>
@@ -52,15 +52,15 @@
                 <td class="py-2 pr-4">{{ formatTime(it.createdAt) }}</td>
                 <td class="py-2 pr-4">
                   <div class="flex items-center gap-2">
-                    <Button size="xs" variant="indigo" @click="openDetail(it)"><eye-icon class="w-4 h-4 mr-1" />{{ t('common.view') || t('teacher.aiGrading.view') || '查看' }}</Button>
-                    <Button size="xs" variant="danger" @click="confirmDelete(it)"><trash-icon class="w-4 h-4 mr-1" />{{ t('teacher.aiGrading.delete') || '删除' }}</Button>
+                    <button size="xs" variant="indigo" @click="openDetail(it)"><eye-icon class="w-4 h-4 mr-1" />{{ t('common.view') || t('teacher.aiGrading.view') || '查看' }}</button>
+                    <button size="xs" variant="danger" @click="confirmDelete(it)"><trash-icon class="w-4 h-4 mr-1" />{{ t('teacher.aiGrading.delete') || '删除' }}</button>
                   </div>
                 </td>
               </tr>
             </tbody>
           </table>
         </div>
-        <PaginationBar
+        <pagination-bar
           :page="page"
           :page-size="size"
           :total-items="total"
@@ -76,7 +76,7 @@
       </div>
     </div>
 
-    <ConfirmDialog
+    <confirm-dialog
       :open="confirmOpen"
       :title="confirmDialog.state.title"
       :message="confirmDialog.state.message"
@@ -89,7 +89,7 @@
 
     <glass-modal v-if="detail" :title="detail.fileName || '记录'" size="xl" :hideScrollbar="true" heightVariant="max" @close="detail=null">
       <div v-if="parsed" ref="detailRef" data-export-root="1" class="space-y-4">
-        <Card padding="sm" tint="secondary">
+        <card padding="sm" tint="secondary">
           <h4 class="font-semibold mb-2">{{ t('teacher.aiGrading.render.overall') }}</h4>
           <div>
             <div class="text-sm mb-2 flex items-center gap-3" v-if="getOverall(parsed)?.final_score != null">
@@ -109,32 +109,32 @@
             </div>
             <div class="text-sm whitespace-pre-wrap">{{ t('teacher.aiGrading.render.holistic_feedback') }}: {{ overallFeedback(parsed) || (t('common.empty') || '无内容') }}</div>
           </div>
-        </Card>
+        </card>
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <Card padding="sm" tint="warning" v-if="parsed?.moral_reasoning">
+        <card padding="sm" tint="warning" v-if="parsed?.moral_reasoning">
           <h4 class="font-semibold mb-2">{{ t('teacher.aiGrading.render.moral_reasoning') }}</h4>
           <div v-html="renderCriterion(parsed.moral_reasoning, 'dimension_moral')"></div>
-        </Card>
-        <Card padding="sm" tint="accent" v-if="parsed?.attitude_development">
+        </card>
+        <card padding="sm" tint="accent" v-if="parsed?.attitude_development">
           <h4 class="font-semibold mb-2">{{ t('teacher.aiGrading.render.attitude_development') }}</h4>
           <div v-html="renderCriterion(parsed.attitude_development, 'dimension_attitude')"></div>
-        </Card>
-        <Card padding="sm" tint="info" v-if="parsed?.ability_growth">
+        </card>
+        <card padding="sm" tint="info" v-if="parsed?.ability_growth">
           <h4 class="font-semibold mb-2">{{ t('teacher.aiGrading.render.ability_growth') }}</h4>
           <div v-html="renderCriterion(parsed.ability_growth, 'dimension_ability')"></div>
-        </Card>
-        <Card padding="sm" tint="success" v-if="parsed?.strategy_optimization">
+        </card>
+        <card padding="sm" tint="success" v-if="parsed?.strategy_optimization">
           <h4 class="font-semibold mb-2">{{ t('teacher.aiGrading.render.strategy_optimization') }}</h4>
           <div v-html="renderCriterion(parsed.strategy_optimization, 'dimension_strategy')"></div>
-        </Card>
+        </card>
         </div>
       </div>
       <pre v-else class="bg-black/70 text-green-100 p-3 rounded overflow-auto text-xs max-h-[60vh]">{{ pretty(detail?.rawJson) }}</pre>
       <template #footer>
-        <Button size="sm" variant="primary" @click="exportDetailAsText" :disabled="!parsed"><arrow-down-tray-icon class="w-4 h-4 mr-2" />{{ t('teacher.aiGrading.exportText') || '导出文本' }}</Button>
-        <Button size="sm" variant="success" @click="exportDetailAsPng" :disabled="!parsed"><arrow-down-tray-icon class="w-4 h-4 mr-2" />{{ t('teacher.aiGrading.exportPng') || '导出 PNG' }}</Button>
-        <Button size="sm" variant="purple" @click="exportDetailAsPdf" :disabled="!parsed"><arrow-down-tray-icon class="w-4 h-4 mr-2" />{{ t('teacher.aiGrading.exportPdf') || '导出 PDF' }}</Button>
-        <Button size="sm" variant="secondary" @click="detail=null"><x-mark-icon class="w-4 h-4 mr-1" />{{ t('teacher.aiGrading.picker.close') || '关闭' }}</Button>
+        <button size="sm" variant="primary" @click="exportDetailAsText" :disabled="!parsed"><arrow-down-tray-icon class="w-4 h-4 mr-2" />{{ t('teacher.aiGrading.exportText') || '导出文本' }}</button>
+        <button size="sm" variant="success" @click="exportDetailAsPng" :disabled="!parsed"><arrow-down-tray-icon class="w-4 h-4 mr-2" />{{ t('teacher.aiGrading.exportPng') || '导出 PNG' }}</button>
+        <button size="sm" variant="purple" @click="exportDetailAsPdf" :disabled="!parsed"><arrow-down-tray-icon class="w-4 h-4 mr-2" />{{ t('teacher.aiGrading.exportPdf') || '导出 PDF' }}</button>
+        <button size="sm" variant="secondary" @click="detail=null"><x-mark-icon class="w-4 h-4 mr-1" />{{ t('teacher.aiGrading.picker.close') || '关闭' }}</button>
       </template>
     </glass-modal>
   </div>

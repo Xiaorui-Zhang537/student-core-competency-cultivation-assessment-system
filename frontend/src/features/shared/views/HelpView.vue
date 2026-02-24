@@ -11,25 +11,25 @@
       <!-- 顶部指标（StartCard 四卡） -->
       <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-4">
         <div class="cursor-pointer" @click="activeSection = 'articles'">
-          <StartCard :label="t('shared.help.cards.categories') || '分类总数'"
+          <start-card :label="t('shared.help.cards.categories') || '分类总数'"
                      :value="categoriesCount"
                      tone="blue"
                      :icon="BookOpenIcon" />
             </div>
         <div class="cursor-pointer" @click="activeSection = 'articles'">
-          <StartCard :label="t('shared.help.cards.hotArticles') || '热门文章'"
+          <start-card :label="t('shared.help.cards.hotArticles') || '热门文章'"
                      :value="hotArticlesCount"
                      tone="emerald"
                      :icon="ChartBarIcon" />
           </div>
         <div class="cursor-pointer" @click="activeSection = 'support'">
-          <StartCard :label="t('shared.help.cards.myTickets') || '我的工单'"
+          <start-card :label="t('shared.help.cards.myTickets') || '我的工单'"
                      :value="myTicketsCount"
                      tone="violet"
                      :icon="ChatBubbleLeftIcon" />
         </div>
         <div class="cursor-pointer" @click="activeSection = 'articles'">
-          <StartCard :label="t('shared.help.cards.new7d') || '近7日新增'"
+          <start-card :label="t('shared.help.cards.new7d') || '近7日新增'"
                      :value="newArticles7dCount"
                      tone="amber"
                      :icon="LightBulbIcon" />
@@ -47,7 +47,7 @@
               <h2 class="text-lg font-semibold text-base-content">{{ t('shared.help.nav') || '导航' }}</h2>
             </template>
             <nav class="space-y-2 pb-4">
-              <Button
+              <button
                 v-for="section in sections"
                 :key="section.id"
                 @click="activeSection = section.id"
@@ -57,13 +57,13 @@
                   : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700'"
               >
                 {{ section.title }}
-              </Button>
-              <Button
+              </button>
+              <button
                 @click="router.push('/docs')"
                 class="w-full text-left px-3 py-2 rounded-lg text-sm transition-colors text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700"
               >
                 {{ t('shared.help.sections.docs') || '文档' }}
-              </Button>
+              </button>
             </nav>
           </card>
         </div>
@@ -77,28 +77,28 @@
                 <div class="flex items-center justify-between gap-3 flex-wrap">
                   <h2 class="text-xl font-semibold text-base-content">{{ t('shared.help.sections.articles') || '帮助文章' }}</h2>
                   <div class="flex items-center gap-2">
-                    <Button size="sm" :variant="sortMode==='latest' ? 'primary' : 'outline'" @click="changeSort('latest')">{{ t('shared.common.latest') || '最新' }}</Button>
-                    <Button size="sm" :variant="sortMode==='hot' ? 'primary' : 'outline'" @click="changeSort('hot')">{{ t('shared.common.hot') || '最热' }}</Button>
+                    <button size="sm" :variant="sortMode==='latest' ? 'primary' : 'outline'" @click="changeSort('latest')">{{ t('shared.common.latest') || '最新' }}</button>
+                    <button size="sm" :variant="sortMode==='hot' ? 'primary' : 'outline'" @click="changeSort('hot')">{{ t('shared.common.hot') || '最热' }}</button>
                   </div>
                 </div>
               </template>
 
               <!-- 分类筛选 -->
               <div class="flex flex-wrap gap-2 mb-4">
-                <Button
+                <button
                   size="sm"
                   :variant="selectedCategoryId===null ? 'primary' : 'outline'"
                   @click="pickCategory(null)">
                   {{ t('shared.common.all') || '全部' }}
-                </Button>
-                <Button
+                </button>
+                <button
                   v-for="c in helpStore.categories"
                   :key="c.id"
                   size="sm"
                   :variant="selectedCategoryId===c.id ? 'primary' : 'outline'"
                   @click="pickCategory(c.id)">
                   {{ c.name }}
-                </Button>
+                </button>
               </div>
 
               <!-- 文章卡片列表 -->
@@ -126,9 +126,9 @@
                 <div class="flex items-center gap-3 flex-wrap">
                   <h2 class="text-xl font-semibold text-base-content">{{ helpStore.article?.title }}</h2>
                   <div class="inline-flex items-center gap-2 flex-nowrap whitespace-nowrap">
-                    <Button size="sm" variant="outline" @click="activeSection='articles'">{{ t('shared.common.back') || '返回' }}</Button>
-                    <Button size="sm" :loading="isVoting" @click="voteArticle(true)">{{ t('shared.help.actions.useful') || '有帮助' }}</Button>
-                    <Button size="sm" variant="outline" :loading="isVoting" @click="voteArticle(false)">{{ t('shared.help.actions.notUseful') || '没帮助' }}</Button>
+                    <button size="sm" variant="outline" @click="activeSection='articles'">{{ t('shared.common.back') || '返回' }}</button>
+                    <button size="sm" :loading="isVoting" @click="voteArticle(true)">{{ t('shared.help.actions.useful') || '有帮助' }}</button>
+                    <button size="sm" variant="outline" :loading="isVoting" @click="voteArticle(false)">{{ t('shared.help.actions.notUseful') || '没帮助' }}</button>
                   </div>
                 </div>
               </template>
@@ -194,7 +194,7 @@
                         <h4 class="font-medium text-base-content">{{ step.title }}</h4>
                       </div>
                       <p class="text-sm text-subtle">{{ step.description }}</p>
-                      <Button
+                      <button
                         v-if="step.action"
                         variant="outline"
                         size="sm"
@@ -202,7 +202,7 @@
                         @click="step.action"
                       >
                         {{ step.actionText }}
-                      </Button>
+                      </button>
                     </div>
                   </div>
                 </div>
@@ -301,14 +301,14 @@
                     />
                   </div>
                   
-                  <Button
+                  <button
                     type="submit"
                     variant="primary"
                     class="w-full"
                     :loading="isSubmittingTicket"
                   >
                     {{ t('shared.help.actions.submitTicket') || '提交工单' }}
-                  </Button>
+                  </button>
                 </form>
               </card>
               
@@ -317,7 +317,7 @@
                 <template #header>
                   <div class="flex items-center justify-between">
                     <h2 class="text-xl font-semibold text-base-content">{{ t('shared.help.sections.myTickets') || '我的工单' }}</h2>
-                    <Button size="sm" variant="outline" @click="helpStore.fetchMyTickets()">{{ t('shared.common.latest') || '最新' }}</Button>
+                    <button size="sm" variant="outline" @click="helpStore.fetchMyTickets()">{{ t('shared.common.latest') || '最新' }}</button>
                   </div>
                 </template>
                 <div v-if="helpStore.tickets.length === 0" class="text-sm text-subtle">
@@ -330,8 +330,8 @@
                       <div class="text-xs text-subtle mt-1">#{{ ticket.id }} · {{ ticket.createdAt }}</div>
                     </div>
                     <div class="inline-flex items-center gap-2 flex-nowrap whitespace-nowrap">
-                      <Button size="sm" variant="outline" class="whitespace-nowrap" @click="editTicket(ticket)">{{ t('shared.common.edit') || '编辑' }}</Button>
-                      <Button size="sm" variant="outline" class="whitespace-nowrap" @click="deleteTicket(ticket.id)">{{ t('shared.common.delete') || '删除' }}</Button>
+                      <button size="sm" variant="outline" class="whitespace-nowrap" @click="editTicket(ticket)">{{ t('shared.common.edit') || '编辑' }}</button>
+                      <button size="sm" variant="outline" class="whitespace-nowrap" @click="deleteTicket(ticket.id)">{{ t('shared.common.delete') || '删除' }}</button>
                     </div>
                   </div>
                 </div>
@@ -402,13 +402,13 @@
                     <span class="ml-2 text-sm text-gray-700 dark:text-gray-300">{{ t('shared.help.form.anonymous') || '匿名反馈' }}</span>
                   </label>
 
-                  <Button
+                  <button
                     type="submit"
                     variant="primary"
                     :loading="isSubmittingFeedback"
                   >
                     {{ t('shared.help.actions.submitFeedback') || '提交反馈' }}
-                  </Button>
+                  </button>
                 </div>
               </form>
             </card>

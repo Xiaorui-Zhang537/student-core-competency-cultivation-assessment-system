@@ -7,7 +7,7 @@
         <span class="mx-1 text-gray-300 dark:text-gray-600">|</span>
       </template>
       <span class="whitespace-nowrap">{{ perPagePrefix }}</span>
-      <GlassPopoverSelect
+      <glass-popover-select
         :model-value="pageSize"
         :options="normalizedPageSizeOptions"
         :disabled="disabled"

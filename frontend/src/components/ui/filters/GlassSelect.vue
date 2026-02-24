@@ -2,7 +2,7 @@
   <div :class="stacked ? 'flex flex-col gap-1 w-full' : 'inline-flex items-center gap-2 w-full'">
     <span v-if="label" class="text-xs text-gray-500 dark:text-gray-400">{{ label }}</span>
     <div class="relative w-full">
-      <LiquidGlass class="rounded-full" :container-class="containerClass">
+      <liquid-glass class="rounded-full" :container-class="containerClass">
         <select
           class="ui-pill--select ui-pill--pl ui-pill--pr-select bg-transparent"
           :class="size==='sm' ? 'ui-pill--sm' : 'ui-pill--md'"
@@ -16,7 +16,7 @@
             {{ opt.label }}
           </option>
         </select>
-      </LiquidGlass>
+      </liquid-glass>
       <svg class="pointer-events-none w-4 h-4 text-gray-400 absolute right-3 top-1/2 -translate-y-1/2" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.24 4.5a.75.75 0 01-1.08 0l-4.24-4.5a.75.75 0 01.02-1.06z" clip-rule="evenodd"/></svg>
     </div>
   </div>

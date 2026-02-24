@@ -76,13 +76,30 @@ public class AnalyticsQueryServiceImpl implements AnalyticsQueryService {
         this.abilityAnalyticsService = abilityAnalyticsService;
     }
 
+    /**
+     * 判断是否为管理员用户。
+     *
+     * <p>说明：教师分析接口在 Controller 层允许 ADMIN 调用，但原先的 teacherId==course.teacherId 校验会拦截管理员。
+     * 这里通过用户角色进行旁路处理，确保管理员能全局审计任意课程数据。</p>
+     */
+    private boolean isAdminUser(Long userId) {
+        if (userId == null) return false;
+        try {
+            User u = userMapper.selectUserById(userId);
+            return u != null && "admin".equalsIgnoreCase(u.getRole());
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
     // Removed legacy single-student progress report implementation
 
     @Override
     public CourseAnalyticsResponse getCourseAnalytics(Long teacherId, Long courseId, String timeRange) {
         logger.info("获取课程分析数据，教师ID: {}, 课程ID: {}, 时间范围: {}", teacherId, courseId, timeRange);
         Course course = courseMapper.selectCourseById(courseId);
-        if (course == null || !teacherId.equals(course.getTeacherId())) {
+        boolean isAdmin = isAdminUser(teacherId);
+        if (course == null || (!isAdmin && !teacherId.equals(course.getTeacherId()))) {
             throw new BusinessException(ErrorCode.COURSE_ACCESS_DENIED);
         }
 
@@ -136,7 +153,8 @@ public class AnalyticsQueryServiceImpl implements AnalyticsQueryService {
             throw new BusinessException(ErrorCode.ASSIGNMENT_NOT_FOUND);
         }
         Course course = courseMapper.selectCourseById(assignment.getCourseId());
-        if (course == null || !teacherId.equals(course.getTeacherId())) {
+        boolean isAdmin = isAdminUser(teacherId);
+        if (course == null || (!isAdmin && !teacherId.equals(course.getTeacherId()))) {
             throw new BusinessException(ErrorCode.ASSIGNMENT_ACCESS_DENIED);
         }
         
@@ -162,7 +180,8 @@ public class AnalyticsQueryServiceImpl implements AnalyticsQueryService {
     public ClassPerformanceResponse getClassPerformance(Long teacherId, Long courseId, String timeRange) {
         logger.info("获取班级表现数据，教师ID: {}, 课程ID: {}, 时间范围: {}", teacherId, courseId, timeRange);
         Course course = courseMapper.selectCourseById(courseId);
-        if (course == null || !teacherId.equals(course.getTeacherId())) {
+        boolean isAdmin = isAdminUser(teacherId);
+        if (course == null || (!isAdmin && !teacherId.equals(course.getTeacherId()))) {
             throw new BusinessException(ErrorCode.COURSE_ACCESS_DENIED);
         }
         
@@ -187,7 +206,8 @@ public class AnalyticsQueryServiceImpl implements AnalyticsQueryService {
                                                                         String search, String sortBy, String activityFilter, String gradeFilter, String progressFilter) {
         logger.info("获取课程学生表现列表，教师ID: {}, 课程ID: {}, page: {}, size: {}", teacherId, courseId, page, size);
         Course course = courseMapper.selectCourseById(courseId);
-        if (course == null || !teacherId.equals(course.getTeacherId())) {
+        boolean isAdmin = isAdminUser(teacherId);
+        if (course == null || (!isAdmin && !teacherId.equals(course.getTeacherId()))) {
             throw new BusinessException(ErrorCode.COURSE_ACCESS_DENIED);
         }
 
@@ -261,7 +281,9 @@ public class AnalyticsQueryServiceImpl implements AnalyticsQueryService {
                 AbilityRadarQuery radarQuery = new AbilityRadarQuery();
                 radarQuery.setCourseId(courseId);
                 radarQuery.setStudentId(s.getId());
-                AbilityRadarResponse radarResponse = abilityAnalyticsService.getRadar(radarQuery, teacherId);
+                AbilityRadarResponse radarResponse = isAdmin
+                        ? abilityAnalyticsService.getRadarForStudent(radarQuery, s.getId())
+                        : abilityAnalyticsService.getRadar(radarQuery, teacherId);
                 dimensionScores = buildDimensionScoreMap(radarResponse);
                 if (!dimensionScores.isEmpty()) {
                     List<Double> radarValues = new ArrayList<>(dimensionScores.values());

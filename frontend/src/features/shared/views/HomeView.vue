@@ -11,20 +11,20 @@
               <div class="mb-8 md:mb-10">
                 <img src="/brand/logo.png" alt="System Logo" class="h-28 md:h-36 w-auto select-none pointer-events-none" />
               </div>
-              <LetterPullup
+              <letter-pullup
                 :words="t('app.home.hero.title') as string"
                 align="left"
                 class="text-left text-4xl sm:text-5xl md:text-7xl font-extrabold leading-tight md:leading-[1.1] break-words break-all mb-6 text-[color:var(--color-base-content)]"
               />
-              <TextGenerateEffect :words="t('app.home.hero.subtitle') as string" :duration="0.7" :delay="100" :filter="true" class="text-left text-base sm:text-lg md:text-2xl leading-relaxed break-words break-all text-subtle" />
+              <text-generate-effect :words="t('app.home.hero.subtitle') as string" :duration="0.7" :delay="100" :filter="true" class="text-left text-base sm:text-lg md:text-2xl leading-relaxed break-words break-all text-subtle" />
               
             </div>
             <div class="md:col-span-6">
-              <LiquidGlass :radius="16" :frost="0.06" :scale="-100" :tint="true" :tint-from="'var(--color-theme-primary)'" :tint-to="'var(--color-theme-accent)'" :container-class="'relative rounded-2xl w-full aspect-[4/3] sm:aspect-[16/10] max-h-[60vh] overflow-hidden'">
+              <liquid-glass :radius="16" :frost="0.06" :scale="-100" :tint="true" :tint-from="'var(--color-theme-primary)'" :tint-to="'var(--color-theme-accent)'" :container-class="'relative rounded-2xl w-full aspect-[4/3] sm:aspect-[16/10] max-h-[60vh] overflow-hidden'">
                 <div class="relative w-full h-full">
-                  <BendingGallery class="absolute inset-0" :bend="3" :border-radius="0.06" :items="galleryItems" :aspect-ratio="16/9" :dpr="2" :anisotropy="8" :wobble="0.015" />
+                  <bending-gallery class="absolute inset-0" :bend="3" :border-radius="0.06" :items="galleryItems" :aspect-ratio="16/9" :dpr="2" :anisotropy="8" :wobble="0.015" />
                 </div>
-              </LiquidGlass>
+              </liquid-glass>
             </div>
           </div>
         </section>
@@ -32,10 +32,10 @@
         <section class="mt-6 md:mt-10">
           <div class="relative">
             <div class="absolute inset-0 opacity-60 pointer-events-none">
-              <Meteors :count="18" />
+              <meteors :count="18" />
             </div>
             <div class="relative">
-              <AppleCardCarousel :items="carouselItems" />
+              <apple-card-carousel :items="carouselItems" />
             </div>
           </div>
         </section>
@@ -44,9 +44,9 @@
 
     <!-- Apple 风格卡片轮播（6 张） -->
     <section id="apps" class="mt-4 md:mt-6 scroll-mt-24">
-      <AppleCardCarousel>
-        <AppleCarouselItem v-for="(c, idx) in appCards" :key="idx" :index="idx">
-          <AppleCard :card="c" :index="idx" :layout="true">
+      <apple-card-carousel>
+        <apple-carousel-item v-for="(c, idx) in appCards" :key="idx" :index="idx">
+          <apple-card :card="c" :index="idx" :layout="true">
             <div class="prose prose-sm max-w-none dark:prose-invert">
               <h4 v-if="idx !== 0 && idx !== 1 && idx !== 2 && idx !== 3 && idx !== 4">{{ c.title }}</h4>
               <p v-if="idx !== 0 && idx !== 2 && idx !== 1 && idx !== 3 && idx !== 4">{{ c.desc }}</p>
@@ -305,9 +305,9 @@
                 </div>
               </template>
             </div>
-          </AppleCard>
-        </AppleCarouselItem>
-      </AppleCardCarousel>
+          </apple-card>
+        </apple-carousel-item>
+      </apple-card-carousel>
     </section>
 
     <!-- 对比（Compare） -->
@@ -317,9 +317,9 @@
         <div id="scene-lightdark" class="relative h-[140vh] sm:h-[200vh]">
           <div class="sticky top-0 grid md:grid-cols-2 items-center gap-8 h-screen">
             <div class="px-2">
-              <SafariMockup class="w-full aspect-[1203/753]" url="student-competency.com">
+              <safari-mockup class="w-full aspect-[1203/753]" url="student-competency.com">
                 <div class="absolute inset-0 overflow-hidden">
-                  <CompareSlider
+                  <compare-slider
                     first-image="/home/compare/theme-light.png"
                     second-image="/home/compare/theme-dark.png"
                     :first-image-alt="t('app.home.compare.light')"
@@ -332,10 +332,10 @@
                     :autoplay-duration="5000"
                   />
                 </div>
-              </SafariMockup>
+              </safari-mockup>
             </div>
             <div class="px-2">
-              <TextScrollReveal
+              <text-scroll-reveal
                 :text="t('app.home.compareDesc.lightDark') as string"
                 :sticky="false"
                 progress-container-id="scene-lightdark"
@@ -349,9 +349,9 @@
         <div id="scene-zhen" class="relative h-[140vh] sm:h-[200vh]">
           <div class="sticky top-0 grid md:grid-cols-2 items-center gap-8 h-screen">
             <div class="px-2">
-              <SafariMockup class="w-full aspect-[1203/753]" url="student-competency.com">
+              <safari-mockup class="w-full aspect-[1203/753]" url="student-competency.com">
                 <div class="absolute inset-0 overflow-hidden">
-                  <CompareSlider
+                  <compare-slider
                     :first-image="langZhImg"
                     :second-image="langEnImg"
                     :first-image-alt="t('app.home.compare.zh')"
@@ -364,10 +364,10 @@
                     :autoplay-duration="5000"
                   />
                 </div>
-              </SafariMockup>
+              </safari-mockup>
             </div>
             <div class="px-2">
-              <TextScrollReveal
+              <text-scroll-reveal
                 :text="t('app.home.compareDesc.zhEn') as string"
                 :sticky="false"
                 progress-container-id="scene-zhen"
@@ -386,11 +386,11 @@
       <div id="scene-structure" class="relative h-[150vh] sm:h-[220vh]">
         <div class="sticky top-[14vh]">
       <div class="mb-8">
-            <TextScrollReveal :text="t('app.home.structureDesc') as string" :sticky="false" progress-container-id="scene-structure" :reveal-portion="0.3" />
+            <text-scroll-reveal :text="t('app.home.structureDesc') as string" :sticky="false" progress-container-id="scene-structure" :reveal-portion="0.3" />
       </div>
       <div class="grid md:grid-cols-3 gap-8">
         <!-- docs 容器 -->
-        <LiquidGlass
+        <liquid-glass
           :radius="16"
           :frost="0.06"
           :tint="true"
@@ -403,14 +403,14 @@
               class="absolute inset-0 rounded-2xl pointer-events-none"
               style="background: linear-gradient(135deg, var(--color-info), color-mix(in oklch, var(--color-accent) 72%, transparent)); opacity: 0.16;"
             ></div>
-            <Tree :initial-expanded-items="expandedDocs">
-              <RenderElements :elements="docsNode ? [docsNode] : []" prefix="root" />
-            </Tree>
+            <tree :initial-expanded-items="expandedDocs">
+              <render-elements :elements="docsNode ? [docsNode] : []" prefix="root" />
+            </tree>
           </div>
-        </LiquidGlass>
+        </liquid-glass>
 
         <!-- frontend 容器 -->
-        <LiquidGlass
+        <liquid-glass
           :radius="16"
           :frost="0.06"
           :tint="true"
@@ -423,14 +423,14 @@
               class="absolute inset-0 rounded-2xl pointer-events-none"
               style="background: linear-gradient(135deg, var(--color-primary), color-mix(in oklch, var(--color-accent) 68%, transparent)); opacity: 0.15;"
             ></div>
-            <Tree :initial-expanded-items="expandedFrontend">
-              <RenderElements :elements="frontendNode ? [frontendNode] : []" prefix="root" />
-            </Tree>
+            <tree :initial-expanded-items="expandedFrontend">
+              <render-elements :elements="frontendNode ? [frontendNode] : []" prefix="root" />
+            </tree>
           </div>
-        </LiquidGlass>
+        </liquid-glass>
 
         <!-- backend 容器 -->
-        <LiquidGlass
+        <liquid-glass
           :radius="16"
           :frost="0.06"
           :tint="true"
@@ -443,11 +443,11 @@
               class="absolute inset-0 rounded-2xl pointer-events-none"
               style="background: linear-gradient(135deg, var(--color-success), color-mix(in oklch, var(--color-secondary) 70%, transparent)); opacity: 0.14;"
             ></div>
-            <Tree :initial-expanded-items="expandedBackend">
-              <RenderElements :elements="backendNode ? [backendNode] : []" prefix="root" />
-            </Tree>
+            <tree :initial-expanded-items="expandedBackend">
+              <render-elements :elements="backendNode ? [backendNode] : []" prefix="root" />
+            </tree>
           </div>
-        </LiquidGlass>
+        </liquid-glass>
           </div>
         </div>
       </div>
@@ -457,14 +457,14 @@
     <section id="help" class="mt-20 scroll-mt-24">
       <div id="scene-help" class="relative h-[180vh] sm:h-[260vh]">
         <div class="sticky top-[8vh]">
-          <ContainerScroll>
+          <container-scroll>
             <template #title>
-              <TextScrollReveal :text="t('app.home.helpDesc') as string" :sticky="false" progress-container-id="scene-help" :reveal-portion="0.5" />
+              <text-scroll-reveal :text="t('app.home.helpDesc') as string" :sticky="false" progress-container-id="scene-help" :reveal-portion="0.5" />
             </template>
             <template #card>
               <img :src="helpImageSrc" alt="Help Overview" class="w-full h-full object-cover rounded-xl" @error="onHelpImgError" />
             </template>
-          </ContainerScroll>
+          </container-scroll>
         </div>
       </div>
     </section>
@@ -474,10 +474,10 @@
       <div id="scene-feedback" class="relative h-[160vh] sm:h-[200vh]">
         <div class="sticky top-[8vh]">
           <div class="mb-4">
-            <TextScrollReveal :text="t('app.home.feedbackDesc') as string" :sticky="false" progress-container-id="scene-feedback" :reveal-portion="0.35" />
+            <text-scroll-reveal :text="t('app.home.feedbackDesc') as string" :sticky="false" progress-container-id="scene-feedback" :reveal-portion="0.35" />
           </div>
           <div class="w-full items-center justify-center px-4 md:px-8">
-            <TracingBeam progress-container-id="scene-feedback" class="px-6">
+            <tracing-beam progress-container-id="scene-feedback" class="px-6">
               <div class="relative mx-auto max-w-2xl pt-4 antialiased">
                 <div v-for="(item, index) in feedbackItems" :key="`fb-${index}`" class="mb-6">
                   <span class="ui-chip mb-2 inline-block text-base md:text-lg" :class="[item.variant, 'is-active']">{{ item.badge }}</span>
@@ -492,7 +492,7 @@
                   <p class="text-subtle opacity-60 text-sm leading-relaxed">{{ t('app.home.feedbackSections.remark') }}</p>
                 </div>
               </div>
-            </TracingBeam>
+            </tracing-beam>
         </div>
         </div>
       </div>
@@ -503,45 +503,45 @@
       <div id="scene-ready" class="relative h-[160vh] sm:h-[180vh]">
         <div class="sticky top-[16vh]">
           <div class="flex flex-col items-center gap-6">
-            <TextScrollReveal
+            <text-scroll-reveal
               :text="t('app.cta.ready') as string"
               :sticky="false"
               progress-container-id="scene-ready"
               :reveal-portion="0.5"
             />
             <div class="flex items-center gap-4">
-              <Button
+              <button
                 variant="primary"
                 size="xl"
                 class="px-7 min-w-[170px]"
                 @click="goLogin"
               >
                 <template #icon>
-                  <SparklesIcon class="w-5 h-5" />
+                  <sparkles-icon class="w-5 h-5" />
                 </template>
                 {{ t('app.home.cta.login') }}
-              </Button>
-              <Button
+              </button>
+              <button
                 variant="info"
                 size="xl"
                 class="px-7 min-w-[170px]"
                 @click="goDocs"
               >
                 <template #icon>
-                  <BookOpenIcon class="w-5 h-5" />
+                  <book-open-icon class="w-5 h-5" />
                 </template>
                 {{ t('app.home.cta.docs') }}
-              </Button>
+              </button>
             </div>
 
             <!-- 复用登录页走马灯（两行，评价卡片） -->
             <div class="mt-8 w-full max-w-5xl mx-auto px-4">
-              <Marquee pauseOnHover class="[--duration:22s] [--gap:1.25rem]">
-                <ReviewCard v-for="r in homeMarqueeRow1" :key="r.username" :img="r.img" :name="r.name" :username="r.username" :mbti="r.mbti" :body="r.body" :tint="r.tint" />
-              </Marquee>
-              <Marquee reverse pauseOnHover class="[--duration:24s] [--gap:1.25rem] mt-4">
-                <ReviewCard v-for="r in homeMarqueeRow2" :key="r.username" :img="r.img" :name="r.name" :username="r.username" :mbti="r.mbti" :body="r.body" :tint="r.tint" />
-              </Marquee>
+              <marquee pauseOnHover class="[--duration:22s] [--gap:1.25rem]">
+                <review-card v-for="r in homeMarqueeRow1" :key="r.username" :img="r.img" :name="r.name" :username="r.username" :mbti="r.mbti" :body="r.body" :tint="r.tint" />
+              </marquee>
+              <marquee reverse pauseOnHover class="[--duration:24s] [--gap:1.25rem] mt-4">
+                <review-card v-for="r in homeMarqueeRow2" :key="r.username" :img="r.img" :name="r.name" :username="r.username" :mbti="r.mbti" :body="r.body" :tint="r.tint" />
+              </marquee>
             </div>
           </div>
         </div>
@@ -551,7 +551,7 @@
     </section>
 
     <section id="marquee" class="mt-14 scroll-mt-24">
-      <Marquee :items="marqueeItems" />
+      <marquee :items="marqueeItems" />
     </section>
 
     

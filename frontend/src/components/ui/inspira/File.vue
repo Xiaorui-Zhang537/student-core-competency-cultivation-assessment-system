@@ -14,7 +14,7 @@
     :dir="direction"
     @click="onClickHandler"
   >
-    <Icon :name="iconName" size="16" />
+    <icon :name="iconName" size="16" />
     <span class="select-none">{{ name }}</span>
   </button>
 </template>

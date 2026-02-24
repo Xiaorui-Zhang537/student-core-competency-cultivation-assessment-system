@@ -48,4 +48,14 @@ export const gradeApi = {
   returnForResubmission: (gradeId: string, data: { reason?: string; resubmitUntil?: string }): Promise<ApiResponse<void>> => {
     return api.post(`/grades/${gradeId}/return`, data);
   }
+  ,
+  // 课程成绩统计（均值、分布等）
+  getCourseGradeStatistics: (courseId: string | number): Promise<ApiResponse<any>> => {
+    return api.get(`/grades/course/${courseId}/statistics`)
+  }
+  ,
+  // 学生成绩趋势
+  getGradeTrend: (studentId: string | number, params?: { courseId?: string | number; days?: number }): Promise<ApiResponse<any[]>> => {
+    return api.get(`/grades/student/${studentId}/trend`, { params })
+  }
 };

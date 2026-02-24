@@ -1,5 +1,5 @@
 <template>
-  <Card padding="md" tint="info">
+  <card padding="md" tint="info">
     <div class="flex items-center justify-between gap-3 mb-3">
       <div class="min-w-0">
         <h3 class="text-lg font-semibold truncate">{{ tf('shared.behaviorEvidence.title', '行为证据') }}</h3>
@@ -7,13 +7,13 @@
           {{ tf('shared.behaviorEvidence.subtitle', '基于行为事件的事实摘要') }}
         </div>
       </div>
-      <Button variant="outline" size="sm" :disabled="loading" @click="reload">
+      <button variant="outline" size="sm" :disabled="loading" @click="reload">
         {{
           loading
             ? tf('shared.behaviorEvidence.loading', '加载中...')
             : tf('shared.behaviorEvidence.refresh', '刷新')
         }}
-      </Button>
+      </button>
     </div>
 
     <div v-if="error" class="text-sm text-red-600 mb-3">
@@ -103,9 +103,9 @@
             <clipboard-document-list-icon class="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
             <span>{{ tf('shared.behaviorEvidence.evidence.title', '证据条目') }}</span>
           </div>
-          <Badge v-if="summary?.evidenceItems?.length" size="sm" variant="info">
+          <badge v-if="summary?.evidenceItems?.length" size="sm" variant="info">
             {{ summary.evidenceItems.length }}
-          </Badge>
+          </badge>
         </div>
         <div v-if="!summary?.evidenceItems || summary.evidenceItems.length === 0" class="text-sm text-gray-500">
           {{ tf('shared.behaviorEvidence.evidence.empty', '暂无可展示的证据条目') }}
@@ -120,7 +120,7 @@
           >
             <div class="flex items-center justify-between gap-3">
               <div class="font-medium truncate">{{ evidenceTitle(it) }}</div>                                                                  
-              <Badge v-if="it.evidenceId" size="sm" variant="secondary">{{ it.evidenceId }}</Badge>
+              <badge v-if="it.evidenceId" size="sm" variant="secondary">{{ it.evidenceId }}</badge>
             </div>
             <div class="text-sm text-gray-500 mt-1 whitespace-pre-wrap">{{ evidenceDescription(it) }}</div>                                                       
             <div v-if="it.eventRefs?.length" class="text-xs text-gray-400 mt-2">
@@ -148,7 +148,7 @@
           >
             <div class="flex items-center justify-between">
               <div class="text-sm font-medium">{{ it.eventType || '-' }}</div>
-              <Badge size="sm" variant="secondary">{{ n(it.count) }}</Badge>
+              <badge size="sm" variant="secondary">{{ n(it.count) }}</badge>
             </div>
             <div v-if="it.meta?.byCategory" class="text-xs text-gray-500 mt-2">
               {{ tf('shared.behaviorEvidence.nonEvaluative.byCategory', '按类别') }}: {{ formatMap(it.meta.byCategory) }}
@@ -157,7 +157,7 @@
         </div>
       </div>
     </div>
-  </Card>
+  </card>
 </template>
 
 <script setup lang="ts">

@@ -149,6 +149,32 @@ public interface NotificationService {
                                              String targetType, List<Long> targetIds, String role);
 
     /**
+     * 管理员群发通知（按用户逐条写入 notifications 表）。
+     *
+     * <p>说明：复用既有通知中心UI，不新增“公告表”。</p>
+     *
+     * @param senderId 发送者ID（管理员）
+     * @param title 标题
+     * @param content 内容
+     * @param type 通知类型（默认 system）
+     * @param category 通知分类（默认 system）
+     * @param priority 优先级（默认 normal）
+     * @param targetType 目标类型（all|role|specific）
+     * @param targetIds 指定用户ID列表（targetType=specific 时使用）
+     * @param role 角色（targetType=role 时使用）
+     * @return 发送结果统计
+     */
+    Map<String, Object> broadcastNotification(Long senderId,
+                                              String title,
+                                              String content,
+                                              String type,
+                                              String category,
+                                              String priority,
+                                              String targetType,
+                                              List<Long> targetIds,
+                                              String role);
+
+    /**
      * 发送作业相关通知
      *
      * @param assignmentId 作业ID

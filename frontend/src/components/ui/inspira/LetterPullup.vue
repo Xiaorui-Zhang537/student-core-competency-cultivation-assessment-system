@@ -3,7 +3,7 @@
     <template v-for="(seg, sIdx) in segments" :key="`seg-${sIdx}`">
       <span v-if="seg.type === 'space'"></span>
       <span v-else class="inline-flex flex-wrap min-w-0 sm:whitespace-nowrap whitespace-normal" :class="wordMarginClass(sIdx)">
-        <Motion
+        <motion
           v-for="(ch, idx) in seg.text.split('')"
           :key="`ch-${sIdx}-${idx}`"
           as="h1"
@@ -19,7 +19,7 @@
           ]"
         >
           <span>{{ ch }}</span>
-        </Motion>
+        </motion>
       </span>
     </template>
   </div>

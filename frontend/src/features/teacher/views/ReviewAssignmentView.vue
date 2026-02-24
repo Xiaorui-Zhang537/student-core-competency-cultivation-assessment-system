@@ -19,14 +19,14 @@
         </nav>
         <page-header :title="t('teacher.assignments.title')" :subtitle="t('teacher.assignments.subtitle')">
           <template #actions>
-            <Button variant="primary" @click="openCreateModal" :disabled="!courseStore.courses.length">
+            <button variant="primary" @click="openCreateModal" :disabled="!courseStore.courses.length">
               <plus-icon class="w-4 h-4 mr-2" />
               {{ t('teacher.assignments.actions.create') }}
-            </Button>
-            <Button variant="success" class="ml-2" @click="goAiGrading()">
+            </button>
+            <button variant="success" class="ml-2" @click="goAiGrading()">
               <inbox-arrow-down-icon class="w-4 h-4 mr-1" />
               {{ t('teacher.aiGrading.entry') }}
-            </Button>
+            </button>
           </template>
         </page-header>
       </div>
@@ -106,18 +106,18 @@
           </div>
         </div>
         <div class="absolute right-4 top-1/2 -translate-y-1/2 flex items-center gap-2">
-          <Button size="sm" variant="success" @click="() => viewSubmissions(assignment)">
+          <button size="sm" variant="success" @click="() => viewSubmissions(assignment)">
             <inbox-arrow-down-icon class="w-4 h-4 mr-1" />
             {{ t('teacher.assignments.actions.viewSubmissions') }}
-          </Button>
-          <Button size="sm" variant="outline" @click="openEditModal(assignment)">
+          </button>
+          <button size="sm" variant="outline" @click="openEditModal(assignment)">
             <pencil-square-icon class="w-4 h-4 mr-1" />
             {{ t('teacher.assignments.actions.edit') }}
-          </Button>
-          <Button size="sm" variant="danger" @click="handleDeleteAssignment(assignment)">
+          </button>
+          <button size="sm" variant="danger" @click="handleDeleteAssignment(assignment)">
             <trash-icon class="w-4 h-4 mr-1" />
             {{ t('teacher.assignments.actions.delete') }}
-          </Button>
+          </button>
         </div>
       </card>
        <card v-if="!assignmentStore.loading && assignmentStore.assignments.length === 0" class="text-center py-12" tint="info">
@@ -125,7 +125,7 @@
         <p class="text-gray-500">{{ selectedCourseId ? t('teacher.assignments.list.emptyDescWithCourse') : t('teacher.assignments.list.emptyDescNoCourse') }}</p>
       </card>
       <!-- Pagination（抽离为统一组件） -->
-      <PaginationBar
+      <pagination-bar
         :page="currentPage"
         :page-size="pageSize"
         :total-pages="totalPages"
@@ -182,10 +182,10 @@
             <glass-date-time-picker :label="(t('teacher.assignments.modal.dueAt') as string) || (t('teacher.assignments.modal.dueDate') as string)" v-model="form.dueDate" />
             <div class="mt-2 flex flex-wrap items-center gap-2 text-xs text-gray-600 dark:text-gray-300">
               <span>{{ t('teacher.assignments.modal.quickHint') || '快捷设置：' }}</span>
-              <Button type="button" size="xs" variant="outline" @click="quickSetDue(1)">{{ t('teacher.assignments.modal.quickRanges.1d') || '+1 天' }}</Button>
-              <Button type="button" size="xs" variant="outline" @click="quickSetDue(7)">{{ t('teacher.assignments.modal.quickRanges.7d') || '+7 天' }}</Button>
-              <Button type="button" size="xs" variant="outline" @click="quickSetDue(14)">{{ t('teacher.assignments.modal.quickRanges.14d') || '+14 天' }}</Button>
-              <Button type="button" size="xs" variant="outline" @click="quickSetDue(30)">{{ t('teacher.assignments.modal.quickRanges.30d') || '+30 天' }}</Button>
+              <button type="button" size="xs" variant="outline" @click="quickSetDue(1)">{{ t('teacher.assignments.modal.quickRanges.1d') || '+1 天' }}</button>
+              <button type="button" size="xs" variant="outline" @click="quickSetDue(7)">{{ t('teacher.assignments.modal.quickRanges.7d') || '+7 天' }}</button>
+              <button type="button" size="xs" variant="outline" @click="quickSetDue(14)">{{ t('teacher.assignments.modal.quickRanges.14d') || '+14 天' }}</button>
+              <button type="button" size="xs" variant="outline" @click="quickSetDue(30)">{{ t('teacher.assignments.modal.quickRanges.30d') || '+30 天' }}</button>
             </div>
           </div>
         </div>
@@ -207,23 +207,23 @@
             <h4 class="text-sm font-medium mb-2">{{ t('teacher.assignments.modal.existing') }}</h4>
             <attachment-list :files="attachments" :noCard="true" :showDefaultDownload="true" :hideHeader="true">
               <template #actions="{ file }">
-                <Button type="button" size="sm" variant="danger" @click="confirmDeleteAttachment((file as any).id)">{{ t('teacher.assignments.modal.delete') }}</Button>
+                <button type="button" size="sm" variant="danger" @click="confirmDeleteAttachment((file as any).id)">{{ t('teacher.assignments.modal.delete') }}</button>
               </template>
             </attachment-list>
           </div>
         </div>
       </form>
       <template #footer>
-        <Button variant="secondary" type="button" @click="closeModal">
+        <button variant="secondary" type="button" @click="closeModal">
           {{ t('teacher.assignments.modal.cancel') }}
-        </Button>
-        <Button variant="primary" type="submit" form="assignmentForm" :disabled="assignmentStore.loading">
+        </button>
+        <button variant="primary" type="submit" form="assignmentForm" :disabled="assignmentStore.loading">
           {{ isEditing ? t('teacher.assignments.actions.save') : t('teacher.assignments.modal.create') }}
-        </Button>
+        </button>
       </template>
     </glass-modal>
 
-    <ConfirmDialog
+    <confirm-dialog
       :open="confirmOpen"
       :title="confirmDialog.state.title"
       :message="confirmDialog.state.message"

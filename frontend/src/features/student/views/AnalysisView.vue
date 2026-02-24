@@ -1,24 +1,24 @@
 <template>
   <div class="p-6">
-    <PageHeader :title="t('student.analysis.title')" :subtitle="t('student.analysis.subtitle')" />
+    <page-header :title="t('student.analysis.title')" :subtitle="t('student.analysis.subtitle')" />
 
     <loading-overlay v-if="loading" :text="String(t('student.analysis.loading'))" />
 
     <div v-else class="space-y-8">
       <!-- KPIs -->
       <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-        <StartCard :label="t('student.analysis.kpiAvgScore')" :value="formatScore(kpi.avgScore)" tone="blue" :icon="StarIcon" />
-        <StartCard :label="t('student.analysis.kpiCompletion')" :value="formatPercent(kpi.completionRate)" tone="emerald" :icon="CheckCircleIcon" />
-        <StartCard :label="t('student.analysis.kpiHours')" :value="String(kpi.studyHours)" tone="violet" :icon="ClockIcon" />
-        <StartCard :label="t('student.analysis.kpiActiveDays')" :value="String(kpi.activeDays)" tone="amber" :icon="BoltIcon" />
+        <start-card :label="t('student.analysis.kpiAvgScore')" :value="formatScore(kpi.avgScore)" tone="blue" :icon="StarIcon" />
+        <start-card :label="t('student.analysis.kpiCompletion')" :value="formatPercent(kpi.completionRate)" tone="emerald" :icon="CheckCircleIcon" />
+        <start-card :label="t('student.analysis.kpiHours')" :value="String(kpi.studyHours)" tone="violet" :icon="ClockIcon" />
+        <start-card :label="t('student.analysis.kpiActiveDays')" :value="String(kpi.activeDays)" tone="amber" :icon="BoltIcon" />
       </div>
 
       <!-- Controls: 课程选择（仅查看本人参与课程）+ 对比开关 同行显示 -->
-      <Card padding="md" tint="info" class="mt-2">
+      <card padding="md" tint="info" class="mt-2">
         <div class="flex items-center flex-wrap gap-3">
           <div class="flex items-center gap-2">
             <span class="whitespace-nowrap text-sm text-gray-700 dark:text-gray-300">{{ t('student.ability.course') || t('teacher.analytics.selectCourse') || '请选择课程' }}</span>
-            <GlassPopoverSelect
+            <glass-popover-select
               v-model="selectedCourseId"
               :options="courseSelectOptions"
               :placeholder="(t('student.ability.selectCourse') as string) || (t('teacher.analytics.selectCourse') as string)"
@@ -30,11 +30,11 @@
           </div>
           <div class="flex items-center gap-2">
             <span class="text-sm text-gray-700 dark:text-gray-300">{{ t('student.ability.compare') || '对比模式' }}</span>
-            <GlassSwitch v-model="compareEnabled" size="sm" />
+            <glass-switch v-model="compareEnabled" size="sm" />
           </div>
           <div class="flex items-center gap-2" v-if="compareEnabled">
             <span class="whitespace-nowrap text-xs font-medium leading-tight text-gray-700 dark:text-gray-300">{{ t('teacher.analytics.settings.classAvgLabel') || '班级均值' }}</span>
-            <GlassPopoverSelect
+            <glass-popover-select
               v-model="includeClassAvg"
               :options="[
                 { label: (t('teacher.analytics.charts.classAvgBoth') as string) || '班级均值: A与B', value: 'both' },
@@ -51,19 +51,19 @@
           <div class="flex items-center gap-2" v-if="compareEnabled">
             <span class="text-xs font-medium leading-tight text-gray-700 dark:text-gray-300">{{ t('student.ability.compareSetA') || '集合A' }}</span>
             <div class="ms-compact" style="width: 160px">
-              <GlassMultiSelect v-model="assignmentIdsA" :options="assignmentSelectOptions" :placeholder="t('common.pleaseSelect') as string" tint="accent" />
+              <glass-multi-select v-model="assignmentIdsA" :options="assignmentSelectOptions" :placeholder="t('common.pleaseSelect') as string" tint="accent" />
             </div>
           </div>
           <div class="flex items-center gap-2" v-if="compareEnabled">
             <span class="text-xs font-medium leading-tight text-gray-700 dark:text-gray-300">{{ t('student.ability.compareSetB') || '集合B' }}</span>
             <div class="ms-compact" style="width: 160px">
-              <GlassMultiSelect v-model="assignmentIdsB" :options="assignmentSelectOptions" :placeholder="t('common.pleaseSelect') as string" tint="accent" />
+              <glass-multi-select v-model="assignmentIdsB" :options="assignmentSelectOptions" :placeholder="t('common.pleaseSelect') as string" tint="accent" />
             </div>
           </div>
 
           <div class="flex items-center gap-2">
             <span class="whitespace-nowrap text-sm text-gray-700 dark:text-gray-300">{{ t('shared.behaviorEvidence.range') || '行为时间窗' }}</span>
-            <GlassPopoverSelect
+            <glass-popover-select
               v-model="behaviorRange"
               :options="behaviorRangeOptions"
               size="sm"
@@ -72,36 +72,36 @@
             />
           </div>
         </div>
-      </Card>
+      </card>
 
       <!-- 能力雷达 + 维度评语（学生本人，左右各占一半） -->
       <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <Card padding="md" tint="primary">
+        <card padding="md" tint="primary">
           <div class="flex items-center justify-between mb-4">
             <h3 class="text-lg font-semibold">{{ t('teacher.analytics.charts.radar') }}</h3>
             <div class="flex items-center gap-2">
-              <Button size="sm" variant="secondary" class="whitespace-nowrap" @click="exportRadarCsv">
-                <DocumentArrowDownIcon class="w-4 h-4 mr-1" />
+              <button size="sm" variant="secondary" class="whitespace-nowrap" @click="exportRadarCsv">
+                <document-arrow-down-icon class="w-4 h-4 mr-1" />
                 {{ t('common.exportCsv') || '导出CSV' }}
-              </Button>
-              <Button size="sm" variant="secondary" class="whitespace-nowrap" @click="exportRadarPng">
-                <ArrowDownTrayIcon class="w-4 h-4 mr-1" />
+              </button>
+              <button size="sm" variant="secondary" class="whitespace-nowrap" @click="exportRadarPng">
+                <arrow-down-tray-icon class="w-4 h-4 mr-1" />
                 {{ t('common.exportPng') || '导出PNG' }}
-              </Button>
-              <Button size="sm" variant="primary" class="whitespace-nowrap" @click="askAiOnRadar">
-                <SparklesIcon class="w-4 h-4 mr-1" />
+              </button>
+              <button size="sm" variant="primary" class="whitespace-nowrap" @click="askAiOnRadar">
+                <sparkles-icon class="w-4 h-4 mr-1" />
                 {{ t('common.askAi') || '询问AI' }}
-              </Button>
+              </button>
             </div>
           </div>
           <div v-if="radarIndicators.length" class="w-full">
             <div class="max-w-[1040px] mx-auto mt-10 md:mt-12 lg:mt-14 pb-2">
-              <RadarChart ref="radarRef" :indicators="radarIndicators" :series="radarSeries" height="460px" />
+              <radar-chart ref="radarRef" :indicators="radarIndicators" :series="radarSeries" height="460px" />
             </div>
           </div>
           <div v-else class="text-sm text-gray-500 text-center">{{ t('teacher.analytics.charts.noRadar') }}</div>
-        </Card>
-        <Card padding="md" tint="secondary">
+        </card>
+        <card padding="md" tint="secondary">
           <h3 class="text-lg font-semibold mb-4">{{ t('student.ability.insights.title') || '维度评语' }}</h3>
           <div v-if="insightsItems.length === 0" class="text-sm text-gray-500">{{ t('student.ability.insights.empty') || '暂无评语' }}</div>
           <div v-else class="space-y-2">
@@ -128,16 +128,16 @@
               </div>
             </div>
           </div>
-        </Card>
+        </card>
       </div>
 
       <!-- 维度说明（玻璃样式，与雷达同页显示） -->
-      <Card v-if="rawRadarDimensions.length" padding="md" tint="info">
-        <AbilityRadarLegend :dimensions="rawRadarDimensions" />
-      </Card>
+      <card v-if="rawRadarDimensions.length" padding="md" tint="info">
+        <ability-radar-legend :dimensions="rawRadarDimensions" />
+      </card>
 
       <!-- 行为洞察（阶段二：AI解释与建议，不算分；学生7天仅一次） -->
-      <BehaviorInsightSection
+      <behavior-insight-section
         :student-id="String(auth?.user?.id || '')"
         :course-id="selectedCourseId || undefined"
         :range="behaviorRange"
@@ -145,7 +145,7 @@
       />
 
       <!-- 行为证据（阶段一：纯代码聚合，不调用AI，不算分） -->
-      <BehaviorEvidenceSection
+      <behavior-evidence-section
         :student-id="String(auth?.user?.id || '')"
         :course-id="selectedCourseId || undefined"
         :range="behaviorRange"
@@ -154,10 +154,10 @@
       <!-- Trends 区域：左侧仪表盘，右侧两张趋势图（去掉完成率） -->
       <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <!-- 左：课程平均分仪表盘（动画） + 作业列表 -->
-        <Card padding="md" tint="accent">
+        <card padding="md" tint="accent">
           <div class="w-full max-w-[420px] mx-auto">
             <div class="text-sm font-semibold text-gray-700 dark:text-gray-200 mb-2 text-center">{{ t('student.analysis.kpiAvgScore') }}</div>
-            <GaugeChart :value="Number(courseAvgScore || 0)" :title="(t('student.analysis.kpiAvgScore') as any)" height="260px" />
+            <gauge-chart :value="Number(courseAvgScore || 0)" :title="(t('student.analysis.kpiAvgScore') as any)" height="260px" />
           </div>
           <div class="mt-4">
             <div class="flex items-center justify-between mb-2">
@@ -165,7 +165,7 @@
               <div class="text-xs text-gray-500 dark:text-gray-400 mr-2">{{ t('student.grades.total') }} ({{ courseAssignments.length }})</div>
             </div>
             <div class="divide-y divide-gray-200 dark:divide-gray-700 rounded-lg border border-gray-100 dark:border-gray-700 overflow-hidden max-h-[260px] overflow-y-auto">
-              <Button
+              <button
                 v-for="a in courseAssignments"
                 :key="String(a.id)"
                 variant="menu"
@@ -186,16 +186,16 @@
                     </span>
                   </div>
                 </div>
-              </Button>
+              </button>
               <div v-if="courseAssignments.length === 0" class="px-3 py-6 text-center text-sm text-gray-500">{{ t('student.grades.emptyTitle') || '暂无已评分的作业' }}</div>
             </div>
           </div>
-        </Card>
+        </card>
         <!-- 右：成绩趋势图 + 最近一次作业教师评价（上下堆叠） -->
         <div class="lg:col-span-2 grid grid-cols-1 gap-6">
-          <Card padding="md" tint="success">
+          <card padding="md" tint="success">
             <div class="text-sm font-semibold text-gray-700 dark:text-gray-200 mb-2">{{ t('student.analysis.trendScore') }}</div>
-            <TrendAreaChart
+            <trend-area-chart
               :series="scoreSeriesPoints"
               :xAxisData="scoreXAxis"
               height="420px"
@@ -203,8 +203,8 @@
               :legend="{ bottom: 0 }"
               :tooltip="{ confine: true }"
             />
-          </Card>
-          <Card padding="md" tint="warning">
+          </card>
+          <card padding="md" tint="warning">
             <div class="flex items-center justify-between mb-2">
               <div class="text-sm font-semibold text-gray-700 dark:text-gray-200">{{ t('student.analysis.latestFeedback') || '最近作业评价' }}</div>
               <div v-if="latestFeedback?.gradedAt" class="text-xs text-gray-500">{{ String(latestFeedback?.gradedAt).toString().substring(0,10) }}</div>
@@ -216,7 +216,7 @@
               <div class="text-sm text-gray-900 dark:text-gray-100 mb-1">{{ latestFeedback.title }}</div>
               <p class="text-sm text-gray-700 dark:text-gray-300 whitespace-pre-wrap">{{ latestFeedback.feedback }}</p>
             </div>
-          </Card>
+          </card>
         </div>
       </div>
       

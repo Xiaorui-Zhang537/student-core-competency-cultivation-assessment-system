@@ -11,6 +11,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import com.noncore.assessment.dto.request.BatchNotificationRequest;
+import com.noncore.assessment.dto.request.AdminBroadcastNotificationRequest;
 import com.noncore.assessment.dto.request.NotificationRequest;
 
 
@@ -196,6 +197,27 @@ public class NotificationController extends BaseController {
             request.getRecipientIds(), getCurrentUserId(), request.getTitle(), request.getContent(),
             request.getType(), request.getCategory(), request.getPriority(),
             request.getRelatedType(), request.getRelatedId()
+        );
+        return ResponseEntity.ok(ApiResponse.success(result));
+    }
+
+    /**
+     * 管理员：全局通知群发（复用 notifications 表逐用户写入）。
+     */
+    @PostMapping("/admin/broadcast")
+    @Operation(summary = "管理员群发通知", description = "管理员向全体/按角色/指定用户群发通知（逐用户写入 notifications）")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<ApiResponse<Map<String, Object>>> adminBroadcast(@RequestBody AdminBroadcastNotificationRequest request) {
+        Map<String, Object> result = notificationService.broadcastNotification(
+                getCurrentUserId(),
+                request.getTitle(),
+                request.getContent(),
+                request.getType(),
+                request.getCategory(),
+                request.getPriority(),
+                request.getTargetType(),
+                request.getTargetIds(),
+                request.getRole()
         );
         return ResponseEntity.ok(ApiResponse.success(result));
     }

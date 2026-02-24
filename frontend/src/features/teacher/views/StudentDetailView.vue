@@ -19,35 +19,35 @@
 
       <div class="space-y-8">
           <!-- Profile Card + Actions -->
-          <Card padding="md" tint="info">
+          <card padding="md" tint="info">
             <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:gap-6">
               <div class="flex items-center gap-4 min-w-0">
                 <user-avatar v-if="profile.avatar" :avatar="profile.avatar" :size="56" :rounded="true" :fit="'cover'" />
                 <div class="min-w-0">
                   <div class="flex items-center gap-3">
                     <span class="text-xl font-semibold truncate">{{ studentName }}</span>
-                    <Badge v-if="profile.mbti" size="sm" :variant="mbtiVariant">MBTI · {{ profile.mbti }}</Badge>
+                    <badge v-if="profile.mbti" size="sm" :variant="mbtiVariant">MBTI · {{ profile.mbti }}</badge>
                   </div>
                  </div>
               </div>
               <div class="flex items-center gap-2 sm:ml-auto">
-                <Button variant="primary" size="sm" @click="contactStudent">
+                <button variant="primary" size="sm" @click="contactStudent">
                   <chat-bubble-left-right-icon class="w-4 h-4 mr-1" />
                   {{ t('teacher.studentDetail.actions.contact') }}
-                </Button>
-                <Button variant="outline" size="sm" icon="download" :loading="exportingReport" @click="exportReportPdf">
+                </button>
+                <button variant="outline" size="sm" icon="download" :loading="exportingReport" @click="exportReportPdf">
                   {{ t('teacher.studentDetail.actions.exportReport') }}
-                </Button>
-                <Button variant="outline" size="sm" @click="exportGrades">
+                </button>
+                <button variant="outline" size="sm" @click="exportGrades">
                   <arrow-down-tray-icon class="w-4 h-4 mr-1" />
                   {{ t('teacher.studentDetail.actions.export') }}
-                </Button>
+                </button>
               </div>
             </div>
-          </Card>
+          </card>
 
           <!-- Student Profile Info (Read-only) -->
-          <Card padding="md" tint="secondary">
+          <card padding="md" tint="secondary">
             <h3 class="text-lg font-semibold mb-4">{{ t('shared.profile.section.profileInfo') || '个人信息' }}</h3>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
@@ -69,7 +69,7 @@
               <div>
                 <label class="block text-sm font-medium mb-1">{{ t('shared.profile.fields.mbti') || 'MBTI' }}</label>
                 <div class="text-sm">
-                  <Badge v-if="profile.mbti" size="sm" :variant="mbtiVariant">{{ profile.mbti }}</Badge>
+                  <badge v-if="profile.mbti" size="sm" :variant="mbtiVariant">{{ profile.mbti }}</badge>
                   <span v-else>{{ t('shared.profile.status.notSet') }}</span>
                 </div>
               </div>
@@ -102,10 +102,10 @@
                 <p class="text-sm">{{ profile.city || t('shared.profile.status.notSet') }}</p>
               </div>
             </div>
-          </Card>
+          </card>
           
           <!-- Course Filter (glass, keep original position) -->
-          <Card padding="sm" tint="accent" class="flex items-center gap-3 whitespace-nowrap">
+          <card padding="sm" tint="accent" class="flex items-center gap-3 whitespace-nowrap">
             <label class="text-sm text-gray-600 whitespace-nowrap pr-2">{{ t('teacher.studentDetail.filter.label') }}</label>
             <glass-popover-select
               v-model="selectedCourseId"
@@ -114,7 +114,7 @@
               width="18rem"
               @change="onCourseChange"
             />
-          </Card>
+          </card>
           <!-- 关键指标（四卡一行，根据课程筛选变化） -->
           <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
             <start-card :label="t('teacher.studentDetail.stats.graded') as string" :value="gradedAssignmentsCount" tone="blue" :icon="DocumentTextIcon" />
@@ -125,7 +125,7 @@
 
           <!-- 最近学习 + 能力雷达（左右并排） -->
           <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <Card padding="md" tint="info">
+            <card padding="md" tint="info">
               <div class="flex items-center gap-2 mb-4">
                 <document-text-icon class="w-5 h-5 text-indigo-600" />
                 <h3 class="text-lg font-semibold">{{ t('teacher.studentDetail.recentStudy') || '最近学习' }}</h3>
@@ -172,9 +172,9 @@
                   <div class="text-sm text-gray-500">{{ t('common.empty') || '暂无数据' }}</div>
                 </template>
               </div>
-            </Card>
+            </card>
 
-            <Card padding="md" tint="secondary">
+            <card padding="md" tint="secondary">
               <div class="flex items-center justify-between mb-2">
                 <div class="flex items-center gap-2">
                   <chart-pie-icon class="w-5 h-5 text-emerald-600" />
@@ -185,12 +185,12 @@
                 <radar-chart :indicators="radarIndicators" :series="radarSeries" :height="'300px'" />
               </div>
               <div v-else class="text-sm text-gray-500 text-center">{{ t('teacher.analytics.charts.noRadar') }}</div>
-            </Card>
+            </card>
           </div>
 
           <!-- 行为洞察（阶段二：AI解释与建议，不算分；学生7天仅一次，教师可重跑） -->
           <div ref="reportInsightWrap">
-            <BehaviorInsightSection
+            <behavior-insight-section
               v-if="studentId"
               :student-id="String(studentId)"
               :course-id="selectedCourseId || (route.query.courseId ? String(route.query.courseId) : undefined)"
@@ -202,7 +202,7 @@
 
           <!-- 行为证据（阶段一：纯代码聚合，不调用AI，不算分） -->
           <div ref="reportEvidenceWrap">
-          <BehaviorEvidenceSection
+          <behavior-evidence-section
             v-if="studentId"
             :student-id="String(studentId)"
             :course-id="selectedCourseId || (route.query.courseId ? String(route.query.courseId) : undefined)"
@@ -215,7 +215,7 @@
           
           <!-- 成绩记录（重做为与“学生管理”一致的表格风格） -->
           <div ref="reportGradesWrap">
-          <Card padding="md" tint="secondary">
+          <card padding="md" tint="secondary">
             <!-- 统计信息放在标题行右侧并右对齐 -->
             <div class="flex items-center justify-between gap-3 mb-4">
               <div class="flex items-center gap-2 min-w-0">
@@ -280,20 +280,20 @@
                       {{ formatDate(grade.gradedAt) }}
                     </td>
                     <td class="px-6 py-3 text-center">
-                      <Badge :variant="grade.isPublished ? 'success' : 'warning'" size="sm" class="whitespace-nowrap">
+                      <badge :variant="grade.isPublished ? 'success' : 'warning'" size="sm" class="whitespace-nowrap">
                         {{ grade.isPublished ? t('teacher.studentDetail.table.published') : t('teacher.studentDetail.table.unpublished') }}
-                      </Badge>
+                      </badge>
                     </td>
                     <td class="px-6 py-3 text-center">
                       <div class="flex items-center justify-center gap-2">
-                        <Button variant="outline" size="sm" class="whitespace-nowrap" @click="viewSubmissions(grade)">
+                        <button variant="outline" size="sm" class="whitespace-nowrap" @click="viewSubmissions(grade)">
                           <document-text-icon class="w-4 h-4 mr-1" />
                           {{ t('teacher.studentDetail.actions.viewSubmissions') }}
-                        </Button>
-                        <Button variant="teal" size="sm" class="whitespace-nowrap" @click="goRegrade(grade)">
+                        </button>
+                        <button variant="teal" size="sm" class="whitespace-nowrap" @click="goRegrade(grade)">
                           <pencil-square-icon class="w-4 h-4 mr-1" />
                           {{ t('teacher.studentDetail.actions.regrade') }}
-                        </Button>
+                        </button>
                       </div>
                     </td>
                   </tr>
@@ -306,7 +306,7 @@
             </div>
 
             <!-- 分页：左侧总数+每页选择，右侧统一分页组件 -->
-            <PaginationBar
+            <pagination-bar
               class="mt-4"
               :page="currentPage"
               :page-size="pageSize"
@@ -317,7 +317,7 @@
               @update:page="handleGradePageChange"
               @update:pageSize="handleGradePageSizeChange"
             />
-          </Card>
+          </card>
           </div>
       </div>
 

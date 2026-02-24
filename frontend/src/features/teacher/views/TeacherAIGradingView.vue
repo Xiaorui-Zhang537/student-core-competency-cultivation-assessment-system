@@ -20,9 +20,9 @@
               <span class="text-xs text-gray-600 dark:text-gray-300">{{ t('teacher.ai.model.label') }}</span>
               <glass-popover-select v-model="gradingModel" :options="gradingModelOptions" size="sm" />
             </div>
-            <Button variant="success" class="whitespace-nowrap" @click="exportActiveAsText" :disabled="!activeItem || !activeItem.result"><arrow-down-tray-icon class="w-4 h-4 mr-2" />{{ t('teacher.aiGrading.exportText') || '导出文本' }}</Button>
-            <Button variant="purple" class="whitespace-nowrap" @click="goHistory"><clock-icon class="w-4 h-4 mr-2" />{{ t('teacher.aiGrading.history') || '历史记录' }}</Button>
-            <Button variant="primary" class="whitespace-nowrap" :disabled="pending || files.length===0" @click="startGrading"><play-icon class="w-4 h-4 mr-2" />{{ t('teacher.aiGrading.start') }}</Button>
+            <button variant="success" class="whitespace-nowrap" @click="exportActiveAsText" :disabled="!activeItem || !activeItem.result"><arrow-down-tray-icon class="w-4 h-4 mr-2" />{{ t('teacher.aiGrading.exportText') || '导出文本' }}</button>
+            <button variant="purple" class="whitespace-nowrap" @click="goHistory"><clock-icon class="w-4 h-4 mr-2" />{{ t('teacher.aiGrading.history') || '历史记录' }}</button>
+            <button variant="primary" class="whitespace-nowrap" :disabled="pending || files.length===0" @click="startGrading"><play-icon class="w-4 h-4 mr-2" />{{ t('teacher.aiGrading.start') }}</button>
           </div>
         </template>
       </page-header>
@@ -37,13 +37,13 @@
             <div class="space-y-2">
               <glass-textarea v-model="textDraft" :rows="5" class="w-full" :placeholder="t('teacher.aiGrading.pastePlaceholder') as string" />
               <div class="flex items-center gap-2">
-                <Button variant="warning" size="sm" class="whitespace-nowrap" @click="addTextItem" :disabled="!textDraft.trim()"><plus-icon class="w-4 h-4 mr-1" />{{ t('teacher.aiGrading.addText') }}</Button>
+                <button variant="warning" size="sm" class="whitespace-nowrap" @click="addTextItem" :disabled="!textDraft.trim()"><plus-icon class="w-4 h-4 mr-1" />{{ t('teacher.aiGrading.addText') }}</button>
                 <span class="text-xs text-gray-500" v-if="textDraft.trim().length">{{ textDraft.trim().length }} 字符</span>
               </div>
             </div>
             <div class="flex items-center gap-2">
-              <Button variant="teal" class="whitespace-nowrap" @click="openPicker"><inbox-arrow-down-icon class="w-4 h-4 mr-2" />{{ t('teacher.aiGrading.pickFromSubmissions') }}</Button>
-              <Button variant="danger" class="whitespace-nowrap" @click="clearAll" :disabled="files.length===0"><x-mark-icon class="w-4 h-4 mr-2" />{{ t('teacher.aiGrading.clearAll') }}</Button>
+              <button variant="teal" class="whitespace-nowrap" @click="openPicker"><inbox-arrow-down-icon class="w-4 h-4 mr-2" />{{ t('teacher.aiGrading.pickFromSubmissions') }}</button>
+              <button variant="danger" class="whitespace-nowrap" @click="clearAll" :disabled="files.length===0"><x-mark-icon class="w-4 h-4 mr-2" />{{ t('teacher.aiGrading.clearAll') }}</button>
             </div>
             <ul class="divide-y divide-white/10 dark:divide-white/10 max-h-60 overflow-auto no-scrollbar pr-1">
               <li v-for="(f, idx) in files" :key="f.id" class="py-2 flex items-center justify-between cursor-pointer rounded-md px-2 transition-colors"
@@ -54,15 +54,15 @@
                   <div class="text-xs text-gray-600 dark:text-gray-300">{{ renderStatus(f) }}</div>
                 </div>
                 <div class="flex items-center gap-2">
-                  <Button size="sm" variant="ghost" class="whitespace-nowrap" @click.stop="retryOne(f)" v-if="f.error"><arrow-path-icon class="w-4 h-4 mr-1" />{{ t('teacher.aiGrading.retry') }}</Button>
-                  <Button size="sm" variant="danger" class="whitespace-nowrap" @click.stop="removeOne(f)"><trash-icon class="w-4 h-4 mr-1" />{{ t('teacher.aiGrading.remove') }}</Button>
+                  <button size="sm" variant="ghost" class="whitespace-nowrap" @click.stop="retryOne(f)" v-if="f.error"><arrow-path-icon class="w-4 h-4 mr-1" />{{ t('teacher.aiGrading.retry') }}</button>
+                  <button size="sm" variant="danger" class="whitespace-nowrap" @click.stop="removeOne(f)"><trash-icon class="w-4 h-4 mr-1" />{{ t('teacher.aiGrading.remove') }}</button>
                 </div>
               </li>
             </ul>
           </div>
         </div>
         <div class="lg:col-span-2">
-          <Card v-if="activeItem" padding="md" tint="primary" class="rounded-2xl glass-interactive" v-glass="{ strength: 'thick', interactive: true }">
+          <card v-if="activeItem" padding="md" tint="primary" class="rounded-2xl glass-interactive" v-glass="{ strength: 'thick', interactive: true }">
             <h3 class="font-medium mb-3">{{ activeItem.name || activeItem.fileName }}</h3>
             <div v-if="activeItem.status==='error'" class="p-3 rounded bg-red-50 text-red-700 text-sm">
               <div class="font-semibold mb-1">{{ t('common.error') || '错误' }}</div>
@@ -71,7 +71,7 @@
             <div v-else-if="isJson(activeItem.result)">
               <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div class="sm:col-span-2">
-                  <Card padding="sm" tint="secondary" class="rounded-xl">
+                  <card padding="sm" tint="secondary" class="rounded-xl">
                   <h4 class="font-semibold mb-2">{{ t('teacher.aiGrading.render.overall') }}</h4>
                   <div>
                     <div class="text-sm mb-2 flex items-center gap-3" v-if="getOverall(activeItem.result)?.final_score != null">
@@ -91,24 +91,24 @@
                     </div>
                     <div class="text-sm whitespace-pre-wrap">{{ t('teacher.aiGrading.render.holistic_feedback') }}: {{ overallFeedback(activeItem.result) || (t('common.empty') || '无内容') }}</div>
                   </div>
-                  </Card>
+                  </card>
                 </div>
-                <Card padding="sm" tint="warning" class="rounded-xl" v-if="activeItem.result?.moral_reasoning">
+                <card padding="sm" tint="warning" class="rounded-xl" v-if="activeItem.result?.moral_reasoning">
                   <h4 class="font-semibold mb-2">{{ t('teacher.aiGrading.render.moral_reasoning') }}</h4>
                   <div v-html="renderCriterion(activeItem.result.moral_reasoning, 'dimension_moral')"></div>
-                </Card>
-                <Card padding="sm" tint="accent" class="rounded-xl" v-if="activeItem.result?.attitude_development">
+                </card>
+                <card padding="sm" tint="accent" class="rounded-xl" v-if="activeItem.result?.attitude_development">
                   <h4 class="font-semibold mb-2">{{ t('teacher.aiGrading.render.attitude_development') }}</h4>
                   <div v-html="renderCriterion(activeItem.result.attitude_development, 'dimension_attitude')"></div>
-                </Card>
-                <Card padding="sm" tint="info" class="rounded-xl" v-if="activeItem.result?.ability_growth">
+                </card>
+                <card padding="sm" tint="info" class="rounded-xl" v-if="activeItem.result?.ability_growth">
                   <h4 class="font-semibold mb-2">{{ t('teacher.aiGrading.render.ability_growth') }}</h4>
                   <div v-html="renderCriterion(activeItem.result.ability_growth, 'dimension_ability')"></div>
-                </Card>
-                <Card padding="sm" tint="success" class="rounded-xl" v-if="activeItem.result?.strategy_optimization">
+                </card>
+                <card padding="sm" tint="success" class="rounded-xl" v-if="activeItem.result?.strategy_optimization">
                   <h4 class="font-semibold mb-2">{{ t('teacher.aiGrading.render.strategy_optimization') }}</h4>
                   <div v-html="renderCriterion(activeItem.result.strategy_optimization, 'dimension_strategy')"></div>
-                </Card>
+                </card>
               </div>
             </div>
             <div v-else-if="activeItem.status==='grading'" class="card p-4 rounded-xl" v-glass="{ strength: 'regular', interactive: true }">
@@ -121,7 +121,7 @@
               {{ t('teacher.aiGrading.picker.hint') || '已添加到队列，请点击开始批改。' }}
             </div>
             <pre v-else class="card p-3 overflow-auto no-scrollbar text-xs">{{ pretty(activeItem.result?.text || activeItem.result || '') }}</pre>
-          </Card>
+          </card>
           <div v-else class="card p-8 text-center text-gray-500">{{ t('teacher.aiGrading.empty') }}</div>
         </div>
       </div>
@@ -143,8 +143,8 @@
                   <input type="checkbox" v-model="picker.useText" :disabled="!picker.preview.text" />
                   <span>{{ t('teacher.aiGrading.picker.useText') || '使用文本内容' }}</span>
                 </label>
-                <Button size="sm" variant="indigo" @click="selectAllFiles" :disabled="!picker.preview.files.length"><plus-icon class="w-4 h-4 mr-1" />{{ t('teacher.aiGrading.picker.selectAllFiles') || '全选附件' }}</Button>
-                <Button size="sm" variant="danger" @click="clearSelectedFiles" :disabled="!picker.selectedFileIds.length"><x-mark-icon class="w-4 h-4 mr-1" />{{ t('teacher.aiGrading.picker.clearFiles') || '清空选择' }}</Button>
+                <button size="sm" variant="indigo" @click="selectAllFiles" :disabled="!picker.preview.files.length"><plus-icon class="w-4 h-4 mr-1" />{{ t('teacher.aiGrading.picker.selectAllFiles') || '全选附件' }}</button>
+                <button size="sm" variant="danger" @click="clearSelectedFiles" :disabled="!picker.selectedFileIds.length"><x-mark-icon class="w-4 h-4 mr-1" />{{ t('teacher.aiGrading.picker.clearFiles') || '清空选择' }}</button>
               </div>
             </div>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -173,15 +173,15 @@
 
           <!-- Action Bar -->
           <div class="flex items-center justify-end gap-2">
-            <Button size="sm" variant="teal" @click="loadSubmissions"><arrow-path-icon class="w-4 h-4 mr-1" />{{ t('teacher.aiGrading.picker.reload') || '重新加载' }}</Button>
-            <Button size="sm" variant="primary" @click="addSelected" :disabled="!canAddFromPreview"><plus-icon class="w-4 h-4 mr-1" />{{ t('teacher.aiGrading.picker.addSelected') }}</Button>
+            <button size="sm" variant="teal" @click="loadSubmissions"><arrow-path-icon class="w-4 h-4 mr-1" />{{ t('teacher.aiGrading.picker.reload') || '重新加载' }}</button>
+            <button size="sm" variant="primary" @click="addSelected" :disabled="!canAddFromPreview"><plus-icon class="w-4 h-4 mr-1" />{{ t('teacher.aiGrading.picker.addSelected') }}</button>
           </div>
         </div>
 
         <div v-else class="text-xs text-gray-500">{{ t('teacher.aiGrading.picker.hint') || '请选择作业与学生以预览提交' }}</div>
 
         <template #footer>
-          <Button size="sm" variant="secondary" @click="modalOpen=false"><x-mark-icon class="w-4 h-4 mr-1" />{{ t('teacher.aiGrading.picker.close') }}</Button>
+          <button size="sm" variant="secondary" @click="modalOpen=false"><x-mark-icon class="w-4 h-4 mr-1" />{{ t('teacher.aiGrading.picker.close') }}</button>
         </template>
       </glass-modal>
     </div>

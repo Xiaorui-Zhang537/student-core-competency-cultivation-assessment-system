@@ -20,12 +20,12 @@
             </div>
           </div>
           <div class="hidden sm:flex items-center gap-2">
-            <Button variant="primary" @click="goPublishAssignment">
+            <button variant="primary" @click="goPublishAssignment">
               <plus-icon class="w-4 h-4 mr-2" />{{ t('teacher.dashboard.actions.publish') }}
-            </Button>
-            <Button variant="success" @click="goGradeAssignments">
+            </button>
+            <button variant="success" @click="goGradeAssignments">
               <check-badge-icon class="w-4 h-4 mr-2" />{{ t('teacher.dashboard.actions.grade') }}
-            </Button>
+            </button>
           </div>
         </div>
       </template>
@@ -50,13 +50,13 @@
         </div>
 
         <!-- Class Performance Chart -->
-        <Card padding="lg" tint="accent">
+        <card padding="lg" tint="accent">
           <div class="flex items-center justify-between mb-4">
             <h2 class="text-xl font-semibold text-base-content">{{ t('teacher.dashboard.chart.title') }}</h2>
             <span class="text-xs text-subtle">{{ t('teacher.dashboard.chart.subtitle') }}</span>
           </div>
           <div ref="chartRef" class="h-[32rem] w-full"></div>
-        </Card>
+        </card>
     </div>
 
      <!-- Empty State -->

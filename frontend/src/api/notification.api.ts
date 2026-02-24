@@ -43,6 +43,17 @@ export interface CreateNotificationRequest {
   expiredAt?: string
 }
 
+export interface AdminBroadcastNotificationRequest {
+  title: string
+  content: string
+  type?: string
+  category?: string
+  priority?: string
+  targetType: 'all' | 'role' | 'specific'
+  role?: 'student' | 'teacher' | 'admin'
+  targetIds?: (string | number)[]
+}
+
 /**
  * 通知API调用
  */
@@ -125,6 +136,11 @@ export const notificationAPI = {
     relatedId?: string|number
   }): Promise<ApiResponse<{ sentCount: number }>> => {
     return api.post('/notifications/batch/send', data)
+  },
+
+  // 管理员群发通知（全体/按角色/指定用户）
+  adminBroadcast: (data: AdminBroadcastNotificationRequest): Promise<any> => {
+    return api.post('/notifications/admin/broadcast', data)
   },
 
   // 获取与某人的会话

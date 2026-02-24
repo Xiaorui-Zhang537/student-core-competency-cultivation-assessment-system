@@ -1,6 +1,6 @@
 <template>
   <div class="relative w-full">
-    <LiquidGlass :radius="16" :frost="0.05" class="rounded-2xl" :container-class="containerClass">
+    <liquid-glass :radius="16" :frost="0.05" class="rounded-2xl" :container-class="containerClass">
       <textarea
         :id="id"
         :rows="rows"
@@ -11,7 +11,7 @@
         :value="modelValue as any"
         @input="onInput"
       />
-    </LiquidGlass>
+    </liquid-glass>
   </div>
   
 </template>

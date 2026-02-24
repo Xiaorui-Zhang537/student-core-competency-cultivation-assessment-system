@@ -4,10 +4,10 @@
       <page-header :title="t('shared.community.title')" :subtitle="t('shared.community.subtitle')">
         <template #actions>
           <div class="flex items-center space-x-3">
-            <Button variant="primary" class="whitespace-nowrap" @click="showCreatePostModal = true">
+            <button variant="primary" class="whitespace-nowrap" @click="showCreatePostModal = true">
               <plus-icon class="w-4 h-4 mr-2" />
               {{ t('shared.community.createPost') }}
-            </Button>
+            </button>
           </div>
         </template>
       </page-header>
@@ -27,7 +27,7 @@
           <div class="p-4 filter-container rounded-2xl glass-tint-secondary" v-glass="{ strength: 'thin', interactive: false }">
             <h2 class="text-lg font-semibold text-base-content mb-4">{{ t('shared.community.categories.title') }}</h2>
             <div class="space-y-2">
-              <Button
+              <button
                 v-for="category in categories"
                 :key="category.id"
                 variant="menu"
@@ -39,7 +39,7 @@
                   <component :is="category.icon" class="w-5 h-5 mr-3" />
                    <span>{{ category.name }}</span>
                 </span>
-              </Button>
+              </button>
             </div>
           </div>
 
@@ -151,10 +151,10 @@
                           <p class="text-sm text-subtle line-clamp-2 mb-2 whitespace-pre-line" v-html="post.content"></p>
                         </div>
                         <div class="flex-shrink-0 flex items-center gap-1.5">
-                          <Button v-if="(post as any).attachments?.length" variant="ghost" size="xs" icon="download" class="text-subtle" @click.stop="downloadFirstAttachment(post)">
+                          <button v-if="(post as any).attachments?.length" variant="ghost" size="xs" icon="download" class="text-subtle" @click.stop="downloadFirstAttachment(post)">
                             {{ t('shared.download') }}
-                          </Button>
-                          <Button
+                          </button>
+                          <button
                             v-if="authStore.user?.id && String(authStore.user.id) === String(post.author?.id || post.authorId)"
                             variant="outline"
                             size="xs"
@@ -163,8 +163,8 @@
                             @click.stop="onEditPost(post)"
                           >
                             {{ t('shared.community.list.edit') }}
-                          </Button>
-                          <Button
+                          </button>
+                          <button
                             v-if="authStore.user?.id && String(authStore.user.id) === String(post.author?.id || post.authorId)"
                             variant="outline"
                             size="xs"
@@ -173,7 +173,7 @@
                             @click.stop="onDeletePost(post.id)"
                           >
                             {{ t('shared.community.list.delete') }}
-                          </Button>
+                          </button>
                         </div>
                       </div>
                     </div>
@@ -182,12 +182,12 @@
                       <span>{{ formatDate(post.createdAt) }}</span>
                       <div class="flex items-center gap-1"><eye-icon class="w-3.5 h-3.5" /><span>{{ post.viewCount }}</span></div>
                       <div class="flex items-center gap-1"><chat-bubble-left-icon class="w-3.5 h-3.5" /><span>{{ post.commentCount }}</span></div>
-                      <Button size="xs" variant="reaction" @click.stop="communityStore.toggleLikePost(post.id)" :class="post.isLiked ? 'reaction-liked' : ''">
+                      <button size="xs" variant="reaction" @click.stop="communityStore.toggleLikePost(post.id)" :class="post.isLiked ? 'reaction-liked' : ''">
                         <template #icon>
                           <hand-thumb-up-icon class="w-3.5 h-3.5" />
                         </template>
                         <span>{{ post.likeCount }}</span>
-                      </Button>
+                      </button>
                     </div>
                     <div v-if="post.tags?.length" class="flex items-center flex-wrap gap-2 mt-2">
                       <badge v-for="tag in post.tags" :key="tag.id" size="sm" :variant="(tagVariantByName(tag.name) as 'primary' | 'secondary' | 'success' | 'warning' | 'info' | 'danger' | 'accent')">#{{ tag.name }}</badge>
@@ -209,18 +209,18 @@
               <p class="text-subtle mb-4">
                 {{ filterOptions.keyword ? t('shared.community.list.emptyDescKeyword') : t('shared.community.list.emptyDescCategory') }}
               </p>
-              <Button variant="primary" class="whitespace-nowrap" @click="showCreatePostModal = true">
+              <button variant="primary" class="whitespace-nowrap" @click="showCreatePostModal = true">
                 <plus-icon class="w-4 h-4 mr-2" />
                 {{ t('shared.community.list.publishFirst') }}
-              </Button>
+              </button>
             </div>
 
             <!-- Pagination -->
             <div v-if="!loading && totalPosts > filterOptions.size" class="mt-6 flex justify-between items-center">
                <span class="text-sm text-subtle">{{ t('shared.community.list.total', { count: totalPosts }) }}</span>
               <div class="flex space-x-1">
-                <Button size="sm" variant="outline" @click="changePage(filterOptions.page - 1)" :disabled="filterOptions.page === 1">{{ t('shared.community.list.prev') }}</Button>
-                <Button size="sm" variant="outline" @click="changePage(filterOptions.page + 1)" :disabled="filterOptions.page * filterOptions.size >= totalPosts">{{ t('shared.community.list.next') }}</Button>
+                <button size="sm" variant="outline" @click="changePage(filterOptions.page - 1)" :disabled="filterOptions.page === 1">{{ t('shared.community.list.prev') }}</button>
+                <button size="sm" variant="outline" @click="changePage(filterOptions.page + 1)" :disabled="filterOptions.page * filterOptions.size >= totalPosts">{{ t('shared.community.list.next') }}</button>
               </div>
             </div>
           </div>
@@ -268,8 +268,8 @@
           
         </form>
         <template #footer>
-          <Button type="button" variant="secondary" @click="showCreatePostModal = false">{{ t('shared.community.modal.cancel') }}</Button>
-          <Button type="submit" form="createPostForm" variant="primary" :disabled="loading">{{ t('shared.community.modal.publish') }}</Button>
+          <button type="button" variant="secondary" @click="showCreatePostModal = false">{{ t('shared.community.modal.cancel') }}</button>
+          <button type="submit" form="createPostForm" variant="primary" :disabled="loading">{{ t('shared.community.modal.publish') }}</button>
         </template>
       </glass-modal>
 
@@ -319,8 +319,8 @@
                       <div class="text-xs text-gray-500">{{ (f.fileSize ? (f.fileSize/1024/1024).toFixed(1)+' MB' : '') }}</div>
                     </div>
                     <div class="flex items-center gap-2">
-                      <Button size="sm" variant="outline" type="button" @click="downloadEditAttachment(f)">{{ t('shared.community.modal.download') }}</Button>
-                      <Button size="sm" variant="danger" type="button" @click="deleteEditAttachment(f.id)">{{ t('shared.community.modal.delete') }}</Button>
+                      <button size="sm" variant="outline" type="button" @click="downloadEditAttachment(f)">{{ t('shared.community.modal.download') }}</button>
+                      <button size="sm" variant="danger" type="button" @click="deleteEditAttachment(f.id)">{{ t('shared.community.modal.delete') }}</button>
                     </div>
                   </li>
                 </ul>
@@ -329,8 +329,8 @@
           
         </form>
         <template #footer>
-          <Button type="button" variant="secondary" @click="editModal.visible = false">{{ t('shared.community.modal.cancel') }}</Button>
-          <Button type="submit" :disabled="loading" form="editPostForm" variant="primary">{{ t('shared.community.modal.save') }}</Button>
+          <button type="button" variant="secondary" @click="editModal.visible = false">{{ t('shared.community.modal.cancel') }}</button>
+          <button type="submit" :disabled="loading" form="editPostForm" variant="primary">{{ t('shared.community.modal.save') }}</button>
         </template>
       </glass-modal>
     </div>

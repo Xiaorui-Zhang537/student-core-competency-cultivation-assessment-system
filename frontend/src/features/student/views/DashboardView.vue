@@ -1,6 +1,6 @@
 <template>
   <div class="p-6">
-    <PageHeader :title="t('student.dashboard.title')" :subtitle="t('student.dashboard.subtitle')" />
+    <page-header :title="t('student.dashboard.title')" :subtitle="t('student.dashboard.subtitle')" />
 
     <!-- Loading State -->
     <loading-overlay v-if="studentStore.loading" :text="String(t('student.dashboard.loading'))" />
@@ -10,17 +10,17 @@
       <!-- Top KPI Cards (full width) -->
       <div class="lg:col-span-3">
         <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4 mb-2">
-          <StartCard :label="t('student.dashboard.cards.activeCourses') as string" :value="stats.activeCourses" tone="blue" :icon="AcademicCapIcon" />
-          <StartCard :label="t('student.dashboard.cards.pendingAssignments') as string" :value="stats.pendingAssignments" tone="amber" :icon="ClipboardDocumentListIcon" />
-          <StartCard :label="t('student.dashboard.cards.averageScore') as string" :value="Number(stats.averageScore || 0).toFixed(1)" tone="violet" :icon="StarIcon" />
-          <StartCard :label="t('student.dashboard.cards.weeklyStudyHours') as string" :value="weeklyStudyHours" tone="emerald" :icon="ClockIcon" />
-          <StartCard v-if="abilityOverallScore>0" :label="t('student.ability.radar') as string" :value="abilityOverallScore.toFixed(1)" tone="indigo" :icon="StarIcon" />
+          <start-card :label="t('student.dashboard.cards.activeCourses') as string" :value="stats.activeCourses" tone="blue" :icon="AcademicCapIcon" />
+          <start-card :label="t('student.dashboard.cards.pendingAssignments') as string" :value="stats.pendingAssignments" tone="amber" :icon="ClipboardDocumentListIcon" />
+          <start-card :label="t('student.dashboard.cards.averageScore') as string" :value="Number(stats.averageScore || 0).toFixed(1)" tone="violet" :icon="StarIcon" />
+          <start-card :label="t('student.dashboard.cards.weeklyStudyHours') as string" :value="weeklyStudyHours" tone="emerald" :icon="ClockIcon" />
+          <start-card v-if="abilityOverallScore>0" :label="t('student.ability.radar') as string" :value="abilityOverallScore.toFixed(1)" tone="indigo" :icon="StarIcon" />
         </div>
       </div>
       <!-- Left Column: Assignments and Courses -->
       <div class="lg:col-span-2 space-y-8">
         <!-- Upcoming Assignments -->
-        <Card padding="md" tint="warning">
+        <card padding="md" tint="warning">
           <h2 class="text-xl font-semibold mb-4">{{ t('student.dashboard.upcomingAssignments') }}</h2>
           <div v-if="upcomingAssignments.length > 0" class="space-y-3">
             <div v-for="assignment in upcomingAssignments" :key="assignment.id" class="p-3 glass-thin rounded flex justify-between items-center" v-glass="{ strength: 'thin', interactive: false }">
@@ -28,14 +28,14 @@
                 <h4 class="font-medium">{{ assignment.title }}</h4>
                 <p class="text-sm text-gray-500">{{ new Date(assignment.dueDate).toLocaleDateString() }}</p>
               </div>
-              <Button size="sm" variant="outline" @click="router.push(`/student/assignments/${assignment.id}/submit`)">{{ t('student.dashboard.goDo') }}</Button>
+              <button size="sm" variant="outline" @click="router.push(`/student/assignments/${assignment.id}/submit`)">{{ t('student.dashboard.goDo') }}</button>
             </div>
           </div>
           <p v-else class="text-gray-500">{{ t('student.dashboard.noUpcoming') }}</p>
-        </Card>
+        </card>
 
         <!-- Active Courses -->
-        <Card padding="md" tint="secondary">
+        <card padding="md" tint="secondary">
           <h2 class="text-xl font-semibold mb-4">{{ t('student.dashboard.activeCourses') }}</h2>
           <div v-if="activeCourses.length > 0" class="space-y-3">
             <div v-for="course in activeCourses" :key="course.id" class="p-3 glass-thin rounded flex justify-between items-center" v-glass="{ strength: 'thin', interactive: false }">
@@ -43,32 +43,32 @@
                 <h4 class="font-medium">{{ course.title }}</h4>
                 <p class="text-sm text-gray-500">{{ course.teacherName }}</p>
               </div>
-              <Button size="sm" variant="outline" @click="router.push(`/student/courses/${course.id}`)">{{ t('student.dashboard.continue') }}</Button>
+              <button size="sm" variant="outline" @click="router.push(`/student/courses/${course.id}`)">{{ t('student.dashboard.continue') }}</button>
             </div>
           </div>
           <p v-else class="text-gray-500">{{ t('student.dashboard.noCourses') }}</p>
-        </Card>
+        </card>
       </div>
 
       <!-- Right Column: Calendar, Grades and Progress -->
       <div class="space-y-8">
         <!-- Spring Calendar -->
-        <Card padding="md" tint="secondary">
+        <card padding="md" tint="secondary">
           <h2 class="text-xl font-semibold mb-4">{{ t('student.dashboard.calendar') || '学习日历' }}</h2>
-          <SpringCalendar :calendar-data="calendarData" :initial-index="0" />
-        </Card>
+          <spring-calendar :calendar-data="calendarData" :initial-index="0" />
+        </card>
         <!-- Overall Progress -->
-        <Card padding="md" tint="accent" class="text-center">
+        <card padding="md" tint="accent" class="text-center">
           <h2 class="text-xl font-semibold mb-4">{{ t('student.dashboard.overallProgress') }}</h2>
           <div class="text-4xl font-bold" :style="{ color: 'var(--color-netural)' }">{{ overallProgress.toFixed(2) }}%</div>
           <div class="mt-3">
-            <Progress :value="overallProgress" size="lg" color="primary" />
+            <progress :value="overallProgress" size="lg" color="primary" />
 
           </div>
-        </Card>
+        </card>
 
         <!-- Recent Grades -->
-        <Card padding="md" tint="info">
+        <card padding="md" tint="info">
           <h2 class="text-xl font-semibold mb-4">{{ t('student.dashboard.recentGrades') }}</h2>
           <div v-if="recentGrades.length > 0" class="space-y-3">
             <div
@@ -86,7 +86,7 @@
             </div>
           </div>
           <p v-else class="text-gray-500">{{ t('student.dashboard.noRecentGrades') }}</p>
-        </Card>
+        </card>
       </div>
     </div>
      <!-- Empty State -->

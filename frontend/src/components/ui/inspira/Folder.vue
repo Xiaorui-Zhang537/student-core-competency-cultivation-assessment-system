@@ -13,13 +13,13 @@
       :dir="direction"
       @click="onTriggerClick"
     >
-      <Icon v-if="isExpanded" :name="openIcon" size="16" />
-      <Icon v-else :name="closeIcon" size="16" />
+      <icon v-if="isExpanded" :name="openIcon" size="16" />
+      <icon v-else :name="closeIcon" size="16" />
       <span class="select-none">{{ name }}</span>
     </div>
 
     <div v-if="isExpanded" class="relative text-sm">
-      <TreeIndicator v-if="name && indicator" aria-hidden="true" />
+      <tree-indicator v-if="name && indicator" aria-hidden="true" />
       <div class="ml-5 flex flex-col gap-1 py-1 rtl:mr-5" :dir="direction">
         <slot />
       </div>

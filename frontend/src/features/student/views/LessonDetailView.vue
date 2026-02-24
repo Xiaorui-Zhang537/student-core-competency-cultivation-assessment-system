@@ -9,12 +9,12 @@
       >
         <template #actions>
           <div class="flex items-center gap-2">
-            <Button size="sm" variant="secondary" :disabled="loading || !prevLessonId" @click="goToSiblingLesson(prevLessonId)">
+            <button size="sm" variant="secondary" :disabled="loading || !prevLessonId" @click="goToSiblingLesson(prevLessonId)">
               {{ t('student.lesson.prev') || '上一节' }}
-            </Button>
-            <Button size="sm" variant="primary" :disabled="loading || !nextLessonId" @click="goToSiblingLesson(nextLessonId)">
+            </button>
+            <button size="sm" variant="primary" :disabled="loading || !nextLessonId" @click="goToSiblingLesson(nextLessonId)">
               {{ t('student.lesson.next') || '下一节' }}
-            </Button>
+            </button>
           </div>
         </template>
       </page-scaffold>
@@ -128,12 +128,12 @@
                   </div>
                 </div>
                 <div class="shrink-0 ml-3">
-                  <Button size="sm" variant="primary" @click="goAssignment(a.id)">
+                  <button size="sm" variant="primary" @click="goAssignment(a.id)">
                     <template #icon>
-                      <EyeIcon class="w-4 h-4" />
+                      <eye-icon class="w-4 h-4" />
                     </template>
                     {{ t('student.assignments.actions.view') || '进入' }}
-                  </Button>
+                  </button>
                 </div>
               </li>
             </ul>
@@ -146,12 +146,12 @@
           <h4 class="font-medium mb-4">{{ t('student.courses.note') || '学习笔记' }}</h4>
           <glass-textarea v-model="notes" :rows="4" :placeholder="t('student.courses.notePh') || '记录你的要点...'" />
           <div class="mt-2 flex justify-end">
-            <Button size="sm" variant="purple" :loading="saving" @click="saveNotes">
+            <button size="sm" variant="purple" :loading="saving" @click="saveNotes">
               <template #icon>
                 <svg class="w-4 h-4" viewBox="0 0 20 20" fill="currentColor"><path d="M7.629 13.707L3.586 9.664l1.414-1.414 2.629 2.629 7.071-7.071 1.414 1.414-8.485 8.485a1 1 0 01-1.414 0z"/></svg>
               </template>
               {{ t('student.courses.save') || '保存' }}
-            </Button>
+            </button>
           </div>
         </card>
       </section>

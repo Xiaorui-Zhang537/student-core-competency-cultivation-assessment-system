@@ -21,7 +21,7 @@
         @click="scrollLeft"
         aria-label="scroll left"
       >
-        <Icon :icon="'tabler:arrow-narrow-left'" class="size-6" />
+        <icon :icon="'tabler:arrow-narrow-left'" class="size-6" />
       </button>
       <button
         class="flex size-11 items-center justify-center rounded-full glass-regular backdrop-blur-md ring-1 ring-white/25 text-[color:var(--color-base-content)] hover:ring-white/40 disabled:opacity-50"
@@ -29,7 +29,7 @@
         @click="scrollRight"
         aria-label="scroll right"
       >
-        <Icon :icon="'tabler:arrow-narrow-right'" class="size-6" />
+        <icon :icon="'tabler:arrow-narrow-right'" class="size-6" />
       </button>
     </div>
   </div>

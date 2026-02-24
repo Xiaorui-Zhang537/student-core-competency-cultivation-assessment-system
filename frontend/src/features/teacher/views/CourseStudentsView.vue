@@ -17,18 +17,18 @@
         <page-header :title="t('teacher.students.title')" :subtitle="t('teacher.students.subtitle')">
           <template #actions>
             <div class="flex items-center space-x-3">
-              <Button variant="primary" @click="openInviteModal">
+              <button variant="primary" @click="openInviteModal">
                 <user-plus-icon class="w-4 h-4 mr-2" />
                 {{ t('teacher.students.actions.invite') }}
-              </Button>
-              <Button variant="purple" @click="openKeyModal">
+              </button>
+              <button variant="purple" @click="openKeyModal">
                 <lock-closed-icon class="w-4 h-4 mr-2" />
                 {{ t('teacher.students.actions.setEnrollKey') }}
-              </Button>
-              <Button variant="success" @click="exportData">
+              </button>
+              <button variant="success" @click="exportData">
                 <arrow-down-tray-icon class="w-4 h-4 mr-2" />
                 {{ t('teacher.students.actions.export') }}
-              </Button>
+              </button>
             </div>
           </template>
         </page-header>
@@ -88,14 +88,14 @@
             <span class="text-sm text-gray-600 dark:text-gray-400">
               {{ t('teacher.students.batch.selectedCount', { count: selectedStudents.length }) }}
             </span>
-            <Button variant="success" size="sm" @click="batchExport">
+            <button variant="success" size="sm" @click="batchExport">
               <arrow-down-tray-icon class="w-4 h-4 mr-1" />
               {{ t('teacher.students.batch.export') }}
-            </Button>
-            <Button variant="outline" size="sm" @click="batchRemove">
+            </button>
+            <button variant="outline" size="sm" @click="batchRemove">
               <user-minus-icon class="w-4 h-4 mr-1" />
               {{ t('teacher.students.batch.remove') }}
-            </Button>
+            </button>
           </div>
 
           <!-- 搜索框（右对齐） -->
@@ -199,7 +199,7 @@
                           {{ student.completedLessons }}/{{ student.totalLessons }}
                         </span>
                       </div>
-                      <Progress
+                      <progress
                         :value="Number(student.progress || 0)"
                         size="sm"
                         :color="Number(student.progress || 0) >= 100 ? 'success' : 'primary'"
@@ -210,9 +210,9 @@
                 <td class="px-9 py-3 min-w-[260px] text-center">
                   <div class="flex flex-col gap-2 items-center">
                     <div class="flex items-center justify-center gap-2">
-                      <Badge :variant="getRadarBadgeVariant(student.radarClassification)" size="sm" class="px-2 font-semibold uppercase tracking-wide">
+                      <badge :variant="getRadarBadgeVariant(student.radarClassification)" size="sm" class="px-2 font-semibold uppercase tracking-wide">
                         {{ formatRadarBadgeLabel(student.radarClassification) }}
-                      </Badge>
+                      </badge>
                       <span class="text-sm font-semibold text-gray-900 dark:text-white">
                         {{ t('teacher.students.table.radarAreaLabel', { value: formatRadarArea(student.radarArea) }) }}
                       </span>
@@ -238,14 +238,14 @@
                     <span class="text-sm font-medium text-gray-900 dark:text-white">
                       {{ student.averageGrade || '--' }}
                     </span>
-                     <Badge 
+                     <badge 
                       v-if="student.averageGrade"
                       :variant="getGradeBadgeVariant(student.averageGrade)"
                       size="sm"
                       class="ml-2 whitespace-nowrap"
                     >
                       {{ getGradeLevel(student.averageGrade) }}
-                     </Badge>
+                     </badge>
                   </div>
                 </td>
                 <td class="px-4 py-3 min-w-[120px] text-center">
@@ -272,13 +272,13 @@
                 <td class="px-4 py-4 text-center">
                   <div class="flex justify-center">
                     <div class="relative" @click.stop :ref="(el: Element | ComponentPublicInstance | null) => setMenuButtonRef((el as HTMLElement) ?? null, student.id)">
-                      <Button
+                      <button
                         variant="ghost"
                         size="sm"
                         @click="toggleStudentMenu(student.id)"
                       >
                         <ellipsis-vertical-icon class="w-4 h-4" />
-                      </Button>
+                      </button>
                       <teleport to="body">
                         <div
                           v-if="showStudentMenu === student.id"
@@ -288,27 +288,27 @@
                           @click.stop
                         >
                           <div class="py-1 space-y-1">
-                            <Button variant="menu" size="sm" class="w-full justify-start gap-2" @click="handleStudentView(student.id)">
+                            <button variant="menu" size="sm" class="w-full justify-start gap-2" @click="handleStudentView(student.id)">
                               <eye-icon class="w-4 h-4" />
                               {{ t('teacher.students.table.view') }}
-                            </Button>
-                            <Button variant="menu" size="sm" class="w-full justify-start gap-2" @click="handleStudentMessage(student.id)">
+                            </button>
+                            <button variant="menu" size="sm" class="w-full justify-start gap-2" @click="handleStudentMessage(student.id)">
                               <chat-bubble-left-icon class="w-4 h-4" />
                               {{ t('teacher.students.table.message') }}
-                            </Button>
-                            <Button variant="menu" size="sm" class="w-full justify-start gap-2" @click="resetProgress(student.id)">
+                            </button>
+                            <button variant="menu" size="sm" class="w-full justify-start gap-2" @click="resetProgress(student.id)">
                                <arrow-path-icon class="w-4 h-4" />
                                {{ t('teacher.students.table.reset') }}
-                            </Button>
-                            <Button variant="menu" size="sm" class="w-full justify-start gap-2" @click="exportStudentData(student.id)">
+                            </button>
+                            <button variant="menu" size="sm" class="w-full justify-start gap-2" @click="exportStudentData(student.id)">
                                <arrow-down-tray-icon class="w-4 h-4" />
                                {{ t('teacher.students.table.export') }}
-                            </Button>
+                            </button>
                             <hr class="my-1 border-white/10" />
-                            <Button variant="danger" size="sm" class="w-full justify-start gap-2" @click="removeStudent(student.id)">
+                            <button variant="danger" size="sm" class="w-full justify-start gap-2" @click="removeStudent(student.id)">
                                <user-minus-icon class="w-4 h-4" />
                                {{ t('teacher.students.table.remove') }}
-                            </Button>
+                            </button>
                           </div>
                         </div>
                       </teleport>
@@ -321,7 +321,7 @@
         </div>
 
         <!-- 分页（抽离为统一组件） -->
-        <PaginationBar
+        <pagination-bar
           :page="currentPage"
           :page-size="pageSize"
           :total-pages="totalPages"
@@ -348,8 +348,8 @@
           <div class="text-xs text-gray-500">{{ t('teacher.students.invite.parsed', { count: parsedInviteIds.length }) }}</div>
         </div>
         <template #footer>
-          <Button variant="secondary" @click="closeInviteModal">{{ t('teacher.students.invite.cancel') }}</Button>
-          <Button variant="teal" :disabled="parsedInviteIds.length===0 || inviting" :loading="inviting" @click="submitInvite">{{ t('teacher.students.invite.confirm') }}</Button>
+          <button variant="secondary" @click="closeInviteModal">{{ t('teacher.students.invite.cancel') }}</button>
+          <button variant="teal" :disabled="parsedInviteIds.length===0 || inviting" :loading="inviting" @click="submitInvite">{{ t('teacher.students.invite.confirm') }}</button>
         </template>
       </glass-modal>
 
@@ -373,15 +373,15 @@
           </div>
         </div>
         <template #footer>
-          <Button variant="secondary" @click="closeKeyModal">{{ t('teacher.students.invite.cancel') }}</Button>
-          <Button variant="teal" :loading="savingKey" @click="saveEnrollKey">{{ t('teacher.students.enrollKey.save') }}</Button>
+          <button variant="secondary" @click="closeKeyModal">{{ t('teacher.students.invite.cancel') }}</button>
+          <button variant="teal" :loading="savingKey" @click="saveEnrollKey">{{ t('teacher.students.enrollKey.save') }}</button>
         </template>
       </glass-modal>
 
       <!-- 已移除卡片视图 -->
 
       <!-- 改为调用全局抽屉：删除本地 Teleport -->
-      <ConfirmDialog
+      <confirm-dialog
         :open="confirmOpen"
         :title="confirmDialog.state.title"
         :message="confirmDialog.state.message"

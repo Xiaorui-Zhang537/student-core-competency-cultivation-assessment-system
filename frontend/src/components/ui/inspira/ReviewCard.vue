@@ -1,10 +1,10 @@
 <template>
   <div class="shrink-0 w-80">
-    <LiquidGlass :radius="16" :frost="0.05" :border="0.07" :alpha="0.93" :blur="11"
+    <liquid-glass :radius="16" :frost="0.05" :border="0.07" :alpha="0.93" :blur="11"
                  :container-class="['glass-regular','glass-interactive', tintClass, 'rounded-2xl'].join(' ')">
       <div class="p-4">
         <div class="flex items-center gap-3 mb-3">
-          <UserAvatar :avatar="img" :size="36" :rounded="true" />
+          <user-avatar :avatar="img" :size="36" :rounded="true" />
           <div class="min-w-0">
             <div class="text-sm font-medium text-base-content truncate">{{ name }}</div>
             <div class="text-xs text-muted truncate">{{ username }}</div>
@@ -17,7 +17,7 @@
           {{ body }}
         </div>
       </div>
-    </LiquidGlass>
+    </liquid-glass>
   </div>
 </template>
 

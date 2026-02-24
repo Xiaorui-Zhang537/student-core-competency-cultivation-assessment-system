@@ -1,17 +1,17 @@
 <template>
   <div :class="['relative z-10', wrapperClass]">
     <div :class="containerClass">
-      <Breadcrumb
+      <breadcrumb
         v-if="hasBreadcrumb"
         class="mb-2"
         :items="breadcrumbItems || []"
         :aria-label="breadcrumbAriaLabel"
       />
-      <PageHeader :title="title" :subtitle="subtitle" :container="false">
+      <page-header :title="title" :subtitle="subtitle" :container="false">
         <template #actions>
           <slot name="actions" />
         </template>
-      </PageHeader>
+      </page-header>
     </div>
     <div v-if="$slots.default" :class="containerClass">
       <slot />

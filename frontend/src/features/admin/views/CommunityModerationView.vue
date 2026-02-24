@@ -2,19 +2,19 @@
   <div class="p-6">
     <PageHeader :title="t('admin.sidebar.community')" :subtitle="t('admin.title')" />
 
-    <Card padding="md" tint="secondary" class="mt-4">
+    <card padding="md" tint="secondary" class="mt-4">
       <div class="flex flex-col md:flex-row gap-3 md:items-center">
-        <GlassSearchInput v-model="keyword" :placeholder="String(t('common.search') || '搜索标题/内容')" size="sm" tint="secondary" />
+        <glass-search-input v-model="keyword" :placeholder="String(t('common.search') || '搜索标题/内容')" size="sm" tint="secondary" />
         <div class="flex gap-2 flex-wrap">
-          <GlassPopoverSelect v-model="status" :options="statusOptions" size="sm" width="160px" />
-          <GlassPopoverSelect v-model="includeDeleted" :options="includeDeletedOptions" size="sm" width="160px" />
-          <Button size="sm" variant="outline" :disabled="loading" @click="reloadPosts">{{ t('common.search') || '查询' }}</Button>
+          <glass-popover-select v-model="status" :options="statusOptions" size="sm" width="160px" />
+          <glass-popover-select v-model="includeDeleted" :options="includeDeletedOptions" size="sm" width="160px" />
+          <button size="sm" variant="outline" :disabled="loading" @click="reloadPosts">{{ t('common.search') || '查询' }}</button>
         </div>
       </div>
-    </Card>
+    </card>
 
     <loading-overlay v-if="loading" class="mt-4" :text="String(t('common.loading') || '加载中…')" />
-    <ErrorState
+    <error-state
       v-else-if="error"
       class="mt-4"
       :title="String(t('common.error') || '加载失败')"
@@ -23,49 +23,47 @@
       @action="reloadPosts"
     />
 
-    <Card v-else padding="md" tint="secondary" class="mt-4">
-      <div class="overflow-x-auto">
-        <table class="table w-full">
-          <thead>
-            <tr>
-              <th>ID</th>
-              <th>Post</th>
-              <th>Status</th>
-              <th>Pinned</th>
-              <th>Comments</th>
-              <th class="text-right">Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr v-for="p in posts" :key="p.id">
-              <td class="font-mono text-xs">{{ p.id }}</td>
-              <td>
-                <div class="font-medium">{{ p.title }}</div>
-                <div class="text-xs text-subtle line-clamp-1">{{ p.content }}</div>
-                <div class="text-xs text-subtle">by {{ p.author?.nickname || p.author?.username || p.authorId }}</div>
-              </td>
-              <td class="w-44">
-                <GlassPopoverSelect :model-value="p.status" :options="postStatusEditOptions" size="sm" @update:modelValue="(v:any)=>moderatePost(p.id, { status: String(v) })" />
-              </td>
-              <td class="w-28">
-                <GlassPopoverSelect :model-value="Boolean(p.pinned)" :options="boolOptions" size="sm" @update:modelValue="(v:any)=>moderatePost(p.id, { pinned: Boolean(v) })" />
-              </td>
-              <td class="text-sm">{{ p.commentsCount ?? 0 }}</td>
-              <td class="text-right space-x-2">
-                <Button size="sm" variant="outline" @click="openComments(p.id)">{{ t('shared.community.comments') || '评论' }}</Button>
-                <Button size="sm" variant="outline" @click="moderatePost(p.id, { deleted: true })">{{ t('common.delete') || '删除' }}</Button>
-              </td>
-            </tr>
-            <tr v-if="posts.length === 0">
-              <td colspan="6">
-                <EmptyState :title="String(t('common.empty') || '暂无数据')" />
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
+    <card v-else padding="md" tint="secondary" class="mt-4">
+      <glass-table>
+        <template #head>
+          <tr>
+            <th class="px-6 py-3 text-center text-xs font-semibold text-gray-700 dark:text-gray-200 tracking-wide whitespace-nowrap">{{ t('common.columns.id') || 'ID' }}</th>
+            <th class="px-6 py-3 text-left text-xs font-semibold text-gray-700 dark:text-gray-200 tracking-wide">{{ t('admin.moderation.post') || t('common.columns.content') || 'Post' }}</th>
+            <th class="px-6 py-3 text-center text-xs font-semibold text-gray-700 dark:text-gray-200 tracking-wide whitespace-nowrap">{{ t('admin.moderation.status') || t('common.columns.status') || 'Status' }}</th>
+            <th class="px-6 py-3 text-center text-xs font-semibold text-gray-700 dark:text-gray-200 tracking-wide whitespace-nowrap">{{ t('admin.moderation.pinned') || t('common.columns.pinned') || 'Pinned' }}</th>
+            <th class="px-6 py-3 text-center text-xs font-semibold text-gray-700 dark:text-gray-200 tracking-wide whitespace-nowrap">{{ t('admin.moderation.comments') || t('common.columns.comments') || 'Comments' }}</th>
+            <th class="px-6 py-3 text-right text-xs font-semibold text-gray-700 dark:text-gray-200 tracking-wide whitespace-nowrap">{{ t('admin.moderation.actions') || t('common.columns.actions') || 'Actions' }}</th>
+          </tr>
+        </template>
+        <template #body>
+          <tr v-for="p in posts" :key="p.id" class="hover:bg-white/10 transition-colors duration-150">
+            <td class="px-6 py-3 text-center font-mono text-xs">{{ p.id }}</td>
+            <td class="px-6 py-3">
+              <div class="font-medium">{{ p.title }}</div>
+              <div class="text-xs text-subtle line-clamp-1">{{ p.content }}</div>
+              <div class="text-xs text-subtle">by {{ p.author?.nickname || p.author?.username || p.authorId }}</div>
+            </td>
+            <td class="px-6 py-3 w-44 text-center">
+              <glass-popover-select :model-value="p.status" :options="postStatusEditOptions" size="sm" @update:modelValue="(v:any)=>moderatePost(p.id, { status: String(v) })" />
+            </td>
+            <td class="px-6 py-3 w-28 text-center">
+              <glass-popover-select :model-value="Boolean(p.pinned)" :options="boolOptions" size="sm" @update:modelValue="(v:any)=>moderatePost(p.id, { pinned: Boolean(v) })" />
+            </td>
+            <td class="px-6 py-3 text-sm text-center">{{ p.commentsCount ?? 0 }}</td>
+            <td class="px-6 py-3 text-right space-x-2 whitespace-nowrap">
+              <button size="sm" variant="outline" @click="openComments(p.id)">{{ t('shared.community.comments') || '评论' }}</button>
+              <button size="sm" variant="outline" @click="moderatePost(p.id, { deleted: true })">{{ t('common.delete') || '删除' }}</button>
+            </td>
+          </tr>
+          <tr v-if="posts.length === 0">
+            <td colspan="6" class="px-6 py-6">
+              <empty-state :title="String(t('common.empty') || '暂无数据')" />
+            </td>
+          </tr>
+        </template>
+      </glass-table>
 
-      <PaginationBar
+      <pagination-bar
         :page="page"
         :page-size="pageSize"
         :total-items="total"
@@ -74,45 +72,43 @@
         @update:page="(v: number) => { page = v; reloadPosts() }"
         @update:pageSize="(v: number) => { pageSize = v; page = 1; reloadPosts() }"
       />
-    </Card>
+    </card>
 
-    <GlassModal v-if="showComments" :title="'Comments'" size="lg" heightVariant="tall" @close="closeComments">
+    <glass-modal v-if="showComments" :title="String(t('admin.tabs.comments') || t('shared.community.comments') || '评论')" size="lg" heightVariant="tall" @close="closeComments">
       <loading-overlay v-if="commentsLoading" :text="String(t('common.loading') || '加载中…')" />
-      <Card v-else padding="md" tint="secondary">
-        <div class="overflow-x-auto">
-          <table class="table w-full">
-            <thead>
-              <tr>
-                <th>ID</th>
-                <th>Content</th>
-                <th>Status</th>
-                <th class="text-right">Delete</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr v-for="c in comments" :key="c.id">
-                <td class="font-mono text-xs">{{ c.id }}</td>
-                <td>
-                  <div class="text-sm whitespace-pre-line">{{ c.content }}</div>
-                  <div class="text-xs text-subtle">by {{ c.author?.nickname || c.author?.username || c.authorId }}</div>
-                </td>
-                <td class="w-44">
-                  <GlassPopoverSelect :model-value="c.status" :options="commentStatusEditOptions" size="sm" @update:modelValue="(v:any)=>moderateComment(c.id, { status: String(v) })" />
-                </td>
-                <td class="text-right">
-                  <Button size="sm" variant="outline" @click="moderateComment(c.id, { deleted: true })">{{ t('common.delete') || '删除' }}</Button>
-                </td>
-              </tr>
-              <tr v-if="comments.length === 0">
-                <td colspan="4">
-                  <EmptyState :title="String(t('common.empty') || '暂无数据')" />
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      </Card>
-    </GlassModal>
+      <card v-else padding="md" tint="secondary">
+        <glass-table>
+          <template #head>
+            <tr>
+              <th class="px-6 py-3 text-center text-xs font-semibold text-gray-700 dark:text-gray-200 tracking-wide whitespace-nowrap">{{ t('common.columns.id') || 'ID' }}</th>
+              <th class="px-6 py-3 text-left text-xs font-semibold text-gray-700 dark:text-gray-200 tracking-wide">{{ t('common.columns.content') || 'Content' }}</th>
+              <th class="px-6 py-3 text-center text-xs font-semibold text-gray-700 dark:text-gray-200 tracking-wide whitespace-nowrap">{{ t('admin.moderation.status') || t('common.columns.status') || 'Status' }}</th>
+              <th class="px-6 py-3 text-right text-xs font-semibold text-gray-700 dark:text-gray-200 tracking-wide whitespace-nowrap">{{ t('common.delete') || t('common.columns.delete') || 'Delete' }}</th>
+            </tr>
+          </template>
+          <template #body>
+            <tr v-for="c in comments" :key="c.id" class="hover:bg-white/10 transition-colors duration-150">
+              <td class="px-6 py-3 text-center font-mono text-xs">{{ c.id }}</td>
+              <td class="px-6 py-3">
+                <div class="text-sm whitespace-pre-line">{{ c.content }}</div>
+                <div class="text-xs text-subtle">by {{ c.author?.nickname || c.author?.username || c.authorId }}</div>
+              </td>
+              <td class="px-6 py-3 w-44 text-center">
+                <glass-popover-select :model-value="c.status" :options="commentStatusEditOptions" size="sm" @update:modelValue="(v:any)=>moderateComment(c.id, { status: String(v) })" />
+              </td>
+              <td class="px-6 py-3 text-right">
+                <button size="sm" variant="outline" @click="moderateComment(c.id, { deleted: true })">{{ t('common.delete') || '删除' }}</button>
+              </td>
+            </tr>
+            <tr v-if="comments.length === 0">
+              <td colspan="4" class="px-6 py-6">
+                <empty-state :title="String(t('common.empty') || '暂无数据')" />
+              </td>
+            </tr>
+          </template>
+        </glass-table>
+      </card>
+    </glass-modal>
   </div>
 </template>
 
@@ -127,6 +123,7 @@ import PaginationBar from '@/components/ui/PaginationBar.vue'
 import GlassPopoverSelect from '@/components/ui/filters/GlassPopoverSelect.vue'
 import GlassSearchInput from '@/components/ui/inputs/GlassSearchInput.vue'
 import GlassModal from '@/components/ui/GlassModal.vue'
+import GlassTable from '@/components/ui/tables/GlassTable.vue'
 import { adminApi } from '@/api/admin.api'
 import { useUIStore } from '@/stores/ui'
 

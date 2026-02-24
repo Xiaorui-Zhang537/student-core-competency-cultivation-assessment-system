@@ -45,11 +45,11 @@
             <div class="flex items-center gap-2">
               <span class="text-xs text-gray-500 dark:text-gray-400">{{ t('shared.time') || '时间' }}</span>
               <div class="w-24">
-                <GlassPopoverSelect :options="hourOptions" :model-value="hour" @update:modelValue="(v:any)=>hour = Number(v)" size="sm" :tint="tint" :teleport="true" />
+                <glass-popover-select :options="hourOptions" :model-value="hour" @update:modelValue="(v:any)=>hour = Number(v)" size="sm" :tint="tint" :teleport="true" />
               </div>
               <span class="text-xs text-gray-500">:</span>
               <div class="w-24">
-                <GlassPopoverSelect :options="minuteSelectOptions" :model-value="minute" @update:modelValue="(v:any)=>minute = Number(v)" size="sm" :tint="tint" :teleport="true" />
+                <glass-popover-select :options="minuteSelectOptions" :model-value="minute" @update:modelValue="(v:any)=>minute = Number(v)" size="sm" :tint="tint" :teleport="true" />
               </div>
             </div>
             <div class="ml-auto flex items-center gap-2">

@@ -1,6 +1,6 @@
 <template>
   <div class="max-w-lg w-[92%] mx-auto">
-    <LiquidGlass :radius="16" :frost="0.05" class="p-0" :container-class="'rounded-2xl w-full'">
+    <liquid-glass :radius="16" :frost="0.05" class="p-0" :container-class="'rounded-2xl w-full'">
       <div class="py-8 px-6 md:py-10 md:px-8 text-center">
         <h2 class="text-2xl md:text-3xl font-bold text-[color:var(--color-base-content)]">{{ t('auth.verify.title') }}</h2>
         <p class="mt-2 text-sm md:text-base text-subtle">{{ t('auth.verify.subtitle') }}</p>
@@ -13,11 +13,11 @@
 
         <div class="mt-6" v-else>
           <div class="inline-flex flex-wrap gap-3 justify-center">
-            <Button variant="primary" size="xl" class="rounded-full px-6" @click="goLogin">{{ t('auth.verify.toLogin') }}</Button>
+            <button variant="primary" size="xl" class="rounded-full px-6" @click="goLogin">{{ t('auth.verify.toLogin') }}</button>
           </div>
         </div>
       </div>
-    </LiquidGlass>
+    </liquid-glass>
   </div>
 </template>
 

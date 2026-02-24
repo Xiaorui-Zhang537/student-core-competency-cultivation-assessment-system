@@ -2,18 +2,18 @@
   <div class="p-6">
     <PageHeader :title="t('admin.sidebar.students')" :subtitle="t('admin.title')" />
 
-    <Card padding="md" tint="secondary" class="mt-4">
+    <card padding="md" tint="secondary" class="mt-4">
       <div class="flex flex-col md:flex-row gap-3 md:items-center">
-        <GlassSearchInput v-model="keyword" :placeholder="String(t('common.search') || '搜索学生')" size="sm" tint="secondary" />
+        <glass-search-input v-model="keyword" :placeholder="String(t('common.search') || '搜索学生')" size="sm" tint="secondary" />
         <div class="flex gap-2 flex-wrap">
-          <GlassPopoverSelect v-model="status" :options="statusOptions" size="sm" width="140px" />
-          <Button size="sm" variant="outline" :disabled="loading" @click="reload">{{ String(t('common.search') || '查询') }}</Button>
+          <glass-popover-select v-model="status" :options="statusOptions" size="sm" width="140px" />
+          <button size="sm" variant="outline" :disabled="loading" @click="reload">{{ String(t('common.search') || '查询') }}</button>
         </div>
       </div>
-    </Card>
+    </card>
 
     <loading-overlay v-if="loading" class="mt-4" :text="String(t('common.loading') || '加载中…')" />
-    <ErrorState
+    <error-state
       v-else-if="error"
       class="mt-4"
       :title="String(t('common.error') || '加载失败')"
@@ -22,40 +22,38 @@
       @action="reload"
     />
 
-    <Card v-else padding="md" tint="secondary" class="mt-4">
-      <div class="overflow-x-auto">
-        <table class="table w-full">
-          <thead>
-            <tr>
-              <th>ID</th>
-              <th>Student</th>
-              <th>Status</th>
-              <th class="text-right">Open</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr v-for="u in items" :key="u.id">
-              <td class="font-mono text-xs">{{ u.id }}</td>
-              <td>
-                <div class="font-medium">{{ u.nickname || u.username }}</div>
-                <div class="text-xs text-subtle">{{ u.email }}</div>
-                <div class="text-xs text-subtle" v-if="u.studentNo">{{ u.studentNo }}</div>
-              </td>
-              <td class="text-sm">{{ u.status }}</td>
-              <td class="text-right">
-                <Button size="sm" variant="outline" @click="router.push(`/admin/students/${u.id}`)">{{ t('common.view') || '查看' }}</Button>
-              </td>
-            </tr>
-            <tr v-if="items.length === 0">
-              <td colspan="4">
-                <EmptyState :title="String(t('common.empty') || '暂无数据')" />
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
+    <card v-else padding="md" tint="secondary" class="mt-4">
+      <glass-table>
+        <template #head>
+          <tr>
+            <th class="px-6 py-3 text-center text-xs font-semibold text-gray-700 dark:text-gray-200 tracking-wide whitespace-nowrap">{{ t('common.columns.id') || 'ID' }}</th>
+            <th class="px-6 py-3 text-left text-xs font-semibold text-gray-700 dark:text-gray-200 tracking-wide">{{ t('common.columns.student') || 'Student' }}</th>
+            <th class="px-6 py-3 text-center text-xs font-semibold text-gray-700 dark:text-gray-200 tracking-wide whitespace-nowrap">{{ t('common.columns.status') || 'Status' }}</th>
+            <th class="px-6 py-3 text-right text-xs font-semibold text-gray-700 dark:text-gray-200 tracking-wide whitespace-nowrap">{{ t('common.columns.open') || t('common.view') || 'Open' }}</th>
+          </tr>
+        </template>
+        <template #body>
+          <tr v-for="u in items" :key="u.id" class="hover:bg-white/10 transition-colors duration-150">
+            <td class="px-6 py-3 text-center font-mono text-xs">{{ u.id }}</td>
+            <td class="px-6 py-3">
+              <div class="font-medium">{{ u.nickname || u.username }}</div>
+              <div class="text-xs text-subtle">{{ u.email }}</div>
+              <div class="text-xs text-subtle" v-if="u.studentNo">{{ u.studentNo }}</div>
+            </td>
+            <td class="px-6 py-3 text-sm text-center">{{ u.status }}</td>
+            <td class="px-6 py-3 text-right">
+              <button size="sm" variant="outline" @click="router.push(`/admin/students/${u.id}`)">{{ t('common.view') || '查看' }}</button>
+            </td>
+          </tr>
+          <tr v-if="items.length === 0">
+            <td colspan="4" class="px-6 py-6">
+              <empty-state :title="String(t('common.empty') || '暂无数据')" />
+            </td>
+          </tr>
+        </template>
+      </glass-table>
 
-      <PaginationBar
+      <pagination-bar
         :page="page"
         :page-size="pageSize"
         :total-items="total"
@@ -64,7 +62,7 @@
         @update:page="(v: number) => { page = v; reload() }"
         @update:pageSize="(v: number) => { pageSize = v; page = 1; reload() }"
       />
-    </Card>
+    </card>
   </div>
 </template>
 
@@ -79,6 +77,7 @@ import EmptyState from '@/components/ui/EmptyState.vue'
 import PaginationBar from '@/components/ui/PaginationBar.vue'
 import GlassPopoverSelect from '@/components/ui/filters/GlassPopoverSelect.vue'
 import GlassSearchInput from '@/components/ui/inputs/GlassSearchInput.vue'
+import GlassTable from '@/components/ui/tables/GlassTable.vue'
 import { adminApi, type AdminUserListItem } from '@/api/admin.api'
 
 const { t } = useI18n()
@@ -95,9 +94,9 @@ const keyword = ref('')
 const status = ref('')
 
 const statusOptions = [
-  { label: 'All status', value: '' },
-  { label: 'active', value: 'active' },
-  { label: 'disabled', value: 'disabled' },
+  { label: String(t('admin.people.allStatus') || t('common.all') || 'All'), value: '' },
+  { label: String(t('admin.people.userStatus.active') || 'active'), value: 'active' },
+  { label: String(t('admin.people.userStatus.disabled') || 'disabled'), value: 'disabled' },
 ]
 
 async function reload() {

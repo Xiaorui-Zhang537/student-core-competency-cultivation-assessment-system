@@ -320,11 +320,21 @@ const routes = [
     component: AdminLayout,
     meta: { requiresAuth: true, role: 'ADMIN' },
     children: [
-      { path: '', redirect: '/admin/dashboard' },
+      { path: '', redirect: '/admin/console' },
       {
-        path: 'dashboard',
-        name: 'AdminDashboard',
-        component: () => import('@/features/admin/views/DashboardView.vue')
+        path: 'console',
+        name: 'AdminConsole',
+        component: () => import('@/features/admin/views/ConsoleView.vue')
+      },
+      {
+        path: 'people',
+        name: 'AdminPeople',
+        component: () => import('@/features/admin/views/PeopleView.vue')
+      },
+      {
+        path: 'moderation',
+        name: 'AdminModeration',
+        component: () => import('@/features/admin/views/ModerationView.vue')
       },
       {
         path: 'courses',
@@ -332,19 +342,26 @@ const routes = [
         component: () => import('@/features/admin/views/CoursesView.vue')
       },
       {
-        path: 'analytics',
-        name: 'AdminAnalytics',
-        component: () => import('@/features/admin/views/AnalyticsView.vue')
+        path: 'rankings',
+        name: 'AdminRankings',
+        component: () => import('@/features/admin/views/RankingsView.vue')
       },
       {
-        path: 'users',
-        name: 'AdminUsers',
-        component: () => import('@/features/admin/views/UsersView.vue')
+        path: 'courses/:id',
+        name: 'AdminCourseDetail',
+        component: () => import('@/features/admin/views/CourseDetailView.vue'),
+        props: true
       },
       {
-        path: 'students',
-        name: 'AdminStudents',
-        component: () => import('@/features/admin/views/StudentsView.vue')
+        path: 'tools',
+        name: 'AdminTools',
+        component: () => import('@/features/admin/views/ToolsView.vue')
+      },
+      {
+        path: 'courses/:courseId/students/:studentId',
+        name: 'AdminCourseStudentDetail',
+        component: () => import('@/features/admin/views/StudentDetailView.vue'),
+        props: true
       },
       {
         path: 'students/:id',
@@ -353,30 +370,16 @@ const routes = [
         props: true
       },
       {
-        path: 'teachers',
-        name: 'AdminTeachers',
-        component: () => import('@/features/admin/views/TeachersView.vue')
-      },
-      {
         path: 'teachers/:id',
         name: 'AdminTeacherDetail',
         component: () => import('@/features/admin/views/TeacherDetailView.vue'),
         props: true
       },
       {
-        path: 'reports',
-        name: 'AdminReports',
-        component: () => import('@/features/admin/views/ReportsView.vue')
-      },
-      {
-        path: 'exports',
-        name: 'AdminExports',
-        component: () => import('@/features/admin/views/ExportsView.vue')
-      },
-      {
-        path: 'community',
-        name: 'AdminCommunityModeration',
-        component: () => import('@/features/admin/views/CommunityModerationView.vue')
+        path: 'audit/:userId',
+        name: 'AdminAiVoiceAudit',
+        component: () => import('@/shared/views/AiVoiceAuditView.vue'),
+        props: true
       },
       {
         path: 'profile',
@@ -389,6 +392,16 @@ const routes = [
         component: () => import('@/features/shared/views/HelpView.vue'),
         meta: { requiresAuth: true }
       },
+
+      // 旧入口兼容：重定向到新聚合页面（保留 query）
+      { path: 'dashboard', redirect: (to: any) => ({ path: '/admin/console', query: to.query }) },
+      { path: 'analytics', redirect: (to: any) => ({ path: '/admin/console', query: { ...to.query, panel: 'analytics' } }) },
+      { path: 'users', redirect: (to: any) => ({ path: '/admin/people', query: { ...to.query, tab: 'users' } }) },
+      { path: 'students', redirect: (to: any) => ({ path: '/admin/people', query: { ...to.query, tab: 'students' } }) },
+      { path: 'teachers', redirect: (to: any) => ({ path: '/admin/people', query: { ...to.query, tab: 'teachers' } }) },
+      { path: 'reports', redirect: (to: any) => ({ path: '/admin/moderation', query: { ...to.query, tab: 'ability' } }) },
+      { path: 'community', redirect: (to: any) => ({ path: '/admin/moderation', query: { ...to.query, tab: 'posts' } }) },
+      { path: 'exports', redirect: (to: any) => ({ path: '/admin/tools', query: to.query }) },
     ]
   },
   // 兼容旧路径：/assistant → 按角色重定向到嵌套路由，保留查询参数

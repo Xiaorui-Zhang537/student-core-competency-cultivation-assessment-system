@@ -2,6 +2,9 @@
   "admin": {
     "title": "Admin Center",
     "sidebar": {
+      "console": "Console",
+      "people": "People",
+      "moderation": "Moderation",
       "dashboard": "Dashboard",
       "courses": "Courses",
       "analytics": "Analytics",
@@ -10,7 +13,50 @@
       "teachers": "Teachers",
       "reports": "Reports",
       "exports": "Exports",
-      "community": "Moderation"
+      "community": "Moderation",
+      "tools": "Tools"
+    },
+    "tabs": {
+      "users": "Users",
+      "students": "Students",
+      "teachers": "Teachers",
+      "abilityReports": "Ability reports",
+      "posts": "Posts",
+      "comments": "Comments"
+    },
+    "console": {
+      "daysLabel": "Window",
+      "abilityReports": "Ability reports"
+    },
+    "people": {
+      "statusLabel": "Status"
+    },
+    "courses": {
+      "statusLabel": "Status",
+      "overview": "Overview",
+      "teacher": "Teacher",
+      "students": "Students",
+      "tabs": {
+        "content": "Content",
+        "students": "Students",
+        "grades": "Grades",
+        "reports": "Reports"
+      }
+    },
+    "tools": {
+      "exportCsv": "Export CSV",
+      "exportPdf": "Export PDF",
+      "exportZip": "Export ZIP"
+    },
+    "student360": {
+      "profile": "Student profile",
+      "tabs": {
+        "grades": "Grades",
+        "ability": "Radar & reports",
+        "insights": "Behavior insights",
+        "aiChat": "AI chats",
+        "voice": "Voice practice"
+      }
     },
     "common": {
       "comingSoon": "Coming soon",

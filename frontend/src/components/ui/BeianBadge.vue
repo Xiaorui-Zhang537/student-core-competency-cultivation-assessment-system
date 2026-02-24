@@ -1,6 +1,6 @@
 <template>
   <div class="fixed left-4 bottom-4 z-30">
-    <LiquidGlass :radius="28" :frost="0.04" class="px-4 py-2" containerClass="rounded-full shadow-lg">
+    <liquid-glass :radius="28" :frost="0.04" class="px-4 py-2" containerClass="rounded-full shadow-lg">
       <a
         href="https://beian.mps.gov.cn/#/query/webSearch?code=21021702000814"
         target="_blank"
@@ -14,7 +14,7 @@
         </span>
         <span class="whitespace-nowrap">辽ICP备2025066070号-1</span>
       </a>
-    </LiquidGlass>
+    </liquid-glass>
   </div>
   
 </template>

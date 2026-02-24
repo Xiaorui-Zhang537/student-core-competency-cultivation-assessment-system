@@ -2,26 +2,26 @@
   <div class="p-6">
     <PageHeader :title="t('admin.sidebar.users')" :subtitle="t('admin.title')">
       <template #actions>
-        <Button variant="primary" @click="openCreate">
-          <PlusIcon class="w-4 h-4 mr-2" />
+        <button variant="primary" @click="openCreate">
+          <plus-icon class="w-4 h-4 mr-2" />
           {{ t('common.create') || '创建' }}
-        </Button>
+        </button>
       </template>
     </PageHeader>
 
-    <Card padding="md" tint="secondary" class="mt-4">
+    <card padding="md" tint="secondary" class="mt-4">
       <div class="flex flex-col md:flex-row gap-3 md:items-center">
-        <GlassSearchInput v-model="keyword" :placeholder="String(t('common.search') || '搜索用户名/邮箱/学号/工号')" size="sm" tint="secondary" />
+        <glass-search-input v-model="keyword" :placeholder="String(t('common.search') || '搜索用户名/邮箱/学号/工号')" size="sm" tint="secondary" />
         <div class="flex gap-2 flex-wrap">
-          <GlassPopoverSelect v-model="role" :options="roleOptions" size="sm" width="140px" />
-          <GlassPopoverSelect v-model="status" :options="statusOptions" size="sm" width="140px" />
-          <Button size="sm" variant="outline" :disabled="loading" @click="reload">{{ String(t('common.search') || '查询') }}</Button>
+          <glass-popover-select v-model="role" :options="roleOptions" size="sm" width="140px" />
+          <glass-popover-select v-model="status" :options="statusOptions" size="sm" width="140px" />
+          <button size="sm" variant="outline" :disabled="loading" @click="reload">{{ String(t('common.search') || '查询') }}</button>
         </div>
       </div>
-    </Card>
+    </card>
 
     <loading-overlay v-if="loading" class="mt-4" :text="String(t('common.loading') || '加载中…')" />
-    <ErrorState
+    <error-state
       v-else-if="error"
       class="mt-4"
       :title="String(t('common.error') || '加载失败')"
@@ -30,58 +30,57 @@
       @action="reload"
     />
 
-    <Card v-else padding="md" tint="secondary" class="mt-4">
-      <div class="overflow-x-auto">
-        <table class="table w-full">
-          <thead>
-            <tr>
-              <th>ID</th>
-              <th>User</th>
-              <th>Role</th>
-              <th>Status</th>
-              <th class="text-right">Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr v-for="u in items" :key="u.id">
-              <td class="font-mono text-xs">{{ u.id }}</td>
-              <td>
-                <div class="font-medium">{{ u.nickname || u.username }}</div>
-                <div class="text-xs text-subtle">{{ u.email }}</div>
-                <div class="text-xs text-subtle" v-if="u.studentNo || u.teacherNo">{{ u.studentNo || u.teacherNo }}</div>
-              </td>
-              <td class="w-40">
-                <GlassPopoverSelect
-                  :model-value="u.role"
-                  :options="roleEditOptions"
-                  size="sm"
-                  @update:modelValue="(v:any) => onChangeRole(u, v)"
-                />
-              </td>
-              <td class="w-40">
-                <GlassPopoverSelect
-                  :model-value="u.status"
-                  :options="statusEditOptions"
-                  size="sm"
-                  @update:modelValue="(v:any) => onChangeStatus(u, v)"
-                />
-              </td>
-              <td class="text-right">
-                <Button size="sm" variant="outline" :disabled="opLoadingId===u.id" @click="sendReset(u)">
-                  {{ t('auth.forgotPassword.send') || '重置密码' }}
-                </Button>
-              </td>
-            </tr>
-            <tr v-if="items.length === 0">
-              <td colspan="5">
-                <EmptyState :title="String(t('common.empty') || '暂无数据')" />
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
+    <card v-else padding="md" tint="secondary" class="mt-4">
+      <glass-table>
+        <template #head>
+          <tr>
+            <th class="px-6 py-3 text-center text-xs font-semibold text-gray-700 dark:text-gray-200 tracking-wide whitespace-nowrap">{{ t('common.columns.id') || 'ID' }}</th>
+            <th class="px-6 py-3 text-left text-xs font-semibold text-gray-700 dark:text-gray-200 tracking-wide">{{ t('common.columns.user') || 'User' }}</th>
+            <th class="px-6 py-3 text-center text-xs font-semibold text-gray-700 dark:text-gray-200 tracking-wide whitespace-nowrap w-40">{{ t('common.columns.role') || 'Role' }}</th>
+            <th class="px-6 py-3 text-center text-xs font-semibold text-gray-700 dark:text-gray-200 tracking-wide whitespace-nowrap w-40">{{ t('common.columns.status') || 'Status' }}</th>
+            <th class="px-6 py-3 text-right text-xs font-semibold text-gray-700 dark:text-gray-200 tracking-wide whitespace-nowrap">{{ t('common.columns.actions') || 'Actions' }}</th>
+          </tr>
+        </template>
+        <template #body>
+          <tr v-for="u in items" :key="u.id" class="hover:bg-white/10 transition-colors duration-150">
+            <td class="px-6 py-3 text-center font-mono text-xs">{{ u.id }}</td>
+            <td class="px-6 py-3">
+              <div class="font-medium">{{ u.nickname || u.username }}</div>
+              <div class="text-xs text-subtle">{{ u.email }}</div>
+              <div class="text-xs text-subtle" v-if="u.studentNo || u.teacherNo">{{ u.studentNo || u.teacherNo }}</div>
+            </td>
+            <td class="px-6 py-3 w-40 text-center">
+              <glass-popover-select
+                :model-value="u.role"
+                :options="roleEditOptions"
+                size="sm"
+                @update:modelValue="(v:any) => onChangeRole(u, v)"
+              />
+            </td>
+            <td class="px-6 py-3 w-40 text-center">
+              <glass-popover-select
+                :model-value="u.status"
+                :options="statusEditOptions"
+                size="sm"
+                @update:modelValue="(v:any) => onChangeStatus(u, v)"
+              />
+            </td>
+            <td class="px-6 py-3 text-right">
+              <button size="sm" variant="outline" :disabled="opLoadingId===u.id" @click="sendReset(u)">
+                {{ t('auth.forgotPassword.send') || '重置密码' }}
+              </button>
+            </td>
+          </tr>
 
-      <PaginationBar
+          <tr v-if="items.length === 0">
+            <td colspan="5" class="px-6 py-6">
+              <empty-state :title="String(t('common.empty') || '暂无数据')" />
+            </td>
+          </tr>
+        </template>
+      </glass-table>
+
+      <pagination-bar
         :page="page"
         :page-size="pageSize"
         :total-items="total"
@@ -90,56 +89,56 @@
         @update:page="(v: number) => { page = v; reload() }"
         @update:pageSize="(v: number) => { pageSize = v; page = 1; reload() }"
       />
-    </Card>
+    </card>
 
-    <GlassModal v-if="showCreate" :title="String(t('common.create') || '创建用户')" size="md" heightVariant="tall" @close="closeCreate">
+    <glass-modal v-if="showCreate" :title="String(t('common.create') || '创建用户')" size="md" heightVariant="tall" @close="closeCreate">
       <form class="space-y-3" @submit.prevent="create">
         <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
           <div>
-            <label class="block text-sm font-medium mb-1">Username</label>
-            <GlassInput v-model="form.username" />
+            <label class="block text-sm font-medium mb-1">{{ t('auth.register.form.username.label') || '用户名' }}</label>
+            <glass-input v-model="form.username" />
           </div>
           <div>
-            <label class="block text-sm font-medium mb-1">Email</label>
-            <GlassInput v-model="form.email" type="email" />
+            <label class="block text-sm font-medium mb-1">{{ t('auth.register.form.email.label') || '邮箱' }}</label>
+            <glass-input v-model="form.email" type="email" />
           </div>
           <div>
-            <label class="block text-sm font-medium mb-1">Password</label>
-            <GlassInput v-model="form.password" type="password" />
+            <label class="block text-sm font-medium mb-1">{{ t('auth.register.form.password.label') || '密码' }}</label>
+            <glass-input v-model="form.password" type="password" />
           </div>
           <div>
-            <label class="block text-sm font-medium mb-1">Role</label>
-            <GlassPopoverSelect v-model="form.role" :options="roleCreateOptions" size="sm" />
+            <label class="block text-sm font-medium mb-1">{{ t('common.columns.role') || '角色' }}</label>
+            <glass-popover-select v-model="form.role" :options="roleCreateOptions" size="sm" />
           </div>
           <div>
-            <label class="block text-sm font-medium mb-1">Status</label>
-            <GlassPopoverSelect v-model="form.status" :options="statusEditOptions" size="sm" />
+            <label class="block text-sm font-medium mb-1">{{ t('common.columns.status') || '状态' }}</label>
+            <glass-popover-select v-model="form.status" :options="statusEditOptions" size="sm" />
           </div>
           <div>
-            <label class="block text-sm font-medium mb-1">Nickname</label>
-            <GlassInput v-model="form.nickname" />
+            <label class="block text-sm font-medium mb-1">{{ t('admin.people.fields.nickname') || '昵称' }}</label>
+            <glass-input v-model="form.nickname" />
           </div>
           <div>
-            <label class="block text-sm font-medium mb-1">StudentNo</label>
-            <GlassInput v-model="form.studentNo" />
+            <label class="block text-sm font-medium mb-1">{{ t('admin.people.fields.studentNo') || '学号' }}</label>
+            <glass-input v-model="form.studentNo" />
           </div>
           <div>
-            <label class="block text-sm font-medium mb-1">TeacherNo</label>
-            <GlassInput v-model="form.teacherNo" />
+            <label class="block text-sm font-medium mb-1">{{ t('admin.people.fields.teacherNo') || '工号' }}</label>
+            <glass-input v-model="form.teacherNo" />
           </div>
         </div>
 
         <div class="flex justify-end gap-2 pt-2">
-          <Button variant="ghost" type="button" @click="closeCreate">{{ t('common.cancel') || '取消' }}</Button>
-          <Button variant="primary" type="submit" :disabled="createLoading">{{ t('common.confirm') || '确认' }}</Button>
+          <button variant="ghost" type="button" @click="closeCreate">{{ t('common.cancel') || '取消' }}</button>
+          <button variant="primary" type="submit" :disabled="createLoading">{{ t('common.confirm') || '确认' }}</button>
         </div>
       </form>
-    </GlassModal>
+    </glass-modal>
   </div>
 </template>
 
 <script setup lang="ts">
-import { onMounted, reactive, ref } from 'vue'
+import { computed, onMounted, reactive, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import Card from '@/components/ui/Card.vue'
 import Button from '@/components/ui/Button.vue'
@@ -150,6 +149,7 @@ import GlassPopoverSelect from '@/components/ui/filters/GlassPopoverSelect.vue'
 import GlassSearchInput from '@/components/ui/inputs/GlassSearchInput.vue'
 import GlassModal from '@/components/ui/GlassModal.vue'
 import GlassInput from '@/components/ui/inputs/GlassInput.vue'
+import GlassTable from '@/components/ui/tables/GlassTable.vue'
 import { PlusIcon } from '@heroicons/vue/24/outline'
 import { adminApi, type AdminUserCreateRequest, type AdminUserListItem } from '@/api/admin.api'
 import { useUIStore } from '@/stores/ui'
@@ -169,27 +169,27 @@ const keyword = ref('')
 const role = ref('') // filter
 const status = ref('') // filter
 
-const roleOptions = [
-  { label: 'All roles', value: '' },
-  { label: 'student', value: 'student' },
-  { label: 'teacher', value: 'teacher' },
-  { label: 'admin', value: 'admin' },
-]
-const statusOptions = [
-  { label: 'All status', value: '' },
-  { label: 'active', value: 'active' },
-  { label: 'disabled', value: 'disabled' },
-]
-const roleEditOptions = [
-  { label: 'student', value: 'student' },
-  { label: 'teacher', value: 'teacher' },
-  { label: 'admin', value: 'admin' },
-]
+const roleOptions = computed(() => ([
+  { label: String(t('admin.people.allRoles') || t('common.all') || 'All'), value: '' },
+  { label: String(t('admin.roles.student') || 'student'), value: 'student' },
+  { label: String(t('admin.roles.teacher') || 'teacher'), value: 'teacher' },
+  { label: String(t('admin.roles.admin') || 'admin'), value: 'admin' },
+]))
+const statusOptions = computed(() => ([
+  { label: String(t('admin.people.allStatus') || t('common.all') || 'All'), value: '' },
+  { label: String(t('admin.people.userStatus.active') || 'active'), value: 'active' },
+  { label: String(t('admin.people.userStatus.disabled') || 'disabled'), value: 'disabled' },
+]))
+const roleEditOptions = computed(() => ([
+  { label: String(t('admin.roles.student') || 'student'), value: 'student' },
+  { label: String(t('admin.roles.teacher') || 'teacher'), value: 'teacher' },
+  { label: String(t('admin.roles.admin') || 'admin'), value: 'admin' },
+]))
 const roleCreateOptions = roleEditOptions
-const statusEditOptions = [
-  { label: 'active', value: 'active' },
-  { label: 'disabled', value: 'disabled' },
-]
+const statusEditOptions = computed(() => ([
+  { label: String(t('admin.people.userStatus.active') || 'active'), value: 'active' },
+  { label: String(t('admin.people.userStatus.disabled') || 'disabled'), value: 'disabled' },
+]))
 
 const opLoadingId = ref<number | null>(null)
 

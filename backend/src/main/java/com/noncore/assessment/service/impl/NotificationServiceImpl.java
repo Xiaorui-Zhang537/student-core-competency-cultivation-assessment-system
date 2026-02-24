@@ -356,6 +356,46 @@ public class NotificationServiceImpl implements NotificationService {
         return batchSendNotification(recipientIds, null, title, content, type, "system", "normal", null, null);
     }
 
+    /**
+     * 管理员群发通知：按用户逐条写入（复用 notifications 表与通知中心）。
+     */
+    @Override
+    @Transactional
+    public Map<String, Object> broadcastNotification(Long senderId,
+                                                     String title,
+                                                     String content,
+                                                     String type,
+                                                     String category,
+                                                     String priority,
+                                                     String targetType,
+                                                     List<Long> targetIds,
+                                                     String role) {
+        logger.info("管理员群发通知，senderId: {}, 目标类型: {}, role: {}", senderId, targetType, role);
+
+        String resolvedType = (type == null || type.isBlank()) ? "system" : type;
+        String resolvedCategory = (category == null || category.isBlank()) ? "system" : category;
+        String resolvedPriority = (priority == null || priority.isBlank()) ? "normal" : priority;
+        String resolvedTargetType = (targetType == null || targetType.isBlank()) ? "all" : targetType;
+
+        List<Long> recipientIds = switch (resolvedTargetType) {
+            case "all" -> userMapper.selectAllUserIds();
+            case "role" -> {
+                if (role == null || role.isBlank()) {
+                    throw new BusinessException(ErrorCode.INVALID_PARAMETER, "角色不能为空");
+                }
+                yield userMapper.selectUserIdsByRole(role);
+            }
+            case "specific" -> (targetIds == null ? List.of() : targetIds);
+            default -> throw new BusinessException(ErrorCode.INVALID_PARAMETER, "不支持的目标类型: " + resolvedTargetType);
+        };
+
+        if (recipientIds == null || recipientIds.isEmpty()) {
+            return Map.of("successCount", 0, "failCount", 0, "errors", List.of("接收者列表为空"));
+        }
+
+        return batchSendNotification(recipientIds, senderId, title, content, resolvedType, resolvedCategory, resolvedPriority, null, null);
+    }
+
     @Override
     public Map<String, Object> sendAssignmentNotification(Long assignmentId, String type, String customMessage) {
         logger.info("发送作业相关通知，作业ID: {}, 类型: {}", assignmentId, type);

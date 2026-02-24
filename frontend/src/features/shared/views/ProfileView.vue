@@ -91,10 +91,10 @@
                   <p>{{ userProfile.city || t('shared.profile.status.notSet') }}</p>
                 </div>
               </div>
-              <Button variant="indigo" class="mt-4" @click="openEditProfile">
+              <button variant="indigo" class="mt-4" @click="openEditProfile">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5M18.5 2.5a2.121 2.121 0 113 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
                 {{ t('shared.profile.actions.edit') }}
-              </Button>
+              </button>
             </div>
           </div>
         </div>
@@ -208,14 +208,14 @@
               <glass-textarea id="bio" v-model="profileForm.bio" :rows="4" />
             </div>
             <div class="flex justify-end space-x-3">
-              <Button type="button" variant="secondary" @click="cancelEdit">
+              <button type="button" variant="secondary" @click="cancelEdit">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
                 {{ t('shared.profile.actions.cancel') }}
-              </Button>
-              <Button type="submit" :disabled="uiStore.loading" variant="indigo">
+              </button>
+              <button type="submit" :disabled="uiStore.loading" variant="indigo">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
                 {{ t('shared.profile.actions.save') }}
-              </Button>
+              </button>
             </div>
           </form>
         </div>
@@ -229,20 +229,20 @@
                 <h3 class="text-sm font-medium">{{ t('shared.profile.section.changePassword') }}</h3>
                 <p class="text-sm text-gray-500"></p>
               </div>
-               <Button variant="outline" size="sm" @click="showChangePassword = true">
+               <button variant="outline" size="sm" @click="showChangePassword = true">
                  <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 11c-1.657 0-3 1.343-3 3v4h6v-4c0-1.657-1.343-3-3-3z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 11V7a5 5 0 1110 0v4"/></svg>
                  {{ t('shared.profile.actions.changePassword') }}
-               </Button>
+               </button>
             </div>
             <div class="flex items-center justify-between p-4 rounded-lg" v-glass="{ strength: 'thin', interactive: true }">
               <div>
                 <h3 class="text-sm font-medium">{{ t('shared.profile.fields.email') }}</h3>
                 <p class="text-sm text_gray-500">{{ userProfile.emailVerified ? t('shared.profile.status.verified') : t('shared.profile.status.notVerified') }}</p>
               </div>
-               <Button v-if="!userProfile.emailVerified" variant="secondary" size="sm" :disabled="uiStore.loading" @click="handleResendVerification">
+               <button v-if="!userProfile.emailVerified" variant="secondary" size="sm" :disabled="uiStore.loading" @click="handleResendVerification">
                  <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v16h16"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 8l4 4-4 4"/></svg>
                  {{ t('shared.profile.actions.sendVerification') }}
-               </Button>
+               </button>
             </div>
           </div>
         </div>
@@ -264,16 +264,16 @@
               <input id="confirmNewPassword" v-model="confirmNewPassword" type="password" required class="input" />
             </div>
             <div class="flex justify-end space-x-3">
-              <Button type="button" variant="secondary" @click="showChangePassword = false">
+              <button type="button" variant="secondary" @click="showChangePassword = false">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
                 {{ t('shared.profile.actions.cancel') }}
-              </Button>
-              <Button type="submit" :disabled="uiStore.loading" variant="indigo">
+              </button>
+              <button type="submit" :disabled="uiStore.loading" variant="indigo">
                 <template #icon>
                   <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 11c-1.657 0-3 1.343-3 3v4h6v-4c0-1.657-1.343-3-3-3z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 11V7a5 5 0 1110 0v4"/></svg>
                 </template>
                 {{ t('shared.profile.actions.changePassword') }}
-              </Button>
+              </button>
             </div>
           </form>
         </div>

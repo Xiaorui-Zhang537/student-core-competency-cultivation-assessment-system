@@ -16,20 +16,20 @@
         </nav>
         <page-header :title="t('teacher.submissions.title')" :subtitle="t('teacher.submissions.subtitle')">
           <template #actions>
-            <Button
+            <button
               variant="primary"
               @click="remindUnsubmitted"
               :loading="reminding"
               :disabled="reminding || stats.unsubmittedCount === 0 || isPastDue"
             >
               {{ t('teacher.submissions.actions.remindUnsubmitted') }}
-            </Button>
+            </button>
           </template>
         </page-header>
       </div>
 
       <!-- Filters（与作业管理页一致：容器放在标题下方） -->
-      <FilterBar tint="info" align="center" :dense="false" class="mb-6 h-19">
+      <filter-bar tint="info" align="center" :dense="false" class="mb-6 h-19">
         <template #left>
           <div class="flex items-center gap-3 flex-wrap">
             <div class="w-auto flex items-center gap-2">
@@ -37,7 +37,7 @@
                 {{ t('teacher.submissions.filters.statusLabel') || '提交状态' }}
               </span>
               <div class="w-50">
-                <GlassPopoverSelect
+                <glass-popover-select
                   v-model="statusFilter"
                   :options="statusOptions"
                   size="sm"
@@ -60,7 +60,7 @@
         <template #right>
           <div class="flex items-center gap-3 flex-wrap justify-end">
             <div class="w-56">
-              <GlassSearchInput
+              <glass-search-input
                 v-model="searchText"
                 :placeholder="(t('teacher.submissions.searchPlaceholder') as string) || '搜索学生姓名'"
                 size="sm"
@@ -69,20 +69,20 @@
             </div>
           </div>
         </template>
-      </FilterBar>
+      </filter-bar>
 
     <div v-if="loading" class="text-center py-12">{{ t('teacher.submissions.loading') }}</div>
     <div v-else>
-      <Card v-if="errorMessage" padding="md" tint="danger" class="text-center">
+      <card v-if="errorMessage" padding="md" tint="danger" class="text-center">
         <p class="mb-3">{{ errorMessage }}</p>
-         <Button variant="info" @click="fetch()">
+         <button variant="info" @click="fetch()">
            <arrow-path-icon class="w-4 h-4 mr-2" />
            {{ t('teacher.submissions.retry') }}
-         </Button>
-      </Card>
-      <Card v-else-if="displayRows.length === 0" padding="md" tint="info" class="text-center text-gray-500">{{ t('teacher.submissions.empty') }}</Card>
+         </button>
+      </card>
+      <card v-else-if="displayRows.length === 0" padding="md" tint="info" class="text-center text-gray-500">{{ t('teacher.submissions.empty') }}</card>
       <div v-else class="space-y-3">
-        <Card v-for="row in displayRows" :key="row.key" padding="md" tint="secondary" class="relative">
+        <card v-for="row in displayRows" :key="row.key" padding="md" tint="secondary" class="relative">
           <div class="flex items-center gap-3 pr-40 min-w-0">
             <div class="w-9 h-9">
               <user-avatar :avatar="row.avatar" :size="36">
@@ -108,15 +108,15 @@
             </div>
           </div>
           <div class="absolute right-4 top-1/2 -translate-y-1/2">
-            <Button size="sm" variant="purple" :disabled="loading" @click="goGrade(row)">
+            <button size="sm" variant="purple" :disabled="loading" @click="goGrade(row)">
               <check-badge-icon class="w-4 h-4 mr-1" />
               {{ t('teacher.submissions.actions.grade') }}
-            </Button>
+            </button>
           </div>
-        </Card>
+        </card>
       </div>
 
-      <PaginationBar
+      <pagination-bar
         :page="currentPage"
         :page-size="pageSize"
         :total-pages="totalPages"

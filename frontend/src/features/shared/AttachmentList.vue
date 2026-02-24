@@ -1,6 +1,6 @@
 <template>
   <component :is="noCard ? 'div' : 'div'" class="w-full">
-    <Card v-if="!noCard" :hoverable="true" padding="md" class="w-full">
+    <card v-if="!noCard" :hoverable="true" padding="md" class="w-full">
       <template v-if="!hideHeader" #header>
         <div class="flex items-center">
           <h3 class="text-lg font-semibold flex-1 truncate">{{ titleText }}</h3>
@@ -17,17 +17,17 @@
             <div class="text-xs text-gray-500">{{ formatSize((f as any).fileSize) }}</div>
           </div>
           <div class="flex items-center gap-2">
-            <Button v-if="showDefaultDownload" size="sm" variant="success" class="whitespace-nowrap" @click="handleDownload(f)">
+            <button v-if="showDefaultDownload" size="sm" variant="success" class="whitespace-nowrap" @click="handleDownload(f)">
               <template #icon>
                 <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
               </template>
               {{ i18nText('student.assignments.detail.download', '下载') }}
-            </Button>
+            </button>
             <slot name="actions" :file="f" />
           </div>
         </li>
       </ul>
-    </Card>
+    </card>
     <template v-else>
       <div v-if="!files || files.length === 0" class="text-sm text-gray-500 dark:text-gray-400">
         {{ i18nText('student.assignments.detail.noAttachments', '暂无附件') }}
@@ -39,12 +39,12 @@
             <div class="text-xs text-gray-500">{{ formatSize((f as any).fileSize) }}</div>
           </div>
           <div class="flex items-center gap-2">
-            <Button v-if="showDefaultDownload" size="sm" variant="success" class="whitespace-nowrap" @click="handleDownload(f)">
+            <button v-if="showDefaultDownload" size="sm" variant="success" class="whitespace-nowrap" @click="handleDownload(f)">
               <template #icon>
                 <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
               </template>
               {{ i18nText('student.assignments.detail.download', '下载') }}
-            </Button>
+            </button>
             <slot name="actions" :file="f" />
           </div>
         </li>

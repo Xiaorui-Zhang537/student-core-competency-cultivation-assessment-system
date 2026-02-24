@@ -4,7 +4,7 @@
       <!-- 使用零宽空格提供换行机会，具体间距由前一个单词的 margin 决定 -->
       <span v-if="seg.type === 'space'">&#8203;</span>
       <span v-else class="inline-flex whitespace-nowrap" :class="wordMarginClass(sIdx)">
-        <Motion
+        <motion
           v-for="(ch, idx) in seg.text.split('')"
           :key="`tg-${sIdx}-${idx}`"
           as="span"
@@ -18,7 +18,7 @@
           class="inline-block will-change-transform"
         >
           <span>{{ ch }}</span>
-        </Motion>
+        </motion>
       </span>
     </template>
   </div>

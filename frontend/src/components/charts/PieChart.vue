@@ -87,6 +87,18 @@ let resizeObserver: ResizeObserver | null = null
 let darkObserver: MutationObserver | null = null
 let lastIsDark: boolean | null = null
 let reRenderScheduled = false
+let isUnmounted = false
+
+// 等待容器可用且有尺寸（避免初始化过早导致 dom 被卸载/尚未布局）
+const waitForContainer = async (maxTries = 10): Promise<boolean> => {
+  for (let i = 0; i < maxTries; i++) {
+    await nextTick()
+    if (isUnmounted) return false
+    if (chartRef.value && chartRef.value.offsetWidth > 0 && chartRef.value.offsetHeight > 0) return true
+    await new Promise((r) => requestAnimationFrame(() => r(null)))
+  }
+  return !!chartRef.value && !isUnmounted
+}
 
 const ensurePalette = () => {
   const palette = getEChartsThemedTokens()?.palette
@@ -159,7 +171,8 @@ const resolveBg = () => {
 }
 
 const initChart = async () => {
-  if (!chartRef.value) return
+  const ok = await waitForContainer()
+  if (!ok || !chartRef.value) return
   if (!hasData()) {
     disposeChart()
     return
@@ -169,6 +182,9 @@ const initChart = async () => {
     disposeChart()
     
     await nextTick()
+
+    // nextTick 期间可能发生路由切换导致卸载；此处必须二次校验
+    if (isUnmounted || !chartRef.value) return
     
     // 创建图表实例（统一主题）
     const theme = resolveEChartsTheme()
@@ -432,7 +448,14 @@ onMounted(() => {
   }
 })
 
-onUnmounted(() => { disposeChart(); if (darkObserver) { try { (darkObserver as any).disconnect?.() } catch {}; darkObserver = null } })
+onUnmounted(() => {
+  isUnmounted = true
+  disposeChart()
+  if (darkObserver) {
+    try { (darkObserver as any).disconnect?.() } catch {}
+    darkObserver = null
+  }
+})
 </script>
 
 <style scoped lang="postcss">

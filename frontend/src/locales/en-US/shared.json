@@ -613,6 +613,10 @@
         }
       },
       "dimensions": {
+        "ability": { "title": "Learning ability" },
+        "attitude": { "title": "Learning attitude" },
+        "moral_reasoning": { "title": "Moral reasoning" },
+        "strategy": { "title": "Learning strategy" },
         "MORAL_COGNITION": {
           "title": "Moral Reasoning",
           "what": "Stage of moral reasoning, breadth of moral foundations, argument and counter-argument chains",

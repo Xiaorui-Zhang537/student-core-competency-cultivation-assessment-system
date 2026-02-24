@@ -7,7 +7,7 @@
 
     <div v-else class="space-y-4">
       <!-- 主卡片 -->
-      <Card padding="lg" :tint="typeTint">
+      <card padding="lg" :tint="typeTint">
         <!-- 顶部：图标/标题在左，查看详情/返回在右上 -->
         <div class="flex flex-wrap items-start gap-3">
           <div class="flex items-start gap-3 flex-1 min-w-0">
@@ -21,12 +21,12 @@
               <div class="flex items-center flex-wrap gap-2">
                 <h2 class="text-lg font-semibold text-base-content">{{ localizedTitle }}</h2>
                 <!-- 类型 Badge -->
-                <Badge size="sm" :variant="typeVariant">{{ localizedType }}</Badge>
+                <badge size="sm" :variant="typeVariant">{{ localizedType }}</badge>
                 <!-- 优先级 Badge -->
-                <Badge size="sm" :variant="priorityVariant">{{ localizedPriority }}</Badge>
+                <badge size="sm" :variant="priorityVariant">{{ localizedPriority }}</badge>
                 <!-- 已读状态 -->
-                <Badge v-if="notification.isRead" size="sm" variant="secondary">{{ t('notifications.status.read') || '已读' }}</Badge>
-                <Badge v-else size="sm" variant="success">{{ t('notifications.status.unread') || '未读' }}</Badge>
+                <badge v-if="notification.isRead" size="sm" variant="secondary">{{ t('notifications.status.read') || '已读' }}</badge>
+                <badge v-else size="sm" variant="success">{{ t('notifications.status.unread') || '未读' }}</badge>
               </div>
 
               <!-- 时间 -->
@@ -35,14 +35,14 @@
           </div>
 
           <div class="ml-auto flex shrink-0 items-center gap-2">
-            <Button variant="success" size="sm" @click="goRelated">
+            <button variant="success" size="sm" @click="goRelated">
               <svg class="w-4 h-4 mr-1.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M12 5l7 7-7 7"/></svg>
               {{ t('notifications.actions.goRelated') || '查看详情' }}
-            </Button>
-            <Button variant="outline" size="sm" @click="goCenter">
+            </button>
+            <button variant="outline" size="sm" @click="goCenter">
               <svg class="w-4 h-4 mr-1.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5"/><path d="M12 19l-7-7 7-7"/></svg>
               {{ t('notifications.actions.backToCenter') || '返回通知中心' }}
-            </Button>
+            </button>
           </div>
         </div>
 
@@ -80,14 +80,14 @@
             {{ notification.content }}
           </div>
         </div>
-      </Card>
+      </card>
 
       <!-- 操作按钮 -->
       <div v-if="!notification.isRead" class="flex flex-wrap gap-3">
-        <Button variant="primary" size="sm" @click="markRead">
+        <button variant="primary" size="sm" @click="markRead">
           <svg class="w-4 h-4 mr-1.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
           {{ t('notifications.actions.markRead') || '标记已读' }}
-        </Button>
+        </button>
       </div>
     </div>
   </div>

@@ -1,6 +1,6 @@
 <template>
   <div class="min-h-screen relative text-base-content" :style="baseBgStyle">
-    <BackgroundLayer />
+    <background-layer />
     <nav class="sticky top-0 z-40 px-6 pt-6 pb-6">
       <div class="flex items-center gap-3">
         <!-- 左：系统名称（药丸，SparklesText，不换行，自适应宽度，高度60px） -->
@@ -15,9 +15,9 @@
 
         <!-- 右：Dock（外层液态玻璃药丸 + 透明 Dock 内核） -->
         <liquid-glass :radius="30" class="flex items-center justify-center h-full" containerClass="rounded-full h-[60px] px-2">
-          <Dock :magnification="0" :distance="0" :animate="false" variant="transparent" paddingClass="pl-1.5 pr-5" heightClass="h-[56px]" roundedClass="rounded-full" gapClass="gap-3">
-            <DockIcon :animate="false">
-              <GlassTooltip :content="(isDockVisible ? (t('layout.common.hideDock') as string) : (t('layout.common.showDock') as string)) || '切换 Dock'">
+          <dock :magnification="0" :distance="0" :animate="false" variant="transparent" paddingClass="pl-1.5 pr-5" heightClass="h-[56px]" roundedClass="rounded-full" gapClass="gap-3">
+            <dock-icon :animate="false">
+              <glass-tooltip :content="(isDockVisible ? (t('layout.common.hideDock') as string) : (t('layout.common.showDock') as string)) || '切换 Dock'">
                 <ripple-button
                   pill
                   :duration="0"
@@ -25,87 +25,87 @@
                   :class="topbarBtnClass"
                   @click="isDockVisible = !isDockVisible"
                 >
-                  <EyeIcon v-if="isDockVisible" class="w-5 h-5" />
-                  <EyeSlashIcon v-else class="w-5 h-5" />
+                  <eye-icon v-if="isDockVisible" class="w-5 h-5" />
+                  <eye-slash-icon v-else class="w-5 h-5" />
                 </ripple-button>
-              </GlassTooltip>
-            </DockIcon>
-            <DockIcon :animate="false">
-              <GlassTooltip :content="(t('layout.common.toggleTheme') as string) || '主题'">
+              </glass-tooltip>
+            </dock-icon>
+            <dock-icon :animate="false">
+              <glass-tooltip :content="(t('layout.common.toggleTheme') as string) || '主题'">
                 <ripple-button pill :duration="0" :class="topbarBtnClass" :aria-label="(t('layout.common.toggleTheme') as string) || '主题'" @click="uiStore.toggleDarkMode()">
                   <sun-icon v-if="uiStore.isDarkMode" class="w-5 h-5" />
                   <moon-icon v-else class="w-5 h-5" />
                 </ripple-button>
-              </GlassTooltip>
-            </DockIcon>
-            <DockIcon :animate="false">
+              </glass-tooltip>
+            </dock-icon>
+            <dock-icon :animate="false">
               <span ref="bgBtnRef" class="inline-flex">
-                <GlassTooltip :content="(t('layout.common.bgPickerTitle') as string) || '背景'">
+                <glass-tooltip :content="(t('layout.common.bgPickerTitle') as string) || '背景'">
                   <ripple-button pill :duration="0" :class="topbarBtnClass" :aria-label="(t('layout.common.bgPickerTitle') as string) || '背景'" @click="onToggleBgPicker">
                     <photo-icon class="w-5 h-5" />
                   </ripple-button>
-                </GlassTooltip>
+                </glass-tooltip>
               </span>
-            </DockIcon>
-            <DockIcon :animate="false">
+            </dock-icon>
+            <dock-icon :animate="false">
               <span ref="themeBtnRef" class="inline-flex">
-                <GlassTooltip :content="(t('layout.common.themeFamily') as string) || '主题家族'">
+                <glass-tooltip :content="(t('layout.common.themeFamily') as string) || '主题家族'">
                   <ripple-button pill :duration="0" :class="topbarBtnClass" :aria-label="(t('layout.common.themeFamily') as string) || '主题家族'" @click="onToggleThemeMenu">
                     <paint-brush-icon class="w-5 h-5" />
                   </ripple-button>
-                </GlassTooltip>
+                </glass-tooltip>
               </span>
-            </DockIcon>
-            <DockIcon :animate="false">
+            </dock-icon>
+            <dock-icon :animate="false">
               <span ref="cursorBtnRef" class="inline-flex">
-                <GlassTooltip :content="(t('layout.common.cursorTrail') as string) || '鼠标轨迹'">
+                <glass-tooltip :content="(t('layout.common.cursorTrail') as string) || '鼠标轨迹'">
                   <ripple-button pill :duration="0" :class="topbarBtnClass" :aria-label="(t('layout.common.cursorTrail') as string) || '鼠标轨迹'" @click="onToggleCursorMenu">
-                    <CursorArrowRaysIcon class="w-5 h-5" />
+                    <cursor-arrow-rays-icon class="w-5 h-5" />
                   </ripple-button>
-                </GlassTooltip>
+                </glass-tooltip>
               </span>
-            </DockIcon>
-            <DockIcon class="-ml-2" :animate="false">
-              <GlassTooltip :content="(t('layout.common.language') as string) || '语言'">
+            </dock-icon>
+            <dock-icon class="-ml-2" :animate="false">
+              <glass-tooltip :content="(t('layout.common.language') as string) || '语言'">
                 <language-switcher buttonClass="px-3 h-10 flex items-center rounded-full min-w-[56px] whitespace-nowrap" />
-              </GlassTooltip>
-            </DockIcon>
+              </glass-tooltip>
+            </dock-icon>
             
-            <DockIcon :animate="false">
+            <dock-icon :animate="false">
               <notification-bell>
                 <template #trigger="{ toggle }">
-                  <GlassTooltip :content="t('notifications.title') as string">
+                  <glass-tooltip :content="t('notifications.title') as string">
                     <ripple-button pill :duration="0" :class="topbarBtnClass" :aria-label="t('notifications.title') as string" @click="toggle">
                       <bell-icon class="w-5 h-5" />
                     </ripple-button>
-                  </GlassTooltip>
+                  </glass-tooltip>
                 </template>
               </notification-bell>
-            </DockIcon>
-            <DockIcon :animate="false">
+            </dock-icon>
+            <dock-icon :animate="false">
               <span class="relative inline-flex">
-                <GlassTooltip :content="(t('shared.chat.open') as string) || '聊天'">
+                <glass-tooltip :content="(t('shared.chat.open') as string) || '聊天'">
                   <ripple-button pill :duration="0" :class="topbarBtnClass" :aria-label="(t('shared.chat.open') as string) || '聊天'" @click.stop="toggleChatDrawer($event)">
                     <chat-bubble-left-right-icon class="w-5 h-5" />
                   </ripple-button>
-                </GlassTooltip>
+                </glass-tooltip>
                 <span v-if="chat.totalUnread > 0 && !chat.isOpen" class="absolute -top-0.5 -right-0.5 glass-badge glass-badge-xs text-[10px] leading-none px-[6px]">{{ Math.min(chat.totalUnread as any, 99) }}</span>
               </span>
-            </DockIcon>
+            </dock-icon>
             
-            <DockIcon :square="false" :baseSize="56" :ml="8" :animate="false">
+            <dock-icon :square="false" :baseSize="56" :ml="8" :animate="false">
               <span ref="userMenuBtn" class="inline-flex">
-                <GlassTooltip :content="(t('layout.common.me') as string) || '我'">
+                <glass-tooltip :content="(t('layout.common.me') as string) || '我'">
                   <ripple-button pill class="pl-2 pr-4 h-full items-center gap-2 whitespace-nowrap" :duration="0" :class="topbarBtnClass" :aria-label="(t('layout.common.me') as string) || '我'" @click="showUserMenu = !showUserMenu">
                     <user-avatar :avatar="(authStore.user as any)?.avatar" :size="30">
                       <div class="w-[30px] h-[30px] rounded-full bg-gray-200 dark:bg-gray-700 flex-shrink-0"></div>
                     </user-avatar>
                     <span class="text-sm font-medium text-base-content whitespace-nowrap">{{ displayName }}</span>
                   </ripple-button>
-                </GlassTooltip>
+                </glass-tooltip>
               </span>
-            </DockIcon>
-          </Dock>
+            </dock-icon>
+          </dock>
         </liquid-glass>
       </div>
     </nav>

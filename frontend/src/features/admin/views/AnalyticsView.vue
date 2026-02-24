@@ -2,17 +2,17 @@
   <div class="p-6">
     <PageHeader :title="t('admin.sidebar.analytics')" :subtitle="t('admin.title')" />
 
-    <Card padding="md" tint="secondary" class="mt-4">
+    <card padding="md" tint="secondary" class="mt-4">
       <div class="flex items-center gap-3 flex-wrap">
         <div class="w-48">
-          <GlassPopoverSelect v-model="days" :options="dayOptions" size="sm" />
+          <glass-popover-select v-model="days" :options="dayOptions" size="sm" />
         </div>
-        <Button size="sm" variant="outline" :disabled="loading" @click="reload">{{ t('common.refresh') || '刷新' }}</Button>
+        <button size="sm" variant="outline" :disabled="loading" @click="reload">{{ t('common.refresh') || '刷新' }}</button>
       </div>
-    </Card>
+    </card>
 
     <loading-overlay v-if="loading" class="mt-4" :text="String(t('common.loading') || '加载中…')" />
-    <ErrorState
+    <error-state
       v-else-if="error"
       class="mt-4"
       :title="String(t('common.error') || '加载失败')"
@@ -22,23 +22,23 @@
     />
 
     <div v-else class="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-4">
-      <Card padding="md" tint="secondary" class="lg:col-span-3">
+      <card padding="md" tint="secondary" class="lg:col-span-3">
         <div class="text-sm font-medium mb-2">Series (last {{ days }} days)</div>
         <div class="text-xs text-subtle">该页面首期以“后端聚合序列”展示为主；后续可升级为完整 ECharts 面板。</div>
-      </Card>
+      </card>
 
-      <Card padding="md" tint="secondary">
+      <card padding="md" tint="secondary">
         <div class="text-sm font-medium mb-2">Active users (daily)</div>
         <pre class="text-xs whitespace-pre-wrap break-words">{{ JSON.stringify(series?.activeUsersDaily || [], null, 2) }}</pre>
-      </Card>
-      <Card padding="md" tint="secondary">
+      </card>
+      <card padding="md" tint="secondary">
         <div class="text-sm font-medium mb-2">New users (daily)</div>
         <pre class="text-xs whitespace-pre-wrap break-words">{{ JSON.stringify(series?.newUsersDaily || [], null, 2) }}</pre>
-      </Card>
-      <Card padding="md" tint="secondary">
+      </card>
+      <card padding="md" tint="secondary">
         <div class="text-sm font-medium mb-2">Enrollments (daily)</div>
         <pre class="text-xs whitespace-pre-wrap break-words">{{ JSON.stringify(series?.enrollmentsDaily || [], null, 2) }}</pre>
-      </Card>
+      </card>
     </div>
   </div>
 </template>

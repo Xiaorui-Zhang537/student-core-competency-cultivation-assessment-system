@@ -1,9 +1,9 @@
 <template>
   <template v-for="el in elements" :key="String(prefix + '/' + el.name)">
-    <Folder v-if="el.directory" :id="String(prefix + '/' + el.name)" :name="el.name">
+    <folder v-if="el.directory" :id="String(prefix + '/' + el.name)" :name="el.name">
       <RenderElements :elements="el.children || []" :prefix="String(prefix + '/' + el.name)" />
-    </Folder>
-    <File v-else :id="String(prefix + '/' + el.name)" :name="el.name" />
+    </folder>
+    <file v-else :id="String(prefix + '/' + el.name)" :name="el.name" />
   </template>
   
 </template>

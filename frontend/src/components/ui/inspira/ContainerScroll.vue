@@ -4,12 +4,12 @@
     class="relative flex h-[60rem] items-center justify-center p-2 md:h-[80rem] md:p-20"
   >
     <div class="relative w-full py-10 md:py-40" style="perspective: 1000px">
-      <ContainerScrollTitle :translate="translateY">
+      <container-scroll-title :translate="translateY">
         <slot name="title"></slot>
-      </ContainerScrollTitle>
-      <ContainerScrollCard :rotate="rotate" :scale="scale">
+      </container-scroll-title>
+      <container-scroll-card :rotate="rotate" :scale="scale">
         <slot name="card" />
-      </ContainerScrollCard>
+      </container-scroll-card>
     </div>
   </div>
 </template>

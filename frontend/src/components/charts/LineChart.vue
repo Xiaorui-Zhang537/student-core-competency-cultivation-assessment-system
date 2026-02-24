@@ -87,6 +87,7 @@ const error = ref(false)
 let resizeObserver: ResizeObserver | null = null
 let darkObserver: { disconnect: () => void } | null = null
 let reRenderScheduled = false
+let isUnmounted = false
 
 const ensurePalette = () => {
   const tokens = getEChartsThemedTokens()
@@ -216,6 +217,7 @@ const resolveBg = () => {
 const waitForContainer = async (maxTries = 10): Promise<boolean> => {
   for (let i = 0; i < maxTries; i++) {
     await nextTick()
+    if (isUnmounted) return false
     if (chartRef.value && chartRef.value.offsetWidth > 0 && chartRef.value.offsetHeight > 0) return true
     await new Promise(r => requestAnimationFrame(() => r(null)))
   }
@@ -233,6 +235,7 @@ const initChart = async () => {
     disposeChart()
     
     await nextTick()
+    if (isUnmounted || !chartRef.value) return
     
     // 创建图表实例（统一主题）
     const theme = resolveEChartsTheme()
@@ -486,7 +489,14 @@ onMounted(() => {
   }
 })
 
-onUnmounted(() => { disposeChart(); if (darkObserver) { try { darkObserver.disconnect() } catch {}; darkObserver = null } })
+onUnmounted(() => {
+  isUnmounted = true
+  disposeChart()
+  if (darkObserver) {
+    try { darkObserver.disconnect() } catch {}
+    darkObserver = null
+  }
+})
 </script>
 
 <style scoped lang="postcss">

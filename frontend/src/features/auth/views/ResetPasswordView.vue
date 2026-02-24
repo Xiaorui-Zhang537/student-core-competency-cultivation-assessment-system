@@ -20,9 +20,9 @@
       </div>
 
       <div>
-        <Button class="w-full" variant="info" type="submit" :disabled="uiStore.loading">
+        <button class="w-full" variant="info" type="submit" :disabled="uiStore.loading">
           {{ uiStore.loading ? '提交中...' : '重置密码' }}
-        </Button>
+        </button>
       </div>
     </form>
   </div>

@@ -1,6 +1,6 @@
 <template>
   <div class="relative">
-    <LiquidGlass :radius="16" :frost="0.05" class="rounded-2xl" :container-class="containerClass">
+    <liquid-glass :radius="16" :frost="0.05" class="rounded-2xl" :container-class="containerClass">
       <input
         :id="id"
         :type="isVisible ? 'text' : 'password'"
@@ -29,7 +29,7 @@
       >
         {{ t('layout.auth.capsLockOn') }}
       </div>
-    </LiquidGlass>
+    </liquid-glass>
   </div>
   
 </template>

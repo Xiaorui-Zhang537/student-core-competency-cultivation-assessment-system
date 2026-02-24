@@ -1,6 +1,6 @@
 <template>
   <div class="min-h-screen relative text-base-content" :style="baseBgStyle">
-    <BackgroundLayer />
+    <background-layer />
     <!-- 顶部导航：品牌 + 右上 Dock（已移除中部菜单） -->
     <nav class="sticky top-0 z-40 px-6 pt-6 pb-6">
       <div class="flex items-center gap-3">
@@ -18,48 +18,48 @@
 
         <!-- 右上 Dock：包裹到 LiquidGlass 药丸，统一液态玻璃视觉 -->
         <liquid-glass :radius="30" class="flex items-center justify-center h-full" containerClass="rounded-full h-[60px] px-2">
-          <Dock :magnification="60" :distance="140" variant="transparent" paddingClass="pl-1.5 pr-5" heightClass="h-[56px]" roundedClass="rounded-full" gapClass="gap-3" class="!mt-0 min-w-0">
-            <DockIcon>
+          <dock :magnification="60" :distance="140" variant="transparent" paddingClass="pl-1.5 pr-5" heightClass="h-[56px]" roundedClass="rounded-full" gapClass="gap-3" class="!mt-0 min-w-0">
+            <dock-icon>
               <ripple-button pill :title="t('layout.common.toggleTheme') as string" @click="uiStore.toggleDarkMode()">
                 <sun-icon v-if="uiStore.isDarkMode" class="w-5 h-5" />
                 <moon-icon v-else class="w-5 h-5" />
               </ripple-button>
-            </DockIcon>
-            <DockIcon>
+            </dock-icon>
+            <dock-icon>
               <span ref="bgBtnRef" class="inline-flex">
                 <ripple-button pill :title="t('layout.common.bgPickerTitle') as string" @click="onToggleBgPicker">
                   <photo-icon class="w-5 h-5" />
                 </ripple-button>
               </span>
-            </DockIcon>
-            <DockIcon>
+            </dock-icon>
+            <dock-icon>
               <span ref="cursorBtnRef" class="inline-flex">
                 <ripple-button pill :title="t('layout.common.cursorTrail') as string" @click="onToggleCursorMenu">
-                  <CursorArrowRaysIcon class="w-5 h-5" />
+                  <cursor-arrow-rays-icon class="w-5 h-5" />
                 </ripple-button>
               </span>
-            </DockIcon>
+            </dock-icon>
             
-            <DockIcon class="-ml-2 whitespace-nowrap">
+            <dock-icon class="-ml-2 whitespace-nowrap">
               <language-switcher buttonClass="px-4 h-10 flex items-center rounded-full min-w-[64px]" />
-            </DockIcon>
-            <DockIcon>
+            </dock-icon>
+            <dock-icon>
               <ripple-button pill class="px-4 h-10" :title="t('app.home.cta.docs') as string" @click="goDocs()">
-                <BookOpenIcon class="w-5 h-5" />
+                <book-open-icon class="w-5 h-5" />
               </ripple-button>
-            </DockIcon>
-            <DockIcon>
+            </dock-icon>
+            <dock-icon>
               <ripple-button pill title="GitHub" @click="openExternal(githubUrl)">
                 <svg viewBox="0 0 16 16" fill="currentColor" class="w-5 h-5"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38C13.71 14.53 16 11.54 16 8c0-4.42-3.58-8-8-8z"/></svg>
               </ripple-button>
-            </DockIcon>
-            <DockIcon class="min-w-0">
+            </dock-icon>
+            <dock-icon class="min-w-0">
               <ripple-button pill class="px-4 h-10 min-w-0" :title="authStore.isAuthenticated ? (t('app.home.enterApp') as string) : (t('app.home.cta.login') as string)" @click="authStore.isAuthenticated ? goDashboard() : goLogin()">
                 <user-icon v-if="!authStore.isAuthenticated" class="w-5 h-5" />
                 <arrow-right-start-on-rectangle-icon v-else class="w-5 h-5" />
               </ripple-button>
-            </DockIcon>
-          </Dock>
+            </dock-icon>
+          </dock>
         </liquid-glass>
       </div>
     </nav>

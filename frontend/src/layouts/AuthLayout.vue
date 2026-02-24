@@ -1,43 +1,43 @@
 <template>
   <!-- 强制刷新标记: v2025-07-29-11:15 -->
   <div class="min-h-screen relative overflow-hidden text-base-content" :style="baseBgStyle">
-    <BackgroundLayer />
+    <background-layer />
 
     <!-- 主容器：分屏布局 -->
     <div class="relative z-10 min-h-screen py-8 md:py-10 pl-8 pr-8 md:pl-16 md:pr-16 xl:pl-24 xl:pr-24 2xl:pl-32 2xl:pr-32 max-w-8xl mx-auto">
       <!-- 顶部导航：右上 Dock，与主页一致 -->
       <nav class="flex items-center justify-end mb-6">
         <liquid-glass :radius="30" class="flex items-center justify-center h-full" containerClass="rounded-full h-[56px] px-2">
-          <Dock :magnification="60" :distance="140" variant="transparent" paddingClass="pl-1.5 pr-1.5" heightClass="h-[52px]" roundedClass="rounded-full" gapClass="gap-3" class="!mt-0">
-            <DockIcon>
+          <dock :magnification="60" :distance="140" variant="transparent" paddingClass="pl-1.5 pr-1.5" heightClass="h-[52px]" roundedClass="rounded-full" gapClass="gap-3" class="!mt-0">
+            <dock-icon>
               <ripple-button pill :title="t('layout.common.toggleTheme') as string" @click="uiStore.toggleDarkMode()">
                 <sun-icon v-if="uiStore.isDarkMode" class="w-5 h-5" />
                 <moon-icon v-else class="w-5 h-5" />
               </ripple-button>
-            </DockIcon>
-            <DockIcon>
+            </dock-icon>
+            <dock-icon>
               <span ref="bgBtnRef" class="inline-flex">
                 <ripple-button pill :title="t('layout.common.bgPickerTitle') as string" @click="onToggleBgPicker">
                   <photo-icon class="w-5 h-5" />
                 </ripple-button>
               </span>
-            </DockIcon>
-            <DockIcon>
+            </dock-icon>
+            <dock-icon>
               <span ref="cursorBtnRef" class="inline-flex">
                 <ripple-button pill :title="t('layout.common.cursorTrail') as string" @click="onToggleCursorMenu">
-                  <CursorArrowRaysIcon class="w-5 h-5" />
+                  <cursor-arrow-rays-icon class="w-5 h-5" />
                 </ripple-button>
               </span>
-            </DockIcon>
-            <DockIcon class="-ml-2">
+            </dock-icon>
+            <dock-icon class="-ml-2">
               <language-switcher buttonClass="px-4 h-10 flex items-center rounded-full min-w-[64px]" />
-            </DockIcon>
-            <DockIcon>
+            </dock-icon>
+            <dock-icon>
               <ripple-button pill class="px-3 h-10" :title="('返回首页')" @click="goHome()">
-                <HomeIcon class="w-5 h-5" />
+                <home-icon class="w-5 h-5" />
               </ripple-button>
-            </DockIcon>
-          </Dock>
+            </dock-icon>
+          </dock>
         </liquid-glass>
       </nav>
       <!-- 光标菜单弹层 -->
@@ -119,10 +119,10 @@
             <div class="flex items-center gap-4 mb-12">
               <img src="/brand/logo.png" alt="Logo" class="shrink-0 h-20 md:h-24 w-auto select-none" />
               <div>
-                <LetterPullup :words="t('app.title') as string" class="bg-gradient-to-r from-gray-900 to-gray-700 dark:from-white dark:to-gray-300 bg-clip-text text-transparent text-3xl md:text-5xl lg:text-6xl font-extrabold leading-tight" />
-                <RadiantText :duration="5" :radiantWidth="90" class="mt-1 text-lg md:text-xl text-left">
+                <letter-pullup :words="t('app.title') as string" class="bg-gradient-to-r from-gray-900 to-gray-700 dark:from-white dark:to-gray-300 bg-clip-text text-transparent text-3xl md:text-5xl lg:text-6xl font-extrabold leading-tight" />
+                <radiant-text :duration="5" :radiantWidth="90" class="mt-1 text-lg md:text-xl text-left">
                   {{ t('layout.auth.subtitle') }}
-                </RadiantText>
+                </radiant-text>
               </div>
             </div>
 
@@ -131,57 +131,57 @@
               <!-- primary -->
               <div class="theme-surface theme-surface--primary rounded-xl border border-white/15 dark:border-white/10"
                    style="--spotlight-color: color-mix(in oklab, var(--color-primary) 60%, transparent);">
-                <LiquidGlass :radius="16" :frost="0.05" :border="0.07" :alpha="0.93" :blur="11"
+                <liquid-glass :radius="16" :frost="0.05" :border="0.07" :alpha="0.93" :blur="11"
                               :container-class="'glass-regular glass-interactive glass-tint-primary rounded-xl'">
-                  <CardSpotlight slotClass="p-4" :gradientColor="'var(--spotlight-color)'" :gradientOpacity="0.7" :gradientSize="220">
+                  <card-spotlight slotClass="p-4" :gradientColor="'var(--spotlight-color)'" :gradientOpacity="0.7" :gradientSize="220">
                     <div class="text-base font-medium text-base-content mb-1">{{ t('layout.auth.points.radar.title') }}</div>
                     <div class="text-sm text-gray-600 dark:text-gray-400">{{ t('layout.auth.points.radar.descLong') }}</div>
-                  </CardSpotlight>
-                </LiquidGlass>
+                  </card-spotlight>
+                </liquid-glass>
               </div>
               <!-- info -->
               <div class="theme-surface theme-surface--info rounded-xl border border-white/15 dark:border-white/10"
                    style="--spotlight-color: color-mix(in oklab, var(--color-info) 60%, transparent);">
-                <LiquidGlass :radius="16" :frost="0.05" :border="0.07" :alpha="0.93" :blur="11"
+                <liquid-glass :radius="16" :frost="0.05" :border="0.07" :alpha="0.93" :blur="11"
                               :container-class="'glass-regular glass-interactive glass-tint-info rounded-xl'">
-                  <CardSpotlight slotClass="p-4" :gradientColor="'var(--spotlight-color)'" :gradientOpacity="0.7" :gradientSize="220">
+                  <card-spotlight slotClass="p-4" :gradientColor="'var(--spotlight-color)'" :gradientOpacity="0.7" :gradientSize="220">
                     <div class="text-base font-medium text-base-content mb-1">{{ t('layout.auth.points.ai.title') }}</div>
                     <div class="text-sm text-gray-600 dark:text-gray-400">{{ t('layout.auth.points.ai.descLong') }}</div>
-                  </CardSpotlight>
-                </LiquidGlass>
+                  </card-spotlight>
+                </liquid-glass>
               </div>
               <!-- success -->
               <div class="theme-surface theme-surface--success rounded-xl border border-white/15 dark:border-white/10"
                    style="--spotlight-color: color-mix(in oklab, var(--color-success) 60%, transparent);">
-                <LiquidGlass :radius="16" :frost="0.05" :border="0.07" :alpha="0.93" :blur="11"
+                <liquid-glass :radius="16" :frost="0.05" :border="0.07" :alpha="0.93" :blur="11"
                               :container-class="'glass-regular glass-interactive glass-tint-success rounded-xl'">
-                  <CardSpotlight slotClass="p-4" :gradientColor="'var(--spotlight-color)'" :gradientOpacity="0.7" :gradientSize="220">
+                  <card-spotlight slotClass="p-4" :gradientColor="'var(--spotlight-color)'" :gradientOpacity="0.7" :gradientSize="220">
                     <div class="text-base font-medium text-base-content mb-1">{{ t('layout.auth.points.growth.title') }}</div>
                     <div class="text-sm text-gray-600 dark:text-gray-400">{{ t('layout.auth.points.growth.descLong') }}</div>
-                  </CardSpotlight>
-                </LiquidGlass>
+                  </card-spotlight>
+                </liquid-glass>
               </div>
               <!-- neutral (新增第4张) -->
               <div class="theme-surface theme-surface--neutral rounded-xl border border-white/15 dark:border-white/10"
                    style="--spotlight-color: color-mix(in oklab, var(--color-secondary, var(--color-accent)) 55%, transparent);">
-                <LiquidGlass :radius="16" :frost="0.05" :border="0.07" :alpha="0.93" :blur="11"
+                <liquid-glass :radius="16" :frost="0.05" :border="0.07" :alpha="0.93" :blur="11"
                               :container-class="'glass-regular glass-interactive glass-tint-secondary rounded-xl'">
-                  <CardSpotlight slotClass="p-4" :gradientColor="'var(--spotlight-color)'" :gradientOpacity="0.7" :gradientSize="220">
+                  <card-spotlight slotClass="p-4" :gradientColor="'var(--spotlight-color)'" :gradientOpacity="0.7" :gradientSize="220">
                     <div class="text-base font-medium text-base-content mb-1">{{ t('layout.auth.points.community.title') }}</div>
                     <div class="text-sm text-gray-600 dark:text-gray-400">{{ t('layout.auth.points.community.descLong') }}</div>
-                  </CardSpotlight>
-                </LiquidGlass>
+                  </card-spotlight>
+                </liquid-glass>
               </div>
             </div>
 
             <!-- 走马灯评价区 -->
             <div class="mt-10">
-              <Marquee pauseOnHover class="[--duration:22s] [--gap:1.25rem]">
-                <ReviewCard v-for="r in marqueeRow1" :key="r.username" :img="r.img" :name="r.name" :username="r.username" :mbti="r.mbti" :body="r.body" :tint="r.tint" />
-              </Marquee>
-              <Marquee reverse pauseOnHover class="[--duration:24s] [--gap:1.25rem] mt-4">
-                <ReviewCard v-for="r in marqueeRow2" :key="r.username" :img="r.img" :name="r.name" :username="r.username" :mbti="r.mbti" :body="r.body" :tint="r.tint" />
-              </Marquee>
+              <marquee pauseOnHover class="[--duration:22s] [--gap:1.25rem]">
+                <review-card v-for="r in marqueeRow1" :key="r.username" :img="r.img" :name="r.name" :username="r.username" :mbti="r.mbti" :body="r.body" :tint="r.tint" />
+              </marquee>
+              <marquee reverse pauseOnHover class="[--duration:24s] [--gap:1.25rem] mt-4">
+                <review-card v-for="r in marqueeRow2" :key="r.username" :img="r.img" :name="r.name" :username="r.username" :mbti="r.mbti" :body="r.body" :tint="r.tint" />
+              </marquee>
             </div>
 
           </div>

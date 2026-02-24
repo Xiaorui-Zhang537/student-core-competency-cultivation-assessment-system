@@ -613,6 +613,10 @@
         }
       },
       "dimensions": {
+        "ability": { "title": "学习能力" },
+        "attitude": { "title": "学习态度" },
+        "moral_reasoning": { "title": "道德认知" },
+        "strategy": { "title": "学习方法" },
         "MORAL_COGNITION": {
           "title": "道德认知",
           "what": "道德推理阶段、道德基础覆盖、论证与反驳链条",

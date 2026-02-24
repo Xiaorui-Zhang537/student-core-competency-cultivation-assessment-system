@@ -2,30 +2,30 @@
   <div class="min-h-screen p-6">
     <div class="max-w-7xl mx-auto">
       <!-- Header -->
-      <PageHeader :title="t('teacher.courses.title')" :subtitle="t('teacher.courses.subtitle')">
+      <page-header :title="t('teacher.courses.title')" :subtitle="t('teacher.courses.subtitle')">
         <template #actions>
-          <Button variant="primary" @click="openCreateModal">
-            <PlusIcon class="w-4 h-4 mr-2" />
+          <button variant="primary" @click="openCreateModal">
+            <plus-icon class="w-4 h-4 mr-2" />
             {{ t('teacher.courses.actions.create') }}
-          </Button>
+          </button>
         </template>
-      </PageHeader>
+      </page-header>
 
       <!-- Filters -->
-      <FilterBar tint="info" align="center" :dense="false" class="mb-6 h-19">
+      <filter-bar tint="info" align="center" :dense="false" class="mb-6 h-19">
         <template #left>
           <div class="flex items-center gap-3 flex-wrap">
             <div class="w-auto flex items-center gap-2">
               <span class="text-xs font-medium leading-tight text-gray-700 dark:text-gray-300">{{ t('teacher.courses.filters.sortDifficultyLabel') || '难度排序' }}</span>
               <div class="w-48">
-                <GlassPopoverSelect
+                <glass-popover-select
                   v-model="difficultyOrder"
                   :options="difficultyOrderOptions"
                   size="sm"
                 />
               </div>
             </div>
-            <SegmentedPills
+            <segmented-pills
               :model-value="filters.status"
               :options="statusOptions"
               size="sm"
@@ -35,7 +35,7 @@
         </template>
         <template #right>
           <div class="relative w-56">
-            <GlassSearchInput
+            <glass-search-input
               v-model="filters.query"
               :placeholder="t('teacher.courses.filters.searchPlaceholder') as string"
               size="sm"
@@ -43,14 +43,14 @@
             />
           </div>
         </template>
-      </FilterBar>
+      </filter-bar>
 
       <!-- Course List -->
       <div v-if="courseStore.loading" class="text-center py-12">
         <p>{{ t('teacher.courses.loading') }}</p>
       </div>
       <div v-else class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-4">
-        <Card
+        <card
           v-for="course in displayedCourses"
           :key="course.id"
           class="relative overflow-hidden cursor-pointer transition-all duration-300 hover:shadow-md hover:-translate-y-0.5"
@@ -70,13 +70,13 @@
               <span class="text-4xl font-bold text-white">{{ (course.title || '').charAt(0) }}</span>
             </div>
             <!-- 状态徽标浮层（玻璃 Badge） -->
-            <Badge
+            <badge
               :variant="statusVariant(course.status)"
               size="sm"
               class="absolute top-3 left-3"
             >
               {{ statusText(course.status) }}
-            </Badge>
+            </badge>
           </div>
           <div class="p-4">
             <h3 class="font-bold text-lg line-clamp-1">{{ course.title }}</h3>
@@ -84,47 +84,47 @@
             <p class="text-sm text-gray-600 dark:text-gray-300 line-clamp-2 min-h-[2.5rem] whitespace-pre-line">{{ course.description }}</p>
             <div class="mt-4 flex justify-between items-center">
               <div class="flex flex-wrap gap-1.5 items-center min-h-[1.5rem]">
-                <Badge v-for="tag in toTagList(course)" :key="String(tag)" size="sm" :variant="tagVariant(String(tag))">
+                <badge v-for="tag in toTagList(course)" :key="String(tag)" size="sm" :variant="tagVariant(String(tag))">
                   {{ localizeTag(String(tag)) }}
-                </Badge>
+                </badge>
                 <span v-if="toTagList(course).length===0" class="text-xs text-gray-400">{{ t('teacher.courses.card.none') }}</span>
               </div>
               <div class="flex items-center">
-                <Button size="sm" variant="secondary" class="mr-2" icon="edit" @click.stop="openEditModal(course)">{{ t('teacher.courses.actions.edit') }}</Button>
-                <Button size="sm" variant="danger" icon="delete" @click.stop="handleDeleteCourse(String(course.id))">{{ t('teacher.courses.actions.delete') }}</Button>
+                <button size="sm" variant="secondary" class="mr-2" icon="edit" @click.stop="openEditModal(course)">{{ t('teacher.courses.actions.edit') }}</button>
+                <button size="sm" variant="danger" icon="delete" @click.stop="handleDeleteCourse(String(course.id))">{{ t('teacher.courses.actions.delete') }}</button>
               </div>
             </div>
           </div>
-        </Card>
+        </card>
       </div>
-      <Card v-if="!courseStore.loading && courseStore.courses.length === 0" class="text-center py-12" tint="info">
+      <card v-if="!courseStore.loading && courseStore.courses.length === 0" class="text-center py-12" tint="info">
         <h3 class="text-lg font-medium">{{ t('teacher.courses.empty.title') }}</h3>
         <p class="text-gray-500 mb-4">{{ t('teacher.courses.empty.description') }}</p>
-        <Button variant="primary" @click="openCreateModal">
-          <PlusIcon class="w-4 h-4 mr-2" />
+        <button variant="primary" @click="openCreateModal">
+          <plus-icon class="w-4 h-4 mr-2" />
           {{ t('teacher.courses.actions.create') }}
-        </Button>
-      </Card>
+        </button>
+      </card>
 
       <!-- Create/Edit Modal (GlassModal) -->
-      <GlassModal v-if="showModal" :title="(isEditing ? t('teacher.courses.modal.editTitle') : t('teacher.courses.modal.createTitle')) as string" size="md" heightVariant="tall" @close="closeModal">
+      <glass-modal v-if="showModal" :title="(isEditing ? t('teacher.courses.modal.editTitle') : t('teacher.courses.modal.createTitle')) as string" size="md" heightVariant="tall" @close="closeModal">
         <form id="courseForm" @submit.prevent="handleSubmit" class="space-y-4">
           <div>
             <label for="title" class="block text-sm font-medium mb-1">{{ t('teacher.courses.modal.title') }}</label>
-            <GlassInput id="title" v-model="form.title" type="text" />
+            <glass-input id="title" v-model="form.title" type="text" />
           </div>
           <div>
             <label for="description" class="block text-sm font-medium mb-1">{{ t('teacher.courses.modal.description') }}</label>
-            <GlassTextarea id="description" v-model="form.description" :rows="3" />
+            <glass-textarea id="description" v-model="form.description" :rows="3" />
           </div>
           <div>
             <label for="content" class="block text-sm font-medium mb-1">{{ t('teacher.courses.modal.content') }}</label>
-            <GlassTextarea id="content" v-model="form.content" :rows="6" />
+            <glass-textarea id="content" v-model="form.content" :rows="6" />
           </div>
           <div>
             <label class="block text-sm font-medium mb-1">{{ t('teacher.courses.modal.status') || '状态' }}</label>
             <div class="w-full md:w-64">
-              <SegmentedPills
+              <segmented-pills
                 :model-value="form.status"
                 :options="statusPillOptions"
                 size="sm"
@@ -137,37 +137,37 @@
             <div>
               <label for="category" class="block text-sm font-medium mb-1">{{ t('teacher.courses.modal.category') }}</label>
               <div class="w-full md:w-64">
-                <GlassPopoverSelect :options="categoryOptions" :model-value="form.category" size="sm" @update:modelValue="(v:any)=> form.category = String(v)" />
+                <glass-popover-select :options="categoryOptions" :model-value="form.category" size="sm" @update:modelValue="(v:any)=> form.category = String(v)" />
               </div>
             </div>
             <div>
               <label class="block text-sm font-medium mb-1">{{ t('teacher.courses.difficulty') || '难度' }}</label>
               <div class="w-full md:w-64">
-              <SegmentedPills :model-value="(form as any).difficulty || 'beginner'" :options="difficultyOptions" size="sm" variant="accent" @update:modelValue="(v:any)=> (form as any).difficulty = String(v)" />
+              <segmented-pills :model-value="(form as any).difficulty || 'beginner'" :options="difficultyOptions" size="sm" variant="accent" @update:modelValue="(v:any)=> (form as any).difficulty = String(v)" />
               </div>
             </div>
             <div>
               <label class="block text-sm font-medium mb-1">{{ t('teacher.courses.duration') || '预计时长(小时)' }}</label>
               <div class="w-full md:w-64">
-                <GlassInput v-model="durationInput" type="number" />
+                <glass-input v-model="durationInput" type="number" />
               </div>
             </div>
             <div>
               <label class="block text-sm font-medium mb-1">{{ t('teacher.courses.maxStudents') || '最大人数' }}</label>
               <div class="w-full md:w-64">
-                <GlassInput v-model="maxStudentsInput" type="number" />
+                <glass-input v-model="maxStudentsInput" type="number" />
               </div>
             </div>
             <div>
-              <GlassDateTimePicker v-model="startDate" :label="(t('teacher.courses.startDate') as string) || '开课时间'" date-only />
+              <glass-date-time-picker v-model="startDate" :label="(t('teacher.courses.startDate') as string) || '开课时间'" date-only />
             </div>
             <div>
-              <GlassDateTimePicker v-model="endDate" :label="(t('teacher.courses.endDate') as string) || '结课时间'" date-only />
+              <glass-date-time-picker v-model="endDate" :label="(t('teacher.courses.endDate') as string) || '结课时间'" date-only />
             </div>
           </div>
           <div>
             <label class="block text-sm font-medium mb-1">{{ t('teacher.courses.modal.tags') || '标签' }}</label>
-            <GlassTagsInput v-model="selectedTagsStr" :placeholder="(t('teacher.courses.tagsPlaceholder') as string) || '输入后回车添加标签'" />
+            <glass-tags-input v-model="selectedTagsStr" :placeholder="(t('teacher.courses.tagsPlaceholder') as string) || '输入后回车添加标签'" />
           </div>
           <div>
             <label class="block text-sm font-medium mb-1">{{ t('teacher.courses.modal.cover') }}</label>
@@ -186,14 +186,14 @@
           </div>
         </form>
         <template #footer>
-          <Button type="button" variant="secondary" @click="closeModal">{{ t('teacher.courses.modal.cancel') }}</Button>
-          <Button type="submit" form="courseForm" :disabled="courseStore.loading" variant="primary">
+          <button type="button" variant="secondary" @click="closeModal">{{ t('teacher.courses.modal.cancel') }}</button>
+          <button type="submit" form="courseForm" :disabled="courseStore.loading" variant="primary">
             {{ isEditing ? t('teacher.courses.actions.save') : t('teacher.courses.actions.create') }}
-          </Button>
+          </button>
         </template>
-      </GlassModal>
+      </glass-modal>
 
-      <ConfirmDialog
+      <confirm-dialog
         :open="confirmOpen"
         :title="confirmDialog.state.title"
         :message="confirmDialog.state.message"

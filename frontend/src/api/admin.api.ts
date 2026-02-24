@@ -95,6 +95,9 @@ export const adminApi = {
     return api.get('/admin/courses', { params })
   },
   getCourse: (id: string | number): Promise<AdminCourseDetailResponse> => api.get(`/admin/courses/${id}`),
+  pageCourseStudents: (courseId: string | number, params: { page: number; size: number; search?: string; sortBy?: string; activity?: string; grade?: string; progress?: string }) => {
+    return api.get(`/admin/courses/${courseId}/students`, { params })
+  },
 
   pageUsers: (params: { page: number; size: number; keyword?: string; role?: string; status?: string; includeDeleted?: boolean }): Promise<PageResult<AdminUserListItem>> => {
     return api.get('/admin/users', { params })
@@ -124,6 +127,40 @@ export const adminApi = {
   // 导出（CSV Blob）
   exportUsersCsv: (params: any): Promise<Blob> => api.get('/admin/exports/users.csv', { params, responseType: 'blob' as any }),
   exportAbilityReportsCsv: (params: any): Promise<Blob> => api.get('/admin/exports/ability-reports.csv', { params, responseType: 'blob' as any }),
+  exportCourseStudentsCsv: (params: { courseId: string | number; search?: string; sortBy?: string; activity?: string; grade?: string; progress?: string }): Promise<Blob> =>
+    api.get('/admin/exports/course-students.csv', { params, responseType: 'blob' as any }),
+  exportAiConversationsCsv: (params: { studentId: string | number; q?: string; pinned?: boolean; archived?: boolean }): Promise<Blob> =>
+    api.get('/admin/exports/ai-conversations.csv', { params, responseType: 'blob' as any }),
+  exportVoiceSessionsCsv: (params: { studentId: string | number; q?: string }): Promise<Blob> =>
+    api.get('/admin/exports/voice-sessions.csv', { params, responseType: 'blob' as any }),
   getExportCapabilities: (): Promise<any> => api.get('/admin/exports/capabilities'),
+
+  // 能力雷达（管理员版）
+  getAbilityRadar: (params: { studentId: string | number; courseId: string | number; classId?: string | number; startDate?: string; endDate?: string }) =>
+    api.get('/admin/ability/radar', { params }),
+  compareAbilityRadar: (body: any, params?: { studentId?: string | number }) =>
+    api.post('/admin/ability/radar/compare', body, { params }),
+
+  // 行为洞察（管理员版）
+  getBehaviorInsightLatest: (params: { studentId: string | number; courseId?: string | number; range?: string }) =>
+    api.get('/admin/behavior/insights', { params }),
+  generateBehaviorInsight: (params: { studentId: string | number; courseId?: string | number; range?: string; model?: string; force?: boolean }) =>
+    api.post('/admin/behavior/insights/generate', null, { params }),
+
+  // AI 问答审计（管理员版）
+  listAiConversations: (params: { studentId: string | number; q?: string; pinned?: boolean; archived?: boolean; page?: number; size?: number }) =>
+    api.get('/admin/ai/conversations', { params }),
+  getAiConversation: (conversationId: string | number, params: { studentId: string | number }) =>
+    api.get(`/admin/ai/conversations/${conversationId}`, { params }),
+  listAiMessages: (conversationId: string | number, params: { studentId: string | number; page?: number; size?: number }) =>
+    api.get(`/admin/ai/conversations/${conversationId}/messages`, { params }),
+
+  // 口语训练审计（管理员版）
+  listVoiceSessions: (params: { studentId: string | number; q?: string; page?: number; size?: number }) =>
+    api.get('/admin/ai/voice/sessions', { params }),
+  getVoiceSession: (sessionId: string | number, params: { studentId: string | number }) =>
+    api.get(`/admin/ai/voice/sessions/${sessionId}`, { params }),
+  listVoiceTurns: (sessionId: string | number, params: { studentId: string | number; page?: number; size?: number }) =>
+    api.get(`/admin/ai/voice/sessions/${sessionId}/turns`, { params }),
 }
 

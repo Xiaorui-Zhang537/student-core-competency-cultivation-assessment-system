@@ -2,15 +2,15 @@
   <div class="p-6">
     <PageHeader :title="t('admin.sidebar.reports')" :subtitle="t('admin.title')" />
 
-    <Card padding="md" tint="secondary" class="mt-4">
+    <card padding="md" tint="secondary" class="mt-4">
       <div class="flex items-center justify-between flex-wrap gap-3">
-        <SegmentedPills :model-value="tab" :options="tabOptions" size="sm" variant="primary" @update:modelValue="(v:any)=> { tab = String(v); onTab() }" />
-        <Button size="sm" variant="outline" :disabled="loading" @click="reload">{{ t('common.refresh') || '刷新' }}</Button>
+        <segmented-pills :model-value="tab" :options="tabOptions" size="sm" variant="primary" @update:modelValue="(v:any)=> { tab = String(v); onTab() }" />
+        <button size="sm" variant="outline" :disabled="loading" @click="reload">{{ t('common.refresh') || '刷新' }}</button>
       </div>
-    </Card>
+    </card>
 
     <loading-overlay v-if="loading" class="mt-4" :text="String(t('common.loading') || '加载中…')" />
-    <ErrorState
+    <error-state
       v-else-if="error"
       class="mt-4"
       :title="String(t('common.error') || '加载失败')"
@@ -21,51 +21,49 @@
 
     <!-- Ability Reports -->
     <div v-else-if="tab === 'ability'" class="mt-4 space-y-4">
-      <Card padding="md" tint="secondary">
+      <card padding="md" tint="secondary">
         <div class="flex flex-col md:flex-row gap-3 md:items-center">
-          <GlassInput v-model="abilityStudentId" type="number" :placeholder="'studentId(optional)'" />
-          <GlassPopoverSelect v-model="abilityReportType" :options="reportTypeOptions" size="sm" width="180px" />
-          <Button size="sm" variant="outline" :disabled="loading" @click="reloadAbility">{{ t('common.search') || '查询' }}</Button>
+          <glass-input v-model="abilityStudentId" type="number" :placeholder="String(t('admin.moderation.studentIdOptional') || 'studentId(可选)')" />
+          <glass-popover-select v-model="abilityReportType" :options="reportTypeOptions" size="sm" width="180px" />
+          <button size="sm" variant="outline" :disabled="loading" @click="reloadAbility">{{ t('common.search') || '查询' }}</button>
         </div>
-      </Card>
+      </card>
 
-      <Card padding="md" tint="secondary">
-        <div class="overflow-x-auto">
-          <table class="table w-full">
-            <thead>
-              <tr>
-                <th>ID</th>
-                <th>Student</th>
-                <th>Type</th>
-                <th>Score</th>
-                <th>Created</th>
-                <th class="text-right">Open</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr v-for="r in abilityItems" :key="r.id">
-                <td class="font-mono text-xs">{{ r.id }}</td>
-                <td>
-                  <div class="font-medium">{{ r.studentName || '-' }}</div>
-                  <div class="text-xs text-subtle">#{{ r.studentId }} · {{ r.studentNumber || '-' }}</div>
-                </td>
-                <td class="text-sm">{{ r.reportType }}</td>
-                <td class="text-sm">{{ r.overallScore ?? '-' }}</td>
-                <td class="text-xs text-subtle">{{ r.createdAt || '-' }}</td>
-                <td class="text-right">
-                  <Button size="sm" variant="outline" @click="openAbility(r.id)">{{ t('common.view') || '查看' }}</Button>
-                </td>
-              </tr>
-              <tr v-if="abilityItems.length === 0">
-                <td colspan="6">
-                  <EmptyState :title="String(t('common.empty') || '暂无数据')" />
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
+      <card padding="md" tint="secondary">
+        <glass-table>
+          <template #head>
+            <tr>
+              <th class="px-6 py-3 text-center text-xs font-semibold text-gray-700 dark:text-gray-200 tracking-wide whitespace-nowrap">{{ t('common.columns.id') || 'ID' }}</th>
+              <th class="px-6 py-3 text-left text-xs font-semibold text-gray-700 dark:text-gray-200 tracking-wide">{{ t('common.columns.student') || 'Student' }}</th>
+              <th class="px-6 py-3 text-center text-xs font-semibold text-gray-700 dark:text-gray-200 tracking-wide whitespace-nowrap">{{ t('admin.moderation.reportType') || 'Type' }}</th>
+              <th class="px-6 py-3 text-center text-xs font-semibold text-gray-700 dark:text-gray-200 tracking-wide whitespace-nowrap">{{ t('admin.moderation.score') || 'Score' }}</th>
+              <th class="px-6 py-3 text-center text-xs font-semibold text-gray-700 dark:text-gray-200 tracking-wide whitespace-nowrap">{{ t('admin.moderation.createdAt') || 'Created' }}</th>
+              <th class="px-6 py-3 text-right text-xs font-semibold text-gray-700 dark:text-gray-200 tracking-wide whitespace-nowrap">{{ t('common.columns.open') || t('common.view') || 'Open' }}</th>
+            </tr>
+          </template>
+          <template #body>
+            <tr v-for="r in abilityItems" :key="r.id" class="hover:bg-white/10 transition-colors duration-150">
+              <td class="px-6 py-3 text-center font-mono text-xs">{{ r.id }}</td>
+              <td class="px-6 py-3">
+                <div class="font-medium">{{ r.studentName || '-' }}</div>
+                <div class="text-xs text-subtle">#{{ r.studentId }} · {{ r.studentNumber || '-' }}</div>
+              </td>
+              <td class="px-6 py-3 text-sm text-center">{{ r.reportType }}</td>
+              <td class="px-6 py-3 text-sm text-center">{{ r.overallScore ?? '-' }}</td>
+              <td class="px-6 py-3 text-xs text-subtle text-center">{{ r.createdAt || '-' }}</td>
+              <td class="px-6 py-3 text-right">
+                <button size="sm" variant="outline" @click="openAbility(r.id)">{{ t('common.view') || '查看' }}</button>
+              </td>
+            </tr>
+            <tr v-if="abilityItems.length === 0">
+              <td colspan="6" class="px-6 py-6">
+                <empty-state :title="String(t('common.empty') || '暂无数据')" />
+              </td>
+            </tr>
+          </template>
+        </glass-table>
 
-        <PaginationBar
+        <pagination-bar
           :page="abilityPage"
           :page-size="abilityPageSize"
           :total-items="abilityTotal"
@@ -74,56 +72,54 @@
           @update:page="(v: number) => { abilityPage = v; reloadAbility() }"
           @update:pageSize="(v: number) => { abilityPageSize = v; abilityPage = 1; reloadAbility() }"
         />
-      </Card>
+      </card>
     </div>
 
     <!-- Abuse Reports -->
     <div v-else class="mt-4 space-y-4">
-      <Card padding="md" tint="secondary">
+      <card padding="md" tint="secondary">
         <div class="flex flex-col md:flex-row gap-3 md:items-center">
-          <GlassPopoverSelect v-model="abuseStatus" :options="abuseStatusOptions" size="sm" width="180px" />
-          <Button size="sm" variant="outline" :disabled="loading" @click="reloadAbuse">{{ t('common.search') || '查询' }}</Button>
+          <glass-popover-select v-model="abuseStatus" :options="abuseStatusOptions" size="sm" width="180px" />
+          <button size="sm" variant="outline" :disabled="loading" @click="reloadAbuse">{{ t('common.search') || '查询' }}</button>
         </div>
-      </Card>
+      </card>
 
-      <Card padding="md" tint="secondary">
-        <div class="overflow-x-auto">
-          <table class="table w-full">
-            <thead>
-              <tr>
-                <th>ID</th>
-                <th>Reason</th>
-                <th>Status</th>
-                <th>Created</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr v-for="r in abuseItems" :key="r.id">
-                <td class="font-mono text-xs">{{ r.id }}</td>
-                <td>
-                  <div class="font-medium">{{ r.reason }}</div>
-                  <div class="text-xs text-subtle line-clamp-1">{{ r.details || '' }}</div>
-                </td>
-                <td class="w-48">
-                  <GlassPopoverSelect
-                    :model-value="r.status"
-                    :options="abuseStatusEditOptions"
-                    size="sm"
-                    @update:modelValue="(v:any) => updateAbuseStatus(r, v)"
-                  />
-                </td>
-                <td class="text-xs text-subtle">{{ r.createdAt || '-' }}</td>
-              </tr>
-              <tr v-if="abuseItems.length === 0">
-                <td colspan="4">
-                  <EmptyState :title="String(t('common.empty') || '暂无数据')" />
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
+      <card padding="md" tint="secondary">
+        <glass-table>
+          <template #head>
+            <tr>
+              <th class="px-6 py-3 text-center text-xs font-semibold text-gray-700 dark:text-gray-200 tracking-wide whitespace-nowrap">{{ t('common.columns.id') || 'ID' }}</th>
+              <th class="px-6 py-3 text-left text-xs font-semibold text-gray-700 dark:text-gray-200 tracking-wide">{{ t('admin.moderation.reason') || t('common.columns.reason') || 'Reason' }}</th>
+              <th class="px-6 py-3 text-center text-xs font-semibold text-gray-700 dark:text-gray-200 tracking-wide whitespace-nowrap">{{ t('admin.moderation.status') || t('common.columns.status') || 'Status' }}</th>
+              <th class="px-6 py-3 text-center text-xs font-semibold text-gray-700 dark:text-gray-200 tracking-wide whitespace-nowrap">{{ t('admin.moderation.createdAt') || t('common.columns.createdAt') || 'Created' }}</th>
+            </tr>
+          </template>
+          <template #body>
+            <tr v-for="r in abuseItems" :key="r.id" class="hover:bg-white/10 transition-colors duration-150">
+              <td class="px-6 py-3 text-center font-mono text-xs">{{ r.id }}</td>
+              <td class="px-6 py-3">
+                <div class="font-medium">{{ r.reason }}</div>
+                <div class="text-xs text-subtle line-clamp-1">{{ r.details || '' }}</div>
+              </td>
+              <td class="px-6 py-3 w-48 text-center">
+                <glass-popover-select
+                  :model-value="r.status"
+                  :options="abuseStatusEditOptions"
+                  size="sm"
+                  @update:modelValue="(v:any) => updateAbuseStatus(r, v)"
+                />
+              </td>
+              <td class="px-6 py-3 text-xs text-subtle text-center">{{ r.createdAt || '-' }}</td>
+            </tr>
+            <tr v-if="abuseItems.length === 0">
+              <td colspan="4" class="px-6 py-6">
+                <empty-state :title="String(t('common.empty') || '暂无数据')" />
+              </td>
+            </tr>
+          </template>
+        </glass-table>
 
-        <PaginationBar
+        <pagination-bar
           :page="abusePage"
           :page-size="abusePageSize"
           :total-items="abuseTotal"
@@ -132,27 +128,27 @@
           @update:page="(v: number) => { abusePage = v; reloadAbuse() }"
           @update:pageSize="(v: number) => { abusePageSize = v; abusePage = 1; reloadAbuse() }"
         />
-      </Card>
+      </card>
     </div>
 
-    <GlassModal v-if="showAbilityDetail" :title="String(t('admin.sidebar.reports') || '报告')" size="lg" heightVariant="tall" @close="closeAbility">
+    <glass-modal v-if="showAbilityDetail" :title="String(t('admin.sidebar.reports') || '报告')" size="lg" heightVariant="tall" @close="closeAbility">
       <div v-if="abilityDetail" class="space-y-3">
         <div class="text-sm text-subtle">#{{ abilityDetail.id }} · {{ abilityDetail.reportType }}</div>
-        <Card padding="md" tint="secondary">
+        <card padding="md" tint="secondary">
           <div class="text-sm font-medium mb-2">{{ abilityDetail.title }}</div>
-          <div class="text-sm text-subtle">Student: {{ abilityDetail.studentName }} (#{{ abilityDetail.studentId }})</div>
-          <div class="text-sm">Score: {{ abilityDetail.overallScore }}</div>
-        </Card>
-        <Card padding="md" tint="secondary">
-          <div class="text-sm font-medium mb-2">Recommendations</div>
+          <div class="text-sm text-subtle">{{ t('common.columns.student') || 'Student' }}: {{ abilityDetail.studentName }} (#{{ abilityDetail.studentId }})</div>
+          <div class="text-sm">{{ t('admin.moderation.score') || t('admin.student360.score') || 'Score' }}: {{ abilityDetail.overallScore }}</div>
+        </card>
+        <card padding="md" tint="secondary">
+          <div class="text-sm font-medium mb-2">{{ t('admin.moderation.recommendations') || '建议' }}</div>
           <div class="text-sm whitespace-pre-line">{{ abilityDetail.recommendations || '-' }}</div>
-        </Card>
-        <Card padding="md" tint="secondary">
+        </card>
+        <card padding="md" tint="secondary">
           <div class="text-sm font-medium mb-2">DimensionScores(JSON)</div>
           <pre class="text-xs whitespace-pre-wrap break-words opacity-90">{{ abilityDetail.dimensionScores || '{}' }}</pre>
-        </Card>
+        </card>
       </div>
-    </GlassModal>
+    </glass-modal>
   </div>
 </template>
 
@@ -168,6 +164,7 @@ import SegmentedPills from '@/components/ui/SegmentedPills.vue'
 import GlassPopoverSelect from '@/components/ui/filters/GlassPopoverSelect.vue'
 import GlassInput from '@/components/ui/inputs/GlassInput.vue'
 import GlassModal from '@/components/ui/GlassModal.vue'
+import GlassTable from '@/components/ui/tables/GlassTable.vue'
 import { adminApi, type AbilityReport, type ReportEntity } from '@/api/admin.api'
 import { useUIStore } from '@/stores/ui'
 

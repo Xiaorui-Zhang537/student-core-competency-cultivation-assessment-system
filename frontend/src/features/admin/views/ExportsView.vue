@@ -3,7 +3,7 @@
     <PageHeader :title="t('admin.sidebar.exports')" :subtitle="t('admin.title')" />
 
     <loading-overlay v-if="loading" class="mt-4" :text="String(t('common.loading') || '加载中…')" />
-    <ErrorState
+    <error-state
       v-else-if="error"
       class="mt-4"
       :title="String(t('common.error') || '加载失败')"
@@ -13,26 +13,26 @@
     />
 
     <div v-else class="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-4">
-      <Card padding="md" tint="secondary" class="lg:col-span-3">
+      <card padding="md" tint="secondary" class="lg:col-span-3">
         <div class="text-sm font-medium mb-2">Export capabilities</div>
         <div class="text-xs text-subtle">Max rows: {{ caps?.maxRows ?? '-' }} · Formats: {{ (caps?.formats || []).join(', ') }}</div>
-      </Card>
+      </card>
 
-      <Card padding="md" tint="secondary">
+      <card padding="md" tint="secondary">
         <div class="text-sm font-medium mb-3">Users CSV</div>
         <div class="text-xs text-subtle mb-3">Export `/admin/users` list to CSV.</div>
         <div class="flex gap-2">
-          <Button size="sm" variant="primary" :disabled="exporting" @click="exportUsers">Download</Button>
+          <button size="sm" variant="primary" :disabled="exporting" @click="exportUsers">Download</button>
         </div>
-      </Card>
+      </card>
 
-      <Card padding="md" tint="secondary">
+      <card padding="md" tint="secondary">
         <div class="text-sm font-medium mb-3">Ability reports CSV</div>
         <div class="text-xs text-subtle mb-3">Export `/admin/ability-reports` list to CSV.</div>
         <div class="flex gap-2">
-          <Button size="sm" variant="primary" :disabled="exporting" @click="exportAbilityReports">Download</Button>
+          <button size="sm" variant="primary" :disabled="exporting" @click="exportAbilityReports">Download</button>
         </div>
-      </Card>
+      </card>
     </div>
   </div>
 </template>

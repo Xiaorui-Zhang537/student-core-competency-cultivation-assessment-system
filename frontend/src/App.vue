@@ -38,7 +38,7 @@
 
     <!-- 全局通知系统（Animated List + 玻璃 + 主题色） -->
     <div class="fixed top-4 right-4 z-50 w-auto max-w-[90vw] sm:max-w-[560px]">
-      <AnimatedList :items="notifications" :delay="120" :reverse="true">
+      <animated-list :items="notifications" :delay="120" :reverse="true">
         <template #item="{ item }">
           <div
             class="relative rounded-2xl pointer-events-auto overflow-hidden glass-thin glass-interactive border border-white/20 dark:border-white/12 shadow-md"
@@ -47,7 +47,7 @@
           >
             <!-- 关闭叉：每条通知独立关闭 -->
             <div class="absolute top-2 right-2">
-              <Button
+              <button
                 variant="glass-ghost"
                 size="xs"
                 icon="close"
@@ -60,10 +60,10 @@
 
             <div class="p-4 sm:p-5 flex items-start">
               <div class="flex-shrink-0 w-7 h-7 mr-4 flex items-center justify-start">
-                <CheckCircleSolid v-if="item.type === 'success'" class="h-7 w-7" :style="iconStyle('success')" />
-                <ExclamationTriangleSolid v-else-if="item.type === 'warning'" class="h-7 w-7" :style="iconStyle('warning')" />
-                <XCircleSolid v-else-if="item.type === 'error'" class="h-7 w-7" :style="iconStyle('error')" />
-                <InformationCircleSolid v-else class="h-7 w-7" :style="iconStyle('info')" />
+                <check-circle-solid v-if="item.type === 'success'" class="h-7 w-7" :style="iconStyle('success')" />
+                <exclamation-triangle-solid v-else-if="item.type === 'warning'" class="h-7 w-7" :style="iconStyle('warning')" />
+                <x-circle-solid v-else-if="item.type === 'error'" class="h-7 w-7" :style="iconStyle('error')" />
+                <information-circle-solid v-else class="h-7 w-7" :style="iconStyle('info')" />
               </div>
               <div class="min-w-0 flex-1">
                 <p class="text-[15px] sm:text-[17px] font-semibold break-words whitespace-normal">{{ item.title }}</p>
@@ -72,7 +72,7 @@
             </div>
           </div>
         </template>
-      </AnimatedList>
+      </animated-list>
     </div>
 
     <!-- 全局错误边界弹窗 -->
@@ -90,8 +90,8 @@
           {{ t('app.error.description') }}
         </p>
         <div class="flex space-x-3">
-          <Button class="flex-1" variant="primary" icon="confirm" @click="reloadPage">{{ t('app.error.button.reload') }}</Button>
-          <Button class="flex-1" variant="secondary" icon="close" @click="showErrorModal = false">{{ t('app.error.button.close') }}</Button>
+          <button class="flex-1" variant="primary" icon="confirm" @click="reloadPage">{{ t('app.error.button.reload') }}</button>
+          <button class="flex-1" variant="secondary" icon="close" @click="showErrorModal = false">{{ t('app.error.button.close') }}</button>
         </div>
       </div>
     </div>
@@ -123,7 +123,7 @@
     />
 
     <!-- 全局备案徽章（固定在底部，覆盖所有页面） -->
-    <BeianBadge />
+    <beian-badge />
   </div>
 </template>
 

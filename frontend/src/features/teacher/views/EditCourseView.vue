@@ -30,7 +30,7 @@
 
                   <div>
           <label for="category" class="label">{{ t('teacher.courseEdit.form.category') }} <span class="text-red-500">*</span></label>
-          <GlassPopoverSelect
+          <glass-popover-select
             :model-value="courseForm.category"
             :options="categories.map((c: string) => ({ label: c, value: c }))"
             :placeholder="(t('teacher.courseEdit.form.selectCategory') as string)"
@@ -43,11 +43,11 @@
         <!-- Actions -->
         <div class="flex justify-end gap-4 pt-4">
             <router-link :to="'/teacher/courses/' + courseForm.id">
-              <Button variant="secondary">{{ t('teacher.courseEdit.actions.cancel') }}</Button>
+              <button variant="secondary">{{ t('teacher.courseEdit.actions.cancel') }}</button>
             </router-link>
-            <Button type="submit" variant="primary" :disabled="courseStore.loading">
+            <button type="submit" variant="primary" :disabled="courseStore.loading">
                 {{ courseStore.loading ? t('teacher.courseEdit.actions.saving') : t('teacher.courseEdit.actions.save') }}
-            </Button>
+            </button>
         </div>
       </form>
       

@@ -87,9 +87,9 @@
                       <p class="notification-title font-semibold">
                         {{ getLocalizedTitle(notification) }}
                       </p>
-                      <Badge size="sm" :variant="priorityVariant(notification.priority)">
+                      <badge size="sm" :variant="priorityVariant(notification.priority)">
                         {{ getPriorityText(notification.priority) }}
-                      </Badge>
+                      </badge>
                     </div>
                     
                     <!-- 内容预览 -->
@@ -115,7 +115,7 @@
 
           <!-- 下拉面板底部 -->
           <div class="dropdown-footer bg-white/5 dark:bg-white/5" style="box-shadow: inset 0 1px 0 rgba(255,255,255,0.14);">
-            <Button
+            <button
               variant="primary"
               class="w-full justify-center !rounded-none !rounded-b-2xl py-3"
               :title="t('notifications.actions.viewAll') as string"
@@ -123,7 +123,7 @@
               @click="openNotificationCenter"
             >
               {{ t('notifications.actions.viewAll') }}
-            </Button>
+            </button>
           </div>
         </liquid-glass>
       </teleport>

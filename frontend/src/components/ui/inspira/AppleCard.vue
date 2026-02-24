@@ -1,38 +1,38 @@
 <template>
   <Teleport to="body">
-    <Presence>
+    <presence>
       <div v-if="open" class="fixed inset-0 z-50 h-screen overflow-auto">
-        <Motion as="div" :initial="{ opacity: 0 }" :animate="{ opacity: 1 }" :exit="{ opacity: 0 }" class="fixed inset-0 size-full bg-black/80 backdrop-blur-lg" />
-        <Motion ref="containerRef" as="div" :initial="{ opacity: 0 }" :animate="{ opacity: 1 }" :exit="{ opacity: 0 }" :layout-id="layout ? `card-${card.title}` : undefined" class="relative z-[60] mx-auto my-10 h-fit max-w-5xl rounded-3xl bg-white p-4 font-sans md:p-10 dark:bg-neutral-900">
+        <motion as="div" :initial="{ opacity: 0 }" :animate="{ opacity: 1 }" :exit="{ opacity: 0 }" class="fixed inset-0 size-full bg-black/80 backdrop-blur-lg" />
+        <motion ref="containerRef" as="div" :initial="{ opacity: 0 }" :animate="{ opacity: 1 }" :exit="{ opacity: 0 }" :layout-id="layout ? `card-${card.title}` : undefined" class="relative z-[60] mx-auto my-10 h-fit max-w-5xl rounded-3xl bg-white p-4 font-sans md:p-10 dark:bg-neutral-900">
           <button class="sticky right-0 top-4 ml-auto flex size-8 items-center justify-center rounded-full bg-black dark:bg-white" @click="handleClose" aria-label="close">
-            <Icon :icon="'tabler:x'" class="size-6 text-white dark:text-black" />
+            <icon :icon="'tabler:x'" class="size-6 text-white dark:text-black" />
           </button>
-          <Motion v-if="props.index !== 0 && props.index !== 1 && props.index !== 2 && props.index !== 3 && props.index !== 4" as="div" :layout-id="layout ? `category-${card.title}` : undefined" class="text-base font-medium text-black dark:text-white">
+          <motion v-if="props.index !== 0 && props.index !== 1 && props.index !== 2 && props.index !== 3 && props.index !== 4" as="div" :layout-id="layout ? `category-${card.title}` : undefined" class="text-base font-medium text-black dark:text-white">
             {{ card.category }}
-          </Motion>
-          <Motion as="div" :layout-id="layout ? `title-${card.title}` : undefined" class="mt-4 text-2xl font-semibold text-neutral-700 md:text-5xl dark:text-white">
+          </motion>
+          <motion as="div" :layout-id="layout ? `title-${card.title}` : undefined" class="mt-4 text-2xl font-semibold text-neutral-700 md:text-5xl dark:text-white">
             {{ card.title }}
-          </Motion>
+          </motion>
           <div class="py-10">
             <slot />
           </div>
-        </Motion>
+        </motion>
       </div>
-    </Presence>
+    </presence>
   </Teleport>
 
-  <Motion :layout-id="layout ? `card-${card.title}` : undefined" class="relative z-10 flex h-80 w-56 flex-col items-start justify-start overflow-hidden rounded-3xl glass-regular md:h-[40rem] md:w-96 ring-1 ring-white/10" @click="handleOpen">
+  <motion :layout-id="layout ? `card-${card.title}` : undefined" class="relative z-10 flex h-80 w-56 flex-col items-start justify-start overflow-hidden rounded-3xl glass-regular md:h-[40rem] md:w-96 ring-1 ring-white/10" @click="handleOpen">
     <div class="pointer-events-none absolute inset-x-0 top-0 z-30 h-full bg-gradient-to-b from-black/50 via-transparent to-transparent" />
     <div class="relative z-40 p-8">
-      <Motion :layout-id="layout ? `category-${card.category}` : undefined" class="text-left font-sans text-sm font-medium text-white md:text-base">
+      <motion :layout-id="layout ? `category-${card.category}` : undefined" class="text-left font-sans text-sm font-medium text-white md:text-base">
         {{ card.category }}
-      </Motion>
-      <Motion :layout-id="layout ? `title-${card.title}` : undefined" class="mt-2 max-w-xs text-left font-sans text-xl font-semibold text-white [text-wrap:balance] md:text-3xl">
+      </motion>
+      <motion :layout-id="layout ? `title-${card.title}` : undefined" class="mt-2 max-w-xs text-left font-sans text-xl font-semibold text-white [text-wrap:balance] md:text-3xl">
         {{ card.title }}
-      </Motion>
+      </motion>
     </div>
-    <AppleBlurImage :src="card.src" :alt="card.title" class="absolute inset-0 z-10 object-cover" :fill="true" />
-  </Motion>
+    <apple-blur-image :src="card.src" :alt="card.title" class="absolute inset-0 z-10 object-cover" :fill="true" />
+  </motion>
 </template>
 
 <script setup lang="ts">

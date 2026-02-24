@@ -2,15 +2,272 @@
   "admin": {
     "title": "Admin Center",
     "sidebar": {
+      "console": "Console",
+      "people": "People",
+      "moderation": "Moderation",
       "dashboard": "Dashboard",
       "courses": "Courses",
       "analytics": "Analytics",
+      "rankings": "Rankings",
       "users": "Users",
       "students": "Students",
       "teachers": "Teachers",
       "reports": "Reports",
       "exports": "Exports",
-      "community": "Moderation"
+      "community": "Moderation",
+      "tools": "Tools"
+    },
+    "tabs": {
+      "users": "Users",
+      "students": "Students",
+      "teachers": "Teachers",
+      "abilityReports": "Ability reports",
+      "posts": "Posts",
+      "comments": "Comments"
+    },
+    "kpi": {
+      "totalUsers": "Total users",
+      "students": "Students",
+      "teachers": "Teachers",
+      "disabledUsers": "Disabled users",
+      "totalCourses": "Total courses",
+      "communityPosts": "Community posts",
+      "abilityReports": "Ability reports"
+    },
+    "roles": {
+      "student": "Student",
+      "teacher": "Teacher",
+      "admin": "Admin"
+    },
+    "courseStatus": {
+      "draft": "Draft",
+      "published": "Published",
+      "archived": "Archived"
+    },
+    "postStatus": {
+      "published": "Published",
+      "draft": "Draft",
+      "deleted": "Deleted"
+    },
+    "console": {
+      "daysLabel": "Window",
+      "dataSourceHint": "Data from aggregated APIs and paged totals (size=1).",
+      "trendsTitle": "Key trends",
+      "trendsSubtitle": "Last {days} days: Active / New / Enrollments",
+      "quickActions": "Quick actions",
+      "quickModeration": "Go to moderation",
+      "gotoPeople": "People center: users & segments",
+      "gotoCourses": "Courses center",
+      "gotoModeration": "Moderation: ability reports & community",
+      "gotoTools": "Tools: exports",
+      "activeUsers": "Active users (N days)",
+      "abilityReports": "Ability reports",
+      "userRoleDist": "User role distribution",
+      "courseStatusDist": "Course status distribution",
+      "postStatusDist": "Post status distribution",
+      "series": {
+        "active": "Active",
+        "newUsers": "New",
+        "enrollments": "Enrollments"
+      }
+    },
+    "people": {
+      "hint": "One filter set for all tabs; Users tab supports creation and role updates.",
+      "statusLabel": "Status",
+      "allStatus": "All status",
+      "allRoles": "All roles",
+      "fields": {
+        "nickname": "Nickname",
+        "studentNo": "Student No",
+        "teacherNo": "Teacher No"
+      },
+      "userStatus": {
+        "active": "Active",
+        "disabled": "Disabled"
+      }
+    },
+    "moderation": {
+      "studentIdOptional": "studentId(optional)",
+      "postIdOptional": "postId(optional)",
+      "reportType": "Type",
+      "score": "Score",
+      "createdAt": "Created",
+      "recommendations": "Recommendations",
+      "reason": "Reason",
+      "status": "Status",
+      "post": "Post",
+      "pinned": "Pinned",
+      "comments": "Comments",
+      "actions": "Actions",
+      "comment": "Comment"
+    },
+    "courses": {
+      "statusLabel": "Status",
+      "statusDistTitle": "Course status distribution",
+      "statusDistSubtitle": "Totals are computed for current query (size=1).",
+      "overview": "Overview",
+      "teacher": "Teacher",
+      "students": "Students",
+      "createdAt": "Created",
+      "quickNav": "Quick actions",
+      "actions": "Actions",
+      "viewStudent": "View profile",
+      "contentTitle": "Course content",
+      "tabs": {
+        "content": "Content",
+        "students": "Students",
+        "grades": "Grades",
+        "reports": "Reports"
+      },
+      "gradesStatsTitle": "Grade stats",
+      "avgScore": "Average",
+      "submissionCount": "Submissions",
+      "maxScore": "Max",
+      "minScore": "Min",
+      "gradeDistTitle": "Grade distribution",
+      "gradeDistSubtitle": "Bucketed distribution returned by backend.",
+      "reportsTitle": "Ability reports",
+      "tipsTitle": "Tips",
+      "tip1": "More specific filters make the overview closer to your task.",
+      "tip2": "For complex analytics (teacher/category/difficulty), consider adding backend aggregation endpoints."
+    },
+    "courseStudents": {
+      "cards": {
+        "total": "Total students",
+        "avgProgress": "Avg progress",
+        "avgGrade": "Avg grade",
+        "active": "Active students"
+      },
+      "filters": {
+        "labels": {
+          "progress": "Progress",
+          "grade": "Grade",
+          "activity": "Activity",
+          "sort": "Sort"
+        },
+        "progress": {
+          "all": "All",
+          "notStarted": "Not started",
+          "inProgress": "In progress",
+          "completed": "Completed"
+        },
+        "grade": {
+          "all": "All",
+          "excellent": "Excellent",
+          "good": "Good",
+          "average": "Average",
+          "below": "Below"
+        },
+        "activity": {
+          "all": "All",
+          "high": "High",
+          "medium": "Medium",
+          "low": "Low",
+          "inactive": "Inactive"
+        },
+        "sort": {
+          "radar": "Radar",
+          "name": "Name",
+          "progress": "Progress",
+          "grade": "Grade",
+          "lastActive": "Last active",
+          "activity": "Activity"
+        },
+        "searchPlaceholder": "Search name/username/studentNo"
+      },
+      "table": {
+        "student": "Student",
+        "progress": "Progress",
+        "radar": "Radar",
+        "grade": "Grade",
+        "activity": "Activity",
+        "lastActive": "Last active",
+        "actions": "Actions"
+      }
+    },
+    "tools": {
+      "capabilitiesTitle": "Export capabilities",
+      "capabilitiesSubtitle": "Synchronous CSV export in v1; narrow filters to avoid hitting the max rows limit.",
+      "broadcastTitle": "Global notification",
+      "broadcastDesc": "Send a system notification to all users or a segment (written per user into notifications).",
+      "broadcast": {
+        "title": "Title",
+        "content": "Content",
+        "target": "Target",
+        "role": "Role",
+        "specificIds": "User IDs (comma-separated)",
+        "send": "Send"
+      },
+      "broadcastTargets": {
+        "all": "All users",
+        "role": "By role",
+        "specific": "Specific users"
+      },
+      "usersCsvTitle": "Users CSV",
+      "usersCsvDesc": "Export `/admin/users` list to CSV.",
+      "abilityCsvTitle": "Ability reports CSV",
+      "abilityCsvDesc": "Export ability reports list to CSV.",
+      "courseStudentsCsvTitle": "Course students CSV",
+      "courseStudentsCsvDesc": "Export course students list by courseId.",
+      "aiConversationsCsvTitle": "AI conversations index CSV",
+      "aiConversationsCsvDesc": "Export AI conversations index by studentId.",
+      "voiceSessionsCsvTitle": "Voice sessions index CSV",
+      "voiceSessionsCsvDesc": "Export voice sessions index by studentId.",
+      "courseIdPlaceholder": "Enter courseId",
+      "studentIdPlaceholder": "Enter studentId",
+      "exportCsv": "Export CSV",
+      "exportPdf": "Export PDF",
+      "exportZip": "Export ZIP",
+      "download": "Download",
+      "openFilters": "Open filters",
+      "tipsTitle": "Tips",
+      "tip1": "Narrow filters in People/Moderation first for faster downloads.",
+      "tip2": "For large exports, consider an async export job pipeline."
+    },
+    "student360": {
+      "profile": "Student profile",
+      "courseContext": "Course context",
+      "panels": "Panels",
+      "auditAiVoice": "AI & voice audit",
+      "tabs": {
+        "grades": "Grades",
+        "ability": "Radar & reports",
+        "insights": "Behavior insights",
+        "aiChat": "AI chats",
+        "voice": "Voice practice"
+      },
+      "enrolledCourses": "Enrollments",
+      "avgGrade": "Avg grade",
+      "abilityReports": "Reports",
+      "gradesTitle": "Grades",
+      "trendTitle": "Trend",
+      "assignment": "Assignment",
+      "score": "Score",
+      "feedback": "Feedback",
+      "radarTitle": "Ability radar",
+      "needCourseContext": "Radar needs a course context. Enter from the course page or provide courseId in URL.",
+      "reportsTitle": "Ability reports",
+      "insightsTitle": "AI behavior insights",
+      "generate": "Generate",
+      "risks": "Risk alerts",
+      "recommendations": "Recommendations",
+      "aiConversations": "Conversations",
+      "aiMessages": "Messages",
+      "selectConversation": "Select a conversation",
+      "voiceSessions": "Sessions",
+      "voiceTurns": "Turns",
+      "selectVoiceSession": "Select a session",
+      "voiceUser": "Student",
+      "voiceAssistant": "AI",
+      "student": "Student",
+      "classAvg": "Class avg"
+    },
+    "teacherDetail": {
+      "title": "Teacher",
+      "summary": "Summary",
+      "courses": "Courses",
+      "assignments": "Assignments",
+      "activeEnrollments": "Active enrollments"
     },
     "common": {
       "comingSoon": "Coming soon",

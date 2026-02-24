@@ -1,12 +1,12 @@
 <template>
   <div class="min-h-screen p-6">
-    <PageHeader :title="t('teacher.analytics.title')" :subtitle="t('teacher.analytics.subtitle')">
+    <page-header :title="t('teacher.analytics.title')" :subtitle="t('teacher.analytics.subtitle')">
       <template #actions>
         <div class="flex items-center space-x-4">
           <span class="text-sm font-medium text-gray-700 dark:text-gray-300 whitespace-nowrap">
             {{ t('teacher.analytics.courseSelector.label') || '选择课程' }}
           </span>
-          <GlassPopoverSelect
+          <glass-popover-select
             v-model="selectedCourseId"
             :options="courseSelectOptions"
             :placeholder="t('teacher.analytics.selectCourse') as string"
@@ -16,45 +16,45 @@
             @change="onCourseChange"
           />
           <div class="flex items-center gap-3">
-            <Button variant="primary" class="whitespace-nowrap" :disabled="!selectedCourseId" @click="askAiForAnalytics">
-              <SparklesIcon class="w-4 h-4 mr-2" />
+            <button variant="primary" class="whitespace-nowrap" :disabled="!selectedCourseId" @click="askAiForAnalytics">
+              <sparkles-icon class="w-4 h-4 mr-2" />
               {{ t('teacher.analytics.askAi') }}
-            </Button>
-            <Button variant="secondary" class="whitespace-nowrap" @click="exportReport">
-              <DocumentArrowDownIcon class="w-4 h-4 mr-2 flex-shrink-0" />
+            </button>
+            <button variant="secondary" class="whitespace-nowrap" @click="exportReport">
+              <document-arrow-down-icon class="w-4 h-4 mr-2 flex-shrink-0" />
               {{ t('teacher.analytics.exportReport') }}
-            </Button>
+            </button>
           </div>
         </div>
       </template>
-    </PageHeader>
+    </page-header>
 
     <!-- 核心指标卡片（统一为工作台小卡片样式） -->
     <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6 mb-8">
-      <StartCard :label="t('teacher.analytics.cards.totalStudents') as string" :value="n(safeCourseAnalytics.totalStudents, 'integer')" tone="blue" :icon="UserGroupIcon" />
-      <StartCard :label="t('teacher.analytics.cards.completionRate') as string" :value="n((safeCourseAnalytics.completionRate || 0) / 100, 'percent')" tone="emerald" :icon="CheckCircleIcon" />
-      <StartCard :label="t('teacher.analytics.cards.averageScore') as string" :value="(safeCourseAnalytics.averageScore || 0).toFixed(1)" tone="violet" :icon="StarIcon" />
-      <StartCard :label="t('teacher.analytics.cards.totalAssignments') as string" :value="n(safeCourseAnalytics.totalAssignments, 'integer')" tone="amber" :icon="ClipboardDocumentListIcon" />
+      <start-card :label="t('teacher.analytics.cards.totalStudents') as string" :value="n(safeCourseAnalytics.totalStudents, 'integer')" tone="blue" :icon="UserGroupIcon" />
+      <start-card :label="t('teacher.analytics.cards.completionRate') as string" :value="n((safeCourseAnalytics.completionRate || 0) / 100, 'percent')" tone="emerald" :icon="CheckCircleIcon" />
+      <start-card :label="t('teacher.analytics.cards.averageScore') as string" :value="(safeCourseAnalytics.averageScore || 0).toFixed(1)" tone="violet" :icon="StarIcon" />
+      <start-card :label="t('teacher.analytics.cards.totalAssignments') as string" :value="n(safeCourseAnalytics.totalAssignments, 'integer')" tone="amber" :icon="ClipboardDocumentListIcon" />
     </div>
 
     <!-- 图表区域 -->
     <div class="grid grid-cols-12 gap-6 mb-2 items-start w-full">
       <!-- 左列包裹：成绩分布 + 学生表现排行（同一列内堆叠，避免被右列拉高后产生空白） -->
       <div class="col-span-12 lg:col-span-6 min-w-0 flex flex-col gap-4 self-start w-full">
-        <Card padding="lg" class="self-start w-full" tint="info">
+        <card padding="lg" class="self-start w-full" tint="info">
         <template #header>
             <div class="flex items-center justify-between h-11 overflow-hidden">
             <h3 class="text-lg font-semibold text-gray-900 dark:text-white">{{ t('teacher.analytics.charts.scoreDistribution') }}</h3>
-              <div class="invisible flex items-center gap-2"><Button size="sm" variant="ghost">1</Button><Button size="sm" variant="ghost">2</Button></div>
+              <div class="invisible flex items-center gap-2"><button size="sm" variant="ghost">1</button><button size="sm" variant="ghost">2</button></div>
           </div>
         </template>
         <div class="mb-3 min-h-[44px]"></div>
           <div class="w-full relative z-0">
             <div ref="scoreDistributionRef" class="h-80 w-full"></div>
           </div>
-      </Card>
+      </card>
 
-        <Card padding="lg" class="self-start w-full" tint="accent">
+        <card padding="lg" class="self-start w-full" tint="accent">
         <template #header>
           <h3 class="text-lg font-semibold text-gray-900 dark:text-white">{{ t('teacher.analytics.tables.studentRanking') }}</h3>
         </template>
@@ -73,9 +73,9 @@
                     <div class="flex flex-col gap-1">
                       <div class="flex items-center gap-2">
                         <span class="text-sm font-semibold text-gray-900 dark:text-gray-100">{{ s.studentName }}</span>
-                        <Badge :variant="getRadarBadgeVariant(s.radarClassification)" size="xs" class="px-2 text-xs font-semibold uppercase tracking-wide">
+                        <badge :variant="getRadarBadgeVariant(s.radarClassification)" size="xs" class="px-2 text-xs font-semibold uppercase tracking-wide">
                           {{ formatRadarBadgeLabel(s.radarClassification) }}
-                        </Badge>
+                        </badge>
                       </div>
                       <div v-if="s.dimensionScores && Object.keys(s.dimensionScores || {}).length" class="grid grid-cols-2 gap-x-3 gap-y-1 text-xs text-gray-600 dark:text-gray-400 mt-1">
                         <span
@@ -99,7 +99,7 @@
                 </div>
               </li>
             </ul>
-            <PaginationBar
+            <pagination-bar
               :page="rankingPage"
               :page-size="rankingPageSize"
               :total-pages="rankingTotalPages"
@@ -110,29 +110,29 @@
               @update:pageSize="handleRankingPageSizeChange"
             />
           </div>
-      </Card>
+      </card>
       </div>
 
       <!-- 五维能力雷达图 -->
       <div class="col-span-12 lg:col-span-6 min-w-0 flex flex-col gap-4 w-full">
         <!-- 控制面板 -->
-        <Card padding="lg" class="w-full" tint="warning">
+        <card padding="lg" class="w-full" tint="warning">
           <template #header>
             <div class="flex items-center justify-between h-11">
               <h3 class="text-lg font-semibold text-gray-900 dark:text-white">{{ t('teacher.analytics.settings.title') }}</h3>
               <div class="flex items-center gap-3">
                 <div class="flex items-center gap-2 mr-1">
                   <span class="text-sm text-gray-700 dark:text-gray-300">{{ t('teacher.analytics.charts.enableCompare') }}</span>
-                  <GlassSwitch v-model="compareEnabled" size="sm" />
+                  <glass-switch v-model="compareEnabled" size="sm" />
                 </div>
-                <Button size="sm" variant="info" :title="t('teacher.analytics.charts.refresh')" @click="onRefreshAnalytics" :disabled="!selectedCourseId" class="shadow-sm">
-                  <ArrowPathIcon class="w-4 h-4 mr-1" />
+                <button size="sm" variant="info" :title="t('teacher.analytics.charts.refresh')" @click="onRefreshAnalytics" :disabled="!selectedCourseId" class="shadow-sm">
+                  <arrow-path-icon class="w-4 h-4 mr-1" />
                   {{ t('teacher.analytics.charts.refresh') }}
-                </Button>
-                <Button size="sm" variant="secondary" @click="exportAnalytics" :disabled="!selectedCourseId" class="shadow-sm">
-                  <DocumentArrowDownIcon class="w-4 h-4 mr-1" />
+                </button>
+                <button size="sm" variant="secondary" @click="exportAnalytics" :disabled="!selectedCourseId" class="shadow-sm">
+                  <document-arrow-down-icon class="w-4 h-4 mr-1" />
                   {{ t('teacher.analytics.charts.exportCsv') }}
-                </Button>
+                </button>
               </div>
             </div>
           </template>
@@ -141,7 +141,7 @@
             <div class="flex flex-wrap items-center gap-4 whitespace-nowrap">
               <div class="flex items-center gap-2">
                 <span class="text-xs font-medium leading-tight text-gray-700 dark:text-gray-300">{{ t('teacher.analytics.settings.studentLabel') }}</span>
-                  <GlassPopoverSelect
+                  <glass-popover-select
                     v-model="selectedStudentId"
                     :options="studentSelectOptions"
                     :placeholder="t('teacher.analytics.charts.selectStudent') as string"
@@ -153,7 +153,7 @@
               </div>
               <div class="flex items-center gap-2">
                 <span class="text-xs font-medium leading-tight text-gray-700 dark:text-gray-300">{{ t('teacher.analytics.settings.classAvgLabel') }}</span>
-                  <GlassPopoverSelect
+                  <glass-popover-select
                     v-model="includeClassAvg"
                     :options="[
                       { label: t('teacher.analytics.charts.classAvgBoth') as string || '班级均值: A与B', value: 'both' },
@@ -173,18 +173,18 @@
               <div v-if="compareEnabled" class="flex flex-col gap-2">
               <div class="flex flex-wrap items-center gap-2">
                 <span class="text-sm text-gray-700 dark:text-gray-300">{{ t('teacher.analytics.settings.setA') }}</span>
-                <GlassMultiSelect v-model="assignmentIdsA" :options="assignmentSelectOptions" size="sm" tint="primary" />
+                <glass-multi-select v-model="assignmentIdsA" :options="assignmentSelectOptions" size="sm" tint="primary" />
               </div>
               <div class="flex flex-wrap items-center gap-2">
                 <span class="text-sm text-gray-700 dark:text-gray-300">{{ t('teacher.analytics.settings.setB') }}</span>
-                <GlassMultiSelect v-model="assignmentIdsB" :options="assignmentSelectOptions" size="sm" tint="secondary" />
+                <glass-multi-select v-model="assignmentIdsB" :options="assignmentSelectOptions" size="sm" tint="secondary" />
               </div>
             </div>
           </div>
-        </Card>
+        </card>
 
         <!-- 雷达图展示 -->
-        <Card padding="lg" tint="secondary">
+        <card padding="lg" tint="secondary">
           <template #header>
             <div class="flex items-center justify-between h-11 relative z-10 overflow-hidden">
               <h3 class="text-lg font-semibold text-gray-900 dark:text-white">{{ t('teacher.analytics.charts.radar') }}</h3>
@@ -195,19 +195,19 @@
             <radar-chart :indicators="radarIndicators" :series="radarSeries" height="320px" :appendTooltipToBody="true" :showLegend="true" />
           </div>
           <div v-else class="text-sm text-gray-500 text-center">{{ t('teacher.analytics.charts.noRadar') }}</div>
-        </Card>
+        </card>
 
         <!-- 维度图例说明（中英） -->
         <card padding="lg" v-if="rawRadarDimensions.length">
-          <AbilityRadarLegend :dimensions="rawRadarDimensions" />
+          <ability-radar-legend :dimensions="rawRadarDimensions" />
         </card>
 
         <!-- 维度解析卡片（右列堆叠） -->
-        <Card padding="lg" v-if="compareEnabled || (!!selectedStudentId)" class="self-start w-full" tint="primary">
+        <card padding="lg" v-if="compareEnabled || (!!selectedStudentId)" class="self-start w-full" tint="primary">
           <template #header>
             <div class="flex items-center justify-between h-11">
               <h3 class="text-lg font-semibold text-gray-900 dark:text-white">{{ t('teacher.analytics.charts.dimensionInsights') || '维度解析' }}</h3>
-              <Button size="sm" variant="outline" @click="loadInsights" :disabled="!selectedCourseId">{{ t('teacher.analytics.charts.refresh') || '刷新' }}</Button>
+              <button size="sm" variant="outline" @click="loadInsights" :disabled="!selectedCourseId">{{ t('teacher.analytics.charts.refresh') || '刷新' }}</button>
             </div>
           </template>
           <div v-if="insightsItems.length === 0" class="text-sm text-gray-500">{{ t('teacher.analytics.charts.noInsights') || '暂无解析' }}</div>
@@ -236,7 +236,7 @@
               </div>
             </div>
           </div>
-        </Card>
+        </card>
       </div>
     
     </div>

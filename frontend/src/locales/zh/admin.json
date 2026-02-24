@@ -2,6 +2,9 @@
   "admin": {
     "title": "管理员中心",
     "sidebar": {
+      "console": "控制台",
+      "people": "数据中心",
+      "moderation": "内容治理",
       "dashboard": "仪表盘",
       "courses": "课程总览",
       "analytics": "数据看板",
@@ -10,7 +13,50 @@
       "teachers": "教师数据中心",
       "reports": "报告中心",
       "exports": "数据导出",
-      "community": "内容治理"
+      "community": "内容治理",
+      "tools": "工具中心"
+    },
+    "tabs": {
+      "users": "用户",
+      "students": "学生",
+      "teachers": "教师",
+      "abilityReports": "能力报告",
+      "posts": "帖子",
+      "comments": "评论"
+    },
+    "console": {
+      "daysLabel": "时间窗口",
+      "abilityReports": "能力报告"
+    },
+    "people": {
+      "statusLabel": "状态"
+    },
+    "courses": {
+      "statusLabel": "状态",
+      "overview": "概览",
+      "teacher": "教师",
+      "students": "学生",
+      "tabs": {
+        "content": "内容",
+        "students": "学生",
+        "grades": "成绩",
+        "reports": "报告"
+      }
+    },
+    "tools": {
+      "exportCsv": "导出CSV",
+      "exportPdf": "导出PDF",
+      "exportZip": "导出ZIP"
+    },
+    "student360": {
+      "profile": "学生画像",
+      "tabs": {
+        "grades": "成绩",
+        "ability": "雷达与报告",
+        "insights": "行为洞察",
+        "aiChat": "AI问答",
+        "voice": "口语训练"
+      }
     },
     "common": {
       "comingSoon": "功能开发中",

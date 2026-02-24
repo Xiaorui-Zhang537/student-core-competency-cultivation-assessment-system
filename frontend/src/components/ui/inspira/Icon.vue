@@ -1,6 +1,6 @@
 <template>
   <span class="inline-flex items-center justify-center" :style="{ width: sizePx, height: sizePx }">
-    <Iconify :icon="resolved" :width="sizePx" :height="sizePx" />
+    <iconify :icon="resolved" :width="sizePx" :height="sizePx" />
   </span>
 </template>
 
