@@ -4,10 +4,10 @@
       <page-header :title="t('shared.community.title')" :subtitle="t('shared.community.subtitle')">
         <template #actions>
           <div class="flex items-center space-x-3">
-            <button variant="primary" class="whitespace-nowrap" @click="showCreatePostModal = true">
+            <Button variant="primary" class="whitespace-nowrap" @click="showCreatePostModal = true">
               <plus-icon class="w-4 h-4 mr-2" />
               {{ t('shared.community.createPost') }}
-            </button>
+            </Button>
           </div>
         </template>
       </page-header>
@@ -27,7 +27,7 @@
           <div class="p-4 filter-container rounded-2xl glass-tint-secondary" v-glass="{ strength: 'thin', interactive: false }">
             <h2 class="text-lg font-semibold text-base-content mb-4">{{ t('shared.community.categories.title') }}</h2>
             <div class="space-y-2">
-              <button
+              <Button
                 v-for="category in categories"
                 :key="category.id"
                 variant="menu"
@@ -39,7 +39,7 @@
                   <component :is="category.icon" class="w-5 h-5 mr-3" />
                    <span>{{ category.name }}</span>
                 </span>
-              </button>
+              </Button>
             </div>
           </div>
 
@@ -51,10 +51,16 @@
                 v-for="(topic, index) in hotTopics"
                 :key="topic.topic"
                 @click="searchByTopic(topic.topic)"
-                class="flex items-center justify-between p-2 rounded-xl cursor-pointer hover-bg-soft"
+                class="flex items-center justify-between p-2.5 rounded-xl cursor-pointer transition-all duration-200"
+                :class="selectedTopicTag === topic.topic ? 'bg-soft-primary ring-soft-primary' : 'hover-bg-soft'"
               >
                 <div class="flex items-center space-x-2">
-                  <span class="glass-badge glass-badge-primary glass-badge-sm">{{ index + 1 }}</span>
+                  <span
+                    class="inline-flex items-center justify-center w-6 h-6 rounded-full text-[11px] font-semibold shadow-sm ring-1"
+                    :class="rankBadgeClass(index)"
+                  >
+                    {{ index + 1 }}
+                  </span>
                   <span class="text-sm text-base-content">#{{ topic.topic }}</span>
                 </div>
                 <span class="text-xs text-subtle">{{ t('shared.community.sidebar.postsCount', { count: topic.postCount }) }}</span>
@@ -90,6 +96,13 @@
                 <div class="flex items-center gap-2 min-w-0">
                   <h2 class="text-base md:text-lg font-semibold text-base-content truncate">{{ currentCategoryName }}</h2>
                   <span class="text-xs text-subtle whitespace-nowrap">{{ t('shared.community.list.total', { count: totalPosts }) }}</span>
+                  <span
+                    v-if="selectedTopicTag"
+                    class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs bg-soft-primary text-strong ring-soft-primary"
+                  >
+                    #{{ selectedTopicTag }}
+                    <button type="button" class="leading-none opacity-70 hover:opacity-100" @click="clearTopicFilter">×</button>
+                  </span>
                 </div>
               </template>
               <template #right>
@@ -99,7 +112,7 @@
                     :placeholder="t('shared.community.list.searchPlaceholder') as string"
                     size="sm"
                     @keyup.enter="applyFilters"
-                    @update:modelValue="(v: string | null) => { if (String(v ?? '').trim() === '') { applyFilters() } }"
+                    @update:modelValue="onKeywordInput"
                   />
                 </div>
                 <div class="w-36">
@@ -151,10 +164,10 @@
                           <p class="text-sm text-subtle line-clamp-2 mb-2 whitespace-pre-line" v-html="post.content"></p>
                         </div>
                         <div class="flex-shrink-0 flex items-center gap-1.5">
-                          <button v-if="(post as any).attachments?.length" variant="ghost" size="xs" icon="download" class="text-subtle" @click.stop="downloadFirstAttachment(post)">
+                          <Button v-if="(post as any).attachments?.length" variant="ghost" size="xs" icon="download" class="text-subtle" @click.stop="downloadFirstAttachment(post)">
                             {{ t('shared.download') }}
-                          </button>
-                          <button
+                          </Button>
+                          <Button
                             v-if="authStore.user?.id && String(authStore.user.id) === String(post.author?.id || post.authorId)"
                             variant="outline"
                             size="xs"
@@ -163,8 +176,8 @@
                             @click.stop="onEditPost(post)"
                           >
                             {{ t('shared.community.list.edit') }}
-                          </button>
-                          <button
+                          </Button>
+                          <Button
                             v-if="authStore.user?.id && String(authStore.user.id) === String(post.author?.id || post.authorId)"
                             variant="outline"
                             size="xs"
@@ -173,7 +186,7 @@
                             @click.stop="onDeletePost(post.id)"
                           >
                             {{ t('shared.community.list.delete') }}
-                          </button>
+                          </Button>
                         </div>
                       </div>
                     </div>
@@ -182,12 +195,12 @@
                       <span>{{ formatDate(post.createdAt) }}</span>
                       <div class="flex items-center gap-1"><eye-icon class="w-3.5 h-3.5" /><span>{{ post.viewCount }}</span></div>
                       <div class="flex items-center gap-1"><chat-bubble-left-icon class="w-3.5 h-3.5" /><span>{{ post.commentCount }}</span></div>
-                      <button size="xs" variant="reaction" @click.stop="communityStore.toggleLikePost(post.id)" :class="post.isLiked ? 'reaction-liked' : ''">
+                      <Button size="xs" variant="reaction" @click.stop="communityStore.toggleLikePost(post.id)" :class="post.isLiked ? 'reaction-liked' : ''">
                         <template #icon>
                           <hand-thumb-up-icon class="w-3.5 h-3.5" />
                         </template>
                         <span>{{ post.likeCount }}</span>
-                      </button>
+                      </Button>
                     </div>
                     <div v-if="post.tags?.length" class="flex items-center flex-wrap gap-2 mt-2">
                       <badge v-for="tag in post.tags" :key="tag.id" size="sm" :variant="(tagVariantByName(tag.name) as 'primary' | 'secondary' | 'success' | 'warning' | 'info' | 'danger' | 'accent')">#{{ tag.name }}</badge>
@@ -209,18 +222,18 @@
               <p class="text-subtle mb-4">
                 {{ filterOptions.keyword ? t('shared.community.list.emptyDescKeyword') : t('shared.community.list.emptyDescCategory') }}
               </p>
-              <button variant="primary" class="whitespace-nowrap" @click="showCreatePostModal = true">
+              <Button variant="primary" class="whitespace-nowrap" @click="showCreatePostModal = true">
                 <plus-icon class="w-4 h-4 mr-2" />
                 {{ t('shared.community.list.publishFirst') }}
-              </button>
+              </Button>
             </div>
 
             <!-- Pagination -->
             <div v-if="!loading && totalPosts > filterOptions.size" class="mt-6 flex justify-between items-center">
                <span class="text-sm text-subtle">{{ t('shared.community.list.total', { count: totalPosts }) }}</span>
               <div class="flex space-x-1">
-                <button size="sm" variant="outline" @click="changePage(filterOptions.page - 1)" :disabled="filterOptions.page === 1">{{ t('shared.community.list.prev') }}</button>
-                <button size="sm" variant="outline" @click="changePage(filterOptions.page + 1)" :disabled="filterOptions.page * filterOptions.size >= totalPosts">{{ t('shared.community.list.next') }}</button>
+                <Button size="sm" variant="outline" @click="changePage(filterOptions.page - 1)" :disabled="filterOptions.page === 1">{{ t('shared.community.list.prev') }}</Button>
+                <Button size="sm" variant="outline" @click="changePage(filterOptions.page + 1)" :disabled="filterOptions.page * filterOptions.size >= totalPosts">{{ t('shared.community.list.next') }}</Button>
               </div>
             </div>
           </div>
@@ -268,8 +281,8 @@
           
         </form>
         <template #footer>
-          <button type="button" variant="secondary" @click="showCreatePostModal = false">{{ t('shared.community.modal.cancel') }}</button>
-          <button type="submit" form="createPostForm" variant="primary" :disabled="loading">{{ t('shared.community.modal.publish') }}</button>
+          <Button type="button" variant="secondary" @click="showCreatePostModal = false">{{ t('shared.community.modal.cancel') }}</Button>
+          <Button type="submit" form="createPostForm" variant="primary" :disabled="loading">{{ t('shared.community.modal.publish') }}</Button>
         </template>
       </glass-modal>
 
@@ -319,8 +332,8 @@
                       <div class="text-xs text-gray-500">{{ (f.fileSize ? (f.fileSize/1024/1024).toFixed(1)+' MB' : '') }}</div>
                     </div>
                     <div class="flex items-center gap-2">
-                      <button size="sm" variant="outline" type="button" @click="downloadEditAttachment(f)">{{ t('shared.community.modal.download') }}</button>
-                      <button size="sm" variant="danger" type="button" @click="deleteEditAttachment(f.id)">{{ t('shared.community.modal.delete') }}</button>
+                      <Button size="sm" variant="outline" type="button" @click="downloadEditAttachment(f)">{{ t('shared.community.modal.download') }}</Button>
+                      <Button size="sm" variant="danger" type="button" @click="deleteEditAttachment(f.id)">{{ t('shared.community.modal.delete') }}</Button>
                     </div>
                   </li>
                 </ul>
@@ -329,8 +342,8 @@
           
         </form>
         <template #footer>
-          <button type="button" variant="secondary" @click="editModal.visible = false">{{ t('shared.community.modal.cancel') }}</button>
-          <button type="submit" :disabled="loading" form="editPostForm" variant="primary">{{ t('shared.community.modal.save') }}</button>
+          <Button type="button" variant="secondary" @click="editModal.visible = false">{{ t('shared.community.modal.cancel') }}</Button>
+          <Button type="submit" :disabled="loading" form="editPostForm" variant="primary">{{ t('shared.community.modal.save') }}</Button>
         </template>
       </glass-modal>
     </div>
@@ -388,6 +401,7 @@ const safeStats = computed(() => ({
 }))
 
 const showCreatePostModal = ref(false);
+const selectedTopicTag = ref('');
 const filterOptions = reactive<{ page: number; size: number; category: string; keyword: string; orderBy: 'latest' | 'hot' | 'comments' | 'likes' | 'views' }>({
   page: 1,
   size: 10,
@@ -449,12 +463,14 @@ const labelToCategoryId: Record<string, string> = Object.fromEntries(Object.entr
 
 const applyFilters = () => {
   filterOptions.page = 1;
+  const hasTagFilter = String(selectedTopicTag.value || '').trim() !== ''
   const params: any = {
     page: filterOptions.page,
     size: filterOptions.size,
     orderBy: filterOptions.orderBy,
-    // 允许搜索栏空白时，keyword 传 undefined 展示全部
-    keyword: String(filterOptions.keyword || '').trim() === '' ? undefined : filterOptions.keyword,
+    // 标签筛选启用时，以后端 tag 精确筛选为准；关键词留空避免“内容搜索”误导。
+    keyword: hasTagFilter ? undefined : (String(filterOptions.keyword || '').trim() === '' ? undefined : filterOptions.keyword),
+    tag: hasTagFilter ? selectedTopicTag.value : undefined,
     category: filterOptions.category === 'all' ? undefined : categoryIdToLabel[filterOptions.category] || filterOptions.category
   };
   communityStore.fetchPosts(params);
@@ -468,19 +484,37 @@ const onCategoryChange = (categoryId: string) => {
 const changePage = (page: number) => {
   if (page < 1 || (page - 1) * filterOptions.size >= totalPosts.value) return;
   filterOptions.page = page;
+  const hasTagFilter = String(selectedTopicTag.value || '').trim() !== ''
    const params: any = {
     ...filterOptions,
-    // 空白搜索同样视为展示全部
-    keyword: String(filterOptions.keyword || '').trim() === '' ? undefined : filterOptions.keyword,
+    // 标签筛选启用时，以后端 tag 精确筛选为准；关键词留空避免“内容搜索”误导。
+    keyword: hasTagFilter ? undefined : (String(filterOptions.keyword || '').trim() === '' ? undefined : filterOptions.keyword),
+    tag: hasTagFilter ? selectedTopicTag.value : undefined,
     category: filterOptions.category === 'all' ? undefined : filterOptions.category
   };
   communityStore.fetchPosts(params);
 };
 
 const searchByTopic = (topic: string) => {
-  filterOptions.keyword = topic;
+  selectedTopicTag.value = String(topic || '').trim();
+  filterOptions.keyword = '';
   applyFilters();
 };
+
+const clearTopicFilter = () => {
+  selectedTopicTag.value = ''
+  applyFilters()
+}
+
+const onKeywordInput = (v: string | null) => {
+  const text = String(v ?? '').trim()
+  if (text && selectedTopicTag.value) {
+    selectedTopicTag.value = ''
+  }
+  if (!text) {
+    applyFilters()
+  }
+}
 
 const viewPost = (postId: number) => {
   const routeName = authStore.userRole === 'TEACHER' ? 'TeacherPostDetail' : 'StudentPostDetail';
@@ -681,6 +715,13 @@ function hashCode(s: string): number {
   let h = 0
   for (let i=0;i<s.length;i++) { h = ((h<<5)-h) + s.charCodeAt(i); h |= 0 }
   return h
+}
+
+const rankBadgeClass = (index: number) => {
+  if (index === 0) return 'bg-amber-500/20 text-amber-700 dark:text-amber-300 ring-amber-500/30'
+  if (index === 1) return 'bg-slate-500/20 text-slate-700 dark:text-slate-300 ring-slate-500/30'
+  if (index === 2) return 'bg-orange-500/20 text-orange-700 dark:text-orange-300 ring-orange-500/30'
+  return 'bg-primary-500/15 text-primary-700 dark:text-primary-300 ring-primary-500/25'
 }
 
 

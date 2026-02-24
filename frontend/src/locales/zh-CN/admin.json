@@ -49,8 +49,23 @@
       "draft": "草稿",
       "deleted": "已删除"
     },
+    "gradeLevel": {
+      "A": "A",
+      "B": "B",
+      "C": "C",
+      "D": "D",
+      "E": "E",
+      "F": "F"
+    },
     "console": {
       "daysLabel": "时间窗口",
+      "dayOptions": {
+        "d7": "7天",
+        "d30": "30天",
+        "d90": "90天",
+        "d180": "180天",
+        "d365": "365天"
+      },
       "dataSourceHint": "数据来自管理员聚合接口与分页 totals 统计（size=1）",
       "trendsTitle": "关键趋势",
       "trendsSubtitle": "近 {days} 天：活跃 / 新增 / 选课",
@@ -62,6 +77,24 @@
       "gotoTools": "工具中心：导出",
       "activeUsers": "近 N 天活跃",
       "abilityReports": "能力报告",
+      "abilityRadarTitle": "整体五维能力雷达",
+      "abilityRadarSubtitle": "近 {days} 天全局维度均值",
+      "radarSeriesSchool": "全局均值",
+      "radarDims": {
+        "moral": "道德认知",
+        "attitude": "学习态度",
+        "ability": "学习能力",
+        "method": "学习方法",
+        "academic": "学业成绩"
+      },
+      "radarEmptyHint": "当前时间窗口暂无有效能力评估数据，已展示基础维度占位。",
+      "aiUsageTitle": "AI 使用排行（访问数）",
+      "aiUsageSubtitle": "近 {days} 天按消息数 Top 用户",
+      "aiVisitsSeries": "访问数",
+      "aiSummaryConversations": "会话总数",
+      "aiSummaryMessages": "消息总数",
+      "aiSummaryActiveUsers": "活跃用户",
+      "gradeLevelDist": "成绩等级分布",
       "userRoleDist": "用户角色分布",
       "courseStatusDist": "课程状态分布",
       "postStatusDist": "帖子状态分布",

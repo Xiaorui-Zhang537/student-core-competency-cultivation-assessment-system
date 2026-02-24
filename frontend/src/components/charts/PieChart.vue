@@ -64,6 +64,7 @@ interface Props {
   showLabel?: boolean
   labelPosition?: 'inside' | 'outside'
   roseType?: boolean | 'radius' | 'area'
+  compact?: boolean
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -77,7 +78,8 @@ const props = withDefaults(defineProps<Props>(), {
   loading: false,
   showLabel: true,
   labelPosition: 'outside',
-  roseType: false
+  roseType: false,
+  compact: false
 })
 
 // 状态
@@ -109,6 +111,18 @@ const ensurePalette = () => {
 }
 
 const hasData = () => Array.isArray(props.data) && props.data.length > 0
+
+const parsePx = (value?: string) => {
+  if (!value) return NaN
+  const m = value.trim().match(/^(\d+(?:\.\d+)?)px$/i)
+  return m ? Number(m[1]) : NaN
+}
+
+const resolveCompact = () => {
+  if (props.compact) return true
+  const heightPx = parsePx(props.height)
+  return Number.isFinite(heightPx) && heightPx <= 300
+}
 
 const computeIsDark = () => {
   if (props.theme === 'auto') {
@@ -200,6 +214,31 @@ const initChart = async () => {
       return applyStableStates(item, baseColor)
     })
     
+    const compact = resolveCompact()
+    const legendConfig = compact
+      ? {
+          type: 'scroll' as const,
+          orient: 'horizontal' as const,
+          left: 'center',
+          bottom: 6,
+          textStyle: {
+            color: tokens.textPrimary || (isDark ? '#f3f4f6' : '#1f2937')
+          }
+        }
+      : {
+          type: 'scroll' as const,
+          orient: 'vertical' as const,
+          right: 10,
+          top: 20,
+          bottom: 20,
+          textStyle: {
+            color: tokens.textPrimary || (isDark ? '#f3f4f6' : '#1f2937')
+          }
+        }
+    const seriesCenter = compact ? (['50%', '38%'] as [string, string]) : props.center
+    const seriesRadius = compact ? (['0%', '50%'] as [string, string]) : props.radius
+    const effectiveLabelPosition = compact ? 'outside' : props.labelPosition
+
     // 配置选项
     const option = {
       backgroundColor: resolveBg(),
@@ -238,14 +277,7 @@ const initChart = async () => {
       },
       
       legend: {
-        type: 'scroll',
-        orient: 'vertical',
-        right: 10,
-        top: 20,
-        bottom: 20,
-        textStyle: {
-          color: tokens.textPrimary || (isDark ? '#f3f4f6' : '#1f2937')
-        },
+        ...legendConfig,
         ...props.legend
       },
       
@@ -253,9 +285,9 @@ const initChart = async () => {
         {
           name: props.title || '数据分布',
           type: 'pie',
-          radius: props.radius,
-          center: props.center,
-          avoidLabelOverlap: false,
+          radius: seriesRadius,
+          center: seriesCenter,
+          avoidLabelOverlap: true,
           selectedMode: false,
           silent: false,
           hoverAnimation: false,
@@ -268,12 +300,19 @@ const initChart = async () => {
           },
           label: {
             show: props.showLabel,
-            position: props.labelPosition,
+            position: effectiveLabelPosition,
             color: tokens.textPrimary || (isDark ? '#f9fafb' : '#1f2937'),
-            formatter: '{b}: {d}%'
+            formatter: compact ? '{b}: {d}%' : '{b}: {d}%'
           },
           labelLine: {
-            show: props.showLabel && props.labelPosition === 'outside'
+            show: props.showLabel && effectiveLabelPosition === 'outside',
+            length: compact ? 8 : 15,
+            length2: compact ? 8 : 15,
+            smooth: compact
+          },
+          minShowLabelAngle: compact ? 8 : 0,
+          labelLayout: {
+            hideOverlap: true
           },
           animation: !!props.animation,
           animationType: 'scale',

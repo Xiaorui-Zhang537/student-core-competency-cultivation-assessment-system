@@ -4,9 +4,9 @@
       <div class="max-w-6xl mx-auto mb-4 md:mb-6">
         <page-header :title="t('teacher.ai.title')" :subtitle="t('teacher.ai.subtitle')">
           <template #actions>
-            <button variant="success" icon="user-plus" class="whitespace-nowrap shrink-0" @click="goVoicePractice">
+            <Button variant="success" icon="user-plus" class="whitespace-nowrap shrink-0" @click="goVoicePractice">
               {{ t('shared.voicePractice.entry') }}
-            </button>
+            </Button>
           </template>
         </page-header>
       </div>
@@ -21,7 +21,7 @@
                 <h3 class="text-sm font-semibold text-gray-700 dark:text-gray-200 truncate">{{ t('teacher.ai.conversations') || '会话' }}</h3>
                 <span class="text-xs text-gray-500 shrink-0">{{ conversations.length }}</span>
               </div>
-              <button size="sm" variant="primary" icon="plus" class="whitespace-nowrap shrink-0" @click="newConv">{{ t('common.new') || '新建' }}</button>
+              <Button size="sm" variant="primary" icon="plus" class="whitespace-nowrap shrink-0" @click="newConv">{{ t('common.new') || '新建' }}</Button>
             </div>
             <div class="flex items-center gap-2 mb-3">
               <div class="flex-1 min-w-0">
@@ -41,7 +41,7 @@
             </div>
 
             <div class="divide-y divide-gray-100 dark:divide-gray-700 rounded-lg border border-gray-100 dark:border-gray-700 overflow-hidden max-h-[50vh] overflow-y-auto">
-              <button
+              <Button
                 v-for="c in conversations"
                 :key="c.id"
                 variant="menu"
@@ -53,26 +53,26 @@
                   <div class="flex items-center gap-3 w-full min-w-0">
                     <div class="font-medium truncate flex-1 min-w-0">{{ c.title || (t('teacher.ai.untitled') || '未命名会话') }}</div>
                     <div class="flex items-center gap-2 shrink-0 ml-auto">
-                      <button variant="ghost" size="xs" class="text-base-content/70 hover:text-base-content" :title="t('common.rename') || '重命名'" @click.stop="rename(c)">
+                      <Button variant="ghost" size="xs" class="text-base-content/70 hover:text-base-content" :title="t('common.rename') || '重命名'" @click.stop="rename(c)">
                         <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
                           <path d="M12 20h9"/><path d="M16.5 3.5l4 4-11 11H5.5v-4.5l11-10.5z"/>
                         </svg>
-                      </button>
-                      <button variant="ghost" size="xs" :class="c.pinned ? 'theme-primary' : 'text-base-content/60 hover:text-base-content'" :title="c.pinned ? (t('common.unpin') || '取消置顶') : (t('common.pin') || '置顶')" @click.stop="pin(c, !c.pinned)">
+                      </Button>
+                      <Button variant="ghost" size="xs" :class="c.pinned ? 'theme-primary' : 'text-base-content/60 hover:text-base-content'" :title="c.pinned ? (t('common.unpin') || '取消置顶') : (t('common.pin') || '置顶')" @click.stop="pin(c, !c.pinned)">
                         <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
                           <path :fill="c.pinned ? 'currentColor' : 'none'" d="M12 17l-5.878 3.09 1.123-6.545L2.49 8.91l6.561-.953L12 2l2.949 5.957 6.561.953-4.755 4.635 1.123 6.545z"/>
                         </svg>
-                      </button>
-                      <button variant="danger" size="xs" :title="t('common.delete') || '删除'" @click.stop="remove(c.id)">
+                      </Button>
+                      <Button variant="danger" size="xs" :title="t('common.delete') || '删除'" @click.stop="remove(c.id)">
                         <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
                           <polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/>
                         </svg>
-                      </button>
+                      </Button>
                     </div>
                   </div>
                   <div class="text-xs text-gray-500 truncate" v-if="c.model">{{ c.model }}</div>
                 </div>
-              </button>
+              </Button>
             </div>
           </div>
 
@@ -137,7 +137,7 @@
                     <div class="space-y-2">
                       <div v-for="fid in m.attachments" :key="fid" class="flex items-center gap-2">
                         <audio :src="buildAuthedStreamUrl(fid)" controls class="w-full" />
-                        <button size="xs" variant="ghost" class="shrink-0" @click="download(fid)">{{ t('common.download') || '下载' }}</button>
+                        <Button size="xs" variant="ghost" class="shrink-0" @click="download(fid)">{{ t('common.download') || '下载' }}</Button>
                       </div>
                     </div>
                   </div>
@@ -185,11 +185,11 @@
                   </svg>
                 </div>
                 <div class="text-xs text-gray-700 dark:text-gray-200 max-w-[180px] truncate">{{ a.name || ('#' + a.id) }}</div>
-                <button size="xs" variant="ghost" class="shrink-0 opacity-70 group-hover:opacity-100" :title="t('common.delete') || '删除'" @click.prevent="removePending(a.id)">
+                <Button size="xs" variant="ghost" class="shrink-0 opacity-70 group-hover:opacity-100" :title="t('common.delete') || '删除'" @click.prevent="removePending(a.id)">
                   <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
                     <path d="M18 6L6 18"/><path d="M6 6l12 12"/>
                   </svg>
-                </button>
+                </Button>
               </div>
             </div>
 
@@ -205,22 +205,22 @@
               />
               <div v-if="showUpload" class="flex items-center gap-2">
                 <input ref="fileInput" type="file" class="hidden" accept="image/*,.pdf,.doc,.docx,.txt" multiple @change="handlePickFiles" />
-                <button variant="ghost" size="sm" :title="t('teacher.ai.uploadTitle') || '上传'" @click.prevent="triggerPick">
+                <Button variant="ghost" size="sm" :title="t('teacher.ai.uploadTitle') || '上传'" @click.prevent="triggerPick">
                   <svg class="w-5 h-5 text-gray-700 dark:text-gray-200" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
                     <path d="M12 3v12"/><path d="M7 8l5-5 5 5"/><path d="M4 17v3h16v-3"/>
                   </svg>
-                </button>
+                </Button>
               </div>
 
               <!-- 停止生成 / 发送 -->
-              <button v-if="ai.streaming" variant="danger" class="shrink-0 whitespace-nowrap min-w-[96px]" @click="stopGeneration">
+              <Button v-if="ai.streaming" variant="danger" class="shrink-0 whitespace-nowrap min-w-[96px]" @click="stopGeneration">
                 <svg class="w-4 h-4 mr-1.5" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="6" width="12" height="12" rx="2"/></svg>
                 {{ t('teacher.ai.stop') || '停止生成' }}
-              </button>
-              <button v-else variant="primary" class="shrink-0 whitespace-nowrap min-w-[96px]" :disabled="!canSend || sending" :loading="sending" @click="send">
+              </Button>
+              <Button v-else variant="primary" class="shrink-0 whitespace-nowrap min-w-[96px]" :disabled="!canSend || sending" :loading="sending" @click="send">
                 <span v-if="sending">{{ t('teacher.ai.thinking') || 'AI 正在思考...' }}</span>
                 <span v-else>{{ t('teacher.ai.send') || '发送' }}</span>
-              </button>
+              </Button>
             </div>
             <!-- 字数统计 -->
             <div class="text-right text-xs text-gray-400 dark:text-gray-500" v-if="draft">
@@ -234,8 +234,8 @@
       <glass-modal v-if="showRename" :title="(t('teacher.ai.renameTitle') as string) || '重命名对话'" :backdropDark="false" blur="sm" clarity="default" maxWidth="max-w-[1040px]" heightVariant="normal" @close="showRename=false">
         <glass-input v-model="renameTitle" class="mb-4" :placeholder="t('common.rename') || '请输入新的标题'" />
         <template #footer>
-          <button size="sm" variant="secondary" @click="showRename=false">{{ t('common.cancel') || '取消' }}</button>
-          <button size="sm" variant="primary" @click="confirmRename">{{ t('teacher.courses.actions.save') || '保存' }}</button>
+          <Button size="sm" variant="secondary" @click="showRename=false">{{ t('common.cancel') || '取消' }}</Button>
+          <Button size="sm" variant="primary" @click="confirmRename">{{ t('teacher.courses.actions.save') || '保存' }}</Button>
         </template>
       </glass-modal>
     </div>

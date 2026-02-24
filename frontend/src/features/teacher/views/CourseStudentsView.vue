@@ -17,18 +17,18 @@
         <page-header :title="t('teacher.students.title')" :subtitle="t('teacher.students.subtitle')">
           <template #actions>
             <div class="flex items-center space-x-3">
-              <button variant="primary" @click="openInviteModal">
+              <Button variant="primary" @click="openInviteModal">
                 <user-plus-icon class="w-4 h-4 mr-2" />
                 {{ t('teacher.students.actions.invite') }}
-              </button>
-              <button variant="purple" @click="openKeyModal">
+              </Button>
+              <Button variant="purple" @click="openKeyModal">
                 <lock-closed-icon class="w-4 h-4 mr-2" />
                 {{ t('teacher.students.actions.setEnrollKey') }}
-              </button>
-              <button variant="success" @click="exportData">
+              </Button>
+              <Button variant="success" @click="exportData">
                 <arrow-down-tray-icon class="w-4 h-4 mr-2" />
                 {{ t('teacher.students.actions.export') }}
-              </button>
+              </Button>
             </div>
           </template>
         </page-header>
@@ -88,14 +88,14 @@
             <span class="text-sm text-gray-600 dark:text-gray-400">
               {{ t('teacher.students.batch.selectedCount', { count: selectedStudents.length }) }}
             </span>
-            <button variant="success" size="sm" @click="batchExport">
+            <Button variant="success" size="sm" @click="batchExport">
               <arrow-down-tray-icon class="w-4 h-4 mr-1" />
               {{ t('teacher.students.batch.export') }}
-            </button>
-            <button variant="outline" size="sm" @click="batchRemove">
+            </Button>
+            <Button variant="outline" size="sm" @click="batchRemove">
               <user-minus-icon class="w-4 h-4 mr-1" />
               {{ t('teacher.students.batch.remove') }}
-            </button>
+            </Button>
           </div>
 
           <!-- 搜索框（右对齐） -->
@@ -199,7 +199,7 @@
                           {{ student.completedLessons }}/{{ student.totalLessons }}
                         </span>
                       </div>
-                      <progress
+                      <Progress
                         :value="Number(student.progress || 0)"
                         size="sm"
                         :color="Number(student.progress || 0) >= 100 ? 'success' : 'primary'"
@@ -272,13 +272,13 @@
                 <td class="px-4 py-4 text-center">
                   <div class="flex justify-center">
                     <div class="relative" @click.stop :ref="(el: Element | ComponentPublicInstance | null) => setMenuButtonRef((el as HTMLElement) ?? null, student.id)">
-                      <button
+                      <Button
                         variant="ghost"
                         size="sm"
                         @click="toggleStudentMenu(student.id)"
                       >
                         <ellipsis-vertical-icon class="w-4 h-4" />
-                      </button>
+                      </Button>
                       <teleport to="body">
                         <div
                           v-if="showStudentMenu === student.id"
@@ -288,27 +288,27 @@
                           @click.stop
                         >
                           <div class="py-1 space-y-1">
-                            <button variant="menu" size="sm" class="w-full justify-start gap-2" @click="handleStudentView(student.id)">
+                            <Button variant="menu" size="sm" class="w-full justify-start gap-2" @click="handleStudentView(student.id)">
                               <eye-icon class="w-4 h-4" />
                               {{ t('teacher.students.table.view') }}
-                            </button>
-                            <button variant="menu" size="sm" class="w-full justify-start gap-2" @click="handleStudentMessage(student.id)">
+                            </Button>
+                            <Button variant="menu" size="sm" class="w-full justify-start gap-2" @click="handleStudentMessage(student.id)">
                               <chat-bubble-left-icon class="w-4 h-4" />
                               {{ t('teacher.students.table.message') }}
-                            </button>
-                            <button variant="menu" size="sm" class="w-full justify-start gap-2" @click="resetProgress(student.id)">
+                            </Button>
+                            <Button variant="menu" size="sm" class="w-full justify-start gap-2" @click="resetProgress(student.id)">
                                <arrow-path-icon class="w-4 h-4" />
                                {{ t('teacher.students.table.reset') }}
-                            </button>
-                            <button variant="menu" size="sm" class="w-full justify-start gap-2" @click="exportStudentData(student.id)">
+                            </Button>
+                            <Button variant="menu" size="sm" class="w-full justify-start gap-2" @click="exportStudentData(student.id)">
                                <arrow-down-tray-icon class="w-4 h-4" />
                                {{ t('teacher.students.table.export') }}
-                            </button>
+                            </Button>
                             <hr class="my-1 border-white/10" />
-                            <button variant="danger" size="sm" class="w-full justify-start gap-2" @click="removeStudent(student.id)">
+                            <Button variant="danger" size="sm" class="w-full justify-start gap-2" @click="removeStudent(student.id)">
                                <user-minus-icon class="w-4 h-4" />
                                {{ t('teacher.students.table.remove') }}
-                            </button>
+                            </Button>
                           </div>
                         </div>
                       </teleport>
@@ -348,8 +348,8 @@
           <div class="text-xs text-gray-500">{{ t('teacher.students.invite.parsed', { count: parsedInviteIds.length }) }}</div>
         </div>
         <template #footer>
-          <button variant="secondary" @click="closeInviteModal">{{ t('teacher.students.invite.cancel') }}</button>
-          <button variant="teal" :disabled="parsedInviteIds.length===0 || inviting" :loading="inviting" @click="submitInvite">{{ t('teacher.students.invite.confirm') }}</button>
+          <Button variant="secondary" @click="closeInviteModal">{{ t('teacher.students.invite.cancel') }}</Button>
+          <Button variant="teal" :disabled="parsedInviteIds.length===0 || inviting" :loading="inviting" @click="submitInvite">{{ t('teacher.students.invite.confirm') }}</Button>
         </template>
       </glass-modal>
 
@@ -373,8 +373,8 @@
           </div>
         </div>
         <template #footer>
-          <button variant="secondary" @click="closeKeyModal">{{ t('teacher.students.invite.cancel') }}</button>
-          <button variant="teal" :loading="savingKey" @click="saveEnrollKey">{{ t('teacher.students.enrollKey.save') }}</button>
+          <Button variant="secondary" @click="closeKeyModal">{{ t('teacher.students.invite.cancel') }}</Button>
+          <Button variant="teal" :loading="savingKey" @click="saveEnrollKey">{{ t('teacher.students.enrollKey.save') }}</Button>
         </template>
       </glass-modal>
 

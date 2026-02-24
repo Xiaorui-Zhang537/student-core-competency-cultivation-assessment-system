@@ -12,7 +12,7 @@
           <div class="mt-4 md:mt-0 w-full md:w-96">
             <div class="flex items-center gap-2">
               <glass-search-input v-model="searchQuery" :placeholder="t('shared.discovery.searchPlaceholder') || '搜索课程...'" size="sm" tint="info" />
-              <button variant="primary" size="sm" icon="search" class="shrink-0" @click="handleSearch">{{ t('common.search') || '搜索' }}</button>
+              <Button variant="primary" size="sm" icon="search" class="shrink-0" @click="handleSearch">{{ t('common.search') || '搜索' }}</Button>
             </div>
           </div>
         </div>
@@ -44,7 +44,7 @@
       <div class="mb-8 p-4 glass-regular glass-tint-primary rounded-2xl" v-glass>
         <div class="flex items-center justify-between mb-6">
           <h2 class="text-xl font-semibold text-base-content">热门课程</h2>
-          <button variant="secondary" size="sm" icon="arrow-right" @click="viewAllPopular">查看全部</button>
+          <Button variant="secondary" size="sm" icon="arrow-right" @click="viewAllPopular">查看全部</Button>
         </div>
 
         <div v-if="discoveryLoading.popular" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -115,7 +115,7 @@
       <div class="mb-8 p-4 glass-regular glass-tint-accent rounded-2xl" v-glass>
         <div class="flex items-center justify-between mb-6">
           <h2 class="text-xl font-semibold text-base-content">为您推荐</h2>
-          <button variant="secondary" size="sm" icon="arrow-right" @click="refreshRecommended">换一批</button>
+          <Button variant="secondary" size="sm" icon="arrow-right" @click="refreshRecommended">换一批</Button>
         </div>
 
         <div v-if="discoveryLoading.recommended" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -186,7 +186,7 @@
           <h2 class="text-xl font-semibold text-base-content">
             {{ selectedCategory.name }}课程
           </h2>
-          <button variant="secondary" size="sm" icon="close" @click="clearCategoryFilter">清除筛选</button>
+          <Button variant="secondary" size="sm" icon="close" @click="clearCategoryFilter">清除筛选</Button>
         </div>
 
         <div v-if="discoveryLoading.categoryCourses" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -246,9 +246,9 @@
           <!-- 分页 -->
           <div v-if="categoryPagination.totalPages > 1" class="flex justify-center mt-8">
             <div class="flex items-center space-x-2">
-              <button variant="secondary" size="sm" icon="arrow-left" @click="handleCategoryPageChange(categoryPagination.page - 1)" :disabled="categoryPagination.page <= 1">上一页</button>
+              <Button variant="secondary" size="sm" icon="arrow-left" @click="handleCategoryPageChange(categoryPagination.page - 1)" :disabled="categoryPagination.page <= 1">上一页</Button>
               <span class="text-sm text-gray-600">第 {{ categoryPagination.page }} 页，共 {{ categoryPagination.totalPages }} 页</span>
-              <button variant="secondary" size="sm" icon="arrow-right" iconPosition="right" @click="handleCategoryPageChange(categoryPagination.page + 1)" :disabled="categoryPagination.page >= categoryPagination.totalPages">下一页</button>
+              <Button variant="secondary" size="sm" icon="arrow-right" iconPosition="right" @click="handleCategoryPageChange(categoryPagination.page + 1)" :disabled="categoryPagination.page >= categoryPagination.totalPages">下一页</Button>
             </div>
           </div>
         </div>

@@ -10,6 +10,16 @@
   - **Query**：`days`（默认 7）
   - **返回**：用户/课程/社区/举报等全局计数与近 N 天活跃用户数（基于 `behavior_events`）。
 
+- `GET /api/admin/dashboard/ability-radar-overview`
+  - **Query**：`days`（默认 180，最大 365）
+  - **返回**：全局五维雷达聚合（`dimensions[]`，含维度编码、名称、平均分、样本量）。
+
+- `GET /api/admin/dashboard/ai-usage-overview`
+  - **Query**：`days`（默认 30，最大 365）、`limit`（默认 20，最大 100）
+  - **返回**：
+    - `summary`：会话总数、消息总数、活跃用户数
+    - `users[]`：按用户聚合的会话数、消息数、最后活跃时间（按消息数降序）
+
 ## 2. 课程总览
 
 - `GET /api/admin/courses`

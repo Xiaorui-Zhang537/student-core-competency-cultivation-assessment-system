@@ -17,6 +17,39 @@ export interface AdminDashboardOverview {
   community: { posts: number; comments: number }
   reports: { total: number; pending: number }
   activity: { activeUsers: number; since: string }
+  grades?: { A: number; B: number; C: number; D: number; E: number; F: number }
+}
+
+export interface AdminAbilityRadarDimensionOverview {
+  code: string
+  name: string
+  value: number
+  sampleSize: number
+}
+
+export interface AdminAbilityRadarOverviewResponse {
+  days: number
+  dimensions: AdminAbilityRadarDimensionOverview[]
+}
+
+export interface AdminAiUsageUserItem {
+  userId: number
+  username: string
+  role: string
+  conversationCount: number
+  messageCount: number
+  lastActiveAt?: string
+}
+
+export interface AdminAiUsageOverviewResponse {
+  days: number
+  limit: number
+  summary: {
+    conversationCount: number
+    messageCount: number
+    activeUsers: number
+  }
+  users: AdminAiUsageUserItem[]
 }
 
 export interface AdminUserListItem {
@@ -89,6 +122,12 @@ export interface ReportEntity {
 export const adminApi = {
   getDashboardOverview: (days = 7): Promise<AdminDashboardOverview> => {
     return api.get('/admin/dashboard/overview', { params: { days } })
+  },
+  getAbilityRadarOverview: (days = 180): Promise<AdminAbilityRadarOverviewResponse> => {
+    return api.get('/admin/dashboard/ability-radar-overview', { params: { days } })
+  },
+  getAiUsageOverview: (days = 30, limit = 20): Promise<AdminAiUsageOverviewResponse> => {
+    return api.get('/admin/dashboard/ai-usage-overview', { params: { days, limit } })
   },
 
   pageCourses: (params: { page: number; size: number; query?: string; category?: string; difficulty?: string; status?: string; teacherId?: number }) => {

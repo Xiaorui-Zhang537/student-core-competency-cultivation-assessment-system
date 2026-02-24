@@ -19,9 +19,9 @@
               <glass-popover-select v-model="status" :options="statusOptions" size="sm" tint="secondary" />
             </div>
           </div>
-          <button size="sm" variant="outline" :disabled="kpiLoading" @click="reloadKpis">
+          <Button size="sm" variant="outline" :disabled="kpiLoading" @click="reloadKpis">
             {{ t('common.refresh') || '刷新' }}
-          </button>
+          </Button>
         </div>
       </template>
       <template #right>

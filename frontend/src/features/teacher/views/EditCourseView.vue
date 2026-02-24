@@ -43,11 +43,11 @@
         <!-- Actions -->
         <div class="flex justify-end gap-4 pt-4">
             <router-link :to="'/teacher/courses/' + courseForm.id">
-              <button variant="secondary">{{ t('teacher.courseEdit.actions.cancel') }}</button>
+              <Button variant="secondary">{{ t('teacher.courseEdit.actions.cancel') }}</Button>
             </router-link>
-            <button type="submit" variant="primary" :disabled="courseStore.loading">
+            <Button type="submit" variant="primary" :disabled="courseStore.loading">
                 {{ courseStore.loading ? t('teacher.courseEdit.actions.saving') : t('teacher.courseEdit.actions.save') }}
-            </button>
+            </Button>
         </div>
       </form>
       

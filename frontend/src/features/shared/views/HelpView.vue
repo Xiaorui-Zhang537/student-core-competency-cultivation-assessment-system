@@ -77,28 +77,28 @@
                 <div class="flex items-center justify-between gap-3 flex-wrap">
                   <h2 class="text-xl font-semibold text-base-content">{{ t('shared.help.sections.articles') || '帮助文章' }}</h2>
                   <div class="flex items-center gap-2">
-                    <button size="sm" :variant="sortMode==='latest' ? 'primary' : 'outline'" @click="changeSort('latest')">{{ t('shared.common.latest') || '最新' }}</button>
-                    <button size="sm" :variant="sortMode==='hot' ? 'primary' : 'outline'" @click="changeSort('hot')">{{ t('shared.common.hot') || '最热' }}</button>
+                    <Button size="sm" :variant="sortMode==='latest' ? 'primary' : 'outline'" @click="changeSort('latest')">{{ t('shared.common.latest') || '最新' }}</Button>
+                    <Button size="sm" :variant="sortMode==='hot' ? 'primary' : 'outline'" @click="changeSort('hot')">{{ t('shared.common.hot') || '最热' }}</Button>
                   </div>
                 </div>
               </template>
 
               <!-- 分类筛选 -->
               <div class="flex flex-wrap gap-2 mb-4">
-                <button
+                <Button
                   size="sm"
                   :variant="selectedCategoryId===null ? 'primary' : 'outline'"
                   @click="pickCategory(null)">
                   {{ t('shared.common.all') || '全部' }}
-                </button>
-                <button
+                </Button>
+                <Button
                   v-for="c in helpStore.categories"
                   :key="c.id"
                   size="sm"
                   :variant="selectedCategoryId===c.id ? 'primary' : 'outline'"
                   @click="pickCategory(c.id)">
                   {{ c.name }}
-                </button>
+                </Button>
               </div>
 
               <!-- 文章卡片列表 -->
@@ -126,9 +126,9 @@
                 <div class="flex items-center gap-3 flex-wrap">
                   <h2 class="text-xl font-semibold text-base-content">{{ helpStore.article?.title }}</h2>
                   <div class="inline-flex items-center gap-2 flex-nowrap whitespace-nowrap">
-                    <button size="sm" variant="outline" @click="activeSection='articles'">{{ t('shared.common.back') || '返回' }}</button>
-                    <button size="sm" :loading="isVoting" @click="voteArticle(true)">{{ t('shared.help.actions.useful') || '有帮助' }}</button>
-                    <button size="sm" variant="outline" :loading="isVoting" @click="voteArticle(false)">{{ t('shared.help.actions.notUseful') || '没帮助' }}</button>
+                    <Button size="sm" variant="outline" @click="activeSection='articles'">{{ t('shared.common.back') || '返回' }}</Button>
+                    <Button size="sm" :loading="isVoting" @click="voteArticle(true)">{{ t('shared.help.actions.useful') || '有帮助' }}</Button>
+                    <Button size="sm" variant="outline" :loading="isVoting" @click="voteArticle(false)">{{ t('shared.help.actions.notUseful') || '没帮助' }}</Button>
                   </div>
                 </div>
               </template>
@@ -194,7 +194,7 @@
                         <h4 class="font-medium text-base-content">{{ step.title }}</h4>
                       </div>
                       <p class="text-sm text-subtle">{{ step.description }}</p>
-                      <button
+                      <Button
                         v-if="step.action"
                         variant="outline"
                         size="sm"
@@ -202,7 +202,7 @@
                         @click="step.action"
                       >
                         {{ step.actionText }}
-                      </button>
+                      </Button>
                     </div>
                   </div>
                 </div>
@@ -301,14 +301,14 @@
                     />
                   </div>
                   
-                  <button
+                  <Button
                     type="submit"
                     variant="primary"
                     class="w-full"
                     :loading="isSubmittingTicket"
                   >
                     {{ t('shared.help.actions.submitTicket') || '提交工单' }}
-                  </button>
+                  </Button>
                 </form>
               </card>
               
@@ -317,7 +317,7 @@
                 <template #header>
                   <div class="flex items-center justify-between">
                     <h2 class="text-xl font-semibold text-base-content">{{ t('shared.help.sections.myTickets') || '我的工单' }}</h2>
-                    <button size="sm" variant="outline" @click="helpStore.fetchMyTickets()">{{ t('shared.common.latest') || '最新' }}</button>
+                    <Button size="sm" variant="outline" @click="helpStore.fetchMyTickets()">{{ t('shared.common.latest') || '最新' }}</Button>
                   </div>
                 </template>
                 <div v-if="helpStore.tickets.length === 0" class="text-sm text-subtle">
@@ -330,8 +330,8 @@
                       <div class="text-xs text-subtle mt-1">#{{ ticket.id }} · {{ ticket.createdAt }}</div>
                     </div>
                     <div class="inline-flex items-center gap-2 flex-nowrap whitespace-nowrap">
-                      <button size="sm" variant="outline" class="whitespace-nowrap" @click="editTicket(ticket)">{{ t('shared.common.edit') || '编辑' }}</button>
-                      <button size="sm" variant="outline" class="whitespace-nowrap" @click="deleteTicket(ticket.id)">{{ t('shared.common.delete') || '删除' }}</button>
+                      <Button size="sm" variant="outline" class="whitespace-nowrap" @click="editTicket(ticket)">{{ t('shared.common.edit') || '编辑' }}</Button>
+                      <Button size="sm" variant="outline" class="whitespace-nowrap" @click="deleteTicket(ticket.id)">{{ t('shared.common.delete') || '删除' }}</Button>
                     </div>
                   </div>
                 </div>
@@ -402,13 +402,13 @@
                     <span class="ml-2 text-sm text-gray-700 dark:text-gray-300">{{ t('shared.help.form.anonymous') || '匿名反馈' }}</span>
                   </label>
 
-                  <button
+                  <Button
                     type="submit"
                     variant="primary"
                     :loading="isSubmittingFeedback"
                   >
                     {{ t('shared.help.actions.submitFeedback') || '提交反馈' }}
-                  </button>
+                  </Button>
                 </div>
               </form>
             </card>

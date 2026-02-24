@@ -49,8 +49,23 @@
       "draft": "Draft",
       "deleted": "Deleted"
     },
+    "gradeLevel": {
+      "A": "A",
+      "B": "B",
+      "C": "C",
+      "D": "D",
+      "E": "E",
+      "F": "F"
+    },
     "console": {
       "daysLabel": "Window",
+      "dayOptions": {
+        "d7": "7 days",
+        "d30": "30 days",
+        "d90": "90 days",
+        "d180": "180 days",
+        "d365": "365 days"
+      },
       "dataSourceHint": "Data from aggregated APIs and paged totals (size=1).",
       "trendsTitle": "Key trends",
       "trendsSubtitle": "Last {days} days: Active / New / Enrollments",
@@ -62,6 +77,24 @@
       "gotoTools": "Tools: exports",
       "activeUsers": "Active users (N days)",
       "abilityReports": "Ability reports",
+      "abilityRadarTitle": "Overall five-dimension radar",
+      "abilityRadarSubtitle": "Global dimension averages in last {days} days",
+      "radarSeriesSchool": "Global average",
+      "radarDims": {
+        "moral": "Moral cognition",
+        "attitude": "Learning attitude",
+        "ability": "Learning ability",
+        "method": "Learning method",
+        "academic": "Academic grade"
+      },
+      "radarEmptyHint": "No effective ability assessments in the current window; showing baseline dimensions.",
+      "aiUsageTitle": "AI usage ranking (visits)",
+      "aiUsageSubtitle": "Top users by message count in last {days} days",
+      "aiVisitsSeries": "Visits",
+      "aiSummaryConversations": "Conversations",
+      "aiSummaryMessages": "Messages",
+      "aiSummaryActiveUsers": "Active users",
+      "gradeLevelDist": "Grade level distribution",
       "userRoleDist": "User role distribution",
       "courseStatusDist": "Course status distribution",
       "postStatusDist": "Post status distribution",

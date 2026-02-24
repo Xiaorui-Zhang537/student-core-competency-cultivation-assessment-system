@@ -1,13 +1,13 @@
 ## 管理员端 UI 重构说明（聚合控制台）
 
-> 对应前端版本：`frontend@0.3.6`  
+> 对应前端版本：`frontend@0.3.7`  
 > 目标：减少“页面分区过多”的割裂感，把管理员常用能力聚合到更少入口，并统一玻璃主题容器、选择器样式与图表风格。
 
 ### 1. 信息架构（新入口）
 
 管理员端收敛为 **5 个入口**（底部 Dock 同步收敛）：
 
-- **控制台**：KPI + 趋势图 + 分布图 + 快捷入口（`/admin/console`）
+- **控制台**：KPI + 长趋势图 + 分布图 + 雷达/AI使用可视化（`/admin/console`）
 - **数据中心**：用户/学生/教师合并为同页 Tabs（`/admin/people`）
 - **内容治理**：能力报告 / 帖子 / 评论合并为治理台 Tabs（`/admin/moderation`）
 - **课程中心**：课程列表 + 概览 KPI + 状态分布（`/admin/courses`）
@@ -51,7 +51,18 @@
 
 - **接口**：`GET /api/admin/analytics/series/overview?days=N`
 - **字段**：`activeUsersDaily/newUsersDaily/enrollmentsDaily`（每项为 `{ day, value }`）
-- **展示**：折线面积图（统一 x 轴为最近 N 天，缺失天补 0）
+- **展示**：折线面积图（统一 x 轴为最近 N 天，缺失天补 0）；控制台默认 180 天并使用加长画布
+
+#### 4.3 控制台新增全局可视化
+
+- **五维能力雷达**
+  - 接口：`GET /api/admin/dashboard/ability-radar-overview?days=N`
+  - 字段：`dimensions[]`（`code/name/value/sampleSize`）
+  - 展示：全局五维平均能力结构（RadarChart）
+- **AI 使用排行（访问数口径）**
+  - 接口：`GET /api/admin/dashboard/ai-usage-overview?days=N&limit=20`
+  - 字段：`summary + users[]`
+  - 展示：按用户消息数排行（柱状图 + Top 列表），不使用 token 真值
 
 #### 4.2 分布类图表（基于聚合或 totals 统计）
 

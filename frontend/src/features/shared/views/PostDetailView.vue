@@ -44,7 +44,7 @@
           </div>
 
           <div class="flex items-center gap-3 shrink-0">
-            <button
+            <Button
               size="sm"
               variant="reaction"
               @click="communityStore.toggleLikePost(currentPost.id)"
@@ -54,10 +54,10 @@
                 <hand-thumb-up-icon class="w-4 h-4" />
               </template>
               <span>{{ currentPost.likeCount }}</span>
-            </button>
-            <button variant="primary" size="sm" @click="askAiForCurrentPost">
+            </Button>
+            <Button variant="primary" size="sm" @click="askAiForCurrentPost">
               <sparkles-icon class="w-4 h-4 mr-2" />{{ t('shared.community.detail.askAi') }}
-            </button>
+            </Button>
           </div>
         </div>
       </div>
@@ -91,9 +91,9 @@
                   </div>
                   <div class="text-xs text-subtle truncate">{{ t('shared.community.detail.attachmentHint') }}</div>
                 </div>
-                <button size="xs" variant="outline" icon="download" class="shrink-0" @click="downloadAttachment(f)">
+                <Button size="xs" variant="outline" icon="download" class="shrink-0" @click="downloadAttachment(f)">
                   {{ t('shared.community.detail.download') }}
-                </button>
+                </Button>
               </div>
             </div>
           </div>
@@ -109,10 +109,10 @@
             <glass-textarea v-model="newComment" :rows="3" :placeholder="t('shared.community.detail.writeComment') as string" class="w-full" />
             <div class="mt-4 md:mt-5 flex items-center gap-4">
               <emoji-picker size="sm" variant="outline" tint="accent" @select="onEmojiSelect" />
-              <button size="sm" variant="primary" @click="handlePostComment" :disabled="!newComment.trim() || loading">
+              <Button size="sm" variant="primary" @click="handlePostComment" :disabled="!newComment.trim() || loading">
                 <paper-airplane-icon class="w-4 h-4 mr-2" />
                 {{ t('shared.community.detail.postComment') }}
-              </button>
+              </Button>
             </div>
         </div>
 
@@ -121,18 +121,18 @@
             <div class="flex items-center justify-between mb-4">
             <div class="text-xs text-subtle">{{ t('shared.community.detail.order') }}</div>
             <div class="space-x-2">
-              <button size="xs" variant="ghost" :class="commentOrderBy==='time' ? 'font-semibold selected-accent' : (isDark ? 'text-gray-400' : '')" @click="setOrder('time')">
+              <Button size="xs" variant="ghost" :class="commentOrderBy==='time' ? 'font-semibold selected-accent' : (isDark ? 'text-gray-400' : '')" @click="setOrder('time')">
                 <template #icon>
                   <clock-icon class="w-3.5 h-3.5" />
                 </template>
                 {{ t('shared.community.detail.orderTime') }}
-              </button>
-              <button size="xs" variant="ghost" :class="commentOrderBy==='hot' ? 'font-semibold selected-accent' : (isDark ? 'text-gray-400' : '')" @click="setOrder('hot')">
+              </Button>
+              <Button size="xs" variant="ghost" :class="commentOrderBy==='hot' ? 'font-semibold selected-accent' : (isDark ? 'text-gray-400' : '')" @click="setOrder('hot')">
                 <template #icon>
                   <fire-icon class="w-3.5 h-3.5" />
                 </template>
                 {{ t('shared.community.detail.orderHot') }}
-              </button>
+              </Button>
             </div>
           </div>
           <comment-thread v-for="comment in localComments" :key="comment.id" :comment="comment" :post-id="currentPost.id" @deleted="onTopDeleted" />
@@ -141,7 +141,7 @@
               <span class="text-xs text-subtle">{{ t('shared.community.detail.total', { count: totalComments }) }}</span>
             <div class="flex items-center space-x-2">
               <span class="text-xs text-subtle">{{ t('shared.community.detail.page', { page: commentsPage }) }}</span>
-              <button size="sm" variant="outline" :disabled="commentsPage * commentsSize >= totalComments" @click="loadMoreComments">{{ t('shared.community.detail.more') }}</button>
+              <Button size="sm" variant="outline" :disabled="commentsPage * commentsSize >= totalComments" @click="loadMoreComments">{{ t('shared.community.detail.more') }}</Button>
             </div>
           </div>
         </div>
@@ -186,16 +186,16 @@
                       <div class="text-xs text-gray-500">{{ (f.fileSize ? (f.fileSize/1024/1024).toFixed(1)+' MB' : '') }}</div>
                     </div>
                     <div class="flex items-center gap-2">
-                      <button size="sm" variant="outline" type="button" @click="downloadDetailEditAttachment(f)">{{ t('shared.community.modal.download') }}</button>
-                      <button size="sm" variant="danger" type="button" @click="deleteDetailEditAttachment(f.id)">{{ t('shared.community.modal.delete') }}</button>
+                      <Button size="sm" variant="outline" type="button" @click="downloadDetailEditAttachment(f)">{{ t('shared.community.modal.download') }}</Button>
+                      <Button size="sm" variant="danger" type="button" @click="deleteDetailEditAttachment(f.id)">{{ t('shared.community.modal.delete') }}</Button>
                     </div>
                   </li>
                 </ul>
               </div>
             </div>
             <div class="flex justify-end space-x-3 pt-4">
-              <button type="button" variant="secondary" @click="editCurrent.visible = false">{{ t('shared.community.modal.cancel') }}</button>
-              <button type="submit" variant="indigo" :disabled="loading">{{ t('shared.community.modal.save') }}</button>
+              <Button type="button" variant="secondary" @click="editCurrent.visible = false">{{ t('shared.community.modal.cancel') }}</Button>
+              <Button type="submit" variant="indigo" :disabled="loading">{{ t('shared.community.modal.save') }}</Button>
             </div>
           </form>
         </div>

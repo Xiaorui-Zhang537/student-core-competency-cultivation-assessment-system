@@ -7,8 +7,8 @@
       </div>
     </div>
     <template #footer>
-      <button variant="secondary" @click="$emit('close')">{{ t('teacher.analytics.weights.cancel') }}</button>
-      <button variant="primary" @click="save" :disabled="!valid || saving">{{ t('teacher.analytics.weights.save') }}</button>
+      <Button variant="secondary" @click="$emit('close')">{{ t('teacher.analytics.weights.cancel') }}</Button>
+      <Button variant="primary" @click="save" :disabled="!valid || saving">{{ t('teacher.analytics.weights.save') }}</Button>
     </template>
   </glass-modal>
 </template>

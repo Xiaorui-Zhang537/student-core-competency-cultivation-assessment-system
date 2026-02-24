@@ -2,10 +2,10 @@
   <div class="p-6">
     <PageHeader :title="t('admin.sidebar.users')" :subtitle="t('admin.title')">
       <template #actions>
-        <button variant="primary" @click="openCreate">
+        <Button variant="primary" @click="openCreate">
           <plus-icon class="w-4 h-4 mr-2" />
           {{ t('common.create') || '创建' }}
-        </button>
+        </Button>
       </template>
     </PageHeader>
 
@@ -15,7 +15,7 @@
         <div class="flex gap-2 flex-wrap">
           <glass-popover-select v-model="role" :options="roleOptions" size="sm" width="140px" />
           <glass-popover-select v-model="status" :options="statusOptions" size="sm" width="140px" />
-          <button size="sm" variant="outline" :disabled="loading" @click="reload">{{ String(t('common.search') || '查询') }}</button>
+          <Button size="sm" variant="outline" :disabled="loading" @click="reload">{{ String(t('common.search') || '查询') }}</Button>
         </div>
       </div>
     </card>
@@ -66,9 +66,9 @@
               />
             </td>
             <td class="px-6 py-3 text-right">
-              <button size="sm" variant="outline" :disabled="opLoadingId===u.id" @click="sendReset(u)">
+              <Button size="sm" variant="outline" :disabled="opLoadingId===u.id" @click="sendReset(u)">
                 {{ t('auth.forgotPassword.send') || '重置密码' }}
-              </button>
+              </Button>
             </td>
           </tr>
 
@@ -129,8 +129,8 @@
         </div>
 
         <div class="flex justify-end gap-2 pt-2">
-          <button variant="ghost" type="button" @click="closeCreate">{{ t('common.cancel') || '取消' }}</button>
-          <button variant="primary" type="submit" :disabled="createLoading">{{ t('common.confirm') || '确认' }}</button>
+          <Button variant="ghost" type="button" @click="closeCreate">{{ t('common.cancel') || '取消' }}</Button>
+          <Button variant="primary" type="submit" :disabled="createLoading">{{ t('common.confirm') || '确认' }}</Button>
         </div>
       </form>
     </glass-modal>

@@ -8,7 +8,7 @@
         <div class="flex gap-2 flex-wrap">
           <glass-popover-select v-model="status" :options="statusOptions" size="sm" width="160px" />
           <glass-popover-select v-model="includeDeleted" :options="includeDeletedOptions" size="sm" width="160px" />
-          <button size="sm" variant="outline" :disabled="loading" @click="reloadPosts">{{ t('common.search') || '查询' }}</button>
+          <Button size="sm" variant="outline" :disabled="loading" @click="reloadPosts">{{ t('common.search') || '查询' }}</Button>
         </div>
       </div>
     </card>
@@ -51,8 +51,8 @@
             </td>
             <td class="px-6 py-3 text-sm text-center">{{ p.commentsCount ?? 0 }}</td>
             <td class="px-6 py-3 text-right space-x-2 whitespace-nowrap">
-              <button size="sm" variant="outline" @click="openComments(p.id)">{{ t('shared.community.comments') || '评论' }}</button>
-              <button size="sm" variant="outline" @click="moderatePost(p.id, { deleted: true })">{{ t('common.delete') || '删除' }}</button>
+              <Button size="sm" variant="outline" @click="openComments(p.id)">{{ t('shared.community.comments') || '评论' }}</Button>
+              <Button size="sm" variant="outline" @click="moderatePost(p.id, { deleted: true })">{{ t('common.delete') || '删除' }}</Button>
             </td>
           </tr>
           <tr v-if="posts.length === 0">
@@ -97,7 +97,7 @@
                 <glass-popover-select :model-value="c.status" :options="commentStatusEditOptions" size="sm" @update:modelValue="(v:any)=>moderateComment(c.id, { status: String(v) })" />
               </td>
               <td class="px-6 py-3 text-right">
-                <button size="sm" variant="outline" @click="moderateComment(c.id, { deleted: true })">{{ t('common.delete') || '删除' }}</button>
+                <Button size="sm" variant="outline" @click="moderateComment(c.id, { deleted: true })">{{ t('common.delete') || '删除' }}</Button>
               </td>
             </tr>
             <tr v-if="comments.length === 0">

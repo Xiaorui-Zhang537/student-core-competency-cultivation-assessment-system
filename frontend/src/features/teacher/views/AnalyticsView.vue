@@ -16,14 +16,14 @@
             @change="onCourseChange"
           />
           <div class="flex items-center gap-3">
-            <button variant="primary" class="whitespace-nowrap" :disabled="!selectedCourseId" @click="askAiForAnalytics">
+            <Button variant="primary" class="whitespace-nowrap" :disabled="!selectedCourseId" @click="askAiForAnalytics">
               <sparkles-icon class="w-4 h-4 mr-2" />
               {{ t('teacher.analytics.askAi') }}
-            </button>
-            <button variant="secondary" class="whitespace-nowrap" @click="exportReport">
+            </Button>
+            <Button variant="secondary" class="whitespace-nowrap" @click="exportReport">
               <document-arrow-down-icon class="w-4 h-4 mr-2 flex-shrink-0" />
               {{ t('teacher.analytics.exportReport') }}
-            </button>
+            </Button>
           </div>
         </div>
       </template>
@@ -45,7 +45,7 @@
         <template #header>
             <div class="flex items-center justify-between h-11 overflow-hidden">
             <h3 class="text-lg font-semibold text-gray-900 dark:text-white">{{ t('teacher.analytics.charts.scoreDistribution') }}</h3>
-              <div class="invisible flex items-center gap-2"><button size="sm" variant="ghost">1</button><button size="sm" variant="ghost">2</button></div>
+              <div class="invisible flex items-center gap-2"><Button size="sm" variant="ghost">1</Button><Button size="sm" variant="ghost">2</Button></div>
           </div>
         </template>
         <div class="mb-3 min-h-[44px]"></div>
@@ -125,14 +125,14 @@
                   <span class="text-sm text-gray-700 dark:text-gray-300">{{ t('teacher.analytics.charts.enableCompare') }}</span>
                   <glass-switch v-model="compareEnabled" size="sm" />
                 </div>
-                <button size="sm" variant="info" :title="t('teacher.analytics.charts.refresh')" @click="onRefreshAnalytics" :disabled="!selectedCourseId" class="shadow-sm">
+                <Button size="sm" variant="info" :title="t('teacher.analytics.charts.refresh')" @click="onRefreshAnalytics" :disabled="!selectedCourseId" class="shadow-sm">
                   <arrow-path-icon class="w-4 h-4 mr-1" />
                   {{ t('teacher.analytics.charts.refresh') }}
-                </button>
-                <button size="sm" variant="secondary" @click="exportAnalytics" :disabled="!selectedCourseId" class="shadow-sm">
+                </Button>
+                <Button size="sm" variant="secondary" @click="exportAnalytics" :disabled="!selectedCourseId" class="shadow-sm">
                   <document-arrow-down-icon class="w-4 h-4 mr-1" />
                   {{ t('teacher.analytics.charts.exportCsv') }}
-                </button>
+                </Button>
               </div>
             </div>
           </template>
@@ -207,7 +207,7 @@
           <template #header>
             <div class="flex items-center justify-between h-11">
               <h3 class="text-lg font-semibold text-gray-900 dark:text-white">{{ t('teacher.analytics.charts.dimensionInsights') || '维度解析' }}</h3>
-              <button size="sm" variant="outline" @click="loadInsights" :disabled="!selectedCourseId">{{ t('teacher.analytics.charts.refresh') || '刷新' }}</button>
+              <Button size="sm" variant="outline" @click="loadInsights" :disabled="!selectedCourseId">{{ t('teacher.analytics.charts.refresh') || '刷新' }}</Button>
             </div>
           </template>
           <div v-if="insightsItems.length === 0" class="text-sm text-gray-500">{{ t('teacher.analytics.charts.noInsights') || '暂无解析' }}</div>

@@ -31,17 +31,17 @@
                  </div>
               </div>
               <div class="flex items-center gap-2 sm:ml-auto">
-                <button variant="primary" size="sm" @click="contactStudent">
+                <Button variant="primary" size="sm" @click="contactStudent">
                   <chat-bubble-left-right-icon class="w-4 h-4 mr-1" />
                   {{ t('teacher.studentDetail.actions.contact') }}
-                </button>
-                <button variant="outline" size="sm" icon="download" :loading="exportingReport" @click="exportReportPdf">
+                </Button>
+                <Button variant="outline" size="sm" icon="download" :loading="exportingReport" @click="exportReportPdf">
                   {{ t('teacher.studentDetail.actions.exportReport') }}
-                </button>
-                <button variant="outline" size="sm" @click="exportGrades">
+                </Button>
+                <Button variant="outline" size="sm" @click="exportGrades">
                   <arrow-down-tray-icon class="w-4 h-4 mr-1" />
                   {{ t('teacher.studentDetail.actions.export') }}
-                </button>
+                </Button>
               </div>
             </div>
           </card>
@@ -286,14 +286,14 @@
                     </td>
                     <td class="px-6 py-3 text-center">
                       <div class="flex items-center justify-center gap-2">
-                        <button variant="outline" size="sm" class="whitespace-nowrap" @click="viewSubmissions(grade)">
+                        <Button variant="outline" size="sm" class="whitespace-nowrap" @click="viewSubmissions(grade)">
                           <document-text-icon class="w-4 h-4 mr-1" />
                           {{ t('teacher.studentDetail.actions.viewSubmissions') }}
-                        </button>
-                        <button variant="teal" size="sm" class="whitespace-nowrap" @click="goRegrade(grade)">
+                        </Button>
+                        <Button variant="teal" size="sm" class="whitespace-nowrap" @click="goRegrade(grade)">
                           <pencil-square-icon class="w-4 h-4 mr-1" />
                           {{ t('teacher.studentDetail.actions.regrade') }}
-                        </button>
+                        </Button>
                       </div>
                     </td>
                   </tr>

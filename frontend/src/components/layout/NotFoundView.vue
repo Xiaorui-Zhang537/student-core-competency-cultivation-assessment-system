@@ -36,10 +36,10 @@
             <div class="relative">
               <GlassSearchInput v-model="searchQuery" placeholder="搜索课程、作业、学生..." size="md" @keyup.enter="handleSearch" />
             </div>
-            <button variant="primary" class="w-full" @click="handleSearch" :disabled="!searchQuery.trim()">
+            <Button variant="primary" class="w-full" @click="handleSearch" :disabled="!searchQuery.trim()">
               <magnifying-glass-icon class="w-4 h-4 mr-2" />
               搜索
-            </button>
+            </Button>
           </div>
         </card>
       </div>
@@ -99,14 +99,14 @@
 
       <!-- 返回按钮 -->
       <div class="mt-8 flex justify-center space-x-4">
-        <button variant="outline" @click="goBack" v-if="canGoBack">
+        <Button variant="outline" @click="goBack" v-if="canGoBack">
           <arrow-left-icon class="w-4 h-4 mr-2" />
           返回上页
-        </button>
-        <button variant="primary" @click="goHome">
+        </Button>
+        <Button variant="primary" @click="goHome">
           <home-icon class="w-4 h-4 mr-2" />
           返回首页
-        </button>
+        </Button>
       </div>
 
       <!-- 装饰性元素 -->

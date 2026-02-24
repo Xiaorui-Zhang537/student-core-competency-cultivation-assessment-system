@@ -35,14 +35,14 @@
           </div>
 
           <div class="ml-auto flex shrink-0 items-center gap-2">
-            <button variant="success" size="sm" @click="goRelated">
+            <Button variant="success" size="sm" @click="goRelated">
               <svg class="w-4 h-4 mr-1.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M12 5l7 7-7 7"/></svg>
               {{ t('notifications.actions.goRelated') || '查看详情' }}
-            </button>
-            <button variant="outline" size="sm" @click="goCenter">
+            </Button>
+            <Button variant="outline" size="sm" @click="goCenter">
               <svg class="w-4 h-4 mr-1.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5"/><path d="M12 19l-7-7 7-7"/></svg>
               {{ t('notifications.actions.backToCenter') || '返回通知中心' }}
-            </button>
+            </Button>
           </div>
         </div>
 
@@ -84,10 +84,10 @@
 
       <!-- 操作按钮 -->
       <div v-if="!notification.isRead" class="flex flex-wrap gap-3">
-        <button variant="primary" size="sm" @click="markRead">
+        <Button variant="primary" size="sm" @click="markRead">
           <svg class="w-4 h-4 mr-1.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
           {{ t('notifications.actions.markRead') || '标记已读' }}
-        </button>
+        </Button>
       </div>
     </div>
   </div>

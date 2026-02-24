@@ -160,9 +160,8 @@ const buildSeries = (isDark: boolean, palette: string[]) => {
       data: Array.isArray(item.data) ? item.data : [],
       animationDuration: props.animation ? 900 : 0,
       itemStyle: { color: baseColor, opacity: 1 },
-      hoverAnimation: false,
       stateAnimation: { duration: 0 },
-      emphasis: { disabled: true },
+      emphasis: { scale: false, disabled: true },
       blur: { disabled: true },
       select: { disabled: true }
     }

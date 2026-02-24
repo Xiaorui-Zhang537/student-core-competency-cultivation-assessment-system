@@ -2,7 +2,7 @@
   <div class="p-6">
     <page-header :title="t('admin.student360.auditAiVoice') || 'AI/口语审计'" :subtitle="subtitle">
       <template #actions>
-        <button variant="outline" @click="goBack">{{ t('common.back') || '返回' }}</button>
+        <Button variant="outline" @click="goBack">{{ t('common.back') || '返回' }}</Button>
       </template>
     </page-header>
 
@@ -13,7 +13,7 @@
           <div class="w-72">
             <glass-search-input v-model="q" :placeholder="String(t('common.search') || '搜索')" size="sm" tint="info" />
           </div>
-          <button size="sm" variant="outline" :disabled="loading" @click="reload">{{ t('common.refresh') || '刷新' }}</button>
+          <Button size="sm" variant="outline" :disabled="loading" @click="reload">{{ t('common.refresh') || '刷新' }}</Button>
         </div>
       </div>
     </card>
@@ -49,9 +49,9 @@
       <card padding="md" tint="secondary" class="lg:col-span-2">
         <div class="flex items-center justify-between mb-3">
           <div class="text-sm font-medium">{{ rightTitle }}</div>
-          <button v-if="tab==='voice'" size="sm" variant="outline" :disabled="turns.length===0" @click="exportVoiceAudioZip">
+          <Button v-if="tab==='voice'" size="sm" variant="outline" :disabled="turns.length===0" @click="exportVoiceAudioZip">
             {{ t('admin.tools.exportZip') || '导出ZIP' }}
-          </button>
+          </Button>
         </div>
 
         <!-- AI messages -->

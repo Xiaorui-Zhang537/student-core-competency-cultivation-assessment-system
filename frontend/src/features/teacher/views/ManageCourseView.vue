@@ -4,10 +4,10 @@
       <!-- Header -->
       <page-header :title="t('teacher.courses.title')" :subtitle="t('teacher.courses.subtitle')">
         <template #actions>
-          <button variant="primary" @click="openCreateModal">
+          <Button variant="primary" @click="openCreateModal">
             <plus-icon class="w-4 h-4 mr-2" />
             {{ t('teacher.courses.actions.create') }}
-          </button>
+          </Button>
         </template>
       </page-header>
 
@@ -90,8 +90,8 @@
                 <span v-if="toTagList(course).length===0" class="text-xs text-gray-400">{{ t('teacher.courses.card.none') }}</span>
               </div>
               <div class="flex items-center">
-                <button size="sm" variant="secondary" class="mr-2" icon="edit" @click.stop="openEditModal(course)">{{ t('teacher.courses.actions.edit') }}</button>
-                <button size="sm" variant="danger" icon="delete" @click.stop="handleDeleteCourse(String(course.id))">{{ t('teacher.courses.actions.delete') }}</button>
+                <Button size="sm" variant="secondary" class="mr-2" icon="edit" @click.stop="openEditModal(course)">{{ t('teacher.courses.actions.edit') }}</Button>
+                <Button size="sm" variant="danger" icon="delete" @click.stop="handleDeleteCourse(String(course.id))">{{ t('teacher.courses.actions.delete') }}</Button>
               </div>
             </div>
           </div>
@@ -100,10 +100,10 @@
       <card v-if="!courseStore.loading && courseStore.courses.length === 0" class="text-center py-12" tint="info">
         <h3 class="text-lg font-medium">{{ t('teacher.courses.empty.title') }}</h3>
         <p class="text-gray-500 mb-4">{{ t('teacher.courses.empty.description') }}</p>
-        <button variant="primary" @click="openCreateModal">
+        <Button variant="primary" @click="openCreateModal">
           <plus-icon class="w-4 h-4 mr-2" />
           {{ t('teacher.courses.actions.create') }}
-        </button>
+        </Button>
       </card>
 
       <!-- Create/Edit Modal (GlassModal) -->
@@ -186,10 +186,10 @@
           </div>
         </form>
         <template #footer>
-          <button type="button" variant="secondary" @click="closeModal">{{ t('teacher.courses.modal.cancel') }}</button>
-          <button type="submit" form="courseForm" :disabled="courseStore.loading" variant="primary">
+          <Button type="button" variant="secondary" @click="closeModal">{{ t('teacher.courses.modal.cancel') }}</Button>
+          <Button type="submit" form="courseForm" :disabled="courseStore.loading" variant="primary">
             {{ isEditing ? t('teacher.courses.actions.save') : t('teacher.courses.actions.create') }}
-          </button>
+          </Button>
         </template>
       </glass-modal>
 

@@ -38,8 +38,8 @@
     </div>
 
     <template #footer>
-      <button variant="outline" @click="$emit('close')">{{ t('common.close') || '关闭' }}</button>
-      <button variant="primary" :disabled="!userId" @click="contact">{{ t('student.courses.detail.contact') || '联系TA' }}</button>
+      <Button variant="outline" @click="$emit('close')">{{ t('common.close') || '关闭' }}</Button>
+      <Button variant="primary" :disabled="!userId" @click="contact">{{ t('student.courses.detail.contact') || '联系TA' }}</Button>
     </template>
   </glass-modal>
 </template>

@@ -93,12 +93,12 @@
                     </div>
                   </div>
                   <div class="flex items-center space-x-2">
-                    <button variant="ghost" size="sm" @click="previewSingleFile" :disabled="!canPreviewSubmission">
+                    <Button variant="ghost" size="sm" @click="previewSingleFile" :disabled="!canPreviewSubmission">
                       <eye-icon class="w-4 h-4" />
-                    </button>
-                    <button variant="ghost" size="sm" @click="downloadSingleFile">
+                    </Button>
+                    <Button variant="ghost" size="sm" @click="downloadSingleFile">
                       <arrow-down-tray-icon class="w-4 h-4" />
-                    </button>
+                    </Button>
                   </div>
                 </div>
               </div>
@@ -129,19 +129,19 @@
               <div class="flex items-center justify-between">
                 <h2 class="text-lg font-semibold text-gray-900 dark:text-white">{{ t('teacher.grading.ai.title') }}</h2>
                 <div class="flex items-center gap-2">
-                  <button variant="outline" size="sm" @click="applyAiSuggestion">
+                  <Button variant="outline" size="sm" @click="applyAiSuggestion">
                     <check-icon class="w-4 h-4 mr-1" />
                     {{ t('teacher.grading.ai.applySuggestion') || '一键应用' }}
-                  </button>
+                  </Button>
                   
-                  <button v-if="aiSuggestion" variant="indigo" size="sm" @click="viewAiDetail">
+                  <Button v-if="aiSuggestion" variant="indigo" size="sm" @click="viewAiDetail">
                     <eye-icon class="w-4 h-4 mr-1" />
                     {{ t('teacher.grading.ai.viewDetail') || '查看详情' }}
-                  </button>
-                  <button size="sm" variant="primary" class="ml-1" :loading="aiLoading" @click="openAiModal">
+                  </Button>
+                  <Button size="sm" variant="primary" class="ml-1" :loading="aiLoading" @click="openAiModal">
                     <sparkles-icon class="w-4 h-4 mr-1" />
                     {{ t('teacher.grading.ai.open') || 'AI 批改' }}
-                  </button>
+                  </Button>
                 </div>
               </div>
             </template>
@@ -155,22 +155,22 @@
                 <div class="flex-1 grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div class="space-y-2">
                     <div class="text-xs text-gray-500">{{ t('teacher.aiGrading.render.moral_reasoning') }}</div>
-                    <progress :value="(aiSuggestion.dims?.moral ?? 0) * 20" size="sm" color="primary" />
+                    <Progress :value="(aiSuggestion.dims?.moral ?? 0) * 20" size="sm" color="primary" />
                     <div class="text-xs text-right text-gray-500">{{ (aiSuggestion.dims?.moral ?? 0).toFixed(1) }}/5</div>
                 </div>
                   <div class="space-y-2">
                     <div class="text-xs text-gray-500">{{ t('teacher.aiGrading.render.attitude_development') }}</div>
-                    <progress :value="(aiSuggestion.dims?.attitude ?? 0) * 20" size="sm" color="primary" />
+                    <Progress :value="(aiSuggestion.dims?.attitude ?? 0) * 20" size="sm" color="primary" />
                     <div class="text-xs text-right text-gray-500">{{ (aiSuggestion.dims?.attitude ?? 0).toFixed(1) }}/5</div>
                     </div>
                   <div class="space-y-2">
                     <div class="text-xs text-gray-500">{{ t('teacher.aiGrading.render.ability_growth') }}</div>
-                    <progress :value="(aiSuggestion.dims?.ability ?? 0) * 20" size="sm" color="primary" />
+                    <Progress :value="(aiSuggestion.dims?.ability ?? 0) * 20" size="sm" color="primary" />
                     <div class="text-xs text-right text-gray-500">{{ (aiSuggestion.dims?.ability ?? 0).toFixed(1) }}/5</div>
                     </div>
                   <div class="space-y-2">
                     <div class="text-xs text-gray-500">{{ t('teacher.aiGrading.render.strategy_optimization') }}</div>
-                    <progress :value="(aiSuggestion.dims?.strategy ?? 0) * 20" size="sm" color="primary" />
+                    <Progress :value="(aiSuggestion.dims?.strategy ?? 0) * 20" size="sm" color="primary" />
                     <div class="text-xs text-right text-gray-500">{{ (aiSuggestion.dims?.strategy ?? 0).toFixed(1) }}/5</div>
                     </div>
                   </div>
@@ -208,10 +208,10 @@
             </template>
             <div class="flex items-center justify-between">
               <div class="text-sm text-gray-600 dark:text-gray-300">{{ t('teacher.grading.ai.hint') || '点击下方按钮，基于本次提交自动生成AI评分建议。' }}</div>
-              <button size="sm" variant="primary" :loading="aiLoading" @click="openAiModal">
+              <Button size="sm" variant="primary" :loading="aiLoading" @click="openAiModal">
                 <sparkles-icon class="w-4 h-4 mr-1" />
                 {{ t('teacher.grading.ai.open') || 'AI 批改' }}
-              </button>
+              </Button>
             </div>
           </card>
 
@@ -230,9 +230,9 @@
                   size="sm"
                 />
                 <div class="flex items-center gap-2 md:ml-auto">
-                  <button size="sm" variant="primary" :disabled="hasOngoing || !canStartAi" @click="startAiGradingFromModal">
+                  <Button size="sm" variant="primary" :disabled="hasOngoing || !canStartAi" @click="startAiGradingFromModal">
                     <sparkles-icon class="w-4 h-4 mr-1" />{{ t('teacher.aiGrading.start') || '开始批改' }}
-                  </button>
+                  </Button>
                 </div>
               </div>
 
@@ -305,7 +305,7 @@
                         </div>
                       </div>
                       <div class="mt-1" v-if="r.ok && r.finalScore05!=null">
-                        <progress :value="Number(r.finalScore05 || 0) * 20" size="sm" color="accent" />
+                        <Progress :value="Number(r.finalScore05 || 0) * 20" size="sm" color="accent" />
                       </div>
                     </div>
                   </div>
@@ -341,7 +341,7 @@
                           {{ Math.round(stableDiffPercent) }}%
                         </span>
                       </div>
-                      <progress
+                      <Progress
                         :value="stableDiffPercent"
                         size="sm"
                         color="accent"
@@ -377,7 +377,7 @@
                       </div>
 
                       <div class="mt-2" v-if="stableFinalScore05!=null">
-                        <progress :value="Number(stableFinalScore05 || 0) * 20" size="sm" color="accent" />
+                        <Progress :value="Number(stableFinalScore05 || 0) * 20" size="sm" color="accent" />
                       </div>
 
                       <div class="mt-2 flex flex-wrap items-center gap-2 text-[11px] text-gray-600 dark:text-gray-300">
@@ -423,7 +423,7 @@
             <template #footer>
               <div class="flex items-center justify-between w-full">
                 <span class="text-xs text-gray-500 dark:text-gray-400">{{ t('teacher.aiGrading.picker.hintBackgroundRunning') }}</span>
-                <button size="sm" variant="secondary" @click="aiModalOpen=false">{{ t('teacher.aiGrading.picker.close') || '关闭' }}</button>
+                <Button size="sm" variant="secondary" @click="aiModalOpen=false">{{ t('teacher.aiGrading.picker.close') || '关闭' }}</Button>
               </div>
             </template>
           </glass-modal>
@@ -573,7 +573,7 @@
 
               <!-- 提交按钮 -->
               <div class="space-y-3">
-                <button
+                <Button
                   type="submit"
                   variant="success"
                   size="lg"
@@ -583,8 +583,8 @@
                 >
                    <check-icon class="w-4 h-4 mr-2" />
                    {{ t('teacher.grading.form.submit') }}
-                </button>
-                <button
+                </Button>
+                <Button
                   type="button"
                   variant="danger"
                   size="lg"
@@ -593,7 +593,7 @@
                 >
                    <exclamation-triangle-icon class="w-4 h-4 mr-2" />
                    {{ t('teacher.grading.actions.returnForResubmit') || '打回重做' }}
-                </button>
+                </Button>
               </div>
             </form>
           </card>
@@ -657,10 +657,10 @@
         </div>
         <pre v-else class="bg-black/70 text-green-100 p-3 rounded overflow-auto text-xs max-h-[60vh]">{{ pretty(aiRawJson) }}</pre>
         <template #footer>
-          <button size="sm" variant="primary" @click="exportAiDetailAsText" :disabled="!aiDetailParsed">{{ t('teacher.aiGrading.exportText') || '导出文本' }}</button>
-          <button size="sm" variant="success" @click="exportAiDetailAsPng" :disabled="!aiDetailParsed">{{ t('teacher.aiGrading.exportPng') || '导出 PNG' }}</button>
-          <button size="sm" variant="purple" @click="exportAiDetailAsPdf" :disabled="!aiDetailParsed">{{ t('teacher.aiGrading.exportPdf') || '导出 PDF' }}</button>
-          <button size="sm" variant="secondary" @click="aiDetailOpen=false">{{ t('teacher.aiGrading.picker.close') || '关闭' }}</button>
+          <Button size="sm" variant="primary" @click="exportAiDetailAsText" :disabled="!aiDetailParsed">{{ t('teacher.aiGrading.exportText') || '导出文本' }}</Button>
+          <Button size="sm" variant="success" @click="exportAiDetailAsPng" :disabled="!aiDetailParsed">{{ t('teacher.aiGrading.exportPng') || '导出 PNG' }}</Button>
+          <Button size="sm" variant="purple" @click="exportAiDetailAsPdf" :disabled="!aiDetailParsed">{{ t('teacher.aiGrading.exportPdf') || '导出 PDF' }}</Button>
+          <Button size="sm" variant="secondary" @click="aiDetailOpen=false">{{ t('teacher.aiGrading.picker.close') || '关闭' }}</Button>
         </template>
       </glass-modal>
 
@@ -701,10 +701,10 @@
               </div>
               
               <div class="flex justify-center">
-                <button variant="primary" size="lg" @click="viewStudentProfile">
+                <Button variant="primary" size="lg" @click="viewStudentProfile">
                   <user-icon class="w-4 h-4 mr-2" />
                   {{ t('teacher.grading.sidebar.viewProfile') || '查看学生档案' }}
-                </button>
+                </Button>
               </div>
             </div>
           </card>
@@ -716,18 +716,18 @@
             </template>
             
             <div class="space-y-3">
-              <button variant="outline" class="w-full justify-start" @click="contactStudent">
+              <Button variant="outline" class="w-full justify-start" @click="contactStudent">
                 <chat-bubble-left-icon class="w-4 h-4 mr-3" />
                 {{ t('teacher.grading.sidebar.contact') || '联系学生' }}
-              </button>
-              <button variant="outline" class="w-full justify-start" @click="viewOtherSubmissions">
+              </Button>
+              <Button variant="outline" class="w-full justify-start" @click="viewOtherSubmissions">
                 <document-text-icon class="w-4 h-4 mr-3" />
                 {{ t('teacher.grading.sidebar.otherSubmissions') || '查看其它提交' }}
-              </button>
-              <button variant="outline" class="w-full justify-start" @click="exportSubmission" :loading="isExporting" :disabled="isExporting">
+              </Button>
+              <Button variant="outline" class="w-full justify-start" @click="exportSubmission" :loading="isExporting" :disabled="isExporting">
                 <arrow-down-tray-icon class="w-4 h-4 mr-3" />
                 {{ t('teacher.grading.sidebar.export') || '导出提交' }}
-              </button>
+              </Button>
             </div>
           </card>
         </div>
@@ -772,7 +772,7 @@
           </div>
         </div>
         <template #footer>
-          <button size="sm" variant="secondary" @click="aiHistoryDetailOpen=false">{{ t('common.close') || '关闭' }}</button>
+          <Button size="sm" variant="secondary" @click="aiHistoryDetailOpen=false">{{ t('common.close') || '关闭' }}</Button>
         </template>
       </glass-modal>
 

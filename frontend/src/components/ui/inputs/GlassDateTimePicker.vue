@@ -2,7 +2,7 @@
   <div class="w-full">
     <label v-if="label" class="block text-sm font-medium mb-1">{{ label }}</label>
     <div class="relative">
-      <button
+      <Button
         :id="idAttr"
         ref="anchor"
         type="button"
@@ -14,7 +14,7 @@
           {{ valueText || placeholderText }}
         </span>
         <svg class="w-4 h-4 absolute right-2 top-1/2 -translate-y-1/2 text-gray-400" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.24 4.5a.75.75 0 01-1.08 0l-4.24-4.5a.75.75 0 01.02-1.06z" clip-rule="evenodd"/></svg>
-      </button>
+      </Button>
 
       <teleport to="body">
         <div v-if="open" class="fixed inset-0 z-[999]" @click="close"></div>

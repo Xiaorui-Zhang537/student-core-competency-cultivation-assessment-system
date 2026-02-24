@@ -7,6 +7,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -81,7 +82,71 @@ public class AdminDashboardServiceImpl implements AdminDashboardService {
                 "since", since.toString()
         ));
 
+        long gradeA = safe(adminDashboardMapper.countGradesByLevel("A"));
+        long gradeB = safe(adminDashboardMapper.countGradesByLevel("B"));
+        long gradeC = safe(adminDashboardMapper.countGradesByLevel("C"));
+        long gradeD = safe(adminDashboardMapper.countGradesByLevel("D"));
+        long gradeE = safe(adminDashboardMapper.countGradesByLevel("E"));
+        long gradeF = safe(adminDashboardMapper.countGradesByLevel("F"));
+        data.put("grades", Map.of(
+                "A", gradeA,
+                "B", gradeB,
+                "C", gradeC,
+                "D", gradeD,
+                "E", gradeE,
+                "F", gradeF
+        ));
+
         return data;
+    }
+
+    @Override
+    public Map<String, Object> getAbilityRadarOverview(int daysWindow) {
+        int days = daysWindow <= 0 ? 0 : Math.min(daysWindow, 365);
+        List<Map<String, Object>> dimensions = adminDashboardMapper.abilityRadarOverview(days);
+
+        Map<String, Object> data = new HashMap<>();
+        data.put("days", days);
+        data.put("dimensions", dimensions);
+        return data;
+    }
+
+    @Override
+    public Map<String, Object> getAiUsageOverview(int daysWindow, int limitInput) {
+        int days = normalizeDays(daysWindow, 30);
+        int limit = limitInput <= 0 ? 20 : Math.min(limitInput, 100);
+        LocalDateTime since = LocalDateTime.now().minusDays(days);
+
+        long conversations = safe(adminDashboardMapper.countAiConversationsSince(since));
+        long messages = safe(adminDashboardMapper.countAiMessagesSince(since));
+        long activeUsers = safe(adminDashboardMapper.countAiActiveUsersSince(since));
+        List<Map<String, Object>> users = adminDashboardMapper.aiUsageByUser(since, limit);
+
+        Map<String, Object> data = new HashMap<>();
+        data.put("days", days);
+        data.put("limit", limit);
+        data.put("summary", Map.of(
+                "conversationCount", conversations,
+                "messageCount", messages,
+                "activeUsers", activeUsers
+        ));
+        data.put("users", users);
+        return data;
+    }
+
+    private int normalizeDays(int days, int defaultDays) {
+        if (days <= 0) return defaultDays;
+        return Math.min(days, 365);
+    }
+
+    private long asLong(Object value) {
+        if (value == null) return 0L;
+        if (value instanceof Number n) return n.longValue();
+        try {
+            return Long.parseLong(String.valueOf(value));
+        } catch (Exception ignore) {
+            return 0L;
+        }
     }
 
     private long safe(Long v) {

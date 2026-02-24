@@ -2,10 +2,10 @@
   <div class="p-6">
     <page-header :title="t('student.courses.title')" :subtitle="t('student.courses.subtitle')">
       <template #actions>
-        <button variant="primary" @click="showCourseStore = true">
+        <Button variant="primary" @click="showCourseStore = true">
           <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" /></svg>
           {{ t('student.courses.browse') }}
-        </button>
+        </Button>
       </template>
     </page-header>
 
@@ -72,7 +72,7 @@
     <card v-else-if="filteredCourses.length === 0" class="text-center py-12" tint="info">
       <h3 class="text-lg font-medium">{{ t('student.courses.emptyTitle') }}</h3>
       <p class="text-gray-500 mt-2">{{ t('student.courses.emptyDesc') }}</p>
-      <button class="mt-4" variant="primary" @click="showCourseStore = true">{{ t('student.courses.goStore') }}</button>
+      <Button class="mt-4" variant="primary" @click="showCourseStore = true">{{ t('student.courses.goStore') }}</Button>
     </card>
     <div v-else class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
       <card
@@ -99,7 +99,7 @@
               <span>{{ t('student.courses.progressLabel') }}</span>
               <span>{{ (Number(course.progress) || 0).toFixed(0) }}%</span>
             </div>
-            <progress
+            <Progress
               :value="Number(course.progress || 0)"
               size="sm"
               :color="Number(course.progress || 0) >= 100 ? 'success' : 'primary'"
@@ -150,7 +150,7 @@
               <span class="text-sm text-gray-500">{{ t('student.courses.instructor') }}: {{ course.teacherName }}</span>
               <div class="flex items-center gap-2">
                 <badge v-if="isEnrollClosed(course)" size="sm" variant="warning">{{ t('student.courses.enrollClosed') || '报名已截止' }}</badge>
-                <button
+                <Button
                   v-if="isEnrolled(String(course.id))"
                   size="sm"
                   variant="danger"
@@ -158,8 +158,8 @@
                   @click.stop="handleUnenroll(String(course.id))"
                 >
                   {{ t('student.courses.unenroll') || '退课' }}
-                </button>
-                <button
+                </Button>
+                <Button
                   v-else
                   size="sm"
                   variant="primary"
@@ -168,14 +168,14 @@
                   @click.stop="startEnroll(course)"
                 >
                   {{ isEnrollClosed(course) ? (t('student.courses.enrollClosed') || '报名已截止') : (t('student.courses.enroll') ) }}
-                </button>
+                </Button>
               </div>
             </div>
           </card>
         </div>
       </div>
       <template #footer>
-        <button variant="secondary" @click="showCourseStore=false">{{ t('common.close') || '关闭' }}</button>
+        <Button variant="secondary" @click="showCourseStore=false">{{ t('common.close') || '关闭' }}</Button>
       </template>
     </glass-modal>
 
@@ -197,15 +197,15 @@
         />
       </div>
       <template #footer>
-        <button variant="secondary" @click="closeEnrollKeyModal">{{ t('common.cancel') || '取消' }}</button>
-        <button
+        <Button variant="secondary" @click="closeEnrollKeyModal">{{ t('common.cancel') || '取消' }}</Button>
+        <Button
           variant="primary"
           :loading="enrollingId === String(enrollKeyCourseId)"
           :disabled="!enrollKeyInput"
           @click="confirmEnrollWithKey"
         >
           {{ t('student.courses.enroll') }}
-        </button>
+        </Button>
       </template>
     </glass-modal>
   </div>

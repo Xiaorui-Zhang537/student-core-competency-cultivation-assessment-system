@@ -55,9 +55,9 @@
               <glass-input v-model="broadcastSpecificIds" :placeholder="String(t('admin.tools.broadcast.specificIds') || '例如：1,2,3')" />
             </div>
 
-            <button size="sm" variant="primary" :disabled="exporting || !canSendBroadcast" @click="sendBroadcast">
+            <Button size="sm" variant="primary" :disabled="exporting || !canSendBroadcast" @click="sendBroadcast">
               {{ t('admin.tools.broadcast.send') || '发送' }}
-            </button>
+            </Button>
           </div>
         </div>
       </card>
@@ -66,12 +66,12 @@
         <div class="text-sm font-medium mb-3">{{ t('admin.tools.usersCsvTitle') || '用户 CSV' }}</div>
         <div class="text-xs text-subtle mb-3">{{ t('admin.tools.usersCsvDesc') || '导出用户列表（/admin/users）为 CSV。' }}</div>
         <div class="flex gap-2">
-          <button size="sm" variant="primary" :disabled="exporting" @click="exportUsers">
+          <Button size="sm" variant="primary" :disabled="exporting" @click="exportUsers">
             {{ t('admin.tools.download') || '下载' }}
-          </button>
-          <button size="sm" variant="outline" :disabled="exporting" @click="router.push('/admin/people?tab=users')">
+          </Button>
+          <Button size="sm" variant="outline" :disabled="exporting" @click="router.push('/admin/people?tab=users')">
             {{ t('admin.tools.openFilters') || '去筛选' }}
-          </button>
+          </Button>
         </div>
       </card>
 
@@ -79,12 +79,12 @@
         <div class="text-sm font-medium mb-3">{{ t('admin.tools.abilityCsvTitle') || '能力报告 CSV' }}</div>
         <div class="text-xs text-subtle mb-3">{{ t('admin.tools.abilityCsvDesc') || '导出能力报告中心列表为 CSV。' }}</div>
         <div class="flex gap-2">
-          <button size="sm" variant="primary" :disabled="exporting" @click="exportAbilityReports">
+          <Button size="sm" variant="primary" :disabled="exporting" @click="exportAbilityReports">
             {{ t('admin.tools.download') || '下载' }}
-          </button>
-          <button size="sm" variant="outline" :disabled="exporting" @click="router.push('/admin/moderation?tab=ability')">
+          </Button>
+          <Button size="sm" variant="outline" :disabled="exporting" @click="router.push('/admin/moderation?tab=ability')">
             {{ t('admin.tools.openFilters') || '去筛选' }}
-          </button>
+          </Button>
         </div>
       </card>
 
@@ -95,9 +95,9 @@
           <div class="flex-1">
             <glass-search-input v-model="courseIdForExport" :placeholder="String(t('admin.tools.courseIdPlaceholder') || '输入 courseId')" size="sm" tint="info" />
           </div>
-          <button size="sm" variant="primary" :disabled="exporting || !courseIdForExport.trim()" @click="exportCourseStudents">
+          <Button size="sm" variant="primary" :disabled="exporting || !courseIdForExport.trim()" @click="exportCourseStudents">
             {{ t('admin.tools.download') || '下载' }}
-          </button>
+          </Button>
         </div>
       </card>
 
@@ -108,9 +108,9 @@
           <div class="flex-1">
             <glass-search-input v-model="studentIdForExport" :placeholder="String(t('admin.tools.studentIdPlaceholder') || '输入 studentId')" size="sm" tint="info" />
           </div>
-          <button size="sm" variant="primary" :disabled="exporting || !studentIdForExport.trim()" @click="exportAiConversations">
+          <Button size="sm" variant="primary" :disabled="exporting || !studentIdForExport.trim()" @click="exportAiConversations">
             {{ t('admin.tools.download') || '下载' }}
-          </button>
+          </Button>
         </div>
       </card>
 
@@ -121,9 +121,9 @@
           <div class="flex-1">
             <glass-search-input v-model="studentIdForVoiceExport" :placeholder="String(t('admin.tools.studentIdPlaceholder') || '输入 studentId')" size="sm" tint="info" />
           </div>
-          <button size="sm" variant="primary" :disabled="exporting || !studentIdForVoiceExport.trim()" @click="exportVoiceSessions">
+          <Button size="sm" variant="primary" :disabled="exporting || !studentIdForVoiceExport.trim()" @click="exportVoiceSessions">
             {{ t('admin.tools.download') || '下载' }}
-          </button>
+          </Button>
         </div>
       </card>
 

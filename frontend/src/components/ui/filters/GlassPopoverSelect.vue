@@ -2,7 +2,7 @@
   <div :class="stacked ? ['flex flex-col gap-1', fullWidth ? 'w-full' : 'w-auto'] : ['inline-flex items-center gap-2', fullWidth ? 'w-full' : 'w-auto']">
     <span v-if="label" class="text-xs text-gray-500 dark:text-gray-400 whitespace-nowrap">{{ label }}</span>
     <div ref="rootRef" :class="['relative', width ? '' : 'w-full']" :style="{ width: width || undefined }">
-      <button
+      <Button
         type="button"
         class="ui-pill--select ui-pill--pr-select"
         :class="[size==='sm' ? 'ui-pill--sm ui-pill--pl' : 'ui-pill--md ui-pill--pl', tintClass]"
@@ -16,7 +16,7 @@
           {{ selectedLabel || placeholder || '' }}
         </span>
         <svg class="pointer-events-none w-4 h-4 text-gray-400 absolute right-2 top-1/2 -translate-y-1/2" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.24 4.5a.75.75 0 01-1.08 0l-4.24-4.5a.75.75 0 01.02-1.06z" clip-rule="evenodd"/></svg>
-      </button>
+      </Button>
       <!-- local (non-teleport) dropdown -->
       <div v-if="open && !teleport"
            ref="menuRef"
@@ -69,6 +69,7 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted, onBeforeUnmount, watch, CSSProperties, nextTick } from 'vue'
+import Button from '@/components/ui/Button.vue'
 
 interface Option { label: string; value: string | number | boolean; disabled?: boolean }
 interface Props {

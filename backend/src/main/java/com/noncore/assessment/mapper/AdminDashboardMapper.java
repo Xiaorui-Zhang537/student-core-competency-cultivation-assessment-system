@@ -4,6 +4,8 @@ import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
 import java.time.LocalDateTime;
+import java.util.List;
+import java.util.Map;
 
 /**
  * 管理员仪表盘数据聚合 Mapper。
@@ -33,5 +35,17 @@ public interface AdminDashboardMapper {
     Long countReportsByStatus(@Param("status") String status);
 
     Long countActiveUsersSince(@Param("since") LocalDateTime since);
+
+    Long countGradesByLevel(@Param("level") String level);
+
+    List<Map<String, Object>> abilityRadarOverview(@Param("days") int days);
+
+    Long countAiConversationsSince(@Param("since") LocalDateTime since);
+
+    Long countAiMessagesSince(@Param("since") LocalDateTime since);
+
+    Long countAiActiveUsersSince(@Param("since") LocalDateTime since);
+
+    List<Map<String, Object>> aiUsageByUser(@Param("since") LocalDateTime since, @Param("limit") int limit);
 }
 

@@ -34,7 +34,8 @@ export const useCommunityStore = defineStore('community', () => {
     size?: number;
     category?: string;
     keyword?: string;
-    orderBy?: 'latest' | 'popular';
+    tag?: string;
+    orderBy?: 'latest' | 'popular' | 'hot' | 'comments' | 'likes' | 'views';
   }) => {
     // 兼容后端排序参数：将 popular 映射为 hot
     const orderBy = params?.orderBy === 'popular' ? 'hot' : params?.orderBy;

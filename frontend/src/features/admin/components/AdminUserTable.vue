@@ -7,10 +7,10 @@
       </div>
       <div class="shrink-0 flex items-center gap-2">
         <slot name="header" />
-        <button v-if="allowCreate" variant="primary" size="sm" @click="openCreate">
+        <Button v-if="allowCreate" variant="primary" size="sm" @click="openCreate">
           <plus-icon class="w-4 h-4 mr-2" />
           {{ t('common.create') || '创建' }}
-        </button>
+        </Button>
       </div>
     </div>
 
@@ -73,26 +73,26 @@
             </td>
             <td v-if="showActions" class="px-6 py-3 text-right whitespace-nowrap">
               <template v-if="mode === 'users'">
-                <button size="sm" variant="outline" :disabled="opLoadingId===u.id" @click="sendReset(u)">
+                <Button size="sm" variant="outline" :disabled="opLoadingId===u.id" @click="sendReset(u)">
                   {{ t('auth.forgotPassword.send') || '重置密码' }}
-                </button>
-                <button size="sm" variant="outline" class="ml-2" @click="openChat(u)">
+                </Button>
+                <Button size="sm" variant="outline" class="ml-2" @click="openChat(u)">
                   {{ t('shared.chat.open') || '聊天' }}
-                </button>
-                <button size="sm" variant="outline" class="ml-2" @click="openAudit(u)">
+                </Button>
+                <Button size="sm" variant="outline" class="ml-2" @click="openAudit(u)">
                   {{ t('admin.student360.auditAiVoice') || 'AI/口语审计' }}
-                </button>
+                </Button>
               </template>
               <template v-else>
-                <button size="sm" variant="outline" @click="openDetail(u.id)">
+                <Button size="sm" variant="outline" @click="openDetail(u.id)">
                   {{ t('common.view') || '查看' }}
-                </button>
-                <button size="sm" variant="outline" class="ml-2" @click="openChat(u)">
+                </Button>
+                <Button size="sm" variant="outline" class="ml-2" @click="openChat(u)">
                   {{ t('shared.chat.open') || '聊天' }}
-                </button>
-                <button size="sm" variant="outline" class="ml-2" @click="openAudit(u)">
+                </Button>
+                <Button size="sm" variant="outline" class="ml-2" @click="openAudit(u)">
                   {{ t('admin.student360.auditAiVoice') || 'AI/口语审计' }}
-                </button>
+                </Button>
               </template>
             </td>
           </tr>
@@ -154,8 +154,8 @@
         </div>
 
         <div class="flex justify-end gap-2 pt-2">
-          <button variant="ghost" type="button" @click="closeCreate">{{ t('common.cancel') || '取消' }}</button>
-          <button variant="primary" type="submit" :disabled="createLoading">{{ t('common.confirm') || '确认' }}</button>
+          <Button variant="ghost" type="button" @click="closeCreate">{{ t('common.cancel') || '取消' }}</Button>
+          <Button variant="primary" type="submit" :disabled="createLoading">{{ t('common.confirm') || '确认' }}</Button>
         </div>
       </form>
     </glass-modal>

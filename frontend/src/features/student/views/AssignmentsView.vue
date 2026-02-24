@@ -75,14 +75,14 @@
             </div>
           </div>
           <div class="absolute right-4 top-1/2 -translate-y-1/2 flex items-center gap-2">
-            <button v-if="displayStatus(a)==='PENDING' && !isPastDue(a.dueDate || a.dueAt)" variant="success" size="sm" @click="submit(a.id)">{{ t('student.assignments.actions.submit') }}</button>
-            <button v-else-if="displayStatus(a)==='SUBMITTED' || isPastDue(a.dueDate || a.dueAt)" variant="info" size="sm" class="gap-3" @click="view(a.id)">
+            <Button v-if="displayStatus(a)==='PENDING' && !isPastDue(a.dueDate || a.dueAt)" variant="success" size="sm" @click="submit(a.id)">{{ t('student.assignments.actions.submit') }}</Button>
+            <Button v-else-if="displayStatus(a)==='SUBMITTED' || isPastDue(a.dueDate || a.dueAt)" variant="info" size="sm" class="gap-3" @click="view(a.id)">
               <template #icon>
                 <eye-icon class="h-4 w-4" />
               </template>
               {{ t('student.assignments.actions.view') }}
-            </button>
-            <button v-else variant="secondary" icon="confirm" size="sm" class="gap-3" @click="view(a.id)">{{ t('student.assignments.actions.review') }}</button>
+            </Button>
+            <Button v-else variant="secondary" icon="confirm" size="sm" class="gap-3" @click="view(a.id)">{{ t('student.assignments.actions.review') }}</Button>
           </div>
         </card>
 

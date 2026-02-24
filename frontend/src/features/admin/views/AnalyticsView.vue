@@ -7,7 +7,7 @@
         <div class="w-48">
           <glass-popover-select v-model="days" :options="dayOptions" size="sm" />
         </div>
-        <button size="sm" variant="outline" :disabled="loading" @click="reload">{{ t('common.refresh') || '刷新' }}</button>
+        <Button size="sm" variant="outline" :disabled="loading" @click="reload">{{ t('common.refresh') || '刷新' }}</Button>
       </div>
     </card>
 

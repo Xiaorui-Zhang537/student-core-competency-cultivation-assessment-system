@@ -2,6 +2,10 @@
   <div class="p-6">
     <PageHeader :title="t('admin.sidebar.console')" :subtitle="t('admin.title')" />
 
+    <div class="mt-4">
+      <AdminKpiRow :items="kpis" />
+    </div>
+
     <FilterBar tint="secondary" align="center" :dense="false" class="mt-4 mb-2 rounded-full h-19">
       <template #left>
         <div class="flex items-center gap-3 flex-wrap">
@@ -34,75 +38,98 @@
     />
 
     <div v-else class="mt-4 space-y-6">
-      <AdminKpiRow :items="kpis" />
+      <div class="grid grid-cols-1 xl:grid-cols-3 gap-6 items-start">
+        <div class="xl:col-span-2 space-y-6">
+          <AdminTrendsPanel
+            :title="t('admin.console.trendsTitle') || '关键趋势'"
+            :subtitle="t('admin.console.trendsSubtitle', { days }) || `近 ${days} 天：活跃 / 新增 / 选课`"
+            tint="secondary"
+            :series="trendSeries"
+            :xAxisData="trendDays"
+            height="640px"
+            :grid="{ top: '10%', left: '6%', right: '6%', bottom: '16%' }"
+            :legend="{ bottom: 0 }"
+            :tooltip="{ confine: true }"
+          />
 
-      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <AdminTrendsPanel
-          class="lg:col-span-2"
-          :title="t('admin.console.trendsTitle') || '关键趋势'"
-          :subtitle="t('admin.console.trendsSubtitle', { days }) || `近 ${days} 天：活跃 / 新增 / 选课`"
-          tint="secondary"
-          :series="trendSeries"
-          :xAxisData="trendDays"
-          height="320px"
-        >
-          <template #actions>
-            <Button size="sm" variant="outline" @click="router.push('/admin/moderation')">
-              {{ t('admin.console.quickModeration') || '去治理台' }}
-            </Button>
-          </template>
-        </AdminTrendsPanel>
-
-        <Card padding="md" tint="secondary">
-          <div class="text-sm font-medium mb-2">{{ t('admin.console.quickActions') || '快捷入口' }}</div>
-          <div class="space-y-2">
-            <Button class="w-full justify-start" variant="outline" size="sm" @click="router.push('/admin/people?tab=users')">
-              {{ t('admin.console.gotoPeople') || '数据中心：用户与人群' }}
-            </Button>
-            <Button class="w-full justify-start" variant="outline" size="sm" @click="router.push('/admin/courses')">
-              {{ t('admin.console.gotoCourses') || '课程中心：课程总览' }}
-            </Button>
-            <Button class="w-full justify-start" variant="outline" size="sm" @click="router.push('/admin/moderation?tab=ability')">
-              {{ t('admin.console.gotoModeration') || '内容治理：报告/社区' }}
-            </Button>
-            <Button class="w-full justify-start" variant="outline" size="sm" @click="router.push('/admin/tools')">
-              {{ t('admin.console.gotoTools') || '工具中心：导出' }}
-            </Button>
-          </div>
-
-          <div class="border-t border-white/10 my-4"></div>
-          <div class="grid grid-cols-2 gap-3 text-sm">
-            <div class="p-3 glass-thin rounded-2xl" v-glass="{ strength: 'thin', interactive: false }">
-              <div class="text-xs text-subtle mb-1">{{ t('admin.console.activeUsers') || '近 N 天活跃' }}</div>
-              <div class="font-semibold">{{ overview?.activity?.activeUsers ?? 0 }}</div>
+          <Card padding="md" tint="accent">
+            <div class="flex items-center justify-between gap-3 mb-3">
+              <div class="text-sm font-medium">{{ t('admin.console.abilityRadarTitle') || '整体五维能力雷达' }}</div>
             </div>
-            <div class="p-3 glass-thin rounded-2xl" v-glass="{ strength: 'thin', interactive: false }">
-              <div class="text-xs text-subtle mb-1">{{ t('admin.console.abilityReports') || '能力报告' }}</div>
-              <div class="font-semibold">{{ abilityReportsTotal }}</div>
+            <RadarChart
+              :indicators="radarIndicators"
+              :series="radarSeries"
+              height="360px"
+              :showLegend="true"
+              :appendTooltipToBody="false"
+            />
+            <div v-if="!radarHasData" class="mt-2 text-xs text-subtle">
+              {{ t('admin.console.radarEmptyHint') || '当前时间窗口暂无有效能力评估数据，已展示基础维度占位。' }}
             </div>
-          </div>
-        </Card>
+          </Card>
 
-        <AdminDistributionPanel
-          :title="t('admin.console.userRoleDist') || '用户角色分布'"
-          tint="info"
-          :data="userRolePie"
-          height="320px"
-        />
+          <Card padding="md" tint="info">
+            <div class="flex items-center justify-between gap-3 mb-3">
+              <div class="text-sm font-medium">{{ t('admin.console.aiUsageTitle') || 'AI 使用排行（访问数）' }}</div>
+              <div class="text-xs text-subtle">{{ t('admin.console.aiUsageSubtitle', { days }) || `近 ${days} 天按消息数 Top 用户` }}</div>
+            </div>
+            <div class="mt-1 space-y-3">
+              <div v-for="(item, idx) in aiUsageTopList" :key="item.userId" class="text-xs">
+                <div class="flex items-center justify-between gap-3 mb-1">
+                  <span class="truncate pr-3">#{{ idx + 1 }} {{ item.username }} ({{ item.role }})</span>
+                  <span class="font-semibold">{{ aiUsageDisplayCount(item) }}</span>
+                </div>
+                <div class="h-2 rounded-full bg-white/10 overflow-hidden">
+                  <div
+                    class="h-full rounded-full transition-all"
+                    :style="{ width: `${aiUsageBarPercent(item)}%`, backgroundColor: 'var(--color-primary)', opacity: '0.85' }"
+                  />
+                </div>
+              </div>
+            </div>
+            <div class="mt-3 grid grid-cols-3 gap-2 text-xs">
+              <div class="glass-thin rounded-xl p-2" v-glass="{ strength: 'thin', interactive: false }">
+                <div class="text-subtle">{{ t('admin.console.aiSummaryConversations') || '会话总数' }}</div>
+                <div class="font-semibold">{{ aiUsageSummary.conversationCount }}</div>
+              </div>
+              <div class="glass-thin rounded-xl p-2" v-glass="{ strength: 'thin', interactive: false }">
+                <div class="text-subtle">{{ t('admin.console.aiSummaryMessages') || '消息总数' }}</div>
+                <div class="font-semibold">{{ aiUsageSummary.messageCount }}</div>
+              </div>
+              <div class="glass-thin rounded-xl p-2" v-glass="{ strength: 'thin', interactive: false }">
+                <div class="text-subtle">{{ t('admin.console.aiSummaryActiveUsers') || '活跃用户' }}</div>
+                <div class="font-semibold">{{ aiUsageSummary.activeUsers }}</div>
+              </div>
+            </div>
+          </Card>
+        </div>
 
-        <AdminDistributionPanel
-          :title="t('admin.console.courseStatusDist') || '课程状态分布'"
-          tint="accent"
-          :data="courseStatusPie"
-          height="320px"
-        />
-
-        <AdminDistributionPanel
-          :title="t('admin.console.postStatusDist') || '帖子状态分布'"
-          tint="success"
-          :data="postStatusPie"
-          height="320px"
-        />
+        <div class="xl:col-span-1 space-y-6">
+          <AdminDistributionPanel
+            :title="t('admin.console.userRoleDist') || '用户角色分布'"
+            tint="info"
+            :data="userRolePie"
+            height="280px"
+          />
+          <AdminDistributionPanel
+            :title="t('admin.console.courseStatusDist') || '课程状态分布'"
+            tint="accent"
+            :data="courseStatusPie"
+            height="280px"
+          />
+          <AdminDistributionPanel
+            :title="t('admin.console.postStatusDist') || '帖子状态分布'"
+            tint="success"
+            :data="postStatusPie"
+            height="280px"
+          />
+          <AdminDistributionPanel
+            :title="t('admin.console.gradeLevelDist') || '成绩等级分布'"
+            tint="warning"
+            :data="gradeLevelPie"
+            height="280px"
+          />
+        </div>
       </div>
     </div>
   </div>
@@ -111,37 +138,43 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { useRouter } from 'vue-router'
 import PageHeader from '@/components/ui/PageHeader.vue'
 import Card from '@/components/ui/Card.vue'
 import Button from '@/components/ui/Button.vue'
 import ErrorState from '@/components/ui/ErrorState.vue'
+import RadarChart from '@/components/charts/RadarChart.vue'
 import GlassPopoverSelect from '@/components/ui/filters/GlassPopoverSelect.vue'
 import FilterBar from '@/components/ui/filters/FilterBar.vue'
 import AdminKpiRow from '@/features/admin/components/AdminKpiRow.vue'
 import AdminTrendsPanel from '@/features/admin/components/AdminTrendsPanel.vue'
 import AdminDistributionPanel from '@/features/admin/components/AdminDistributionPanel.vue'
-import { adminApi, type AdminDashboardOverview } from '@/api/admin.api'
+import {
+  adminApi,
+  type AdminAiUsageOverviewResponse,
+  type AdminAbilityRadarOverviewResponse,
+  type AdminDashboardOverview,
+} from '@/api/admin.api'
 import { useAdminCounts } from '@/features/admin/composables/useAdminCounts'
 import { UsersIcon, AcademicCapIcon, ShieldCheckIcon, DocumentTextIcon } from '@heroicons/vue/24/outline'
 
 const { t } = useI18n()
-const router = useRouter()
 const counts = useAdminCounts()
 
-const days = ref(30)
-const dayOptions = [
-  { label: '7 days', value: 7 },
-  { label: '30 days', value: 30 },
-  { label: '90 days', value: 90 },
-  { label: '180 days', value: 180 },
-  { label: '365 days', value: 365 },
-]
+const days = ref(180)
+const dayOptions = computed(() => ([
+  { label: t('admin.console.dayOptions.d7') || '7天', value: 7 },
+  { label: t('admin.console.dayOptions.d30') || '30天', value: 30 },
+  { label: t('admin.console.dayOptions.d90') || '90天', value: 90 },
+  { label: t('admin.console.dayOptions.d180') || '180天', value: 180 },
+  { label: t('admin.console.dayOptions.d365') || '365天', value: 365 },
+]))
 
 const loading = ref(false)
 const error = ref<string | null>(null)
 const overview = ref<AdminDashboardOverview | null>(null)
 const series = ref<any>(null)
+const abilityRadar = ref<AdminAbilityRadarOverviewResponse | null>(null)
+const aiUsage = ref<AdminAiUsageOverviewResponse | null>(null)
 
 const abilityReportsTotal = ref(0)
 const postTotals = ref<Record<string, number>>({ published: 0, draft: 0, deleted: 0 })
@@ -175,7 +208,7 @@ function mapSeries(list: any[]): Map<string, number> {
   return m
 }
 
-const trendDays = computed(() => lastNDays(Number(days.value) || 30))
+const trendDays = computed(() => lastNDays(Number(days.value) || 180))
 
 const trendSeries = computed(() => {
   const x = trendDays.value
@@ -214,17 +247,83 @@ const postStatusPie = computed(() => ([
   { name: t('admin.postStatus.deleted') || 'deleted', value: postTotals.value.deleted ?? 0 },
 ]))
 
+const gradeLevelPie = computed(() => ([
+  { name: t('admin.gradeLevel.A') || 'A', value: overview.value?.grades?.A ?? 0 },
+  { name: t('admin.gradeLevel.B') || 'B', value: overview.value?.grades?.B ?? 0 },
+  { name: t('admin.gradeLevel.C') || 'C', value: overview.value?.grades?.C ?? 0 },
+  { name: t('admin.gradeLevel.D') || 'D', value: overview.value?.grades?.D ?? 0 },
+  { name: t('admin.gradeLevel.E') || 'E', value: overview.value?.grades?.E ?? 0 },
+  { name: t('admin.gradeLevel.F') || 'F', value: overview.value?.grades?.F ?? 0 },
+]))
+
+const defaultRadarDimensions = computed(() => ([
+  { code: 'MORAL_COGNITION', name: t('admin.console.radarDims.moral') || '道德认知' },
+  { code: 'LEARNING_ATTITUDE', name: t('admin.console.radarDims.attitude') || '学习态度' },
+  { code: 'LEARNING_ABILITY', name: t('admin.console.radarDims.ability') || '学习能力' },
+  { code: 'LEARNING_METHOD', name: t('admin.console.radarDims.method') || '学习方法' },
+  { code: 'ACADEMIC_GRADE', name: t('admin.console.radarDims.academic') || '学业成绩' },
+]))
+
+const radarDataMap = computed(() => {
+  const map = new Map<string, number>()
+  ;(abilityRadar.value?.dimensions || []).forEach((item) => {
+    const value = Number(item?.value || 0)
+    if (item?.code) map.set(String(item.code), value)
+    const name = String(item?.name || '')
+    if (name) map.set(name, value)
+    if (name.includes('道德')) map.set('MORAL_COGNITION', value)
+    if (name.includes('态度')) map.set('LEARNING_ATTITUDE', value)
+    if (name.includes('能力')) map.set('LEARNING_ABILITY', value)
+    if (name.includes('方法')) map.set('LEARNING_METHOD', value)
+    if (name.includes('成绩')) map.set('ACADEMIC_GRADE', value)
+  })
+  return map
+})
+
+const radarIndicators = computed(() => defaultRadarDimensions.value.map((item) => ({ name: item.name, max: 100 })))
+
+const radarSeries = computed(() => {
+  return [
+    {
+      name: t('admin.console.radarSeriesSchool') || '全局均值',
+      values: defaultRadarDimensions.value.map((item) => Number(radarDataMap.value.get(item.code) || 0)),
+    },
+  ]
+})
+const radarHasData = computed(() => (abilityRadar.value?.dimensions || []).some((item) => Number(item.sampleSize || 0) > 0))
+
+const aiUsageTopList = computed(() => (aiUsage.value?.users || []).slice(0, 10))
+function aiUsageDisplayCount(item: { messageCount?: number; conversationCount?: number }): number {
+  const messages = Number(item?.messageCount || 0)
+  const conversations = Number(item?.conversationCount || 0)
+  return Math.max(messages, conversations)
+}
+const aiUsageMax = computed(() => Math.max(1, ...aiUsageTopList.value.map((item) => aiUsageDisplayCount(item))))
+function aiUsageBarPercent(item: { messageCount?: number; conversationCount?: number }): number {
+  const current = aiUsageDisplayCount(item)
+  return Math.max(4, Math.round((current / aiUsageMax.value) * 100))
+}
+const aiUsageSummary = computed(() => ({
+  conversationCount: Number(aiUsage.value?.summary?.conversationCount || 0),
+  messageCount: Number(aiUsage.value?.summary?.messageCount || 0),
+  activeUsers: Number(aiUsage.value?.summary?.activeUsers || 0),
+}))
+
 async function reload() {
   loading.value = true
   error.value = null
   try {
-    const d = Number(days.value) || 30
-    const [ov, ser] = await Promise.all([
+    const d = Number(days.value) || 180
+    const [ov, ser, radar, ai] = await Promise.all([
       adminApi.getDashboardOverview(d),
       adminApi.getAnalyticsSeriesOverview(d),
+      adminApi.getAbilityRadarOverview(0),
+      adminApi.getAiUsageOverview(d, 20),
     ])
     overview.value = ov
     series.value = ser
+    abilityRadar.value = radar
+    aiUsage.value = ai
 
     try {
       const res = await adminApi.pageAbilityReports({ page: 1, size: 1 })

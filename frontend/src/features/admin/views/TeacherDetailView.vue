@@ -2,9 +2,9 @@
   <div class="p-6">
     <PageHeader :title="t('admin.sidebar.teachers')" :subtitle="`#${id}`">
       <template #actions>
-        <button variant="outline" @click="router.push('/admin/people?tab=teachers')">{{ t('common.back') || '返回' }}</button>
-        <button variant="outline" class="ml-2" @click="openChatWithTeacher">{{ t('shared.chat.open') || '聊天' }}</button>
-        <button variant="outline" class="ml-2" @click="openAudit">{{ t('admin.student360.auditAiVoice') || 'AI/口语审计' }}</button>
+        <Button variant="outline" @click="router.push('/admin/people?tab=teachers')">{{ t('common.back') || '返回' }}</Button>
+        <Button variant="outline" class="ml-2" @click="openChatWithTeacher">{{ t('shared.chat.open') || '聊天' }}</Button>
+        <Button variant="outline" class="ml-2" @click="openAudit">{{ t('admin.student360.auditAiVoice') || 'AI/口语审计' }}</Button>
       </template>
     </PageHeader>
 

@@ -12,7 +12,7 @@
         <badge v-if="insight?.meta?.status" size="sm" :variant="statusVariant">
           {{ t(`shared.behaviorInsight.status.${insight.meta.status}`) }}
         </badge>
-        <button
+        <Button
           v-if="canOperate"
           :variant="actionVariant"
           size="sm"
@@ -20,7 +20,7 @@
           @click="onClickAction"
         >
           {{ actionLabel }}
-        </button>
+        </Button>
       </div>
     </div>
 

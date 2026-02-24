@@ -26,7 +26,40 @@
     },
     "console": {
       "daysLabel": "Window",
-      "abilityReports": "Ability reports"
+      "dayOptions": {
+        "d7": "7 days",
+        "d30": "30 days",
+        "d90": "90 days",
+        "d180": "180 days",
+        "d365": "365 days"
+      },
+      "abilityReports": "Ability reports",
+      "abilityRadarTitle": "Overall five-dimension radar",
+      "abilityRadarSubtitle": "Global dimension averages in last {days} days",
+      "radarSeriesSchool": "Global average",
+      "radarDims": {
+        "moral": "Moral cognition",
+        "attitude": "Learning attitude",
+        "ability": "Learning ability",
+        "method": "Learning method",
+        "academic": "Academic grade"
+      },
+      "radarEmptyHint": "No effective ability assessments in the current window; showing baseline dimensions.",
+      "aiUsageTitle": "AI usage ranking (visits)",
+      "aiUsageSubtitle": "Top users by message count in last {days} days",
+      "aiVisitsSeries": "Visits",
+      "aiSummaryConversations": "Conversations",
+      "aiSummaryMessages": "Messages",
+      "aiSummaryActiveUsers": "Active users",
+      "gradeLevelDist": "Grade level distribution"
+    },
+    "gradeLevel": {
+      "A": "A",
+      "B": "B",
+      "C": "C",
+      "D": "D",
+      "E": "E",
+      "F": "F"
     },
     "people": {
       "statusLabel": "Status"

@@ -7,13 +7,13 @@
           {{ tf('shared.behaviorEvidence.subtitle', '基于行为事件的事实摘要') }}
         </div>
       </div>
-      <button variant="outline" size="sm" :disabled="loading" @click="reload">
+      <Button variant="outline" size="sm" :disabled="loading" @click="reload">
         {{
           loading
             ? tf('shared.behaviorEvidence.loading', '加载中...')
             : tf('shared.behaviorEvidence.refresh', '刷新')
         }}
-      </button>
+      </Button>
     </div>
 
     <div v-if="error" class="text-sm text-red-600 mb-3">

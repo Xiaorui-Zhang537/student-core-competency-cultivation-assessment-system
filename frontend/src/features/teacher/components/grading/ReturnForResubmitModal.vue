@@ -13,8 +13,8 @@
       <glass-date-time-picker v-model="untilModel" size="md" :minute-step="5" tint="info" />
     </div>
     <template #footer>
-      <button variant="secondary" size="sm" @click="emit('update:open', false)">{{ cancelText }}</button>
-      <button variant="danger" size="sm" @click="emit('confirm')">{{ confirmText }}</button>
+      <Button variant="secondary" size="sm" @click="emit('update:open', false)">{{ cancelText }}</Button>
+      <Button variant="danger" size="sm" @click="emit('confirm')">{{ confirmText }}</Button>
     </template>
   </glass-modal>
 </template>

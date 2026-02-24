@@ -19,6 +19,7 @@ export const communityApi = {
     size?: number;
     category?: string;
     keyword?: string;
+    tag?: string;
     orderBy?: 'latest' | 'popular' | 'hot' | 'comments' | 'likes' | 'views';
   }): Promise<PaginatedResponse<Post>> => {
     return api.get('/community/posts', { params });

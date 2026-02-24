@@ -4,12 +4,12 @@
       {{ message }}
     </div>
     <template #footer>
-      <button variant="secondary" size="sm" @click="emit('cancel')">
+      <Button variant="secondary" size="sm" @click="emit('cancel')">
         {{ cancelText }}
-      </button>
-      <button :variant="confirmVariant" size="sm" @click="emit('confirm')">
+      </Button>
+      <Button :variant="confirmVariant" size="sm" @click="emit('confirm')">
         {{ confirmText }}
-      </button>
+      </Button>
     </template>
   </glass-modal>
 </template>

@@ -3,10 +3,10 @@
     <PageHeader :title="pageTitle" :subtitle="pageSubtitle">
       <template #actions>
         <div class="flex items-center gap-2">
-          <button variant="outline" @click="goBack">{{ t('common.back') || '返回' }}</button>
-          <button variant="outline" :disabled="loading" @click="onExportPdf">{{ t('admin.tools.exportPdf') || '导出PDF' }}</button>
-          <button variant="outline" :disabled="!studentId" @click="openChatWithStudent">{{ t('shared.chat.open') || '聊天' }}</button>
-          <button variant="outline" :disabled="!studentId" @click="openAudit">{{ t('admin.student360.auditAiVoice') || 'AI/口语审计' }}</button>
+          <Button variant="outline" @click="goBack">{{ t('common.back') || '返回' }}</Button>
+          <Button variant="outline" :disabled="loading" @click="onExportPdf">{{ t('admin.tools.exportPdf') || '导出PDF' }}</Button>
+          <Button variant="outline" :disabled="!studentId" @click="openChatWithStudent">{{ t('shared.chat.open') || '聊天' }}</Button>
+          <Button variant="outline" :disabled="!studentId" @click="openAudit">{{ t('admin.student360.auditAiVoice') || 'AI/口语审计' }}</Button>
         </div>
       </template>
     </PageHeader>
@@ -56,11 +56,11 @@
         <card padding="md" tint="accent">
           <div class="text-xs text-subtle mb-2">{{ t('admin.student360.panels') || '面板' }}</div>
           <div class="flex flex-col gap-2">
-            <button size="sm" :variant="panel==='grades' ? 'solid' : 'outline'" @click="panel='grades'">{{ t('admin.student360.tabs.grades') || '成绩' }}</button>
-            <button size="sm" :variant="panel==='ability' ? 'solid' : 'outline'" @click="panel='ability'">{{ t('admin.student360.tabs.ability') || '雷达与报告' }}</button>
-            <button size="sm" :variant="panel==='insights' ? 'solid' : 'outline'" @click="panel='insights'">{{ t('admin.student360.tabs.insights') || '行为洞察' }}</button>
-            <button size="sm" :variant="panel==='ai' ? 'solid' : 'outline'" @click="panel='ai'">{{ t('admin.student360.tabs.aiChat') || 'AI问答' }}</button>
-            <button size="sm" :variant="panel==='voice' ? 'solid' : 'outline'" @click="panel='voice'">{{ t('admin.student360.tabs.voice') || '口语训练' }}</button>
+            <Button size="sm" :variant="panel==='grades' ? 'solid' : 'outline'" @click="panel='grades'">{{ t('admin.student360.tabs.grades') || '成绩' }}</Button>
+            <Button size="sm" :variant="panel==='ability' ? 'solid' : 'outline'" @click="panel='ability'">{{ t('admin.student360.tabs.ability') || '雷达与报告' }}</Button>
+            <Button size="sm" :variant="panel==='insights' ? 'solid' : 'outline'" @click="panel='insights'">{{ t('admin.student360.tabs.insights') || '行为洞察' }}</Button>
+            <Button size="sm" :variant="panel==='ai' ? 'solid' : 'outline'" @click="panel='ai'">{{ t('admin.student360.tabs.aiChat') || 'AI问答' }}</Button>
+            <Button size="sm" :variant="panel==='voice' ? 'solid' : 'outline'" @click="panel='voice'">{{ t('admin.student360.tabs.voice') || '口语训练' }}</Button>
           </div>
         </card>
       </div>
@@ -71,8 +71,8 @@
           <div class="flex items-center justify-between mb-3">
             <div class="text-sm font-medium">{{ t('admin.student360.gradesTitle') || '作业成绩' }}</div>
             <div class="flex items-center gap-2">
-              <button size="sm" variant="outline" :disabled="gradesLoading" @click="reloadGrades">{{ t('common.refresh') || '刷新' }}</button>
-              <button size="sm" variant="outline" :disabled="gradesLoading || grades.length===0" @click="exportGradesCsv">{{ t('admin.tools.exportCsv') || '导出CSV' }}</button>
+              <Button size="sm" variant="outline" :disabled="gradesLoading" @click="reloadGrades">{{ t('common.refresh') || '刷新' }}</Button>
+              <Button size="sm" variant="outline" :disabled="gradesLoading || grades.length===0" @click="exportGradesCsv">{{ t('admin.tools.exportCsv') || '导出CSV' }}</Button>
             </div>
           </div>
           <loading-overlay v-if="gradesLoading" :text="String(t('common.loading') || '加载中…')" />
@@ -122,7 +122,7 @@
         <card padding="md" tint="warning">
           <div class="flex items-center justify-between mb-3">
             <div class="text-sm font-medium">{{ t('admin.student360.trendTitle') || '成绩趋势' }}</div>
-            <button size="sm" variant="outline" :disabled="trendLoading" @click="reloadTrend">{{ t('common.refresh') || '刷新' }}</button>
+            <Button size="sm" variant="outline" :disabled="trendLoading" @click="reloadTrend">{{ t('common.refresh') || '刷新' }}</Button>
           </div>
           <trend-area-chart :series="trendSeries" height="320px" :loading="trendLoading" />
         </card>
@@ -134,8 +134,8 @@
           <div class="flex items-center justify-between mb-3">
             <div class="text-sm font-medium">{{ t('admin.student360.radarTitle') || '五维能力雷达' }}</div>
             <div class="flex items-center gap-2">
-              <button size="sm" variant="outline" :disabled="radarLoading" @click="reloadRadar">{{ t('common.refresh') || '刷新' }}</button>
-              <button size="sm" variant="outline" :disabled="!radarOk" @click="exportRadarCsv">{{ t('admin.tools.exportCsv') || '导出CSV' }}</button>
+              <Button size="sm" variant="outline" :disabled="radarLoading" @click="reloadRadar">{{ t('common.refresh') || '刷新' }}</Button>
+              <Button size="sm" variant="outline" :disabled="!radarOk" @click="exportRadarCsv">{{ t('admin.tools.exportCsv') || '导出CSV' }}</Button>
             </div>
           </div>
           <div v-if="!resolvedCourseId" class="text-sm text-subtle">
@@ -159,7 +159,7 @@
         <card padding="md" tint="accent">
           <div class="flex items-center justify-between mb-3">
             <div class="text-sm font-medium">{{ t('admin.student360.reportsTitle') || '能力报告' }}</div>
-            <button size="sm" variant="outline" :disabled="reportsLoading" @click="reloadReports">{{ t('common.refresh') || '刷新' }}</button>
+            <Button size="sm" variant="outline" :disabled="reportsLoading" @click="reloadReports">{{ t('common.refresh') || '刷新' }}</Button>
           </div>
           <loading-overlay v-if="reportsLoading" :text="String(t('common.loading') || '加载中…')" />
           <error-state v-else-if="reportsError" :title="String(t('common.error') || '加载失败')" :message="reportsError" :actionText="String(t('common.retry') || '重试')" @action="reloadReports" />
@@ -176,7 +176,7 @@
             <empty-state v-if="reports.length === 0" :title="String(t('common.empty') || '暂无数据')" />
           </div>
           <div class="mt-3">
-            <button size="sm" variant="outline" :disabled="reports.length===0" @click="exportReportsCsv">{{ t('admin.tools.exportCsv') || '导出CSV' }}</button>
+            <Button size="sm" variant="outline" :disabled="reports.length===0" @click="exportReportsCsv">{{ t('admin.tools.exportCsv') || '导出CSV' }}</Button>
           </div>
         </card>
       </div>
@@ -205,8 +205,8 @@
         <div class="flex items-center justify-between mb-3">
           <div class="text-sm font-medium">{{ t('admin.student360.insightsTitle') || 'AI行为洞察' }}</div>
           <div class="flex items-center gap-2">
-            <button size="sm" variant="outline" :disabled="insightLoading" @click="reloadInsight">{{ t('common.refresh') || '刷新' }}</button>
-            <button size="sm" variant="outline" :disabled="insightLoading" @click="generateInsight">{{ t('admin.student360.generate') || '生成' }}</button>
+            <Button size="sm" variant="outline" :disabled="insightLoading" @click="reloadInsight">{{ t('common.refresh') || '刷新' }}</Button>
+            <Button size="sm" variant="outline" :disabled="insightLoading" @click="generateInsight">{{ t('admin.student360.generate') || '生成' }}</Button>
           </div>
         </div>
         <loading-overlay v-if="insightLoading" :text="String(t('common.loading') || '加载中…')" />
@@ -239,7 +239,7 @@
         <card padding="md" tint="secondary">
           <div class="flex items-center justify-between mb-3">
             <div class="text-sm font-medium">{{ t('admin.student360.aiConversations') || '会话列表' }}</div>
-            <button size="sm" variant="outline" :disabled="aiLoading" @click="reloadAi">{{ t('common.refresh') || '刷新' }}</button>
+            <Button size="sm" variant="outline" :disabled="aiLoading" @click="reloadAi">{{ t('common.refresh') || '刷新' }}</Button>
           </div>
           <loading-overlay v-if="aiLoading" :text="String(t('common.loading') || '加载中…')" />
           <error-state v-else-if="aiError" :title="String(t('common.error') || '加载失败')" :message="aiError" :actionText="String(t('common.retry') || '重试')" @action="reloadAi" />
@@ -257,15 +257,15 @@
             <empty-state v-if="aiConversations.length === 0" :title="String(t('common.empty') || '暂无数据')" />
           </div>
           <div class="mt-3 flex gap-2">
-            <button size="sm" variant="outline" :disabled="aiConversations.length===0" @click="exportAiCsv">{{ t('admin.tools.exportCsv') || '导出CSV' }}</button>
-            <button size="sm" variant="outline" :disabled="!selectedConversationId" @click="exportConversationZip">{{ t('admin.tools.exportZip') || '导出ZIP' }}</button>
+            <Button size="sm" variant="outline" :disabled="aiConversations.length===0" @click="exportAiCsv">{{ t('admin.tools.exportCsv') || '导出CSV' }}</Button>
+            <Button size="sm" variant="outline" :disabled="!selectedConversationId" @click="exportConversationZip">{{ t('admin.tools.exportZip') || '导出ZIP' }}</Button>
           </div>
         </card>
 
         <card padding="md" tint="secondary" class="lg:col-span-2">
           <div class="flex items-center justify-between mb-3">
             <div class="text-sm font-medium">{{ t('admin.student360.aiMessages') || '消息' }}</div>
-            <button size="sm" variant="outline" :disabled="aiMsgLoading || !selectedConversationId" @click="reloadMessages">{{ t('common.refresh') || '刷新' }}</button>
+            <Button size="sm" variant="outline" :disabled="aiMsgLoading || !selectedConversationId" @click="reloadMessages">{{ t('common.refresh') || '刷新' }}</Button>
           </div>
           <loading-overlay v-if="aiMsgLoading" :text="String(t('common.loading') || '加载中…')" />
           <error-state v-else-if="aiMsgError" :title="String(t('common.error') || '加载失败')" :message="aiMsgError" :actionText="String(t('common.retry') || '重试')" @action="reloadMessages" />
@@ -285,7 +285,7 @@
         <card padding="md" tint="secondary">
           <div class="flex items-center justify-between mb-3">
             <div class="text-sm font-medium">{{ t('admin.student360.voiceSessions') || '会话列表' }}</div>
-            <button size="sm" variant="outline" :disabled="voiceLoading" @click="reloadVoice">{{ t('common.refresh') || '刷新' }}</button>
+            <Button size="sm" variant="outline" :disabled="voiceLoading" @click="reloadVoice">{{ t('common.refresh') || '刷新' }}</Button>
           </div>
           <loading-overlay v-if="voiceLoading" :text="String(t('common.loading') || '加载中…')" />
           <error-state v-else-if="voiceError" :title="String(t('common.error') || '加载失败')" :message="voiceError" :actionText="String(t('common.retry') || '重试')" @action="reloadVoice" />
@@ -303,15 +303,15 @@
             <empty-state v-if="voiceSessions.length === 0" :title="String(t('common.empty') || '暂无数据')" />
           </div>
           <div class="mt-3 flex gap-2">
-            <button size="sm" variant="outline" :disabled="voiceSessions.length===0" @click="exportVoiceCsv">{{ t('admin.tools.exportCsv') || '导出CSV' }}</button>
-            <button size="sm" variant="outline" :disabled="!selectedVoiceSessionId" @click="exportVoiceZip">{{ t('admin.tools.exportZip') || '导出ZIP' }}</button>
+            <Button size="sm" variant="outline" :disabled="voiceSessions.length===0" @click="exportVoiceCsv">{{ t('admin.tools.exportCsv') || '导出CSV' }}</Button>
+            <Button size="sm" variant="outline" :disabled="!selectedVoiceSessionId" @click="exportVoiceZip">{{ t('admin.tools.exportZip') || '导出ZIP' }}</Button>
           </div>
         </card>
 
         <card padding="md" tint="secondary" class="lg:col-span-2">
           <div class="flex items-center justify-between mb-3">
             <div class="text-sm font-medium">{{ t('admin.student360.voiceTurns') || '回合' }}</div>
-            <button size="sm" variant="outline" :disabled="voiceTurnsLoading || !selectedVoiceSessionId" @click="reloadVoiceTurns">{{ t('common.refresh') || '刷新' }}</button>
+            <Button size="sm" variant="outline" :disabled="voiceTurnsLoading || !selectedVoiceSessionId" @click="reloadVoiceTurns">{{ t('common.refresh') || '刷新' }}</Button>
           </div>
           <loading-overlay v-if="voiceTurnsLoading" :text="String(t('common.loading') || '加载中…')" />
           <error-state v-else-if="voiceTurnsError" :title="String(t('common.error') || '加载失败')" :message="voiceTurnsError" :actionText="String(t('common.retry') || '重试')" @action="reloadVoiceTurns" />

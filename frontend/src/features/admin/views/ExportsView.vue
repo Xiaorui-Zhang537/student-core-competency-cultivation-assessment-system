@@ -22,7 +22,7 @@
         <div class="text-sm font-medium mb-3">Users CSV</div>
         <div class="text-xs text-subtle mb-3">Export `/admin/users` list to CSV.</div>
         <div class="flex gap-2">
-          <button size="sm" variant="primary" :disabled="exporting" @click="exportUsers">Download</button>
+          <Button size="sm" variant="primary" :disabled="exporting" @click="exportUsers">Download</Button>
         </div>
       </card>
 
@@ -30,7 +30,7 @@
         <div class="text-sm font-medium mb-3">Ability reports CSV</div>
         <div class="text-xs text-subtle mb-3">Export `/admin/ability-reports` list to CSV.</div>
         <div class="flex gap-2">
-          <button size="sm" variant="primary" :disabled="exporting" @click="exportAbilityReports">Download</button>
+          <Button size="sm" variant="primary" :disabled="exporting" @click="exportAbilityReports">Download</Button>
         </div>
       </card>
     </div>

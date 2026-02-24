@@ -28,7 +28,7 @@
                 <h4 class="font-medium">{{ assignment.title }}</h4>
                 <p class="text-sm text-gray-500">{{ new Date(assignment.dueDate).toLocaleDateString() }}</p>
               </div>
-              <button size="sm" variant="outline" @click="router.push(`/student/assignments/${assignment.id}/submit`)">{{ t('student.dashboard.goDo') }}</button>
+              <Button size="sm" variant="outline" @click="router.push(`/student/assignments/${assignment.id}/submit`)">{{ t('student.dashboard.goDo') }}</Button>
             </div>
           </div>
           <p v-else class="text-gray-500">{{ t('student.dashboard.noUpcoming') }}</p>
@@ -43,7 +43,7 @@
                 <h4 class="font-medium">{{ course.title }}</h4>
                 <p class="text-sm text-gray-500">{{ course.teacherName }}</p>
               </div>
-              <button size="sm" variant="outline" @click="router.push(`/student/courses/${course.id}`)">{{ t('student.dashboard.continue') }}</button>
+              <Button size="sm" variant="outline" @click="router.push(`/student/courses/${course.id}`)">{{ t('student.dashboard.continue') }}</Button>
             </div>
           </div>
           <p v-else class="text-gray-500">{{ t('student.dashboard.noCourses') }}</p>
@@ -62,7 +62,7 @@
           <h2 class="text-xl font-semibold mb-4">{{ t('student.dashboard.overallProgress') }}</h2>
           <div class="text-4xl font-bold" :style="{ color: 'var(--color-netural)' }">{{ overallProgress.toFixed(2) }}%</div>
           <div class="mt-3">
-            <progress :value="overallProgress" size="lg" color="primary" />
+            <Progress :value="overallProgress" size="lg" color="primary" />
 
           </div>
         </card>

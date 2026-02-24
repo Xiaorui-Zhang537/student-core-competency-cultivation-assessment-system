@@ -8,6 +8,10 @@
 
 - `adminApi.getDashboardOverview(days?: number)`
   - `GET /api/admin/dashboard/overview`
+- `adminApi.getAbilityRadarOverview(days?: number)`
+  - `GET /api/admin/dashboard/ability-radar-overview`
+- `adminApi.getAiUsageOverview(days?: number, limit?: number)`
+  - `GET /api/admin/dashboard/ai-usage-overview`
 
 ## 2. 课程
 

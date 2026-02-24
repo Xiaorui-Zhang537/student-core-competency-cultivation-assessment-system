@@ -60,5 +60,150 @@
         WHERE e.occurred_at &gt;= #{since}
     </select>
 
+    <select id="countGradesByLevel" resultType="long">
+        SELECT COUNT(1)
+        FROM grades g
+                 JOIN users u ON g.student_id = u.id
+        WHERE g.deleted = 0
+          AND u.deleted = 0
+          AND u.role = 'student'
+          AND UPPER(TRIM(COALESCE(g.grade_level, ''))) = #{level}
+    </select>
+
+    <select id="abilityRadarOverview" resultType="map">
+        SELECT d.code AS code,
+               d.name AS name,
+               ROUND(
+                       CASE d.code
+                           WHEN 'MORAL_COGNITION' THEN COALESCE(rpt.moral_avg, 0)
+                           WHEN 'LEARNING_ATTITUDE' THEN COALESCE(rpt.attitude_avg, 0)
+                           WHEN 'LEARNING_ABILITY' THEN COALESCE(rpt.ability_avg, 0)
+                           WHEN 'LEARNING_METHOD' THEN COALESCE(rpt.method_avg, 0)
+                           WHEN 'ACADEMIC_GRADE' THEN COALESCE(grade.avg_value, 0)
+                           ELSE 0
+                           END
+                   , 2) AS value,
+               CASE d.code
+                   WHEN 'MORAL_COGNITION' THEN COALESCE(rpt.moral_count, 0)
+                   WHEN 'LEARNING_ATTITUDE' THEN COALESCE(rpt.attitude_count, 0)
+                   WHEN 'LEARNING_ABILITY' THEN COALESCE(rpt.ability_count, 0)
+                   WHEN 'LEARNING_METHOD' THEN COALESCE(rpt.method_count, 0)
+                   WHEN 'ACADEMIC_GRADE' THEN COALESCE(grade.sample_size, 0)
+                   ELSE 0
+                   END AS sampleSize
+        FROM (
+                 SELECT 'MORAL_COGNITION' AS code, '道德认知' AS name, 1 AS sort_order
+                 UNION ALL
+                 SELECT 'LEARNING_ATTITUDE' AS code, '学习态度' AS name, 2 AS sort_order
+                 UNION ALL
+                 SELECT 'LEARNING_ABILITY' AS code, '学习能力' AS name, 3 AS sort_order
+                 UNION ALL
+                 SELECT 'LEARNING_METHOD' AS code, '学习方法' AS name, 4 AS sort_order
+                 UNION ALL
+                 SELECT 'ACADEMIC_GRADE' AS code, '学业成绩' AS name, 5 AS sort_order
+             ) d
+        LEFT JOIN (
+            SELECT AVG(CASE WHEN moral_raw &lt;= 5.5 THEN moral_raw * 20 ELSE moral_raw END) AS moral_avg,
+                   COUNT(DISTINCT CASE WHEN moral_raw IS NOT NULL THEN student_id END) AS moral_count,
+                   AVG(CASE WHEN attitude_raw &lt;= 5.5 THEN attitude_raw * 20 ELSE attitude_raw END) AS attitude_avg,
+                   COUNT(DISTINCT CASE WHEN attitude_raw IS NOT NULL THEN student_id END) AS attitude_count,
+                   AVG(CASE WHEN ability_raw &lt;= 5.5 THEN ability_raw * 20 ELSE ability_raw END) AS ability_avg,
+                   COUNT(DISTINCT CASE WHEN ability_raw IS NOT NULL THEN student_id END) AS ability_count,
+                   AVG(CASE WHEN method_raw &lt;= 5.5 THEN method_raw * 20 ELSE method_raw END) AS method_avg,
+                   COUNT(DISTINCT CASE WHEN method_raw IS NOT NULL THEN student_id END) AS method_count
+            FROM (
+                     SELECT r.student_id,
+                            CAST(JSON_UNQUOTE(COALESCE(
+                                    JSON_EXTRACT(r.dimension_scores, '$.moral_reasoning'),
+                                    JSON_EXTRACT(r.dimension_scores, '$.MORAL_COGNITION'),
+                                    JSON_EXTRACT(r.dimension_scores, '$.道德认知')
+                                )) AS DECIMAL(10,4)) AS moral_raw,
+                            CAST(JSON_UNQUOTE(COALESCE(
+                                    JSON_EXTRACT(r.dimension_scores, '$.attitude'),
+                                    JSON_EXTRACT(r.dimension_scores, '$.LEARNING_ATTITUDE'),
+                                    JSON_EXTRACT(r.dimension_scores, '$.学习态度')
+                                )) AS DECIMAL(10,4)) AS attitude_raw,
+                            CAST(JSON_UNQUOTE(COALESCE(
+                                    JSON_EXTRACT(r.dimension_scores, '$.ability'),
+                                    JSON_EXTRACT(r.dimension_scores, '$.LEARNING_ABILITY'),
+                                    JSON_EXTRACT(r.dimension_scores, '$.学习能力')
+                                )) AS DECIMAL(10,4)) AS ability_raw,
+                            CAST(JSON_UNQUOTE(COALESCE(
+                                    JSON_EXTRACT(r.dimension_scores, '$.strategy'),
+                                    JSON_EXTRACT(r.dimension_scores, '$.LEARNING_METHOD'),
+                                    JSON_EXTRACT(r.dimension_scores, '$.学习方法')
+                                )) AS DECIMAL(10,4)) AS method_raw
+                     FROM ability_reports r
+                              JOIN users u ON u.id = r.student_id
+                     WHERE r.report_type = 'ai'
+                       AND u.deleted = 0
+                       AND u.role = 'student'
+                       AND (
+                         #{days} &lt;= 0
+                             OR r.created_at &gt;= DATE_SUB(NOW(), INTERVAL #{days} DAY)
+                         )
+                 ) report_rows
+        ) rpt ON 1 = 1
+        LEFT JOIN (
+            SELECT AVG(COALESCE(
+                    g.percentage,
+                    CASE WHEN g.max_score IS NOT NULL AND g.max_score &gt; 0 THEN (g.score / g.max_score) * 100 ELSE NULL END
+                       )) AS avg_value,
+                   COUNT(DISTINCT g.student_id) AS sample_size
+            FROM grades g
+                     JOIN users u ON g.student_id = u.id
+            WHERE g.deleted = 0
+              AND u.deleted = 0
+              AND u.role = 'student'
+              AND (
+                #{days} &lt;= 0
+                    OR g.created_at &gt;= DATE_SUB(NOW(), INTERVAL #{days} DAY)
+                )
+        ) grade ON d.code = 'ACADEMIC_GRADE'
+        ORDER BY d.sort_order ASC
+    </select>
+
+    <select id="countAiConversationsSince" resultType="long">
+        SELECT COUNT(1)
+        FROM ai_conversations c
+        WHERE c.deleted = 0
+          AND c.created_at &gt;= #{since}
+    </select>
+
+    <select id="countAiMessagesSince" resultType="long">
+        SELECT COUNT(1)
+        FROM ai_messages m
+        WHERE m.created_at &gt;= #{since}
+    </select>
+
+    <select id="countAiActiveUsersSince" resultType="long">
+        SELECT COUNT(DISTINCT c.user_id)
+        FROM ai_conversations c
+        WHERE c.deleted = 0
+          AND (c.updated_at &gt;= #{since} OR c.created_at &gt;= #{since})
+    </select>
+
+    <select id="aiUsageByUser" resultType="map">
+        SELECT u.id AS userId,
+               u.username AS username,
+               u.role AS role,
+               COUNT(DISTINCT c.id) AS conversationCount,
+               COUNT(m.id) AS messageCount,
+               MAX(m.created_at) AS lastActiveAt
+        FROM users u
+        LEFT JOIN ai_conversations c
+               ON c.user_id = u.id
+              AND c.deleted = 0
+              AND (c.updated_at &gt;= #{since} OR c.created_at &gt;= #{since})
+        LEFT JOIN ai_messages m
+               ON m.conversation_id = c.id
+              AND m.created_at &gt;= #{since}
+        WHERE u.deleted = 0
+        GROUP BY u.id, u.username, u.role
+        HAVING COUNT(DISTINCT c.id) &gt; 0 OR COUNT(m.id) &gt; 0
+        ORDER BY messageCount DESC, conversationCount DESC, userId ASC
+        LIMIT #{limit}
+    </select>
+
 </mapper>
 

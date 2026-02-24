@@ -44,15 +44,15 @@
               </div>
               <!-- 3) 进度条（/ui/Progress） -->
               <div class="mt-3">
-                <progress v-if="typeof displayProgress === 'number'" :value="Math.round(displayProgress)" size="md" :color="Number(displayProgress)>=100 ? 'info' : 'primary'" />
+                <Progress v-if="typeof displayProgress === 'number'" :value="Math.round(displayProgress)" size="md" :color="Number(displayProgress)>=100 ? 'info' : 'primary'" />
               </div>
               <div class="mt-3 flex flex-wrap items-center gap-2">
-                <button variant="primary" size="sm" @click="continueLearning">
+                <Button variant="primary" size="sm" @click="continueLearning">
                   {{ t('student.courses.detail.continueLearning') || '继续学习' }}
-                </button>
-                <button variant="secondary" size="sm" @click="goCourseAssignments">
+                </Button>
+                <Button variant="secondary" size="sm" @click="goCourseAssignments">
                   {{ t('student.courses.detail.courseAssignments') || '课程作业' }}
-                </button>
+                </Button>
                 <span class="text-xs text-muted">
                   {{ t('student.courses.detail.assignmentSummary') || '作业总计/待完成' }}: {{ assignmentSummary.total }} / {{ assignmentSummary.pending }}
                 </span>
@@ -68,7 +68,7 @@
                   </div>
                 </div>
                 <div v-else-if="students.length" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
-                  <button
+                  <Button
                     v-for="s in students"
                     :key="String(s.id)"
                     variant="menu"
@@ -85,7 +85,7 @@
                         <span class="block w-full text-sm font-medium text-strong whitespace-nowrap overflow-hidden text-ellipsis max-w-[7ch]">{{ resolveStudentName(s) }}</span>
                       </div>
                     </div>
-                  </button>
+                  </Button>
                 </div>
                 <div v-else class="text-sm text-muted">{{ t('student.courses.detail.noEnrolled') || '暂无报名学生' }}</div>
               </div>
@@ -129,12 +129,12 @@
                 <span class="text-muted">{{ t('student.courses.detail.bioTitle') || '简介' }}：</span>{{ teacher?.bio }}
               </div>
               <div class="mt-4">
-                <button variant="primary" size="sm" class="w-full" @click="contactTeacher">
+                <Button variant="primary" size="sm" class="w-full" @click="contactTeacher">
                   <template #icon>
                     <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M2 5a2 2 0 012-2h16a2 2 0 012 2v14a2 2 0 01-2 2H4a2 2 0 01-2-2V5zm2 1v12h16V6H4zm3 2h6a1 1 0 110 2H7a1 1 0 110-2zm0 4h10a1 1 0 110 2H7a1 1 0 110-2z"/></svg>
                   </template>
                   {{ t('student.courses.detail.contactTeacher') }}
-                </button>
+                </Button>
               </div>
             </div>
           </card>
@@ -146,7 +146,7 @@
             <div class="p-4">
               <attachment-list :files="courseMaterials" :noCard="true" :hideHeader="true" :showDefaultDownload="false">
                 <template #actions="{ file }">
-                  <button
+                  <Button
                     size="sm"
                     variant="success"
                     class="whitespace-nowrap"
@@ -156,7 +156,7 @@
                     <template #icon>
                       <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
                     </template>
-                  </button>
+                  </Button>
                 </template>
               </attachment-list>
               <div v-if="!courseMaterials.length" class="text-sm text-muted mt-2">{{ t('student.courses.detail.noMaterials') }}</div>
@@ -176,13 +176,13 @@
                 <div v-for="group in groupedChapters" :key="group.key" class="space-y-2">
                   <div class="flex items-center justify-between">
                     <div class="text-sm font-semibold text-strong">{{ group.title }}</div>
-                    <button size="xs" variant="purple" class="inline-flex items-center" @click="toggleChapter(group.key)">
+                    <Button size="xs" variant="purple" class="inline-flex items-center" @click="toggleChapter(group.key)">
                       <template #icon>
                         <svg v-if="isExpanded(group.key)" class="w-4 h-4" viewBox="0 0 20 20" fill="currentColor"><path d="M5.23 12.21a.75.75 0 001.06.02L10 8.73l3.71 3.5a.75.75 0 001.04-1.08l-4.23-4a.75.75 0 00-1.04 0l-4.25 4a.75.75 0 00-.02 1.06z"/></svg>
                         <svg v-else class="w-4 h-4" viewBox="0 0 20 20" fill="currentColor"><path d="M14.77 7.79a.75.75 0 00-1.06-.02L10 11.27 6.29 7.77a.75.75 0 00-1.04 1.08l4.23 4a.75.75 0 001.04 0l4.25-4a.75.75 0 00.02-1.06z"/></svg>
                       </template>
                       {{ isExpanded(group.key) ? (t('student.courses.detail.collapse') || '收起') : (t('student.courses.detail.expand') || '展开') }}
-                    </button>
+                    </Button>
                   </div>
                   <div v-if="group.desc" class="text-xs text-subtle">{{ group.desc }}</div>
                   <div class="space-y-2" v-show="isExpanded(group.key)">
@@ -203,12 +203,12 @@
                               <p class="text-sm text-muted mt-1.5 whitespace-pre-line">{{ lesson.description || lesson.content }}</p>
                             </div>
                             <div class="flex items-center gap-2">
-                              <button size="sm" variant="success" @click="goLessonDetail(lesson.id)">
+                              <Button size="sm" variant="success" @click="goLessonDetail(lesson.id)">
                                 <template #icon>
                                   <svg class="w-4 h-4" viewBox="0 0 20 20" fill="currentColor"><path d="M10 3l7 7-7 7-1.5-1.5L13 11H3V9h10L8.5 4.5 10 3z"/></svg>
                                 </template>
                                 {{ t('student.courses.detail.viewDetail') }}
-                              </button>
+                              </Button>
                             </div>
                           </div>
                         </div>
@@ -235,12 +235,12 @@
                               <p class="text-sm text-muted mt-1.5 whitespace-pre-line">{{ lesson.description || lesson.content }}</p>
                             </div>
                         <div class="flex items-center gap-2">
-                          <button size="sm" variant="success" @click="goLessonDetail(lesson.id)">
+                          <Button size="sm" variant="success" @click="goLessonDetail(lesson.id)">
                             <template #icon>
                               <svg class="w-4 h-4" viewBox="0 0 20 20" fill="currentColor"><path d="M10 3l7 7-7 7-1.5-1.5L13 11H3V9h10L8.5 4.5 10 3z"/></svg>
                             </template>
                             {{ t('student.courses.detail.viewDetail') }}
-                          </button>
+                          </Button>
                         </div>
                       </div>
                     </div>

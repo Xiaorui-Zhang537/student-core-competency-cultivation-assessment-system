@@ -13,7 +13,7 @@
 
         <div class="mt-6" v-else>
           <div class="inline-flex flex-wrap gap-3 justify-center">
-            <button variant="primary" size="xl" class="rounded-full px-6" @click="goLogin">{{ t('auth.verify.toLogin') }}</button>
+            <Button variant="primary" size="xl" class="rounded-full px-6" @click="goLogin">{{ t('auth.verify.toLogin') }}</Button>
           </div>
         </div>
       </div>

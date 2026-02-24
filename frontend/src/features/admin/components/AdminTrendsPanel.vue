@@ -10,7 +10,15 @@
       </div>
     </div>
 
-    <trend-area-chart :series="series" :xAxisData="xAxisData" :height="height" :loading="loading" />
+    <trend-area-chart
+      :series="series"
+      :xAxisData="xAxisData"
+      :height="height"
+      :loading="loading"
+      :grid="grid"
+      :legend="legend"
+      :tooltip="tooltip"
+    />
   </card>
 </template>
 
@@ -29,11 +37,17 @@ withDefaults(defineProps<{
   xAxisData?: Array<string | number>
   height?: string
   loading?: boolean
+  grid?: Record<string, any>
+  legend?: Record<string, any>
+  tooltip?: Record<string, any>
 }>(), {
   tint: 'secondary',
   xAxisData: undefined,
   height: '280px',
   loading: false,
+  grid: () => ({}),
+  legend: () => ({}),
+  tooltip: () => ({}),
 })
 </script>
 

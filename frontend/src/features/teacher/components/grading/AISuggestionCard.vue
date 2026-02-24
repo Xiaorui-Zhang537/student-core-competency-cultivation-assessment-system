@@ -4,18 +4,18 @@
       <div class="flex items-center justify-between">
         <h2 class="text-lg font-semibold text-gray-900 dark:text-white">{{ t('teacher.grading.ai.title') }}</h2>
         <div class="flex items-center gap-2">
-          <button variant="outline" size="sm" @click="$emit('apply')">
+          <Button variant="outline" size="sm" @click="$emit('apply')">
             <check-icon class="w-4 h-4 mr-1" />
             {{ t('teacher.grading.ai.applySuggestion') || '一键应用' }}
-          </button>
-          <button variant="indigo" size="sm" @click="$emit('viewDetail')">
+          </Button>
+          <Button variant="indigo" size="sm" @click="$emit('viewDetail')">
             <eye-icon class="w-4 h-4 mr-1" />
             {{ t('teacher.grading.ai.viewDetail') || '查看详情' }}
-          </button>
-          <button size="sm" variant="primary" class="ml-1" :loading="loading" @click="$emit('openAi')">
+          </Button>
+          <Button size="sm" variant="primary" class="ml-1" :loading="loading" @click="$emit('openAi')">
             <sparkles-icon class="w-4 h-4 mr-1" />
             {{ t('teacher.grading.ai.open') || 'AI 批改' }}
-          </button>
+          </Button>
         </div>
       </div>
     </template>
@@ -30,7 +30,7 @@
         <div class="flex-1 grid grid-cols-1 md:grid-cols-2 gap-4">
           <div v-for="dim in dimensions" :key="dim.key" class="space-y-2">
             <div class="text-xs text-gray-500">{{ t(dim.label) }}</div>
-            <progress :value="(dim.value ?? 0) * 20" size="sm" color="primary" />
+            <Progress :value="(dim.value ?? 0) * 20" size="sm" color="primary" />
             <div class="text-xs text-right text-gray-500">{{ (dim.value ?? 0).toFixed(1) }}/5</div>
           </div>
         </div>

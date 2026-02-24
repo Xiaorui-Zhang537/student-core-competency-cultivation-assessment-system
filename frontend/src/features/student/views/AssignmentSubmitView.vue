@@ -46,18 +46,18 @@
               <div v-for="file in uploadedFiles" :key="file.id" class="flex justify-between items-center p-2 rounded glass-ultraThin glass-tint-secondary" v-glass="{ strength: 'ultraThin', interactive: false }">
                 <span>{{ (file as any).originalName || file.fileName }}</span>
                 <div class="flex items-center gap-2">
-                  <button v-if="!readOnly" size="sm" variant="danger" @click="removeFile(file.id)">
+                  <Button v-if="!readOnly" size="sm" variant="danger" @click="removeFile(file.id)">
                     <template #icon>
                       <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
                     </template>
                     {{ t('student.assignments.submit.delete') }}
-                  </button>
-                  <button size="sm" variant="success" @click="downloadSubmissionFile(file)">
+                  </Button>
+                  <Button size="sm" variant="success" @click="downloadSubmissionFile(file)">
                     <template #icon>
                       <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
                     </template>
                     {{ i18nText('student.assignments.detail.download', '下载') }}
-                  </button>
+                  </Button>
                 </div>
               </div>
             </div>
@@ -66,18 +66,18 @@
 
         <!-- Actions (moved up, unique) -->
       <div v-if="!readOnly" class="flex justify-end space-x-4 pointer-events-auto relative z-10">
-          <button variant="outline" @click="handleSaveDraft" :disabled="disableActions || pastDue || !(form.content && form.content.trim())">
+          <Button variant="outline" @click="handleSaveDraft" :disabled="disableActions || pastDue || !(form.content && form.content.trim())">
             <template #icon>
               <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3H3v14h14V3zM5 5h10v10H5V5zm2 2h6v2H7V7z" /></svg>
             </template>
             {{ t('student.assignments.submit.saveDraft') }}
-          </button>
-          <button variant="primary" @click="handleSubmit" :disabled="disableActions || pastDue || !form.content">
+          </Button>
+          <Button variant="primary" @click="handleSubmit" :disabled="disableActions || pastDue || !form.content">
             <template #icon>
               <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 13l4 4L19 7" /></svg>
             </template>
             {{ t('student.assignments.submit.submit') }}
-          </button>
+          </Button>
         </div>
 
         <!-- Grade Block (only when graded) -->
@@ -128,7 +128,7 @@
         <card v-if="displayStatus==='GRADED' && latestReport" tint="info">
           <div class="flex items-center mb-4">
             <h2 class="text-xl font-semibold flex-1">{{ i18nText('student.ability.latestReport', 'AI 能力报告') }}</h2>
-            <button size="sm" variant="indigo" @click="openAiDetail" :disabled="!parsedAi"><template #icon><svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="12" cy="12" r="3"></circle></svg></template>{{ i18nText('teacher.aiGrading.viewDetail', '查看详情') }}</button>
+            <Button size="sm" variant="indigo" @click="openAiDetail" :disabled="!parsedAi"><template #icon><svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="12" cy="12" r="3"></circle></svg></template>{{ i18nText('teacher.aiGrading.viewDetail', '查看详情') }}</Button>
           </div>
           <div class="space-y-3 text-sm">
             <div class="flex items-center gap-3">
@@ -196,10 +196,10 @@
           </div>
           <pre v-else class="bg-black/70 text-green-100 p-3 rounded overflow-auto text-xs max-h-[60vh]">{{ pretty(aiRawJson) }}</pre>
           <template #footer>
-            <button size="sm" variant="primary" @click="exportAiDetailAsText" :disabled="!parsedAi"><template #icon><svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V7"></path><path d="M9 7V3h6v4"></path><path d="M9 15h6"></path></svg></template>{{ i18nText('teacher.aiGrading.exportText', '导出文本') }}</button>
-            <button size="sm" variant="success" @click="exportAiDetailAsPng" :disabled="!parsedAi"><template #icon><svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="14" rx="2" ry="2"></rect><path d="M8 21h8"></path><path d="M12 17v4"></path></svg></template>{{ i18nText('teacher.aiGrading.exportPng', '导出 PNG') }}</button>
-            <button size="sm" variant="purple" @click="exportAiDetailAsPdf" :disabled="!parsedAi"><template #icon><svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2h9l5 5v13a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2z"></path><path d="M14 2v6h6"></path></svg></template>{{ i18nText('teacher.aiGrading.exportPdf', '导出 PDF') }}</button>
-            <button size="sm" variant="secondary" @click="aiDetailOpen=false"><template #icon><svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></template>{{ i18nText('teacher.aiGrading.picker.close', '关闭') }}</button>
+            <Button size="sm" variant="primary" @click="exportAiDetailAsText" :disabled="!parsedAi"><template #icon><svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V7"></path><path d="M9 7V3h6v4"></path><path d="M9 15h6"></path></svg></template>{{ i18nText('teacher.aiGrading.exportText', '导出文本') }}</Button>
+            <Button size="sm" variant="success" @click="exportAiDetailAsPng" :disabled="!parsedAi"><template #icon><svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="14" rx="2" ry="2"></rect><path d="M8 21h8"></path><path d="M12 17v4"></path></svg></template>{{ i18nText('teacher.aiGrading.exportPng', '导出 PNG') }}</Button>
+            <Button size="sm" variant="purple" @click="exportAiDetailAsPdf" :disabled="!parsedAi"><template #icon><svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2h9l5 5v13a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2z"></path><path d="M14 2v6h6"></path></svg></template>{{ i18nText('teacher.aiGrading.exportPdf', '导出 PDF') }}</Button>
+            <Button size="sm" variant="secondary" @click="aiDetailOpen=false"><template #icon><svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></template>{{ i18nText('teacher.aiGrading.picker.close', '关闭') }}</Button>
           </template>
         </glass-modal>
 

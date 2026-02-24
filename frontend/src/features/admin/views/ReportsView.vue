@@ -5,7 +5,7 @@
     <card padding="md" tint="secondary" class="mt-4">
       <div class="flex items-center justify-between flex-wrap gap-3">
         <segmented-pills :model-value="tab" :options="tabOptions" size="sm" variant="primary" @update:modelValue="(v:any)=> { tab = String(v); onTab() }" />
-        <button size="sm" variant="outline" :disabled="loading" @click="reload">{{ t('common.refresh') || '刷新' }}</button>
+        <Button size="sm" variant="outline" :disabled="loading" @click="reload">{{ t('common.refresh') || '刷新' }}</Button>
       </div>
     </card>
 
@@ -25,7 +25,7 @@
         <div class="flex flex-col md:flex-row gap-3 md:items-center">
           <glass-input v-model="abilityStudentId" type="number" :placeholder="String(t('admin.moderation.studentIdOptional') || 'studentId(可选)')" />
           <glass-popover-select v-model="abilityReportType" :options="reportTypeOptions" size="sm" width="180px" />
-          <button size="sm" variant="outline" :disabled="loading" @click="reloadAbility">{{ t('common.search') || '查询' }}</button>
+          <Button size="sm" variant="outline" :disabled="loading" @click="reloadAbility">{{ t('common.search') || '查询' }}</Button>
         </div>
       </card>
 
@@ -52,7 +52,7 @@
               <td class="px-6 py-3 text-sm text-center">{{ r.overallScore ?? '-' }}</td>
               <td class="px-6 py-3 text-xs text-subtle text-center">{{ r.createdAt || '-' }}</td>
               <td class="px-6 py-3 text-right">
-                <button size="sm" variant="outline" @click="openAbility(r.id)">{{ t('common.view') || '查看' }}</button>
+                <Button size="sm" variant="outline" @click="openAbility(r.id)">{{ t('common.view') || '查看' }}</Button>
               </td>
             </tr>
             <tr v-if="abilityItems.length === 0">
@@ -80,7 +80,7 @@
       <card padding="md" tint="secondary">
         <div class="flex flex-col md:flex-row gap-3 md:items-center">
           <glass-popover-select v-model="abuseStatus" :options="abuseStatusOptions" size="sm" width="180px" />
-          <button size="sm" variant="outline" :disabled="loading" @click="reloadAbuse">{{ t('common.search') || '查询' }}</button>
+          <Button size="sm" variant="outline" :disabled="loading" @click="reloadAbuse">{{ t('common.search') || '查询' }}</Button>
         </div>
       </card>
 

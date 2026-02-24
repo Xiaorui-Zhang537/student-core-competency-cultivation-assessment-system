@@ -11,19 +11,19 @@
         </h3>
         <div class="flex items-center gap-2 flex-nowrap justify-end">
           <!-- 顶部：全部已读 + 刷新（遵循仪表盘按钮主题样式） -->
-          <button size="sm" variant="primary"
+          <Button size="sm" variant="primary"
             @click="handleMarkAllAsRead"
             :disabled="loading || !hasUnread"
             :title="t('notifications.actions.markAll') as string"
           >
             <check-icon class="w-4 h-4 mr-2" />
             {{ t('notifications.actions.markAll') }}
-          </button>
+          </Button>
 
-          <button size="sm" variant="secondary" @click="handleRefresh" :disabled="loading">
+          <Button size="sm" variant="secondary" @click="handleRefresh" :disabled="loading">
             <arrow-path-icon class="w-4 h-4 mr-2" :class="{ 'animate-spin': loading }" />
             {{ t('notifications.actions.refresh') }}
-          </button>
+          </Button>
         </div>
       </div>
 
@@ -95,10 +95,10 @@
 
           <template #right>
             <div v-if="hasActiveFilters" class="ml-auto">
-              <button size="sm" variant="ghost" @click="handleClearFilters">
+              <Button size="sm" variant="ghost" @click="handleClearFilters">
                 <x-mark-icon class="w-4 h-4 mr-1" />
                 {{ t('notifications.actions.clearFilters') }}
-              </button>
+              </Button>
             </div>
           </template>
         </filter-bar>
@@ -159,9 +159,9 @@
 
               <!-- 操作按钮 -->
               <div class="flex items-center space-x-1">
-                <button size="xs" variant="ghost" class="text-red-600" title="删除" @click.stop="handleDeleteNotification(notification.id)">
+                <Button size="xs" variant="ghost" class="text-red-600" title="删除" @click.stop="handleDeleteNotification(notification.id)">
                   <trash-icon class="w-4 h-4" />
-                </button>
+                </Button>
               </div>
             </div>
 

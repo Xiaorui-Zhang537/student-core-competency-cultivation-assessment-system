@@ -7,7 +7,7 @@
         <glass-search-input v-model="keyword" :placeholder="String(t('common.search') || '搜索学生')" size="sm" tint="secondary" />
         <div class="flex gap-2 flex-wrap">
           <glass-popover-select v-model="status" :options="statusOptions" size="sm" width="140px" />
-          <button size="sm" variant="outline" :disabled="loading" @click="reload">{{ String(t('common.search') || '查询') }}</button>
+          <Button size="sm" variant="outline" :disabled="loading" @click="reload">{{ String(t('common.search') || '查询') }}</Button>
         </div>
       </div>
     </card>
@@ -42,7 +42,7 @@
             </td>
             <td class="px-6 py-3 text-sm text-center">{{ u.status }}</td>
             <td class="px-6 py-3 text-right">
-              <button size="sm" variant="outline" @click="router.push(`/admin/students/${u.id}`)">{{ t('common.view') || '查看' }}</button>
+              <Button size="sm" variant="outline" @click="router.push(`/admin/students/${u.id}`)">{{ t('common.view') || '查看' }}</Button>
             </td>
           </tr>
           <tr v-if="items.length === 0">

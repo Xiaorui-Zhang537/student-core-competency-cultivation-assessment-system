@@ -47,7 +47,7 @@
           >
             <!-- 关闭叉：每条通知独立关闭 -->
             <div class="absolute top-2 right-2">
-              <button
+              <Button
                 variant="glass-ghost"
                 size="xs"
                 icon="close"
@@ -90,8 +90,8 @@
           {{ t('app.error.description') }}
         </p>
         <div class="flex space-x-3">
-          <button class="flex-1" variant="primary" icon="confirm" @click="reloadPage">{{ t('app.error.button.reload') }}</button>
-          <button class="flex-1" variant="secondary" icon="close" @click="showErrorModal = false">{{ t('app.error.button.close') }}</button>
+          <Button class="flex-1" variant="primary" icon="confirm" @click="reloadPage">{{ t('app.error.button.reload') }}</Button>
+          <Button class="flex-1" variant="secondary" icon="close" @click="showErrorModal = false">{{ t('app.error.button.close') }}</Button>
         </div>
       </div>
     </div>

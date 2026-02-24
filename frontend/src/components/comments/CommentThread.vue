@@ -14,21 +14,21 @@
       </div>
       <div class="text-xs text-gray-500 mt-3 flex items-center gap-3">
         <span>{{ formatDate(comment.createdAt) }}</span>
-        <button size="xs" variant="reaction" class="!px-1 !py-0.5" :class="comment.isLiked ? 'reaction-liked' : ''" @click="onLikeComment" :disabled="likeBusy">
+        <Button size="xs" variant="reaction" class="!px-1 !py-0.5" :class="comment.isLiked ? 'reaction-liked' : ''" @click="onLikeComment" :disabled="likeBusy">
           <template #icon>
             <hand-thumb-up-icon class="w-3.5 h-3.5" />
           </template>
           <span>{{ safeLikeCount }}</span>
-        </button>
-        <button size="xs" variant="ghost" class="!px-1.5 !py-0.5" @click="toggleReply">
+        </Button>
+        <Button size="xs" variant="ghost" class="!px-1.5 !py-0.5" @click="toggleReply">
           <template #icon>
             <chat-bubble-left-icon class="w-3.5 h-3.5" />
           </template>
           {{ t('shared.community.detail.reply') }}
-        </button>
+        </Button>
 
         <div class="ml-auto relative" ref="menuAnchorRef">
-          <button
+          <Button
             size="xs"
             variant="ghost"
             class="!px-1.5 !py-0.5"
@@ -38,7 +38,7 @@
             <template #icon>
               <ellipsis-vertical-icon class="w-4 h-4" />
             </template>
-          </button>
+          </Button>
           <div
             v-if="showMenu"
             ref="menuPanelRef"
@@ -70,13 +70,13 @@
         <glass-textarea v-model="replyContent" :rows="2" class="w-full" :placeholder="t('shared.community.detail.writeComment') as string" />
         <div class="mt-4 flex items-center gap-4">
           <emoji-picker variant="outline" tint="accent" size="sm" @select="onReplyEmojiSelect" />
-          <button variant="primary" size="sm" :disabled="!replyContent.trim()" @click="submitReply">
+          <Button variant="primary" size="sm" :disabled="!replyContent.trim()" @click="submitReply">
             <template #icon>
               <paper-airplane-icon class="w-4 h-4" />
             </template>
             {{ t('shared.community.detail.postComment') }}
-          </button>
-          <button variant="ghost" size="sm" @click="toggleReply">{{ t('shared.community.modal.cancel') }}</button>
+          </Button>
+          <Button variant="ghost" size="sm" @click="toggleReply">{{ t('shared.community.modal.cancel') }}</Button>
         </div>
       </div>
 
@@ -89,7 +89,7 @@
           :post-id="postId"
           @deleted="handleChildDeleted"
         />
-        <button v-if="replies.items.length < replies.total" variant="ghost" size="sm" class="mt-3" @click="loadMoreReplies">{{ t('shared.community.detail.more') }}</button>
+        <Button v-if="replies.items.length < replies.total" variant="ghost" size="sm" class="mt-3" @click="loadMoreReplies">{{ t('shared.community.detail.more') }}</Button>
       </div>
     </div>
   </div>

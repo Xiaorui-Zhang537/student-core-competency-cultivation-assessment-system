@@ -43,5 +43,22 @@ public class AdminDashboardController extends BaseController {
     ) {
         return ResponseEntity.ok(ApiResponse.success(adminDashboardService.getOverview(days)));
     }
+
+    @GetMapping("/ability-radar-overview")
+    @Operation(summary = "仪表盘五维能力雷达总览")
+    public ResponseEntity<ApiResponse<Map<String, Object>>> abilityRadarOverview(
+            @RequestParam(value = "days", required = false, defaultValue = "180") int days
+    ) {
+        return ResponseEntity.ok(ApiResponse.success(adminDashboardService.getAbilityRadarOverview(days)));
+    }
+
+    @GetMapping("/ai-usage-overview")
+    @Operation(summary = "仪表盘 AI 使用总览（按用户访问）")
+    public ResponseEntity<ApiResponse<Map<String, Object>>> aiUsageOverview(
+            @RequestParam(value = "days", required = false, defaultValue = "30") int days,
+            @RequestParam(value = "limit", required = false, defaultValue = "20") int limit
+    ) {
+        return ResponseEntity.ok(ApiResponse.success(adminDashboardService.getAiUsageOverview(days, limit)));
+    }
 }
 

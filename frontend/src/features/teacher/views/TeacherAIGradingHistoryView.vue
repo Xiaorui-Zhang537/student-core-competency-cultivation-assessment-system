@@ -19,7 +19,7 @@
         <template #actions>
           <div class="flex items-center gap-2">
             <glass-search-input v-model="q" :placeholder="t('teacher.aiGrading.historySearchPlaceholder') || (t('common.search') as string) || '搜索'" size="sm" class="w-64" />
-            <button size="sm" variant="primary" class="w-auto px-3 whitespace-nowrap shrink-0" @click="load"><magnifying-glass-icon class="w-4 h-4 mr-1" />{{ t('common.search') || '搜索' }}</button>
+            <Button size="sm" variant="primary" class="w-auto px-3 whitespace-nowrap shrink-0" @click="load"><magnifying-glass-icon class="w-4 h-4 mr-1" />{{ t('common.search') || '搜索' }}</Button>
           </div>
         </template>
       </page-header>
@@ -52,8 +52,8 @@
                 <td class="py-2 pr-4">{{ formatTime(it.createdAt) }}</td>
                 <td class="py-2 pr-4">
                   <div class="flex items-center gap-2">
-                    <button size="xs" variant="indigo" @click="openDetail(it)"><eye-icon class="w-4 h-4 mr-1" />{{ t('common.view') || t('teacher.aiGrading.view') || '查看' }}</button>
-                    <button size="xs" variant="danger" @click="confirmDelete(it)"><trash-icon class="w-4 h-4 mr-1" />{{ t('teacher.aiGrading.delete') || '删除' }}</button>
+                    <Button size="xs" variant="indigo" @click="openDetail(it)"><eye-icon class="w-4 h-4 mr-1" />{{ t('common.view') || t('teacher.aiGrading.view') || '查看' }}</Button>
+                    <Button size="xs" variant="danger" @click="confirmDelete(it)"><trash-icon class="w-4 h-4 mr-1" />{{ t('teacher.aiGrading.delete') || '删除' }}</Button>
                   </div>
                 </td>
               </tr>
@@ -131,10 +131,10 @@
       </div>
       <pre v-else class="bg-black/70 text-green-100 p-3 rounded overflow-auto text-xs max-h-[60vh]">{{ pretty(detail?.rawJson) }}</pre>
       <template #footer>
-        <button size="sm" variant="primary" @click="exportDetailAsText" :disabled="!parsed"><arrow-down-tray-icon class="w-4 h-4 mr-2" />{{ t('teacher.aiGrading.exportText') || '导出文本' }}</button>
-        <button size="sm" variant="success" @click="exportDetailAsPng" :disabled="!parsed"><arrow-down-tray-icon class="w-4 h-4 mr-2" />{{ t('teacher.aiGrading.exportPng') || '导出 PNG' }}</button>
-        <button size="sm" variant="purple" @click="exportDetailAsPdf" :disabled="!parsed"><arrow-down-tray-icon class="w-4 h-4 mr-2" />{{ t('teacher.aiGrading.exportPdf') || '导出 PDF' }}</button>
-        <button size="sm" variant="secondary" @click="detail=null"><x-mark-icon class="w-4 h-4 mr-1" />{{ t('teacher.aiGrading.picker.close') || '关闭' }}</button>
+        <Button size="sm" variant="primary" @click="exportDetailAsText" :disabled="!parsed"><arrow-down-tray-icon class="w-4 h-4 mr-2" />{{ t('teacher.aiGrading.exportText') || '导出文本' }}</Button>
+        <Button size="sm" variant="success" @click="exportDetailAsPng" :disabled="!parsed"><arrow-down-tray-icon class="w-4 h-4 mr-2" />{{ t('teacher.aiGrading.exportPng') || '导出 PNG' }}</Button>
+        <Button size="sm" variant="purple" @click="exportDetailAsPdf" :disabled="!parsed"><arrow-down-tray-icon class="w-4 h-4 mr-2" />{{ t('teacher.aiGrading.exportPdf') || '导出 PDF' }}</Button>
+        <Button size="sm" variant="secondary" @click="detail=null"><x-mark-icon class="w-4 h-4 mr-1" />{{ t('teacher.aiGrading.picker.close') || '关闭' }}</Button>
       </template>
     </glass-modal>
   </div>

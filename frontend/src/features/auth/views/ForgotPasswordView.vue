@@ -16,9 +16,9 @@
       </div>
 
       <div>
-        <button class="w-full" variant="info" type="submit" :disabled="uiStore.loading">
+        <Button class="w-full" variant="info" type="submit" :disabled="uiStore.loading">
           {{ uiStore.loading ? '发送中...' : '发送重置链接' }}
-        </button>
+        </Button>
       </div>
     </form>
 

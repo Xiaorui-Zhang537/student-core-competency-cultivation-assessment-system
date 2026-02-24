@@ -18,5 +18,22 @@ public interface AdminDashboardService {
      * @param daysActiveWindow 统计活跃用户的窗口天数（例如 7）
      */
     Map<String, Object> getOverview(int daysActiveWindow);
+
+    /**
+     * 获取管理员全局五维能力雷达总览。
+     *
+     * @param days 统计窗口（天）
+     * @return 维度平均分与样本量
+     */
+    Map<String, Object> getAbilityRadarOverview(int days);
+
+    /**
+     * 获取管理员 AI 使用总览（按用户访问/消息统计）。
+     *
+     * @param days 统计窗口（天）
+     * @param limit 排行榜返回上限
+     * @return 汇总与用户排行
+     */
+    Map<String, Object> getAiUsageOverview(int days, int limit);
 }
 

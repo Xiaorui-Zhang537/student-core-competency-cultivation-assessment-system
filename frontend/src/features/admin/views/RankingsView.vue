@@ -27,9 +27,9 @@
         </div>
       </template>
       <template #right>
-        <button size="sm" variant="outline" :disabled="loadingCourses || loadingRank" @click="reloadAll">
+        <Button size="sm" variant="outline" :disabled="loadingCourses || loadingRank" @click="reloadAll">
           {{ t('common.refresh') || '刷新' }}
-        </button>
+        </Button>
       </template>
     </filter-bar>
 
@@ -87,7 +87,7 @@
             </td>
             <td class="px-6 py-3 text-center text-xs text-subtle">{{ s.lastActiveAt || '-' }}</td>
             <td class="px-6 py-3 text-right">
-              <button size="sm" variant="outline" @click="openStudent(s.studentId)">{{ t('common.view') || '查看' }}</button>
+              <Button size="sm" variant="outline" @click="openStudent(s.studentId)">{{ t('common.view') || '查看' }}</Button>
             </td>
           </tr>
 

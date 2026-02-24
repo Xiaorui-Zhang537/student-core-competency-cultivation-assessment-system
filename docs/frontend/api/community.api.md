@@ -10,7 +10,7 @@
 
 ## 参数与返回
 - 分页：`{ page?: number; size?: number }`
-- 列表筛选：`{ category?: string; keyword?: string; orderBy?: 'latest'|'popular'|'hot'|'comments'|'likes'|'views' }`
+- 列表筛选：`{ category?: string; keyword?: string; tag?: string; orderBy?: 'latest'|'popular'|'hot'|'comments'|'likes'|'views' }`
 - 评论分页与排序：`{ page?: number; size?: number; parentId?: number; orderBy?: 'time'|'hot' }`
 - 类型：`Post` / `PostComment` / `Tag` / `CommunityStats` / `HotTopic` / `ActiveUser`（见 `@/types/community`）
 

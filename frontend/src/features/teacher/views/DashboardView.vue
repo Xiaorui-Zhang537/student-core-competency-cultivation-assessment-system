@@ -20,12 +20,12 @@
             </div>
           </div>
           <div class="hidden sm:flex items-center gap-2">
-            <button variant="primary" @click="goPublishAssignment">
+            <Button variant="primary" @click="goPublishAssignment">
               <plus-icon class="w-4 h-4 mr-2" />{{ t('teacher.dashboard.actions.publish') }}
-            </button>
-            <button variant="success" @click="goGradeAssignments">
+            </Button>
+            <Button variant="success" @click="goGradeAssignments">
               <check-badge-icon class="w-4 h-4 mr-2" />{{ t('teacher.dashboard.actions.grade') }}
-            </button>
+            </Button>
           </div>
         </div>
       </template>

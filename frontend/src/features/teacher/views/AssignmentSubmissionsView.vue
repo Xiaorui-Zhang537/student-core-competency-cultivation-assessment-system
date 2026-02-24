@@ -16,14 +16,14 @@
         </nav>
         <page-header :title="t('teacher.submissions.title')" :subtitle="t('teacher.submissions.subtitle')">
           <template #actions>
-            <button
+            <Button
               variant="primary"
               @click="remindUnsubmitted"
               :loading="reminding"
               :disabled="reminding || stats.unsubmittedCount === 0 || isPastDue"
             >
               {{ t('teacher.submissions.actions.remindUnsubmitted') }}
-            </button>
+            </Button>
           </template>
         </page-header>
       </div>
@@ -75,10 +75,10 @@
     <div v-else>
       <card v-if="errorMessage" padding="md" tint="danger" class="text-center">
         <p class="mb-3">{{ errorMessage }}</p>
-         <button variant="info" @click="fetch()">
+         <Button variant="info" @click="fetch()">
            <arrow-path-icon class="w-4 h-4 mr-2" />
            {{ t('teacher.submissions.retry') }}
-         </button>
+         </Button>
       </card>
       <card v-else-if="displayRows.length === 0" padding="md" tint="info" class="text-center text-gray-500">{{ t('teacher.submissions.empty') }}</card>
       <div v-else class="space-y-3">
@@ -108,10 +108,10 @@
             </div>
           </div>
           <div class="absolute right-4 top-1/2 -translate-y-1/2">
-            <button size="sm" variant="purple" :disabled="loading" @click="goGrade(row)">
+            <Button size="sm" variant="purple" :disabled="loading" @click="goGrade(row)">
               <check-badge-icon class="w-4 h-4 mr-1" />
               {{ t('teacher.submissions.actions.grade') }}
-            </button>
+            </Button>
           </div>
         </card>
       </div>

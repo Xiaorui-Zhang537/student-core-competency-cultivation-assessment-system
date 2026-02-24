@@ -23,7 +23,7 @@
         </div>
       </template>
       <template #right>
-        <button size="sm" variant="outline" :disabled="loading" @click="reload">{{ String(t('common.search') || '查询') }}</button>
+        <Button size="sm" variant="outline" :disabled="loading" @click="reload">{{ String(t('common.search') || '查询') }}</Button>
       </template>
     </filter-bar>
 
@@ -96,7 +96,7 @@
             <td class="px-6 py-3 text-sm">
               <div class="flex items-center justify-between gap-2">
                 <span>{{ (c as any).enrollmentCount ?? (c as any).studentCount ?? '-' }}</span>
-                <button size="sm" variant="outline" @click="router.push(`/admin/courses/${c.id}`)">{{ t('common.view') || '查看' }}</button>
+                <Button size="sm" variant="outline" @click="router.push(`/admin/courses/${c.id}`)">{{ t('common.view') || '查看' }}</Button>
               </div>
             </td>
           </tr>

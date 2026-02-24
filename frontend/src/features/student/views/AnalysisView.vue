@@ -80,18 +80,18 @@
           <div class="flex items-center justify-between mb-4">
             <h3 class="text-lg font-semibold">{{ t('teacher.analytics.charts.radar') }}</h3>
             <div class="flex items-center gap-2">
-              <button size="sm" variant="secondary" class="whitespace-nowrap" @click="exportRadarCsv">
+              <Button size="sm" variant="secondary" class="whitespace-nowrap" @click="exportRadarCsv">
                 <document-arrow-down-icon class="w-4 h-4 mr-1" />
                 {{ t('common.exportCsv') || '导出CSV' }}
-              </button>
-              <button size="sm" variant="secondary" class="whitespace-nowrap" @click="exportRadarPng">
+              </Button>
+              <Button size="sm" variant="secondary" class="whitespace-nowrap" @click="exportRadarPng">
                 <arrow-down-tray-icon class="w-4 h-4 mr-1" />
                 {{ t('common.exportPng') || '导出PNG' }}
-              </button>
-              <button size="sm" variant="primary" class="whitespace-nowrap" @click="askAiOnRadar">
+              </Button>
+              <Button size="sm" variant="primary" class="whitespace-nowrap" @click="askAiOnRadar">
                 <sparkles-icon class="w-4 h-4 mr-1" />
                 {{ t('common.askAi') || '询问AI' }}
-              </button>
+              </Button>
             </div>
           </div>
           <div v-if="radarIndicators.length" class="w-full">
@@ -165,7 +165,7 @@
               <div class="text-xs text-gray-500 dark:text-gray-400 mr-2">{{ t('student.grades.total') }} ({{ courseAssignments.length }})</div>
             </div>
             <div class="divide-y divide-gray-200 dark:divide-gray-700 rounded-lg border border-gray-100 dark:border-gray-700 overflow-hidden max-h-[260px] overflow-y-auto">
-              <button
+              <Button
                 v-for="a in courseAssignments"
                 :key="String(a.id)"
                 variant="menu"
@@ -186,7 +186,7 @@
                     </span>
                   </div>
                 </div>
-              </button>
+              </Button>
               <div v-if="courseAssignments.length === 0" class="px-3 py-6 text-center text-sm text-gray-500">{{ t('student.grades.emptyTitle') || '暂无已评分的作业' }}</div>
             </div>
           </div>

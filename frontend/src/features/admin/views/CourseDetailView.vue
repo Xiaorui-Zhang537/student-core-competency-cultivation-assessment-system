@@ -3,10 +3,10 @@
     <PageHeader :title="courseTitle" :subtitle="`#${courseId}`">
       <template #actions>
         <div class="flex items-center gap-2">
-          <button variant="outline" @click="router.push('/admin/courses')">{{ t('common.back') || '返回' }}</button>
-          <button v-if="activeTab === 'students'" variant="outline" :disabled="studentsLoading" @click="onExportStudentsCsv">
+          <Button variant="outline" @click="router.push('/admin/courses')">{{ t('common.back') || '返回' }}</Button>
+          <Button v-if="activeTab === 'students'" variant="outline" :disabled="studentsLoading" @click="onExportStudentsCsv">
             {{ t('admin.tools.exportCsv') || '导出CSV' }}
-          </button>
+          </Button>
         </div>
       </template>
     </PageHeader>
@@ -51,10 +51,10 @@
         <card padding="md" tint="accent">
           <div class="text-xs text-subtle mb-2">{{ t('admin.courses.quickNav') || '快速入口' }}</div>
           <div class="flex flex-col gap-2">
-            <button size="sm" variant="outline" @click="activeTab = 'content'">{{ t('admin.courses.tabs.content') || '内容' }}</button>
-            <button size="sm" variant="outline" @click="activeTab = 'students'">{{ t('admin.courses.tabs.students') || '学生' }}</button>
-            <button size="sm" variant="outline" @click="activeTab = 'grades'">{{ t('admin.courses.tabs.grades') || '成绩' }}</button>
-            <button size="sm" variant="outline" @click="activeTab = 'reports'">{{ t('admin.courses.tabs.reports') || '报告' }}</button>
+            <Button size="sm" variant="outline" @click="activeTab = 'content'">{{ t('admin.courses.tabs.content') || '内容' }}</Button>
+            <Button size="sm" variant="outline" @click="activeTab = 'students'">{{ t('admin.courses.tabs.students') || '学生' }}</Button>
+            <Button size="sm" variant="outline" @click="activeTab = 'grades'">{{ t('admin.courses.tabs.grades') || '成绩' }}</Button>
+            <Button size="sm" variant="outline" @click="activeTab = 'reports'">{{ t('admin.courses.tabs.reports') || '报告' }}</Button>
           </div>
         </card>
       </div>
@@ -62,18 +62,18 @@
       <!-- tabs -->
       <card padding="sm" tint="secondary">
         <div class="flex items-center gap-2 flex-wrap">
-          <button size="sm" :variant="activeTab === 'content' ? 'solid' : 'outline'" @click="activeTab = 'content'">
+          <Button size="sm" :variant="activeTab === 'content' ? 'solid' : 'outline'" @click="activeTab = 'content'">
             {{ t('admin.courses.tabs.content') || '内容' }}
-          </button>
-          <button size="sm" :variant="activeTab === 'students' ? 'solid' : 'outline'" @click="activeTab = 'students'">
+          </Button>
+          <Button size="sm" :variant="activeTab === 'students' ? 'solid' : 'outline'" @click="activeTab = 'students'">
             {{ t('admin.courses.tabs.students') || '学生' }}
-          </button>
-          <button size="sm" :variant="activeTab === 'grades' ? 'solid' : 'outline'" @click="activeTab = 'grades'">
+          </Button>
+          <Button size="sm" :variant="activeTab === 'grades' ? 'solid' : 'outline'" @click="activeTab = 'grades'">
             {{ t('admin.courses.tabs.grades') || '成绩' }}
-          </button>
-          <button size="sm" :variant="activeTab === 'reports' ? 'solid' : 'outline'" @click="activeTab = 'reports'">
+          </Button>
+          <Button size="sm" :variant="activeTab === 'reports' ? 'solid' : 'outline'" @click="activeTab = 'reports'">
             {{ t('admin.courses.tabs.reports') || '报告' }}
-          </button>
+          </Button>
         </div>
       </card>
 
@@ -81,7 +81,7 @@
       <card v-if="activeTab === 'content'" padding="md" tint="secondary">
         <div class="flex items-center justify-between mb-3">
           <div class="text-sm font-medium">{{ t('admin.courses.contentTitle') || '课程内容' }}</div>
-          <button size="sm" variant="outline" :disabled="lessonsLoading" @click="reloadLessons">{{ t('common.refresh') || '刷新' }}</button>
+          <Button size="sm" variant="outline" :disabled="lessonsLoading" @click="reloadLessons">{{ t('common.refresh') || '刷新' }}</Button>
         </div>
         <loading-overlay v-if="lessonsLoading" :text="String(t('common.loading') || '加载中…')" />
         <error-state v-else-if="lessonsError" :title="String(t('common.error') || '加载失败')" :message="lessonsError" :actionText="String(t('common.retry') || '重试')" @action="reloadLessons" />
@@ -150,7 +150,7 @@
             </div>
           </template>
           <template #right>
-            <button size="sm" variant="outline" :disabled="studentsLoading" @click="reloadStudents">{{ t('common.search') || '查询' }}</button>
+            <Button size="sm" variant="outline" :disabled="studentsLoading" @click="reloadStudents">{{ t('common.search') || '查询' }}</Button>
           </template>
         </filter-bar>
 
@@ -196,7 +196,7 @@
                           {{ (s.completedLessons ?? '--') }}/{{ (s.totalLessons ?? '--') }}
                         </span>
                       </div>
-                      <progress
+                      <Progress
                         :value="Number(s.progress || 0)"
                         size="sm"
                         :color="Number(s.progress || 0) >= 100 ? 'success' : 'primary'"
@@ -220,7 +220,7 @@
                 <td class="px-6 py-3 text-sm text-center">{{ s.activityLevel || '-' }}</td>
                 <td class="px-6 py-3 text-xs text-subtle text-center">{{ s.lastActiveAt || '-' }}</td>
                 <td class="px-6 py-3 text-right">
-                  <button size="sm" variant="outline" @click="openStudent(s.studentId)">{{ t('admin.courses.viewStudent') || '查看画像' }}</button>
+                  <Button size="sm" variant="outline" @click="openStudent(s.studentId)">{{ t('admin.courses.viewStudent') || '查看画像' }}</Button>
                 </td>
               </tr>
 
@@ -250,7 +250,7 @@
         <card padding="md" tint="warning" class="lg:col-span-2">
           <div class="flex items-center justify-between mb-3">
             <div class="text-sm font-medium">{{ t('admin.courses.gradesStatsTitle') || '成绩统计' }}</div>
-            <button size="sm" variant="outline" :disabled="gradesLoading" @click="reloadGradesStats">{{ t('common.refresh') || '刷新' }}</button>
+            <Button size="sm" variant="outline" :disabled="gradesLoading" @click="reloadGradesStats">{{ t('common.refresh') || '刷新' }}</Button>
           </div>
           <loading-overlay v-if="gradesLoading" :text="String(t('common.loading') || '加载中…')" />
           <error-state v-else-if="gradesError" :title="String(t('common.error') || '加载失败')" :message="gradesError" :actionText="String(t('common.retry') || '重试')" @action="reloadGradesStats" />
@@ -287,7 +287,7 @@
       <card v-if="activeTab === 'reports'" padding="md" tint="accent">
         <div class="flex items-center justify-between mb-3">
           <div class="text-sm font-medium">{{ t('admin.courses.reportsTitle') || '能力报告' }}</div>
-          <button size="sm" variant="outline" :disabled="reportsLoading" @click="reloadReports">{{ t('common.refresh') || '刷新' }}</button>
+          <Button size="sm" variant="outline" :disabled="reportsLoading" @click="reloadReports">{{ t('common.refresh') || '刷新' }}</Button>
         </div>
         <loading-overlay v-if="reportsLoading" :text="String(t('common.loading') || '加载中…')" />
         <error-state v-else-if="reportsError" :title="String(t('common.error') || '加载失败')" :message="reportsError" :actionText="String(t('common.retry') || '重试')" @action="reloadReports" />

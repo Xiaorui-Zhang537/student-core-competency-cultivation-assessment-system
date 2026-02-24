@@ -75,9 +75,9 @@
       </div>
 
       <div>
-        <button class="w-full" variant="info" icon="confirm" type="submit" :disabled="authStore.loading || (form.username && !isUsernameValid) || (form.email && !isEmailValid) || (form.password && !isPasswordValid)">
+        <Button class="w-full" variant="info" icon="confirm" type="submit" :disabled="authStore.loading || (form.username && !isUsernameValid) || (form.email && !isEmailValid) || (form.password && !isPasswordValid)">
           {{ authStore.loading ? t('auth.register.action.submitting') : t('auth.register.action.submit') }}
-        </button>
+        </Button>
       </div>
     </form>
 

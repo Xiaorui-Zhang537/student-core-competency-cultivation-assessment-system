@@ -19,7 +19,7 @@
         <!-- 顶部标题栏（液态玻璃容器内的普通标题条） -->
         <div class="p-4 flex items-center justify-between" style="box-shadow: inset 0 -1px 0 rgba(255,255,255,0.18)">
           <div id="chatDrawerTitle" class="font-semibold text-gray-900 dark:text-white">{{ headerTitle }}</div>
-          <button variant="ghost" size="sm" @click="emit('close')">✕</button>
+          <Button variant="ghost" size="sm" @click="emit('close')">✕</Button>
         </div>
 
         <!-- 主体：左侧列表 + 右侧会话（整块由 LiquidGlass 提供半透明底，禁用折射） -->
@@ -28,8 +28,8 @@
         <div class="hidden sm:flex sm:flex-col w-64 shrink-0" :key="`left-${activeTab}`" :style="{ backgroundColor: 'var(--color-base-100)', boxShadow: 'inset -1px 0 rgba(255,255,255,0.18)' }">
           <div class="pt-3 pb-2 px-2">
             <div class="grid grid-cols-2 gap-2">
-              <button size="sm" :variant="activeTab==='recent' ? 'primary' : 'menu'" class="w-full justify-center" @click="activeTab='recent'">{{ t('shared.chat.recent') || '最近' }}</button>
-              <button size="sm" :variant="activeTab==='contacts' ? 'primary' : 'menu'" class="w-full justify-center" @click="activeTab='contacts'">{{ t('shared.chat.contacts') || '联系人' }}</button>
+              <Button size="sm" :variant="activeTab==='recent' ? 'primary' : 'menu'" class="w-full justify-center" @click="activeTab='recent'">{{ t('shared.chat.recent') || '最近' }}</Button>
+              <Button size="sm" :variant="activeTab==='contacts' ? 'primary' : 'menu'" class="w-full justify-center" @click="activeTab='contacts'">{{ t('shared.chat.contacts') || '联系人' }}</Button>
             </div>
           </div>
            <div class="px-3 pb-2" v-if="activeTab==='contacts'">
@@ -38,7 +38,7 @@
             <div class="relative flex-1 overflow-y-auto px-2 pb-3 pt-3 space-y-1" :key="'list-'+activeTab" :style="{ backgroundColor: 'var(--color-base-100)' }">
             <div v-if="activeTab==='recent'" class="chatlist-surface">
               <div v-if="false"></div>
-              <button
+              <Button
                 v-for="c in recentList"
                 :key="c.id || c.notificationId || c._k"
                 variant="menu"
@@ -57,35 +57,35 @@
                     <div class="text-xs text-gray-500 dark:text-gray-300 truncate text-left">{{ c.content || c.preview }}</div>
                   </div>
                   <div class="flex items-center gap-1 ml-auto mr-1 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
-                    <button :title="(chat.isPinned(c.peerId, props.courseId||null) ? t('shared.chat.unpin') : t('shared.chat.pin')) as string" size="xs" variant="ghost" @click.stop="togglePinAction(c.peerId)">
+                    <Button :title="(chat.isPinned(c.peerId, props.courseId||null) ? t('shared.chat.unpin') : t('shared.chat.pin')) as string" size="xs" variant="ghost" @click.stop="togglePinAction(c.peerId)">
                       <component :is="chat.isPinned(c.peerId, props.courseId||null) ? BookmarkIcon : BookmarkSlashIcon" class="w-4 h-4" />
-                    </button>
-                    <button :title="t('shared.chat.delete') as string" size="xs" variant="danger" @click.stop="deleteRecent(c.peerId)">
+                    </Button>
+                    <Button :title="t('shared.chat.delete') as string" size="xs" variant="danger" @click.stop="deleteRecent(c.peerId)">
                       <x-mark-icon class="w-4 h-4" />
-                    </button>
+                    </Button>
                   </div>
                 </div>
-              </button>
+              </Button>
               <div v-if="recentList.length===0 && !chat.loadingLists" class="text-xs text-gray-500 px-2 py-2">{{ t('shared.chat.emptyList') || '暂无会话' }}</div>
             </div>
 
             <div v-else-if="activeTab==='contacts'" class="chatlist-surface">
               <div v-if="false"></div>
               <div v-for="g in chat.contactGroups" :key="g.courseId" class="px-2">
-                <button type="button" variant="menu" class="w-full flex items-center justify-between px-2 py-1 rounded hover:bg-gray-100 dark:hover:bg-gray-700 !justify-start" @click="onToggleGroup(g)">
+                <Button type="button" variant="menu" class="w-full flex items-center justify-between px-2 py-1 rounded hover:bg-gray-100 dark:hover:bg-gray-700 !justify-start" @click="onToggleGroup(g)">
                   <div class="text-sm font-semibold text-gray-800 dark:text-gray-100 truncate">{{ g.courseName }}</div>
                   <svg :class="['w-4 h-4 transition-transform', g.expanded ? 'rotate-90' : '']" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M6 6L14 10L6 14V6Z" clip-rule="evenodd"/></svg>
-                </button>
+                </Button>
                 <div v-show="g.expanded" class="mt-1 space-y-1">
                   <div v-if="g.loading" class="text-xs text-gray-500 dark:text-gray-300 px-3 py-2">{{ t('shared.loading') || '加载中...' }}</div>
-                  <button v-for="p in g.students" :key="p.id" variant="menu" :class="['w-full text-left px-0 py-3 min-h-[52px] rounded-lg transition-colors outline-none focus:outline-none focus-visible:outline-none ring-0 focus:ring-0 focus-visible:ring-0 focus:ring-offset-0 focus:shadow-none focus-visible:shadow-none hover:bg-transparent !justify-start !items-center', String(p.id)===String(peerActiveId) ? 'chat-selected' : '']" @click="choosePeer(p.id, p.name, g.courseId)">
+                  <Button v-for="p in g.students" :key="p.id" variant="menu" :class="['w-full text-left px-0 py-3 min-h-[52px] rounded-lg transition-colors outline-none focus:outline-none focus-visible:outline-none ring-0 focus:ring-0 focus-visible:ring-0 focus:ring-offset-0 focus:shadow-none focus-visible:shadow-none hover:bg-transparent !justify-start !items-center', String(p.id)===String(peerActiveId) ? 'chat-selected' : '']" @click="choosePeer(p.id, p.name, g.courseId)">
                     <div class="flex items-center gap-4 pl-2">
                       <user-avatar :avatar="p.avatar" :size="28">
                         <div class="w-7 h-7 rounded-full bg-gray-200 dark:bg-gray-700"></div>
                       </user-avatar>
                       <div class="text-sm font-medium text-gray-900 dark:text-white truncate text-left">{{ displayUserName(p) || ('#'+p.id) }}</div>
                     </div>
-                  </button>
+                  </Button>
                 </div>
               </div>
               <div v-if="(!chat.contactGroups || chat.contactGroups.length===0) && !chat.loadingLists" class="text-xs text-gray-500 px-2 py-2">{{ t('shared.chat.emptyList') || '暂无联系人' }}</div>
@@ -144,10 +144,10 @@
                           <span class="inline-block w-6 h-6 rounded bg-gray-300 dark:bg-gray-600"></span>
                           <div class="text-xs text-gray-800 dark:text-gray-100 truncate">{{ fileName(fid) || ('文件 #' + fid) }}</div>
                         </div>
-                        <button variant="primary" size="xs" type="button" class="inline-flex items-center" @click="downloadAttachment(fid)">
+                        <Button variant="primary" size="xs" type="button" class="inline-flex items-center" @click="downloadAttachment(fid)">
                           <arrow-down-tray-icon class="w-3.5 h-3.5 mr-1" />
                           {{ t('shared.download') || '下载' }}
-                        </button>
+                        </Button>
                       </div>
                     </div>
                   </div>
@@ -184,7 +184,7 @@
               <div class="grid grid-cols-3 sm:grid-cols-4 gap-2" v-if="pendingImageIds.length>0">
                 <div v-for="fid in pendingImageIds" :key="'pend-img-'+fid" class="relative group">
                   <img v-if="getPreviewUrl(fid)" :src="getPreviewUrl(fid)" class="w-full h-24 object-cover rounded-lg glass-img-border cursor-pointer" @click="openLightbox(pendingImageIds, fid)" />
-                  <button variant="danger" size="xs" type="button" class="absolute -top-1 -right-1 opacity-0 group-hover:opacity-100 transition-opacity" @click.stop="removePending(fid)">×</button>
+                  <Button variant="danger" size="xs" type="button" class="absolute -top-1 -right-1 opacity-0 group-hover:opacity-100 transition-opacity" @click.stop="removePending(fid)">×</Button>
                 </div>
               </div>
               <div class="space-y-2" v-if="pendingFileIds.length>0">
@@ -193,7 +193,7 @@
                     <span class="inline-block w-6 h-6 rounded bg-gray-300 dark:bg-gray-600"></span>
                     <div class="text-xs text-gray-800 dark:text-gray-100 truncate">{{ fileName(fid) || ('文件 #'+fid) }}</div>
                   </div>
-                  <button variant="ghost" size="xs" type="button" @click.stop="removePending(fid)">×</button>
+                  <Button variant="ghost" size="xs" type="button" @click.stop="removePending(fid)">×</Button>
                 </div>
               </div>
             </div>
@@ -212,14 +212,14 @@
           <div class="flex items-center gap-2 flex-nowrap min-w-0">
             <emoji-picker :variant="'primary'" :size="'sm'" :hideLabelOnSmall="true" :buttonClass="'!text-white whitespace-nowrap shrink-0'" @select="pickEmoji" />
             <input ref="fileInput" type="file" class="hidden" @change="onFilePicked" />
-            <button variant="success" size="sm" class="inline-flex items-center whitespace-nowrap shrink-0" @click="triggerPickFile">
+            <Button variant="success" size="sm" class="inline-flex items-center whitespace-nowrap shrink-0" @click="triggerPickFile">
               <arrow-up-tray-icon class="w-4 h-4 mr-1" />
               <span class="whitespace-nowrap">{{ t('shared.uploadLabel') || '上传' }}</span>
-            </button>
+            </Button>
             <glass-textarea ref="draftInput" v-model="(draft as any)" :rows="2" :placeholder="t('teacher.students.chat.placeholder') as string" class="flex-1 w-full min-h-[44px] max-h-36 resize-none" @keydown="onDraftKeydown" />
-            <button variant="primary" size="sm" class="whitespace-nowrap shrink-0" :disabled="sending || (!draft && attachmentFileIds.length===0)" @click="send()">
+            <Button variant="primary" size="sm" class="whitespace-nowrap shrink-0" :disabled="sending || (!draft && attachmentFileIds.length===0)" @click="send()">
               <span class="whitespace-nowrap">{{ t('teacher.ai.send') }}</span>
-            </button>
+            </Button>
           </div>
         </div>
         </div>
@@ -235,10 +235,10 @@
     <div class="max-w-[85vw] max-h-[85vh] p-2 rounded-xl border lightbox-content relative" @click.stop>
       <img v-if="lightbox.current && getPreviewUrl(lightbox.current)" :src="getPreviewUrl(lightbox.current)" class="max-w-[80vw] max-h-[75vh] object-contain rounded" />
       <div class="absolute inset-x-0 -bottom-10 flex items-center justify-between px-4">
-        <button variant="menu" size="sm" @click="lightboxPrev">上一张</button>
-        <button variant="menu" size="sm" @click="lightboxNext">下一张</button>
+        <Button variant="menu" size="sm" @click="lightboxPrev">上一张</Button>
+        <Button variant="menu" size="sm" @click="lightboxNext">下一张</Button>
       </div>
-      <button class="absolute -top-2 -right-2" variant="danger" size="xs" @click="closeLightbox">✕</button>
+      <Button class="absolute -top-2 -right-2" variant="danger" size="xs" @click="closeLightbox">✕</Button>
   </div>
   </div>
 </teleport>

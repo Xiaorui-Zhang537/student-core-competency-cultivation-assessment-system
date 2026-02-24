@@ -3,7 +3,7 @@
 > 以 Swagger 为准：`http://localhost:8080/api/swagger-ui.html`
 
 ## 1. 帖子与检索
-- `GET /api/community/posts`：帖子列表（`page/size/category/keyword/orderBy`）
+- `GET /api/community/posts`：帖子列表（`page/size/category/keyword/tag/orderBy`）
 请求：
 ```
 GET /api/community/posts?page=1&size=10&orderBy=latest

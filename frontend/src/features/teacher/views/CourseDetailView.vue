@@ -16,18 +16,18 @@
 <page-header :title="course.title" :subtitle="localizeCategory2(course.category)">
         <template #actions>
           <div class="flex items-center gap-2">
-            <button variant="teal" @click="router.push(`/teacher/courses/${course.id}/students`)">
+            <Button variant="teal" @click="router.push(`/teacher/courses/${course.id}/students`)">
               <user-group-icon class="w-4 h-4 mr-2" />
               {{ t('teacher.courseDetail.buttons.students') }}
-            </button>
-            <button variant="secondary" @click="router.push({ name: 'TeacherAssignments' })">
+            </Button>
+            <Button variant="secondary" @click="router.push({ name: 'TeacherAssignments' })">
               <clipboard-document-list-icon class="w-4 h-4 mr-2" />
               {{ t('teacher.courseDetail.buttons.assignments') }}
-            </button>
-            <button variant="primary" @click="router.push(`/teacher/analytics?courseId=${course.id}`)">
+            </Button>
+            <Button variant="primary" @click="router.push(`/teacher/analytics?courseId=${course.id}`)">
               <presentation-chart-bar-icon class="w-4 h-4 mr-2" />
               {{ t('teacher.courseDetail.buttons.analytics') }}
-            </button>
+            </Button>
           </div>
         </template>
       </page-header>
@@ -44,10 +44,10 @@
       <card :hoverable="true" :hoverScale="false" padding="md" class="relative overflow-hidden rounded-2xl" tint="secondary">
         <div class="flex items-center justify-between mb-4">
           <h2 class="text-xl font-semibold">{{ t('teacher.courseDetail.sections.lessons') || '课程节次' }}</h2>
-          <button size="sm" variant="outline" @click="reloadLessons">
+          <Button size="sm" variant="outline" @click="reloadLessons">
             <arrow-path-icon class="w-4 h-4 mr-1" />
             {{ t('teacher.courseDetail.actions.reloadLessons') || '刷新' }}
-          </button>
+          </Button>
         </div>
         <!-- Chapters Toolbar -->
         <card padding="md" tint="info" class="mb-6">
@@ -65,10 +65,10 @@
             </div>
           </div>
           <div class="mt-3 flex items-center gap-2">
-            <button size="sm" variant="primary" @click="createChapter">
+            <Button size="sm" variant="primary" @click="createChapter">
               <plus-icon class="w-4 h-4 mr-1" />
               {{ t('teacher.courseDetail.actions.addChapter') }}
-            </button>
+            </Button>
           </div>
           <div class="mt-4">
             <div class="text-sm mb-2">{{ t('teacher.courseDetail.sections.chapterList') }}</div>
@@ -84,9 +84,9 @@
                 </div>
                 <div class="relative inline-flex items-center gap-2">
                   <span class="text-xs text-gray-400">#{{ c.orderIndex }}</span>
-                  <button size="xs" variant="danger" icon="delete" @click.stop="deleteChapterRow(c)">
+                  <Button size="xs" variant="danger" icon="delete" @click.stop="deleteChapterRow(c)">
                     {{ t('teacher.courseDetail.actions.deleteChapter') || '删除章节' }}
-                  </button>
+                  </Button>
                 </div>
               </li>
               <li v-if="!chapters.length" class="p-3 text-center text-xs text-gray-500">{{ t('teacher.courseDetail.sections.noChapters') }}</li>
@@ -119,19 +119,19 @@
               </div>
             </div>
             <div class="mt-3">
-              <button size="sm" variant="primary" @click="createLesson">
+              <Button size="sm" variant="primary" @click="createLesson">
                 <plus-icon class="w-4 h-4 mr-1" />
                 {{ t('teacher.courseDetail.actions.addLesson') }}
-              </button>
+              </Button>
             </div>
           </card>
           <card v-for="l in lessons" :key="l.id" padding="md" tint="accent" class="border border-transparent relative overflow-hidden group" draggable="true" @dragstart="onDragStart(l)" @dragover.prevent @drop="onDrop(l)">
             <div class="flex items-center gap-3">
               <div class="font-medium flex-1 truncate">{{ l.title }}</div>
-              <button size="xs" variant="danger" @click="deleteLessonRow(l)">
+              <Button size="xs" variant="danger" @click="deleteLessonRow(l)">
                 <trash-icon class="w-4 h-4 mr-1" />
                 {{ t('teacher.courseDetail.actions.deleteLesson') || '删除' }}
-              </button>
+              </Button>
               <div class="w-full md:w-1/2 flex items-center justify-end gap-3">
                 <div class="flex items-center gap-2 whitespace-nowrap">
                   <label class="text-sm whitespace-nowrap">{{ t('teacher.courseDetail.sections.chapterSelect') }}</label>
@@ -156,7 +156,7 @@
                 <div class="flex items-center gap-2 whitespace-nowrap">
                   <label class="text-sm whitespace-nowrap">{{ t('teacher.courseDetail.sections.video') }}</label>
                   <glass-input class="w-80 md:w-96 flex-1 min-w-0 h-9 text-sm" :fullWidth="false" v-model="l._videoUrl" :placeholder="t('teacher.courseDetail.sections.videoUrlPh') as string" @change="() => saveVideoUrl(l)" />
-                  <button size="sm" variant="primary" icon="search" class="whitespace-nowrap" @click="openVideoPicker(l)">{{ t('teacher.courseDetail.actions.selectVideoShort') }}</button>
+                  <Button size="sm" variant="primary" icon="search" class="whitespace-nowrap" @click="openVideoPicker(l)">{{ t('teacher.courseDetail.actions.selectVideoShort') }}</Button>
                 </div>
                 <!-- 资料选择（独立一行，位于视频下方） -->
                 <div class="mt-3 flex items-center gap-2 whitespace-nowrap min-w-0">
@@ -237,8 +237,8 @@
                 </div>
               </div>
               <div class="flex items-center gap-2">
-                <button size="sm" variant="success" icon="download" class="whitespace-nowrap" @click="downloadById(f.id, f)">{{ t('teacher.courseDetail.sections.download') }}</button>
-                <button size="sm" variant="danger" icon="delete" @click="confirmDelete(f.id, 'material')">{{ t('teacher.courseDetail.sections.delete') }}</button>
+                <Button size="sm" variant="success" icon="download" class="whitespace-nowrap" @click="downloadById(f.id, f)">{{ t('teacher.courseDetail.sections.download') }}</Button>
+                <Button size="sm" variant="danger" icon="delete" @click="confirmDelete(f.id, 'material')">{{ t('teacher.courseDetail.sections.delete') }}</Button>
               </div>
             </li>
             <li v-if="!materials.length" class="py-6 text-center text-sm text-gray-500">{{ t('teacher.courseDetail.sections.noMaterials') }}</li>
@@ -283,8 +283,8 @@
                 </div>
               </div>
               <div class="flex items-center gap-2">
-                <button size="sm" variant="success" icon="download" class="whitespace-nowrap" @click="downloadById(f.id, f)">{{ t('teacher.courseDetail.sections.download') }}</button>
-                <button size="sm" variant="danger" icon="delete" @click="confirmDelete(f.id, 'video')">{{ t('teacher.courseDetail.sections.delete') }}</button>
+                <Button size="sm" variant="success" icon="download" class="whitespace-nowrap" @click="downloadById(f.id, f)">{{ t('teacher.courseDetail.sections.download') }}</Button>
+                <Button size="sm" variant="danger" icon="delete" @click="confirmDelete(f.id, 'video')">{{ t('teacher.courseDetail.sections.delete') }}</Button>
               </div>
             </li>
             <li v-if="!videos.length" class="py-6 text-center text-sm text-gray-500">{{ t('teacher.courseDetail.sections.noVideos') }}</li>
@@ -322,9 +322,9 @@
             </div>
           </div>
           <div class="flex items-center gap-2">
-            <button size="sm" variant="primary" icon="confirm" class="whitespace-nowrap" @click="chooseVideo(f)">{{ t('teacher.courseDetail.actions.useThisVideo') }}</button>
-            <button size="sm" variant="success" icon="download" class="whitespace-nowrap" @click="downloadById(f.id, f)">{{ t('teacher.courseDetail.sections.download') }}</button>
-            <button size="sm" variant="success" icon="download" class="whitespace-nowrap" @click="downloadById(f.id, f)">{{ t('teacher.courseDetail.sections.download') }}</button>
+            <Button size="sm" variant="primary" icon="confirm" class="whitespace-nowrap" @click="chooseVideo(f)">{{ t('teacher.courseDetail.actions.useThisVideo') }}</Button>
+            <Button size="sm" variant="success" icon="download" class="whitespace-nowrap" @click="downloadById(f.id, f)">{{ t('teacher.courseDetail.sections.download') }}</Button>
+            <Button size="sm" variant="success" icon="download" class="whitespace-nowrap" @click="downloadById(f.id, f)">{{ t('teacher.courseDetail.sections.download') }}</Button>
           </div>
         </li>
         <li v-if="!videos.length" class="py-6 text-center text-sm text-gray-500">{{ t('teacher.courseDetail.sections.noVideos') }}</li>
@@ -341,7 +341,7 @@
       />
     </div>
     <template #footer>
-      <button size="sm" variant="outline" @click="videoPickerVisible = false">{{ t('teacher.courseDetail.actions.close') }}</button>
+      <Button size="sm" variant="outline" @click="videoPickerVisible = false">{{ t('teacher.courseDetail.actions.close') }}</Button>
     </template>
   </glass-modal>
   
@@ -359,15 +359,15 @@
             </div>
           </div>
           <div class="flex items-center gap-2">
-            <button
+            <Button
               size="sm"
               :variant="isMaterialSelectedForTarget(f) ? 'success' : 'primary'"
               class="whitespace-nowrap shrink-0 min-w-max"
               @click="chooseMaterial(f)"
             >
               {{ t('teacher.courseDetail.actions.selectMaterialShort') }}
-            </button>
-            <button size="sm" variant="outline" @click="downloadById(f.id, f)">{{ t('teacher.courseDetail.sections.download') }}</button>
+            </Button>
+            <Button size="sm" variant="outline" @click="downloadById(f.id, f)">{{ t('teacher.courseDetail.sections.download') }}</Button>
           </div>
         </li>
         <li v-if="!materials.length" class="py-6 text-center text-sm text-gray-500">{{ t('teacher.courseDetail.sections.noMaterials') }}</li>
@@ -384,7 +384,7 @@
       />
     </div>
     <template #footer>
-      <button size="sm" variant="outline" @click="materialPickerVisible = false">{{ t('teacher.courseDetail.actions.close') }}</button>
+      <Button size="sm" variant="outline" @click="materialPickerVisible = false">{{ t('teacher.courseDetail.actions.close') }}</Button>
     </template>
   </glass-modal>
 

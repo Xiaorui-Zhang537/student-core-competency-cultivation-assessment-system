@@ -7,7 +7,7 @@
         <segmented-pills :model-value="tab" :options="tabOptions" size="sm" variant="warning" @update:modelValue="(v:any) => onPickTab(String(v))" />
       </template>
       <template #right>
-        <button size="sm" variant="outline" :disabled="loading" @click="reload">{{ t('common.refresh') || '刷新' }}</button>
+        <Button size="sm" variant="outline" :disabled="loading" @click="reload">{{ t('common.refresh') || '刷新' }}</Button>
       </template>
     </filter-bar>
 
@@ -35,7 +35,7 @@
           </div>
         </template>
         <template #right>
-          <button size="sm" variant="outline" :disabled="loading" @click="reloadAbility">{{ t('common.search') || '查询' }}</button>
+          <Button size="sm" variant="outline" :disabled="loading" @click="reloadAbility">{{ t('common.search') || '查询' }}</Button>
         </template>
       </filter-bar>
 
@@ -63,7 +63,7 @@
               <td class="px-6 py-3 text-sm text-center">{{ r.overallScore ?? '-' }}</td>
               <td class="px-6 py-3 text-xs text-subtle text-center">{{ r.createdAt || '-' }}</td>
               <td class="px-6 py-3 text-right">
-                <button size="sm" variant="outline" @click="openAbility(r.id)">{{ t('common.view') || '查看' }}</button>
+                <Button size="sm" variant="outline" @click="openAbility(r.id)">{{ t('common.view') || '查看' }}</Button>
               </td>
             </tr>
             <tr v-if="abilityItems.length === 0">
@@ -107,7 +107,7 @@
           </div>
         </template>
         <template #right>
-          <button size="sm" variant="outline" :disabled="loading" @click="reloadPosts">{{ t('common.search') || '查询' }}</button>
+          <Button size="sm" variant="outline" :disabled="loading" @click="reloadPosts">{{ t('common.search') || '查询' }}</Button>
         </template>
       </filter-bar>
 
@@ -140,8 +140,8 @@
               </td>
               <td class="px-6 py-3 text-sm text-center">{{ p.commentsCount ?? 0 }}</td>
               <td class="px-6 py-3 text-right space-x-2 whitespace-nowrap">
-                <button size="sm" variant="outline" @click="openCommentsFromPost(p.id)">{{ t('shared.community.comments') || '评论' }}</button>
-                <button size="sm" variant="outline" @click="moderatePost(p.id, { deleted: true })">{{ t('common.delete') || '删除' }}</button>
+                <Button size="sm" variant="outline" @click="openCommentsFromPost(p.id)">{{ t('shared.community.comments') || '评论' }}</Button>
+                <Button size="sm" variant="outline" @click="moderatePost(p.id, { deleted: true })">{{ t('common.delete') || '删除' }}</Button>
               </td>
             </tr>
             <tr v-if="posts.length === 0">
@@ -184,7 +184,7 @@
           </div>
         </template>
         <template #right>
-          <button size="sm" variant="outline" :disabled="loading" @click="reloadComments">{{ t('common.search') || '查询' }}</button>
+          <Button size="sm" variant="outline" :disabled="loading" @click="reloadComments">{{ t('common.search') || '查询' }}</Button>
         </template>
       </filter-bar>
 
@@ -209,7 +209,7 @@
                 <glass-popover-select :model-value="c.status" :options="commentStatusEditOptions" size="sm" @update:modelValue="(v:any)=>moderateComment(c.id, { status: String(v) })" />
               </td>
               <td class="px-6 py-3 text-right">
-                <button size="sm" variant="outline" @click="moderateComment(c.id, { deleted: true })">{{ t('common.delete') || '删除' }}</button>
+                <Button size="sm" variant="outline" @click="moderateComment(c.id, { deleted: true })">{{ t('common.delete') || '删除' }}</Button>
               </td>
             </tr>
             <tr v-if="comments.length === 0">

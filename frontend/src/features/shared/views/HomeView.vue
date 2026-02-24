@@ -510,7 +510,7 @@
               :reveal-portion="0.5"
             />
             <div class="flex items-center gap-4">
-              <button
+              <Button
                 variant="primary"
                 size="xl"
                 class="px-7 min-w-[170px]"
@@ -520,8 +520,8 @@
                   <sparkles-icon class="w-5 h-5" />
                 </template>
                 {{ t('app.home.cta.login') }}
-              </button>
-              <button
+              </Button>
+              <Button
                 variant="info"
                 size="xl"
                 class="px-7 min-w-[170px]"
@@ -531,7 +531,7 @@
                   <book-open-icon class="w-5 h-5" />
                 </template>
                 {{ t('app.home.cta.docs') }}
-              </button>
+              </Button>
             </div>
 
             <!-- 复用登录页走马灯（两行，评价卡片） -->

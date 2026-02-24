@@ -95,9 +95,15 @@ public class CommunityController extends BaseController {
             @RequestParam(defaultValue = "20") int size,
             @RequestParam(required = false) String category,
             @RequestParam(required = false) String keyword,
+            @RequestParam(required = false) String tag,
             @RequestParam(defaultValue = "latest") String orderBy) {
         Long userId = getOptionalUserId();
-        PageResult<Post> result = communityService.getPostList(page, size, category, keyword, orderBy, userId);
+        PageResult<Post> result;
+        if (tag != null && !tag.trim().isEmpty()) {
+            result = communityService.searchPostsByTag(tag.trim(), page, size, userId);
+        } else {
+            result = communityService.getPostList(page, size, category, keyword, orderBy, userId);
+        }
         return ResponseEntity.ok(ApiResponse.success(result));
     }
 
