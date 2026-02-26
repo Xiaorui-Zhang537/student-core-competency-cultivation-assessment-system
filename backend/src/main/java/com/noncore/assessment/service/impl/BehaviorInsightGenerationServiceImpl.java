@@ -205,6 +205,7 @@ public class BehaviorInsightGenerationServiceImpl implements BehaviorInsightGene
             rec.setGeneratedAt(LocalDateTime.now());
             rec.setCreatedAt(LocalDateTime.now());
             insightService.save(rec);
+            appendReportContext(degraded, snapshot.getId());
             return degraded;
         }
 
@@ -251,7 +252,7 @@ public class BehaviorInsightGenerationServiceImpl implements BehaviorInsightGene
 
         if (parsed == null) {
             // 失败返回一个最小结构，便于前端显示“暂不可用”
-            return BehaviorInsightResponse.builder()
+            BehaviorInsightResponse failedResp = BehaviorInsightResponse.builder()
                     .schemaVersion(BehaviorSchemaVersions.INSIGHT_V2)
                     .snapshotId(snapshot.getId())
                     .explainScore(BehaviorInsightResponse.ExplainScore.builder()
@@ -270,6 +271,8 @@ public class BehaviorInsightGenerationServiceImpl implements BehaviorInsightGene
                             )
                     ) : null)
                     .build();
+            appendReportContext(failedResp, snapshot.getId());
+            return failedResp;
         }
         // 填充 meta（以系统为准）
         if (parsed.getMeta() == null) {
@@ -281,6 +284,7 @@ public class BehaviorInsightGenerationServiceImpl implements BehaviorInsightGene
         parsed.getMeta().setStatus("success");
         parsed.setSchemaVersion(BehaviorSchemaVersions.INSIGHT_V2);
         parsed.setSnapshotId(snapshot.getId());
+        appendReportContext(parsed, snapshot.getId());
         if (studentSelfTrigger) {
             // 学生测试策略：不再强制 7 天冷却，仅展示每日额度信息
             LocalDateTime startOfDay = java.time.LocalDate.now().atStartOfDay();
@@ -309,16 +313,19 @@ public class BehaviorInsightGenerationServiceImpl implements BehaviorInsightGene
             throw new BusinessException(ErrorCode.INVALID_PARAMETER, "当前仅支持 range=7d/30d/180d/365d");
         }
         BehaviorSummarySnapshot snapshot = snapshotService.getLatest(studentId, courseId, rk, BehaviorSchemaVersions.SUMMARY_V1, null, null);
-        if (snapshot == null || snapshot.getId() == null) return null;
 
         // 兼容：优先 v2，回退 v1
         // 注意：摘要快照可能因“有新事件”而刷新（snapshotId 变化），此时洞察未必已重新生成。
         // 为避免前端每次都要点“生成”，这里增加回退：按 student+course+rangeKey 返回最近一次洞察。
-        BehaviorInsight latest = firstNonNull(
-                insightService.getLatestBySnapshot(snapshot.getId(), BehaviorSchemaVersions.INSIGHT_V2),
-                insightService.getLatestBySnapshot(snapshot.getId(), BehaviorSchemaVersions.INSIGHT_V1)
-        );
+        BehaviorInsight latest = null;
+        if (snapshot != null && snapshot.getId() != null) {
+            latest = firstNonNull(
+                    insightService.getLatestBySnapshot(snapshot.getId(), BehaviorSchemaVersions.INSIGHT_V2),
+                    insightService.getLatestBySnapshot(snapshot.getId(), BehaviorSchemaVersions.INSIGHT_V1)
+            );
+        }
         boolean fallbackUsed = false;
+        boolean anyRangeFallbackUsed = false;
         if (latest == null || latest.getInsightJson() == null) {
             latest = firstNonNull(
                     insightService.getLatestByStudentCourseRange(studentId, courseId, rk, BehaviorSchemaVersions.INSIGHT_V2),
@@ -326,9 +333,20 @@ public class BehaviorInsightGenerationServiceImpl implements BehaviorInsightGene
             );
             fallbackUsed = latest != null && latest.getInsightJson() != null;
         }
+        // 教师/管理员端常见场景：当前选择窗无数据，但历史曾生成过报告。
+        // 兜底为“最近一次报告（不限制 range）”，保证报告区始终有最近结果可读。
+        if (latest == null || latest.getInsightJson() == null) {
+            latest = firstNonNull(
+                    insightService.getLatestByStudentCourse(studentId, courseId, BehaviorSchemaVersions.INSIGHT_V2),
+                    insightService.getLatestByStudentCourse(studentId, courseId, BehaviorSchemaVersions.INSIGHT_V1)
+            );
+            anyRangeFallbackUsed = latest != null && latest.getInsightJson() != null;
+        }
         if (latest == null || latest.getInsightJson() == null) return null;
         try {
-            Long usedSnapshotId = latest.getSnapshotId() != null ? latest.getSnapshotId() : snapshot.getId();
+            Long usedSnapshotId = latest.getSnapshotId() != null
+                    ? latest.getSnapshotId()
+                    : (snapshot == null ? null : snapshot.getId());
             BehaviorInsightResponse resp = parseAndValidate(latest.getInsightJson(), usedSnapshotId, null);
             resp.setSnapshotId(usedSnapshotId);
             resp.setSchemaVersion(BehaviorSchemaVersions.INSIGHT_V2);
@@ -337,6 +355,7 @@ public class BehaviorInsightGenerationServiceImpl implements BehaviorInsightGene
             resp.getMeta().setPromptVersion(latest.getPromptVersion());
             resp.getMeta().setStatus(latest.getStatus());
             resp.getMeta().setGeneratedAt(latest.getGeneratedAt());
+            appendReportContext(resp, usedSnapshotId);
             // 学生查看自己的洞察：注入每日额度/冷却信息（达到上限才冷却）
             if (operatorId != null && operatorId.equals(studentId)) {
                 LocalDateTime startOfDay = java.time.LocalDate.now().atStartOfDay();
@@ -356,10 +375,17 @@ public class BehaviorInsightGenerationServiceImpl implements BehaviorInsightGene
                             "nextAvailableAt", resetAt
                     ));
                 }
-                if (fallbackUsed && snapshot.getId() != null && !snapshot.getId().equals(usedSnapshotId)) {
+                if (fallbackUsed && snapshot != null && snapshot.getId() != null && !snapshot.getId().equals(usedSnapshotId)) {
                     extra.put("latestSummarySnapshotId", snapshot.getId());
                     extra.put("notice", "当前展示为最近一次已生成的洞察；最新摘要快照尚未生成洞察。");
                 }
+                if (anyRangeFallbackUsed) {
+                    extra.put("notice", "当前行为时间窗暂无可用洞察，已自动展示最近一次历史洞察。");
+                }
+                resp.setExtra(extra);
+            } else if (anyRangeFallbackUsed) {
+                java.util.Map<String, Object> extra = resp.getExtra() == null ? new java.util.HashMap<>() : new java.util.HashMap<>(resp.getExtra());
+                extra.put("notice", "当前行为时间窗暂无可用洞察，已自动展示最近一次历史洞察。");
                 resp.setExtra(extra);
             }
             return resp;
@@ -593,6 +619,54 @@ public class BehaviorInsightGenerationServiceImpl implements BehaviorInsightGene
             }
         }
         return false;
+    }
+
+    @SuppressWarnings("unchecked")
+    private void appendReportContext(BehaviorInsightResponse resp, Long snapshotId) {
+        if (resp == null || snapshotId == null) return;
+        try {
+            BehaviorSummarySnapshot snapshot = snapshotService.getById(snapshotId);
+            if (snapshot == null || snapshot.getSummaryJson() == null || snapshot.getSummaryJson().isBlank()) return;
+            Map<String, Object> root = Jsons.parseObject(snapshot.getSummaryJson());
+            if (root == null || root.isEmpty()) return;
+
+            Map<String, Object> reportContext = new HashMap<>();
+            reportContext.put("snapshotId", snapshot.getId());
+            reportContext.put("range", snapshot.getRangeKey());
+            reportContext.put("from", snapshot.getPeriodFrom());
+            reportContext.put("to", snapshot.getPeriodTo());
+            reportContext.put("inputEventCount", snapshot.getInputEventCount());
+
+            Map<String, Object> stats = new HashMap<>();
+            stats.put("aiQuestionCount", getNestedInt(root, "activityStats", "ai", "questionCount"));
+            stats.put("aiFollowUpCount", getNestedInt(root, "activityStats", "ai", "followUpCount"));
+            stats.put("assignmentSubmitCount", getNestedInt(root, "activityStats", "assignment", "submitCount"));
+            stats.put("assignmentResubmitCount", getNestedInt(root, "activityStats", "assignment", "resubmitCount"));
+            stats.put("communityAskCount", getNestedInt(root, "activityStats", "community", "askCount"));
+            stats.put("communityAnswerCount", getNestedInt(root, "activityStats", "community", "answerCount"));
+            stats.put("feedbackViewCount", getNestedInt(root, "activityStats", "feedback", "viewCount"));
+            reportContext.put("activityStats", stats);
+
+            Map<String, Object> extra = resp.getExtra() == null ? new HashMap<>() : new HashMap<>(resp.getExtra());
+            extra.put("reportContext", reportContext);
+            resp.setExtra(extra);
+        } catch (Exception ignored) {
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    private Integer getNestedInt(Map<String, Object> root, String k1, String k2, String k3) {
+        try {
+            Object o1 = root.get(k1);
+            if (!(o1 instanceof Map<?, ?> m1)) return 0;
+            Object o2 = ((Map<String, Object>) m1).get(k2);
+            if (!(o2 instanceof Map<?, ?> m2)) return 0;
+            Object o3 = ((Map<String, Object>) m2).get(k3);
+            if (o3 == null) return 0;
+            return (int) Math.round(Double.parseDouble(String.valueOf(o3)));
+        } catch (Exception ignored) {
+            return 0;
+        }
     }
 
 }

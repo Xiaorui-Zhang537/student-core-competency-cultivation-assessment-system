@@ -45,5 +45,25 @@ public interface BehaviorInsightService {
      * @return 次数
      */
     long countByStudentSince(Long studentId, String schemaVersion, java.time.LocalDateTime since);
+
+    /**
+     * 分页查询学生在课程（可空）+时间窗下的历史洞察（倒序）。
+     */
+    java.util.List<BehaviorInsight> pageByStudentCourseRange(Long studentId,
+                                                              Long courseId,
+                                                              String rangeKey,
+                                                              String schemaVersion,
+                                                              int page,
+                                                              int size);
+
+    /**
+     * 统计学生在课程（可空）+时间窗下的历史洞察总数。
+     */
+    long countByStudentCourseRange(Long studentId, Long courseId, String rangeKey, String schemaVersion);
+
+    /**
+     * 根据主键查询洞察记录。
+     */
+    BehaviorInsight getById(Long id);
 }
 

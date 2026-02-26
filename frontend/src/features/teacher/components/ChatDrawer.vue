@@ -46,7 +46,7 @@
                 @click="choosePeer(c.peerId, c.displayName, c.courseId)"
               >
                 <div class="flex items-center gap-4 pl-2 w-full min-w-0">
-                  <user-avatar :avatar="c.avatar || getContactAvatar(c.peerId)" :size="28">
+                  <user-avatar :avatar="c.avatar || getPeerAvatar(c.peerId) || getContactAvatar(c.peerId)" :size="28">
                     <div class="w-7 h-7 rounded-full bg-gray-200 dark:bg-gray-700"></div>
                   </user-avatar>
                   <div class="flex-1 min-w-0 overflow-hidden">
@@ -80,7 +80,7 @@
                   <div v-if="g.loading" class="text-xs text-gray-500 dark:text-gray-300 px-3 py-2">{{ t('shared.loading') || '加载中...' }}</div>
                   <Button v-for="p in g.students" :key="p.id" variant="menu" :class="['w-full text-left px-0 py-3 min-h-[52px] rounded-lg transition-colors outline-none focus:outline-none focus-visible:outline-none ring-0 focus:ring-0 focus-visible:ring-0 focus:ring-offset-0 focus:shadow-none focus-visible:shadow-none hover:bg-transparent !justify-start !items-center', String(p.id)===String(peerActiveId) ? 'chat-selected' : '']" @click="choosePeer(p.id, p.name, g.courseId)">
                     <div class="flex items-center gap-4 pl-2">
-                      <user-avatar :avatar="p.avatar" :size="28">
+                      <user-avatar :avatar="p.avatar || getPeerAvatar(p.id)" :size="28">
                         <div class="w-7 h-7 rounded-full bg-gray-200 dark:bg-gray-700"></div>
                       </user-avatar>
                       <div class="text-sm font-medium text-gray-900 dark:text-white truncate text-left">{{ displayUserName(p) || ('#'+p.id) }}</div>
@@ -97,7 +97,16 @@
 
         <!-- 右侧：会话区或占位 -->
         <div class="flex-1 flex flex-col min-w-0" :key="`content-${activeTab}-${peerActiveId}`" :style="{ backgroundColor: 'var(--color-base-100)' }">
-          <div v-if="hasActivePeer" class="flex-1 overflow-y-auto p-4 space-y-3 no-scrollbar min-h-0" ref="scrollContainer" :key="`chat-${peerActiveId}`">
+          <div v-if="hasActivePeer" class="flex-1 flex flex-col min-h-0">
+            <div class="px-4 py-3 border-b border-white/15 flex items-center gap-3 shrink-0">
+              <user-avatar :avatar="currentPeerAvatar" :size="30">
+                <div class="w-8 h-8 rounded-full bg-gray-200 dark:bg-gray-700"></div>
+              </user-avatar>
+              <div class="text-sm font-medium text-gray-900 dark:text-white truncate">
+                {{ currentPeerName || ('#' + String(currentPeerId || '')) }}
+              </div>
+            </div>
+            <div class="flex-1 overflow-y-auto p-4 space-y-3 no-scrollbar min-h-0" ref="scrollContainer" :key="`chat-${peerActiveId}`">
             <div v-if="loadingMessages" class="w-full h-full flex items-center justify-center py-16">
               <div class="flex flex-col items-center gap-3">
                 <div class="theme-spinner theme-spinner-lg"></div>
@@ -172,6 +181,7 @@
             </template>
 
             <div v-if="renderedItems.length === 0" class="text-center text-gray-500 dark:text-gray-400 py-10">{{ emptyText }}</div>
+            </div>
           </div>
           <div v-else class="flex-1 flex items-center justify-center text-sm text-gray-500 dark:text-gray-400 px-4" :key="`placeholder-${activeTab}`">
             {{ t('shared.chat.pickSomeone') || '从左侧选择一位联系人开始聊天' }}
@@ -259,6 +269,7 @@ import EmojiPicker from '@/components/ui/EmojiPicker.vue'
 import { chatApi } from '@/api/chat.api'
 import { notificationAPI } from '@/api/notification.api'
 import { teacherStudentApi } from '@/api/teacher-student.api'
+import { userApi } from '@/api/user.api'
 import { fileApi } from '@/api/file.api'
 import { resolveUserDisplayName } from '@/shared/utils/user'
 
@@ -401,6 +412,10 @@ const peerAvatarMap = ref<Record<string, string>>({})
 
 const getPeerAvatar = (pid: string | number | undefined | null): string => {
   if (!pid) return ''
+  // 0) 当前会话由入口传入的即时头像（用于抽屉首帧）
+  if (String(chat.peerId || '') === String(pid) && String(chat.peerAvatar || '')) {
+    return String(chat.peerAvatar || '')
+  }
   const cached = peerAvatarMap.value[String(pid)]
   if (cached) return cached
   // 1) 联系人
@@ -425,13 +440,53 @@ const ensurePeerAvatar = async (pid: string | number) => {
   const existing = getPeerAvatar(idStr)
   if (existing) { peerAvatarMap.value[idStr] = existing; return }
   try {
-    // 教师端直接拉取学生资料可能因权限返回 400/403；此处对教师角色跳过远程获取
-    const role = String((auth.user as any)?.role || '').toUpperCase()
-    if (role === 'TEACHER') return
-    const profile: any = await teacherStudentApi.getStudentProfile(idStr)
-    const avatar = profile?.avatar || profile?.avatarUrl || profile?.avatar_url || profile?.studentAvatar || profile?.student_avatar || profile?.photo || profile?.image || ''
+    // 统一优先用通用用户资料接口，避免管理员误走教师接口导致 400。
+    let avatar = ''
+    try {
+      const profile: any = await userApi.getProfileById(idStr)
+      const p: any = (profile as any)?.data?.data ?? (profile as any)?.data ?? profile
+      avatar = p?.avatar || p?.avatarUrl || p?.avatar_url || p?.studentAvatar || p?.student_avatar || p?.photo || p?.image || ''
+    } catch {
+      // 兼容：教师场景下再尝试学生资料接口
+      const role = String((auth.user as any)?.role || '').toUpperCase()
+      if (role === 'TEACHER') {
+        try {
+          const profile: any = await teacherStudentApi.getStudentProfile(idStr)
+          avatar = profile?.avatar || profile?.avatarUrl || profile?.avatar_url || profile?.studentAvatar || profile?.student_avatar || profile?.photo || profile?.image || ''
+        } catch {
+          // ignore
+        }
+      }
+    }
     if (avatar) peerAvatarMap.value[idStr] = String(avatar)
   } catch { /* ignore */ }
+}
+
+const prefetchRecentAvatars = async () => {
+  try {
+    const peers = Array.from(new Set((recentList.value || []).map((x: any) => String(x.peerId || '')).filter(Boolean)))
+    // 控制批量上限，避免首次打开并发过高
+    const targets = peers.slice(0, 30)
+    await Promise.allSettled(targets.map((pid) => ensurePeerAvatar(pid)))
+  } catch {
+    // ignore
+  }
+}
+
+const prefetchContactAvatars = async () => {
+  try {
+    const peers = Array.from(
+      new Set(
+        (chat.contactGroups || [])
+          .flatMap((g: any) => (g?.students || []).map((s: any) => String(s?.id || '')))
+          .filter(Boolean)
+      )
+    )
+    const targets = peers.slice(0, 80)
+    await Promise.allSettled(targets.map((pid) => ensurePeerAvatar(pid)))
+  } catch {
+    // ignore
+  }
 }
 
 const getMyAvatar = (): string => {
@@ -478,6 +533,11 @@ const buildRenderedItems = (list: MessageItem[]): RenderItem[] => {
 }
 
 const renderedItems = computed<RenderItem[]>(() => { void peerAvatarMap.value; return buildRenderedItems(messages.value as MessageItem[]) })
+const currentPeerAvatar = computed(() => {
+  void peerAvatarMap.value
+  if (!currentPeerId.value) return ''
+  return getPeerAvatar(String(currentPeerId.value))
+})
 
 const scrollToBottom = async (smooth = false) => {
   await nextTick()
@@ -840,7 +900,8 @@ const pickEmoji = async (e: string) => { await onEmoji(e) }
 
 const choosePeer = async (id: string | number, name?: string | null, cId?: string | number | null) => {
   // 仅设置会话，不强制切换标签，避免跳回“最近”
-  chat.setPeer(id, name ?? null, (cId ?? props.courseId) ?? null)
+  const pickedAvatar = getContactAvatar(id) || getPeerAvatar(id) || ''
+  chat.setPeer(id, name ?? null, (cId ?? props.courseId) ?? null, pickedAvatar || null)
   // 受控模式同步父组件
   try { emit('update:peerId', id) } catch {}
   try { emit('update:peerName', name ?? null) } catch {}
@@ -901,6 +962,8 @@ onMounted(async () => {
   const last = persisted && persisted[0]
   const cid = currentCourseId.value || (last?.courseId || undefined)
   await chat.loadLists({ courseId: cid })
+  await prefetchRecentAvatars()
+  await prefetchContactAvatars()
   // 若已选中会话，再加载会话消息
   if (currentPeerId.value) await load()
 })
@@ -939,6 +1002,8 @@ watch(() => props.open, async (v) => {
     const last = persisted && persisted[0]
     const cid = currentCourseId.value || (last?.courseId || undefined)
     await chat.loadLists({ courseId: cid })
+    await prefetchRecentAvatars()
+    await prefetchContactAvatars()
     // 再次对所有同 peer 分支逐一标记已读，确保历史分支清零
     try {
       const list: any[] = (chat.recentConversations as any[]) || []
@@ -949,10 +1014,32 @@ watch(() => props.open, async (v) => {
         }
       }
     } catch {}
-    if (currentPeerId.value) await load()
+    if (currentPeerId.value) {
+      try { await ensurePeerAvatar(String(currentPeerId.value)) } catch {}
+      await load()
+    }
   }
 })
-watch(() => [props.peerId, chat.peerId], async () => { await load() })
+watch(
+  () => (recentList.value || []).map((x: any) => String(x.peerId || '')).join(','),
+  async () => {
+    if (!props.open) return
+    await prefetchRecentAvatars()
+  }
+)
+watch(
+  () => (chat.contactGroups || []).map((g: any) => `${String(g.courseId || '')}:${(g.students || []).length}`).join('|'),
+  async () => {
+    if (!props.open) return
+    await prefetchContactAvatars()
+  }
+)
+watch(() => [props.peerId, chat.peerId], async () => {
+  if (currentPeerId.value) {
+    try { await ensurePeerAvatar(String(currentPeerId.value)) } catch {}
+  }
+  await load()
+})
 
 // 发送输入区键盘行为：Enter 发送，Shift+Enter 换行
 function onDraftKeydown(e: KeyboardEvent) {

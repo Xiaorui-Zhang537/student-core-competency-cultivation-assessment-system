@@ -2,33 +2,6 @@
   <div class="p-6">
     <page-header :title="t('admin.sidebar.people')" :subtitle="t('admin.title')" />
 
-    <filter-bar tint="secondary" align="center" :dense="false" class="mt-4 mb-2 rounded-full h-19">
-      <template #left>
-        <div class="flex items-center gap-3 flex-wrap">
-          <div class="w-72">
-            <glass-search-input
-              v-model="keyword"
-              :placeholder="String(t('common.search') || '搜索用户名/邮箱/学号/工号')"
-              size="sm"
-              tint="info"
-            />
-          </div>
-          <div class="w-auto flex items-center gap-2">
-            <span class="text-xs font-medium leading-tight text-subtle">{{ t('admin.people.statusLabel') || '状态' }}</span>
-            <div class="w-40">
-              <glass-popover-select v-model="status" :options="statusOptions" size="sm" tint="secondary" />
-            </div>
-          </div>
-          <Button size="sm" variant="outline" :disabled="kpiLoading" @click="reloadKpis">
-            {{ t('common.refresh') || '刷新' }}
-          </Button>
-        </div>
-      </template>
-      <template #right>
-        <div class="text-xs text-subtle whitespace-nowrap">{{ t('admin.people.hint') || '同一套筛选应用到各 Tab；用户 Tab 支持创建与角色调整' }}</div>
-      </template>
-    </filter-bar>
-
     <loading-overlay v-if="kpiLoading" class="mt-4" :text="String(t('common.loading') || '加载中…')" />
     <error-state
       v-else-if="kpiError"
@@ -41,12 +14,36 @@
 
     <div v-else class="mt-4 space-y-6">
       <admin-kpi-row :items="kpis" />
-
-      <card padding="md" tint="secondary">
-        <div class="flex items-center justify-between gap-3 flex-wrap">
-          <segmented-pills :model-value="tab" :options="tabOptions" size="sm" variant="info" @update:modelValue="onPickTab" />
-        </div>
-      </card>
+      <filter-bar tint="secondary" align="center" :dense="false" class="rounded-full h-19">
+        <template #left>
+          <div class="flex items-center gap-3 flex-wrap">
+            <div class="w-auto flex items-center gap-2">
+              <span class="text-xs font-medium leading-tight text-subtle">{{ t('admin.people.tabSelectorLabel') || '人员类型' }}</span>
+              <segmented-pills :model-value="tab" :options="tabOptions" size="sm" variant="info" @update:modelValue="onPickTab" />
+            </div>
+            <div class="w-72">
+              <glass-search-input
+                v-model="keyword"
+                :placeholder="String(t('common.search') || '搜索用户名/邮箱/学号/工号')"
+                size="sm"
+                tint="info"
+              />
+            </div>
+            <div class="w-auto flex items-center gap-2">
+              <span class="text-xs font-medium leading-tight text-subtle">{{ t('admin.people.statusLabel') || '状态' }}</span>
+              <div class="w-40">
+                <glass-popover-select v-model="status" :options="statusOptions" size="sm" tint="secondary" />
+              </div>
+            </div>
+            <Button size="sm" variant="outline" :disabled="kpiLoading" @click="reloadKpis">
+              {{ t('common.refresh') || '刷新' }}
+            </Button>
+          </div>
+        </template>
+        <template #right>
+          <div class="text-xs text-subtle whitespace-nowrap">{{ t('admin.people.hint') || '同一套筛选应用到各 Tab；用户 Tab 支持创建与角色调整' }}</div>
+        </template>
+      </filter-bar>
 
       <div v-show="tab === 'users'">
         <admin-user-table
@@ -87,7 +84,6 @@ import { computed, onMounted, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRoute, useRouter } from 'vue-router'
 import PageHeader from '@/components/ui/PageHeader.vue'
-import Card from '@/components/ui/Card.vue'
 import Button from '@/components/ui/Button.vue'
 import ErrorState from '@/components/ui/ErrorState.vue'
 import SegmentedPills from '@/components/ui/SegmentedPills.vue'

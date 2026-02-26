@@ -4,9 +4,11 @@
       <!-- Header -->
       <div class="mb-8">
         <nav class="flex items-center space-x-2 text-sm text-gray-500 dark:text-gray-400 mb-2">
-          <router-link to="/teacher/courses" class="cursor-pointer pointer-events-auto hover:text-gray-700 dark:hover:text-gray-200">{{ t('teacher.courses.breadcrumb') }}</router-link>
+          <router-link :to="isAdminView ? '/admin/people?tab=students' : '/teacher/courses'" class="cursor-pointer pointer-events-auto hover:text-gray-700 dark:hover:text-gray-200">
+            {{ isAdminView ? (t('admin.sidebar.students') || '学生') : t('teacher.courses.breadcrumb') }}
+          </router-link>
           <chevron-right-icon class="w-4 h-4 pointer-events-none" />
-          <template v-if="route.query.courseId && route.query.courseTitle">
+          <template v-if="!isAdminView && route.query.courseId && route.query.courseTitle">
             <router-link :to="`/teacher/courses/${route.query.courseId}`" class="cursor-pointer pointer-events-auto hover:text-gray-700 dark:hover:text-gray-200">{{ String(route.query.courseTitle) }}</router-link>
             <chevron-right-icon class="w-4 h-4 pointer-events-none" />
             <router-link :to="`/teacher/courses/${route.query.courseId}/students`" class="cursor-pointer pointer-events-auto hover:text-gray-700 dark:hover:text-gray-200">{{ t('teacher.students.breadcrumb.self') }}</router-link>
@@ -14,7 +16,7 @@
           </template>
           <span class="font-medium text-gray-900 dark:text-white">{{ studentName }}</span>
         </nav>
-        <page-header :title="t('teacher.studentDetail.title', { name: studentName })" :subtitle="''" />
+        <page-header :title="isAdminView ? (t('admin.student360.profile') || '学生详情') : t('teacher.studentDetail.title', { name: studentName })" :subtitle="''" />
       </div>
 
       <div class="space-y-8">
@@ -114,6 +116,14 @@
               width="18rem"
               @change="onCourseChange"
             />
+            <label class="text-sm text-gray-600 whitespace-nowrap pl-2">{{ t('shared.behaviorEvidence.range') || '行为时间窗' }}</label>
+            <glass-popover-select
+              v-model="behaviorRange"
+              :options="behaviorRangeOptions"
+              size="sm"
+              width="10rem"
+              @change="onBehaviorRangeChange"
+            />
           </card>
           <!-- 关键指标（四卡一行，根据课程筛选变化） -->
           <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
@@ -193,8 +203,9 @@
             <behavior-insight-section
               v-if="studentId"
               :student-id="String(studentId)"
-              :course-id="selectedCourseId || (route.query.courseId ? String(route.query.courseId) : undefined)"
-              range="7d"
+              :course-id="courseContextId"
+              :admin-mode="isAdminView"
+              :range="behaviorRange"
               :allow-teacher-generate="true"
               @update:insight="(v:any) => (behaviorInsight = v)"
             />
@@ -205,8 +216,9 @@
           <behavior-evidence-section
             v-if="studentId"
             :student-id="String(studentId)"
-            :course-id="selectedCourseId || (route.query.courseId ? String(route.query.courseId) : undefined)"
-            range="7d"
+            :course-id="courseContextId"
+            :admin-mode="isAdminView"
+            :range="behaviorRange"
             @update:summary="(v:any) => (behaviorEvidenceSummary = v)"
           />
           </div>
@@ -253,7 +265,7 @@
                     <th class="px-6 py-3 text-center text-xs font-semibold text-gray-700 dark:text-gray-200 tracking-wide whitespace-nowrap w-24">
                       {{ t('teacher.studentDetail.table.status') }}
                     </th>
-                    <th class="px-6 py-3 text-center text-xs font-semibold text-gray-700 dark:text-gray-200 tracking-wide whitespace-nowrap w-[220px]">
+                    <th v-if="!isAdminView" class="px-6 py-3 text-center text-xs font-semibold text-gray-700 dark:text-gray-200 tracking-wide whitespace-nowrap w-[220px]">
                       {{ t('teacher.studentDetail.table.actions') }}
                     </th>
                   </tr>
@@ -284,7 +296,7 @@
                         {{ grade.isPublished ? t('teacher.studentDetail.table.published') : t('teacher.studentDetail.table.unpublished') }}
                       </badge>
                     </td>
-                    <td class="px-6 py-3 text-center">
+                    <td v-if="!isAdminView" class="px-6 py-3 text-center">
                       <div class="flex items-center justify-center gap-2">
                         <Button variant="outline" size="sm" class="whitespace-nowrap" @click="viewSubmissions(grade)">
                           <document-text-icon class="w-4 h-4 mr-1" />
@@ -342,6 +354,7 @@ import { useChatStore } from '@/stores/chat'
 import { teacherStudentApi } from '@/api/teacher-student.api'
 import RadarChart from '@/components/charts/RadarChart.vue'
 import { teacherApi } from '@/api/teacher.api'
+import { adminApi } from '@/api/admin.api'
 import PageHeader from '@/components/ui/PageHeader.vue'
 import GlassPopoverSelect from '@/components/ui/filters/GlassPopoverSelect.vue'
 import Card from '@/components/ui/Card.vue'
@@ -368,6 +381,7 @@ const studentId = ref<string | null>(null);
 const chat = useChatStore()
 // keep single t from useI18n to avoid redeclare
 const studentName = ref(route.query.name as string || (t('teacher.students.table.student') as string));
+const isAdminView = computed(() => String(route.path || '').startsWith('/admin/'))
 
 const profile = ref<any>({})
 const mbtiVariant = computed(() => getMbtiVariant((profile.value as any)?.mbti))
@@ -404,10 +418,9 @@ const averageScore = computed(() => {
 })
 
 const courseProgress = computed(() => {
-    // 若已在后端 enrollment.progress 返回，可在拉取课程时补充存入 profile 或 studentCourses
-    // 这里作为前端兜底：用成绩条目完成率近似（仅当课程选择器选中某课程时）
     if (!selectedCourseId.value) return profile.value?.completionRate
-    // 无法可靠计算时返回 profile 的总体完成率
+    const hit = (studentCourses.value || []).find((c: any) => String(c?.id || '') === String(selectedCourseId.value))
+    if (hit && hit.progress != null) return hit.progress
     return profile.value?.completionRate
 })
 
@@ -416,6 +429,14 @@ const pageSize = ref(10);
 const total = computed(() => gradeStore.totalGrades);
 const totalPages = computed(() => Math.max(1, Math.ceil((total.value || 0) / pageSize.value)));
 const selectedCourseId = ref<string>('');
+const courseContextId = computed(() => selectedCourseId.value || (route.query.courseId ? String(route.query.courseId) : undefined))
+const behaviorRange = ref<'7d' | '30d' | '180d' | '365d'>('7d')
+const behaviorRangeOptions = computed(() => ([
+  { label: (t('shared.behaviorEvidence.range7d') as any) || '近一周', value: '7d' },
+  { label: (t('shared.behaviorEvidence.range30d') as any) || '近一月', value: '30d' },
+  { label: (t('shared.behaviorEvidence.range180d') as any) || '近半年', value: '180d' },
+  { label: (t('shared.behaviorEvidence.range365d') as any) || '近一年', value: '365d' }
+]))
 
 const studentCourses = ref<any[]>([])
 
@@ -428,10 +449,19 @@ watch(resolvedStudentId, (sid) => {
   if (sid) studentId.value = sid
 }, { immediate: true })
 
+watch(
+  () => [studentId.value, courseContextId.value],
+  async ([sid]) => {
+    if (!sid) return
+    await Promise.allSettled([fetchAbilityRadar(), fetchActivity()])
+  },
+  { immediate: true }
+)
+
 async function fetchPage(page: number) {
   if (!studentId.value) return;
   currentPage.value = page;
-  await gradeStore.fetchGradesByStudent(studentId.value, { page: currentPage.value, size: pageSize.value, courseId: selectedCourseId.value || undefined });
+  await gradeStore.fetchGradesByStudent(studentId.value, { page: currentPage.value, size: pageSize.value, courseId: courseContextId.value || undefined });
 }
 
 function handleGradePageChange(page: number) {
@@ -448,6 +478,13 @@ function handleGradePageSizeChange(size: number) {
 
 function onCourseChange() {
   fetchPage(1);
+  fetchAbilityRadar();
+  fetchActivity();
+}
+
+function onBehaviorRangeChange() {
+  // 行为证据/洞察组件会基于 range 自动刷新；这里同步刷新“最近学习”区域。
+  fetchActivity()
 }
 
 function contactStudent() {
@@ -1007,7 +1044,10 @@ function formatDateTime(input: any): string {
 
 function formatPercent(v: any): string {
   if (v === null || v === undefined) return '-'
-  const num = Number(v)
+  const raw = String(v).trim()
+  // 兼容 "85%" / "85.2 %" 这类后端字符串格式
+  const normalized = raw.endsWith('%') ? raw.replace('%', '').trim() : raw
+  const num = Number(normalized)
   if (!Number.isFinite(num)) return '-'
   return String(Math.round(num * 10) / 10)
 }
@@ -1015,22 +1055,79 @@ function formatPercent(v: any): string {
 async function fetchActivity() {
   if (!studentId.value) return
   try {
+    if (isAdminView.value) {
+      const courseId = courseContextId.value ? String(courseContextId.value) : undefined
+      const detail: any = await adminApi.getStudentDetail(String(studentId.value), {
+        courseId,
+        eventLimit: 8
+      })
+      const data: any = detail?.data?.data ?? detail?.data ?? detail
+      const rows = Array.isArray(data?.recentEvents) ? data.recentEvents : []
+      recentEvents.value = rows
+        .map((it: any) => ({
+          eventType: String(it?.eventType || ''),
+          title: String(it?.title || ''),
+          courseId: it?.courseId != null ? Number(it.courseId) : undefined,
+          courseTitle: String(it?.courseTitle || ''),
+          occurredAt: it?.occurredAt || ''
+        }))
+        .sort((a: any, b: any) => (new Date(b.occurredAt).getTime() || 0) - (new Date(a.occurredAt).getTime() || 0))
+        .slice(0, 8)
+      if (!recentEvents.value.length) {
+        const fromGrades = (grades.value || [])
+          .filter((g: any) => g?.gradedAt)
+          .map((g: any) => ({
+            eventType: 'submission',
+            title: g?.assignmentTitle || `#${g?.assignmentId || ''}`,
+            courseId: g?.courseId,
+            courseTitle: g?.courseTitle || '',
+            occurredAt: g?.gradedAt,
+          }))
+          .slice(0, 8)
+        recentEvents.value = fromGrades
+      }
+      return
+    }
+
     const act = await teacherStudentApi.getStudentActivity(studentId.value, 7, 8)
     recentLessons.value = (act as any)?.recentLessons || []
     recentEvents.value = (act as any)?.recentEvents || []
     if (!recentEvents.value?.length && recentLessons.value?.length) {
       recentEvents.value = recentLessons.value.map((r:any)=>({ eventType:'lesson', title:r.lessonTitle, courseId:r.courseId, courseTitle:r.courseTitle, occurredAt:r.studiedAt }))
     }
-  } catch {}
+  } catch {
+    if (isAdminView.value) {
+      const fromGrades = (grades.value || [])
+        .filter((g: any) => g?.gradedAt)
+        .map((g: any) => ({
+          eventType: 'submission',
+          title: g?.assignmentTitle || `#${g?.assignmentId || ''}`,
+          courseId: g?.courseId,
+          courseTitle: g?.courseTitle || '',
+          occurredAt: g?.gradedAt,
+        }))
+        .slice(0, 8)
+      recentEvents.value = fromGrades
+    }
+  }
 }
 
 async function fetchAbilityRadar() {
   try {
-    // 若带 courseId 则按该课程上下文拉取；否则尝试学生最近课程
-    const courseId = String(route.query.courseId || '')
-    if (!studentId.value || !courseId) return
-    // 与“数据分析”页保持一致：不强行限定日期窗口，避免把班级/学生四维数据过滤掉
-    const resp = await teacherApi.getAbilityRadar({ courseId, studentId: String(studentId.value) })
+    // 优先按课程上下文拉取；管理员模式在无课程时尝试 student 维度兜底。
+    const courseId = String(courseContextId.value || '')
+    if (!studentId.value) return
+    let resp: any = null
+    if (isAdminView.value) {
+      // 与“数据分析”页保持一致：不强行限定日期窗口，避免把班级/学生四维数据过滤掉
+      resp = await adminApi.getAbilityRadar({
+        studentId: String(studentId.value),
+        ...(courseId ? { courseId } : {})
+      } as any)
+    } else {
+      if (!courseId) return
+      resp = await teacherApi.getAbilityRadar({ courseId, studentId: String(studentId.value) })
+    }
     const data: any = (resp as any)?.data?.data ?? (resp as any)?.data ?? resp
     const dims: string[] = data.dimensions || []
     const nextIndicators = dims.map((name:string) => ({ name, max: 100 }))
@@ -1109,14 +1206,50 @@ onMounted(async () => {
     const sid = studentId.value || resolvedStudentId.value
     if (sid) {
         try {
-          const res = await teacherStudentApi.getStudentProfile(sid)
-          const data: any = (res as any)?.data?.data ?? (res as any)?.data ?? (res as any)
-          profile.value = {
-            ...data,
-            mbti: data?.mbti || data?.MBTI || data?.profile?.mbti || data?.profile?.MBTI || ''
+          if (isAdminView.value) {
+            const res: any = await adminApi.getStudentDetail(sid, {
+              courseId: courseContextId.value,
+              eventLimit: 8
+            })
+            const data: any = (res as any)?.data?.data ?? (res as any)?.data ?? (res as any)
+            const student = data?.student || {}
+            profile.value = {
+              ...student,
+              completionRate: data?.completionRate ?? student?.completionRate ?? null,
+              lastAccessTime: data?.lastActiveAt ?? data?.lastAccessTime ?? student?.lastAccessTime,
+              mbti: student?.mbti || student?.MBTI || student?.profile?.mbti || student?.profile?.MBTI || ''
+            }
+            const courses = Array.isArray(data?.courses) ? data.courses : []
+            studentCourses.value = courses.map((c: any) => ({
+              id: String(c?.id || ''),
+              title: String(c?.title || `#${c?.id || ''}`),
+              progress: c?.progress
+            }))
+            if (!selectedCourseId.value) {
+              const queryCourseId = String(route.query.courseId || '').trim()
+              if (queryCourseId && studentCourses.value.some((c: any) => String(c.id) === queryCourseId)) {
+                selectedCourseId.value = queryCourseId
+              } else if (studentCourses.value.length > 0) {
+                selectedCourseId.value = String(studentCourses.value[0].id)
+              }
+            }
+            const events = Array.isArray(data?.recentEvents) ? data.recentEvents : []
+            recentEvents.value = events.map((it: any) => ({
+              eventType: String(it?.eventType || ''),
+              title: String(it?.title || ''),
+              courseId: it?.courseId != null ? Number(it.courseId) : undefined,
+              courseTitle: String(it?.courseTitle || ''),
+              occurredAt: it?.occurredAt || ''
+            }))
+          } else {
+            const res = await teacherStudentApi.getStudentProfile(sid)
+            const data: any = (res as any)?.data?.data ?? (res as any)?.data ?? (res as any)
+            profile.value = {
+              ...data,
+              mbti: data?.mbti || data?.MBTI || data?.profile?.mbti || data?.profile?.MBTI || ''
+            }
+            try { (window as any).__studentDetailProfile = { source: 'teacherStudentApi', raw: res, data: profile.value } } catch {}
           }
-          try { (window as any).__studentDetailProfile = { source: 'teacherStudentApi', raw: res, data: profile.value } } catch {}
-          // 若教师端学生资料未包含 mbti，则回退到通用用户资料接口补齐
           if (!profile.value.mbti) {
             try {
               const ures: any = await userApi.getProfileById(String(sid))
@@ -1126,12 +1259,16 @@ onMounted(async () => {
                 if (resolvedMbti) {
                   profile.value.mbti = String(resolvedMbti)
                 }
-                // 兜底补齐常用展示字段（不覆盖已有）
+                if ((profile.value?.completionRate === null || profile.value?.completionRate === undefined) && udata?.completionRate != null) {
+                  profile.value.completionRate = Number(udata.completionRate)
+                }
+                if (!profile.value?.lastAccessTime && (udata?.lastAccessTime || udata?.lastActiveAt)) {
+                  profile.value.lastAccessTime = udata?.lastAccessTime || udata?.lastActiveAt
+                }
                 if (!profile.value.nickname && udata?.nickname) profile.value.nickname = udata.nickname
                 if (!profile.value.username && udata?.username) profile.value.username = udata.username
                 if (!profile.value.name && (udata?.name || (udata?.lastName || '') + (udata?.firstName || ''))) profile.value.name = udata.name || ((udata?.lastName || '') + (udata?.firstName || ''))
               }
-              try { (window as any).__studentDetailProfileFallback = { source: 'userApi', raw: ures, data: udata, merged: profile.value } } catch {}
             } catch {}
           }
           if (profile.value && (profile.value as any).name) {
@@ -1140,7 +1277,15 @@ onMounted(async () => {
         } catch {}
         // 并行拉取，减少首帧阻塞；失败不阻断其他任务
         const tasks: Array<Promise<any>> = [
-          (async () => { try { studentCourses.value = await teacherStudentApi.getStudentCourses(sid) } catch {} })(),
+          (async () => {
+            try {
+              if (isAdminView.value) {
+                // 管理员课程列表已由 admin student detail 聚合接口返回，这里不再做前端拼接查询。
+              } else {
+                studentCourses.value = await teacherStudentApi.getStudentCourses(sid)
+              }
+            } catch {}
+          })(),
           (async () => { try { await fetchActivity() } catch {} })(),
           (async () => { try { await fetchAbilityRadar() } catch {} })(),
           (async () => { try { await fetchPage(1) } catch {} })()

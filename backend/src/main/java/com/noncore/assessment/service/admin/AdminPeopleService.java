@@ -11,7 +11,7 @@ import com.noncore.assessment.dto.response.admin.AdminTeacherDetailResponse;
  */
 public interface AdminPeopleService {
 
-    AdminStudentDetailResponse getStudentDetail(Long studentId);
+    AdminStudentDetailResponse getStudentDetail(Long studentId, Long courseId, Integer eventLimit);
 
     AdminTeacherDetailResponse getTeacherDetail(Long teacherId);
 }

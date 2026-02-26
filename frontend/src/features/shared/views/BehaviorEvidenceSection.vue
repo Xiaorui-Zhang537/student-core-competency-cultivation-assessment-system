@@ -181,6 +181,7 @@ const props = defineProps<{
   studentId?: string | number
   courseId?: string | number
   range?: string
+  adminMode?: boolean
 }>()
 
 const emit = defineEmits<{
@@ -314,6 +315,8 @@ async function reload() {
   loading.value = true
   error.value = null
   try {
+    // 说明：当前后端 /admin/behavior/summary 在部分环境会 500，
+    // 这里统一走稳定的通用接口，确保管理员详情页可用性。
     data.value = await behaviorEvidenceApi.getSummary({
       studentId: props.studentId,
       courseId: props.courseId,

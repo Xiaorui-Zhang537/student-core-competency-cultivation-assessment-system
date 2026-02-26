@@ -51,7 +51,9 @@
                  JOIN behavior_summary_snapshots bs ON bs.id = bi.snapshot_id
         WHERE bi.student_id = #{studentId}
           AND bi.schema_version = #{schemaVersion}
+        <if test="rangeKey != null and rangeKey != ''">
           AND bs.range_key = #{rangeKey}
+        </if>
         <if test="courseId != null">
             AND bi.course_id = #{courseId}
         </if>
@@ -71,6 +73,46 @@
         <if test="since != null">
           AND generated_at &gt;= #{since}
         </if>
+    </select>
+
+    <select id="pageByStudentCourseRange" resultMap="BaseMap">
+        SELECT bi.*
+        FROM behavior_insights bi
+                 JOIN behavior_summary_snapshots bs ON bs.id = bi.snapshot_id
+        WHERE bi.student_id = #{studentId}
+          AND bi.schema_version = #{schemaVersion}
+        <if test="rangeKey != null and rangeKey != ''">
+          AND bs.range_key = #{rangeKey}
+        </if>
+        <if test="courseId != null">
+            AND bi.course_id = #{courseId}
+        </if>
+        <if test="courseId == null">
+            AND bi.course_id IS NULL
+        </if>
+        ORDER BY bi.generated_at DESC, bi.id DESC
+        LIMIT #{size} OFFSET #{offset}
+    </select>
+
+    <select id="countByStudentCourseRange" resultType="long">
+        SELECT COUNT(*)
+        FROM behavior_insights bi
+                 JOIN behavior_summary_snapshots bs ON bs.id = bi.snapshot_id
+        WHERE bi.student_id = #{studentId}
+          AND bi.schema_version = #{schemaVersion}
+          AND bs.range_key = #{rangeKey}
+        <if test="courseId != null">
+            AND bi.course_id = #{courseId}
+        </if>
+        <if test="courseId == null">
+            AND bi.course_id IS NULL
+        </if>
+    </select>
+
+    <select id="getById" resultMap="BaseMap">
+        SELECT * FROM behavior_insights
+        WHERE id = #{id}
+        LIMIT 1
     </select>
 </mapper>
 

@@ -4,13 +4,13 @@
     <div ref="rootRef" :class="['relative', width ? '' : 'w-full']" :style="{ width: width || undefined }">
       <Button
         type="button"
-        class="ui-pill--select ui-pill--pr-select"
+        class="ui-pill--select ui-pill--pr-select !justify-start text-left"
         :class="[size==='sm' ? 'ui-pill--sm ui-pill--pl' : 'ui-pill--md ui-pill--pl', tintClass]"
         :disabled="disabled"
         @click="toggle"
       >
         <span
-          :class="truncateLabel ? 'truncate' : ''"
+          :class="['block w-full pr-5 text-left', truncateLabel ? 'truncate' : '']"
           :style="selectedLabel ? selectedLabelStyle : undefined"
         >
           {{ selectedLabel || placeholder || '' }}

@@ -1,56 +1,92 @@
 <template>
   <div class="p-6">
-    <PageHeader :title="t('admin.sidebar.teachers')" :subtitle="`#${id}`">
-      <template #actions>
-        <Button variant="outline" @click="router.push('/admin/people?tab=teachers')">{{ t('common.back') || '返回' }}</Button>
-        <Button variant="outline" class="ml-2" @click="openChatWithTeacher">{{ t('shared.chat.open') || '聊天' }}</Button>
-        <Button variant="outline" class="ml-2" @click="openAudit">{{ t('admin.student360.auditAiVoice') || 'AI/口语审计' }}</Button>
-      </template>
-    </PageHeader>
+    <div class="max-w-7xl mx-auto">
+      <div class="mb-8">
+        <nav class="flex items-center space-x-2 text-sm text-gray-500 dark:text-gray-400 mb-2">
+          <router-link to="/admin/people?tab=teachers" class="hover:text-gray-700 dark:hover:text-gray-200">
+            {{ t('admin.sidebar.teachers') || '教师' }}
+          </router-link>
+          <chevron-right-icon class="w-4 h-4" />
+          <span>{{ displayName }}</span>
+        </nav>
+        <page-header :title="t('admin.teacherDetail.title') || '教师详情'" :subtitle="`#${id}`">
+          <template #actions>
+            <div class="flex items-center gap-2">
+              <Button variant="outline" @click="router.push('/admin/people?tab=teachers')">{{ t('common.back') || '返回' }}</Button>
+              <Button variant="outline" @click="openChatWithTeacher">{{ t('shared.chat.open') || '聊天' }}</Button>
+              <Button variant="outline" @click="openAudit">{{ t('admin.student360.auditAiVoice') || 'AI/口语审计' }}</Button>
+            </div>
+          </template>
+        </page-header>
+      </div>
 
-    <loading-overlay v-if="loading" class="mt-4" :text="String(t('common.loading') || '加载中…')" />
-    <error-state
-      v-else-if="error"
-      class="mt-4"
-      :title="String(t('common.error') || '加载失败')"
-      :message="error"
-      :actionText="String(t('common.retry') || '重试')"
-      @action="reload"
-    />
+      <loading-overlay v-if="loading" class="mt-4" :text="String(t('common.loading') || '加载中…')" />
+      <error-state
+        v-else-if="error"
+        class="mt-4"
+        :title="String(t('common.error') || '加载失败')"
+        :message="error"
+        :actionText="String(t('common.retry') || '重试')"
+        @action="reload"
+      />
 
-    <div v-else class="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-4">
-      <card padding="md" tint="secondary" class="lg:col-span-2">
-        <div class="text-sm text-subtle mb-3">{{ t('admin.teacherDetail.title') || t('common.columns.teacher') || '教师' }}</div>
-        <div class="space-y-1">
-          <div class="font-medium">{{ data?.teacher?.nickname || data?.teacher?.username }}</div>
-          <div class="text-sm text-subtle">{{ data?.teacher?.email }}</div>
-          <div class="text-sm text-subtle" v-if="data?.teacher?.teacherNo">
-            {{ t('admin.people.fields.teacherNo') || '工号' }}: {{ data?.teacher?.teacherNo }}
+      <div v-else class="space-y-6">
+        <card padding="md" tint="info">
+          <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:gap-6">
+            <div class="flex items-center gap-4 min-w-0">
+              <user-avatar :avatar="teacher?.avatar" :size="56" :rounded="true" :fit="'cover'" />
+              <div class="min-w-0">
+                <div class="flex items-center gap-3">
+                  <span class="text-xl font-semibold truncate">{{ displayName }}</span>
+                  <badge v-if="teacher?.mbti" size="sm" :variant="getMbtiVariant(teacher?.mbti)">MBTI · {{ teacher.mbti }}</badge>
+                </div>
+                <div class="text-sm text-subtle">{{ teacher?.email || '-' }}</div>
+                <div class="text-xs text-subtle mt-1">{{ t('admin.people.fields.teacherNo') || '工号' }}: {{ teacher?.teacherNo || '-' }}</div>
+              </div>
+            </div>
           </div>
-          <div class="text-sm">
-            {{ t('common.columns.status') || '状态' }}: {{ data?.teacher?.status }}
+        </card>
+
+        <card padding="md" tint="secondary">
+          <h3 class="text-lg font-semibold mb-4">{{ t('shared.profile.section.profileInfo') || '个人信息' }}</h3>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div><label class="block text-sm font-medium mb-1">{{ t('shared.profile.fields.username') }}</label><p class="text-sm">{{ teacher?.username || '-' }}</p></div>
+            <div><label class="block text-sm font-medium mb-1">{{ t('shared.profile.fields.nickname') }}</label><p class="text-sm">{{ teacher?.nickname || '-' }}</p></div>
+            <div><label class="block text-sm font-medium mb-1">{{ t('shared.profile.fields.firstName') }}</label><p class="text-sm">{{ teacher?.firstName || '-' }}</p></div>
+            <div><label class="block text-sm font-medium mb-1">{{ t('shared.profile.fields.lastName') }}</label><p class="text-sm">{{ teacher?.lastName || '-' }}</p></div>
+            <div><label class="block text-sm font-medium mb-1">{{ t('shared.profile.fields.gender') }}</label><p class="text-sm">{{ teacher?.gender || '-' }}</p></div>
+            <div><label class="block text-sm font-medium mb-1">{{ t('shared.profile.fields.phone') }}</label><p class="text-sm">{{ teacher?.phone || '-' }}</p></div>
+            <div><label class="block text-sm font-medium mb-1">{{ t('shared.profile.fields.school') }}</label><p class="text-sm">{{ teacher?.school || '-' }}</p></div>
+            <div><label class="block text-sm font-medium mb-1">{{ t('shared.profile.fields.subject') }}</label><p class="text-sm">{{ teacher?.subject || '-' }}</p></div>
+            <div><label class="block text-sm font-medium mb-1">{{ t('shared.profile.fields.birthday') }}</label><p class="text-sm">{{ teacher?.birthday || '-' }}</p></div>
+            <div><label class="block text-sm font-medium mb-1">{{ t('shared.profile.fields.country') }}</label><p class="text-sm">{{ [teacher?.country, teacher?.province, teacher?.city].filter(Boolean).join(' / ') || '-' }}</p></div>
+            <div class="md:col-span-2"><label class="block text-sm font-medium mb-1">{{ t('shared.profile.fields.bio') }}</label><p class="text-sm whitespace-pre-wrap">{{ teacher?.bio || '-' }}</p></div>
           </div>
+        </card>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <start-card :label="t('admin.teacherDetail.courses') || '课程数'" :value="summaryStats[0].value" tone="blue" :icon="BookOpenIcon" />
+          <start-card :label="t('admin.teacherDetail.assignments') || '作业数'" :value="summaryStats[1].value" tone="amber" :icon="DocumentTextIcon" />
+          <start-card :label="t('admin.teacherDetail.activeEnrollments') || '在读人数'" :value="summaryStats[2].value" tone="emerald" :icon="UserGroupIcon" />
         </div>
-      </card>
-      <card padding="md" tint="secondary">
-        <div class="text-sm text-subtle mb-3">{{ t('admin.teacherDetail.summary') || '概览' }}</div>
-        <div class="space-y-2 text-sm">
-          <div>{{ t('admin.teacherDetail.courses') || '课程数' }}: {{ data?.courses ?? 0 }}</div>
-          <div>{{ t('admin.teacherDetail.assignments') || '作业数' }}: {{ data?.assignments ?? 0 }}</div>
-          <div>{{ t('admin.teacherDetail.activeEnrollments') || '在读人数' }}: {{ data?.activeEnrollments ?? 0 }}</div>
-        </div>
-      </card>
+      </div>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { onMounted, ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
-import Card from '@/components/ui/Card.vue'
+import { ChevronRightIcon, BookOpenIcon, DocumentTextIcon, UserGroupIcon } from '@heroicons/vue/24/outline'
+import { getMbtiVariant } from '@/shared/utils/badgeColor'
+import PageHeader from '@/components/ui/PageHeader.vue'
 import Button from '@/components/ui/Button.vue'
+import Badge from '@/components/ui/Badge.vue'
+import Card from '@/components/ui/Card.vue'
+import StartCard from '@/components/ui/StartCard.vue'
 import ErrorState from '@/components/ui/ErrorState.vue'
+import UserAvatar from '@/components/ui/UserAvatar.vue'
 import { adminApi } from '@/api/admin.api'
 import { useChatStore } from '@/stores/chat'
 
@@ -63,6 +99,13 @@ const id = String(route.params.id || '')
 const loading = ref(false)
 const error = ref<string | null>(null)
 const data = ref<any>(null)
+const teacher = computed(() => data.value?.teacher || null)
+const displayName = computed(() => teacher.value?.nickname || teacher.value?.username || `#${id}`)
+const summaryStats = computed(() => ([
+  { label: t('admin.teacherDetail.courses') || '课程数', value: data.value?.courses ?? 0 },
+  { label: t('admin.teacherDetail.assignments') || '作业数', value: data.value?.assignments ?? 0 },
+  { label: t('admin.teacherDetail.activeEnrollments') || '在读人数', value: data.value?.activeEnrollments ?? 0 },
+]))
 
 async function reload() {
   loading.value = true
@@ -83,7 +126,8 @@ onMounted(reload)
  */
 function openChatWithTeacher() {
   const name = String(data.value?.teacher?.nickname || data.value?.teacher?.username || `#${id}`)
-  chat.openChat(id, name, null)
+  const avatar = String(data.value?.teacher?.avatar || '')
+  chat.openChat(id, name, null, avatar || null)
 }
 
 function openAudit() {

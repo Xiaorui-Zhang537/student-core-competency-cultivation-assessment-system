@@ -13,6 +13,7 @@
     "select": "选择",
     "search": "搜索",
     "view": "查看",
+    "viewDetail": "查看详情",
     "columns": {
       "id": "ID",
       "user": "用户",
@@ -32,6 +33,8 @@
     },
     "preview": "浏览",
     "verified": "已验证",
+    "yes": "是",
+    "no": "否",
     "none": "无",
     "all": "全部",
     "status": {

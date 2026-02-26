@@ -14,11 +14,19 @@ public interface AdminPeopleMapper {
 
     Long countEnrolledCourses(@Param("studentId") Long studentId);
 
+    Double avgEnrollmentProgress(@Param("studentId") Long studentId);
+
     Double avgGradePercentage(@Param("studentId") Long studentId);
 
     String lastActiveAt(@Param("userId") Long userId);
 
     Long countAbilityReports(@Param("studentId") Long studentId);
+
+    java.util.List<com.noncore.assessment.dto.response.admin.AdminStudentCourseItemResponse> listStudentCourses(@Param("studentId") Long studentId);
+
+    java.util.List<com.noncore.assessment.dto.response.admin.AdminStudentRecentEventResponse> listStudentRecentEvents(@Param("studentId") Long studentId,
+                                                                                                                      @Param("courseId") Long courseId,
+                                                                                                                      @Param("limit") Integer limit);
 
     Long countCoursesByTeacher(@Param("teacherId") Long teacherId);
 

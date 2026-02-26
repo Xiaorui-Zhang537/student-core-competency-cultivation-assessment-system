@@ -57,5 +57,31 @@ public class BehaviorInsightServiceImpl implements BehaviorInsightService {
         if (studentId == null) return 0L;
         return mapper.countByStudentSince(studentId, schemaVersion, since);
     }
+
+    @Override
+    public java.util.List<BehaviorInsight> pageByStudentCourseRange(Long studentId,
+                                                                     Long courseId,
+                                                                     String rangeKey,
+                                                                     String schemaVersion,
+                                                                     int page,
+                                                                     int size) {
+        if (studentId == null) return java.util.List.of();
+        final int safePage = Math.max(1, page);
+        final int safeSize = Math.max(1, Math.min(size, 100));
+        final int offset = (safePage - 1) * safeSize;
+        return mapper.pageByStudentCourseRange(studentId, courseId, rangeKey, schemaVersion, offset, safeSize);
+    }
+
+    @Override
+    public long countByStudentCourseRange(Long studentId, Long courseId, String rangeKey, String schemaVersion) {
+        if (studentId == null) return 0L;
+        return mapper.countByStudentCourseRange(studentId, courseId, rangeKey, schemaVersion);
+    }
+
+    @Override
+    public BehaviorInsight getById(Long id) {
+        if (id == null) return null;
+        return mapper.getById(id);
+    }
 }
 

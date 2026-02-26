@@ -194,6 +194,11 @@ const routes = [
         component: () => import('@/features/shared/views/ProfileView.vue')
       },
       {
+        path: 'profile/basic',
+        name: 'TeacherProfileBasic',
+        component: () => import('@/features/teacher/views/TeacherBasicInfoView.vue')
+      },
+      {
         path: 'community',
         name: 'TeacherCommunity',
         component: () => import('@/features/shared/views/CommunityView.vue')

@@ -106,13 +106,15 @@
     },
     "people": {
       "hint": "One filter set for all tabs; Users tab supports creation and role updates.",
+      "tabSelectorLabel": "Person Type",
       "statusLabel": "Status",
       "allStatus": "All status",
       "allRoles": "All roles",
       "fields": {
         "nickname": "Nickname",
         "studentNo": "Student No",
-        "teacherNo": "Teacher No"
+        "teacherNo": "Teacher No",
+        "emailVerified": "Email Verified"
       },
       "userStatus": {
         "active": "Active",

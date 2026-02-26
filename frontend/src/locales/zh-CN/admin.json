@@ -106,13 +106,15 @@
     },
     "people": {
       "hint": "同一套筛选应用到各 Tab；用户 Tab 支持创建与角色调整",
+      "tabSelectorLabel": "人员类型",
       "statusLabel": "状态",
       "allStatus": "全部状态",
       "allRoles": "全部角色",
       "fields": {
         "nickname": "昵称",
         "studentNo": "学号",
-        "teacherNo": "工号"
+        "teacherNo": "工号",
+        "emailVerified": "邮箱验证"
       },
       "userStatus": {
         "active": "正常",

@@ -10,10 +10,13 @@
     "confirm": "Confirm",
     "back": "Back",
     "verified": "Verified",
+    "yes": "Yes",
+    "no": "No",
     "submit": "Submit",
     "select": "Select",
     "search": "Search",
     "view": "View",
+    "viewDetail": "View Detail",
     "columns": {
       "id": "ID",
       "user": "User",

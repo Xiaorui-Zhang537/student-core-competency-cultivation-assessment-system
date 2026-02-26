@@ -569,7 +569,19 @@
         "LEARNING_ABILITY": "Learning ability",
         "LEARNING_METHOD": "Learning method"
       },
-      "evidenceLabel": "Evidence"
+      "evidenceLabel": "Evidence",
+      "reportInfo": {
+        "title": "Report info",
+        "generatedAt": "Generated at",
+        "aiQ": "AI questions",
+        "aiFollow": "AI follow-ups",
+        "submit": "Assignment submits",
+        "resubmit": "Assignment resubmits",
+        "ask": "Community asks",
+        "answer": "Community answers",
+        "feedback": "Feedback views",
+        "events": "Input events"
+      }
     },
     "radarLegend": {
       "labels": {

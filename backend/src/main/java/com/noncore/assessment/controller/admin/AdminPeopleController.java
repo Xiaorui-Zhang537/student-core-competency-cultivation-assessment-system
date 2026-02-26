@@ -12,6 +12,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -38,8 +39,10 @@ public class AdminPeopleController extends BaseController {
 
     @GetMapping("/students/{id}")
     @Operation(summary = "学生详情（聚合）")
-    public ResponseEntity<ApiResponse<AdminStudentDetailResponse>> getStudent(@PathVariable("id") Long id) {
-        return ResponseEntity.ok(ApiResponse.success(adminPeopleService.getStudentDetail(id)));
+    public ResponseEntity<ApiResponse<AdminStudentDetailResponse>> getStudent(@PathVariable("id") Long id,
+                                                                               @RequestParam(value = "courseId", required = false) Long courseId,
+                                                                               @RequestParam(value = "eventLimit", required = false, defaultValue = "8") Integer eventLimit) {
+        return ResponseEntity.ok(ApiResponse.success(adminPeopleService.getStudentDetail(id, courseId, eventLimit)));
     }
 
     @GetMapping("/teachers/{id}")

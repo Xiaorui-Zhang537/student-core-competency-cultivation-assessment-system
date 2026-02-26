@@ -5,6 +5,7 @@ import notificationAPI from '@/api/notification.api'
 import { studentApi } from '@/api/student.api'
 import { teacherStudentApi } from '@/api/teacher-student.api'
 import { teacherApi } from '@/api/teacher.api'
+import { adminApi } from '@/api/admin.api'
 import { useAuthStore } from '@/stores/auth'
 import chatApi from '@/api/chat.api'
 
@@ -12,6 +13,7 @@ export const useChatStore = defineStore('chat', () => {
   const isOpen = ref(false)
   const peerId = ref<string | number | null>(null)
   const peerName = ref<string | null>(null)
+  const peerAvatar = ref<string | null>(null)
   const courseId = ref<string | number | null>(null)
   const recentConversations = ref<any[]>([])
   const contacts = ref<any[]>([])
@@ -60,21 +62,23 @@ export const useChatStore = defineStore('chat', () => {
   // 记录最近使用的存储键，检测用户切换时重置状态，避免“所有人共用最近”问题
   const lastStorageKey = ref<string>('')
 
-  function openChat(id?: string | number | null, name: string | null = null, cId: string | number | null = null) {
+  function openChat(id?: string | number | null, name: string | null = null, cId: string | number | null = null, avatar: string | null = null) {
     // 支持无参：仅打开抽屉，停留在列表态
     if (id !== undefined && id !== null && id !== '') {
       peerId.value = id
       peerName.value = name
       courseId.value = cId
+      if (avatar) peerAvatar.value = avatar
     }
     isOpen.value = true
     try { console.debug('[chat] openChat -> isOpen:', isOpen.value, 'peerId:', peerId.value, 'courseId:', courseId.value) } catch {}
   }
 
-  function setPeer(id: string | number, name: string | null = null, cId: string | number | null = null) {
+  function setPeer(id: string | number, name: string | null = null, cId: string | number | null = null, avatar: string | null = null) {
     peerId.value = id
     peerName.value = name
     courseId.value = cId
+    if (avatar) peerAvatar.value = avatar
     isOpen.value = true
   }
 
@@ -82,6 +86,7 @@ export const useChatStore = defineStore('chat', () => {
     isOpen.value = false
     peerId.value = null
     peerName.value = null
+    peerAvatar.value = null
     courseId.value = null
     try { console.debug('[chat] closeChat -> isOpen:', isOpen.value) } catch {}
   }
@@ -273,6 +278,76 @@ export const useChatStore = defineStore('chat', () => {
               groups.push({ courseId: cId, courseName: cName, expanded: true, students: members })
               contacts.value.push(...members)
             } catch { /* ignore one course */ }
+          }
+        } else if (role === 'ADMIN') {
+          // 管理员：加载所有课程，并在每门课程下展示教师 + 学生联系人
+          const assignedCourseId = String(opts?.courseId || courseId.value || '')
+          const normalizePerson = (u: any) => ({
+            id: String(u?.id || u?.userId || u?.teacherId || u?.studentId || u?.student_id || ''),
+            name: String(u?.nickname || u?.displayName || u?.name || u?.username || u?.userName || ''),
+            nickname: u?.nickname || null,
+            username: u?.username || u?.userName || null,
+            avatar: u?.avatar || u?.avatarUrl || u?.avatar_url || ''
+          })
+          const mergeMembers = (arr: any[]) => {
+            const myId = String((auth.user as any)?.id || localStorage.getItem('userId') || '')
+            const map = new Map<string, any>()
+            for (const it of arr || []) {
+              const p = normalizePerson(it)
+              if (!p.id || p.id === myId) continue
+              if (!p.name) p.name = `#${p.id}`
+              if (!map.has(p.id)) map.set(p.id, p)
+            }
+            return Array.from(map.values())
+          }
+
+          let adminCourses: any[] = []
+          try {
+            const res: any = await adminApi.pageCourses({ page: 1, size: 1000, query: opts?.keyword || undefined })
+            adminCourses = (res?.items) || (res?.data?.items) || []
+          } catch {
+            adminCourses = []
+          }
+          const filteredCourses = assignedCourseId
+            ? adminCourses.filter((c: any) => String(c?.id || c?.courseId || '') === assignedCourseId)
+            : adminCourses
+
+          for (const c of filteredCourses) {
+            const cId = String(c?.id || c?.courseId || '')
+            if (!cId) continue
+            const cName = c?.title || c?.name || `Course ${cId}`
+            let members: any[] = []
+
+            // 1) 课程教师（从课程对象读）
+            const teacherCandidate = {
+              id: c?.teacherId || c?.teacher?.id,
+              name: c?.teacherName || c?.teacher?.nickname || c?.teacher?.username || c?.teacher?.name,
+              nickname: c?.teacher?.nickname,
+              username: c?.teacher?.username,
+              avatar: c?.teacherAvatar || c?.teacher?.avatar
+            }
+            if (teacherCandidate.id) {
+              members.push(teacherCandidate)
+            }
+
+            // 2) 课程学生（管理员课程学生接口）
+            try {
+              const sRes: any = await adminApi.pageCourseStudents(cId, { page: 1, size: 1000, search: opts?.keyword })
+              const students = (sRes?.items) || (sRes?.data?.items) || []
+              members.push(...students)
+            } catch {
+              // ignore per-course error
+            }
+
+            const merged = mergeMembers(members)
+            if (merged.length === 0) continue
+            groups.push({
+              courseId: cId,
+              courseName: cName,
+              expanded: !!assignedCourseId || groups.length === 0,
+              students: merged
+            })
+            contacts.value.push(...merged)
           }
         } else {
           // 教师端：优先一次性聚合接口 /teachers/contacts；失败则回退“我的课程+逐课学生”
@@ -539,7 +614,7 @@ export const useChatStore = defineStore('chat', () => {
     suppressPreviewOnce.value = true
   }
 
-  return { isOpen, peerId, peerName, courseId, recentConversations, contacts, contactGroups, systemMessages, loadingLists, totalUnread, sseConnected, sseStatus, openChat, setPeer, closeChat, loadLists, removeRecent, togglePin, isPinned, upsertRecentAfterSend, toggleContactGroup, suppressNextPreviewUpdateOnce, markPeerRead, connectChatSse, disconnectChatSse }
+  return { isOpen, peerId, peerName, peerAvatar, courseId, recentConversations, contacts, contactGroups, systemMessages, loadingLists, totalUnread, sseConnected, sseStatus, openChat, setPeer, closeChat, loadLists, removeRecent, togglePin, isPinned, upsertRecentAfterSend, toggleContactGroup, suppressNextPreviewUpdateOnce, markPeerRead, connectChatSse, disconnectChatSse }
 })
 
 

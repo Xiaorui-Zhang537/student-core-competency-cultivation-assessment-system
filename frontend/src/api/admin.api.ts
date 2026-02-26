@@ -146,7 +146,8 @@ export const adminApi = {
   updateUserStatus: (id: string | number, status: string): Promise<void> => api.put(`/admin/users/${id}/status`, { status }),
   sendResetPasswordEmail: (id: string | number, lang = 'zh-CN'): Promise<void> => api.post(`/admin/users/${id}/password/reset-email`, undefined, { params: { lang } }),
 
-  getStudentDetail: (id: string | number) => api.get(`/admin/people/students/${id}`),
+  getStudentDetail: (id: string | number, params?: { courseId?: string | number; eventLimit?: number }) =>
+    api.get(`/admin/people/students/${id}`, { params }),
   getTeacherDetail: (id: string | number) => api.get(`/admin/people/teachers/${id}`),
 
   pageAbilityReports: (params: any): Promise<PageResult<AbilityReport>> => api.get('/admin/ability-reports', { params }),
@@ -185,6 +186,13 @@ export const adminApi = {
     api.get('/admin/behavior/insights', { params }),
   generateBehaviorInsight: (params: { studentId: string | number; courseId?: string | number; range?: string; model?: string; force?: boolean }) =>
     api.post('/admin/behavior/insights/generate', null, { params }),
+  getBehaviorInsightHistory: (params: { studentId: string | number; courseId?: string | number; range?: string; page?: number; size?: number }) =>
+    api.get('/admin/behavior/insights/history', { params }),
+  getBehaviorInsightHistoryDetail: (id: string | number) =>
+    api.get(`/admin/behavior/insights/history/${id}`),
+  // 行为证据（管理员版，若后端未提供将由调用方兜底）
+  getBehaviorSummary: (params: { studentId: string | number; courseId?: string | number; range?: string }) =>
+    api.get('/admin/behavior/summary', { params }),
 
   // AI 问答审计（管理员版）
   listAiConversations: (params: { studentId: string | number; q?: string; pinned?: boolean; archived?: boolean; page?: number; size?: number }) =>

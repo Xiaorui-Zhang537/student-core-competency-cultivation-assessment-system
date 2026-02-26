@@ -4,6 +4,8 @@ import com.noncore.assessment.entity.User;
 import lombok.Builder;
 import lombok.Data;
 
+import java.util.List;
+
 /**
  * 管理员-学生数据中心详情响应。
  *
@@ -15,8 +17,11 @@ import lombok.Data;
 public class AdminStudentDetailResponse {
     private User student;
     private Long enrolledCourses;
+    private Double completionRate;
     private Double avgGradePercentage;
     private String lastActiveAt;
     private Long abilityReports;
+    private List<AdminStudentCourseItemResponse> courses;
+    private List<AdminStudentRecentEventResponse> recentEvents;
 }
 

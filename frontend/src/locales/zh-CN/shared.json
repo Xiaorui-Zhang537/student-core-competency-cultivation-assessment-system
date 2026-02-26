@@ -569,7 +569,19 @@
         "LEARNING_ABILITY": "学习能力",
         "LEARNING_METHOD": "学习方法"
       },
-      "evidenceLabel": "证据"
+      "evidenceLabel": "证据",
+      "reportInfo": {
+        "title": "报告信息",
+        "generatedAt": "生成时间",
+        "aiQ": "AI提问",
+        "aiFollow": "AI追问",
+        "submit": "作业提交",
+        "resubmit": "作业重交",
+        "ask": "社区提问",
+        "answer": "社区回答",
+        "feedback": "反馈查看",
+        "events": "输入事件数"
+      }
     },
     "radarLegend": {
       "labels": {

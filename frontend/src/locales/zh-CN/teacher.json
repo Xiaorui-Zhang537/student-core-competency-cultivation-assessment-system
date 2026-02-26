@@ -825,6 +825,10 @@
 			"saved": "入课密钥设置成功",
 			"failed": "入课密钥设置失败"
 		},
+		"profileBasic": {
+			"title": "教师基本信息",
+			"subtitle": "以详情视图查看教师个人基础资料"
+		},
 		"studentDetail": {
 			"breadcrumb": {
 				"overview": "学生进度概览"

@@ -817,6 +817,10 @@
 			"failed": "Failed to save enroll key"
 		}
 		},
+		"profileBasic": {
+			"title": "Teacher Basic Information",
+			"subtitle": "Read-only teacher profile in detail layout"
+		},
 		"studentDetail": {
 			"breadcrumb": {
 				"overview": "Students Overview"

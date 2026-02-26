@@ -51,8 +51,13 @@
             <td class="px-6 py-3 text-center font-mono text-xs">{{ u.id }}</td>
             <td class="px-6 py-3">
               <div class="font-medium">{{ u.nickname || u.username }}</div>
+              <div v-if="buildFullName(u)" class="text-xs text-subtle">{{ buildFullName(u) }}</div>
               <div class="text-xs text-subtle">{{ u.email }}</div>
               <div class="text-xs text-subtle" v-if="u.studentNo || u.teacherNo">{{ u.studentNo || u.teacherNo }}</div>
+              <div class="text-xs text-subtle">
+                {{ (t('admin.people.fields.emailVerified') || '邮箱验证') }}: {{ u.emailVerified ? (t('common.yes') || '是') : (t('common.no') || '否') }}
+                <span v-if="u.createdAt"> · {{ (t('common.columns.createdAt') || '创建时间') }}: {{ formatDateTime(u.createdAt) }}</span>
+              </div>
             </td>
             <td v-if="showRoleColumn" class="px-6 py-3 text-center w-40">
               <glass-popover-select
@@ -72,28 +77,43 @@
               />
             </td>
             <td v-if="showActions" class="px-6 py-3 text-right whitespace-nowrap">
-              <template v-if="mode === 'users'">
-                <Button size="sm" variant="outline" :disabled="opLoadingId===u.id" @click="sendReset(u)">
-                  {{ t('auth.forgotPassword.send') || '重置密码' }}
-                </Button>
-                <Button size="sm" variant="outline" class="ml-2" @click="openChat(u)">
-                  {{ t('shared.chat.open') || '聊天' }}
-                </Button>
-                <Button size="sm" variant="outline" class="ml-2" @click="openAudit(u)">
-                  {{ t('admin.student360.auditAiVoice') || 'AI/口语审计' }}
-                </Button>
-              </template>
-              <template v-else>
-                <Button size="sm" variant="outline" @click="openDetail(u.id)">
-                  {{ t('common.view') || '查看' }}
-                </Button>
-                <Button size="sm" variant="outline" class="ml-2" @click="openChat(u)">
-                  {{ t('shared.chat.open') || '聊天' }}
-                </Button>
-                <Button size="sm" variant="outline" class="ml-2" @click="openAudit(u)">
-                  {{ t('admin.student360.auditAiVoice') || 'AI/口语审计' }}
-                </Button>
-              </template>
+              <div class="inline-flex justify-end">
+                <div class="relative" @click.stop :ref="(el: Element | ComponentPublicInstance | null) => setMenuButtonRef((el as HTMLElement) ?? null, String(u.id))">
+                  <Button size="sm" variant="ghost" @click="toggleRowMenu(String(u.id))">
+                    <ellipsis-vertical-icon class="w-4 h-4" />
+                  </Button>
+                  <teleport to="body">
+                    <div
+                      v-if="showRowMenu === String(u.id)"
+                      class="fixed z-[9999] rounded-2xl shadow-lg popover-glass border border-white/25 dark:border-white/10 overflow-y-auto no-scrollbar p-1"
+                      :style="{ left: menuPos.left + 'px', top: menuPos.top + 'px', width: menuPos.width + 'px', maxHeight: '220px' }"
+                      @click.stop
+                    >
+                      <div class="py-1 space-y-1">
+                        <Button v-if="canOpenDetail(u)" variant="menu" size="sm" class="w-full justify-start gap-2" @click="onMenuView(u)">
+                          <eye-icon class="w-4 h-4" />
+                          {{ t('common.view') || '查看' }}
+                        </Button>
+                        <Button variant="menu" size="sm" class="w-full justify-start gap-2" @click="onMenuChat(u)">
+                          <chat-bubble-left-icon class="w-4 h-4" />
+                          {{ t('shared.chat.open') || '聊天' }}
+                        </Button>
+                        <Button variant="menu" size="sm" class="w-full justify-start gap-2" @click="onMenuAudit(u)">
+                          <shield-check-icon class="w-4 h-4" />
+                          {{ t('admin.student360.auditAiVoice') || 'AI/口语审计' }}
+                        </Button>
+                        <template v-if="mode === 'users'">
+                          <hr class="my-1 border-white/10" />
+                          <Button variant="menu" size="sm" class="w-full justify-start gap-2" :disabled="opLoadingId===u.id" @click="onMenuReset(u)">
+                            <arrow-path-icon class="w-4 h-4" />
+                            {{ t('auth.forgotPassword.send') || '重置密码' }}
+                          </Button>
+                        </template>
+                      </div>
+                    </div>
+                  </teleport>
+                </div>
+              </div>
             </td>
           </tr>
 
@@ -163,7 +183,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, reactive, ref, watch } from 'vue'
+import { computed, nextTick, onMounted, onUnmounted, reactive, ref, watch, type ComponentPublicInstance } from 'vue'
 import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import Card from '@/components/ui/Card.vue'
@@ -175,7 +195,7 @@ import GlassPopoverSelect from '@/components/ui/filters/GlassPopoverSelect.vue'
 import GlassModal from '@/components/ui/GlassModal.vue'
 import GlassInput from '@/components/ui/inputs/GlassInput.vue'
 import GlassTable from '@/components/ui/tables/GlassTable.vue'
-import { PlusIcon } from '@heroicons/vue/24/outline'
+import { ArrowPathIcon, ChatBubbleLeftIcon, EllipsisVerticalIcon, EyeIcon, PlusIcon, ShieldCheckIcon } from '@heroicons/vue/24/outline'
 import { adminApi, type AdminUserCreateRequest, type AdminUserListItem } from '@/api/admin.api'
 import { useUIStore } from '@/stores/ui'
 import { useChatStore } from '@/stores/chat'
@@ -216,6 +236,10 @@ const total = ref(0)
 const totalPages = ref(1)
 
 const opLoadingId = ref<number | null>(null)
+const showRowMenu = ref<string | null>(null)
+const menuButtonMap = new Map<string, HTMLElement>()
+const menuPos = ref({ left: 0, top: 0, width: 168 })
+let followHandler: (() => void) | null = null
 
 const showRoleColumn = computed(() => props.mode === 'users')
 const showActions = computed(() => true)
@@ -298,9 +322,33 @@ async function sendReset(u: AdminUserListItem) {
   }
 }
 
-function openDetail(id: number) {
+function buildFullName(u: AdminUserListItem) {
+  const first = String((u as any).firstName || '').trim()
+  const last = String((u as any).lastName || '').trim()
+  const joined = `${last}${first}`.trim()
+  return joined || ''
+}
+
+function formatDateTime(v?: string) {
+  if (!v) return '-'
+  const d = new Date(v)
+  if (Number.isNaN(d.getTime())) return String(v)
+  return d.toLocaleString()
+}
+
+function canOpenDetail(u: AdminUserListItem) {
+  if (props.mode === 'students' || props.mode === 'teachers') return true
+  const role = String(u.role || '').toLowerCase()
+  return role === 'student' || role === 'teacher'
+}
+
+function openDetailByUser(u: AdminUserListItem) {
+  const id = Number(u.id)
   if (props.mode === 'students') return router.push(`/admin/students/${id}`)
   if (props.mode === 'teachers') return router.push(`/admin/teachers/${id}`)
+  const role = String(u.role || '').toLowerCase()
+  if (role === 'student') return router.push(`/admin/students/${id}`)
+  if (role === 'teacher') return router.push(`/admin/teachers/${id}`)
 }
 
 /**
@@ -308,12 +356,89 @@ function openDetail(id: number) {
  */
 function openChat(u: AdminUserListItem) {
   const name = String(u.nickname || u.username || `#${u.id}`)
-  chat.openChat(u.id, name, null)
+  const avatar = String((u as any).avatar || '')
+  chat.openChat(u.id, name, null, avatar || null)
 }
 
 function openAudit(u: AdminUserListItem) {
   const name = String(u.nickname || u.username || `#${u.id}`)
   router.push({ path: `/admin/audit/${u.id}`, query: { name } })
+}
+
+function setMenuButtonRef(el: HTMLElement | null, id: string) {
+  if (!id) return
+  if (el) menuButtonMap.set(id, el)
+  else menuButtonMap.delete(id)
+}
+
+function computeMenuPos(id: string) {
+  const btn = menuButtonMap.get(id)
+  if (!btn) return
+  const rect = btn.getBoundingClientRect()
+  const margin = 6
+  const viewportW = window.innerWidth
+  const viewportH = window.innerHeight
+  const minWidth = 168
+  const preferredWidth = Math.max(minWidth, rect.width)
+  let left = rect.right - preferredWidth
+  left = Math.max(8, Math.min(left, viewportW - preferredWidth - 8))
+  let top = rect.bottom + margin
+  const estimatedMenuH = 180
+  if (top + estimatedMenuH > viewportH - 8) top = Math.max(8, rect.top - margin - estimatedMenuH)
+  menuPos.value = { left, top, width: preferredWidth }
+}
+
+function bindMenuFollowHandler() {
+  if (followHandler) return
+  followHandler = () => {
+    if (!showRowMenu.value) return
+    computeMenuPos(showRowMenu.value)
+  }
+  window.addEventListener('scroll', followHandler, { passive: true })
+  window.addEventListener('resize', followHandler, { passive: true })
+}
+
+function unbindMenuFollowHandler() {
+  if (!followHandler) return
+  window.removeEventListener('scroll', followHandler)
+  window.removeEventListener('resize', followHandler)
+  followHandler = null
+}
+
+function closeRowMenu() {
+  showRowMenu.value = null
+}
+
+function toggleRowMenu(id: string) {
+  if (showRowMenu.value === id) {
+    closeRowMenu()
+    return
+  }
+  showRowMenu.value = id
+  nextTick(() => {
+    computeMenuPos(id)
+    bindMenuFollowHandler()
+  })
+}
+
+function onMenuView(u: AdminUserListItem) {
+  closeRowMenu()
+  openDetailByUser(u)
+}
+
+function onMenuChat(u: AdminUserListItem) {
+  closeRowMenu()
+  openChat(u)
+}
+
+function onMenuAudit(u: AdminUserListItem) {
+  closeRowMenu()
+  openAudit(u)
+}
+
+function onMenuReset(u: AdminUserListItem) {
+  closeRowMenu()
+  sendReset(u)
 }
 
 // Create modal
@@ -357,6 +482,21 @@ watch(() => [props.keyword, props.status, props.roleFixed], () => {
   reload()
 })
 
-onMounted(reload)
+const handleDocClick = () => closeRowMenu()
+
+onMounted(() => {
+  reload()
+  document.addEventListener('click', handleDocClick)
+})
+
+onUnmounted(() => {
+  document.removeEventListener('click', handleDocClick)
+  unbindMenuFollowHandler()
+})
+
+watch(showRowMenu, (v) => {
+  if (v) bindMenuFollowHandler()
+  else unbindMenuFollowHandler()
+})
 </script>
 

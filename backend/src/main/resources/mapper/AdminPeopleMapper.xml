@@ -11,6 +11,13 @@
           AND e.status IN ('active', 'completed')
     </select>
 
+    <select id="avgEnrollmentProgress" resultType="double">
+        SELECT AVG(e.progress)
+        FROM enrollments e
+        WHERE e.student_id = #{studentId}
+          AND e.status IN ('active', 'completed')
+    </select>
+
     <select id="avgGradePercentage" resultType="double">
         SELECT AVG(g.percentage)
         FROM grades g
@@ -28,6 +35,49 @@
         SELECT COUNT(1)
         FROM ability_reports r
         WHERE r.student_id = #{studentId}
+    </select>
+
+    <select id="listStudentCourses" resultType="com.noncore.assessment.dto.response.admin.AdminStudentCourseItemResponse">
+        SELECT c.id                                                        AS id,
+               c.title                                                     AS title,
+               e.progress                                                  AS progress,
+               e.status                                                    AS status,
+               DATE_FORMAT(e.last_access_time, '%Y-%m-%d %H:%i:%s')       AS lastAccessTime
+        FROM enrollments e
+                 INNER JOIN courses c ON c.id = e.course_id
+        WHERE e.student_id = #{studentId}
+          AND c.deleted = false
+          AND e.status IN ('active', 'completed')
+        ORDER BY COALESCE(e.last_access_time, e.updated_at, e.created_at) DESC, e.id DESC
+    </select>
+
+    <select id="listStudentRecentEvents" resultType="com.noncore.assessment.dto.response.admin.AdminStudentRecentEventResponse">
+        SELECT CASE
+                   WHEN e.event_type IN ('assignment_submit', 'assignment_resubmit') THEN 'submission'
+                   WHEN e.event_type IN ('ai_question', 'ai_follow_up') THEN 'ai'
+                   WHEN e.event_type = 'community_ask' THEN 'community_ask'
+                   WHEN e.event_type = 'community_answer' THEN 'community_answer'
+                   WHEN e.event_type IN ('voice_practice_turn', 'voice_practice_audio_replay') THEN 'lesson'
+                   WHEN e.event_type = 'feedback_view' THEN 'visit'
+                   ELSE 'visit'
+                   END                                                       AS eventType,
+               COALESCE(JSON_UNQUOTE(JSON_EXTRACT(e.metadata, '$.title')),
+                        JSON_UNQUOTE(JSON_EXTRACT(e.metadata, '$.name')),
+                        JSON_UNQUOTE(JSON_EXTRACT(e.metadata, '$.text')),
+                        '')                                                  AS title,
+               e.course_id                                                   AS courseId,
+               c.title                                                       AS courseTitle,
+               DATE_FORMAT(e.occurred_at, '%Y-%m-%d %H:%i:%s')              AS occurredAt,
+               CAST(JSON_UNQUOTE(JSON_EXTRACT(e.metadata, '$.durationSeconds')) AS SIGNED) AS durationSeconds,
+               JSON_UNQUOTE(JSON_EXTRACT(e.metadata, '$.link'))              AS link
+        FROM behavior_events e
+                 LEFT JOIN courses c ON c.id = e.course_id
+        WHERE e.student_id = #{studentId}
+        <if test="courseId != null">
+            AND e.course_id = #{courseId}
+        </if>
+        ORDER BY e.occurred_at DESC, e.id DESC
+            LIMIT #{limit}
     </select>
 
     <select id="countCoursesByTeacher" resultType="long">
