@@ -159,6 +159,17 @@
         "uploadFailedTitle": "Upload Failed"
       }
     },
+    "course": {
+      "fields": {
+        "category": "Category",
+        "difficulty": "Difficulty"
+      },
+      "difficultyMap": {
+        "beginner": "Beginner",
+        "intermediate": "Intermediate",
+        "advanced": "Advanced"
+      }
+    },
     "community": {
       "title": "Community",
       "subtitle": "Share, ask, and grow together.",
@@ -593,6 +604,10 @@
         "scoring": "Scoring logic"
       },
       "insights": {
+        "labels": {
+          "analysis": "Analysis",
+          "suggestion": "Suggestion"
+        },
         "na": "N/A",
         "delta": {
           "up": "+{value}",

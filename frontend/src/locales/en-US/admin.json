@@ -105,12 +105,14 @@
       }
     },
     "people": {
-      "hint": "One filter set for all tabs; Users tab supports creation and role updates.",
+      "hint": "One filter set for all tabs.",
+      "gotoCourseGrades": "View grades by course",
       "tabSelectorLabel": "Person Type",
       "statusLabel": "Status",
       "allStatus": "All status",
       "allRoles": "All roles",
       "fields": {
+        "fullName": "Full name",
         "nickname": "Nickname",
         "studentNo": "Student No",
         "teacherNo": "Teacher No",
@@ -125,6 +127,7 @@
       "studentIdOptional": "studentId(optional)",
       "postIdOptional": "postId(optional)",
       "reportType": "Type",
+      "abilityReportTitle": "Report",
       "score": "Score",
       "createdAt": "Created",
       "recommendations": "Recommendations",
@@ -147,12 +150,20 @@
       "quickNav": "Quick actions",
       "actions": "Actions",
       "viewStudent": "View profile",
+      "viewNotes": "View notes",
+      "exportAllData": "Export all",
+      "exportAllCourseData": "Export course ZIP",
+      "pickStudent": "Set as target",
       "contentTitle": "Course content",
       "tabs": {
         "content": "Content",
+        "contentDesc": "Chapters & resources",
         "students": "Students",
+        "studentsDesc": "Performance & profile",
         "grades": "Grades",
+        "gradesDesc": "Analytics & export",
         "reports": "Reports"
+        ,"reportsDesc": "Ability & history"
       },
       "gradesStatsTitle": "Grade stats",
       "avgScore": "Average",
@@ -162,6 +173,18 @@
       "gradeDistTitle": "Grade distribution",
       "gradeDistSubtitle": "Bucketed distribution returned by backend.",
       "reportsTitle": "Ability reports",
+      "reports": {
+        "assignment": "Assignment",
+        "unlinked": "Unlinked assignment",
+        "viewerTitle": "Ability report",
+        "actions": {
+          "view": "View",
+          "exportSubmissionZip": "Export submission ZIP",
+          "downloadJson": "Download JSON",
+          "downloadPdf": "Download PDF",
+          "downloadPng": "Download PNG"
+        }
+      },
       "tipsTitle": "Tips",
       "tip1": "More specific filters make the overview closer to your task.",
       "tip2": "For complex analytics (teacher/category/difficulty), consider adding backend aggregation endpoints."
@@ -253,6 +276,9 @@
       "exportCsv": "Export CSV",
       "exportPdf": "Export PDF",
       "exportZip": "Export ZIP",
+      "exportJson": "Export JSON",
+      "exportMd": "Export MD",
+      "exportTranscript": "Export transcript",
       "download": "Download",
       "openFilters": "Open filters",
       "tipsTitle": "Tips",
@@ -264,6 +290,8 @@
       "courseContext": "Course context",
       "panels": "Panels",
       "auditAiVoice": "AI & voice audit",
+      "aiChat": "AI chats",
+      "voice": "Voice practice",
       "tabs": {
         "grades": "Grades",
         "ability": "Radar & reports",

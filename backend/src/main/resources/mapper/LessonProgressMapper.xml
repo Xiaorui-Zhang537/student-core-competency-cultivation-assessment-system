@@ -304,4 +304,65 @@
              ) main
     </select>
 
+    <!-- 管理员：课程课堂笔记分页（仅 notes 非空） -->
+    <select id="selectAdminCourseLessonNotes" resultType="com.noncore.assessment.dto.response.admin.AdminLessonNoteListItemResponse">
+        SELECT
+            lp.lesson_id AS lessonId,
+            l.title AS lessonTitle,
+            c.title AS chapterTitle,
+            lp.student_id AS studentId,
+            COALESCE(u.nickname, u.username) AS studentName,
+            u.student_no AS studentNo,
+            lp.notes AS notes,
+            lp.updated_at AS updatedAt
+        FROM lesson_progress lp
+        JOIN lessons l ON lp.lesson_id = l.id
+        LEFT JOIN chapters c ON l.chapter_id = c.id
+        JOIN users u ON lp.student_id = u.id
+        WHERE l.course_id = #{courseId}
+          AND (lp.status IS NULL OR lp.status != 'deleted')
+          AND lp.notes IS NOT NULL AND lp.notes != ''
+        <if test="studentId != null">
+            AND lp.student_id = #{studentId}
+        </if>
+        <if test="lessonId != null">
+            AND lp.lesson_id = #{lessonId}
+        </if>
+        <if test="q != null and q != ''">
+            AND (
+              lp.notes LIKE CONCAT('%', #{q}, '%')
+              OR u.username LIKE CONCAT('%', #{q}, '%')
+              OR u.nickname LIKE CONCAT('%', #{q}, '%')
+              OR u.student_no LIKE CONCAT('%', #{q}, '%')
+            )
+        </if>
+        ORDER BY lp.updated_at DESC
+        LIMIT #{size} OFFSET #{offset}
+    </select>
+
+    <select id="countAdminCourseLessonNotes" resultType="long">
+        SELECT COUNT(1)
+        FROM lesson_progress lp
+        JOIN lessons l ON lp.lesson_id = l.id
+        LEFT JOIN chapters c ON l.chapter_id = c.id
+        JOIN users u ON lp.student_id = u.id
+        WHERE l.course_id = #{courseId}
+          AND (lp.status IS NULL OR lp.status != 'deleted')
+          AND lp.notes IS NOT NULL AND lp.notes != ''
+        <if test="studentId != null">
+            AND lp.student_id = #{studentId}
+        </if>
+        <if test="lessonId != null">
+            AND lp.lesson_id = #{lessonId}
+        </if>
+        <if test="q != null and q != ''">
+            AND (
+              lp.notes LIKE CONCAT('%', #{q}, '%')
+              OR u.username LIKE CONCAT('%', #{q}, '%')
+              OR u.nickname LIKE CONCAT('%', #{q}, '%')
+              OR u.student_no LIKE CONCAT('%', #{q}, '%')
+            )
+        </if>
+    </select>
+
 </mapper>

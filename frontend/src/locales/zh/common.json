@@ -1,0 +1,25 @@
+{
+  "common": {
+    "back": "返回",
+    "loading": "加载中...",
+    "error": "错误",
+    "retry": "重试",
+    "refresh": "刷新",
+    "search": "搜索",
+    "close": "关闭",
+    "all": "全部",
+    "empty": "暂无数据",
+    "preview": "预览",
+    "download": "下载",
+    "total": "总数",
+    "count": "数量",
+    "optional": "可选",
+    "enabled": "开启",
+    "disabled": "关闭",
+    "columns": {
+      "id": "ID",
+      "actions": "操作"
+    }
+  }
+}
+

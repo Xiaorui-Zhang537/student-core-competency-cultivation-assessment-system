@@ -23,6 +23,7 @@ public class AdminUserListItemResponse {
     private String status;
     private String avatar;
     private String nickname;
+    private String mbti;
     private String firstName;
     private String lastName;
     private String studentNo;

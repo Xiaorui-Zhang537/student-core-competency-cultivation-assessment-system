@@ -375,6 +375,29 @@ public class LessonController extends BaseController {
     }
 
     /**
+     * 管理员/教师读取指定学生在该节次的笔记（只读）。
+     */
+    @GetMapping("/{lessonId}/notes/by-student")
+    @PreAuthorize("hasRole('TEACHER') or hasRole('ADMIN')")
+    @Operation(summary = "教师/管理员获取指定学生章节笔记", description = "用于审计与导出：读取 studentId 在 lessonId 下的 notes")
+    public ResponseEntity<ApiResponse<Map<String, Object>>> getLessonNotesByStudent(
+            @PathVariable Long lessonId,
+            @RequestParam Long studentId
+    ) {
+        if (studentId == null || studentId <= 0) {
+            throw new BusinessException(ErrorCode.INVALID_PARAMETER, "studentId 不能为空");
+        }
+        LessonProgress progress = lessonService.getStudentProgress(studentId, lessonId);
+        String notes = (progress == null || progress.getNotes() == null) ? "" : progress.getNotes();
+        java.util.Map<String, Object> data = new java.util.HashMap<>();
+        data.put("studentId", studentId);
+        data.put("lessonId", lessonId);
+        data.put("notes", notes);
+        data.put("updatedAt", progress == null ? null : progress.getUpdatedAt());
+        return ResponseEntity.ok(ApiResponse.success(data));
+    }
+
+    /**
      * 添加章节笔记
      */
     @PostMapping("/{lessonId}/notes")

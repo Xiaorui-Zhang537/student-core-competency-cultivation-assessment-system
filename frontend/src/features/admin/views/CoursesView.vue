@@ -1,54 +1,51 @@
 <template>
   <div class="p-6">
-    <PageHeader :title="t('admin.sidebar.courses')" :subtitle="t('admin.title')" />
-
-    <filter-bar tint="secondary" align="center" :dense="false" class="mt-4 mb-2 rounded-full h-19">
-      <template #left>
-        <div class="flex items-center gap-3 flex-wrap">
-          <div class="w-72">
-            <glass-search-input v-model="query" :placeholder="String(t('common.search') || '搜索课程标题/教师')" size="sm" tint="info" />
-          </div>
-          <div class="w-auto flex items-center gap-2">
-            <span class="text-xs font-medium leading-tight text-subtle">{{ t('admin.courses.statusLabel') || '状态' }}</span>
-            <div class="w-44">
-              <glass-popover-select
-                :model-value="status"
-                :options="statusOptions"
-                size="sm"
-                tint="secondary"
-                @update:modelValue="(v: any) => (status = v)"
-              />
-            </div>
-          </div>
-        </div>
-      </template>
-      <template #right>
-        <Button size="sm" variant="outline" :disabled="loading" @click="reload">{{ String(t('common.search') || '查询') }}</Button>
-      </template>
-    </filter-bar>
+    <div class="mb-4">
+      <nav class="flex items-center space-x-2 text-sm text-gray-500 dark:text-gray-400 mb-2">
+        <router-link to="/admin/people" class="hover:text-gray-700 dark:hover:text-gray-200">
+          {{ t('admin.sidebar.people') || '数据中心' }}
+        </router-link>
+        <ChevronRightIcon class="w-4 h-4" />
+        <span>{{ t('admin.sidebar.courses') || '课程总览' }}</span>
+      </nav>
+      <PageHeader :title="t('admin.sidebar.courses')" :subtitle="t('admin.title')" />
+    </div>
 
     <div class="mt-4">
       <loading-overlay v-if="statsLoading" :text="String(t('common.loading') || '加载中…')" />
       <admin-kpi-row v-else :items="statsKpis" />
     </div>
 
-    <div v-if="!statsLoading" class="mt-4 grid grid-cols-1 lg:grid-cols-3 gap-6">
-      <admin-distribution-panel
-        class="lg:col-span-2"
-        :title="t('admin.courses.statusDistTitle') || '课程状态分布'"
-        :subtitle="t('admin.courses.statusDistSubtitle') || '基于当前搜索条件（query）统计 totals，便于快速判断整体结构'"
-        tint="accent"
-        :data="statusPie"
-        height="320px"
-      />
-      <card padding="md" tint="secondary">
-        <div class="text-sm font-medium mb-2">{{ t('admin.courses.tipsTitle') || '提示' }}</div>
-        <div class="text-xs text-subtle space-y-2">
-          <div>{{ t('admin.courses.tip1') || '筛选条件越具体，分布图与概览卡片越贴近当前任务。' }}</div>
-          <div>{{ t('admin.courses.tip2') || '如需更复杂的统计（按教师/分类/难度），建议后端增加聚合接口。' }}</div>
+    <!-- filters (under KPI cards) -->
+    <filter-bar tint="secondary" align="center" :dense="false" class="mt-4 mb-2 rounded-full h-19">
+      <template #left>
+        <div class="flex items-center gap-3 flex-wrap">
+          <div class="w-auto flex items-center gap-2">
+            <span class="text-xs font-medium leading-tight text-subtle">{{ t('admin.courses.statusLabel') || '状态' }}</span>
+            <div class="w-44">
+              <glass-popover-select v-model="status" :options="statusOptions" size="sm" tint="secondary" />
+            </div>
+          </div>
+
+          <div class="w-auto flex items-center gap-2">
+            <span class="text-xs font-medium leading-tight text-subtle">{{ t('shared.course.fields.difficulty') || '难度' }}</span>
+            <div class="w-44">
+              <glass-popover-select v-model="difficulty" :options="difficultyOptions" size="sm" tint="secondary" />
+            </div>
+          </div>
         </div>
-      </card>
-    </div>
+      </template>
+      <template #right>
+        <div class="w-72">
+          <glass-search-input
+            v-model="query"
+            :placeholder="String(t('common.search') || '搜索课程标题/教师')"
+            size="sm"
+            tint="info"
+          />
+        </div>
+      </template>
+    </filter-bar>
 
     <loading-overlay v-if="loading" class="mt-4" :text="String(t('common.loading') || '加载中…')" />
     <error-state
@@ -70,39 +67,71 @@
             <th class="px-6 py-3 text-left text-xs font-semibold text-gray-700 dark:text-gray-200 tracking-wide">
               {{ t('admin.sidebar.courses') }}
             </th>
-            <th class="px-6 py-3 text-left text-xs font-semibold text-gray-700 dark:text-gray-200 tracking-wide whitespace-nowrap">
+            <th class="px-6 py-3 text-center text-xs font-semibold text-gray-700 dark:text-gray-200 tracking-wide whitespace-nowrap">
               {{ t('common.columns.teacher') || 'Teacher' }}
             </th>
             <th class="px-6 py-3 text-center text-xs font-semibold text-gray-700 dark:text-gray-200 tracking-wide whitespace-nowrap">
               {{ t('common.columns.status') || 'Status' }}
             </th>
-            <th class="px-6 py-3 text-left text-xs font-semibold text-gray-700 dark:text-gray-200 tracking-wide whitespace-nowrap">
+            <th class="px-6 py-3 text-center text-xs font-semibold text-gray-700 dark:text-gray-200 tracking-wide whitespace-nowrap hidden xl:table-cell">
+              {{ t('shared.course.fields.category') || '类别' }}
+            </th>
+            <th class="px-6 py-3 text-center text-xs font-semibold text-gray-700 dark:text-gray-200 tracking-wide whitespace-nowrap hidden xl:table-cell">
+              {{ t('shared.course.fields.difficulty') || '难度' }}
+            </th>
+            <th class="px-6 py-3 text-center text-xs font-semibold text-gray-700 dark:text-gray-200 tracking-wide whitespace-nowrap hidden xl:table-cell">
+              {{ t('common.columns.createdAt') || '创建时间' }}
+            </th>
+            <th class="px-6 py-3 text-center text-xs font-semibold text-gray-700 dark:text-gray-200 tracking-wide whitespace-nowrap">
               {{ t('common.columns.student') || 'Students' }}
+            </th>
+            <th class="px-6 py-3 text-center text-xs font-semibold text-gray-700 dark:text-gray-200 tracking-wide whitespace-nowrap">
+              {{ t('common.columns.actions') || '操作' }}
             </th>
           </tr>
         </template>
 
         <template #body>
           <tr v-for="c in items" :key="c.id" class="hover:bg-white/10 transition-colors duration-150">
-            <td class="px-6 py-3 text-center font-mono text-xs">{{ c.id }}</td>
-            <td class="px-6 py-3">
+            <td class="px-6 py-3 text-center font-mono text-xs align-middle">{{ c.id }}</td>
+            <td class="px-6 py-3 align-middle">
               <div class="font-medium">{{ c.title }}</div>
               <div class="text-xs text-subtle line-clamp-1">{{ c.description }}</div>
             </td>
-            <td class="px-6 py-3 text-sm">
+            <td class="px-6 py-3 text-sm text-center align-middle">
               {{ (c as any).teacherName || (c as any).teacher?.nickname || (c as any).teacher?.username || '-' }}
             </td>
-            <td class="px-6 py-3 text-sm text-center">{{ c.status }}</td>
-            <td class="px-6 py-3 text-sm">
-              <div class="flex items-center justify-between gap-2">
-                <span>{{ (c as any).enrollmentCount ?? (c as any).studentCount ?? '-' }}</span>
-                <Button size="sm" variant="outline" @click="router.push(`/admin/courses/${c.id}`)">{{ t('common.view') || '查看' }}</Button>
-              </div>
+            <td class="px-6 py-3 text-sm text-center align-middle">
+              <badge size="sm" :variant="statusVariant(c.status)">{{ statusLabel(c.status) }}</badge>
+            </td>
+            <td class="px-6 py-3 text-sm text-center hidden xl:table-cell align-middle">
+              <badge v-if="(c as any).category" size="sm" :variant="getCategoryVariant(String((c as any).category))">
+                {{ localizeCategory((c as any).category, t) }}
+              </badge>
+              <span v-else class="text-subtle">-</span>
+            </td>
+            <td class="px-6 py-3 text-sm text-center hidden xl:table-cell align-middle">
+              <badge v-if="(c as any).difficulty" size="sm" :variant="getDifficultyVariant(String((c as any).difficulty))">
+                {{ localizeDifficulty((c as any).difficulty, t) }}
+              </badge>
+              <span v-else class="text-subtle">-</span>
+            </td>
+            <td class="px-6 py-3 text-xs text-subtle text-center hidden xl:table-cell align-middle">
+              {{ formatDateTime((c as any).createdAt) }}
+            </td>
+            <td class="px-6 py-3 text-sm text-center align-middle">
+              {{ (c as any).enrollmentCount ?? (c as any).studentCount ?? '-' }}
+            </td>
+            <td class="px-6 py-3 text-center align-middle">
+              <Button size="sm" variant="primary" @click="router.push(`/admin/courses/${c.id}`)">
+                <EyeIcon class="w-4 h-4 mr-2" />
+                {{ t('common.view') || '查看' }}
+              </Button>
             </td>
           </tr>
 
           <tr v-if="items.length === 0">
-            <td colspan="5" class="px-6 py-6">
+            <td colspan="9" class="px-6 py-6">
               <empty-state :title="String(t('common.empty') || '暂无数据')" />
             </td>
           </tr>
@@ -123,10 +152,11 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, ref } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import Card from '@/components/ui/Card.vue'
 import Button from '@/components/ui/Button.vue'
+import Badge from '@/components/ui/Badge.vue'
 import ErrorState from '@/components/ui/ErrorState.vue'
 import EmptyState from '@/components/ui/EmptyState.vue'
 import PaginationBar from '@/components/ui/PaginationBar.vue'
@@ -137,10 +167,11 @@ import { adminApi } from '@/api/admin.api'
 import type { Course } from '@/types/course'
 import AdminKpiRow from '@/features/admin/components/AdminKpiRow.vue'
 import { useAdminCounts } from '@/features/admin/composables/useAdminCounts'
-import { AcademicCapIcon } from '@heroicons/vue/24/outline'
-import AdminDistributionPanel from '@/features/admin/components/AdminDistributionPanel.vue'
+import { AcademicCapIcon, ChevronRightIcon, EyeIcon } from '@heroicons/vue/24/outline'
 import FilterBar from '@/components/ui/filters/FilterBar.vue'
 import { useRouter } from 'vue-router'
+import { getCategoryVariant, getDifficultyVariant } from '@/shared/utils/badgeColor'
+import { localizeCategory, localizeDifficulty } from '@/shared/utils/localize'
 
 const { t } = useI18n()
 const counts = useAdminCounts()
@@ -156,6 +187,7 @@ const totalPages = ref(1)
 
 const query = ref<string>('')
 const status = ref<string>('') // '' 表示全部
+const difficulty = ref<string>('') // '' 表示全部
 
 const statusOptions = [
   { label: String(t('common.all') || 'All'), value: '' },
@@ -164,22 +196,28 @@ const statusOptions = [
   { label: String(t('admin.courseStatus.archived') || 'archived'), value: 'archived' },
 ]
 
+const difficultyOptions = computed(() => ([
+  { label: String(t('common.all') || 'All'), value: '' },
+  { label: String(t('shared.course.difficultyMap.beginner') || 'beginner'), value: 'beginner' },
+  { label: String(t('shared.course.difficultyMap.intermediate') || 'intermediate'), value: 'intermediate' },
+  { label: String(t('shared.course.difficultyMap.advanced') || 'advanced'), value: 'advanced' },
+]))
+
 const statsLoading = ref(false)
 const stats = ref<{ total: number; draft: number; published: number; archived: number }>({ total: 0, draft: 0, published: 0, archived: 0 })
 
 const statsKpis = ref<any[]>([])
 
-const statusPie = ref<{ name: string; value: number }[]>([])
-
 async function reloadStats() {
   statsLoading.value = true
   try {
     const q = query.value || undefined
+    const diff = difficulty.value || undefined
     const [total, draft, published, archived] = await Promise.all([
-      counts.countCourses({ query: q }),
-      counts.countCourses({ query: q, status: 'draft' }),
-      counts.countCourses({ query: q, status: 'published' }),
-      counts.countCourses({ query: q, status: 'archived' }),
+      counts.countCourses({ query: q, difficulty: diff }),
+      counts.countCourses({ query: q, difficulty: diff, status: 'draft' }),
+      counts.countCourses({ query: q, difficulty: diff, status: 'published' }),
+      counts.countCourses({ query: q, difficulty: diff, status: 'archived' }),
     ])
     stats.value = { total, draft, published, archived }
     statsKpis.value = [
@@ -188,20 +226,42 @@ async function reloadStats() {
       { label: t('admin.courseStatus.published') || 'published', value: published, tint: 'success', icon: AcademicCapIcon },
       { label: t('admin.courseStatus.archived') || 'archived', value: archived, tint: 'warning', icon: AcademicCapIcon },
     ]
-    statusPie.value = [
-      { name: t('admin.courseStatus.draft') || 'draft', value: draft },
-      { name: t('admin.courseStatus.published') || 'published', value: published },
-      { name: t('admin.courseStatus.archived') || 'archived', value: archived },
-    ]
   } catch {
     // KPI 失败不阻塞列表
     statsKpis.value = [
       { label: t('admin.kpi.totalCourses') || '课程总数', value: '-', tint: 'info', icon: AcademicCapIcon },
     ]
-    statusPie.value = []
   } finally {
     statsLoading.value = false
   }
+}
+
+function normalizeStatus(v: any): string {
+  const s = String(v || '').trim()
+  return s.toLowerCase()
+}
+
+function statusLabel(v: any): string {
+  const s = normalizeStatus(v)
+  if (s === 'draft') return String(t('admin.courseStatus.draft') || 'draft')
+  if (s === 'published') return String(t('admin.courseStatus.published') || 'published')
+  if (s === 'archived') return String(t('admin.courseStatus.archived') || 'archived')
+  return String(v || '-')
+}
+
+function statusVariant(v: any) {
+  const s = normalizeStatus(v)
+  if (s === 'published') return 'success'
+  if (s === 'draft') return 'secondary'
+  if (s === 'archived') return 'warning'
+  return 'info'
+}
+
+function formatDateTime(v?: string) {
+  if (!v) return '-'
+  const d = new Date(v)
+  if (Number.isNaN(d.getTime())) return String(v)
+  return d.toLocaleDateString()
 }
 
 async function reload() {
@@ -213,6 +273,7 @@ async function reload() {
       size: pageSize.value,
       query: query.value || undefined,
       status: status.value || undefined,
+      difficulty: difficulty.value || undefined,
     })
     items.value = (res?.items || []) as Course[]
     total.value = Number(res?.total || 0)
@@ -226,6 +287,15 @@ async function reload() {
   }
 }
 
-onMounted(reload)
+let debounceTimer: any = null
+watch([query, status, difficulty], () => {
+  page.value = 1
+  if (debounceTimer) clearTimeout(debounceTimer)
+  debounceTimer = setTimeout(() => reload(), 250)
+})
+
+onMounted(() => {
+  reload()
+})
 </script>
 

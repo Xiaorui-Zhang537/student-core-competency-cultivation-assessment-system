@@ -156,6 +156,17 @@
         "uploadFailedTitle": "上传失败"
       }
     },
+    "course": {
+      "fields": {
+        "category": "类别",
+        "difficulty": "难度"
+      },
+      "difficultyMap": {
+        "beginner": "入门",
+        "intermediate": "进阶",
+        "advanced": "高级"
+      }
+    },
     "community": {
       "title": "学习社区",
       "subtitle": "一起讨论、一起进步，把灵感留在这里。",
@@ -593,6 +604,10 @@
         "scoring": "评分逻辑"
       },
       "insights": {
+        "labels": {
+          "analysis": "分析",
+          "suggestion": "建议"
+        },
         "na": "—",
         "delta": {
           "up": "+{value}",

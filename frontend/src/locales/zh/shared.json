@@ -1,0 +1,89 @@
+{
+  "shared": {
+    "course": {
+      "fields": {
+        "category": "类别",
+        "difficulty": "难度"
+      }
+    },
+    "radarLegend": {
+      "labels": {
+        "title": "五维能力说明",
+        "expandAll": "全部展开",
+        "collapseAll": "全部收起",
+        "what": "考查内容",
+        "abilities": "展示能力",
+        "scoring": "评分逻辑"
+      },
+      "insights": {
+        "labels": {
+          "analysis": "分析",
+          "suggestion": "建议"
+        },
+        "na": "—",
+        "delta": {
+          "up": "+{value}",
+          "down": "-{value}",
+          "equal": "0"
+        },
+        "baseline": {
+          "classAvg": "班级均值",
+          "setB": "集合B"
+        },
+        "MORAL_COGNITION": {
+          "analysis": "道德认知 — 本期 {scoreA}，对比期（{baseline}）{scoreB}，变化 {delta}",
+          "suggestion": "多从原则层面反思，完善论证与反驳链条。"
+        },
+        "LEARNING_ATTITUDE": {
+          "analysis": "学习态度 — 本期 {scoreA}，对比期（{baseline}）{scoreB}，变化 {delta}",
+          "suggestion": "加强动机调节，保持专注与稳定投入。"
+        },
+        "LEARNING_ABILITY": {
+          "analysis": "学习能力 — 本期 {scoreA}，对比期（{baseline}）{scoreB}，变化 {delta}",
+          "suggestion": "多进行高阶思维练习，完成计划–监控–修订闭环。"
+        },
+        "LEARNING_METHOD": {
+          "analysis": "学习方法 — 本期 {scoreA}，对比期（{baseline}）{scoreB}，变化 {delta}",
+          "suggestion": "结合多样策略，提升深度加工与自我调节。"
+        },
+        "ACADEMIC_GRADE": {
+          "analysis": "学习成绩 — 本期 {scoreA}，对比期（{baseline}）{scoreB}，变化 {delta}",
+          "suggestion": "查缺补漏，系统复习薄弱点以巩固成绩。"
+        }
+      },
+      "dimensions": {
+        "MORAL_COGNITION": {
+          "title": "道德认知",
+          "what": "道德推理阶段、道德基础覆盖、论证与反驳链条",
+          "abilities": "原则性判断、价值权衡、批判性思维",
+          "scoring": "1A 阶段：自利/惩罚→社会规范→普世原则；1B 广度：1→2→≥3 种道德基础；1C 论证：无依据→因果+单一反方→连贯链条+明确反驳"
+        },
+        "LEARNING_ATTITUDE": {
+          "title": "学习态度",
+          "what": "情感投入、坚持韧性、专注/心流",
+          "abilities": "动机调节、自驱力、任务专注",
+          "scoring": "2A 情感：负面→混合/中性→清晰正向；2B 坚持：放弃→一次尝试→多次调整反思；2C 专注：离题→大体聚焦→结构清晰、衔接顺畅"
+        },
+        "LEARNING_ABILITY": {
+          "title": "学习能力",
+          "what": "布鲁姆层级进展、元认知（计划–监控–修订）、迁移能力",
+          "abilities": "高阶思维、反思改进、跨域迁移",
+          "scoring": "3A 层级：记忆/理解→应用/分析→评价/创造；3B 元认知：无→1–2 阶段→完整循环与具体调整；3C 迁移：无→近迁移→清晰远迁移"
+        },
+        "LEARNING_METHOD": {
+          "title": "学习方法",
+          "what": "策略多样性、加工深度、自我调节（前-中-后）",
+          "abilities": "策略统合、深度加工、自主监控",
+          "scoring": "4A 多样性：单一→2 种弱整合→≥3 种有效结合；4B 深度：罗列/复述→有限解释→语义重构与多连接；4C 调节：无→部分→完整前-中-后与具体下一步"
+        },
+        "ACADEMIC_GRADE": {
+          "title": "学习成绩",
+          "what": "课程作业/考试成绩的总体表现（百分制归一化）",
+          "abilities": "学业达成度",
+          "scoring": "由成绩表汇总并按分数/满分归一化为 0–100，与其他四维同尺度显示"
+        }
+      }
+    }
+  }
+}
+

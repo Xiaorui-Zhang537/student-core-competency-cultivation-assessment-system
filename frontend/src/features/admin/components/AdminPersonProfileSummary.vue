@@ -8,10 +8,6 @@
           <div class="text-sm text-subtle">{{ person?.email || '-' }}</div>
           <div v-if="primaryIdValue" class="text-xs text-subtle mt-1">{{ primaryIdLabel }}: {{ primaryIdValue }}</div>
           <div class="text-xs text-subtle mt-1">{{ t('common.columns.status') || '状态' }}: {{ person?.status || '-' }}</div>
-          <div class="text-xs text-subtle mt-1">
-            {{ t('admin.people.fields.emailVerified') || '邮箱验证' }}:
-            {{ person?.emailVerified ? (t('common.yes') || '是') : (t('common.no') || '否') }}
-          </div>
         </div>
         <div class="flex flex-col gap-2 min-w-[12rem]">
           <div

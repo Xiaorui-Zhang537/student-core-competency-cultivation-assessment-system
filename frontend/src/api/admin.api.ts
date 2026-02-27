@@ -58,12 +58,17 @@ export interface AdminUserListItem {
   email: string
   role: string
   status: string
+  avatar?: string
   nickname?: string
+  mbti?: string
+  firstName?: string
+  lastName?: string
   studentNo?: string
   teacherNo?: string
   emailVerified?: boolean
   deleted?: boolean
   createdAt?: string
+  updatedAt?: string
 }
 
 export interface AdminUserCreateRequest {
@@ -85,6 +90,17 @@ export interface AdminUserCreateRequest {
 export interface AdminCourseDetailResponse {
   course: any
   activeEnrollments: number
+}
+
+export interface AdminLessonNoteListItem {
+  lessonId: number
+  lessonTitle?: string
+  chapterTitle?: string
+  studentId: number
+  studentName?: string
+  studentNo?: string
+  notes?: string
+  updatedAt?: string
 }
 
 export interface AbilityReport {
@@ -137,6 +153,12 @@ export const adminApi = {
   pageCourseStudents: (courseId: string | number, params: { page: number; size: number; search?: string; sortBy?: string; activity?: string; grade?: string; progress?: string }) => {
     return api.get(`/admin/courses/${courseId}/students`, { params })
   },
+  pageCourseLessonNotes: (
+    courseId: string | number,
+    params: { page: number; size: number; studentId?: string | number; lessonId?: string | number; q?: string }
+  ): Promise<PageResult<AdminLessonNoteListItem>> => {
+    return api.get(`/admin/courses/${courseId}/lesson-notes`, { params })
+  },
 
   pageUsers: (params: { page: number; size: number; keyword?: string; role?: string; status?: string; includeDeleted?: boolean }): Promise<PageResult<AdminUserListItem>> => {
     return api.get('/admin/users', { params })
@@ -169,6 +191,14 @@ export const adminApi = {
   exportAbilityReportsCsv: (params: any): Promise<Blob> => api.get('/admin/exports/ability-reports.csv', { params, responseType: 'blob' as any }),
   exportCourseStudentsCsv: (params: { courseId: string | number; search?: string; sortBy?: string; activity?: string; grade?: string; progress?: string }): Promise<Blob> =>
     api.get('/admin/exports/course-students.csv', { params, responseType: 'blob' as any }),
+  exportCourseLessonNotesCsv: (params: { courseId: string | number; studentId?: string | number; lessonId?: string | number; q?: string }): Promise<Blob> =>
+    api.get('/admin/exports/course-lesson-notes.csv', { params, responseType: 'blob' as any }),
+  exportCourseLessonNotesZip: (params: { courseId: string | number; studentId?: string | number; lessonId?: string | number; q?: string }): Promise<Blob> =>
+    api.get('/admin/exports/course-lesson-notes.zip', { params, responseType: 'blob' as any }),
+  exportCourseDataZip: (params: { courseId: string | number }): Promise<Blob> =>
+    api.get('/admin/exports/course-data.zip', { params, responseType: 'blob' as any }),
+  exportCourseStudentDataZip: (params: { courseId: string | number; studentId: string | number }): Promise<Blob> =>
+    api.get('/admin/exports/course-student-data.zip', { params, responseType: 'blob' as any }),
   exportAiConversationsCsv: (params: { studentId: string | number; q?: string; pinned?: boolean; archived?: boolean }): Promise<Blob> =>
     api.get('/admin/exports/ai-conversations.csv', { params, responseType: 'blob' as any }),
   exportVoiceSessionsCsv: (params: { studentId: string | number; q?: string }): Promise<Blob> =>

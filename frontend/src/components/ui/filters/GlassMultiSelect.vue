@@ -51,6 +51,7 @@
 
 <script setup lang="ts">
 import { computed, ref, onMounted, onBeforeUnmount, type CSSProperties } from 'vue'
+import Button from '@/components/ui/Button.vue'
 
 interface Option { label: string; value: string | number; disabled?: boolean }
 interface Props {
@@ -132,6 +133,10 @@ function onDocClick(e: MouseEvent) {
   if (!insideRoot && !insideMenu) open.value = false
 }
 
+function onKeydown(e: KeyboardEvent) {
+  if (e.key === 'Escape') open.value = false
+}
+
 const isChecked = (val: string | number) => checkedMap.value.get(String(val)) === true
 
 const checkboxBoxStyle = (val: string | number): CSSProperties => {
@@ -154,13 +159,14 @@ onMounted(() => {
   window.addEventListener('resize', onWindow, { passive: true })
   window.addEventListener('scroll', onWindow, { passive: true })
   document.addEventListener('click', onDocClick)
-  document.addEventListener('keydown', (e) => { if (e.key === 'Escape') open.value = false })
+  document.addEventListener('keydown', onKeydown)
 })
 
 onBeforeUnmount(() => {
   window.removeEventListener('resize', onWindow)
   window.removeEventListener('scroll', onWindow)
   document.removeEventListener('click', onDocClick)
+  document.removeEventListener('keydown', onKeydown)
 })
 </script>
 

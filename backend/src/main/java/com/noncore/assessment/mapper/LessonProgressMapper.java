@@ -1,6 +1,7 @@
 package com.noncore.assessment.mapper;
 
 import com.noncore.assessment.entity.LessonProgress;
+import com.noncore.assessment.dto.response.admin.AdminLessonNoteListItemResponse;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
@@ -128,4 +129,22 @@ public interface LessonProgressMapper {
     Double getAverageRatingByTeacher(@Param("teacherId") Long teacherId);
 
     Double getAverageCompletionRateByTeacher(@Param("teacherId") Long teacherId);
+
+    /**
+     * 管理员：分页查看某课程下的课堂笔记（仅返回有 notes 的记录）。
+     */
+    List<AdminLessonNoteListItemResponse> selectAdminCourseLessonNotes(@Param("courseId") Long courseId,
+                                                                       @Param("studentId") Long studentId,
+                                                                       @Param("lessonId") Long lessonId,
+                                                                       @Param("q") String q,
+                                                                       @Param("offset") Integer offset,
+                                                                       @Param("size") Integer size);
+
+    /**
+     * 管理员：统计某课程下课堂笔记条目数（仅返回有 notes 的记录）。
+     */
+    Long countAdminCourseLessonNotes(@Param("courseId") Long courseId,
+                                     @Param("studentId") Long studentId,
+                                     @Param("lessonId") Long lessonId,
+                                     @Param("q") String q);
 } 

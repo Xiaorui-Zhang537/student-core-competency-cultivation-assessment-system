@@ -40,7 +40,7 @@
             <th class="px-6 py-3 text-center text-xs font-semibold text-gray-700 dark:text-gray-200 tracking-wide whitespace-nowrap w-40">
               {{ t('common.columns.status') || 'Status' }}
             </th>
-            <th v-if="showActions" class="px-6 py-3 text-right text-xs font-semibold text-gray-700 dark:text-gray-200 tracking-wide whitespace-nowrap">
+            <th v-if="showActions" class="px-6 py-3 text-center text-xs font-semibold text-gray-700 dark:text-gray-200 tracking-wide whitespace-nowrap">
               {{ t('common.columns.actions') || 'Actions' }}
             </th>
           </tr>
@@ -50,13 +50,59 @@
           <tr v-for="u in items" :key="u.id" class="hover:bg-white/10 transition-colors duration-150">
             <td class="px-6 py-3 text-center font-mono text-xs">{{ u.id }}</td>
             <td class="px-6 py-3">
-              <div class="font-medium">{{ u.nickname || u.username }}</div>
-              <div v-if="buildFullName(u)" class="text-xs text-subtle">{{ buildFullName(u) }}</div>
-              <div class="text-xs text-subtle">{{ u.email }}</div>
-              <div class="text-xs text-subtle" v-if="u.studentNo || u.teacherNo">{{ u.studentNo || u.teacherNo }}</div>
-              <div class="text-xs text-subtle">
-                {{ (t('admin.people.fields.emailVerified') || '邮箱验证') }}: {{ u.emailVerified ? (t('common.yes') || '是') : (t('common.no') || '否') }}
-                <span v-if="u.createdAt"> · {{ (t('common.columns.createdAt') || '创建时间') }}: {{ formatDateTime(u.createdAt) }}</span>
+              <div class="flex items-start gap-3">
+                <user-avatar :avatar="u.avatar" :size="36" class="shrink-0 self-center">
+                  <div class="w-9 h-9 rounded-full bg-gray-200 dark:bg-gray-600 ring-1 ring-white/20" />
+                </user-avatar>
+                <div class="min-w-0">
+                  <div class="flex items-center gap-2 min-w-0">
+                    <div class="font-medium truncate">{{ u.nickname || u.username }}</div>
+                    <badge v-if="showMbti(u)" size="sm" :variant="getMbtiVariant(u.mbti)">
+                      MBTI · {{ String(u.mbti || '').toUpperCase() }}
+                    </badge>
+                  </div>
+
+                  <div class="mt-1 space-y-0.5 text-xs text-subtle">
+                    <div v-if="buildFullName(u)">
+                      <span class="text-subtle">{{ t('admin.people.fields.fullName') || '姓名' }}:</span>
+                      {{ buildFullName(u) }}
+                    </div>
+
+                    <div v-if="u.email">
+                      <span class="text-subtle">{{ t('shared.profile.fields.email') || '邮箱' }}:</span>
+                      {{ u.email }}
+                    </div>
+
+                    <template v-if="mode === 'students'">
+                      <div v-if="u.studentNo">
+                        <span class="text-subtle">{{ t('shared.profile.fields.studentNo') || '学号' }}:</span>
+                        {{ u.studentNo }}
+                      </div>
+                    </template>
+
+                    <template v-else-if="mode === 'teachers'">
+                      <div v-if="u.teacherNo">
+                        <span class="text-subtle">{{ t('shared.profile.fields.teacherNo') || '工号' }}:</span>
+                        {{ u.teacherNo }}
+                      </div>
+                    </template>
+
+                    <template v-else>
+                      <div v-if="u.studentNo">
+                        <span class="text-subtle">{{ t('shared.profile.fields.studentNo') || '学号' }}:</span>
+                        {{ u.studentNo }}
+                      </div>
+                      <div v-if="u.teacherNo">
+                        <span class="text-subtle">{{ t('shared.profile.fields.teacherNo') || '工号' }}:</span>
+                        {{ u.teacherNo }}
+                      </div>
+                      <div v-if="u.createdAt">
+                        <span class="text-subtle">{{ t('common.columns.createdAt') || '创建时间' }}:</span>
+                        {{ formatDateTime(u.createdAt) }}
+                      </div>
+                    </template>
+                  </div>
+                </div>
               </div>
             </td>
             <td v-if="showRoleColumn" class="px-6 py-3 text-center w-40">
@@ -76,8 +122,8 @@
                 @update:modelValue="(v:any) => onChangeStatus(u, v)"
               />
             </td>
-            <td v-if="showActions" class="px-6 py-3 text-right whitespace-nowrap">
-              <div class="inline-flex justify-end">
+            <td v-if="showActions" class="px-6 py-3 text-center whitespace-nowrap">
+              <div class="inline-flex justify-center">
                 <div class="relative" @click.stop :ref="(el: Element | ComponentPublicInstance | null) => setMenuButtonRef((el as HTMLElement) ?? null, String(u.id))">
                   <Button size="sm" variant="ghost" @click="toggleRowMenu(String(u.id))">
                     <ellipsis-vertical-icon class="w-4 h-4" />
@@ -94,7 +140,7 @@
                           <eye-icon class="w-4 h-4" />
                           {{ t('common.view') || '查看' }}
                         </Button>
-                        <Button variant="menu" size="sm" class="w-full justify-start gap-2" @click="onMenuChat(u)">
+                        <Button v-if="canChat(u)" variant="menu" size="sm" class="w-full justify-start gap-2" @click="onMenuChat(u)">
                           <chat-bubble-left-icon class="w-4 h-4" />
                           {{ t('shared.chat.open') || '聊天' }}
                         </Button>
@@ -188,6 +234,7 @@ import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import Card from '@/components/ui/Card.vue'
 import Button from '@/components/ui/Button.vue'
+import Badge from '@/components/ui/Badge.vue'
 import ErrorState from '@/components/ui/ErrorState.vue'
 import EmptyState from '@/components/ui/EmptyState.vue'
 import PaginationBar from '@/components/ui/PaginationBar.vue'
@@ -195,10 +242,13 @@ import GlassPopoverSelect from '@/components/ui/filters/GlassPopoverSelect.vue'
 import GlassModal from '@/components/ui/GlassModal.vue'
 import GlassInput from '@/components/ui/inputs/GlassInput.vue'
 import GlassTable from '@/components/ui/tables/GlassTable.vue'
+import UserAvatar from '@/components/ui/UserAvatar.vue'
 import { ArrowPathIcon, ChatBubbleLeftIcon, EllipsisVerticalIcon, EyeIcon, PlusIcon, ShieldCheckIcon } from '@heroicons/vue/24/outline'
 import { adminApi, type AdminUserCreateRequest, type AdminUserListItem } from '@/api/admin.api'
 import { useUIStore } from '@/stores/ui'
 import { useChatStore } from '@/stores/chat'
+import { useAuthStore } from '@/stores/auth'
+import { getMbtiVariant } from '@/shared/utils/badgeColor'
 
 type Mode = 'users' | 'students' | 'teachers'
 
@@ -226,6 +276,30 @@ const { t } = useI18n()
 const ui = useUIStore()
 const router = useRouter()
 const chat = useChatStore()
+const auth = useAuthStore()
+
+const myUserId = computed(() => {
+  try {
+    const id = (auth.user as any)?.id
+    if (id != null && id !== '') return Number(id)
+  } catch {}
+  try {
+    const ls = localStorage.getItem('userId')
+    if (ls) return Number(ls)
+  } catch {}
+  return NaN
+})
+
+function isSelf(u: AdminUserListItem): boolean {
+  const mine = Number(myUserId.value)
+  const target = Number((u as any)?.id)
+  if (!Number.isFinite(mine)) return false
+  return mine === target
+}
+
+function canChat(u: AdminUserListItem): boolean {
+  return !isSelf(u)
+}
 
 const loading = ref(false)
 const error = ref<string | null>(null)
@@ -323,10 +397,18 @@ async function sendReset(u: AdminUserListItem) {
 }
 
 function buildFullName(u: AdminUserListItem) {
-  const first = String((u as any).firstName || '').trim()
-  const last = String((u as any).lastName || '').trim()
+  const first = String(u.firstName || '').trim()
+  const last = String(u.lastName || '').trim()
   const joined = `${last}${first}`.trim()
   return joined || ''
+}
+
+function showMbti(u: AdminUserListItem): boolean {
+  const code = String(u.mbti || '').trim()
+  if (!code) return false
+  if (props.mode === 'students' || props.mode === 'teachers') return true
+  const role = String(u.role || '').toLowerCase()
+  return role === 'student' || role === 'teacher'
 }
 
 function formatDateTime(v?: string) {
@@ -355,6 +437,10 @@ function openDetailByUser(u: AdminUserListItem) {
  * 打开与指定用户的一对一聊天抽屉。
  */
 function openChat(u: AdminUserListItem) {
+  if (isSelf(u)) {
+    ui.showNotification({ type: 'warning', title: '提示', message: '不能给自己发送消息' })
+    return
+  }
   const name = String(u.nickname || u.username || `#${u.id}`)
   const avatar = String((u as any).avatar || '')
   chat.openChat(u.id, name, null, avatar || null)
@@ -362,7 +448,9 @@ function openChat(u: AdminUserListItem) {
 
 function openAudit(u: AdminUserListItem) {
   const name = String(u.nickname || u.username || `#${u.id}`)
-  router.push({ path: `/admin/audit/${u.id}`, query: { name } })
+  const avatar = String((u as any).avatar || '')
+  const role = String((u as any).role || '')
+  router.push({ path: `/admin/audit/${u.id}`, query: { name, avatar: avatar || undefined, role: role || undefined } })
 }
 
 function setMenuButtonRef(el: HTMLElement | null, id: string) {

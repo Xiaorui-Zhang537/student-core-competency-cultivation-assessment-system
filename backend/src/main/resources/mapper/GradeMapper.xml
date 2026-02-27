@@ -319,7 +319,11 @@
     <!-- 查询用于导出的成绩数据 -->
     <select id="selectGradesForExport" resultType="map">
         SELECT
+        g.student_id as studentId,
+        g.assignment_id as assignmentId,
+        g.submission_id as submissionId,
         u.username as studentName,
+        u.student_no as studentNo,
         u.email as studentEmail,
         c.title as courseTitle,
         a.title as assignmentTitle,

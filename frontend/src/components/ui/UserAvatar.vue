@@ -54,6 +54,7 @@ const avatarKind = computed<'none' | 'http' | 'path' | 'fileId'>(() => {
   const av = props.avatar
   if (!av) return 'none'
   const s = String(av)
+  if (/^data:/i.test(s)) return 'http'
   if (/^https?:\/\//i.test(s)) return 'http'
   if (s.startsWith('/')) return 'path'
   if (/^\d+$/.test(s)) return 'fileId'
@@ -65,6 +66,7 @@ const imgSrc = computed(() => {
   if (!av) return null
   const s = String(av)
   const isHttp = /^https?:\/\//i.test(s)
+  if (/^data:/i.test(s)) return s
   if (isHttp) return s
   // 非 http 的资源（fileId 或相对路径）需要带鉴权头，交给 tryLoadBlob 通过 fetch/axios 拉取
   return null
@@ -114,7 +116,8 @@ const tryLoadBlob = async () => {
     if (!av) return
     const s = String(av)
     const isHttp = /^https?:\/\//i.test(s)
-    if (isHttp) { blobUrl.value = null; hadError.value = false; return }
+    const isData = /^data:/i.test(s)
+    if (isHttp || isData) { blobUrl.value = null; hadError.value = false; return }
     // 未登录时，不去请求受保护的 /files/*，避免控制台刷 401；直接走 fallback/slot
     const token = (() => { try { return localStorage.getItem('token') } catch { return null } })()
     if (!token) {

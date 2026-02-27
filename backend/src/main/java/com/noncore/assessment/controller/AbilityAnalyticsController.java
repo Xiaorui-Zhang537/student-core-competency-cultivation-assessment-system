@@ -15,6 +15,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.nio.charset.StandardCharsets;
@@ -22,6 +23,7 @@ import java.nio.charset.StandardCharsets;
 @RestController
 @RequestMapping("/teachers/ability")
 @Tag(name = "Teacher Ability Analytics")
+@PreAuthorize("hasRole('TEACHER') or hasRole('ADMIN')")
 public class AbilityAnalyticsController extends BaseController {
 
     private final AbilityAnalyticsService abilityAnalyticsService;

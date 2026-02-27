@@ -62,27 +62,63 @@
       "F": "F"
     },
     "people": {
-      "statusLabel": "Status"
+      "hint": "One filter set for all tabs.",
+      "gotoCourseGrades": "View grades by course",
+      "statusLabel": "Status",
+      "fields": {
+        "fullName": "Full name"
+      }
+    },
+    "moderation": {
+      "abilityReportTitle": "Report",
+      "score": "Score",
+      "createdAt": "Created"
     },
     "courses": {
       "statusLabel": "Status",
       "overview": "Overview",
       "teacher": "Teacher",
       "students": "Students",
+      "viewStudent": "View profile",
+      "viewNotes": "View notes",
+      "exportAllData": "Export all",
+      "exportAllCourseData": "Export course ZIP",
+      "pickStudent": "Set as target",
       "tabs": {
         "content": "Content",
+        "contentDesc": "Chapters & resources",
         "students": "Students",
+        "studentsDesc": "Performance & profile",
         "grades": "Grades",
+        "gradesDesc": "Analytics & export",
         "reports": "Reports"
+        ,"reportsDesc": "Ability & history"
+      },
+      "reports": {
+        "assignment": "Assignment",
+        "unlinked": "Unlinked assignment",
+        "viewerTitle": "Ability report",
+        "actions": {
+          "view": "View",
+          "exportSubmissionZip": "Export submission ZIP",
+          "downloadJson": "Download JSON",
+          "downloadPdf": "Download PDF",
+          "downloadPng": "Download PNG"
+        }
       }
     },
     "tools": {
       "exportCsv": "Export CSV",
       "exportPdf": "Export PDF",
-      "exportZip": "Export ZIP"
+      "exportZip": "Export ZIP",
+      "exportJson": "Export JSON",
+      "exportMd": "Export MD",
+      "exportTranscript": "Export transcript"
     },
     "student360": {
       "profile": "Student profile",
+      "aiChat": "AI chats",
+      "voice": "Voice practice",
       "tabs": {
         "grades": "Grades",
         "ability": "Radar & reports",

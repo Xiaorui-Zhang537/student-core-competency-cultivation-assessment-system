@@ -9,12 +9,14 @@ import com.noncore.assessment.dto.response.AbilityCompareResponse;
 import com.noncore.assessment.dto.response.AbilityDimensionInsightsResponse;
 import com.noncore.assessment.entity.AbilityReport;
 import com.noncore.assessment.entity.Course;
+import com.noncore.assessment.entity.User;
 import com.noncore.assessment.exception.BusinessException;
 import com.noncore.assessment.exception.ErrorCode;
 import com.noncore.assessment.mapper.AbilityAnalyticsMapper;
 import com.noncore.assessment.mapper.AbilityReportMapper;
 import com.noncore.assessment.mapper.CourseMapper;
 import com.noncore.assessment.mapper.EnrollmentMapper;
+import com.noncore.assessment.mapper.UserMapper;
 import com.noncore.assessment.service.AbilityAnalyticsService;
 import com.noncore.assessment.service.CacheService;
 import com.noncore.assessment.service.AbilityService;
@@ -49,25 +51,46 @@ public class AbilityAnalyticsServiceImpl implements AbilityAnalyticsService {
     private final AbilityService abilityService;
     private final EnrollmentMapper enrollmentMapper;
     private final AbilityReportMapper abilityReportMapper;
+    private final UserMapper userMapper;
 
     public AbilityAnalyticsServiceImpl(AbilityAnalyticsMapper analyticsMapper,
                                        CourseMapper courseMapper,
                                        CacheService cacheService,
                                        EnrollmentMapper enrollmentMapper,
                                        AbilityService abilityService,
-                                       AbilityReportMapper abilityReportMapper) {
+                                       AbilityReportMapper abilityReportMapper,
+                                       UserMapper userMapper) {
         this.analyticsMapper = analyticsMapper;
         this.courseMapper = courseMapper;
         this.cacheService = cacheService;
         this.enrollmentMapper = enrollmentMapper;
         this.abilityService = abilityService;
         this.abilityReportMapper = abilityReportMapper;
+        this.userMapper = userMapper;
+    }
+
+    /**
+     * 判断是否为管理员用户。
+     *
+     * <p>说明：教师端能力分析接口在 Controller 层可能允许 ADMIN 调用，
+     * 但原先的 teacherId==course.teacherId 校验会拦截管理员。
+     * 这里通过用户角色进行旁路处理，确保管理员能全局审计任意课程数据。</p>
+     */
+    private boolean isAdminUser(Long userId) {
+        if (userId == null) return false;
+        try {
+            User u = userMapper.selectUserById(userId);
+            return u != null && "admin".equalsIgnoreCase(u.getRole());
+        } catch (Exception e) {
+            return false;
+        }
     }
 
     @Override
     public AbilityRadarResponse getRadar(AbilityRadarQuery query, Long teacherId) {
         Course course = courseMapper.selectCourseById(query.getCourseId());
-        if (course == null || !Objects.equals(course.getTeacherId(), teacherId)) {
+        boolean isAdmin = isAdminUser(teacherId);
+        if (course == null || (!isAdmin && !Objects.equals(course.getTeacherId(), teacherId))) {
             throw new BusinessException(ErrorCode.COURSE_ACCESS_DENIED);
         }
 
@@ -253,7 +276,8 @@ public class AbilityAnalyticsServiceImpl implements AbilityAnalyticsService {
     @Override
     public AbilityWeightsResponse getWeights(Long courseId, Long teacherId) {
         Course course = courseMapper.selectCourseById(courseId);
-        if (course == null || !Objects.equals(course.getTeacherId(), teacherId)) {
+        boolean isAdmin = isAdminUser(teacherId);
+        if (course == null || (!isAdmin && !Objects.equals(course.getTeacherId(), teacherId))) {
             throw new BusinessException(ErrorCode.COURSE_ACCESS_DENIED);
         }
         Map<String, Double> weights = loadWeightsOrDefault(courseId);
@@ -275,7 +299,8 @@ public class AbilityAnalyticsServiceImpl implements AbilityAnalyticsService {
         }
         // 教师侧：必须为课程任课老师；学生侧：必须为该课程已报名学生
         if (teacherId != null) {
-            if (!Objects.equals(course.getTeacherId(), teacherId)) {
+            boolean isAdmin = isAdminUser(teacherId);
+            if (!isAdmin && !Objects.equals(course.getTeacherId(), teacherId)) {
                 throw new BusinessException(ErrorCode.COURSE_ACCESS_DENIED);
             }
         } else {
@@ -741,7 +766,8 @@ public class AbilityAnalyticsServiceImpl implements AbilityAnalyticsService {
     @Transactional
     public AbilityWeightsResponse updateWeights(UpdateAbilityWeightsRequest request, Long teacherId) {
         Course course = courseMapper.selectCourseById(request.getCourseId());
-        if (course == null || !Objects.equals(course.getTeacherId(), teacherId)) {
+        boolean isAdmin = isAdminUser(teacherId);
+        if (course == null || (!isAdmin && !Objects.equals(course.getTeacherId(), teacherId))) {
             throw new BusinessException(ErrorCode.COURSE_ACCESS_DENIED);
         }
 

@@ -85,7 +85,16 @@ public class FileController extends BaseController {
             return ResponseEntity.notFound().build();
         }
 
-        byte[] fileBytes = fileStorageService.downloadFile(fileId, userId);
+        // 管理员审计场景：管理员需要下载/播放学生上传的文件（如口语训练音频）。
+        // FileStorageService 的权限检查默认是“上传者/关联者”，因此在 ADMIN 角色下放行。
+        Long effectiveUserId = userId;
+        try {
+            if (hasRole("ADMIN") && fileRecord.getUploaderId() != null) {
+                effectiveUserId = fileRecord.getUploaderId();
+            }
+        } catch (Exception ignored) {}
+
+        byte[] fileBytes = fileStorageService.downloadFile(fileId, effectiveUserId);
         // 行为记录：资源访问（只记录不评价）
         try {
             if (hasRole("STUDENT")) {
@@ -216,9 +225,17 @@ public class FileController extends BaseController {
         boolean previewable = mt.startsWith("image/") || mt.startsWith("application/pdf");
         if (!previewable) return ResponseEntity.badRequest().build();
 
+        // 管理员审计场景：管理员预览学生文件需要放行（否则会 4xx）。
+        Long effectiveUserId = userId;
+        try {
+            if (hasRole("ADMIN") && fileRecord.getUploaderId() != null) {
+                effectiveUserId = fileRecord.getUploaderId();
+            }
+        } catch (Exception ignored) {}
+
         byte[] fileBytes;
         try {
-            fileBytes = fileStorageService.downloadFile(fileId, userId);
+            fileBytes = fileStorageService.downloadFile(fileId, effectiveUserId);
         } catch (BusinessException e) {
             // 图片文件丢失：返回透明占位图，避免前端头像请求持续刷 4xx
             if (mt.startsWith("image/") && (
@@ -283,7 +300,15 @@ public class FileController extends BaseController {
             return ResponseEntity.notFound().build();
         }
 
-        byte[] all = fileStorageService.downloadFile(fileId, userId);
+        // 管理员审计场景：允许 ADMIN 流式播放学生音视频文件
+        Long effectiveUserId = userId;
+        try {
+            if (hasRole("ADMIN") && fileRecord.getUploaderId() != null) {
+                effectiveUserId = fileRecord.getUploaderId();
+            }
+        } catch (Exception ignored) {}
+
+        byte[] all = fileStorageService.downloadFile(fileId, effectiveUserId);
         // 行为记录：资源访问（只记录不评价）
         try {
             if (hasRole("STUDENT")) {

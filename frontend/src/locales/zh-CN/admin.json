@@ -105,12 +105,14 @@
       }
     },
     "people": {
-      "hint": "同一套筛选应用到各 Tab；用户 Tab 支持创建与角色调整",
+      "hint": "同一套筛选应用到各 Tab",
+      "gotoCourseGrades": "按课程查看成绩",
       "tabSelectorLabel": "人员类型",
       "statusLabel": "状态",
       "allStatus": "全部状态",
       "allRoles": "全部角色",
       "fields": {
+        "fullName": "姓名",
         "nickname": "昵称",
         "studentNo": "学号",
         "teacherNo": "工号",
@@ -125,6 +127,7 @@
       "studentIdOptional": "studentId(可选)",
       "postIdOptional": "postId(可选)",
       "reportType": "类型",
+      "abilityReportTitle": "报告",
       "score": "分数",
       "createdAt": "创建时间",
       "recommendations": "建议",
@@ -144,15 +147,56 @@
       "teacher": "教师",
       "students": "学生",
       "createdAt": "创建时间",
+      "enrollKey": "入课密钥",
+      "dateRange": "起止日期",
+      "cover": "封面",
+      "noCover": "无封面",
+      "navigation": "导航",
       "quickNav": "快速入口",
       "actions": "操作",
       "viewStudent": "查看画像",
+      "viewNotes": "查看笔记",
+      "exportAllData": "导出全量",
+      "exportAllCourseData": "导出课程ZIP",
+      "pickStudent": "选为分析对象",
       "contentTitle": "课程内容",
+      "contents": "目录",
+      "pickLesson": "请选择一个节次",
+      "noVideo": "本节暂无视频。",
+      "assignmentNavHint": "管理员端当前仅展示关联信息（只读）。",
+      "kpi": {
+        "lessons": "节次",
+        "reports": "报告"
+      },
+      "video": {
+        "hlsHint": "如果无法播放 HLS（.m3u8），请尝试 Safari 或更换格式。"
+      },
+      "lessonNotes": {
+        "title": "课堂笔记",
+        "searchPh": "搜索笔记/姓名/学号",
+        "studentId": "学生ID",
+        "lesson": "节次",
+        "modalTitle": "课堂笔记",
+        "columns": {
+          "student": "学生",
+          "lesson": "节次",
+          "notes": "笔记",
+          "updatedAt": "更新时间",
+          "actions": "操作"
+        },
+        "actions": {
+          "view": "查看"
+        }
+      },
       "tabs": {
         "content": "内容",
+        "contentDesc": "章节与资源",
         "students": "学生",
+        "studentsDesc": "表现与画像",
         "grades": "成绩",
+        "gradesDesc": "分析与导出",
         "reports": "报告"
+        ,"reportsDesc": "能力与历史"
       },
       "gradesStatsTitle": "成绩统计",
       "avgScore": "平均分",
@@ -162,6 +206,18 @@
       "gradeDistTitle": "成绩分布",
       "gradeDistSubtitle": "按课程维度聚合的分布统计（后端返回区间桶）",
       "reportsTitle": "能力报告",
+      "reports": {
+        "assignment": "作业",
+        "unlinked": "未关联作业",
+        "viewerTitle": "能力报告",
+        "actions": {
+          "view": "在线查看",
+          "exportSubmissionZip": "导出提交ZIP",
+          "downloadJson": "下载JSON",
+          "downloadPdf": "下载PDF",
+          "downloadPng": "下载PNG"
+        }
+      },
       "tipsTitle": "提示",
       "tip1": "筛选条件越具体，分布图与概览卡片越贴近当前任务。",
       "tip2": "如需更复杂的统计（按教师/分类/难度），建议后端增加聚合接口。"
@@ -253,6 +309,9 @@
       "exportCsv": "导出CSV",
       "exportPdf": "导出PDF",
       "exportZip": "导出ZIP",
+      "exportJson": "导出JSON",
+      "exportMd": "导出MD",
+      "exportTranscript": "导出转写",
       "download": "下载",
       "openFilters": "去筛选",
       "tipsTitle": "使用建议",
@@ -264,6 +323,8 @@
       "courseContext": "课程上下文",
       "panels": "面板",
       "auditAiVoice": "AI/口语审计",
+      "aiChat": "AI问答",
+      "voice": "口语训练",
       "tabs": {
         "grades": "成绩",
         "ability": "雷达与报告",

@@ -21,6 +21,16 @@
               <span class="text-xs font-medium leading-tight text-subtle">{{ t('admin.people.tabSelectorLabel') || '人员类型' }}</span>
               <segmented-pills :model-value="tab" :options="tabOptions" size="sm" variant="info" @update:modelValue="onPickTab" />
             </div>
+            <div class="w-auto flex items-center gap-2">
+              <span class="text-xs font-medium leading-tight text-subtle">{{ t('admin.people.statusLabel') || '状态' }}</span>
+              <div class="w-40">
+                <glass-popover-select v-model="status" :options="statusOptions" size="sm" tint="secondary" />
+              </div>
+            </div>
+          </div>
+        </template>
+        <template #right>
+          <div class="flex items-center gap-2 flex-wrap justify-end">
             <div class="w-72">
               <glass-search-input
                 v-model="keyword"
@@ -29,19 +39,15 @@
                 tint="info"
               />
             </div>
-            <div class="w-auto flex items-center gap-2">
-              <span class="text-xs font-medium leading-tight text-subtle">{{ t('admin.people.statusLabel') || '状态' }}</span>
-              <div class="w-40">
-                <glass-popover-select v-model="status" :options="statusOptions" size="sm" tint="secondary" />
-              </div>
-            </div>
-            <Button size="sm" variant="outline" :disabled="kpiLoading" @click="reloadKpis">
-              {{ t('common.refresh') || '刷新' }}
+            <Button size="sm" variant="primary" :disabled="exporting" @click="exportCsv">
+              <ArrowDownTrayIcon class="w-4 h-4 mr-2" />
+              {{ t('common.exportCsv') || '导出CSV' }}
+            </Button>
+            <Button v-if="tab === 'students'" size="sm" variant="primary" @click="router.push('/admin/courses')">
+              <AcademicCapIcon class="w-4 h-4 mr-2" />
+              {{ t('admin.people.gotoCourseGrades') || '按课程查看成绩' }}
             </Button>
           </div>
-        </template>
-        <template #right>
-          <div class="text-xs text-subtle whitespace-nowrap">{{ t('admin.people.hint') || '同一套筛选应用到各 Tab；用户 Tab 支持创建与角色调整' }}</div>
         </template>
       </filter-bar>
 
@@ -93,12 +99,16 @@ import GlassSearchInput from '@/components/ui/inputs/GlassSearchInput.vue'
 import AdminKpiRow from '@/features/admin/components/AdminKpiRow.vue'
 import AdminUserTable from '@/features/admin/components/AdminUserTable.vue'
 import { useAdminCounts } from '@/features/admin/composables/useAdminCounts'
-import { UsersIcon, UserIcon, ShieldCheckIcon } from '@heroicons/vue/24/outline'
+import { AcademicCapIcon, ArrowDownTrayIcon, ShieldCheckIcon, UserIcon, UsersIcon } from '@heroicons/vue/24/outline'
+import { adminApi } from '@/api/admin.api'
+import { downloadCsv } from '@/utils/download'
+import { useUIStore } from '@/stores/ui'
 
 const { t } = useI18n()
 const route = useRoute()
 const router = useRouter()
 const counts = useAdminCounts()
+const ui = useUIStore()
 
 const keyword = ref(String((route.query as any)?.q || ''))
 const status = ref(String((route.query as any)?.status || ''))
@@ -119,6 +129,7 @@ const tabOptions = computed(() => ([
 const kpiLoading = ref(false)
 const kpiError = ref<string | null>(null)
 const totals = ref<{ users: number; students: number; teachers: number; disabled: number }>({ users: 0, students: 0, teachers: 0, disabled: 0 })
+const exporting = ref(false)
 
 const kpis = computed(() => ([
   { label: t('admin.kpi.totalUsers') || '用户总数', value: totals.value.users, tint: 'info' as const, icon: UsersIcon },
@@ -169,5 +180,23 @@ async function reloadKpis() {
 }
 
 onMounted(reloadKpis)
+
+async function exportCsv() {
+  exporting.value = true
+  try {
+    const role = tab.value === 'students' ? 'student' : (tab.value === 'teachers' ? 'teacher' : undefined)
+    const blob = await adminApi.exportUsersCsv({
+      keyword: keyword.value.trim() || undefined,
+      status: status.value.trim() || undefined,
+      role,
+    })
+    downloadCsv(blob, `people_${tab.value}.csv`)
+    ui.showNotification({ type: 'success', title: 'OK', message: String(t('admin.tools.download') || '已下载') })
+  } catch (e: any) {
+    ui.showNotification({ type: 'error', title: String(t('common.error') || '错误'), message: e?.message || 'Failed' })
+  } finally {
+    exporting.value = false
+  }
+}
 </script>
 
