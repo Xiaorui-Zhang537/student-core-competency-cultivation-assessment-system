@@ -209,6 +209,7 @@ export const adminApi = {
   // 导出（CSV Blob）
   exportUsersCsv: (params: any): Promise<Blob> => api.get('/admin/exports/users.csv', { params, responseType: 'blob' as any }),
   exportAbilityReportsCsv: (params: any): Promise<Blob> => api.get('/admin/exports/ability-reports.csv', { params, responseType: 'blob' as any }),
+  exportCommunityCsv: (): Promise<Blob> => api.get('/admin/exports/community.csv', { responseType: 'blob' as any }),
   exportCourseStudentsCsv: (params: { courseId: string | number; search?: string; sortBy?: string; activity?: string; grade?: string; progress?: string }): Promise<Blob> =>
     api.get('/admin/exports/course-students.csv', { params, responseType: 'blob' as any }),
   exportCourseLessonNotesCsv: (params: { courseId: string | number; studentId?: string | number; lessonId?: string | number; q?: string }): Promise<Blob> =>
@@ -260,4 +261,3 @@ export const adminApi = {
   listVoiceTurns: (sessionId: string | number, params: { studentId: string | number; page?: number; size?: number }) =>
     api.get(`/admin/ai/voice/sessions/${sessionId}/turns`, { params }),
 }
-

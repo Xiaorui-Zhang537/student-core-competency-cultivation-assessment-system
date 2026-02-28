@@ -19,7 +19,7 @@
 
       <page-header
         :container="false"
-        :title="currentPost.title"
+        :title="safePostTitle"
         class="mb-6"
       />
 
@@ -47,7 +47,7 @@
             <Button
               size="sm"
               variant="reaction"
-              @click="communityStore.toggleLikePost(currentPost.id)"
+              @click="activePostId && communityStore.toggleLikePost(activePostId)"
               :class="currentPost.isLiked ? 'reaction-liked' : ''"
             >
               <template #icon>
@@ -55,8 +55,22 @@
               </template>
               <span>{{ currentPost.likeCount }}</span>
             </Button>
-            <Button variant="primary" size="sm" @click="askAiForCurrentPost">
+            <Button v-if="!isAdminModeration" variant="primary" size="sm" @click="askAiForCurrentPost">
               <sparkles-icon class="w-4 h-4 mr-2" />{{ t('shared.community.detail.askAi') }}
+            </Button>
+            <Button
+              v-if="isAdminModeration"
+              variant="secondary"
+              size="sm"
+              class="bg-amber-500 text-white border-amber-500 hover:bg-amber-600"
+              @click="openAdminBlockPostModal"
+            >
+              <shield-exclamation-icon class="w-4 h-4 mr-2" />
+              {{ t('admin.moderation.block') || '屏蔽' }}
+            </Button>
+            <Button v-if="isAdminModeration" variant="danger" size="sm" @click="onAdminDeleteCurrentPost">
+              <trash-icon class="w-4 h-4 mr-2" />
+              {{ t('common.delete') || '删除' }}
             </Button>
           </div>
         </div>
@@ -135,7 +149,15 @@
               </Button>
             </div>
           </div>
-          <comment-thread v-for="comment in localComments" :key="comment.id" :comment="comment" :post-id="currentPost.id" @deleted="onTopDeleted" />
+          <comment-thread
+            v-for="comment in localComments"
+            :key="comment.id"
+            :comment="comment"
+            :post-id="activePostId"
+            :admin-moderation="isAdminModeration"
+            :post-title="safePostTitle"
+            @deleted="onTopDeleted"
+          />
           <!-- 评论分页 -->
             <div v-if="totalComments > commentsSize" class="mt-4 flex items-center justify-between">
               <span class="text-xs text-subtle">{{ t('shared.community.detail.total', { count: totalComments }) }}</span>
@@ -146,6 +168,29 @@
           </div>
         </div>
       </div>
+
+      <glass-modal
+        v-if="adminBlock.visible"
+        :title="String(t('admin.moderation.blockWithReason') || '屏蔽并告知原因')"
+        size="sm"
+        @close="closeAdminBlockPostModal"
+      >
+        <div class="space-y-3">
+          <div class="text-sm text-subtle line-clamp-2">{{ safePostTitle }}</div>
+          <glass-textarea
+            v-model="adminBlock.reason"
+            :rows="4"
+            :placeholder="String(t('admin.moderation.blockReasonPlaceholder') || '请输入屏蔽原因')"
+          />
+        </div>
+        <template #footer>
+          <Button type="button" variant="secondary" @click="closeAdminBlockPostModal">{{ t('shared.community.modal.cancel') }}</Button>
+          <Button type="button" variant="danger" :disabled="!adminBlock.reason.trim() || loading" @click="confirmAdminBlockPost">
+            <shield-exclamation-icon class="w-4 h-4 mr-1" />
+            {{ t('admin.moderation.confirmBlock') || '确认屏蔽' }}
+          </Button>
+        </template>
+      </glass-modal>
 
       <!-- Edit Current Post Modal -->
       <div v-if="editCurrent.visible" class="fixed inset-0 bg-transparent flex items-center justify-center z-50 p-4">
@@ -210,7 +255,18 @@ import { useRoute, useRouter } from 'vue-router';
 import { storeToRefs } from 'pinia';
 import { useCommunityStore } from '@/stores/community';
 import { useAuthStore } from '@/stores/auth';
-import { UserIcon, EyeIcon, HandThumbUpIcon, ChatBubbleLeftIcon, SparklesIcon, ClockIcon, FireIcon, PaperAirplaneIcon } from '@heroicons/vue/24/outline';
+import {
+  UserIcon,
+  EyeIcon,
+  HandThumbUpIcon,
+  ChatBubbleLeftIcon,
+  SparklesIcon,
+  ClockIcon,
+  FireIcon,
+  PaperAirplaneIcon,
+  ShieldExclamationIcon,
+  TrashIcon,
+} from '@heroicons/vue/24/outline';
 import Button from '@/components/ui/Button.vue'
 import CommentThread from '@/components/comments/CommentThread.vue'
 import EmojiPicker from '@/components/ui/EmojiPicker.vue'
@@ -224,7 +280,10 @@ import GlassTextarea from '@/components/ui/inputs/GlassTextarea.vue'
 import GlassInput from '@/components/ui/inputs/GlassInput.vue'
 import GlassPopoverSelect from '@/components/ui/filters/GlassPopoverSelect.vue'
 import Badge from '@/components/ui/Badge.vue'
+import GlassModal from '@/components/ui/GlassModal.vue'
 import { resolveUserDisplayName } from '@/shared/utils/user'
+import { adminApi } from '@/api/admin.api'
+import { notificationAPI } from '@/api/notification.api'
 
 const route = useRoute();
 const router = useRouter();
@@ -232,6 +291,9 @@ const authStore = useAuthStore();
 const communityStore = useCommunityStore();
 const { t, locale } = useI18n()
 const isDark = computed(() => document.documentElement.classList.contains('dark'))
+const isAdminModeration = computed(() =>
+  authStore.userRole === 'ADMIN' && String(route.path || '').startsWith('/admin/moderation/center')
+)
 
 function displayUserName(u: any): string { return resolveUserDisplayName(u) || String(u?.nickname || u?.username || '') }
 
@@ -249,6 +311,15 @@ const labelToCategoryId: Record<string, string> = Object.fromEntries(
 
 const { currentPost, comments, totalComments, loading } = storeToRefs(communityStore);
 const localComments = ref<any[]>([])
+const routePostId = computed(() => {
+  const n = Number(route.params.id)
+  return Number.isFinite(n) && n > 0 ? n : 0
+})
+const activePostId = computed(() => {
+  const current = Number((currentPost.value as any)?.id)
+  return Number.isFinite(current) && current > 0 ? current : routePostId.value
+})
+const safePostTitle = computed(() => String((currentPost.value as any)?.title || ''))
 
 const newComment = ref('');
 const attachments = ref<any[]>([]);
@@ -261,7 +332,10 @@ const detailEditAttachments = ref<any[]>([]);
 const commentsPage = ref(1);
 const commentsSize = ref(20);
 const commentOrderBy = ref<'time' | 'hot'>('time')
-const backToCommunity = computed(() => authStore.userRole === 'TEACHER' ? '/teacher/community' : '/student/community');
+const backToCommunity = computed(() => {
+  if (isAdminModeration.value) return '/admin/moderation/center'
+  return authStore.userRole === 'TEACHER' ? '/teacher/community' : '/student/community'
+});
 
 function goBackCommunity() {
   const target = String(backToCommunity.value || '/student/community')
@@ -292,31 +366,31 @@ const categoryOptions = computed(() => [
 // 改为递归组件内部管理回复，无需本地 replyBoxFor/commentReplies
 
 const handlePostComment = async () => {
-  if (!currentPost.value) return;
-  await communityStore.postComment(currentPost.value.id, newComment.value);
+  if (!activePostId.value) return;
+  await communityStore.postComment(activePostId.value, newComment.value);
   const { useUIStore } = await import('@/stores/ui')
   const ui = useUIStore()
   ui.showNotification({ type: 'success', title: t('shared.community.notify.commentPostedTitle') as string, message: t('shared.community.notify.commentPostedMsg') as string })
   newComment.value = '';
   // 重新拉取第一页评论，保证新评论立即可见
   commentsPage.value = 1;
-  await communityStore.fetchComments(currentPost.value.id, { page: commentsPage.value, size: commentsSize.value, orderBy: commentOrderBy.value });
+  await communityStore.fetchComments(activePostId.value, { page: commentsPage.value, size: commentsSize.value, orderBy: commentOrderBy.value });
   localComments.value = comments.value.slice();
 };
 
 const handleDeleteComment = async (commentId: number) => {
-  if (!currentPost.value) return;
+  if (!activePostId.value) return;
   if (!confirm(t('shared.community.confirm.deleteComment') as string)) return;
-  await communityStore.deleteComment(commentId, currentPost.value.id);
+  await communityStore.deleteComment(commentId, activePostId.value);
   const { useUIStore } = await import('@/stores/ui')
   const ui = useUIStore()
   ui.showNotification({ type: 'success', title: t('shared.community.notify.commentDeletedTitle') as string, message: t('shared.community.notify.commentDeletedMsg') as string })
 }
 
 const onDeleteCurrentPost = async () => {
-  if (!currentPost.value) return;
+  if (!activePostId.value) return;
   if (!confirm(t('shared.community.confirm.deletePost') as string)) return;
-  await communityStore.deletePost(currentPost.value.id);
+  await communityStore.deletePost(activePostId.value);
   const { useUIStore } = await import('@/stores/ui')
   const ui = useUIStore()
   ui.showNotification({ type: 'success', title: t('shared.community.notify.postDeletedTitle') as string, message: t('shared.community.notify.postDeletedMsg') as string })
@@ -324,9 +398,13 @@ const onDeleteCurrentPost = async () => {
   window.history.back();
 }
 
-const editCurrent = reactive<{ visible: boolean; form: { title: string; category: string; content: string } }>({
+const editCurrent = reactive<{ visible: boolean; form: { title: string; category: string; content: string; allowComments: boolean } }>({
   visible: false,
-  form: { title: '', category: 'study', content: '' }
+  form: { title: '', category: 'study', content: '', allowComments: true }
+})
+const adminBlock = reactive<{ visible: boolean; reason: string }>({
+  visible: false,
+  reason: '',
 })
 
 const openEditCurrentPost = () => {
@@ -336,19 +414,21 @@ const openEditCurrentPost = () => {
   // 将后端中文分类转换为前端英文 id（保持选项值稳定）
   editCurrent.form.category = labelToCategoryId[currentPost.value.category] || currentPost.value.category
   editCurrent.form.content = currentPost.value.content
-  detailEditUploadData.relatedId = currentPost.value.id
+  editCurrent.form.allowComments = Boolean((currentPost.value as any).allowComments ?? true)
+  detailEditUploadData.relatedId = activePostId.value
   refreshDetailEditAttachments()
 }
 
 const handleUpdateCurrentPost = async () => {
-  if (!currentPost.value) return
-  await communityStore.updatePost(currentPost.value.id, {
+  if (!activePostId.value) return
+  await communityStore.updatePost(activePostId.value, {
     title: editCurrent.form.title,
     // 提交给后端中文分类（由稳定 id -> 中文标签）
     category: categoryIdToLabel[editCurrent.form.category] || editCurrent.form.category,
     content: editCurrent.form.content,
+    allowComments: editCurrent.form.allowComments,
   })
-  await communityStore.fetchPostById(currentPost.value.id)
+  await communityStore.fetchPostById(activePostId.value)
   await refreshMainAttachments()
   editCurrent.visible = false
 }
@@ -369,7 +449,7 @@ const formatDate = (dateString: string) => {
 }
 
 onMounted(async () => {
-  const postId = Number(route.params.id);
+  const postId = routePostId.value;
   if (postId) {
     await communityStore.fetchPostById(postId);
     await communityStore.fetchComments(postId, { page: commentsPage.value, size: commentsSize.value, orderBy: commentOrderBy.value });
@@ -385,27 +465,27 @@ onUnmounted(() => {
 });
 
 const changeCommentsPage = async (page: number) => {
-  if (!currentPost.value) return;
+  if (!activePostId.value) return;
   if (page < 1) return;
   commentsPage.value = page;
-  await communityStore.fetchComments(currentPost.value.id, { page: commentsPage.value, size: commentsSize.value });
+  await communityStore.fetchComments(activePostId.value, { page: commentsPage.value, size: commentsSize.value });
 }
 
 const loadMoreComments = async () => {
-  if (!currentPost.value) return;
+  if (!activePostId.value) return;
   if (commentsPage.value * commentsSize.value >= totalComments.value) return;
   commentsPage.value += 1;
-  await communityStore.fetchComments(currentPost.value.id, { page: commentsPage.value, size: commentsSize.value, orderBy: commentOrderBy.value });
+  await communityStore.fetchComments(activePostId.value, { page: commentsPage.value, size: commentsSize.value, orderBy: commentOrderBy.value });
   // 追加到本地列表
   localComments.value = [...localComments.value, ...comments.value];
 }
 
 const setOrder = async (order: 'time' | 'hot') => {
-  if (!currentPost.value) return
+  if (!activePostId.value) return
   if (commentOrderBy.value === order) return
   commentOrderBy.value = order
   commentsPage.value = 1
-  await communityStore.fetchComments(currentPost.value.id, { page: commentsPage.value, size: commentsSize.value, orderBy: commentOrderBy.value })
+  await communityStore.fetchComments(activePostId.value, { page: commentsPage.value, size: commentsSize.value, orderBy: commentOrderBy.value })
   localComments.value = comments.value.slice()
 }
 
@@ -416,6 +496,7 @@ const onTopDeleted = (id: number) => {
 
 const askAiForCurrentPost = () => {
   if (!currentPost.value) return
+  if (isAdminModeration.value) return
   const content = (currentPost.value.title ? `【问题标题】${currentPost.value.title}\n` : '') +
                   (currentPost.value.content ? `【问题内容】${currentPost.value.content}` : '')
   // 角色统一使用教师AI页面；如需学生也支持，可按角色跳不同路由
@@ -423,9 +504,86 @@ const askAiForCurrentPost = () => {
   router.push({ ...target, query: { q: content } })
 }
 
+const openAdminBlockPostModal = () => {
+  adminBlock.visible = true
+  adminBlock.reason = ''
+}
+
+const closeAdminBlockPostModal = () => {
+  adminBlock.visible = false
+  adminBlock.reason = ''
+}
+
+const sendAdminBlockNotification = async (reason: string) => {
+  if (!currentPost.value) return
+  const recipientId = currentPost.value.author?.id || currentPost.value.authorId
+  if (!recipientId) return
+  await notificationAPI.batchSend({
+    recipientIds: [recipientId],
+    title: '社区帖子已被屏蔽',
+    content: `你发布的社区帖子《${safePostTitle.value || '未命名帖子'}》已被管理员屏蔽。原因：${reason}`,
+    type: 'system',
+    category: 'communityModeration',
+    priority: 'high',
+    relatedType: 'community_post',
+    relatedId: String(activePostId.value),
+  })
+}
+
+const sendAdminDeleteNotification = async () => {
+  if (!currentPost.value) return
+  const recipientId = currentPost.value.author?.id || currentPost.value.authorId
+  if (!recipientId) return
+  await notificationAPI.batchSend({
+    recipientIds: [recipientId],
+    title: '社区帖子已被删除',
+    content: `你发布的社区帖子《${safePostTitle.value || '未命名帖子'}》已被管理员删除。`,
+    type: 'system',
+    category: 'communityModeration',
+    priority: 'high',
+    relatedType: 'community_post',
+    relatedId: String(activePostId.value),
+  })
+}
+
+const confirmAdminBlockPost = async () => {
+  if (!activePostId.value) return
+  const reason = adminBlock.reason.trim()
+  if (!reason) return
+  try {
+    await adminApi.moderatePost(activePostId.value, { status: 'deleted', deleted: true })
+    await sendAdminBlockNotification(reason)
+    const { useUIStore } = await import('@/stores/ui')
+    const ui = useUIStore()
+    ui.showNotification({ type: 'success', title: 'OK', message: String(t('admin.moderation.blockedAndNotified') || '已屏蔽并通知作者') })
+    closeAdminBlockPostModal()
+    goBackCommunity()
+  } catch (e: any) {
+    const { useUIStore } = await import('@/stores/ui')
+    const ui = useUIStore()
+    ui.showNotification({ type: 'error', title: 'Error', message: e?.message || 'Failed' })
+  }
+}
+
+const onAdminDeleteCurrentPost = async () => {
+  if (!activePostId.value) return
+  try {
+    await adminApi.moderatePost(activePostId.value, { deleted: true })
+    await sendAdminDeleteNotification()
+    const { useUIStore } = await import('@/stores/ui')
+    const ui = useUIStore()
+    ui.showNotification({ type: 'success', title: 'OK', message: '删除成功，已通知作者' })
+    goBackCommunity()
+  } catch (e: any) {
+    const { useUIStore } = await import('@/stores/ui')
+    const ui = useUIStore()
+    ui.showNotification({ type: 'error', title: 'Error', message: e?.message || 'Failed' })
+  }
+}
+
 const refreshDetailEditAttachments = async () => {
   if (!currentPost.value) return
-  const res: any = await fileApi.getRelatedFiles('community_post', currentPost.value.id);
+  const res: any = await fileApi.getRelatedFiles('community_post', activePostId.value);
   detailEditAttachments.value = res?.data || res || [];
 };
 
@@ -469,7 +627,8 @@ const isImageAttachment = (f: any) => {
 // 加载/刷新正文附件与预览
 const refreshMainAttachments = async () => {
   if (!currentPost.value) return;
-  const files: any = await fileApi.getRelatedFiles('community_post', currentPost.value.id);
+  if (!activePostId.value) return;
+  const files: any = await fileApi.getRelatedFiles('community_post', activePostId.value);
   const list = (files?.data || files || []) as any[];
   attachments.value = list;
   // 为图片准备预览 URL（鉴权 blob）

@@ -11,6 +11,7 @@ export interface Post {
   author?: UserProfileResponse; // 作者信息，通常在后端组装
   category: string;
   tags: Tag[];
+  allowComments?: boolean;
   viewCount: number;
   likeCount: number;
   commentCount: number;
@@ -55,6 +56,7 @@ export interface PostCreationRequest {
   title: string;
   content: string;
   category: string;
+  allowComments?: boolean;
   tags?: string[]; // 发送标签名称数组
 }
 

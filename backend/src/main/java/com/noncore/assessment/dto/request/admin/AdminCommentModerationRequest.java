@@ -12,5 +12,12 @@ import lombok.Data;
 public class AdminCommentModerationRequest {
     private String status;
     private Boolean deleted;
-}
 
+    public String getStatus() {
+        return status;
+    }
+
+    public Boolean getDeleted() {
+        return deleted;
+    }
+}

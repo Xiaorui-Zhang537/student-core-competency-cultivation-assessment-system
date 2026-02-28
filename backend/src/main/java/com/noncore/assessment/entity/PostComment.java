@@ -94,6 +94,16 @@ public class PostComment {
      * 当前用户是否已点赞
      */
     private Boolean liked;
+
+    /**
+     * 所属帖子标题（管理员治理展示/导出）
+     */
+    private String postTitle;
+
+    /**
+     * 所属帖子作者显示名（管理员治理展示）
+     */
+    private String postAuthorName;
     
     /**
      * 增加点赞数
@@ -128,5 +138,77 @@ public class PostComment {
      */
     public boolean isViewable() {
         return isPublished() && !Boolean.TRUE.equals(this.deleted);
+    }
+
+    public LocalDateTime getCreatedAt() {
+        return createdAt;
+    }
+
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    public Long getPostId() {
+        return postId;
+    }
+
+    public void setPostId(Long postId) {
+        this.postId = postId;
+    }
+
+    public Long getAuthorId() {
+        return authorId;
+    }
+
+    public void setAuthorId(Long authorId) {
+        this.authorId = authorId;
+    }
+
+    public Long getParentId() {
+        return parentId;
+    }
+
+    public void setParentId(Long parentId) {
+        this.parentId = parentId;
+    }
+
+    public String getContent() {
+        return content;
+    }
+
+    public void setContent(String content) {
+        this.content = content;
+    }
+
+    public Integer getLikesCount() {
+        return likesCount;
+    }
+
+    public String getStatus() {
+        return status;
+    }
+
+    public void setStatus(String status) {
+        this.status = status;
+    }
+
+    public LocalDateTime getUpdatedAt() {
+        return updatedAt;
+    }
+
+    public Boolean getDeleted() {
+        return deleted;
+    }
+
+    public User getAuthor() {
+        return author;
+    }
+
+    public void setLiked(Boolean liked) {
+        this.liked = liked;
     }
 } 

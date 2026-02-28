@@ -26,6 +26,30 @@
           </template>
           {{ t('shared.community.detail.reply') }}
         </Button>
+        <Button
+          v-if="canAdminModerate"
+          size="xs"
+          variant="secondary"
+          class="!px-1.5 !py-0.5 bg-amber-500 text-white border-amber-500 hover:bg-amber-600"
+          @click="openBlockDialog"
+        >
+          <template #icon>
+            <shield-exclamation-icon class="w-3.5 h-3.5" />
+          </template>
+          {{ t('admin.moderation.block') || '屏蔽' }}
+        </Button>
+        <Button
+          v-if="canAdminModerate"
+          size="xs"
+          variant="danger"
+          class="!px-1.5 !py-0.5"
+          @click="onAdminDeleteFromAction"
+        >
+          <template #icon>
+            <trash-icon class="w-3.5 h-3.5" />
+          </template>
+          {{ t('shared.community.list.delete') }}
+        </Button>
 
         <div class="ml-auto relative" ref="menuAnchorRef">
           <Button
@@ -45,10 +69,32 @@
             class="absolute right-0 mt-2 min-w-[10rem] rounded-2xl p-2 ui-popover-menu z-20"
             v-glass="{ strength: 'thin', interactive: false }"
           >
-            <button type="button" class="w-full text-left px-3 py-2 rounded-xl text-sm hover-bg-soft" @click="onAskAiFromMenu">
+            <button v-if="!canAdminModerate" type="button" class="w-full text-left px-3 py-2 rounded-xl text-sm hover-bg-soft" @click="onAskAiFromMenu">
               <span class="inline-flex items-center gap-2">
                 <sparkles-icon class="w-4 h-4" />
                 <span>{{ t('shared.community.detail.askAi') }}</span>
+              </span>
+            </button>
+            <button
+              v-if="canAdminModerate"
+              type="button"
+              class="w-full text-left px-3 py-2 rounded-xl text-sm hover-bg-soft"
+              @click="onBlockFromMenu"
+            >
+              <span class="inline-flex items-center gap-2">
+                <shield-exclamation-icon class="w-4 h-4" />
+                <span>{{ t('admin.moderation.block') || '屏蔽' }}</span>
+              </span>
+            </button>
+            <button
+              v-if="canAdminModerate"
+              type="button"
+              class="w-full text-left px-3 py-2 rounded-xl text-sm hover-bg-soft"
+              @click="onAdminDeleteFromMenu"
+            >
+              <span class="inline-flex items-center gap-2">
+                <trash-icon class="w-4 h-4" />
+                <span>{{ t('shared.community.list.delete') }}</span>
               </span>
             </button>
             <button
@@ -87,31 +133,69 @@
           :key="rc.id"
           :comment="rc"
           :post-id="postId"
+          :admin-moderation="canAdminModerate"
+          :post-title="props.postTitle"
           @deleted="handleChildDeleted"
         />
         <Button v-if="replies.items.length < replies.total" variant="ghost" size="sm" class="mt-3" @click="loadMoreReplies">{{ t('shared.community.detail.more') }}</Button>
       </div>
     </div>
   </div>
+  <glass-modal
+    v-if="blockDialog.visible"
+    :title="String(t('admin.moderation.blockWithReason') || '屏蔽并告知原因')"
+    size="sm"
+    @close="closeBlockDialog"
+  >
+    <div class="space-y-3">
+      <div class="text-sm text-subtle line-clamp-2">{{ comment.content || '-' }}</div>
+      <glass-textarea
+        v-model="blockDialog.reason"
+        :rows="4"
+        :placeholder="String(t('admin.moderation.blockReasonPlaceholder') || '请输入屏蔽原因')"
+      />
+    </div>
+    <template #footer>
+      <Button type="button" variant="secondary" @click="closeBlockDialog">{{ t('shared.community.modal.cancel') }}</Button>
+      <Button type="button" variant="danger" :disabled="!blockDialog.reason.trim()" @click="confirmBlockDialog">
+        <template #icon>
+          <shield-exclamation-icon class="w-4 h-4" />
+        </template>
+        {{ t('admin.moderation.confirmBlock') || '确认屏蔽' }}
+      </Button>
+    </template>
+  </glass-modal>
 </template>
 
 <script setup lang="ts">
 import { ref, onMounted, onBeforeUnmount, computed } from 'vue'
 import { useAuthStore } from '@/stores/auth'
 import { useCommunityStore } from '@/stores/community'
-import { UserIcon, HandThumbUpIcon, SparklesIcon, ChatBubbleLeftIcon, TrashIcon, PaperAirplaneIcon, EllipsisVerticalIcon } from '@heroicons/vue/24/outline'
+import {
+  UserIcon,
+  HandThumbUpIcon,
+  SparklesIcon,
+  ChatBubbleLeftIcon,
+  TrashIcon,
+  PaperAirplaneIcon,
+  EllipsisVerticalIcon,
+  ShieldExclamationIcon,
+} from '@heroicons/vue/24/outline'
 import UserAvatar from '@/components/ui/UserAvatar.vue'
 import EmojiPicker from '@/components/ui/EmojiPicker.vue'
 import { useRouter } from 'vue-router'
 // @ts-ignore shim for vue-i18n types in this project
 import { useI18n } from 'vue-i18n'
 import GlassTextarea from '@/components/ui/inputs/GlassTextarea.vue'
+import GlassModal from '@/components/ui/GlassModal.vue'
 import Button from '@/components/ui/Button.vue'
 import { resolveUserDisplayName } from '@/shared/utils/user'
+import { adminApi } from '@/api/admin.api'
+import { notificationAPI } from '@/api/notification.api'
 
 defineOptions({ name: 'CommentThread' })
 
-const props = defineProps<{ comment: any; postId: number }>()
+const props = defineProps<{ comment: any; postId: number; adminModeration?: boolean; postTitle?: string }>()
 const emit = defineEmits<{ (e: 'deleted', id: number): void }>()
 
 const authStore = useAuthStore()
@@ -130,8 +214,11 @@ const safeLikeCount = computed(() => {
   return Number.isFinite(n) ? Math.max(0, n) : 0
 })
 const likeBusy = ref(false)
+const canAdminModerate = computed(() => props.adminModeration === true)
+const blockDialog = ref({ visible: false, reason: '' })
 
 const canDelete = computed(() => {
+  if (canAdminModerate.value) return false
   const uid = authStore.user?.id
   if (!uid) return false
   return String(uid) === String((props.comment as any).author?.id || (props.comment as any).authorId)
@@ -256,13 +343,93 @@ const onLikeComment = async () => {
 }
 
 const askAiForComment = () => {
+  if (canAdminModerate.value) return
   const content = (props.comment?.content ? `【评论内容】${props.comment.content}` : '')
-  router.push({ path: '/teacher/assistant', query: { q: content } })
+  const target = authStore.userRole === 'TEACHER' ? '/teacher/assistant' : '/student/assistant'
+  router.push({ path: target, query: { q: content } })
 }
 
 const onAskAiFromMenu = () => {
   closeMenu()
   askAiForComment()
+}
+
+const sendAdminCommentNotice = async (mode: 'blocked' | 'deleted', reason?: string) => {
+  const recipientId = (props.comment as any).author?.id || (props.comment as any).authorId
+  if (!recipientId) return
+  const title = mode === 'blocked' ? '社区评论已被屏蔽' : '社区评论已被删除'
+  const content = mode === 'blocked'
+    ? `你在社区帖子《${props.postTitle || '未命名帖子'}》下发布的评论已被管理员屏蔽。原因：${reason || '内容不符合社区规范'}`
+    : `你在社区帖子《${props.postTitle || '未命名帖子'}》下发布的评论已被管理员删除。`
+  await notificationAPI.batchSend({
+    recipientIds: [recipientId],
+    title,
+    content,
+    type: 'system',
+    category: 'communityModeration',
+    priority: 'high',
+    relatedType: 'community_comment',
+    relatedId: String(props.comment.id),
+  })
+}
+
+const performAdminBlock = async (reason: string) => {
+  const trimmed = String(reason).trim()
+  if (!trimmed) return
+  try {
+    await adminApi.moderateComment(props.comment.id, { status: 'deleted', deleted: true })
+    await sendAdminCommentNotice('blocked', trimmed)
+    const { useUIStore } = await import('@/stores/ui')
+    const ui = useUIStore()
+    ui.showNotification({ type: 'success', title: 'OK', message: String(t('admin.moderation.blockedAndNotified') || '已屏蔽并通知作者') })
+    closeBlockDialog()
+    emit('deleted', props.comment.id)
+  } catch (e: any) {
+    const { useUIStore } = await import('@/stores/ui')
+    const ui = useUIStore()
+    ui.showNotification({ type: 'error', title: 'Error', message: e?.message || 'Failed' })
+  }
+}
+
+const performAdminDelete = async () => {
+  try {
+    await adminApi.moderateComment(props.comment.id, { deleted: true })
+    await sendAdminCommentNotice('deleted')
+    const { useUIStore } = await import('@/stores/ui')
+    const ui = useUIStore()
+    ui.showNotification({ type: 'success', title: 'OK', message: '删除成功，已通知作者' })
+    emit('deleted', props.comment.id)
+  } catch (e: any) {
+    const { useUIStore } = await import('@/stores/ui')
+    const ui = useUIStore()
+    ui.showNotification({ type: 'error', title: 'Error', message: e?.message || 'Failed' })
+  }
+}
+
+const onBlockFromMenu = async () => {
+  closeMenu()
+  openBlockDialog()
+}
+
+const onAdminDeleteFromMenu = async () => {
+  closeMenu()
+  await performAdminDelete()
+}
+
+const onAdminDeleteFromAction = async () => {
+  await performAdminDelete()
+}
+
+const openBlockDialog = () => {
+  blockDialog.value = { visible: true, reason: '' }
+}
+
+const closeBlockDialog = () => {
+  blockDialog.value = { visible: false, reason: '' }
+}
+
+const confirmBlockDialog = async () => {
+  await performAdminBlock(blockDialog.value.reason)
 }
 
 const onDeleteFromMenu = async () => {
@@ -277,4 +444,3 @@ const onReplyEmojiSelect = (e: string) => {
 
 <style scoped>
 </style>
-

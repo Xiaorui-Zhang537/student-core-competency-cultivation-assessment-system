@@ -16,5 +16,20 @@ public class AdminPostModerationRequest {
     private Boolean pinned;
     private Boolean allowComments;
     private Boolean deleted;
-}
 
+    public String getStatus() {
+        return status;
+    }
+
+    public Boolean getPinned() {
+        return pinned;
+    }
+
+    public Boolean getAllowComments() {
+        return allowComments;
+    }
+
+    public Boolean getDeleted() {
+        return deleted;
+    }
+}

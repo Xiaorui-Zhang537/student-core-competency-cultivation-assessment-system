@@ -71,6 +71,7 @@
     },
     "moderation": {
       "viewCommunityCenter": "查看具体社区",
+      "exportCommunity": "导出社区CSV",
       "viewComments": "查看评论",
       "centerTitle": "社区治理中心",
       "backToGovernance": "返回治理表格",
@@ -95,6 +96,9 @@
       "abilityReportTitle": "报告",
       "score": "分数",
       "createdAt": "创建时间",
+      "comment": "评论",
+      "postedBy": "发布者：{name}",
+      "commentOnPost": "帖子《{title}》 · {author}",
       "filterTypeLabel": "类型",
       "bool": {
         "yes": "是",
@@ -111,7 +115,9 @@
         "errorTitle": "操作失败",
         "updateSuccess": "修改成功",
         "updateFailed": "修改失败",
-        "blockFailed": "屏蔽失败"
+        "blockFailed": "屏蔽失败",
+        "exportSuccess": "导出成功",
+        "exportFailed": "导出失败"
       }
     },
     "courses": {

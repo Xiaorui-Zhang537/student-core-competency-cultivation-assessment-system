@@ -13,5 +13,32 @@ public class PostCreateRequest {
     private Boolean anonymous;
     private Boolean pinned;
     private List<String> tags;
-}
 
+    public String getTitle() {
+        return title;
+    }
+
+    public String getContent() {
+        return content;
+    }
+
+    public String getCategory() {
+        return category;
+    }
+
+    public Boolean getAllowComments() {
+        return allowComments;
+    }
+
+    public Boolean getAnonymous() {
+        return anonymous;
+    }
+
+    public Boolean getPinned() {
+        return pinned;
+    }
+
+    public List<String> getTags() {
+        return tags;
+    }
+}

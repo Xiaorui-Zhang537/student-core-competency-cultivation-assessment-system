@@ -4,11 +4,11 @@
       <page-header :title="t('shared.community.title')" :subtitle="t('shared.community.subtitle')">
         <template #actions>
           <div class="flex items-center space-x-3">
-            <Button v-if="!isAdminModeration" variant="primary" class="whitespace-nowrap" @click="showCreatePostModal = true">
+            <Button variant="primary" class="whitespace-nowrap" @click="showCreatePostModal = true">
               <plus-icon class="w-4 h-4 mr-2" />
               {{ t('shared.community.createPost') }}
             </Button>
-            <Button v-else variant="primary" class="whitespace-nowrap" @click="goBackToGovernance">
+            <Button v-if="isAdminModeration" variant="primary" class="whitespace-nowrap" @click="goBackToGovernance">
               <shield-check-icon class="w-4 h-4 mr-2" />
               {{ t('admin.moderation.backToGovernance') || '返回治理表格' }}
             </Button>
@@ -245,7 +245,7 @@
               <p class="text-subtle mb-4">
                 {{ filterOptions.keyword ? t('shared.community.list.emptyDescKeyword') : t('shared.community.list.emptyDescCategory') }}
               </p>
-              <Button v-if="!isAdminModeration" variant="primary" class="whitespace-nowrap" @click="showCreatePostModal = true">
+              <Button variant="primary" class="whitespace-nowrap" @click="showCreatePostModal = true">
                 <plus-icon class="w-4 h-4 mr-2" />
                 {{ t('shared.community.list.publishFirst') }}
               </Button>
@@ -473,9 +473,9 @@ const newPost = reactive({
   tagOptions: [] as { id: number; name: string }[],
   selectedTags: [] as string[],
 });
-const editModal = reactive<{ visible: boolean; form: { id?: number; title: string; category: string; content: string; tags: string[] } }>({
+const editModal = reactive<{ visible: boolean; form: { id?: number; title: string; category: string; content: string; tags: string[]; allowComments: boolean } }>({
   visible: false,
-  form: { id: undefined, title: '', category: 'study', content: '', tags: [] }
+  form: { id: undefined, title: '', category: 'study', content: '', tags: [], allowComments: true }
 })
 const adminBlock = reactive<{ visible: boolean; postId?: number; authorId?: number | string; reason: string; targetTitle: string }>({
   visible: false,
@@ -526,16 +526,6 @@ const applyFilters = () => {
   filterOptions.page = 1;
   const hasTagFilter = String(selectedTopicTag.value || '').trim() !== ''
   const keyword = hasTagFilter ? undefined : (String(filterOptions.keyword || '').trim() === '' ? undefined : filterOptions.keyword)
-  if (isAdminModeration.value) {
-    adminLoadPosts({
-      page: filterOptions.page,
-      size: filterOptions.size,
-      keyword,
-      status: undefined,
-      includeDeleted: true,
-    })
-    return
-  }
   const params: any = {
     page: filterOptions.page,
     size: filterOptions.size,
@@ -548,21 +538,6 @@ const applyFilters = () => {
   communityStore.fetchPosts(params);
 };
 
-const adminLoadPosts = async (params: { page: number; size: number; keyword?: string; status?: string; includeDeleted?: boolean }) => {
-  const { useUIStore } = await import('@/stores/ui')
-  const ui = useUIStore()
-  try {
-    ui.setLoading(true)
-    const res = await adminApi.pageCommunityPosts(params as any)
-    posts.value = (res.items || []) as any
-    totalPosts.value = Number(res.total || 0)
-  } catch (e: any) {
-    ui.showNotification({ type: 'error', title: 'Error', message: e?.message || 'Failed' })
-  } finally {
-    ui.setLoading(false)
-  }
-}
-
 const onCategoryChange = (categoryId: string) => {
   filterOptions.category = categoryId;
   applyFilters();
@@ -573,16 +548,6 @@ const changePage = (page: number) => {
   filterOptions.page = page;
   const hasTagFilter = String(selectedTopicTag.value || '').trim() !== ''
   const keyword = hasTagFilter ? undefined : (String(filterOptions.keyword || '').trim() === '' ? undefined : filterOptions.keyword)
-  if (isAdminModeration.value) {
-    adminLoadPosts({
-      page: filterOptions.page,
-      size: filterOptions.size,
-      keyword,
-      status: undefined,
-      includeDeleted: true,
-    })
-    return
-  }
    const params: any = {
     ...filterOptions,
     // 标签筛选启用时，以后端 tag 精确筛选为准；关键词留空避免“内容搜索”误导。
@@ -615,8 +580,9 @@ const onKeywordInput = (v: string | null) => {
 }
 
 const viewPost = (postId: number) => {
-  if (isAdminModeration.value) return
-  const routeName = authStore.userRole === 'TEACHER' ? 'TeacherPostDetail' : 'StudentPostDetail';
+  const routeName = isAdminModeration.value
+    ? 'AdminModerationPostDetail'
+    : (authStore.userRole === 'TEACHER' ? 'TeacherPostDetail' : 'StudentPostDetail');
   router.push({ name: routeName, params: { id: postId } });
 };
 
@@ -635,6 +601,7 @@ const onEditPost = (post: any) => {
   editModal.form.category = labelToCategoryId[post.category] || post.category
   editModal.form.content = post.content
   editModal.form.tags = Array.isArray(post.tags) ? post.tags.map((t:any)=> String(t.name || t)) : []
+  editModal.form.allowComments = Boolean((post as any).allowComments ?? true)
   editUploadData.relatedId = post.id
   refreshEditAttachments(post.id)
 }
@@ -646,6 +613,7 @@ const handleUpdatePost = async () => {
     // 提交给后端中文分类（由稳定 id -> 中文标签）
     category: categoryIdToLabel[editModal.form.category] || editModal.form.category,
     content: editModal.form.content,
+    allowComments: editModal.form.allowComments,
     tags: Array.isArray(editModal.form.tags) ? editModal.form.tags : [],
   })
   {
@@ -663,6 +631,7 @@ const handleCreatePost = async () => {
     content: newPost.content,
     // 提交给后端中文分类（由稳定 id -> 中文标签）
     category: categoryIdToLabel[newPost.category] || newPost.category,
+    allowComments: true,
     tags: Array.from(new Set([...(newPost.selectedTags || [])])),
   };
   
@@ -855,13 +824,27 @@ const sendBlockNotificationToAuthor = async (authorId: string | number | undefin
   if (!authorId) return
   await notificationAPI.batchSend({
     recipientIds: [authorId],
-    title: String(t('admin.moderation.blockNoticeTitle') || '社区内容已被屏蔽'),
-    content: String(t('admin.moderation.blockNoticeContent', { reason, title: postTitle || '-' }) || `你的社区内容已被管理员屏蔽，原因：${reason}`),
+    title: '社区帖子已被屏蔽',
+    content: `你发布的社区帖子《${postTitle || '未命名帖子'}》已被管理员屏蔽。原因：${reason}`,
     type: 'system',
     category: 'communityModeration',
     priority: 'high',
     relatedType: 'community_post',
     relatedId: String(adminBlock.postId || ''),
+  })
+}
+
+const sendDeleteNotificationToAuthor = async (authorId: string | number | undefined, postId: number, postTitle: string) => {
+  if (!authorId) return
+  await notificationAPI.batchSend({
+    recipientIds: [authorId],
+    title: '社区帖子已被删除',
+    content: `你发布的社区帖子《${postTitle || '未命名帖子'}》已被管理员删除。`,
+    type: 'system',
+    category: 'communityModeration',
+    priority: 'high',
+    relatedType: 'community_post',
+    relatedId: String(postId),
   })
 }
 
@@ -888,10 +871,11 @@ const onAdminDeletePost = async (post: any) => {
   if (!post?.id) return
   try {
     await adminApi.moderatePost(post.id, { deleted: true })
+    await sendDeleteNotificationToAuthor(post?.author?.id || post?.authorId, Number(post.id), String(post?.title || ''))
     {
       const { useUIStore } = await import('@/stores/ui')
       const ui = useUIStore()
-      ui.showNotification({ type: 'success', title: 'OK', message: String(t('admin.moderation.deleted') || '删除成功') })
+      ui.showNotification({ type: 'success', title: 'OK', message: '删除成功，已通知作者' })
     }
     applyFilters()
   } catch (e: any) {

@@ -86,7 +86,7 @@ export const useCommunityStore = defineStore('community', () => {
       '获取帖子详情失败'
     );
     if (response) {
-      const r: any = response;
+      const r: any = (response as any)?.data ?? response;
       const normalizeAuthor = (obj: any) => {
         if (!obj) return undefined
         if (obj.author && (obj.author.avatar || obj.author.username || obj.author.nickname)) {

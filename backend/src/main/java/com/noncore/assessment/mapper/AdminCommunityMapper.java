@@ -41,5 +41,8 @@ public interface AdminCommunityMapper {
                        @Param("keyword") String keyword,
                        @Param("status") String status,
                        @Param("includeDeleted") boolean includeDeleted);
-}
 
+    List<Post> listPostsForExport(@Param("includeDeleted") boolean includeDeleted);
+
+    List<PostComment> listCommentsForExport(@Param("includeDeleted") boolean includeDeleted);
+}

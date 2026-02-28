@@ -26,13 +26,15 @@
             <result column="author_username" property="username"/>
             <result column="author_nickname" property="nickname"/>
             <result column="author_avatar" property="avatar"/>
+            <result column="author_email" property="email"/>
+            <result column="author_role" property="role"/>
         </association>
     </resultMap>
 
     <sql id="postColumns">
         p.id, p.title, p.content, p.category, p.author_id, p.pinned, p.anonymous, p.allow_comments,
         p.views, p.likes_count, p.comments_count, p.status, p.created_at, p.updated_at, p.deleted,
-        u.username AS author_username, u.nickname AS author_nickname, u.avatar AS author_avatar
+        u.username AS author_username, u.nickname AS author_nickname, u.avatar AS author_avatar, u.email AS author_email, u.role AS author_role
     </sql>
 
     <sql id="postWhere">
@@ -83,17 +85,22 @@
         <result column="created_at" property="createdAt" jdbcType="TIMESTAMP"/>
         <result column="updated_at" property="updatedAt" jdbcType="TIMESTAMP"/>
         <result column="deleted" property="deleted" jdbcType="BOOLEAN"/>
+        <result column="post_title" property="postTitle" jdbcType="VARCHAR"/>
+        <result column="post_author_name" property="postAuthorName" jdbcType="VARCHAR"/>
         <association property="author" javaType="com.noncore.assessment.entity.User">
             <id column="author_id" property="id"/>
             <result column="author_username" property="username"/>
             <result column="author_nickname" property="nickname"/>
             <result column="author_avatar" property="avatar"/>
+            <result column="author_email" property="email"/>
+            <result column="author_role" property="role"/>
         </association>
     </resultMap>
 
     <sql id="commentColumns">
         c.id, c.post_id, c.author_id, c.parent_id, c.content, c.likes_count, c.status, c.created_at, c.updated_at, c.deleted,
-        u.username AS author_username, u.nickname AS author_nickname, u.avatar AS author_avatar
+        u.username AS author_username, u.nickname AS author_nickname, u.avatar AS author_avatar, u.email AS author_email, u.role AS author_role,
+        p.title AS post_title, COALESCE(pu.nickname, pu.username) AS post_author_name
     </sql>
 
     <sql id="commentWhere">
@@ -118,6 +125,8 @@
         SELECT <include refid="commentColumns"/>
         FROM post_comments c
         LEFT JOIN users u ON c.author_id = u.id
+        LEFT JOIN posts p ON c.post_id = p.id
+        LEFT JOIN users pu ON p.author_id = pu.id
         <include refid="commentWhere"/>
         ORDER BY c.created_at DESC
         LIMIT #{offset}, #{size}
@@ -129,5 +138,30 @@
         <include refid="commentWhere"/>
     </select>
 
-</mapper>
+    <select id="listPostsForExport" resultMap="AdminPostDetailResultMap">
+        SELECT <include refid="postColumns"/>
+        FROM posts p
+        LEFT JOIN users u ON p.author_id = u.id
+        <where>
+            <if test="includeDeleted == false">
+                p.deleted = false
+            </if>
+        </where>
+        ORDER BY p.created_at DESC
+    </select>
 
+    <select id="listCommentsForExport" resultMap="AdminCommentDetailResultMap">
+        SELECT <include refid="commentColumns"/>
+        FROM post_comments c
+        LEFT JOIN users u ON c.author_id = u.id
+        LEFT JOIN posts p ON c.post_id = p.id
+        LEFT JOIN users pu ON p.author_id = pu.id
+        <where>
+            <if test="includeDeleted == false">
+                c.deleted = false
+            </if>
+        </where>
+        ORDER BY c.post_id ASC, c.created_at ASC
+    </select>
+
+</mapper>

@@ -71,6 +71,7 @@
     },
     "moderation": {
       "viewCommunityCenter": "View Community Center",
+      "exportCommunity": "Export Community CSV",
       "viewComments": "View Comments",
       "centerTitle": "Community Governance Center",
       "backToGovernance": "Back To Governance Table",
@@ -95,6 +96,9 @@
       "abilityReportTitle": "Report",
       "score": "Score",
       "createdAt": "Created",
+      "comment": "Comment",
+      "postedBy": "Posted by: {name}",
+      "commentOnPost": "Post \"{title}\" · {author}",
       "filterTypeLabel": "Type",
       "bool": {
         "yes": "Yes",
@@ -111,7 +115,9 @@
         "errorTitle": "Error",
         "updateSuccess": "Updated successfully",
         "updateFailed": "Update failed",
-        "blockFailed": "Block failed"
+        "blockFailed": "Block failed",
+        "exportSuccess": "Export completed",
+        "exportFailed": "Export failed"
       }
     },
     "courses": {

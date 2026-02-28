@@ -28,6 +28,10 @@
               @keyup.enter="reload"
             />
           </div>
+          <Button size="sm" variant="secondary" class="bg-sky-600 text-white border-sky-600 hover:bg-sky-700 whitespace-nowrap" @click="exportCommunity">
+            <arrow-down-tray-icon class="w-4 h-4 mr-1" />
+            {{ t('admin.moderation.exportCommunity') || '导出社区CSV' }}
+          </Button>
           <Button size="sm" variant="primary" @click="goCenter" class="whitespace-nowrap">
             <users-icon class="w-4 h-4 mr-1" />
             {{ t('admin.moderation.viewCommunityCenter') || '查看具体社区' }}
@@ -64,9 +68,9 @@
             <tr v-for="p in posts" :key="p.id" class="hover:bg-white/10 transition-colors duration-150">
               <td class="px-6 py-3 text-center font-mono text-xs">{{ p.id }}</td>
               <td class="px-6 py-3">
-                <div class="font-medium">{{ p.title }}</div>
-                <div class="text-xs text-subtle line-clamp-1">{{ p.content }}</div>
-                <div class="text-xs text-subtle">by {{ p.author?.nickname || p.author?.username || p.authorId }}</div>
+                <div class="font-medium">{{ truncateText(p.title, 36) }}</div>
+                <div class="text-xs text-subtle line-clamp-1">{{ truncateText(p.content, 72) }}</div>
+                <div class="text-xs text-subtle">{{ postAuthorLine(p) }}</div>
               </td>
               <td class="px-6 py-3 w-44 text-center">
                 <glass-popover-select :model-value="p.status" :options="postStatusEditOptions" size="sm" @update:modelValue="(v:any)=>moderatePost(p.id, { status: String(v) })" />
@@ -85,7 +89,7 @@
                   <shield-exclamation-icon class="w-4 h-4 mr-1" />
                   {{ t('admin.moderation.block') || '屏蔽' }}
                 </Button>
-                <Button size="sm" variant="danger" @click="moderatePost(p.id, { deleted: true })">
+                <Button size="sm" variant="danger" @click="deletePostWithNotice(p)">
                   <trash-icon class="w-4 h-4 mr-1" />
                   {{ t('common.delete') || '删除' }}
                 </Button>
@@ -127,8 +131,8 @@
             <tr v-for="c in comments" :key="c.id" class="hover:bg-white/10 transition-colors duration-150">
               <td class="px-6 py-3 text-center font-mono text-xs">{{ c.id }}</td>
               <td class="px-6 py-3">
-                <div class="text-sm whitespace-pre-line">{{ c.content }}</div>
-                <div class="text-xs text-subtle">post #{{ c.postId }} · by {{ c.author?.nickname || c.author?.username || c.authorId }}</div>
+                <div class="text-sm">{{ truncateText(c.content, 72) }}</div>
+                <div class="text-xs text-subtle">{{ commentMetaLine(c) }}</div>
               </td>
               <td class="px-6 py-3 w-44 text-center">
                 <glass-popover-select :model-value="c.status" :options="commentStatusEditOptions" size="sm" @update:modelValue="(v:any)=>moderateComment(c.id, { status: String(v) })" />
@@ -139,7 +143,7 @@
                     <shield-exclamation-icon class="w-4 h-4 mr-1" />
                     {{ t('admin.moderation.block') || '屏蔽' }}
                   </Button>
-                  <Button size="sm" variant="danger" @click="moderateComment(c.id, { deleted: true })">
+                  <Button size="sm" variant="danger" @click="deleteCommentWithNotice(c)">
                     <trash-icon class="w-4 h-4 mr-1" />
                     {{ t('common.delete') || '删除' }}
                   </Button>
@@ -211,11 +215,13 @@ import GlassModal from '@/components/ui/GlassModal.vue'
 import { adminApi } from '@/api/admin.api'
 import { notificationAPI } from '@/api/notification.api'
 import { useUIStore } from '@/stores/ui'
+import { downloadCsv } from '@/utils/download'
 import {
   UsersIcon,
   ChatBubbleLeftRightIcon,
   ShieldExclamationIcon,
   TrashIcon,
+  ArrowDownTrayIcon,
 } from '@heroicons/vue/24/outline'
 
 const { t } = useI18n()
@@ -231,6 +237,26 @@ const tabOptions = computed(() => ([
 
 const loading = ref(false)
 const error = ref<string | null>(null)
+
+function truncateText(value: any, max = 48): string {
+  const text = String(value || '').replace(/\s+/g, ' ').trim()
+  if (!text) return '-'
+  return text.length > max ? `${text.slice(0, max)}...` : text
+}
+
+function displayUserName(user: any, fallback?: any): string {
+  return String(user?.nickname || user?.username || fallback || '-')
+}
+
+function postAuthorLine(post: any): string {
+  return String(t('admin.moderation.postedBy', { name: displayUserName(post?.author, post?.authorId) }) || `发布者：${displayUserName(post?.author, post?.authorId)}`)
+}
+
+function commentMetaLine(comment: any): string {
+  const postTitle = truncateText(comment?.postTitle || comment?.title, 24)
+  const postAuthor = displayUserName({ nickname: comment?.postAuthorName }, comment?.postAuthorId)
+  return String(t('admin.moderation.commentOnPost', { title: postTitle, author: postAuthor }) || `帖子《${postTitle}》 · ${postAuthor}`)
+}
 
 function onPickTab(next: 'posts' | 'comments') {
   tab.value = next
@@ -447,14 +473,71 @@ async function sendBlockNotice(reason: string) {
   if (!recipientId) return
   await notificationAPI.batchSend({
     recipientIds: [recipientId],
-    title: String(t('admin.moderation.blockNoticeTitle') || '社区内容已被屏蔽'),
-    content: String(t('admin.moderation.blockNoticeContent', { reason, title: blockDialog.value.preview || '-' }) || `你的社区内容已被管理员屏蔽，原因：${reason}`),
+    title: blockDialog.value.type === 'post' ? '社区帖子已被屏蔽' : '社区评论已被屏蔽',
+    content: blockDialog.value.type === 'post'
+      ? `你发布的社区帖子《${blockDialog.value.preview || '未命名帖子'}》已被管理员屏蔽。原因：${reason}`
+      : `你发布的社区评论已被管理员屏蔽。原因：${reason}`,
     type: 'system',
     category: 'communityModeration',
     priority: 'high',
     relatedType: blockDialog.value.type === 'post' ? 'community_post' : 'community_comment',
     relatedId: String(blockDialog.value.targetId || ''),
   })
+}
+
+async function sendDeleteNotice(type: 'post' | 'comment', row: any) {
+  const recipientId = row?.author?.id || row?.authorId
+  if (!recipientId) return
+  await notificationAPI.batchSend({
+    recipientIds: [recipientId],
+    title: type === 'post' ? '社区帖子已被删除' : '社区评论已被删除',
+    content: type === 'post'
+      ? `你发布的社区帖子《${String(row?.title || row?.content || '未命名帖子')}》已被管理员删除。`
+      : '你发布的社区评论已被管理员删除。',
+    type: 'system',
+    category: 'communityModeration',
+    priority: 'high',
+    relatedType: type === 'post' ? 'community_post' : 'community_comment',
+    relatedId: String(row?.id || ''),
+  })
+}
+
+async function deletePostWithNotice(row: any) {
+  try {
+    await adminApi.moderatePost(Number(row?.id), { deleted: true })
+    await sendDeleteNotice('post', row)
+    ui.showNotification({
+      type: 'success',
+      title: String(t('admin.moderation.notify.successTitle') || '成功'),
+      message: '删除成功，已通知作者',
+    })
+    await reloadPosts()
+  } catch (e: any) {
+    ui.showNotification({
+      type: 'error',
+      title: String(t('admin.moderation.notify.errorTitle') || '错误'),
+      message: e?.message || String(t('admin.moderation.notify.updateFailed') || '修改失败'),
+    })
+  }
+}
+
+async function deleteCommentWithNotice(row: any) {
+  try {
+    await adminApi.moderateComment(Number(row?.id), { deleted: true })
+    await sendDeleteNotice('comment', row)
+    ui.showNotification({
+      type: 'success',
+      title: String(t('admin.moderation.notify.successTitle') || '成功'),
+      message: '删除成功，已通知作者',
+    })
+    await reloadComments()
+  } catch (e: any) {
+    ui.showNotification({
+      type: 'error',
+      title: String(t('admin.moderation.notify.errorTitle') || '错误'),
+      message: e?.message || String(t('admin.moderation.notify.updateFailed') || '修改失败'),
+    })
+  }
 }
 
 async function confirmBlockAction() {
@@ -485,6 +568,24 @@ async function confirmBlockAction() {
   }
 }
 
+async function exportCommunity() {
+  try {
+    const blob = await adminApi.exportCommunityCsv()
+    downloadCsv(blob, 'community_posts_comments.csv')
+    ui.showNotification({
+      type: 'success',
+      title: String(t('admin.moderation.notify.successTitle') || '成功'),
+      message: String(t('admin.moderation.notify.exportSuccess') || '导出成功'),
+    })
+  } catch (e: any) {
+    ui.showNotification({
+      type: 'error',
+      title: String(t('admin.moderation.notify.errorTitle') || '错误'),
+      message: e?.message || String(t('admin.moderation.notify.exportFailed') || '导出失败'),
+    })
+  }
+}
+
 async function reload() {
   if (tab.value === 'posts') return reloadPosts()
   return reloadComments()
@@ -496,4 +597,3 @@ function goCenter() {
 
 onMounted(() => reload())
 </script>
-

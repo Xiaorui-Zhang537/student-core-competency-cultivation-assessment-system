@@ -347,6 +347,12 @@ const routes = [
         component: () => import('@/features/shared/views/CommunityView.vue')
       },
       {
+        path: 'moderation/center/post/:id',
+        name: 'AdminModerationPostDetail',
+        component: () => import('@/features/shared/views/PostDetailView.vue'),
+        props: true
+      },
+      {
         path: 'courses',
         name: 'AdminCourses',
         component: () => import('@/features/admin/views/CoursesView.vue')

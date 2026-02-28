@@ -6,11 +6,15 @@ import com.noncore.assessment.dto.response.admin.AdminUserListItemResponse;
 import com.noncore.assessment.entity.AbilityReport;
 import com.noncore.assessment.entity.AiConversation;
 import com.noncore.assessment.entity.AiVoiceSession;
+import com.noncore.assessment.entity.Post;
+import com.noncore.assessment.entity.PostComment;
 import com.noncore.assessment.entity.User;
 import com.noncore.assessment.mapper.AbilityReportMapper;
+import com.noncore.assessment.mapper.AdminCommunityMapper;
 import com.noncore.assessment.mapper.AdminUserMapper;
 import com.noncore.assessment.mapper.AiVoiceSessionMapper;
 import com.noncore.assessment.mapper.LessonProgressMapper;
+import com.noncore.assessment.mapper.TagMapper;
 import com.noncore.assessment.mapper.UserMapper;
 import com.noncore.assessment.mapper.AssignmentMapper;
 import com.noncore.assessment.mapper.GradeMapper;
@@ -71,6 +75,8 @@ public class AdminExportsController extends BaseController {
     private final AssignmentMapper assignmentMapper;
     private final GradeMapper gradeMapper;
     private final AnalyticsQueryService analyticsQueryService;
+    private final AdminCommunityMapper adminCommunityMapper;
+    private final TagMapper tagMapper;
 
     public AdminExportsController(AdminUserMapper adminUserMapper,
                                   AbilityReportMapper abilityReportMapper,
@@ -82,6 +88,8 @@ public class AdminExportsController extends BaseController {
                                   AssignmentMapper assignmentMapper,
                                   GradeMapper gradeMapper,
                                   AnalyticsQueryService analyticsQueryService,
+                                  AdminCommunityMapper adminCommunityMapper,
+                                  TagMapper tagMapper,
                                   UserService userService) {
         super(userService);
         this.adminUserMapper = adminUserMapper;
@@ -94,6 +102,8 @@ public class AdminExportsController extends BaseController {
         this.assignmentMapper = assignmentMapper;
         this.gradeMapper = gradeMapper;
         this.analyticsQueryService = analyticsQueryService;
+        this.adminCommunityMapper = adminCommunityMapper;
+        this.tagMapper = tagMapper;
     }
 
     @GetMapping("/users.csv")
@@ -141,6 +151,59 @@ public class AdminExportsController extends BaseController {
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.parseMediaType("text/csv;charset=UTF-8"));
         headers.set(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=users.csv");
+        return ResponseEntity.ok().headers(headers).body(bytes);
+    }
+
+    @GetMapping("/community.csv")
+    @Operation(summary = "导出社区帖子及评论（CSV）")
+    public ResponseEntity<byte[]> exportCommunityCsv(HttpServletRequest httpRequest) {
+        List<Post> posts = adminCommunityMapper.listPostsForExport(true);
+        List<PostComment> comments = adminCommunityMapper.listCommentsForExport(true);
+
+        Map<Long, List<PostComment>> commentsByPostId = new HashMap<>();
+        if (comments != null) {
+            for (PostComment comment : comments) {
+                if (comment == null || comment.getPostId() == null) continue;
+                commentsByPostId.computeIfAbsent(comment.getPostId(), k -> new java.util.ArrayList<>()).add(comment);
+            }
+        }
+
+        StringBuilder sb = new StringBuilder();
+        sb.append("postId,postTitle,postContent,postCategory,postTags,postPinned,postAnonymous,postAllowComments,postViews,postLikes,postComments,postStatus,postDeleted,postCreatedAt,postUpdatedAt,postAuthorId,postAuthorUsername,postAuthorNickname,postAuthorEmail,postAuthorRole,commentId,commentParentId,commentContent,commentLikes,commentStatus,commentDeleted,commentCreatedAt,commentUpdatedAt,commentAuthorId,commentAuthorUsername,commentAuthorNickname,commentAuthorEmail,commentAuthorRole\n");
+
+        int rows = 0;
+        if (posts != null) {
+            for (Post post : posts) {
+                List<com.noncore.assessment.entity.Tag> tags = tagMapper.selectByPostId(post.getId());
+                String tagText = tags == null ? "" : tags.stream()
+                        .map(com.noncore.assessment.entity.Tag::getName)
+                        .filter(java.util.Objects::nonNull)
+                        .collect(Collectors.joining("|"));
+                List<PostComment> postComments = commentsByPostId.getOrDefault(post.getId(), java.util.Collections.emptyList());
+                if (postComments.isEmpty()) {
+                    appendCommunityCsvRow(sb, post, tagText, null);
+                    rows++;
+                    continue;
+                }
+                for (PostComment comment : postComments) {
+                    appendCommunityCsvRow(sb, post, tagText, comment);
+                    rows++;
+                }
+            }
+        }
+
+        byte[] bytes = sb.toString().getBytes(StandardCharsets.UTF_8);
+        adminAuditLogService.record(
+                getCurrentUserId(),
+                "admin.export.community.csv",
+                "export",
+                null,
+                Map.of("rows", rows, "posts", posts == null ? 0 : posts.size(), "comments", comments == null ? 0 : comments.size()),
+                httpRequest
+        );
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.parseMediaType("text/csv;charset=UTF-8"));
+        headers.set(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=community_posts_comments.csv");
         return ResponseEntity.ok().headers(headers).body(bytes);
     }
 
@@ -205,6 +268,45 @@ public class AdminExportsController extends BaseController {
         headers.setContentType(MediaType.parseMediaType("text/csv;charset=UTF-8"));
         headers.set(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=ability_reports.csv");
         return ResponseEntity.ok().headers(headers).body(bytes);
+    }
+
+    private void appendCommunityCsvRow(StringBuilder sb, Post post, String tagText, PostComment comment) {
+        User postAuthor = post == null ? null : post.getAuthor();
+        User commentAuthor = comment == null ? null : comment.getAuthor();
+        sb.append(CsvUtils.nullToEmpty(post == null ? null : post.getId())).append(',')
+                .append(CsvUtils.escape(post == null ? "" : post.getTitle())).append(',')
+                .append(CsvUtils.escape(post == null ? "" : post.getContent())).append(',')
+                .append(CsvUtils.escape(post == null ? "" : post.getCategory())).append(',')
+                .append(CsvUtils.escape(tagText)).append(',')
+                .append(CsvUtils.nullToEmpty(post == null ? null : post.getPinned())).append(',')
+                .append(CsvUtils.nullToEmpty(post == null ? null : post.getAnonymous())).append(',')
+                .append(CsvUtils.nullToEmpty(post == null ? null : post.getAllowComments())).append(',')
+                .append(CsvUtils.nullToEmpty(post == null ? null : post.getViews())).append(',')
+                .append(CsvUtils.nullToEmpty(post == null ? null : post.getLikesCount())).append(',')
+                .append(CsvUtils.nullToEmpty(post == null ? null : post.getCommentsCount())).append(',')
+                .append(CsvUtils.escape(post == null ? "" : post.getStatus())).append(',')
+                .append(CsvUtils.nullToEmpty(post == null ? null : post.getDeleted())).append(',')
+                .append(CsvUtils.escape(post == null || post.getCreatedAt() == null ? "" : post.getCreatedAt().toString())).append(',')
+                .append(CsvUtils.escape(post == null || post.getUpdatedAt() == null ? "" : post.getUpdatedAt().toString())).append(',')
+                .append(CsvUtils.nullToEmpty(postAuthor == null ? null : postAuthor.getId())).append(',')
+                .append(CsvUtils.escape(postAuthor == null ? "" : postAuthor.getUsername())).append(',')
+                .append(CsvUtils.escape(postAuthor == null ? "" : postAuthor.getNickname())).append(',')
+                .append(CsvUtils.escape(postAuthor == null ? "" : postAuthor.getEmail())).append(',')
+                .append(CsvUtils.escape(postAuthor == null ? "" : postAuthor.getRole())).append(',')
+                .append(CsvUtils.nullToEmpty(comment == null ? null : comment.getId())).append(',')
+                .append(CsvUtils.nullToEmpty(comment == null ? null : comment.getParentId())).append(',')
+                .append(CsvUtils.escape(comment == null ? "" : comment.getContent())).append(',')
+                .append(CsvUtils.nullToEmpty(comment == null ? null : comment.getLikesCount())).append(',')
+                .append(CsvUtils.escape(comment == null ? "" : comment.getStatus())).append(',')
+                .append(CsvUtils.nullToEmpty(comment == null ? null : comment.getDeleted())).append(',')
+                .append(CsvUtils.escape(comment == null || comment.getCreatedAt() == null ? "" : comment.getCreatedAt().toString())).append(',')
+                .append(CsvUtils.escape(comment == null || comment.getUpdatedAt() == null ? "" : comment.getUpdatedAt().toString())).append(',')
+                .append(CsvUtils.nullToEmpty(commentAuthor == null ? null : commentAuthor.getId())).append(',')
+                .append(CsvUtils.escape(commentAuthor == null ? "" : commentAuthor.getUsername())).append(',')
+                .append(CsvUtils.escape(commentAuthor == null ? "" : commentAuthor.getNickname())).append(',')
+                .append(CsvUtils.escape(commentAuthor == null ? "" : commentAuthor.getEmail())).append(',')
+                .append(CsvUtils.escape(commentAuthor == null ? "" : commentAuthor.getRole()))
+                .append('\n');
     }
 
     @GetMapping("/course-students.csv")
@@ -1148,4 +1250,3 @@ public class AdminExportsController extends BaseController {
         )));
     }
 }
-
