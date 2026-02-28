@@ -134,7 +134,8 @@ public interface AbilityReportMapper {
     /**
      * 管理员：跨学生检索能力报告（分页）。
      */
-    List<AbilityReport> selectAdminReports(@Param("studentId") Long studentId,
+    List<AbilityReport> selectAdminReports(@Param("search") String search,
+                                           @Param("studentId") Long studentId,
                                            @Param("reportType") String reportType,
                                            @Param("isPublished") Boolean isPublished,
                                            @Param("courseId") Long courseId,
@@ -148,7 +149,8 @@ public interface AbilityReportMapper {
     /**
      * 管理员：跨学生检索能力报告（计数）。
      */
-    Integer countAdminReports(@Param("studentId") Long studentId,
+    Integer countAdminReports(@Param("search") String search,
+                              @Param("studentId") Long studentId,
                               @Param("reportType") String reportType,
                               @Param("isPublished") Boolean isPublished,
                               @Param("courseId") Long courseId,

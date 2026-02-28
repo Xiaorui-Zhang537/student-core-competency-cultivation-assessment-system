@@ -1,153 +1,144 @@
 <template>
   <div class="p-6">
     <div class="mb-4">
-      <nav class="flex items-center space-x-2 text-sm text-gray-500 dark:text-gray-400 mb-2">
-        <router-link to="/admin/people" class="hover:text-gray-700 dark:hover:text-gray-200">
-          {{ t('admin.sidebar.people') || '数据中心' }}
-        </router-link>
-        <ChevronRightIcon class="w-4 h-4" />
-        <span>{{ t('admin.sidebar.courses') || '课程总览' }}</span>
-      </nav>
       <PageHeader :title="t('admin.sidebar.courses')" :subtitle="t('admin.title')" />
     </div>
 
-    <div class="mt-4">
+    <div class="mt-4 space-y-6">
       <loading-overlay v-if="statsLoading" :text="String(t('common.loading') || '加载中…')" />
       <admin-kpi-row v-else :items="statsKpis" />
-    </div>
+      <!-- filters (under KPI cards) -->
+      <filter-bar tint="secondary" align="center" :dense="false" class="rounded-full h-19">
+        <template #left>
+          <div class="flex items-center gap-3 flex-wrap">
+            <div class="w-auto flex items-center gap-2">
+              <span class="text-xs font-medium leading-tight text-subtle">{{ t('admin.courses.statusLabel') || '状态' }}</span>
+              <div class="w-44">
+                <glass-popover-select v-model="status" :options="statusOptions" size="sm" tint="secondary" />
+              </div>
+            </div>
 
-    <!-- filters (under KPI cards) -->
-    <filter-bar tint="secondary" align="center" :dense="false" class="mt-4 mb-2 rounded-full h-19">
-      <template #left>
-        <div class="flex items-center gap-3 flex-wrap">
-          <div class="w-auto flex items-center gap-2">
-            <span class="text-xs font-medium leading-tight text-subtle">{{ t('admin.courses.statusLabel') || '状态' }}</span>
-            <div class="w-44">
-              <glass-popover-select v-model="status" :options="statusOptions" size="sm" tint="secondary" />
+            <div class="w-auto flex items-center gap-2">
+              <span class="text-xs font-medium leading-tight text-subtle">{{ t('shared.course.fields.difficulty') || '难度' }}</span>
+              <div class="w-44">
+                <glass-popover-select v-model="difficulty" :options="difficultyOptions" size="sm" tint="secondary" />
+              </div>
             </div>
           </div>
-
-          <div class="w-auto flex items-center gap-2">
-            <span class="text-xs font-medium leading-tight text-subtle">{{ t('shared.course.fields.difficulty') || '难度' }}</span>
-            <div class="w-44">
-              <glass-popover-select v-model="difficulty" :options="difficultyOptions" size="sm" tint="secondary" />
-            </div>
+        </template>
+        <template #right>
+          <div class="w-72">
+            <glass-search-input
+              v-model="query"
+              :placeholder="String(t('common.search') || '搜索课程标题/教师')"
+              size="sm"
+              tint="info"
+            />
           </div>
-        </div>
-      </template>
-      <template #right>
-        <div class="w-72">
-          <glass-search-input
-            v-model="query"
-            :placeholder="String(t('common.search') || '搜索课程标题/教师')"
-            size="sm"
-            tint="info"
-          />
-        </div>
-      </template>
-    </filter-bar>
-
-    <loading-overlay v-if="loading" class="mt-4" :text="String(t('common.loading') || '加载中…')" />
-    <error-state
-      v-else-if="error"
-      class="mt-4"
-      :title="String(t('common.error') || '加载失败')"
-      :message="error"
-      :actionText="String(t('common.retry') || '重试')"
-      @action="reload"
-    />
-
-    <card v-else padding="md" tint="secondary" class="mt-4">
-      <glass-table>
-        <template #head>
-          <tr>
-            <th class="px-6 py-3 text-center text-xs font-semibold text-gray-700 dark:text-gray-200 tracking-wide whitespace-nowrap">
-              {{ t('common.columns.id') || 'ID' }}
-            </th>
-            <th class="px-6 py-3 text-left text-xs font-semibold text-gray-700 dark:text-gray-200 tracking-wide">
-              {{ t('admin.sidebar.courses') }}
-            </th>
-            <th class="px-6 py-3 text-center text-xs font-semibold text-gray-700 dark:text-gray-200 tracking-wide whitespace-nowrap">
-              {{ t('common.columns.teacher') || 'Teacher' }}
-            </th>
-            <th class="px-6 py-3 text-center text-xs font-semibold text-gray-700 dark:text-gray-200 tracking-wide whitespace-nowrap">
-              {{ t('common.columns.status') || 'Status' }}
-            </th>
-            <th class="px-6 py-3 text-center text-xs font-semibold text-gray-700 dark:text-gray-200 tracking-wide whitespace-nowrap hidden xl:table-cell">
-              {{ t('shared.course.fields.category') || '类别' }}
-            </th>
-            <th class="px-6 py-3 text-center text-xs font-semibold text-gray-700 dark:text-gray-200 tracking-wide whitespace-nowrap hidden xl:table-cell">
-              {{ t('shared.course.fields.difficulty') || '难度' }}
-            </th>
-            <th class="px-6 py-3 text-center text-xs font-semibold text-gray-700 dark:text-gray-200 tracking-wide whitespace-nowrap hidden xl:table-cell">
-              {{ t('common.columns.createdAt') || '创建时间' }}
-            </th>
-            <th class="px-6 py-3 text-center text-xs font-semibold text-gray-700 dark:text-gray-200 tracking-wide whitespace-nowrap">
-              {{ t('common.columns.student') || 'Students' }}
-            </th>
-            <th class="px-6 py-3 text-center text-xs font-semibold text-gray-700 dark:text-gray-200 tracking-wide whitespace-nowrap">
-              {{ t('common.columns.actions') || '操作' }}
-            </th>
-          </tr>
         </template>
+      </filter-bar>
 
-        <template #body>
-          <tr v-for="c in items" :key="c.id" class="hover:bg-white/10 transition-colors duration-150">
-            <td class="px-6 py-3 text-center font-mono text-xs align-middle">{{ c.id }}</td>
-            <td class="px-6 py-3 align-middle">
-              <div class="font-medium">{{ c.title }}</div>
-              <div class="text-xs text-subtle line-clamp-1">{{ c.description }}</div>
-            </td>
-            <td class="px-6 py-3 text-sm text-center align-middle">
-              {{ (c as any).teacherName || (c as any).teacher?.nickname || (c as any).teacher?.username || '-' }}
-            </td>
-            <td class="px-6 py-3 text-sm text-center align-middle">
-              <badge size="sm" :variant="statusVariant(c.status)">{{ statusLabel(c.status) }}</badge>
-            </td>
-            <td class="px-6 py-3 text-sm text-center hidden xl:table-cell align-middle">
-              <badge v-if="(c as any).category" size="sm" :variant="getCategoryVariant(String((c as any).category))">
-                {{ localizeCategory((c as any).category, t) }}
-              </badge>
-              <span v-else class="text-subtle">-</span>
-            </td>
-            <td class="px-6 py-3 text-sm text-center hidden xl:table-cell align-middle">
-              <badge v-if="(c as any).difficulty" size="sm" :variant="getDifficultyVariant(String((c as any).difficulty))">
-                {{ localizeDifficulty((c as any).difficulty, t) }}
-              </badge>
-              <span v-else class="text-subtle">-</span>
-            </td>
-            <td class="px-6 py-3 text-xs text-subtle text-center hidden xl:table-cell align-middle">
-              {{ formatDateTime((c as any).createdAt) }}
-            </td>
-            <td class="px-6 py-3 text-sm text-center align-middle">
-              {{ (c as any).enrollmentCount ?? (c as any).studentCount ?? '-' }}
-            </td>
-            <td class="px-6 py-3 text-center align-middle">
-              <Button size="sm" variant="primary" @click="router.push(`/admin/courses/${c.id}`)">
-                <EyeIcon class="w-4 h-4 mr-2" />
-                {{ t('common.view') || '查看' }}
-              </Button>
-            </td>
-          </tr>
-
-          <tr v-if="items.length === 0">
-            <td colspan="9" class="px-6 py-6">
-              <empty-state :title="String(t('common.empty') || '暂无数据')" />
-            </td>
-          </tr>
-        </template>
-      </glass-table>
-
-      <pagination-bar
-        :page="page"
-        :page-size="pageSize"
-        :total-items="total"
-        :total-pages="totalPages"
-        :disabled="loading"
-        @update:page="(v: number) => { page = v; reload() }"
-        @update:pageSize="(v: number) => { pageSize = v; page = 1; reload() }"
+      <loading-overlay v-if="loading" :text="String(t('common.loading') || '加载中…')" />
+      <error-state
+        v-else-if="error"
+        :title="String(t('common.error') || '加载失败')"
+        :message="error"
+        :actionText="String(t('common.retry') || '重试')"
+        @action="reload"
       />
-    </card>
+
+      <card v-else padding="md" tint="secondary">
+        <glass-table>
+          <template #head>
+            <tr>
+              <th class="px-6 py-3 text-center text-xs font-semibold text-gray-700 dark:text-gray-200 tracking-wide whitespace-nowrap">
+                {{ t('common.columns.id') || 'ID' }}
+              </th>
+              <th class="px-6 py-3 text-left text-xs font-semibold text-gray-700 dark:text-gray-200 tracking-wide">
+                {{ t('admin.sidebar.courses') }}
+              </th>
+              <th class="px-6 py-3 text-center text-xs font-semibold text-gray-700 dark:text-gray-200 tracking-wide whitespace-nowrap">
+                {{ t('common.columns.teacher') || 'Teacher' }}
+              </th>
+              <th class="px-6 py-3 text-center text-xs font-semibold text-gray-700 dark:text-gray-200 tracking-wide whitespace-nowrap">
+                {{ t('common.columns.status') || 'Status' }}
+              </th>
+              <th class="px-6 py-3 text-center text-xs font-semibold text-gray-700 dark:text-gray-200 tracking-wide whitespace-nowrap hidden xl:table-cell">
+                {{ t('shared.course.fields.category') || '类别' }}
+              </th>
+              <th class="px-6 py-3 text-center text-xs font-semibold text-gray-700 dark:text-gray-200 tracking-wide whitespace-nowrap hidden xl:table-cell">
+                {{ t('shared.course.fields.difficulty') || '难度' }}
+              </th>
+              <th class="px-6 py-3 text-center text-xs font-semibold text-gray-700 dark:text-gray-200 tracking-wide whitespace-nowrap hidden xl:table-cell">
+                {{ t('common.columns.createdAt') || '创建时间' }}
+              </th>
+              <th class="px-6 py-3 text-center text-xs font-semibold text-gray-700 dark:text-gray-200 tracking-wide whitespace-nowrap">
+                {{ t('common.columns.student') || 'Students' }}
+              </th>
+              <th class="px-6 py-3 text-center text-xs font-semibold text-gray-700 dark:text-gray-200 tracking-wide whitespace-nowrap">
+                {{ t('common.columns.actions') || '操作' }}
+              </th>
+            </tr>
+          </template>
+
+          <template #body>
+            <tr v-for="c in items" :key="c.id" class="hover:bg-white/10 transition-colors duration-150">
+              <td class="px-6 py-3 text-center font-mono text-xs align-middle">{{ c.id }}</td>
+              <td class="px-6 py-3 align-middle">
+                <div class="font-medium">{{ c.title }}</div>
+                <div class="text-xs text-subtle line-clamp-1">{{ c.description }}</div>
+              </td>
+              <td class="px-6 py-3 text-sm text-center align-middle">
+                {{ (c as any).teacherName || (c as any).teacher?.nickname || (c as any).teacher?.username || '-' }}
+              </td>
+              <td class="px-6 py-3 text-sm text-center align-middle">
+                <badge size="sm" :variant="statusVariant(c.status)">{{ statusLabel(c.status) }}</badge>
+              </td>
+              <td class="px-6 py-3 text-sm text-center hidden xl:table-cell align-middle">
+                <badge v-if="(c as any).category" size="sm" :variant="getCategoryVariant(String((c as any).category))">
+                  {{ localizeCategory((c as any).category, t) }}
+                </badge>
+                <span v-else class="text-subtle">-</span>
+              </td>
+              <td class="px-6 py-3 text-sm text-center hidden xl:table-cell align-middle">
+                <badge v-if="(c as any).difficulty" size="sm" :variant="getDifficultyVariant(String((c as any).difficulty))">
+                  {{ localizeDifficulty((c as any).difficulty, t) }}
+                </badge>
+                <span v-else class="text-subtle">-</span>
+              </td>
+              <td class="px-6 py-3 text-xs text-subtle text-center hidden xl:table-cell align-middle">
+                {{ formatDateTime((c as any).createdAt) }}
+              </td>
+              <td class="px-6 py-3 text-sm text-center align-middle">
+                {{ (c as any).enrollmentCount ?? (c as any).studentCount ?? '-' }}
+              </td>
+              <td class="px-6 py-3 text-center align-middle">
+                <Button size="sm" variant="primary" @click="router.push(`/admin/courses/${c.id}`)">
+                  <EyeIcon class="w-4 h-4 mr-2" />
+                  {{ t('common.view') || '查看' }}
+                </Button>
+              </td>
+            </tr>
+
+            <tr v-if="items.length === 0">
+              <td colspan="9" class="px-6 py-6">
+                <empty-state :title="String(t('common.empty') || '暂无数据')" />
+              </td>
+            </tr>
+          </template>
+        </glass-table>
+
+        <pagination-bar
+          :page="page"
+          :page-size="pageSize"
+          :total-items="total"
+          :total-pages="totalPages"
+          :disabled="loading"
+          @update:page="(v: number) => { page = v; reload() }"
+          @update:pageSize="(v: number) => { pageSize = v; page = 1; reload() }"
+        />
+      </card>
+    </div>
   </div>
 </template>
 
@@ -167,7 +158,7 @@ import { adminApi } from '@/api/admin.api'
 import type { Course } from '@/types/course'
 import AdminKpiRow from '@/features/admin/components/AdminKpiRow.vue'
 import { useAdminCounts } from '@/features/admin/composables/useAdminCounts'
-import { AcademicCapIcon, ChevronRightIcon, EyeIcon } from '@heroicons/vue/24/outline'
+import { AcademicCapIcon, EyeIcon } from '@heroicons/vue/24/outline'
 import FilterBar from '@/components/ui/filters/FilterBar.vue'
 import { useRouter } from 'vue-router'
 import { getCategoryVariant, getDifficultyVariant } from '@/shared/utils/badgeColor'

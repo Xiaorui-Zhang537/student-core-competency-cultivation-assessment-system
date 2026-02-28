@@ -15,6 +15,7 @@ public interface AdminAbilityReportService {
 
     PageResult<AbilityReport> pageReports(int page,
                                           int size,
+                                          String search,
                                           Long studentId,
                                           String reportType,
                                           Boolean isPublished,

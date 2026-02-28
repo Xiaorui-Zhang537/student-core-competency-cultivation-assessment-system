@@ -4,9 +4,13 @@
       <div class="flex items-center justify-between gap-3">
         <div class="text-sm font-medium">{{ t('admin.courses.tabs.grades') || '成绩' }}</div>
         <div class="flex items-center gap-2">
-          <Button size="sm" variant="outline" :disabled="loading" @click="reloadAll">{{ t('common.refresh') || '刷新' }}</Button>
-          <Button size="sm" variant="outline" :disabled="loading || !selectedStudentId" @click="exportRadarCsv">
-            {{ t('teacher.analytics.charts.exportCsv') || t('admin.tools.exportCsv') || '导出CSV' }}
+          <Button size="sm" variant="primary" :disabled="loading" @click="exportRadarCsvAll">
+            <document-arrow-down-icon class="w-4 h-4 mr-1" />
+            {{ t('admin.courses.exportAllCsv') || '全部导出' }}
+          </Button>
+          <Button size="sm" variant="secondary" :disabled="loading || !selectedStudentId" @click="exportRadarCsvSingle">
+            <document-arrow-down-icon class="w-4 h-4 mr-1" />
+            {{ t('admin.courses.exportCurrentStudentCsv') || '导出当前学生' }}
           </Button>
         </div>
       </div>
@@ -42,24 +46,48 @@
             <div v-if="rankingLoading" class="py-6 text-center text-sm text-gray-500 dark:text-gray-400">{{ t('common.loading') || '加载中…' }}</div>
             <div v-else-if="!topStudents.length" class="py-6 text-center text-sm text-gray-500 dark:text-gray-400">{{ t('common.empty') || '暂无数据' }}</div>
             <div v-else class="flex flex-col">
-              <ul class="divide-y divide-white/10">
-                <li v-for="(s, idx) in topStudents" :key="String(s.studentId)" class="py-3 flex items-start justify-between gap-4">
-                  <div class="min-w-0">
-                    <div class="flex items-center gap-2">
-                      <span class="text-sm w-6 text-right font-semibold text-gray-600 dark:text-gray-300">{{ (rankingPage - 1) * rankingPageSize + idx + 1 }}</span>
-                      <span class="text-sm font-semibold text-gray-900 dark:text-gray-100 truncate">{{ s.studentName || `#${s.studentId}` }}</span>
-                      <badge :variant="getRadarBadgeVariant(s.radarClassification)" size="xs" class="px-2 text-xs font-semibold uppercase tracking-wide">
-                        {{ String(s.radarClassification || '-') }}
-                      </badge>
+              <ul class="divide-y divide-gray-200 dark:divide-gray-700">
+                <li v-for="(s, idx) in topStudents" :key="String(s.studentId)" class="py-3 flex flex-col gap-2">
+                  <div class="flex items-start justify-between gap-4">
+                    <div class="flex items-start gap-3 min-w-0">
+                      <span class="text-sm w-6 text-right font-semibold text-gray-600 dark:text-gray-300 pt-0.5">{{ (rankingPage - 1) * rankingPageSize + idx + 1 }}</span>
+                      <div class="flex flex-col gap-1 min-w-0">
+                        <div class="flex items-center gap-2 min-w-0">
+                          <span class="text-sm font-semibold text-gray-900 dark:text-gray-100 truncate">{{ s.studentName || `#${s.studentId}` }}</span>
+                          <badge :variant="getRadarBadgeVariant(s.radarClassification)" size="xs" class="px-2 text-xs font-semibold uppercase tracking-wide">
+                            {{ formatRadarBadgeLabel(s.radarClassification) }}
+                          </badge>
+                        </div>
+                        <div v-if="s.dimensionScores && Object.keys(s.dimensionScores || {}).length" class="grid grid-cols-2 gap-x-3 gap-y-1 text-xs text-gray-600 dark:text-gray-400 mt-1">
+                          <span
+                            v-for="([code, value], didx) in Object.entries(s.dimensionScores || {})"
+                            :key="`${s.studentId}-${code}-${didx}`"
+                            class="inline-flex items-center gap-1 uppercase"
+                          >
+                            <span class="font-medium">{{ formatDimensionLabel(code) }}</span>
+                            <span class="text-gray-400">·</span>
+                            <span>{{ formatRadarValue(value) }}</span>
+                          </span>
+                        </div>
+                        <div v-else class="text-xs text-gray-400 dark:text-gray-500">
+                          {{ t('teacher.students.table.noRadarData') || '暂无雷达数据' }}
+                        </div>
+                      </div>
                     </div>
-                    <div class="text-xs text-subtle mt-1">
-                      {{ t('admin.courseStudents.table.radar') || '雷达' }}: {{ formatRadarArea(s.radarArea) }}%
-                      <span class="mx-2">·</span>
-                      {{ t('admin.courseStudents.table.grade') || '成绩' }}: {{ typeof s.averageGrade === 'number' ? Number(s.averageGrade).toFixed(1) : '-' }}
+                    <div class="flex flex-col items-end text-sm text-gray-700 dark:text-gray-200">
+                      <span class="text-sm font-semibold whitespace-nowrap text-gray-900 dark:text-gray-100">{{ t('teacher.analytics.tables.radarAreaValue', { value: formatRadarArea(s.radarArea) }) || `面积 ${formatRadarArea(s.radarArea)}` }}</span>
                     </div>
                   </div>
-                  <div class="shrink-0">
-                    <Button size="sm" variant="outline" @click="() => pickStudent(String(s.studentId))">{{ t('admin.courses.pickStudent') || '选为分析对象' }}</Button>
+                  <div class="shrink-0 self-end">
+                    <Button
+                      size="sm"
+                      :variant="isSelectedStudent(s) ? 'primary' : 'outline'"
+                      @click="() => pickStudent(String(s.studentId))"
+                    >
+                      <check-circle-icon v-if="isSelectedStudent(s)" class="w-4 h-4 mr-1" />
+                      <user-icon v-else class="w-4 h-4 mr-1" />
+                      {{ isSelectedStudent(s) ? (t('admin.courses.pickStudentActive') || '已选为分析对象') : (t('admin.courses.pickStudent') || '选为分析对象') }}
+                    </Button>
                   </div>
                 </li>
               </ul>
@@ -90,6 +118,7 @@
                     <glass-switch v-model="compareEnabled" size="sm" />
                   </div>
                   <Button size="sm" variant="info" :disabled="!selectedStudentId" @click="onRefreshRadarAndInsights">
+                    <arrow-path-icon class="w-4 h-4 mr-1" />
                     {{ t('teacher.analytics.charts.refresh') || t('common.refresh') || '刷新' }}
                   </Button>
                 </div>
@@ -97,8 +126,8 @@
             </template>
 
             <div class="flex flex-col gap-3">
-              <div class="flex flex-wrap items-center gap-4 whitespace-nowrap">
-                <div class="flex items-center gap-2">
+              <div class="flex items-center gap-4 whitespace-nowrap flex-nowrap">
+                <div class="flex items-center gap-2 shrink-0">
                   <span class="text-xs font-medium leading-tight text-gray-700 dark:text-gray-300">{{ t('teacher.analytics.settings.studentLabel') || '学生' }}</span>
                   <glass-popover-select
                     v-model="selectedStudentId"
@@ -111,7 +140,7 @@
                   />
                 </div>
 
-                <div class="flex items-center gap-2">
+                <div class="flex items-center gap-2 shrink-0">
                   <span class="text-xs font-medium leading-tight text-gray-700 dark:text-gray-300">{{ t('teacher.analytics.settings.classAvgLabel') || '班级均值' }}</span>
                   <glass-popover-select
                     v-model="includeClassAvg"
@@ -158,7 +187,10 @@
             <template #header>
               <div class="flex items-center justify-between h-11">
                 <h3 class="text-lg font-semibold text-gray-900 dark:text-white">{{ t('teacher.analytics.charts.dimensionInsights') || '维度解析' }}</h3>
-                <Button size="sm" variant="outline" @click="loadInsights" :disabled="!selectedStudentId">{{ t('teacher.analytics.charts.refresh') || '刷新' }}</Button>
+                <Button size="sm" variant="outline" @click="loadInsights" :disabled="!selectedStudentId">
+                  <arrow-path-icon class="w-4 h-4 mr-1" />
+                  {{ t('teacher.analytics.charts.refresh') || '刷新' }}
+                </Button>
               </div>
             </template>
             <div v-if="insightsItems.length === 0" class="text-sm text-gray-500">{{ t('teacher.analytics.charts.noInsights') || '暂无解析' }}</div>
@@ -213,6 +245,7 @@ import { assignmentApi } from '@/api/assignment.api'
 import type { ClassPerformanceData, CourseAnalyticsData, CourseStudentPerformanceItem } from '@/types/teacher'
 import { downloadCsv } from '@/utils/download'
 import { useUIStore } from '@/stores/ui'
+import { ArrowPathIcon, CheckCircleIcon, DocumentArrowDownIcon, UserIcon } from '@heroicons/vue/24/outline'
 
 const props = withDefaults(defineProps<{ courseId: string; active?: boolean }>(), { active: true })
 const emit = defineEmits<{ (e: 'counts', v: { totalAssignments: number; totalStudents: number }): void }>()
@@ -272,6 +305,22 @@ function formatRadarArea(v?: number) {
   const n = Number(v)
   if (!Number.isFinite(n)) return '--'
   return n.toFixed(1)
+}
+function formatRadarBadgeLabel(classification?: string) {
+  const key = (classification || 'D').toUpperCase() as 'A' | 'B' | 'C' | 'D'
+  const desc = t(`teacher.students.radar.classification.${key}`) as string
+  return `${key} · ${desc}`
+}
+function formatDimensionLabel(code: string) {
+  const label = t(`shared.radarLegend.dimensions.${code}.title`) as string
+  return label || code
+}
+function formatRadarValue(value?: number) {
+  if (!Number.isFinite(Number(value))) return '--'
+  return Number(value).toFixed(1)
+}
+function isSelectedStudent(s: CourseStudentPerformanceItem) {
+  return String(s?.studentId ?? '') === String(selectedStudentId.value ?? '')
 }
 
 function resolveUserDisplayName(i: any): string {
@@ -509,7 +558,7 @@ function pickStudent(id: string) {
   nextTick(() => loadInsights())
 }
 
-async function exportRadarCsv() {
+async function exportRadarCsvSingle() {
   if (!selectedStudentId.value) return
   if (compareEnabled.value) {
     const body: any = {
@@ -519,12 +568,28 @@ async function exportRadarCsv() {
     }
     if (assignmentIdsA.value?.length) body.assignmentIdsA = assignmentIdsA.value
     if (assignmentIdsB.value?.length) body.assignmentIdsB = assignmentIdsB.value
-    const res = await teacherApi.exportAbilityRadarCompareCsv(body)
-    downloadCsv(res as any, `radar_compare_${props.courseId}_${selectedStudentId.value}.csv`)
+    const res = await teacherApi.exportAbilityRadarCompareCsv(body, 'single')
+    downloadCsv(res as any, `radar_compare_single_${props.courseId}_${selectedStudentId.value}.csv`)
   } else {
-    const params: any = { courseId: props.courseId, studentId: selectedStudentId.value }
+    const params: any = { courseId: props.courseId, studentId: selectedStudentId.value, scope: 'single' }
     const res = await teacherApi.exportAbilityRadarCsv(params)
-    downloadCsv(res as any, `radar_${props.courseId}_${selectedStudentId.value}.csv`)
+    downloadCsv(res as any, `radar_single_${props.courseId}_${selectedStudentId.value}.csv`)
+  }
+}
+
+async function exportRadarCsvAll() {
+  if (compareEnabled.value) {
+    const body: any = {
+      courseId: props.courseId,
+      includeClassAvg: includeClassAvg.value,
+    }
+    if (assignmentIdsA.value?.length) body.assignmentIdsA = assignmentIdsA.value
+    if (assignmentIdsB.value?.length) body.assignmentIdsB = assignmentIdsB.value
+    const res = await teacherApi.exportAbilityRadarCompareCsv(body, 'all')
+    downloadCsv(res as any, `radar_compare_all_${props.courseId}.csv`)
+  } else {
+    const res = await teacherApi.exportAbilityRadarCsv({ courseId: props.courseId, scope: 'all' } as any)
+    downloadCsv(res as any, `radar_all_${props.courseId}.csv`)
   }
 }
 

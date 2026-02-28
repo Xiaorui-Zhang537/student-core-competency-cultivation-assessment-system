@@ -39,6 +39,7 @@ public class AdminAbilityReportsController extends BaseController {
     public ResponseEntity<ApiResponse<PageResult<AbilityReport>>> page(
             @RequestParam(defaultValue = "1") int page,
             @RequestParam(defaultValue = "20") int size,
+            @RequestParam(required = false) String search,
             @RequestParam(required = false) Long studentId,
             @RequestParam(required = false) String reportType,
             @RequestParam(required = false) Boolean isPublished,
@@ -49,7 +50,7 @@ public class AdminAbilityReportsController extends BaseController {
             @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss") LocalDateTime end
     ) {
         return ResponseEntity.ok(ApiResponse.success(
-                adminAbilityReportService.pageReports(page, size, studentId, reportType, isPublished, courseId, assignmentId, submissionId, start, end)
+                adminAbilityReportService.pageReports(page, size, search, studentId, reportType, isPublished, courseId, assignmentId, submissionId, start, end)
         ));
     }
 

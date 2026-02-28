@@ -64,12 +64,12 @@ export const teacherApi = {
   updateAbilityWeights: (payload: { courseId: string; weights: Record<string, number> }) => {
     return api.put('/teachers/ability/weights', payload);
   },
-  exportAbilityRadarCsv: (params: { courseId: string; classId?: string; studentId?: string; startDate?: string; endDate?: string }) => {
+  exportAbilityRadarCsv: (params: { courseId: string; classId?: string; studentId?: string; startDate?: string; endDate?: string; scope?: 'single' | 'all' }) => {
     return api.get('/teachers/ability/radar/export', { params, responseType: 'blob' as any });
   },
   // Compare APIs (POST)
   postAbilityRadarCompare: (body: {
-    courseId: string; studentId: string; classId?: string;
+    courseId: string; studentId?: string; classId?: string;
     startDateA?: string; endDateA?: string; assignmentIdsA?: string[];
     startDateB?: string; endDateB?: string; assignmentIdsB?: string[];
     includeClassAvg?: 'none'|'A'|'B'|'both';
@@ -77,12 +77,12 @@ export const teacherApi = {
     return api.post('/teachers/ability/radar/compare', body);
   },
   exportAbilityRadarCompareCsv: (body: {
-    courseId: string; studentId: string; classId?: string;
+    courseId: string; studentId?: string; classId?: string;
     startDateA?: string; endDateA?: string; assignmentIdsA?: string[];
     startDateB?: string; endDateB?: string; assignmentIdsB?: string[];
     includeClassAvg?: 'none'|'A'|'B'|'both';
-  }) => {
-    return api.post('/teachers/ability/radar/compare/export', body, { responseType: 'blob' as any });
+  }, scope: 'single' | 'all' = 'single') => {
+    return api.post('/teachers/ability/radar/compare/export', body, { params: { scope }, responseType: 'blob' as any });
   },
   postAbilityDimensionInsights: (body: {
     courseId: string; studentId: string; classId?: string;

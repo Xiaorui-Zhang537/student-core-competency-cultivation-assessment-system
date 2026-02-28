@@ -159,7 +159,7 @@ public class AdminExportsController extends BaseController {
     ) {
         int size = 50000;
         List<AbilityReport> items = abilityReportMapper.selectAdminReports(
-                studentId, reportType, isPublished, courseId, assignmentId, submissionId, start, end, 0, size
+                null, studentId, reportType, isPublished, courseId, assignmentId, submissionId, start, end, 0, size
         );
 
         StringBuilder sb = new StringBuilder();
@@ -475,7 +475,7 @@ public class AdminExportsController extends BaseController {
 
         List<Grade> grades = gradeMapper.selectByStudentAndCourse(studentId, courseId);
         List<AbilityReport> reports = abilityReportMapper.selectAdminReports(
-                studentId, null, null, courseId, null, null, null, null, 0, 50000
+                null, studentId, null, null, courseId, null, null, null, null, 0, 50000
         );
         List<AdminLessonNoteListItemResponse> notesRows = lessonProgressMapper.selectAdminCourseLessonNotes(
                 courseId, studentId, null, null, 0, 50000
@@ -862,7 +862,7 @@ public class AdminExportsController extends BaseController {
         List<AbilityReport> reports;
         try {
             reports = abilityReportMapper.selectAdminReports(
-                    null, null, null, courseId, null, null, null, null, 0, 50000
+                    null, null, null, null, courseId, null, null, null, null, 0, 50000
             );
         } catch (Exception e) {
             reports = java.util.Collections.emptyList();

@@ -108,6 +108,7 @@ export interface AbilityReport {
   studentId: number
   studentName?: string
   studentNumber?: string
+  assignmentTitle?: string
   reportType: string
   title: string
   overallScore?: string | number
@@ -117,7 +118,26 @@ export interface AbilityReport {
   isPublished?: boolean
   createdAt?: string
   dimensionScores?: string
+  trendsAnalysis?: string
+  trends_analysis?: string
+  normalizedJson?: string
+  rawJson?: string
+  raw_json?: string
   recommendations?: string
+}
+
+export interface AdminAbilityReportPageParams {
+  page: number
+  size: number
+  search?: string
+  studentId?: number
+  reportType?: string
+  isPublished?: boolean
+  courseId?: number
+  assignmentId?: number
+  submissionId?: number
+  start?: string
+  end?: string
 }
 
 export interface ReportEntity {
@@ -172,7 +192,7 @@ export const adminApi = {
     api.get(`/admin/people/students/${id}`, { params }),
   getTeacherDetail: (id: string | number) => api.get(`/admin/people/teachers/${id}`),
 
-  pageAbilityReports: (params: any): Promise<PageResult<AbilityReport>> => api.get('/admin/ability-reports', { params }),
+  pageAbilityReports: (params: AdminAbilityReportPageParams): Promise<PageResult<AbilityReport>> => api.get('/admin/ability-reports', { params }),
   getAbilityReport: (id: string | number): Promise<AbilityReport> => api.get(`/admin/ability-reports/${id}`),
 
   getAnalyticsSeriesOverview: (days = 30): Promise<any> => api.get('/admin/analytics/series/overview', { params: { days } }),

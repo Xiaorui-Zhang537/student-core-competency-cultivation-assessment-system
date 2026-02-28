@@ -108,6 +108,9 @@ public class AbilityReport {
 
     @Schema(description = "学生学号", example = "2021001")
     private String studentNumber;
+
+    @Schema(description = "作业标题", example = "Python 条件语句练习")
+    private String assignmentTitle;
     
     /**
      * 发布报告

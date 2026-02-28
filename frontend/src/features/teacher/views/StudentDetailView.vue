@@ -107,7 +107,7 @@
           </card>
           
           <!-- Course Filter (glass, keep original position) -->
-          <card padding="sm" tint="accent" class="flex items-center gap-3 whitespace-nowrap">
+          <card padding="sm" tint="accent" class="flex items-center gap-4 whitespace-nowrap">
             <label class="text-sm text-gray-600 whitespace-nowrap pr-2">{{ t('teacher.studentDetail.filter.label') }}</label>
             <glass-popover-select
               v-model="selectedCourseId"
@@ -116,7 +116,7 @@
               width="18rem"
               @change="onCourseChange"
             />
-            <label class="text-sm text-gray-600 whitespace-nowrap pl-2">{{ t('shared.behaviorEvidence.range') || '行为时间窗' }}</label>
+            <label class="text-sm text-gray-600 whitespace-nowrap pl-4 pr-3">{{ t('shared.behaviorEvidence.range') || '行为时间窗' }}</label>
             <glass-popover-select
               v-model="behaviorRange"
               :options="behaviorRangeOptions"
@@ -130,17 +130,17 @@
             <start-card :label="t('teacher.studentDetail.stats.graded') as string" :value="gradedAssignmentsCount" tone="blue" :icon="DocumentTextIcon" />
             <start-card :label="t('teacher.studentDetail.stats.average') as string" :value="averageScore.toFixed(1)" tone="amber" :icon="StarIcon" />
             <start-card :label="t('teacher.studentDetail.stats.completionRate') || '完成率(%)'" :value="formatPercent(selectedCourseId ? courseProgress : profile.completionRate)" tone="emerald" :icon="ChartPieIcon" />
-            <start-card :label="t('teacher.studentDetail.stats.lastActive') || '最近活跃'" :value="formatDateTime(profile.lastAccessTime)" tone="sky" :icon="ChatBubbleLeftRightIcon" />
+            <start-card :label="t('teacher.studentDetail.stats.lastActive') || '最近活跃'" :value="formatDateTime(profile.lastAccessTime)" tone="violet" :icon="ChatBubbleLeftRightIcon" />
           </div>
 
           <!-- 最近学习 + 能力雷达（左右并排） -->
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <card padding="md" tint="info">
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
+            <card padding="md" tint="info" class="h-[380px] max-h-[380px] overflow-hidden">
               <div class="flex items-center gap-2 mb-4">
                 <document-text-icon class="w-5 h-5 text-indigo-600" />
                 <h3 class="text-lg font-semibold">{{ t('teacher.studentDetail.recentStudy') || '最近学习' }}</h3>
               </div>
-              <div class="space-y-3">
+              <div class="h-[300px] max-h-[300px] space-y-3 overflow-y-auto pr-1">
                 <template v-if="recentEvents.length > 0">
                   <div v-for="ev in recentEvents" :key="String(ev.eventType)+'-'+String(ev.occurredAt)+'-'+String(ev.title||'')" class="flex items-center justify-between">
                     <div class="flex items-center gap-2 min-w-0">
@@ -184,14 +184,14 @@
               </div>
             </card>
 
-            <card padding="md" tint="secondary">
+            <card padding="md" tint="secondary" class="h-[380px] max-h-[380px] overflow-hidden flex flex-col">
               <div class="flex items-center justify-between mb-2">
                 <div class="flex items-center gap-2">
                   <chart-pie-icon class="w-5 h-5 text-emerald-600" />
                   <h3 class="text-lg font-semibold">{{ t('teacher.studentDetail.radar.title') || '能力雷达' }}</h3>
                 </div>
               </div>
-              <div v-if="radarIndicators.length" class="w-full">
+              <div v-if="radarIndicators.length" class="w-full flex-1 min-h-0">
                 <radar-chart :indicators="radarIndicators" :series="radarSeries" :height="'300px'" />
               </div>
               <div v-else class="text-sm text-gray-500 text-center">{{ t('teacher.analytics.charts.noRadar') }}</div>
@@ -1114,15 +1114,18 @@ async function fetchActivity() {
 
 async function fetchAbilityRadar() {
   try {
-    // 优先按课程上下文拉取；管理员模式在无课程时尝试 student 维度兜底。
-    const courseId = String(courseContextId.value || '')
+    // 优先按课程上下文拉取；管理员模式必须带 courseId，避免后端 500。
+    const routeCourseId = String(courseContextId.value || '').trim()
+    const fallbackCourseId = String((studentCourses.value?.[0] as any)?.id || '').trim()
+    const courseId = routeCourseId || fallbackCourseId
     if (!studentId.value) return
     let resp: any = null
     if (isAdminView.value) {
+      if (!courseId) return
       // 与“数据分析”页保持一致：不强行限定日期窗口，避免把班级/学生四维数据过滤掉
       resp = await adminApi.getAbilityRadar({
         studentId: String(studentId.value),
-        ...(courseId ? { courseId } : {})
+        courseId,
       } as any)
     } else {
       if (!courseId) return

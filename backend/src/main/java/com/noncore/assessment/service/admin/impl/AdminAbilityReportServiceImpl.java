@@ -31,6 +31,7 @@ public class AdminAbilityReportServiceImpl implements AdminAbilityReportService 
     @Override
     public PageResult<AbilityReport> pageReports(int page,
                                                  int size,
+                                                 String search,
                                                  Long studentId,
                                                  String reportType,
                                                  Boolean isPublished,
@@ -44,9 +45,9 @@ public class AdminAbilityReportServiceImpl implements AdminAbilityReportService 
         int offset = (p - 1) * s;
 
         List<AbilityReport> items = abilityReportMapper.selectAdminReports(
-                studentId, reportType, isPublished, courseId, assignmentId, submissionId, start, end, offset, s
+                search, studentId, reportType, isPublished, courseId, assignmentId, submissionId, start, end, offset, s
         );
-        long total = safeInt(abilityReportMapper.countAdminReports(studentId, reportType, isPublished, courseId, assignmentId, submissionId, start, end));
+        long total = safeInt(abilityReportMapper.countAdminReports(search, studentId, reportType, isPublished, courseId, assignmentId, submissionId, start, end));
         int totalPages = (int) Math.ceil(total / (double) s);
         return PageResult.of(items, p, s, total, totalPages);
     }

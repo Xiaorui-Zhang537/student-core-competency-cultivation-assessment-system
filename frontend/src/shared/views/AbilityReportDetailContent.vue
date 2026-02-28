@@ -47,7 +47,7 @@
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import Card from '@/components/ui/Card.vue'
-import { normalizeAssessment, safeJsonParse } from '@/shared/utils/aiGradingNormalizer'
+import { parseAbilityReport, resolveReportRawJson } from '@/shared/utils/abilityReportData'
 
 const props = defineProps<{ report: any }>()
 const { t } = useI18n()
@@ -61,78 +61,11 @@ function i18nText(key: string, fallback: string): string {
   }
 }
 
-const rawAiJson = computed(() => (props.report as any)?.dimensionScores || null)
-const parsedAi = computed(() => {
-  const raw = rawAiJson.value
-  if (!raw) return null
-  try {
-    const obj = typeof raw === 'string' ? safeJsonParse(raw) : raw
-    if (!obj) return null
-    const normalized = normalizeAssessment(obj)
-    if (hasCoreStructure(normalized)) return normalized
-    const fallback = buildFallbackFromFlatScores(normalized, obj)
-    return hasCoreStructure(fallback) ? fallback : null
-  } catch {
-    return buildFallbackFromFlatScores(null, null)
-  }
-})
+const rawAiJson = computed(() => resolveReportRawJson(props.report))
+const parsedAi = computed(() => parseAbilityReport(props.report))
 
 function pretty(v: any) {
   try { return JSON.stringify(typeof v === 'string' ? JSON.parse(v) : v, null, 2) } catch { return String(v || '') }
-}
-
-function hasCoreStructure(v: any): boolean {
-  return !!(v && (v.overall || v.moral_reasoning || v.attitude_development || v.ability_growth || v.strategy_optimization))
-}
-
-function toFlatScores(fromA: any, fromB: any): Record<string, number> {
-  const src = (fromA && typeof fromA === 'object') ? fromA : ((fromB && typeof fromB === 'object') ? fromB : {})
-  const out: Record<string, number> = {}
-  const pairs: Array<[string, string[]]> = [
-    ['MORAL_COGNITION', ['MORAL_COGNITION', 'moral', 'moral_cognition']],
-    ['LEARNING_ATTITUDE', ['LEARNING_ATTITUDE', 'attitude', 'learning_attitude']],
-    ['LEARNING_ABILITY', ['LEARNING_ABILITY', 'ability', 'learning_ability']],
-    ['LEARNING_METHOD', ['LEARNING_METHOD', 'strategy', 'learning_method']],
-  ]
-  for (const [key, aliases] of pairs) {
-    for (const alias of aliases) {
-      const n = Number((src as any)?.[alias])
-      if (Number.isFinite(n)) {
-        out[key] = n
-        break
-      }
-    }
-  }
-  return out
-}
-
-function score5(v: number): number {
-  if (!Number.isFinite(v)) return 0
-  if (v > 5) return Math.max(0, Math.min(5, v / 20))
-  return Math.max(0, Math.min(5, v))
-}
-
-function buildFallbackFromFlatScores(fromA: any, fromB: any): any | null {
-  const flat = toFlatScores(fromA, fromB)
-  const keys = Object.keys(flat)
-  if (!keys.length) return null
-  const mr = score5(Number(flat.MORAL_COGNITION || 0))
-  const ad = score5(Number(flat.LEARNING_ATTITUDE || 0))
-  const ag = score5(Number(flat.LEARNING_ABILITY || 0))
-  const so = score5(Number(flat.LEARNING_METHOD || 0))
-  const mk = (score: number) => ({ score, evidence: [], suggestions: [] })
-  const finalScore = [mr, ad, ag, so].reduce((a, b) => a + b, 0) / 4
-  return {
-    overall: {
-      dimension_averages: { moral_reasoning: mr, attitude: ad, ability: ag, strategy: so },
-      final_score: Math.round(finalScore * 10) / 10,
-      holistic_feedback: String((props.report as any)?.recommendations || ''),
-    },
-    moral_reasoning: { stage_level: mk(mr), foundations_balance: mk(mr), argument_chain: mk(mr) },
-    attitude_development: { emotional_engagement: mk(ad), resilience: mk(ad), focus_flow: mk(ad) },
-    ability_growth: { blooms_level: mk(ag), metacognition: mk(ag), transfer: mk(ag) },
-    strategy_optimization: { diversity: mk(so), depth: mk(so), self_regulation: mk(so) },
-  }
 }
 
 function getOverall(obj: any): any {
@@ -159,7 +92,7 @@ function dimensionBars(obj: any): Array<{ key: string; label: string; value: num
       { key: 'moral_reasoning', label: i18nText('teacher.aiGrading.render.moral_reasoning', '道德推理'), value: Number(dm.moral_reasoning ?? 0) },
       { key: 'attitude', label: i18nText('teacher.aiGrading.render.attitude_development', '学习态度'), value: Number(dm.attitude ?? 0) },
       { key: 'ability', label: i18nText('teacher.aiGrading.render.ability_growth', '学习能力'), value: Number(dm.ability ?? 0) },
-      { key: 'strategy', label: i18nText('teacher.aiGrading.render.strategy_optimization', '学习策略'), value: Number(dm.strategy ?? 0) }
+      { key: 'strategy', label: i18nText('teacher.aiGrading.render.strategy_optimization', '学习策略'), value: Number(dm.strategy ?? 0) },
     ]
   } catch { return null }
 }
@@ -216,4 +149,3 @@ function escapeHtml(s: string) {
     .replace(/'/g, '&#39;')
 }
 </script>
-
