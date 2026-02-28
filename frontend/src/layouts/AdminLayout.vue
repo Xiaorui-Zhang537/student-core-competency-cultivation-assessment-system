@@ -302,7 +302,6 @@ import {
   SunIcon, MoonIcon, PaintBrushIcon, PhotoIcon,
   UserIcon, ArrowRightOnRectangleIcon,
   HomeIcon, AcademicCapIcon, UsersIcon,
-  ChartBarIcon,
   ArrowDownTrayIcon, ShieldCheckIcon,
   ChatBubbleLeftRightIcon, QuestionMarkCircleIcon,
   BellIcon, CursorArrowRaysIcon, EyeIcon, EyeSlashIcon,
@@ -330,7 +329,6 @@ const {
     people: '/admin/people',
     moderation: '/admin/moderation',
     courses: '/admin/courses',
-    rankings: '/admin/rankings',
     tools: '/admin/tools',
   },
 })
@@ -349,7 +347,6 @@ const dockItems = computed(() => ([
   { key: 'people', label: t('admin.sidebar.people') as string, icon: UsersIcon },
   { key: 'moderation', label: t('admin.sidebar.moderation') as string, icon: ShieldCheckIcon },
   { key: 'courses', label: t('admin.sidebar.courses') as string, icon: AcademicCapIcon },
-  { key: 'rankings', label: (t('admin.sidebar.rankings') as string) || '排名', icon: ChartBarIcon },
   { key: 'tools', label: t('admin.sidebar.tools') as string, icon: ArrowDownTrayIcon },
 ]))
 </script>

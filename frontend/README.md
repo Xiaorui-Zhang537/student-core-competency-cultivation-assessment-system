@@ -79,7 +79,7 @@ npm run dev
 - 访客：`/`、`/auth/*`、`/docs`
 - 学生：`/student/*`（dashboard/courses/lessons/assignments/analysis/community/notifications/assistant/help）
 - 教师：`/teacher/*`（dashboard/courses/assignments/analytics/ai-grading/students/assistant/help/notifications）
-- 管理员：`/admin/*`（console/people/moderation/courses/rankings/tools 等）
+- 管理员：`/admin/*`（console/people/moderation/moderation/center/courses/tools 等）
 
 守卫规则：
 - `meta.requiresAuth`：未登录会跳转 `/auth/login`
@@ -150,3 +150,10 @@ VITE_DOCS_URL=http://docs.stucoreai.space
 - 前端 API 参考：`../docs/frontend/api/index.md`
 - 前端深入：`../docs/frontend-deep-dive.md`
 - 实时语音口语训练：`../docs/frontend/voice-practice.md`
+
+## 最近更新（2026-02）
+
+- 管理员社区治理页补齐中英文切换：状态选项、是否置顶、查看评论按钮、治理通知（成功/失败）均接入 i18n。
+- 帖子治理表“操作”列标题与按钮组统一居中，按钮文案由“评论”调整为“查看评论”。
+- 评论查看逻辑分流：表格按钮进入“指定帖子评论”；顶部类型选择器切换到评论时展示“全部评论”。
+- 管理员帖子查询排序调整为置顶优先（`pinned DESC, created_at DESC`），与后端置顶语义一致。

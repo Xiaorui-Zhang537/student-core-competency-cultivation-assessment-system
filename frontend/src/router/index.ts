@@ -342,14 +342,14 @@ const routes = [
         component: () => import('@/features/admin/views/ModerationView.vue')
       },
       {
+        path: 'moderation/center',
+        name: 'AdminModerationCenter',
+        component: () => import('@/features/shared/views/CommunityView.vue')
+      },
+      {
         path: 'courses',
         name: 'AdminCourses',
         component: () => import('@/features/admin/views/CoursesView.vue')
-      },
-      {
-        path: 'rankings',
-        name: 'AdminRankings',
-        component: () => import('@/features/admin/views/RankingsView.vue')
       },
       {
         path: 'courses/:id',
@@ -404,8 +404,8 @@ const routes = [
       { path: 'users', redirect: (to: any) => ({ path: '/admin/people', query: { ...to.query, tab: 'users' } }) },
       { path: 'students', redirect: (to: any) => ({ path: '/admin/people', query: { ...to.query, tab: 'students' } }) },
       { path: 'teachers', redirect: (to: any) => ({ path: '/admin/people', query: { ...to.query, tab: 'teachers' } }) },
-      { path: 'reports', redirect: (to: any) => ({ path: '/admin/moderation', query: { ...to.query, tab: 'ability' } }) },
-      { path: 'community', redirect: (to: any) => ({ path: '/admin/moderation', query: { ...to.query, tab: 'posts' } }) },
+      { path: 'reports', redirect: (to: any) => ({ path: '/admin/moderation', query: to.query }) },
+      { path: 'community', redirect: (to: any) => ({ path: '/admin/moderation', query: to.query }) },
       { path: 'exports', redirect: (to: any) => ({ path: '/admin/tools', query: to.query }) },
     ]
   },

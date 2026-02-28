@@ -4,9 +4,13 @@
       <page-header :title="t('shared.community.title')" :subtitle="t('shared.community.subtitle')">
         <template #actions>
           <div class="flex items-center space-x-3">
-            <Button variant="primary" class="whitespace-nowrap" @click="showCreatePostModal = true">
+            <Button v-if="!isAdminModeration" variant="primary" class="whitespace-nowrap" @click="showCreatePostModal = true">
               <plus-icon class="w-4 h-4 mr-2" />
               {{ t('shared.community.createPost') }}
+            </Button>
+            <Button v-else variant="primary" class="whitespace-nowrap" @click="goBackToGovernance">
+              <shield-check-icon class="w-4 h-4 mr-2" />
+              {{ t('admin.moderation.backToGovernance') || '返回治理表格' }}
             </Button>
           </div>
         </template>
@@ -187,6 +191,25 @@
                           >
                             {{ t('shared.community.list.delete') }}
                           </Button>
+                          <Button
+                            v-if="isAdminModeration"
+                            variant="secondary"
+                            size="xs"
+                            class="bg-amber-500 text-white border-amber-500 hover:bg-amber-600"
+                            @click.stop="openBlockPostModal(post)"
+                          >
+                            <shield-exclamation-icon class="w-3.5 h-3.5 mr-1" />
+                            {{ t('admin.moderation.block') || '屏蔽' }}
+                          </Button>
+                          <Button
+                            v-if="isAdminModeration"
+                            variant="danger"
+                            size="xs"
+                            @click.stop="onAdminDeletePost(post)"
+                          >
+                            <trash-icon class="w-3.5 h-3.5 mr-1" />
+                            {{ t('common.delete') || '删除' }}
+                          </Button>
                         </div>
                       </div>
                     </div>
@@ -222,7 +245,7 @@
               <p class="text-subtle mb-4">
                 {{ filterOptions.keyword ? t('shared.community.list.emptyDescKeyword') : t('shared.community.list.emptyDescCategory') }}
               </p>
-              <Button variant="primary" class="whitespace-nowrap" @click="showCreatePostModal = true">
+              <Button v-if="!isAdminModeration" variant="primary" class="whitespace-nowrap" @click="showCreatePostModal = true">
                 <plus-icon class="w-4 h-4 mr-2" />
                 {{ t('shared.community.list.publishFirst') }}
               </Button>
@@ -346,20 +369,45 @@
           <Button type="submit" :disabled="loading" form="editPostForm" variant="primary">{{ t('shared.community.modal.save') }}</Button>
         </template>
       </glass-modal>
+
+      <!-- Admin block modal -->
+      <glass-modal
+        v-if="adminBlock.visible"
+        :title="String(t('admin.moderation.blockWithReason') || '屏蔽并告知原因')"
+        size="sm"
+        @close="closeBlockModal"
+      >
+        <div class="space-y-3">
+          <div class="text-sm text-subtle line-clamp-2">{{ adminBlock.targetTitle }}</div>
+          <glass-textarea
+            v-model="adminBlock.reason"
+            :rows="4"
+            :placeholder="String(t('admin.moderation.blockReasonPlaceholder') || '请输入屏蔽原因')"
+          />
+        </div>
+        <template #footer>
+          <Button type="button" variant="secondary" @click="closeBlockModal">{{ t('common.cancel') || '取消' }}</Button>
+          <Button type="button" variant="danger" :disabled="!adminBlock.reason.trim() || loading" @click="confirmBlockPost">
+            <shield-exclamation-icon class="w-4 h-4 mr-1" />
+            {{ t('admin.moderation.confirmBlock') || '确认屏蔽' }}
+          </Button>
+        </template>
+      </glass-modal>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, reactive, onMounted, computed } from 'vue';
-import { useRouter } from 'vue-router';
+import { useRoute, useRouter } from 'vue-router';
 import { storeToRefs } from 'pinia';
 import { useCommunityStore } from '@/stores/community';
 import {
   UserIcon, PlusIcon, MagnifyingGlassIcon, ChatBubbleLeftIcon,
   EyeIcon, HandThumbUpIcon, BookOpenIcon, QuestionMarkCircleIcon,
   LightBulbIcon, AcademicCapIcon, ChatBubbleOvalLeftEllipsisIcon,
-  DocumentTextIcon, ChatBubbleLeftRightIcon, BoltIcon, UserGroupIcon
+  DocumentTextIcon, ChatBubbleLeftRightIcon, BoltIcon, UserGroupIcon,
+  ShieldExclamationIcon, ShieldCheckIcon, TrashIcon
 } from '@heroicons/vue/24/outline';
 import UserAvatar from '@/components/ui/UserAvatar.vue'
 import Button from '@/components/ui/Button.vue'
@@ -379,8 +427,11 @@ import { baseURL } from '@/api/config';
 import { fileApi } from '@/api/file.api';
 import PageHeader from '@/components/ui/PageHeader.vue'
 import GlassModal from '@/components/ui/GlassModal.vue'
+import { adminApi } from '@/api/admin.api'
+import { notificationAPI } from '@/api/notification.api'
 
 const router = useRouter();
+const route = useRoute();
 const communityStore = useCommunityStore();
 const authStore = useAuthStore();
 // @ts-ignore shim for vue-i18n types in this project
@@ -389,6 +440,9 @@ const { t, locale } = useI18n()
 
 
 const { posts, totalPosts, stats, hotTopics, activeUsers, loading } = storeToRefs(communityStore);
+const isAdminModeration = computed(() =>
+  authStore.userRole === 'ADMIN' && String(route.path || '').startsWith('/admin/moderation/center')
+)
 // 统一用户名展示
 function displayUserName(u: any): string {
   return resolveUserDisplayName(u) || String(u?.nickname || u?.username || '')
@@ -422,6 +476,13 @@ const newPost = reactive({
 const editModal = reactive<{ visible: boolean; form: { id?: number; title: string; category: string; content: string; tags: string[] } }>({
   visible: false,
   form: { id: undefined, title: '', category: 'study', content: '', tags: [] }
+})
+const adminBlock = reactive<{ visible: boolean; postId?: number; authorId?: number | string; reason: string; targetTitle: string }>({
+  visible: false,
+  postId: undefined,
+  authorId: undefined,
+  reason: '',
+  targetTitle: '',
 })
 const postUploader = ref();
 const postEditUploader = ref();
@@ -464,17 +525,43 @@ const labelToCategoryId: Record<string, string> = Object.fromEntries(Object.entr
 const applyFilters = () => {
   filterOptions.page = 1;
   const hasTagFilter = String(selectedTopicTag.value || '').trim() !== ''
+  const keyword = hasTagFilter ? undefined : (String(filterOptions.keyword || '').trim() === '' ? undefined : filterOptions.keyword)
+  if (isAdminModeration.value) {
+    adminLoadPosts({
+      page: filterOptions.page,
+      size: filterOptions.size,
+      keyword,
+      status: undefined,
+      includeDeleted: true,
+    })
+    return
+  }
   const params: any = {
     page: filterOptions.page,
     size: filterOptions.size,
     orderBy: filterOptions.orderBy,
     // 标签筛选启用时，以后端 tag 精确筛选为准；关键词留空避免“内容搜索”误导。
-    keyword: hasTagFilter ? undefined : (String(filterOptions.keyword || '').trim() === '' ? undefined : filterOptions.keyword),
+    keyword,
     tag: hasTagFilter ? selectedTopicTag.value : undefined,
     category: filterOptions.category === 'all' ? undefined : categoryIdToLabel[filterOptions.category] || filterOptions.category
   };
   communityStore.fetchPosts(params);
 };
+
+const adminLoadPosts = async (params: { page: number; size: number; keyword?: string; status?: string; includeDeleted?: boolean }) => {
+  const { useUIStore } = await import('@/stores/ui')
+  const ui = useUIStore()
+  try {
+    ui.setLoading(true)
+    const res = await adminApi.pageCommunityPosts(params as any)
+    posts.value = (res.items || []) as any
+    totalPosts.value = Number(res.total || 0)
+  } catch (e: any) {
+    ui.showNotification({ type: 'error', title: 'Error', message: e?.message || 'Failed' })
+  } finally {
+    ui.setLoading(false)
+  }
+}
 
 const onCategoryChange = (categoryId: string) => {
   filterOptions.category = categoryId;
@@ -485,10 +572,21 @@ const changePage = (page: number) => {
   if (page < 1 || (page - 1) * filterOptions.size >= totalPosts.value) return;
   filterOptions.page = page;
   const hasTagFilter = String(selectedTopicTag.value || '').trim() !== ''
+  const keyword = hasTagFilter ? undefined : (String(filterOptions.keyword || '').trim() === '' ? undefined : filterOptions.keyword)
+  if (isAdminModeration.value) {
+    adminLoadPosts({
+      page: filterOptions.page,
+      size: filterOptions.size,
+      keyword,
+      status: undefined,
+      includeDeleted: true,
+    })
+    return
+  }
    const params: any = {
     ...filterOptions,
     // 标签筛选启用时，以后端 tag 精确筛选为准；关键词留空避免“内容搜索”误导。
-    keyword: hasTagFilter ? undefined : (String(filterOptions.keyword || '').trim() === '' ? undefined : filterOptions.keyword),
+    keyword,
     tag: hasTagFilter ? selectedTopicTag.value : undefined,
     category: filterOptions.category === 'all' ? undefined : filterOptions.category
   };
@@ -517,6 +615,7 @@ const onKeywordInput = (v: string | null) => {
 }
 
 const viewPost = (postId: number) => {
+  if (isAdminModeration.value) return
   const routeName = authStore.userRole === 'TEACHER' ? 'TeacherPostDetail' : 'StudentPostDetail';
   router.push({ name: routeName, params: { id: postId } });
 };
@@ -731,6 +830,76 @@ onMounted(() => {
   communityStore.fetchActiveUsers();
   applyFilters();
 });
+
+const goBackToGovernance = () => {
+  router.push('/admin/moderation')
+}
+
+const openBlockPostModal = (post: any) => {
+  adminBlock.visible = true
+  adminBlock.postId = Number(post?.id)
+  adminBlock.authorId = post?.author?.id || post?.authorId
+  adminBlock.reason = ''
+  adminBlock.targetTitle = String(post?.title || '')
+}
+
+const closeBlockModal = () => {
+  adminBlock.visible = false
+  adminBlock.postId = undefined
+  adminBlock.authorId = undefined
+  adminBlock.reason = ''
+  adminBlock.targetTitle = ''
+}
+
+const sendBlockNotificationToAuthor = async (authorId: string | number | undefined, reason: string, postTitle: string) => {
+  if (!authorId) return
+  await notificationAPI.batchSend({
+    recipientIds: [authorId],
+    title: String(t('admin.moderation.blockNoticeTitle') || '社区内容已被屏蔽'),
+    content: String(t('admin.moderation.blockNoticeContent', { reason, title: postTitle || '-' }) || `你的社区内容已被管理员屏蔽，原因：${reason}`),
+    type: 'system',
+    category: 'communityModeration',
+    priority: 'high',
+    relatedType: 'community_post',
+    relatedId: String(adminBlock.postId || ''),
+  })
+}
+
+const confirmBlockPost = async () => {
+  if (!adminBlock.postId || !adminBlock.reason.trim()) return
+  try {
+    await adminApi.moderatePost(adminBlock.postId, { status: 'deleted', deleted: true })
+    await sendBlockNotificationToAuthor(adminBlock.authorId, adminBlock.reason.trim(), adminBlock.targetTitle)
+    {
+      const { useUIStore } = await import('@/stores/ui')
+      const ui = useUIStore()
+      ui.showNotification({ type: 'success', title: 'OK', message: String(t('admin.moderation.blockedAndNotified') || '已屏蔽并通知作者') })
+    }
+    closeBlockModal()
+    applyFilters()
+  } catch (e: any) {
+    const { useUIStore } = await import('@/stores/ui')
+    const ui = useUIStore()
+    ui.showNotification({ type: 'error', title: 'Error', message: e?.message || 'Failed' })
+  }
+}
+
+const onAdminDeletePost = async (post: any) => {
+  if (!post?.id) return
+  try {
+    await adminApi.moderatePost(post.id, { deleted: true })
+    {
+      const { useUIStore } = await import('@/stores/ui')
+      const ui = useUIStore()
+      ui.showNotification({ type: 'success', title: 'OK', message: String(t('admin.moderation.deleted') || '删除成功') })
+    }
+    applyFilters()
+  } catch (e: any) {
+    const { useUIStore } = await import('@/stores/ui')
+    const ui = useUIStore()
+    ui.showNotification({ type: 'error', title: 'Error', message: e?.message || 'Failed' })
+  }
+}
 
 const onDeletePost = async (postId: number) => {
   if (!confirm(t('shared.community.confirm.deletePost') as string)) return;

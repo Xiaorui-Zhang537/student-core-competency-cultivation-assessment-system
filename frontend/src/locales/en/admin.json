@@ -4,7 +4,7 @@
     "sidebar": {
       "console": "Console",
       "people": "People",
-      "moderation": "Moderation",
+      "moderation": "Community Governance",
       "dashboard": "Dashboard",
       "courses": "Courses",
       "analytics": "Analytics",
@@ -13,7 +13,7 @@
       "teachers": "Teachers",
       "reports": "Reports",
       "exports": "Exports",
-      "community": "Moderation",
+      "community": "Community Governance",
       "tools": "Tools"
     },
     "tabs": {
@@ -70,9 +70,49 @@
       }
     },
     "moderation": {
+      "viewCommunityCenter": "View Community Center",
+      "viewComments": "View Comments",
+      "centerTitle": "Community Governance Center",
+      "backToGovernance": "Back To Governance Table",
+      "filterStatusLabel": "Status",
+      "filterScopeLabel": "Scope",
+      "filterSearchLabel": "Search",
+      "block": "Block",
+      "blockWithReason": "Block With Reason",
+      "blockReasonPlaceholder": "Please enter block reason",
+      "confirmBlock": "Confirm Block",
+      "blockNoticeTitle": "Community content has been blocked",
+      "blockNoticeContent": "Your community content has been blocked by an admin. Reason: {reason}. Summary: {title}",
+      "blockedAndNotified": "Blocked and author notified",
+      "deleted": "Deleted successfully",
+      "centerTrendsTitle": "Community Trends",
+      "centerTrendsSubtitle": "Daily trend of posts and comments activity",
+      "centerStatusDistTitle": "Post Status Distribution",
+      "centerVisualCardTitle": "Governance Snapshot",
+      "centerVisualCardDesc": "Use this center for quick visibility. Return to governance table for operations.",
+      "centerTableTitle": "Community Posts Table",
+      "goModerate": "Go Moderate",
       "abilityReportTitle": "Report",
       "score": "Score",
-      "createdAt": "Created"
+      "createdAt": "Created",
+      "filterTypeLabel": "Type",
+      "bool": {
+        "yes": "Yes",
+        "no": "No"
+      },
+      "statusOption": {
+        "all": "All",
+        "published": "Published",
+        "draft": "Draft",
+        "deleted": "Deleted"
+      },
+      "notify": {
+        "successTitle": "Success",
+        "errorTitle": "Error",
+        "updateSuccess": "Updated successfully",
+        "updateFailed": "Update failed",
+        "blockFailed": "Block failed"
+      }
     },
     "courses": {
       "statusLabel": "Status",
@@ -91,8 +131,8 @@
         "studentsDesc": "Performance & profile",
         "grades": "Grades",
         "gradesDesc": "Analytics & export",
-        "reports": "Reports"
-        ,"reportsDesc": "Ability & history"
+        "reports": "Reports",
+        "reportsDesc": "Ability & history"
       },
       "reports": {
         "assignment": "Assignment",
@@ -133,4 +173,3 @@
     }
   }
 }
-

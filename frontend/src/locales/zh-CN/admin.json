@@ -4,17 +4,16 @@
     "sidebar": {
       "console": "控制台",
       "people": "数据中心",
-      "moderation": "内容治理",
+      "moderation": "社区治理",
       "dashboard": "仪表盘",
       "courses": "课程总览",
       "analytics": "数据看板",
-      "rankings": "排名",
       "users": "用户管理",
       "students": "学生数据中心",
       "teachers": "教师数据中心",
       "reports": "报告中心",
       "exports": "数据导出",
-      "community": "内容治理",
+      "community": "社区治理",
       "tools": "工具中心"
     },
     "tabs": {
@@ -124,6 +123,28 @@
       }
     },
     "moderation": {
+      "viewCommunityCenter": "查看具体社区",
+      "viewComments": "查看评论",
+      "centerTitle": "社区治理中心",
+      "backToGovernance": "返回治理表格",
+      "filterStatusLabel": "状态",
+      "filterScopeLabel": "范围",
+      "filterSearchLabel": "搜索",
+      "block": "屏蔽",
+      "blockWithReason": "屏蔽并告知原因",
+      "blockReasonPlaceholder": "请输入屏蔽原因",
+      "confirmBlock": "确认屏蔽",
+      "blockNoticeTitle": "社区内容已被屏蔽",
+      "blockNoticeContent": "你的社区内容已被管理员屏蔽，原因：{reason}。内容摘要：{title}",
+      "blockedAndNotified": "已屏蔽并通知作者",
+      "deleted": "删除成功",
+      "centerTrendsTitle": "社区趋势",
+      "centerTrendsSubtitle": "按日查看帖子与评论活跃变化",
+      "centerStatusDistTitle": "帖子状态分布",
+      "centerVisualCardTitle": "治理概览图",
+      "centerVisualCardDesc": "该中心用于快速查看社区态势，具体治理操作请返回表格页。",
+      "centerTableTitle": "社区帖子列表",
+      "goModerate": "去治理",
       "studentIdOptional": "studentId(可选)",
       "postIdOptional": "postId(可选)",
       "reportType": "类型",
@@ -137,7 +158,25 @@
       "pinned": "置顶",
       "comments": "评论数",
       "actions": "操作",
-      "comment": "评论"
+      "comment": "评论",
+      "filterTypeLabel": "类型",
+      "bool": {
+        "yes": "是",
+        "no": "否"
+      },
+      "statusOption": {
+        "all": "全部",
+        "published": "已发布",
+        "draft": "草稿",
+        "deleted": "已删除"
+      },
+      "notify": {
+        "successTitle": "操作成功",
+        "errorTitle": "操作失败",
+        "updateSuccess": "修改成功",
+        "updateFailed": "修改失败",
+        "blockFailed": "屏蔽失败"
+      }
     },
     "courses": {
       "statusLabel": "状态",
@@ -198,8 +237,8 @@
         "studentsDesc": "表现与画像",
         "grades": "成绩",
         "gradesDesc": "分析与导出",
-        "reports": "报告"
-        ,"reportsDesc": "能力与历史"
+        "reports": "报告",
+        "reportsDesc": "能力与历史"
       },
       "gradesStatsTitle": "成绩统计",
       "avgScore": "平均分",
@@ -378,4 +417,3 @@
     }
   }
 }
-

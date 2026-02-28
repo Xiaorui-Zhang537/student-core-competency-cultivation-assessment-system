@@ -15,7 +15,7 @@ export interface Post {
   likeCount: number;
   commentCount: number;
   isLiked: boolean; // 当前用户是否点赞
-  isPinned: boolean;
+  pinned: boolean;
   status: 'PUBLISHED' | 'DRAFT' | 'ARCHIVED';
   createdAt: string;
   updatedAt: string;

@@ -61,7 +61,7 @@
         FROM posts p
         LEFT JOIN users u ON p.author_id = u.id
         <include refid="postWhere"/>
-        ORDER BY p.created_at DESC
+        ORDER BY p.pinned DESC, p.created_at DESC
         LIMIT #{offset}, #{size}
     </select>
 

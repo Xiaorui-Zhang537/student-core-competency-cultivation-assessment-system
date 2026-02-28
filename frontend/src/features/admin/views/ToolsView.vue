@@ -82,7 +82,7 @@
           <Button size="sm" variant="primary" :disabled="exporting" @click="exportAbilityReports">
             {{ t('admin.tools.download') || '下载' }}
           </Button>
-          <Button size="sm" variant="outline" :disabled="exporting" @click="router.push('/admin/moderation?tab=ability')">
+          <Button size="sm" variant="outline" :disabled="exporting" @click="router.push('/admin/moderation')">
             {{ t('admin.tools.openFilters') || '去筛选' }}
           </Button>
         </div>
