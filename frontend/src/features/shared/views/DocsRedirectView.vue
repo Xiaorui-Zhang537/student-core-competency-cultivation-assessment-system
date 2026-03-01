@@ -11,11 +11,10 @@ onMounted(() => {
   const fallback = 'http://localhost:4174'
   const target = (import.meta as any).env?.VITE_DOCS_URL || fallback
   try {
-    window.location.href = String(target)
+    window.location.replace(String(target))
   } catch {
-    window.location.href = fallback
+    window.location.replace(fallback)
   }
 })
 </script>
-
 

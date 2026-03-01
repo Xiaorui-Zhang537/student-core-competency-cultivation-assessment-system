@@ -32,9 +32,32 @@
     <result column="user_id" property="userId"/>
     <result column="title" property="title"/>
     <result column="description" property="description"/>
+    <result column="channel" property="channel"/>
+    <result column="ticket_type" property="ticketType"/>
+    <result column="priority" property="priority"/>
+    <result column="source_role" property="sourceRole"/>
+    <result column="contact" property="contact"/>
+    <result column="is_anonymous" property="anonymous"/>
     <result column="status" property="status"/>
+    <result column="assignee_admin_id" property="assigneeAdminId"/>
+    <result column="last_reply_at" property="lastReplyAt"/>
+    <result column="closed_at" property="closedAt"/>
     <result column="created_at" property="createdAt"/>
     <result column="updated_at" property="updatedAt"/>
+    <result column="username" property="username"/>
+    <result column="user_role" property="userRole"/>
+    <result column="assignee_name" property="assigneeName"/>
+  </resultMap>
+
+  <resultMap id="HelpTicketMessageMap" type="com.noncore.assessment.entity.HelpTicketMessage">
+    <id column="id" property="id"/>
+    <result column="ticket_id" property="ticketId"/>
+    <result column="sender_id" property="senderId"/>
+    <result column="sender_role" property="senderRole"/>
+    <result column="sender_side" property="senderSide"/>
+    <result column="content" property="content"/>
+    <result column="created_at" property="createdAt"/>
+    <result column="sender_name" property="senderName"/>
   </resultMap>
 
   <select id="listCategories" resultMap="HelpCategoryMap">
@@ -84,21 +107,156 @@
   </insert>
 
   <insert id="insertTicket" parameterType="com.noncore.assessment.entity.HelpTicket" useGeneratedKeys="true" keyProperty="id">
-    INSERT INTO help_ticket (user_id, title, description, status, created_at, updated_at)
-    VALUES (#{userId}, #{title}, #{description}, #{status}, NOW(), NOW())
+    INSERT INTO help_ticket (
+      user_id, title, description, channel, ticket_type, priority, source_role, contact, is_anonymous,
+      status, assignee_admin_id, last_reply_at, closed_at, created_at, updated_at
+    )
+    VALUES (
+      #{userId}, #{title}, #{description}, #{channel}, #{ticketType}, #{priority}, #{sourceRole}, #{contact}, #{anonymous},
+      #{status}, #{assigneeAdminId}, #{lastReplyAt}, #{closedAt}, NOW(), NOW()
+    )
   </insert>
 
   <select id="listTicketsByUser" resultMap="HelpTicketMap">
-    SELECT id, user_id, title, description, status, created_at, updated_at
-    FROM help_ticket WHERE user_id = #{userId}
-    ORDER BY created_at DESC
+    SELECT
+      ht.id, ht.user_id, ht.title, ht.description, ht.channel, ht.ticket_type, ht.priority, ht.source_role,
+      ht.contact, ht.is_anonymous, ht.status, ht.assignee_admin_id, ht.last_reply_at, ht.closed_at,
+      ht.created_at, ht.updated_at,
+      u.username AS username, u.role AS user_role,
+      admin_user.username AS assignee_name
+    FROM help_ticket ht
+    LEFT JOIN users u ON u.id = ht.user_id
+    LEFT JOIN users admin_user ON admin_user.id = ht.assignee_admin_id
+    WHERE ht.user_id = #{userId}
+    ORDER BY ht.updated_at DESC, ht.created_at DESC
   </select>
 
-  <update id="updateTicket">
+  <select id="selectTicketByIdAndUser" resultMap="HelpTicketMap">
+    SELECT
+      ht.id, ht.user_id, ht.title, ht.description, ht.channel, ht.ticket_type, ht.priority, ht.source_role,
+      ht.contact, ht.is_anonymous, ht.status, ht.assignee_admin_id, ht.last_reply_at, ht.closed_at,
+      ht.created_at, ht.updated_at,
+      u.username AS username, u.role AS user_role,
+      admin_user.username AS assignee_name
+    FROM help_ticket ht
+    LEFT JOIN users u ON u.id = ht.user_id
+    LEFT JOIN users admin_user ON admin_user.id = ht.assignee_admin_id
+    WHERE ht.id = #{id} AND ht.user_id = #{userId}
+  </select>
+
+  <select id="selectTicketById" resultMap="HelpTicketMap">
+    SELECT
+      ht.id, ht.user_id, ht.title, ht.description, ht.channel, ht.ticket_type, ht.priority, ht.source_role,
+      ht.contact, ht.is_anonymous, ht.status, ht.assignee_admin_id, ht.last_reply_at, ht.closed_at,
+      ht.created_at, ht.updated_at,
+      u.username AS username, u.role AS user_role,
+      admin_user.username AS assignee_name
+    FROM help_ticket ht
+    LEFT JOIN users u ON u.id = ht.user_id
+    LEFT JOIN users admin_user ON admin_user.id = ht.assignee_admin_id
+    WHERE ht.id = #{id}
+  </select>
+
+  <select id="pageTicketsForAdmin" resultMap="HelpTicketMap">
+    SELECT
+      ht.id, ht.user_id, ht.title, ht.description, ht.channel, ht.ticket_type, ht.priority, ht.source_role,
+      ht.contact, ht.is_anonymous, ht.status, ht.assignee_admin_id, ht.last_reply_at, ht.closed_at,
+      ht.created_at, ht.updated_at,
+      u.username AS username, u.role AS user_role,
+      admin_user.username AS assignee_name
+    FROM help_ticket ht
+    LEFT JOIN users u ON u.id = ht.user_id
+    LEFT JOIN users admin_user ON admin_user.id = ht.assignee_admin_id
+    <where>
+      <if test="status != null and status != ''">
+        ht.status = #{status}
+      </if>
+      <if test="channel != null and channel != ''">
+        AND ht.channel = #{channel}
+      </if>
+      <if test="priority != null and priority != ''">
+        AND ht.priority = #{priority}
+      </if>
+      <if test="sourceRole != null and sourceRole != ''">
+        AND ht.source_role = #{sourceRole}
+      </if>
+      <if test="keyword != null and keyword != ''">
+        AND (
+          ht.title LIKE CONCAT('%', #{keyword}, '%')
+          OR ht.description LIKE CONCAT('%', #{keyword}, '%')
+          OR u.username LIKE CONCAT('%', #{keyword}, '%')
+        )
+      </if>
+    </where>
+    ORDER BY
+      CASE ht.status
+        WHEN 'open' THEN 0
+        WHEN 'in_progress' THEN 1
+        WHEN 'resolved' THEN 2
+        ELSE 3
+      END,
+      COALESCE(ht.last_reply_at, ht.updated_at, ht.created_at) DESC
+    LIMIT #{size} OFFSET #{offset}
+  </select>
+
+  <select id="countTicketsForAdmin" resultType="long">
+    SELECT COUNT(1)
+    FROM help_ticket ht
+    LEFT JOIN users u ON u.id = ht.user_id
+    <where>
+      <if test="status != null and status != ''">
+        ht.status = #{status}
+      </if>
+      <if test="channel != null and channel != ''">
+        AND ht.channel = #{channel}
+      </if>
+      <if test="priority != null and priority != ''">
+        AND ht.priority = #{priority}
+      </if>
+      <if test="sourceRole != null and sourceRole != ''">
+        AND ht.source_role = #{sourceRole}
+      </if>
+      <if test="keyword != null and keyword != ''">
+        AND (
+          ht.title LIKE CONCAT('%', #{keyword}, '%')
+          OR ht.description LIKE CONCAT('%', #{keyword}, '%')
+          OR u.username LIKE CONCAT('%', #{keyword}, '%')
+        )
+      </if>
+    </where>
+  </select>
+
+  <insert id="insertTicketMessage" parameterType="com.noncore.assessment.entity.HelpTicketMessage" useGeneratedKeys="true" keyProperty="id">
+    INSERT INTO help_ticket_message (ticket_id, sender_id, sender_role, sender_side, content, created_at)
+    VALUES (#{ticketId}, #{senderId}, #{senderRole}, #{senderSide}, #{content}, NOW())
+  </insert>
+
+  <select id="listTicketMessages" resultMap="HelpTicketMessageMap">
+    SELECT
+      htm.id, htm.ticket_id, htm.sender_id, htm.sender_role, htm.sender_side, htm.content, htm.created_at,
+      u.username AS sender_name
+    FROM help_ticket_message htm
+    LEFT JOIN users u ON u.id = htm.sender_id
+    WHERE htm.ticket_id = #{ticketId}
+    ORDER BY htm.created_at ASC, htm.id ASC
+  </select>
+
+  <update id="updateTicket" parameterType="com.noncore.assessment.entity.HelpTicket">
     UPDATE help_ticket
     <set>
-      <if test="title != null">title = #{title},</if>
-      <if test="description != null">description = #{description},</if>
+      <if test="title != null and title != ''">title = #{title},</if>
+      <if test="description != null and description != ''">description = #{description},</if>
+      <if test="channel != null and channel != ''">channel = #{channel},</if>
+      <if test="ticketType != null and ticketType != ''">ticket_type = #{ticketType},</if>
+      <if test="priority != null and priority != ''">priority = #{priority},</if>
+      <if test="sourceRole != null and sourceRole != ''">source_role = #{sourceRole},</if>
+      <if test="contact != null">contact = #{contact},</if>
+      <if test="anonymous != null">is_anonymous = #{anonymous},</if>
+      <if test="status != null and status != ''">status = #{status},</if>
+      <if test="assigneeAdminId != null">assignee_admin_id = #{assigneeAdminId},</if>
+      <if test="lastReplyAt != null">last_reply_at = #{lastReplyAt},</if>
+      <if test="closedAt != null">closed_at = #{closedAt},</if>
+      <if test="closedAt == null">closed_at = NULL,</if>
       updated_at = NOW()
     </set>
     WHERE id = #{id}
@@ -109,5 +267,4 @@
   </delete>
 
 </mapper>
-
 

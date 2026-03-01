@@ -25,12 +25,6 @@ export default defineConfig({
         changeOrigin: true,
         secure: false,
         rewrite: (path) => path,
-      },
-      '/docs': {
-        target: 'http://localhost:4174',
-        changeOrigin: true,
-        secure: false,
-        rewrite: (path) => path.replace(/^\/docs/, ''),
       }
     },
   }

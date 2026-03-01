@@ -18,9 +18,20 @@ public class HelpTicket {
     private Long userId;
     private String title;
     private String description;
+    private String channel;
+    private String ticketType;
+    private String priority;
+    private String sourceRole;
+    private String contact;
+    private Boolean anonymous;
     private String status; // open,in_progress,resolved,closed
+    private Long assigneeAdminId;
+    private LocalDateTime lastReplyAt;
+    private LocalDateTime closedAt;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
+    private String username;
+    private String userRole;
+    private String assigneeName;
 }
-
 

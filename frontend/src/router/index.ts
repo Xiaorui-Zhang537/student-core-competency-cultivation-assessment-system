@@ -364,6 +364,17 @@ const routes = [
         props: true
       },
       {
+        path: 'notifications',
+        name: 'AdminNotifications',
+        component: () => import('@/features/shared/views/NotificationsView.vue')
+      },
+      {
+        path: 'notifications/:id',
+        name: 'AdminNotificationDetail',
+        component: () => import('@/features/shared/views/NotificationDetailView.vue'),
+        props: true
+      },
+      {
         path: 'tools',
         name: 'AdminTools',
         component: () => import('@/features/admin/views/ToolsView.vue')

@@ -1,6 +1,6 @@
 <template>
   <div class="relative inline-block" ref="btnRef">
-    <Button :size="size" :variant="btnVariant" :class="['flex items-center', buttonClass]" @click="toggle">
+    <Button type="button" :size="size" :variant="btnVariant" :class="['flex items-center', buttonClass]" @click="toggle">
       <face-smile-icon class="w-5 h-5 mr-1" />
       <span :class="[hideLabelOnSmall ? 'hidden sm:inline' : '', 'whitespace-nowrap']">
         {{ t('shared.emojiPicker.button') }}
@@ -169,4 +169,3 @@ onBeforeUnmount(() => {
 .no-scrollbar::-webkit-scrollbar { display: none; }
 .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
 </style>
-

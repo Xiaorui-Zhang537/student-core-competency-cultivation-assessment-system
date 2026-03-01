@@ -1,5 +1,6 @@
 import { api } from './config'
-import type { HelpCategory, HelpArticle, HelpTicket } from '@/types/help'
+import type { PaginatedResponse } from '@/types/api'
+import type { HelpCategory, HelpArticle, HelpTicket, HelpTicketCreateRequest, HelpTicketDetail } from '@/types/help'
 
 export const helpApi = {
   listCategories: () => api.get<HelpCategory[]>('/help/categories'),
@@ -13,14 +14,29 @@ export const helpApi = {
   submitArticleFeedback: (articleId: number, data: { helpful?: boolean; content?: string }) =>
     api.post<void>(`/help/articles/${articleId}/feedback`, null, { params: data }),
 
-  createTicket: (title: string, description: string) =>
-    api.post<HelpTicket>('/help/tickets', { title, description }),
+  createTicket: (data: HelpTicketCreateRequest) =>
+    api.post<HelpTicket>('/help/tickets', data),
 
-  myTickets: () => api.get<HelpTicket[]>('/help/tickets')
-  ,
-  updateTicket: (id: number, title: string, description: string) =>
-    api.put<HelpTicket>(`/help/tickets/${id}`, { title, description }),
-  deleteTicket: (id: number) => api.delete<void>(`/help/tickets/${id}`)
+  myTickets: () => api.get<HelpTicket[]>('/help/tickets'),
+  getTicket: (id: number) => api.get<HelpTicketDetail>(`/help/tickets/${id}`),
+  replyTicket: (id: number, content: string) => api.post<HelpTicketDetail>(`/help/tickets/${id}/reply`, { content }),
+  updateTicket: (id: number, data: Partial<HelpTicketCreateRequest>) =>
+    api.put<HelpTicket>(`/help/tickets/${id}`, data),
+  deleteTicket: (id: number) => api.delete<void>(`/help/tickets/${id}`),
+
+  adminPageTickets: (params?: {
+    page?: number
+    size?: number
+    status?: string
+    channel?: string
+    priority?: string
+    sourceRole?: string
+    q?: string
+  }) => api.get<PaginatedResponse<HelpTicket>>('/admin/help/tickets', { params }),
+  adminGetTicket: (id: number | string) => api.get<HelpTicketDetail>(`/admin/help/tickets/${id}`),
+  adminReplyTicket: (id: number | string, content: string) =>
+    api.post<HelpTicketDetail>(`/admin/help/tickets/${id}/reply`, { content }),
+  adminUpdateTicketStatus: (id: number | string, status: string) =>
+    api.put<HelpTicket>(`/admin/help/tickets/${id}/status`, { status })
 }
-
 

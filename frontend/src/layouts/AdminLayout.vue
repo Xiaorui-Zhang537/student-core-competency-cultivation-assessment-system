@@ -302,7 +302,7 @@ import {
   SunIcon, MoonIcon, PaintBrushIcon, PhotoIcon,
   UserIcon, ArrowRightOnRectangleIcon,
   HomeIcon, AcademicCapIcon, UsersIcon,
-  ArrowDownTrayIcon, ShieldCheckIcon,
+  ShieldCheckIcon,
   ChatBubbleLeftRightIcon, QuestionMarkCircleIcon,
   BellIcon, CursorArrowRaysIcon, EyeIcon, EyeSlashIcon,
 } from '@heroicons/vue/24/outline'
@@ -347,7 +347,7 @@ const dockItems = computed(() => ([
   { key: 'people', label: t('admin.sidebar.people') as string, icon: UsersIcon },
   { key: 'moderation', label: t('admin.sidebar.moderation') as string, icon: ShieldCheckIcon },
   { key: 'courses', label: t('admin.sidebar.courses') as string, icon: AcademicCapIcon },
-  { key: 'tools', label: t('admin.sidebar.tools') as string, icon: ArrowDownTrayIcon },
+  { key: 'tools', label: t('admin.sidebar.tools') as string, icon: BellIcon },
 ]))
 </script>
 
@@ -363,4 +363,3 @@ const dockItems = computed(() => ([
   border-radius: 20px !important;
 }
 </style>
-

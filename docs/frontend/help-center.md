@@ -24,7 +24,7 @@ outline: [2, 3]
   - 提供学生/教师关键步骤引导
   - 页首提供 “查看完整文档” CTA（跳转文档站 `/docs`）
 - 技术支持与工单：
-  - 联系方式来自 i18n/配置（示例：电话 `15362612345`、邮箱 `xiaorui537@gmail.com`）
+  - 联系方式来自 i18n/配置（示例：电话 `15362612345`、邮箱 `xiaorui537537@gmail.com`）
   - 提交工单：`POST /api/help/tickets`
   - 我的工单：`GET /api/help/tickets`
 
@@ -39,4 +39,3 @@ outline: [2, 3]
   - `frontend/src/locales/zh-CN/shared.json`
   - `frontend/src/locales/en-US/shared.json`
 - 命名空间：`shared.help.*`
-

@@ -246,20 +246,36 @@
               <!-- 提交工单 -->
               <card padding="lg" tint="secondary">
                 <template #header>
-                <h2 class="text-xl font-semibold text-base-content">{{ t('shared.help.sections.ticket') || '提交技术工单' }}</h2>
+                <h2 class="text-xl font-semibold text-base-content">{{ t('shared.help.sections.ticket') || '提交支持单' }}</h2>
                 </template>
                 
                 <form @submit.prevent="submitTicket" class="space-y-4">
                   <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">诉求分类</label>
+                    <glass-popover-select
+                      v-model="ticketForm.channel as any"
+                      tint="info"
+                      :options="[
+                        { label: '技术支持', value: 'support' },
+                        { label: '意见反馈', value: 'feedback' }
+                      ]"
+                      stacked
+                    />
+                  </div>
+
+                  <div>
                     <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{{ t('shared.help.form.type') || '问题类型' }}</label>
                     <glass-popover-select
                       v-model="ticketForm.type as any"
+                      tint="accent"
                       :options="[
                         { label: t('shared.help.form.selectType') || '选择问题类型', value: '', disabled: true },
                         { label: t('shared.help.form.typeTechnical') || '技术问题', value: 'technical' },
                         { label: t('shared.help.form.typeAccount') || '账户问题', value: 'account' },
                         { label: t('shared.help.form.typeFeature') || '功能建议', value: 'feature' },
                         { label: t('shared.help.form.typeBug') || '错误报告', value: 'bug' },
+                        { label: '使用体验', value: 'experience' },
+                        { label: '意见反馈', value: 'feedback' },
                         { label: t('shared.help.form.typeOther') || '其他', value: 'other' }
                       ]"
                       :placeholder="t('shared.help.form.selectType') || '选择问题类型'"
@@ -269,28 +285,49 @@
                   
                   <div>
                     <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{{ t('shared.help.form.title') || '问题标题' }}</label>
-                    <input
+                    <glass-input
                       v-model="ticketForm.title"
                       type="text"
+                      tint="secondary"
                       :placeholder="t('shared.help.form.titlePh') || '简要描述您的问题'"
-                      class="input"
                     />
                   </div>
                   
                   <div>
-                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{{ t('shared.help.form.description') || '问题详情' }}</label>
-                    <textarea
+                    <div class="flex items-center justify-between gap-3 mb-1">
+                      <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">{{ t('shared.help.form.description') || '问题详情' }}</label>
+                      <emoji-picker
+                        size="sm"
+                        variant="primary"
+                        tint="accent"
+                        :hideLabelOnSmall="true"
+                        :buttonClass="'!text-white whitespace-nowrap shrink-0'"
+                        @select="onTicketDescriptionEmojiSelect"
+                      />
+                    </div>
+                    <glass-textarea
                       v-model="ticketForm.description"
-                      rows="4"
+                      tint="secondary"
+                      :rows="4"
                       :placeholder="t('shared.help.form.descriptionPh') || '请详细描述您遇到的问题...'"
-                      class="input"
-                    ></textarea>
+                    />
+                  </div>
+
+                  <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{{ t('shared.help.form.contact') || '联系方式 (可选)' }}</label>
+                    <glass-input
+                      v-model="ticketForm.contact"
+                      type="text"
+                      tint="secondary"
+                      :placeholder="t('shared.help.form.contactPh') || '如需回复，请留下您的邮箱或电话'"
+                    />
                   </div>
                   
                   <div>
                     <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{{ t('shared.help.form.priority') || '优先级' }}</label>
                     <glass-popover-select
                       v-model="ticketForm.priority as any"
+                      tint="secondary"
                       :options="[
                         { label: t('shared.help.form.priLow') || '低', value: 'low' },
                         { label: t('shared.help.form.priMedium') || '中', value: 'medium' },
@@ -300,42 +337,190 @@
                       stacked
                     />
                   </div>
-                  
+
                   <Button
                     type="submit"
                     variant="primary"
                     class="w-full"
                     :loading="isSubmittingTicket"
                   >
+                    <PaperAirplaneIcon class="w-4 h-4 mr-2" />
                     {{ t('shared.help.actions.submitTicket') || '提交工单' }}
                   </Button>
                 </form>
               </card>
               
               <!-- 我的工单（仅登录后显示） -->
-              <card v-if="authStore.isAuthenticated" padding="lg" tint="secondary" class="md:col-span-2">
-                <template #header>
-                  <div class="flex items-center justify-between">
-                    <h2 class="text-xl font-semibold text-base-content">{{ t('shared.help.sections.myTickets') || '我的工单' }}</h2>
-                    <Button size="sm" variant="outline" @click="helpStore.fetchMyTickets()">{{ t('shared.common.latest') || '最新' }}</Button>
-                  </div>
-                </template>
-                <div v-if="helpStore.tickets.length === 0" class="text-sm text-subtle">
-                  {{ t('shared.common.empty') || '暂无内容' }}
-                </div>
-                <div v-else class="divide-y divide-gray-200/60 dark:divide-gray-700/60">
-                  <div v-for="ticket in helpStore.tickets" :key="ticket.id" class="py-3 flex items-start justify-between">
-                    <div class="pr-3 w-full">
-                      <div class="font-medium text-base-content">{{ ticket.title }}</div>
-                      <div class="text-xs text-subtle mt-1">#{{ ticket.id }} · {{ ticket.createdAt }}</div>
+              <div v-if="authStore.isAuthenticated" ref="myTicketsPanelRef" class="md:col-span-2">
+                <card padding="lg" tint="secondary">
+                  <template #header>
+                    <div class="flex items-center justify-between gap-3 flex-wrap">
+                      <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-2xl bg-indigo-500/15 text-indigo-600 dark:text-indigo-300 flex items-center justify-center">
+                          <TicketIcon class="w-5 h-5" />
+                        </div>
+                        <div>
+                          <h2 class="text-xl font-semibold text-base-content">{{ t('shared.help.sections.myTickets') || '我的工单' }}</h2>
+                          <p class="text-xs text-subtle">
+                            {{ isZh ? '查看管理员回复，并在同一条支持单继续补充信息' : 'Review admin replies and continue the conversation in one support ticket' }}
+                          </p>
+                        </div>
+                      </div>
+                      <Button size="sm" variant="info" @click="helpStore.fetchMyTickets()">
+                        <ArrowPathIcon class="w-4 h-4 mr-2" />
+                        {{ t('shared.common.latest') || '最新' }}
+                      </Button>
                     </div>
-                    <div class="inline-flex items-center gap-2 flex-nowrap whitespace-nowrap">
-                      <Button size="sm" variant="outline" class="whitespace-nowrap" @click="editTicket(ticket)">{{ t('shared.common.edit') || '编辑' }}</Button>
-                      <Button size="sm" variant="outline" class="whitespace-nowrap" @click="deleteTicket(ticket.id)">{{ t('shared.common.delete') || '删除' }}</Button>
+                  </template>
+
+                  <div v-if="helpStore.tickets.length === 0" class="text-sm text-subtle">
+                    {{ t('shared.common.empty') || '暂无内容' }}
+                  </div>
+
+                  <div v-else class="space-y-3">
+                    <div
+                      v-for="ticket in helpStore.tickets"
+                      :key="ticket.id"
+                      class="rounded-2xl p-4 transition glass-ultraThin border border-white/20 dark:border-white/10 shadow-sm"
+                      :class="isCurrentTicket(ticket.id)
+                        ? 'glass-tint-info border-cyan-300/50'
+                        : 'glass-tint-secondary hover:bg-white/10'"
+                    >
+                      <div class="flex items-start justify-between gap-3 flex-wrap">
+                        <div class="min-w-0 flex-1">
+                          <div class="flex items-center gap-2 flex-wrap">
+                            <div class="font-medium text-base-content">{{ ticket.title }}</div>
+                            <Badge size="sm" :variant="ticketStatusVariant(ticket.status)">
+                              {{ ticketStatusText(ticket.status) }}
+                            </Badge>
+                          </div>
+
+                          <div class="mt-2 grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-1 text-xs">
+                            <div>
+                              <span class="text-subtle">{{ isZh ? '工单ID' : 'Ticket ID' }}:</span>
+                              <span class="text-base-content ml-1">#{{ ticket.id }}</span>
+                            </div>
+                            <div>
+                              <span class="text-subtle">{{ isZh ? '分类' : 'Channel' }}:</span>
+                              <span class="text-base-content ml-1">{{ ticketChannelText(ticket.channel) }}</span>
+                            </div>
+                            <div>
+                              <span class="text-subtle">{{ isZh ? '类型' : 'Type' }}:</span>
+                              <span class="text-base-content ml-1">{{ ticketTypeText(ticket.ticketType) }}</span>
+                            </div>
+                            <div>
+                              <span class="text-subtle">{{ isZh ? '创建时间' : 'Created' }}:</span>
+                              <span class="text-base-content ml-1">{{ formatTicketTime(ticket.createdAt) }}</span>
+                            </div>
+                          </div>
+                        </div>
+
+                        <div class="inline-flex items-center gap-2 flex-nowrap whitespace-nowrap">
+                          <Button size="sm" variant="primary" class="whitespace-nowrap" @click="openTicketDetail(ticket.id)">
+                            <EyeIcon class="w-4 h-4 mr-1.5" />
+                            {{ isZh ? '查看工单' : 'Open' }}
+                          </Button>
+                          <Button size="sm" variant="danger" class="whitespace-nowrap" @click="deleteTicket(ticket.id)">
+                            <TrashIcon class="w-4 h-4 mr-1.5" />
+                            {{ t('shared.common.delete') || '删除' }}
+                          </Button>
+                        </div>
+                      </div>
                     </div>
                   </div>
-                </div>
-              </card>
+
+                  <div v-if="helpStore.ticketDetail?.ticket" class="mt-6 pt-6 border-t border-white/15 dark:border-white/10">
+                    <div class="rounded-3xl p-5 glass-thin glass-tint-accent border border-white/20 dark:border-white/10 shadow-sm">
+                      <div class="flex items-start justify-between gap-3 flex-wrap">
+                        <div class="min-w-0">
+                          <div class="flex items-center gap-2 flex-wrap">
+                            <div class="font-semibold text-base-content">{{ helpStore.ticketDetail.ticket.title }}</div>
+                            <Badge size="sm" :variant="ticketStatusVariant(helpStore.ticketDetail.ticket.status)">
+                              {{ ticketStatusText(helpStore.ticketDetail.ticket.status) }}
+                            </Badge>
+                          </div>
+                          <div class="mt-3 grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-x-4 gap-y-1 text-xs">
+                            <div>
+                              <span class="text-subtle">{{ isZh ? '工单ID' : 'Ticket ID' }}:</span>
+                              <span class="text-base-content ml-1">#{{ helpStore.ticketDetail.ticket.id }}</span>
+                            </div>
+                            <div>
+                              <span class="text-subtle">{{ isZh ? '分类' : 'Channel' }}:</span>
+                              <span class="text-base-content ml-1">{{ ticketChannelText(helpStore.ticketDetail.ticket.channel) }}</span>
+                            </div>
+                            <div>
+                              <span class="text-subtle">{{ isZh ? '类型' : 'Type' }}:</span>
+                              <span class="text-base-content ml-1">{{ ticketTypeText(helpStore.ticketDetail.ticket.ticketType) }}</span>
+                            </div>
+                            <div>
+                              <span class="text-subtle">{{ isZh ? '最近回复' : 'Last reply' }}:</span>
+                              <span class="text-base-content ml-1">{{ formatTicketTime(helpStore.ticketDetail.ticket.lastReplyAt || helpStore.ticketDetail.ticket.updatedAt || helpStore.ticketDetail.ticket.createdAt) }}</span>
+                            </div>
+                          </div>
+                        </div>
+                        <Button size="sm" variant="info" @click="openTicketDetail(helpStore.ticketDetail.ticket.id)">
+                          <ArrowPathIcon class="w-4 h-4 mr-1.5" />
+                          {{ isZh ? '刷新详情' : 'Refresh' }}
+                        </Button>
+                      </div>
+
+                      <div class="mt-5 space-y-3 max-h-80 overflow-auto pr-1">
+                        <div
+                          v-for="message in helpStore.ticketDetail.messages"
+                          :key="message.id"
+                          class="rounded-2xl px-4 py-3 border glass-ultraThin"
+                          :class="message.senderSide === 'admin'
+                            ? 'glass-tint-success border-emerald-300/30'
+                            : 'glass-tint-info border-white/15 dark:border-white/10'"
+                        >
+                          <div class="flex items-center gap-2 flex-wrap text-xs mb-2">
+                            <span class="inline-flex items-center gap-1 text-subtle">
+                              <ClockIcon class="w-3.5 h-3.5" />
+                              {{ formatTicketTime(message.createdAt) }}
+                            </span>
+                            <span class="text-subtle">·</span>
+                            <span class="text-base-content">
+                              {{ message.senderSide === 'admin'
+                                ? (isZh ? '管理员回复' : 'Admin reply')
+                                : (isZh ? '我的补充' : 'My reply') }}
+                            </span>
+                            <span v-if="message.senderName" class="text-subtle">· {{ message.senderName }}</span>
+                          </div>
+                          <div class="text-sm text-base-content whitespace-pre-line">{{ message.content }}</div>
+                        </div>
+                      </div>
+
+                      <form class="mt-5 space-y-3" @submit.prevent="replyToCurrentTicket">
+                        <div class="flex items-center justify-between gap-3">
+                          <div class="text-sm font-medium text-base-content">
+                            {{ isZh ? '继续补充信息' : 'Add more details' }}
+                          </div>
+                          <emoji-picker
+                            size="sm"
+                            variant="primary"
+                            tint="accent"
+                            :hideLabelOnSmall="true"
+                            :buttonClass="'!text-white whitespace-nowrap shrink-0'"
+                            @select="onTicketReplyEmojiSelect"
+                          />
+                        </div>
+                        <glass-textarea
+                          v-model="ticketReply"
+                          tint="accent"
+                          :rows="3"
+                          :placeholder="isZh ? '继续补充问题，或回复管理员' : 'Add more details or reply to the admin'"
+                        />
+                        <div class="flex justify-end">
+                          <Button type="submit" size="sm" variant="primary" :loading="isReplyingTicket" :disabled="!ticketReply.trim()">
+                            <PaperAirplaneIcon class="w-4 h-4 mr-1.5" />
+                            {{ isZh ? '发送回复' : 'Send reply' }}
+                          </Button>
+                        </div>
+                      </form>
+                    </div>
+                  </div>
+                </card>
+              </div>
             </div>
           </section>
 
@@ -347,70 +532,31 @@
               <template #header>
                 <h2 class="text-xl font-semibold text-gray-900 dark:text-white">{{ t('shared.help.sections.feedback') || '意见反馈' }}</h2>
               </template>
-              
-              <form @submit.prevent="submitFeedback" class="space-y-6">
-                <div>
-                  <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                    反馈类型
-                  </label>
-                  <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
-                    <label
-                      v-for="type in feedbackTypeOptions"
-                      :key="type.value"
-                      class="flex items-center p-3 border border-gray-200 dark:border-gray-600 rounded-lg cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700"
-                      :class="{ 'border-primary-500 bg-primary-50 dark:bg-primary-900/20': feedbackForm.type === type.value }"
-                    >
-                      <input
-                        v-model="feedbackForm.type"
-                        type="radio"
-                        :value="type.value"
-                        class="sr-only"
-                      />
-                      <component :is="type.icon" class="w-5 h-5 mr-2 text-gray-600" />
-                      <span class="text-sm font-medium">{{ type.label }}</span>
-                    </label>
-                  </div>
-                </div>
 
-                <div>
-                  <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{{ t('shared.help.form.feedback') || '反馈内容' }}</label>
-                  <textarea
-                    v-model="feedbackForm.content"
-                    rows="6"
-                    :placeholder="t('shared.help.form.feedbackPh') || '请详细描述您的反馈意见...'"
-                    class="input"
-                  ></textarea>
-                </div>
+              <div class="space-y-5">
+                <p class="text-sm text-subtle">
+                  意见反馈已合并到统一的支持单表单中。先选择反馈类型，再跳转到“技术支持”页面填写内容，管理员会在同一条单据里处理和回复。
+                </p>
 
-                <div>
-                  <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{{ t('shared.help.form.contact') || '联系方式 (可选)' }}</label>
-                  <input
-                    v-model="feedbackForm.contact"
-                    type="text"
-                    :placeholder="t('shared.help.form.contactPh') || '如需回复，请留下您的邮箱或电话'"
-                    class="input"
-                  />
-                </div>
-
-                <div class="flex items-center justify-between">
-                  <label class="flex items-center">
-                    <input
-                      v-model="feedbackForm.anonymous"
-                      type="checkbox"
-                      class="rounded border-gray-300 text-primary-600 focus:ring-primary-500"
-                    />
-                    <span class="ml-2 text-sm text-gray-700 dark:text-gray-300">{{ t('shared.help.form.anonymous') || '匿名反馈' }}</span>
-                  </label>
-
-                  <Button
-                    type="submit"
-                    variant="primary"
-                    :loading="isSubmittingFeedback"
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+                  <button
+                    v-for="type in feedbackTypeOptions"
+                    :key="type.value"
+                    type="button"
+                    class="flex items-center p-3 border border-gray-200 dark:border-gray-600 rounded-lg cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700"
+                    @click="startFeedbackTicket(type.value)"
                   >
-                    {{ t('shared.help.actions.submitFeedback') || '提交反馈' }}
+                    <component :is="type.icon" class="w-5 h-5 mr-2 text-gray-600" />
+                    <span class="text-sm font-medium">{{ type.label }}</span>
+                  </button>
+                </div>
+
+                <div class="flex justify-end">
+                  <Button type="button" variant="primary" @click="startFeedbackTicket('feedback')">
+                    去填写统一支持单
                   </Button>
                 </div>
-              </form>
+              </div>
             </card>
           </section>
         </div>
@@ -420,26 +566,33 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, onMounted, computed, watch } from 'vue'
+import { ref, reactive, onMounted, computed, watch, nextTick } from 'vue'
 import { useUIStore } from '@/stores/ui'
 import Card from '@/components/ui/Card.vue'
+import Badge from '@/components/ui/Badge.vue'
 import Button from '@/components/ui/Button.vue'
 import PageHeader from '@/components/ui/PageHeader.vue'
 import StartCard from '@/components/ui/StartCard.vue'
+import EmojiPicker from '@/components/ui/EmojiPicker.vue'
+import GlassInput from '@/components/ui/inputs/GlassInput.vue'
+import GlassTextarea from '@/components/ui/inputs/GlassTextarea.vue'
 // 动态背景已移除
 import { useI18n } from 'vue-i18n'
-const { t } = useI18n()
+const { t, locale } = useI18n()
 import { useHelpStore } from '@/stores/help'
 import { useAuthStore } from '@/stores/auth'
-import GlassSelect from '@/components/ui/filters/GlassSelect.vue'
 import GlassPopoverSelect from '@/components/ui/filters/GlassPopoverSelect.vue'
 import { useRouter, useRoute } from 'vue-router'
 import {
+  ArrowPathIcon,
+  EyeIcon,
   MagnifyingGlassIcon,
+  PaperAirplaneIcon,
   QuestionMarkCircleIcon,
   BookOpenIcon,
   PhoneIcon,
   ChatBubbleLeftIcon,
+  ClockIcon,
   EnvelopeIcon,
   ChevronDownIcon,
   ExclamationTriangleIcon,
@@ -448,6 +601,8 @@ import {
   BugAntIcon,
   AcademicCapIcon,
   CogIcon,
+  TicketIcon,
+  TrashIcon,
   UserGroupIcon,
   ChartBarIcon
 } from '@heroicons/vue/24/outline'
@@ -459,30 +614,29 @@ const helpStore = useHelpStore()
 const authStore = useAuthStore()
 const router = useRouter()
 const route = useRoute()
+const isZh = computed(() => String(locale.value || '').toLowerCase().startsWith('zh'))
 
 // 状态
 const activeSection = ref('faq')
 const searchQuery = ref('')
 const expandedFaqs = ref<string[]>([])
 const isSubmittingTicket = ref(false)
-const isSubmittingFeedback = ref(false)
+const isReplyingTicket = ref(false)
 const selectedCategoryId = ref<number | null>(null)
 const sortMode = ref<'latest' | 'hot'>('hot')
 const isVoting = ref(false)
+const ticketReply = ref('')
+const myTicketsPanelRef = ref<HTMLElement | null>(null)
+const lastHandledRouteTicketId = ref<number | null>(null)
 
 // 表单数据
 const ticketForm = reactive({
+  channel: 'support',
   type: '',
   title: '',
   description: '',
-  priority: 'medium'
-})
-
-const feedbackForm = reactive({
-  type: '',
-  content: '',
   contact: '',
-  anonymous: false
+  priority: 'medium'
 })
 
 // 顶部 StartCard 统计
@@ -730,7 +884,7 @@ const supportContacts = computed(() => ([
     type: 'email',
     title: t('shared.help.support.email.title') || '邮件支持',
     description: t('shared.help.support.email.desc') || '非紧急问题请发送邮件',
-    value: 'xiaorui537@gmail.com',
+    value: 'xiaorui537537@gmail.com',
     time: t('shared.help.support.email.time') || '24小时内回复',
     icon: EnvelopeIcon,
     iconBg: 'bg-blue-500'
@@ -786,19 +940,46 @@ async function voteArticle(helpful: boolean) {
   }
 }
 
-async function editTicket(ticket: any) {
-  const title = prompt(t('shared.common.edit') || '编辑标题', ticket.title)
-  if (title === null) return
-  const desc = prompt(t('shared.common.edit') || '编辑描述', ticket.description || '')
-  if (desc === null) return
-  await helpStore.updateTicket(ticket.id, title, desc)
-  uiStore.showNotification({ type: 'success', title: t('shared.common.saved') || '已保存', message: '' })
-}
-
 async function deleteTicket(id: number) {
   if (!confirm(t('shared.common.confirm') || '确认删除？')) return
   await helpStore.deleteTicket(id)
   uiStore.showNotification({ type: 'success', title: t('shared.common.deleted') || '已删除', message: '' })
+}
+
+async function openTicketDetail(id: number) {
+  try {
+    ticketReply.value = ''
+    await helpStore.fetchTicketDetail(id)
+  } catch (error) {
+    uiStore.showNotification({
+      type: 'error',
+      title: isZh.value ? '错误' : 'Error',
+      message: isZh.value ? '加载单据详情失败' : 'Failed to load ticket details'
+    })
+  }
+}
+
+async function focusTicketFromRoute() {
+  const rawTicketId = Number((route.query as any)?.ticketId || 0)
+  if (!rawTicketId || !authStore.isAuthenticated) {
+    lastHandledRouteTicketId.value = null
+    return
+  }
+
+  const shouldHandle = lastHandledRouteTicketId.value !== rawTicketId
+    || !isCurrentTicket(rawTicketId)
+
+  if (!shouldHandle) return
+
+  lastHandledRouteTicketId.value = rawTicketId
+  activeSection.value = 'support'
+
+  try {
+    await helpStore.fetchMyTickets()
+    await openTicketDetail(rawTicketId)
+    await nextTick()
+    myTicketsPanelRef.value?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  } catch {}
 }
 
 const searchHelp = () => {
@@ -826,6 +1007,68 @@ const ticketStatusText = (s: string) => {
   }
 }
 
+const ticketStatusVariant = (s?: string): 'warning' | 'info' | 'success' | 'secondary' => {
+  switch (s) {
+    case 'open': return 'warning'
+    case 'in_progress': return 'info'
+    case 'resolved': return 'success'
+    case 'closed': return 'secondary'
+    default: return 'secondary'
+  }
+}
+
+const ticketChannelText = (channel?: string) => {
+  if (channel === 'feedback') return t('shared.help.sections.feedback') || (isZh.value ? '反馈' : 'Feedback')
+  if (channel === 'support') return t('shared.help.sections.support') || (isZh.value ? '支持' : 'Support')
+  return channel || (isZh.value ? '未知' : 'Unknown')
+}
+
+const ticketTypeText = (type?: string) => {
+  switch (String(type || '')) {
+    case 'technical': return t('shared.help.form.typeTechnical') || (isZh.value ? '技术问题' : 'Technical')
+    case 'account': return t('shared.help.form.typeAccount') || (isZh.value ? '账户问题' : 'Account')
+    case 'feature': return t('shared.help.form.typeFeature') || (isZh.value ? '功能建议' : 'Feature')
+    case 'bug': return t('shared.help.form.typeBug') || (isZh.value ? '错误报告' : 'Bug')
+    case 'experience': return t('shared.help.form.typeExperience') || (isZh.value ? '用户体验' : 'Experience')
+    case 'feedback': return t('shared.help.sections.feedback') || (isZh.value ? '意见反馈' : 'Feedback')
+    case 'other': return t('shared.help.form.typeOther') || (isZh.value ? '其他' : 'Other')
+    default: return type || (isZh.value ? '未分类' : 'Uncategorized')
+  }
+}
+
+const formatTicketTime = (value?: string) => {
+  if (!value) return isZh.value ? '暂无' : 'N/A'
+  const date = new Date(value)
+  if (Number.isNaN(date.getTime())) return value
+  return new Intl.DateTimeFormat(locale.value || (isZh.value ? 'zh-CN' : 'en-US'), {
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: !isZh.value
+  }).format(date)
+}
+
+const isCurrentTicket = (id?: number) => Number(helpStore.ticketDetail?.ticket?.id || 0) === Number(id || 0)
+
+const onTicketDescriptionEmojiSelect = (emoji: string) => {
+  ticketForm.description = `${ticketForm.description || ''}${emoji}`
+}
+
+const onTicketReplyEmojiSelect = (emoji: string) => {
+  ticketReply.value = `${ticketReply.value || ''}${emoji}`
+}
+
+const startFeedbackTicket = (type: string) => {
+  ticketForm.channel = 'feedback'
+  ticketForm.type = type
+  if (!ticketForm.title.trim()) {
+    ticketForm.title = '意见反馈'
+  }
+  activeSection.value = 'support'
+}
+
 const submitTicket = async () => {
   if (!authStore.isAuthenticated) {
     uiStore.showNotification({ type: 'warning', title: t('shared.common.tip') || '提示', message: t('auth.loginRequired') || '请先登录再提交工单' })
@@ -842,9 +1085,14 @@ const submitTicket = async () => {
 
   isSubmittingTicket.value = true
   try {
-    const composedTitle = `${ticketForm.title}`
-    const composedDesc = `[${ticketForm.type.toUpperCase()} | ${ticketForm.priority}]\n${ticketForm.description}`
-    await helpStore.submitTicket(composedTitle, composedDesc)
+    await helpStore.submitTicket({
+      title: ticketForm.title.trim(),
+      content: ticketForm.description.trim(),
+      channel: ticketForm.channel as 'support' | 'feedback',
+      ticketType: ticketForm.type,
+      priority: ticketForm.priority as 'low' | 'medium' | 'high' | 'urgent',
+      contact: ticketForm.contact.trim() || undefined
+    })
     uiStore.showNotification({
       type: 'success',
       title: t('shared.help.notify.ticketSuccessTitle') || '工单提交成功',
@@ -853,11 +1101,14 @@ const submitTicket = async () => {
 
     // 重置表单
     Object.assign(ticketForm, {
+      channel: 'support',
       type: '',
       title: '',
       description: '',
+      contact: '',
       priority: 'medium'
     })
+    await helpStore.fetchMyTickets()
   } catch (error) {
     uiStore.showNotification({
       type: 'error',
@@ -869,46 +1120,27 @@ const submitTicket = async () => {
   }
 }
 
-const submitFeedback = async () => {
-  if (!authStore.isAuthenticated) {
-    uiStore.showNotification({ type: 'warning', title: t('shared.common.tip') || '提示', message: t('auth.loginRequired') || '请先登录再提交反馈' })
-    return router.push({ name: 'Login', query: { redirect: router.currentRoute.value.fullPath } })
-  }
-  if (!feedbackForm.type || !feedbackForm.content) {
-    uiStore.showNotification({
-      type: 'warning',
-      title: t('shared.help.validation.incomplete') || '表单不完整',
-      message: t('shared.help.validation.pickTypeAndFill') || '请选择反馈类型并填写反馈内容'
-    })
-    return
-  }
-
-  isSubmittingFeedback.value = true
+const replyToCurrentTicket = async () => {
+  const currentId = helpStore.ticketDetail?.ticket?.id
+  if (!currentId || !ticketReply.value.trim()) return
+  isReplyingTicket.value = true
   try {
-    const title = `[Feedback] ${feedbackForm.type}`
-    const desc = `${feedbackForm.content}${feedbackForm.contact ? `\nContact: ${feedbackForm.contact}` : ''}`
-    await helpStore.submitTicket(title, desc)
+    await helpStore.replyTicket(currentId, ticketReply.value.trim())
+    ticketReply.value = ''
     uiStore.showNotification({
       type: 'success',
-      title: t('shared.help.notify.feedbackSuccessTitle') || '反馈提交成功',
-      message: t('shared.help.notify.feedbackSuccessMsg') || '感谢您的反馈，我们会认真考虑您的建议'
+      title: isZh.value ? '已发送' : 'Sent',
+      message: isZh.value ? '已追加到当前支持单' : 'Your reply has been added to this ticket'
     })
-
-    // 重置表单
-    Object.assign(feedbackForm, {
-      type: '',
-      content: '',
-      contact: '',
-      anonymous: false
-    })
+    await helpStore.fetchMyTickets()
   } catch (error) {
     uiStore.showNotification({
       type: 'error',
       title: t('shared.help.notify.submitFailTitle') || '提交失败',
-      message: t('shared.help.notify.feedbackFailMsg') || '提交反馈时发生错误，请稍后重试'
+      message: isZh.value ? '追加回复失败，请稍后重试' : 'Failed to add your reply. Please try again later'
     })
   } finally {
-    isSubmittingFeedback.value = false
+    isReplyingTicket.value = false
   }
 }
 
@@ -930,6 +1162,7 @@ onMounted(() => {
       activeSection.value = candidate
     }
   } catch {}
+  focusTicketFromRoute().catch(() => {})
 })
 
 // 分区变化时写回到 URL，避免主题/语言切换导致重置
@@ -939,4 +1172,11 @@ watch(activeSection, (s) => {
     router.replace({ query: q })
   } catch {}
 })
+
+watch(
+  () => [route.query.ticketId, authStore.isAuthenticated],
+  () => {
+    focusTicketFromRoute().catch(() => {})
+  }
+)
 </script> 

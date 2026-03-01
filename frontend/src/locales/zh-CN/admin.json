@@ -14,7 +14,7 @@
       "reports": "报告中心",
       "exports": "数据导出",
       "community": "社区治理",
-      "tools": "工具中心"
+      "tools": "通知中心"
     },
     "tabs": {
       "users": "用户",
@@ -73,7 +73,7 @@
       "gotoPeople": "数据中心：用户与人群",
       "gotoCourses": "课程中心：课程总览",
       "gotoModeration": "内容治理：报告/社区",
-      "gotoTools": "工具中心：导出",
+      "gotoTools": "通知中心：通知与工单",
       "activeUsers": "近 N 天活跃",
       "abilityReports": "能力报告",
       "abilityRadarTitle": "整体五维能力雷达",

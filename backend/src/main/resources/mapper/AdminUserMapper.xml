@@ -42,6 +42,10 @@
                     u.username LIKE CONCAT('%', #{keyword}, '%')
                     OR u.email LIKE CONCAT('%', #{keyword}, '%')
                     OR u.nickname LIKE CONCAT('%', #{keyword}, '%')
+                    OR u.first_name LIKE CONCAT('%', #{keyword}, '%')
+                    OR u.last_name LIKE CONCAT('%', #{keyword}, '%')
+                    OR CONCAT(COALESCE(u.first_name, ''), COALESCE(u.last_name, '')) LIKE CONCAT('%', #{keyword}, '%')
+                    OR CONCAT(COALESCE(u.last_name, ''), COALESCE(u.first_name, '')) LIKE CONCAT('%', #{keyword}, '%')
                     OR u.student_no LIKE CONCAT('%', #{keyword}, '%')
                     OR u.teacher_no LIKE CONCAT('%', #{keyword}, '%')
                 )
@@ -76,4 +80,3 @@
     </update>
 
 </mapper>
-

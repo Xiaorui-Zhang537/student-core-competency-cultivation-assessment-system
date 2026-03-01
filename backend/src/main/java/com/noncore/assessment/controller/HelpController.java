@@ -1,5 +1,7 @@
 package com.noncore.assessment.controller;
 
+import com.noncore.assessment.dto.request.HelpTicketReplyRequest;
+import com.noncore.assessment.dto.response.HelpTicketDetailResponse;
 import com.noncore.assessment.entity.HelpArticle;
 import com.noncore.assessment.entity.HelpArticleFeedback;
 import com.noncore.assessment.entity.HelpCategory;
@@ -72,7 +74,7 @@ public class HelpController extends BaseController {
     @Operation(summary = "创建工单")
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<ApiResponse<HelpTicket>> createTicket(@RequestBody HelpTicketCreateRequest body) {
-        HelpTicket t = helpService.createTicket(getCurrentUserId(), body.getTitle(), body.getDescription());
+        HelpTicket t = helpService.createTicket(getCurrentUserId(), getCurrentUser().getRole(), body);
         return ResponseEntity.ok(ApiResponse.success(t));
     }
 
@@ -83,12 +85,32 @@ public class HelpController extends BaseController {
         return ResponseEntity.ok(ApiResponse.success(helpService.listMyTickets(getCurrentUserId())));
     }
 
+    @GetMapping("/tickets/{id}")
+    @Operation(summary = "我的工单详情")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<ApiResponse<HelpTicketDetailResponse>> myTicketDetail(@PathVariable Long id) {
+        return ResponseEntity.ok(ApiResponse.success(helpService.getMyTicketDetail(getCurrentUserId(), id)));
+    }
+
+    @PostMapping("/tickets/{id}/reply")
+    @Operation(summary = "回复我的工单")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<ApiResponse<HelpTicketDetailResponse>> replyTicket(@PathVariable Long id,
+                                                                             @RequestBody HelpTicketReplyRequest body) {
+        return ResponseEntity.ok(ApiResponse.success(helpService.replyMyTicket(
+                getCurrentUserId(),
+                getCurrentUser().getRole(),
+                id,
+                body.getContent()
+        )));
+    }
+
     @PutMapping("/tickets/{id}")
     @Operation(summary = "编辑我的工单")
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<ApiResponse<HelpTicket>> updateTicket(@PathVariable Long id,
                                                                 @RequestBody HelpTicketCreateRequest body) {
-        HelpTicket updated = helpService.updateMyTicket(getCurrentUserId(), id, body.getTitle(), body.getDescription());
+        HelpTicket updated = helpService.updateMyTicket(getCurrentUserId(), id, body);
         return ResponseEntity.ok(ApiResponse.success(updated));
     }
 
@@ -100,5 +122,4 @@ public class HelpController extends BaseController {
         return ResponseEntity.ok(ApiResponse.success());
     }
 }
-
 

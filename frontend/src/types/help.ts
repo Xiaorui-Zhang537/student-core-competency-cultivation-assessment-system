@@ -28,9 +28,46 @@ export interface HelpTicket {
   userId: number
   title: string
   description: string
+  channel?: 'support' | 'feedback'
+  ticketType?: string
+  priority?: 'low' | 'medium' | 'high' | 'urgent'
+  sourceRole?: 'student' | 'teacher' | 'admin' | string
+  contact?: string
+  anonymous?: boolean
   status: 'open' | 'in_progress' | 'resolved' | 'closed'
+  assigneeAdminId?: number
+  lastReplyAt?: string
+  closedAt?: string
+  username?: string
+  userRole?: string
+  assigneeName?: string
   createdAt?: string
   updatedAt?: string
 }
 
+export interface HelpTicketMessage {
+  id: number
+  ticketId: number
+  senderId: number
+  senderRole?: string
+  senderSide: 'user' | 'admin'
+  senderName?: string
+  content: string
+  createdAt?: string
+}
+
+export interface HelpTicketDetail {
+  ticket: HelpTicket
+  messages: HelpTicketMessage[]
+}
+
+export interface HelpTicketCreateRequest {
+  title: string
+  content: string
+  channel?: 'support' | 'feedback'
+  ticketType?: string
+  priority?: 'low' | 'medium' | 'high' | 'urgent'
+  contact?: string
+  anonymous?: boolean
+}
 

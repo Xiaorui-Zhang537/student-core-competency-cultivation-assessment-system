@@ -238,13 +238,19 @@ const handleNotificationClick = async (notification: any) => {
   }
 
   // 统一先进入详情页
-  const prefix = window.location.pathname.startsWith('/student') ? '/student' : '/teacher'
+  const path = window.location.pathname
+  const prefix = path.startsWith('/admin')
+    ? '/admin'
+    : (path.startsWith('/teacher') ? '/teacher' : '/student')
   await router.push(`${prefix}/notifications/${notification.id}`)
   closeDropdown()
 }
 
 const openNotificationCenter = () => {
-  const prefix = window.location.pathname.startsWith('/student') ? '/student' : '/teacher'
+  const path = window.location.pathname
+  const prefix = path.startsWith('/admin')
+    ? '/admin'
+    : (path.startsWith('/teacher') ? '/teacher' : '/student')
   router.push(`${prefix}/notifications`)
   closeDropdown()
 }

@@ -328,7 +328,10 @@ const openDetail = async (id: string) => {
     console.error('进入详情前标记已读失败:', e)
   }
 
-  const prefix = window.location.pathname.startsWith('/student') ? '/student' : '/teacher'
+  const path = window.location.pathname
+  const prefix = path.startsWith('/admin')
+    ? '/admin'
+    : (path.startsWith('/teacher') ? '/teacher' : '/student')
 
   // 帖子/评论通知：跳帖子详情
   if (found?.type === 'post') {

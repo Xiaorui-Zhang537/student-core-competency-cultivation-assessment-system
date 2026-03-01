@@ -730,7 +730,16 @@ create table if not exists student_assessment_system.help_ticket
     user_id     bigint                                                                       not null comment '提交用户ID',
     title       varchar(200)                                                                 not null comment '标题',
     description text                                                                         not null comment '描述',
+    channel     varchar(32)                                default 'support'                  null comment '渠道：support/feedback',
+    ticket_type varchar(64)                                default 'other'                    null comment '类型',
+    priority    varchar(16)                                default 'medium'                   null comment '优先级',
+    source_role varchar(32)                                default 'student'                  null comment '来源角色',
+    contact     varchar(255)                                                              null comment '联系方式',
+    is_anonymous tinyint(1)                                default 0                          null comment '是否匿名展示',
     status      enum ('open', 'in_progress', 'resolved', 'closed') default 'open'            null comment '状态',
+    assignee_admin_id bigint                                                             null comment '处理管理员ID',
+    last_reply_at timestamp                                                                null comment '最近回复时间',
+    closed_at    timestamp                                                                 null comment '关闭时间',
     created_at  timestamp                                          default CURRENT_TIMESTAMP null comment '创建时间',
     updated_at  timestamp                                          default CURRENT_TIMESTAMP null on update CURRENT_TIMESTAMP comment '更新时间'
 )
@@ -741,6 +750,49 @@ create index idx_help_ticket_status
 
 create index idx_help_ticket_user
     on student_assessment_system.help_ticket (user_id);
+
+create table if not exists student_assessment_system.help_ticket_message
+(
+    id          bigint auto_increment comment '消息ID'
+        primary key,
+    ticket_id   bigint                                                                       not null comment '工单ID',
+    sender_id   bigint                                                                       not null comment '发送者ID',
+    sender_role varchar(32)                                                                  null comment '发送者角色',
+    sender_side varchar(16)                                                                  not null comment '发送侧：user/admin',
+    content     text                                                                         not null comment '消息内容',
+    created_at  timestamp                                          default CURRENT_TIMESTAMP null comment '创建时间'
+)
+    comment '技术支持工单消息表' charset = utf8mb4;
+
+create index idx_help_ticket_message_ticket
+    on student_assessment_system.help_ticket_message (ticket_id);
+
+alter table student_assessment_system.help_ticket
+    add column if not exists channel varchar(32) default 'support' null comment '渠道：support/feedback';
+
+alter table student_assessment_system.help_ticket
+    add column if not exists ticket_type varchar(64) default 'other' null comment '类型';
+
+alter table student_assessment_system.help_ticket
+    add column if not exists priority varchar(16) default 'medium' null comment '优先级';
+
+alter table student_assessment_system.help_ticket
+    add column if not exists source_role varchar(32) default 'student' null comment '来源角色';
+
+alter table student_assessment_system.help_ticket
+    add column if not exists contact varchar(255) null comment '联系方式';
+
+alter table student_assessment_system.help_ticket
+    add column if not exists is_anonymous tinyint(1) default 0 null comment '是否匿名展示';
+
+alter table student_assessment_system.help_ticket
+    add column if not exists assignee_admin_id bigint null comment '处理管理员ID';
+
+alter table student_assessment_system.help_ticket
+    add column if not exists last_reply_at timestamp null comment '最近回复时间';
+
+alter table student_assessment_system.help_ticket
+    add column if not exists closed_at timestamp null comment '关闭时间';
 
 create table if not exists student_assessment_system.learning_recommendations
 (
@@ -1664,5 +1716,4 @@ alter table student_assessment_system.ai_voice_turns
     add constraint fk_ai_voice_turns_user
         foreign key (user_id) references student_assessment_system.users (id)
             on delete cascade;
-
 

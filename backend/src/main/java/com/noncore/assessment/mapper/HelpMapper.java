@@ -1,5 +1,6 @@
 package com.noncore.assessment.mapper;
 
+import com.noncore.assessment.entity.HelpTicketMessage;
 import com.noncore.assessment.entity.HelpArticle;
 import com.noncore.assessment.entity.HelpArticleFeedback;
 import com.noncore.assessment.entity.HelpCategory;
@@ -30,9 +31,30 @@ public interface HelpMapper {
 
     List<HelpTicket> listTicketsByUser(@Param("userId") Long userId);
 
-    int updateTicket(@Param("id") Long id, @Param("title") String title, @Param("description") String description);
+    HelpTicket selectTicketByIdAndUser(@Param("id") Long id, @Param("userId") Long userId);
+
+    HelpTicket selectTicketById(@Param("id") Long id);
+
+    List<HelpTicket> pageTicketsForAdmin(@Param("status") String status,
+                                         @Param("channel") String channel,
+                                         @Param("priority") String priority,
+                                         @Param("sourceRole") String sourceRole,
+                                         @Param("keyword") String keyword,
+                                         @Param("offset") Integer offset,
+                                         @Param("size") Integer size);
+
+    long countTicketsForAdmin(@Param("status") String status,
+                              @Param("channel") String channel,
+                              @Param("priority") String priority,
+                              @Param("sourceRole") String sourceRole,
+                              @Param("keyword") String keyword);
+
+    int insertTicketMessage(HelpTicketMessage message);
+
+    List<HelpTicketMessage> listTicketMessages(@Param("ticketId") Long ticketId);
+
+    int updateTicket(HelpTicket ticket);
 
     int deleteTicket(@Param("id") Long id, @Param("userId") Long userId);
 }
-
 

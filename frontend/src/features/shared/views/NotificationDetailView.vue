@@ -35,9 +35,9 @@
           </div>
 
           <div class="ml-auto flex shrink-0 items-center gap-2">
-            <Button variant="success" size="sm" @click="goRelated">
-              <svg class="w-4 h-4 mr-1.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M12 5l7 7-7 7"/></svg>
-              {{ t('notifications.actions.goRelated') || '查看详情' }}
+            <Button :variant="goRelatedVariant" size="sm" @click="goRelated">
+              <component :is="goRelatedIcon" class="w-4 h-4 mr-1.5" />
+              {{ goRelatedLabel }}
             </Button>
             <Button variant="outline" size="sm" @click="goCenter">
               <svg class="w-4 h-4 mr-1.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5"/><path d="M12 19l-7-7 7-7"/></svg>
@@ -113,6 +113,7 @@ import {
   DocumentTextIcon,
   AcademicCapIcon,
   ChatBubbleLeftRightIcon,
+  LifebuoyIcon,
   StarIcon,
 } from '@heroicons/vue/24/outline'
 
@@ -124,8 +125,14 @@ const { currentNotification: notification, loading } = storeToRefs(notifications
 const chatStore = useChatStore()
 
 const id = route.params.id as string
-const isTeacher = computed(() => String(route.path || '').startsWith('/teacher'))
-const base = computed(() => (isTeacher.value ? '/teacher' : '/student'))
+const base = computed(() => {
+  const path = String(route.path || '')
+  if (path.startsWith('/admin')) return '/admin'
+  if (path.startsWith('/teacher')) return '/teacher'
+  return '/student'
+})
+const isTeacher = computed(() => base.value === '/teacher')
+const isZh = computed(() => String(locale.value || '').toLowerCase().startsWith('zh'))
 
 onMounted(async () => {
   await notificationsStore.fetchNotificationDetail(id)
@@ -228,6 +235,20 @@ const senderName = computed(() => {
 
 const avatarUrl = computed(() => metaInfo.value.senderAvatar || '')
 
+const isHelpTicketNotification = computed(() => String(notification.value?.relatedType || '').toLowerCase() === 'help_ticket')
+
+const goRelatedLabel = computed(() => {
+  if (!isHelpTicketNotification.value) {
+    return (t('notifications.actions.goRelated') as string) || (isZh.value ? '查看详情' : 'View details')
+  }
+  if (base.value === '/admin') return isZh.value ? '处理支持单' : 'Handle support ticket'
+  return isZh.value ? '前往技术支持' : 'Open support ticket'
+})
+
+const goRelatedVariant = computed(() => (isHelpTicketNotification.value ? 'primary' : 'success'))
+
+const goRelatedIcon = computed(() => (isHelpTicketNotification.value ? LifebuoyIcon : BellIcon))
+
 // ---- 时间格式化 ----
 const formatDetailTime = (timestamp: string) => {
   if (!timestamp) return ''
@@ -245,6 +266,27 @@ const goRelated = async () => {
   if (!n) return
   const rt = String(n.relatedType || '').toLowerCase()
   const tp = String(n.type || '').toLowerCase()
+
+  if (base.value === '/admin') {
+    if (rt === 'help_ticket' && n.relatedId) {
+      router.push({ path: '/admin/tools', query: { ticketId: String(n.relatedId) } })
+      return
+    }
+    goCenter()
+    return
+  }
+
+  if (rt === 'help_ticket' && n.relatedId) {
+    router.push({
+      path: `${base.value}/help`,
+      query: {
+        section: 'support',
+        ticketId: String(n.relatedId),
+        focus: 'tickets'
+      }
+    })
+    return
+  }
 
   // 消息类型：打开聊天
   if (tp === 'message') {
