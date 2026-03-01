@@ -1,3 +1,9 @@
+---
+title: "`student.api.ts`"
+description: 学生仪表盘、课程/课节进度、作业与分析 API 封装
+outline: [2, 3]
+---
+
 # 前端 API：student.api.ts
 
 ## 方法签名

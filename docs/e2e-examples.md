@@ -1,3 +1,9 @@
+---
+title: 端到端样例（E2E）
+description: 从后端接口到前端组件的完整闭环示例（API -> types -> api.ts -> store -> view）
+outline: [2, 3]
+---
+
 # 端到端样例（API → 前端组件 E2E）
 
 面向新手，逐步演示“一个后端接口，如何被前端消费并展示”。每个示例都覆盖：接口 → 类型 → 前端 API 封装 → Store → 视图/组件 → 交互与验证。
@@ -8,22 +14,26 @@
 
 - 后端接口（Swagger 可测）：`POST /api/auth/login`
   - 请求体（示例）：`{ username, password }`
-  - 响应体（示例）：`{ code: 200, data: { token, refreshToken, user } }`
+  - 响应体（示例）：`{ code: 200, data: { accessToken, refreshToken, user, expiresIn } }`
 - 前端对应文件：
-  - 请求封装：`src/api/auth.api.ts` → `authApi.login(data)`
-  - Axios 拦截器：`src/api/config.ts`
+  - 请求封装：`frontend/src/api/auth.api.ts` → `authApi.login(data)`
+  - Axios 拦截器：`frontend/src/api/config.ts`
     - 登录/注册请求不附带旧 token
-    - 其它请求附带 `Authorization: Bearer <token>`
+    - 其它请求附带 `Authorization: Bearer <accessToken>`
     - 401 时清 token 并跳转登录页
-  - Store：`src/stores/auth.ts`（命名可能为 `useAuthStore`）
+  - Store：`frontend/src/stores/auth.ts`（命名可能为 `useAuthStore`）
     - `login` action 调用 `authApi.login`
-    - 成功后保存 token 与 user
-  - 视图：`src/features/auth/views/LoginView.vue`
+    - 成功后保存 `accessToken`（本地键名为 `token`）与 `user`
+  - 视图：`frontend/src/features/auth/views/LoginView.vue`
     - 表单校验 → 触发 Store `login`
     - 成功后路由跳转至首页/仪表盘
 - 验证要点：
   - 登录成功后，刷新页面仍保持登录态（token 持久化）
-  - 未登录访问受限路由，路由守卫应跳转到登录页（见 `router/index.ts`）
+  - 未登录访问受限路由，路由守卫应跳转到登录页（见 `frontend/src/router/index.ts`）
+
+:::tip 前端拿到的是什么
+后端返回统一包装 `ApiResponse<T>`，但前端 Axios 拦截器会自动把 `{ code, message, data }` 解包为 `data`（见 `frontend/src/api/config.ts`）。
+:::
 
 时序图：
 ```mermaid
@@ -37,10 +47,10 @@ sequenceDiagram
   V->>A: POST /api/auth/login
   A->>C: 请求
   C->>S: 校验并签发JWT
-  S-->>C: { token, refreshToken, user }
+  S-->>C: { accessToken, refreshToken, user, expiresIn }
   C-->>A: ApiResponse< AuthResponse >
   A-->>V: 响应
-  V->>V: 保存token/用户信息
+  V->>V: 保存 accessToken/refreshToken/用户信息
   V-->>U: 跳转首页/仪表盘
 ```
 
@@ -52,10 +62,10 @@ sequenceDiagram
   - 查询参数：`page`、`size`、`q`
   - 响应体：`{ code: 200, data: PageResult<CourseDto> }`
 - 前端对应文件：
-  - 请求封装：`src/api/course.api.ts`（示例方法：`listCourses(params)`）
-  - Store：`src/stores/course.ts`（示例 `useCourseStore`）
+  - 请求封装：`frontend/src/api/course.api.ts`（示例方法：`courseApi.getCourses(params)`）
+  - Store：`frontend/src/stores/course.ts`（示例 `useCourseStore`）
     - `fetchCourses` action：调用 `listCourses`，保存 `items`、`total`、`page`、`size`
-  - 视图：教师端 `src/features/teacher/views/ManageCourseView.vue`
+  - 视图：教师端 `frontend/src/features/teacher/views/ManageCourseView.vue`
     - 搜索框与分页器联动 → 触发 `fetchCourses`
     - 渲染课程卡片列表
 - 验证要点：
@@ -88,10 +98,10 @@ sequenceDiagram
   - 请求体（要点）：`messages[]`、可选 `conversationId`、可选 `studentIds[]`
   - 响应体：`{ code: 200, data: { answer, conversationId, messageId } }`
 - 前端对应文件：
-  - 请求封装：`src/api/ai.api.ts`（示例方法：`chat(payload)`）
-  - Store：`src/stores/ai.ts`（示例 `useAiStore`）
+  - 请求封装：`frontend/src/api/ai.api.ts`（示例方法：`aiApi.chat(payload)` / `aiApi.chatStream(...)`）
+  - Store：`frontend/src/stores/ai.ts`（示例 `useAIStore`）
     - 管理当前会话 ID、消息列表、loading 状态
-  - 视图：`src/features/shared/views/AiAssistantView.vue`（或同名位置）
+  - 视图：`frontend/src/features/shared/views/AIAssistantView.vue`
     - 输入框回车/点击发送 → 调用 `chat` → 渲染助手回答
 - 验证要点：
   - 首次会话 `conversationId` 为空时，后端会新建会话并返回 ID
@@ -107,7 +117,7 @@ sequenceDiagram
   participant A as Axios
   participant C as Controller(/ai)
   participant S as AiService
-  participant P as Provider(DeepSeek/OpenRouter)
+  participant P as Provider(Gemini/GLM)
   U->>V: 输入消息并发送
   V->>ST: chat(messages)
   ST->>A: POST /api/ai/chat
@@ -126,11 +136,12 @@ sequenceDiagram
 
 ## 示例 4：通知流（GET /api/notifications 或轮询/流）
 
-- 后端接口：`GET /api/notifications`（实际以后端为准）
+- 后端接口（分页）：`GET /api/notifications/my?page=1&size=20&type=...`
+- SSE（实时推送）：`GET /api/notifications/stream?token=...`（`EventSource` 不能自定义 header，因此前端走 query token）
 - 前端对应文件：
-  - 组合式函数：`src/composables/useNotificationStream.ts`
-  - 组件：`src/components/notifications/NotificationBell.vue`、`NotificationCenter.vue`
-  - Store：`src/stores/notifications.ts`
+  - 组合式函数：`frontend/src/composables/useNotificationStream.ts`（`createNotificationStream()`）
+  - 组件：`frontend/src/components/notifications/NotificationBell.vue`、`frontend/src/components/notifications/NotificationCenter.vue`
+  - Store：`frontend/src/stores/notifications.ts`
 - 验证要点：
   - 新通知能被感知并高亮提示
   - 点击查看后变为已读
@@ -162,7 +173,7 @@ sequenceDiagram
 
 - 统一响应：`{ code, message, data }`，业务成功 `code=200`
 - 分页体 `PageResult<T>`：前端 Store 应保存 `items`、`total`、`page`、`size`
-- TS 类型与后端 DTO 字段保持一致（`src/types/*`）
+- TS 类型与后端 DTO 字段保持一致（`frontend/src/types/*`）
 
 ---
 
@@ -175,9 +186,9 @@ sequenceDiagram
    - Mapper + XML 实现数据访问
    - 在 Swagger 中验证通过
 2) 前端
-   - `src/types/` 增加/更新类型
-   - `src/api/xxx.api.ts` 增加请求方法
-   - `src/stores/xxx.ts` 增加 action/state/getters
+   - `frontend/src/types/` 增加/更新类型
+   - `frontend/src/api/xxx.api.ts` 增加请求方法
+   - `frontend/src/stores/xxx.ts` 增加 action/state/getters
    - 视图/组件联动 Store（加载/空态/异常态）
    - i18n 文案、路由守卫
 3) 自测

@@ -1,3 +1,9 @@
+---
+title: "`ability.api.ts`"
+description: 能力评估（学生端雷达/报告/建议）API 封装
+outline: [2, 3]
+---
+
 # 前端 API：ability.api.ts
 
 ## 方法签名

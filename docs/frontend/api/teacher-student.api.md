@@ -1,3 +1,9 @@
+---
+title: "`teacher-student.api.ts`"
+description: 教师视角学生画像/活跃/预警/建议 API 封装
+outline: [2, 3]
+---
+
 # 前端 API：teacher-student.api.ts
 
 ## 方法签名

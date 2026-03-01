@@ -1,3 +1,9 @@
+---
+title: "`community.api.ts`"
+description: 社区帖子/评论/点赞/统计 API 封装
+outline: [2, 3]
+---
+
 # 前端 API：community.api.ts
 
 ## 方法签名（节选）

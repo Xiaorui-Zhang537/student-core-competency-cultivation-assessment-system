@@ -1,38 +1,51 @@
-# AI 实时语音（口语训练）API（Gemini Live）
+---
+title: AI 实时语音（Gemini Live）API
+description: WebSocket 实时语音通道（浏览器 <-> 后端 <-> Gemini Live）
+outline: [2, 3]
+---
+
+# AI 实时语音（Gemini Live）API
 
 > 以 Swagger 与后端实现为准：`http://localhost:8080/api/swagger-ui.html`  
-> 说明：实时语音使用 **WebSocket**（双工），并通过后端代理连接 Gemini Live API。前端 **不得**直连 Gemini（避免暴露密钥）。
+> 说明：实时语音使用 WebSocket（双工），由后端代理连接 Gemini Live API，前端不直连 Gemini（避免暴露密钥）。
 
-## 1. 入口与用途
+本项目后端 `context-path=/api`，因此 WS 完整路径为 `/api/ai/live/ws`。
 
-- **入口页面**：AI 助理页右上角「语音练习」按钮
-  - 学生端：`/student/assistant/voice`
-  - 教师端：`/teacher/assistant/voice`
+## 1. 用途与限制
 
-- **核心能力**：
-  - 浏览器实时采集麦克风音频 → 后端 WS → Gemini Live
-  - 实时返回：输入转写、AI 文本增量、AI 音频分片（可选）
-  - 结束后：上传用户音频与 AI 音频，并写入会话消息用于回放
+用途：
 
-> 重要限制：Gemini Live 的 `responseModalities` 单次只能选择 **TEXT** 或 **AUDIO**，不能同时 TEXT+AUDIO。  
-> 因此本文的 `mode=both（音频+文字）` 实现方式是：**AUDIO 输出 + 开启 `outputAudioTranscription`**（获得文字转写），从而达到“能听到音频 + 看到文字”的效果。
+- 浏览器实时采集麦克风音频，通过后端 WS 转发到 Gemini Live
+- 实时返回：用户输入转写、AI 文本增量、AI 音频分片
+
+限制：
+
+- Gemini Live 的 `responseModalities` 单次只能选择 `TEXT` 或 `AUDIO`，不能同时 `TEXT+AUDIO`。
+- 本项目的 `mode=both` 实现方式是：选择 `AUDIO` 输出，并开启 `outputAudioTranscription`（得到音频 + 文字转写）。
+- Live 通道本身不自动“落库”，如需保存练习回合，请走“口语训练回合入库”接口（见本文第 4 节与 [ai-voice-practice.md](./ai-voice-practice)）。
 
 ## 2. WebSocket：`/api/ai/live/ws`
 
 ### 2.1 鉴权
 
-- WS 地址：`/api/ai/live/ws?token=JWT_ACCESS_TOKEN`
-- 鉴权规则与通知 SSE 一致：必须是 **access token**，并通过后端校验。
+后端支持 3 种方式传 token（优先级从高到低）：
 
-### 2.2 客户端消息（Client → Server）
+- Query：`/api/ai/live/ws?token=<access_jwt>`
+- Header：`Authorization: Bearer <access_jwt>`
+- Header：`X-Auth-Token: <access_jwt>`
+
+要求：必须是合法的 access token。
+
+### 2.2 客户端消息（Client -> Server）
 
 #### start
+
+用于启动一段 Live 会话，并触发后端连接 Gemini Live + 发送 setup。
 
 ```json
 {
   "type": "start",
-  "conversationId": 123,
-  "model": "google/gemini-2.5-pro",
+  "model": "gemini-2.5-flash-native-audio-preview-12-2025",
   "mode": "text|audio|both",
   "locale": "en-US",
   "scenario": "面试自我介绍"
@@ -40,11 +53,15 @@
 ```
 
 说明：
-- `mode=text`：后端向 Gemini 设置 `responseModalities=["TEXT"]`
-- `mode=audio`：后端向 Gemini 设置 `responseModalities=["AUDIO"]`
-- `mode=both`：后端向 Gemini 设置 `responseModalities=["AUDIO"]` 并开启 `outputAudioTranscription`（返回音频 + 文字转写）
+
+- `model` 可省略。后端会按 `mode` 选择默认模型：
+  - `mode=text` -> `gemini-live-2.5-flash-preview`
+  - `mode=audio|both` -> `gemini-2.5-flash-native-audio-preview-12-2025`
+- 仅支持 Gemini 模型：`google/*` 或 `gemini-*` 或 `models/*`。非 Gemini 会返回 `INVALID_MODEL`。
 
 #### audio_chunk
+
+用于实时推送音频分片（PCM16 base64）。
 
 ```json
 {
@@ -55,25 +72,30 @@
 }
 ```
 
-> PCM 要求：16-bit little-endian PCM。建议 16kHz 单声道。
+说明：
 
-#### activity_start（开始本轮，可选）
+- PCM 要求：16-bit little-endian PCM（单声道）。
+- `sampleRate` 可选，缺省视为 16000。
 
-用于“按回合”的口语训练交互：标记用户开始说话。
+#### activity_start
+
+开始本轮说话（按回合交互）。
 
 ```json
 { "type": "activity_start" }
 ```
 
-#### activity_end（结束本轮，触发模型回复）
+#### activity_end
 
-用于“按回合”的口语训练交互：标记用户结束说话，并触发模型开始生成回复。
+结束本轮说话，并触发模型开始生成回复（按回合交互）。
 
 ```json
 { "type": "activity_end" }
 ```
 
 #### stop
+
+停止会话（关闭后端到 Gemini 的 WS）。
 
 ```json
 { "type": "stop" }
@@ -85,12 +107,26 @@
 { "type": "ping", "ts": 1738500000000 }
 ```
 
-### 2.3 服务端消息（Server → Client）
+### 2.3 服务端消息（Server -> Client）
 
-#### ready（握手后立即返回）
+#### ready（握手成功）
 
 ```json
 { "type": "ready", "userId": 1, "role": "STUDENT" }
+```
+
+#### started / stopped / pong（本地 ACK）
+
+```json
+{ "type": "started", "mode": "both", "model": "gemini-2.5-flash-native-audio-preview-12-2025" }
+```
+
+```json
+{ "type": "stopped" }
+```
+
+```json
+{ "type": "pong", "ts": 1738500000000 }
 ```
 
 #### session_ready（Gemini setup 完成）
@@ -99,21 +135,27 @@
 { "type": "session_ready" }
 ```
 
-> 说明：后端已在 Gemini setup 中禁用自动 VAD（`realtimeInputConfig.automaticActivityDetection.disabled=true`），建议客户端在 `session_ready` 后再发送 `activity_start/audio_chunk/activity_end`。
+说明：后端在 setup 中禁用了自动 VAD（`automaticActivityDetection.disabled=true`），因此推荐客户端在 `session_ready` 之后再发送 `activity_start/audio_chunk/activity_end`。
 
-#### transcript（输入音频转写）
+#### transcript（用户输入转写）
 
 ```json
 { "type": "transcript", "isFinal": true, "text": "..." }
 ```
 
+#### assistant_transcript（AI 音频的文字转写）
+
+```json
+{ "type": "assistant_transcript", "isFinal": true, "text": "..." }
+```
+
 #### assistant_text（AI 文本增量）
 
 ```json
-{ "type": "assistant_text", "delta": "..." }
+{ "type": "assistant_text", "delta": "...", "isFinal": false }
 ```
 
-#### assistant_audio（AI 音频分片，base64）
+#### assistant_audio（AI 音频分片）
 
 ```json
 {
@@ -123,25 +165,49 @@
 }
 ```
 
-#### error / warn
+#### turn_complete / generation_complete / interrupted
 
 ```json
-{ "type": "error", "code": "CONNECT_FAILED", "message": "..." }
+{ "type": "turn_complete" }
 ```
 
 ```json
-{ "type": "warn", "code": "THROTTLED", "message": "..." }
+{ "type": "generation_complete" }
 ```
 
-## 3. 回合入库：`POST /api/ai/voice/turns`
+```json
+{ "type": "interrupted" }
+```
 
-用于把一次口语训练回合写入 AI 会话消息中（`AiMessage.attachments` 保存音频文件ID）。
+#### warn / error / closed
 
-### 请求
+```json
+{ "type": "warn", "code": "THROTTLED", "message": "发送过快，已触发节流，请放慢语速或稍后重试" }
+```
+
+```json
+{ "type": "error", "code": "CONNECT_FAILED", "message": "Google Gemini API Key 未配置" }
+```
+
+```json
+{ "type": "closed", "code": 1000, "reason": "client_closed" }
+```
+
+## 3. Prompt
+
+后端在 Live setup 中注入 `systemInstruction`，并把 `locale/scenario` 追加到提示词中（用于口语训练引导）。
+
+## 4. 回合入库：`POST /api/ai/voice/turns`
+
+用途：把一次口语训练回合（转写 + 音频附件）写入“口语训练”独立记录（不写入 AI 聊天会话）。
+
+创建 `sessionId` 请先调用语音会话接口（见 [ai-voice-practice.md](./ai-voice-practice) 的 `POST /ai/voice/sessions`）。
+
+请求（示例）：
 
 ```json
 {
-  "conversationId": 123,
+  "sessionId": 123,
   "model": "google/gemini-2.5-pro",
   "userTranscript": "Hello, my name is ...",
   "assistantText": "Nice to meet you. ...",
@@ -152,26 +218,22 @@
 }
 ```
 
-### 响应
+说明：兼容历史字段名 `conversationId`，会被当作 `sessionId` 使用。
+
+响应（示例）：
 
 ```json
 {
   "code": 200,
   "data": {
+    "sessionId": 123,
     "conversationId": 123,
-    "userMessageId": 20001,
-    "assistantMessageId": 20002
+    "turnId": 20001
   }
 }
 ```
 
-## 4. 音频文件上传与回放
+## 5. 音频文件上传与回放
 
-- 上传：`POST /api/files/upload`（purpose=ai_voice, relatedId=conversationId）
-- 回放：推荐使用 `GET /api/files/{fileId}/stream?token=...`（支持 Range，浏览器 `audio` 标签更稳定）
-
-## 5. Prompt
-
-- 口语训练系统 Prompt：`backend/src/main/resources/prompts/speaking_practice_system_prompt.v1.txt`
-- Live 会话 setup 时会注入 systemInstruction（并附加 locale/scenario 提示）
-
+- 上传：`POST /api/files/upload`（先拿到 `fileId`，再填 `userAudioFileId/assistantAudioFileId`）
+- 回放：可使用 `GET /api/files/{fileId}/stream?token=...`（支持 Range）

@@ -1,14 +1,24 @@
+---
+title: 实战食谱（Cookbook）
+description: 选择 2-3 个任务完成，从小闭环开始熟悉项目
+outline: [2, 3]
+---
+
 # 实战食谱（Cookbook）
 
-选择任意 2–3 个任务完成，建议按顺序累积难度。每个任务包含：后端端点、前端改动、请求示例、验收清单、时序图。
+选择任意 2-3 个任务完成，建议按顺序累积难度。每个任务尽量包含：后端端点、前端改动、请求示例、验收清单、时序图。
+
+:::tip 约定
+示例中的 URL 默认包含后端 `context-path=/api`，即 `http://localhost:8080/api/...`。
+:::
 
 ---
 
 ## 任务A：学生端“我的作业”筛选与导出
 
 ### 后端（确认/对齐）
-- `GET /api/students/assignments` 支持 `courseId/status/q/page/size`
-- 导出：可选走提交导出或报表接口（视项目实现选择其一）
+- `GET /api/students/assignments`：支持 `courseId/status/q/page/size` 等过滤（以 `StudentController.getMyAssignments` 为准）
+- 导出：若后端无“导出端点”，可先做“当前筛选结果的 CSV（前端生成）”作为最小闭环
 
 ### 前端改动
 - 视图：学生作业列表新增筛选（课程/状态/关键词）与导出按钮
@@ -17,7 +27,7 @@
 ### 请求示例
 ```bash
 curl -H "Authorization: Bearer $TOKEN" \
-  "http://localhost:8080/api/students/assignments?courseId=2001&status=ONGOING&page=1&size=10"
+  "http://localhost:8080/api/students/assignments?courseId=2001&status=pending&page=1&size=10&q=AI"
 ```
 
 ### 验收清单
@@ -39,8 +49,7 @@ sequenceDiagram
   C-->>A: PageResult
   A-->>V: 渲染列表
   S->>V: 点击导出
-  V->>A: GET /export/assignments?filters
-  A-->>V: 文件流
+  V->>V: 生成 CSV 或调用导出端点（如存在）
 ```
 
 ---
@@ -48,8 +57,7 @@ sequenceDiagram
 ## 任务B：教师端成绩发布批处理
 
 ### 后端（确认/对齐）
-- `POST /api/grades/batch`
-- `POST /api/grades/batch-publish`
+- `POST /api/grades/batch-publish`：Body 为 `gradeIds: number[]`
 
 ### 前端改动
 - 视图：批改页面支持多选并批量发布
@@ -57,8 +65,10 @@ sequenceDiagram
 
 ### 请求示例
 ```bash
-curl -X POST -H "Authorization: Bearer $TOKEN" -H "Content-Type: application/json" \
-  -d '{"submissionIds": [4001,4002], "operation": "publish"}' \
+curl -X POST \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '[10001,10002,10003]' \
   http://localhost:8080/api/grades/batch-publish
 ```
 
@@ -74,8 +84,8 @@ sequenceDiagram
   participant A as Axios
   participant G as GradeController
 
-  T->>V: 多选提交
-  V->>A: POST /grades/batch-publish {ids}
+  T->>V: 多选成绩
+  V->>A: POST /grades/batch-publish [gradeIds]
   A->>G: 校验与发布
   G-->>A: { ok, failed[] }
   A-->>V: 合并提示
@@ -83,21 +93,22 @@ sequenceDiagram
 
 ---
 
-## 任务C：通知中心会话模式
+## 任务C：聊天抽屉（最近会话 + 消息分页 + 已读）
 
 ### 后端（确认/对齐）
-- `GET /api/notifications/conversation?peerId=...`
-- `POST /api/notifications/conversation/read?peerId=...`
-- SSE：`GET /api/notifications/stream?token=...`
+- 会话列表：`GET /api/chat/conversations/my`
+- 消息分页：`GET /api/chat/messages?peerId=...&page=1&size=20`
+- 标记已读：`PUT /api/chat/conversations/peer/{peerId}/read`
+- SSE（通知）：`GET /api/notifications/stream?token=...`
 
 ### 前端改动
-- 视图：通知中心按联系人分组与一键已读
-- Store：封装按 `peerId` 拉取与已读的 action；SSE 订阅实时更新
+- 视图：聊天抽屉支持最近会话列表、按对端拉取消息、发送消息、已读同步
+- Store：封装会话/消息的分页与已读 action；SSE 到达时刷新未读计数
 
 ### 请求示例
 ```bash
 curl -H "Authorization: Bearer $TOKEN" \
-  "http://localhost:8080/api/notifications/conversation?peerId=1001&page=1&size=20"
+  "http://localhost:8080/api/chat/messages?peerId=1001&page=1&size=20"
 ```
 
 ### 验收清单
@@ -108,20 +119,24 @@ curl -H "Authorization: Bearer $TOKEN" \
 ```mermaid
 sequenceDiagram
   participant U as User
-  participant V as Vue(NotifyCenter)
+  participant V as Vue(ChatDrawer)
   participant A as Axios
-  participant N as NotificationController
+  participant C as ChatController
   participant S as NotificationSSE
 
-  U->>V: 选择联系人
-  V->>A: GET /notifications/conversation
-  A->>N: 查询消息
-  N-->>A: PageResult
-  A-->>V: 渲染会话
-  V->>A: POST /notifications/conversation/read
-  A->>N: 标记已读
-  S-->>V: event: new-message
-  V-->>U: 更新UI
+  U->>V: 打开抽屉
+  V->>A: GET /chat/conversations/my
+  A->>C: 查询会话
+  C-->>A: PageResult
+  A-->>V: 渲染会话列表
+  U->>V: 选择对端
+  V->>A: GET /chat/messages?peerId=...
+  A->>C: 查询消息
+  C-->>A: PageResult
+  A-->>V: 渲染消息
+  V->>A: PUT /chat/conversations/peer/{peerId}/read
+  A->>C: 标记已读
+  S-->>V: SSE message -> 刷新未读角标（可选）
 ```
 
 ---
@@ -140,7 +155,7 @@ sequenceDiagram
 ### 请求示例
 ```bash
 curl -H "Authorization: Bearer $TOKEN" -H "Content-Type: application/json" \
-  -d '{"messages":[{"role":"user","content":"请点评作业3001"}],"model":"deepseek/deepseek-chat-v3.1"}' \
+  -d '{"messages":[{"role":"user","content":"请点评作业3001"}],"model":"google/gemini-2.5-pro"}' \
   http://localhost:8080/api/ai/chat
 ```
 
@@ -171,18 +186,18 @@ sequenceDiagram
 ## 任务E：能力雷达权重调优
 
 ### 后端（确认/对齐）
-- 读取/更新：`GET/PUT /api/teachers/ability/weights`（以教师端为例）
-- 趋势/对比导出：相关统计接口或按课程聚合
+- 雷达：`GET /api/ability/student/radar?courseId=...`
+- 对比：`POST /api/ability/student/radar/compare`
+- 维度洞察：`POST /api/ability/student/dimension-insights`
 
 ### 前端改动
-- 视图：滑杆/输入框调整维度权重，右侧预览雷达变化（ECharts）
-- Store：保存权重、拉取预览数据、支持导出 CSV
+- 视图：课程选择 + 雷达图 + “对比分析/洞察”卡片（ECharts）
+- Store：封装雷达/对比/洞察的请求与 loading/error 处理；支持导出 CSV/PNG（可选）
 
 ### 请求示例
 ```bash
-curl -X PUT -H "Authorization: Bearer $TOKEN" -H "Content-Type: application/json" \
-  -d '{"weights": {"communication":0.2,"teamwork":0.3,"creativity":0.5}}' \
-  http://localhost:8080/api/teachers/ability/weights
+curl -H "Authorization: Bearer $TOKEN" \
+  "http://localhost:8080/api/ability/student/radar?courseId=2001"
 ```
 
 ### 验收清单

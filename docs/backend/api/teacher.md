@@ -1,177 +1,268 @@
+---
+title: 教师端 API（Teacher）
+description: 教师分析指标、课程学生表现与导出、五维雷达与权重、学生画像、联系人与进度维护
+outline: [2, 3]
+---
+
 # 教师端 API（Teacher）
 
 > 以 Swagger 为准：`http://localhost:8080/api/swagger-ui.html`
 
-## 1. 分析指标
-- `GET /api/teachers/analytics/course/{courseId}`：课程分析
-请求：
-```
-GET /api/teachers/analytics/course/2
-Authorization: Bearer <token>
-```
-响应（示例）：
-```json
-{ "code":200, "data": { "enrolled": 50, "completionRate": 0.87, "avgScore": 86.4 } }
-```
+本项目后端 `context-path=/api`，下文接口路径均以 `/api/...` 展示。
 
-- `GET /api/teachers/analytics/assignment/{assignmentId}`：作业分析
-- `GET /api/teachers/analytics/class-performance/{courseId}`：班级表现
-- `GET /api/teachers/analytics/course/{courseId}/students`：课程学生表现（分页过滤）
-  - Query：`page,size,search,sortBy,activity,grade,progress`
-  - `sortBy` 可选：`name|grade|progress|lastActive|activity`
-  - 字段口径：
-    - `lastActiveAt`：课程范围内最近一次学习/提交/访问的最大时间
-    - `activityLevel`：基于近一周学习时长分档（high/medium/low/inactive），后续将由 activityScore 驱动
-- `GET /api/teachers/analytics/course/{courseId}/students/export`：导出（blob）
-  - 同步支持 `sortBy=name|grade|progress|lastActive|activity`
+## 1. 通用约定
 
-## 2. 能力雷达与权重
-- `GET /api/teachers/ability/radar`：雷达数据（`courseId/classId/studentId/startDate/endDate`）
-- `GET /api/teachers/ability/weights?courseId=...`：获取权重
-请求：
-```
-GET /api/teachers/ability/weights?courseId=2
-Authorization: Bearer <token>
-```
-响应（示例）：
-```json
-{ "code":200, "data": { "invest":0.2, "quality":0.2, "mastery":0.2, "stability":0.2, "growth":0.2 } }
+- 认证：`Authorization: Bearer <token>`
+- 响应：统一返回 `ApiResponse<T>`（`code/message/data`）
+- 权限：本页接口由 `TEACHER` / `ADMIN` 使用（控制器层有角色校验）
+
+## 2. 教学分析（Analytics）
+
+### GET `/api/teachers/analytics/course/{courseId}` 课程分析
+
+Query：
+
+- `timeRange`：可选（字符串；口径以服务实现为准）
+
+curl：
+
+```bash
+curl -H "Authorization: Bearer $TOKEN" \
+  "http://localhost:8080/api/teachers/analytics/course/2?timeRange=last_30_days"
 ```
 
-- `PUT /api/teachers/ability/weights`：更新权重
-请求：
-```json
-{ "courseId": 2, "weights": { "invest":0.1, "quality":0.25, "mastery":0.25, "stability":0.2, "growth":0.2 } }
-```
-响应：
-```json
-{ "code":200, "message":"OK" }
-```
+### GET `/api/teachers/analytics/assignment/{assignmentId}` 作业分析
 
-- `GET /api/teachers/ability/radar/export`：导出雷达（blob）
-- `POST /api/teachers/ability/radar/compare`：双区间对比（A/B）
-- `POST /api/teachers/ability/radar/compare/export`：对比导出（blob）
-- `POST /api/teachers/ability/dimension-insights`：维度洞察
+curl：
 
-## 3. 课程进度（维护）
-- `POST /api/teachers/courses/{courseId}/students/{studentId}/progress/reset`：重置进度
-
-## 4. 学生详情/活跃度/预警/建议
-- `GET /api/teachers/students/{studentId}`：学生画像（返回 users 表完整字段 + 汇总指标）
-- `GET /api/teachers/students/{studentId}/courses`：学生参与课程（教师可见范围）
-- `GET /api/teachers/students/{studentId}/activity?days=7&limit=5`：活跃度与最近学习
-- `GET /api/teachers/students/{studentId}/alerts`：风险预警（如14天未活跃/低均分/低完成率）
-- `GET /api/teachers/students/{studentId}/recommendations?limit=6`：个性化学习建议（优先级排序）
-
-说明：所有接口均基于“教师与学生存在课程交集”的权限校验，非授课教师访问将返回 403。
-
-## 5. 返回码对照
-- 200：成功
-- 400：非法参数（日期区间/权重和不等于 1 等）
-- 401：未认证
-- 403：非授课教师无权限
-- 404：课程/学生不存在
-- 409：并发/状态冲突
-- 5xx：服务端错误
-
----
-
-# 前端对接（teacher.api.ts）
-
-- `getCourseAnalytics(courseId)` / `getAssignmentAnalytics(assignmentId)` / `getClassPerformance(courseId)`
-- `getCourseStudentPerformance(courseId, params)` / `exportCourseStudents(courseId, params)`
-- `getAllCourseStudentsBasic(courseId, keyword?)`
-- `getAbilityRadar(params)` / `getAbilityWeights(courseId)` / `updateAbilityWeights(payload)`
-- `exportAbilityRadarCsv(params)` / `postAbilityRadarCompare(body)` / `exportAbilityRadarCompareCsv(body)` / `postAbilityDimensionInsights(body)`
-- `resetStudentCourseProgress(courseId, studentId)`
-
-## 6. 时序图：课程分析拉取
-```mermaid
-sequenceDiagram
-  participant T as Teacher
-  participant V as Vue(DashboardView)
-  participant A as Axios
-  participant C as Controller(/teachers/analytics)
-  T->>V: 打开课程分析
-  V->>A: GET /api/teachers/analytics/course/{courseId}
-  A->>C: 请求
-  C-->>A: { enrolled, completionRate, avgScore }
-  A-->>V: 更新图表
+```bash
+curl -H "Authorization: Bearer $TOKEN" \
+  http://localhost:8080/api/teachers/analytics/assignment/301
 ```
 
-## 7. 时序图：能力权重更新
-```mermaid
-sequenceDiagram
-  participant T as Teacher
-  participant V as Vue(AbilityWeightsPanel)
-  participant A as Axios
-  participant C as Controller(/teachers/ability)
-  T->>V: 调整滑杆
-  V->>A: PUT /api/teachers/ability/weights { courseId, weights }
-  A->>C: 保存权重
-  C-->>A: OK
-  A-->>V: 重新拉取 GET /api/teachers/ability/radar
-  V-->>T: 雷达图更新
+### GET `/api/teachers/analytics/class-performance/{courseId}` 班级整体表现
+
+Query：
+
+- `timeRange`：默认 `last_30_days`
+
+### GET `/api/teachers/analytics/course/{courseId}/students` 课程学生表现（分页+过滤）
+
+Query：
+
+- `page`：默认 1
+- `size`：默认 20
+- `search`：可选关键词
+- `sortBy`：默认 `name`（可选：`name|grade|progress|lastActive|activity`）
+- `activity`：可选筛选
+- `grade`：可选筛选
+- `progress`：可选筛选
+
+curl：
+
+```bash
+curl -H "Authorization: Bearer $TOKEN" \
+  "http://localhost:8080/api/teachers/analytics/course/2/students?page=1&size=20&sortBy=progress"
 ```
 
-## 7. 我的课程（教师）
-- `GET /api/teachers/my-courses`
+### GET `/api/teachers/analytics/course/{courseId}/students/export` 导出课程学生表现（CSV）
 
-请求示例：
-```
-GET /api/teachers/my-courses
-Authorization: Bearer <token>
+说明：返回二进制 CSV（`Content-Disposition: attachment`）。
+
+curl：
+
+```bash
+curl -L -H "Authorization: Bearer $TOKEN" \
+  "http://localhost:8080/api/teachers/analytics/course/2/students/export?sortBy=progress" \
+  -o course_2_students.csv
 ```
 
-响应示例：
+## 3. 五维能力雷达（教师端）
+
+本节接口由 `AbilityAnalyticsController` 提供，路径前缀为 `/api/teachers/ability`。
+
+### GET `/api/teachers/ability/radar` 获取五维雷达
+
+Query（按需传参）：
+
+- `courseId`（必填）
+- `classId`（可选）
+- `studentId`（可选；不传通常表示按班级/课程聚合的对比基准）
+- `startDate` / `endDate`（可选，格式 `YYYY-MM-DD`）
+
+curl：
+
+```bash
+curl -H "Authorization: Bearer $TOKEN" \
+  "http://localhost:8080/api/teachers/ability/radar?courseId=2&studentId=1001&startDate=2026-03-01&endDate=2026-03-31"
+```
+
+### GET `/api/teachers/ability/weights` 读取课程五维权重
+
+Query：`courseId`（必填）
+
+curl：
+
+```bash
+curl -H "Authorization: Bearer $TOKEN" \
+  "http://localhost:8080/api/teachers/ability/weights?courseId=2"
+```
+
+### PUT `/api/teachers/ability/weights` 更新课程五维权重
+
+请求 Body：`UpdateAbilityWeightsRequest`
+
 ```json
 {
-  "code": 200,
-  "data": [
-    { "id": 101, "title": "高等数学", "teacherId": 9, "status": "published" },
-    { "id": 102, "title": "线性代数", "teacherId": 9, "status": "published" }
-  ]
+  "courseId": 2,
+  "weights": { "invest": 0.2, "quality": 0.2, "mastery": 0.2, "stability": 0.2, "growth": 0.2 }
 }
 ```
 
-说明：返回当前登录教师所授课程列表，用于联系人聚合/聊天联系人分组等。
+响应：`ApiResponse<AbilityWeightsResponse>`
 
-## 8. 教师联系人聚合（按课程）
-- `GET /api/teachers/contacts`
+### GET `/api/teachers/ability/radar/export` 导出雷达数据（CSV）
 
-Query 参数：
-- `keyword`（可选）：按 `username` 或相关字段过滤学生。
+Query：同 `GET /api/teachers/ability/radar`，额外支持：
 
-请求示例：
+- `scope`：默认 `single`；可选 `single|all`
+
+curl：
+
+```bash
+curl -L -H "Authorization: Bearer $TOKEN" \
+  "http://localhost:8080/api/teachers/ability/radar/export?courseId=2&studentId=1001&scope=single" \
+  -o ability_radar.csv
 ```
-GET /api/teachers/contacts?keyword=tom
-Authorization: Bearer <token>
+
+### POST `/api/teachers/ability/radar/compare` 双区间对比（A/B）
+
+请求 Body：`AbilityCompareQuery`（示例）：
+
+```json
+{
+  "courseId": 2,
+  "studentId": 1001,
+  "startDateA": "2026-03-01",
+  "endDateA": "2026-03-31",
+  "startDateB": "2026-04-01",
+  "endDateB": "2026-04-30",
+  "includeClassAvg": true
+}
 ```
 
-响应示例：
+### POST `/api/teachers/ability/radar/compare/export` 导出对比结果（CSV）
+
+curl：
+
+```bash
+curl -L -H "Authorization: Bearer $TOKEN" \
+  -X POST -H "Content-Type: application/json" \
+  -d '{"courseId":2,"studentId":1001,"startDateA":"2026-03-01","endDateA":"2026-03-31","startDateB":"2026-04-01","endDateB":"2026-04-30"}' \
+  "http://localhost:8080/api/teachers/ability/radar/compare/export?scope=single" \
+  -o ability_radar_compare.csv
+```
+
+### POST `/api/teachers/ability/dimension-insights` 维度解析（结构化洞察）
+
+请求 Body：同 `AbilityCompareQuery`
+
+## 4. 学生画像与详情（教师视角）
+
+说明：该组接口由 `TeacherStudentController` 提供，路径前缀为 `/api/teachers/students`。服务端会校验“教师与学生存在课程交集”，否则返回 403。
+
+### GET `/api/teachers/students/{studentId}` 获取学生概况
+
+curl：
+
+```bash
+curl -H "Authorization: Bearer $TOKEN" \
+  http://localhost:8080/api/teachers/students/1001
+```
+
+### GET `/api/teachers/students/{studentId}/courses` 获取学生参与课程列表
+
+### GET `/api/teachers/students/basic` 课程学生基础列表（用于下拉）
+
+Query：
+
+- `courseId`（必填）
+- `page`：默认 1
+- `size`：默认 10000
+- `keyword`：可选
+
+### GET `/api/teachers/students/{studentId}/activity` 活跃度与最近学习
+
+Query：
+
+- `days`：默认 7
+- `limit`：默认 5
+
+### GET `/api/teachers/students/{studentId}/alerts` 风险预警
+
+### GET `/api/teachers/students/{studentId}/recommendations` 个性化学习建议
+
+Query：
+
+- `limit`：默认 6
+
+## 5. 课程进度维护
+
+### POST `/api/teachers/courses/{courseId}/students/{studentId}/progress/reset` 重置学生课程进度
+
+curl：
+
+```bash
+curl -X POST -H "Authorization: Bearer $TOKEN" \
+  http://localhost:8080/api/teachers/courses/2/students/1001/progress/reset
+```
+
+## 6. 教师我的课程与联系人
+
+### GET `/api/teachers/my-courses` 我授课的课程列表
+
+curl：
+
+```bash
+curl -H "Authorization: Bearer $TOKEN" \
+  http://localhost:8080/api/teachers/my-courses
+```
+
+响应：`ApiResponse<Course[]>`
+
+### GET `/api/teachers/contacts` 教师联系人聚合（按课程分组返回学生）
+
+Query：
+
+- `keyword`：可选关键词（用于筛选学生）
+
+curl：
+
+```bash
+curl -H "Authorization: Bearer $TOKEN" \
+  "http://localhost:8080/api/teachers/contacts?keyword=tom"
+```
+
+响应：`ApiResponse<TeacherContactsResponse>`（示例）：
+
 ```json
 {
   "code": 200,
+  "message": "Success",
   "data": {
     "groups": [
       {
         "courseId": 101,
         "courseTitle": "高等数学",
-        "students": [
-          { "id": 2001, "username": "tom", "avatar": "/u/2001.png" },
-          { "id": 2002, "username": "jerry", "avatar": "/u/2002.png" }
-        ]
-      },
-      {
-        "courseId": 102,
-        "courseTitle": "线性代数",
-        "students": [
-          { "id": 2003, "username": "alice", "avatar": null }
-        ]
+        "students": [{ "id": 2001, "username": "tom", "avatar": "/u/2001.png" }]
       }
     ]
   }
 }
 ```
 
-说明：服务端按课程返回学生通讯录，每个学生包含 `username` 与 `avatar`，前端可直接渲染为联系人分组列表。
+## 7. Troubleshooting
+
+- 401：未登录或 token 失效
+- 403：非教师/管理员角色，或教师与学生无课程交集
+- 400：参数不合法（例如日期区间、权重校验失败等）

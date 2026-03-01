@@ -1,3 +1,9 @@
+---
+title: "`file.api.ts`"
+description: 文件上传/下载/预览 API 封装
+outline: [2, 3]
+---
+
 # 前端 API：file.api.ts
 
 ## 方法签名

@@ -1,6 +1,12 @@
+---
+title: "`help.api.ts`"
+description: 帮助中心工单与反馈 API 封装
+outline: [2, 3]
+---
+
 # 前端 Help API 使用说明（中文）
 
-从 `src/api/help.api.ts` 引入：
+从 `frontend/src/api/help.api.ts` 引入：
 
 ```ts
 import { helpApi } from '@/api/help.api'
@@ -14,4 +20,4 @@ import { helpApi } from '@/api/help.api'
 - `helpApi.createTicket(title, description)` → 返回 `HelpTicket`
 - `helpApi.myTickets()` → 返回 `HelpTicket[]`
 
-类型定义位于：`src/types/help.ts`。
+类型定义位于：`frontend/src/types/help.ts`。

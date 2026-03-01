@@ -1,119 +1,131 @@
+---
+title: 通知 API（Notification）
+description: 通知中心（分页/已读/删除/统计）、教师发送、管理员群发、SSE 实时推送
+outline: [2, 3]
+---
+
 # 通知 API（Notification）
 
 > 以 Swagger 为准：`http://localhost:8080/api/swagger-ui.html`
 
-## 1. 我的通知与统计
-- `GET /api/notifications/my`：分页获取我的通知（支持 `type?page=1&size=20`）
-请求（示例）：
-```
-GET /api/notifications/my?page=1&size=10&type=system
-Authorization: Bearer <token>
-```
-响应（示例）：
+本项目后端 `context-path=/api`，下文接口路径均以 `/api/...` 展示。
+
+## 1. 通用约定
+
+权限：除 SSE token 校验外，本域接口均要求已登录（`isAuthenticated()`），写接口另有角色限制。
+
+响应封装：除 SSE 外，其它接口均返回 `ApiResponse<T>`。
+
+## 2. 数据结构：Notification（核心字段）
+
 ```json
 {
-  "code": 200,
-  "data": {
-    "items": [
-      {
-        "id": 10001,
-        "title": "课程更新",
-        "content": "第3课新增练习",
-        "type": "system",
-        "category": "course",
-        "priority": "normal",
-        "isRead": false,
-        "createdAt": "2025-01-01T10:20:30Z"
-      }
-    ],
-    "total": 37,
-    "page": 1,
-    "size": 10
-  }
+  "id": 10001,
+  "recipientId": 20001,
+  "senderId": 11,
+  "type": "system",
+  "category": "notice",
+  "title": "课程更新",
+  "content": "第3课新增练习",
+  "relatedType": "course",
+  "relatedId": 21001,
+  "isRead": false,
+  "readAt": null,
+  "priority": "normal",
+  "createdAt": "2026-03-01 12:00:00"
 }
 ```
 
-- `GET /api/notifications/{id}`：通知详情
-```
-GET /api/notifications/10001
-Authorization: Bearer <token>
-```
-响应：
-```json
-{ "code":200, "data": { "id":10001, "title":"课程更新", "isRead": false, "content": "..." } }
-```
+## 3. 我的通知与统计
 
-- `GET /api/notifications/unread/count`：未读数量
-```
-GET /api/notifications/unread/count?type=system
-Authorization: Bearer <token>
-```
-响应：
-```json
-{ "code":200, "data": { "unreadCount": 5 } }
-```
+### GET `/api/notifications/my` 我的通知列表（分页）
 
-- `GET /api/notifications/stats`：统计信息
-```
-GET /api/notifications/stats
-Authorization: Bearer <token>
-```
+权限：已登录
+
+Query：
+
+- `type`：可选（如 `system|message|assignment|grade|course`）
+- `page`：默认 1
+- `size`：默认 20
+
+响应：`ApiResponse<PageResult<Notification>>`
+
+### GET `/api/notifications/{notificationId}` 通知详情
+
+权限：已登录（后端会校验归属）
+
+响应：`ApiResponse<Notification>`
+
+### GET `/api/notifications/unread/count` 未读数量
+
+权限：已登录
+
+Query：`type` 可选
+
 响应（示例）：
+
 ```json
-{ "code":200, "data": { "total": 37, "unread": 5, "byType": { "system": 20, "message": 17 } } }
+{ "code": 200, "data": { "unreadCount": 5 } }
 ```
 
-## 2. 已读与删除
-- `PUT /api/notifications/{id}/read`：标记已读
-```
-PUT /api/notifications/10001/read
-Authorization: Bearer <token>
-```
-响应：
+### GET `/api/notifications/stats` 通知统计
+
+权限：已登录
+
+响应：`ApiResponse<Map>`（结构以服务端实现为准）
+
+## 4. 已读与删除
+
+### PUT `/api/notifications/{notificationId}/read` 标记已读
+
+权限：已登录
+
+响应：成功返回 200，无 data。
+
+### PUT `/api/notifications/batch/read` 批量已读
+
+权限：已登录
+
+请求 Body：`number[]`
+
 ```json
-{ "code":200, "data": null }
+[10001, 10002, 10003]
 ```
 
-- `PUT /api/notifications/batch/read`：批量已读
-```
-PUT /api/notifications/batch/read
-Authorization: Bearer <token>
-Content-Type: application/json
+响应：`ApiResponse<Map>`
 
-[10001,10002,10003]
-```
-响应：
+### PUT `/api/notifications/all/read` 全部已读
+
+权限：已登录
+
+响应（示例）：
+
 ```json
-{ "code":200, "data": { "marked": 3 } }
+{ "code": 200, "data": { "markedCount": 37 } }
 ```
 
-- `PUT /api/notifications/all/read`：全部已读
-```
-PUT /api/notifications/all/read
-Authorization: Bearer <token>
-```
-响应：
-```json
-{ "code":200, "data": { "markedCount": 37 } }
-```
+### DELETE `/api/notifications/{notificationId}` 删除单条
 
-- `DELETE /api/notifications/{id}`：删除
-- `DELETE /api/notifications/batch`：批量删除
-```
-DELETE /api/notifications/batch
-Authorization: Bearer <token>
-Content-Type: application/json
+权限：已登录（后端会校验归属）
 
-[10001,10002]
-```
-响应：
-```json
-{ "code":200, "data": { "deleted": 2 } }
-```
+响应：成功返回 200，无 data。
 
-## 3. 发送（教师）
-- `POST /api/notifications/send`：发送单条
-请求：
+### DELETE `/api/notifications/batch` 批量删除
+
+权限：已登录
+
+请求 Body：`number[]`
+
+响应：`ApiResponse<Map>`
+
+## 5. 发送通知（教师/管理员）
+
+### POST `/api/notifications/send` 发送单条通知
+
+权限：`TEACHER`
+
+请求 Body：`NotificationRequest`
+
 ```json
 {
   "recipientId": 20001,
@@ -126,16 +138,18 @@ Content-Type: application/json
   "relatedId": 31001
 }
 ```
-响应：
-```json
-{ "code":200, "data": { "id": 120001, "title": "作业提醒" } }
-```
 
-- `POST /api/notifications/batch/send`：批量发送
-请求：
+响应：`ApiResponse<Notification>`
+
+### POST `/api/notifications/batch/send` 批量发送通知
+
+权限：`TEACHER`
+
+请求 Body：`BatchNotificationRequest`
+
 ```json
 {
-  "recipientIds": [20001,20002,20003],
+  "recipientIds": [20001, 20002],
   "title": "课程公告",
   "content": "明日调课",
   "type": "course",
@@ -145,122 +159,122 @@ Content-Type: application/json
   "relatedId": 21001
 }
 ```
-响应：
+
+响应：`ApiResponse<Map>`
+
+### POST `/api/notifications/admin/broadcast` 管理员群发
+
+权限：`ADMIN`
+
+请求 Body：`AdminBroadcastNotificationRequest`
+
 ```json
-{ "code":200, "data": { "sent": 3 } }
+{
+  "title": "系统维护",
+  "content": "今晚 23:00-23:30 维护",
+  "type": "system",
+  "category": "system",
+  "priority": "normal",
+  "targetType": "all"
+}
 ```
 
-- `POST /api/notifications/assignment/{assignmentId}`：向作业相关学生发送通知
-```
-POST /api/notifications/assignment/31001?type=deadline&customMessage=今晚24:00截止
-Authorization: Bearer <teacher_token>
-```
+响应：`ApiResponse<Map>`
 
-- `POST /api/notifications/course/{courseId}`：向课程相关学生发送通知
-```
-POST /api/notifications/course/21001?type=notice&customMessage=明日调课
-Authorization: Bearer <teacher_token>
-```
+### POST `/api/notifications/assignment/{assignmentId}` 作业相关通知
 
-## 4. 会话（已拆分到 Chat 域）
-- 说明：聊天相关端点已迁移至 `/api/chat/*`，如下：
-  - `GET /api/chat/messages?peerId=...`：按对端获取会话消息
-  - `POST /api/chat/messages`：发送聊天消息
-  - `PUT /api/chat/conversations/peer/{peerId}/read`：按对端标记会话已读
-  - `GET /api/chat/conversations/my`：我的最近会话
+权限：`TEACHER`
 
-历史端点（将逐步下线，仅做兼容）：
-- `GET /api/notifications/conversation?peerId=...`
-- `POST /api/notifications/conversation/read?peerId=...`
+Query：
 
-请求：
-```
-GET /api/notifications/conversation?peerId=20002&page=1&size=20
-Authorization: Bearer <token>
-```
-请改用 `Chat` 文档中对应端点。
+- `type`：必填
+- `customMessage`：可选
 
-## 5. 实时通知（SSE）
-- `GET /api/notifications/stream`：SSE 订阅（支持查询参数 `token` 或 `Authorization: Bearer` 头）
+响应：`ApiResponse<Map>`
 
-示例：
-```
-GET /api/notifications/stream?token=<jwt>
-Accept: text/event-stream
-```
-事件示例：
-```
-event: message
-data: {"id":120001,"title":"作业提醒","isRead":false}
-```
+### POST `/api/notifications/course/{courseId}` 课程相关通知
 
-安全：需要有效访问令牌；无效或缺失返回 401。
+权限：`TEACHER`
 
----
+Query：
 
-## 返回码对照
-- 200：成功
-- 400：参数非法（分页、空标题/内容、批量列表为空）
-- 401：未认证（缺少/无效 token）
-- 403：无权限（非教师发送、越权访问他人会话）
-- 404：通知不存在
-- 5xx：服务端错误
+- `type`：必填
+- `customMessage`：可选
 
----
+响应：`ApiResponse<Map>`
 
-# 前端对接（notification.api.ts）
-- `getMyNotifications(params)` ↔ `GET /api/notifications/my`
-- `getNotification(id)` ↔ `GET /api/notifications/{id}`
-- `getUnreadCount()` ↔ `GET /api/notifications/unread/count`
-- `getNotificationStats()` ↔ `GET /api/notifications/stats`
-- `markAsRead(id)` / `batchMarkAsRead(ids)` / `markAllAsRead()`
-- `deleteNotification(id)` / `batchDeleteNotifications(ids)`
-- `sendNotification(data)` / `batchSend(data)`
-- `getConversation(peerId, params)` / `readConversation(peerId)`
-- `subscribeSse(token?)`：`GET /api/notifications/stream`
+### POST `/api/notifications/grade/{gradeId}` 成绩相关通知
 
----
+权限：`TEACHER`
 
-## 时序图：SSE 订阅与消息到达
-```mermaid
-sequenceDiagram
-  participant U as User
-  participant C as Client(NotificationBell)
-  participant A as Axios/EventSource
-  participant NS as NotificationStreamController
+Query：
 
-  U->>C: 打开页面
-  C->>A: GET /api/notifications/stream?token=JWT (SSE)
-  A->>NS: 鉴权校验
-  NS-->>A: 200 text/event-stream
-  Note right of C: 连接保持
+- `type`：必填
+- `customMessage`：可选
 
-  NS-->>A: event: message / data: {id,title,...}
-  A-->>C: onmessage 回调
-  C-->>C: 列表刷新/未读角标+1
+响应：`ApiResponse<Map>`
+
+## 6. 聊天消息（兼容入口）
+
+说明：聊天推荐走 `/api/chat/*`（见 [chat.md](./chat)）。`/api/notifications/message` 是“消息落库 + 触发通知”的兼容入口。
+
+### POST `/api/notifications/message` 发送聊天消息
+
+权限：已登录
+
+请求 Body（示例）：
+
+```json
+{
+  "recipientId": 20002,
+  "content": "你好",
+  "relatedType": "course",
+  "relatedId": 101,
+  "attachmentFileIds": [9876, 9999]
+}
 ```
 
-## 时序图：发送与阅读
-```mermaid
-sequenceDiagram
-  participant T as Teacher
-  participant V as Vue(NotifyForm)
-  participant A as Axios
-  participant NC as NotificationController
-  participant C as Client(NotificationCenter)
+响应：`ApiResponse<Notification>`
 
-  T->>V: 填写通知内容
-  V->>A: POST /api/notifications/send {title,content,...}
-  A->>NC: 发送通知
-  NC-->>A: ok
-  A-->>V: 成功提示
+## 7. 会话接口（旧版兼容）
 
-  C->>A: GET /api/notifications/my
-  A->>NC: 拉取分页通知
-  NC-->>A: PageResult<Notification>
-  A-->>C: 列表
-  C->>A: PUT /api/notifications/{id}/read
-  A->>NC: 标记已读
-  NC-->>A: ok
-  A-->>C: 更新状态
+说明：以下两个接口是历史兼容，建议迁移到 `/api/chat/*`：
+
+### GET `/api/notifications/conversation`
+
+Query：`peerId`（必填）、`page`（默认 1）、`size`（默认 20）、`courseId`（可选）
+
+响应：`ApiResponse<PageResult<Notification>>`
+
+### POST `/api/notifications/conversation/read`
+
+Query：`peerId`（必填）、`courseId`（可选）
+
+响应（示例）：
+
+```json
+{ "code": 200, "data": { "marked": 10 } }
 ```
+
+## 8. 实时通知（SSE）
+
+### GET `/api/notifications/stream`
+
+权限：`isAuthenticated()`，且后端会额外校验 access token（支持 query token 或 Authorization header）。
+
+请求示例：
+
+```bash
+curl -N 'http://localhost:8080/api/notifications/stream?token=<access_jwt>' \
+  -H 'Accept: text/event-stream'
+```
+
+返回：`text/event-stream`（事件名与数据结构以服务端推送为准）。
+
+## 9. 常见错误与排查
+
+- 400：批量列表为空、type 不合法等。
+- 401：未登录或 SSE token 不是合法 access token。
+- 403：非教师调用发送接口；非管理员调用群发接口。
+- 404：通知不存在或无权访问。
+

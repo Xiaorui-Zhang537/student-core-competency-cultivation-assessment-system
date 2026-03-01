@@ -22,7 +22,7 @@
 
 ## 前端约定
 - “后端即真理”：仅基于已存在 API 开发
-- API 封装统一在 `src/api`；状态在 `src/stores`
+- API 封装统一在 `frontend/src/api`；状态在 `frontend/src/stores`
 - 鉴权：401 统一跳登录；403 友好提示，不自动跳转
 - i18n：新增文案全部进入语言包；组件中使用 `t()`
 - 可视化：ECharts 配置复用，风格统一（雷达/饼/趋势）

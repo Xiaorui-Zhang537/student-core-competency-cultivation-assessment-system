@@ -1,3 +1,9 @@
+---
+title: "`notification.api.ts`"
+description: 通知中心、站内消息与会话 API 封装
+outline: [2, 3]
+---
+
 # 前端 API：notification.api.ts
 
 ## 方法签名（节选）

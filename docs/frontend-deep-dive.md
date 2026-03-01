@@ -6,17 +6,17 @@
 - Node.js 18+（建议 20+）
 - `npm install && npm run dev`
 - `.env.development` 建议：`VITE_API_BASE_URL=http://localhost:8080`
-- Axios 基址在开发模式会打印到控制台（见 `src/api/config.ts`）
+- Axios 基址在开发模式会打印到控制台（见 `frontend/src/api/config.ts`）
 
 ## 2. 目录与职责
-- `api/`：后端 Controller 的请求封装（`auth.api.ts`、`course.api.ts` 等）
-- `stores/`：Pinia，全局状态与业务流程
-- `features/`：按业务域/角色组织视图
-- `layouts/`：`StudentLayout.vue`、`TeacherLayout.vue`
-- `router/`：路由配置与守卫
-- `types/`：与后端 DTO 对齐的 TS 类型
-- `utils/`：工具方法（如统一 API 处理）
-- `composables/`：组合式函数（如通知流 `useNotificationStream.ts`）
+- `frontend/src/api/`：后端 Controller 的请求封装（`auth.api.ts`、`course.api.ts` 等）
+- `frontend/src/stores/`：Pinia，全局状态与业务流程
+- `frontend/src/features/`：按业务域/角色组织视图
+- `frontend/src/layouts/`：`StudentLayout.vue`、`TeacherLayout.vue`
+- `frontend/src/router/`：路由配置与守卫
+- `frontend/src/types/`：与后端 DTO 对齐的 TS 类型
+- `frontend/src/utils/`：工具方法（如统一 API 处理）
+- `frontend/src/composables/`：组合式函数（如通知流 `useNotificationStream.ts`）
 
 ## 3. Axios 与鉴权
 - 基址：优先读取 `VITE_API_BASE_URL`，自动拼接 `/api`；未设置走 `/api` 代理
@@ -43,10 +43,10 @@ sequenceDiagram
 ```mermaid
 graph LR
   View --> Store
-  Store --> API[api/*.ts]
+  Store --> API[frontend/src/api/*.ts]
   API --> Backend[/api/**]
 ```
-- 约定：所有后端交互统一经由 `api/*.ts`，在 Store 聚合业务状态与副作用
+- 约定：所有后端交互统一经由 `frontend/src/api/*.ts`，在 Store 聚合业务状态与副作用
 - 好处：组件保持轻量；便于测试与复用
 
 ## 6. 错误处理模式
@@ -66,7 +66,7 @@ graph LR
 
 ## 8. 组件-API 映射清单（开发 Checklist）
 - 确认页面对应的 Store 名称与职责
-- 列出页面所需的 API 方法（在 `api/*.ts` 明确）
+- 列出页面所需的 API 方法（在 `frontend/src/api/*.ts` 明确）
 - Store 中添加 action，处理装载/错误/分页等
 - 组件引入 Store 并只关注 UI 与交互
 - 新增文案同步 i18n

@@ -1,3 +1,9 @@
+---
+title: "`grade.api.ts`"
+description: 评分、发布与统计 API 封装
+outline: [2, 3]
+---
+
 # 前端 API：grade.api.ts
 
 ## 方法签名

@@ -1,7 +1,13 @@
+---
+title: "`report.api.ts`"
+description: 举报/报表相关 API 封装
+outline: [2, 3]
+---
+
 # 前端 API：report.api.ts
 
 ## 方法签名
-- `createReport(data: CreateReportRequest): Promise<ApiResponse<{ id: number }>>`
+- `createReport(data: CreateReportRequest): Promise<any>`（返回后端 `Report` 实体）
 
 ## CreateReportRequest 字段
 - `reportedStudentId`（必填）

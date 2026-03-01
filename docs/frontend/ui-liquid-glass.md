@@ -78,5 +78,6 @@
 
 ## 设计与实现注意事项
 
-- **不要对根容器强制 `background: transparent !important`**：这会把遮蔽层完全抹掉，导致只剩“折射/模糊”，最终变成“看不清”。\n- 如果需要让内容层透明，只对内部元素（如 `.slot-container` 或子元素）做透明覆盖。\n- `occlusionBlur` 的 blur/saturate/contrast 复用 `glass.tokens.postcss` 的变量，保证全站一致性与可维护性。
-
+- **不要对根容器强制 `background: transparent !important`**：这会把遮蔽层完全抹掉，导致只剩“折射/模糊”，最终变成“看不清”。
+- 如果需要让内容层透明，只对内部元素（如 `.slot-container` 或子元素）做透明覆盖。
+- `occlusionBlur` 的 blur/saturate/contrast 复用 `glass.tokens.postcss` 的变量，保证全站一致性与可维护性。

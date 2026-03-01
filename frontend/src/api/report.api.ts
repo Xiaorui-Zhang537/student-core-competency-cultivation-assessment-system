@@ -1,5 +1,4 @@
 import { api } from './config'
-import type { ApiResponse } from '@/types/api'
 
 export interface CreateReportRequest {
   reportedStudentId: string | number
@@ -12,9 +11,9 @@ export interface CreateReportRequest {
 }
 
 export const reportApi = {
-  createReport: (data: CreateReportRequest): Promise<ApiResponse<{ id: number }>> => {
+  // NOTE: axios response interceptor unwraps ApiResponse<T> => T (see frontend/src/api/config.ts)
+  createReport: (data: CreateReportRequest): Promise<any> => {
     return api.post('/reports', data)
   },
 }
-
 

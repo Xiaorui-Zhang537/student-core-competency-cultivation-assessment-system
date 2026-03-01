@@ -10,6 +10,8 @@
     "lint": "cd frontend && npm run lint",
     "format": "cd frontend && npm run format",
     "type-check": "cd frontend && npm run type-check",
+    "docs:audit": "node scripts/docs-audit-backend.cjs",
+    "docs:qa": "node scripts/docs-qa.cjs",
     "install:frontend": "cd frontend && npm install",
     "install:backend": "cd backend && npm install",
     "install:all": "npm run install:frontend && npm run install:backend"

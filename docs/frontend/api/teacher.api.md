@@ -1,3 +1,9 @@
+---
+title: "`teacher.api.ts`"
+description: 教师分析、联系人、能力雷达与导出 API 封装
+outline: [2, 3]
+---
+
 # 前端 API：teacher.api.ts
 
 ## 方法签名

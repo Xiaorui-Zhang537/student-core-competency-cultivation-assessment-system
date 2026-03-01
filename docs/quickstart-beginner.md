@@ -1,87 +1,113 @@
+---
+title: 零基础快速上手
+description: 本地跑通后端 + 前端 + Swagger（可选启动文档站）
+outline: [2, 3]
+---
+
 # 零基础快速上手（Beginner Quickstart）
 
-目标：从 0 跑通项目（后端 + 前端），并能打开 Swagger 与页面。
+## 目标（Goal）
 
-## 0. 前置检查（Preflight Checks）
-- Java 版本：`java -version` 输出 17.x
-- Node 版本：`node -v` 输出 ≥ 18（建议 20）
-- Maven：`mvn -v` 正常
-- MySQL：能够登录；字符集为 `utf8mb4`
-- 端口占用：8080（后端）、5173（前端）、4174（文档）未被占用
+从 0 跑通项目（后端 + 前端），并能打开 Swagger 与页面完成一次请求验证。
 
-## 1. 安装必备工具
-- Java 17（JDK） → 参考 `https://dev.java/`
-- Node.js 18+（建议 20+） → 参考 `https://nodejs.org/`
-- Maven 3.8+ → 参考 `https://maven.apache.org/`
-- MySQL 8.x → 参考 `https://dev.mysql.com/`
-- Redis 6.x（可选） → 参考 `https://redis.io/`
+## 前置条件（Prerequisites）
 
-## 2. 初始化数据库
+- Java 17：`java -version`
+- Node.js >= 18（建议 20）：`node -v`
+- Maven 3.8+：`mvn -v`
+- MySQL 8.x：可登录，字符集建议 `utf8mb4`
+- 端口未占用：8080（后端）、5173（前端）、4174（文档）
+
+## 1. 初始化数据库（DB）
+
+创建数据库并导入结构（`schema.sql` 为准）：
+
 ```bash
 mysql -u root -p
 CREATE DATABASE student_assessment_system CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+exit
+
 # 导入结构（最新）
 mysql -u root -p student_assessment_system < backend/src/main/resources/schema.sql
-# 可选：初始数据（当前非最新，导入前请自行核对）
+
+# 可选：初始数据（导入前请自行核对内容）
 mysql -u root -p student_assessment_system < backend/src/main/resources/data.sql
 ```
 
-## 3. 启动后端
+## 2. 启动后端（Backend）
+
+后端默认端口为 8080，且 `context-path=/api`，所以最终根路径是 `http://localhost:8080/api`。
+
 ```bash
 cd backend
 mvn spring-boot:run
-# 默认地址：http://localhost:8080/api
 ```
-- Swagger：`http://localhost:8080/api/swagger-ui.html`
-- 健康检查：控制台启动日志与 `/actuator/health`（如启用）
 
-## 4. 启动前端
+验证：
+
+- Swagger：`http://localhost:8080/api/swagger-ui.html`
+- Health（如开启）：`http://localhost:8080/api/actuator/health`
+
+## 3. 启动前端（Frontend）
+
+前端默认端口 5173。API baseURL 的规则见 `frontend/src/api/config.ts`：
+
+- 若设置了 `VITE_API_BASE` 或 `VITE_API_BASE_URL`，会优先使用（会自动补齐 `/api`）
+- 若未设置，则默认请求走相对路径 `/api`（开发期由 Vite 代理转发到后端）
+
 ```bash
 cd frontend
 npm install
-# 建议创建 .env.development 并设置：
-# VITE_API_BASE_URL=http://localhost:8080
-# （可选）若通过 Vite 代理：导出 VITE_BACKEND_URL=http://localhost:8080
 npm run dev
-# 默认地址：http://localhost:5173
 ```
-- 控制台会打印 `Axios baseURL`
 
-## 5. 文档站点（可选）
+验证：
+
+- 前端：`http://localhost:5173`
+- 打开浏览器控制台，会打印 `Axios baseURL => ...`
+
+:::tip 代理与直连怎么选
+1. 直连（默认 `.env.development`）：`VITE_API_BASE_URL=http://localhost:8080` 或 `http://localhost:8080/api`，需要后端允许 CORS（本项目已放行本地 5173）。
+2. 代理：删掉/清空 `VITE_API_BASE_URL`，让 Axios 走 `/api`；然后由 `frontend/vite.config.ts` 代理到 `VITE_BACKEND_URL`（默认 `http://localhost:8080`）。
+:::
+
+## 4.（可选）启动文档站（Docs）
+
 ```bash
 cd docs
 npm install
 npm run docs:dev
-# 访问 http://localhost:4174
 ```
-- 在应用内访问 `/docs` 时，若设置了 `VITE_DOCS_URL`，前端会直接跳转到该地址。
-- 若 ESM 报错：`docs/package.json` 添加 `"type": "module"`
-- 若首页 404：确保 `docs/index.md` 存在
 
-## 6. 验证清单（Checklist）
-- [ ] Swagger 可访问并能打开任意控制器
-- [ ] 前端首页可访问，登录失败/成功均有清晰提示
-- [ ] 前端请求命中 `/api`，无 CORS 报错
-- [ ] 数据库连接成功，后端无启动异常
-- [ ] （可选）SSE 订阅成功，通知能推送
+- 文档站：`http://localhost:4174`
+- 前端开发期也可以通过 `http://localhost:5173/docs` 访问（由 Vite 代理 `/docs` 到 4174）。
+- 线上/独立文档站跳转由 `VITE_DOCS_URL` 控制（见 `frontend/src/router/index.ts` 的 `/docs` 路由）。
 
-## 7. 排错决策树（Troubleshooting）
+## 验证清单（Verify）
+
+- [ ] `http://localhost:8080/api/swagger-ui.html` 可访问
+- [ ] `http://localhost:5173` 可访问
+- [ ] 前端发起请求时，路径命中 `/api/**`（控制台无 CORS 报错）
+- [ ] 后端启动日志无数据库连接异常
+- [ ] （可选）SSE：`/api/notifications/stream` 能建立连接
+
+## 常见问题（Troubleshooting）
+
 ```mermaid
 graph TD
-  A[无法访问前端/后端] --> B{404/401/500?}
-  B -->|404| C[检查 /api 前缀 与 baseURL]
-  B -->|401| D[检查 Authorization 头 与 token 有效期]
-  B -->|500| E[查看后端日志 与 DB 连接]
-  C --> F[修正 .env 与 代理配置]
-  D --> G[重新登录/刷新令牌]
+  A[页面/接口不可用] --> B{404/401/500?}
+  B -->|404| C[检查 context-path=/api 与 Axios baseURL]
+  B -->|401| D[检查 localStorage token 与 Authorization 头]
+  B -->|500| E[查看后端日志 + DB 配置]
+  C --> F[检查 VITE_API_BASE(_URL) / Vite 代理]
+  D --> G[重新登录/清理 token]
   E --> H[确认 schema.sql 已导入/账号密码正确]
 ```
 
-## 8. 下一步计划（First Milestones）
-- 里程碑 1（当天）：跑通后端、前端与 Swagger；记录本地配置
-- 里程碑 2（第2天）：完成 `e2e-examples.md` 的登录/课程列表流程
-- 里程碑 3（第3-4天）：完成 Cookbook 任一任务（建议“通知中心会话模式”）并提交 PR
+## 下一步（Next）
 
-> 继续阅读：`architecture-overview.md`（理解一次请求的完整链路）；`file-walkthrough.md`（关键文件与调用关系）。
-
+- 架构总览：`/architecture-overview`
+- 逐文件导览：`/file-walkthrough`
+- 端到端样例：`/e2e-examples`
+- 实战任务：`/cookbook`
 

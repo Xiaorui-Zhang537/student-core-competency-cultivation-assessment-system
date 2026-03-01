@@ -1,111 +1,170 @@
+---
+title: 提交 API（Submission）
+description: 学生提交/草稿、教师查看提交、导出 ZIP、学生查看成绩
+outline: [2, 3]
+---
+
 # 提交 API（Submission）
 
 > 以 Swagger 为准：`http://localhost:8080/api/swagger-ui.html`
 
-## 1. 查询与导出
-- `GET /api/submissions/{id}`：按提交 ID 查询
-请求：
-```
-GET /api/submissions/123
-Authorization: Bearer <token>
-```
-响应：
+本项目后端 `context-path=/api`，下文接口路径均以 `/api/...` 展示。
+
+## 1. 通用约定
+
+响应封装：除导出 ZIP 外，其余接口均返回 `ApiResponse<T>`。
+
+角色权限（按接口注解）：
+
+- 学生提交/草稿/查询本人提交：`STUDENT`
+- 教师查看提交/导出：`TEACHER` / `ADMIN`
+- 成绩详情：`STUDENT` / `TEACHER`
+
+## 2. 数据结构：Submission（核心字段）
+
 ```json
-{ "code": 200, "data": { "id": "123", "assignmentId": "88", "studentId": "1001", "status": "graded" } }
+{
+  "id": 123,
+  "assignmentId": 88,
+  "studentId": 1001,
+  "content": "My answer...",
+  "submissionCount": 1,
+  "status": "submitted",
+  "submittedAt": "2026-03-01 12:00:00",
+  "isLate": false
+}
 ```
 
-- `GET /api/assignments/{assignmentId}/submission`：查询我对该作业的提交
-- `GET /api/assignments/{assignmentId}/submissions`：该作业所有提交（分页，教师）
-- `GET /api/submissions/{id}/export`：导出 ZIP（二进制）
+`status`：`submitted|graded|returned`
 
-## 2. 创建与草稿
-- `POST /api/assignments/{assignmentId}/submit`：提交作业
-请求：
-```json
-{ "content": "My answer...", "fileIds": ["5678","5679"] }
-```
-响应：
-```json
-{ "code": 200, "data": { "id": "123", "status": "submitted", "submittedAt": "2025-01-01 12:00:00" } }
-```
+## 3. 教师/管理员：提交查询与导出
 
-- `POST /api/assignments/{assignmentId}/draft`：保存草稿
-请求：
-```json
-{ "content": "Draft...", "fileIds": ["5678"] }
-```
-响应：
-```json
-{ "code": 200, "message": "OK" }
-```
+### GET `/api/submissions/{submissionId}` 获取提交详情
 
-## 3. 返回码对照
-- 200：成功
-- 400：参数非法/内容为空/文件不合法
-- 401：未认证
-- 403：非课程成员或无查看权限
-- 404：作业/提交不存在
-- 409：重复提交/状态冲突
-- 5xx：服务端错误
+权限：`TEACHER` / `ADMIN`
 
----
+响应：`ApiResponse<Submission>`
 
-# 前端对接（submission.api.ts）
+### GET `/api/assignments/{assignmentId}/submissions` 作业提交列表（分页）
 
-## 1. 方法映射
-- `getSubmissionById(id)` ↔ `GET /api/submissions/{id}`
-- `getSubmissionForAssignment(assignmentId)` ↔ `GET /api/assignments/{assignmentId}/submission`
-- `getSubmissionsByAssignment(assignmentId, params)` ↔ `GET /api/assignments/{assignmentId}/submissions`
-- `submitAssignment(assignmentId, data)` ↔ `POST /api/assignments/{assignmentId}/submit`
-- `saveDraft(assignmentId, data)` ↔ `POST /api/assignments/{assignmentId}/draft`
-- `exportSubmission(id)` ↔ `GET /api/submissions/{id}/export`（blob）
+权限：`TEACHER` / `ADMIN`
 
-## 2. 常见错误
-- 400：提交内容缺失或不合法
-- 401：未登录；403：不是该课程学生/非授课教师
+Query：`page`（默认 1）、`size`（默认 10）
 
-## 3. 时序图：提交与草稿
-```mermaid
-sequenceDiagram
-  participant S as Student
-  participant V as Vue(AssignmentSubmitView)
-  participant A as Axios
-  participant C as SubmissionController
-  S->>V: 编辑答案
-  V->>A: POST /api/assignments/{id}/draft
-  A->>C: 保存草稿
-  C-->>A: OK
-  V->>A: POST /api/assignments/{id}/submit
-  A->>C: 提交作业
-  C-->>A: { id, status: submitted }
-  A-->>V: 提交成功
-```
+响应：`ApiResponse<PageResult<Submission>>`
 
-## 4. curl 示例
-保存草稿：
-```bash
-curl -X POST 'http://localhost:8080/api/assignments/88/draft' \
-  -H 'Authorization: Bearer <access_jwt>' \
-  -H 'Content-Type: application/json' \
-  -d '{"content":"Draft...","fileIds":["5678"]}'
-```
+### GET `/api/submissions/{submissionId}/export` 导出提交（ZIP 二进制）
 
-提交作业：
-```bash
-curl -X POST 'http://localhost:8080/api/assignments/88/submit' \
-  -H 'Authorization: Bearer <access_jwt>' \
-  -H 'Content-Type: application/json' \
-  -d '{"content":"My answer...","fileIds":["5678","5679"]}'
-```
+权限：`TEACHER` / `ADMIN`
 
-导出提交：
+返回：二进制 ZIP，响应头：
+
+- `Content-Type: application/octet-stream`
+- `Content-Disposition: attachment; filename="submission_{id}.zip"`
+
+curl：
+
 ```bash
 curl -L -OJ 'http://localhost:8080/api/submissions/123/export' \
   -H 'Authorization: Bearer <access_jwt>'
 ```
 
-## 5. 错误与排查
-- 400：内容为空/附件不合法；检查 `content` 与 `fileIds`
-- 401/403：确认为课程成员且已登录
-- 404：提交或作业不存在；确认 `id/assignmentId`
-- 409：重复提交；检查当前提交状态
+## 4. 学生：查询与提交
+
+### GET `/api/assignments/{assignmentId}/submission` 我对该作业的提交
+
+权限：`STUDENT`
+
+响应：`ApiResponse<Submission>`
+
+### POST `/api/assignments/{assignmentId}/submit` 提交作业（form 版本）
+
+权限：`STUDENT`
+
+Content-Type：`multipart/form-data` 或 `application/x-www-form-urlencoded`
+
+参数：
+
+- `content`：可选
+- `file`：可选（单文件）
+
+curl（带文件）：
+
+```bash
+curl -X POST 'http://localhost:8080/api/assignments/88/submit' \
+  -H 'Authorization: Bearer <access_jwt>' \
+  -F 'content=My answer' \
+  -F 'file=@/path/to/answer.pdf'
+```
+
+响应：`ApiResponse<Submission>`
+
+### POST `/api/assignments/{assignmentId}/submit` 提交作业（JSON 版本）
+
+权限：`STUDENT`
+
+Content-Type：`application/json`
+
+请求 Body：`SubmissionRequest`
+
+```json
+{ "content": "My answer...", "fileIds": [5678, 5679] }
+```
+
+说明：`fileIds` 为已上传文件 ID 列表（先调用文件上传接口拿 `fileId`），后端会“取第一个作为主附件”。
+
+curl：
+
+```bash
+curl -X POST 'http://localhost:8080/api/assignments/88/submit' \
+  -H 'Authorization: Bearer <access_jwt>' \
+  -H 'Content-Type: application/json' \
+  -d '{"content":"My answer...","fileIds":[5678,5679]}'
+```
+
+响应：`ApiResponse<Submission>`
+
+### POST `/api/assignments/{assignmentId}/draft` 保存草稿
+
+权限：`STUDENT`
+
+Content-Type：`application/x-www-form-urlencoded`
+
+参数：
+
+- `content`：必填（`@RequestParam String content`）
+
+curl：
+
+```bash
+curl -X POST 'http://localhost:8080/api/assignments/88/draft' \
+  -H 'Authorization: Bearer <access_jwt>' \
+  -H 'Content-Type: application/x-www-form-urlencoded' \
+  -d 'content=Draft...'
+```
+
+响应：`ApiResponse<Submission>`
+
+## 5. 成绩相关（学生/教师）
+
+### GET `/api/submissions/my/grades` 我的成绩列表（分页）
+
+权限：`STUDENT`
+
+Query：`page`（默认 1）、`size`（默认 10）
+
+响应：`ApiResponse<PageResult<Map>>`（结构以服务端实现为准）
+
+### GET `/api/submissions/{submissionId}/grade` 成绩详情（按提交）
+
+权限：`STUDENT` / `TEACHER`
+
+响应：`ApiResponse<Map>`（结构以服务端实现为准）
+
+## 6. 常见错误与排查
+
+- 400：参数非法（草稿缺少 content，或提交内容/附件不合规）。
+- 401：未登录或 token 过期。
+- 403：非学生提交，或非教师查看提交/导出。
+- 404：作业/提交不存在。
+

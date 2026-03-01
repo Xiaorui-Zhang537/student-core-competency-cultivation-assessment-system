@@ -1,3 +1,5 @@
+# 前端 UI 统一规范
+
 ## 学生端/教师端 UI 统一：章节-节次与本节说明
 
 ### 章节-节次分组
@@ -62,7 +64,7 @@
 - 将原生 `<input>` 搜索改用 `GlassSearchInput.vue`
 - 将原生 `<select>` 改为 `GlassSelect` 或 `GlassPopoverSelect`（或至少使用 `.ui-pill--select` 类）
 - 移除局部 `.card` 覆盖，统一使用全局卡片玻璃风格
- - 状态徽章/标签统一替换为 `Badge`（例如作业状态、表内小圆标）
+- 状态徽章/标签统一替换为 `Badge`（例如作业状态、表内小圆标）
 
 ### 社区颜色映射
 - 分类到 `Badge` 的颜色：
@@ -88,7 +90,7 @@
 - 所有新样式必须复用 `/ui` 提供的工具类，禁止在页面内写死 `rounded-*`/`border-*` 与玻璃参数；
 - 暗黑模式边框与背景由全局变量控制，不要在页面内自定义；
 - 交互反馈（hover/active）由 `.glass-interactive` 与组件内部处理，无需重复。
- - 页面内仍出现 `input input--glass`、原生 `<select>`、手写 `rounded-full` 圆角标签等，应替换为 `/ui` 组件或 `.ui-pill--*`/`Badge`。
+- 页面内仍出现 `input input--glass`、原生 `<select>`、手写 `rounded-full` 圆角标签等，应替换为 `/ui` 组件或 `.ui-pill--*`/`Badge`。
 
 ### 变更影响
 - 视觉与交互统一，提高一致性与可维护性；
@@ -102,9 +104,9 @@
 - 已替换：`GlassModal.vue`、`Card.vue`、`Button.vue`（glass 变体）、`GlassInput.vue`、`GlassTextarea.vue`、`filters/GlassSelect.vue`、`DocumentViewer.vue`。
 - 后续清理：逐步移除遗留 `v-glass` 指令与 `glass-*` 类的使用，统一改为 `LiquidGlass`。
 - 兼容策略：Chromium 优先启用 Liquid Glass；Safari/Firefox 可通过条件判断降级为 `.glass-*` 或纯色/半透明背景。
-# 前端 UI 统一规范
+## 全站 UI 规范（v0.3.4）
 
-> 版本：v0.3.4（与 frontend/package.json 对齐）
+> 与 `frontend/package.json` 对齐。
 
 ## 页面标题区（Breadcrumb + Title + Subtitle）
 

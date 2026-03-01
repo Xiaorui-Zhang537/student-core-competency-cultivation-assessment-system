@@ -14,12 +14,12 @@
 
 ## 3. Axios 调试开关
 ```ts
-// src/api/config.ts 中临时加入
-axiosInstance.interceptors.request.use((cfg) => {
+// frontend/src/api/config.ts 中临时加入
+apiClient.interceptors.request.use((cfg) => {
   console.debug('[REQ]', cfg.method, cfg.url, cfg.params ?? cfg.data)
   return cfg
 })
-axiosInstance.interceptors.response.use(
+apiClient.interceptors.response.use(
   (res) => {
     console.debug('[RES]', res.config.url, res.status, res.data?.code)
     return res

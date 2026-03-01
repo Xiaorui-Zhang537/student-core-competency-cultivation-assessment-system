@@ -1,3 +1,9 @@
+---
+title: "`submission.api.ts`"
+description: 作业提交、草稿与导出 API 封装
+outline: [2, 3]
+---
+
 # 前端 API：submission.api.ts
 
 ## 方法签名

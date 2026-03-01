@@ -1,3 +1,9 @@
+---
+title: "`assignment.api.ts`"
+description: 作业 CRUD、发布/关闭、绑定课节与提醒 API 封装
+outline: [2, 3]
+---
+
 # 前端 API：assignment.api.ts
 
 ## 方法签名

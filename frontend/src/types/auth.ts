@@ -28,7 +28,11 @@ export interface User {
 }
 
 export interface AuthResponse {
-  user: User;
+  // refreshToken flow may return token-only payload; keep fields optional for compatibility.
+  user?: User;
   accessToken: string;
-  refreshToken: string;
+  refreshToken?: string;
+  tokenType?: string;
+  expiresIn?: number;
+  issuedAt?: string;
 }

@@ -1,51 +1,110 @@
-# 帮助中心后端 API（中文）
+---
+title: 帮助中心 API（Help Center）
+description: 分类、文章、反馈与工单（/api/help/**）
+outline: [2, 3]
+---
 
-本文档描述帮助中心相关的后端接口，所有接口统一前缀为 `/api/help`。
+# 帮助中心 API（Help Center）
 
-## 分类（Categories）
-- GET `/api/help/categories`
-  - 说明：获取帮助分类列表
-  - 返回：`HelpCategory[]`
-  - 字段：`id, name, slug, sort, createdAt, updatedAt`
+> 以 Swagger 为准：`http://localhost:8080/api/swagger-ui.html`
 
-## 文章（Articles）
-- GET `/api/help/articles`
-  - 说明：按条件查询帮助文章列表
-  - 查询参数：
-    - `q?` 关键字（标题/内容模糊匹配）
-    - `categoryId?` 分类 ID
-    - `tag?` 标签（FIND_IN_SET）
-    - `sort?` 排序方式：`latest`（默认）或 `hot`
-  - 返回：`HelpArticle[]`
+本项目后端 `context-path=/api`，下文接口路径均以 `/api/...` 展示。
 
-- GET `/api/help/articles/{slug}`
-  - 说明：获取指定文章详情
-  - 查询参数：
-    - `inc?` 是否递增浏览量（默认 `true`）
-  - 返回：`HelpArticle`
+## 1. 通用约定
 
-- POST `/api/help/articles/{id}/feedback`
-  - 说明：提交文章反馈/有用性投票
-  - 查询参数：
-    - `helpful?` 是否有帮助（`true/false`），可选
-    - `content?` 文字反馈，可选
-  - 返回：空（统一 `ApiResponse.success()`）
+响应封装：统一返回 `ApiResponse<T>`。
 
-## 工单（Tickets）
-- POST `/api/help/tickets`
-  - 说明：创建技术支持工单（需要登录）
-  - 查询参数：
-    - `title` 工单标题（必填）
-    - `description` 工单描述（必填）
-  - 返回：`HelpTicket`
+权限：
 
-- GET `/api/help/tickets`
-  - 说明：获取当前登录用户的工单列表（需要登录）
-  - 返回：`HelpTicket[]`
+- 分类/文章/反馈：无需登录也可调用（反馈会尝试记录 userId，未登录则为空）
+- 工单：需要登录（`isAuthenticated()`）
 
-## 数据模型（简要）
-- `HelpCategory`：`id, name, slug, sort, createdAt, updatedAt`
-- `HelpArticle`：`id, categoryId, title, slug, contentMd, contentHtml, tags, views, upVotes, downVotes, published, createdAt, updatedAt`
-- `HelpTicket`：`id, userId, title, description, status, createdAt, updatedAt`
+## 2. 分类（Categories）
 
-前端类型参见：`frontend/src/types/help.ts`。
+### GET `/api/help/categories`
+
+响应：`ApiResponse<HelpCategory[]>`
+
+curl：
+
+```bash
+curl 'http://localhost:8080/api/help/categories'
+```
+
+## 3. 文章（Articles）
+
+### GET `/api/help/articles`
+
+Query（均可选）：
+
+- `q`：关键字（标题/内容模糊匹配）
+- `categoryId`：分类 ID
+- `tag`：标签（FIND_IN_SET）
+- `sort`：排序，默认 `latest`，可选 `hot`
+
+响应：`ApiResponse<HelpArticle[]>`
+
+### GET `/api/help/articles/{slug}`
+
+Query：
+
+- `inc`：是否递增浏览量，默认 `true`
+
+响应：`ApiResponse<HelpArticle>`
+
+### POST `/api/help/articles/{id}/feedback` 提交文章反馈
+
+Query（均可选）：
+
+- `helpful`：`true|false`
+- `content`：文字反馈
+
+响应：成功返回 200，无 data。
+
+curl：
+
+```bash
+curl -X POST 'http://localhost:8080/api/help/articles/1/feedback?helpful=true&content=%E5%BE%88%E6%9C%89%E7%94%A8'
+```
+
+## 4. 工单（Tickets）
+
+### POST `/api/help/tickets` 创建工单
+
+权限：已登录
+
+请求 Body：`HelpTicketCreateRequest`
+
+```json
+{ "title": "无法提交作业", "description": "点击提交后提示 500" }
+```
+
+响应：`ApiResponse<HelpTicket>`
+
+### GET `/api/help/tickets` 我的工单列表
+
+权限：已登录
+
+响应：`ApiResponse<HelpTicket[]>`
+
+### PUT `/api/help/tickets/{id}` 编辑我的工单
+
+权限：已登录
+
+请求 Body：同创建
+
+响应：`ApiResponse<HelpTicket>`
+
+### DELETE `/api/help/tickets/{id}` 删除/撤回我的工单
+
+权限：已登录
+
+响应：成功返回 200，无 data。
+
+## 5. 常见错误与排查
+
+- 401：工单接口未登录或 token 过期。
+- 404：文章/工单不存在，或无权访问他人工单。
+
+前端类型参考：`frontend/src/types/help.ts`。
+

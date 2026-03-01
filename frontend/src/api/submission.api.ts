@@ -1,24 +1,24 @@
 import { api } from './config';
-import type { ApiResponse, PaginatedResponse } from '@/types/api';
+import type { PaginatedResponse } from '@/types/api';
 import type { Submission, SubmissionRequest, DraftRequest } from '@/types/submission';
 // Grade type will be needed later
 // import type { Grade } from '@/types/grade';
 
 export const submissionApi = {
   // Teacher fetches a submission by id
-  getSubmissionById: (submissionId: string): Promise<ApiResponse<Submission>> => {
+  getSubmissionById: (submissionId: string): Promise<Submission> => {
     return api.get(`/submissions/${submissionId}`);
   },
-  getSubmissionForAssignment: (assignmentId: string): Promise<ApiResponse<Submission>> => {
+  getSubmissionForAssignment: (assignmentId: string): Promise<Submission> => {
     return api.get(`/assignments/${assignmentId}/submission`);
   },
 
   // Teacher fetch submissions of an assignment (paginated)
-  getSubmissionsByAssignment: (assignmentId: string, params?: { page?: number; size?: number }): Promise<ApiResponse<PaginatedResponse<Submission>>> => {
+  getSubmissionsByAssignment: (assignmentId: string, params?: { page?: number; size?: number }): Promise<PaginatedResponse<Submission>> => {
     return api.get(`/assignments/${assignmentId}/submissions`, { params });
   },
 
-  submitAssignment: (assignmentId: string, data: SubmissionRequest): Promise<ApiResponse<Submission>> => {
+  submitAssignment: (assignmentId: string, data: SubmissionRequest): Promise<Submission> => {
     const payload = {
       ...data,
       fileIds: Array.isArray(data?.fileIds)
@@ -31,7 +31,7 @@ export const submissionApi = {
     return api.post(`/assignments/${assignmentId}/submit`, payload);
   },
 
-  saveDraft: (assignmentId: string, data: DraftRequest): Promise<ApiResponse<void>> => {
+  saveDraft: (assignmentId: string, data: DraftRequest): Promise<void> => {
     // 优先使用 x-www-form-urlencoded 作为 POST body 传参，兼容部分后端仅从 request body 取 @RequestParam 的实现
     const body = new URLSearchParams();
     body.set('content', String(data?.content ?? ''));
@@ -41,7 +41,7 @@ export const submissionApi = {
   },
 
   // Get grade summary for a submission (map with grade_id etc.)
-  getSubmissionGrade: (submissionId: string): Promise<ApiResponse<any>> => {
+  getSubmissionGrade: (submissionId: string): Promise<any> => {
     return api.get(`/submissions/${submissionId}/grade`);
   },
 
@@ -56,11 +56,11 @@ export const submissionApi = {
 
   // NOTE: These endpoints are related to grades, and will be used when Grade module is refactored.
   /*
-  getMyGradedSubmissions: (): Promise<ApiResponse<any[]>> => {
+  getMyGradedSubmissions: (): Promise<any[]> => {
     return api.get('/submissions/my/grades');
   },
 
-  getGradeForSubmission: (submissionId: string): Promise<ApiResponse<Grade>> => {
+  getGradeForSubmission: (submissionId: string): Promise<Grade> => {
     return api.get(`/submissions/${submissionId}/grade`);
   },
   */

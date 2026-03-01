@@ -1,3 +1,9 @@
+---
+title: 新人上手手册
+description: 新手阅读路线、常用入口与变更记录
+outline: [2, 3]
+---
+
 # 新人上手手册（导航）
 
 欢迎来到“学生核心能力培养评估系统”。本手册面向完全新手：不需要预先了解项目或相关技术，按顺序阅读并动手实践，你将能在本地跑起来并逐步理解系统。
@@ -36,6 +42,7 @@
 - Swagger（本地）：`http://localhost:8080/api/swagger-ui.html`
 - 前端（本地）：`http://localhost:5173`
 - 文档站（本地）：`http://localhost:4174`
+- 文档写作规范：`/docs-authoring`
 
 ## 相关技术官方链接
 - Java：`https://dev.java/`

@@ -1,3 +1,9 @@
+---
+title: "`admin.api.ts`"
+description: 管理员端仪表盘、用户/课程/治理与导出 API 封装
+outline: [2, 3]
+---
+
 # `admin.api.ts`（管理员端）
 
 对应文件：`frontend/src/api/admin.api.ts`。
@@ -75,4 +81,3 @@
   - `GET /api/admin/exports/users.csv`（Blob）
 - `adminApi.exportAbilityReportsCsv(params)`
   - `GET /api/admin/exports/ability-reports.csv`（Blob）
-

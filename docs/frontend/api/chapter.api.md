@@ -1,3 +1,9 @@
+---
+title: "`chapter.api.ts`"
+description: 章节（Chapter）管理 API 封装
+outline: [2, 3]
+---
+
 # 前端 API：chapter.api.ts
 
 ## 方法签名

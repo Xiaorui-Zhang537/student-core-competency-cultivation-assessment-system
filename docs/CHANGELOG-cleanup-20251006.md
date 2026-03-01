@@ -60,8 +60,7 @@
 - `architecture-overview.md`：新增安全配置概览并链接 `security-config.md`
 - `conventions.md`：新增“API 与数据约定（补充）”小节
 
-> 后续建议：对 `backend/api/*` 与前端 `src/api/*.ts` 进行定期脚本化对比，生成差异清单，确保文档与代码长期一致。
+> 后续建议：对 `backend/api/*` 与前端 `frontend/src/api/*.ts` 进行定期脚本化对比，生成差异清单，确保文档与代码长期一致。
 
 > 说明：所有删除均经过全局引用检索验证为零引用且不影响功能；如需回滚，可使用 Git 历史恢复。
-
 

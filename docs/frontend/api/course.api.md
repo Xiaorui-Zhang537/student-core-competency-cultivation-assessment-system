@@ -1,3 +1,9 @@
+---
+title: "`course.api.ts`"
+description: 课程 CRUD、发现、选课与课程学生管理 API 封装
+outline: [2, 3]
+---
+
 # 前端 API：course.api.ts
 
 ## 方法签名（节选）
@@ -9,7 +15,8 @@
 
 ## 最小示例
 ```ts
-const { data } = await courseApi.getCourses({ page: 1, size: 10 })
+const data = await courseApi.getCourses({ page: 1, size: 10, query: 'AI' })
+console.log(data.items, data.total)
 ```
 
 ## 注意事项
@@ -23,8 +30,13 @@ const { data } = await courseApi.getCourses({ page: 1, size: 10 })
 
 ## 进阶示例
 ```ts
-// 搜索+分页
-const { items, total } = await courseApi.searchCourses({ query: 'AI', page: 1, size: 20 })
+// 搜索+分页（分页接口：/courses）
+const page = await courseApi.getCourses({ query: 'AI', page: 1, size: 20 })
+console.log(page.items, page.total)
+
+// 搜索（非分页接口：/courses/search）
+const list = await courseApi.searchCourses({ keyword: 'AI' })
+console.log(list.length)
 
 // 选课/退课
 await courseApi.enrollInCourse(1001)
@@ -38,7 +50,7 @@ await courseApi.inviteStudents(1001, [2001, '2002'])
 await courseApi.removeStudent(1001, 2001)
 
 // 批量状态更新（教师）——与后端 schema 对齐使用小写
-await courseApi.updateBatchStatus({ ids: [1,2,3], status: 'published' } as any)
+await courseApi.updateBatchStatus({ courseIds: [1, 2, 3], status: 'published' } as any)
 ```
 
 ## 错误处理与权限

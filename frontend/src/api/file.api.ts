@@ -1,5 +1,4 @@
 import apiClient, { api, baseURL } from './config';
-import type { ApiResponse } from '@/types/api';
 import type { FileInfo } from '@/types/file';
 
 const normalizeBase = () => String(apiClient.defaults.baseURL || baseURL || '/api').replace(/\/+$/, '');
@@ -62,13 +61,13 @@ export const fileApi = {
     return api.get(`/files/${fileId}/info`);
   },
 
-  deleteFile: (fileId: string): Promise<ApiResponse<void>> => {
+  deleteFile: (fileId: string): Promise<void> => {
     return api.delete(`/files/${fileId}`);
   },
 
   // Note: The download URL is typically constructed directly, e.g., `/files/{fileId}/download`
   // So a dedicated API client function might not be necessary unless it needs special headers.
-  getRelatedFiles: (purpose: string, relatedId: string | number): Promise<ApiResponse<any[]>> => {
+  getRelatedFiles: (purpose: string, relatedId: string | number): Promise<any[]> => {
     return api.get(`/files/related`, { params: { purpose, relatedId } });
   },
   

@@ -1,3 +1,9 @@
+---
+title: "`lesson.api.ts`"
+description: 课时（Lesson）内容、材料与学习进度 API 封装
+outline: [2, 3]
+---
+
 # 前端 API：lesson.api.ts
 
 ## 方法签名

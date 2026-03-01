@@ -1,66 +1,71 @@
-# Chat 会话 API
+---
+title: 聊天会话 API（Chat）
+description: 最近会话、消息拉取与发送、已读/归档、未读统计
+outline: [2, 3]
+---
 
-> 以 Swagger 为准：`/api/swagger-ui.html`
+# 聊天会话 API（Chat）
 
-## 1. 获取我的最近会话
-- `GET /api/chat/conversations/my`
+> 以 Swagger 为准：`http://localhost:8080/api/swagger-ui.html`
 
-Query 参数：
-- `page`（默认1）
-- `size`（默认20）
-- `pinned`（可选）
-- `archived`（可选）
+本项目后端 `context-path=/api`，下文接口路径均以 `/api/...` 展示。
 
-响应字段：
-- `peerId`：对端用户ID
-- `peerUsername`：对端用户名
-- `peerAvatar`：对端头像
-- `courseId`：会话关联课程（学生侧可能为空）
-- `lastContent`：最近一条消息内容
-- `lastMessageAt`：最近一条消息时间
-- `unread`：未读数
+## 1. 通用约定
 
-示例：
-```json
-{
-  "code": 200,
-  "data": {
-    "items": [
-      {"peerId": 9, "peerUsername": "teacherA", "peerAvatar": null, "courseId": 101, "lastContent": "收到", "lastMessageAt": "2025-09-06T12:00:00Z", "unread": 0}
-    ],
-    "page": 1,
-    "size": 20,
-    "total": 1,
-    "pages": 1
-  }
-}
+权限：本域接口全部要求已登录（`isAuthenticated()`）。
+
+存储说明：聊天当前复用 `Notification` 作为消息载体（`type=message`），会话/已读等通过服务层聚合实现。
+
+附件说明：
+
+- 先上传文件：`POST /api/files/upload` 拿到 `fileId`
+- 发送消息时带上 `attachmentFileIds`
+- 预览/下载附件走文件接口（需要带 Token）
+
+## 2. 最近会话
+
+### GET `/api/chat/conversations/my`
+
+Query：
+
+- `page`：默认 1
+- `size`：默认 20
+- `pinned`：可选
+- `archived`：可选
+
+响应：`ApiResponse<PageResult<Map>>`（字段以服务端实现为准，常见字段包括 `peerId/peerUsername/peerAvatar/courseId/lastContent/lastMessageAt/unread`）
+
+curl：
+
+```bash
+curl 'http://localhost:8080/api/chat/conversations/my?page=1&size=20' \
+  -H 'Authorization: Bearer <access_jwt>'
 ```
 
-## 2. 标记会话为已读
-- `PUT /api/chat/conversations/{id}/read`
+## 3. 消息列表与发送
 
-说明：将该会话中“我为接收者”的消息全部置为已读，并返回剩余未读数。
+### GET `/api/chat/messages` 获取与某人的会话消息
 
-响应：
-```json
-{ "code": 200, "data": { "marked": 5, "unread": 0 } }
+Query：
+
+- `peerId`：必填
+- `courseId`：可选（课程上下文）
+- `page`：默认 1
+- `size`：默认 20
+
+响应：`ApiResponse<PageResult<Notification>>`
+
+curl：
+
+```bash
+curl 'http://localhost:8080/api/chat/messages?peerId=20002&page=1&size=20' \
+  -H 'Authorization: Bearer <access_jwt>'
 ```
 
+### POST `/api/chat/messages` 发送聊天消息
 
-## 3. 获取与某人的会话消息（按对端）
-- `GET /api/chat/messages?peerId={id}&page=1&size=20`
+请求 Body（复用 `NotificationRequest` 的部分字段）：
 
-说明：用于按对端用户ID分页拉取消息流（目前复用通知存储结构）。
-
-响应（示例）：
-```json
-{ "code": 200, "data": { "items": [{"id":1,"content":"hi","createdAt":"..."}], "total": 12, "page": 1, "size": 20 } }
-```
-
-## 4. 发送聊天消息
-- `POST /api/chat/messages`
-
-请求体：
 ```json
 {
   "recipientId": 20002,
@@ -70,40 +75,67 @@ Query 参数：
   "attachmentFileIds": [9876, 9999]
 }
 ```
-响应（示例）：
-```json
-{
-  "code": 200,
-  "data": {
-    "id": 99901,
-    "content": "你好",
-    "createdAt": "..."
-  }
-}
+
+响应：`ApiResponse<Notification>`
+
+curl：
+
+```bash
+curl -X POST 'http://localhost:8080/api/chat/messages' \
+  -H 'Authorization: Bearer <access_jwt>' \
+  -H 'Content-Type: application/json' \
+  -d '{"recipientId":20002,"content":"你好","relatedType":"course","relatedId":101,"attachmentFileIds":[9876]}'
 ```
 
-## 5. 按对端标记会话为已读
-- `PUT /api/chat/conversations/peer/{peerId}/read`
+## 4. 已读管理
 
-说明：将我与该对端的消息（我为接收者）全部置为已读。
+### PUT `/api/chat/conversations/{id}/read` 按会话ID标记已读
+
+响应：`ApiResponse<Map>`（示例字段：`marked/unread`）
+
+### PUT `/api/chat/conversations/peer/{peerId}/read` 按对端标记已读
+
+Query：`courseId` 可选
 
 响应（示例）：
+
 ```json
 { "code": 200, "data": { "marked": 5 } }
 ```
 
----
+## 5. 归档与未读统计
 
-迁移说明：
-- 历史上聊天消息通过 `/api/notifications/conversation` 与 `/api/notifications/message` 实现；现已拆分到 `/api/chat/*`。
-- 前端应优先调用 `/api/chat/messages` 与 `/api/chat/conversations/peer/{peerId}/read`。
-- 后端当前仍复用 `NotificationService` 的数据访问，后续可逐步将消息持久层迁移为独立的 `messages`/`message_attachments` 表。
+### PUT `/api/chat/conversations/{id}/archive` 归档/取消归档
 
----
+Query：`archived=true|false`
 
-附件说明：
-- 前端上传文件使用文件 API：`POST /api/files/upload`，得到 `fileId`；将 `fileId` 放入 `attachmentFileIds` 随消息发送。
-- 后端将附件引用写入 `chat_message_attachments` 表；查询会话时会返回每条消息的 `attachmentFileIds`（数组）。
-- 图片可走 `GET /api/files/{fileId}/preview` 直接渲染；其他文件走 `GET /api/files/{fileId}/download` 下载。
+响应（示例）：
 
+```json
+{ "code": 200, "data": { "updated": 1 } }
+```
+
+### GET `/api/chat/unread/count` 聊天未读总数
+
+响应（示例）：
+
+```json
+{ "code": 200, "data": { "unreadCount": 12 } }
+```
+
+## 6. 兼容接口
+
+历史上聊天通过通知域接口提供：
+
+- `GET /api/notifications/conversation`
+- `POST /api/notifications/message`
+- `POST /api/notifications/conversation/read`
+
+新前端建议优先使用本页 `/api/chat/*`。
+
+## 7. 常见错误与排查
+
+- 401：未登录或 token 过期。
+- 403：课程上下文（`relatedType=course`）不匹配，或越权访问对话。
+- 附件预览失败：检查是否用带 token 的请求访问 `/api/files/{id}/preview|download|stream`。
 

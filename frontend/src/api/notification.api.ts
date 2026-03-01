@@ -1,5 +1,5 @@
 import { api } from './config'
-import type { ApiResponse, PaginatedResponse } from '@/types/api'
+import type { PaginatedResponse } from '@/types/api'
 
 /**
  * 通知数据类型定义
@@ -65,52 +65,52 @@ export const notificationAPI = {
     type?: string
     isRead?: boolean
     priority?: string
-  }): Promise<ApiResponse<PaginatedResponse<Notification>>> => {
+  }): Promise<PaginatedResponse<Notification>> => {
     return api.get('/notifications/my', { params })
   },
 
   // 获取通知详情
-  getNotification: (notificationId: string): Promise<ApiResponse<Notification>> => {
+  getNotification: (notificationId: string): Promise<Notification> => {
     return api.get(`/notifications/${notificationId}`)
   },
 
   // 标记通知为已读
-  markAsRead: (notificationId: string): Promise<ApiResponse<void>> => {
+  markAsRead: (notificationId: string): Promise<void> => {
     return api.put(`/notifications/${notificationId}/read`)
   },
 
   // 批量标记通知为已读
-  batchMarkAsRead: (notificationIds: string[]): Promise<ApiResponse<void>> => {
+  batchMarkAsRead: (notificationIds: string[]): Promise<void> => {
     return api.put('/notifications/batch/read', { notificationIds })
   },
 
   // 全部标记为已读
-  markAllAsRead: (): Promise<ApiResponse<void>> => {
+  markAllAsRead: (): Promise<void> => {
     return api.put('/notifications/all/read')
   },
 
   // 删除通知
-  deleteNotification: (notificationId: string): Promise<ApiResponse<void>> => {
+  deleteNotification: (notificationId: string): Promise<void> => {
     return api.delete(`/notifications/${notificationId}`)
   },
 
   // 批量删除通知
-  batchDeleteNotifications: (notificationIds: string[]): Promise<ApiResponse<void>> => {
+  batchDeleteNotifications: (notificationIds: string[]): Promise<void> => {
     return api.delete('/notifications/batch', { data: { notificationIds } })
   },
 
   // 获取未读通知数量
-  getUnreadCount: (): Promise<ApiResponse<{ unreadCount: number }>> => {
+  getUnreadCount: (): Promise<{ unreadCount: number }> => {
     return api.get('/notifications/unread/count')
   },
 
   // 获取通知统计
-  getNotificationStats: (): Promise<ApiResponse<NotificationStats>> => {
+  getNotificationStats: (): Promise<NotificationStats> => {
     return api.get('/notifications/stats')
   },
 
   // 发送通知（管理员/教师功能）
-  sendNotification: (data: CreateNotificationRequest): Promise<ApiResponse<Notification>> => {
+  sendNotification: (data: CreateNotificationRequest): Promise<Notification> => {
     return api.post('/notifications/send', data)
   },
 
@@ -120,7 +120,7 @@ export const notificationAPI = {
     content: string
     relatedType?: string
     relatedId?: string|number
-  }): Promise<ApiResponse<Notification>> => {
+  }): Promise<Notification> => {
     return api.post('/notifications/message', data)
   },
 
@@ -134,7 +134,7 @@ export const notificationAPI = {
     priority?: string
     relatedType?: string
     relatedId?: string|number
-  }): Promise<ApiResponse<{ sentCount: number }>> => {
+  }): Promise<{ sentCount: number }> => {
     return api.post('/notifications/batch/send', data)
   },
 
@@ -144,12 +144,12 @@ export const notificationAPI = {
   },
 
   // 获取与某人的会话
-  getConversation: (peerId: string | number, params?: { page?: number; size?: number }): Promise<ApiResponse<PaginatedResponse<Notification>>> => {
+  getConversation: (peerId: string | number, params?: { page?: number; size?: number }): Promise<PaginatedResponse<Notification>> => {
     return api.get('/notifications/conversation', { params: { peerId, ...(params || {}) } })
   },
 
   // 标记会话已读
-  readConversation: (peerId: string | number): Promise<ApiResponse<{ marked: number }>> => {
+  readConversation: (peerId: string | number): Promise<{ marked: number }> => {
     return api.post('/notifications/conversation/read', undefined, { params: { peerId } })
   },
 
@@ -157,7 +157,7 @@ export const notificationAPI = {
   sendAssignmentNotification: (
     assignmentId: string | number,
     params: { type: string; customMessage?: string }
-  ): Promise<ApiResponse<any>> => {
+  ): Promise<any> => {
     return api.post(`/notifications/assignment/${assignmentId}`, undefined as any, { params })
   },
 
@@ -165,7 +165,7 @@ export const notificationAPI = {
   sendCourseNotification: (
     courseId: string | number,
     params: { type: string; customMessage?: string }
-  ): Promise<ApiResponse<any>> => {
+  ): Promise<any> => {
     return api.post(`/notifications/course/${courseId}`, undefined as any, { params })
   },
 
@@ -173,7 +173,7 @@ export const notificationAPI = {
   sendGradeNotification: (
     gradeId: string | number,
     params: { type: string; customMessage?: string }
-  ): Promise<ApiResponse<any>> => {
+  ): Promise<any> => {
     return api.post(`/notifications/grade/${gradeId}`, undefined as any, { params })
   }
 }

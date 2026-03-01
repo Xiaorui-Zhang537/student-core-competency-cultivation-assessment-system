@@ -1,6 +1,15 @@
-## 教师端评分与AI报告联动（更新）
+# 组件-Store-API 交互案例（含代码片段）
 
-本系统已将教师端评分、AI评分历史与学生端报告展示打通：
+> 面向新手：用最小可运行的片段展示“组件 → Store → API → 后端”的完整闭环。
+
+:::tip 关于 `ApiResponse<T>` 解包
+本项目的 Axios 拦截器（`frontend/src/api/config.ts`）会把后端统一返回 `{ code, message, data }` 解包为 `data` 并直接返回。
+因此很多调用在运行时形态更接近 `const data = await api.xxx()`，而不是 `const { data } = await api.xxx()`。
+:::
+
+## 更新：教师端评分与 AI 报告联动
+
+本系统已将教师端评分、AI 评分历史与学生端报告展示打通：
 
 - 生成AI建议：
   - 在教师评分页触发AI批改后，结果会记录至“AI评分历史”（historyId）。
@@ -18,10 +27,6 @@
   - 点击“查看详情”弹出完整AI报告（与教师端一致）。
 
 注意：教师端“写入五维能力分”按钮已移除，维度写入随“提交评分（发布）”自动完成。
-
-# 组件-Store-API 交互案例（含代码片段）
-
-> 面向新手：用最小可运行的片段展示“组件 → Store → API → 后端”的完整闭环。
 
 ## 0. 页面标题统一组件（PageHeader）
 
@@ -76,9 +81,12 @@ export const useAuthStore = defineStore('auth', {
   state: () => ({ token: '', user: null as any }),
   actions: {
     async login(payload: { username: string; password: string }) {
-      const { data } = await authApi.login(payload)
-      this.token = data.token
+      // 运行时通常已被拦截器解包为 AuthResponse
+      const data: any = await authApi.login(payload)
+      this.token = data.accessToken
       this.user = data.user
+      localStorage.setItem('token', data.accessToken)
+      localStorage.setItem('refreshToken', data.refreshToken)
     }
   }
 })
@@ -111,7 +119,7 @@ export const useCourseStore = defineStore('course', {
   state: () => ({ items: [] as any[], total: 0, page: 1, size: 10 }),
   actions: {
     async fetchCourses(params: { page: number; size: number; query?: string }) {
-      const { data } = await courseApi.getCourses(params)
+      const data: any = await courseApi.getCourses(params)
       this.items = data.items
       this.total = data.total
       this.page = data.page
@@ -248,7 +256,7 @@ export const useSubmissionStore = defineStore('submission', {
       await submissionApi.saveDraft(assignmentId, payload)
     },
     async submit(assignmentId: number, payload: any) {
-      const { data } = await submissionApi.submitAssignment(assignmentId, payload)
+      const data: any = await submissionApi.submitAssignment(assignmentId, payload)
       this.lastId = data.id
     }
   }
@@ -274,7 +282,7 @@ const keyword = ref('')
 const fetch = async () => {
   const params: any = { page: page.value, size: size.value }
   if (courseId.value) params.courseId = courseId.value
-  if (status.value !== 'ALL') params.status = status.value.toLowerCase()
+  if (status.value !== 'all') params.status = status.value.toLowerCase()
   if (keyword.value) params.q = keyword.value
   const res: any = await studentApi.getAssignments(params)
   list.value = res?.items || res?.data?.items || []
@@ -362,7 +370,7 @@ export const useCourseStore = defineStore('course', {
   state: () => ({ detail: null as any }),
   actions: {
     async fetchCourseById(id: number) {
-      const { data } = await courseApi.getCourseById(id)
+      const data: any = await courseApi.getCourseById(id)
       this.detail = data
     }
   }
@@ -446,7 +454,7 @@ export const useAssignmentStore = defineStore('assignment', {
   state: () => ({ items: [] as any[], total: 0, page: 1, size: 10 }),
   actions: {
     async fetchAssignments(params: { page: number; size: number; status?: string; keyword?: string }) {
-      const { data } = await assignmentApi.getAssignments(params)
+      const data: any = await assignmentApi.getAssignments(params)
       this.items = data.items
       this.total = data.total
       this.page = data.page
@@ -475,25 +483,25 @@ const markAll = () => store.markAllAsRead()
 Store 片段：
 ```ts
 import { defineStore } from 'pinia'
-import { notificationApi } from '@/api/notification.api'
+import { notificationAPI } from '@/api/notification.api'
 
 export const useNotificationStore = defineStore('notifications', {
   state: () => ({ items: [] as any[], unread: 0 }),
   actions: {
     async fetchMy(params: any) {
-      const { data } = await notificationApi.getMyNotifications(params)
+      const data: any = await notificationAPI.getMyNotifications(params)
       this.items = data.items
-      this.unread = data.items.filter((n: any) => !n.read).length
+      this.unread = data.items.filter((n: any) => !n.isRead).length
     },
     async markAsRead(id: number) {
-      await notificationApi.markAsRead(id)
+      await notificationAPI.markAsRead(id)
       const n = this.items.find((x: any) => x.id === id)
-      if (n) n.read = true
+      if (n) n.isRead = true
       this.unread = Math.max(0, this.unread - 1)
     },
     async markAllAsRead() {
-      await notificationApi.markAllAsRead()
-      this.items.forEach((n: any) => (n.read = true))
+      await notificationAPI.markAllAsRead()
+      this.items.forEach((n: any) => (n.isRead = true))
       this.unread = 0
     }
   }
@@ -506,45 +514,21 @@ export const useNotificationStore = defineStore('notifications', {
 ```ts
 <script setup lang="ts">
 import { ref } from 'vue'
-import { useFileStore } from '@/stores/file'
+import { fileApi } from '@/api/file.api'
 
-const store = useFileStore()
 const file = ref<File | null>(null)
 
 const onUpload = async () => {
   if (!file.value) return
-  const form = new FormData()
-  form.append('file', file.value)
-  await store.upload(form)
+  await fileApi.uploadFile(file.value, { purpose: 'assignment', relatedId: 88 })
 }
-const onDownload = (id: number) => store.download(id)
+const onDownload = (id: number) => fileApi.downloadFile(id, `file_${id}`)
 </script>
 ```
 
-Store 片段：
-```ts
-import { defineStore } from 'pinia'
-import { fileApi } from '@/api/file.api'
-
-export const useFileStore = defineStore('file', {
-  state: () => ({ list: [] as any[] }),
-  actions: {
-    async upload(form: FormData) {
-      const { data } = await fileApi.upload(form)
-      this.list.unshift(data)
-    },
-    async download(id: number) {
-      const blob = await fileApi.download(id)
-      const url = URL.createObjectURL(blob)
-      const a = document.createElement('a')
-      a.href = url
-      a.download = 'file'
-      a.click()
-      URL.revokeObjectURL(url)
-    }
-  }
-})
-```
+要点：
+- `uploadFile(file)` 走 `multipart/form-data`；返回值在运行时通常是 `FileInfo`（已被拦截器解包）。
+- 下载建议用 `fileApi.downloadFile(...)`（内部使用 `fetch` 带鉴权），避免 `<a>` 直链 401。
 
 ## 10. 课时进度异常重传（LessonPlayer → useLessonStore → lesson.api.ts）
 
@@ -625,16 +609,16 @@ export const useCommunityStore = defineStore('community', {
   state: () => ({ posts: [] as any[], total: 0 }),
   actions: {
     async fetchPosts(params: any) {
-      const { data } = await communityApi.getPosts(params)
+      const data: any = await communityApi.getPosts(params)
       this.posts = data.items
       this.total = data.total
     },
     async createPost(payload: any) {
-      const { data } = await communityApi.createPost(payload)
+      const data: any = await communityApi.createPost(payload)
       this.posts.unshift(data)
     },
     async addComment(postId: number, payload: any) {
-      const { data } = await communityApi.addComment(postId, payload)
+      const data: any = await communityApi.addComment(postId, payload)
       const post = this.posts.find((p: any) => p.id === postId)
       if (post) post.comments.unshift(data)
     }
@@ -642,18 +626,21 @@ export const useCommunityStore = defineStore('community', {
 })
 ```
 
-## 12. 教师仪表盘指标（DashboardView → useDashboardStore → teacher.api.ts）
+## 12. 教师仪表盘指标（DashboardView → useTeacherStore → teacher.api.ts）
 
 组件片段：
 ```ts
 <script setup lang="ts">
 import { onMounted, ref } from 'vue'
-import { useDashboardStore } from '@/stores/dashboard'
+import { useTeacherStore } from '@/stores/teacher'
 
-const store = useDashboardStore()
-const range = ref<'7d'|'30d'|'90d'>('7d')
+const store = useTeacherStore()
+const courseId = ref('2001')
 
-onMounted(() => store.fetchMetrics({ range: range.value }))
+onMounted(async () => {
+  await store.fetchCourseAnalytics(courseId.value)
+  await store.fetchClassPerformance(courseId.value)
+})
 </script>
 ```
 
@@ -662,45 +649,38 @@ Store 片段：
 import { defineStore } from 'pinia'
 import { teacherApi } from '@/api/teacher.api'
 
-export const useDashboardStore = defineStore('dashboard', {
-  state: () => ({ kpis: null as any, trends: [] as any[] }),
+export const useTeacherStore = defineStore('teacher', {
+  state: () => ({ courseAnalytics: null as any, classPerformance: null as any }),
   actions: {
-    async fetchMetrics(params: { range: string }) {
-      const { data } = await teacherApi.getDashboard(params)
-      this.kpis = data.kpis
-      this.trends = data.trends
+    async fetchCourseAnalytics(courseId: string) {
+      const data: any = await teacherApi.getCourseAnalytics(courseId)
+      this.courseAnalytics = data
+    },
+    async fetchClassPerformance(courseId: string) {
+      const data: any = await teacherApi.getClassPerformance(courseId)
+      this.classPerformance = data
     }
   }
 })
 ```
 
-## 13. 学生能力雷达/趋势（StudentAnalysisView → useStudentStore → ability.api.ts）
+## 13. 学生能力雷达/洞察（AnalysisView → ability.api.ts）
 
 组件片段：
 ```ts
 <script setup lang="ts">
 import { onMounted } from 'vue'
-import { useStudentStore } from '@/stores/student'
+import { abilityApi } from '@/api/ability.api'
 
-const store = useStudentStore()
+const courseId = '2001'
 
-onMounted(() => store.fetchAbility({ studentId: 1001 }))
+onMounted(async () => {
+  const radar: any = await abilityApi.getStudentRadar({ courseId, startDate: '2026-02-01', endDate: '2026-03-01' })
+  // radar.dimensions / radar.studentScores / radar.classAvgScores ...
+  console.log(radar)
+})
 </script>
 ```
 
-Store 片段：
-```ts
-import { defineStore } from 'pinia'
-import { abilityApi } from '@/api/ability.api'
-
-export const useStudentStore = defineStore('student', {
-  state: () => ({ radar: [] as any[], trends: [] as any[] }),
-  actions: {
-    async fetchAbility(params: { studentId: number }) {
-      const { data } = await abilityApi.getStudentAbility(params.studentId)
-      this.radar = data.radar
-      this.trends = data.trends
-    }
-  }
-})
-```
+要点：
+- 学生端雷达/对比/洞察主要由 `abilityApi.getStudentRadar`、`abilityApi.postStudentRadarCompare`、`abilityApi.postStudentDimensionInsights` 支撑。

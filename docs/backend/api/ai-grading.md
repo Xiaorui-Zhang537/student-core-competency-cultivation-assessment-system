@@ -1,92 +1,221 @@
-## AI 批改接口（稳定化版）
-
-本项目的教师端 AI 批改接口默认启用“多次取样稳定算法”，用于降低单次大模型调用的随机性导致的分数抖动。
-
-### 背景与设计目标
-
-- **问题**：单次调用大模型会出现 `overall.final_score`（0~5）不稳定，影响教师端“AI 评分建议/一键应用”的一致性。
-- **目标**：在不破坏现有前端渲染（仍读取 `overall.final_score` 与 `overall.dimension_averages`）的前提下，让后端输出更稳定的结果，并保留可追溯信息。
-
+---
+title: AI 批改 API（AI Grading）
+description: 教师端 AI 作文批改（稳定化取样、SSE、历史记录）
+outline: [2, 3]
 ---
 
-## 稳定算法（2 次 + 必要时第 3 次）
+# AI 批改 API（AI Grading）
 
-以 `overall.final_score`（0~5）作为稳定判断基准：
+> 以 Swagger 与后端实现为准：`http://localhost:8080/api/swagger-ui.html`
 
-1. **默认取样 2 次**：得到 `s1`、`s2`，最终分 `final = (s1+s2)/2`（四舍五入到 0.1）。
-2. **触发第 3 次**：若 `|s1 - s2| > diffThreshold`（默认 0.8），追加第 3 次得到 `s3`。
-3. **三次时的最终分**：从 `s1/s2` 中选出与 `s3` 更接近的一个 `sClosest`，最终分 `final = (s3 + sClosest)/2`（四舍五入到 0.1）。
+本项目后端 `context-path=/api`，下文接口路径均以 `/api/...` 展示。
 
-同时，后端会对“最终用于平均的那一对结果”进行：
+## 1. 权限与返回封装
 
-- **子项分数平均**：每个子项的 `score` 取均值并 round 到 0.1；
-- **证据 evidence 合并**：按 `quote` 去重合并（每个子项最多保留 3 条）；
-- **建议 suggestions 合并**：去重合并（每个子项最多保留 5 条）；
-- **整体反馈 holistic_feedback**：不拼接模型原文，改为后端确定性模板生成，避免文本继续抖动。
+权限：以下批改与历史接口均要求 `TEACHER` 角色（见各接口注解）。
 
----
+响应封装：统一返回 `ApiResponse<T>`。
 
-## 接口：`POST /ai/grade/files`
+## 2. 稳定化取样算法（samples + diffThreshold）
 
-### 请求 Body（JSON）
+批改接口支持“多次取样稳定化”，用于降低单次大模型随机性导致的分数抖动。
 
-- **fileIds**: `number[]`（必填）文件 ID 列表
-- **model**: `string`（可选）支持 `google/*` 与 `glm-*`，否则回退默认
-- **jsonOnly**: `boolean`（可选，默认 `true`）
-- **useGradingPrompt**: `boolean`（可选，默认 `true`）
-- **samples**: `number`（可选，默认 `1`；推荐 `2`；范围 1~3）
-- **diffThreshold**: `number`（可选，默认 `0.8`；范围 0~5）
+- `samples`: 1~3，默认 1
+- `diffThreshold`: 0~5（基于 `overall.final_score` 的 0~5 标尺），默认 0.8
 
-### 响应（成功）
+规则（简述）：
 
-返回 `results: [{ fileId, fileName, result, historyId }]`，其中 `result` 为标准结构（见“统一结构”），并可能包含 `meta.ensemble`（用于调试追溯）。
+- 先取样 2 次得到 `s1/s2`。
+- 若 `|s1-s2| > diffThreshold`，会补第 3 次 `s3`。
+- 最终分数由后端对“更稳定的两次”做平均并做字段合并（证据/建议去重，整体反馈使用确定性模板，附带 `meta.ensemble` 调试信息）。
 
----
+## 3. 接口：按文件批改
 
-## 接口：`POST /ai/grade/essay`
+### POST `/api/ai/grade/files`
 
-### 请求 Body（AiChatRequest）
+用途：传 `fileIds`，后端下载文件并抽取文本（doc/docx/pdf/txt），再调用批改模型。
 
-在原有字段基础上新增：
+权限：`TEACHER`
 
-- **samples**: `number`（可选，默认 `1`，范围 1~3）
-- **diffThreshold**: `number`（可选，默认 `0.8`，范围 0~5）
+请求 Body（JSON）：
 
-后端会强制 `jsonOnly=true` 执行批改，并写入批改历史（返回体含 `historyId`）。
+```json
+{
+  "fileIds": [1, 2, 3],
+  "model": "google/gemini-2.5-pro",
+  "jsonOnly": true,
+  "useGradingPrompt": true,
+  "samples": 2,
+  "diffThreshold": 0.8
+}
+```
 
----
+说明：
 
-## 接口：`POST /ai/grade/essay/batch`
+- `model` 仅允许 `google/*` 或 `glm-*`，否则回退为 `google/gemini-2.5-pro`。
+- `jsonOnly` 默认 `true`。当 `jsonOnly=true` 时会写入批改历史，并在每条 result 中返回 `historyId`。
+- `samples>1` 仅在 `jsonOnly=true` 场景启用稳定化；`jsonOnly=false` 仅做一次调用（调试用）。
 
-每个元素均为 `AiChatRequest`，支持同样的 `samples/diffThreshold` 参数。
+响应（示例）：
 
----
+```json
+{
+  "code": 200,
+  "data": {
+    "results": [
+      {
+        "fileId": 1,
+        "fileName": "essayA.docx",
+        "result": {
+          "overall": { "final_score": 4.2, "dimension_averages": { "ability": 4.0 } },
+          "meta": { "ensemble": { "samplesRequested": 2, "diffThreshold": 0.8 } }
+        },
+        "historyId": 101
+      },
+      { "fileId": 2, "fileName": "essayB.pdf", "error": "..." }
+    ]
+  }
+}
+```
 
-## 统一结构（核心字段）
+curl：
 
-后端最终输出会保证存在以下关键字段（前端依赖）：  
+```bash
+curl -X POST 'http://localhost:8080/api/ai/grade/files' \
+  -H 'Authorization: Bearer <access_jwt>' \
+  -H 'Content-Type: application/json' \
+  -d '{"fileIds":[1,2,3],"model":"google/gemini-2.5-pro","jsonOnly":true,"useGradingPrompt":true,"samples":2,"diffThreshold":0.8}'
+```
 
-- **overall.final_score**：`0~5`（稳定后的最终分）  
-- **overall.dimension_averages**：`{ moral_reasoning, attitude, ability, strategy }`  
-- **四个维度对象**：`moral_reasoning / attitude_development / ability_growth / strategy_optimization`  
+## 4. 接口：单篇文本批改（非流式）
 
-同时会附带调试信息（不影响前端展示）：
+### POST `/api/ai/grade/essay`
 
-- **meta.ensemble**：
-  - `samplesRequested`：请求的 samples
-  - `diffThreshold`：阈值
-  - `triggeredThird`：是否触发第 3 次
-  - `method`：`mean2 | closest2of3`
-  - `chosenPair`：最终用于平均的两次编号（1-based）
-  - `pairDiff`：两次分差
-  - `runs`：每次取样的 `finalScore`
-  - `confidence`：简易置信度（0~1，分差越小越高）
+用途：批改一段文本（或前端拼装的 messages），后端强制 JSON 输出并写入历史。
 
----
+权限：`TEACHER`
 
-## 降级策略（可靠性）
+请求 Body：`AiChatRequest`（关键字段）
 
-- 若第 2 次失败：退化为第 1 次结果。
-- 若触发第 3 次但失败：使用前两次均值。
-- 若所有取样均无法解析为 JSON：返回 `error=INVALID_JSON` 并透出 `raw`（便于排障）。
+```json
+{
+  "messages": [{ "role": "user", "content": "<essay text>" }],
+  "model": "google/gemini-2.5-pro",
+  "samples": 2,
+  "diffThreshold": 0.8
+}
+```
+
+说明：
+
+- 后端会强制 `jsonOnly=true`，并对返回 JSON 做 normalize（补齐 `overall/*` 等前端依赖字段）。
+- 成功时会把 `historyId` 注入到返回对象里（与批改结果同层级）。
+
+响应（示例，截断）：
+
+```json
+{
+  "code": 200,
+  "data": {
+    "overall": { "final_score": 4.2 },
+    "meta": { "ensemble": { "samplesRequested": 2 } },
+    "historyId": 102
+  }
+}
+```
+
+当模型返回非 JSON 时（示例）：
+
+```json
+{ "code": 200, "data": { "error": "INVALID_JSON", "message": "...", "raw": "..." } }
+```
+
+## 5. 接口：单篇文本批改（SSE 流式逐次取样）
+
+### POST `/api/ai/grade/essay/stream`
+
+用途：当 `samples>1` 时避免前端长时间等待，通过 SSE 逐次推送每次 run 的分数，最后推送聚合结果。
+
+权限：`TEACHER`
+
+请求 Body：同 `POST /api/ai/grade/essay`
+
+响应：`text/event-stream`（SSE）
+
+事件约定（后端实现）：
+
+- `event: ping` -> `{ ts }`（心跳）
+- `event: meta` -> `{ samplesRequested, diffThreshold }`
+- `event: run` -> `{ index, ok, finalScore05?, error? }`
+- `event: diff` -> `{ s1, s2, diff12, threshold, triggeredThird }`
+- `event: final` -> `{ result: <mergedNormalized>, historyId }`
+- `event: error` -> `{ message }`
+
+curl（观察流）：
+
+```bash
+curl -N 'http://localhost:8080/api/ai/grade/essay/stream' \
+  -H 'Authorization: Bearer <access_jwt>' \
+  -H 'Content-Type: application/json' \
+  -d '{"messages":[{"role":"user","content":"<essay text>"}],"model":"google/gemini-2.5-pro","samples":2,"diffThreshold":0.8}'
+```
+
+## 6. 接口：批量文本批改
+
+### POST `/api/ai/grade/essay/batch`
+
+权限：`TEACHER`
+
+请求 Body：`AiChatRequest[]`
+
+响应：`ApiResponse<object[]>`（每个元素为一次批改结果；若某项返回非 JSON，会返回 `error/message/raw` 结构）
+
+## 7. 批改历史（History）
+
+### GET `/api/ai/grade/history`
+
+权限：`TEACHER`
+
+Query：
+
+- `q`：可选，模糊搜索（实现以服务端为准）
+- `page`：默认 1
+- `size`：默认 20
+
+响应：`ApiResponse<PageResult<AiGradingHistory>>`
+
+`AiGradingHistory` 字段：
+
+```json
+{
+  "id": 101,
+  "teacherId": 11,
+  "fileId": 8888,
+  "fileName": "essayA.docx",
+  "model": "google/gemini-2.5-pro",
+  "finalScore": 4.2,
+  "rawJson": "{...}",
+  "createdAt": "2026-03-01 12:00:00"
+}
+```
+
+### GET `/api/ai/grade/history/{id}`
+
+权限：`TEACHER`
+
+响应：`ApiResponse<AiGradingHistory>`
+
+### DELETE `/api/ai/grade/history/{id}`
+
+权限：`TEACHER`
+
+响应：成功返回 200，无 data。
+
+### POST `/api/ai/grade/history/{id}/delete`（兼容）
+
+用途：兼容部分环境禁用 DELETE 的情况。
+
+权限：`TEACHER`
+
+响应：成功返回 200，无 data。
 

@@ -437,8 +437,13 @@ const handleChangePassword = async () => {
 };
 
 const handleResendVerification = async () => {
+  const email = String((profileForm as any)?.email || (authStore.user as any)?.email || '').trim()
+  if (!email) {
+    uiStore.showNotification({ type: 'error', title: t('app.notifications.error.title'), message: t('shared.profile.messages.updateFail') })
+    return
+  }
   await handleApiCall(
-    () => userApi.resendVerification(),
+    () => userApi.resendVerification(email),
     uiStore,
     t('shared.profile.messages.updateFail') as string,
     { successI18n: { titleKey: 'app.notifications.success.title', messageKey: 'shared.profile.messages.emailSent' } }
