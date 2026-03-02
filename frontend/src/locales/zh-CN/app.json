@@ -123,19 +123,27 @@
         }
       },
       "rive": {
-        "title": "更高级的动效资产: Rive",
-        "subtitle": "用矢量动画把信息变成可互动的视觉. 这里接入 Canvas Lite 运行时, 并提供简单的交互控制作为示例。",
+        "title": "交互式评分演示: Rive",
+        "subtitle": "把“评价”做成可互动的矢量动画。拖动滑块或点击画布来模拟一次评分，并即时反馈到动效中。",
         "status": "状态",
         "runtime": "运行时",
-        "note": "提示: 该示例动画来自 Rive 官方 CDN. 若网络不可用, 该区块会保持静态画布。",
+        "note": "提示: 该示例动画来自 Rive 社区运行时文件。若网络不可用，该区块会显示静态占位画布。",
+        "canvasAria": "Rive 交互式评分画布",
+        "fallbackTitle": "Rive 画布占位",
+        "fallbackDesc": "网络或运行时不可用时，将显示静态画布。",
+        "fallbackNoRuntime": "运行时加载失败，已切换为静态画布。",
         "actions": {
-          "idle": "Idle",
-          "wipers": "Wipers"
+          "random": "随机评分",
+          "reset": "重置"
         },
         "modes": {
-          "idle": "Idle",
-          "wipers": "Wipers",
-          "paused": "已暂停"
+          "playing": "播放中",
+          "paused": "已暂停",
+          "fallback": "静态占位"
+        },
+        "rating": {
+          "label": "评分",
+          "hint": "拖动滑块或点击画布"
         }
       },
 			"cards": {

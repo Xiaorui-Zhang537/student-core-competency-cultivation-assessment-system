@@ -20,7 +20,7 @@ const routes = [
   { path: '/home/compare', redirect: '/#compare' },
   { path: '/home/timeline', redirect: '/#timeline' },
   { path: '/home/journey', redirect: '/#timeline' },
-  { path: '/home/structure', redirect: '/#motion' },
+  { path: '/home/structure', redirect: '/#features' },
   { path: '/home/marquee', redirect: '/#marquee' },
   // 兼容旧地址 /student/analytics → 新的 /student/analysis
   {

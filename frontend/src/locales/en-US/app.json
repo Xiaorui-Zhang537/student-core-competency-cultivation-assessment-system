@@ -123,19 +123,27 @@
         }
       },
       "rive": {
-        "title": "Premium motion assets: Rive",
-        "subtitle": "Turn information into interactive visuals. This section integrates the Canvas Lite runtime and exposes a small set of controls as a demo.",
+        "title": "Interactive Rating Demo: Rive",
+        "subtitle": "Turn assessment into interactive vector motion. Drag the slider or click the canvas to simulate a rating and see the animation respond instantly.",
         "status": "Status",
         "runtime": "Runtime",
-        "note": "Note: This demo animation is loaded from Rive's CDN. If the network is unavailable, the canvas will stay static.",
+        "note": "Tip: This demo animation is loaded from a Rive Community runtime file. If the network is unavailable, you'll see a static placeholder canvas.",
+        "canvasAria": "Rive interactive rating canvas",
+        "fallbackTitle": "Rive Placeholder",
+        "fallbackDesc": "When the network or runtime is unavailable, a static canvas placeholder is shown.",
+        "fallbackNoRuntime": "Runtime failed to load. Switched to a static placeholder.",
         "actions": {
-          "idle": "Idle",
-          "wipers": "Wipers"
+          "random": "Random",
+          "reset": "Reset"
         },
         "modes": {
-          "idle": "Idle",
-          "wipers": "Wipers",
-          "paused": "Paused"
+          "playing": "Playing",
+          "paused": "Paused",
+          "fallback": "Placeholder"
+        },
+        "rating": {
+          "label": "Rating",
+          "hint": "Drag the slider or click"
         }
       },
 			"cards": {

@@ -34,8 +34,7 @@
     <!-- 滚动叙事 Features（ScrollTrigger pin） -->
     <home-feature-scroll-section />
 
-    <!-- Rive 动效展示（外部动画资源 + 交互控制） -->
-    <home-rive-showcase-section />
+    <!-- Rive 动效展示已从主页移除：保留组件模板以备后续使用 -->
 
     <!-- 对比（Compare） -->
     <section id="compare" class="mt-14 scroll-mt-24">
@@ -241,7 +240,6 @@ import Marquee from '@/components/ui/inspira/Marquee.vue'
 import ReviewCard from '@/components/ui/inspira/ReviewCard.vue'
 import { DEFAULT_AVATARS } from '@/shared/utils/avatars'
 import HomeFeatureScrollSection from '@/features/home/sections/HomeFeatureScrollSection.vue'
-import HomeRiveShowcaseSection from '@/features/home/sections/HomeRiveShowcaseSection.vue'
 
 const router = useRouter()
 const { t } = useI18n()

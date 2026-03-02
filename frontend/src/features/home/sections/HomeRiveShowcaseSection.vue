@@ -10,16 +10,42 @@
             {{ t('app.home.rive.subtitle') }}
           </p>
 
-          <div class="mt-6 flex flex-wrap gap-3">
-            <Button variant="primary" size="md" class="px-5" @click="playIdle">
-              {{ t('app.home.rive.actions.idle') }}
-            </Button>
-            <Button variant="info" size="md" class="px-5" @click="playWipers">
-              {{ t('app.home.rive.actions.wipers') }}
-            </Button>
-            <Button variant="secondary" size="md" class="px-5" @click="togglePlay">
-              {{ isPlaying ? t('common.pause') : t('common.play') }}
-            </Button>
+          <div class="mt-6">
+            <div class="flex flex-wrap items-center gap-3">
+              <Button variant="secondary" size="md" class="px-5" @click="togglePlay">
+                {{ isPlaying ? t('common.pause') : t('common.play') }}
+              </Button>
+              <Button variant="info" size="md" class="px-5" @click="randomizeRating">
+                {{ t('app.home.rive.actions.random') }}
+              </Button>
+              <Button variant="ghost" size="md" class="px-5" @click="resetRating">
+                {{ t('app.home.rive.actions.reset') }}
+              </Button>
+            </div>
+
+            <div class="mt-4">
+              <div class="flex items-center justify-between gap-3">
+                <div class="text-sm text-subtle">
+                  {{ t('app.home.rive.rating.label') }}:
+                  <span class="font-semibold text-[color:var(--color-base-content)] tabular-nums">
+                    {{ rating.toFixed(1) }} / 5.0
+                  </span>
+                </div>
+                <div class="text-xs opacity-70">
+                  {{ t('app.home.rive.rating.hint') }}
+                </div>
+              </div>
+              <input
+                v-model.number="rating"
+                type="range"
+                min="0"
+                max="5"
+                step="0.1"
+                class="range range-primary mt-2"
+                :disabled="!isReady"
+                @input="applyRating"
+              />
+            </div>
           </div>
 
           <p class="mt-4 text-xs text-subtle/70 leading-relaxed">
@@ -47,6 +73,9 @@
                 <canvas
                   ref="canvasRef"
                   class="block w-full h-[360px] sm:h-[420px] md:h-[460px]"
+                  role="img"
+                  :aria-label="t('app.home.rive.canvasAria') as string"
+                  @pointerdown="onCanvasPointerDown"
                 />
               </div>
 
@@ -81,15 +110,46 @@ const { t } = useI18n()
 const canvasRef = ref<HTMLCanvasElement | null>(null)
 const riveRef = ref<any>(null)
 const isPlaying = ref(true)
-const activeMode = ref<'idle' | 'wipers' | 'paused'>('idle')
+const isReady = ref(false)
+const rating = ref(3.8)
+let ratingInput: any = null
+const activeMode = ref<'playing' | 'paused' | 'fallback'>('fallback')
 const statusLabel = computed(() => {
   if (activeMode.value === 'paused') return t('app.home.rive.modes.paused')
-  if (activeMode.value === 'wipers') return t('app.home.rive.modes.wipers')
-  return t('app.home.rive.modes.idle')
+  if (activeMode.value === 'playing') return t('app.home.rive.modes.playing')
+  return t('app.home.rive.modes.fallback')
 })
 
 let io: IntersectionObserver | null = null
 let removeResize: (() => void) | null = null
+let removeRO: (() => void) | null = null
+
+function drawFallback(message?: string) {
+  const canvas = canvasRef.value
+  if (!canvas) return
+  const ctx = canvas.getContext('2d')
+  if (!ctx) return
+  const w = canvas.clientWidth || 960
+  const h = canvas.clientHeight || 540
+  // Make sure the backing store matches CSS pixels for crisp text.
+  canvas.width = Math.max(1, Math.floor(w * (window.devicePixelRatio || 1)))
+  canvas.height = Math.max(1, Math.floor(h * (window.devicePixelRatio || 1)))
+  ctx.scale(window.devicePixelRatio || 1, window.devicePixelRatio || 1)
+
+  const g = ctx.createLinearGradient(0, 0, w, h)
+  g.addColorStop(0, 'rgba(56,189,248,0.18)')
+  g.addColorStop(1, 'rgba(217,70,239,0.14)')
+  ctx.fillStyle = g
+  ctx.fillRect(0, 0, w, h)
+
+  ctx.fillStyle = 'rgba(255,255,255,0.85)'
+  ctx.font = '600 16px ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial'
+  ctx.fillText(t('app.home.rive.fallbackTitle') as string, 20, 34)
+  ctx.fillStyle = 'rgba(255,255,255,0.65)'
+  ctx.font = '400 13px ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial'
+  const line = message || (t('app.home.rive.fallbackDesc') as string)
+  ctx.fillText(line, 20, 58)
+}
 
 async function setupRive() {
   const canvas = canvasRef.value
@@ -102,29 +162,44 @@ async function setupRive() {
     const mod: any = await import('@rive-app/canvas-lite')
     RiveCtor = mod?.Rive || mod?.default?.Rive || mod?.default || mod
   } catch {
+    activeMode.value = 'fallback'
+    drawFallback(t('app.home.rive.fallbackNoRuntime') as string)
     return
   }
   if (!RiveCtor) return
 
-  const src = 'https://cdn.rive.app/animations/vehicles.riv'
+  // Rive community file: Star Rating (interactive input: "Rating")
+  // Used as a demo that matches this system's "assessment" theme.
+  const src = 'https://public.rive.app/community/runtime-files/3145-6649-star-rating.riv'
 
   const rive = new RiveCtor({
     src,
     canvas,
     autoplay: true,
-    animations: 'idle',
+    stateMachines: 'State Machine 1',
     // Canvas size sync: makes it crisp on DPR changes.
     onLoad: () => {
       try { rive.resizeDrawingSurfaceToCanvas?.() } catch {}
+      try {
+        const inputs = rive.stateMachineInputs?.('State Machine 1') || []
+        ratingInput = (inputs || []).find((i: any) => i?.name === 'Rating') || null
+        isReady.value = true
+        activeMode.value = 'playing'
+        applyRating()
+      } catch {}
     },
   })
   riveRef.value = rive
 
-  const onResize = () => {
-    try { rive.resizeDrawingSurfaceToCanvas?.() } catch {}
-  }
+  const onResize = () => { try { rive.resizeDrawingSurfaceToCanvas?.() } catch {} }
   window.addEventListener('resize', onResize, { passive: true })
   removeResize = () => window.removeEventListener('resize', onResize)
+
+  try {
+    const ro = new ResizeObserver(() => { try { rive.resizeDrawingSurfaceToCanvas?.() } catch {} })
+    ro.observe(canvas)
+    removeRO = () => { try { ro.disconnect() } catch {} }
+  } catch {}
 
   // Pause when out of view to save CPU.
   try {
@@ -147,26 +222,23 @@ async function setupRive() {
   } catch {}
 }
 
-function playIdle() {
-  const rive = riveRef.value
-  if (!rive) return
-  activeMode.value = 'idle'
-  isPlaying.value = true
+function applyRating() {
   try {
-    rive.stop?.()
-    rive.play?.('idle')
+    const v = Math.max(0, Math.min(5, Number(rating.value)))
+    rating.value = v
+    if (ratingInput) ratingInput.value = v
   } catch {}
 }
 
-function playWipers() {
-  const rive = riveRef.value
-  if (!rive) return
-  activeMode.value = 'wipers'
-  isPlaying.value = true
-  try {
-    rive.stop?.()
-    rive.play?.('windshield_wipers')
-  } catch {}
+function resetRating() {
+  rating.value = 0
+  applyRating()
+}
+
+function randomizeRating() {
+  const v = Math.round((Math.random() * 5) * 10) / 10
+  rating.value = v
+  applyRating()
 }
 
 function togglePlay() {
@@ -174,7 +246,7 @@ function togglePlay() {
   if (!rive) return
   isPlaying.value = !isPlaying.value
   if (isPlaying.value) {
-    if (activeMode.value === 'paused') activeMode.value = 'idle'
+    if (activeMode.value === 'paused') activeMode.value = 'playing'
     try { rive.play?.() } catch {}
   } else {
     activeMode.value = 'paused'
@@ -182,7 +254,21 @@ function togglePlay() {
   }
 }
 
+function onCanvasPointerDown(e: PointerEvent) {
+  const canvas = canvasRef.value
+  if (!canvas || !isReady.value) return
+  try {
+    const rect = canvas.getBoundingClientRect()
+    const x = Math.max(0, Math.min(rect.width, e.clientX - rect.left))
+    const v = Math.round(((x / rect.width) * 5) * 10) / 10
+    rating.value = v
+    applyRating()
+  } catch {}
+}
+
 onMounted(() => {
+  // Draw an immediate placeholder so the section never looks "empty".
+  drawFallback()
   setupRive()
 })
 
@@ -191,11 +277,14 @@ onUnmounted(() => {
   io = null
   try { removeResize?.() } catch {}
   removeResize = null
+  try { removeRO?.() } catch {}
+  removeRO = null
   const rive = riveRef.value
   if (rive) {
     try { rive.cleanup?.() } catch {}
     try { rive.pause?.() } catch {}
   }
   riveRef.value = null
+  ratingInput = null
 })
 </script>
