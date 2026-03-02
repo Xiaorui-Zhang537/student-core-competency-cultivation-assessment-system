@@ -9,6 +9,8 @@
     "confirm": "确定",
     "back": "返回",
     "close": "关闭",
+    "play": "播放",
+    "pause": "暂停",
     "submit": "提交",
     "select": "选择",
     "search": "搜索",
@@ -162,5 +164,4 @@
     "last": "末页"
   }
 }
-
 

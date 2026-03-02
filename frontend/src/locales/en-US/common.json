@@ -7,6 +7,8 @@
     "empty": "Empty",
     "cancel": "Cancel",
     "close": "Close",
+    "play": "Play",
+    "pause": "Pause",
     "confirm": "Confirm",
     "back": "Back",
     "verified": "Verified",
@@ -157,5 +159,4 @@
     "last": "Last"
   }
 }
-
 

@@ -6,7 +6,8 @@
       @scroll="checkScrollability"
     >
       <!-- 移除顶部渐变遮罩与多余修饰 -->
-      <div :class="cn('flex flex-row justify-start gap-4 pl-4','mx-auto max-w-7xl')">
+      <!-- Use w-max so cards never shrink; min-w-full keeps content aligned when few items -->
+      <div :class="cn('flex flex-row w-max min-w-full justify-start gap-4 px-4 md:px-6')">
         <slot />
       </div>
     </div>
@@ -87,5 +88,4 @@ onUnmounted(() => { window.removeEventListener('resize', checkScrollability) })
 </script>
 
  
-
 

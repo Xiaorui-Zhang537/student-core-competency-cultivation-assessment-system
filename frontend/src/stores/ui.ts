@@ -7,10 +7,11 @@ export const useUIStore = defineStore('ui', () => {
   type ThemeName = 'retro' | 'dracula' | 'light' | 'dark' | 'cupcake' | 'coffee'
   const themeName = ref<ThemeName>('retro')
   // 新增：背景选择（明/暗各自独立）
-  type LightBackground = 'none' | 'aurora' | 'tetris'
+  type LightBackground = 'none' | 'aurora' | 'tetris' | 'neural'
   type DarkBackground = 'none' | 'neural' | 'meteors'
-  const backgroundLight = ref<LightBackground>('none')
-  const backgroundDark = ref<DarkBackground>('none')
+  // Default to neural to make the landing pages feel more "alive" out of the box.
+  const backgroundLight = ref<LightBackground>('neural')
+  const backgroundDark = ref<DarkBackground>('neural')
   type CursorTrailMode = 'off' | 'fluid' | 'smooth' | 'tailed'
   const cursorTrailMode = ref<CursorTrailMode>('off')
   type CursorStyle = 'arrow' | 'triangle' | 'teardrop'
@@ -70,20 +71,20 @@ export const useUIStore = defineStore('ui', () => {
     // 初始化背景偏好
     try {
       const lb = localStorage.getItem('backgroundLight')
-      if (lb === 'none' || lb === 'aurora' || lb === 'tetris') {
+      if (lb === 'none' || lb === 'aurora' || lb === 'tetris' || lb === 'neural') {
         backgroundLight.value = lb as LightBackground
       } else {
-        backgroundLight.value = 'none'
+        backgroundLight.value = 'neural'
       }
       const db = localStorage.getItem('backgroundDark')
       if (db === 'none' || db === 'neural' || db === 'meteors') {
         backgroundDark.value = db as DarkBackground
       } else {
-        backgroundDark.value = 'none'
+        backgroundDark.value = 'neural'
       }
     } catch {
-      backgroundLight.value = 'none'
-      backgroundDark.value = 'none'
+      backgroundLight.value = 'neural'
+      backgroundDark.value = 'neural'
     }
   }
 

@@ -85,6 +85,59 @@
 				"docs": "Learn more",
 				"login": "Try now"
 			},
+      "featureScroll": {
+        "title": "Turn growth into a visual story",
+        "subtitle": "Scroll to progress: assessment insights, courses and assignments, AI grading, community collaboration, and notifications, stitched into one clear learning loop.",
+        "nowShowing": "Now showing",
+        "scrollHint": "Keep scrolling to switch",
+        "steps": {
+          "assessment": {
+            "title": "Assessment and learner profile",
+            "desc": "Radar and trend views make progress readable: not just scores, but signals for what to improve next.",
+            "badge": "Assessment"
+          },
+          "courses": {
+            "title": "Courses and assignments loop",
+            "desc": "From assigning and submitting to grading and reflection, everything stays connected in one workflow.",
+            "badge": "Teaching",
+            "alt": "Courses overview"
+          },
+          "ai": {
+            "title": "AI grading and insights",
+            "desc": "Upgrade grading from repetition to explainable feedback with evidence and actionable suggestions.",
+            "badge": "AI",
+            "alt": "AI overview"
+          },
+          "community": {
+            "title": "Community and collaboration",
+            "desc": "Curated topics plus peer help: learning becomes discussion, contribution, and shared building.",
+            "badge": "Community",
+            "alt": "Community overview"
+          },
+          "chat": {
+            "title": "Chat and notifications",
+            "desc": "Instant communication with timely prompts: what to do, when to do it, at a glance.",
+            "badge": "Messaging",
+            "alt": "Chat overview"
+          }
+        }
+      },
+      "rive": {
+        "title": "Premium motion assets: Rive",
+        "subtitle": "Turn information into interactive visuals. This section integrates the Canvas Lite runtime and exposes a small set of controls as a demo.",
+        "status": "Status",
+        "runtime": "Runtime",
+        "note": "Note: This demo animation is loaded from Rive's CDN. If the network is unavailable, the canvas will stay static.",
+        "actions": {
+          "idle": "Idle",
+          "wipers": "Wipers"
+        },
+        "modes": {
+          "idle": "Idle",
+          "wipers": "Wipers",
+          "paused": "Paused"
+        }
+      },
 			"cards": {
         "category": "Feature",
         "assessment": {
@@ -437,5 +490,3 @@
     }
   }
 }
-
-

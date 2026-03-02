@@ -4,14 +4,19 @@
     <component
       v-if="!uiStore.isDarkMode"
       :is="lightComponent"
-      class="absolute inset-0"
+      class="absolute inset-0 opacity-55"
     />
     <!-- 暗黑模式背景 -->
     <component
       v-else
       :is="darkComponent"
-      class="absolute inset-0"
+      class="absolute inset-0 opacity-60"
     />
+    <!-- Global scrim for legibility -->
+    <div
+      class="absolute inset-0 pointer-events-none"
+      style="background: color-mix(in oklch, var(--color-base-100) 82%, transparent);"
+    ></div>
   </div>
 </template>
 
@@ -30,6 +35,7 @@ const lightComponent = computed(() => {
   switch (uiStore.backgroundLight) {
     case 'aurora': return AuroraBackground
     case 'tetris': return Tetris
+    case 'neural': return NeuralBackground
     default: return null
   }
 })
@@ -45,5 +51,3 @@ const darkComponent = computed(() => {
 
 <style scoped>
 </style>
-
-
