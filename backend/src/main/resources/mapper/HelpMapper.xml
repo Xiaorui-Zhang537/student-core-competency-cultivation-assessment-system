@@ -66,6 +66,20 @@
     ORDER BY sort ASC, id ASC
   </select>
 
+  <select id="countCategorySlug" resultType="long">
+    SELECT COUNT(1)
+    FROM help_category
+    WHERE slug = #{slug}
+    <if test="excludeId != null">
+      AND id != #{excludeId}
+    </if>
+  </select>
+
+  <insert id="insertCategory" parameterType="com.noncore.assessment.entity.HelpCategory" useGeneratedKeys="true" keyProperty="id">
+    INSERT INTO help_category (name, slug, sort, created_at, updated_at)
+    VALUES (#{name}, #{slug}, #{sort}, NOW(), NOW())
+  </insert>
+
   <select id="listArticles" resultMap="HelpArticleMap">
     SELECT id, category_id, title, slug, content_md, content_html, tags, views, up_votes, down_votes, published, created_at, updated_at
     FROM help_article
@@ -87,6 +101,27 @@
     </choose>
   </select>
 
+  <select id="adminListArticles" resultMap="HelpArticleMap">
+    SELECT id, category_id, title, slug, content_md, content_html, tags, views, up_votes, down_votes, published, created_at, updated_at
+    FROM help_article
+    <where>
+      <if test="q != null and q != ''">
+        (
+          title LIKE CONCAT('%', #{q}, '%')
+          OR slug LIKE CONCAT('%', #{q}, '%')
+          OR content_md LIKE CONCAT('%', #{q}, '%')
+        )
+      </if>
+      <if test="categoryId != null">
+        AND category_id = #{categoryId}
+      </if>
+      <if test="published != null">
+        AND published = #{published}
+      </if>
+    </where>
+    ORDER BY updated_at DESC, id DESC
+  </select>
+
   <select id="getArticleBySlug" resultMap="HelpArticleMap">
     SELECT id, category_id, title, slug, content_md, content_html, tags, views, up_votes, down_votes, published, created_at, updated_at
     FROM help_article WHERE slug = #{slug} AND published = 1
@@ -97,8 +132,60 @@
     FROM help_article WHERE id = #{id}
   </select>
 
+  <select id="countCategoryById" resultType="long">
+    SELECT COUNT(1)
+    FROM help_category
+    WHERE id = #{id}
+  </select>
+
+  <select id="countArticleSlug" resultType="long">
+    SELECT COUNT(1)
+    FROM help_article
+    WHERE slug = #{slug}
+    <if test="excludeId != null">
+      AND id != #{excludeId}
+    </if>
+  </select>
+
+  <insert id="insertArticle" parameterType="com.noncore.assessment.entity.HelpArticle" useGeneratedKeys="true" keyProperty="id">
+    INSERT INTO help_article (
+      category_id, title, slug, content_md, content_html, tags, views, up_votes, down_votes, published, created_at, updated_at
+    )
+    VALUES (
+      #{categoryId}, #{title}, #{slug}, #{contentMd}, #{contentHtml}, #{tags}, #{views}, #{upVotes}, #{downVotes}, #{published}, NOW(), NOW()
+    )
+  </insert>
+
+  <update id="updateArticleAdmin" parameterType="com.noncore.assessment.entity.HelpArticle">
+    UPDATE help_article
+    <set>
+      <if test="categoryId != null">category_id = #{categoryId},</if>
+      <if test="title != null and title != ''">title = #{title},</if>
+      <if test="slug != null and slug != ''">slug = #{slug},</if>
+      <if test="contentMd != null">content_md = #{contentMd},</if>
+      <if test="contentHtml != null">content_html = #{contentHtml},</if>
+      <if test="tags != null">tags = #{tags},</if>
+      <if test="published != null">published = #{published},</if>
+      updated_at = NOW()
+    </set>
+    WHERE id = #{id}
+  </update>
+
+  <delete id="deleteArticleById">
+    DELETE FROM help_article WHERE id = #{id}
+  </delete>
+
   <update id="incrementArticleViews">
     UPDATE help_article SET views = views + 1 WHERE id = #{id}
+  </update>
+
+  <update id="incrementArticleVoteTotals">
+    UPDATE help_article
+    SET
+      up_votes = up_votes + CASE WHEN #{helpful} = TRUE THEN 1 ELSE 0 END,
+      down_votes = down_votes + CASE WHEN #{helpful} = FALSE THEN 1 ELSE 0 END,
+      updated_at = NOW()
+    WHERE id = #{id}
   </update>
 
   <insert id="insertArticleFeedback" parameterType="com.noncore.assessment.entity.HelpArticleFeedback">
@@ -267,4 +354,3 @@
   </delete>
 
 </mapper>
-

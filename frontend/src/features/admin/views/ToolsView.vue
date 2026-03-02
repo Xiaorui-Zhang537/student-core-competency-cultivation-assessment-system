@@ -451,6 +451,267 @@
           </div>
         </div>
       </card>
+
+      <card padding="lg" tint="success" class="overflow-hidden">
+        <template #header>
+          <div class="flex items-center justify-between gap-3 flex-wrap">
+            <div class="flex items-center gap-3">
+              <div class="w-11 h-11 rounded-2xl bg-emerald-500/15 text-emerald-600 dark:text-emerald-300 flex items-center justify-center">
+                <BookOpenIcon class="w-5 h-5" />
+              </div>
+              <div>
+                <h2 class="text-lg font-semibold text-base-content">{{ copy.helpDocs.panelTitle }}</h2>
+                <p class="text-xs text-subtle mt-1">{{ copy.helpDocs.panelDesc }}</p>
+              </div>
+            </div>
+            <Button size="sm" variant="success" :loading="helpArticleLoading" @click="fetchAdminHelpArticles">
+              <ArrowPathIcon class="w-4 h-4 mr-2" />
+              {{ copy.helpDocs.refresh }}
+            </Button>
+          </div>
+        </template>
+
+        <div class="space-y-4">
+          <div class="rounded-2xl p-5 glass-ultraThin glass-tint-success border border-white/20 dark:border-white/10 shadow-sm space-y-4">
+            <div class="flex items-center justify-between gap-3 flex-wrap">
+              <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-2xl bg-emerald-500/15 text-emerald-700 dark:text-emerald-200 flex items-center justify-center">
+                  <DocumentTextIcon class="w-5 h-5" />
+                </div>
+                <div>
+                  <div class="text-sm font-semibold text-base-content">
+                    {{ editingHelpArticleId ? copy.helpDocs.editingTitle : copy.helpDocs.createTitle }}
+                  </div>
+                  <div class="text-xs text-subtle mt-1">
+                    {{ editingHelpArticleId ? copy.helpDocs.editingDesc : copy.helpDocs.createDesc }}
+                  </div>
+                </div>
+              </div>
+
+              <Button size="sm" variant="secondary" @click="resetHelpArticleForm">
+                <ArrowPathIcon class="w-4 h-4 mr-2" />
+                {{ copy.helpDocs.reset }}
+              </Button>
+            </div>
+
+            <div class="rounded-2xl border border-white/15 bg-white/5 p-4 space-y-3">
+              <div class="flex items-center justify-between gap-3 flex-wrap">
+                <div class="text-xs font-medium text-subtle">{{ copy.helpDocs.categoryCreateLabel }}</div>
+                <div v-if="helpCategories.length === 0" class="text-xs text-amber-700 dark:text-amber-300">
+                  {{ copy.helpDocs.noCategoriesHint }}
+                </div>
+              </div>
+              <div class="flex flex-col sm:flex-row gap-3">
+                <div class="flex-1 min-w-0">
+                  <glass-input
+                    v-model="newHelpCategoryName"
+                    :placeholder="copy.helpDocs.categoryCreatePlaceholder"
+                  />
+                </div>
+                <Button
+                  size="sm"
+                  variant="success"
+                  class="sm:self-end"
+                  :loading="creatingHelpCategory"
+                  :disabled="creatingHelpCategory"
+                  @click="saveHelpCategory"
+                >
+                  <BookOpenIcon class="w-4 h-4 mr-2" />
+                  {{ copy.helpDocs.categoryCreateButton }}
+                </Button>
+              </div>
+            </div>
+
+            <div class="grid grid-cols-1 xl:grid-cols-4 gap-4">
+              <div>
+                <div class="text-xs text-subtle mb-1">{{ copy.helpDocs.categoryLabel }}</div>
+                <glass-popover-select
+                  v-model="helpArticleForm.categoryId"
+                  :options="helpCategoryFormOptions"
+                  size="sm"
+                  tint="success"
+                />
+              </div>
+              <div class="xl:col-span-2">
+                <div class="text-xs text-subtle mb-1">{{ copy.helpDocs.titleLabel }}</div>
+                <glass-input
+                  v-model="helpArticleForm.title"
+                  :placeholder="copy.helpDocs.titlePlaceholder"
+                />
+              </div>
+              <div>
+                <div class="text-xs text-subtle mb-1">{{ copy.helpDocs.publishedLabel }}</div>
+                <glass-popover-select
+                  v-model="helpArticleForm.publishState"
+                  :options="helpArticlePublishOptions"
+                  size="sm"
+                  tint="success"
+                />
+              </div>
+            </div>
+
+            <div class="grid grid-cols-1 xl:grid-cols-3 gap-4">
+              <div>
+                <div class="text-xs text-subtle mb-1">{{ copy.helpDocs.slugLabel }}</div>
+                <glass-input
+                  v-model="helpArticleForm.slug"
+                  :placeholder="copy.helpDocs.slugPlaceholder"
+                />
+              </div>
+              <div class="xl:col-span-2">
+                <div class="text-xs text-subtle mb-1">{{ copy.helpDocs.tagsLabel }}</div>
+                <glass-input
+                  v-model="helpArticleForm.tags"
+                  :placeholder="copy.helpDocs.tagsPlaceholder"
+                />
+              </div>
+            </div>
+
+            <div>
+              <div class="text-xs text-subtle mb-1">{{ copy.helpDocs.contentLabel }}</div>
+              <glass-textarea
+                v-model="helpArticleForm.contentMd"
+                :rows="8"
+                :placeholder="copy.helpDocs.contentPlaceholder"
+              />
+            </div>
+
+            <div class="flex flex-wrap gap-3 pt-2">
+              <Button
+                size="sm"
+                variant="success"
+                :loading="savingHelpArticle"
+                :disabled="savingHelpArticle"
+                @click="saveHelpArticle"
+              >
+                <DocumentTextIcon class="w-4 h-4 mr-2" />
+                {{ editingHelpArticleId ? copy.helpDocs.update : copy.helpDocs.create }}
+              </Button>
+              <Button
+                size="sm"
+                variant="secondary"
+                :disabled="savingHelpArticle"
+                @click="resetHelpArticleForm"
+              >
+                <ArrowPathIcon class="w-4 h-4 mr-2" />
+                {{ copy.helpDocs.reset }}
+              </Button>
+            </div>
+          </div>
+
+          <div class="rounded-2xl p-4 glass-ultraThin glass-tint-primary border border-white/20 dark:border-white/10 shadow-sm">
+            <filter-bar tint="secondary" align="center" :dense="false" class="rounded-3xl">
+              <template #left>
+                <div class="flex items-start gap-3 flex-wrap w-full">
+                  <div class="w-full sm:w-auto flex flex-col gap-1">
+                    <span class="text-xs font-medium leading-tight text-subtle">{{ copy.helpDocs.categoryLabel }}</span>
+                    <div class="w-full sm:w-44">
+                      <glass-popover-select
+                        v-model="helpArticleFilters.categoryId"
+                        :options="helpCategoryFilterOptions"
+                        size="sm"
+                        tint="secondary"
+                      />
+                    </div>
+                  </div>
+                  <div class="w-full sm:w-auto flex flex-col gap-1">
+                    <span class="text-xs font-medium leading-tight text-subtle">{{ copy.helpDocs.publishedLabel }}</span>
+                    <div class="w-full sm:w-40">
+                      <glass-popover-select
+                        v-model="helpArticleFilters.published"
+                        :options="helpArticleStatusFilterOptions"
+                        size="sm"
+                        tint="secondary"
+                      />
+                    </div>
+                  </div>
+                  <div class="w-full lg:flex-1 flex flex-col gap-1 min-w-[16rem]">
+                    <span class="text-xs font-medium leading-tight text-subtle">{{ copy.helpDocs.searchLabel }}</span>
+                    <glass-search-input
+                      v-model="helpArticleFilters.q"
+                      :placeholder="copy.helpDocs.searchPlaceholder"
+                      size="sm"
+                      tint="success"
+                    />
+                  </div>
+                </div>
+              </template>
+            </filter-bar>
+          </div>
+
+          <div class="rounded-2xl p-5 glass-ultraThin glass-tint-accent border border-white/20 dark:border-white/10 shadow-sm space-y-3">
+            <div class="flex items-center justify-between gap-3 flex-wrap">
+              <div class="text-sm font-semibold text-base-content">{{ copy.helpDocs.listTitle }}</div>
+              <div class="text-xs text-subtle">{{ helpArticleListSummary }}</div>
+            </div>
+
+            <div v-if="helpArticleLoading && adminHelpArticles.length === 0" class="text-sm text-subtle py-8 text-center">
+              {{ copy.support.loading }}
+            </div>
+            <div v-else-if="adminHelpArticles.length === 0" class="text-sm text-subtle py-8 text-center">
+              {{ copy.helpDocs.empty }}
+            </div>
+
+            <div v-else class="space-y-3">
+              <div
+                v-for="article in adminHelpArticles"
+                :key="article.id"
+                class="rounded-3xl border border-white/20 dark:border-white/10 bg-white/5 p-4"
+              >
+                <div class="flex items-start justify-between gap-3 flex-wrap">
+                  <div class="min-w-0 flex-1">
+                    <div class="flex items-center gap-2 flex-wrap">
+                      <div class="font-semibold text-base-content break-all">{{ article.title }}</div>
+                      <Badge size="sm" :variant="article.published ? 'success' : 'secondary'">
+                        {{ article.published ? copy.helpDocs.published : copy.helpDocs.draft }}
+                      </Badge>
+                    </div>
+                    <div class="mt-2 flex items-center gap-2 flex-wrap text-xs text-subtle">
+                      <span>#{{ article.id }}</span>
+                      <span>{{ helpCategoryName(article.categoryId) }}</span>
+                      <span>{{ article.slug || '-' }}</span>
+                    </div>
+                    <div class="mt-2 flex items-center gap-3 flex-wrap text-xs text-subtle">
+                      <span>{{ article.views || 0 }} {{ isZh ? '浏览' : 'views' }}</span>
+                      <span>{{ article.upVotes || 0 }} {{ isZh ? '有帮助' : 'helpful' }}</span>
+                      <span>{{ article.downVotes || 0 }} {{ isZh ? '没帮助' : 'not helpful' }}</span>
+                    </div>
+                    <div v-if="article.tags" class="mt-2 text-xs text-subtle break-all">{{ article.tags }}</div>
+                    <div class="mt-3 text-sm text-base-content/90 whitespace-pre-line">
+                      {{ helpArticlePreview(article) }}
+                    </div>
+                    <div class="mt-3 text-xs text-subtle">
+                      {{ copy.helpDocs.updatedAt }}:
+                      <span class="text-base-content ml-1">{{ formatDateTime(article.updatedAt || article.createdAt) }}</span>
+                    </div>
+                  </div>
+
+                  <div class="flex items-center gap-2 shrink-0">
+                    <Button
+                      size="sm"
+                      variant="secondary"
+                      @click="editHelpArticle(article)"
+                    >
+                      <PencilSquareIcon class="w-4 h-4 mr-2" />
+                      {{ copy.helpDocs.edit }}
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="danger"
+                      :loading="deletingHelpArticleId === article.id"
+                      :disabled="deletingHelpArticleId === article.id"
+                      @click="deleteHelpArticle(article)"
+                    >
+                      <TrashIcon class="w-4 h-4 mr-2" />
+                      {{ copy.helpDocs.delete }}
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </card>
     </div>
   </div>
 </template>
@@ -474,15 +735,19 @@ import { notificationAPI } from '@/api/notification.api'
 import { adminApi, type AdminUserListItem } from '@/api/admin.api'
 import { helpApi } from '@/api/help.api'
 import { useUIStore } from '@/stores/ui'
-import type { HelpTicket, HelpTicketDetail } from '@/types/help'
+import type { HelpArticle, HelpArticleUpsertRequest, HelpCategory, HelpCategoryCreateRequest, HelpTicket, HelpTicketDetail } from '@/types/help'
 import {
   ArrowPathIcon,
   BellAlertIcon,
+  BookOpenIcon,
   ChatBubbleLeftRightIcon,
   CheckCircleIcon,
   ClockIcon,
+  DocumentTextIcon,
   InboxStackIcon,
   PaperAirplaneIcon,
+  PencilSquareIcon,
+  TrashIcon,
 } from '@heroicons/vue/24/outline'
 
 const { t, locale } = useI18n()
@@ -620,6 +885,56 @@ const copy = computed(() => (isZh.value
         statusError: '更新状态失败',
         loadError: '加载支持单失败',
         detailError: '加载详情失败'
+      },
+      helpDocs: {
+        panelTitle: '帮助文档管理',
+        panelDesc: '创建、编辑并发布帮助文章，前台帮助中心会自动展示已发布内容',
+        refresh: '刷新文章',
+        listTitle: '已发布与草稿',
+        createTitle: '新建帮助文章',
+        createDesc: '写好内容后即可保存为草稿或直接发布',
+        editingTitle: '编辑帮助文章',
+        editingDesc: '更新后会同步到帮助中心，已发布内容会直接生效',
+        categoryCreateLabel: '快速新增分类',
+        categoryCreatePlaceholder: '输入分类名称',
+        categoryCreateButton: '新增分类',
+        noCategoriesHint: '当前还没有帮助分类，请先新增一个分类再创建文章',
+        searchLabel: '搜索',
+        searchPlaceholder: '搜索标题、slug 或正文',
+        categoryLabel: '分类',
+        allCategories: '全部分类',
+        selectCategory: '选择分类',
+        titleLabel: '标题',
+        titlePlaceholder: '输入帮助文章标题',
+        slugLabel: 'Slug',
+        slugPlaceholder: '留空则按标题生成',
+        tagsLabel: '标签',
+        tagsPlaceholder: '多个标签请用逗号分隔',
+        contentLabel: '内容',
+        contentPlaceholder: '输入帮助说明，支持纯文本或 Markdown',
+        publishedLabel: '发布状态',
+        allStatus: '全部状态',
+        published: '已发布',
+        draft: '草稿',
+        create: '新增文章',
+        update: '保存修改',
+        reset: '新建一篇',
+        edit: '编辑',
+        delete: '删除',
+        empty: '暂无帮助文章',
+        createSuccess: '帮助文章已创建',
+        updateSuccess: '帮助文章已更新',
+        deleteSuccess: '帮助文章已删除',
+        categoryCreateSuccess: '帮助分类已创建',
+        updatedAt: '最近更新',
+        listSummary: '当前文章数',
+        saveError: '保存帮助文章失败',
+        categoryCreateError: '新增帮助分类失败',
+        deleteError: '删除帮助文章失败',
+        loadError: '加载帮助文章失败',
+        loadCategoriesError: '加载帮助分类失败',
+        requiredError: '请先填写分类、标题和内容',
+        categoryRequiredError: '请先新增或选择帮助分类'
       },
       recipient: {
         userId: '用户ID',
@@ -760,6 +1075,56 @@ const copy = computed(() => (isZh.value
         loadError: 'Failed to load tickets',
         detailError: 'Failed to load details'
       },
+      helpDocs: {
+        panelTitle: 'Help article management',
+        panelDesc: 'Create, edit, and publish help articles. Published items appear in the public Help Center automatically.',
+        refresh: 'Refresh articles',
+        listTitle: 'Published and draft articles',
+        createTitle: 'Create help article',
+        createDesc: 'Write the content, then save it as a draft or publish it directly.',
+        editingTitle: 'Edit help article',
+        editingDesc: 'Updates sync to the Help Center, and published changes go live immediately.',
+        categoryCreateLabel: 'Quick category',
+        categoryCreatePlaceholder: 'Enter a category name',
+        categoryCreateButton: 'Add category',
+        noCategoriesHint: 'No help categories yet. Add one before creating the first article.',
+        searchLabel: 'Search',
+        searchPlaceholder: 'Search title, slug, or content',
+        categoryLabel: 'Category',
+        allCategories: 'All categories',
+        selectCategory: 'Select category',
+        titleLabel: 'Title',
+        titlePlaceholder: 'Enter the help article title',
+        slugLabel: 'Slug',
+        slugPlaceholder: 'Leave blank to generate from the title',
+        tagsLabel: 'Tags',
+        tagsPlaceholder: 'Separate multiple tags with commas',
+        contentLabel: 'Content',
+        contentPlaceholder: 'Enter help content in plain text or Markdown',
+        publishedLabel: 'Publish status',
+        allStatus: 'All statuses',
+        published: 'Published',
+        draft: 'Draft',
+        create: 'Create article',
+        update: 'Save changes',
+        reset: 'New article',
+        edit: 'Edit',
+        delete: 'Delete',
+        empty: 'No help articles yet',
+        createSuccess: 'Help article created',
+        updateSuccess: 'Help article updated',
+        deleteSuccess: 'Help article deleted',
+        categoryCreateSuccess: 'Help category created',
+        updatedAt: 'Updated',
+        listSummary: 'Articles',
+        saveError: 'Failed to save the help article',
+        categoryCreateError: 'Failed to create the help category',
+        deleteError: 'Failed to delete the help article',
+        loadError: 'Failed to load help articles',
+        loadCategoriesError: 'Failed to load help categories',
+        requiredError: 'Please fill in the category, title, and content first',
+        categoryRequiredError: 'Create or select a help category first'
+      },
       recipient: {
         userId: 'User ID',
         username: 'Username',
@@ -776,6 +1141,10 @@ const ticketLoading = ref(false)
 const ticketDetailLoading = ref(false)
 const searchingRecipients = ref(false)
 const replyingTicket = ref(false)
+const helpArticleLoading = ref(false)
+const savingHelpArticle = ref(false)
+const deletingHelpArticleId = ref<number | null>(null)
+const creatingHelpCategory = ref(false)
 
 const broadcastTitle = ref('')
 const broadcastContent = ref('')
@@ -792,14 +1161,43 @@ const selectedTicketId = ref<number | null>(null)
 const selectedTicketDetail = ref<HelpTicketDetail | null>(null)
 const ticketReply = ref('')
 const detailStatus = ref<'open' | 'in_progress' | 'resolved' | 'closed'>('open')
+const helpCategories = ref<HelpCategory[]>([])
+const adminHelpArticles = ref<HelpArticle[]>([])
+const editingHelpArticleId = ref<number | null>(null)
+const newHelpCategoryName = ref('')
 const ticketFilters = reactive({
   status: '',
   channel: '',
   priority: '',
   q: ''
 })
+const helpArticleFilters = reactive<{
+  categoryId: number
+  published: '' | 'published' | 'draft'
+  q: string
+}>({
+  categoryId: 0,
+  published: '',
+  q: ''
+})
+const helpArticleForm = reactive<{
+  categoryId: number
+  title: string
+  slug: string
+  tags: string
+  contentMd: string
+  publishState: 'published' | 'draft'
+}>({
+  categoryId: 0,
+  title: '',
+  slug: '',
+  tags: '',
+  contentMd: '',
+  publishState: 'published'
+})
 let recipientSearchTimer: ReturnType<typeof setTimeout> | null = null
 let ticketFilterTimer: ReturnType<typeof setTimeout> | null = null
+let helpArticleFilterTimer: ReturnType<typeof setTimeout> | null = null
 
 const broadcastTargetOptions = computed(() => [
   { label: copy.value.targets.all, value: 'all' },
@@ -857,9 +1255,37 @@ const ticketPriorityFilterOptions = computed(() => [
   { label: copy.value.priorities.urgent, value: 'urgent' }
 ])
 
+const helpCategoryFilterOptions = computed(() => [
+  { label: copy.value.helpDocs.allCategories, value: 0 },
+  ...helpCategories.value.map(item => ({
+    label: item.name,
+    value: item.id
+  }))
+])
+
+const helpCategoryFormOptions = computed(() => [
+  { label: copy.value.helpDocs.selectCategory, value: 0 },
+  ...helpCategories.value.map(item => ({
+    label: item.name,
+    value: item.id
+  }))
+])
+
+const helpArticleStatusFilterOptions = computed(() => [
+  { label: copy.value.helpDocs.allStatus, value: '' },
+  { label: copy.value.helpDocs.published, value: 'published' },
+  { label: copy.value.helpDocs.draft, value: 'draft' }
+])
+
+const helpArticlePublishOptions = computed(() => [
+  { label: copy.value.helpDocs.published, value: 'published' },
+  { label: copy.value.helpDocs.draft, value: 'draft' }
+])
+
 const pendingTicketCount = computed(() => tickets.value.filter(item => item.status === 'open').length)
 const inProgressTicketCount = computed(() => tickets.value.filter(item => item.status === 'in_progress').length)
 const resolvedTicketCount = computed(() => tickets.value.filter(item => item.status === 'resolved' || item.status === 'closed').length)
+const helpArticleListSummary = computed(() => `${copy.value.helpDocs.listSummary}: ${adminHelpArticles.value.length}`)
 
 const broadcastAudienceValue = computed(() => {
   if (broadcastTargetType.value === 'all') return copy.value.broadcast.allAudienceValue
@@ -1015,6 +1441,189 @@ const appendBroadcastEmoji = (emoji: string) => {
 
 const appendTicketReplyEmoji = (emoji: string) => {
   ticketReply.value = `${ticketReply.value || ''}${emoji}`
+}
+
+const defaultHelpCategoryId = () => helpCategories.value[0]?.id || 0
+
+const resetHelpArticleForm = () => {
+  editingHelpArticleId.value = null
+  helpArticleForm.categoryId = defaultHelpCategoryId()
+  helpArticleForm.title = ''
+  helpArticleForm.slug = ''
+  helpArticleForm.tags = ''
+  helpArticleForm.contentMd = ''
+  helpArticleForm.publishState = 'published'
+}
+
+const helpCategoryName = (categoryId?: number) => {
+  if (!categoryId) return copy.value.common.notAvailable
+  return helpCategories.value.find(item => item.id === categoryId)?.name || `#${categoryId}`
+}
+
+const helpArticlePreview = (article: HelpArticle) => {
+  const raw = String(article.contentMd || article.contentHtml || '')
+    .replace(/<[^>]+>/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim()
+  if (!raw) return copy.value.common.notAvailable
+  return raw.length > 120 ? `${raw.slice(0, 120)}...` : raw
+}
+
+const fetchHelpCategories = async () => {
+  try {
+    helpCategories.value = await helpApi.listCategories()
+    if (!helpArticleForm.categoryId) {
+      helpArticleForm.categoryId = defaultHelpCategoryId()
+    }
+  } catch (error: any) {
+    ui.showNotification({
+      type: 'error',
+      title: copy.value.common.errorTitle,
+      message: error?.message || copy.value.helpDocs.loadCategoriesError
+    })
+  }
+}
+
+const saveHelpCategory = async () => {
+  const name = newHelpCategoryName.value.trim()
+  if (!name) {
+    ui.showNotification({
+      type: 'warning',
+      title: copy.value.common.errorTitle,
+      message: copy.value.helpDocs.categoryCreatePlaceholder
+    })
+    return
+  }
+
+  const payload: HelpCategoryCreateRequest = { name }
+  creatingHelpCategory.value = true
+  try {
+    const created = await helpApi.adminCreateCategory(payload)
+    await fetchHelpCategories()
+    helpArticleForm.categoryId = created.id
+    newHelpCategoryName.value = ''
+    ui.showNotification({
+      type: 'success',
+      title: copy.value.helpDocs.categoryCreateSuccess,
+      message: created.name
+    })
+  } catch (error: any) {
+    ui.showNotification({
+      type: 'error',
+      title: copy.value.common.errorTitle,
+      message: error?.message || copy.value.helpDocs.categoryCreateError
+    })
+  } finally {
+    creatingHelpCategory.value = false
+  }
+}
+
+const fetchAdminHelpArticles = async () => {
+  helpArticleLoading.value = true
+  try {
+    adminHelpArticles.value = await helpApi.adminListArticles({
+      q: helpArticleFilters.q.trim() || undefined,
+      categoryId: helpArticleFilters.categoryId || undefined,
+      published: helpArticleFilters.published === 'published'
+        ? true
+        : (helpArticleFilters.published === 'draft' ? false : undefined)
+    })
+  } catch (error: any) {
+    ui.showNotification({
+      type: 'error',
+      title: copy.value.common.errorTitle,
+      message: error?.message || copy.value.helpDocs.loadError
+    })
+  } finally {
+    helpArticleLoading.value = false
+  }
+}
+
+const editHelpArticle = (article: HelpArticle) => {
+  editingHelpArticleId.value = article.id
+  helpArticleForm.categoryId = article.categoryId || defaultHelpCategoryId()
+  helpArticleForm.title = article.title || ''
+  helpArticleForm.slug = article.slug || ''
+  helpArticleForm.tags = article.tags || ''
+  helpArticleForm.contentMd = article.contentMd || article.contentHtml || ''
+  helpArticleForm.publishState = article.published ? 'published' : 'draft'
+}
+
+const saveHelpArticle = async () => {
+  if (!helpArticleForm.categoryId) {
+    ui.showNotification({
+      type: 'warning',
+      title: copy.value.common.errorTitle,
+      message: copy.value.helpDocs.categoryRequiredError
+    })
+    return
+  }
+
+  if (!helpArticleForm.title.trim() || !helpArticleForm.contentMd.trim()) {
+    ui.showNotification({
+      type: 'warning',
+      title: copy.value.common.errorTitle,
+      message: copy.value.helpDocs.requiredError
+    })
+    return
+  }
+
+  const payload: HelpArticleUpsertRequest = {
+    categoryId: helpArticleForm.categoryId,
+    title: helpArticleForm.title.trim(),
+    slug: helpArticleForm.slug.trim() || undefined,
+    contentMd: helpArticleForm.contentMd.trim(),
+    tags: helpArticleForm.tags.trim() || undefined,
+    published: helpArticleForm.publishState === 'published'
+  }
+
+  savingHelpArticle.value = true
+  try {
+    if (editingHelpArticleId.value) {
+      await helpApi.adminUpdateArticle(editingHelpArticleId.value, payload)
+    } else {
+      await helpApi.adminCreateArticle(payload)
+    }
+    await fetchAdminHelpArticles()
+    ui.showNotification({
+      type: 'success',
+      title: editingHelpArticleId.value ? copy.value.helpDocs.updateSuccess : copy.value.helpDocs.createSuccess,
+      message: helpArticleForm.title.trim()
+    })
+    resetHelpArticleForm()
+  } catch (error: any) {
+    ui.showNotification({
+      type: 'error',
+      title: copy.value.common.errorTitle,
+      message: error?.message || copy.value.helpDocs.saveError
+    })
+  } finally {
+    savingHelpArticle.value = false
+  }
+}
+
+const deleteHelpArticle = async (article: HelpArticle) => {
+  deletingHelpArticleId.value = article.id
+  try {
+    await helpApi.adminDeleteArticle(article.id)
+    if (editingHelpArticleId.value === article.id) {
+      resetHelpArticleForm()
+    }
+    await fetchAdminHelpArticles()
+    ui.showNotification({
+      type: 'success',
+      title: copy.value.helpDocs.deleteSuccess,
+      message: article.title
+    })
+  } catch (error: any) {
+    ui.showNotification({
+      type: 'error',
+      title: copy.value.common.errorTitle,
+      message: error?.message || copy.value.helpDocs.deleteError
+    })
+  } finally {
+    deletingHelpArticleId.value = null
+  }
 }
 
 const searchRecipients = async () => {
@@ -1196,7 +1805,11 @@ const changeTicketStatus = async () => {
 }
 
 onMounted(async () => {
-  await fetchTickets(true)
+  await Promise.all([
+    fetchTickets(true),
+    fetchHelpCategories()
+  ])
+  await fetchAdminHelpArticles()
 })
 
 watch(
@@ -1234,6 +1847,16 @@ watch(
     if (ticketFilterTimer) clearTimeout(ticketFilterTimer)
     ticketFilterTimer = setTimeout(() => {
       fetchTickets(true)
+    }, 220)
+  }
+)
+
+watch(
+  () => [helpArticleFilters.categoryId, helpArticleFilters.published, helpArticleFilters.q],
+  () => {
+    if (helpArticleFilterTimer) clearTimeout(helpArticleFilterTimer)
+    helpArticleFilterTimer = setTimeout(() => {
+      fetchAdminHelpArticles()
     }, 220)
   }
 )

@@ -28,7 +28,13 @@ export const useHelpStore = defineStore('help', {
       this.article = await helpApi.getArticle(slug, inc)
     },
     async voteOrFeedback(articleId: number, payload: { helpful?: boolean; content?: string }) {
-      await helpApi.submitArticleFeedback(articleId, payload)
+      const updated = await helpApi.submitArticleFeedback(articleId, payload)
+      this.article = updated
+      const idx = this.articles.findIndex(item => item.id === updated.id)
+      if (idx >= 0) {
+        this.articles[idx] = updated
+      }
+      return updated
     },
     async submitTicket(payload: HelpTicketCreateRequest) {
       const t = await helpApi.createTicket(payload)
@@ -65,4 +71,3 @@ export const useHelpStore = defineStore('help', {
     }
   }
 })
-

@@ -1,5 +1,7 @@
 package com.noncore.assessment.service.impl;
 
+import com.noncore.assessment.dto.request.HelpArticleUpsertRequest;
+import com.noncore.assessment.dto.request.HelpCategoryCreateRequest;
 import com.noncore.assessment.dto.request.HelpTicketCreateRequest;
 import com.noncore.assessment.dto.response.HelpTicketDetailResponse;
 import com.noncore.assessment.entity.HelpArticle;
@@ -16,8 +18,11 @@ import com.noncore.assessment.util.PageResult;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
+import java.util.Objects;
+import java.util.stream.Collectors;
 
 @Service
 public class HelpServiceImpl implements HelpService {
@@ -36,8 +41,35 @@ public class HelpServiceImpl implements HelpService {
     }
 
     @Override
+    public HelpCategory createCategoryForAdmin(HelpCategoryCreateRequest request) {
+        if (request == null || request.getName() == null || request.getName().isBlank()) {
+            throw new BusinessException(ErrorCode.INVALID_PARAMETER, "帮助分类名称不能为空");
+        }
+        String name = request.getName().trim();
+        String slug = resolveCategorySlug(request.getSlug(), name);
+        if (helpMapper.countCategorySlug(slug, null) > 0) {
+            throw new BusinessException(ErrorCode.INVALID_PARAMETER, "帮助分类标识已存在");
+        }
+        HelpCategory category = HelpCategory.builder()
+                .name(name)
+                .slug(slug)
+                .sort(request.getSort() == null ? 0 : request.getSort())
+                .build();
+        helpMapper.insertCategory(category);
+        return helpMapper.listCategories().stream()
+                .filter(item -> Objects.equals(item.getId(), category.getId()))
+                .findFirst()
+                .orElse(category);
+    }
+
+    @Override
     public List<HelpArticle> listArticles(String q, Long categoryId, String tag, String sort) {
         return helpMapper.listArticles(q, categoryId, tag, sort);
+    }
+
+    @Override
+    public List<HelpArticle> listArticlesForAdmin(String q, Long categoryId, Boolean published) {
+        return helpMapper.adminListArticles(blankToNull(q), categoryId, published);
     }
 
     @Override
@@ -50,8 +82,50 @@ public class HelpServiceImpl implements HelpService {
     }
 
     @Override
-    public int submitArticleFeedback(HelpArticleFeedback feedback) {
-        return helpMapper.insertArticleFeedback(feedback);
+    public HelpArticle createArticleForAdmin(HelpArticleUpsertRequest request) {
+        HelpArticle article = buildArticlePayload(null, request);
+        article.setViews(0);
+        article.setUpVotes(0);
+        article.setDownVotes(0);
+        helpMapper.insertArticle(article);
+        return helpMapper.getArticleById(article.getId());
+    }
+
+    @Override
+    public HelpArticle updateArticleForAdmin(Long articleId, HelpArticleUpsertRequest request) {
+        HelpArticle current = helpMapper.getArticleById(articleId);
+        if (current == null) {
+            throw new BusinessException(ErrorCode.INVALID_PARAMETER, "帮助文章不存在");
+        }
+        HelpArticle update = buildArticlePayload(articleId, request);
+        update.setId(articleId);
+        helpMapper.updateArticleAdmin(update);
+        return helpMapper.getArticleById(articleId);
+    }
+
+    @Override
+    public void deleteArticleForAdmin(Long articleId) {
+        HelpArticle current = helpMapper.getArticleById(articleId);
+        if (current == null) {
+            throw new BusinessException(ErrorCode.INVALID_PARAMETER, "帮助文章不存在");
+        }
+        helpMapper.deleteArticleById(articleId);
+    }
+
+    @Override
+    public HelpArticle submitArticleFeedback(HelpArticleFeedback feedback) {
+        if (feedback == null || feedback.getArticleId() == null) {
+            throw new BusinessException(ErrorCode.INVALID_PARAMETER, "帮助文章不存在");
+        }
+        HelpArticle current = helpMapper.getArticleById(feedback.getArticleId());
+        if (current == null) {
+            throw new BusinessException(ErrorCode.INVALID_PARAMETER, "帮助文章不存在");
+        }
+        helpMapper.insertArticleFeedback(feedback);
+        if (feedback.getHelpful() != null) {
+            helpMapper.incrementArticleVoteTotals(feedback.getArticleId(), feedback.getHelpful());
+        }
+        return helpMapper.getArticleById(feedback.getArticleId());
     }
 
     @Override
@@ -243,6 +317,106 @@ public class HelpServiceImpl implements HelpService {
             );
         } catch (Exception ignore) {
         }
+    }
+
+    private HelpArticle buildArticlePayload(Long articleId, HelpArticleUpsertRequest request) {
+        if (request == null) {
+            throw new BusinessException(ErrorCode.INVALID_PARAMETER, "帮助文章内容不能为空");
+        }
+        Long categoryId = request.getCategoryId();
+        if (categoryId == null || helpMapper.countCategoryById(categoryId) < 1) {
+            throw new BusinessException(ErrorCode.INVALID_PARAMETER, "帮助分类不存在");
+        }
+
+        String title = requireArticleTitle(request.getTitle());
+        String slug = resolveArticleSlug(request.getSlug(), title);
+        if (helpMapper.countArticleSlug(slug, articleId) > 0) {
+            throw new BusinessException(ErrorCode.INVALID_PARAMETER, "文章标识已存在");
+        }
+
+        String contentMd = requireArticleContent(request.getContentMd());
+        String contentHtml = blankToNull(request.getContentHtml());
+        if (contentHtml == null) {
+            contentHtml = renderPlainTextAsHtml(contentMd);
+        }
+
+        return HelpArticle.builder()
+                .categoryId(categoryId)
+                .title(title)
+                .slug(slug)
+                .contentMd(contentMd)
+                .contentHtml(contentHtml)
+                .tags(normalizeTags(request.getTags()))
+                .published(Boolean.TRUE.equals(request.getPublished()))
+                .build();
+    }
+
+    private String requireArticleTitle(String title) {
+        if (title == null || title.isBlank()) {
+            throw new BusinessException(ErrorCode.INVALID_PARAMETER, "帮助文章标题不能为空");
+        }
+        return title.trim();
+    }
+
+    private String requireArticleContent(String content) {
+        if (content == null || content.isBlank()) {
+            throw new BusinessException(ErrorCode.INVALID_PARAMETER, "帮助文章内容不能为空");
+        }
+        return content.trim();
+    }
+
+    private String resolveArticleSlug(String rawSlug, String title) {
+        return resolveSlug(rawSlug, title, "文章标识不能为空");
+    }
+
+    private String resolveCategorySlug(String rawSlug, String name) {
+        return resolveSlug(rawSlug, name, "分类标识不能为空");
+    }
+
+    private String resolveSlug(String rawSlug, String fallback, String emptyMessage) {
+        String base = blankToNull(rawSlug);
+        if (base == null) {
+            base = fallback;
+        }
+        base = base.trim()
+                .replaceAll("\\s+", "-")
+                .replaceAll("-{2,}", "-")
+                .replaceAll("^-+|-+$", "");
+        if (base.isBlank()) {
+            throw new BusinessException(ErrorCode.INVALID_PARAMETER, emptyMessage);
+        }
+        return base.toLowerCase(Locale.ROOT);
+    }
+
+    private String normalizeTags(String tags) {
+        String value = blankToNull(tags);
+        if (value == null) return null;
+        return Arrays.stream(value.split(","))
+                .map(String::trim)
+                .filter(s -> !s.isBlank())
+                .distinct()
+                .collect(Collectors.joining(","));
+    }
+
+    private String renderPlainTextAsHtml(String content) {
+        return Arrays.stream(content.split("\\r?\\n\\s*\\r?\\n"))
+                .map(String::trim)
+                .filter(s -> !s.isBlank())
+                .map(block -> "<p>" + Arrays.stream(block.split("\\r?\\n"))
+                        .map(this::escapeHtml)
+                        .filter(s -> !s.isBlank())
+                        .collect(Collectors.joining("<br/>")) + "</p>")
+                .filter(s -> !Objects.equals(s, "<p></p>"))
+                .collect(Collectors.joining());
+    }
+
+    private String escapeHtml(String value) {
+        return value
+                .replace("&", "&amp;")
+                .replace("<", "&lt;")
+                .replace(">", "&gt;")
+                .replace("\"", "&quot;")
+                .replace("'", "&#39;");
     }
 
     private String requireContent(HelpTicketCreateRequest request) {

@@ -57,17 +57,16 @@ public class HelpController extends BaseController {
 
     @PostMapping("/articles/{id}/feedback")
     @Operation(summary = "提交文章反馈")
-    public ResponseEntity<ApiResponse<Void>> articleFeedback(@PathVariable Long id,
-                                                             @RequestParam(required = false) Boolean helpful,
-                                                             @RequestParam(required = false) String content) {
+    public ResponseEntity<ApiResponse<HelpArticle>> articleFeedback(@PathVariable Long id,
+                                                                    @RequestParam(required = false) Boolean helpful,
+                                                                    @RequestParam(required = false) String content) {
         HelpArticleFeedback f = new HelpArticleFeedback();
         f.setArticleId(id);
         Long uid = getOptionalUserId();
         f.setUserId(uid);
         f.setHelpful(helpful);
         f.setContent(content);
-        helpService.submitArticleFeedback(f);
-        return ResponseEntity.ok(ApiResponse.success());
+        return ResponseEntity.ok(ApiResponse.success(helpService.submitArticleFeedback(f)));
     }
 
     @PostMapping("/tickets")
@@ -122,4 +121,3 @@ public class HelpController extends BaseController {
         return ResponseEntity.ok(ApiResponse.success());
     }
 }
-

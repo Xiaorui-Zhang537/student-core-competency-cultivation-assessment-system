@@ -1,6 +1,6 @@
 import { api } from './config'
 import type { PaginatedResponse } from '@/types/api'
-import type { HelpCategory, HelpArticle, HelpTicket, HelpTicketCreateRequest, HelpTicketDetail } from '@/types/help'
+import type { HelpCategory, HelpArticle, HelpArticleUpsertRequest, HelpCategoryCreateRequest, HelpTicket, HelpTicketCreateRequest, HelpTicketDetail } from '@/types/help'
 
 export const helpApi = {
   listCategories: () => api.get<HelpCategory[]>('/help/categories'),
@@ -12,7 +12,7 @@ export const helpApi = {
     api.get<HelpArticle>(`/help/articles/${encodeURIComponent(slug)}`, { params: { inc } }),
 
   submitArticleFeedback: (articleId: number, data: { helpful?: boolean; content?: string }) =>
-    api.post<void>(`/help/articles/${articleId}/feedback`, null, { params: data }),
+    api.post<HelpArticle>(`/help/articles/${articleId}/feedback`, null, { params: data }),
 
   createTicket: (data: HelpTicketCreateRequest) =>
     api.post<HelpTicket>('/help/tickets', data),
@@ -37,6 +37,15 @@ export const helpApi = {
   adminReplyTicket: (id: number | string, content: string) =>
     api.post<HelpTicketDetail>(`/admin/help/tickets/${id}/reply`, { content }),
   adminUpdateTicketStatus: (id: number | string, status: string) =>
-    api.put<HelpTicket>(`/admin/help/tickets/${id}/status`, { status })
+    api.put<HelpTicket>(`/admin/help/tickets/${id}/status`, { status }),
+  adminListArticles: (params?: { q?: string; categoryId?: number; published?: boolean }) =>
+    api.get<HelpArticle[]>('/admin/help/articles', { params }),
+  adminCreateArticle: (data: HelpArticleUpsertRequest) =>
+    api.post<HelpArticle>('/admin/help/articles', data),
+  adminUpdateArticle: (id: number | string, data: HelpArticleUpsertRequest) =>
+    api.put<HelpArticle>(`/admin/help/articles/${id}`, data),
+  adminDeleteArticle: (id: number | string) =>
+    api.delete<void>(`/admin/help/articles/${id}`),
+  adminCreateCategory: (data: HelpCategoryCreateRequest) =>
+    api.post<HelpCategory>('/admin/help/categories', data)
 }
-

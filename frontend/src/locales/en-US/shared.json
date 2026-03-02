@@ -319,8 +319,8 @@
     },
     "help": {
       "title": "Help Center",
-      "subtitle": "When you’re stuck, you’re not alone—we’ll figure it out together.",
-      "searchPlaceholder": "Search help content...",
+      "subtitle": "Start with self-service answers, then keep follow-ups in one unified support thread.",
+      "searchPlaceholder": "Search FAQs, guides, or error symptoms...",
       "nav": "Navigation",
       "sections": {
         "faq": "FAQs",
@@ -380,12 +380,12 @@
       "support": {
         "email": {
           "title": "Email Support",
-          "desc": "For non-urgent issues, please email us",
+          "desc": "Best for non-urgent issues; include screenshots and steps when possible",
           "time": "Reply within 24 hours"
         },
         "wechat": {
           "title": "WeChat",
-          "desc": "Add WeChat for support",
+          "desc": "Best when you need quick clarification or back-and-forth support",
           "time": "Business days 9:00–18:00"
         }
       },
@@ -437,7 +437,7 @@
       "notify": {
         "videoWip": "Video playback is under development...",
         "ticketSuccessTitle": "Ticket submitted",
-        "ticketSuccessMsg": "We will handle your issue as soon as possible.",
+        "ticketSuccessMsg": "Your ticket is submitted. You can continue the thread and review replies in My Tickets.",
         "ticketFailMsg": "An error occurred while submitting the ticket. Please try again later.",
         "feedbackSuccessTitle": "Feedback sent",
         "feedbackSuccessMsg": "Thank you for your feedback.",
@@ -678,5 +678,4 @@
     }
   }
 }
-
 

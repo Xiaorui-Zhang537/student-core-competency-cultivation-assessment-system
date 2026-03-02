@@ -71,3 +71,18 @@ export interface HelpTicketCreateRequest {
   anonymous?: boolean
 }
 
+export interface HelpArticleUpsertRequest {
+  categoryId: number
+  title: string
+  slug?: string
+  contentMd: string
+  contentHtml?: string
+  tags?: string
+  published?: boolean
+}
+
+export interface HelpCategoryCreateRequest {
+  name: string
+  slug?: string
+  sort?: number
+}

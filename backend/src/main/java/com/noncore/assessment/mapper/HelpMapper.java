@@ -14,16 +14,36 @@ import java.util.List;
 public interface HelpMapper {
     List<HelpCategory> listCategories();
 
+    long countCategorySlug(@Param("slug") String slug, @Param("excludeId") Long excludeId);
+
+    int insertCategory(HelpCategory category);
+
     List<HelpArticle> listArticles(@Param("q") String q,
                                    @Param("categoryId") Long categoryId,
                                    @Param("tag") String tag,
                                    @Param("sort") String sort);
 
+    List<HelpArticle> adminListArticles(@Param("q") String q,
+                                        @Param("categoryId") Long categoryId,
+                                        @Param("published") Boolean published);
+
     HelpArticle getArticleBySlug(@Param("slug") String slug);
 
     HelpArticle getArticleById(@Param("id") Long id);
 
+    long countCategoryById(@Param("id") Long id);
+
+    long countArticleSlug(@Param("slug") String slug, @Param("excludeId") Long excludeId);
+
+    int insertArticle(HelpArticle article);
+
+    int updateArticleAdmin(HelpArticle article);
+
+    int deleteArticleById(@Param("id") Long id);
+
     void incrementArticleViews(@Param("id") Long id);
+
+    int incrementArticleVoteTotals(@Param("id") Long id, @Param("helpful") Boolean helpful);
 
     int insertArticleFeedback(HelpArticleFeedback feedback);
 
@@ -57,4 +77,3 @@ public interface HelpMapper {
 
     int deleteTicket(@Param("id") Long id, @Param("userId") Long userId);
 }
-
