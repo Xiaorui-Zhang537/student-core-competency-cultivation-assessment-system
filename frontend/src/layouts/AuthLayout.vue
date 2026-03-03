@@ -8,31 +8,32 @@
       <!-- 顶部导航：右上 Dock，与主页一致 -->
       <nav class="flex items-center justify-end mb-6">
         <liquid-glass :radius="30" class="flex items-center justify-center h-full" containerClass="rounded-full h-[56px] px-2">
-          <dock :magnification="60" :distance="140" variant="transparent" paddingClass="pl-1.5 pr-1.5" heightClass="h-[52px]" roundedClass="rounded-full" gapClass="gap-3" class="!mt-0">
-            <dock-icon>
+          <!-- Match student/teacher/public layouts: no magnify-on-hover -->
+          <dock :magnification="0" :distance="0" :animate="false" variant="transparent" paddingClass="pl-1.5 pr-5" heightClass="h-[56px]" roundedClass="rounded-full" gapClass="gap-3" class="!mt-0 min-w-0">
+            <dock-icon :animate="false">
               <ripple-button pill :title="t('layout.common.toggleTheme') as string" @click="uiStore.toggleDarkMode()">
                 <sun-icon v-if="uiStore.isDarkMode" class="w-5 h-5" />
                 <moon-icon v-else class="w-5 h-5" />
               </ripple-button>
             </dock-icon>
-            <dock-icon>
+            <dock-icon :animate="false">
               <span ref="bgBtnRef" class="inline-flex">
                 <ripple-button pill :title="t('layout.common.bgPickerTitle') as string" @click="onToggleBgPicker">
                   <photo-icon class="w-5 h-5" />
                 </ripple-button>
               </span>
             </dock-icon>
-            <dock-icon>
+            <dock-icon :animate="false">
               <span ref="cursorBtnRef" class="inline-flex">
                 <ripple-button pill :title="t('layout.common.cursorTrail') as string" @click="onToggleCursorMenu">
                   <cursor-arrow-rays-icon class="w-5 h-5" />
                 </ripple-button>
               </span>
             </dock-icon>
-            <dock-icon class="-ml-2">
+            <dock-icon class="-ml-2" :animate="false">
               <language-switcher buttonClass="px-4 h-10 flex items-center rounded-full min-w-[64px]" />
             </dock-icon>
-            <dock-icon>
+            <dock-icon :animate="false">
               <ripple-button pill class="px-3 h-10" :title="('返回首页')" @click="goHome()">
                 <home-icon class="w-5 h-5" />
               </ripple-button>

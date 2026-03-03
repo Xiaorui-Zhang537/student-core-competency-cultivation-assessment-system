@@ -17,6 +17,30 @@
               <p class="text-left text-base sm:text-lg md:text-2xl leading-relaxed break-words break-all text-subtle">
                 {{ t('app.home.hero.subtitle') }}
               </p>
+
+              <div class="mt-8 flex flex-wrap items-center gap-4">
+                <Button
+                  variant="primary"
+                  size="xl"
+                  class="heroCtaBtn px-8 min-w-[190px] relative overflow-hidden"
+                  @click="goExperience"
+                >
+                  <span class="heroCtaGlow" aria-hidden="true"></span>
+                  <span class="heroCtaSheen" aria-hidden="true"></span>
+                  <span class="relative inline-flex items-center gap-2">
+                    <SparklesIcon class="w-5 h-5" />
+                    {{ authStore.isAuthenticated ? t('app.home.enterApp') : t('app.home.cta.login') }}
+                    <span class="heroCtaArrow" aria-hidden="true">›</span>
+                  </span>
+                </Button>
+
+                <Button variant="info" size="xl" class="px-7 min-w-[170px]" @click="goDocs">
+                  <template #icon>
+                    <BookOpenIcon class="w-5 h-5" />
+                  </template>
+                  {{ t('app.home.cta.docs') }}
+                </Button>
+              </div>
               
             </div>
             <div class="md:col-span-6">
@@ -225,6 +249,7 @@ import { useI18n } from 'vue-i18n'
 import Button from '@/components/ui/Button.vue'
 import { SparklesIcon, BookOpenIcon } from '@heroicons/vue/24/solid'
 import { useLenisHomeScroll } from '@/composables/useLenisHomeScroll'
+import { useAuthStore } from '@/stores/auth'
 // 按钮已移除：不再需要相关图标
 
 // Inspira 适配组件
@@ -244,6 +269,7 @@ import HomeFeatureScrollSection from '@/features/home/sections/HomeFeatureScroll
 const router = useRouter()
 const { t } = useI18n()
 const uiStore = useUIStore()
+const authStore = useAuthStore()
 const { themeName } = storeToRefs(uiStore)
 const isDarkMode = computed(() => {
   try { return (uiStore as any).isDarkMode || document.documentElement.classList.contains('dark') } catch { return document.documentElement.classList.contains('dark') }
@@ -273,6 +299,16 @@ function goLogin() {
 function goDocs() {
   const url = (import.meta as any).env.VITE_DOCS_URL || 'http://localhost:4174'
   try { window.location.href = url } catch { window.open(url, '_self') }
+}
+
+function goExperience() {
+  if (!authStore.isAuthenticated) {
+    goLogin()
+    return
+  }
+  const role = authStore.userRole
+  const target = role === 'TEACHER' ? '/teacher/dashboard' : role === 'ADMIN' ? '/admin/dashboard' : '/student/dashboard'
+  router.push(target)
 }
 // 画廊图片路径固定，标题走 i18n
 const galleryItems = computed(() => {
@@ -427,4 +463,55 @@ function triggerFireworks() {
 </script>
 
 <style scoped>
+.heroCtaBtn {
+  transition: transform 180ms ease, box-shadow 180ms ease;
+  box-shadow: 0 18px 42px color-mix(in oklch, var(--color-primary) 26%, transparent);
+}
+.heroCtaBtn:hover {
+  transform: translateY(-1px) scale(1.02);
+  box-shadow: 0 22px 54px color-mix(in oklch, var(--color-primary) 34%, transparent);
+}
+.heroCtaBtn:active {
+  transform: translateY(0) scale(0.99);
+}
+.heroCtaGlow {
+  position: absolute;
+  inset: -40%;
+  pointer-events: none;
+  background: radial-gradient(circle at 30% 30%, color-mix(in oklch, var(--color-accent) 45%, transparent), transparent 55%),
+    radial-gradient(circle at 70% 60%, color-mix(in oklch, var(--color-primary) 42%, transparent), transparent 58%);
+  filter: blur(26px);
+  opacity: 0.9;
+}
+.heroCtaSheen {
+  position: absolute;
+  inset: -60% -60%;
+  pointer-events: none;
+  background: linear-gradient(115deg, transparent 30%, rgba(255,255,255,0.28) 46%, transparent 60%);
+  transform: translateX(-35%) rotate(8deg);
+  animation: heroCtaSheen 2.6s ease-in-out infinite;
+  mix-blend-mode: soft-light;
+}
+.heroCtaArrow {
+  display: inline-block;
+  margin-left: 2px;
+  opacity: 0.9;
+  transform: translateX(0);
+  transition: transform 160ms ease;
+}
+.heroCtaBtn:hover .heroCtaArrow {
+  transform: translateX(3px);
+}
+@keyframes heroCtaSheen {
+  0% { transform: translateX(-35%) rotate(8deg); opacity: 0.0; }
+  18% { opacity: 0.0; }
+  45% { opacity: 0.65; }
+  55% { opacity: 0.65; }
+  85% { opacity: 0.0; }
+  100% { transform: translateX(35%) rotate(8deg); opacity: 0.0; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .heroCtaSheen { animation: none; }
+  .heroCtaBtn { transition: none; }
+}
 </style>
