@@ -107,13 +107,6 @@ public interface StudentAbilityMapper {
     int initializeStudentAbilities(@Param("studentId") Long studentId);
 
     /**
-     * 获取学生能力发展趋势数据
-     */
-    List<Map<String, Object>> getStudentAbilityTrends(@Param("studentId") Long studentId,
-                                                      @Param("dimensionId") Long dimensionId,
-                                                      @Param("months") Integer months);
-
-    /**
      * 检查学生能力记录是否存在
      */
     boolean existsByStudentAndDimension(@Param("studentId") Long studentId,

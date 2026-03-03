@@ -120,13 +120,13 @@
     </div>
 
     <!-- Course Store Modal (GlassModal) -->
-    <glass-modal v-if="showCourseStore" :title="t('student.courses.storeTitle') as string" size="md" heightVariant="tall" @close="showCourseStore=false">
-      <div class="overflow-y-auto" style="max-height:70vh;">
+    <glass-modal v-if="showCourseStore" :title="t('student.courses.storeTitle') as string" size="xl" heightVariant="max" @close="showCourseStore=false">
+      <div class="overflow-y-auto" style="max-height:74vh;">
         <div v-if="courseStore.loading" class="text-center"><p>{{ t('student.courses.loading') }}</p></div>
-        <div v-else class="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <card v-for="course in courseStore.courses" :key="course.id">
+        <div v-else class="grid grid-cols-1 xl:grid-cols-2 gap-6">
+          <card v-for="course in courseStore.courses" :key="course.id" class="course-store-card">
             <h4 class="font-medium mb-2">{{ course.title }}</h4>
-            <p class="text-sm text-gray-600 mb-3 whitespace-pre-line">{{ course.description }}</p>
+            <p class="text-sm text-gray-600 mb-3 whitespace-pre-line line-clamp-3">{{ course.description }}</p>
             <div class="flex flex-wrap items-center gap-2 mb-2 text-sm">
               <badge v-if="course.startDate" size="sm" variant="info">
                 <span class="inline-flex items-center gap-1">📅 {{ t('student.courses.detail.startDate') }}: {{ formatDateOnly(course.startDate) }}</span>
@@ -145,6 +145,21 @@
               <template v-for="tag in toTagArray(course.tags)" :key="`${course.id}-${tag}`">
                 <badge size="sm" :variant="getTagVariant(tag)">#{{ tag }}</badge>
               </template>
+            </div>
+            <div class="mb-3 flex flex-wrap items-center gap-2 text-sm">
+              <span class="font-medium text-strong">{{ t('student.courses.detail.ratingLabel') }}</span>
+              <rive-star-rating
+                :value="Number(course.rating ?? 0)"
+                :width="104"
+                :height="28"
+                :readonly="true"
+                :use-rive="false"
+                active-color="--color-primary"
+                inactive-color="rgba(148, 163, 184, 0.28)"
+                aria-label="course-store-rating"
+              />
+              <span class="font-semibold text-strong">{{ Number(course.rating ?? 0).toFixed(1) }}</span>
+              <span class="text-xs text-muted">({{ course.reviewCount ?? 0 }} {{ t('student.courses.detail.ratingVotes') }})</span>
             </div>
             <div class="flex justify-between items-center">
               <span class="text-sm text-gray-500">{{ t('student.courses.instructor') }}: {{ course.teacherName }}</span>
@@ -230,6 +245,7 @@ import GlassSearchInput from '@/components/ui/inputs/GlassSearchInput.vue'
 import Progress from '@/components/ui/Progress.vue'
 import GlassInput from '@/components/ui/inputs/GlassInput.vue'
 import Badge from '@/components/ui/Badge.vue'
+import RiveStarRating from '@/components/ui/RiveStarRating.vue'
 import { getDifficultyVariant, getCategoryVariant, getTagVariant } from '@/shared/utils/badgeColor'
 import { localizeDifficulty, localizeCategory } from '@/shared/utils/localize'
 import apiClient from '@/api/config'
@@ -477,5 +493,17 @@ onMounted(async () => {
   line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
+}
+
+.line-clamp-3 {
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.course-store-card {
+  min-height: 21rem;
 }
 </style>

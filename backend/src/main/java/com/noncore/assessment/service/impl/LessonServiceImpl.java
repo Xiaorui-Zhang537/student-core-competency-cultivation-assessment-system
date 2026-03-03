@@ -5,6 +5,7 @@ import com.noncore.assessment.entity.LessonProgress;
 import com.noncore.assessment.exception.BusinessException;
 import com.noncore.assessment.exception.ErrorCode;
 import com.noncore.assessment.mapper.LessonMapper;
+import com.noncore.assessment.mapper.CourseMapper;
 import com.noncore.assessment.mapper.EnrollmentMapper;
 import com.noncore.assessment.mapper.FileRecordMapper;
 import com.noncore.assessment.mapper.LessonProgressMapper;
@@ -28,12 +29,18 @@ public class LessonServiceImpl implements LessonService {
     private static final Logger logger = LoggerFactory.getLogger(LessonServiceImpl.class);
 
     private final LessonMapper lessonMapper;
+    private final CourseMapper courseMapper;
     private final FileRecordMapper fileRecordMapper;
     private final LessonProgressMapper lessonProgressMapper;
     private final EnrollmentMapper enrollmentMapper;
 
-    public LessonServiceImpl(LessonMapper lessonMapper, LessonProgressMapper lessonProgressMapper, FileRecordMapper fileRecordMapper, EnrollmentMapper enrollmentMapper) {
+    public LessonServiceImpl(LessonMapper lessonMapper,
+                             CourseMapper courseMapper,
+                             LessonProgressMapper lessonProgressMapper,
+                             FileRecordMapper fileRecordMapper,
+                             EnrollmentMapper enrollmentMapper) {
         this.lessonMapper = lessonMapper;
+        this.courseMapper = courseMapper;
         this.lessonProgressMapper = lessonProgressMapper;
         this.fileRecordMapper = fileRecordMapper;
         this.enrollmentMapper = enrollmentMapper;
@@ -358,6 +365,10 @@ public class LessonServiceImpl implements LessonService {
         if (rating < 1 || rating > 5) {
             throw new BusinessException(ErrorCode.RATING_OUT_OF_RANGE);
         }
+        Lesson lesson = lessonMapper.selectLessonById(lessonId);
+        if (lesson == null) {
+            throw new BusinessException(ErrorCode.LESSON_NOT_FOUND);
+        }
         LessonProgress progress = lessonProgressMapper.selectByStudentAndLesson(studentId, lessonId);
         if (progress == null) {
             updateStudentProgress(studentId, lessonId, BigDecimal.ZERO, null, null);
@@ -365,7 +376,11 @@ public class LessonServiceImpl implements LessonService {
         }
         progress.setRating(rating);
         progress.setUpdatedAt(LocalDateTime.now());
-        return lessonProgressMapper.updateLessonProgress(progress) > 0;
+        boolean updated = lessonProgressMapper.updateLessonProgress(progress) > 0;
+        if (updated && lesson.getCourseId() != null) {
+            syncCourseRatingFromLessonRatings(lesson.getCourseId());
+        }
+        return updated;
     }
 
     // ---- 学生进度聚合补充 ----
@@ -452,5 +467,33 @@ public class LessonServiceImpl implements LessonService {
         } else if (!contBlank && descBlank) {
             lesson.setDescription(cont);
         }
+    }
+
+    private void syncCourseRatingFromLessonRatings(Long courseId) {
+        if (courseId == null) {
+            return;
+        }
+        Map<String, Object> stats = lessonProgressMapper.getCourseRatingStats(courseId);
+        double avgRating = 0.0;
+        int reviewCount = 0;
+        if (stats != null) {
+            Object avg = stats.get("avgRating");
+            if (avg instanceof Number number) {
+                avgRating = number.doubleValue();
+            } else if (avg != null) {
+                try {
+                    avgRating = Double.parseDouble(String.valueOf(avg));
+                } catch (Exception ignore) {}
+            }
+            Object reviews = stats.get("reviewCount");
+            if (reviews instanceof Number number) {
+                reviewCount = number.intValue();
+            } else if (reviews != null) {
+                try {
+                    reviewCount = Integer.parseInt(String.valueOf(reviews));
+                } catch (Exception ignore) {}
+            }
+        }
+        courseMapper.updateCourseRating(courseId, avgRating, reviewCount);
     }
 } 

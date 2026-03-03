@@ -24,7 +24,7 @@ public interface AbilityDimensionMapper {
     /**
      * 根据ID查询能力维度
      */
-    AbilityDimension selectDimensionById(Long id);
+    AbilityDimension selectDimensionById(@Param("dimensionId") Long id);
 
     /**
      * 更新能力维度

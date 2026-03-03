@@ -1,9 +1,11 @@
 package com.noncore.assessment.service.impl;
 
 import com.noncore.assessment.entity.Assignment;
+import com.noncore.assessment.entity.AbilityAssessment;
 import com.noncore.assessment.entity.Grade;
 import com.noncore.assessment.entity.AbilityReport;
 import com.noncore.assessment.entity.AbilityDimension;
+import com.noncore.assessment.entity.StudentAbility;
 import com.noncore.assessment.exception.BusinessException;
 import com.noncore.assessment.exception.ErrorCode;
 import com.noncore.assessment.mapper.AssignmentMapper;
@@ -50,6 +52,8 @@ public class GradeServiceImpl implements GradeService {
     private final com.noncore.assessment.service.SubmissionService submissionService;
     private final com.noncore.assessment.service.NotificationService notificationService;
     private final AbilityService abilityService;
+    private final com.noncore.assessment.mapper.AbilityAssessmentMapper abilityAssessmentMapper;
+    private final com.noncore.assessment.mapper.StudentAbilityMapper studentAbilityMapper;
     private final AbilityDimensionMapper abilityDimensionMapper;
     private final ObjectMapper objectMapper;
 
@@ -58,6 +62,8 @@ public class GradeServiceImpl implements GradeService {
                             com.noncore.assessment.service.NotificationService notificationService,
                             com.noncore.assessment.mapper.UserMapper userMapper,
                             AbilityService abilityService,
+                            com.noncore.assessment.mapper.AbilityAssessmentMapper abilityAssessmentMapper,
+                            com.noncore.assessment.mapper.StudentAbilityMapper studentAbilityMapper,
                             AbilityDimensionMapper abilityDimensionMapper,
                             ObjectMapper objectMapper) {
         this.gradeMapper = gradeMapper;
@@ -66,6 +72,8 @@ public class GradeServiceImpl implements GradeService {
         this.notificationService = notificationService;
         this.userMapper = userMapper;
         this.abilityService = abilityService;
+        this.abilityAssessmentMapper = abilityAssessmentMapper;
+        this.studentAbilityMapper = studentAbilityMapper;
         this.abilityDimensionMapper = abilityDimensionMapper;
         this.objectMapper = objectMapper;
     }
@@ -463,11 +471,13 @@ public class GradeServiceImpl implements GradeService {
         );
         if (report == null) return;
 
-        // 双重校验：确保报告属于同一学生，且若存在 assignmentId/submissionId 则必须与当前一致
+        // 严格校验：必须属于同一学生，且必须命中当前提交或当前作业。
         if (report.getStudentId() == null || !report.getStudentId().equals(studentId)) return;
-        if (report.getAssignmentId() != null && !report.getAssignmentId().equals(assignmentId)) return;
-        if (existing.getSubmissionId() != null && report.getSubmissionId() != null &&
-                !report.getSubmissionId().equals(existing.getSubmissionId())) return;
+        boolean sameSubmission = existing.getSubmissionId() != null
+                && report.getSubmissionId() != null
+                && report.getSubmissionId().equals(existing.getSubmissionId());
+        boolean sameAssignment = report.getAssignmentId() != null && report.getAssignmentId().equals(assignmentId);
+        if (!sameSubmission && !sameAssignment) return;
 
         // 优先从 trendsAnalysis 读取规范化JSON；其次尝试 dimensionScores
         Map<String, Object> normalized = null;
@@ -528,7 +538,7 @@ public class GradeServiceImpl implements GradeService {
             if (did == null) continue;
             java.math.BigDecimal score5 = java.math.BigDecimal.valueOf(e.getValue());
             try {
-                abilityService.recordAbilityAssessment(studentId, did, score5, "assignment", assignmentId, evidence);
+                upsertPublishedAbilityAssessment(studentId, did, assignmentId, score5, evidence);
             } catch (Exception ex) {
                 logger.warn("写入四维评估失败 studentId={}, dimensionCode={}, assignmentId={}", studentId, e.getKey(), assignmentId, ex);
             }
@@ -538,6 +548,63 @@ public class GradeServiceImpl implements GradeService {
     private String safeFirstNonBlank(String v) { return (v == null || v.isBlank()) ? null : v; }
     private double toDouble(Object v) { try { return v == null ? 0.0 : Double.parseDouble(String.valueOf(v)); } catch (Exception e) { return 0.0; } }
     private double clamp05(double v) { double x = Math.round(v * 10.0) / 10.0; if (x < 0) x = 0; if (x > 5) x = 5; return x; }
+
+    private void upsertPublishedAbilityAssessment(Long studentId,
+                                                  Long dimensionId,
+                                                  Long assignmentId,
+                                                  BigDecimal score5,
+                                                  String evidence) {
+        AbilityAssessment existingAssessment = abilityAssessmentMapper.selectLatestByStudentDimensionAndRelated(
+                studentId,
+                dimensionId,
+                "assignment",
+                assignmentId
+        );
+
+        if (existingAssessment == null) {
+            abilityService.recordAbilityAssessment(studentId, dimensionId, score5, "assignment", assignmentId, evidence);
+            return;
+        }
+
+        existingAssessment.setScore(score5);
+        existingAssessment.setMaxScore(BigDecimal.valueOf(5));
+        existingAssessment.setStatus("completed");
+        existingAssessment.setEvidence(evidence);
+        existingAssessment.setAssessedAt(LocalDateTime.now());
+        existingAssessment.setUpdatedAt(LocalDateTime.now());
+        abilityAssessmentMapper.updateAssessment(existingAssessment);
+        refreshStudentAbilitySnapshot(studentId, dimensionId, score5);
+    }
+
+    private void refreshStudentAbilitySnapshot(Long studentId, Long dimensionId, BigDecimal score5) {
+        StudentAbility snapshot = studentAbilityMapper.selectByStudentAndDimension(studentId, dimensionId);
+        if (snapshot == null) {
+            snapshot = new StudentAbility(studentId, dimensionId);
+            snapshot.setCurrentScore(score5);
+            snapshot.setLastAssessmentAt(LocalDateTime.now());
+            snapshot.setAssessmentCount(1);
+            snapshot.updateLevel();
+            snapshot.updateTimestamp();
+            studentAbilityMapper.insertStudentAbility(snapshot);
+            return;
+        }
+
+        BigDecimal previous = snapshot.getCurrentScore();
+        snapshot.setCurrentScore(score5);
+        snapshot.setLastAssessmentAt(LocalDateTime.now());
+        if (previous != null) {
+            int compare = score5.compareTo(previous);
+            snapshot.setTrend(compare > 0 ? "rising" : compare < 0 ? "declining" : "stable");
+        } else if (snapshot.getTrend() == null || snapshot.getTrend().isBlank()) {
+            snapshot.setTrend("stable");
+        }
+        if (snapshot.getAssessmentCount() == null || snapshot.getAssessmentCount() <= 0) {
+            snapshot.setAssessmentCount(1);
+        }
+        snapshot.updateLevel();
+        snapshot.updateTimestamp();
+        studentAbilityMapper.updateStudentAbility(snapshot);
+    }
 
     @Override
     public Map<String, Object> batchPublishGrades(List<Long> gradeIds) {

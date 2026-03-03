@@ -471,10 +471,6 @@
         }
       }
     },
-    "discovery": {
-      "title": "课程发现",
-      "subtitle": "在这里遇见下一门想学的课。"
-    },
     "emojiPicker": {
       "button": "表情"
     },
@@ -522,12 +518,34 @@
         "eventRefs": "关联事件 {count} 条",
         "idsLabel": "IDs"
       },
+      "goal": {
+        "title": "能力目标",
+        "active": "进行中",
+        "overdue": "已逾期",
+        "completionRate": "达成率",
+        "linkedDelta": "目标关联分数变化",
+        "focus": "当前聚焦",
+        "nextDue": "最近截止",
+        "recovery": "逾期后达成",
+        "latestAction": "最近动作",
+        "activeList": "进行中目标",
+        "overdueList": "逾期目标",
+        "dueToday": "今天到期",
+        "dueInDays": "剩余 {days} 天",
+        "overdueByDays": "已逾期 {days} 天",
+        "none": "暂无"
+      },
       "records": {
         "ai": { "title": "AI 交流记录", "desc": "本阶段内产生 AI 提问 {q} 次，追问 {f} 次。" },
+        "voice": { "title": "口语练习记录", "desc": "本阶段内完成口语训练回合 {n} 次。" },
+        "voiceReview": { "title": "口语复听记录", "desc": "本阶段内存在口语复听行为。" },
         "community": { "title": "社区互动记录", "desc": "本阶段内社区发问 {ask} 次，回答/回复 {ans} 次。" },
         "assignment": { "title": "作业提交记录", "desc": "本阶段内作业提交 {submit} 次，修改/重交 {resub} 次。" },
         "feedback": { "title": "反馈查看记录", "desc": "本阶段内查看反馈 {fb} 次（如成绩评语/能力报告等）。" },
-        "feedbackIteration": { "title": "查看反馈后进行修改", "desc": "本阶段内在查看反馈后对作业进行了修改。" }
+        "feedbackIteration": { "title": "查看反馈后进行修改", "desc": "本阶段内在查看反馈后对作业进行了修改。" },
+        "goalFocus": { "title": "能力目标聚焦", "desc": "本阶段内有设定、调整或持续跟进能力目标。" },
+        "goalAchievement": { "title": "能力目标达成", "desc": "本阶段内达成了至少一个能力目标。" },
+        "goalOverdue": { "title": "目标逾期提醒", "desc": "当前存在已超过目标日期但仍需继续推进的目标。" }
       },
       "nonEvaluative": {
         "title": "资源访问",
@@ -548,7 +566,7 @@
         "empty": "暂无历史洞见报告",
         "detailTitle": "洞见报告详情"
       },
-      "cooldown": "冷却中：7天内仅允许生成一次",
+      "cooldown": "冷却中：7天内最多生成2次",
       "cooldownUntil": "下次可生成时间：{time}",
       "empty": "暂无洞察结果（可先查看阶段一行为摘要）",
       "status": {
@@ -678,4 +696,3 @@
     }
   }
 }
-

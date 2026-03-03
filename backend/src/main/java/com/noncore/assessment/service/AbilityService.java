@@ -113,14 +113,14 @@ public interface AbilityService {
      * @param goal 更新的目标信息
      * @return 更新后的目标
      */
-    AbilityGoal updateAbilityGoal(Long goalId, AbilityGoal goal);
+    AbilityGoal updateAbilityGoal(Long goalId, Long studentId, AbilityGoal goal);
 
     /**
      * 删除能力目标
      *
      * @param goalId 目标ID
      */
-    void deleteAbilityGoal(Long goalId);
+    void deleteAbilityGoal(Long goalId, Long studentId);
 
     /**
      * 获取学生的能力目标
@@ -129,6 +129,15 @@ public interface AbilityService {
      * @return 目标列表
      */
     List<AbilityGoal> getStudentGoals(Long studentId);
+
+    /**
+     * 同步学生能力目标提醒到通知中心（即将到期 / 已逾期）。
+     *
+     * <p>该方法用于在用户拉取通知时按需补齐提醒，不依赖额外定时任务。</p>
+     *
+     * @param studentId 学生ID
+     */
+    void syncGoalReminderNotifications(Long studentId);
 
     /**
      * 提交自评
@@ -203,14 +212,14 @@ public interface AbilityService {
      *
      * @param recommendationId 建议ID
      */
-    void markRecommendationAsRead(Long recommendationId);
+    void markRecommendationAsRead(Long recommendationId, Long studentId);
 
     /**
      * 采纳学习建议
      *
      * @param recommendationId 建议ID
      */
-    void acceptRecommendation(Long recommendationId);
+    void acceptRecommendation(Long recommendationId, Long studentId);
 
     /**
      * 获取班级能力统计

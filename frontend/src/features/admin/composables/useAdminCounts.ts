@@ -57,18 +57,6 @@ export function useAdminCounts() {
     )
   }
 
-  async function countReports(status: string | undefined, ttlMs?: number) {
-    const key = `reports:${String(status || '')}`
-    return cachedCount(
-      key,
-      async () => {
-        const res = await adminApi.pageReports({ status: status || undefined, page: 1, size: 1 })
-        return num((res as any)?.total)
-      },
-      ttlMs
-    )
-  }
-
   async function countPosts(params: { status?: string; keyword?: string; category?: string; pinned?: boolean; includeDeleted?: boolean }, ttlMs?: number) {
     const key = `posts:${JSON.stringify(params || {})}`
     return cachedCount(
@@ -99,9 +87,7 @@ export function useAdminCounts() {
     clearCache,
     countUsers,
     countCourses,
-    countReports,
     countPosts,
     countComments,
   }
 }
-

@@ -49,27 +49,27 @@
 
     <!-- 根据ID查询能力目标 -->
     <select id="selectGoalById" resultMap="AbilityGoalResultMap">
-        SELECT <include refid="abilityGoalColumns"/>
+        SELECT <include refid="abilityGoalDetailColumns"/>
         FROM ability_goals g
+        LEFT JOIN ability_dimensions d ON g.dimension_id = d.id
+        LEFT JOIN users u ON g.student_id = u.id
         WHERE g.id = #{id}
     </select>
 
     <!-- 更新能力目标 -->
     <update id="updateGoal" parameterType="com.noncore.assessment.entity.AbilityGoal">
         UPDATE ability_goals
-        <set>
-            <if test="studentId != null">student_id = #{studentId},</if>
-            <if test="dimensionId != null">dimension_id = #{dimensionId},</if>
-            <if test="title != null">title = #{title},</if>
-            <if test="description != null">description = #{description},</if>
-            <if test="targetScore != null">target_score = #{targetScore},</if>
-            <if test="currentScore != null">current_score = #{currentScore},</if>
-            <if test="targetDate != null">target_date = #{targetDate},</if>
-            <if test="priority != null">priority = #{priority},</if>
-            <if test="status != null">status = #{status},</if>
-            <if test="achievedAt != null">achieved_at = #{achievedAt},</if>
+        SET student_id = #{studentId},
+            dimension_id = #{dimensionId},
+            title = #{title},
+            description = #{description},
+            target_score = #{targetScore},
+            current_score = #{currentScore},
+            target_date = #{targetDate},
+            priority = #{priority},
+            status = #{status},
+            achieved_at = #{achievedAt},
             updated_at = NOW()
-        </set>
         WHERE id = #{id}
     </update>
 
@@ -80,34 +80,49 @@
 
     <!-- 根据学生ID查询所有目标 -->
     <select id="selectGoalsByStudentId" resultMap="AbilityGoalResultMap">
-        SELECT <include refid="abilityGoalColumns"/>
+        SELECT <include refid="abilityGoalDetailColumns"/>
         FROM ability_goals g
+        LEFT JOIN ability_dimensions d ON g.dimension_id = d.id
+        LEFT JOIN users u ON g.student_id = u.id
         WHERE g.student_id = #{studentId}
         ORDER BY g.created_at DESC
     </select>
 
     <!-- 根据学生ID查询活跃目标（active/paused 等状态） -->
     <select id="selectActiveGoalsByStudent" resultMap="AbilityGoalResultMap">
-        SELECT <include refid="abilityGoalColumns"/>
+        SELECT <include refid="abilityGoalDetailColumns"/>
         FROM ability_goals g
+        LEFT JOIN ability_dimensions d ON g.dimension_id = d.id
+        LEFT JOIN users u ON g.student_id = u.id
         WHERE g.student_id = #{studentId} AND g.status = 'active'
         ORDER BY g.target_date
     </select>
 
     <!-- 根据学生ID和维度ID查询活跃目标 -->
     <select id="selectActiveGoalsByStudentAndDimension" resultMap="AbilityGoalResultMap">
-        SELECT <include refid="abilityGoalColumns"/>
+        SELECT <include refid="abilityGoalDetailColumns"/>
         FROM ability_goals g
+        LEFT JOIN ability_dimensions d ON g.dimension_id = d.id
+        LEFT JOIN users u ON g.student_id = u.id
         WHERE g.student_id = #{studentId}
         AND g.dimension_id = #{dimensionId}
         AND g.status = 'active'
         ORDER BY g.target_date
     </select>
 
+    <select id="selectStudentIdsWithActiveGoals" resultType="long">
+        SELECT DISTINCT g.student_id
+        FROM ability_goals g
+        WHERE g.status = 'active'
+        ORDER BY g.student_id
+    </select>
+
     <!-- 分页查询能力目标 -->
     <select id="selectGoalsWithPagination" resultMap="AbilityGoalResultMap">
-        SELECT <include refid="abilityGoalColumns"/>
+        SELECT <include refid="abilityGoalDetailColumns"/>
         FROM ability_goals g
+        LEFT JOIN ability_dimensions d ON g.dimension_id = d.id
+        LEFT JOIN users u ON g.student_id = u.id
         <where>
             <if test="studentId != null">AND g.student_id = #{studentId}</if>
             <if test="dimensionId != null">AND g.dimension_id = #{dimensionId}</if>
@@ -130,8 +145,10 @@
 
     <!-- 根据维度ID查询目标 -->
     <select id="selectGoalsByDimensionId" resultMap="AbilityGoalResultMap">
-        SELECT <include refid="abilityGoalColumns"/>
+        SELECT <include refid="abilityGoalDetailColumns"/>
         FROM ability_goals g
+        LEFT JOIN ability_dimensions d ON g.dimension_id = d.id
+        LEFT JOIN users u ON g.student_id = u.id
         WHERE g.dimension_id = #{dimensionId}
         ORDER BY g.created_at DESC
     </select>
@@ -148,8 +165,10 @@
 
     <!-- 获取即将到期的目标 -->
     <select id="selectUpcomingDeadlineGoals" resultMap="AbilityGoalResultMap">
-        SELECT <include refid="abilityGoalColumns"/>
+        SELECT <include refid="abilityGoalDetailColumns"/>
         FROM ability_goals g
+        LEFT JOIN ability_dimensions d ON g.dimension_id = d.id
+        LEFT JOIN users u ON g.student_id = u.id
         WHERE g.student_id = #{studentId}
         AND g.status = 'active'
         AND g.target_date BETWEEN CURDATE() AND DATE_ADD(CURDATE(), INTERVAL #{days} DAY)

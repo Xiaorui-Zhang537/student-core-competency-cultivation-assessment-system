@@ -52,24 +52,6 @@ export const courseApi = {
       return api.put('/courses/batch-status', data);
   },
 
-  // Search and discovery
-  searchCourses: (params: { keyword: string }): Promise<Course[]> => {
-    return api.get('/courses/search', { params });
-  },
-
-  getPopularCourses: (params?: { limit?: number }): Promise<Course[]> => {
-    return api.get('/courses/popular', { params });
-  },
-
-  getRecommendedCourses: (params?: { limit?: number }): Promise<Course[]> => {
-    return api.get('/courses/recommended', { params });
-  },
-
-  getCoursesByCategory: (category: string, params: { page?: number; size?: number }): Promise<PaginatedResponse<Course>> => {
-    // 与后端对齐：使用 /courses?category=xxx 获取分页结果
-    return api.get('/courses', { params: { category, ...params } });
-  },
-
   // Statistics
   getCourseStatistics: (): Promise<CourseStatistics> => {
     return api.get('/courses/statistics');

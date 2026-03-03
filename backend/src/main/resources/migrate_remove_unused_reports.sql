@@ -1,0 +1,5 @@
+USE student_assessment_system;
+
+SET FOREIGN_KEY_CHECKS = 0;
+DROP TABLE IF EXISTS reports;
+SET FOREIGN_KEY_CHECKS = 1;

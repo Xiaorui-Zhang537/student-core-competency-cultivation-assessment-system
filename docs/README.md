@@ -69,7 +69,7 @@ outline: [2, 3]
 - 新增后端管理员聚合端点（统一前缀 `/api/admin/*`），并通过 `@PreAuthorize("hasRole('ADMIN')")` 做权限保护。
 - 安全与审计：
   - `users.status` 支持 `active/disabled`，禁用账号不可登录/刷新令牌。
-  - 新增 `admin_audit_logs` 表，记录创建用户/权限变更/导出/治理/更新举报状态等高风险操作（含 IP、User-Agent、详情 JSON）。
+  - 新增 `admin_audit_logs` 表，记录创建用户/权限变更/导出/治理等高风险操作（含 IP、User-Agent、详情 JSON）。
 - 文档：
   - 新增：`docs/backend/api/admin.md`、`docs/frontend/api/admin.api.md`
   - 更新索引：`docs/backend/api/index.md`、`docs/frontend/api/index.md`
@@ -83,7 +83,7 @@ outline: [2, 3]
 ### 教师端 - 学生详情画像/活跃度/预警/建议与能力雷达（2025-09-19）
 - 新增端点：
   - `GET /api/teachers/students/{studentId}` 返回用户完整画像与汇总指标
-  - `GET /api/teachers/students/{studentId}/activity` 近 7/30 天活跃度与最近学习
+  - `GET /api/teachers/students/{studentId}/activity` 近 N 天活跃度与最近学习（`days/limit` 已真实生效，统一事件流含 `submission`）
   - `GET /api/teachers/students/{studentId}/alerts` 风险预警
   - `GET /api/teachers/students/{studentId}/recommendations` 个性化建议
 - 前端：`StudentDetailView.vue` 展示档案、联系方式、课程/平均分/完成率/最近活跃、最近学习、能力雷达、预警与建议
@@ -119,7 +119,7 @@ outline: [2, 3]
 - 统一前台页面的标题与简介展示，采用 `components/ui/PageHeader.vue` 复用组件；支持 actions 插槽放置筛选器与操作按钮；组件在 `main.ts` 已全局注册。
 - 学生端：Dashboard、Assignments、AssignmentSubmit、Courses、CourseDetail、Analysis、Analytics、Grades、Community、Ability（本次新增）、AIAssistant（共享）。
 - 教师端：Dashboard、ManageCourse、CourseDetail、CourseStudents、Analytics、ReviewAssignment、AssignmentSubmissions、GradeAssignment、StudentDetail、EditCourse。
-- 共享：Community、AIAssistant、Notifications、NotificationDetail、PostDetail、CourseDiscovery、Help。
+- 共享：Community、AIAssistant、Notifications、NotificationDetail、PostDetail、Help。
 - 使用方式示例：
   - 基础用法：`<PageHeader :title="t('xxx.title')" :subtitle="t('xxx.subtitle')" />`
   - 携带操作区：

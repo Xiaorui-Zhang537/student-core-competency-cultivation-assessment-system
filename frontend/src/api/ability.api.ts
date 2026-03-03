@@ -1,5 +1,5 @@
 import { api } from './config';
-import type { AbilityDimension, AbilityDashboardData, AbilityTrendData, AbilityRecommendation } from '@/types/ability';
+import type { AbilityDimension, AbilityDashboardData, AbilityTrendData, AbilityRecommendation, AbilityGoal, AbilityGoalPayload } from '@/types/ability';
 
 export const abilityApi = {
   // Student-facing endpoints
@@ -17,6 +17,22 @@ export const abilityApi = {
 
   getStudentRecommendations: (): Promise<AbilityRecommendation[]> => {
     return api.get('/ability/student/recommendations');
+  },
+
+  getStudentGoals: (): Promise<AbilityGoal[]> => {
+    return api.get('/ability/student/goals');
+  },
+
+  createStudentGoal: (payload: AbilityGoalPayload): Promise<AbilityGoal> => {
+    return api.post('/ability/student/goals', payload);
+  },
+
+  updateStudentGoal: (goalId: string | number, payload: AbilityGoalPayload): Promise<AbilityGoal> => {
+    return api.put(`/ability/student/goals/${goalId}`, payload);
+  },
+
+  deleteStudentGoal: (goalId: string | number): Promise<void> => {
+    return api.delete(`/ability/student/goals/${goalId}`);
   },
   
   // Student radar (same 5 dimensions as teacher)

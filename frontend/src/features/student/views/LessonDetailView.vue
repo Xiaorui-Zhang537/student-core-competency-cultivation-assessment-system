@@ -154,6 +154,55 @@
             </Button>
           </div>
         </card>
+
+        <!-- 课时评分 -->
+        <card padding="md" class="" tint="success">
+          <div class="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+            <div class="space-y-2">
+              <h4 class="font-medium">{{ t('student.lesson.ratingTitle') || '本节评分' }}</h4>
+              <p class="text-sm" style="color: color-mix(in oklab, var(--color-base-content) 68%, transparent)">
+                {{ t('student.lesson.ratingHint') || '给这一节一个直观反馈，系统会汇总成课程口碑分。' }}
+              </p>
+              <div class="flex flex-wrap items-center gap-3">
+                <rive-star-rating
+                  :value="lessonRating"
+                  :width="168"
+                  :height="40"
+                  interactive
+                  :use-rive="false"
+                  active-color="--color-primary"
+                  inactive-color="rgba(148, 163, 184, 0.28)"
+                  :aria-label="String(t('student.lesson.ratingAria') || '课时评分')"
+                  @update:value="updateLessonRating"
+                />
+                <span
+                  v-if="savedLessonRating > 0 && lessonRating === savedLessonRating"
+                  class="glass-ultraThin border rounded-full px-2 py-1 text-xs font-medium"
+                  style="color: color-mix(in oklab, var(--color-base-content) 84%, transparent); border-color: color-mix(in oklab, var(--color-base-content) 14%, transparent)"
+                >
+                  {{ t('student.lesson.ratingSavedBadge') || '已保存' }}
+                </span>
+              </div>
+            </div>
+            <div class="flex flex-col items-start gap-2 md:items-end">
+              <div class="text-xs" style="color: color-mix(in oklab, var(--color-base-content) 58%, transparent)">
+                {{ ratingStatusText }}
+              </div>
+              <Button
+                size="sm"
+                variant="primary"
+                :loading="ratingSaving"
+                :disabled="ratingSaving || !lesson?.id || lessonRating < 1 || lessonRating === savedLessonRating"
+                @click="saveLessonRating"
+              >
+                <template #icon>
+                  <svg class="w-4 h-4" viewBox="0 0 20 20" fill="currentColor"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.08 3.322a1 1 0 00.95.69h3.493c.969 0 1.371 1.24.588 1.81l-2.826 2.054a1 1 0 00-.364 1.118l1.08 3.322c.3.921-.755 1.688-1.538 1.118l-2.826-2.054a1 1 0 00-1.176 0l-2.826 2.054c-.783.57-1.838-.197-1.539-1.118l1.08-3.322a1 1 0 00-.363-1.118L2.938 8.75c-.783-.57-.38-1.81.588-1.81H7.02a1 1 0 00.951-.69l1.079-3.322z"/></svg>
+                </template>
+                {{ t('student.lesson.ratingAction') || '提交评分' }}
+              </Button>
+            </div>
+          </div>
+        </card>
       </section>
     </div>
   </div>
@@ -180,6 +229,7 @@ import { courseApi } from '@/api/course.api'
 import { EyeIcon } from '@heroicons/vue/24/outline'
 import { useUIStore } from '@/stores/ui'
 import PageScaffold from '@/components/ui/PageScaffold.vue'
+import RiveStarRating from '@/components/ui/RiveStarRating.vue'
 
 const { t } = useI18n()
 const route = useRoute()
@@ -200,6 +250,9 @@ const relatedAssignments = computed(() => {
 })
 const notes = ref('')
 const saving = ref(false)
+const lessonRating = ref(0)
+const savedLessonRating = ref(0)
+const ratingSaving = ref(false)
 const videoRef = ref<HTMLVideoElement | null>(null)
 const videoSrc = ref<string>('')
 const videoType = ref<string>('video/mp4')
@@ -466,6 +519,9 @@ async function syncStoredProgressOnce(lessonId: string) {
     if (Number.isFinite(pv)) {
       progressMap.value[String(lessonId)] = Math.round(pv)
     }
+    const rv = normalizeLessonRating(p?.rating)
+    lessonRating.value = rv
+    savedLessonRating.value = rv
   } catch {}
 }
 
@@ -487,6 +543,31 @@ async function saveNotes() {
     })
   } finally {
     saving.value = false
+  }
+}
+
+async function saveLessonRating() {
+  if (!lesson.value?.id) return
+  const nextRating = normalizeLessonRating(lessonRating.value)
+  if (nextRating < 1) return
+  ratingSaving.value = true
+  try {
+    await lessonApi.rateLesson(String(lesson.value.id), nextRating)
+    lessonRating.value = nextRating
+    savedLessonRating.value = nextRating
+    uiStore.showNotification({
+      type: 'success',
+      title: String(t('student.lesson.ratingSavedTitle') || '评分成功'),
+      message: String(t('student.lesson.ratingSaved') || '你的课时评分已保存，并会汇总到课程口碑分。')
+    })
+  } catch {
+    uiStore.showNotification({
+      type: 'error',
+      title: String(t('student.lesson.ratingSaveFailedTitle') || '评分失败'),
+      message: String(t('student.lesson.ratingSaveFailed') || '评分保存失败，请稍后重试')
+    })
+  } finally {
+    ratingSaving.value = false
   }
 }
 
@@ -872,8 +953,26 @@ const pageSubtitle = computed(() => {
   // 统一用 i18n 模板句
   return String(t('student.lesson.subtitleProgress', { progress: p }))
 })
+
+const ratingStatusText = computed(() => {
+  if (savedLessonRating.value > 0 && lessonRating.value === savedLessonRating.value) {
+    return String(t('student.lesson.ratingCurrent') || '已保存你的评分')
+  }
+  if (lessonRating.value > 0) {
+    return String(t('student.lesson.ratingPending') || '已选择星级，点击提交即可保存')
+  }
+  return String(t('student.lesson.ratingSelectHint') || '点击星星即可选择 1-5 分。')
+})
+
+function normalizeLessonRating(value: unknown): number {
+  const safe = Number(value)
+  if (!Number.isFinite(safe) || safe <= 0) return 0
+  return Math.max(1, Math.min(5, Math.round(safe)))
+}
+
+function updateLessonRating(value: number) {
+  lessonRating.value = normalizeLessonRating(value)
+}
 </script>
 
  
-
-

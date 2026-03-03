@@ -417,6 +417,8 @@ const getLocalizedTitle = (notification: any) => {
       'course_update': 'notifications.categoryTitles.courseUpdate',
       'assignment_deadline': 'notifications.categoryTitles.assignmentDeadline',
       'assignment_reminder': 'notifications.categoryTitles.assignmentReminder',
+      'goal_deadline': 'notifications.categoryTitles.goalDeadline',
+      'goal_overdue': 'notifications.categoryTitles.goalOverdue',
       'assignment': 'notifications.categoryTitles.assignmentPublished',
       'grade_posted': 'notifications.categoryTitles.gradePosted',
       'message': 'notifications.categoryTitles.message'

@@ -7,7 +7,6 @@
         <id column="id" property="id"/>
         <result column="student_id" property="studentId"/>
         <result column="dimension_id" property="dimensionId"/>
-        <result column="ability_id" property="abilityId"/>
         <result column="max_score" property="maxScore"/>
         <result column="ability_level" property="abilityLevel"/>
         <result column="assessment_type" property="assessmentType"/>
@@ -33,7 +32,7 @@
 
     <!-- 基础查询字段 -->
     <sql id="abilityAssessmentColumns">
-        a.id, a.student_id, a.dimension_id, a.ability_id, a.assessment_type, a.status,
+        a.id, a.student_id, a.dimension_id, a.assessment_type, a.status,
         a.score, a.max_score, a.ability_level, a.confidence, a.improvement,
         a.assessed_at, a.assessor_id, a.related_id, a.evidence,
         a.created_at, a.updated_at, a.deleted
@@ -47,11 +46,11 @@
     <!-- 插入评估记录 -->
     <insert id="insertAssessment" parameterType="com.noncore.assessment.entity.AbilityAssessment" useGeneratedKeys="true" keyProperty="id">
         INSERT INTO ability_assessments (
-            student_id, dimension_id, ability_id, assessment_type, status, score,
+            student_id, dimension_id, assessment_type, status, score,
             max_score, ability_level, confidence, assessed_at, assessor_id,
             related_id, evidence, improvement, created_at, updated_at, deleted
         ) VALUES (
-            #{studentId}, #{dimensionId}, #{abilityId}, #{assessmentType}, #{status}, #{score},
+            #{studentId}, #{dimensionId}, #{assessmentType}, #{status}, #{score},
             #{maxScore}, #{abilityLevel}, #{confidence}, #{assessedAt}, #{assessorId},
             #{relatedId}, #{evidence}, #{improvement}, NOW(), NOW(), false
         )
@@ -114,13 +113,13 @@
     <!-- 批量插入评估记录 -->
     <insert id="batchInsertAssessments">
         INSERT INTO ability_assessments (
-            student_id, dimension_id, ability_id, assessment_type, status, score,
+            student_id, dimension_id, assessment_type, status, score,
             max_score, ability_level, confidence, assessed_at, assessor_id,
             related_id, evidence, improvement, created_at, updated_at, deleted
         ) VALUES
         <foreach collection="assessments" item="item" separator=",">
             (
-                #{item.studentId}, #{item.dimensionId}, #{item.abilityId}, #{item.assessmentType}, #{item.status},
+                #{item.studentId}, #{item.dimensionId}, #{item.assessmentType}, #{item.status},
                 #{item.score}, #{item.maxScore}, #{item.abilityLevel}, #{item.confidence}, #{item.assessedAt},
                 #{item.assessorId}, #{item.relatedId}, #{item.evidence}, #{item.improvement},
                 NOW(), NOW(), false
@@ -193,7 +192,6 @@
         SET
             student_id = #{studentId},
             dimension_id = #{dimensionId},
-            ability_id = #{abilityId},
             assessment_type = #{assessmentType},
             status = #{status},
             score = #{score},
@@ -232,6 +230,18 @@
         SELECT *
         FROM ability_assessments
         WHERE student_id = #{studentId} AND dimension_id = #{dimensionId} AND deleted = false
+    </select>
+
+    <select id="selectLatestByStudentDimensionAndRelated" resultMap="AbilityAssessmentResultMap">
+        SELECT *
+        FROM ability_assessments
+        WHERE student_id = #{studentId}
+          AND dimension_id = #{dimensionId}
+          AND assessment_type = #{assessmentType}
+          AND related_id = #{relatedId}
+          AND deleted = false
+        ORDER BY assessed_at DESC, id DESC
+        LIMIT 1
     </select>
 
     <select id="selectByAssessmentType" resultMap="AbilityAssessmentResultMap">

@@ -34,9 +34,6 @@ public class AbilityAssessment {
     @Schema(description = "能力维度ID", example = "1")
     private Long dimensionId; // 能力维度ID
 
-    @Schema(description = "能力ID", example = "1")
-    private Long abilityId;
-
     // 关联字段
     @Schema(description = "能力维度名称", example = "编程能力")
     private String dimensionName; // 能力维度名称

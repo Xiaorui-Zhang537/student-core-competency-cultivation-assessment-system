@@ -23,7 +23,6 @@ outline: [2, 3]
 - 社区（Community）：`/backend/api/community`
 - 通知（Notifications）：`/backend/api/notification`
 - 文件（Files）：`/backend/api/file`
-- 报表（Reports）：`/backend/api/report`
 - 帮助中心（Help Center）：`/backend/api/help`
 - 聊天（Chat）：`/backend/api/chat`
 - 项目/工作台（Project）：`/backend/api/project`

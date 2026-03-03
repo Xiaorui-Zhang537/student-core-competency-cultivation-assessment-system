@@ -211,26 +211,8 @@ sequenceDiagram
 ```
 
 ## 举报表单（ReportFormView）
-```mermaid
-sequenceDiagram
-  participant V as Vue(ReportForm)
-  participant S as ReportStore
-  participant A as report.api.ts
-  participant B as ReportController
 
-  V->>S: submit(payload)
-  S->>A: createReport(data)
-  A->>B: POST /reports
-  alt 成功
-    B-->>A: { id, status }
-    A-->>S: 保存
-    S-->>V: 显示编号/跳转
-  else 400/403
-    B-->>A: error
-    A-->>S: 抛错
-    S-->>V: 显示校验/权限提示
-  end
-```
+该链路已在 2026-03 下线：前端入口、后端 CRUD 与 `reports` 表均已移除，不再属于当前主流程。
 
 ## 学生课时进度（LessonPlayerView）
 ```mermaid

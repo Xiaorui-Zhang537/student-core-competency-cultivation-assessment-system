@@ -238,7 +238,7 @@ curl -H "Authorization: Bearer $TOKEN" \
   "message": "Success",
   "data": {
     "kpi": { "avgScore": 88.2, "completionRate": 93.0, "studyHours": 20, "activeDays": 10 },
-    "radar": { "invest": 75.0, "quality": 75.0, "mastery": 75.0, "stability": 75.0, "growth": 75.0 },
+    "radar": { "invest": 93.0, "quality": 88.2, "mastery": 86.0, "stability": 82.0, "growth": 80.0 },
     "trends": { "score": [], "completion": [], "hours": [] },
     "recentGrades": []
   }
@@ -248,6 +248,9 @@ curl -H "Authorization: Bearer $TOKEN" \
 说明：
 
 - `completionRate`：当前实现返回 `0-100` 的百分比数值。
+- `radar.invest`：优先使用学习态度快照，缺失时回退到完成率。
+- `radar.quality`：优先使用平均成绩，缺失时回退到能力快照均值。
+- `radar.mastery / stability / growth`：分别优先映射学习能力、道德认知、学习方法快照。
 
 ## 9. 课程参与者
 

@@ -59,5 +59,10 @@ public interface BehaviorInsightMapper {
     long countByStudentSince(@Param("studentId") Long studentId,
                              @Param("schemaVersion") String schemaVersion,
                              @Param("since") java.time.LocalDateTime since);
-}
 
+    /**
+     * 获取指定时间点之后、计入额度的最早一条洞察生成时间。
+     */
+    java.time.LocalDateTime getEarliestCountedByStudentSince(@Param("studentId") Long studentId,
+                                                             @Param("since") java.time.LocalDateTime since);
+}

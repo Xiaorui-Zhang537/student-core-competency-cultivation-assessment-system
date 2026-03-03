@@ -7,7 +7,7 @@
           {{ tf('shared.behaviorEvidence.subtitle', '基于行为事件的事实摘要') }}
         </div>
       </div>
-      <Button variant="outline" size="sm" :disabled="loading" @click="reload">
+      <Button variant="outline" size="sm" :disabled="loading" @click="reload(true)">
         {{
           loading
             ? tf('shared.behaviorEvidence.loading', '加载中...')
@@ -96,6 +96,111 @@
         </div>
       </div>
 
+      <!-- 能力目标证据 -->
+      <div v-if="hasGoalSection">
+        <div class="flex items-center justify-between mb-2">
+          <div class="flex items-center gap-2 text-sm font-semibold">
+            <sparkles-icon class="w-4 h-4 text-rose-600 dark:text-rose-400" />
+            <span>{{ tf('shared.behaviorEvidence.goal.title', '能力目标') }}</span>
+          </div>
+          <badge v-if="Number(goalSignals.totalGoalCount) > 0" size="sm" variant="info">
+            {{ n(goalSignals.totalGoalCount) }}
+          </badge>
+        </div>
+        <div class="rounded-2xl p-4 glass-ultraThin border border-white/20 dark:border-white/10 bg-gradient-to-r from-rose-500/10 via-orange-500/6 to-transparent">
+          <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 text-sm">
+            <div>
+              <div class="text-xs text-gray-500">{{ tf('shared.behaviorEvidence.goal.active', '进行中') }}</div>
+              <div class="mt-1 font-semibold text-gray-700 dark:text-gray-200">{{ n(goalSignals.activeCount) }}</div>
+            </div>
+            <div>
+              <div class="text-xs text-gray-500">{{ tf('shared.behaviorEvidence.goal.overdue', '已逾期') }}</div>
+              <div class="mt-1 font-semibold text-gray-700 dark:text-gray-200">{{ n(goalSignals.overdueCount) }}</div>
+            </div>
+            <div>
+              <div class="text-xs text-gray-500">{{ tf('shared.behaviorEvidence.goal.completionRate', '达成率') }}</div>
+              <div class="mt-1 font-semibold text-gray-700 dark:text-gray-200">{{ percent(goalSignals.completionRate) }}</div>
+            </div>
+            <div>
+              <div class="text-xs text-gray-500">{{ tf('shared.behaviorEvidence.goal.linkedDelta', '目标关联分数变化') }}</div>
+              <div class="mt-1 font-semibold text-gray-700 dark:text-gray-200">{{ signed(goalSignals.linkedScoreDelta) }}</div>
+            </div>
+          </div>
+          <div class="mt-3 grid grid-cols-1 lg:grid-cols-3 gap-3 text-sm">
+            <div>
+              <div class="text-xs text-gray-500">{{ tf('shared.behaviorEvidence.goal.focus', '当前聚焦') }}</div>
+              <div class="mt-1 text-gray-700 dark:text-gray-200">{{ goalSignals.focusSummary || tf('shared.behaviorEvidence.goal.none', '暂无') }}</div>
+            </div>
+            <div>
+              <div class="text-xs text-gray-500">{{ tf('shared.behaviorEvidence.goal.nextDue', '最近截止') }}</div>
+              <div class="mt-1 text-gray-700 dark:text-gray-200">
+                {{ formatGoalDate(goalSignals.nextTargetDate) }}
+                <span v-if="goalSignals.nextTargetDate" class="text-xs text-gray-500 ml-2">
+                  ({{ dueLabel(goalSignals.nearestDueInDays) }})
+                </span>
+              </div>
+            </div>
+            <div>
+              <div class="text-xs text-gray-500">{{ tf('shared.behaviorEvidence.goal.recovery', '逾期后达成') }}</div>
+              <div class="mt-1 text-gray-700 dark:text-gray-200">
+                {{ n(goalSignals.overdueRecoveryCount) }}
+                <span class="text-xs text-gray-500 ml-2">
+                  {{ tf('shared.behaviorEvidence.goal.latestAction', '最近动作') }}: {{ formatGoalDateTime(goalSignals.latestActionAt) }}
+                </span>
+              </div>
+            </div>
+          </div>
+          <div v-if="goalSignals.activeGoals?.length" class="mt-3">
+            <div class="text-xs text-gray-500 mb-2">{{ tf('shared.behaviorEvidence.goal.activeList', '进行中目标') }}</div>
+            <div class="flex flex-wrap gap-2">
+              <span
+                v-for="it in goalSignals.activeGoals"
+                :key="`active-${it.goalId || it.title}`"
+                class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs bg-white/60 dark:bg-white/8 text-gray-700 dark:text-gray-200 border border-white/40 dark:border-white/10"
+              >
+                <span>{{ it.dimensionName || it.title || '-' }}</span>
+                <span class="text-gray-500">{{ formatGoalScore(it.currentScore) }}/{{ formatGoalScore(it.targetScore) }}</span>
+              </span>
+            </div>
+          </div>
+          <div v-if="goalSignals.overdueGoals?.length" class="mt-3">
+            <div class="text-xs text-gray-500 mb-2">{{ tf('shared.behaviorEvidence.goal.overdueList', '逾期目标') }}</div>
+            <div class="flex flex-wrap gap-2">
+              <span
+                v-for="it in goalSignals.overdueGoals"
+                :key="`overdue-${it.goalId || it.title}`"
+                class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs bg-rose-500/10 text-rose-700 dark:text-rose-300 border border-rose-400/20"
+              >
+                <span>{{ it.dimensionName || it.title || '-' }}</span>
+                <span>{{ formatGoalDate(it.targetDate) }}</span>
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <div v-if="goalEvidenceItems.length" class="space-y-2 mt-3">
+          <div
+            v-for="(it, idx) in goalEvidenceItems"
+            :key="it.evidenceId || `goal-${idx}`"
+            class="rounded-2xl p-4 glass-ultraThin border border-white/20 dark:border-white/10 border-l-4"
+            :class="goalEvidenceTintClass(it.evidenceType)"
+            v-glass="{ strength: 'ultraThin', interactive: false }"
+          >
+            <div class="flex items-center justify-between gap-3">
+              <div class="font-medium truncate">{{ evidenceTitle(it) }}</div>
+              <badge v-if="it.evidenceId" size="sm" variant="secondary">{{ it.evidenceId }}</badge>
+            </div>
+            <div class="text-sm text-gray-500 mt-1 whitespace-pre-wrap">{{ evidenceDescription(it) }}</div>
+            <div v-if="it.eventRefs?.length" class="text-xs text-gray-400 mt-2">
+              <div>{{ eventRefsLabel(it.eventRefs.length) }}</div>
+              <div class="mt-1 break-all">
+                {{ tf('shared.behaviorEvidence.evidence.idsLabel', 'IDs') }}: {{ it.eventRefs.join(', ') }}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <!-- 证据条目 -->
       <div>
         <div class="flex items-center justify-between mb-2">
@@ -103,16 +208,16 @@
             <clipboard-document-list-icon class="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
             <span>{{ tf('shared.behaviorEvidence.evidence.title', '证据条目') }}</span>
           </div>
-          <badge v-if="summary?.evidenceItems?.length" size="sm" variant="info">
-            {{ summary.evidenceItems.length }}
+          <badge v-if="generalEvidenceItems.length" size="sm" variant="info">
+            {{ generalEvidenceItems.length }}
           </badge>
         </div>
-        <div v-if="!summary?.evidenceItems || summary.evidenceItems.length === 0" class="text-sm text-gray-500">
+        <div v-if="generalEvidenceItems.length === 0" class="text-sm text-gray-500">
           {{ tf('shared.behaviorEvidence.evidence.empty', '暂无可展示的证据条目') }}
         </div>
         <div v-else class="space-y-2">
           <div
-            v-for="(it, idx) in summary.evidenceItems"
+            v-for="(it, idx) in generalEvidenceItems"
             :key="it.evidenceId || it.title"
             class="rounded-2xl p-4 glass-ultraThin border border-white/20 dark:border-white/10 border-l-4"
             :class="evidenceTintClass(idx)"
@@ -161,7 +266,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, ref, watch } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import Card from '@/components/ui/Card.vue'
 import Button from '@/components/ui/Button.vue'
@@ -198,13 +303,95 @@ function tf(key: string, fallback: string): string {
 const loading = ref(false)
 const error = ref<string | null>(null)
 const data = ref<BehaviorSummaryResponse | null>(null)
+const lastReloadKey = ref('')
 
 const summary = computed(() => data.value)
 const isEnLocale = computed(() => String(locale?.value || 'zh-CN').toLowerCase().startsWith('en'))
+const goalSignals = computed<Record<string, any>>(() => {
+  const raw = summary.value?.signals?.goalSignals
+  return raw && typeof raw === 'object' ? raw as Record<string, any> : {}
+})
+const goalEvidenceItems = computed(() =>
+  (summary.value?.evidenceItems || []).filter((it) => String(it?.evidenceType || '').startsWith('goal_'))
+)
+const generalEvidenceItems = computed(() =>
+  (summary.value?.evidenceItems || []).filter((it) => !String(it?.evidenceType || '').startsWith('goal_'))
+)
+const hasGoalSection = computed(() =>
+  goalEvidenceItems.value.length > 0
+  || Number(goalSignals.value.totalGoalCount || 0) > 0
+  || Number(goalSignals.value.activeCount || 0) > 0
+)
+
+function toNumber(v: any): number {
+  const num = Number(v ?? 0)
+  return Number.isFinite(num) ? num : 0
+}
 
 function n(v: any): string {
-  const num = Number(v ?? 0)
-  return Number.isFinite(num) ? String(num) : '0'
+  return String(toNumber(v))
+}
+
+function percent(v: any): string {
+  const raw = Number(v)
+  if (!Number.isFinite(raw)) return '0%'
+  const normalized = raw > 1 ? raw : raw * 100
+  return `${Math.round(normalized)}%`
+}
+
+function signed(v: any): string {
+  const raw = Number(v)
+  if (!Number.isFinite(raw)) return '-'
+  if (raw > 0) return `+${raw.toFixed(2)}`
+  return raw.toFixed(2)
+}
+
+function formatGoalScore(v: any): string {
+  const raw = Number(v)
+  if (!Number.isFinite(raw)) return '-'
+  return raw.toFixed(2)
+}
+
+function formatGoalDate(input: any): string {
+  if (!input) return '-'
+  const date = new Date(String(input))
+  if (isNaN(date.getTime())) return '-'
+  if (isEnLocale.value) {
+    return new Intl.DateTimeFormat('en-US', { month: 'short', day: '2-digit' }).format(date)
+  }
+  const month = `${date.getMonth() + 1}`.padStart(2, '0')
+  const day = `${date.getDate()}`.padStart(2, '0')
+  return `${month}月${day}日`
+}
+
+function formatGoalDateTime(input: any): string {
+  if (!input) return '-'
+  const date = new Date(String(input))
+  if (isNaN(date.getTime())) return '-'
+  if (isEnLocale.value) {
+    return new Intl.DateTimeFormat('en-US', {
+      month: 'short',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: false
+    }).format(date).replace(',', '')
+  }
+  const month = `${date.getMonth() + 1}`.padStart(2, '0')
+  const day = `${date.getDate()}`.padStart(2, '0')
+  const hour = `${date.getHours()}`.padStart(2, '0')
+  const minute = `${date.getMinutes()}`.padStart(2, '0')
+  return `${month}月${day}日 ${hour}:${minute}`
+}
+
+function dueLabel(v: any): string {
+  const days = Number(v)
+  if (!Number.isFinite(days)) return '-'
+  if (days === 0) return tf('shared.behaviorEvidence.goal.dueToday', '今天到期')
+  if (days > 0) {
+    return tf('shared.behaviorEvidence.goal.dueInDays', '剩余 {days} 天').replace('{days}', String(days))
+  }
+  return tf('shared.behaviorEvidence.goal.overdueByDays', '已逾期 {days} 天').replace('{days}', String(Math.abs(days)))
 }
 
 function formatMap(m: Record<string, any>): string {
@@ -236,6 +423,8 @@ function evidenceTitle(it: any): string {
         return tf('shared.behaviorEvidence.records.ai.title', 'AI Interaction')
       case 'voice_practice_activity':
         return tf('shared.behaviorEvidence.records.voice.title', 'Speaking Practice')
+      case 'voice_practice_review':
+        return tf('shared.behaviorEvidence.records.voiceReview.title', 'Speaking Replay')
       case 'community_activity':
         return tf('shared.behaviorEvidence.records.community.title', 'Community Activity')
       case 'assignment_activity':
@@ -244,6 +433,12 @@ function evidenceTitle(it: any): string {
         return tf('shared.behaviorEvidence.records.feedback.title', 'Feedback Views')
       case 'feedback_iteration':
         return tf('shared.behaviorEvidence.records.feedbackIteration.title', 'Post-feedback revision')
+      case 'goal_focus':
+        return tf('shared.behaviorEvidence.records.goalFocus.title', 'Goal Focus')
+      case 'goal_achievement':
+        return tf('shared.behaviorEvidence.records.goalAchievement.title', 'Goal Achieved')
+      case 'goal_overdue':
+        return tf('shared.behaviorEvidence.records.goalOverdue.title', 'Goal Overdue')
       default:
         return it.title || it.evidenceType || '-'
     }
@@ -275,6 +470,8 @@ function evidenceDescription(it: any): string {
         return tf('shared.behaviorEvidence.records.community.desc', 'In this stage: {ask} asks, {ans} replies.')
           .replace('{ask}', String(ask))
           .replace('{ans}', String(ans))
+      case 'voice_practice_review':
+        return tf('shared.behaviorEvidence.records.voiceReview.desc', 'Replay activity was recorded in this stage.')
       case 'assignment_activity':
         return tf('shared.behaviorEvidence.records.assignment.desc', 'In this stage: {submit} submissions, {resub} resubmits.')
           .replace('{submit}', String(submit))
@@ -285,11 +482,30 @@ function evidenceDescription(it: any): string {
       case 'feedback_iteration':
         // 该条证据是后端通过事件引用生成的最小证据，这里给个稳定英文兜底
         return tf('shared.behaviorEvidence.records.feedbackIteration.desc', 'Revised an assignment after viewing feedback.')
+      case 'goal_focus':
+        return tf('shared.behaviorEvidence.records.goalFocus.desc', 'Created, updated, or kept active learning goals in this stage.')
+      case 'goal_achievement':
+        return tf('shared.behaviorEvidence.records.goalAchievement.desc', 'Completed at least one learning goal in this stage.')
+      case 'goal_overdue':
+        return tf('shared.behaviorEvidence.records.goalOverdue.desc', 'There are active goals that have passed the target date and still need follow-through.')
       default:
         return it.description || '-'
     }
   }
   return it.description || '-'
+}
+
+function goalEvidenceTintClass(type: any): string {
+  switch (String(type || '')) {
+    case 'goal_focus':
+      return 'border-l-rose-500 bg-gradient-to-r from-rose-500/18 via-rose-500/8 to-transparent dark:from-rose-400/22 dark:via-rose-400/10'
+    case 'goal_achievement':
+      return 'border-l-emerald-500 bg-gradient-to-r from-emerald-500/18 via-emerald-500/8 to-transparent dark:from-emerald-400/22 dark:via-emerald-400/10'
+    case 'goal_overdue':
+      return 'border-l-amber-500 bg-gradient-to-r from-amber-500/18 via-amber-500/8 to-transparent dark:from-amber-400/22 dark:via-amber-400/10'
+    default:
+      return 'glass-tint-secondary'
+  }
 }
 
 function evidenceTintClass(idx: number): string {
@@ -305,11 +521,21 @@ function evidenceTintClass(idx: number): string {
   }
 }
 
-async function reload() {
+function buildReloadKey(): string {
+  return [props.studentId ?? '', props.courseId ?? '', props.range || '7d', props.adminMode ? 'admin' : 'user'].join('|')
+}
+
+async function reload(force = false) {
   // 参数未就绪时不请求，避免首帧出现“studentId 必填”
   if (props.studentId === undefined || props.studentId === null || String(props.studentId).trim() === '') {
     data.value = null
     error.value = null
+    lastReloadKey.value = ''
+    emit('update:summary', null)
+    return
+  }
+  const requestKey = buildReloadKey()
+  if (!force && requestKey === lastReloadKey.value) {
     return
   }
   loading.value = true
@@ -322,6 +548,7 @@ async function reload() {
       courseId: props.courseId,
       range: props.range || '7d'
     })
+    lastReloadKey.value = requestKey
     emit('update:summary', data.value)
   } catch (e: any) {
     error.value = e?.message || String(e || '')
@@ -332,9 +559,8 @@ async function reload() {
 }
 
 watch(
-  () => [props.studentId, props.courseId, props.range],
+  [() => props.studentId, () => props.courseId, () => props.range, () => props.adminMode],
   () => reload(),
-  { deep: true, immediate: true }
+  { immediate: true }
 )
 </script>
-

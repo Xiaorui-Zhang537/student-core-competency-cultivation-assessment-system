@@ -1,6 +1,7 @@
 package com.noncore.assessment.controller;
 
 import com.noncore.assessment.entity.Notification;
+import com.noncore.assessment.service.AbilityService;
 import com.noncore.assessment.service.NotificationService;
 import com.noncore.assessment.service.UserService;
 import com.noncore.assessment.util.ApiResponse;
@@ -32,10 +33,12 @@ import java.util.Map;
 public class NotificationController extends BaseController {
 
     private final NotificationService notificationService;
+    private final AbilityService abilityService;
 
-    public NotificationController(NotificationService notificationService, UserService userService) {
+    public NotificationController(NotificationService notificationService, AbilityService abilityService, UserService userService) {
         super(userService);
         this.notificationService = notificationService;
+        this.abilityService = abilityService;
     }
 
     /**
@@ -48,6 +51,7 @@ public class NotificationController extends BaseController {
             @RequestParam(value = "type", required = false) String type,
             @RequestParam(value = "page", defaultValue = "1") Integer page,
             @RequestParam(value = "size", defaultValue = "20") Integer size) {
+        abilityService.syncGoalReminderNotifications(getCurrentUserId());
         PageResult<Notification> notifications = notificationService.getUserNotifications(getCurrentUserId(), type, page, size);
         return ResponseEntity.ok(ApiResponse.success(notifications));
     }
@@ -127,6 +131,7 @@ public class NotificationController extends BaseController {
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<ApiResponse<Map<String, Object>>> getUnreadCount(
             @RequestParam(value = "type", required = false) String type) {
+        abilityService.syncGoalReminderNotifications(getCurrentUserId());
         Integer count = notificationService.getUnreadCount(getCurrentUserId(), type);
         Map<String, Object> result = Map.of("unreadCount", count);
         return ResponseEntity.ok(ApiResponse.success(result));
@@ -139,6 +144,7 @@ public class NotificationController extends BaseController {
     @Operation(summary = "获取通知统计信息", description = "获取当前用户的通知统计信息")
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<ApiResponse<Map<String, Object>>> getNotificationStats() {
+        abilityService.syncGoalReminderNotifications(getCurrentUserId());
         Map<String, Object> stats = notificationService.getNotificationStats(getCurrentUserId());
         return ResponseEntity.ok(ApiResponse.success(stats));
     }

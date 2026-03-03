@@ -114,6 +114,8 @@
         "detailTitle": "课程详情",
         "sectionIntro": "本节说明",
         "subtitleAi": "把重点交给 AI 整理，把时间留给真正的练习——从未完成的小节开始就好。",
+        "ratingLabel": "课程口碑",
+        "ratingVotes": "份评分",
         "continueLearning": "继续学习",
         "courseAssignments": "课程作业",
         "assignmentSummary": "作业总计/待完成"
@@ -185,6 +187,18 @@
     "subtitleStart": "慢慢来，把今天这 10 分钟学扎实就很好。",
     "subtitleDone": "你已经学完这一节了，给自己一个小小的肯定。",
     "subtitleProgress": "稳稳推进中，已完成 {progress}%。",
+    "ratingTitle": "本节评分",
+    "ratingHint": "给这一节一个直观反馈，系统会汇总成课程口碑分。",
+    "ratingAria": "课时评分",
+    "ratingAction": "提交评分",
+    "ratingSavedBadge": "已保存",
+    "ratingCurrent": "已保存你的评分",
+    "ratingPending": "已选择星级，点击提交即可保存",
+    "ratingSelectHint": "点击星星即可选择 1-5 分。",
+    "ratingSavedTitle": "评分成功",
+    "ratingSaved": "你的课时评分已保存，并会汇总到课程口碑分。",
+    "ratingSaveFailedTitle": "评分失败",
+    "ratingSaveFailed": "评分保存失败，请稍后重试",
     "notesSaved": "笔记已保存",
     "notesSaveFailed": "笔记保存失败，请稍后重试"
   },
@@ -304,7 +318,47 @@
       "selectCourse": "请选择课程",
       "compare": "对比模式",
       "compareSetA": "集合A",
-      "compareSetB": "集合B"
+      "compareSetB": "集合B",
+      "goals": {
+        "title": "能力目标",
+        "subtitle": "给每个维度设一个清晰的下一步。",
+        "create": "新建目标",
+        "edit": "编辑目标",
+        "empty": "还没有目标，先为一个维度设定具体提升目标。",
+        "dimension": "目标维度",
+        "name": "目标标题",
+        "targetScore": "目标分数（0-5）",
+        "targetDate": "截止日期",
+        "priority": "优先级",
+        "description": "补充说明",
+        "descriptionPlaceholder": "写清楚这个目标要如何落地，例如每周复盘、按题型补练。",
+        "titlePlaceholder": "例如：把学习能力提升到 4.5",
+        "save": "保存目标",
+        "saving": "保存中...",
+        "cancel": "取消",
+        "syncHint": "保存时会自动带入该维度当前最新分数。",
+        "current": "当前",
+        "due": "截止",
+        "progress": "进度",
+        "retry": "重试",
+        "loadFailed": "加载目标失败，请稍后重试。",
+        "saveFailed": "保存失败，请检查输入后重试。",
+        "deleteConfirm": "确定删除这个目标吗？",
+        "overdueHint": "已过截止时间，系统会继续保留目标并等待后续达成。",
+        "overdueStatusNote": "截止已过，仍可继续推进该目标。",
+        "status": {
+          "active": "进行中",
+          "overdue": "已逾期",
+          "achieved": "已达成",
+          "paused": "已暂停",
+          "cancelled": "已取消"
+        },
+        "priorityMap": {
+          "low": "低",
+          "medium": "中",
+          "high": "高"
+        }
+      }
     },
     "grades": {
       "title": "我的成绩",
@@ -325,5 +379,3 @@
     }
   }
 }
-
-

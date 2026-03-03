@@ -186,16 +186,22 @@
     <!-- 获取班级/课程能力统计 -->
     <select id="getClassAbilityStats" resultType="map">
         SELECT
-        AVG(sa.current_score) as average_score,
-        MAX(sa.current_score) as max_score,
-        MIN(sa.current_score) as min_score,
-        d.name as dimension_name
-        FROM student_abilities sa
+            AVG(sa.current_score) as average_score,
+            MAX(sa.current_score) as max_score,
+            MIN(sa.current_score) as min_score,
+            COUNT(DISTINCT e.student_id) as student_count,
+            COUNT(sa.id) as assessed_count,
+            d.id as dimension_id,
+            d.code as dimension_code,
+            d.name as dimension_name
+        FROM enrollments e
+        LEFT JOIN student_abilities sa ON sa.student_id = e.student_id
         LEFT JOIN ability_dimensions d ON sa.dimension_id = d.id
-        WHERE 1=1
-        <if test="courseId != null">AND d.course_id = #{courseId}</if>
+        WHERE e.course_id = #{courseId}
+          AND e.status = 'active'
+          AND sa.dimension_id IS NOT NULL
         <if test="dimensionId != null">AND sa.dimension_id = #{dimensionId}</if>
-        GROUP BY d.name
+        GROUP BY d.id, d.code, d.name
     </select>
 
     <!-- 获取学生能力排名 -->
@@ -220,18 +226,6 @@
         FROM ability_dimensions d
         WHERE d.id NOT IN (SELECT dimension_id FROM student_abilities WHERE student_id = #{studentId})
     </insert>
-
-    <!-- 获取学生能力发展趋势数据 -->
-    <select id="getStudentAbilityTrends" resultType="map">
-        SELECT DATE_FORMAT(a.created_at, '%Y-%m') AS month,
-               AVG(a.current_score)               AS average_score
-        FROM student_abilities a
-        WHERE a.student_id = #{studentId}
-          AND a.dimension_id = #{dimensionId}
-          AND a.created_at >= DATE_SUB(NOW(), INTERVAL #{months} MONTH)
-        GROUP BY month
-        ORDER BY month
-    </select>
 
     <!-- 检查学生能力记录是否存在 -->
     <select id="existsByStudentAndDimension" resultType="boolean">

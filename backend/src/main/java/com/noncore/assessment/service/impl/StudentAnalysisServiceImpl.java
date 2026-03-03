@@ -1,6 +1,7 @@
 package com.noncore.assessment.service.impl;
 
 import com.noncore.assessment.dto.response.StudentAnalysisResponse;
+import com.noncore.assessment.entity.StudentAbility;
 import com.noncore.assessment.mapper.GradeMapper;
 import com.noncore.assessment.mapper.LessonProgressMapper;
 import com.noncore.assessment.mapper.SubmissionMapper;
@@ -15,6 +16,7 @@ import org.springframework.stereotype.Service;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -89,19 +91,7 @@ public class StudentAnalysisServiceImpl implements StudentAnalysisService {
                 .activeDays(activeDays)
                 .build();
 
-        // 雷达：如存在总体能力评分，可映射到五维；当前 mapper 仅有 overallScore，先将其均分映射（简化）
-        Double overall = null;
-        try {
-            overall = studentAbilityMapper.selectOverallScoreByStudentId(studentId) == null ? null : studentAbilityMapper.selectOverallScoreByStudentId(studentId).doubleValue();
-        } catch (Exception ignore) {}
-        double base = overall == null ? 0.0 : overall;
-        StudentAnalysisResponse.Radar radar = StudentAnalysisResponse.Radar.builder()
-                .invest(base)
-                .quality(base)
-                .mastery(base)
-                .stability(base)
-                .growth(base)
-                .build();
+        StudentAnalysisResponse.Radar radar = buildRadar(studentId, avgScore, completionRate);
 
         // 趋势：成绩趋势（近区间）使用 GradeMapper 已有方法
         List<StudentAnalysisResponse.Point> scoreTrend = new ArrayList<>();
@@ -237,6 +227,123 @@ public class StudentAnalysisServiceImpl implements StudentAnalysisService {
         }
         return 0.0;
     }
-}
 
+    private StudentAnalysisResponse.Radar buildRadar(Long studentId, double avgScore, double completionRate) {
+        List<StudentAbility> snapshots = new ArrayList<>();
+        try {
+            List<StudentAbility> fetched = studentAbilityMapper.selectByStudentId(studentId);
+            if (fetched != null) {
+                snapshots = fetched;
+            }
+        } catch (Exception ignore) {}
+
+        Map<String, Double> dims = extractDimensionScores(snapshots);
+        double overall = average(dims.values());
+
+        double invest = firstPositive(
+                dims.get("LEARNING_ATTITUDE"),
+                completionRate,
+                overall
+        );
+        double quality = firstPositive(
+                clamp100(avgScore),
+                overall
+        );
+        double mastery = firstPositive(
+                dims.get("LEARNING_ABILITY"),
+                overall
+        );
+        double stability = firstPositive(
+                dims.get("MORAL_COGNITION"),
+                overall
+        );
+        double growth = firstPositive(
+                dims.get("LEARNING_METHOD"),
+                average(List.of(invest, mastery, stability)),
+                overall
+        );
+
+        return StudentAnalysisResponse.Radar.builder()
+                .invest(round2(invest))
+                .quality(round2(quality))
+                .mastery(round2(mastery))
+                .stability(round2(stability))
+                .growth(round2(growth))
+                .build();
+    }
+
+    private Map<String, Double> extractDimensionScores(List<StudentAbility> snapshots) {
+        Map<String, Double> scores = new HashMap<>();
+        if (snapshots == null || snapshots.isEmpty()) {
+            return scores;
+        }
+
+        for (StudentAbility item : snapshots) {
+            if (item == null || item.getDimensionName() == null || item.getCurrentScore() == null) {
+                continue;
+            }
+            double normalized = normalizeAbilityScore(item.getCurrentScore());
+            switch (item.getDimensionName()) {
+                case "道德认知" -> scores.put("MORAL_COGNITION", normalized);
+                case "学习态度" -> scores.put("LEARNING_ATTITUDE", normalized);
+                case "学习能力" -> scores.put("LEARNING_ABILITY", normalized);
+                case "学习方法" -> scores.put("LEARNING_METHOD", normalized);
+                default -> {
+                    // Ignore unknown dimensions in the student overview radar.
+                }
+            }
+        }
+
+        return scores;
+    }
+
+    private double normalizeAbilityScore(BigDecimal score) {
+        if (score == null) {
+            return 0.0;
+        }
+        double value = score.doubleValue();
+        if (value <= 5.0) {
+            value = value * 20.0;
+        }
+        return clamp100(value);
+    }
+
+    private double clamp100(double value) {
+        if (value < 0) return 0.0;
+        if (value > 100) return 100.0;
+        return value;
+    }
+
+    private double firstPositive(Double... candidates) {
+        for (Double candidate : candidates) {
+            if (candidate != null && candidate > 0) {
+                return candidate;
+            }
+        }
+        return 0.0;
+    }
+
+    private double average(Iterable<Double> values) {
+        if (values == null) {
+            return 0.0;
+        }
+        double sum = 0.0;
+        int count = 0;
+        for (Double value : values) {
+            if (value == null || value <= 0) {
+                continue;
+            }
+            sum += value;
+            count++;
+        }
+        if (count == 0) {
+            return 0.0;
+        }
+        return sum / count;
+    }
+
+    private double round2(double value) {
+        return Math.round(value * 100.0) / 100.0;
+    }
+}
 

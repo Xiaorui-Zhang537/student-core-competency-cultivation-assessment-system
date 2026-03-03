@@ -77,7 +77,6 @@
             <if test="isRead != null">is_read = #{isRead},</if>
             <if test="isAccepted != null">is_accepted = #{isAccepted},</if>
             <if test="expiresAt != null">expires_at = #{expiresAt},</if>
-            updated_at = NOW()
         </set>
         WHERE id = #{id}
     </update>

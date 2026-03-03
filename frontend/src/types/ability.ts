@@ -36,3 +36,36 @@ export interface AbilityRecommendation {
         title: string;
     }[];
 }
+
+export type AbilityGoalPriority = 'low' | 'medium' | 'high'
+export type AbilityGoalStatus = 'active' | 'achieved' | 'paused' | 'cancelled'
+
+export interface AbilityGoal {
+    id: number;
+    studentId: number;
+    dimensionId: number;
+    title: string;
+    description?: string | null;
+    targetScore: number;
+    currentScore: number;
+    targetDate: string;
+    priority: AbilityGoalPriority;
+    status: AbilityGoalStatus;
+    achievedAt?: string | null;
+    createdAt?: string;
+    updatedAt?: string;
+    dimensionName?: string;
+    studentName?: string;
+    progress?: number;
+    overdue?: boolean;
+}
+
+export interface AbilityGoalPayload {
+    dimensionId: number;
+    title: string;
+    description?: string | null;
+    targetScore: number;
+    currentScore?: number | null;
+    targetDate: string;
+    priority?: AbilityGoalPriority;
+}

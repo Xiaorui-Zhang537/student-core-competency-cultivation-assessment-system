@@ -113,6 +113,8 @@
         "detailTitle": "Course Detail",
         "sectionIntro": "Section Intro",
         "subtitleAi": "Let AI organize the key points—save your time for real practice. Start from the next unfinished lesson.",
+        "ratingLabel": "Course rating",
+        "ratingVotes": "ratings",
         "continueLearning": "Continue Learning",
         "courseAssignments": "Course Assignments",
         "assignmentSummary": "Assignments total/pending"
@@ -184,6 +186,18 @@
     "subtitleStart": "Take it slow—ten focused minutes is still progress.",
     "subtitleDone": "You’ve finished this lesson. Take a small moment to celebrate.",
     "subtitleProgress": "Steady progress—{progress}% completed.",
+    "ratingTitle": "Lesson Rating",
+    "ratingHint": "Leave quick feedback for this lesson. It will roll up into the course reputation score.",
+    "ratingAria": "Lesson rating",
+    "ratingAction": "Submit Rating",
+    "ratingSavedBadge": "Saved",
+    "ratingCurrent": "Your rating is saved",
+    "ratingPending": "You picked a star level. Submit to save it.",
+    "ratingSelectHint": "Tap the stars to choose a score from 1 to 5.",
+    "ratingSavedTitle": "Rating saved",
+    "ratingSaved": "Your lesson rating was saved and will be included in the course reputation score.",
+    "ratingSaveFailedTitle": "Rating failed",
+    "ratingSaveFailed": "Failed to save the rating. Please try again later.",
     "notesSaved": "Notes saved",
     "notesSaveFailed": "Failed to save notes, please try again later"
   },
@@ -300,7 +314,47 @@
       "selectCourse": "Select a course",
       "compare": "Compare",
       "compareSetA": "Set A",
-      "compareSetB": "Set B"
+      "compareSetB": "Set B",
+      "goals": {
+        "title": "Ability Goals",
+        "subtitle": "Set one concrete next step for each dimension.",
+        "create": "New Goal",
+        "edit": "Edit Goal",
+        "empty": "No goals yet. Start by setting one clear improvement target.",
+        "dimension": "Dimension",
+        "name": "Title",
+        "targetScore": "Target Score (0-5)",
+        "targetDate": "Due Date",
+        "priority": "Priority",
+        "description": "Notes",
+        "descriptionPlaceholder": "Describe how you plan to reach it, such as weekly review or focused drills.",
+        "titlePlaceholder": "For example: Raise Learning Ability to 4.5",
+        "save": "Save Goal",
+        "saving": "Saving...",
+        "cancel": "Cancel",
+        "syncHint": "Saving will sync the latest score from this dimension automatically.",
+        "current": "Current",
+        "due": "Due",
+        "progress": "Progress",
+        "retry": "Retry",
+        "loadFailed": "Failed to load goals. Please try again later.",
+        "saveFailed": "Failed to save the goal. Please check the form and retry.",
+        "deleteConfirm": "Delete this goal?",
+        "overdueHint": "The due date has passed. The goal stays active until you reach it or change it.",
+        "overdueStatusNote": "Past due, but you can still continue working toward it.",
+        "status": {
+          "active": "Active",
+          "overdue": "Overdue",
+          "achieved": "Achieved",
+          "paused": "Paused",
+          "cancelled": "Cancelled"
+        },
+        "priorityMap": {
+          "low": "Low",
+          "medium": "Medium",
+          "high": "High"
+        }
+      }
     },
     
     "grades": {
@@ -322,5 +376,3 @@
     }
   }
 }
-
-

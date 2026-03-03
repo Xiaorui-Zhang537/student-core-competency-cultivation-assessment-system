@@ -37,6 +37,12 @@
       <div>{{ t('shared.behaviorInsight.cooldown') }}</div>
       <div v-if="nextAvailableAt">{{ t('shared.behaviorInsight.cooldownUntil', { time: formatDateTime(nextAvailableAt) }) }}</div>
     </div>
+    <div
+      v-if="insightNotice"
+      class="mb-3 rounded-2xl border border-sky-200/70 bg-sky-50/80 px-4 py-3 text-sm text-sky-700 dark:border-sky-400/20 dark:bg-sky-500/10 dark:text-sky-200"
+    >
+      {{ insightNotice }}
+    </div>
 
     <div v-if="error" class="text-sm text-red-600 mb-3">{{ error }}</div>
     <div v-if="loading" class="text-sm text-gray-500">{{ t('shared.behaviorInsight.loading') }}</div>
@@ -51,6 +57,20 @@
           <div class="text-sm font-semibold mb-2">{{ t('shared.behaviorInsight.reportInfo.title') || '报告信息' }}</div>
           <div class="text-xs text-gray-500 mb-2">
             {{ t('shared.behaviorInsight.reportInfo.generatedAt') || '生成时间' }}：{{ formatDateTime(insight?.meta?.generatedAt) }}
+          </div>
+          <div class="mb-3 flex flex-wrap gap-2 text-xs">
+            <span class="rounded-full bg-white/70 px-2.5 py-1 text-gray-600 dark:bg-white/8 dark:text-gray-300">
+              {{ tf('shared.behaviorInsight.reportInfo.selectedWindow', '当前选择窗口') }}：{{ selectedRangeLabel }}
+            </span>
+            <span class="rounded-full bg-white/70 px-2.5 py-1 text-gray-600 dark:bg-white/8 dark:text-gray-300">
+              {{ tf('shared.behaviorInsight.reportInfo.actualWindow', '当前报告窗口') }}：{{ actualRangeLabel }}
+            </span>
+            <span
+              v-if="rangeMismatch"
+              class="rounded-full bg-amber-500/10 px-2.5 py-1 text-amber-700 dark:text-amber-300"
+            >
+              {{ tf('shared.behaviorInsight.reportInfo.windowMismatch', '当前显示的是历史洞察，不是当前筛选窗口的新结果') }}
+            </span>
           </div>
           <div class="grid grid-cols-2 md:grid-cols-4 gap-2 text-xs text-gray-600 dark:text-gray-300">
             <div>{{ t('shared.behaviorInsight.reportInfo.aiQ') || 'AI提问' }}：{{ reportStats.aiQuestionCount }}</div>
@@ -373,7 +393,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, ref, watch } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import Card from '@/components/ui/Card.vue'
 import Button from '@/components/ui/Button.vue'
@@ -398,9 +418,14 @@ const emit = defineEmits<{
 }>()
 
 const { t, locale } = useI18n()
+function tf(key: string, fallback: string): string {
+  const v = t(key) as any
+  return v === key ? fallback : String(v)
+}
 const loading = ref(false)
 const error = ref<string | null>(null)
 const insight = ref<BehaviorInsightResponse | null>(null)
+const lastLoadKey = ref('')
 const historyVisible = ref(false)
 const historyLoading = ref(false)
 const historyError = ref<string | null>(null)
@@ -422,6 +447,10 @@ const historyReportStats = computed(() => ({
 
 const cooldownActive = computed(() => Boolean(insight.value?.extra?.cooldown?.active))
 const nextAvailableAt = computed(() => insight.value?.extra?.cooldown?.nextAvailableAt as string | undefined)
+const insightNotice = computed(() => {
+  const raw = insight.value?.extra?.notice
+  return raw ? String(raw) : ''
+})
 
 const statusVariant = computed(() => {
   const st = insight.value?.meta?.status
@@ -435,6 +464,11 @@ const canOperate = computed(() => Boolean(props.allowStudentGenerate || props.al
 const isTeacher = computed(() => Boolean(props.allowTeacherGenerate))
 const hasInsight = computed(() => Boolean(insight.value))
 const reportContext = computed<any>(() => insight.value?.extra?.reportContext || null)
+const selectedRange = computed(() => String(props.range || '7d'))
+const actualRange = computed(() => String(reportContext.value?.range || selectedRange.value))
+const rangeMismatch = computed(() => selectedRange.value !== actualRange.value)
+const selectedRangeLabel = computed(() => rangeLabel(selectedRange.value))
+const actualRangeLabel = computed(() => rangeLabel(actualRange.value))
 const reportStats = computed(() => ({
   aiQuestionCount: Number(reportContext.value?.activityStats?.aiQuestionCount ?? 0),
   aiFollowUpCount: Number(reportContext.value?.activityStats?.aiFollowUpCount ?? 0),
@@ -524,7 +558,29 @@ function formatDateTime(input: any): string {
   return new Intl.DateTimeFormat('en-US', opts).format(date).replace(',', '')
 }
 
-async function loadLatest() {
+function buildLoadKey(): string {
+  return [props.studentId ?? '', props.courseId ?? '', props.range || '7d', props.adminMode ? 'admin' : 'user'].join('|')
+}
+
+function rangeLabel(range: any): string {
+  const key = String(range || '7d')
+  switch (key) {
+    case '30d':
+      return tf('shared.behaviorEvidence.range30d', '近一月')
+    case '180d':
+      return tf('shared.behaviorEvidence.range180d', '近半年')
+    case '365d':
+      return tf('shared.behaviorEvidence.range365d', '近一年')
+    default:
+      return tf('shared.behaviorEvidence.range7d', '近一周')
+  }
+}
+
+async function loadLatest(force = false) {
+  const requestKey = buildLoadKey()
+  if (!force && requestKey === lastLoadKey.value) {
+    return
+  }
   loading.value = true
   error.value = null
   try {
@@ -541,6 +597,7 @@ async function loadLatest() {
         range: props.range || '7d'
       })
     }
+    lastLoadKey.value = requestKey
     emit('update:insight', insight.value)
   } catch (e: any) {
     // 未生成时后端可能返回 null => axios 层会直接返回 null；这里兜底
@@ -593,11 +650,10 @@ async function onClickAction() {
 }
 
 watch(
-  () => [props.studentId, props.courseId, props.range],
-  () => loadLatest()
+  [() => props.studentId, () => props.courseId, () => props.range, () => props.adminMode],
+  () => loadLatest(),
+  { immediate: true }
 )
-
-onMounted(() => loadLatest())
 
 async function openHistory() {
   historyVisible.value = true
@@ -643,4 +699,3 @@ function closeHistoryDetail() {
   historyDetailVisible.value = false
 }
 </script>
-

@@ -59,6 +59,12 @@ public class BehaviorInsightServiceImpl implements BehaviorInsightService {
     }
 
     @Override
+    public LocalDateTime getEarliestCountedByStudentSince(Long studentId, LocalDateTime since) {
+        if (studentId == null) return null;
+        return mapper.getEarliestCountedByStudentSince(studentId, since);
+    }
+
+    @Override
     public java.util.List<BehaviorInsight> pageByStudentCourseRange(Long studentId,
                                                                      Long courseId,
                                                                      String rangeKey,
@@ -84,4 +90,3 @@ public class BehaviorInsightServiceImpl implements BehaviorInsightService {
         return mapper.getById(id);
     }
 }
-

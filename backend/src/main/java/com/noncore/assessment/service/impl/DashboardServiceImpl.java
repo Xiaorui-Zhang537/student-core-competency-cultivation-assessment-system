@@ -118,9 +118,9 @@ public class DashboardServiceImpl implements DashboardService {
         long totalStudents = enrollmentMapper.countStudentsByTeacher(teacherId);
         long pendingGradingsCount = submissionMapper.countPendingByTeacher(teacherId);
         long monthlyAssignments = assignmentMapper.countMonthlyByTeacher(teacherId);
-        // TODO: The getAverageScoreByTeacher method was removed. A new, efficient query is needed.
-        // For now, returning a placeholder value.
-        double averageAssignmentScore = 0.0;
+        double averageAssignmentScore = Optional.ofNullable(gradeMapper.calculateAverageScoreByTeacher(teacherId))
+                .map(BigDecimal::doubleValue)
+                .orElse(0.0);
         double averageCourseRating = Optional.ofNullable(lessonProgressMapper.getAverageRatingByTeacher(teacherId)).orElse(0.0);
         double studentCompletionRate = Optional.ofNullable(lessonProgressMapper.getAverageCompletionRateByTeacher(teacherId)).orElse(0.0);
         long weeklyActiveStudents = enrollmentMapper.countWeeklyActiveStudentsByTeacher(teacherId);

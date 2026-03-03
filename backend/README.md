@@ -82,11 +82,23 @@ CREATE DATABASE student_assessment_system CHARACTER SET utf8mb4 COLLATE utf8mb4_
 
 # 从仓库根目录执行时：
 mysql -u root -p student_assessment_system < backend/src/main/resources/schema.sql
+mysql -u root -p student_assessment_system < backend/src/main/resources/data.sql
 
 # 或者进入 backend/ 目录再执行：
 # cd backend
 # mysql -u root -p student_assessment_system < src/main/resources/schema.sql
+# mysql -u root -p student_assessment_system < src/main/resources/data.sql
+#
+# 如需把历史 AI 报告补齐为结构化四维评估：
+# mysql -u root -p student_assessment_system < src/main/resources/backfill_ability_assessments_from_reports.sql
+#
+# 如需清理旧版遗留结构（abilities 表、ability_assessments.ability_id）：
+# mysql -u root -p student_assessment_system < src/main/resources/migrate_cleanup_legacy_ability_schema.sql
 ```
+
+- `data.sql` 采用固定主键、可重复执行的核心种子数据策略，适合开发/演示/联调环境。
+- 默认账号：`admin`、`teacher_java`、`teacher_soft`、`student_lin`、`student_wang`、`student_chen`、`student_zhao`
+- 默认密码：`12345678`
 
 ### 2) 启动
 
@@ -150,9 +162,14 @@ mvn spring-boot:run
 
 ## 数据库
 
-- 主初始化脚本：`src/main/resources/schema.sql`
-- 能力模块参考：`src/main/resources/ability_schema.sql`
-- 示例数据：`src/main/resources/data.sql`
+- 主结构脚本（唯一准源）：`src/main/resources/schema.sql`
+- 核心种子数据：`src/main/resources/data.sql`
+- 旧结构清理迁移：`src/main/resources/migrate_cleanup_legacy_ability_schema.sql`
+- 未使用缓存表清理迁移：`src/main/resources/migrate_remove_unused_analytics_cache.sql`
+- 旧举报工单表清理迁移：`src/main/resources/migrate_remove_unused_reports.sql`
+- 历史 AI 报告回填：`src/main/resources/backfill_ability_assessments_from_reports.sql`
+- 历史参考脚本：`src/main/resources/ability_schema.sql`（不再作为当前库结构准源）
+- 审计备注：旧 `reports` 举报工单链路已确认不在主流程并已移除；`analytics_cache` 已确认不在主流程并已移除；`student_abilities` 上旧的月趋势查询已移除，趋势统一按 `ability_assessments.assessed_at` 聚合
 
 ## 实时能力
 

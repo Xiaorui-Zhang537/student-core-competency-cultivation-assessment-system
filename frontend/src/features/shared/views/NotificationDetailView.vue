@@ -183,6 +183,8 @@ const localizedTitle = computed(() => {
     'assignment_returned': 'notifications.categoryTitles.assignmentGeneral',
     'grade_published': 'notifications.categoryTitles.gradePosted',
     'deadline_reminder': 'notifications.categoryTitles.assignmentDeadline',
+    'goal_deadline': 'notifications.categoryTitles.goalDeadline',
+    'goal_overdue': 'notifications.categoryTitles.goalOverdue',
   }
   if (keyByRelated[rt]) {
     const val = t(keyByRelated[rt]) as string

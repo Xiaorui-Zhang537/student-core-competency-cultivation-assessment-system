@@ -128,6 +128,11 @@ public interface LessonProgressMapper {
 
     Double getAverageRatingByTeacher(@Param("teacherId") Long teacherId);
 
+    /**
+     * 计算课程口碑分（按“每个学生对该课程已评分课时的平均分”再聚合）
+     */
+    Map<String, Object> getCourseRatingStats(@Param("courseId") Long courseId);
+
     Double getAverageCompletionRateByTeacher(@Param("teacherId") Long teacherId);
 
     /**

@@ -66,14 +66,6 @@ public class AdminDashboardServiceImpl implements AdminDashboardService {
                 "comments", comments
         ));
 
-        // 举报
-        long reportsAll = safe(adminDashboardMapper.countReportsAll());
-        long reportsPending = safe(adminDashboardMapper.countReportsByStatus("pending"));
-        data.put("reports", Map.of(
-                "total", reportsAll,
-                "pending", reportsPending
-        ));
-
         // 活跃用户（按行为事件）
         LocalDateTime since = LocalDateTime.now().minusDays(days);
         long activeUsers = safe(adminDashboardMapper.countActiveUsersSince(since));
@@ -153,4 +145,3 @@ public class AdminDashboardServiceImpl implements AdminDashboardService {
         return v == null ? 0L : v;
     }
 }
-

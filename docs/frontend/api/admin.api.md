@@ -46,16 +46,12 @@ outline: [2, 3]
 - `adminApi.getTeacherDetail(id)`
   - `GET /api/admin/people/teachers/{id}`
 
-## 5. 报告中心
+## 5. 能力报告中心
 
 - `adminApi.pageAbilityReports(params)`
   - `GET /api/admin/ability-reports`
 - `adminApi.getAbilityReport(id)`
   - `GET /api/admin/ability-reports/{id}`
-- `adminApi.pageReports(params)`
-  - `GET /api/reports`（管理员举报列表）
-- `adminApi.updateReportStatus(id, status)`
-  - `PUT /api/reports/{id}/status`
 
 ## 6. 分析看板
 

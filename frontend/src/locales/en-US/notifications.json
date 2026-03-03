@@ -55,6 +55,8 @@
       "assignmentPublished": "Assignment Published",
       "assignmentReminder": "Assignment Reminder",
       "assignmentDeadline": "Assignment Deadline",
+      "goalDeadline": "Goal Deadline Reminder",
+      "goalOverdue": "Goal Overdue Reminder",
       "gradePosted": "Grade Posted",
       "message": "Message",
       "postReply": "Post Reply"
@@ -92,5 +94,4 @@
     }
   }
 }
-
 

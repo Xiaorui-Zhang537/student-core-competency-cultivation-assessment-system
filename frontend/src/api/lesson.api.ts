@@ -64,6 +64,10 @@ export const lessonApi = {
     return api.post(`/lessons/${lessonId}/notes`, { notes });
   },
 
+  rateLesson(lessonId: string, rating: number): Promise<void> {
+    return api.post(`/lessons/${lessonId}/rating`, { rating });
+  },
+
   getLessonNotes(lessonId: string): Promise<{ notes: string }> {
     return api.get(`/lessons/${lessonId}/notes`);
   }

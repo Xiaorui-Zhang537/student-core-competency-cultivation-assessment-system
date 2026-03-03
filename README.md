@@ -173,9 +173,24 @@ CREATE DATABASE student_assessment_system CHARACTER SET utf8mb4 COLLATE utf8mb4_
 # 导入主结构
 mysql -u root -p student_assessment_system < backend/src/main/resources/schema.sql
 
-# 可选：示例数据
+# 可选：导入可重复执行的核心种子数据（开发/演示/联调）
 mysql -u root -p student_assessment_system < backend/src/main/resources/data.sql
+
+# 可选：若你的库里已有历史 AI 报告、但缺少结构化四维评估，可执行回填脚本
+# mysql -u root -p student_assessment_system < backend/src/main/resources/backfill_ability_assessments_from_reports.sql
+
+# 可选：若你的库里是旧版结构，先执行清理迁移脚本
+# mysql -u root -p student_assessment_system < backend/src/main/resources/migrate_cleanup_legacy_ability_schema.sql
+
+# 可选：若你的库里仍有未使用的 analytics_cache 表，可执行清理迁移脚本
+# mysql -u root -p student_assessment_system < backend/src/main/resources/migrate_remove_unused_analytics_cache.sql
+
+# 可选：若你的库里仍有旧版举报工单表（reports），可执行清理迁移脚本
+# mysql -u root -p student_assessment_system < backend/src/main/resources/migrate_remove_unused_reports.sql
 ```
+
+- 默认演示账号：`admin`、`teacher_java`、`teacher_soft`、`student_lin`、`student_wang`、`student_chen`、`student_zhao`
+- 默认密码：`12345678`
 
 ### 3) 启动后端
 

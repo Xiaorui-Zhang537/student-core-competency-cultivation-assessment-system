@@ -95,6 +95,10 @@ public class StudentAbility {
         }
 
         double score = currentScore.doubleValue();
+        // AI 四维当前按 0-5 存储，历史数据中也可能存在 0-100；统一归一到百分制再判级。
+        if (score <= 5.0) {
+            score = score * 20.0;
+        }
         if (score >= 90) {
             this.level = "expert";
         } else if (score >= 75) {

@@ -47,6 +47,13 @@ public interface BehaviorInsightService {
     long countByStudentSince(Long studentId, String schemaVersion, java.time.LocalDateTime since);
 
     /**
+     * 获取学生在指定时间点之后、计入额度的最早一条洞察生成时间。
+     *
+     * <p>仅统计 status!=partial 的记录，用于推算滚动窗口配额何时释放。</p>
+     */
+    java.time.LocalDateTime getEarliestCountedByStudentSince(Long studentId, java.time.LocalDateTime since);
+
+    /**
      * 分页查询学生在课程（可空）+时间窗下的历史洞察（倒序）。
      */
     java.util.List<BehaviorInsight> pageByStudentCourseRange(Long studentId,
@@ -66,4 +73,3 @@ public interface BehaviorInsightService {
      */
     BehaviorInsight getById(Long id);
 }
-

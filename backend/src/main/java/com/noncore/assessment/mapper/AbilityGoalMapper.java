@@ -24,7 +24,7 @@ public interface AbilityGoalMapper {
     /**
      * 根据ID查询能力目标
      */
-    AbilityGoal selectGoalById(Long id);
+    AbilityGoal selectGoalById(@Param("id") Long id);
 
     /**
      * 更新能力目标
@@ -34,7 +34,7 @@ public interface AbilityGoalMapper {
     /**
      * 删除能力目标
      */
-    int deleteGoal(Long id);
+    int deleteGoal(@Param("id") Long id);
 
     /**
      * 根据学生ID查询所有目标
@@ -51,6 +51,11 @@ public interface AbilityGoalMapper {
      */
     List<AbilityGoal> selectActiveGoalsByStudentAndDimension(@Param("studentId") Long studentId,
                                                              @Param("dimensionId") Long dimensionId);
+
+    /**
+     * 查询所有存在进行中目标的学生ID。
+     */
+    List<Long> selectStudentIdsWithActiveGoals();
 
     /**
      * 分页查询能力目标

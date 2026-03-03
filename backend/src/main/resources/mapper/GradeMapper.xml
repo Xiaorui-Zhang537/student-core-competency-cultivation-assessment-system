@@ -233,6 +233,16 @@
           AND deleted = false
     </select>
 
+    <!-- 计算教师名下已发布成绩平均分 -->
+    <select id="calculateAverageScoreByTeacher" resultType="java.math.BigDecimal">
+        SELECT COALESCE(AVG(g.score), 0) as average_score
+        FROM grades g
+                 INNER JOIN assignments a ON g.assignment_id = a.id
+        WHERE a.teacher_id = #{teacherId}
+          AND g.status = 'published'
+          AND g.deleted = false
+    </select>
+
     <!-- 计算学生课程平均分 -->
     <select id="calculateCourseAverageScore" resultType="java.math.BigDecimal">
         SELECT COALESCE(AVG(g.score), 0) as average_score

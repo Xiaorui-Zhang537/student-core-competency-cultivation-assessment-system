@@ -75,6 +75,18 @@
         </if>
     </select>
 
+    <select id="getEarliestCountedByStudentSince" resultType="java.time.LocalDateTime">
+        SELECT generated_at
+        FROM behavior_insights
+        WHERE student_id = #{studentId}
+          AND status &lt;&gt; 'partial'
+        <if test="since != null">
+          AND generated_at &gt;= #{since}
+        </if>
+        ORDER BY generated_at ASC, id ASC
+        LIMIT 1
+    </select>
+
     <select id="pageByStudentCourseRange" resultMap="BaseMap">
         SELECT bi.*
         FROM behavior_insights bi
@@ -115,4 +127,3 @@
         LIMIT 1
     </select>
 </mapper>
-

@@ -136,6 +136,109 @@
         <ability-radar-legend :dimensions="rawRadarDimensions" />
       </card>
 
+      <card padding="md" tint="accent">
+        <div class="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+          <div>
+            <div class="text-lg font-semibold text-gray-900 dark:text-gray-100">{{ t('student.ability.goals.title') }}</div>
+            <div class="text-sm text-gray-500 dark:text-gray-400">{{ t('student.ability.goals.subtitle') }}</div>
+          </div>
+          <div class="flex items-center gap-2">
+            <badge :variant="goalStats.active > 0 ? 'info' : 'secondary'" size="sm">
+              {{ t('student.ability.goals.status.active') }} {{ goalStats.active }}
+            </badge>
+            <badge :variant="goalStats.overdue > 0 ? 'warning' : 'secondary'" size="sm">
+              {{ t('student.ability.goals.status.overdue') }} {{ goalStats.overdue }}
+            </badge>
+            <badge :variant="goalStats.achieved > 0 ? 'success' : 'secondary'" size="sm">
+              {{ t('student.ability.goals.status.achieved') }} {{ goalStats.achieved }}
+            </badge>
+            <Button size="sm" variant="primary" icon="plus" @click="openCreateGoalModal">
+              {{ t('student.ability.goals.create') }}
+            </Button>
+          </div>
+        </div>
+
+        <div v-if="goalsError" class="mt-4 rounded-2xl border border-rose-200 bg-rose-50/70 px-4 py-3 text-sm text-rose-700 dark:border-rose-500/30 dark:bg-rose-500/10 dark:text-rose-200">
+          <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <span>{{ goalsError }}</span>
+            <Button size="sm" variant="danger" @click="loadGoals">{{ t('student.ability.goals.retry') }}</Button>
+          </div>
+        </div>
+
+        <div v-else-if="goalsLoading" class="mt-4 text-sm text-gray-500 dark:text-gray-400">
+          {{ t('student.analysis.loading') }}
+        </div>
+
+        <div v-else-if="goals.length === 0" class="mt-4 rounded-3xl border border-dashed border-gray-300/80 px-5 py-8 text-center text-sm text-gray-500 dark:border-gray-600/60 dark:text-gray-400">
+          {{ t('student.ability.goals.empty') }}
+        </div>
+
+        <div v-else class="mt-4 grid grid-cols-1 gap-4 xl:grid-cols-2">
+          <div
+            v-for="goal in goals"
+            :key="goal.id"
+            class="rounded-3xl border border-white/60 bg-white/60 p-5 shadow-sm backdrop-blur-sm dark:border-white/10 dark:bg-white/5"
+          >
+            <div class="flex items-start gap-3">
+              <div class="min-w-0 flex-1">
+                <div class="flex flex-wrap items-center gap-2">
+                  <div class="truncate text-base font-semibold text-gray-900 dark:text-gray-100">{{ goal.title }}</div>
+                  <badge :variant="goalStatusVariant(goal)" size="sm">
+                    {{ goalStatusLabel(goal) }}
+                  </badge>
+                </div>
+                <div class="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-gray-500 dark:text-gray-400">
+                  <span>{{ goal.dimensionName || ('#' + goal.dimensionId) }}</span>
+                  <span>{{ t('student.ability.goals.priority') }}: {{ goalPriorityLabel(goal.priority) }}</span>
+                  <span>{{ t('student.ability.goals.due') }} {{ formatGoalDate(goal.targetDate) }}</span>
+                  <span
+                    v-if="isGoalOverdue(goal)"
+                    class="rounded-full bg-amber-100 px-2 py-0.5 font-medium text-amber-700 dark:bg-amber-500/10 dark:text-amber-200"
+                  >
+                    {{ t('student.ability.goals.overdueHint') }}
+                  </span>
+                </div>
+              </div>
+              <div class="flex items-center gap-2">
+                <Button size="sm" variant="secondary" icon="edit" @click="openEditGoalModal(goal)">
+                  {{ t('student.ability.goals.edit') }}
+                </Button>
+                <Button size="sm" variant="danger" icon="delete" @click="removeGoal(goal)">
+                  {{ t('common.delete') || '删除' }}
+                </Button>
+              </div>
+            </div>
+
+            <p v-if="goal.description" class="mt-3 text-sm leading-6 text-gray-600 dark:text-gray-300 whitespace-pre-wrap">{{ goal.description }}</p>
+
+            <div class="mt-4 flex items-end justify-between gap-4">
+              <div>
+                <div class="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400">{{ t('student.ability.goals.progress') }}</div>
+                <div class="mt-1 text-sm font-medium text-gray-900 dark:text-gray-100">
+                  {{ goalProgressPercent(goal) }}%
+                  <span class="ml-2 text-xs font-normal text-gray-500 dark:text-gray-400">
+                    {{ t('student.ability.goals.current') }} {{ formatGoalScore(goal.currentScore) }} / {{ formatGoalScore(goal.targetScore) }}
+                  </span>
+                </div>
+              </div>
+              <div class="text-right text-xs text-gray-500 dark:text-gray-400">
+                <div>ID #{{ goal.id }}</div>
+                <div v-if="goal.achievedAt">{{ t('student.ability.goals.status.achieved') }} {{ formatGoalDate(goal.achievedAt) }}</div>
+                <div v-else-if="isGoalOverdue(goal)">{{ t('student.ability.goals.overdueStatusNote') }}</div>
+              </div>
+            </div>
+
+            <div class="mt-3 h-2 overflow-hidden rounded-full bg-gray-200/80 dark:bg-gray-700/80">
+              <div
+                class="h-2 rounded-full transition-all"
+                :class="goalProgressBarClass(goal)"
+                :style="{ width: `${goalProgressPercent(goal)}%` }"
+              />
+            </div>
+          </div>
+        </div>
+      </card>
+
       <!-- 行为洞察（阶段二：AI解释与建议，不算分；学生7天仅一次） -->
       <behavior-insight-section
         :student-id="String(auth?.user?.id || '')"
@@ -222,6 +325,80 @@
       
       <empty-state v-if="empty" :title="String(t('student.analysis.empty'))" tint="info" />
     </div>
+
+    <glass-modal
+      v-if="goalModalOpen"
+      :title="editingGoalId ? String(t('student.ability.goals.edit')) : String(t('student.ability.goals.create'))"
+      size="sm"
+      height-variant="compact"
+      @close="closeGoalModal"
+    >
+      <div class="space-y-4">
+        <div v-if="goalFormError" class="rounded-2xl border border-rose-200 bg-rose-50/70 px-4 py-3 text-sm text-rose-700 dark:border-rose-500/30 dark:bg-rose-500/10 dark:text-rose-200">
+          {{ goalFormError }}
+        </div>
+
+        <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <div>
+            <div class="mb-2 text-xs font-medium text-gray-500 dark:text-gray-400">{{ t('student.ability.goals.dimension') }}</div>
+            <glass-popover-select
+              v-model="goalForm.dimensionId"
+              :options="goalDimensionOptions"
+              width="100%"
+              size="sm"
+              tint="primary"
+            />
+          </div>
+          <div>
+            <div class="mb-2 text-xs font-medium text-gray-500 dark:text-gray-400">{{ t('student.ability.goals.priority') }}</div>
+            <glass-popover-select
+              v-model="goalForm.priority"
+              :options="goalPriorityOptions"
+              width="100%"
+              size="sm"
+              tint="secondary"
+            />
+          </div>
+        </div>
+
+        <div>
+          <div class="mb-2 text-xs font-medium text-gray-500 dark:text-gray-400">{{ t('student.ability.goals.name') }}</div>
+          <glass-input v-model="goalForm.title" :placeholder="String(t('student.ability.goals.titlePlaceholder'))" tint="primary" />
+        </div>
+
+        <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <div>
+            <div class="mb-2 text-xs font-medium text-gray-500 dark:text-gray-400">{{ t('student.ability.goals.targetScore') }}</div>
+            <glass-input v-model="goalForm.targetScore" type="number" step="0.1" min="0.1" max="5" tint="accent" />
+          </div>
+          <div>
+            <div class="mb-2 text-xs font-medium text-gray-500 dark:text-gray-400">{{ t('student.ability.goals.targetDate') }}</div>
+            <glass-date-time-picker v-model="goalForm.targetDate" :date-only="true" size="sm" tint="accent" />
+          </div>
+        </div>
+
+        <div>
+          <div class="mb-2 text-xs font-medium text-gray-500 dark:text-gray-400">{{ t('student.ability.goals.description') }}</div>
+          <glass-textarea
+            v-model="goalForm.description"
+            :rows="4"
+            :placeholder="String(t('student.ability.goals.descriptionPlaceholder'))"
+            tint="secondary"
+          />
+        </div>
+
+        <div class="rounded-2xl border border-sky-200 bg-sky-50/70 px-4 py-3 text-xs text-sky-700 dark:border-sky-500/30 dark:bg-sky-500/10 dark:text-sky-200">
+          {{ t('student.ability.goals.syncHint') }}
+        </div>
+      </div>
+
+      <template #footer>
+        <Button size="sm" variant="ghost" @click="closeGoalModal">{{ t('student.ability.goals.cancel') }}</Button>
+        <Button size="sm" variant="primary" :loading="goalSaving" @click="submitGoal">
+          {{ goalSaving ? t('student.ability.goals.saving') : t('student.ability.goals.save') }}
+        </Button>
+      </template>
+    </glass-modal>
   </div>
 </template>
 
@@ -257,19 +434,23 @@ import AbilityRadarLegend from '@/shared/views/AbilityRadarLegend.vue'
 import { getThemeCoreColors, rgba } from '@/utils/theme'
 import EmptyState from '@/components/ui/EmptyState.vue'
 import LoadingOverlay from '@/components/ui/LoadingOverlay.vue'
+import GlassModal from '@/components/ui/GlassModal.vue'
+import GlassInput from '@/components/ui/inputs/GlassInput.vue'
+import GlassDateTimePicker from '@/components/ui/inputs/GlassDateTimePicker.vue'
+import GlassTextarea from '@/components/ui/inputs/GlassTextarea.vue'
+import Badge from '@/components/ui/Badge.vue'
+import type { AbilityDimension, AbilityGoal, AbilityGoalPayload, AbilityGoalPriority } from '@/types/ability'
 
 const { t } = useI18n()
 const router = useRouter()
 const ai = useAIStore()
 const auth = useAuthStore()
 
-// 行为证据/洞察时间窗（固定窗口，与后端一致）
-const behaviorRange = ref<'7d' | '30d' | '180d' | '365d'>('7d')
+// 行为证据/洞察时间窗（学生端只保留近期窗口，默认近30天）
+const behaviorRange = ref<'7d' | '30d'>('30d')
 const behaviorRangeOptions = computed(() => ([
   { label: (t('shared.behaviorEvidence.range7d') as any) || '近一周', value: '7d' },
-  { label: (t('shared.behaviorEvidence.range30d') as any) || '近一月', value: '30d' },
-  { label: (t('shared.behaviorEvidence.range180d') as any) || '近半年', value: '180d' },
-  { label: (t('shared.behaviorEvidence.range365d') as any) || '近一年', value: '365d' }
+  { label: (t('shared.behaviorEvidence.range30d') as any) || '近一月', value: '30d' }
 ]))
 
 type Point = { x: string; y: number }
@@ -302,6 +483,54 @@ const includeClassAvg = ref<'none'|'A'|'B'|'both'>('both')
 const assignmentOptions = ref<{ id: string; title: string }[]>([])
 const assignmentIdsA = ref<string[]>([])
 const assignmentIdsB = ref<string[]>([])
+
+type GoalFormState = {
+  dimensionId: number | null
+  title: string
+  description: string
+  targetScore: number | null
+  targetDate: string
+  priority: AbilityGoalPriority
+}
+
+const abilityDimensions = ref<AbilityDimension[]>([])
+const goals = ref<AbilityGoal[]>([])
+const goalsLoading = ref(false)
+const goalsError = ref('')
+const goalModalOpen = ref(false)
+const goalSaving = ref(false)
+const goalFormError = ref('')
+const editingGoalId = ref<number | null>(null)
+
+function createGoalFormState(): GoalFormState {
+  return {
+    dimensionId: abilityDimensions.value[0]?.id ?? null,
+    title: '',
+    description: '',
+    targetScore: null,
+    targetDate: '',
+    priority: 'medium'
+  }
+}
+
+const goalForm = ref<GoalFormState>(createGoalFormState())
+
+const goalStats = computed(() => ({
+  active: goals.value.filter(goal => goal.status === 'active' && !isGoalOverdue(goal)).length,
+  overdue: goals.value.filter(goal => isGoalOverdue(goal)).length,
+  achieved: goals.value.filter(goal => goal.status === 'achieved').length
+}))
+
+const goalDimensionOptions = computed(() => abilityDimensions.value.map(dim => ({
+  label: dim.name,
+  value: dim.id
+})))
+
+const goalPriorityOptions = computed(() => ([
+  { label: String(t('student.ability.goals.priorityMap.high')), value: 'high' },
+  { label: String(t('student.ability.goals.priorityMap.medium')), value: 'medium' },
+  { label: String(t('student.ability.goals.priorityMap.low')), value: 'low' }
+]))
 
 // 课程作业及课程平均分
 const courseAssignments = ref<Array<{ id: string|number; title: string; score?: number; courseTitle?: string }>>([])
@@ -389,6 +618,181 @@ function localizeDimensionName(serverName: string): string {
   // 使用共享维度说明的标题键，支持中英文
   // @ts-ignore
   return code ? ((t(`shared.radarLegend.dimensions.${code}.title`) as any) || serverName) : serverName
+}
+
+function isGoalOverdue(goal: AbilityGoal): boolean {
+  if (!goal) return false
+  if (goal.status !== 'active') return false
+  if (goal.achievedAt) return false
+  if (goal.overdue === true) return true
+  if (!goal.targetDate) return false
+  const due = new Date(String(goal.targetDate).slice(0, 10))
+  if (Number.isNaN(due.getTime())) return false
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
+  return due.getTime() < today.getTime()
+}
+
+function goalStatusVariant(goal: AbilityGoal): 'secondary' | 'info' | 'success' | 'warning' | 'danger' {
+  if (isGoalOverdue(goal)) return 'warning'
+  switch (goal.status) {
+    case 'achieved': return 'success'
+    case 'paused': return 'warning'
+    case 'cancelled': return 'danger'
+    default: return 'info'
+  }
+}
+
+function goalStatusLabel(goal: AbilityGoal): string {
+  return String(t(`student.ability.goals.status.${isGoalOverdue(goal) ? 'overdue' : goal.status}`))
+}
+
+function goalProgressBarClass(goal: AbilityGoal): string {
+  if (goal.status === 'achieved') return 'bg-emerald-500'
+  if (isGoalOverdue(goal)) return 'bg-amber-500'
+  return 'bg-sky-500'
+}
+
+function goalPriorityLabel(priority: AbilityGoalPriority): string {
+  return String(t(`student.ability.goals.priorityMap.${priority}`))
+}
+
+function goalProgressPercent(goal: AbilityGoal): number {
+  const raw = Number(goal.progress)
+  if (Number.isFinite(raw)) {
+    return Math.max(0, Math.min(100, Math.round(raw)))
+  }
+  const current = Number(goal.currentScore || 0)
+  const target = Number(goal.targetScore || 0)
+  if (!Number.isFinite(current) || !Number.isFinite(target) || target <= 0) return 0
+  return Math.max(0, Math.min(100, Math.round((current / target) * 100)))
+}
+
+function formatGoalScore(value: number | string | null | undefined): string {
+  const num = Number(value)
+  if (!Number.isFinite(num)) return '0.00'
+  return num.toFixed(2)
+}
+
+function formatGoalDate(value: string | null | undefined): string {
+  if (!value) return '--'
+  return String(value).slice(0, 10)
+}
+
+async function loadGoalDimensions() {
+  try {
+    const list = await abilityApi.getAbilityDimensions()
+    abilityDimensions.value = Array.isArray(list) ? list : []
+    if (!goalForm.value.dimensionId && abilityDimensions.value.length) {
+      goalForm.value.dimensionId = abilityDimensions.value[0].id
+    }
+  } catch {
+    abilityDimensions.value = []
+  }
+}
+
+async function loadGoals() {
+  goalsLoading.value = true
+  goalsError.value = ''
+  try {
+    const list = await abilityApi.getStudentGoals()
+    const rows = Array.isArray(list) ? list.slice() : []
+    rows.sort((a, b) => {
+      const statusRank = (status: AbilityGoal['status']) => {
+        if (status === 'active') return 0
+        if (status === 'paused') return 1
+        if (status === 'achieved') return 2
+        return 3
+      }
+      const rankDiff = statusRank(a.status) - statusRank(b.status)
+      if (rankDiff !== 0) return rankDiff
+      const aDate = new Date(a.targetDate || 0).getTime()
+      const bDate = new Date(b.targetDate || 0).getTime()
+      if (aDate !== bDate) return aDate - bDate
+      return Number(b.id || 0) - Number(a.id || 0)
+    })
+    goals.value = rows
+  } catch (e: any) {
+    goals.value = []
+    goalsError.value = String(e?.message || t('student.ability.goals.loadFailed'))
+  } finally {
+    goalsLoading.value = false
+  }
+}
+
+function closeGoalModal() {
+  goalModalOpen.value = false
+  goalSaving.value = false
+  goalFormError.value = ''
+  editingGoalId.value = null
+  goalForm.value = createGoalFormState()
+}
+
+function openCreateGoalModal() {
+  goalFormError.value = ''
+  editingGoalId.value = null
+  goalForm.value = createGoalFormState()
+  goalModalOpen.value = true
+}
+
+function openEditGoalModal(goal: AbilityGoal) {
+  goalFormError.value = ''
+  editingGoalId.value = Number(goal.id)
+  goalForm.value = {
+    dimensionId: Number(goal.dimensionId),
+    title: String(goal.title || ''),
+    description: String(goal.description || ''),
+    targetScore: Number(goal.targetScore || 0),
+    targetDate: formatGoalDate(goal.targetDate),
+    priority: goal.priority || 'medium'
+  }
+  goalModalOpen.value = true
+}
+
+async function submitGoal() {
+  const payloadTitle = String(goalForm.value.title || '').trim()
+  const payloadDescription = String(goalForm.value.description || '').trim()
+  const targetScore = Number(goalForm.value.targetScore)
+  if (!goalForm.value.dimensionId || !payloadTitle || !goalForm.value.targetDate || !Number.isFinite(targetScore) || targetScore <= 0) {
+    goalFormError.value = String(t('student.ability.goals.saveFailed'))
+    return
+  }
+
+  const payload: AbilityGoalPayload = {
+    dimensionId: Number(goalForm.value.dimensionId),
+    title: payloadTitle,
+    description: payloadDescription || null,
+    targetScore,
+    targetDate: goalForm.value.targetDate,
+    priority: goalForm.value.priority
+  }
+
+  goalSaving.value = true
+  goalFormError.value = ''
+  try {
+    if (editingGoalId.value) {
+      await abilityApi.updateStudentGoal(editingGoalId.value, payload)
+    } else {
+      await abilityApi.createStudentGoal(payload)
+    }
+    await loadGoals()
+    closeGoalModal()
+  } catch (e: any) {
+    goalFormError.value = String(e?.message || t('student.ability.goals.saveFailed'))
+  } finally {
+    goalSaving.value = false
+  }
+}
+
+async function removeGoal(goal: AbilityGoal) {
+  const ok = window.confirm(String(t('student.ability.goals.deleteConfirm')))
+  if (!ok) return
+  try {
+    await abilityApi.deleteStudentGoal(goal.id)
+    await loadGoals()
+  } catch (e: any) {
+    goalsError.value = String(e?.message || t('student.ability.goals.saveFailed'))
+  }
 }
 
 function normalizeScores(raw: any): number[] {
@@ -800,8 +1204,8 @@ onMounted(async () => {
   const locRaw = String(i18n.global.locale.value)
   const loc = (locRaw === 'zh' ? 'zh-CN' : (locRaw === 'en' ? 'en-US' : (locRaw as 'zh-CN' | 'en-US')))
   await loadLocaleMessages(loc, ['student'])
-  // 仅加载学生自己报名课程
-  await fetchEnrolledCourses()
+  // 仅加载学生自己报名课程，同时预载能力目标所需字典和目标列表
+  await Promise.all([fetchEnrolledCourses(), loadGoalDimensions(), loadGoals()])
   if (!selectedCourseId.value) {
     selectedCourseId.value = enrolledCourses.value[0] ? String(enrolledCourses.value[0].id) : null
   }
@@ -866,4 +1270,3 @@ onUnmounted(() => {
 <style scoped>
 .ms-compact :deep(.input) { min-height: 2rem; padding-top: 0.25rem; padding-bottom: 0.25rem; }
 </style>
-

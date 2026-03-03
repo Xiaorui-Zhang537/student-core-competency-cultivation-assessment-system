@@ -12,7 +12,9 @@ outline: [2, 3]
 - `getStudentCourses(studentId)` → `GET /teachers/students/{studentId}/courses`
   - 返回该学生所关联课程的精简列表
 - `getStudentActivity(studentId, days=7, limit=5)` → `GET /teachers/students/{studentId}/activity`
-  - 返回 `{ lastAccessTime, weeklyStudyMinutes, recentLessons: [{ lessonId, lessonTitle, courseId, courseTitle, studiedAt }] }`
+  - 返回 `{ lastAccessTime, weeklyStudyMinutes, recentLessons, recentEvents }`
+  - `days` 会真实影响最近学习和事件流的时间窗；`limit` 同时约束 `recentLessons/recentEvents`
+  - `recentEvents[].eventType` 当前包含：`lesson | submission | visit | community_ask | community_answer | ai`
 - `getStudentAlerts(studentId)` → `GET /teachers/students/{studentId}/alerts`
   - 返回 `{ alerts: [{ code, message, severity }] }`
 - `getStudentRecommendations(studentId, limit=6)` → `GET /teachers/students/{studentId}/recommendations`
@@ -64,6 +66,7 @@ const list = await teacherStudentApi.getStudentCourses('1001')
 
 // 活跃度与最近学习
 const act = await teacherStudentApi.getStudentActivity('1001', 7, 5)
+// act.recentEvents 可直接用于“统一活动流”时间线
 
 // 风险预警与个性化建议
 const alerts = await teacherStudentApi.getStudentAlerts('1001')

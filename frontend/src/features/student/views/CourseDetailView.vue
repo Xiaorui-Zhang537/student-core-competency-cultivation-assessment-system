@@ -46,6 +46,21 @@
               <div class="mt-3">
                 <Progress v-if="typeof displayProgress === 'number'" :value="Math.round(displayProgress)" size="md" :color="Number(displayProgress)>=100 ? 'info' : 'primary'" />
               </div>
+              <div class="mt-3 flex flex-wrap items-center gap-2 text-sm text-muted">
+                <span class="font-medium text-strong">{{ t('student.courses.detail.ratingLabel') }}</span>
+                <rive-star-rating
+                  :value="Number(course.rating ?? 0)"
+                  :width="104"
+                  :height="28"
+                  :readonly="true"
+                  :use-rive="false"
+                  active-color="--color-primary"
+                  inactive-color="rgba(148, 163, 184, 0.28)"
+                  aria-label="course-rating"
+                />
+                <span class="font-semibold text-strong">{{ Number(course.rating ?? 0).toFixed(1) }}</span>
+                <span class="text-xs text-muted">({{ course.reviewCount ?? 0 }} {{ t('student.courses.detail.ratingVotes') }})</span>
+              </div>
               <div class="mt-3 flex flex-wrap items-center gap-2">
                 <Button variant="primary" size="sm" @click="continueLearning">
                   {{ t('student.courses.detail.continueLearning') || '继续学习' }}
@@ -296,6 +311,7 @@ import Button from '@/components/ui/Button.vue'
 import Card from '@/components/ui/Card.vue'
 import UserAvatar from '@/components/ui/UserAvatar.vue'
 import Progress from '@/components/ui/Progress.vue'
+import RiveStarRating from '@/components/ui/RiveStarRating.vue'
 import ErrorState from '@/components/ui/ErrorState.vue'
 import LoadingOverlay from '@/components/ui/LoadingOverlay.vue'
 import StudentProfileModal from '@/shared/views/StudentProfileModal.vue'

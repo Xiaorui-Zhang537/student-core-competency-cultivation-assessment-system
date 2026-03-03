@@ -14,11 +14,10 @@
     />
 
     <div v-else class="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-4">
-      <div class="lg:col-span-3 grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
+      <div class="lg:col-span-3 grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
         <StartCard :label="t('admin.sidebar.users') as string" :value="overview?.users?.total ?? 0" tone="blue" :icon="UsersIcon" />
         <StartCard :label="t('admin.sidebar.courses') as string" :value="overview?.courses?.total ?? 0" tone="violet" :icon="AcademicCapIcon" />
         <StartCard :label="t('admin.sidebar.community') as string" :value="overview?.community?.posts ?? 0" tone="emerald" :icon="ShieldCheckIcon" />
-        <StartCard :label="t('admin.sidebar.reports') as string" :value="overview?.reports?.pending ?? 0" tone="amber" :icon="DocumentTextIcon" />
       </div>
 
       <Card padding="md" tint="secondary" class="lg:col-span-2">
@@ -42,12 +41,6 @@
               Active users ({{ overview?.daysActiveWindow ?? 7 }}d): {{ overview?.activity?.activeUsers ?? 0 }}
             </div>
           </div>
-          <div class="p-3 glass-thin rounded" v-glass="{ strength: 'thin', interactive: false }">
-            <div class="text-xs text-subtle mb-1">Reports</div>
-            <div class="text-sm">
-              Total: {{ overview?.reports?.total ?? 0 }} · Pending: {{ overview?.reports?.pending ?? 0 }}
-            </div>
-          </div>
         </div>
       </Card>
 
@@ -69,7 +62,7 @@ import Button from '@/components/ui/Button.vue'
 import StartCard from '@/components/ui/StartCard.vue'
 import ErrorState from '@/components/ui/ErrorState.vue'
 import { adminApi, type AdminDashboardOverview } from '@/api/admin.api'
-import { UsersIcon, AcademicCapIcon, ShieldCheckIcon, DocumentTextIcon } from '@heroicons/vue/24/outline'
+import { UsersIcon, AcademicCapIcon, ShieldCheckIcon } from '@heroicons/vue/24/outline'
 
 const { t } = useI18n()
 const router = useRouter()
@@ -92,4 +85,3 @@ async function fetchOverview() {
 
 onMounted(fetchOverview)
 </script>
-

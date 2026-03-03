@@ -67,6 +67,14 @@ public interface AbilityAssessmentMapper {
                                                         @Param("dimensionId") Long dimensionId);
 
     /**
+     * 根据学生、维度、评估类型和关联对象查询最新一条记录
+     */
+    AbilityAssessment selectLatestByStudentDimensionAndRelated(@Param("studentId") Long studentId,
+                                                               @Param("dimensionId") Long dimensionId,
+                                                               @Param("assessmentType") String assessmentType,
+                                                               @Param("relatedId") Long relatedId);
+
+    /**
      * 根据学生和时间范围查询评估记录
      */
     List<AbilityAssessment> selectByStudentAndPeriod(@Param("studentId") Long studentId,

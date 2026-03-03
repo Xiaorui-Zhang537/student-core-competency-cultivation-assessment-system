@@ -18,6 +18,8 @@ outline: [2, 3]
 - `completeLesson(lessonId)` → `POST /lessons/{lessonId}/complete`
 - `updateLessonProgress(lessonId, payload)` → `POST /lessons/{lessonId}/progress`（学生）
   - `payload: { progress?: number; studyTime?: number; lastPosition?: number }`
+- `rateLesson(lessonId, rating)` → `POST /lessons/{lessonId}/rating`（学生）
+  - `rating: 1-5`
 ## 2025-09-24 更新（节次详情合成进度/只增不减）
 
 - 合成规则：
@@ -63,6 +65,9 @@ await lessonApi.updateLessonProgress('3001', { progress: 80, lastPosition: 120, 
 // 保存笔记
 await lessonApi.addLessonNotes('3001', '本节重点：……')
 
+// 为课时打分（1-5）
+await lessonApi.rateLesson('3001', 4)
+
 // 读取笔记
 const noteResp = await lessonApi.getLessonNotes('3001')
 console.log(noteResp.data.notes)
@@ -71,6 +76,7 @@ console.log(noteResp.data.notes)
 ## 注意事项
 - 资料文件由 `file.api.ts` 上传，获得 `fileId` 后通过 `materialFileIds` 绑定
 - 进度上报频率建议节流，避免产生大量请求
+- `rateLesson` 已接入学生课时详情页，默认通过课时详情页中“只展示星级”的五星评分卡片提交；仍未在课程商城提供独立课程打分入口
 - 敏感操作需教师角色，具体以后端鉴权为准
  - 字段约定：`content` 表示“本节说明/正文”，`description` 为“简介摘要”。前端创建/编辑时会同步两者，后端也做互补（任一为空将被补齐为另一方）。学生端列表展示 `description || content`
 

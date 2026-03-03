@@ -1,28 +1,9 @@
-create table if not exists student_assessment_system.abilities
-(
-    id          bigint auto_increment comment '能力ID'
-        primary key,
-    name        varchar(255)                            not null comment '能力名称',
-    description text                                    null comment '能力描述',
-    category    varchar(64)                             null comment '能力分类',
-    level       varchar(32)                             null comment '能力等级',
-    weight      decimal(5, 2) default 1.00              null comment '权重',
-    parent_id   bigint                                  null comment '父能力ID',
-    sort_order  int           default 0                 null comment '排序顺序',
-    is_active   tinyint(1)    default 1                 null comment '是否激活',
-    created_at  datetime      default CURRENT_TIMESTAMP null comment '创建时间',
-    updated_at  datetime      default CURRENT_TIMESTAMP null on update CURRENT_TIMESTAMP comment '更新时间',
-    deleted     tinyint(1)    default 0                 null comment '是否删除'
-)
-    comment '能力表' charset = utf8mb4;
-
 create table if not exists student_assessment_system.ability_assessments
 (
     id              bigint auto_increment comment '评估ID'
         primary key,
     student_id      bigint                                                                                     not null comment '学生ID',
     dimension_id    bigint                                                                                     not null comment '能力维度ID',
-    ability_id      bigint                                                                                     null,
     assessor_id     bigint                                                                                     null comment '评估者ID（教师/系统）',
     assessment_type enum ('assignment', 'project', 'exam', 'peer', 'self', 'system') default 'assignment'      null comment '评估类型',
     related_id      bigint                                                                                     null comment '关联对象ID',
@@ -260,17 +241,6 @@ alter table student_assessment_system.ai_messages
     add constraint fk_ai_messages_conversation
         foreign key (conversation_id) references student_assessment_system.ai_conversations (id)
             on delete cascade;
-
-create table if not exists student_assessment_system.analytics_cache
-(
-    cache_key    varchar(255) not null comment '缓存主键',
-    cache_value  text         null comment '缓存内容',
-    generated_at datetime     null comment '生成时间'
-)
-    comment '分析缓存表' charset = utf8mb4;
-
-alter table student_assessment_system.analytics_cache
-    add primary key (cache_key);
 
 create table if not exists student_assessment_system.assignments
 (
@@ -1160,39 +1130,6 @@ create index idx_pinned
 create index idx_status
     on student_assessment_system.posts (status);
 
-create table student_assessment_system.reports
-(
-    id                  bigint auto_increment comment '举报ID'
-        primary key,
-    reporter_id         bigint                                not null comment '举报者ID',
-    reported_student_id bigint                                null comment '被举报学生ID',
-    course_id           bigint                                null comment '课程ID',
-    assignment_id       bigint                                null comment '作业ID',
-    submission_id       bigint                                null comment '提交ID',
-    reason              varchar(200)                          not null comment '举报原因',
-    details             text                                  null comment '补充说明',
-    evidence_file_id    bigint                                null comment '证据文件ID（file_records.id）',
-    status              varchar(20) default 'pending'         null comment '状态：pending,in_review,resolved,rejected',
-    created_at          timestamp   default CURRENT_TIMESTAMP null comment '创建时间',
-    updated_at          timestamp   default CURRENT_TIMESTAMP null on update CURRENT_TIMESTAMP comment '更新时间'
-)
-    comment '举报表' charset = utf8mb4;
-
-create index idx_created_at
-    on student_assessment_system.reports (created_at);
-
-create index idx_course_id
-    on student_assessment_system.reports (course_id);
-
-create index idx_reported_student_id
-    on student_assessment_system.reports (reported_student_id);
-
-create index idx_reporter_id
-    on student_assessment_system.reports (reporter_id);
-
-create index idx_status
-    on student_assessment_system.reports (status);
-
 create table if not exists student_assessment_system.student_abilities
 (
     id                 bigint auto_increment comment '记录ID'
@@ -1468,34 +1405,6 @@ alter table student_assessment_system.posts
         foreign key (author_id) references student_assessment_system.users (id)
             on delete cascade;
 
-alter table student_assessment_system.reports
-    add constraint reports_ibfk_1
-        foreign key (reporter_id) references student_assessment_system.users (id)
-            on delete cascade;
-
-alter table student_assessment_system.reports
-    add constraint reports_ibfk_2
-        foreign key (reported_student_id) references student_assessment_system.users (id)
-            on delete set null;
-
-alter table student_assessment_system.reports
-    add constraint reports_ibfk_3
-        foreign key (course_id) references student_assessment_system.courses (id)
-            on delete set null;
-
-alter table student_assessment_system.reports
-    add constraint reports_ibfk_4
-        foreign key (assignment_id) references student_assessment_system.assignments (id)
-            on delete set null;
-
-alter table student_assessment_system.reports
-    add constraint reports_ibfk_5
-        foreign key (submission_id) references student_assessment_system.submissions (id)
-            on delete set null;
-
-alter table student_assessment_system.reports
-    add constraint reports_ibfk_6
-        foreign key (evidence_file_id) references student_assessment_system.file_records (id)
             on delete set null;
 
 alter table student_assessment_system.admin_audit_logs
@@ -1716,4 +1625,3 @@ alter table student_assessment_system.ai_voice_turns
     add constraint fk_ai_voice_turns_user
         foreign key (user_id) references student_assessment_system.users (id)
             on delete cascade;
-

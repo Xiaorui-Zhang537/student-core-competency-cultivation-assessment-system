@@ -43,6 +43,13 @@ public enum BehaviorEventType {
     /** 查看反馈（如查看成绩评语、查看老师反馈、查看系统建议等） */
     FEEDBACK_VIEW("feedback_view", false),
 
+    /** 设定能力目标 */
+    GOAL_SET("goal_set", false),
+    /** 调整能力目标 */
+    GOAL_UPDATE("goal_update", false),
+    /** 达成能力目标 */
+    GOAL_ACHIEVE("goal_achieve", false),
+
     /**
      * 资源访问（只记录不评价）。
      *
@@ -92,4 +99,3 @@ public enum BehaviorEventType {
                 .findFirst();
     }
 }
-

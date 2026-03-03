@@ -474,10 +474,6 @@
         "contactPh": "Leave your email or phone if you want a reply"
       }
     },
-    "discovery": {
-      "title": "Course Discovery",
-      "subtitle": "Find the next course that sparks your curiosity."
-    },
     "emojiPicker": {
       "button": "Emoji"
     },
@@ -522,12 +518,34 @@
         "eventRefs": "{count} linked events",
         "idsLabel": "IDs"
       },
+      "goal": {
+        "title": "Goal Evidence",
+        "active": "Active",
+        "overdue": "Overdue",
+        "completionRate": "Completion rate",
+        "linkedDelta": "Goal-linked score change",
+        "focus": "Current focus",
+        "nextDue": "Nearest due",
+        "recovery": "Recovered after overdue",
+        "latestAction": "Latest action",
+        "activeList": "Active goals",
+        "overdueList": "Overdue goals",
+        "dueToday": "Due today",
+        "dueInDays": "Due in {days} days",
+        "overdueByDays": "Overdue by {days} days",
+        "none": "None"
+      },
       "records": {
         "ai": { "title": "AI Interaction", "desc": "In this stage: {q} questions, {f} follow-ups." },
+        "voice": { "title": "Speaking Practice", "desc": "In this stage: {n} speaking practice turns." },
+        "voiceReview": { "title": "Speaking Replay", "desc": "Replay activity was recorded in this stage." },
         "community": { "title": "Community Activity", "desc": "In this stage: {ask} asks, {ans} replies." },
         "assignment": { "title": "Assignment Submissions", "desc": "In this stage: {submit} submissions, {resub} resubmits." },
         "feedback": { "title": "Feedback Views", "desc": "In this stage: {fb} feedback views." },
-        "feedbackIteration": { "title": "Post-feedback revision", "desc": "Revised an assignment after viewing feedback." }
+        "feedbackIteration": { "title": "Post-feedback revision", "desc": "Revised an assignment after viewing feedback." },
+        "goalFocus": { "title": "Goal Focus", "desc": "Created, updated, or kept active learning goals in this stage." },
+        "goalAchievement": { "title": "Goal Achieved", "desc": "Completed at least one learning goal in this stage." },
+        "goalOverdue": { "title": "Goal Overdue", "desc": "There are active goals that have passed the target date and still need follow-through." }
       },
       "nonEvaluative": {
         "title": "Resource views",
@@ -548,7 +566,7 @@
         "empty": "No insight history yet",
         "detailTitle": "Insight report detail"
       },
-      "cooldown": "Cooldown: only once within 7 days",
+      "cooldown": "Cooldown: up to 2 generations within 7 days",
       "cooldownUntil": "Next available at: {time}",
       "empty": "No insight yet (you can view the Stage-1 summary first)",
       "status": {
@@ -678,4 +696,3 @@
     }
   }
 }
-

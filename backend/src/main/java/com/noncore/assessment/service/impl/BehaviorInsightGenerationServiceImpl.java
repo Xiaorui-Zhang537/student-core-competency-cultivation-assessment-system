@@ -30,10 +30,11 @@ import java.util.*;
 public class BehaviorInsightGenerationServiceImpl implements BehaviorInsightGenerationService {
 
     private static final String PROMPT_PATH = "classpath:/prompts/behavior_insight_system_prompt.txt";
-    private static final String PROMPT_VERSION = "behavior_insight_prompt.v2";
+    private static final String PROMPT_VERSION = "behavior_insight_prompt.v4";
     private static final String DEFAULT_MODEL = "google/gemini-2.5-pro";
-    // 测试策略：学生每天最多触发 N 次（仅限制“真正调用AI”的次数；partial/NO_EVIDENCE 不计入）
-    private static final int STUDENT_DAILY_LIMIT = 7;
+    // 学生自助触发：7天滚动窗口内最多 2 次（仅限制“真正调用AI”的次数；partial/NO_EVIDENCE 不计入）
+    private static final int STUDENT_WINDOW_DAYS = 7;
+    private static final int STUDENT_WINDOW_LIMIT = 2;
 
     private final BehaviorAggregationService aggregationService;
     private final BehaviorSummarySnapshotService snapshotService;
@@ -69,7 +70,7 @@ public class BehaviorInsightGenerationServiceImpl implements BehaviorInsightGene
         }
 
         // 治理：限流/复用策略
-        // - 学生自助触发（测试）：每日最多 7 次（仅统计 status!=partial 的记录）
+        // - 学生自助触发：7天滚动窗口最多 2 次（仅统计 status!=partial 的记录）
         // - 教师/管理员：默认复用 7 天内 success；force=true 可重跑
         try {
             // 兼容：优先读取 v2；若未生成过 v2，则回退读取 v1（避免升级后“历史洞察全丢失”）
@@ -86,13 +87,10 @@ public class BehaviorInsightGenerationServiceImpl implements BehaviorInsightGene
             LocalDateTime now = LocalDateTime.now();
 
             if (studentSelfTrigger) {
-                LocalDateTime startOfDay = java.time.LocalDate.now().atStartOfDay();
-                // 兼容：额度统计同时覆盖 v1 + v2，避免通过“切版本”绕过限流
-                long usedToday =
-                        insightService.countByStudentSince(studentId, BehaviorSchemaVersions.INSIGHT_V2, startOfDay)
-                      + insightService.countByStudentSince(studentId, BehaviorSchemaVersions.INSIGHT_V1, startOfDay);
-                if (usedToday >= STUDENT_DAILY_LIMIT) {
-                    // 达到每日上限：返回最近一次结果 + cooldown 到明日 00:00
+                Map<String, Object> quota = buildStudentQuota(studentId, now);
+                long usedInWindow = readLong(quota.get("usedInWindow"));
+                if (usedInWindow >= STUDENT_WINDOW_LIMIT) {
+                    // 达到滚动窗口上限：返回最近一次结果 + 直到窗口释放
                     BehaviorInsightResponse cached = (existing != null && existing.getInsightJson() != null)
                             ? parseAndValidate(existing.getInsightJson(), snapshot.getId(), null)
                             : BehaviorInsightResponse.builder()
@@ -109,17 +107,8 @@ public class BehaviorInsightGenerationServiceImpl implements BehaviorInsightGene
                     cached.setSchemaVersion(BehaviorSchemaVersions.INSIGHT_V2);
                     if (cached.getMeta() == null) cached.setMeta(new BehaviorInsightResponse.Meta());
                     cached.getMeta().setStatus(cached.getMeta().getStatus() == null ? "partial" : cached.getMeta().getStatus());
-                    java.time.LocalDateTime resetAt = java.time.LocalDate.now().plusDays(1).atStartOfDay();
                     java.util.Map<String, Object> extra = cached.getExtra() == null ? new java.util.HashMap<>() : new java.util.HashMap<>(cached.getExtra());
-                    extra.put("cooldown", java.util.Map.of(
-                            "active", true,
-                            "nextAvailableAt", resetAt
-                    ));
-                    extra.put("quota", java.util.Map.of(
-                            "limitPerDay", STUDENT_DAILY_LIMIT,
-                            "usedToday", usedToday,
-                            "resetAt", resetAt
-                    ));
+                    applyStudentQuota(extra, quota);
                     cached.setExtra(extra);
                     return cached;
                 }
@@ -183,12 +172,9 @@ public class BehaviorInsightGenerationServiceImpl implements BehaviorInsightGene
                             .promptVersion(PROMPT_VERSION)
                             .status("partial")
                             .build())
-                    // 学生测试策略：不因 “证据不足”进入冷却（NO_EVIDENCE 不计入每日额度）
+                    // 学生测试策略：不因 “证据不足”进入冷却（NO_EVIDENCE 不计入滚动窗口额度）
                     .extra(studentSelfTrigger ? java.util.Map.of(
-                            "quota", java.util.Map.of(
-                                    "limitPerDay", STUDENT_DAILY_LIMIT,
-                                    "usedToday", 0
-                            )
+                            "quota", buildStudentQuota(studentId, LocalDateTime.now())
                     ) : null)
                     .build();
 
@@ -266,9 +252,7 @@ public class BehaviorInsightGenerationServiceImpl implements BehaviorInsightGene
                             .status("failed")
                             .build())
                     .extra(studentSelfTrigger ? java.util.Map.of(
-                            "quota", java.util.Map.of(
-                                    "limitPerDay", STUDENT_DAILY_LIMIT
-                            )
+                            "quota", buildStudentQuota(studentId, LocalDateTime.now())
                     ) : null)
                     .build();
             appendReportContext(failedResp, snapshot.getId());
@@ -286,19 +270,9 @@ public class BehaviorInsightGenerationServiceImpl implements BehaviorInsightGene
         parsed.setSnapshotId(snapshot.getId());
         appendReportContext(parsed, snapshot.getId());
         if (studentSelfTrigger) {
-            // 学生测试策略：不再强制 7 天冷却，仅展示每日额度信息
-            LocalDateTime startOfDay = java.time.LocalDate.now().atStartOfDay();
-            long usedToday =
-                    insightService.countByStudentSince(studentId, BehaviorSchemaVersions.INSIGHT_V2, startOfDay)
-                  + insightService.countByStudentSince(studentId, BehaviorSchemaVersions.INSIGHT_V1, startOfDay);
-            java.time.LocalDateTime resetAt = java.time.LocalDate.now().plusDays(1).atStartOfDay();
-            parsed.setExtra(java.util.Map.of(
-                    "quota", java.util.Map.of(
-                            "limitPerDay", STUDENT_DAILY_LIMIT,
-                            "usedToday", usedToday,
-                            "resetAt", resetAt
-                    )
-            ));
+            java.util.Map<String, Object> extra = parsed.getExtra() == null ? new java.util.HashMap<>() : new java.util.HashMap<>(parsed.getExtra());
+            applyStudentQuota(extra, buildStudentQuota(studentId, LocalDateTime.now()));
+            parsed.setExtra(extra);
         }
         return parsed;
     }
@@ -356,25 +330,10 @@ public class BehaviorInsightGenerationServiceImpl implements BehaviorInsightGene
             resp.getMeta().setStatus(latest.getStatus());
             resp.getMeta().setGeneratedAt(latest.getGeneratedAt());
             appendReportContext(resp, usedSnapshotId);
-            // 学生查看自己的洞察：注入每日额度/冷却信息（达到上限才冷却）
+            // 学生查看自己的洞察：注入滚动窗口额度/冷却信息（达到上限才冷却）
             if (operatorId != null && operatorId.equals(studentId)) {
-                LocalDateTime startOfDay = java.time.LocalDate.now().atStartOfDay();
-                long usedToday =
-                        insightService.countByStudentSince(studentId, BehaviorSchemaVersions.INSIGHT_V2, startOfDay)
-                      + insightService.countByStudentSince(studentId, BehaviorSchemaVersions.INSIGHT_V1, startOfDay);
-                java.time.LocalDateTime resetAt = java.time.LocalDate.now().plusDays(1).atStartOfDay();
                 java.util.Map<String, Object> extra = resp.getExtra() == null ? new java.util.HashMap<>() : new java.util.HashMap<>(resp.getExtra());
-                extra.put("quota", java.util.Map.of(
-                        "limitPerDay", STUDENT_DAILY_LIMIT,
-                        "usedToday", usedToday,
-                        "resetAt", resetAt
-                ));
-                if (usedToday >= STUDENT_DAILY_LIMIT) {
-                    extra.put("cooldown", java.util.Map.of(
-                            "active", true,
-                            "nextAvailableAt", resetAt
-                    ));
-                }
+                applyStudentQuota(extra, buildStudentQuota(studentId, LocalDateTime.now()));
                 if (fallbackUsed && snapshot != null && snapshot.getId() != null && !snapshot.getId().equals(usedSnapshotId)) {
                     extra.put("latestSummarySnapshotId", snapshot.getId());
                     extra.put("notice", "当前展示为最近一次已生成的洞察；最新摘要快照尚未生成洞察。");
@@ -401,6 +360,58 @@ public class BehaviorInsightGenerationServiceImpl implements BehaviorInsightGene
             if (it != null) return it;
         }
         return null;
+    }
+
+    private Map<String, Object> buildStudentQuota(Long studentId, LocalDateTime now) {
+        LocalDateTime current = now == null ? LocalDateTime.now() : now;
+        LocalDateTime windowStartedAt = current.minusDays(STUDENT_WINDOW_DAYS);
+        long usedInWindow =
+                insightService.countByStudentSince(studentId, BehaviorSchemaVersions.INSIGHT_V2, windowStartedAt)
+              + insightService.countByStudentSince(studentId, BehaviorSchemaVersions.INSIGHT_V1, windowStartedAt);
+        LocalDateTime earliestCountedAt = usedInWindow <= 0
+                ? null
+                : insightService.getEarliestCountedByStudentSince(studentId, windowStartedAt);
+        LocalDateTime nextAvailableAt = earliestCountedAt == null
+                ? null
+                : earliestCountedAt.plusDays(STUDENT_WINDOW_DAYS);
+
+        Map<String, Object> quota = new java.util.LinkedHashMap<>();
+        quota.put("windowDays", STUDENT_WINDOW_DAYS);
+        quota.put("limitPerWindow", STUDENT_WINDOW_LIMIT);
+        quota.put("usedInWindow", usedInWindow);
+        quota.put("windowStartedAt", windowStartedAt);
+        quota.put("nextAvailableAt", nextAvailableAt);
+        return quota;
+    }
+
+    private void applyStudentQuota(Map<String, Object> extra, Map<String, Object> quota) {
+        if (extra == null || quota == null) {
+            return;
+        }
+        extra.put("quota", quota);
+        if (readLong(quota.get("usedInWindow")) >= STUDENT_WINDOW_LIMIT) {
+            Object nextAvailableAt = quota.get("nextAvailableAt");
+            if (nextAvailableAt != null) {
+                extra.put("cooldown", java.util.Map.of(
+                        "active", true,
+                        "nextAvailableAt", nextAvailableAt
+                ));
+            }
+        }
+    }
+
+    private long readLong(Object value) {
+        if (value instanceof Number number) {
+            return number.longValue();
+        }
+        if (value == null) {
+            return 0L;
+        }
+        try {
+            return Long.parseLong(String.valueOf(value));
+        } catch (Exception ignored) {
+            return 0L;
+        }
     }
 
     /**
@@ -646,6 +657,25 @@ public class BehaviorInsightGenerationServiceImpl implements BehaviorInsightGene
             stats.put("communityAnswerCount", getNestedInt(root, "activityStats", "community", "answerCount"));
             stats.put("feedbackViewCount", getNestedInt(root, "activityStats", "feedback", "viewCount"));
             reportContext.put("activityStats", stats);
+            Object signals = root.get("signals");
+            if (signals instanceof Map<?, ?> signalsMapRaw) {
+                Map<String, Object> signalsMap = (Map<String, Object>) signalsMapRaw;
+                Map<String, Object> goalSummary = new HashMap<>();
+                goalSummary.put("goalSetCount", signalsMap.get("goalSetCount"));
+                goalSummary.put("goalUpdateCount", signalsMap.get("goalUpdateCount"));
+                goalSummary.put("goalAchievedCount", signalsMap.get("goalAchievedCount"));
+                goalSummary.put("goalCompletionRate", signalsMap.get("goalCompletionRate"));
+                goalSummary.put("overdueRecoveryCount", signalsMap.get("overdueRecoveryCount"));
+                goalSummary.put("activeGoalCount", signalsMap.get("activeGoalCount"));
+                goalSummary.put("overdueGoalCount", signalsMap.get("overdueGoalCount"));
+                goalSummary.put("hasOverdueGoals", signalsMap.get("hasOverdueGoals"));
+                goalSummary.put("goalLinkedScoreDelta", signalsMap.get("goalLinkedScoreDelta"));
+                goalSummary.put("goalFocusSummary", signalsMap.get("goalFocusSummary"));
+                goalSummary.put("goalNextTargetDate", signalsMap.get("goalNextTargetDate"));
+                goalSummary.put("goalNearestDueInDays", signalsMap.get("goalNearestDueInDays"));
+                goalSummary.put("goalLatestActionAt", signalsMap.get("goalLatestActionAt"));
+                reportContext.put("goalSummary", goalSummary);
+            }
 
             Map<String, Object> extra = resp.getExtra() == null ? new HashMap<>() : new HashMap<>(resp.getExtra());
             extra.put("reportContext", reportContext);
@@ -670,4 +700,3 @@ public class BehaviorInsightGenerationServiceImpl implements BehaviorInsightGene
     }
 
 }
-

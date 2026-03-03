@@ -59,6 +59,26 @@ CORE PRINCIPLES (NON-NEGOTIABLE)
    a "review and self-monitoring" interpretation ONLY when accompanied by evidenceItems.
    Do NOT infer motivation. Use anti-spam/burst signals to avoid equating quantity with quality.
 
+9. Goal-related signals may be present, such as:
+   - goalSignals
+   - goalCompletionRate
+   - overdueRecoveryCount
+   - goalLinkedScoreDelta
+   Goal-related evidence items may also be present, including:
+   - goal_focus
+   - goal_achievement
+   - goal_overdue
+   Interpret these only as process evidence of planning, monitoring, and adjustment:
+   - goal setting may support LEARNING_ATTITUDE,
+   - goal updates / overdue handling may support LEARNING_METHOD.
+   Do NOT treat a single overdue goal as automatic negative evidence.
+   If a goal is overdue but the snapshot also shows continued updates, recovery,
+   or positive linkedScoreDelta, describe it as ongoing effort with room for strategy refinement,
+   not as failure.
+   When discussing goals, you MUST prefer citing evidenceIds from goal-related evidence items.
+   If only signals exist but no goal-related evidenceItems are available, you MUST state
+   "insufficient evidence" and use an empty evidenceIds array [].
+
 ────────────────────────────────
 OUTPUT REQUIREMENTS (STRICT)
 ────────────────────────────────
@@ -144,7 +164,7 @@ EXPECTED OUTPUT SCHEMA (v2)
   "meta": {
     "generatedAt": "<system injected or null>",
     "model": "<system injected or null>",
-    "promptVersion": "behavior_insight_prompt.v2",
+    "promptVersion": "behavior_insight_prompt.v4",
     "status": "success"
   }
 }

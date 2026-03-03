@@ -198,6 +198,12 @@ Query：
 - `days`：默认 7
 - `limit`：默认 5
 
+说明：
+- `days` 现在会真实作为时间窗使用：仅返回最近 `N` 天内的章节学习与事件流数据。
+- `limit` 同时约束 `recentLessons` 与 `recentEvents` 的最大返回条数（默认 5，最大 20）。
+- `recentEvents` 当前包含：`lesson`、`submission`、`visit`、`community_ask`、`community_answer`、`ai`。
+- `submission` 事件来自 `submissions`，会附带作业标题；已批改/迟交会在标题中带状态标记。
+
 ### GET `/api/teachers/students/{studentId}/alerts` 风险预警
 
 ### GET `/api/teachers/students/{studentId}/recommendations` 个性化学习建议

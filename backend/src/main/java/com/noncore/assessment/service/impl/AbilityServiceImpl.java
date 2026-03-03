@@ -2,19 +2,25 @@ package com.noncore.assessment.service.impl;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.noncore.assessment.behavior.BehaviorEventRecorder;
+import com.noncore.assessment.behavior.BehaviorEventType;
 import com.noncore.assessment.entity.*;
 import com.noncore.assessment.exception.BusinessException;
 import com.noncore.assessment.exception.ErrorCode;
 import com.noncore.assessment.mapper.*;
 import com.noncore.assessment.service.AbilityService;
+import com.noncore.assessment.service.NotificationService;
 import com.noncore.assessment.util.PageResult;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.*;
 
 /**
@@ -29,6 +35,7 @@ import java.util.*;
 public class AbilityServiceImpl implements AbilityService {
 
     private static final Logger logger = LoggerFactory.getLogger(AbilityServiceImpl.class);
+    private static final long GOAL_REMINDER_LOOKAHEAD_DAYS = 3;
 
     private final AbilityDimensionMapper abilityDimensionMapper;
     private final StudentAbilityMapper studentAbilityMapper;
@@ -36,6 +43,9 @@ public class AbilityServiceImpl implements AbilityService {
     private final AbilityReportMapper abilityReportMapper;
     private final LearningRecommendationMapper learningRecommendationMapper;
     private final AbilityGoalMapper abilityGoalMapper;
+    private final EnrollmentMapper enrollmentMapper;
+    private final BehaviorEventRecorder behaviorEventRecorder;
+    private final NotificationService notificationService;
     private final ObjectMapper objectMapper;
 
     public AbilityServiceImpl(AbilityDimensionMapper abilityDimensionMapper,
@@ -44,6 +54,9 @@ public class AbilityServiceImpl implements AbilityService {
                               AbilityReportMapper abilityReportMapper,
                               LearningRecommendationMapper learningRecommendationMapper,
                               AbilityGoalMapper abilityGoalMapper,
+                              EnrollmentMapper enrollmentMapper,
+                              BehaviorEventRecorder behaviorEventRecorder,
+                              NotificationService notificationService,
                               ObjectMapper objectMapper) {
         this.abilityDimensionMapper = abilityDimensionMapper;
         this.studentAbilityMapper = studentAbilityMapper;
@@ -51,6 +64,9 @@ public class AbilityServiceImpl implements AbilityService {
         this.abilityReportMapper = abilityReportMapper;
         this.learningRecommendationMapper = learningRecommendationMapper;
         this.abilityGoalMapper = abilityGoalMapper;
+        this.enrollmentMapper = enrollmentMapper;
+        this.behaviorEventRecorder = behaviorEventRecorder;
+        this.notificationService = notificationService;
         this.objectMapper = objectMapper;
     }
 
@@ -174,49 +190,64 @@ public class AbilityServiceImpl implements AbilityService {
     }
 
     @Override
-    public void acceptRecommendation(Long recommendationId) {
-        logger.info("接受学习建议，建议ID: {}", recommendationId);
-        
-        // 这里应该实现具体的接受建议逻辑
-        // 比如更新建议状态、记录用户行为等
-        // 暂时只做日志记录，后续可以根据具体需求实现
-        
-        logger.info("学习建议已接受，建议ID: {}", recommendationId);
+    public void acceptRecommendation(Long recommendationId, Long studentId) {
+        logger.info("接受学习建议，建议ID: {}, 学生ID: {}", recommendationId, studentId);
+
+        LearningRecommendation recommendation = requireOwnedRecommendation(recommendationId, studentId);
+        if (!Boolean.TRUE.equals(recommendation.getIsRead())) {
+            learningRecommendationMapper.markAsRead(recommendation.getId());
+        }
+        if (!Boolean.TRUE.equals(recommendation.getIsAccepted())) {
+            learningRecommendationMapper.markAsAccepted(recommendation.getId());
+        }
+
+        logger.info("学习建议已接受，建议ID: {}, 学生ID: {}", recommendationId, studentId);
     }
 
     @Override
-    public void markRecommendationAsRead(Long recommendationId) {
-        logger.info("标记学习建议为已读，建议ID: {}", recommendationId);
-        
-        // 这里应该实现具体的标记为已读逻辑
-        // 比如更新建议的阅读状态、记录阅读时间等
-        // 暂时只做日志记录，后续可以根据具体需求实现
-        
-        logger.info("学习建议已标记为已读，建议ID: {}", recommendationId);
+    public void markRecommendationAsRead(Long recommendationId, Long studentId) {
+        logger.info("标记学习建议为已读，建议ID: {}, 学生ID: {}", recommendationId, studentId);
+
+        LearningRecommendation recommendation = requireOwnedRecommendation(recommendationId, studentId);
+        if (!Boolean.TRUE.equals(recommendation.getIsRead())) {
+            learningRecommendationMapper.markAsRead(recommendation.getId());
+        }
+
+        logger.info("学习建议已标记为已读，建议ID: {}, 学生ID: {}", recommendationId, studentId);
     }
 
     @Override
     public void publishAbilityReport(Long reportId) {
         logger.info("发布能力报告，报告ID: {}", reportId);
-        
-        // 这里应该实现具体的发布报告逻辑
-        // 比如更新报告状态、通知相关人员等
-        // 暂时只做日志记录，后续可以根据具体需求实现
-        
+
+        if (reportId == null) {
+            throw new BusinessException(ErrorCode.INVALID_PARAMETER, "报告ID不能为空");
+        }
+
+        AbilityReport report = abilityReportMapper.selectReportById(reportId);
+        if (report == null) {
+            throw new BusinessException(ErrorCode.DATA_NOT_FOUND, "能力报告不存在");
+        }
+
+        if (!Boolean.TRUE.equals(report.getIsPublished())) {
+            int updated = abilityReportMapper.publishReport(reportId);
+            if (updated < 1) {
+                throw new BusinessException(ErrorCode.OPERATION_FAILED, "能力报告发布失败");
+            }
+        }
+
         logger.info("能力报告发布完成，报告ID: {}", reportId);
     }
 
     @Override
     public AbilityReport getAbilityReportById(Long reportId) {
         logger.info("获取能力报告详情，报告ID: {}", reportId);
-        
-        // 这里应该实现具体的获取报告逻辑
-        // 比如从数据库查询报告详情等
-        // 暂时返回一个基础对象，后续可以根据具体需求实现
-        AbilityReport report = new AbilityReport();
-        report.setId(reportId);
-        report.setTitle("能力报告 " + reportId);
-        
+
+        AbilityReport report = abilityReportMapper.selectReportById(reportId);
+        if (report == null) {
+            throw new BusinessException(ErrorCode.DATA_NOT_FOUND, "能力报告不存在");
+        }
+
         logger.info("能力报告获取成功，报告ID: {}", reportId);
         return report;
     }
@@ -224,16 +255,25 @@ public class AbilityServiceImpl implements AbilityService {
     @Override
     public PageResult<AbilityReport> getAbilityReportHistory(Long studentId, Integer page, Integer size) {
         logger.info("获取能力报告历史，学生ID: {}, 页码: {}, 页大小: {}", studentId, page, size);
-        
-        // 这里应该实现具体的获取报告历史逻辑
-        // 暂时返回空的分页结果，后续可以根据具体需求实现
+
+        if (studentId == null) {
+            throw new BusinessException(ErrorCode.INVALID_PARAMETER, "学生ID不能为空");
+        }
+
+        int safePage = page == null || page < 1 ? 1 : page;
+        int safeSize = size == null || size < 1 ? 10 : Math.min(size, 100);
+        int offset = (safePage - 1) * safeSize;
+
+        List<AbilityReport> items = abilityReportMapper.selectReportsWithPagination(studentId, null, null, offset, safeSize);
+        Integer total = abilityReportMapper.countReports(studentId, null, null);
+
         PageResult<AbilityReport> result = new PageResult<>();
-        result.setItems(new ArrayList<>());
-        result.setTotal(0L);
-        result.setTotalPages(0);
-        result.setPage(page);
-        result.setSize(size);
-        
+        result.setItems(items == null ? new ArrayList<>() : items);
+        result.setTotal(total == null ? 0L : total.longValue());
+        result.setTotalPages(result.getTotal() == 0 ? 0 : (int) Math.ceil((double) result.getTotal() / safeSize));
+        result.setPage(safePage);
+        result.setSize(safeSize);
+
         logger.info("能力报告历史获取成功，学生ID: {}", studentId);
         return result;
     }
@@ -415,17 +455,32 @@ public class AbilityServiceImpl implements AbilityService {
     @Override
     public AbilityAssessment submitSelfAssessment(Long studentId, Long dimensionId, BigDecimal score, String feedback) {
         logger.info("提交自我评估，学生ID: {}, 维度ID: {}, 得分: {}", studentId, dimensionId, score);
-        
-        // 这里应该实现具体的自我评估提交逻辑
-        // 比如创建评估记录、更新能力数据等
+
+        if (studentId == null || dimensionId == null) {
+            throw new BusinessException(ErrorCode.INVALID_PARAMETER, "学生ID和维度ID不能为空");
+        }
+
+        requireActiveDimension(dimensionId);
+        BigDecimal normalizedScore = normalizeGoalScore(score);
+        if (normalizedScore == null) {
+            throw new BusinessException(ErrorCode.INVALID_PARAMETER, "自评分数不能为空");
+        }
+
         AbilityAssessment assessment = new AbilityAssessment();
         assessment.setStudentId(studentId);
         assessment.setDimensionId(dimensionId);
-        assessment.setScore(score);
-        assessment.setEvidence(feedback);
+        assessment.setScore(normalizedScore);
+        assessment.setMaxScore(BigDecimal.valueOf(5).setScale(2, java.math.RoundingMode.HALF_UP));
+        assessment.setEvidence(normalizeOptionalText(feedback));
         assessment.setAssessmentType("self");
         assessment.setStatus("completed");
-        
+        assessment.setAssessorId(studentId);
+        assessment.setAssessedAt(LocalDateTime.now());
+
+        abilityAssessmentMapper.insertAssessment(assessment);
+        updateStudentAbilityFromAssessment(studentId, dimensionId, normalizedScore);
+        checkAndUpdateGoalProgress(studentId, dimensionId, normalizedScore);
+
         logger.info("自我评估提交成功，学生ID: {}", studentId);
         return assessment;
     }
@@ -468,80 +523,318 @@ public class AbilityServiceImpl implements AbilityService {
     @Override
     public List<Map<String, Object>> getStudentAbilityRanking(Long dimensionId, Integer limit) {
         logger.info("获取学生能力排名，维度ID: {}, 限制数量: {}", dimensionId, limit);
-        
-        // 这里应该实现具体的排名逻辑
-        // 暂时返回空列表，后续可以根据具体需求实现
 
-        return new ArrayList<>();
+        AbilityDimension dimension = requireActiveDimension(dimensionId);
+        int safeLimit = limit == null || limit < 1 ? 20 : Math.min(limit, 100);
+
+        List<Map<String, Object>> ranking = studentAbilityMapper.getStudentAbilityRanking(dimensionId, safeLimit);
+        if (ranking == null) {
+            return new ArrayList<>();
+        }
+
+        for (Map<String, Object> item : ranking) {
+            if (item == null) {
+                continue;
+            }
+            item.putIfAbsent("dimensionId", dimensionId);
+            item.putIfAbsent("dimensionName", dimension.getName());
+            item.putIfAbsent("dimensionCode", dimension.getCode());
+        }
+        return ranking;
     }
 
     @Override
     public List<Map<String, Object>> getClassAbilityStats(Long courseId, Long dimensionId) {
         logger.info("获取班级能力统计，课程ID: {}, 维度ID: {}", courseId, dimensionId);
-        
+
+        if (courseId == null) {
+            throw new BusinessException(ErrorCode.INVALID_PARAMETER, "课程ID不能为空");
+        }
+
+        List<Long> enrolledStudentIds = enrollmentMapper.findActiveStudentIdsByCourse(courseId);
+        if (enrolledStudentIds == null || enrolledStudentIds.isEmpty()) {
+            return new ArrayList<>();
+        }
+
+        Set<Long> studentIdSet = new LinkedHashSet<>(enrolledStudentIds);
+        List<AbilityDimension> targetDimensions = dimensionId == null
+                ? Optional.ofNullable(abilityDimensionMapper.selectActiveDimensions()).orElse(List.of())
+                : List.of(requireActiveDimension(dimensionId));
+
         List<Map<String, Object>> statsList = new ArrayList<>();
-        Map<String, Object> stats = new HashMap<>();
-        
-        // 这里应该实现具体的班级统计逻辑
-        // 暂时返回基础结构，后续可以根据具体需求实现
-        stats.put("courseId", courseId);
-        stats.put("dimensionId", dimensionId);
-        stats.put("studentCount", 0);
-        stats.put("averageScore", 0.0);
-        stats.put("distributions", new ArrayList<>());
-        
-        statsList.add(stats);
+        for (AbilityDimension dimension : targetDimensions) {
+            if (dimension == null || dimension.getId() == null) {
+                continue;
+            }
+
+            List<StudentAbility> dimensionAbilities = Optional.ofNullable(studentAbilityMapper.selectByDimensionId(dimension.getId()))
+                    .orElse(List.of());
+            List<StudentAbility> enrolledAbilities = new ArrayList<>();
+            BigDecimal totalScore = BigDecimal.ZERO;
+            BigDecimal maxScore = null;
+            BigDecimal minScore = null;
+
+            for (StudentAbility ability : dimensionAbilities) {
+                if (ability == null || ability.getStudentId() == null || ability.getCurrentScore() == null) {
+                    continue;
+                }
+                if (!studentIdSet.contains(ability.getStudentId())) {
+                    continue;
+                }
+                enrolledAbilities.add(ability);
+                totalScore = totalScore.add(ability.getCurrentScore());
+                if (maxScore == null || ability.getCurrentScore().compareTo(maxScore) > 0) {
+                    maxScore = ability.getCurrentScore();
+                }
+                if (minScore == null || ability.getCurrentScore().compareTo(minScore) < 0) {
+                    minScore = ability.getCurrentScore();
+                }
+            }
+
+            Map<String, Object> stats = new LinkedHashMap<>();
+            stats.put("courseId", courseId);
+            stats.put("dimensionId", dimension.getId());
+            stats.put("dimensionName", dimension.getName());
+            stats.put("dimensionCode", dimension.getCode());
+            stats.put("studentCount", studentIdSet.size());
+            stats.put("assessedCount", enrolledAbilities.size());
+            stats.put("averageScore", enrolledAbilities.isEmpty()
+                    ? BigDecimal.ZERO.setScale(2, java.math.RoundingMode.HALF_UP)
+                    : totalScore.divide(BigDecimal.valueOf(enrolledAbilities.size()), 2, java.math.RoundingMode.HALF_UP));
+            stats.put("maxScore", maxScore == null ? BigDecimal.ZERO.setScale(2, java.math.RoundingMode.HALF_UP) : maxScore);
+            stats.put("minScore", minScore == null ? BigDecimal.ZERO.setScale(2, java.math.RoundingMode.HALF_UP) : minScore);
+            stats.put("distributions", buildLevelDistribution(enrolledAbilities));
+            statsList.add(stats);
+        }
+
         return statsList;
     }
 
     @Override
     public void generateLearningRecommendations(Long studentId, Long dimensionId) {
         logger.info("生成学习建议，学生ID: {}, 维度ID: {}", studentId, dimensionId);
-        
-        // 这里应该实现具体的学习建议生成逻辑
-        // 比如基于学生的能力评估结果、学习历史等生成个性化建议
-        // 生成的建议会保存到数据库中，后续可以根据具体需求实现
-        
-        logger.info("学习建议生成完成，学生ID: {}", studentId);
+
+        if (studentId == null) {
+            throw new BusinessException(ErrorCode.INVALID_PARAMETER, "学生ID不能为空");
+        }
+
+        learningRecommendationMapper.deleteExpiredRecommendations();
+
+        List<AbilityDimension> targetDimensions = resolveRecommendationDimensions(studentId, dimensionId);
+        if (targetDimensions.isEmpty()) {
+            logger.info("学习建议生成跳过，无可用维度，学生ID: {}", studentId);
+            return;
+        }
+
+        Map<Long, StudentAbility> abilityByDimension = new HashMap<>();
+        List<StudentAbility> abilities = studentAbilityMapper.selectByStudentId(studentId);
+        if (abilities != null) {
+            for (StudentAbility ability : abilities) {
+                if (ability != null && ability.getDimensionId() != null) {
+                    abilityByDimension.put(ability.getDimensionId(), ability);
+                }
+            }
+        }
+
+        int created = 0;
+        for (AbilityDimension dimension : targetDimensions) {
+            if (dimension == null || dimension.getId() == null) {
+                continue;
+            }
+            List<LearningRecommendation> existing = learningRecommendationMapper.selectByStudentAndDimension(studentId, dimension.getId(), null);
+            boolean hasPending = existing != null && existing.stream()
+                    .filter(Objects::nonNull)
+                    .anyMatch(item -> !Boolean.TRUE.equals(item.getIsAccepted()) && !item.isExpired());
+            if (hasPending) {
+                continue;
+            }
+
+            LearningRecommendation recommendation = buildRecommendation(studentId, dimension, abilityByDimension.get(dimension.getId()));
+            learningRecommendationMapper.insertRecommendation(recommendation);
+            created++;
+        }
+
+        logger.info("学习建议生成完成，学生ID: {}, 新增数量: {}", studentId, created);
     }
 
     @Override
     public List<AbilityGoal> getStudentGoals(Long studentId) {
         logger.info("获取学生目标，学生ID: {}", studentId);
-        
-        // 这里应该实现具体的获取学生目标逻辑
-        // 比如从数据库查询学生设定的学习目标等
-        // 暂时返回空列表，后续可以根据具体需求实现
-        List<AbilityGoal> goals = new ArrayList<>();
-        
-        logger.info("学生目标获取成功，学生ID: {}, 目标数量: {}", studentId, 0);
+
+        if (studentId == null) {
+            throw new BusinessException(ErrorCode.INVALID_PARAMETER, "学生ID不能为空");
+        }
+
+        List<AbilityGoal> goals = abilityGoalMapper.selectGoalsByStudentId(studentId);
+        if (goals == null) {
+            goals = new ArrayList<>();
+        }
+
+        logger.info("学生目标获取成功，学生ID: {}, 目标数量: {}", studentId, goals == null ? 0 : goals.size());
         return goals;
     }
 
     @Override
-    public void deleteAbilityGoal(Long goalId) {
+    public void syncGoalReminderNotifications(Long studentId) {
+        if (studentId == null) {
+            return;
+        }
+
+        List<AbilityGoal> goals = abilityGoalMapper.selectGoalsByStudentId(studentId);
+        if (goals == null || goals.isEmpty()) {
+            return;
+        }
+
+        List<com.noncore.assessment.entity.Notification> existingNotifications = notificationService.getAllUserNotifications(studentId, "system");
+        LocalDate today = LocalDate.now();
+
+        for (AbilityGoal goal : goals) {
+            if (goal == null || goal.getId() == null || goal.getTargetDate() == null) {
+                continue;
+            }
+            if (!"active".equals(goal.getStatus())) {
+                continue;
+            }
+
+            long daysUntilDue = ChronoUnit.DAYS.between(today, goal.getTargetDate());
+            if (daysUntilDue < 0) {
+                if (!hasRecentGoalReminder(existingNotifications, goal.getId(), "goal_overdue", 24)) {
+                    notificationService.sendNotification(
+                            studentId,
+                            null,
+                            "能力目标已逾期",
+                            buildGoalOverdueMessage(goal),
+                            "system",
+                            "goal_overdue",
+                            "high",
+                            "goal_overdue",
+                            goal.getId()
+                    );
+                }
+                continue;
+            }
+
+            if (daysUntilDue <= GOAL_REMINDER_LOOKAHEAD_DAYS
+                    && !hasRecentGoalReminder(existingNotifications, goal.getId(), "goal_deadline", 24)) {
+                notificationService.sendNotification(
+                        studentId,
+                        null,
+                        "能力目标即将到期",
+                        buildGoalDeadlineMessage(goal, daysUntilDue),
+                        "system",
+                        "goal_deadline",
+                        daysUntilDue == 0 ? "high" : "normal",
+                        "goal_deadline",
+                        goal.getId()
+                );
+            }
+        }
+    }
+
+    /**
+     * 每天早上预先同步一次所有学生的目标提醒。
+     *
+     * <p>保留按需同步兜底；该任务主要用于让用户未主动打开通知中心时也能收到提醒。</p>
+     */
+    @Scheduled(cron = "0 0 8 * * ?")
+    public void syncScheduledGoalReminderNotifications() {
+        List<Long> studentIds = abilityGoalMapper.selectStudentIdsWithActiveGoals();
+        if (studentIds == null || studentIds.isEmpty()) {
+            return;
+        }
+
+        for (Long studentId : studentIds) {
+            try {
+                syncGoalReminderNotifications(studentId);
+            } catch (Exception ex) {
+                logger.warn("同步学生能力目标提醒失败，studentId={}", studentId, ex);
+            }
+        }
+    }
+
+    @Override
+    public void deleteAbilityGoal(Long goalId, Long studentId) {
         logger.info("删除能力目标，目标ID: {}", goalId);
-        
-        // 这里应该实现具体的删除目标逻辑
-        // 比如从数据库删除指定的学习目标记录
-        // 暂时只做日志记录，后续可以根据具体需求实现
-        
+
+        AbilityGoal existing = requireOwnedGoal(goalId, studentId);
+        abilityGoalMapper.deleteGoal(existing.getId());
+
         logger.info("能力目标删除成功，目标ID: {}", goalId);
     }
 
     @Override
     public List<Map<String, Object>> getStudentAbilityTrends(Long studentId, Long dimensionId, Integer timeRange) {
         logger.info("获取学生能力发展趋势，学生ID: {}, 维度ID: {}, 时间范围: {}月", studentId, dimensionId, timeRange);
-        
-        // 这里应该实现具体的获取能力趋势逻辑
-        // 暂时返回空列表，后续可以根据具体需求实现
-        List<Map<String, Object>> trends = new ArrayList<>();
-        
-        logger.info("学生能力发展趋势获取成功，学生ID: {}, 数据点数量: {}", studentId, 0);
+
+        if (studentId == null) {
+            throw new BusinessException(ErrorCode.INVALID_PARAMETER, "学生ID不能为空");
+        }
+        if (dimensionId != null) {
+            requireActiveDimension(dimensionId);
+        }
+
+        int safeMonths = timeRange == null || timeRange < 1 ? 6 : Math.min(timeRange, 24);
+        List<Map<String, Object>> trends = Optional.ofNullable(
+                abilityAssessmentMapper.getAssessmentTrends(studentId, dimensionId, safeMonths)
+        ).orElse(new ArrayList<>());
+
+        for (Map<String, Object> item : trends) {
+            if (item == null) {
+                continue;
+            }
+            Object month = item.get("month");
+            Object averageScore = item.get("averageScore");
+            item.putIfAbsent("x", month == null ? "" : String.valueOf(month));
+            item.putIfAbsent("y", averageScore == null ? 0 : averageScore);
+        }
+
+        logger.info("学生能力发展趋势获取成功，学生ID: {}, 数据点数量: {}", studentId, trends.size());
         return trends;
     }
 
     // ==================== 私有辅助方法 ====================
+
+    private AbilityDimension requireActiveDimension(Long dimensionId) {
+        if (dimensionId == null) {
+            throw new BusinessException(ErrorCode.INVALID_PARAMETER, "能力维度ID不能为空");
+        }
+
+        AbilityDimension dimension = abilityDimensionMapper.selectDimensionById(dimensionId);
+        if (dimension == null || !Boolean.TRUE.equals(dimension.getIsActive())) {
+            throw new BusinessException(ErrorCode.DATA_NOT_FOUND, "能力维度不存在或未启用");
+        }
+        return dimension;
+    }
+
+    private List<Map<String, Object>> buildLevelDistribution(List<StudentAbility> abilities) {
+        Map<String, Integer> counts = new LinkedHashMap<>();
+        counts.put("expert", 0);
+        counts.put("advanced", 0);
+        counts.put("intermediate", 0);
+        counts.put("beginner", 0);
+
+        if (abilities != null) {
+            for (StudentAbility ability : abilities) {
+                if (ability == null) {
+                    continue;
+                }
+                String level = ability.getLevel();
+                if (level == null || !counts.containsKey(level)) {
+                    level = "beginner";
+                }
+                counts.put(level, counts.get(level) + 1);
+            }
+        }
+
+        List<Map<String, Object>> distributions = new ArrayList<>();
+        for (Map.Entry<String, Integer> entry : counts.entrySet()) {
+            Map<String, Object> item = new LinkedHashMap<>();
+            item.put("level", entry.getKey());
+            item.put("count", entry.getValue());
+            distributions.add(item);
+        }
+        return distributions;
+    }
 
     /**
      * 计算综合能力分数
@@ -592,8 +885,15 @@ public class AbilityServiceImpl implements AbilityService {
         List<AbilityGoal> goals = abilityGoalMapper.selectActiveGoalsByStudentAndDimension(studentId, dimensionId);
         
         for (AbilityGoal goal : goals) {
+            boolean wasAchieved = "achieved".equals(goal.getStatus());
             goal.updateCurrentScore(score);
             abilityGoalMapper.updateGoal(goal);
+            if (!wasAchieved && "achieved".equals(goal.getStatus())) {
+                recordGoalBehaviorEvent(goal, BehaviorEventType.GOAL_ACHIEVE, Map.of(
+                        "source", "assessment_sync",
+                        "triggerDimensionId", dimensionId
+                ));
+            }
         }
     }
 
@@ -747,38 +1047,518 @@ public class AbilityServiceImpl implements AbilityService {
 
     @Override
     public AbilityGoal createAbilityGoal(AbilityGoal abilityGoal) {
+        if (abilityGoal == null) {
+            throw new BusinessException(ErrorCode.INVALID_PARAMETER, "目标信息不能为空");
+        }
+
         logger.info("创建能力目标，目标名称: {}", abilityGoal.getTitle());
-        
-        // 这里应该实现具体的创建目标逻辑
-        // 比如保存到数据库，生成目标ID等
-        // 暂时设置基本属性，后续可以根据具体需求实现
-        
-        logger.info("能力目标创建成功，目标ID: {}", abilityGoal.getId());
-        return abilityGoal;
+
+        Long studentId = abilityGoal.getStudentId();
+        if (studentId == null) {
+            throw new BusinessException(ErrorCode.INVALID_PARAMETER, "学生ID不能为空");
+        }
+
+        Long dimensionId = abilityGoal.getDimensionId();
+        validateGoalDimension(dimensionId);
+
+        AbilityGoal record = new AbilityGoal();
+        record.setStudentId(studentId);
+        record.setDimensionId(dimensionId);
+        record.setTitle(requireGoalTitle(abilityGoal.getTitle()));
+        record.setDescription(normalizeOptionalText(abilityGoal.getDescription()));
+        record.setTargetDate(requireGoalTargetDate(abilityGoal.getTargetDate()));
+        record.setPriority(normalizeGoalPriority(abilityGoal.getPriority()));
+        record.setTargetScore(requireGoalTargetScore(abilityGoal.getTargetScore()));
+        record.setCurrentScore(resolveGoalCurrentScore(studentId, dimensionId, abilityGoal.getCurrentScore()));
+        record.setStatus(normalizeGoalStatus(abilityGoal.getStatus(), "active"));
+        record.setAchievedAt(null);
+        applyGoalLifecycle(record, abilityGoal.getStatus() != null && !abilityGoal.getStatus().isBlank());
+
+        abilityGoalMapper.insertGoal(record);
+        AbilityGoal createdGoal = abilityGoalMapper.selectGoalById(record.getId());
+        recordGoalBehaviorEvent(createdGoal, BehaviorEventType.GOAL_SET, null);
+        if (createdGoal != null && "achieved".equals(createdGoal.getStatus())) {
+            recordGoalBehaviorEvent(createdGoal, BehaviorEventType.GOAL_ACHIEVE, Map.of("source", "goal_create"));
+        }
+
+        logger.info("能力目标创建成功，目标ID: {}", record.getId());
+        return createdGoal != null ? createdGoal : record;
     }
 
     @Override
-    public AbilityGoal updateAbilityGoal(Long goalId, AbilityGoal abilityGoal) {
+    public AbilityGoal updateAbilityGoal(Long goalId, Long studentId, AbilityGoal abilityGoal) {
         logger.info("更新能力目标，目标ID: {}", goalId);
-        
-        // 这里应该实现具体的更新目标逻辑
-        // 比如从数据库更新指定的学习目标记录
-        // 暂时设置基本属性，后续可以根据具体需求实现
-        abilityGoal.setId(goalId);
-        
+
+        if (abilityGoal == null) {
+            throw new BusinessException(ErrorCode.INVALID_PARAMETER, "目标信息不能为空");
+        }
+
+        AbilityGoal existing = requireOwnedGoal(goalId, studentId);
+        boolean wasAchieved = "achieved".equals(existing.getStatus());
+        String previousStatus = existing.getStatus();
+
+        Long originalDimensionId = existing.getDimensionId();
+        Long effectiveDimensionId = abilityGoal.getDimensionId() != null ? abilityGoal.getDimensionId() : existing.getDimensionId();
+        validateGoalDimension(effectiveDimensionId);
+
+        existing.setDimensionId(effectiveDimensionId);
+        if (abilityGoal.getTitle() != null) {
+            existing.setTitle(requireGoalTitle(abilityGoal.getTitle()));
+        }
+        if (abilityGoal.getDescription() != null) {
+            existing.setDescription(normalizeOptionalText(abilityGoal.getDescription()));
+        }
+        if (abilityGoal.getTargetDate() != null) {
+            existing.setTargetDate(requireGoalTargetDate(abilityGoal.getTargetDate()));
+        }
+        if (abilityGoal.getPriority() != null) {
+            existing.setPriority(normalizeGoalPriority(abilityGoal.getPriority()));
+        }
+        if (abilityGoal.getTargetScore() != null) {
+            existing.setTargetScore(requireGoalTargetScore(abilityGoal.getTargetScore()));
+        }
+        BigDecimal currentScoreFallback = abilityGoal.getCurrentScore() != null
+                ? abilityGoal.getCurrentScore()
+                : (Objects.equals(originalDimensionId, effectiveDimensionId) ? existing.getCurrentScore() : BigDecimal.ZERO);
+        existing.setCurrentScore(resolveGoalCurrentScore(studentId, effectiveDimensionId, currentScoreFallback));
+        if (abilityGoal.getStatus() != null) {
+            existing.setStatus(normalizeGoalStatus(abilityGoal.getStatus(), existing.getStatus()));
+        }
+
+        applyGoalLifecycle(existing, abilityGoal.getStatus() != null && !abilityGoal.getStatus().isBlank());
+        abilityGoalMapper.updateGoal(existing);
+        AbilityGoal updatedGoal = abilityGoalMapper.selectGoalById(goalId);
+        Map<String, Object> updateMeta = new LinkedHashMap<>();
+        updateMeta.put("previousStatus", previousStatus);
+        updateMeta.put("source", "goal_update");
+        recordGoalBehaviorEvent(updatedGoal, BehaviorEventType.GOAL_UPDATE, updateMeta);
+        if (!wasAchieved && updatedGoal != null && "achieved".equals(updatedGoal.getStatus())) {
+            recordGoalBehaviorEvent(updatedGoal, BehaviorEventType.GOAL_ACHIEVE, Map.of("source", "goal_update"));
+        }
+
         logger.info("能力目标更新成功，目标ID: {}", goalId);
-        return abilityGoal;
+        return updatedGoal != null ? updatedGoal : existing;
+    }
+
+    private AbilityGoal requireOwnedGoal(Long goalId, Long studentId) {
+        if (goalId == null || studentId == null) {
+            throw new BusinessException(ErrorCode.INVALID_PARAMETER, "目标ID和学生ID不能为空");
+        }
+
+        AbilityGoal existing = abilityGoalMapper.selectGoalById(goalId);
+        if (existing == null) {
+            throw new BusinessException(ErrorCode.DATA_NOT_FOUND, "能力目标不存在");
+        }
+        if (existing.getStudentId() == null || !existing.getStudentId().equals(studentId)) {
+            throw new BusinessException(ErrorCode.UNAUTHORIZED_OPERATION, "无权操作该能力目标");
+        }
+        return existing;
+    }
+
+    private void validateGoalDimension(Long dimensionId) {
+        if (dimensionId == null) {
+            throw new BusinessException(ErrorCode.INVALID_PARAMETER, "能力维度不能为空");
+        }
+        AbilityDimension dimension = abilityDimensionMapper.selectDimensionById(dimensionId);
+        if (dimension == null || Boolean.FALSE.equals(dimension.getIsActive())) {
+            throw new BusinessException(ErrorCode.INVALID_PARAMETER, "能力维度不存在或未启用");
+        }
+    }
+
+    private String requireGoalTitle(String title) {
+        String normalized = normalizeOptionalText(title);
+        if (normalized == null) {
+            throw new BusinessException(ErrorCode.INVALID_PARAMETER, "目标标题不能为空");
+        }
+        return normalized;
+    }
+
+    private LocalDate requireGoalTargetDate(LocalDate targetDate) {
+        if (targetDate == null) {
+            throw new BusinessException(ErrorCode.INVALID_PARAMETER, "目标日期不能为空");
+        }
+        return targetDate;
+    }
+
+    private BigDecimal requireGoalTargetScore(BigDecimal targetScore) {
+        BigDecimal normalized = normalizeGoalScore(targetScore);
+        if (normalized == null || normalized.compareTo(BigDecimal.ZERO) <= 0) {
+            throw new BusinessException(ErrorCode.INVALID_PARAMETER, "目标分数必须大于0");
+        }
+        return normalized;
+    }
+
+    private BigDecimal resolveGoalCurrentScore(Long studentId, Long dimensionId, BigDecimal fallbackScore) {
+        StudentAbility snapshot = studentAbilityMapper.selectByStudentAndDimension(studentId, dimensionId);
+        if (snapshot != null && snapshot.getCurrentScore() != null) {
+            return normalizeGoalScore(snapshot.getCurrentScore());
+        }
+        BigDecimal normalizedFallback = normalizeGoalScore(fallbackScore);
+        return normalizedFallback == null ? BigDecimal.ZERO.setScale(2, java.math.RoundingMode.HALF_UP) : normalizedFallback;
+    }
+
+    private BigDecimal normalizeGoalScore(BigDecimal score) {
+        if (score == null) {
+            return null;
+        }
+        if (score.compareTo(BigDecimal.ZERO) < 0) {
+            throw new BusinessException(ErrorCode.INVALID_PARAMETER, "分数不能为负数");
+        }
+
+        BigDecimal normalized = score;
+        if (normalized.compareTo(BigDecimal.valueOf(5)) > 0) {
+            normalized = normalized.divide(BigDecimal.valueOf(20), 2, java.math.RoundingMode.HALF_UP);
+        } else {
+            normalized = normalized.setScale(2, java.math.RoundingMode.HALF_UP);
+        }
+
+        if (normalized.compareTo(BigDecimal.valueOf(5)) > 0) {
+            throw new BusinessException(ErrorCode.INVALID_PARAMETER, "分数超出允许范围");
+        }
+        return normalized;
+    }
+
+    private String normalizeGoalPriority(String priority) {
+        String normalized = normalizeOptionalText(priority);
+        if (normalized == null) {
+            return "medium";
+        }
+        if (!Set.of("low", "medium", "high").contains(normalized)) {
+            throw new BusinessException(ErrorCode.INVALID_PARAMETER, "目标优先级不合法");
+        }
+        return normalized;
+    }
+
+    private String normalizeGoalStatus(String status, String defaultValue) {
+        String normalized = normalizeOptionalText(status);
+        if (normalized == null) {
+            return defaultValue;
+        }
+        if (!Set.of("active", "achieved", "paused", "cancelled").contains(normalized)) {
+            throw new BusinessException(ErrorCode.INVALID_PARAMETER, "目标状态不合法");
+        }
+        return normalized;
+    }
+
+    private String normalizeOptionalText(String value) {
+        if (value == null) {
+            return null;
+        }
+        String trimmed = value.trim();
+        return trimmed.isEmpty() ? null : trimmed;
+    }
+
+    private void applyGoalLifecycle(AbilityGoal goal, boolean explicitStatus) {
+        if (goal.getCurrentScore() == null) {
+            goal.setCurrentScore(BigDecimal.ZERO.setScale(2, java.math.RoundingMode.HALF_UP));
+        }
+
+        if ("cancelled".equals(goal.getStatus())) {
+            goal.setAchievedAt(null);
+            goal.updateTimestamp();
+            return;
+        }
+
+        if (goal.getTargetScore() != null && goal.getCurrentScore().compareTo(goal.getTargetScore()) >= 0) {
+            if (!"achieved".equals(goal.getStatus())) {
+                goal.markAsAchieved();
+            } else if (goal.getAchievedAt() == null) {
+                goal.setAchievedAt(java.time.LocalDateTime.now());
+                goal.updateTimestamp();
+            } else {
+                goal.updateTimestamp();
+            }
+            return;
+        }
+
+        if ("achieved".equals(goal.getStatus()) && !explicitStatus) {
+            goal.setStatus("active");
+        }
+        if (goal.getStatus() == null || goal.getStatus().isBlank()) {
+            goal.setStatus("active");
+        }
+        if (!"achieved".equals(goal.getStatus())) {
+            goal.setAchievedAt(null);
+        } else if (goal.getAchievedAt() == null) {
+            goal.setAchievedAt(java.time.LocalDateTime.now());
+        }
+        goal.updateTimestamp();
+    }
+
+    private void recordGoalBehaviorEvent(AbilityGoal goal, BehaviorEventType eventType, Map<String, Object> extraMetadata) {
+        if (goal == null || goal.getStudentId() == null || goal.getId() == null || eventType == null) {
+            return;
+        }
+
+        Map<String, Object> metadata = new LinkedHashMap<>();
+        metadata.put("goalId", goal.getId());
+        metadata.put("dimensionId", goal.getDimensionId());
+        if (goal.getDimensionName() != null && !goal.getDimensionName().isBlank()) {
+            metadata.put("dimensionName", goal.getDimensionName());
+        }
+        metadata.put("title", goal.getTitle());
+        metadata.put("targetScore", goal.getTargetScore());
+        metadata.put("currentScore", goal.getCurrentScore());
+        metadata.put("targetDate", goal.getTargetDate() == null ? null : goal.getTargetDate().toString());
+        metadata.put("priority", goal.getPriority());
+        metadata.put("status", goal.getStatus());
+        metadata.put("overdue", goal.isOverdue());
+
+        if (extraMetadata != null && !extraMetadata.isEmpty()) {
+            metadata.putAll(extraMetadata);
+        }
+
+        behaviorEventRecorder.record(
+                goal.getStudentId(),
+                null,
+                eventType,
+                "ability_goal",
+                goal.getId(),
+                metadata
+        );
+    }
+
+    private boolean hasRecentGoalReminder(List<com.noncore.assessment.entity.Notification> notifications,
+                                          Long goalId,
+                                          String relatedType,
+                                          long hoursWindow) {
+        if (notifications == null || notifications.isEmpty() || goalId == null || relatedType == null) {
+            return false;
+        }
+        LocalDateTime cutoff = LocalDateTime.now().minusHours(Math.max(1, hoursWindow));
+        for (com.noncore.assessment.entity.Notification notification : notifications) {
+            if (notification == null) {
+                continue;
+            }
+            if (!goalId.equals(notification.getRelatedId())) {
+                continue;
+            }
+            if (!relatedType.equalsIgnoreCase(String.valueOf(notification.getRelatedType()))) {
+                continue;
+            }
+            if (notification.getCreatedAt() != null && notification.getCreatedAt().isAfter(cutoff)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private String buildGoalDeadlineMessage(AbilityGoal goal, long daysUntilDue) {
+        String dimension = goal.getDimensionName() == null || goal.getDimensionName().isBlank()
+                ? ("维度#" + goal.getDimensionId())
+                : goal.getDimensionName();
+        String dueText;
+        if (daysUntilDue <= 0) {
+            dueText = "今天";
+        } else if (daysUntilDue == 1) {
+            dueText = "明天";
+        } else {
+            dueText = daysUntilDue + " 天后";
+        }
+        return String.format("你设定的目标“%s”（%s）将在%s到期，当前 %.2f / %.2f，建议尽快推进或调整计划。",
+                goal.getTitle(),
+                dimension,
+                dueText,
+                goal.getCurrentScore() == null ? 0.0 : goal.getCurrentScore().doubleValue(),
+                goal.getTargetScore() == null ? 0.0 : goal.getTargetScore().doubleValue());
+    }
+
+    private String buildGoalOverdueMessage(AbilityGoal goal) {
+        String dimension = goal.getDimensionName() == null || goal.getDimensionName().isBlank()
+                ? ("维度#" + goal.getDimensionId())
+                : goal.getDimensionName();
+        long overdueDays = Math.max(1, ChronoUnit.DAYS.between(goal.getTargetDate(), LocalDate.now()));
+        return String.format("目标“%s”（%s）已逾期 %d 天，当前 %.2f / %.2f。你仍然可以继续完成，或调整目标分数与截止日期。",
+                goal.getTitle(),
+                dimension,
+                overdueDays,
+                goal.getCurrentScore() == null ? 0.0 : goal.getCurrentScore().doubleValue(),
+                goal.getTargetScore() == null ? 0.0 : goal.getTargetScore().doubleValue());
     }
 
     @Override
     public List<LearningRecommendation> getLearningRecommendations(Long studentId, Long dimensionId, Integer limit) {
         logger.info("获取学习建议，学生ID: {}, 维度ID: {}, 限制数量: {}", studentId, dimensionId, limit);
-        
-        // 这里应该实现具体的获取学习建议逻辑
-        // 暂时返回空列表，后续可以根据具体需求实现
-        List<LearningRecommendation> recommendations = new ArrayList<>();
-        
-        logger.info("学习建议获取成功，学生ID: {}, 建议数量: {}", studentId, 0);
+
+        if (studentId == null) {
+            throw new BusinessException(ErrorCode.INVALID_PARAMETER, "学生ID不能为空");
+        }
+
+        learningRecommendationMapper.deleteExpiredRecommendations();
+        int safeLimit = limit == null || limit < 1 ? 10 : Math.min(limit, 20);
+
+        List<LearningRecommendation> recommendations = loadRecommendations(studentId, dimensionId, safeLimit);
+        if (recommendations.isEmpty()) {
+            generateLearningRecommendations(studentId, dimensionId);
+            recommendations = loadRecommendations(studentId, dimensionId, safeLimit);
+        }
+
+        logger.info("学习建议获取成功，学生ID: {}, 建议数量: {}", studentId, recommendations.size());
         return recommendations;
+    }
+
+    private LearningRecommendation requireOwnedRecommendation(Long recommendationId, Long studentId) {
+        if (recommendationId == null || studentId == null) {
+            throw new BusinessException(ErrorCode.INVALID_PARAMETER, "建议ID和学生ID不能为空");
+        }
+
+        LearningRecommendation recommendation = learningRecommendationMapper.selectRecommendationById(recommendationId);
+        if (recommendation == null) {
+            throw new BusinessException(ErrorCode.DATA_NOT_FOUND, "学习建议不存在");
+        }
+        if (!Objects.equals(recommendation.getStudentId(), studentId)) {
+            throw new BusinessException(ErrorCode.PERMISSION_DENIED, "无权操作该学习建议");
+        }
+        return recommendation;
+    }
+
+    private List<LearningRecommendation> loadRecommendations(Long studentId, Long dimensionId, int limit) {
+        List<LearningRecommendation> source = dimensionId == null
+                ? learningRecommendationMapper.selectByStudentId(studentId, null)
+                : learningRecommendationMapper.selectByStudentAndDimension(studentId, dimensionId, null);
+        if (source == null || source.isEmpty()) {
+            return new ArrayList<>();
+        }
+
+        List<LearningRecommendation> filtered = new ArrayList<>();
+        for (LearningRecommendation item : source) {
+            if (item == null || item.isExpired()) {
+                continue;
+            }
+            filtered.add(item);
+            if (filtered.size() >= limit) {
+                break;
+            }
+        }
+        return filtered;
+    }
+
+    private List<AbilityDimension> resolveRecommendationDimensions(Long studentId, Long dimensionId) {
+        List<AbilityDimension> activeDimensions = Optional.ofNullable(abilityDimensionMapper.selectActiveDimensions())
+                .orElse(List.of());
+        if (activeDimensions.isEmpty()) {
+            return List.of();
+        }
+
+        Map<Long, AbilityDimension> dimensionMap = new LinkedHashMap<>();
+        for (AbilityDimension dimension : activeDimensions) {
+            if (dimension != null && dimension.getId() != null) {
+                dimensionMap.put(dimension.getId(), dimension);
+            }
+        }
+
+        if (dimensionId != null) {
+            AbilityDimension dimension = dimensionMap.get(dimensionId);
+            return dimension == null ? List.of() : List.of(dimension);
+        }
+
+        List<StudentAbility> abilities = Optional.ofNullable(studentAbilityMapper.selectByStudentId(studentId))
+                .orElse(List.of());
+        List<StudentAbility> sortedAbilities = abilities.stream()
+                .filter(Objects::nonNull)
+                .filter(item -> item.getDimensionId() != null && dimensionMap.containsKey(item.getDimensionId()))
+                .sorted(Comparator
+                        .comparing((StudentAbility item) -> item.getCurrentScore() == null ? BigDecimal.ZERO : item.getCurrentScore())
+                        .thenComparing(item -> item.getLastAssessmentAt(), Comparator.nullsLast(Comparator.naturalOrder())))
+                .toList();
+
+        LinkedHashSet<Long> picked = new LinkedHashSet<>();
+        for (StudentAbility item : sortedAbilities) {
+            BigDecimal score = item.getCurrentScore();
+            if (score == null || score.compareTo(new BigDecimal("4.60")) < 0) {
+                picked.add(item.getDimensionId());
+            }
+            if (picked.size() >= 2) {
+                break;
+            }
+        }
+
+        if (picked.isEmpty() && !sortedAbilities.isEmpty()) {
+            picked.add(sortedAbilities.get(0).getDimensionId());
+        }
+        if (picked.isEmpty()) {
+            for (AbilityDimension dimension : activeDimensions) {
+                if (dimension == null || dimension.getId() == null) {
+                    continue;
+                }
+                picked.add(dimension.getId());
+                if (picked.size() >= 2) {
+                    break;
+                }
+            }
+        }
+
+        List<AbilityDimension> dimensions = new ArrayList<>();
+        for (Long id : picked) {
+            AbilityDimension dimension = dimensionMap.get(id);
+            if (dimension != null) {
+                dimensions.add(dimension);
+            }
+        }
+        return dimensions;
+    }
+
+    private LearningRecommendation buildRecommendation(Long studentId, AbilityDimension dimension, StudentAbility ability) {
+        String dimensionName = dimension.getName() == null || dimension.getName().isBlank()
+                ? ("维度#" + dimension.getId())
+                : dimension.getName();
+        BigDecimal currentScore = ability == null || ability.getCurrentScore() == null
+                ? BigDecimal.ZERO
+                : ability.getCurrentScore().setScale(2, java.math.RoundingMode.HALF_UP);
+        double currentValue = currentScore.doubleValue();
+        BigDecimal gap = BigDecimal.valueOf(Math.max(0.0, 5.0 - currentValue)).setScale(2, java.math.RoundingMode.HALF_UP);
+        BigDecimal priority = BigDecimal.valueOf(Math.min(0.99, 0.55 + (gap.doubleValue() / 5.0) * 0.4))
+                .setScale(2, java.math.RoundingMode.HALF_UP);
+
+        String recommendationType = switch (String.valueOf(dimension.getCode())) {
+            case "LEARNING_ATTITUDE" -> "practice";
+            case "LEARNING_ABILITY" -> "practice";
+            case "LEARNING_METHOD" -> "project";
+            case "MORAL_COGNITION" -> "resource";
+            default -> "course";
+        };
+
+        String difficulty = currentValue >= 4.2
+                ? "advanced"
+                : (currentValue >= 3.2 ? "intermediate" : "beginner");
+
+        String estimatedTime = switch (difficulty) {
+            case "advanced" -> "每周30-45分钟";
+            case "intermediate" -> "每周20-30分钟";
+            default -> "每天15-20分钟";
+        };
+
+        String title = "优先提升" + dimensionName;
+        String description = switch (String.valueOf(dimension.getCode())) {
+            case "LEARNING_ATTITUDE" -> String.format(
+                    "当前%s为 %.2f/5。建议把本周学习任务拆成更小的每日目标，并固定一个复盘时间，优先保持连续投入而不是一次性突击。",
+                    dimensionName, currentValue);
+            case "LEARNING_ABILITY" -> String.format(
+                    "当前%s为 %.2f/5。建议针对最近一次作业中失分最多的知识点做 1 次专项练习，并在练习后总结一条可复用的解题步骤。",
+                    dimensionName, currentValue);
+            case "LEARNING_METHOD" -> String.format(
+                    "当前%s为 %.2f/5。建议为下一次学习任务提前列出“计划-执行-复盘”三步清单，并在完成后记录最有效的一条方法。",
+                    dimensionName, currentValue);
+            case "MORAL_COGNITION" -> String.format(
+                    "当前%s为 %.2f/5。建议结合近期课堂/作业案例，补充记录 1-2 条判断依据与责任边界，提升表达的完整性与自我校准能力。",
+                    dimensionName, currentValue);
+            default -> String.format(
+                    "当前%s为 %.2f/5。建议先从最近一次任务中选择一个最薄弱环节，制定一个可在一周内完成的改进动作并跟踪执行。",
+                    dimensionName, currentValue);
+        };
+
+        return LearningRecommendation.builder()
+                .studentId(studentId)
+                .dimensionId(dimension.getId())
+                .title(title)
+                .description(description)
+                .recommendationType(recommendationType)
+                .difficultyLevel(difficulty)
+                .estimatedTime(estimatedTime)
+                .priorityScore(priority)
+                .isRead(false)
+                .isAccepted(false)
+                .expiresAt(LocalDateTime.now().plusDays(currentValue >= 4.2 ? 21 : 14))
+                .build();
     }
 }

@@ -46,14 +46,6 @@
         SELECT COUNT(1) FROM post_comments c WHERE c.deleted = false
     </select>
 
-    <select id="countReportsAll" resultType="long">
-        SELECT COUNT(1) FROM reports
-    </select>
-
-    <select id="countReportsByStatus" resultType="long">
-        SELECT COUNT(1) FROM reports r WHERE r.status = #{status}
-    </select>
-
     <select id="countActiveUsersSince" resultType="long">
         SELECT COUNT(DISTINCT e.student_id)
         FROM behavior_events e
@@ -206,4 +198,3 @@
     </select>
 
 </mapper>
-

@@ -113,6 +113,11 @@ public interface GradeMapper {
     BigDecimal calculateAverageScore(Long studentId);
 
     /**
+     * 计算教师名下已发布成绩的平均分
+     */
+    BigDecimal calculateAverageScoreByTeacher(@Param("teacherId") Long teacherId);
+
+    /**
      * 计算学生课程平均分
      */
     BigDecimal calculateCourseAverageScore(@Param("studentId") Long studentId, 

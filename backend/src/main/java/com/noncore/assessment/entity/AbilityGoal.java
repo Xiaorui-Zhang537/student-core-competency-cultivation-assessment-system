@@ -102,6 +102,19 @@ public class AbilityGoal {
     }
 
     /**
+     * 是否已逾期但仍未达成。
+     *
+     * <p>注意：逾期是派生状态，不会写回 status 字段，避免引入额外状态迁移复杂度。</p>
+     */
+    @Schema(description = "是否已逾期（派生状态）", example = "false")
+    public boolean isOverdue() {
+        return "active".equals(this.status)
+                && !isAchieved()
+                && targetDate != null
+                && targetDate.isBefore(LocalDate.now());
+    }
+
+    /**
      * 标记为已达成
      */
     public void markAsAchieved() {

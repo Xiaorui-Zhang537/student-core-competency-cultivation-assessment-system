@@ -291,6 +291,23 @@
         WHERE c.teacher_id = #{teacherId} AND lp.rating IS NOT NULL
     </select>
 
+    <!-- 课程口碑分：按每个学生在该课程下的已评分课时均值再聚合 -->
+    <select id="getCourseRatingStats" resultType="map">
+        SELECT
+            COALESCE(AVG(student_avg_rating), 0.0) AS avgRating,
+            COUNT(*) AS reviewCount
+        FROM (
+                 SELECT
+                     lp.student_id,
+                     AVG(lp.rating) AS student_avg_rating
+                 FROM lesson_progress lp
+                          JOIN lessons l ON lp.lesson_id = l.id
+                 WHERE l.course_id = #{courseId}
+                   AND lp.rating IS NOT NULL
+                 GROUP BY lp.student_id
+             ) course_reviews
+    </select>
+
     <!-- 教师所有学生的平均课程完成率 -->
     <select id="getAverageCompletionRateByTeacher" resultType="double">
         SELECT COALESCE(AVG(main.completion_rate), 0.0)

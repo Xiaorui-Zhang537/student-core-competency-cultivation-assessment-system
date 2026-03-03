@@ -11,6 +11,7 @@ import com.noncore.assessment.exception.ErrorCode;
 import com.noncore.assessment.mapper.CourseMapper;
 import com.noncore.assessment.mapper.EnrollmentMapper;
 import com.noncore.assessment.mapper.GradeMapper;
+import com.noncore.assessment.mapper.SubmissionMapper;
 import com.noncore.assessment.mapper.UserMapper;
 import com.noncore.assessment.mapper.LessonProgressMapper;
 import com.noncore.assessment.mapper.LearningRecommendationMapper;
@@ -35,6 +36,7 @@ public class TeacherStudentServiceImpl implements TeacherStudentService {
     private final EnrollmentMapper enrollmentMapper;
     private final LessonProgressMapper lessonProgressMapper;
     private final LearningRecommendationMapper learningRecommendationMapper;
+    private final SubmissionMapper submissionMapper;
     private final AbilityAnalyticsService abilityAnalyticsService;
     private final com.noncore.assessment.service.AiConversationService aiConversationService;
     private final com.noncore.assessment.service.CommunityService communityService;
@@ -45,6 +47,7 @@ public class TeacherStudentServiceImpl implements TeacherStudentService {
                                      CourseMapper courseMapper,
                                      LessonProgressMapper lessonProgressMapper,
                                      LearningRecommendationMapper learningRecommendationMapper,
+                                     SubmissionMapper submissionMapper,
                                      com.noncore.assessment.service.AiConversationService aiConversationService,
                                      com.noncore.assessment.service.CommunityService communityService,
                                      AbilityAnalyticsService abilityAnalyticsService) {
@@ -54,6 +57,7 @@ public class TeacherStudentServiceImpl implements TeacherStudentService {
         this.enrollmentMapper = enrollmentMapper;
         this.lessonProgressMapper = lessonProgressMapper;
         this.learningRecommendationMapper = learningRecommendationMapper;
+        this.submissionMapper = submissionMapper;
         this.aiConversationService = aiConversationService;
         this.communityService = communityService;
         this.abilityAnalyticsService = abilityAnalyticsService;
@@ -247,6 +251,10 @@ public class TeacherStudentServiceImpl implements TeacherStudentService {
             throw new BusinessException(ErrorCode.PERMISSION_DENIED);
         }
 
+        int safeDays = days == null || days < 1 ? 7 : Math.min(days, 365);
+        int safeLimit = limit == null || limit < 1 ? 5 : Math.min(limit, 20);
+        java.time.LocalDateTime cutoff = java.time.LocalDateTime.now().minusDays(safeDays);
+
         // 最近访问时间
         java.time.LocalDateTime maxAccess = null;
         java.util.List<com.noncore.assessment.entity.Enrollment> enrollmentList = enrollmentMapper.selectEnrollmentsByStudentId(studentId);
@@ -263,23 +271,31 @@ public class TeacherStudentServiceImpl implements TeacherStudentService {
         // 近一周学习总时长（分钟）
         Long weeklyMinutes = lessonProgressMapper.calculateWeeklyStudyTime(studentId);
 
-        // 最近学习章节（已有）
-        java.util.List<java.util.Map<String, Object>> recent = lessonProgressMapper.selectRecentStudiedLessons(studentId, (limit == null || limit <= 0) ? 5 : limit);
+        // 最近学习章节：按时间窗过滤，并对外保持 limit 上限
+        int lessonFetchLimit = Math.max(10, safeLimit * 3);
+        java.util.List<java.util.Map<String, Object>> recent = lessonProgressMapper.selectRecentStudiedLessons(studentId, lessonFetchLimit);
         java.util.List<TeacherStudentActivityResponse.RecentLessonDto> recentDtos = new java.util.ArrayList<>();
         if (recent != null) {
             for (java.util.Map<String, Object> r : recent) {
+                java.util.Date studiedAt = asDate(r.get("studiedAt"));
+                if (!isWithinWindow(studiedAt, cutoff)) {
+                    continue;
+                }
                 TeacherStudentActivityResponse.RecentLessonDto dto = TeacherStudentActivityResponse.RecentLessonDto.builder()
                         .lessonId(asLong(r.get("lessonId")))
                         .lessonTitle(asString(r.get("lessonTitle")))
                         .courseId(asLong(r.get("courseId")))
                         .courseTitle(asString(r.get("courseTitle")))
-                        .studiedAt(asDate(r.get("studiedAt")))
+                        .studiedAt(studiedAt)
                         .build();
                 recentDtos.add(dto);
+                if (recentDtos.size() >= safeLimit) {
+                    break;
+                }
             }
         }
 
-        // 统一事件流（第一期先拼装：lesson + visit + ai + community，不落库）
+        // 统一事件流（lesson + submission + visit + ai + community）
         java.util.List<TeacherStudentActivityResponse.ActivityEventDto> events = new java.util.ArrayList<>();
         for (TeacherStudentActivityResponse.RecentLessonDto rl : recentDtos) {
             events.add(TeacherStudentActivityResponse.ActivityEventDto.builder()
@@ -292,7 +308,7 @@ public class TeacherStudentServiceImpl implements TeacherStudentService {
                     .link(null)
                     .build());
         }
-        if (maxAccess != null) {
+        if (maxAccess != null && !maxAccess.isBefore(cutoff)) {
             events.add(TeacherStudentActivityResponse.ActivityEventDto.builder()
                     .eventType("visit")
                     .title("访问课程")
@@ -303,21 +319,63 @@ public class TeacherStudentServiceImpl implements TeacherStudentService {
                     .link(null)
                     .build());
         }
+        // 最近提交：补齐学生最近作业产出轨迹
+        try {
+            java.util.List<com.noncore.assessment.entity.Submission> submissions = submissionMapper.selectByStudentId(studentId);
+            if (submissions != null) {
+                int added = 0;
+                for (com.noncore.assessment.entity.Submission submission : submissions) {
+                    if (submission == null) {
+                        continue;
+                    }
+                    java.util.Date submittedAt = submission.getSubmittedAt() == null
+                            ? asDate(submission.getCreatedAt())
+                            : asDate(submission.getSubmittedAt());
+                    if (!isWithinWindow(submittedAt, cutoff)) {
+                        continue;
+                    }
+                    String title = submission.getAssignmentTitle();
+                    if (title == null || title.isBlank()) {
+                        title = "提交作业";
+                    }
+                    if ("graded".equalsIgnoreCase(submission.getStatus())) {
+                        title = title + "（已批改）";
+                    } else if (Boolean.TRUE.equals(submission.getIsLate())) {
+                        title = title + "（迟交）";
+                    }
+                    events.add(TeacherStudentActivityResponse.ActivityEventDto.builder()
+                            .eventType("submission")
+                            .title(title)
+                            .courseId(null)
+                            .courseTitle(submission.getCourseName())
+                            .occurredAt(submittedAt)
+                            .durationSeconds(null)
+                            .link(submission.getAssignmentId() == null ? null : "/teacher/assignments/" + submission.getAssignmentId() + "/submissions")
+                            .build());
+                    added++;
+                    if (added >= safeLimit) {
+                        break;
+                    }
+                }
+            }
+        } catch (Exception ignore) {}
         // 社区发问/回答：取最近一条帖子与评论
         try {
             var myPosts = communityService.getUserPosts(studentId, 1, 1);
             if (myPosts != null && myPosts.getItems() != null && !myPosts.getItems().isEmpty()) {
                 var p = myPosts.getItems().get(0);
                 java.util.Date created = p.getCreatedAt() == null ? null : java.util.Date.from(p.getCreatedAt().atZone(java.time.ZoneId.systemDefault()).toInstant());
-                events.add(TeacherStudentActivityResponse.ActivityEventDto.builder()
-                        .eventType("community_ask")
-                        .title(String.valueOf(p.getTitle()))
-                        .courseId(null)
-                        .courseTitle(null)
-                        .occurredAt(created)
-                        .durationSeconds(null)
-                        .link(null)
-                        .build());
+                if (isWithinWindow(created, cutoff)) {
+                    events.add(TeacherStudentActivityResponse.ActivityEventDto.builder()
+                            .eventType("community_ask")
+                            .title(String.valueOf(p.getTitle()))
+                            .courseId(null)
+                            .courseTitle(null)
+                            .occurredAt(created)
+                            .durationSeconds(null)
+                            .link(null)
+                            .build());
+                }
             }
             var myComments = communityService.getUserComments(studentId, 1, 1);
             if (myComments != null && myComments.getItems() != null && !myComments.getItems().isEmpty()) {
@@ -325,15 +383,17 @@ public class TeacherStudentServiceImpl implements TeacherStudentService {
                 String snippet = c.getContent();
                 if (snippet != null && snippet.length() > 32) snippet = snippet.substring(0, 32);
                 java.util.Date created = c.getCreatedAt() == null ? null : java.util.Date.from(c.getCreatedAt().atZone(java.time.ZoneId.systemDefault()).toInstant());
-                events.add(TeacherStudentActivityResponse.ActivityEventDto.builder()
-                        .eventType("community_answer")
-                        .title(snippet)
-                        .courseId(null)
-                        .courseTitle(null)
-                        .occurredAt(created)
-                        .durationSeconds(null)
-                        .link(null)
-                        .build());
+                if (isWithinWindow(created, cutoff)) {
+                    events.add(TeacherStudentActivityResponse.ActivityEventDto.builder()
+                            .eventType("community_answer")
+                            .title(snippet)
+                            .courseId(null)
+                            .courseTitle(null)
+                            .occurredAt(created)
+                            .durationSeconds(null)
+                            .link(null)
+                            .build());
+                }
             }
         } catch (Exception ignore) {}
         // AI 对话：按学生ID读取其最近对话与消息（教师端已做课程交集校验）
@@ -361,23 +421,27 @@ public class TeacherStudentServiceImpl implements TeacherStudentService {
                         }
                     }
                 } catch (Exception ignored) {}
-                events.add(TeacherStudentActivityResponse.ActivityEventDto.builder()
-                        .eventType("ai")
-                        .title(title)
-                        .courseId(null)
-                        .courseTitle(null)
-                        .occurredAt(occurredAt)
-                        .durationSeconds(null)
-                        .link(null)
-                        .build());
+                if (isWithinWindow(occurredAt, cutoff)) {
+                    events.add(TeacherStudentActivityResponse.ActivityEventDto.builder()
+                            .eventType("ai")
+                            .title(title)
+                            .courseId(null)
+                            .courseTitle(null)
+                            .occurredAt(occurredAt)
+                            .durationSeconds(null)
+                            .link(null)
+                            .build());
+                }
             }
         } catch (Exception ignore) {}
-        // TODO: 若后续需要引入 submission/quiz/discussion，可在此处追加 Mapper 查询并合并排序
         events.sort((a, b) -> {
             long ta = a.getOccurredAt() == null ? 0L : a.getOccurredAt().getTime();
             long tb = b.getOccurredAt() == null ? 0L : b.getOccurredAt().getTime();
             return Long.compare(tb, ta);
         });
+        if (events.size() > safeLimit) {
+            events = new java.util.ArrayList<>(events.subList(0, safeLimit));
+        }
 
         return TeacherStudentActivityResponse.builder()
                 .lastAccessTime(maxAccess == null ? null : java.util.Date.from(maxAccess.atZone(java.time.ZoneId.systemDefault()).toInstant()))
@@ -605,6 +669,15 @@ public class TeacherStudentServiceImpl implements TeacherStudentService {
         try { return new java.util.Date(Long.parseLong(String.valueOf(v))); } catch (Exception ignore) {}
         return null;
     }
+
+    private static boolean isWithinWindow(java.util.Date occurredAt, java.time.LocalDateTime cutoff) {
+        if (occurredAt == null) {
+            return false;
+        }
+        java.time.LocalDateTime point = java.time.LocalDateTime.ofInstant(
+                occurredAt.toInstant(),
+                java.time.ZoneId.systemDefault()
+        );
+        return !point.isBefore(cutoff);
+    }
 }
-
-

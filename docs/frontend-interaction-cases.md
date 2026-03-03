@@ -48,7 +48,7 @@
 - 已应用页面（节选）：
   - 学生端：Dashboard、Assignments、AssignmentSubmit、Courses、CourseDetail、Analysis、Analytics、Grades、Community、Ability
   - 教师端：Dashboard、ManageCourse、CourseDetail、CourseStudents、Analytics、ReviewAssignment、AssignmentSubmissions、GradeAssignment、StudentDetail、EditCourse
-  - 共享：Community、AIAssistant、Notifications、NotificationDetail、PostDetail、CourseDiscovery、Help
+  - 共享：Community、AIAssistant、Notifications、NotificationDetail、PostDetail、Help
 
 ## 1. 登录表单（LoginView → useAuthStore → auth.api.ts）
 

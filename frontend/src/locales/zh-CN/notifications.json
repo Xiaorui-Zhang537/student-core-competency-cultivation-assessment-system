@@ -55,6 +55,8 @@
       "assignmentPublished": "作业已发布",
       "assignmentReminder": "作业提醒",
       "assignmentDeadline": "作业截止提醒",
+      "goalDeadline": "目标到期提醒",
+      "goalOverdue": "目标逾期提醒",
       "gradePosted": "成绩发布",
       "message": "消息",
       "postReply": "帖子回复"

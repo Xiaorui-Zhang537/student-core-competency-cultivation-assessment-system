@@ -30,10 +30,6 @@ public interface AdminDashboardMapper {
 
     Long countPostCommentsAll();
 
-    Long countReportsAll();
-
-    Long countReportsByStatus(@Param("status") String status);
-
     Long countActiveUsersSince(@Param("since") LocalDateTime since);
 
     Long countGradesByLevel(@Param("level") String level);
@@ -48,4 +44,3 @@ public interface AdminDashboardMapper {
 
     List<Map<String, Object>> aiUsageByUser(@Param("since") LocalDateTime since, @Param("limit") int limit);
 }
-

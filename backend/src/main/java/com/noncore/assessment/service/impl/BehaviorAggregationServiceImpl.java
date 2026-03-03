@@ -3,10 +3,14 @@ package com.noncore.assessment.service.impl;
 import com.noncore.assessment.behavior.BehaviorEventType;
 import com.noncore.assessment.behavior.BehaviorSchemaVersions;
 import com.noncore.assessment.dto.response.BehaviorSummaryResponse;
+import com.noncore.assessment.entity.AbilityAssessment;
+import com.noncore.assessment.entity.AbilityGoal;
 import com.noncore.assessment.entity.BehaviorEvent;
 import com.noncore.assessment.entity.BehaviorSummarySnapshot;
 import com.noncore.assessment.exception.BusinessException;
 import com.noncore.assessment.exception.ErrorCode;
+import com.noncore.assessment.mapper.AbilityAssessmentMapper;
+import com.noncore.assessment.mapper.AbilityGoalMapper;
 import com.noncore.assessment.service.BehaviorAggregationService;
 import com.noncore.assessment.service.BehaviorEventService;
 import com.noncore.assessment.service.BehaviorSummarySnapshotService;
@@ -16,7 +20,9 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.time.LocalDate;
+import java.time.temporal.ChronoUnit;
 import java.time.format.DateTimeFormatter;
+import java.math.BigDecimal;
 import java.util.*;
 
 /**
@@ -33,6 +39,8 @@ public class BehaviorAggregationServiceImpl implements BehaviorAggregationServic
 
     private final BehaviorEventService behaviorEventService;
     private final BehaviorSummarySnapshotService snapshotService;
+    private final AbilityAssessmentMapper abilityAssessmentMapper;
+    private final AbilityGoalMapper abilityGoalMapper;
 
     /**
      * 获取或生成行为摘要（阶段一）。
@@ -53,6 +61,13 @@ public class BehaviorAggregationServiceImpl implements BehaviorAggregationServic
                     latest = null;
                 }
             } catch (Exception ignored) { }
+            if (latest != null) {
+                try {
+                    if (shouldInvalidateForGoalState(studentId, latest.getGeneratedAt())) {
+                        latest = null;
+                    }
+                } catch (Exception ignored) { }
+            }
         }
         if (latest != null && latest.getSummaryJson() != null && !latest.getSummaryJson().isBlank()) {
             // 直接返回快照内 JSON（避免重复计算），但仍返回结构化对象，便于后续演进
@@ -183,6 +198,17 @@ public class BehaviorAggregationServiceImpl implements BehaviorAggregationServic
         };
     }
 
+    private boolean shouldInvalidateForGoalState(Long studentId, LocalDateTime generatedAt) {
+        if (studentId == null || generatedAt == null) {
+            return false;
+        }
+        if (generatedAt.toLocalDate().isEqual(LocalDate.now())) {
+            return false;
+        }
+        List<AbilityGoal> activeGoals = abilityGoalMapper.selectActiveGoalsByStudent(studentId);
+        return activeGoals != null && !activeGoals.isEmpty();
+    }
+
     private BehaviorSummaryResponse aggregate(Long studentId,
                                               Long courseId,
                                               String rangeKey,
@@ -242,6 +268,66 @@ public class BehaviorAggregationServiceImpl implements BehaviorAggregationServic
                 }
             }
         }
+
+        List<AbilityGoal> studentGoals = studentId == null
+                ? List.of()
+                : Optional.ofNullable(abilityGoalMapper.selectGoalsByStudentId(studentId)).orElse(List.of());
+        List<AbilityGoal> activeGoals = studentGoals.stream()
+                .filter(Objects::nonNull)
+                .filter(goal -> "active".equals(goal.getStatus()))
+                .toList();
+        List<AbilityGoal> achievedGoals = studentGoals.stream()
+                .filter(Objects::nonNull)
+                .filter(goal -> "achieved".equals(goal.getStatus()))
+                .toList();
+        List<AbilityGoal> overdueGoals = activeGoals.stream()
+                .filter(AbilityGoal::isOverdue)
+                .toList();
+        LocalDate nearestGoalDate = activeGoals.stream()
+                .map(AbilityGoal::getTargetDate)
+                .filter(Objects::nonNull)
+                .min(LocalDate::compareTo)
+                .orElse(null);
+        Long nearestGoalDueInDays = nearestGoalDate == null
+                ? null
+                : ChronoUnit.DAYS.between(LocalDate.now(), nearestGoalDate);
+        LocalDateTime latestGoalActionAt = latestOccurredAtByTypes(eventsAsc, java.util.Set.of(
+                BehaviorEventType.GOAL_SET.getCode(),
+                BehaviorEventType.GOAL_UPDATE.getCode(),
+                BehaviorEventType.GOAL_ACHIEVE.getCode()
+        ));
+        double goalCompletionRate = studentGoals.isEmpty()
+                ? 0.0
+                : safeRatio(achievedGoals.size(), studentGoals.size());
+        int overdueRecoveryCount = (int) achievedGoals.stream()
+                .filter(goal -> goal.getTargetDate() != null)
+                .filter(goal -> goal.getAchievedAt() != null)
+                .filter(goal -> goal.getAchievedAt().toLocalDate().isAfter(goal.getTargetDate()))
+                .count();
+        Map<Long, List<AbilityAssessment>> assessmentsByDimension = new HashMap<>();
+        List<Map<String, Object>> goalLinkedDeltaItems = new ArrayList<>();
+        BigDecimal totalGoalLinkedDelta = BigDecimal.ZERO;
+        int goalLinkedDeltaCount = 0;
+        for (AbilityGoal goal : studentGoals) {
+            if (goal == null || goal.getDimensionId() == null) {
+                continue;
+            }
+            List<AbilityAssessment> dimensionAssessments = assessmentsByDimension.computeIfAbsent(goal.getDimensionId(), dimensionId ->
+                    loadAssessmentsByStudentAndDimension(studentId, dimensionId));
+            Map<String, Object> goalDelta = buildGoalLinkedDelta(goal, dimensionAssessments);
+            if (goalDelta == null) {
+                continue;
+            }
+            goalLinkedDeltaItems.add(goalDelta);
+            Object deltaValue = goalDelta.get("delta");
+            if (deltaValue instanceof BigDecimal delta) {
+                totalGoalLinkedDelta = totalGoalLinkedDelta.add(delta);
+                goalLinkedDeltaCount++;
+            }
+        }
+        BigDecimal goalLinkedScoreDelta = goalLinkedDeltaCount == 0
+                ? null
+                : totalGoalLinkedDelta.divide(BigDecimal.valueOf(goalLinkedDeltaCount), 2, java.math.RoundingMode.HALF_UP);
 
         // 双指针：对每个 resubmit 找到最近的 feedback_view（24h 内）
         int j = 0;
@@ -444,6 +530,77 @@ public class BehaviorAggregationServiceImpl implements BehaviorAggregationServic
                     .build());
         }
 
+        int goalSet = countsByType.getOrDefault(BehaviorEventType.GOAL_SET.getCode(), 0);
+        int goalUpdate = countsByType.getOrDefault(BehaviorEventType.GOAL_UPDATE.getCode(), 0);
+        int goalAchieve = countsByType.getOrDefault(BehaviorEventType.GOAL_ACHIEVE.getCode(), 0);
+        if ((goalSet + goalUpdate) > 0 || !activeGoals.isEmpty()) {
+            String eid = buildEvidenceId(generatedAt, evidenceSeq++);
+            StringBuilder desc = new StringBuilder();
+            if ((goalSet + goalUpdate) > 0) {
+                desc.append("本阶段内新设能力目标 ").append(goalSet).append(" 个，调整目标 ").append(goalUpdate).append(" 次。");
+            }
+            if (!activeGoals.isEmpty()) {
+                if (desc.length() > 0) {
+                    desc.append(" ");
+                }
+                desc.append("当前聚焦：").append(summarizeGoals(activeGoals, 3)).append("。");
+            }
+            if (goalLinkedScoreDelta != null) {
+                if (desc.length() > 0) {
+                    desc.append(" ");
+                }
+                desc.append("与目标相关维度的平均分数变化为 ")
+                        .append(goalLinkedScoreDelta.toPlainString())
+                        .append("。");
+            }
+            evidences.add(BehaviorSummaryResponse.EvidenceItem.builder()
+                    .evidenceId(eid)
+                    .evidenceType("goal_focus")
+                    .title("能力目标聚焦")
+                    .description(desc.toString())
+                    .eventRefs(lastEventIdsByTypes(eventsAsc, java.util.Set.of(
+                            BehaviorEventType.GOAL_SET.getCode(),
+                            BehaviorEventType.GOAL_UPDATE.getCode()
+                    ), 5))
+                    .occurredAt(!activeGoals.isEmpty() ? latestGoalMoment(activeGoals, true) : latestGoalActionAt)
+                    .build());
+        }
+
+        if (goalAchieve > 0) {
+            String eid = buildEvidenceId(generatedAt, evidenceSeq++);
+            String desc = "本阶段内达成能力目标 " + goalAchieve + " 个。";
+            if (overdueRecoveryCount > 0) {
+                desc += " 其中有 " + overdueRecoveryCount + " 个是在逾期后继续推进并最终达成。";
+            }
+            evidences.add(BehaviorSummaryResponse.EvidenceItem.builder()
+                    .evidenceId(eid)
+                    .evidenceType("goal_achievement")
+                    .title("能力目标达成")
+                    .description(desc)
+                    .eventRefs(lastEventIdsByTypes(eventsAsc, java.util.Set.of(
+                            BehaviorEventType.GOAL_ACHIEVE.getCode()
+                    ), 5))
+                    .occurredAt(latestOccurredAtByTypes(eventsAsc, java.util.Set.of(
+                            BehaviorEventType.GOAL_ACHIEVE.getCode()
+                    )))
+                    .build());
+        }
+
+        if (!overdueGoals.isEmpty()) {
+            String eid = buildEvidenceId(generatedAt, evidenceSeq++);
+            evidences.add(BehaviorSummaryResponse.EvidenceItem.builder()
+                    .evidenceId(eid)
+                    .evidenceType("goal_overdue")
+                    .title("目标逾期提醒")
+                    .description("当前有 " + overdueGoals.size() + " 个进行中目标已过截止日期但尚未达成：" + summarizeGoals(overdueGoals, 3) + "。")
+                    .eventRefs(lastEventIdsByTypes(eventsAsc, java.util.Set.of(
+                            BehaviorEventType.GOAL_SET.getCode(),
+                            BehaviorEventType.GOAL_UPDATE.getCode()
+                    ), 5))
+                    .occurredAt(latestGoalMoment(overdueGoals, false))
+                    .build());
+        }
+
         // nonEvaluative（资源访问）
         List<BehaviorSummaryResponse.NonEvaluativeItem> nonEvalItems = new ArrayList<>();
         int rv = countsByType.getOrDefault(BehaviorEventType.RESOURCE_VIEW.getCode(), 0);
@@ -466,6 +623,40 @@ public class BehaviorAggregationServiceImpl implements BehaviorAggregationServic
         signals.put("voiceReplaySecondsUser", voiceReplaySecondsUser);
         signals.put("voiceReplaySecondsAssistant", voiceReplaySecondsAssistant);
         signals.put("voiceReplaySecondsTotal", voiceReplaySecondsTotal);
+        signals.put("goalSetCount", goalSet);
+        signals.put("goalUpdateCount", goalUpdate);
+        signals.put("goalAchievedCount", goalAchieve);
+        signals.put("goalCompletionRate", goalCompletionRate);
+        signals.put("overdueRecoveryCount", overdueRecoveryCount);
+        signals.put("activeGoalCount", activeGoals.size());
+        signals.put("overdueGoalCount", overdueGoals.size());
+        signals.put("hasOverdueGoals", !overdueGoals.isEmpty());
+        signals.put("goalFocusSummary", activeGoals.isEmpty() ? null : summarizeGoals(activeGoals, 3));
+        signals.put("goalNextTargetDate", nearestGoalDate == null ? null : nearestGoalDate.toString());
+        signals.put("goalNearestDueInDays", nearestGoalDueInDays);
+        signals.put("goalLatestActionAt", latestGoalActionAt);
+        if (goalLinkedScoreDelta != null) {
+            signals.put("goalLinkedScoreDelta", goalLinkedScoreDelta);
+        }
+        Map<String, Object> goalSignals = new LinkedHashMap<>();
+        goalSignals.put("setCount", goalSet);
+        goalSignals.put("updateCount", goalUpdate);
+        goalSignals.put("achievedCount", goalAchieve);
+        goalSignals.put("completionRate", goalCompletionRate);
+        goalSignals.put("overdueRecoveryCount", overdueRecoveryCount);
+        goalSignals.put("activeCount", activeGoals.size());
+        goalSignals.put("overdueCount", overdueGoals.size());
+        goalSignals.put("achievedCountTotal", achievedGoals.size());
+        goalSignals.put("totalGoalCount", studentGoals.size());
+        goalSignals.put("linkedScoreDelta", goalLinkedScoreDelta);
+        goalSignals.put("linkedScoreDeltaByGoal", goalLinkedDeltaItems);
+        goalSignals.put("focusSummary", activeGoals.isEmpty() ? null : summarizeGoals(activeGoals, 3));
+        goalSignals.put("nextTargetDate", nearestGoalDate == null ? null : nearestGoalDate.toString());
+        goalSignals.put("nearestDueInDays", nearestGoalDueInDays);
+        goalSignals.put("latestActionAt", latestGoalActionAt);
+        goalSignals.put("activeGoals", toGoalSignalItems(activeGoals, 5));
+        goalSignals.put("overdueGoals", toGoalSignalItems(overdueGoals, 5));
+        signals.put("goalSignals", goalSignals);
 
         // =========================
         // 时间维度 + 抗刷/抗噪信号（纯事实，不评价）
@@ -637,6 +828,9 @@ public class BehaviorAggregationServiceImpl implements BehaviorAggregationServic
         caps.put(BehaviorEventType.FEEDBACK_VIEW.getCode(), 30);
         caps.put(BehaviorEventType.ASSIGNMENT_SUBMIT.getCode(), 5);
         caps.put(BehaviorEventType.ASSIGNMENT_RESUBMIT.getCode(), 5);
+        caps.put(BehaviorEventType.GOAL_SET.getCode(), 10);
+        caps.put(BehaviorEventType.GOAL_UPDATE.getCode(), 10);
+        caps.put(BehaviorEventType.GOAL_ACHIEVE.getCode(), 10);
         // resource_view 为 nonEvaluative，不进入此处（避免把“资源访问”作为刷的目标）
         return caps;
     }
@@ -700,6 +894,151 @@ public class BehaviorAggregationServiceImpl implements BehaviorAggregationServic
         out.put("maxInWindow", max);
         if (max >= threshold) out.put("burst", true);
         return out;
+    }
+
+    private String summarizeGoals(List<AbilityGoal> goals, int maxItems) {
+        if (goals == null || goals.isEmpty() || maxItems <= 0) {
+            return "暂无";
+        }
+        List<String> parts = new ArrayList<>();
+        for (AbilityGoal goal : goals) {
+            if (goal == null) {
+                continue;
+            }
+            String dimension = goal.getDimensionName() != null && !goal.getDimensionName().isBlank()
+                    ? goal.getDimensionName()
+                    : ("维度#" + goal.getDimensionId());
+            String title = goal.getTitle() == null || goal.getTitle().isBlank() ? dimension : goal.getTitle();
+            String targetDate = goal.getTargetDate() == null ? "未设期限" : goal.getTargetDate().toString();
+            String targetScore = goal.getTargetScore() == null ? "--" : goal.getTargetScore().toPlainString();
+            parts.add(title + "（" + dimension + "，目标 " + targetScore + "，截止 " + targetDate + "）");
+            if (parts.size() >= maxItems) {
+                break;
+            }
+        }
+        if (parts.isEmpty()) {
+            return "暂无";
+        }
+        if (goals.size() > parts.size()) {
+            parts.add("另有 " + (goals.size() - parts.size()) + " 个目标");
+        }
+        return String.join("；", parts);
+    }
+
+    private LocalDateTime latestGoalMoment(List<AbilityGoal> goals, boolean preferUpdatedAt) {
+        if (goals == null || goals.isEmpty()) {
+            return null;
+        }
+        LocalDateTime latest = null;
+        for (AbilityGoal goal : goals) {
+            if (goal == null) {
+                continue;
+            }
+            LocalDateTime candidate;
+            if (!preferUpdatedAt && goal.getTargetDate() != null) {
+                candidate = goal.getTargetDate().atStartOfDay();
+            } else if (goal.getUpdatedAt() != null) {
+                candidate = goal.getUpdatedAt();
+            } else if (goal.getCreatedAt() != null) {
+                candidate = goal.getCreatedAt();
+            } else if (goal.getTargetDate() != null) {
+                candidate = goal.getTargetDate().atStartOfDay();
+            } else {
+                candidate = null;
+            }
+            if (candidate != null && (latest == null || candidate.isAfter(latest))) {
+                latest = candidate;
+            }
+        }
+        return latest;
+    }
+
+    private List<Map<String, Object>> toGoalSignalItems(List<AbilityGoal> goals, int maxItems) {
+        if (goals == null || goals.isEmpty() || maxItems <= 0) {
+            return List.of();
+        }
+        List<Map<String, Object>> items = new ArrayList<>();
+        for (AbilityGoal goal : goals) {
+            if (goal == null) {
+                continue;
+            }
+            Map<String, Object> row = new LinkedHashMap<>();
+            row.put("goalId", goal.getId());
+            row.put("title", goal.getTitle());
+            row.put("dimensionId", goal.getDimensionId());
+            row.put("dimensionName", goal.getDimensionName());
+            row.put("targetScore", goal.getTargetScore());
+            row.put("currentScore", goal.getCurrentScore());
+            row.put("targetDate", goal.getTargetDate() == null ? null : goal.getTargetDate().toString());
+            row.put("priority", goal.getPriority());
+            row.put("status", goal.getStatus());
+            row.put("overdue", goal.isOverdue());
+            items.add(row);
+            if (items.size() >= maxItems) {
+                break;
+            }
+        }
+        return items;
+    }
+
+    private List<AbilityAssessment> loadAssessmentsByStudentAndDimension(Long studentId, Long dimensionId) {
+        if (studentId == null || dimensionId == null) {
+            return List.of();
+        }
+        List<AbilityAssessment> items = abilityAssessmentMapper.selectByStudentAndDimension(studentId, dimensionId);
+        if (items == null || items.isEmpty()) {
+            return List.of();
+        }
+        List<AbilityAssessment> sorted = new ArrayList<>(items);
+        sorted.sort(Comparator.comparing(AbilityAssessment::getAssessedAt, Comparator.nullsLast(Comparator.naturalOrder()))
+                .thenComparing(AbilityAssessment::getId, Comparator.nullsLast(Comparator.naturalOrder())));
+        return sorted;
+    }
+
+    private Map<String, Object> buildGoalLinkedDelta(AbilityGoal goal, List<AbilityAssessment> assessments) {
+        if (goal == null || assessments == null || assessments.isEmpty()) {
+            return null;
+        }
+
+        AbilityAssessment baseline = null;
+        AbilityAssessment latest = null;
+        LocalDateTime createdAt = goal.getCreatedAt();
+
+        for (AbilityAssessment assessment : assessments) {
+            if (assessment == null || assessment.getScore() == null) {
+                continue;
+            }
+            latest = assessment;
+            if (createdAt == null) {
+                if (baseline == null) {
+                    baseline = assessment;
+                }
+                continue;
+            }
+            LocalDateTime assessedAt = assessment.getAssessedAt();
+            if (assessedAt == null || !assessedAt.isAfter(createdAt)) {
+                baseline = assessment;
+            } else if (baseline == null) {
+                baseline = assessment;
+            }
+        }
+
+        if (baseline == null || latest == null || baseline.getScore() == null || latest.getScore() == null) {
+            return null;
+        }
+
+        BigDecimal delta = latest.getScore().subtract(baseline.getScore()).setScale(2, java.math.RoundingMode.HALF_UP);
+        Map<String, Object> item = new LinkedHashMap<>();
+        item.put("goalId", goal.getId());
+        item.put("title", goal.getTitle());
+        item.put("dimensionId", goal.getDimensionId());
+        item.put("dimensionName", goal.getDimensionName());
+        item.put("baselineScore", baseline.getScore());
+        item.put("latestScore", latest.getScore());
+        item.put("delta", delta);
+        item.put("baselineAssessedAt", baseline.getAssessedAt());
+        item.put("latestAssessedAt", latest.getAssessedAt());
+        return item;
     }
 
     private Map<String, Object> safeParseMeta(String metadataJson) {
@@ -907,4 +1246,3 @@ public class BehaviorAggregationServiceImpl implements BehaviorAggregationServic
         return m + "分钟" + r + "秒";
     }
 }
-

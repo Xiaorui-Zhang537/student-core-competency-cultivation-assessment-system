@@ -11,7 +11,7 @@ outline: [2, 3]
 - 通用约定（axios/baseURL/自动解包）：`/frontend/api/conventions`
 - `auth.api.ts` → 认证
 - `user.api.ts` → 用户
-- `admin.api.ts` → 管理员端（仪表盘/课程/用户/数据中心/报告/治理/导出）
+- `admin.api.ts` → 管理员端（仪表盘/课程/用户/数据中心/能力报告/治理/导出）
 - `course.api.ts` → 课程
 - `lesson.api.ts` → 课时
 - `chapter.api.ts` → 章节
@@ -24,7 +24,6 @@ outline: [2, 3]
 - `community.api.ts` → 社区
 - `notification.api.ts` → 通知
 - `file.api.ts` → 文件上传/下载
-- `report.api.ts` → 举报/报表
 - `ai.api.ts` → AI 聊天
 - `aiGrading.api.ts` → AI 批改（作文/文件批改与历史）
 - `voicePractice.api.ts` → AI 口语训练（语音会话/回合/复听上报）

@@ -1,6 +1,8 @@
 package com.noncore.assessment.controller;
 
 import com.noncore.assessment.entity.*;
+import com.noncore.assessment.exception.BusinessException;
+import com.noncore.assessment.exception.ErrorCode;
 import com.noncore.assessment.service.AbilityService;
 import com.noncore.assessment.service.AbilityAnalyticsService;
 import com.noncore.assessment.dto.request.AbilityRadarQuery;
@@ -172,7 +174,8 @@ public class AbilityController extends BaseController {
     public ResponseEntity<ApiResponse<AbilityGoal>> updateAbilityGoal(
             @Parameter(description = "目标ID") @PathVariable Long goalId,
             @Valid @RequestBody AbilityGoal goal) {
-        AbilityGoal updatedGoal = abilityService.updateAbilityGoal(goalId, goal);
+        goal.setStudentId(getCurrentUserId());
+        AbilityGoal updatedGoal = abilityService.updateAbilityGoal(goalId, getCurrentUserId(), goal);
         return ResponseEntity.ok(ApiResponse.success(updatedGoal));
     }
 
@@ -183,7 +186,7 @@ public class AbilityController extends BaseController {
     @Operation(summary = "删除能力目标", description = "删除指定的能力发展目标")
     @PreAuthorize("hasRole('STUDENT')")
     public ResponseEntity<ApiResponse<Void>> deleteAbilityGoal(@Parameter(description = "目标ID") @PathVariable Long goalId) {
-        abilityService.deleteAbilityGoal(goalId);
+        abilityService.deleteAbilityGoal(goalId, getCurrentUserId());
         return ResponseEntity.ok(ApiResponse.success());
     }
 
@@ -296,6 +299,9 @@ public class AbilityController extends BaseController {
     @PreAuthorize("hasRole('STUDENT')")
     public ResponseEntity<ApiResponse<AbilityReport>> getAbilityReport(@Parameter(description = "报告ID") @PathVariable Long reportId) {
         AbilityReport report = abilityService.getAbilityReportById(reportId);
+        if (report.getStudentId() != null && !report.getStudentId().equals(getCurrentUserId())) {
+            throw new BusinessException(ErrorCode.UNAUTHORIZED_OPERATION, "无权查看该报告");
+        }
         // 行为记录：查看反馈（能力报告详情）
         try {
             java.util.Map<String, Object> meta = new java.util.HashMap<>();
@@ -380,7 +386,7 @@ public class AbilityController extends BaseController {
     @Operation(summary = "标记学习建议为已读", description = "将指定的学习建议标记为已读状态")
     @PreAuthorize("hasRole('STUDENT')")
     public ResponseEntity<ApiResponse<Void>> markRecommendationAsRead(@Parameter(description = "建议ID") @PathVariable Long recommendationId) {
-        abilityService.markRecommendationAsRead(recommendationId);
+        abilityService.markRecommendationAsRead(recommendationId, getCurrentUserId());
         return ResponseEntity.ok(ApiResponse.success());
     }
 
@@ -391,7 +397,7 @@ public class AbilityController extends BaseController {
     @Operation(summary = "采纳学习建议", description = "采纳指定的学习建议")
     @PreAuthorize("hasRole('STUDENT')")
     public ResponseEntity<ApiResponse<Void>> acceptRecommendation(@Parameter(description = "建议ID") @PathVariable Long recommendationId) {
-        abilityService.acceptRecommendation(recommendationId);
+        abilityService.acceptRecommendation(recommendationId, getCurrentUserId());
         return ResponseEntity.ok(ApiResponse.success());
     }
 
