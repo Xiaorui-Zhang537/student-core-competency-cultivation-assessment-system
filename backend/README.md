@@ -119,7 +119,7 @@ mvn spring-boot:run
 - 教学：`/courses` `/chapters` `/lessons` `/assignments` `/grades`
 - 角色数据：`/students` `/teachers` `/teachers/students` `/teachers/ability`
 - 协作：`/community` `/chat` `/notifications`
-- 文件与帮助：`/files` `/help` `/reports` `/public/project`
+- 文件与帮助：`/files` `/help` `/reports`
 - 能力/行为：`/ability` `/behavior` `/behavior/insights`
 - AI：`/ai` `/ai/voice`
 - 管理员：`/admin/*`

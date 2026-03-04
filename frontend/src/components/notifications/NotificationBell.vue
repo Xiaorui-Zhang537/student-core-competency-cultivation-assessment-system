@@ -35,22 +35,26 @@
         >
           <!-- 下拉面板头部 -->
           <div class="dropdown-header px-4 py-3 bg-white/5 dark:bg-white/5" style="box-shadow: inset 0 -1px 0 rgba(255,255,255,0.14);">
-            <h3 class="text-[15px] font-semibold text-base-content flex items-center">
-              <span>{{ t('notifications.title') }}</span>
-              <span v-if="unreadCount > 0" class="text-sm font-normal text-gray-500 dark:text-gray-400 ml-2">
-                ({{ unreadCount }}{{ t('notifications.unreadSuffix') }})
-              </span>
-              <ripple-button
-                v-if="hasUnread"
-                class="ml-3 px-3 py-1 text-xs rounded-full"
-                :duration="0"
-                :aria-label="t('notifications.actions.markAll') as string"
-                :title="t('notifications.actions.markAll') as string"
-                @click="handleMarkAllAsRead"
-              >
-                {{ t('notifications.actions.markAll') }}
-              </ripple-button>
-            </h3>
+            <div class="min-w-0 flex items-center">
+              <h3 class="text-[15px] font-semibold text-base-content flex items-center min-w-0">
+                <span class="truncate">{{ t('notifications.title') }}</span>
+                <span v-if="unreadCount > 0" class="text-sm font-normal text-gray-500 dark:text-gray-400 ml-2">
+                  ({{ unreadCount }}{{ t('notifications.unreadSuffix') }})
+                </span>
+              </h3>
+            </div>
+            <Button
+              v-if="hasUnread"
+              size="xs"
+              variant="glass-ghost"
+              class="ml-3 shrink-0 !h-8 px-3 text-[11px] font-semibold tracking-wide"
+              :aria-label="t('notifications.actions.markAll') as string"
+              :title="t('notifications.actions.markAll') as string"
+              @click="handleMarkAllAsRead"
+            >
+              <check-icon class="w-3.5 h-3.5 mr-1.5" />
+              {{ t('notifications.actions.markAll') }}
+            </Button>
           </div>
 
           <!-- 通知列表 -->
@@ -144,6 +148,7 @@ import LiquidGlass from '@/components/ui/LiquidGlass.vue'
 import {
   BellIcon,
   BellSlashIcon,
+  CheckIcon,
   InformationCircleIcon,
   DocumentTextIcon,
   AcademicCapIcon,
@@ -455,7 +460,7 @@ const vClickOutside = {
   box-shadow: var(--glass-inner-shadow, inset 0 1px 0 rgba(255,255,255,0.14)), 0 6px 16px rgba(0,0,0,0.10);
 }
 
-:global(.dark) .notification-dropdown {
+html.dark .notification-dropdown {
   background-color: transparent;
   border-color: transparent;
   box-shadow: var(--glass-inner-shadow, inset 0 1px 0 rgba(255,255,255,0.08)), 0 6px 16px rgba(0,0,0,0.32);
@@ -469,7 +474,7 @@ const vClickOutside = {
   border-bottom: 1px solid rgb(229 231 235);
 }
 
-:global(.dark) .dropdown-header { border-bottom-color: rgb(55 65 81); }
+html.dark .dropdown-header { border-bottom-color: rgb(55 65 81); }
 
 .dropdown-content {
   max-height: 20rem;
@@ -499,7 +504,7 @@ const vClickOutside = {
   white-space: nowrap;
 }
 
-:global(.dark) .notification-title { color: rgba(255, 255, 255, 0.95); }
+html.dark .notification-title { color: rgba(255, 255, 255, 0.95); }
 
 .notification-preview {
   font-size: 0.75rem;
@@ -512,7 +517,7 @@ const vClickOutside = {
   overflow: hidden;
 }
 
-:global(.dark) .notification-preview { color: rgba(229, 231, 235, 0.9); }
+html.dark .notification-preview { color: rgba(229, 231, 235, 0.9); }
 
 .notification-time {
   font-size: 0.75rem;
@@ -520,11 +525,11 @@ const vClickOutside = {
   margin-top: 0.25rem;
 }
 
-:global(.dark) .notification-time { color: rgb(156 163 175); }
+html.dark .notification-time { color: rgb(156 163 175); }
 
 /* Dark mode hover feedback only inside bell dropdown */
-:global(html.dark) .notification-bell .dropdown-content .notification-item { background-color: transparent; }
-:global(html.dark) .notification-bell .dropdown-content .notification-item:hover {
+html.dark .notification-bell .dropdown-content .notification-item { background-color: transparent; }
+html.dark .notification-bell .dropdown-content .notification-item:hover {
   background-color: rgb(71 85 105);
   box-shadow: inset 0 0 0 1px rgba(148, 163, 184, 0.18);
 }
@@ -541,13 +546,13 @@ html:not(.dark) .notification-bell .dropdown-content .notification-item:hover {
   background-color: rgb(243, 244, 246);
 }
 /* Dark mode hover text highlights */
-::global(.dark) .notification-bell .dropdown-content .notification-item:hover .notification-title { color: rgba(255, 255, 255, 0.98); }
-::global(.dark) .notification-bell .dropdown-content .notification-item:hover .notification-preview { color: rgba(229, 231, 235, 0.95); }
-::global(.dark) .notification-bell .dropdown-content .notification-item:hover .notification-time { color: rgb(203, 213, 225); }
+html.dark .notification-bell .dropdown-content .notification-item:hover .notification-title { color: rgba(255, 255, 255, 0.98); }
+html.dark .notification-bell .dropdown-content .notification-item:hover .notification-preview { color: rgba(229, 231, 235, 0.95); }
+html.dark .notification-bell .dropdown-content .notification-item:hover .notification-time { color: rgb(203, 213, 225); }
 
 /* 提升 bell 暗黑模式标题可读性 */
 html:not(.dark) .notification-bell .notification-title { color: rgb(17 24 39); }
-::global(.dark) .notification-bell .notification-title { color: rgb(255 255 255); font-weight: 600; }
+html.dark .notification-bell .notification-title { color: rgb(255 255 255); font-weight: 600; }
 
 /* 优先级徽章样式（与通知中心保持一致） */
 .priority-badge {
@@ -581,10 +586,10 @@ html:not(.dark) .notification-bell .notification-title { color: rgb(17 24 39); }
 }
 
 /* Force title colors to override any prior rules */
-::global(.dark) .notification-bell .notification-title { color: rgb(255 255 255) !important; font-weight: 600; }
+html.dark .notification-bell .notification-title { color: rgb(255 255 255) !important; font-weight: 600; }
 html:not(.dark) .notification-bell .notification-title { color: rgb(17 24 39) !important; }
 
-/* Ensure title colors within scoped styles using :deep to bypass hashing */
-.dark :deep(.notification-bell .notification-title) { color: rgb(255 255 255) !important; font-weight: 600; }
-:root:not(.dark) :deep(.notification-bell .notification-title), html:not(.dark) :deep(.notification-bell .notification-title) { color: rgb(17 24 39) !important; }
+/* Ensure title colors remain stable in both themes */
+html.dark .notification-bell .notification-title { color: rgb(255 255 255) !important; font-weight: 600; }
+html:not(.dark) .notification-bell .notification-title { color: rgb(17 24 39) !important; }
 </style> 

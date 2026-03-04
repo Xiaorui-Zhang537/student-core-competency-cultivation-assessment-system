@@ -1,16 +1,19 @@
 <template>
   <div class="w-full">
     <label v-if="label" class="block text-sm font-medium mb-1">{{ label }}</label>
-    <div class="relative">
+    <div ref="rootRef" class="relative">
       <Button
         :id="idAttr"
-        ref="anchor"
         type="button"
-        class="ui-pill--select ui-pill--pr-select w-full"
+        class="ui-pill--select ui-pill--pr-select w-full !justify-start text-left"
         :class="[size==='sm' ? 'ui-pill--sm ui-pill--pl' : 'ui-pill--md ui-pill--pl', tintClass]"
         @click="toggle"
       >
-        <span class="truncate" :class="valueText ? 'text-gray-900 dark:text-gray-100' : 'text-gray-400'" :style="valueText ? selectedLabelStyle : undefined">
+        <span
+          class="block w-full pr-5 text-left"
+          :class="[truncateClass, valueText ? 'text-gray-900 dark:text-gray-100' : 'text-gray-400']"
+          :style="valueText ? selectedLabelStyle : undefined"
+        >
           {{ valueText || placeholderText }}
         </span>
         <svg class="w-4 h-4 absolute right-2 top-1/2 -translate-y-1/2 text-gray-400" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.24 4.5a.75.75 0 01-1.08 0l-4.24-4.5a.75.75 0 01.02-1.06z" clip-rule="evenodd"/></svg>
@@ -68,6 +71,7 @@
 import { ref, computed, onMounted, watch, type CSSProperties } from 'vue'
 // @ts-ignore
 import { useI18n } from 'vue-i18n'
+import Button from '@/components/ui/Button.vue'
 import GlassPopoverSelect from '@/components/ui/filters/GlassPopoverSelect.vue'
 
 interface Props {
@@ -91,7 +95,7 @@ const props = withDefaults(defineProps<Props>(), {
 const emit = defineEmits<{ (e:'update:modelValue', v:string): void }>()
 const { t } = useI18n()
 
-const anchor = ref<HTMLElement | null>(null)
+const rootRef = ref<HTMLElement | null>(null)
 const open = ref(false)
 const positionTick = ref(0)
 
@@ -112,6 +116,7 @@ const weekdays = ['日','一','二','三','四','五','六']
 
 const valueText = computed(() => formatDisplay(internal.value))
 const placeholderText = computed(() => (props.dateOnly ? (t('shared.date') as string || '选择日期') : (t('shared.datetime.hint') as string || '选择日期时间')))
+const truncateClass = computed(() => (props.size === 'sm' ? 'truncate' : ''))
 
 const minuteSelectOptions = computed(() => {
   const arr:number[] = []
@@ -234,7 +239,7 @@ function confirm(){ emit('update:modelValue', formatModel(internal.value)); clos
 
 function positionPanel(){
   try {
-    const el = anchor.value as HTMLElement
+    const el = rootRef.value as HTMLElement | null
     const rect = el?.getBoundingClientRect()
     if (!rect) return { left:'20px', top:'20px', width:'560px' }
     // 弹窗宽度略大于输入框但限制最大值，避免在窄表单中过宽
@@ -252,7 +257,6 @@ function positionPanel(){
 const idAttr = computed(() => props.id || `gdtp-${Math.random().toString(36).slice(2,8)}`)
 
 onMounted(() => {
-  anchor.value = document.getElementById(idAttr.value)
   const onResize = () => { if (open.value) nudge() }
   const onScroll = () => { if (open.value) nudge() }
   window.addEventListener('resize', onResize)
@@ -353,5 +357,3 @@ watch([hour, minute], ([h, m]) => {
 .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
 .no-scrollbar::-webkit-scrollbar { display: none; width: 0; height: 0; }
 </style>
-
-

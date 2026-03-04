@@ -58,16 +58,3 @@ export interface CourseUpdateRequest {
   startDate?: string;
   endDate?: string;
 }
-
-export interface BatchStatusUpdateRequest {
-  courseIds: number[];
-  status: 'PUBLISHED' | 'UNPUBLISHED' | 'ARCHIVED';
-}
-
-// API Response Types
-export interface CourseStatistics {
-  totalCourses: number;
-  publishedCourses: number;
-  draftCourses: number;
-  enrollmentCount: number;
-}

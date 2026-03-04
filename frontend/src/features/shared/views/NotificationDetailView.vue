@@ -326,6 +326,15 @@ const goRelated = async () => {
   }
 
   switch (rt || tp) {
+    case 'goal_deadline':
+    case 'goal_overdue':
+      if (base.value === '/student') {
+        const query: Record<string, string> = { section: 'goals' }
+        if (n.relatedId != null) query.goalId = String(n.relatedId)
+        router.push({ name: 'StudentAnalysis', query })
+        return
+      }
+      break
     case 'assignment':
     case 'assignment_created':
     case 'assignment_updated':

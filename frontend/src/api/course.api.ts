@@ -1,6 +1,6 @@
 import { api } from './config';
 import type { PaginatedResponse } from '@/types/api';
-import type { Course, CourseDetailed, CourseCreationRequest, CourseUpdateRequest, BatchStatusUpdateRequest, CourseStatistics } from '@/types/course';
+import type { Course, CourseDetailed, CourseCreationRequest, CourseUpdateRequest } from '@/types/course';
 import type { User } from '@/types/auth';
 
 export const courseApi = {
@@ -42,19 +42,6 @@ export const courseApi = {
   // Publishing
   publishCourse: (courseId: number): Promise<void> => {
     return api.post(`/courses/${courseId}/publish`);
-  },
-
-  unpublishCourse: (courseId: number): Promise<void> => {
-    return api.post(`/courses/${courseId}/unpublish`);
-  },
-
-  updateBatchStatus: (data: BatchStatusUpdateRequest): Promise<void> => {
-      return api.put('/courses/batch-status', data);
-  },
-
-  // Statistics
-  getCourseStatistics: (): Promise<CourseStatistics> => {
-    return api.get('/courses/statistics');
   },
 
   // Enrollment listings (teacher only)

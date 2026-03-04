@@ -89,6 +89,7 @@ outline: [2, 3]
 - 截止日期已过但未达成时，不会强制改写数据库 `status`；接口会以派生字段 `overdue=true` 返回，前端与行为摘要按“已逾期”展示。
 - 创建/编辑目标使用统一日期控件，提交给后端的日期格式仍是 `yyyy-MM-dd`。
 - 系统会在每天早上预同步一次“目标即将到期 / 目标已逾期”提醒；通知中心在拉取通知列表/未读数/统计时还会再做一次按需同步，作为兜底。
+- 上述提醒写入通知中心时会使用 `relatedType=goal_deadline|goal_overdue`、`relatedId=goalId`；学生端通知详情页“查看详情”会深链到 `/student/analysis` 的能力目标区块。
 - 行为摘要会附带 `goalCompletionRate`、`overdueRecoveryCount`、`goalLinkedScoreDelta` 等派生信号；`signals.goalSignals` 还会给出 `focusSummary`、`nextTargetDate`、`nearestDueInDays`、`latestActionAt`，便于前端和行为洞察统一解释目标执行情况。
 
 ### 自评与历史

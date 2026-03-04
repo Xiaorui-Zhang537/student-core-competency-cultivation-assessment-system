@@ -136,126 +136,132 @@
         <ability-radar-legend :dimensions="rawRadarDimensions" />
       </card>
 
-      <card padding="md" tint="accent">
-        <div class="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-          <div>
-            <div class="text-lg font-semibold text-gray-900 dark:text-gray-100">{{ t('student.ability.goals.title') }}</div>
-            <div class="text-sm text-gray-500 dark:text-gray-400">{{ t('student.ability.goals.subtitle') }}</div>
-          </div>
-          <div class="flex items-center gap-2">
-            <badge :variant="goalStats.active > 0 ? 'info' : 'secondary'" size="sm">
-              {{ t('student.ability.goals.status.active') }} {{ goalStats.active }}
-            </badge>
-            <badge :variant="goalStats.overdue > 0 ? 'warning' : 'secondary'" size="sm">
-              {{ t('student.ability.goals.status.overdue') }} {{ goalStats.overdue }}
-            </badge>
-            <badge :variant="goalStats.achieved > 0 ? 'success' : 'secondary'" size="sm">
-              {{ t('student.ability.goals.status.achieved') }} {{ goalStats.achieved }}
-            </badge>
-            <Button size="sm" variant="primary" icon="plus" @click="openCreateGoalModal">
-              {{ t('student.ability.goals.create') }}
-            </Button>
-          </div>
-        </div>
-
-        <div v-if="goalsError" class="mt-4 rounded-2xl border border-rose-200 bg-rose-50/70 px-4 py-3 text-sm text-rose-700 dark:border-rose-500/30 dark:bg-rose-500/10 dark:text-rose-200">
-          <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <span>{{ goalsError }}</span>
-            <Button size="sm" variant="danger" @click="loadGoals">{{ t('student.ability.goals.retry') }}</Button>
-          </div>
-        </div>
-
-        <div v-else-if="goalsLoading" class="mt-4 text-sm text-gray-500 dark:text-gray-400">
-          {{ t('student.analysis.loading') }}
-        </div>
-
-        <div v-else-if="goals.length === 0" class="mt-4 rounded-3xl border border-dashed border-gray-300/80 px-5 py-8 text-center text-sm text-gray-500 dark:border-gray-600/60 dark:text-gray-400">
-          {{ t('student.ability.goals.empty') }}
-        </div>
-
-        <div v-else class="mt-4 grid grid-cols-1 gap-4 xl:grid-cols-2">
-          <div
-            v-for="goal in goals"
-            :key="goal.id"
-            class="rounded-3xl border border-white/60 bg-white/60 p-5 shadow-sm backdrop-blur-sm dark:border-white/10 dark:bg-white/5"
-          >
-            <div class="flex items-start gap-3">
-              <div class="min-w-0 flex-1">
-                <div class="flex flex-wrap items-center gap-2">
-                  <div class="truncate text-base font-semibold text-gray-900 dark:text-gray-100">{{ goal.title }}</div>
-                  <badge :variant="goalStatusVariant(goal)" size="sm">
-                    {{ goalStatusLabel(goal) }}
-                  </badge>
-                </div>
-                <div class="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-gray-500 dark:text-gray-400">
-                  <span>{{ goal.dimensionName || ('#' + goal.dimensionId) }}</span>
-                  <span>{{ t('student.ability.goals.priority') }}: {{ goalPriorityLabel(goal.priority) }}</span>
-                  <span>{{ t('student.ability.goals.due') }} {{ formatGoalDate(goal.targetDate) }}</span>
-                  <span
-                    v-if="isGoalOverdue(goal)"
-                    class="rounded-full bg-amber-100 px-2 py-0.5 font-medium text-amber-700 dark:bg-amber-500/10 dark:text-amber-200"
-                  >
-                    {{ t('student.ability.goals.overdueHint') }}
-                  </span>
-                </div>
-              </div>
-              <div class="flex items-center gap-2">
-                <Button size="sm" variant="secondary" icon="edit" @click="openEditGoalModal(goal)">
-                  {{ t('student.ability.goals.edit') }}
-                </Button>
-                <Button size="sm" variant="danger" icon="delete" @click="removeGoal(goal)">
-                  {{ t('common.delete') || '删除' }}
-                </Button>
-              </div>
+      <div ref="goalsSectionRef">
+        <card padding="md" tint="accent">
+          <div class="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+            <div>
+              <div class="text-lg font-semibold text-gray-900 dark:text-gray-100">{{ t('student.ability.goals.title') }}</div>
+              <div class="text-sm text-gray-500 dark:text-gray-400">{{ t('student.ability.goals.subtitle') }}</div>
             </div>
-
-            <p v-if="goal.description" class="mt-3 text-sm leading-6 text-gray-600 dark:text-gray-300 whitespace-pre-wrap">{{ goal.description }}</p>
-
-            <div class="mt-4 flex items-end justify-between gap-4">
-              <div>
-                <div class="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400">{{ t('student.ability.goals.progress') }}</div>
-                <div class="mt-1 text-sm font-medium text-gray-900 dark:text-gray-100">
-                  {{ goalProgressPercent(goal) }}%
-                  <span class="ml-2 text-xs font-normal text-gray-500 dark:text-gray-400">
-                    {{ t('student.ability.goals.current') }} {{ formatGoalScore(goal.currentScore) }} / {{ formatGoalScore(goal.targetScore) }}
-                  </span>
-                </div>
-              </div>
-              <div class="text-right text-xs text-gray-500 dark:text-gray-400">
-                <div>ID #{{ goal.id }}</div>
-                <div v-if="goal.achievedAt">{{ t('student.ability.goals.status.achieved') }} {{ formatGoalDate(goal.achievedAt) }}</div>
-                <div v-else-if="isGoalOverdue(goal)">{{ t('student.ability.goals.overdueStatusNote') }}</div>
-              </div>
-            </div>
-
-            <div class="mt-3 h-2 overflow-hidden rounded-full bg-gray-200/80 dark:bg-gray-700/80">
-              <div
-                class="h-2 rounded-full transition-all"
-                :class="goalProgressBarClass(goal)"
-                :style="{ width: `${goalProgressPercent(goal)}%` }"
-              />
+            <div class="flex items-center gap-2">
+              <badge :variant="goalStats.active > 0 ? 'info' : 'secondary'" size="sm">
+                {{ t('student.ability.goals.status.active') }} {{ goalStats.active }}
+              </badge>
+              <badge :variant="goalStats.overdue > 0 ? 'warning' : 'secondary'" size="sm">
+                {{ t('student.ability.goals.status.overdue') }} {{ goalStats.overdue }}
+              </badge>
+              <badge :variant="goalStats.achieved > 0 ? 'success' : 'secondary'" size="sm">
+                {{ t('student.ability.goals.status.achieved') }} {{ goalStats.achieved }}
+              </badge>
+              <Button size="sm" variant="primary" icon="plus" @click="openCreateGoalModal">
+                {{ t('student.ability.goals.create') }}
+              </Button>
             </div>
           </div>
-        </div>
-      </card>
+
+          <div v-if="goalsError" class="mt-4 rounded-2xl border border-rose-200 bg-rose-50/70 px-4 py-3 text-sm text-rose-700 dark:border-rose-500/30 dark:bg-rose-500/10 dark:text-rose-200">
+            <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <span>{{ goalsError }}</span>
+              <Button size="sm" variant="danger" @click="loadGoals">{{ t('student.ability.goals.retry') }}</Button>
+            </div>
+          </div>
+
+          <div v-else-if="goalsLoading" class="mt-4 text-sm text-gray-500 dark:text-gray-400">
+            {{ t('student.analysis.loading') }}
+          </div>
+
+          <div v-else-if="goals.length === 0" class="mt-4 rounded-3xl border border-dashed border-gray-300/80 px-5 py-8 text-center text-sm text-gray-500 dark:border-gray-600/60 dark:text-gray-400">
+            {{ t('student.ability.goals.empty') }}
+          </div>
+
+          <div v-else class="mt-4 grid grid-cols-1 gap-4 xl:grid-cols-2">
+            <div
+              v-for="goal in goals"
+              :key="goal.id"
+              class="rounded-3xl border border-white/60 bg-white/60 p-5 shadow-sm backdrop-blur-sm dark:border-white/10 dark:bg-white/5"
+            >
+              <div class="flex items-start gap-3">
+                <div class="min-w-0 flex-1">
+                  <div class="flex flex-wrap items-center gap-2">
+                    <div class="truncate text-base font-semibold text-gray-900 dark:text-gray-100">{{ goal.title }}</div>
+                    <badge :variant="goalStatusVariant(goal)" size="sm">
+                      {{ goalStatusLabel(goal) }}
+                    </badge>
+                  </div>
+                  <div class="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-gray-500 dark:text-gray-400">
+                    <span>{{ goal.dimensionName || ('#' + goal.dimensionId) }}</span>
+                    <span>{{ t('student.ability.goals.priority') }}: {{ goalPriorityLabel(goal.priority) }}</span>
+                    <span>{{ t('student.ability.goals.due') }} {{ formatGoalDate(goal.targetDate) }}</span>
+                    <span
+                      v-if="isGoalOverdue(goal)"
+                      class="rounded-full bg-amber-100 px-2 py-0.5 font-medium text-amber-700 dark:bg-amber-500/10 dark:text-amber-200"
+                    >
+                      {{ t('student.ability.goals.overdueHint') }}
+                    </span>
+                  </div>
+                </div>
+                <div class="flex items-center gap-2">
+                  <Button size="sm" variant="secondary" icon="edit" @click="openEditGoalModal(goal)">
+                    {{ t('student.ability.goals.edit') }}
+                  </Button>
+                  <Button size="sm" variant="danger" icon="delete" @click="removeGoal(goal)">
+                    {{ t('common.delete') || '删除' }}
+                  </Button>
+                </div>
+              </div>
+
+              <p v-if="goal.description" class="mt-3 text-sm leading-6 text-gray-600 dark:text-gray-300 whitespace-pre-wrap">{{ goal.description }}</p>
+
+              <div class="mt-4 flex items-end justify-between gap-4">
+                <div>
+                  <div class="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400">{{ t('student.ability.goals.progress') }}</div>
+                  <div class="mt-1 text-sm font-medium text-gray-900 dark:text-gray-100">
+                    {{ goalProgressPercent(goal) }}%
+                    <span class="ml-2 text-xs font-normal text-gray-500 dark:text-gray-400">
+                      {{ t('student.ability.goals.current') }} {{ formatGoalScore(goal.currentScore) }} / {{ formatGoalScore(goal.targetScore) }}
+                    </span>
+                  </div>
+                </div>
+                <div class="text-right text-xs text-gray-500 dark:text-gray-400">
+                  <div>ID #{{ goal.id }}</div>
+                  <div v-if="goal.achievedAt">{{ t('student.ability.goals.status.achieved') }} {{ formatGoalDate(goal.achievedAt) }}</div>
+                  <div v-else-if="isGoalOverdue(goal)">{{ t('student.ability.goals.overdueStatusNote') }}</div>
+                </div>
+              </div>
+
+              <div class="mt-3 h-2 overflow-hidden rounded-full bg-gray-200/80 dark:bg-gray-700/80">
+                <div
+                  class="h-2 rounded-full transition-all"
+                  :class="goalProgressBarClass(goal)"
+                  :style="{ width: `${goalProgressPercent(goal)}%` }"
+                />
+              </div>
+            </div>
+          </div>
+        </card>
+      </div>
 
       <!-- 行为洞察（阶段二：AI解释与建议，不算分；学生7天仅一次） -->
-      <behavior-insight-section
-        :student-id="String(auth?.user?.id || '')"
-        :course-id="selectedCourseId || undefined"
-        :range="behaviorRange"
-        :allow-student-generate="true"
-      />
+      <div class="perf-section perf-section--medium">
+        <behavior-insight-section
+          :student-id="String(auth?.user?.id || '')"
+          :course-id="selectedCourseId || undefined"
+          :range="behaviorRange"
+          :allow-student-generate="true"
+        />
+      </div>
 
       <!-- 行为证据（阶段一：纯代码聚合，不调用AI，不算分） -->
-      <behavior-evidence-section
-        :student-id="String(auth?.user?.id || '')"
-        :course-id="selectedCourseId || undefined"
-        :range="behaviorRange"
-      />
+      <div class="perf-section perf-section--medium">
+        <behavior-evidence-section
+          :student-id="String(auth?.user?.id || '')"
+          :course-id="selectedCourseId || undefined"
+          :range="behaviorRange"
+        />
+      </div>
 
       <!-- Trends 区域：左侧仪表盘，右侧两张趋势图（去掉完成率） -->
-      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 perf-section perf-section--large">
         <!-- 左：课程平均分仪表盘（动画） + 作业列表 -->
         <card padding="md" tint="accent">
           <div class="w-full max-w-[420px] mx-auto">
@@ -421,7 +427,7 @@ import { useCourseStore } from '@/stores/course'
 import { abilityApi } from '@/api/ability.api'
 import BehaviorEvidenceSection from '@/features/shared/views/BehaviorEvidenceSection.vue'
 import BehaviorInsightSection from '@/features/shared/views/BehaviorInsightSection.vue'
-import { useRouter } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import { useAIStore } from '@/stores/ai'
 import Button from '@/components/ui/Button.vue'
 import { DocumentArrowDownIcon, ArrowDownTrayIcon, SparklesIcon } from '@heroicons/vue/24/outline'
@@ -442,6 +448,7 @@ import Badge from '@/components/ui/Badge.vue'
 import type { AbilityDimension, AbilityGoal, AbilityGoalPayload, AbilityGoalPriority } from '@/types/ability'
 
 const { t } = useI18n()
+const route = useRoute()
 const router = useRouter()
 const ai = useAIStore()
 const auth = useAuthStore()
@@ -454,6 +461,7 @@ const behaviorRangeOptions = computed(() => ([
 ]))
 
 type Point = { x: string; y: number }
+const initialAnalysisReady = ref(false)
 
 type EnrolledCourseItem = { id: string; title: string }
 
@@ -501,6 +509,7 @@ const goalModalOpen = ref(false)
 const goalSaving = ref(false)
 const goalFormError = ref('')
 const editingGoalId = ref<number | null>(null)
+const goalsSectionRef = ref<HTMLElement | null>(null)
 
 function createGoalFormState(): GoalFormState {
   return {
@@ -747,6 +756,19 @@ function openEditGoalModal(goal: AbilityGoal) {
     priority: goal.priority || 'medium'
   }
   goalModalOpen.value = true
+}
+
+function shouldFocusGoalsSection() {
+  return String(route.query.section || '').toLowerCase() === 'goals'
+}
+
+async function scrollToGoalsSection(smooth = true) {
+  await nextTick()
+  if (!shouldFocusGoalsSection()) return
+  goalsSectionRef.value?.scrollIntoView({
+    behavior: smooth ? 'smooth' : 'auto',
+    block: 'start'
+  })
 }
 
 async function submitGoal() {
@@ -1149,6 +1171,7 @@ function runIdle(task: () => void) {
 
 // 课程切换：刷新作业与趋势（仪表盘交由 GaugeChart 自身监听大小/可见性）
 watch(() => selectedCourseId.value, async () => {
+  if (!initialAnalysisReady.value) return
   await fetchCourseAssignments()
   loadScoreTrend()
   runIdle(() => { loadHoursTrend() })
@@ -1219,9 +1242,11 @@ onMounted(async () => {
   await Promise.all([load(), loadRadar(), loadInsights()])
   // 数据入位后再次稳态渲染（避免首次 loading 切换造成实例被销毁）
   await nextTick()
+  await scrollToGoalsSection(false)
   await loadScoreTrend()
   runIdle(() => { loadHoursTrend() })
   runIdle(() => { fetchLatestAiFeedback() })
+  initialAnalysisReady.value = true
   // 监听全局主题事件：切换中隐藏可能的 tooltip；切换完成后重绘仪表并重算颜色
   if (!themeListenerBound) {
     themeChangedHandler = () => { themeVersion.value++ }
@@ -1262,6 +1287,15 @@ watch(() => i18n.global.locale.value, () => {
   })
 })
 
+watch(
+  () => [route.query.section, route.query.goalId],
+  () => {
+    if (shouldFocusGoalsSection()) {
+      scrollToGoalsSection()
+    }
+  }
+)
+
 onUnmounted(() => {
   if (themeListenerBound && themeChangedHandler) { try { window.removeEventListener('theme:changed', themeChangedHandler as any) } catch {}; themeListenerBound = false; themeChangedHandler = null }
 })
@@ -1269,4 +1303,18 @@ onUnmounted(() => {
 
 <style scoped>
 .ms-compact :deep(.input) { min-height: 2rem; padding-top: 0.25rem; padding-bottom: 0.25rem; }
+
+.perf-section {
+  content-visibility: auto;
+  contain: layout style paint;
+  contain-intrinsic-size: 560px;
+}
+
+.perf-section--medium {
+  contain-intrinsic-size: 720px;
+}
+
+.perf-section--large {
+  contain-intrinsic-size: 980px;
+}
 </style>

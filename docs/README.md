@@ -17,6 +17,7 @@ outline: [2, 3]
 6. 主题与 UI：`ui-theming.md`、`frontend/ui-backgrounds.md`（Legacy 背景指南）
 7. 参考：API 参考、模型与配置、安全配置、Cookbook、FAQ、术语、团队约定
 8. `learning-path.md`：1–2 周成长路线（配实践任务）
+9. `controller-reachability-audit.md`：当前前端直连/后端弱链路审计（用于清理前先确认）
 
 ## 角色路线
 - 学生端路线（Beta）：`quickstart` → `frontend-deep-dive` → `student.api.ts` → 完成 Cookbook 任务A/C

@@ -34,21 +34,9 @@ export const useNotificationsStore = defineStore('notifications', () => {
   })
 
   // 计算属性
-  const unreadNotifications = computed(() => notifications.value.filter(n => !n.isRead))
   const unreadCount = computed(() => stats.value.unreadCount)
 
   const hasUnread = computed(() => unreadCount.value > 0)
-
-  const notificationsByType = computed(() => {
-    const grouped: Record<string, Notification[]> = {}
-    notifications.value.forEach(notification => {
-      if (!grouped[notification.type]) {
-        grouped[notification.type] = []
-      }
-      grouped[notification.type].push(notification)
-    })
-    return grouped
-  })
 
   const setUnreadCountGuarded = (next: number) => {
     const value = Math.max(0, Number(next || 0))
@@ -170,35 +158,6 @@ export const useNotificationsStore = defineStore('notifications', () => {
     }
   }
 
-  // 批量标记为已读
-  const batchMarkAsRead = async (notificationIds: string[]) => {
-    try {
-      const unreadBefore = Number(stats.value.unreadCount || 0)
-      await notificationAPI.batchMarkAsRead(notificationIds)
-      
-      // 更新本地状态
-      let newlyReadCount = 0
-      notifications.value.forEach(notification => {
-        if (notificationIds.includes(notification.id)) {
-          if (!notification.isRead) newlyReadCount++
-          notification.isRead = true
-        }
-      })
-      if (newlyReadCount > 0) {
-        stats.value.unreadCount = Math.max(0, Number(stats.value.unreadCount || 0) - newlyReadCount)
-      }
-
-      // 更新统计信息
-      await Promise.allSettled([fetchStats(), fetchUnreadCount()])
-      const optimisticTarget = Math.max(0, unreadBefore - newlyReadCount)
-      stats.value.unreadCount = Math.min(Number(stats.value.unreadCount || 0), optimisticTarget)
-      
-    } catch (err: any) {
-      console.error('批量标记已读失败:', err)
-      throw err
-    }
-  }
-
   // 全部标记为已读
   const markAllAsRead = async () => {
     try {
@@ -258,34 +217,6 @@ export const useNotificationsStore = defineStore('notifications', () => {
     }
   }
 
-  // 批量删除通知
-  const batchDeleteNotifications = async (notificationIds: string[]) => {
-    try {
-      const unreadBefore = Number(stats.value.unreadCount || 0)
-      const unreadToDelete = notifications.value.filter(
-        notification => notificationIds.includes(notification.id) && !notification.isRead
-      ).length
-      await notificationAPI.batchDeleteNotifications(notificationIds)
-      
-      // 从本地状态中移除
-      notifications.value = notifications.value.filter(
-        notification => !notificationIds.includes(notification.id)
-      )
-      if (unreadToDelete > 0) {
-        stats.value.unreadCount = Math.max(0, Number(stats.value.unreadCount || 0) - unreadToDelete)
-      }
-
-      // 更新统计信息
-      await Promise.allSettled([fetchStats(), fetchUnreadCount()])
-      const optimisticTarget = Math.max(0, unreadBefore - unreadToDelete)
-      stats.value.unreadCount = Math.min(Number(stats.value.unreadCount || 0), optimisticTarget)
-      
-    } catch (err: any) {
-      console.error('批量删除通知失败:', err)
-      throw err
-    }
-  }
-
   // 获取统计信息
   const fetchStats = async () => {
     try {
@@ -312,15 +243,6 @@ export const useNotificationsStore = defineStore('notifications', () => {
     } catch (err: any) {
       console.error('获取未读数量失败:', err)
     }
-  }
-
-  // 设置过滤器
-  const setFilter = <K extends keyof typeof filters.value>(
-    key: K, 
-    value: typeof filters.value[K]
-  ) => {
-    filters.value[key] = value
-    fetchNotifications(true) // 重新加载数据
   }
 
   // 清除过滤器
@@ -405,27 +327,6 @@ export const useNotificationsStore = defineStore('notifications', () => {
     await fetchStats()
   }
 
-  // 重置状态
-  const reset = () => {
-    notifications.value = []
-    currentNotification.value = null
-    stats.value = {
-      totalCount: 0,
-      unreadCount: 0,
-      todayCount: 0,
-      typeDistribution: {}
-    }
-    loading.value = false
-    error.value = null
-    pagination.value = {
-      page: 1,
-      size: 20,
-      total: 0,
-      totalPages: 0
-    }
-    clearFilters()
-  }
-
   return {
     // 状态
     notifications,
@@ -437,22 +338,17 @@ export const useNotificationsStore = defineStore('notifications', () => {
     filters,
     
     // 计算属性
-    unreadNotifications,
     unreadCount,
     hasUnread,
-    notificationsByType,
     
     // 方法
     fetchNotifications,
     fetchNotificationDetail,
     markAsRead,
-    batchMarkAsRead,
     markAllAsRead,
     deleteNotification,
-    batchDeleteNotifications,
     fetchStats,
     fetchUnreadCount,
-    setFilter,
     clearFilters,
     loadMore,
     refresh,
@@ -460,7 +356,6 @@ export const useNotificationsStore = defineStore('notifications', () => {
     insertOrUpdateFromSse,
     applyReadUpdateFromSse,
     removeByIdFromSse,
-    refreshStatsFromSse,
-    reset
+    refreshStatsFromSse
   }
 }) 

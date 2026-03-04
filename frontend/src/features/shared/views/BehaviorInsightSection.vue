@@ -417,10 +417,10 @@ const emit = defineEmits<{
   (e: 'update:insight', v: BehaviorInsightResponse | null): void
 }>()
 
-const { t, locale } = useI18n()
+const { t, te, locale } = useI18n()
 function tf(key: string, fallback: string): string {
-  const v = t(key) as any
-  return v === key ? fallback : String(v)
+  if (!te(key)) return fallback
+  return String(t(key))
 }
 const loading = ref(false)
 const error = ref<string | null>(null)

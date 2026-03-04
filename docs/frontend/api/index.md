@@ -32,7 +32,6 @@ outline: [2, 3]
 - `behaviorInsight.api.ts` → 行为洞察（阶段二 AI 解读）
 - `chat.api.ts` → 站内私信会话
 - `help.api.ts` → 帮助中心
-- `project.api.ts` → 公开项目目录树（工作台/展示）
 
 > 详细方法在对应子页查看（如 `frontend/api/lesson.api.md`、`frontend/api/admin.api.md` 等）。
 

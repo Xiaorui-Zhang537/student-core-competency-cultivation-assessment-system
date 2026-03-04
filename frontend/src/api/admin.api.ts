@@ -190,27 +190,17 @@ export const adminApi = {
   exportUsersCsv: (params: any): Promise<Blob> => api.get('/admin/exports/users.csv', { params, responseType: 'blob' as any }),
   exportAbilityReportsCsv: (params: any): Promise<Blob> => api.get('/admin/exports/ability-reports.csv', { params, responseType: 'blob' as any }),
   exportCommunityCsv: (): Promise<Blob> => api.get('/admin/exports/community.csv', { responseType: 'blob' as any }),
-  exportCourseStudentsCsv: (params: { courseId: string | number; search?: string; sortBy?: string; activity?: string; grade?: string; progress?: string }): Promise<Blob> =>
-    api.get('/admin/exports/course-students.csv', { params, responseType: 'blob' as any }),
   exportCourseLessonNotesCsv: (params: { courseId: string | number; studentId?: string | number; lessonId?: string | number; q?: string }): Promise<Blob> =>
     api.get('/admin/exports/course-lesson-notes.csv', { params, responseType: 'blob' as any }),
   exportCourseLessonNotesZip: (params: { courseId: string | number; studentId?: string | number; lessonId?: string | number; q?: string }): Promise<Blob> =>
     api.get('/admin/exports/course-lesson-notes.zip', { params, responseType: 'blob' as any }),
   exportCourseDataZip: (params: { courseId: string | number }): Promise<Blob> =>
     api.get('/admin/exports/course-data.zip', { params, responseType: 'blob' as any }),
-  exportCourseStudentDataZip: (params: { courseId: string | number; studentId: string | number }): Promise<Blob> =>
-    api.get('/admin/exports/course-student-data.zip', { params, responseType: 'blob' as any }),
-  exportAiConversationsCsv: (params: { studentId: string | number; q?: string; pinned?: boolean; archived?: boolean }): Promise<Blob> =>
-    api.get('/admin/exports/ai-conversations.csv', { params, responseType: 'blob' as any }),
-  exportVoiceSessionsCsv: (params: { studentId: string | number; q?: string }): Promise<Blob> =>
-    api.get('/admin/exports/voice-sessions.csv', { params, responseType: 'blob' as any }),
   getExportCapabilities: (): Promise<any> => api.get('/admin/exports/capabilities'),
 
   // 能力雷达（管理员版）
   getAbilityRadar: (params: { studentId: string | number; courseId: string | number; classId?: string | number; startDate?: string; endDate?: string }) =>
     api.get('/admin/ability/radar', { params }),
-  compareAbilityRadar: (body: any, params?: { studentId?: string | number }) =>
-    api.post('/admin/ability/radar/compare', body, { params }),
 
   // 行为洞察（管理员版）
   getBehaviorInsightLatest: (params: { studentId: string | number; courseId?: string | number; range?: string }) =>
@@ -221,23 +211,16 @@ export const adminApi = {
     api.get('/admin/behavior/insights/history', { params }),
   getBehaviorInsightHistoryDetail: (id: string | number) =>
     api.get(`/admin/behavior/insights/history/${id}`),
-  // 行为证据（管理员版，若后端未提供将由调用方兜底）
-  getBehaviorSummary: (params: { studentId: string | number; courseId?: string | number; range?: string }) =>
-    api.get('/admin/behavior/summary', { params }),
 
   // AI 问答审计（管理员版）
   listAiConversations: (params: { studentId: string | number; q?: string; pinned?: boolean; archived?: boolean; page?: number; size?: number }) =>
     api.get('/admin/ai/conversations', { params }),
-  getAiConversation: (conversationId: string | number, params: { studentId: string | number }) =>
-    api.get(`/admin/ai/conversations/${conversationId}`, { params }),
   listAiMessages: (conversationId: string | number, params: { studentId: string | number; page?: number; size?: number }) =>
     api.get(`/admin/ai/conversations/${conversationId}/messages`, { params }),
 
   // 口语训练审计（管理员版）
   listVoiceSessions: (params: { studentId: string | number; q?: string; page?: number; size?: number }) =>
     api.get('/admin/ai/voice/sessions', { params }),
-  getVoiceSession: (sessionId: string | number, params: { studentId: string | number }) =>
-    api.get(`/admin/ai/voice/sessions/${sessionId}`, { params }),
   listVoiceTurns: (sessionId: string | number, params: { studentId: string | number; page?: number; size?: number }) =>
     api.get(`/admin/ai/voice/sessions/${sessionId}/turns`, { params }),
 }

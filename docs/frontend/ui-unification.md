@@ -223,7 +223,6 @@
 - 组件必须监听 `document.documentElement` 的 `class` 变化（`dark` 切换），在主题变化时以轻微节流（150ms）重建实例以应用新主题，并保留动画：
   - RadarChart：已内置
   - PieChart：已内置
-  - LineChart：已内置（含柱状数据）
   - TrendAreaChart：已内置
 - Tooltip 必须使用玻璃风格：`glassTooltipCss()`，并使用 `renderMode: 'html'` + `className: 'echarts-glass-tooltip'`。
 - 背景色统一为透明，保持玻璃卡片的背景效果。

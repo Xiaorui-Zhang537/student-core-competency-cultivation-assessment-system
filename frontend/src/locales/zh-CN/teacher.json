@@ -594,7 +594,9 @@
 				"studentRanking": "学生表现排行",
 				"noRanking": "暂无学生排行数据",
 				"radarAreaValue": "面积 {value}",
-				"averageGradeShort": "成绩 {value}"
+				"averageGradeShort": "成绩 {value}",
+				"pickStudent": "选为分析对象",
+				"pickStudentActive": "已选为分析对象"
 			},
 			"messages": {
 				"chooseCourse": "请选择课程",

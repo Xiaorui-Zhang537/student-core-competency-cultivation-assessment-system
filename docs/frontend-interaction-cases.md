@@ -380,43 +380,35 @@ export const useCourseStore = defineStore('course', {
 要点：
 - 路由参数变化时需重新拉取；404 需跳回课程列表并提示
 
-## 6. 成绩批改（GradeAssignmentView → useTeacherStore → grade.api.ts）
+## 6. 成绩批改（GradeAssignmentView → grade.api.ts）
 
 组件片段：
 ```ts
 <script setup lang="ts">
 import { ref } from 'vue'
-import { useTeacherStore } from '@/stores/teacher'
+import { gradeApi } from '@/api/grade.api'
 
-const store = useTeacherStore()
 const score = ref(0)
 const feedback = ref('')
 
 const grade = async (submissionId: string, studentId: string, assignmentId: string) => {
-  await store.gradeSubmission({ submissionId, studentId, assignmentId, score: score.value, feedback: feedback.value, maxScore: 100, publishImmediately: false })
+  await gradeApi.gradeSubmission({ submissionId, studentId, assignmentId, score: score.value, feedback: feedback.value, maxScore: 100, publishImmediately: false })
 }
 
 const publish = async (gradeId: string) => {
-  await store.publishGrade(gradeId)
+  await gradeApi.publishGrade(gradeId)
 }
 </script>
 ```
 
-Store 片段：
+API 片段：
 ```ts
-import { defineStore } from 'pinia'
 import { gradeApi } from '@/api/grade.api'
 
-export const useTeacherStore = defineStore('teacher', {
-  actions: {
-    async gradeSubmission(payload: any) {
-      await gradeApi.gradeSubmission(payload)
-    },
-    async publishGrade(id: string) {
-      await gradeApi.publishGrade(id)
-    }
-  }
-})
+export const gradeApi = {
+  gradeSubmission: (payload: any) => api.post('/grades', payload),
+  publishGrade: (id: string) => api.post(`/grades/${id}/publish`)
+}
 ```
 
 要点：
@@ -530,24 +522,18 @@ const onDownload = (id: number) => fileApi.downloadFile(id, `file_${id}`)
 - `uploadFile(file)` 走 `multipart/form-data`；返回值在运行时通常是 `FileInfo`（已被拦截器解包）。
 - 下载建议用 `fileApi.downloadFile(...)`（内部使用 `fetch` 带鉴权），避免 `<a>` 直链 401。
 
-## 10. 课时进度异常重传（LessonPlayer → useLessonStore → lesson.api.ts）
+## 10. 课程详情课时列表（CourseDetailView → useLessonStore → lesson.api.ts）
 
-组件片段（含退避重试）：
+组件片段：
 ```ts
 <script setup lang="ts">
-import { onMounted, ref } from 'vue'
+import { onMounted } from 'vue'
 import { useLessonStore } from '@/stores/lesson'
 
 const store = useLessonStore()
-const progress = ref(0)
-
-const onProgress = async (p: number) => {
-  progress.value = p
-  await store.updateProgressWithRetry({ id: 123, progress: p })
-}
 
 onMounted(() => {
-  // 播放器绑定 onProgress 回调
+  store.fetchLessonsForCourse('2001')
 })
 </script>
 ```
@@ -559,24 +545,8 @@ import { lessonApi } from '@/api/lesson.api'
 
 export const useLessonStore = defineStore('lesson', {
   actions: {
-    async updateProgress(id: number, p: number) {
-      await lessonApi.updateLessonProgress(id, p)
-    },
-    async updateProgressWithRetry({ id, progress }: { id: number; progress: number }) {
-      let delay = 1000
-      for (let i = 0; i < 5; i++) {
-        try {
-          await this.updateProgress(id, progress)
-          return
-        } catch (e: any) {
-          if (e?.response?.status && [401, 403, 429, 503].includes(e.response.status)) {
-            await new Promise((r) => setTimeout(r, delay))
-            delay = Math.min(delay * 2, 10000)
-            continue
-          }
-          throw e
-        }
-      }
+    async fetchLessonsForCourse(courseId: string) {
+      return lessonApi.getLessonsByCourse(courseId)
     }
   }
 })

@@ -592,7 +592,9 @@
 				"studentRanking": "Student Ranking",
 				"noRanking": "No ranking data",
 				"radarAreaValue": "Area {value}",
-				"averageGradeShort": "Grade {value}"
+				"averageGradeShort": "Grade {value}",
+				"pickStudent": "Set As Focus",
+				"pickStudentActive": "Current Focus"
 			},
 			"radar": {
 				"classification": {

@@ -25,7 +25,6 @@ outline: [2, 3]
 - 文件（Files）：`/backend/api/file`
 - 帮助中心（Help Center）：`/backend/api/help`
 - 聊天（Chat）：`/backend/api/chat`
-- 项目/工作台（Project）：`/backend/api/project`
 - 管理员（Admin）：`/backend/api/admin`
 - AI 聊天（AI）：`/backend/api/ai`
 - AI 批改（AI Grading）：`/backend/api/ai-grading`

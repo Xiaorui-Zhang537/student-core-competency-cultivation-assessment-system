@@ -82,30 +82,6 @@ public interface CourseMapper {
     List<Course> selectCoursesByStudentId(@Param("studentId") Long studentId);
 
     /**
-     * 查询热门课程（按报名人数排序）
-     *
-     * @param limit 限制数量
-     * @return 课程列表
-     */
-    List<Course> selectPopularCourses(@Param("limit") Integer limit);
-
-    /**
-     * 查询推荐课程（按评分排序）
-     *
-     * @param limit 限制数量
-     * @return 课程列表
-     */
-    List<Course> selectRecommendedCourses(@Param("limit") Integer limit);
-
-    /**
-     * 根据分类查询课程
-     *
-     * @param category 课程分类
-     * @return 课程列表
-     */
-    List<Course> selectCoursesByCategory(@Param("category") String category);
-
-    /**
      * 更新课程报名人数
      *
      * @param courseId 课程ID
@@ -160,30 +136,6 @@ public interface CourseMapper {
      * @return 影响的行数
      */
     int batchUpdateCourseStatus(@Param("courseIds") List<Long> courseIds, @Param("status") String status);
-
-    /**
-     * 查询即将开始的课程
-     *
-     * @param days 天数
-     * @return 课程列表
-     */
-    List<Course> selectUpcomingCourses(@Param("days") Integer days);
-
-    /**
-     * 查询即将结束的课程
-     *
-     * @param days 天数
-     * @return 课程列表
-     */
-    List<Course> selectEndingCourses(@Param("days") Integer days);
-
-    /**
-     * 根据关键词搜索课程
-     *
-     * @param keyword 搜索关键词
-     * @return 课程列表
-     */
-    List<Course> searchCourses(@Param("keyword") String keyword);
 
     /**
      * 获取课程统计信息

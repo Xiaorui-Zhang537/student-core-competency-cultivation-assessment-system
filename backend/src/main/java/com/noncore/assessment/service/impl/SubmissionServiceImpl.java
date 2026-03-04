@@ -386,19 +386,18 @@ public class SubmissionServiceImpl implements SubmissionService {
         }
         // 追加班级平均分与排名（后续可迁到SQL层窗口函数实现）
         try {
-            // 平均分
             Object avg = grade.get("avg_score");
             if (avg != null) {
                 grade.put("averageScore", avg);
             }
-            // 总人数
             Object total = grade.get("total_students");
             if (total != null) {
                 grade.put("totalStudents", total);
             }
-            // 排名：基于该作业所有已评分成绩按 score 降序排名
-            // 这里简单通过 mapper 的现有方法拼装数据较重，暂用占位，当无成绩时给 null
-            // 前端将做兜底显示
+            Object rank = grade.get("student_rank");
+            if (rank != null) {
+                grade.put("rank", rank);
+            }
         } catch (Exception ignore) {}
         return grade;
     }

@@ -131,31 +131,7 @@ curl 'http://localhost:8080/api/courses?page=1&size=10&query=AI'
 
 响应：成功返回 200，无 data。
 
-## 6. 课程发现（推荐/热门/分类/搜索）
-
-### GET `/api/courses/popular` 热门课程
-
-Query：`limit`（默认 10）
-
-响应：`ApiResponse<Course[]>`
-
-### GET `/api/courses/recommended` 推荐课程
-
-Query：`limit`（默认 10）
-
-响应：`ApiResponse<Course[]>`
-
-### GET `/api/courses/category/{category}` 分类课程（简单列表）
-
-响应：`ApiResponse<Course[]>`
-
-### GET `/api/courses/search` 搜索课程（简单列表）
-
-Query：`keyword`（必填）
-
-响应：`ApiResponse<Course[]>`
-
-## 7. 选课与状态
+## 6. 选课与状态
 
 ### POST `/api/courses/{id}/enroll` 学生选课
 

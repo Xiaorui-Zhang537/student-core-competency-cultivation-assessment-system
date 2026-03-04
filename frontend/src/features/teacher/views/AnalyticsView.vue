@@ -97,6 +97,17 @@
                     <span class="text-sm font-semibold whitespace-nowrap text-gray-900 dark:text-gray-100">{{ t('teacher.analytics.tables.radarAreaValue', { value: formatRadarArea(s.radarArea) }) }}</span>
                   </div>
                 </div>
+                <div class="shrink-0 self-end">
+                  <Button
+                    size="sm"
+                    :variant="isSelectedStudent(s) ? 'primary' : 'outline'"
+                    @click="pickStudent(String(s.studentId))"
+                  >
+                    <check-circle-icon v-if="isSelectedStudent(s)" class="w-4 h-4 mr-1" />
+                    <user-icon v-else class="w-4 h-4 mr-1" />
+                    {{ isSelectedStudent(s) ? (t('teacher.analytics.tables.pickStudentActive') || '已选为分析对象') : (t('teacher.analytics.tables.pickStudent') || '选为分析对象') }}
+                  </Button>
+                </div>
               </li>
             </ul>
             <pagination-bar
@@ -262,7 +273,7 @@ import { resolveEChartsTheme, glassTooltipCss, resolveThemePalette } from '@/cha
 import { getOrInitChart, bindHideTipOnGlobalOut, bindTooltipVisibility, bindThemeChangeEvents } from '@/charts/echartsHelpers'
 import RadarChart from '@/components/charts/RadarChart.vue'
 import AbilityRadarLegend from '@/shared/views/AbilityRadarLegend.vue'
-import { DocumentArrowDownIcon, SparklesIcon, ArrowPathIcon, UserGroupIcon, CheckCircleIcon, StarIcon, ClipboardDocumentListIcon } from '@heroicons/vue/24/outline'
+import { DocumentArrowDownIcon, SparklesIcon, ArrowPathIcon, UserGroupIcon, CheckCircleIcon, StarIcon, ClipboardDocumentListIcon, UserIcon } from '@heroicons/vue/24/outline'
 // @ts-ignore shim for vue-i18n types in this project
 import { useI18n } from 'vue-i18n'
 import GlassPopoverSelect from '@/components/ui/filters/GlassPopoverSelect.vue'
@@ -354,6 +365,26 @@ const handleRankingPageSizeChange = (value: any) => {
   if (rankingPageSize.value === normalized) return
   rankingPageSize.value = normalized
   rankingPage.value = 1
+}
+
+const isSelectedStudent = (student: Pick<CourseStudentPerformanceItem, 'studentId'> | null | undefined) => {
+  if (!student?.studentId || !selectedStudentId.value) return false
+  return String(student.studentId) === String(selectedStudentId.value)
+}
+
+const pickStudent = (studentId: string) => {
+  const normalized = String(studentId || '')
+  if (!normalized || !selectedCourseId.value) return
+  if (selectedStudentId.value === normalized) return
+  selectedStudentId.value = normalized
+  router.replace({
+    name: 'TeacherAnalytics',
+    query: {
+      ...route.query,
+      courseId: selectedCourseId.value,
+      studentId: normalized
+    }
+  })
 }
 
 const handleRankingPrev = () => {
@@ -506,7 +537,7 @@ const initScoreDistributionChart = () => {
       borderColor: 'transparent',
       textStyle: { color: 'var(--color-base-content)' },
       extraCssText: glassTooltipCss(),
-      className: 'echarts-glass-tooltip',
+      className: 'echarts-glass-tooltip teacher-analytics-score-tooltip',
       renderMode: 'html',
       enterable: false,
       confine: true,
@@ -548,8 +579,8 @@ const initScoreDistributionChart = () => {
   scoreDistributionChart && scoreDistributionChart.setOption(option, true)
   // 初始化后立即隐藏 tooltip，避免左上角残留小空白容器
   try { scoreDistributionChart?.dispatchAction({ type: 'hideTip' } as any) } catch {}
-  bindTooltipVisibility(scoreDistributionChart)
-  bindHideTipOnGlobalOut(scoreDistributionChart)
+  bindTooltipVisibility(scoreDistributionChart, 'teacher-analytics-score-tooltip')
+  bindHideTipOnGlobalOut(scoreDistributionChart, 'teacher-analytics-score-tooltip')
 }
 
 function scheduleReinitScoreDistribution() {

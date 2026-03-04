@@ -10,7 +10,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.util.StringUtils;
 
 import java.util.List;
 
@@ -34,37 +33,4 @@ public class CourseDiscoveryServiceImpl implements CourseDiscoveryService {
         PageInfo<Course> pageInfo = new PageInfo<>(courses);
         return PageResult.of(pageInfo.getList(), pageInfo.getPageNum(), pageInfo.getPageSize(), pageInfo.getTotal(), pageInfo.getPages());
     }
-
-    @Override
-    public List<Course> getPopularCourses(Integer limit) {
-        return courseMapper.selectPopularCourses(limit != null ? limit : 10);
-    }
-
-    @Override
-    public List<Course> getRecommendedCourses(Integer limit) {
-        return courseMapper.selectRecommendedCourses(limit != null ? limit : 10);
-    }
-
-    @Override
-    public List<Course> getCoursesByCategory(String category) {
-        return courseMapper.selectCoursesByCategory(category);
-    }
-
-    @Override
-    public List<Course> searchCourses(String keyword) {
-        if (!StringUtils.hasText(keyword)) {
-            return List.of();
-        }
-        return courseMapper.searchCourses(keyword);
-    }
-    
-    @Override
-    public List<Course> getUpcomingCourses(Integer days) {
-        return courseMapper.selectUpcomingCourses(days != null ? days : 7);
-    }
-
-    @Override
-    public List<Course> getEndingCourses(Integer days) {
-        return courseMapper.selectEndingCourses(days != null ? days : 7);
-    }
-} 
+}

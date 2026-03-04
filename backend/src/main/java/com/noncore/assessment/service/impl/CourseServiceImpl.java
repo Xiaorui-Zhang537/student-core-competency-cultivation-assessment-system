@@ -216,21 +216,6 @@ public class CourseServiceImpl implements CourseService {
     }
 
     @Override
-    public void updateCourseRating(Long courseId, Double newRating, Integer newReviewCount) {
-        logger.info("更新课程评分: courseId={}, rating={}, reviewCount={}", courseId, newRating, newReviewCount);
-
-        Course course = courseMapper.selectCourseById(courseId);
-        if (course == null) {
-            throw new BusinessException(ErrorCode.COURSE_NOT_FOUND);
-        }
-
-        // TODO: 此处评分更新逻辑已简化。未来应考虑更复杂的加权平均或重新计算逻辑。
-        courseMapper.updateCourseRating(courseId, newRating, newReviewCount);
-
-        logger.info("课程评分更新成功: courseId={}", courseId);
-    }
-
-    @Override
     @Transactional(readOnly = true)
     public CourseStatisticsResponse getCourseStatistics(Long teacherId) {
         List<Map<String, Object>> stats = courseMapper.getCourseStatistics(teacherId);

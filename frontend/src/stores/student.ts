@@ -1,7 +1,7 @@
 import { defineStore } from 'pinia';
 import { ref, computed } from 'vue';
 import { studentApi } from '@/api/student.api';
-import type { StudentDashboardData, StudentCourse, StudentLesson, StudentSubmission } from '@/types/student';
+import type { StudentDashboardData, StudentCourse } from '@/types/student';
 import { useUIStore } from './ui';
 import { handleApiCall } from '@/utils/api-handler';
 
@@ -26,9 +26,6 @@ export const useStudentStore = defineStore('student', () => {
 
   const dashboardData = ref<StudentDashboardData>(defaultDashboardData);
   const myCourses = ref<StudentCourse[]>([]);
-  const currentCourseProgress = ref<StudentCourse | null>(null);
-  const currentLesson = ref<StudentLesson | null>(null);
-  const mySubmissions = ref<StudentSubmission[]>([]);
   const loading = computed(() => uiStore.loading);
 
   // Actions
@@ -129,53 +126,11 @@ export const useStudentStore = defineStore('student', () => {
     }
   };
 
-  const fetchCourseProgress = async (courseId: string) => {
-    const response = await handleApiCall(
-      () => studentApi.getCourseProgress(courseId),
-      uiStore,
-      '获取课程进度失败'
-    );
-    if (response) {
-      currentCourseProgress.value = response;
-    }
-  };
-
-  const fetchLessonDetails = async (lessonId: string) => {
-    const response = await handleApiCall(
-      () => studentApi.getLessonDetails(lessonId),
-      uiStore,
-      '获取课程详情失败'
-    );
-    if (response) {
-      currentLesson.value = response;
-    }
-  };
-  
-  const toggleLessonCompleted = async (lessonId: string, completed: boolean) => {
-      const apiCall = completed 
-          ? () => studentApi.markLessonAsCompleted(lessonId)
-          : () => studentApi.markLessonAsIncomplete(lessonId);
-          
-      await handleApiCall(apiCall, uiStore, '更新课程状态失败');
-      
-      // Refresh course progress after update
-      if(currentCourseProgress.value) {
-          await fetchCourseProgress(String(currentCourseProgress.value.id));
-      }
-  }
-
-
   return {
     dashboardData,
     myCourses,
-    currentCourseProgress,
-    currentLesson,
-    mySubmissions,
     loading,
     fetchDashboardData,
     fetchMyCourses,
-    fetchCourseProgress,
-    fetchLessonDetails,
-    toggleLessonCompleted,
   };
 });

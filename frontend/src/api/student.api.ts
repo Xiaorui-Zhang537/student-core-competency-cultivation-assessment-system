@@ -27,14 +27,6 @@ export const studentApi = {
     return api.get(`/students/lessons/${lessonId}`);
   },
 
-  markLessonAsCompleted: (lessonId: string): Promise<void> => {
-    return api.post(`/students/lessons/${lessonId}/complete`);
-  },
-
-  markLessonAsIncomplete: (lessonId: string): Promise<void> => {
-    return api.post(`/students/lessons/${lessonId}/incomplete`);
-  },
-
   // NOTE: backend returns a PageResult<Submission> (not a plain array).
   getMySubmissions: (params?: { page?: number; size?: number; courseId?: string | number }): Promise<{ items: StudentSubmission[]; page: number; size: number; total: number; totalPages: number }> => {
     return api.get('/students/my-submissions', { params });

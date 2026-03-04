@@ -602,6 +602,9 @@
       "reportInfo": {
         "title": "报告信息",
         "generatedAt": "生成时间",
+        "selectedWindow": "当前选择窗口",
+        "actualWindow": "当前报告窗口",
+        "windowMismatch": "当前显示的是历史洞察，不是当前筛选窗口的新结果",
         "aiQ": "AI提问",
         "aiFollow": "AI追问",
         "submit": "作业提交",

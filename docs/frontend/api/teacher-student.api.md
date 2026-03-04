@@ -9,6 +9,7 @@ outline: [2, 3]
 ## 方法签名
 - `getStudentProfile(studentId)` → `GET /teachers/students/{studentId}`
   - 返回 `TeacherStudentProfileDto`
+  - `rank / percentile` 会基于当前教师名下在读学生的平均成绩实时返回；若该学生暂无有效成绩则可能为空
 - `getStudentCourses(studentId)` → `GET /teachers/students/{studentId}/courses`
   - 返回该学生所关联课程的精简列表
 - `getStudentActivity(studentId, days=7, limit=5)` → `GET /teachers/students/{studentId}/activity`
@@ -49,7 +50,7 @@ export interface TeacherStudentProfileDto {
   averageScore?: number | null;
   completionRate?: number | null; // 0-100
   lastAccessTime?: string | number | null;
-  // 预留
+  // 相对当前教师名下在读学生的成绩排名
   rank?: number | null; percentile?: number | null;
 }
 ```

@@ -514,7 +514,7 @@ onMounted(() => {
   box-shadow: none;
 }
 
-:global(.dark) .notification-center { background-color: transparent; }
+html.dark .notification-center { background-color: transparent; }
 
 .notification-header {
   padding: 0; /* 重做容器：不使用原有分割线 */
@@ -523,7 +523,7 @@ onMounted(() => {
   background: transparent;
 }
 
-:global(.dark) .notification-header {
+html.dark .notification-header {
   border: 0;
   box-shadow: none;
   background: transparent;
@@ -553,10 +553,10 @@ onMounted(() => {
 }
 
 /* 暗黑模式全局滚动条（通知中心区域内） */
-::global(.dark) .notification-list::-webkit-scrollbar { width: 10px; }
-::global(.dark) .notification-list::-webkit-scrollbar-track { background: transparent; }
-::global(.dark) .notification-list::-webkit-scrollbar-thumb { background-color: rgb(71 85 105); border-radius: 9999px; }
-::global(.dark) .notification-list::-webkit-scrollbar-thumb:hover { background-color: rgb(100 116 139); }
+html.dark .notification-list::-webkit-scrollbar { width: 10px; }
+html.dark .notification-list::-webkit-scrollbar-track { background: transparent; }
+html.dark .notification-list::-webkit-scrollbar-thumb { background-color: rgb(71 85 105); border-radius: 9999px; }
+html.dark .notification-list::-webkit-scrollbar-thumb:hover { background-color: rgb(100 116 139); }
 
 .loading-state,
 .empty-state {
@@ -575,7 +575,7 @@ onMounted(() => {
   background-color: rgb(239 246 255);
 }
 
-:global(.dark) .notification-unread {
+html.dark .notification-unread {
   background-color: rgb(30 58 138 / 0.3); /* blue-900/30 */
   border-color: rgb(191 219 254 / 0.2);
 }
@@ -588,7 +588,7 @@ onMounted(() => {
   background-color: white;
 }
 
-:global(.dark) .notification-read {
+html.dark .notification-read {
   background-color: rgb(55 65 81 / 0.6); /* gray-700/60 */
   border-color: rgb(255 255 255 / 0.1);
 }
@@ -607,7 +607,7 @@ onMounted(() => {
 html:not(.dark) .notification-center .notification-title { color: rgb(17 24 39); }
 
 /* 提升暗黑模式下的基础可读性（非悬停态） */
-::global(.dark) .notification-center .notification-title { color: rgba(255, 255, 255, 0.98); }
+html.dark .notification-center .notification-title { color: rgba(255, 255, 255, 0.98); }
 
 .notification-content {
   font-size: 0.875rem;
@@ -619,7 +619,7 @@ html:not(.dark) .notification-center .notification-title { color: rgb(17 24 39);
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
-::global(.dark) .notification-center .notification-content { color: rgba(229, 231, 235, 0.96); }
+html.dark .notification-center .notification-content { color: rgba(229, 231, 235, 0.96); }
 
 .notification-meta {
   display: flex;
@@ -632,7 +632,7 @@ html:not(.dark) .notification-center .notification-title { color: rgb(17 24 39);
 .notification-time {
   color: rgb(107 114 128);
 }
-::global(.dark) .notification-center .notification-time { color: rgb(203, 213, 225); }
+html.dark .notification-center .notification-time { color: rgb(203, 213, 225); }
 
 .notification-status.read {
   color: rgb(107 114 128);
@@ -714,48 +714,44 @@ html:not(.dark) .btn-ghost:hover {
 }
 
 /* Dark mode hover/active styles to avoid white flash */
-::global(.dark) .btn-ghost { color: rgb(209 213 219); }
-::global(.dark) .btn-ghost:hover,
-::global(.dark) .btn-ghost:focus,
-::global(.dark) .btn-ghost:active {
+html.dark .btn-ghost { color: rgb(209 213 219); }
+html.dark .btn-ghost:hover,
+html.dark .btn-ghost:focus,
+html.dark .btn-ghost:active {
   color: rgb(255 255 255); /* 与侧栏逻辑一致 */
   background-color: rgb(55 65 81); /* gray-700 */
 }
-::global(.dark) .btn-ghost.text-red-600:hover { color: rgb(255 255 255); }
+html.dark .btn-ghost.text-red-600:hover { color: rgb(255 255 255); }
 
 /* Dark mode hover for list items (scoped) - stronger contrast */
-::global(html.dark) .notification-center .notification-item:hover,
-::global(.dark) .notification-center .notification-item:hover,
-::global(.dark) .notification-center .notification-item.notification-read:hover,
-::global(.dark) .notification-center .notification-item.notification-unread:hover {
+html.dark .notification-center .notification-item:hover,
+html.dark .notification-center .notification-item.notification-read:hover,
+html.dark .notification-center .notification-item.notification-unread:hover {
   /* slate-500 */
   background-color: rgb(100 116 139) !important;
   box-shadow: inset 0 0 0 1px rgba(148, 163, 184, 0.25) !important;
 }
 /* Dark mode hover text highlights (ensure visible) */
-::global(html.dark) .notification-center .notification-item:hover .notification-title,
-::global(.dark) .notification-center .notification-item:hover .notification-title { color: rgba(255, 255, 255, 0.98) !important; }
-::global(html.dark) .notification-center .notification-item:hover .notification-content,
-::global(.dark) .notification-center .notification-item:hover .notification-content { color: rgba(229, 231, 235, 0.95) !important; }
-::global(html.dark) .notification-center .notification-item:hover .notification-time,
-::global(.dark) .notification-center .notification-item:hover .notification-time { color: rgb(203, 213, 225) !important; }
+html.dark .notification-center .notification-item:hover .notification-title { color: rgba(255, 255, 255, 0.98) !important; }
+html.dark .notification-center .notification-item:hover .notification-content { color: rgba(229, 231, 235, 0.95) !important; }
+html.dark .notification-center .notification-item:hover .notification-time { color: rgb(203, 213, 225) !important; }
 /* Light mode hover for list items */
 html:not(.dark) .notification-center .notification-item:hover { background-color: rgb(243 244 246) !important; }
 /* 悬停时同步提亮文字，贴合侧栏 hover 文本为白色的逻辑 */
-::global(.dark) .notification-center .notification-item:hover .notification-title { color: rgba(255, 255, 255, 0.98); }
-::global(.dark) .notification-center .notification-item:hover .notification-content { color: rgba(229, 231, 235, 0.95); }
-::global(.dark) .notification-center .notification-item:hover .notification-time { color: rgb(203, 213, 225); }
-::global(.dark) .notification-center .notification-item:active { background-color: rgb(71 85 105); }
+html.dark .notification-center .notification-item:hover .notification-title { color: rgba(255, 255, 255, 0.98); }
+html.dark .notification-center .notification-item:hover .notification-content { color: rgba(229, 231, 235, 0.95); }
+html.dark .notification-center .notification-item:hover .notification-time { color: rgb(203, 213, 225); }
+html.dark .notification-center .notification-item:active { background-color: rgb(71 85 105); }
 
 /* 针对 system 与 assignment 类型在暗黑模式下提升标题可读性 */
-::global(.dark) .notification-center .notification-item.type-system .notification-title,
-::global(.dark) .notification-center .notification-item.type-assignment .notification-title {
+html.dark .notification-center .notification-item.type-system .notification-title,
+html.dark .notification-center .notification-item.type-assignment .notification-title {
   color: rgba(255, 255, 255, 0.98);
   font-weight: 600;
 }
 
 /* 统一加强暗黑模式标题（所有类型，非悬停态） */
-::global(.dark) .notification-center .notification-item .notification-title {
+html.dark .notification-center .notification-item .notification-title {
   color: rgb(255 255 255);
   font-weight: 600;
 }
@@ -784,11 +780,11 @@ html:not(.dark) .notification-center .notification-item:hover { background-color
   border-radius: 0.5rem;
   padding: 0 0.5rem;
 }
-::global(.dark) .filter-box {
+html.dark .filter-box {
   background-color: rgb(15 23 42);
   border-color: rgb(71 85 105);
 }
-:global(.dark) .filter-box select {
+html.dark .filter-box select {
   background-color: transparent !important;
   color: rgb(229 231 235);
 }

@@ -18,7 +18,6 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import com.noncore.assessment.dto.request.BatchCourseStatusRequest;
 
-import java.util.List;
 import com.noncore.assessment.entity.User;
 
 @RestController
@@ -128,37 +127,6 @@ public class CourseController extends BaseController {
     public ResponseEntity<ApiResponse<Void>> unpublishCourse(@PathVariable Long id) {
         courseService.unpublishCourse(id, getCurrentUserId());
         return ResponseEntity.ok(ApiResponse.success());
-    }
-
-    @GetMapping("/popular")
-    @Operation(summary = "获取热门课程", description = "获取报名人数最多的课程")
-    public ResponseEntity<ApiResponse<List<Course>>> getPopularCourses(
-            @Parameter(description = "限制数量", example = "10") @RequestParam(defaultValue = "10") Integer limit) {
-        List<Course> courses = courseDiscoveryService.getPopularCourses(limit);
-        return ResponseEntity.ok(ApiResponse.success(courses));
-    }
-
-    @GetMapping("/recommended")
-    @Operation(summary = "获取推荐课程", description = "获取评分最高的课程")
-    public ResponseEntity<ApiResponse<List<Course>>> getRecommendedCourses(
-            @Parameter(description = "限制数量", example = "10") @RequestParam(defaultValue = "10") Integer limit) {
-        List<Course> courses = courseDiscoveryService.getRecommendedCourses(limit);
-        return ResponseEntity.ok(ApiResponse.success(courses));
-    }
-
-    @GetMapping("/category/{category}")
-    @Operation(summary = "分类课程", description = "根据分类获取课程列表")
-    public ResponseEntity<ApiResponse<List<Course>>> getCoursesByCategory(@PathVariable String category) {
-        List<Course> courses = courseDiscoveryService.getCoursesByCategory(category);
-        return ResponseEntity.ok(ApiResponse.success(courses));
-    }
-
-    @GetMapping("/search")
-    @Operation(summary = "搜索课程", description = "根据关键词搜索课程")
-    public ResponseEntity<ApiResponse<List<Course>>> searchCourses(
-            @Parameter(description = "搜索关键词", required = true) @RequestParam String keyword) {
-        List<Course> courses = courseDiscoveryService.searchCourses(keyword);
-        return ResponseEntity.ok(ApiResponse.success(courses));
     }
 
     @GetMapping("/statistics")

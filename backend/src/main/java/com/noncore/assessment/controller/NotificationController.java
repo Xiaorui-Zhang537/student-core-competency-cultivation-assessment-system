@@ -150,34 +150,6 @@ public class NotificationController extends BaseController {
     }
 
     /**
-     * 获取与某人的会话（分页）
-     */
-    @GetMapping("/conversation")
-    @Operation(summary = "获取会话", description = "获取当前用户与指定对端的会话消息")
-    @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<ApiResponse<PageResult<Notification>>> getConversation(
-            @RequestParam("peerId") Long peerId,
-            @RequestParam(value = "page", defaultValue = "1") Integer page,
-            @RequestParam(value = "size", defaultValue = "20") Integer size,
-            @RequestParam(value = "courseId", required = false) Long courseId
-    ) {
-        PageResult<Notification> result = notificationService.getConversation(getCurrentUserId(), peerId, page, size, courseId);
-        return ResponseEntity.ok(ApiResponse.success(result));
-    }
-
-    /**
-     * 将与某人的会话全部标记为已读
-     */
-    @PostMapping("/conversation/read")
-    @Operation(summary = "标记会话已读")
-    @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<ApiResponse<Map<String, Object>>> readConversation(
-            @RequestParam("peerId") Long peerId,
-            @RequestParam(value = "courseId", required = false) Long courseId) {
-        int count = notificationService.markConversationAsRead(getCurrentUserId(), peerId, courseId);
-        return ResponseEntity.ok(ApiResponse.success(Map.of("marked", count)));
-    }
-    /**
      * 发送通知（教师专用）
      */
     @PostMapping("/send")
@@ -270,22 +242,4 @@ public class NotificationController extends BaseController {
         return ResponseEntity.ok(ApiResponse.success(result));
     }
 
-    /**
-     * 学生/教师互发聊天消息（课程上下文可选）
-     */
-    @PostMapping("/message")
-    @Operation(summary = "发送聊天消息", description = "学生或教师均可发送消息；如提供 relatedType=course 且 relatedId，则要求双方均为该课程参与者")
-    @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<ApiResponse<Notification>> sendMessage(@RequestBody NotificationRequest request) {
-        Long senderId = getCurrentUserId();
-        Notification n = notificationService.sendMessage(
-            senderId,
-            request.getRecipientId(),
-            request.getContent(),
-            request.getRelatedType(),
-            request.getRelatedId(),
-            request.getAttachmentFileIds()
-        );
-        return ResponseEntity.ok(ApiResponse.success(n));
-    }
-} 
+}

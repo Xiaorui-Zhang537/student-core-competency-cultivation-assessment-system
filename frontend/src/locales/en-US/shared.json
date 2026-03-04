@@ -602,6 +602,9 @@
       "reportInfo": {
         "title": "Report info",
         "generatedAt": "Generated at",
+        "selectedWindow": "Selected window",
+        "actualWindow": "Report window",
+        "windowMismatch": "You are viewing a historical insight, not a fresh result for the current filter window",
         "aiQ": "AI questions",
         "aiFollow": "AI follow-ups",
         "submit": "Assignment submits",

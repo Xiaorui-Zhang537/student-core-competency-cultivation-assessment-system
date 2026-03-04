@@ -96,6 +96,38 @@ public class TeacherStudentServiceImpl implements TeacherStudentService {
             }
         }
 
+        Integer rank = null;
+        Double percentile = null;
+        if (avg != null) {
+            java.util.Set<Long> peerStudentIds = collectActiveStudentIdsByTeacher(teacherId);
+            peerStudentIds.add(studentId);
+
+            List<BigDecimal> peerAverages = new java.util.ArrayList<>();
+            for (Long peerStudentId : peerStudentIds) {
+                if (peerStudentId == null) {
+                    continue;
+                }
+                BigDecimal peerAverage = gradeMapper.calculateAverageScore(peerStudentId);
+                if (peerAverage != null) {
+                    peerAverages.add(peerAverage);
+                }
+            }
+
+            if (!peerAverages.isEmpty()) {
+                int higherCount = 0;
+                for (BigDecimal peerAverage : peerAverages) {
+                    if (peerAverage.compareTo(avg) > 0) {
+                        higherCount++;
+                    }
+                }
+                rank = higherCount + 1;
+                int totalRanked = peerAverages.size();
+                percentile = totalRanked <= 1
+                        ? 100.0
+                        : round2(((totalRanked - rank) * 100.0) / (totalRanked - 1));
+            }
+        }
+
         String displayName = user.getNickname() != null ? user.getNickname() :
                 ((user.getLastName() != null || user.getFirstName() != null)
                         ? ((user.getLastName() == null ? "" : user.getLastName()) + (user.getFirstName() == null ? "" : user.getFirstName()))
@@ -129,8 +161,8 @@ public class TeacherStudentServiceImpl implements TeacherStudentService {
                 .averageScore(avg != null ? avg.doubleValue() : null)
                 .completionRate(completionRate)
                 .lastAccessTime(maxAccess == null ? null : java.util.Date.from(maxAccess.atZone(java.time.ZoneId.systemDefault()).toInstant()))
-                .rank(null)
-                .percentile(null)
+                .rank(rank)
+                .percentile(percentile)
                 .build();
     }
 
@@ -656,6 +688,29 @@ public class TeacherStudentServiceImpl implements TeacherStudentService {
         if (v instanceof Number) return ((Number) v).longValue();
         try { return Long.parseLong(String.valueOf(v)); } catch (Exception e) { return null; }
     }
+
+    private java.util.Set<Long> collectActiveStudentIdsByTeacher(Long teacherId) {
+        java.util.Set<Long> ids = new java.util.LinkedHashSet<>();
+        List<Course> teacherCourses = courseMapper.selectCoursesByTeacherId(teacherId);
+        if (teacherCourses == null || teacherCourses.isEmpty()) {
+            return ids;
+        }
+        for (Course course : teacherCourses) {
+            if (course == null || course.getId() == null) {
+                continue;
+            }
+            List<Long> studentIds = enrollmentMapper.findActiveStudentIdsByCourse(course.getId());
+            if (studentIds != null) {
+                ids.addAll(studentIds);
+            }
+        }
+        return ids;
+    }
+
+    private static double round2(double value) {
+        return Math.round(value * 100.0) / 100.0;
+    }
+
     private static String asString(Object v) { return v == null ? null : String.valueOf(v); }
     private static java.util.Date asDate(Object v) {
         if (v == null) return null;

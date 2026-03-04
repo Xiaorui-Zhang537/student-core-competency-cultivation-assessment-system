@@ -6,7 +6,7 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, onUnmounted, ref, watch, nextTick } from 'vue'
+import { onMounted, onUnmounted, ref, watch, nextTick, getCurrentInstance } from 'vue'
 import * as echarts from 'echarts'
 import { resolveEChartsTheme, glassTooltipCss, resolveThemePalette } from '@/charts/echartsTheme'
 import { getEChartsThemedTokens } from '@/utils/theme'
@@ -40,6 +40,11 @@ let inst: echarts.ECharts | null = null
 let darkObserver: { disconnect: () => void } | null = null
 let lastIsDark: boolean | null = null
 let reRenderScheduled = false
+const tooltipScopeClass = `radar-chart-tooltip-${getCurrentInstance()?.uid ?? 'local'}`
+
+function tooltipElementsForCurrentChart(): HTMLElement[] {
+  return Array.from(document.querySelectorAll(`.echarts-glass-tooltip.${tooltipScopeClass}`)) as HTMLElement[]
+}
 
 const buildOption = () => {
   const theme = props.theme === 'auto'
@@ -59,7 +64,7 @@ const buildOption = () => {
       textStyle: { color: 'var(--color-base-content)' },
       // 默认隐藏，避免初始化阶段 body 左上角出现空白容器
       extraCssText: glassTooltipCss() + ';visibility:hidden;',
-      className: 'echarts-glass-tooltip',
+      className: `echarts-glass-tooltip ${tooltipScopeClass}`,
       renderMode: 'html',
       enterable: false,
       confine: true,
@@ -137,14 +142,14 @@ const render = async () => {
       try { inst?.dispatchAction({ type: 'hideTip' } as any) } catch {}
     })
     // 控制 tooltip DOM 的可见性（默认隐藏，显示时再显式开启）
-    const tooltipEls = Array.from(document.querySelectorAll('.echarts-tooltip, .echarts-glass-tooltip')) as HTMLElement[]
+    const tooltipEls = tooltipElementsForCurrentChart()
     tooltipEls.forEach(el => { el.style.visibility = 'hidden' })
     inst.on('showTip', () => {
-      const els = Array.from(document.querySelectorAll('.echarts-tooltip, .echarts-glass-tooltip')) as HTMLElement[]
+      const els = tooltipElementsForCurrentChart()
       els.forEach(el => { el.style.visibility = 'visible' })
     })
     inst.on('hideTip', () => {
-      const els = Array.from(document.querySelectorAll('.echarts-tooltip, .echarts-glass-tooltip')) as HTMLElement[]
+      const els = tooltipElementsForCurrentChart()
       els.forEach(el => { el.style.visibility = 'hidden' })
     })
   } catch {}
@@ -215,4 +220,3 @@ defineExpose({
 /* 确保 tooltip 元素不占据布局空间 */
 :deep(.echarts-glass-tooltip) { position: fixed; left: 0; top: 0; }
 </style>
-

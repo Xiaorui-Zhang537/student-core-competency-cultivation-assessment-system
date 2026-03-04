@@ -148,35 +148,6 @@
         ORDER BY e.enrolled_at DESC
     </select>
 
-    <!-- 查询热门课程 -->
-    <select id="selectPopularCourses" parameterType="int" resultMap="CourseResultMap">
-        SELECT <include refid="Course_With_Teacher_Column_List"/>
-        FROM courses c
-        LEFT JOIN users u ON c.teacher_id = u.id
-        WHERE c.deleted = false AND c.status = 'published'
-        ORDER BY c.enrollment_count DESC, c.created_at DESC
-        LIMIT #{limit}
-    </select>
-
-    <!-- 查询推荐课程 -->
-    <select id="selectRecommendedCourses" parameterType="int" resultMap="CourseResultMap">
-        SELECT <include refid="Course_With_Teacher_Column_List"/>
-        FROM courses c
-        LEFT JOIN users u ON c.teacher_id = u.id
-        WHERE c.deleted = false AND c.status = 'published'
-        ORDER BY c.rating DESC, c.created_at DESC
-        LIMIT #{limit}
-    </select>
-
-    <!-- 根据分类查询课程 -->
-    <select id="selectCoursesByCategory" parameterType="string" resultMap="CourseResultMap">
-        SELECT <include refid="Course_With_Teacher_Column_List"/>
-        FROM courses c
-        LEFT JOIN users u ON c.teacher_id = u.id
-        WHERE c.category = #{category} AND c.deleted = false AND c.status = 'published'
-        ORDER BY c.created_at DESC
-    </select>
-
     <!-- 更新课程报名人数 -->
     <update id="updateEnrollmentCount">
         UPDATE courses SET
@@ -232,38 +203,6 @@
             #{id}
         </foreach>
     </update>
-
-    <!-- 查询即将开始的课程 -->
-    <select id="selectUpcomingCourses" parameterType="int" resultMap="CourseResultMap">
-        SELECT <include refid="Course_With_Teacher_Column_List"/>
-        FROM courses c
-        LEFT JOIN users u ON c.teacher_id = u.id
-        WHERE c.deleted = false AND c.status = 'published'
-        AND c.start_date BETWEEN CURDATE() AND DATE_ADD(CURDATE(), INTERVAL #{days} DAY)
-        ORDER BY c.start_date
-    </select>
-
-    <!-- 查询即将结束的课程 -->
-    <select id="selectEndingCourses" parameterType="int" resultMap="CourseResultMap">
-        SELECT <include refid="Course_With_Teacher_Column_List"/>
-        FROM courses c
-        LEFT JOIN users u ON c.teacher_id = u.id
-        WHERE c.deleted = false AND c.status = 'published'
-        AND c.end_date BETWEEN CURDATE() AND DATE_ADD(CURDATE(), INTERVAL #{days} DAY)
-        ORDER BY c.end_date
-    </select>
-
-    <!-- 根据关键词搜索课程 -->
-    <select id="searchCourses" parameterType="string" resultMap="CourseResultMap">
-        SELECT <include refid="Course_With_Teacher_Column_List"/>
-        FROM courses c
-        LEFT JOIN users u ON c.teacher_id = u.id
-        WHERE c.deleted = false AND c.status = 'published'
-        AND (c.title LIKE CONCAT('%', #{keyword}, '%')
-        OR c.description LIKE CONCAT('%', #{keyword}, '%')
-        OR c.category LIKE CONCAT('%', #{keyword}, '%'))
-        ORDER BY c.created_at DESC, c.rating DESC
-    </select>
 
     <!-- 获取课程统计信息 -->
     <select id="getCourseStatistics" resultType="map">

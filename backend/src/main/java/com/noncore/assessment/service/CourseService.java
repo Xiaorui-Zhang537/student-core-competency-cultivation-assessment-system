@@ -79,15 +79,6 @@ public interface CourseService {
     void archiveCourse(Long courseId, Long teacherId);
 
     /**
-     * 更新课程评分
-     *
-     * @param courseId 课程ID
-     * @param newRating 新评分
-     * @param newReviewCount 新评价数量
-     */
-    void updateCourseRating(Long courseId, Double newRating, Integer newReviewCount);
-
-    /**
      * 获取课程统计信息
      *
      * @param teacherId 教师ID（可选）

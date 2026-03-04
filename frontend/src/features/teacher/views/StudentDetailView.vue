@@ -199,7 +199,7 @@
           </div>
 
           <!-- 行为洞察（阶段二：AI解释与建议，不算分；学生7天仅一次，教师可重跑） -->
-          <div ref="reportInsightWrap">
+          <div ref="reportInsightWrap" class="perf-section perf-section--medium">
             <behavior-insight-section
               v-if="studentId"
               :student-id="String(studentId)"
@@ -212,7 +212,7 @@
           </div>
 
           <!-- 行为证据（阶段一：纯代码聚合，不调用AI，不算分） -->
-          <div ref="reportEvidenceWrap">
+          <div ref="reportEvidenceWrap" class="perf-section perf-section--medium">
           <behavior-evidence-section
             v-if="studentId"
             :student-id="String(studentId)"
@@ -226,7 +226,7 @@
           <!-- 风险预警/行动建议：改为完全从“洞察（AI）”读取（v2 结构化输出），不再展示规则容器 -->
           
           <!-- 成绩记录（重做为与“学生管理”一致的表格风格） -->
-          <div ref="reportGradesWrap">
+          <div ref="reportGradesWrap" class="perf-section perf-section--large">
           <card padding="md" tint="secondary">
             <!-- 统计信息放在标题行右侧并右对齐 -->
             <div class="flex items-center justify-between gap-3 mb-4">
@@ -439,6 +439,7 @@ const behaviorRangeOptions = computed(() => ([
 ]))
 
 const studentCourses = ref<any[]>([])
+const initialDataReady = ref(false)
 
 // 确保 studentId 在首帧渲染前尽量就绪，避免子组件首帧以 undefined 发请求（导致“studentId 必填”）
 const resolvedStudentId = computed(() => {
@@ -453,9 +454,9 @@ watch(
   () => [studentId.value, courseContextId.value],
   async ([sid]) => {
     if (!sid) return
+    if (!initialDataReady.value) return
     await Promise.allSettled([fetchAbilityRadar(), fetchActivity()])
-  },
-  { immediate: true }
+  }
 )
 
 async function fetchPage(page: number) {
@@ -1207,6 +1208,10 @@ function openRecentEventLink(link: any) {
 
 onMounted(async () => {
     const sid = studentId.value || resolvedStudentId.value
+    if (!sid) {
+        initialDataReady.value = true
+        return
+    }
     if (sid) {
         try {
           if (isAdminView.value) {
@@ -1294,6 +1299,23 @@ onMounted(async () => {
           (async () => { try { await fetchPage(1) } catch {} })()
         ]
         await Promise.allSettled(tasks)
+        initialDataReady.value = true
     }
 });
 </script>
+
+<style scoped>
+.perf-section {
+  content-visibility: auto;
+  contain: layout style paint;
+  contain-intrinsic-size: 560px;
+}
+
+.perf-section--medium {
+  contain-intrinsic-size: 760px;
+}
+
+.perf-section--large {
+  contain-intrinsic-size: 1200px;
+}
+</style>

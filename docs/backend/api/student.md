@@ -247,7 +247,8 @@ curl -H "Authorization: Bearer $TOKEN" \
 
 说明：
 
-- `completionRate`：当前实现返回 `0-100` 的百分比数值。
+- `completionRate`：返回 `0-100` 的百分比数值；按当前 `range` 窗口内“已发布且与时间窗有交集”的相关作业计算，分子为截至窗口结束前已提交的作业数。
+- `studyHours / activeDays`：按当前 `range` 窗口内的 `lesson_progress.last_studied_at` 日聚合数据实时计算，不再使用估算占位值。
 - `radar.invest`：优先使用学习态度快照，缺失时回退到完成率。
 - `radar.quality`：优先使用平均成绩，缺失时回退到能力快照均值。
 - `radar.mastery / stability / growth`：分别优先映射学习能力、道德认知、学习方法快照。

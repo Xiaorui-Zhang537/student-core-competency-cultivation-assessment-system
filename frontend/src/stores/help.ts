@@ -58,12 +58,6 @@ export const useHelpStore = defineStore('help', {
       }
       return this.ticketDetail
     },
-    async updateTicket(id: number, data: Partial<HelpTicketCreateRequest>) {
-      const t = await helpApi.updateTicket(id, data)
-      const idx = this.tickets.findIndex(x => x.id === id)
-      if (idx >= 0) this.tickets[idx] = t
-      return t
-    },
     async deleteTicket(id: number) {
       await helpApi.deleteTicket(id)
       this.tickets = this.tickets.filter(x => x.id !== id)

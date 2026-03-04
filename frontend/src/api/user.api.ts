@@ -30,9 +30,5 @@ export const userApi = {
   resendVerification: (email: string, lang = 'zh-CN'): Promise<void> => {
     // backend requires email; keep helper signature explicit to avoid 400.
     return api.post('/auth/resend-verification', null, { params: { email, lang } });
-  },
-  // Backward-compatible wrapper for old call sites.
-  resendVerificationCompat: (): Promise<void> => {
-    return api.post('/auth/resend-verification');
-  },
+  }
 };

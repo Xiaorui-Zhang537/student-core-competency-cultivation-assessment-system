@@ -198,7 +198,7 @@ const initChart = () => {
       textStyle: { color: 'var(--color-base-content)' },
       // 默认隐藏，由 showTip/hideTip 控制可见性（避免残留）
       extraCssText: glassTooltipCss() + ';visibility:hidden;pointer-events:none;',
-      className: 'echarts-glass-tooltip',
+      className: 'echarts-glass-tooltip teacher-dashboard-distribution-tooltip',
       renderMode: 'html',
       enterable: false,
       // appendToBody 时不再 confine，避免浅色模式下定位异常导致“看似不显示”
@@ -240,8 +240,8 @@ const initChart = () => {
     }]
   }, { notMerge: true, lazyUpdate: false })
 
-  bindTooltipVisibility(chart)
-  bindHideTipOnGlobalOut(chart)
+  bindTooltipVisibility(chart, 'teacher-dashboard-distribution-tooltip')
+  bindHideTipOnGlobalOut(chart, 'teacher-dashboard-distribution-tooltip')
 }
 
 function scheduleReinit() {

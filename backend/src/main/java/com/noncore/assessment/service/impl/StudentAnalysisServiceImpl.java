@@ -10,6 +10,7 @@ import com.noncore.assessment.mapper.AssignmentMapper;
 import com.noncore.assessment.mapper.CourseMapper;
 import com.noncore.assessment.entity.Assignment;
 import com.noncore.assessment.entity.Course;
+import com.noncore.assessment.entity.Submission;
 import com.noncore.assessment.service.StudentAnalysisService;
 import org.springframework.stereotype.Service;
 
@@ -49,40 +50,21 @@ public class StudentAnalysisServiceImpl implements StudentAnalysisService {
     @Override
     public StudentAnalysisResponse getStudentAnalysis(Long studentId, String range) {
         String safeRange = (range == null || range.isBlank()) ? "30d" : range;
+        List<Map<String, Object>> studyHeat = loadStudyHeatmap(studentId, safeRange);
+        LocalDateTime[] rangeTimes = toRange(safeRange);
+        List<Assignment> allAssignments = loadStudentAssignments(studentId);
+        List<Submission> mySubs = loadStudentSubmissions(studentId);
 
         // KPI
         BigDecimal avgScoreBD = gradeMapper.calculateAverageScore(studentId);
         double avgScore = avgScoreBD != null ? avgScoreBD.doubleValue() : 0.0;
 
-        // 完成率：用“学生已提交作业数 / 学生关联作业总数”粗略估算
-        double completionRate = 0.0;
-        try {
-            // 已提交（去重到作业级别）
-            java.util.List<java.util.Map<String, Object>> submitted = submissionMapper.selectStudentGradesWithPagination(studentId, 0, Integer.MAX_VALUE);
-            java.util.Set<Object> submittedAssignmentIds = new java.util.HashSet<>();
-            for (var row : submitted) {
-                Object aid = row.get("assignment_id");
-                if (aid != null) submittedAssignmentIds.add(aid);
-            }
-            int submittedCount = submittedAssignmentIds.size();
-            // 总作业：根据学生-课程关联推导（此处用成绩导出接口的轻量数据作为兜底）
-            java.util.List<java.util.Map<String, Object>> allGradesExport = gradeMapper.selectGradesForExport(null, null, studentId);
-            java.util.Set<Object> allAssignmentIds = new java.util.HashSet<>();
-            for (var row : allGradesExport) {
-                Object aid = row.get("assignment_id");
-                if (aid != null) allAssignmentIds.add(aid);
-            }
-            int totalRelated = Math.max(allAssignmentIds.size(), submittedCount);
-            if (totalRelated > 0) {
-                completionRate = Math.min(100.0, (submittedCount * 100.0) / totalRelated);
-            }
-        } catch (Exception ignore) {}
+        double completionRate = calculateCompletionRate(allAssignments, mySubs, rangeTimes[0], rangeTimes[1]);
 
-        // 学习时长：按区间小时
-        long studyMinutes = toRangeStudyMinutes(studentId, safeRange);
+        // 学习时长：按区间热力图聚合
+        long studyMinutes = sumStudyMinutes(studyHeat);
         long studyHours = Math.max(0, Math.round(studyMinutes / 60.0));
-
-        long activeDays = estimateActiveDays(safeRange, studyMinutes);
+        long activeDays = countActiveDays(studyHeat);
 
         StudentAnalysisResponse.Kpi kpi = StudentAnalysisResponse.Kpi.builder()
                 .avgScore(avgScore)
@@ -95,7 +77,6 @@ public class StudentAnalysisServiceImpl implements StudentAnalysisService {
 
         // 趋势：成绩趋势（近区间）使用 GradeMapper 已有方法
         List<StudentAnalysisResponse.Point> scoreTrend = new ArrayList<>();
-        LocalDateTime[] rangeTimes = toRange(safeRange);
         List<Map<String, Object>> scoreList = gradeMapper.selectDailyAvgScore(studentId, rangeTimes[0], rangeTimes[1]);
         for (Map<String, Object> row : scoreList) {
             String x = Objects.toString(row.getOrDefault("date", row.getOrDefault("x", "")));
@@ -109,28 +90,13 @@ public class StudentAnalysisServiceImpl implements StudentAnalysisService {
             java.time.LocalDate startD = rangeTimes[0].toLocalDate();
             java.time.LocalDate endD = rangeTimes[1].toLocalDate();
 
-            // 学生所有课程及其作业（内存过滤）
-            List<Course> myCourses = courseMapper.selectCoursesByStudentId(studentId);
-            List<Assignment> allAssignments = new ArrayList<>();
-            for (Course c : myCourses) {
-                if (c == null || c.getId() == null) continue;
-                List<Assignment> list = assignmentMapper.selectAssignmentsByCourseId(c.getId());
-                if (list != null) allAssignments.addAll(list);
-            }
-            // 学生所有提交（用于当天提交计数）
-            List<com.noncore.assessment.entity.Submission> mySubs = submissionMapper.selectByStudentId(studentId);
-
             for (java.time.LocalDate d = startD; !d.isAfter(endD); d = d.plusDays(1)) {
                 // 分母 N：当天需要完成的作业（状态published 且 截止 >= d）
                 int need = 0;
                 for (Assignment a : allAssignments) {
-                    if (a == null) continue;
-                    String st = a.getStatus() == null ? "" : a.getStatus().toLowerCase();
-                    java.time.LocalDate due = null;
-                    try { if (a.getDueDate() != null) due = a.getDueDate().toLocalDate(); } catch (Exception ignore) {}
-                    boolean published = "published".equals(st);
-                    boolean notExpired = (due == null) || !due.isBefore(d);
-                    if (published && notExpired) need++;
+                    if (isAssignmentActiveOnDay(a, d)) {
+                        need++;
+                    }
                 }
                 // 分子 M：当天提交的作业数量（去重 assignmentId）
                 int done = 0;
@@ -153,11 +119,9 @@ public class StudentAnalysisServiceImpl implements StudentAnalysisService {
         // 学习时长趋势：复用热力图数据（天粒度的分钟数→小时）
         List<StudentAnalysisResponse.Point> hoursTrend = new ArrayList<>();
         try {
-            int days = switch (safeRange) { case "7d" -> 7; case "term" -> 120; default -> 30; };
-            List<Map<String, Object>> heat = lessonProgressMapper.getStudyHeatmapData(studentId, days);
-            for (Map<String, Object> r : heat) {
+            for (Map<String, Object> r : studyHeat) {
                 String x = Objects.toString(r.getOrDefault("date", r.getOrDefault("day", r.getOrDefault("x", ""))));
-                Double minutes = toDouble(r.get("minutes"), r.get("value"), r.get("y"));
+                Double minutes = toDouble(r.get("studyTime"), r.get("minutes"), r.get("value"), r.get("y"));
                 double hours = minutes == null ? 0.0 : minutes / 60.0;
                 hoursTrend.add(StudentAnalysisResponse.Point.builder().x(x).y(hours).build());
             }
@@ -204,17 +168,152 @@ public class StudentAnalysisServiceImpl implements StudentAnalysisService {
         return new LocalDateTime[]{start, end};
     }
 
-    private long toRangeStudyMinutes(Long studentId, String range) {
-        // 目前 LessonProgressMapper 只提供 total/weekly，暂用 total 在区间内估算（简化）
-        Integer minutes = lessonProgressMapper.calculateTotalStudyTime(studentId, null);
-        return minutes == null ? 0L : minutes.longValue();
+    private List<Assignment> loadStudentAssignments(Long studentId) {
+        List<Assignment> allAssignments = new ArrayList<>();
+        try {
+            List<Course> myCourses = courseMapper.selectCoursesByStudentId(studentId);
+            if (myCourses == null || myCourses.isEmpty()) {
+                return allAssignments;
+            }
+            for (Course c : myCourses) {
+                if (c == null || c.getId() == null) continue;
+                List<Assignment> list = assignmentMapper.selectAssignmentsByCourseId(c.getId());
+                if (list != null) {
+                    allAssignments.addAll(list);
+                }
+            }
+        } catch (Exception ignore) {}
+        return allAssignments;
     }
 
-    private long estimateActiveDays(String range, long studyMinutes) {
-        // 占位估算：有学习记录则按范围天数的三分之一
-        int days = switch (range) { case "7d" -> 7; case "term" -> 120; default -> 30; };
-        if (studyMinutes <= 0) return 0;
-        return Math.max(1, days / 3);
+    private List<Submission> loadStudentSubmissions(Long studentId) {
+        try {
+            List<Submission> submissions = submissionMapper.selectByStudentId(studentId);
+            return submissions == null ? List.of() : submissions;
+        } catch (Exception ignore) {
+            return List.of();
+        }
+    }
+
+    private double calculateCompletionRate(List<Assignment> assignments,
+                                           List<Submission> submissions,
+                                           LocalDateTime start,
+                                           LocalDateTime end) {
+        if (assignments == null || assignments.isEmpty()) {
+            return 0.0;
+        }
+
+        java.util.Set<Long> submittedAssignmentIds = new java.util.HashSet<>();
+        if (submissions != null) {
+            for (Submission submission : submissions) {
+                if (submission == null || submission.getAssignmentId() == null) {
+                    continue;
+                }
+                if (submission.getSubmittedAt() != null && submission.getSubmittedAt().isAfter(end)) {
+                    continue;
+                }
+                submittedAssignmentIds.add(submission.getAssignmentId());
+            }
+        }
+
+        int totalRelevant = 0;
+        int completed = 0;
+        for (Assignment assignment : assignments) {
+            if (!isAssignmentRelevantInRange(assignment, start, end)) {
+                continue;
+            }
+            totalRelevant++;
+            if (assignment.getId() != null && submittedAssignmentIds.contains(assignment.getId())) {
+                completed++;
+            }
+        }
+
+        if (totalRelevant <= 0) {
+            return 0.0;
+        }
+        return Math.min(100.0, (completed * 100.0) / totalRelevant);
+    }
+
+    private int getRangeDays(String range) {
+        return switch (range) {
+            case "7d" -> 7;
+            case "term" -> 120;
+            default -> 30;
+        };
+    }
+
+    private List<Map<String, Object>> loadStudyHeatmap(Long studentId, String range) {
+        try {
+            List<Map<String, Object>> rows = lessonProgressMapper.getStudyHeatmapData(studentId, getRangeDays(range));
+            return rows == null ? List.of() : rows;
+        } catch (Exception ignore) {
+            return List.of();
+        }
+    }
+
+    private long sumStudyMinutes(List<Map<String, Object>> heatRows) {
+        long total = 0L;
+        if (heatRows == null || heatRows.isEmpty()) {
+            return total;
+        }
+        for (Map<String, Object> row : heatRows) {
+            Double minutes = toDouble(row.get("studyTime"), row.get("minutes"), row.get("value"), row.get("y"));
+            if (minutes == null || minutes <= 0) {
+                continue;
+            }
+            total += Math.round(minutes);
+        }
+        return total;
+    }
+
+    private long countActiveDays(List<Map<String, Object>> heatRows) {
+        long total = 0L;
+        if (heatRows == null || heatRows.isEmpty()) {
+            return total;
+        }
+        for (Map<String, Object> row : heatRows) {
+            Double minutes = toDouble(row.get("studyTime"), row.get("minutes"), row.get("value"), row.get("y"));
+            if (minutes != null && minutes > 0) {
+                total++;
+            }
+        }
+        return total;
+    }
+
+    private boolean isAssignmentRelevantInRange(Assignment assignment, LocalDateTime start, LocalDateTime end) {
+        if (assignment == null) {
+            return false;
+        }
+        if (Boolean.TRUE.equals(assignment.getDeleted())) {
+            return false;
+        }
+        String status = assignment.getStatus() == null ? "" : assignment.getStatus().toLowerCase();
+        if (!"published".equals(status)) {
+            return false;
+        }
+        boolean wasVisibleByRangeEnd = assignment.getCreatedAt() == null || !assignment.getCreatedAt().isAfter(end);
+        boolean notExpiredBeforeRange = assignment.getDueDate() == null || !assignment.getDueDate().isBefore(start);
+        return wasVisibleByRangeEnd && notExpiredBeforeRange;
+    }
+
+    private boolean isAssignmentActiveOnDay(Assignment assignment, java.time.LocalDate day) {
+        if (assignment == null) {
+            return false;
+        }
+        if (Boolean.TRUE.equals(assignment.getDeleted())) {
+            return false;
+        }
+        String status = assignment.getStatus() == null ? "" : assignment.getStatus().toLowerCase();
+        if (!"published".equals(status)) {
+            return false;
+        }
+        java.time.LocalDate created = null;
+        java.time.LocalDate due = null;
+        try { if (assignment.getCreatedAt() != null) created = assignment.getCreatedAt().toLocalDate(); } catch (Exception ignore) {}
+        try { if (assignment.getDueDate() != null) due = assignment.getDueDate().toLocalDate(); } catch (Exception ignore) {}
+        boolean alreadyVisible = created == null || !created.isAfter(day);
+        boolean notExpired = due == null || !due.isBefore(day);
+        return alreadyVisible && notExpired;
     }
 
     private Double toDouble(Object... candidates) {
@@ -346,4 +445,3 @@ public class StudentAnalysisServiceImpl implements StudentAnalysisService {
         return Math.round(value * 100.0) / 100.0;
     }
 }
-

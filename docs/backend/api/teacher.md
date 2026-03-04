@@ -173,6 +173,9 @@ curl -L -H "Authorization: Bearer $TOKEN" \
 
 ### GET `/api/teachers/students/{studentId}` 获取学生概况
 
+说明：
+- `rank / percentile` 现在会基于当前教师名下在读学生的平均成绩实时计算；若该学生暂无有效成绩，则这两个字段仍可能为空。
+
 curl：
 
 ```bash
