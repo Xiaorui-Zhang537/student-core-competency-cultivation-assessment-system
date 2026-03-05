@@ -28,4 +28,23 @@ export default defineConfig({
       }
     },
   }
+  ,
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks(id) {
+          if (id.includes('node_modules/vue') || id.includes('node_modules/@vue') || id.includes('node_modules/vue-router') || id.includes('node_modules/pinia') || id.includes('node_modules/vue-i18n')) return 'vendor-vue'
+          if (id.includes('node_modules/@heroicons')) return 'vendor-icons'
+          if (id.includes('node_modules/zrender')) return 'vendor-echarts-zrender'
+          if (id.includes('node_modules/echarts')) return 'vendor-echarts-core'
+          if (id.includes('node_modules/rive')) return 'vendor-rive'
+          if (id.includes('node_modules/jspdf')) return 'vendor-jspdf'
+          if (id.includes('node_modules/html2canvas')) return 'vendor-html2canvas'
+          if (id.includes('node_modules/jszip')) return 'vendor-jszip'
+          if (id.includes('node_modules/gsap') || id.includes('node_modules/lenis')) return 'vendor-motion'
+          if (id.includes('node_modules/markdown-it') || id.includes('node_modules/dompurify') || id.includes('node_modules/katex')) return 'vendor-content'
+        }
+      }
+    }
+  }
 })

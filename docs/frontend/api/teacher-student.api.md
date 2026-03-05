@@ -1,6 +1,6 @@
 ---
 title: "`teacher-student.api.ts`"
-description: 教师视角学生画像/活跃/预警/建议 API 封装
+description: 教师视角学生画像/活跃/预警 API 封装
 outline: [2, 3]
 ---
 
@@ -18,8 +18,6 @@ outline: [2, 3]
   - `recentEvents[].eventType` 当前包含：`lesson | submission | visit | community_ask | community_answer | ai`
 - `getStudentAlerts(studentId)` → `GET /teachers/students/{studentId}/alerts`
   - 返回 `{ alerts: [{ code, message, severity }] }`
-- `getStudentRecommendations(studentId, limit=6)` → `GET /teachers/students/{studentId}/recommendations`
-  - 返回 `LearningRecommendation[]`
 - `getCourseStudentsBasic(courseId, page=1, size=10000, keyword?)` → `GET /teachers/students/basic`
   - 请求参数：`{ courseId, page, size, keyword? }`
   - 特性：对 400/403 进行捕获并返回空列表 `{ items: [] }`，同时抑制控制台错误打印（`suppressLog: true`）
@@ -69,9 +67,8 @@ const list = await teacherStudentApi.getStudentCourses('1001')
 const act = await teacherStudentApi.getStudentActivity('1001', 7, 5)
 // act.recentEvents 可直接用于“统一活动流”时间线
 
-// 风险预警与个性化建议
+// 风险预警
 const alerts = await teacherStudentApi.getStudentAlerts('1001')
-const recs = await teacherStudentApi.getStudentRecommendations('1001', 6)
 
 // 课程下学生（联系人用途）
 const basic = await teacherStudentApi.getCourseStudentsBasic('2001', 1, 10000, '张')

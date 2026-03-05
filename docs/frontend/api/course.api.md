@@ -1,6 +1,6 @@
 ---
 title: "`course.api.ts`"
-description: 课程 CRUD、发现、选课与课程学生管理 API 封装
+description: 课程 CRUD、选课与课程学生管理 API 封装
 outline: [2, 3]
 ---
 
@@ -8,10 +8,9 @@ outline: [2, 3]
 
 ## 方法签名（节选）
 - `getCourses(params)` / `getCourseById(id)` / `createCourse(data)` / `updateCourse(id, data)` / `deleteCourse(id)`
-- `searchCourses(params)` / `getPopularCourses()` / `getRecommendedCourses()` / `getCoursesByCategory(category, params)`
-- `enrollInCourse(id)` / `unenrollFromCourse(id)` / `getEnrollmentStatus(id)`
+- `enrollInCourse(id)` / `unenrollFromCourse(id)`
 - `getCourseStudents(courseId, params)` / `inviteStudents(courseId, studentIds)` / `removeStudent(courseId, studentId)`
-- `publishCourse(id)` / `unpublishCourse(id)` / `updateBatchStatus(data)`
+- `publishCourse(id)` / `setCourseEnrollKey(courseId, require, key?)`
 
 ## 最小示例
 ```ts
@@ -21,7 +20,7 @@ console.log(data.items, data.total)
 
 ## 注意事项
 - 敏感操作需要教师角色
-- 分类/推荐接口与后端实际实现保持一致
+- 学生端选课商城当前直接复用 `getCourses(params)` 分页接口，不再依赖独立“课程发现”前端封装
 
 ## 参数与返回
 - 分页参数：`{ page?: number; size?: number; sort?: string }`
@@ -34,10 +33,6 @@ console.log(data.items, data.total)
 const page = await courseApi.getCourses({ query: 'AI', page: 1, size: 20 })
 console.log(page.items, page.total)
 
-// 搜索（非分页接口：/courses/search）
-const list = await courseApi.searchCourses({ keyword: 'AI' })
-console.log(list.length)
-
 // 选课/退课
 await courseApi.enrollInCourse(1001)
 await courseApi.unenrollFromCourse(1001)
@@ -49,8 +44,8 @@ const students = await courseApi.getCourseStudents('1001', { page: 1, size: 50 }
 await courseApi.inviteStudents(1001, [2001, '2002'])
 await courseApi.removeStudent(1001, 2001)
 
-// 批量状态更新（教师）——与后端 schema 对齐使用小写
-await courseApi.updateBatchStatus({ courseIds: [1, 2, 3], status: 'published' } as any)
+// 课程发布（教师）
+await courseApi.publishCourse(1001)
 ```
 
 ## 错误处理与权限

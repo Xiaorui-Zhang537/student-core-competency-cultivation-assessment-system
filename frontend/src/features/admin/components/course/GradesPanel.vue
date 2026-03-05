@@ -246,6 +246,13 @@ import type { ClassPerformanceData, CourseAnalyticsData, CourseStudentPerformanc
 import { downloadCsv } from '@/utils/download'
 import { useUIStore } from '@/stores/ui'
 import { ArrowPathIcon, CheckCircleIcon, DocumentArrowDownIcon, UserIcon } from '@heroicons/vue/24/outline'
+import {
+  formatRadarArea,
+  getRadarBadgeVariant,
+  formatRadarBadgeLabel as formatRadarBadgeLabelByLocale,
+  formatDimensionLabel as formatDimensionLabelByLocale,
+  formatRadarValue
+} from '@/features/teacher/utils/radarDisplay'
 
 const props = withDefaults(defineProps<{ courseId: string; active?: boolean }>(), { active: true })
 const emit = defineEmits<{ (e: 'counts', v: { totalAssignments: number; totalStudents: number }): void }>()
@@ -293,32 +300,8 @@ const rankingTotalPages = computed(() => {
   return pages > 0 ? pages : 1
 })
 
-function getRadarBadgeVariant(classification?: string) {
-  switch ((classification || '').toUpperCase()) {
-    case 'A': return 'success'
-    case 'B': return 'warning'
-    case 'C': return 'info'
-    default: return 'danger'
-  }
-}
-function formatRadarArea(v?: number) {
-  const n = Number(v)
-  if (!Number.isFinite(n)) return '--'
-  return n.toFixed(1)
-}
-function formatRadarBadgeLabel(classification?: string) {
-  const key = (classification || 'D').toUpperCase() as 'A' | 'B' | 'C' | 'D'
-  const desc = t(`teacher.students.radar.classification.${key}`) as string
-  return `${key} · ${desc}`
-}
-function formatDimensionLabel(code: string) {
-  const label = t(`shared.radarLegend.dimensions.${code}.title`) as string
-  return label || code
-}
-function formatRadarValue(value?: number) {
-  if (!Number.isFinite(Number(value))) return '--'
-  return Number(value).toFixed(1)
-}
+const formatRadarBadgeLabel = (classification?: string) => formatRadarBadgeLabelByLocale((key: string) => String(t(key) as any), classification)
+const formatDimensionLabel = (code: string) => formatDimensionLabelByLocale((key: string) => String(t(key) as any), code)
 function isSelectedStudent(s: CourseStudentPerformanceItem) {
   return String(s?.studentId ?? '') === String(selectedStudentId.value ?? '')
 }
@@ -634,4 +617,3 @@ onMounted(() => {
   if (props.active !== false) reloadAll()
 })
 </script>
-

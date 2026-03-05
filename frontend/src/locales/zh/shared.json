@@ -83,7 +83,16 @@
           "scoring": "由成绩表汇总并按分数/满分归一化为 0–100，与其他四维同尺度显示"
         }
       }
+    },
+    "behaviorInsight": {
+      "reportInfo": {
+        "title": "报告信息",
+        "generatedAt": "生成时间",
+        "window": "数据窗口",
+        "selectedWindow": "当前选择窗口",
+        "actualWindow": "当前报告窗口",
+        "windowMismatch": "当前显示的是历史洞察，不是当前筛选窗口的新结果"
+      }
     }
   }
 }
-

@@ -35,10 +35,6 @@ export const courseApi = {
     return api.delete(`/courses/${courseId}/enroll`);
   },
 
-  getEnrollmentStatus: (courseId: number | string): Promise<boolean> => {
-    return api.get(`/courses/${courseId}/enrollment-status`);
-  },
-
   // Publishing
   publishCourse: (courseId: number): Promise<void> => {
     return api.post(`/courses/${courseId}/publish`);

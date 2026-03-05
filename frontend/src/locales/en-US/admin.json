@@ -125,6 +125,12 @@
     "moderation": {
       "viewCommunityCenter": "View Community Center",
       "exportCommunity": "Export Community CSV",
+      "cards": {
+        "totalPosts": "Total posts",
+        "totalComments": "Total comments",
+        "pendingPosts": "Pending drafts",
+        "blockedItems": "Blocked content"
+      },
       "viewComments": "View Comments",
       "centerTitle": "Community Governance Center",
       "backToGovernance": "Back To Governance Table",

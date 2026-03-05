@@ -20,8 +20,6 @@ export const helpApi = {
   myTickets: () => api.get<HelpTicket[]>('/help/tickets'),
   getTicket: (id: number) => api.get<HelpTicketDetail>(`/help/tickets/${id}`),
   replyTicket: (id: number, content: string) => api.post<HelpTicketDetail>(`/help/tickets/${id}/reply`, { content }),
-  updateTicket: (id: number, data: Partial<HelpTicketCreateRequest>) =>
-    api.put<HelpTicket>(`/help/tickets/${id}`, data),
   deleteTicket: (id: number) => api.delete<void>(`/help/tickets/${id}`),
 
   adminPageTickets: (params?: {

@@ -116,7 +116,7 @@
                     {{ formatRadarBadgeLabel((s as any).radarClassification) }}
                   </badge>
                   <span class="text-sm font-semibold text-gray-900 dark:text-white">
-                    {{ typeof (s as any).radarArea === 'number' ? `${Number((s as any).radarArea).toFixed(1)}%` : '--' }}
+                    {{ formatRadarArea((s as any).radarArea) }}
                   </span>
                 </div>
                 <div v-if="radarDimensionEntries((s as any)).length" class="grid grid-cols-2 gap-x-3 gap-y-1 text-xs text-gray-600 dark:text-gray-400 text-left max-w-[210px]">
@@ -196,6 +196,13 @@ import { AcademicCapIcon, BoltIcon, ChartBarIcon, UsersIcon } from '@heroicons/v
 import { teacherApi } from '@/api/teacher.api'
 import { downloadCsv } from '@/utils/download'
 import type { CourseStudentPerformanceItem } from '@/types/teacher'
+import {
+  formatRadarArea,
+  getRadarBadgeVariant,
+  formatRadarBadgeLabel as formatRadarBadgeLabelByLocale,
+  formatDimensionLabel as formatDimensionLabelByLocale,
+  formatRadarValue
+} from '@/features/teacher/utils/radarDisplay'
 
 const { t, te } = useI18n()
 const router = useRouter()
@@ -253,33 +260,14 @@ const sortOptions = computed(() => ([
   { label: String(t('admin.courseStudents.filters.sort.activity') || '活跃度'), value: 'activity' },
 ]))
 
-const getRadarBadgeVariant = (classification?: string) => {
-  switch ((classification || '').toUpperCase()) {
-    case 'A': return 'success'
-    case 'B': return 'warning'
-    case 'C': return 'info'
-    default: return 'danger'
-  }
-}
-
 const formatRadarBadgeLabel = (classification?: string) => {
-  const key = (classification || 'D').toUpperCase() as 'A' | 'B' | 'C' | 'D'
-  const desc = te(`teacher.students.radar.classification.${key}`)
-    ? String(t(`teacher.students.radar.classification.${key}`))
-    : key
-  return `${key} · ${desc}`
+  const translate = (key: string) => te(key) ? String(t(key)) : key
+  return formatRadarBadgeLabelByLocale(translate, classification)
 }
 
 const formatDimensionLabel = (code: string) => {
-  if (te(`shared.radarLegend.dimensions.${code}.title`)) {
-    return String(t(`shared.radarLegend.dimensions.${code}.title`))
-  }
-  return code
-}
-
-const formatRadarValue = (value?: number) => {
-  if (!Number.isFinite(Number(value))) return '--'
-  return Number(value).toFixed(1)
+  const translate = (key: string) => te(key) ? String(t(key)) : key
+  return formatDimensionLabelByLocale(translate, code)
 }
 
 function radarDimensionEntries(s: any): Array<[string, number]> {
@@ -388,4 +376,3 @@ onMounted(() => {
   if (props.active !== false) reload()
 })
 </script>
-

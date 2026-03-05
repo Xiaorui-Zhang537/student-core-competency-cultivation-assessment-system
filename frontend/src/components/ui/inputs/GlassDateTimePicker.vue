@@ -2,22 +2,23 @@
   <div class="w-full">
     <label v-if="label" class="block text-sm font-medium mb-1">{{ label }}</label>
     <div ref="rootRef" class="relative">
-      <Button
+      <button
+        ref="triggerRef"
         :id="idAttr"
         type="button"
-        class="ui-pill--select ui-pill--pr-select w-full !justify-start text-left"
+        class="ui-pill--select ui-pill--pr-select inline-flex items-center !justify-start w-full !text-left"
         :class="[size==='sm' ? 'ui-pill--sm ui-pill--pl' : 'ui-pill--md ui-pill--pl', tintClass]"
         @click="toggle"
       >
         <span
-          class="block w-full pr-5 text-left"
+          class="block w-full pr-5 !text-left"
           :class="[truncateClass, valueText ? 'text-gray-900 dark:text-gray-100' : 'text-gray-400']"
           :style="valueText ? selectedLabelStyle : undefined"
         >
           {{ valueText || placeholderText }}
         </span>
         <svg class="w-4 h-4 absolute right-2 top-1/2 -translate-y-1/2 text-gray-400" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.24 4.5a.75.75 0 01-1.08 0l-4.24-4.5a.75.75 0 01.02-1.06z" clip-rule="evenodd"/></svg>
-      </Button>
+      </button>
 
       <teleport to="body">
         <div v-if="open" class="fixed inset-0 z-[999]" @click="close"></div>
@@ -68,10 +69,9 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, watch, type CSSProperties } from 'vue'
+import { ref, computed, onMounted, onUnmounted, watch, nextTick, type CSSProperties } from 'vue'
 // @ts-ignore
 import { useI18n } from 'vue-i18n'
-import Button from '@/components/ui/Button.vue'
 import GlassPopoverSelect from '@/components/ui/filters/GlassPopoverSelect.vue'
 
 interface Props {
@@ -96,8 +96,10 @@ const emit = defineEmits<{ (e:'update:modelValue', v:string): void }>()
 const { t } = useI18n()
 
 const rootRef = ref<HTMLElement | null>(null)
+const triggerRef = ref<HTMLElement | null>(null)
 const open = ref(false)
 const positionTick = ref(0)
+const lastPanelStyle = ref<{ left: string; top: string; width: string }>({ left: '8px', top: '8px', width: '420px' })
 
 const tintClass = computed(() => props.tint ? `glass-tint-${props.tint}` : '')
 const themeColorVar = computed(() => props.tint ? `var(--color-${props.tint})` : 'var(--color-primary)')
@@ -133,7 +135,13 @@ const panelStyle = computed(() => {
   return positionPanel()
 })
 
-function toggle() { open.value = !open.value; if (open.value) nudge() }
+function toggle() {
+  open.value = !open.value
+  if (open.value) {
+    nudge()
+    requestAnimationFrame(() => nudge())
+  }
+}
 function close() { open.value = false }
 
 function nudge() { positionTick.value++ }
@@ -239,9 +247,9 @@ function confirm(){ emit('update:modelValue', formatModel(internal.value)); clos
 
 function positionPanel(){
   try {
-    const el = rootRef.value as HTMLElement | null
+    const el = (triggerRef.value || rootRef.value) as HTMLElement | null
     const rect = el?.getBoundingClientRect()
-    if (!rect) return { left:'20px', top:'20px', width:'560px' }
+    if (!rect || (rect.width <= 0 && rect.height <= 0)) return lastPanelStyle.value
     // 弹窗宽度略大于输入框但限制最大值，避免在窄表单中过宽
     const widthBaseline = Math.max(rect.width + 180, 420)
     const width = Math.min(600, Math.max(widthBaseline, rect.width))
@@ -250,8 +258,12 @@ function positionPanel(){
     const desiredHeight = 520
     const hasSpaceBelow = rect.bottom + 6 + desiredHeight <= window.innerHeight
     const top = hasSpaceBelow ? (rect.bottom + 6) : Math.max(8, rect.top - desiredHeight - 6)
-    return { left: left+'px', top: top+'px', width: width+'px' }
-  } catch { return { left:'20px', top:'20px', width:'360px' } }
+    const style = { left: left+'px', top: top+'px', width: width+'px' }
+    lastPanelStyle.value = style
+    return style
+  } catch {
+    return lastPanelStyle.value
+  }
 }
 
 const idAttr = computed(() => props.id || `gdtp-${Math.random().toString(36).slice(2,8)}`)
@@ -270,6 +282,12 @@ onMounted(() => {
 
 const cleanupFns: Array<() => void> = []
 
+onUnmounted(() => {
+  cleanupFns.forEach((fn) => {
+    try { fn() } catch {}
+  })
+})
+
 // 保持页面滚动不被锁定；仅在选择器内部控制滚动条样式
 
 // 当用户调整小时/分钟时，实时同步到内部日期并更新展示
@@ -277,6 +295,13 @@ watch([hour, minute], ([h, m]) => {
   const base = internal.value ? new Date(internal.value) : new Date()
   base.setHours(Number(h || 0), Number(m || 0), 0, 0)
   internal.value = base
+})
+
+watch(open, async (isOpen) => {
+  if (!isOpen) return
+  await nextTick()
+  nudge()
+  requestAnimationFrame(() => nudge())
 })
 </script>
 

@@ -6,7 +6,7 @@
 
     <div v-else class="space-y-8">
       <!-- KPIs -->
-      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 perf-section perf-section--small">
         <start-card :label="t('student.analysis.kpiAvgScore')" :value="formatScore(kpi.avgScore)" tone="blue" :icon="StarIcon" />
         <start-card :label="t('student.analysis.kpiCompletion')" :value="formatPercent(kpi.completionRate)" tone="emerald" :icon="CheckCircleIcon" />
         <start-card :label="t('student.analysis.kpiHours')" :value="String(kpi.studyHours)" tone="violet" :icon="ClockIcon" />
@@ -14,7 +14,7 @@
       </div>
 
       <!-- Controls: 课程选择（仅查看本人参与课程）+ 对比开关 同行显示 -->
-      <card padding="md" tint="info" class="mt-2">
+      <card padding="md" tint="info" class="mt-2 perf-section perf-section--small">
         <div class="flex items-center flex-wrap gap-3">
           <div class="flex items-center gap-2">
             <span class="whitespace-nowrap text-sm text-gray-700 dark:text-gray-300">{{ t('student.ability.course') || t('teacher.analytics.selectCourse') || '请选择课程' }}</span>
@@ -61,21 +61,18 @@
             </div>
           </div>
 
-          <div class="flex items-center gap-2">
-            <span class="whitespace-nowrap text-sm text-gray-700 dark:text-gray-300">{{ t('shared.behaviorEvidence.range') || '行为时间窗' }}</span>
-            <glass-popover-select
-              v-model="behaviorRange"
-              :options="behaviorRangeOptions"
-              size="sm"
-              width="160px"
-              tint="secondary"
-            />
-          </div>
+          <behavior-range-select
+            v-model="behaviorRange"
+            mode="student"
+            size="sm"
+            width="160px"
+            tint="secondary"
+          />
         </div>
       </card>
 
       <!-- 能力雷达 + 维度评语（学生本人，左右各占一半） -->
-      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 perf-section perf-section--large">
         <card padding="md" tint="primary">
           <div class="flex items-center justify-between mb-4">
             <h3 class="text-lg font-semibold">{{ t('teacher.analytics.charts.radar') }}</h3>
@@ -132,11 +129,11 @@
       </div>
 
       <!-- 维度说明（玻璃样式，与雷达同页显示） -->
-      <card v-if="rawRadarDimensions.length" padding="md" tint="info">
+      <card v-if="rawRadarDimensions.length" padding="md" tint="info" class="perf-section perf-section--small">
         <ability-radar-legend :dimensions="rawRadarDimensions" />
       </card>
 
-      <div ref="goalsSectionRef">
+      <div ref="goalsSectionRef" class="perf-section perf-section--medium">
         <card padding="md" tint="accent">
           <div class="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
             <div>
@@ -242,26 +239,35 @@
       </div>
 
       <!-- 行为洞察（阶段二：AI解释与建议，不算分；学生7天仅一次） -->
-      <div class="perf-section perf-section--medium">
+      <div ref="insightSectionRef" class="perf-section perf-section--medium">
         <behavior-insight-section
+          v-if="insightSectionMounted"
           :student-id="String(auth?.user?.id || '')"
           :course-id="selectedCourseId || undefined"
           :range="behaviorRange"
           :allow-student-generate="true"
         />
+        <card v-else padding="md" tint="secondary" class="min-h-[160px] flex items-center justify-center">
+          <span class="text-sm text-gray-500 dark:text-gray-400">{{ t('student.analysis.loading') }}</span>
+        </card>
       </div>
 
       <!-- 行为证据（阶段一：纯代码聚合，不调用AI，不算分） -->
-      <div class="perf-section perf-section--medium">
+      <div ref="evidenceSectionRef" class="perf-section perf-section--medium">
         <behavior-evidence-section
+          v-if="evidenceSectionMounted"
           :student-id="String(auth?.user?.id || '')"
           :course-id="selectedCourseId || undefined"
           :range="behaviorRange"
         />
+        <card v-else padding="md" tint="info" class="min-h-[160px] flex items-center justify-center">
+          <span class="text-sm text-gray-500 dark:text-gray-400">{{ t('student.analysis.loading') }}</span>
+        </card>
       </div>
 
       <!-- Trends 区域：左侧仪表盘，右侧两张趋势图（去掉完成率） -->
-      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 perf-section perf-section--large">
+      <div ref="trendsSectionRef" class="grid grid-cols-1 lg:grid-cols-3 gap-6 perf-section perf-section--large">
+        <template v-if="trendsSectionMounted">
         <!-- 左：课程平均分仪表盘（动画） + 作业列表 -->
         <card padding="md" tint="accent">
           <div class="w-full max-w-[420px] mx-auto">
@@ -327,6 +333,10 @@
             </div>
           </card>
         </div>
+        </template>
+        <card v-else padding="md" tint="accent" class="lg:col-span-3 min-h-[240px] flex items-center justify-center">
+          <span class="text-sm text-gray-500 dark:text-gray-400">{{ t('student.analysis.loading') }}</span>
+        </card>
       </div>
       
       <empty-state v-if="empty" :title="String(t('student.analysis.empty'))" tint="info" />
@@ -409,24 +419,18 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, computed, watch, onUnmounted, nextTick } from 'vue'
-import * as echarts from 'echarts'
-import { resolveEChartsTheme } from '@/charts/echartsTheme'
+import { ref, onMounted, computed, watch, onUnmounted, nextTick, defineAsyncComponent } from 'vue'
 import { studentApi } from '@/api/student.api'
 import { useI18n } from 'vue-i18n'
 import { i18n, loadLocaleMessages } from '@/i18n'
 import StartCard from '@/components/ui/StartCard.vue'
-import TrendAreaChart from '@/components/charts/TrendAreaChart.vue'
 import PageHeader from '@/components/ui/PageHeader.vue'
 import Card from '@/components/ui/Card.vue'
-import RadarChart from '@/components/charts/RadarChart.vue'
-import GaugeChart from '@/components/charts/GaugeChart.vue'
 import GlassPopoverSelect from '@/components/ui/filters/GlassPopoverSelect.vue'
 import GlassMultiSelect from '@/components/ui/filters/GlassMultiSelect.vue'
+import BehaviorRangeSelect from '@/components/ui/filters/BehaviorRangeSelect.vue'
 import { useCourseStore } from '@/stores/course'
 import { abilityApi } from '@/api/ability.api'
-import BehaviorEvidenceSection from '@/features/shared/views/BehaviorEvidenceSection.vue'
-import BehaviorInsightSection from '@/features/shared/views/BehaviorInsightSection.vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useAIStore } from '@/stores/ai'
 import Button from '@/components/ui/Button.vue'
@@ -447,18 +451,20 @@ import GlassTextarea from '@/components/ui/inputs/GlassTextarea.vue'
 import Badge from '@/components/ui/Badge.vue'
 import type { AbilityDimension, AbilityGoal, AbilityGoalPayload, AbilityGoalPriority } from '@/types/ability'
 
+const TrendAreaChart = defineAsyncComponent(() => import('@/components/charts/TrendAreaChart.vue'))
+const RadarChart = defineAsyncComponent(() => import('@/components/charts/RadarChart.vue'))
+const GaugeChart = defineAsyncComponent(() => import('@/components/charts/GaugeChart.vue'))
+const BehaviorEvidenceSection = defineAsyncComponent(() => import('@/features/shared/views/BehaviorEvidenceSection.vue'))
+const BehaviorInsightSection = defineAsyncComponent(() => import('@/features/shared/views/BehaviorInsightSection.vue'))
+
 const { t } = useI18n()
 const route = useRoute()
 const router = useRouter()
 const ai = useAIStore()
 const auth = useAuthStore()
 
-// 行为证据/洞察时间窗（学生端只保留近期窗口，默认近30天）
+// 行为证据/洞察时间窗（学生端仅近7/30天）
 const behaviorRange = ref<'7d' | '30d'>('30d')
-const behaviorRangeOptions = computed(() => ([
-  { label: (t('shared.behaviorEvidence.range7d') as any) || '近一周', value: '7d' },
-  { label: (t('shared.behaviorEvidence.range30d') as any) || '近一月', value: '30d' }
-]))
 
 type Point = { x: string; y: number }
 const initialAnalysisReady = ref(false)
@@ -510,6 +516,13 @@ const goalSaving = ref(false)
 const goalFormError = ref('')
 const editingGoalId = ref<number | null>(null)
 const goalsSectionRef = ref<HTMLElement | null>(null)
+const insightSectionRef = ref<HTMLElement | null>(null)
+const evidenceSectionRef = ref<HTMLElement | null>(null)
+const trendsSectionRef = ref<HTMLElement | null>(null)
+const insightSectionMounted = ref(false)
+const evidenceSectionMounted = ref(false)
+const trendsSectionMounted = ref(false)
+let lazySectionObserver: IntersectionObserver | null = null
 
 function createGoalFormState(): GoalFormState {
   return {
@@ -1222,6 +1235,48 @@ async function loadHoursTrend() {
   }
 }
 
+function mountAllLazySections() {
+  insightSectionMounted.value = true
+  evidenceSectionMounted.value = true
+  trendsSectionMounted.value = true
+}
+
+function observeLazySections() {
+  if (typeof window === 'undefined' || typeof IntersectionObserver === 'undefined') {
+    mountAllLazySections()
+    return
+  }
+  if (lazySectionObserver) {
+    try { lazySectionObserver.disconnect() } catch {}
+    lazySectionObserver = null
+  }
+  lazySectionObserver = new IntersectionObserver((entries) => {
+    for (const entry of entries) {
+      if (!entry.isIntersecting) continue
+      const target = entry.target
+      if (target === insightSectionRef.value) insightSectionMounted.value = true
+      if (target === evidenceSectionRef.value) evidenceSectionMounted.value = true
+      if (target === trendsSectionRef.value) trendsSectionMounted.value = true
+      try { lazySectionObserver?.unobserve(target) } catch {}
+    }
+    if (insightSectionMounted.value && evidenceSectionMounted.value && trendsSectionMounted.value) {
+      try { lazySectionObserver?.disconnect() } catch {}
+      lazySectionObserver = null
+    }
+  }, {
+    root: null,
+    rootMargin: '260px 0px 340px 0px',
+    threshold: 0.01
+  })
+
+  if (insightSectionRef.value && !insightSectionMounted.value) lazySectionObserver.observe(insightSectionRef.value)
+  if (!insightSectionRef.value) insightSectionMounted.value = true
+  if (evidenceSectionRef.value && !evidenceSectionMounted.value) lazySectionObserver.observe(evidenceSectionRef.value)
+  if (!evidenceSectionRef.value) evidenceSectionMounted.value = true
+  if (trendsSectionRef.value && !trendsSectionMounted.value) lazySectionObserver.observe(trendsSectionRef.value)
+  if (!trendsSectionRef.value) trendsSectionMounted.value = true
+}
+
 onMounted(async () => {
   // 防御：确保当前 locale 的 student 命名空间已加载
   const locRaw = String(i18n.global.locale.value)
@@ -1242,6 +1297,7 @@ onMounted(async () => {
   await Promise.all([load(), loadRadar(), loadInsights()])
   // 数据入位后再次稳态渲染（避免首次 loading 切换造成实例被销毁）
   await nextTick()
+  observeLazySections()
   await scrollToGoalsSection(false)
   await loadScoreTrend()
   runIdle(() => { loadHoursTrend() })
@@ -1297,6 +1353,10 @@ watch(
 )
 
 onUnmounted(() => {
+  if (lazySectionObserver) {
+    try { lazySectionObserver.disconnect() } catch {}
+    lazySectionObserver = null
+  }
   if (themeListenerBound && themeChangedHandler) { try { window.removeEventListener('theme:changed', themeChangedHandler as any) } catch {}; themeListenerBound = false; themeChangedHandler = null }
 })
 </script>
@@ -1305,16 +1365,18 @@ onUnmounted(() => {
 .ms-compact :deep(.input) { min-height: 2rem; padding-top: 0.25rem; padding-bottom: 0.25rem; }
 
 .perf-section {
-  content-visibility: auto;
-  contain: layout style paint;
-  contain-intrinsic-size: 560px;
+  contain: layout paint;
 }
 
 .perf-section--medium {
-  contain-intrinsic-size: 720px;
+  contain: layout paint;
+}
+
+.perf-section--small {
+  contain: layout paint;
 }
 
 .perf-section--large {
-  contain-intrinsic-size: 980px;
+  contain: layout paint;
 }
 </style>

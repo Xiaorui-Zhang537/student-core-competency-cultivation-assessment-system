@@ -3,9 +3,6 @@
 export default {
   content: ['./index.html', './src/**/*.{vue,js,ts,jsx,tsx}'],
   darkMode: 'class',
-  daisyui: {
-    themes: ['retro', 'dracula']
-  },
   theme: {
     extend: {
       colors: {
@@ -59,6 +56,10 @@ export default {
   },
   plugins: [
     require('@tailwindcss/typography'),
-    require('daisyui')
+    require('daisyui')({
+      themes: ['retro', 'dracula'],
+      // mockup / label 会在 esbuild 压缩阶段触发空选择器告警；项目内不依赖其样式
+      exclude: ['mockup', 'label']
+    })
   ]
-} 
+}

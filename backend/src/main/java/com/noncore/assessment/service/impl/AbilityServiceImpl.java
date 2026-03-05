@@ -22,6 +22,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * 能力评估服务实现类
@@ -36,6 +37,7 @@ public class AbilityServiceImpl implements AbilityService {
 
     private static final Logger logger = LoggerFactory.getLogger(AbilityServiceImpl.class);
     private static final long GOAL_REMINDER_LOOKAHEAD_DAYS = 3;
+    private static final long GOAL_REMINDER_ON_DEMAND_THROTTLE_SECONDS = 60;
 
     private final AbilityDimensionMapper abilityDimensionMapper;
     private final StudentAbilityMapper studentAbilityMapper;
@@ -47,6 +49,7 @@ public class AbilityServiceImpl implements AbilityService {
     private final BehaviorEventRecorder behaviorEventRecorder;
     private final NotificationService notificationService;
     private final ObjectMapper objectMapper;
+    private final Map<Long, LocalDateTime> goalReminderOnDemandSyncedAt = new ConcurrentHashMap<>();
 
     public AbilityServiceImpl(AbilityDimensionMapper abilityDimensionMapper,
                               StudentAbilityMapper studentAbilityMapper,
@@ -676,12 +679,22 @@ public class AbilityServiceImpl implements AbilityService {
 
     @Override
     public void syncGoalReminderNotifications(Long studentId) {
+        syncGoalReminderNotifications(studentId, false);
+    }
+
+    private void syncGoalReminderNotifications(Long studentId, boolean force) {
         if (studentId == null) {
+            return;
+        }
+        if (!force && shouldSkipOnDemandGoalReminderSync(studentId)) {
             return;
         }
 
         List<AbilityGoal> goals = abilityGoalMapper.selectGoalsByStudentId(studentId);
         if (goals == null || goals.isEmpty()) {
+            if (!force) {
+                markOnDemandGoalReminderSync(studentId);
+            }
             return;
         }
 
@@ -729,6 +742,10 @@ public class AbilityServiceImpl implements AbilityService {
                 );
             }
         }
+
+        if (!force) {
+            markOnDemandGoalReminderSync(studentId);
+        }
     }
 
     /**
@@ -745,11 +762,26 @@ public class AbilityServiceImpl implements AbilityService {
 
         for (Long studentId : studentIds) {
             try {
-                syncGoalReminderNotifications(studentId);
+                syncGoalReminderNotifications(studentId, true);
             } catch (Exception ex) {
                 logger.warn("同步学生能力目标提醒失败，studentId={}", studentId, ex);
             }
         }
+    }
+
+    private boolean shouldSkipOnDemandGoalReminderSync(Long studentId) {
+        LocalDateTime last = goalReminderOnDemandSyncedAt.get(studentId);
+        if (last == null) {
+            return false;
+        }
+        return last.plusSeconds(GOAL_REMINDER_ON_DEMAND_THROTTLE_SECONDS).isAfter(LocalDateTime.now());
+    }
+
+    private void markOnDemandGoalReminderSync(Long studentId) {
+        if (studentId == null) {
+            return;
+        }
+        goalReminderOnDemandSyncedAt.put(studentId, LocalDateTime.now());
     }
 
     @Override

@@ -1,5 +1,28 @@
-import html2canvas from 'html2canvas'
-import jsPDF from 'jspdf'
+type Html2CanvasFn = (element: HTMLElement, options?: any) => Promise<HTMLCanvasElement>
+type JsPdfCtor = new (options?: any) => any
+
+let html2canvasLoader: Html2CanvasFn | null = null
+let jsPdfCtor: JsPdfCtor | null = null
+let exportLibsPromise: Promise<void> | null = null
+
+async function ensureExportLibs() {
+  if (html2canvasLoader && jsPdfCtor) return
+  if (!exportLibsPromise) {
+    exportLibsPromise = Promise.all([
+      import('html2canvas'),
+      import('jspdf')
+    ])
+      .then(([html2canvasMod, jsPdfMod]) => {
+        html2canvasLoader = (html2canvasMod.default || html2canvasMod) as Html2CanvasFn
+        jsPdfCtor = (jsPdfMod.default || jsPdfMod) as unknown as JsPdfCtor
+      })
+      .catch((err) => {
+        exportLibsPromise = null
+        throw err
+      })
+  }
+  await exportLibsPromise
+}
 
 export const EXPORT_FALLBACK_STYLE = `
   :root, html[data-theme], body {
@@ -54,7 +77,8 @@ export const EXPORT_THEME_CSS = `
 `
 
 export async function exportNodeAsPng(node: HTMLElement, fileBase: string) {
-  const canvas = await html2canvas(node, {
+  await ensureExportLibs()
+  const canvas = await (html2canvasLoader as Html2CanvasFn)(node, {
     backgroundColor: '#ffffff',
     scale: 2,
     useCORS: true,
@@ -106,7 +130,8 @@ export async function exportNodeAsPng(node: HTMLElement, fileBase: string) {
 }
 
 export async function exportNodeAsPdf(node: HTMLElement, fileBase: string) {
-  const canvas = await html2canvas(node, {
+  await ensureExportLibs()
+  const canvas = await (html2canvasLoader as Html2CanvasFn)(node, {
     backgroundColor: '#ffffff',
     scale: 2,
     useCORS: true,
@@ -149,14 +174,16 @@ export async function exportNodeAsPdf(node: HTMLElement, fileBase: string) {
       } catch {}
     }
   })
-  const pdf = new jsPDF({ orientation: 'p', unit: 'px', format: [canvas.width, canvas.height], compress: true })
+  const JsPdf = jsPdfCtor as JsPdfCtor
+  const pdf = new JsPdf({ orientation: 'p', unit: 'px', format: [canvas.width, canvas.height], compress: true })
   pdf.addImage(canvas.toDataURL('image/png'), 'PNG', 0, 0, canvas.width, canvas.height, undefined, 'FAST')
   pdf.save(`${fileBase}.pdf`)
 }
 
 // 与 exportNodeAsPdf 逻辑一致，但返回 Blob（用于打包到ZIP等场景）
 export async function exportNodeAsPdfBlob(node: HTMLElement): Promise<Blob> {
-  const canvas = await html2canvas(node, {
+  await ensureExportLibs()
+  const canvas = await (html2canvasLoader as Html2CanvasFn)(node, {
     backgroundColor: '#ffffff',
     scale: 2,
     useCORS: true,
@@ -198,7 +225,8 @@ export async function exportNodeAsPdfBlob(node: HTMLElement): Promise<Blob> {
       } catch {}
     }
   })
-  const pdf = new jsPDF({ orientation: 'p', unit: 'px', format: [canvas.width, canvas.height], compress: true })
+  const JsPdf = jsPdfCtor as JsPdfCtor
+  const pdf = new JsPdf({ orientation: 'p', unit: 'px', format: [canvas.width, canvas.height], compress: true })
   pdf.addImage(canvas.toDataURL('image/png'), 'PNG', 0, 0, canvas.width, canvas.height, undefined, 'FAST')
   return pdf.output('blob')
 }
@@ -210,4 +238,3 @@ export function applyExportGradientsInline(el: HTMLElement) {
     el.querySelectorAll('[data-gradient="templateSky"]').forEach((n) => (n as HTMLElement).style.background = GRADIENTS.templateSky)
   } catch {}
 }
-

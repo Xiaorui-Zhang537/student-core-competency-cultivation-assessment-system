@@ -419,7 +419,8 @@ const emit = defineEmits<{
 
 const { t, te, locale } = useI18n()
 function tf(key: string, fallback: string): string {
-  if (!te(key)) return fallback
+  // 仅检测当前 locale，避免 te 走回退链后 t() 仍触发“当前语言缺 key”告警
+  if (!te(key, String(locale.value || ''))) return fallback
   return String(t(key))
 }
 const loading = ref(false)

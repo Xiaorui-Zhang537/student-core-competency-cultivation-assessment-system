@@ -1,22 +1,10 @@
 import { api } from './config';
-import type { AbilityDimension, AbilityDashboardData, AbilityTrendData, AbilityRecommendation, AbilityGoal, AbilityGoalPayload } from '@/types/ability';
+import type { AbilityDimension, AbilityGoal, AbilityGoalPayload } from '@/types/ability';
 
 export const abilityApi = {
   // Student-facing endpoints
   getAbilityDimensions: (): Promise<AbilityDimension[]> => {
     return api.get('/ability/dimensions');
-  },
-
-  getStudentDashboard: (): Promise<AbilityDashboardData> => {
-    return api.get('/ability/student/dashboard');
-  },
-
-  getStudentTrends: (): Promise<AbilityTrendData> => {
-    return api.get('/ability/student/trends');
-  },
-
-  getStudentRecommendations: (): Promise<AbilityRecommendation[]> => {
-    return api.get('/ability/student/recommendations');
   },
 
   getStudentGoals: (): Promise<AbilityGoal[]> => {
@@ -60,10 +48,6 @@ export const abilityApi = {
   // Teacher query student's latest AI report by context (prefers submissionId > assignmentId > courseId)
   getTeacherLatestReportOfStudent: (params: { studentId: string|number; courseId?: string|number; assignmentId?: string|number; submissionId?: string|number }): Promise<any> => {
     return api.get('/ability/teacher/report/latest', { params });
-  },
-  // Student ability report history (pagination)
-  getStudentReportHistory: (params?: { page?: number; size?: number }): Promise<any> => {
-    return api.get('/ability/student/reports', { params });
   },
   // Teacher create report from AI
   createReportFromAi: (payload: { studentId: string|number; normalizedJson: string; title?: string; courseId?: string|number; assignmentId?: string|number; submissionId?: string|number; aiHistoryId?: string|number }): Promise<any> => {

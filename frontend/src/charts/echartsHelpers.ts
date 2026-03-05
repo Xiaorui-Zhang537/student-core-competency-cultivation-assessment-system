@@ -1,4 +1,4 @@
-import * as echarts from 'echarts'
+import { echarts, type ECharts } from '@/charts/echartsCore'
 
 /**
  * ECharts 通用工具（教师端多页面复用）
@@ -7,7 +7,7 @@ import * as echarts from 'echarts'
  * - 统一全局主题切换事件绑定
  */
 
-export function getOrInitChart(el: HTMLElement | undefined | null, theme?: any): echarts.ECharts | null {
+export function getOrInitChart(el: HTMLElement | undefined | null, theme?: any): ECharts | null {
   if (!el) return null
   let inst = echarts.getInstanceByDom(el as any)
   if (!inst) {
@@ -32,15 +32,28 @@ function tooltipElements(scopeClass?: string): HTMLElement[] {
   return Array.from(document.querySelectorAll(tooltipSelector(scopeClass))) as HTMLElement[]
 }
 
+function allTooltipElements(): HTMLElement[] {
+  return Array.from(document.querySelectorAll('.echarts-tooltip, .echarts-glass-tooltip')) as HTMLElement[]
+}
+
 export function setTooltipVisible(visible: boolean, scopeClass?: string) {
   const v = visible ? 'visible' : 'hidden'
-  tooltipElements(scopeClass).forEach(el => {
+  const scoped = tooltipElements(scopeClass)
+  if (visible && scopeClass) {
+    const scopedSet = new Set(scoped)
+    allTooltipElements().forEach(el => {
+      if (!scopedSet.has(el)) {
+        el.style.visibility = 'hidden'
+      }
+    })
+  }
+  scoped.forEach(el => {
     el.style.visibility = v
     if (visible) el.style.opacity = '1'
   })
 }
 
-export function bindTooltipVisibility(inst: echarts.ECharts | null, scopeClass?: string) {
+export function bindTooltipVisibility(inst: ECharts | null, scopeClass?: string) {
   if (!inst) return
   try { (inst as any).off && (inst as any).off('showTip') } catch {}
   try { (inst as any).off && (inst as any).off('hideTip') } catch {}
@@ -54,7 +67,7 @@ export function bindTooltipVisibility(inst: echarts.ECharts | null, scopeClass?:
   } catch {}
 }
 
-export function bindHideTipOnGlobalOut(inst: echarts.ECharts | null, scopeClass?: string) {
+export function bindHideTipOnGlobalOut(inst: ECharts | null, scopeClass?: string) {
   if (!inst) return
   try { (inst as any).off && (inst as any).off('globalout') } catch {}
   try {

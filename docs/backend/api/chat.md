@@ -123,19 +123,12 @@ Query：`archived=true|false`
 { "code": 200, "data": { "unreadCount": 12 } }
 ```
 
-## 6. 兼容接口
+## 6. 统一入口
 
-历史上聊天通过通知域接口提供：
-
-- `GET /api/notifications/conversation`
-- `POST /api/notifications/message`
-- `POST /api/notifications/conversation/read`
-
-新前端建议优先使用本页 `/api/chat/*`。
+聊天消息与会话当前统一使用本页 `/api/chat/*`，不再复用通知域兼容接口。
 
 ## 7. 常见错误与排查
 
 - 401：未登录或 token 过期。
 - 403：课程上下文（`relatedType=course`）不匹配，或越权访问对话。
 - 附件预览失败：检查是否用带 token 的请求访问 `/api/files/{id}/preview|download|stream`。
-

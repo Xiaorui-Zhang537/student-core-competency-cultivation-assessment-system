@@ -9,9 +9,6 @@ export const authApi = {
   register: (data: RegisterRequest): Promise<void> => {
     return api.post('/auth/register', data);
   },
-  refreshToken: (refreshToken: string): Promise<AuthResponse> => {
-    return api.post('/auth/refresh', null, { params: { refreshToken } });
-  },
   logout: (): Promise<void> => {
     return api.post('/auth/logout');
   },

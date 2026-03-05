@@ -96,16 +96,6 @@ export const communityApi = {
   },
 
   /**
-   * 获取我发布的帖子
-   */
-  getMyPosts: (params: {
-    page?: number;
-    size?: number;
-  }): Promise<PaginatedResponse<Post>> => {
-    return api.get('/community/my-posts', { params });
-  },
-
-  /**
    * 搜索标签
    */
   searchTags: (keyword: string, limit = 10): Promise<Tag[]> => {

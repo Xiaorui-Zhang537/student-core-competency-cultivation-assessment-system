@@ -6,7 +6,7 @@
 
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted, watch, nextTick } from 'vue'
-import * as echarts from 'echarts'
+import { echarts, type ECharts, type EChartsCoreOption } from '@/charts/echartsCore'
 import { resolveEChartsTheme } from '@/charts/echartsTheme'
 import { getThemeCoreColors, rgba } from '@/utils/theme'
 
@@ -24,9 +24,20 @@ const props = withDefaults(defineProps<Props>(), {
 })
 
 const chartRef = ref<HTMLElement>()
-let inst: echarts.ECharts | null = null
+let inst: ECharts | null = null
 let resizeObserver: ResizeObserver | null = null
 let visibilityObserver: IntersectionObserver | null = null
+let isMounted = false
+let fallbackTimer: ReturnType<typeof setTimeout> | null = null
+
+function isInstAlive() {
+  if (!inst) return false
+  try {
+    const checker = (inst as any).isDisposed
+    if (typeof checker === 'function') return checker.call(inst) !== true
+  } catch {}
+  return true
+}
 
 const waitForContainer = async (maxTries = 20): Promise<boolean> => {
   for (let i = 0; i < maxTries; i++) {
@@ -37,7 +48,7 @@ const waitForContainer = async (maxTries = 20): Promise<boolean> => {
   return !!chartRef.value
 }
 
-const buildOption = (valNum: number): echarts.EChartsCoreOption => {
+const buildOption = (valNum: number): EChartsCoreOption => {
   const theme = document.documentElement.classList.contains('dark') ? 'dark' : 'light'
   const baseColors = getThemeCoreColors()
   const base = baseColors.primary
@@ -66,43 +77,81 @@ const buildOption = (valNum: number): echarts.EChartsCoreOption => {
 }
 
 const init = async () => {
+  if (!isMounted) return
   const ok = await waitForContainer()
+  if (!isMounted) return
   if (!ok || !chartRef.value) return
   const theme = resolveEChartsTheme()
+  if (!isInstAlive()) inst = null
   if (!inst) {
     inst = echarts.init(chartRef.value as HTMLDivElement, theme as any)
   }
   try { inst.setOption(buildOption(props.value), true) } catch {
-    try { inst?.dispose(); inst = echarts.init(chartRef.value as HTMLDivElement, theme as any); inst.setOption(buildOption(props.value), true) } catch {}
+    try {
+      inst?.dispose()
+      inst = null
+      if (!isMounted || !chartRef.value) return
+      inst = echarts.init(chartRef.value as HTMLDivElement, theme as any)
+      inst.setOption(buildOption(props.value), true)
+    } catch {}
   }
-  requestAnimationFrame(() => { try { inst?.resize() } catch {} })
+  requestAnimationFrame(() => {
+    if (!isMounted || !isInstAlive()) return
+    try { inst?.resize() } catch {}
+  })
 }
 
 const update = () => {
-  if (!inst) return
+  if (!isMounted || !isInstAlive()) return
   try { inst.setOption(buildOption(props.value), true) } catch {}
 }
 
 onMounted(() => {
+  isMounted = true
   init()
-  resizeObserver = new ResizeObserver(() => { requestAnimationFrame(() => { try { inst?.resize() } catch {} }) })
+  resizeObserver = new ResizeObserver(() => {
+    requestAnimationFrame(() => {
+      if (!isMounted || !isInstAlive()) return
+      try { inst?.resize() } catch {}
+    })
+  })
   if (chartRef.value) resizeObserver.observe(chartRef.value)
   visibilityObserver = new IntersectionObserver((entries) => {
     for (const entry of entries) {
+      if (!isMounted) return
       if (entry.isIntersecting && entry.target === chartRef.value) {
-        if (!inst) init(); else requestAnimationFrame(() => { try { inst?.resize() } catch {} })
+        if (!isInstAlive()) {
+          init()
+        } else {
+          requestAnimationFrame(() => {
+            if (!isMounted || !isInstAlive()) return
+            try { inst?.resize() } catch {}
+          })
+        }
       }
     }
   }, { root: null, threshold: 0.01 })
   if (chartRef.value) visibilityObserver.observe(chartRef.value)
   // 兜底：延时再刷新一次
-  setTimeout(() => { try { if (!inst) init(); else update() } catch {} }, 300)
+  fallbackTimer = setTimeout(() => {
+    if (!isMounted) return
+    try {
+      if (!isInstAlive()) init()
+      else update()
+    } catch {}
+  }, 300)
 })
 
 watch(() => props.value, () => { update() })
 
 onUnmounted(() => {
+  isMounted = false
+  if (fallbackTimer) {
+    clearTimeout(fallbackTimer)
+    fallbackTimer = null
+  }
   try { inst?.dispose() } catch {}
+  inst = null
   try { if (resizeObserver && chartRef.value) resizeObserver.unobserve(chartRef.value) } catch {}
   try { resizeObserver?.disconnect(); resizeObserver = null } catch {}
   try { visibilityObserver?.disconnect(); visibilityObserver = null } catch {}
@@ -113,5 +162,3 @@ onUnmounted(() => {
 .gauge-chart-container { position: relative; display: flex; flex-direction: column; }
 .gauge-chart { flex: 1; min-height: 200px; }
 </style>
-
-

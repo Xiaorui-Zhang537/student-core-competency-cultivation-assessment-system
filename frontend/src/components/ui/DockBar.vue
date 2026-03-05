@@ -27,7 +27,7 @@
                 @click="onClick(item.key)"
               >
                 <component :is="item.icon" class="icon" />
-                <span class="label">{{ item.label }}</span>
+                <span class="dock-label">{{ item.label }}</span>
               </button>
             </glass-tooltip>
           </div>
@@ -223,7 +223,7 @@ watch(() => props.modelValue, async () => { await nextTick(); updateMeasurements
   border: 0;
 }
 .dock-item .icon { width: 28px; height: 28px; }
-.dock-item .label { margin-top: 4px; font-size: 13px; }
+.dock-item .dock-label { margin-top: 4px; font-size: 13px; }
 .dock-item:hover { transform: translateY(-2px); }
 .dock-item { position: relative; }
 .dock-item > * { position: relative; z-index: 1; }
@@ -256,5 +256,4 @@ watch(() => props.modelValue, async () => { await nextTick(); updateMeasurements
 
 :deep(.slider) { pointer-events: auto; position: absolute; mix-blend-mode: plus-lighter; }
 </style>
-
 

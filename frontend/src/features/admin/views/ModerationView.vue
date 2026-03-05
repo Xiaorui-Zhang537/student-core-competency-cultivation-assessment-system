@@ -2,6 +2,33 @@
   <div class="p-6">
     <page-header :title="t('admin.sidebar.moderation')" :subtitle="t('admin.title')" />
 
+    <div class="mt-4 grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
+      <start-card
+        :label="t('admin.moderation.cards.totalPosts') || '帖子总数'"
+        :value="String(moderationStats.totalPosts)"
+        tone="blue"
+        :icon="DocumentTextIcon"
+      />
+      <start-card
+        :label="t('admin.moderation.cards.totalComments') || '评论总数'"
+        :value="String(moderationStats.totalComments)"
+        tone="emerald"
+        :icon="ChatBubbleLeftRightIcon"
+      />
+      <start-card
+        :label="t('admin.moderation.cards.pendingPosts') || '待处理草稿'"
+        :value="String(moderationStats.pendingPosts)"
+        tone="amber"
+        :icon="ClockIcon"
+      />
+      <start-card
+        :label="t('admin.moderation.cards.blockedItems') || '已屏蔽内容'"
+        :value="String(moderationStats.blockedItems)"
+        tone="violet"
+        :icon="ShieldExclamationIcon"
+      />
+    </div>
+
     <filter-bar tint="secondary" align="center" :dense="false" class="mt-4 mb-2 rounded-full h-19">
       <template #left>
         <div class="flex items-end gap-3 flex-wrap min-w-0">
@@ -28,7 +55,7 @@
               @keyup.enter="reload"
             />
           </div>
-          <Button size="sm" variant="secondary" class="bg-sky-600 text-white border-sky-600 hover:bg-sky-700 whitespace-nowrap" @click="exportCommunity">
+          <Button size="sm" variant="primary" class="whitespace-nowrap" @click="exportCommunity">
             <arrow-down-tray-icon class="w-4 h-4 mr-1" />
             {{ t('admin.moderation.exportCommunity') || '导出社区CSV' }}
           </Button>
@@ -200,6 +227,7 @@ import { onMounted, ref, computed, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRoute, useRouter } from 'vue-router'
 import PageHeader from '@/components/ui/PageHeader.vue'
+import StartCard from '@/components/ui/StartCard.vue'
 import Card from '@/components/ui/Card.vue'
 import Button from '@/components/ui/Button.vue'
 import ErrorState from '@/components/ui/ErrorState.vue'
@@ -217,6 +245,8 @@ import { notificationAPI } from '@/api/notification.api'
 import { useUIStore } from '@/stores/ui'
 import { downloadCsv } from '@/utils/download'
 import {
+  DocumentTextIcon,
+  ClockIcon,
   UsersIcon,
   ChatBubbleLeftRightIcon,
   ShieldExclamationIcon,
@@ -237,6 +267,36 @@ const tabOptions = computed(() => ([
 
 const loading = ref(false)
 const error = ref<string | null>(null)
+const moderationStats = ref({
+  totalPosts: 0,
+  totalComments: 0,
+  pendingPosts: 0,
+  blockedItems: 0,
+})
+
+function toTotal(payload: any): number {
+  return Number(payload?.total || 0)
+}
+
+async function loadModerationStats() {
+  try {
+    const [postsAll, commentsAll, postsDraft, postsDeleted, commentsDeleted] = await Promise.all([
+      adminApi.pageCommunityPosts({ page: 1, size: 1, includeDeleted: true }),
+      adminApi.pageCommunityComments({ page: 1, size: 1, includeDeleted: true }),
+      adminApi.pageCommunityPosts({ page: 1, size: 1, status: 'draft', includeDeleted: false }),
+      adminApi.pageCommunityPosts({ page: 1, size: 1, status: 'deleted', includeDeleted: true }),
+      adminApi.pageCommunityComments({ page: 1, size: 1, status: 'deleted', includeDeleted: true }),
+    ])
+    moderationStats.value = {
+      totalPosts: toTotal(postsAll),
+      totalComments: toTotal(commentsAll),
+      pendingPosts: toTotal(postsDraft),
+      blockedItems: toTotal(postsDeleted) + toTotal(commentsDeleted),
+    }
+  } catch {
+    // ignore stats errors, list data remains available
+  }
+}
 
 function truncateText(value: any, max = 48): string {
   const text = String(value || '').replace(/\s+/g, ' ').trim()
@@ -331,6 +391,7 @@ async function moderatePost(id: number, data: any) {
       message: String(t('admin.moderation.notify.updateSuccess') || '修改成功'),
     })
     await reloadPosts()
+    await loadModerationStats()
   } catch (e: any) {
     ui.showNotification({
       type: 'error',
@@ -437,6 +498,7 @@ async function moderateComment(id: number, data: any) {
       message: String(t('admin.moderation.notify.updateSuccess') || '修改成功'),
     })
     await reloadComments()
+    await loadModerationStats()
   } catch (e: any) {
     ui.showNotification({
       type: 'error',
@@ -512,6 +574,7 @@ async function deletePostWithNotice(row: any) {
       message: '删除成功，已通知作者',
     })
     await reloadPosts()
+    await loadModerationStats()
   } catch (e: any) {
     ui.showNotification({
       type: 'error',
@@ -531,6 +594,7 @@ async function deleteCommentWithNotice(row: any) {
       message: '删除成功，已通知作者',
     })
     await reloadComments()
+    await loadModerationStats()
   } catch (e: any) {
     ui.showNotification({
       type: 'error',
@@ -553,6 +617,7 @@ async function confirmBlockAction() {
       await sendBlockNotice(reason)
       await reloadComments()
     }
+    await loadModerationStats()
     ui.showNotification({
       type: 'success',
       title: String(t('admin.moderation.notify.successTitle') || '成功'),
@@ -595,5 +660,7 @@ function goCenter() {
   router.push('/admin/moderation/center')
 }
 
-onMounted(() => reload())
+onMounted(async () => {
+  await Promise.allSettled([reload(), loadModerationStats()])
+})
 </script>

@@ -214,49 +214,11 @@ Query：
 
 响应：`ApiResponse<Map>`
 
-## 6. 聊天消息（兼容入口）
+## 6. 聊天与会话
 
-说明：聊天推荐走 `/api/chat/*`（见 [chat.md](./chat)）。`/api/notifications/message` 是“消息落库 + 触发通知”的兼容入口。
+聊天消息与会话已统一迁移到 `/api/chat/*`（见 [chat.md](./chat)），通知域不再提供旧的聊天兼容端点。
 
-### POST `/api/notifications/message` 发送聊天消息
-
-权限：已登录
-
-请求 Body（示例）：
-
-```json
-{
-  "recipientId": 20002,
-  "content": "你好",
-  "relatedType": "course",
-  "relatedId": 101,
-  "attachmentFileIds": [9876, 9999]
-}
-```
-
-响应：`ApiResponse<Notification>`
-
-## 7. 会话接口（旧版兼容）
-
-说明：以下两个接口是历史兼容，建议迁移到 `/api/chat/*`：
-
-### GET `/api/notifications/conversation`
-
-Query：`peerId`（必填）、`page`（默认 1）、`size`（默认 20）、`courseId`（可选）
-
-响应：`ApiResponse<PageResult<Notification>>`
-
-### POST `/api/notifications/conversation/read`
-
-Query：`peerId`（必填）、`courseId`（可选）
-
-响应（示例）：
-
-```json
-{ "code": 200, "data": { "marked": 10 } }
-```
-
-## 8. 实时通知（SSE）
+## 7. 实时通知（SSE）
 
 ### GET `/api/notifications/stream`
 
@@ -271,10 +233,9 @@ curl -N 'http://localhost:8080/api/notifications/stream?token=<access_jwt>' \
 
 返回：`text/event-stream`（事件名与数据结构以服务端推送为准）。
 
-## 9. 常见错误与排查
+## 8. 常见错误与排查
 
 - 400：批量列表为空、type 不合法等。
 - 401：未登录或 SSE token 不是合法 access token。
 - 403：非教师调用发送接口；非管理员调用群发接口。
 - 404：通知不存在或无权访问。
-

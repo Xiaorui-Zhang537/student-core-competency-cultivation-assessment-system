@@ -1,8 +1,3 @@
-import AuthLayout from '@/layouts/AuthLayout.vue'
-import StudentLayout from '@/layouts/StudentLayout.vue'
-import TeacherLayout from '@/layouts/TeacherLayout.vue'
-import AdminLayout from '@/layouts/AdminLayout.vue'
-import NotFoundView from '@/components/layout/NotFoundView.vue'
 import { createRouter, createWebHistory } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 
@@ -29,7 +24,7 @@ const routes = [
   },
   {
     path: '/auth',
-    component: AuthLayout,
+    component: () => import('@/layouts/AuthLayout.vue'),
     children: [
       {
         path: 'login',
@@ -71,7 +66,7 @@ const routes = [
   },
   {
     path: '/student',
-    component: StudentLayout,
+    component: () => import('@/layouts/StudentLayout.vue'),
     meta: { requiresAuth: true, role: 'STUDENT' },
     children: [
       {
@@ -176,7 +171,7 @@ const routes = [
   // 学生首页已移除，统一使用 /student/dashboard
   {
     path: '/teacher',
-    component: TeacherLayout,
+    component: () => import('@/layouts/TeacherLayout.vue'),
     meta: { requiresAuth: true, role: 'TEACHER' },
     children: [
       {
@@ -322,7 +317,7 @@ const routes = [
   },
   {
     path: '/admin',
-    component: AdminLayout,
+    component: () => import('@/layouts/AdminLayout.vue'),
     meta: { requiresAuth: true, role: 'ADMIN' },
     children: [
       { path: '', redirect: '/admin/console' },
@@ -495,7 +490,7 @@ const routes = [
   {
     path: '/:pathMatch(.*)*',
     name: 'NotFound',
-    component: NotFoundView
+    component: () => import('@/components/layout/NotFoundView.vue')
   }
 ];
 

@@ -184,4 +184,4 @@ graph LR
 ## 页面 → Store → API 快速索引（示例）
 - 课程详情：`CourseDetailView.vue` → `useCourseStore` → `course.api.ts` → `CourseController`
 - 作业提交：`AssignmentSubmitView.vue` → `useSubmissionStore` → `submission.api.ts` → `SubmissionController`
-- 成绩批改：`GradeAssignmentView.vue` → `useTeacherStore` → `grade.api.ts` → `GradeController`
+- 成绩批改：`GradeAssignmentView.vue` → `grade.api.ts` → `GradeController`

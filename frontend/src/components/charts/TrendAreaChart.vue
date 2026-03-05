@@ -17,7 +17,7 @@
 
 <script setup lang="ts">
 import { ref, watch, onMounted, onUnmounted, nextTick, computed } from 'vue'
-import * as echarts from 'echarts'
+import { echarts, type ECharts } from '@/charts/echartsCore'
 import { resolveEChartsTheme, glassTooltipCss, resolveThemePalette } from '@/charts/echartsTheme'
 import { getEChartsThemedTokens } from '@/utils/theme'
 import { normalizeCssColor, rgba } from '@/utils/theme'
@@ -50,7 +50,7 @@ const props = withDefaults(defineProps<Props>(), {
 })
 
 const chartRef = ref<HTMLElement | null>(null)
-let chart: echarts.ECharts | null = null
+let chart: ECharts | null = null
 let ro: ResizeObserver | null = null
 let darkObserver: MutationObserver | null = null
 let lastIsDark: boolean | null = null
@@ -245,5 +245,4 @@ defineExpose({ getChartInstance: () => chart })
 .trend-area-chart-container { position: relative; display: flex; flex-direction: column; }
 .trend-area-chart { flex: 1; min-height: 200px; }
 </style>
-
 

@@ -116,14 +116,15 @@
               width="18rem"
               @change="onCourseChange"
             />
-            <label class="text-sm text-gray-600 whitespace-nowrap pl-4 pr-3">{{ t('shared.behaviorEvidence.range') || '行为时间窗' }}</label>
-            <glass-popover-select
-              v-model="behaviorRange"
-              :options="behaviorRangeOptions"
-              size="sm"
-              width="10rem"
-              @change="onBehaviorRangeChange"
-            />
+            <div class="pl-2">
+              <behavior-range-select
+                v-model="behaviorRange"
+                mode="full"
+                size="sm"
+                width="10rem"
+                @change="onBehaviorRangeChange"
+              />
+            </div>
           </card>
           <!-- 关键指标（四卡一行，根据课程筛选变化） -->
           <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
@@ -339,7 +340,7 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, computed, ref, watch, nextTick } from 'vue';
+import { onMounted, computed, ref, watch, nextTick, defineAsyncComponent } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useGradeStore } from '@/stores/grade';
 
@@ -352,23 +353,23 @@ import { ChatBubbleLeftRightIcon, ChartPieIcon, ArrowDownTrayIcon, DocumentTextI
 import { StarIcon } from '@heroicons/vue/24/outline'
 import { useChatStore } from '@/stores/chat'
 import { teacherStudentApi } from '@/api/teacher-student.api'
-import RadarChart from '@/components/charts/RadarChart.vue'
 import { teacherApi } from '@/api/teacher.api'
 import { adminApi } from '@/api/admin.api'
 import PageHeader from '@/components/ui/PageHeader.vue'
 import GlassPopoverSelect from '@/components/ui/filters/GlassPopoverSelect.vue'
+import BehaviorRangeSelect from '@/components/ui/filters/BehaviorRangeSelect.vue'
 import Card from '@/components/ui/Card.vue'
 import Badge from '@/components/ui/Badge.vue'
 import { getMbtiVariant } from '@/shared/utils/badgeColor'
 import { userApi } from '@/api/user.api'
 import UserAvatar from '@/components/ui/UserAvatar.vue'
-import BehaviorEvidenceSection from '@/features/shared/views/BehaviorEvidenceSection.vue'
-import BehaviorInsightSection from '@/features/shared/views/BehaviorInsightSection.vue'
 import PaginationBar from '@/components/ui/PaginationBar.vue'
-import html2canvas from 'html2canvas'
-import jsPDF from 'jspdf'
 import { gradeApi } from '@/api/grade.api'
 import { useUIStore } from '@/stores/ui'
+
+const RadarChart = defineAsyncComponent(() => import('@/components/charts/RadarChart.vue'))
+const BehaviorEvidenceSection = defineAsyncComponent(() => import('@/features/shared/views/BehaviorEvidenceSection.vue'))
+const BehaviorInsightSection = defineAsyncComponent(() => import('@/features/shared/views/BehaviorInsightSection.vue'))
 const route = useRoute();
 const router = useRouter();
 const gradeStore = useGradeStore();
@@ -401,6 +402,31 @@ const reportInsightWrap = ref<HTMLElement | null>(null)
 const reportEvidenceWrap = ref<HTMLElement | null>(null)
 const reportGradesWrap = ref<HTMLElement | null>(null)
 
+type Html2CanvasFn = (element: HTMLElement, options?: any) => Promise<HTMLCanvasElement>
+type JsPdfCtor = new (options?: any) => any
+let html2canvasLoader: Html2CanvasFn | null = null
+let jsPdfCtor: JsPdfCtor | null = null
+let exportLibsLoading: Promise<void> | null = null
+
+async function ensureReportExportLibs() {
+  if (html2canvasLoader && jsPdfCtor) return
+  if (!exportLibsLoading) {
+    exportLibsLoading = Promise.all([
+      import('html2canvas'),
+      import('jspdf')
+    ])
+      .then(([html2canvasMod, jsPdfMod]) => {
+        html2canvasLoader = (html2canvasMod.default || html2canvasMod) as Html2CanvasFn
+        jsPdfCtor = (jsPdfMod.default || jsPdfMod) as unknown as JsPdfCtor
+      })
+      .catch((err) => {
+        exportLibsLoading = null
+        throw err
+      })
+  }
+  await exportLibsLoading
+}
+
 const grades = computed(() => gradeStore.grades);
 
 // 选中课程下的过滤视图统计
@@ -431,12 +457,6 @@ const totalPages = computed(() => Math.max(1, Math.ceil((total.value || 0) / pag
 const selectedCourseId = ref<string>('');
 const courseContextId = computed(() => selectedCourseId.value || (route.query.courseId ? String(route.query.courseId) : undefined))
 const behaviorRange = ref<'7d' | '30d' | '180d' | '365d'>('7d')
-const behaviorRangeOptions = computed(() => ([
-  { label: (t('shared.behaviorEvidence.range7d') as any) || '近一周', value: '7d' },
-  { label: (t('shared.behaviorEvidence.range30d') as any) || '近一月', value: '30d' },
-  { label: (t('shared.behaviorEvidence.range180d') as any) || '近半年', value: '180d' },
-  { label: (t('shared.behaviorEvidence.range365d') as any) || '近一年', value: '365d' }
-]))
 
 const studentCourses = ref<any[]>([])
 const initialDataReady = ref(false)
@@ -570,8 +590,9 @@ function buildGradesTableForExport(allGrades: any[]) {
 }
 
 async function renderElementToCanvas(el: HTMLElement, opts?: { sanitizeThemeColors?: boolean }) {
+  await ensureReportExportLibs()
   const sanitizeThemeColors = opts?.sanitizeThemeColors !== false
-  return await html2canvas(el, {
+  return await (html2canvasLoader as Html2CanvasFn)(el, {
     scale: 2,
     backgroundColor: '#ffffff',
     useCORS: true,
@@ -838,6 +859,7 @@ async function exportReportPdf() {
 
   exportingReport.value = true
   try {
+    await ensureReportExportLibs()
     const courseId = selectedCourseId.value || undefined
     // 拉取全部成绩（不受分页影响）
     const allResp: any = await gradeApi.getGradesByStudent(String(sid), { page: 1, size: 10000, courseId })
@@ -952,7 +974,8 @@ async function exportReportPdf() {
     `)
     doc.close()
 
-    const pdf = new jsPDF({ unit: 'pt', format: 'a4' })
+    const JsPdf = jsPdfCtor as JsPdfCtor
+    const pdf = new JsPdf({ unit: 'pt', format: 'a4' })
     // 自动“排版到同页”：尽量把多个 section 放到一页里，减少大片空白；
     // 如果某个 section 太高，再单独切页渲染（仍保持不截断）。
     const margin = 18
@@ -1306,16 +1329,14 @@ onMounted(async () => {
 
 <style scoped>
 .perf-section {
-  content-visibility: auto;
-  contain: layout style paint;
-  contain-intrinsic-size: 560px;
+  contain: layout paint;
 }
 
 .perf-section--medium {
-  contain-intrinsic-size: 760px;
+  contain: layout paint;
 }
 
 .perf-section--large {
-  contain-intrinsic-size: 1200px;
+  contain: layout paint;
 }
 </style>

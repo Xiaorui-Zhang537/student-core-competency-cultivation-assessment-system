@@ -290,31 +290,26 @@ sequenceDiagram
 
 ## 示例 8：成绩批改与发布（POST /api/grades → /api/grades/{id}/publish）
 
-- 前端：`GradeAssignmentView.vue` → `useTeacherStore` → `grade.api.ts`
+- 前端：`GradeAssignmentView.vue` → `grade.api.ts`
 - 后端：`GradeController`
 
 ```mermaid
 sequenceDiagram
   participant V as Vue(GradeAssignmentView)
-  participant ST as Store(useTeacherStore)
   participant A as Axios
   participant GC as GradeController
-  V->>ST: gradeSubmission(payload)
-  ST->>A: POST /api/grades { GradeRequest }
+  V->>A: POST /api/grades { GradeRequest }
   A->>GC: 保存成绩
   GC-->>A: { id, isPublished:false }
-  A-->>ST: 保存 gradeId
-  V->>ST: publishGrade(id)
-  ST->>A: POST /api/grades/{id}/publish
+  A-->>V: 保存 gradeId
+  V->>A: POST /api/grades/{id}/publish
   A->>GC: 发布
   alt 成功
     GC-->>A: ok
-    A-->>ST: 更新状态
-    ST-->>V: 学生可见
+    A-->>V: 学生可见
   else 409/403
     GC-->>A: error
-    A-->>ST: 抛错
-    ST-->>V: 提示重试或权限不足
+    A-->>V: 提示重试或权限不足
   end
 ```
 
@@ -406,30 +401,23 @@ sequenceDiagram
 
 ---
 
-## 示例 12：课时进度异常重传（POST /api/lessons/{id}/progress）
+## 示例 12：课程详情课时列表（GET /api/lessons/course/{id}）
 
-- 前端：`LessonPlayer.vue` → `useLessonStore` → `lesson.api.ts`
+- 前端：`CourseDetailView.vue` → `useLessonStore` → `lesson.api.ts`
 - 后端：`LessonController`
 
 ```mermaid
 sequenceDiagram
-  participant V as Vue(LessonPlayer)
+  participant V as Vue(CourseDetailView)
   participant ST as Store(useLessonStore)
   participant A as Axios
   participant C as LessonController
-  V->>ST: onProgress(80)
-  ST->>A: POST /api/lessons/{id}/progress
-  A->>C: 上报进度
-  alt 成功
-    C-->>A: ok
-    A-->>ST: 更新本地进度
-    ST-->>V: 正常播放
-  else 401/429/503
-    C-->>A: error
-    A-->>ST: 抛错
-    ST-->>ST: 指数退避重试(1s→2s→5s→10s)
-    ST-->>V: 提示“已暂存，将自动重传”
-  end
+  V->>ST: fetchLessonsForCourse(courseId)
+  ST->>A: GET /api/lessons/course/{id}
+  A->>C: 获取课时列表
+  C-->>A: Lesson[]
+  A-->>ST: lessons
+  ST-->>V: 渲染课程目录
 ```
 
 ---

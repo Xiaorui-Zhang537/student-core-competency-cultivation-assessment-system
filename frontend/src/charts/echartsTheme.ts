@@ -1,4 +1,4 @@
-import * as echarts from 'echarts'
+import type { EChartsCoreOption } from '@/charts/echartsCore'
 import { getEChartsThemedTokens, normalizeCssColor } from '@/utils/theme'
 
 /**
@@ -17,7 +17,7 @@ export function resolveEChartsTheme() {
   const axisLabel = String(t.axisLabel || 'rgba(0,0,0,0.62)')
   const splitLine = String(t.splitLine || 'rgba(0,0,0,0.22)')
 
-  const theme: echarts.EChartsCoreOption = {
+  const theme: EChartsCoreOption = {
     backgroundColor: 'transparent',
     color: colorPalette,
     textStyle: { color: baseText },

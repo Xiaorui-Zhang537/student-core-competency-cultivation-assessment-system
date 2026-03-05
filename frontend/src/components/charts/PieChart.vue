@@ -32,7 +32,7 @@
 
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted, watch, nextTick } from 'vue'
-import * as echarts from 'echarts'
+import { echarts, type ECharts } from '@/charts/echartsCore'
 import { resolveEChartsTheme, glassTooltipCss, resolveThemePalette } from '@/charts/echartsTheme'
 import { getEChartsThemedTokens, normalizeCssColor } from '@/utils/theme'
 import { ChartPieIcon } from '@heroicons/vue/24/outline'
@@ -84,7 +84,7 @@ const props = withDefaults(defineProps<Props>(), {
 
 // 状态
 const chartRef = ref<HTMLElement>()
-const chartInstance = ref<echarts.ECharts>()
+const chartInstance = ref<ECharts>()
 let resizeObserver: ResizeObserver | null = null
 let darkObserver: MutationObserver | null = null
 let lastIsDark: boolean | null = null

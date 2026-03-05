@@ -1,5 +1,5 @@
 import { api } from './config';
-import type { CourseAnalyticsData, AssignmentAnalyticsData, ClassPerformanceData, CourseStudentPerformanceResponse } from '@/types/teacher';
+import type { CourseAnalyticsData, ClassPerformanceData, CourseStudentPerformanceResponse } from '@/types/teacher';
 
 export const teacherApi = {
   // Note: backend currently has no '/teachers/analytics/dashboard' endpoint
@@ -9,10 +9,6 @@ export const teacherApi = {
 
   getCourseAnalytics: (courseId: string): Promise<CourseAnalyticsData> => {
     return api.get(`/teachers/analytics/course/${courseId}`);
-  },
-
-  getAssignmentAnalytics: (assignmentId: string): Promise<AssignmentAnalyticsData> => {
-    return api.get(`/teachers/analytics/assignment/${assignmentId}`);
   },
 
   getClassPerformance: (courseId: string): Promise<ClassPerformanceData> => {
@@ -25,13 +21,6 @@ export const teacherApi = {
   ): Promise<CourseStudentPerformanceResponse> => {
     return api.get(`/teachers/analytics/course/${courseId}/students`, { params });
   },
-  // 获取课程全部学生（用于雷达图下拉），默认一次取最多10000条
-  getAllCourseStudentsBasic: (courseId: string, keyword?: string) => {
-    const params: any = { page: 1, size: 10000 };
-    if (keyword) params.keyword = keyword;
-    return api.get(`/teachers/students/basic`, { params: { ...params, courseId } });
-  },
-  
   exportCourseStudents: (
     courseId: string,
     params?: { search?: string; sortBy?: string; activity?: string; grade?: string; progress?: string }
@@ -56,12 +45,6 @@ export const teacherApi = {
   // Ability radar & weights
   getAbilityRadar: (params: { courseId: string; classId?: string; studentId?: string; startDate?: string; endDate?: string }): Promise<any> => {
     return api.get('/teachers/ability/radar', { params });
-  },
-  getAbilityWeights: (courseId: string): Promise<any> => {
-    return api.get('/teachers/ability/weights', { params: { courseId } });
-  },
-  updateAbilityWeights: (payload: { courseId: string; weights: Record<string, number> }): Promise<any> => {
-    return api.put('/teachers/ability/weights', payload);
   },
   exportAbilityRadarCsv: (params: { courseId: string; classId?: string; studentId?: string; startDate?: string; endDate?: string; scope?: 'single' | 'all' }): Promise<Blob> => {
     return api.get('/teachers/ability/radar/export', { params, responseType: 'blob' as any });

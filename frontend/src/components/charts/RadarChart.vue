@@ -7,7 +7,7 @@
 
 <script setup lang="ts">
 import { onMounted, onUnmounted, ref, watch, nextTick, getCurrentInstance } from 'vue'
-import * as echarts from 'echarts'
+import { echarts, type ECharts } from '@/charts/echartsCore'
 import { resolveEChartsTheme, glassTooltipCss, resolveThemePalette } from '@/charts/echartsTheme'
 import { getEChartsThemedTokens } from '@/utils/theme'
 
@@ -36,7 +36,7 @@ const props = withDefaults(defineProps<Props>(), {
 })
 
 const chartRef = ref<HTMLElement>()
-let inst: echarts.ECharts | null = null
+let inst: ECharts | null = null
 let darkObserver: { disconnect: () => void } | null = null
 let lastIsDark: boolean | null = null
 let reRenderScheduled = false
@@ -44,6 +44,10 @@ const tooltipScopeClass = `radar-chart-tooltip-${getCurrentInstance()?.uid ?? 'l
 
 function tooltipElementsForCurrentChart(): HTMLElement[] {
   return Array.from(document.querySelectorAll(`.echarts-glass-tooltip.${tooltipScopeClass}`)) as HTMLElement[]
+}
+
+function allTooltipElements(): HTMLElement[] {
+  return Array.from(document.querySelectorAll('.echarts-tooltip, .echarts-glass-tooltip')) as HTMLElement[]
 }
 
 const buildOption = () => {
@@ -146,6 +150,10 @@ const render = async () => {
     tooltipEls.forEach(el => { el.style.visibility = 'hidden' })
     inst.on('showTip', () => {
       const els = tooltipElementsForCurrentChart()
+      const scoped = new Set(els)
+      allTooltipElements().forEach(el => {
+        if (!scoped.has(el)) el.style.visibility = 'hidden'
+      })
       els.forEach(el => { el.style.visibility = 'visible' })
     })
     inst.on('hideTip', () => {

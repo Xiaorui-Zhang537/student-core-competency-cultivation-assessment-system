@@ -8,7 +8,7 @@ outline: [2, 3]
 
 ## 方法签名
 - `getDashboardData()` / `getMyCourses(params)` / `getCourseProgress(courseId)`
-- `getLessonDetails(lessonId)` / `markLessonAsCompleted(lessonId)` / `markLessonAsIncomplete(lessonId)`
+- `getLessonDetails(lessonId)`
 - `getMySubmissions(params)` / `getAnalysis(params)`
 - `getCourseParticipants(courseId, keyword?)` / `getAssignments(params)`
 
@@ -30,7 +30,7 @@ outline: [2, 3]
   - `status` 取值：`pending | submitted | graded`（小写）。若不传表示全部；待提交由后端根据发布/提交状态聚合。
   - `q` 为关键字搜索，与 `/students/my-courses/paged` 保持一致。
 - `StudentDashboardData`/`StudentCourse`/`StudentLesson`/`StudentSubmission` 见 `@/types/student`
-- `getAnalysis`：`{ range?: '7d'|'30d'|'term' }`，返回包含 KPI/雷达/趋势/近期成绩
+- `getAnalysis`：`{ range?: '7d'|'30d'|'term' }`，返回包含 KPI/雷达/趋势/近期成绩；其中 `studyHours/activeDays` 按当前时间窗内的真实学习热力图数据计算，`completionRate` 按当前时间窗内相关已发布作业的真实完成情况计算
 
 ## 示例
 // 学生作业（分页/筛选/搜索）
@@ -45,10 +45,8 @@ const myCourses = await studentApi.getMyCourses({ page: 1, size: 10 })
 // 课程进度
 const progress = await studentApi.getCourseProgress('1001')
 
-// 课时详情+完成/撤销完成
+// 课时详情
 const lesson = await studentApi.getLessonDetails('3001')
-await studentApi.markLessonAsCompleted('3001')
-await studentApi.markLessonAsIncomplete('3001')
 
 // 我的作业（分页/筛选）
 const myAssignments = await studentApi.getAssignments({ courseId: '1001', status: 'pending', page: 1, size: 10 })

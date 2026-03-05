@@ -57,9 +57,6 @@ export const teacherStudentApi = {
   getStudentAlerts(studentId: string) {
     return api.get<{ alerts: Array<{ code: string; message: string; severity: 'info'|'warn'|'critical' }> }>(`/teachers/students/${studentId}/alerts`)
   },
-  getStudentRecommendations(studentId: string, limit = 6) {
-    return api.get<Array<{ id:number; title:string; description:string; recommendationType:string; resourceUrl?:string; difficultyLevel?:string; estimatedTime?:string; priorityScore?:number; isRead?:boolean; isAccepted?:boolean }>>(`/teachers/students/${studentId}/recommendations`, { params: { limit } })
-  },
   // 课程下学生基础列表（用于联系人列表）
   getCourseStudentsBasic(courseId: string, page = 1, size = 10000, keyword?: string) {
     const params: any = { courseId, page, size }

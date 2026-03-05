@@ -103,17 +103,6 @@ export const aiApi = {
 
     return controller
   },
-  // Voice practice turn persistence
-  saveVoiceTurn: (data: {
-    conversationId: number
-    model?: string
-    userTranscript?: string
-    assistantText?: string
-    userAudioFileId?: number
-    assistantAudioFileId?: number
-    scenario?: string
-    locale?: string
-  }) => api.post('/ai/voice/turns', data),
   // Conversations
   createConversation: (data: { title?: string; model?: string; provider?: string }) => api.post('/ai/conversations', data),
   listConversations: (params?: { q?: string; pinned?: boolean; archived?: boolean; page?: number; size?: number }) => api.get('/ai/conversations', { params }),
@@ -127,4 +116,3 @@ export const aiApi = {
   getMemory: () => api.get('/ai/memory'),
   updateMemory: (data: { enabled?: boolean; content?: string }) => api.put('/ai/memory', data)
 }
-

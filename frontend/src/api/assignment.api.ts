@@ -63,10 +63,6 @@ export const assignmentApi = {
     return api.post(`/assignments/${id}/publish`);
   },
 
-  closeAssignment: (id: string): Promise<void> => {
-    return api.post(`/assignments/${id}/close`);
-  },
-
   // Submission stats for a specific assignment
   getAssignmentSubmissionStats: (id: string): Promise<{ assignmentId: string; courseId: string; totalEnrolled: number; submittedCount: number; unsubmittedCount: number }> => {
     return api.get(`/assignments/${id}/submission-stats`);

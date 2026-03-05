@@ -285,6 +285,13 @@ import { resolveUserDisplayName } from '@/shared/utils/user'
 import { downloadCsv } from '@/utils/download'
 import { useCourseAssignmentsOptions } from '@/features/teacher/composables/useCourseAssignmentsOptions'
 import { debounce } from '@/shared/utils/debounce'
+import {
+  formatRadarArea,
+  getRadarBadgeVariant,
+  formatRadarBadgeLabel as formatRadarBadgeLabelByLocale,
+  formatDimensionLabel as formatDimensionLabelByLocale,
+  formatRadarValue
+} from '@/features/teacher/utils/radarDisplay'
 
 // Stores
 const teacherStore = useTeacherStore()
@@ -385,16 +392,6 @@ const pickStudent = (studentId: string) => {
       studentId: normalized
     }
   })
-}
-
-const handleRankingPrev = () => {
-  if (rankingPage.value <= 1) return
-  rankingPage.value -= 1
-}
-
-const handleRankingNext = () => {
-  if (rankingPage.value >= rankingTotalPages.value) return
-  rankingPage.value += 1
 }
 
 const loadStudentRanking = async () => {
@@ -752,35 +749,8 @@ const askAiForAnalytics = () => {
   router.push({ path: '/teacher/assistant', query: { q } })
 }
 
-const formatRadarArea = (area?: number) => {
-  if (!Number.isFinite(Number(area))) return '--'
-  return `${Number(area).toFixed(1)}%`
-}
-
-const getRadarBadgeVariant = (classification?: string) => {
-  switch ((classification || '').toUpperCase()) {
-    case 'A': return 'success'
-    case 'B': return 'warning'
-    case 'C': return 'info'
-    default: return 'danger'
-  }
-}
-
-const formatRadarBadgeLabel = (classification?: string) => {
-  const key = (classification || 'D').toUpperCase() as 'A' | 'B' | 'C' | 'D'
-  const desc = t(`teacher.students.radar.classification.${key}`)
-  return `${key} · ${desc}`
-}
-
-const formatDimensionLabel = (code: string) => {
-  const label = t(`shared.radarLegend.dimensions.${code}.title`) as any
-  return label || code
-}
-
-const formatRadarValue = (value?: number) => {
-  if (!Number.isFinite(Number(value))) return '--'
-  return Number(value).toFixed(1)
-}
+const formatRadarBadgeLabel = (classification?: string) => formatRadarBadgeLabelByLocale((key: string) => String(t(key) as any), classification)
+const formatDimensionLabel = (code: string) => formatDimensionLabelByLocale((key: string) => String(t(key) as any), code)
 
 function setRadarDimensions(dims: string[]) {
   rawRadarDimensions.value = Array.isArray(dims) ? [...dims] : []

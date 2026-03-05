@@ -40,9 +40,6 @@ export const voicePracticeApi = {
   listSessions: (params?: { q?: string; page?: number; size?: number }) =>
     api.get('/ai/voice/sessions', { params }),
 
-  getSession: (sessionId: string | number) =>
-    api.get(`/ai/voice/sessions/${sessionId}`),
-
   updateSession: (sessionId: string | number, data: { title?: string; pinned?: boolean }) =>
     api.patch(`/ai/voice/sessions/${sessionId}`, data),
 
@@ -70,4 +67,3 @@ export const voicePracticeApi = {
    */
   reportReplay: (data: VoiceReplayReportRequest) => api.post('/ai/voice/replay', data)
 }
-

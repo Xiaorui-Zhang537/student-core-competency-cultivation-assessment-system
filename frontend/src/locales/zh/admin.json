@@ -72,6 +72,12 @@
     "moderation": {
       "viewCommunityCenter": "查看具体社区",
       "exportCommunity": "导出社区CSV",
+      "cards": {
+        "totalPosts": "帖子总数",
+        "totalComments": "评论总数",
+        "pendingPosts": "待处理草稿",
+        "blockedItems": "已屏蔽内容"
+      },
       "viewComments": "查看评论",
       "centerTitle": "社区治理中心",
       "backToGovernance": "返回治理表格",
