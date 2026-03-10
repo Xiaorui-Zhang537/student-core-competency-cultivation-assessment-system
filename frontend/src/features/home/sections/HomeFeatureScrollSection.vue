@@ -49,7 +49,7 @@
                   <button
                     type="button"
                     class="w-full text-left p-4 md:p-5"
-                    @click="activeIndex = idx"
+                    @click="onStepClick(idx)"
                   >
                     <div class="flex items-start gap-3">
                       <div class="mt-0.5">
@@ -266,6 +266,7 @@ const visualRef = ref<HTMLElement | null>(null)
 
 let cleanup: (() => void) | null = null
 let refreshScroll: (() => void) | null = null
+let activeScrollTrigger: any = null
 
 const aspectByKey = ref<Record<string, number>>({})
 const activeKey = computed(() => steps.value[activeIndex.value]?.key || '')
@@ -289,6 +290,40 @@ function onImgLoad(e: Event) {
     aspectByKey.value = { ...aspectByKey.value, [key]: w / h }
   } catch {}
   try { refreshScroll?.() } catch {}
+}
+
+function onStepClick(idx: number) {
+  const total = steps.value.length
+  if (!total) return
+  const targetIndex = Math.min(total - 1, Math.max(0, Math.trunc(idx)))
+  activeIndex.value = targetIndex
+
+  const st = activeScrollTrigger
+  const start = Number(st?.start)
+  const end = Number(st?.end)
+  if (!Number.isFinite(start) || !Number.isFinite(end) || end <= start) return
+
+  // Pick the center of each segment so ScrollTrigger's floor() mapping lands on the intended step.
+  const progress = Math.min(0.999, Math.max(0, (targetIndex + 0.5) / total))
+  const targetY = start + (end - start) * progress
+
+  try {
+    const anyWin = window as any
+    const lenis = anyWin?.__lenis
+    if (lenis && typeof lenis.scrollTo === 'function') {
+      lenis.scrollTo(targetY, {
+        duration: 0.55,
+        easing: (t: number) => 1 - Math.pow(1 - t, 3),
+      })
+      return
+    }
+  } catch {}
+
+  try {
+    window.scrollTo({ top: targetY, behavior: 'smooth' })
+  } catch {
+    window.scrollTo(0, targetY)
+  }
 }
 
 async function setupScrollOrchestration() {
@@ -345,6 +380,7 @@ async function setupScrollOrchestration() {
         if (idx !== activeIndex.value) activeIndex.value = idx
       },
     })
+    activeScrollTrigger = st
 
     // Subtle camera-like drift on the visual container to avoid static feeling when pinned.
     if (visualRef.value) {
@@ -384,6 +420,7 @@ async function setupScrollOrchestration() {
       try {
         st.kill()
       } catch {}
+      activeScrollTrigger = null
       try {
         stopWatch?.()
       } catch {}
@@ -406,6 +443,7 @@ async function setupScrollOrchestration() {
       ctx.revert()
     } catch {}
     refreshScroll = null
+    activeScrollTrigger = null
   }
 }
 
