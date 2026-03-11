@@ -1,11 +1,11 @@
 <template>
-  <div class="max-w-md w-[92%] mx-auto">
-    <div class="text-center mb-8">
-      <h2 class="text-3xl font-bold text-gray-900 dark:text-white">{{ t('auth.login.title') }}</h2>
+  <div class="max-w-md w-full mx-auto px-1 sm:px-0">
+    <div class="text-center mb-6 sm:mb-8">
+      <h2 class="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">{{ t('auth.login.title') }}</h2>
       <p class="mt-2 text-sm text-gray-600 dark:text-gray-400">{{ t('auth.login.subtitle') }}</p>
     </div>
 
-    <form @submit.prevent="handleLogin(form)" class="space-y-6">
+    <form @submit.prevent="handleLogin(form)" class="space-y-5 sm:space-y-6">
       <div>
         <label for="username" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{{ t('auth.login.form.username.label') }}</label>
         <div class="rounded-lg">

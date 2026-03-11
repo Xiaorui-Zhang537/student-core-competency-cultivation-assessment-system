@@ -4,7 +4,7 @@
     <nav class="sticky top-0 z-40 px-6 pt-6 pb-6">
       <div class="flex items-center gap-3">
         <!-- 左：系统名称（药丸，SparklesText，不换行，自适应宽度，高度60px） -->
-        <liquid-glass :radius="30" class="flex items-center justify-center gap-3 h-full" containerClass="rounded-full h-[60px] px-5 whitespace-nowrap">
+        <liquid-glass effect="occlusionBlur" :tint="false" :radius="30" class="flex items-center justify-center gap-3 h-full" containerClass="rounded-full h-[60px] px-5 whitespace-nowrap">
           <div class="flex items-center justify-center gap-3">
             <liquid-logo :size="36" :image-url="'/brand/logo.png'" :liquid="12" :speed="1.0" />
             <sparkles-text :text="t('app.title') as string" :sparklesCount="18" class="text-3xl" />
@@ -13,8 +13,8 @@
 
         <div class="flex-1"></div>
 
-        <!-- 右：Dock（外层液态玻璃药丸 + 透明 Dock 内核） -->
-        <liquid-glass :radius="30" class="flex items-center justify-center h-full" containerClass="rounded-full h-[60px] px-2">
+        <!-- 右：Dock（恢复外层玻璃容器） -->
+        <liquid-glass effect="occlusionBlur" :tint="false" :radius="30" class="flex items-center justify-center h-full" containerClass="rounded-full h-[60px] px-2">
           <dock :magnification="0" :distance="0" :animate="false" variant="transparent" paddingClass="pl-1.5 pr-5" heightClass="h-[56px]" roundedClass="rounded-full" gapClass="gap-3">
             <dock-icon :animate="false">
               <glass-tooltip :content="(isDockVisible ? (t('layout.common.hideDock') as string) : (t('layout.common.showDock') as string)) || '切换 Dock'">

@@ -1,20 +1,20 @@
 <template>
-  <div>
-    <div class="text-center mb-8">
-      <h2 class="text-3xl font-bold text-gray-900 dark:text-white">{{ t('auth.register.title') }}</h2>
+  <div class="max-w-md w-full mx-auto px-1 sm:px-0">
+    <div class="text-center mb-6 sm:mb-8">
+      <h2 class="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">{{ t('auth.register.title') }}</h2>
       <p class="mt-2 text-sm text-gray-600 dark:text-gray-400">{{ t('auth.register.subtitle') }}</p>
     </div>
 
-    <form @submit.prevent="handleSubmit" class="space-y-6">
+    <form @submit.prevent="handleSubmit" class="space-y-5 sm:space-y-6">
       <!-- 默认头像选择（统一使用 UserAvatar 显示，圆形裁切） -->
       <div>
         <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{{ t('auth.register.form.avatar') || '选择头像（可选）' }}</label>
-        <div v-glass="{ strength: 'ultraThin' }" class="grid grid-cols-5 gap-2 rounded-lg p-2">
+        <div v-glass="{ strength: 'ultraThin' }" class="grid grid-cols-4 sm:grid-cols-5 gap-2 rounded-xl p-2">
           <button
             v-for="(url, idx) in defaultAvatars"
             :key="idx"
             type="button"
-            class="h-12 w-12 rounded-full overflow-hidden border-2 transition-all bg-transparent flex items-center justify-center"
+            class="h-10 w-10 sm:h-12 sm:w-12 rounded-full overflow-hidden border-2 transition-all bg-transparent flex items-center justify-center"
             :class="
               form.avatar === url
                 ? 'border-primary-500 ring-2 ring-primary-500 ring-offset-2 ring-offset-white dark:ring-offset-gray-800 shadow-md'
@@ -23,16 +23,16 @@
             @click="form.avatar = url"
             :title="'默认头像 ' + (idx+1)"
           >
-            <user-avatar :avatar="url" :size="44" :rounded="true" :fit="'cover'" />
+            <user-avatar :avatar="url" :size="40" :rounded="true" :fit="'cover'" />
           </button>
         </div>
       </div>
       <div>
         <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">{{ t('auth.register.form.role.label') }}</label>
-        <div class="grid grid-cols-2 gap-4">
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
           <label class="relative" v-for="roleOption in roles" :key="roleOption.value">
             <input v-model="form.role" type="radio" :value="roleOption.value" class="sr-only peer" />
-            <div v-glass="{ strength: 'regular', interactive: true }" class="p-4 border-2 rounded-lg cursor-pointer peer-checked:border-primary-500">
+            <div v-glass="{ strength: 'regular', interactive: true }" class="p-3 sm:p-4 border-2 rounded-xl cursor-pointer peer-checked:border-primary-500">
               <div class="text-center">
                 {{ roleOption.value === 'student' ? t('auth.register.form.role.student') : t('auth.register.form.role.teacher') }}
               </div>
@@ -75,7 +75,7 @@
       </div>
 
       <div>
-        <Button class="w-full" variant="info" icon="confirm" type="submit" :disabled="authStore.loading || (form.username && !isUsernameValid) || (form.email && !isEmailValid) || (form.password && !isPasswordValid)">
+        <Button class="w-full rounded-full" variant="info" icon="confirm" type="submit" :disabled="authStore.loading || (form.username && !isUsernameValid) || (form.email && !isEmailValid) || (form.password && !isPasswordValid)">
           {{ authStore.loading ? t('auth.register.action.submitting') : t('auth.register.action.submit') }}
         </Button>
       </div>

@@ -1,28 +1,31 @@
 <template>
-  <div>
+  <div class="homeView">
     <!-- 概览（Hero + Gallery） -->
     <section id="overview" class="scroll-mt-24">
       <div class="relative">
-        <section class="py-10 md:py-16">
-          <div class="grid md:grid-cols-12 gap-8 items-center">
-            <div class="md:col-span-6 min-w-0 relative z-10">
-              <div class="mb-8 md:mb-10">
-                <img src="/brand/logo.png" alt="System Logo" class="h-28 md:h-36 w-auto select-none pointer-events-none" />
+        <section class="py-6 sm:py-8 md:py-12 xl:py-16">
+          <div class="grid md:grid-cols-12 gap-6 xl:gap-8 items-center">
+            <div class="md:col-span-6 xl:col-span-6 2xl:col-span-7 min-w-0 relative z-10 text-center md:text-left">
+              <div class="mb-6 md:mb-8 xl:mb-10 flex justify-center md:justify-start">
+                <img src="/brand/logo.png" alt="System Logo" class="h-20 sm:h-24 md:h-28 xl:h-36 w-auto select-none pointer-events-none" />
               </div>
               <h1
-                class="text-left text-4xl sm:text-5xl md:text-7xl font-extrabold leading-tight md:leading-[1.1] break-words break-all mb-6 text-[color:var(--color-base-content)]"
+                :class="[
+                  'text-center md:text-left text-3xl sm:text-5xl md:text-6xl xl:text-5xl 2xl:text-6xl font-extrabold leading-tight md:leading-[1.1] break-words mb-5 md:mb-6 text-[color:var(--color-base-content)]',
+                  isZhLocale ? 'xl:whitespace-nowrap' : ''
+                ]"
               >
                 {{ t('app.home.hero.title') }}
               </h1>
-              <p class="text-left text-base sm:text-lg md:text-2xl leading-relaxed break-words break-all text-subtle">
+              <p class="text-center md:text-left text-base sm:text-lg md:text-xl xl:text-xl 2xl:text-2xl leading-relaxed break-words text-subtle max-w-[42ch] mx-auto md:mx-0">
                 {{ t('app.home.hero.subtitle') }}
               </p>
 
-              <div class="mt-8 flex flex-wrap items-center gap-4">
+              <div class="mt-7 sm:mt-8 flex flex-col sm:flex-row sm:flex-wrap items-stretch sm:items-center gap-3 sm:gap-4">
                 <Button
                   variant="primary"
                   size="xl"
-                  class="heroCtaBtn px-8 min-w-[190px] relative overflow-hidden"
+                  class="heroCtaBtn px-8 min-w-[190px] w-full sm:w-auto relative overflow-hidden"
                   @click="goExperience"
                 >
                   <span class="heroCtaGlow" aria-hidden="true"></span>
@@ -34,7 +37,7 @@
                   </span>
                 </Button>
 
-                <Button variant="info" size="xl" class="px-7 min-w-[170px]" @click="goDocs">
+                <Button variant="info" size="xl" class="px-7 min-w-[170px] w-full sm:w-auto" @click="goDocs">
                   <template #icon>
                     <BookOpenIcon class="w-5 h-5" />
                   </template>
@@ -43,12 +46,14 @@
               </div>
               
             </div>
-            <div class="md:col-span-6">
-              <liquid-glass :radius="16" :frost="0.06" :scale="-100" :tint="true" :tint-from="'var(--color-theme-primary)'" :tint-to="'var(--color-theme-accent)'" :container-class="'relative rounded-2xl w-full aspect-[4/3] sm:aspect-[16/10] max-h-[60vh] overflow-hidden'">
+            <div class="md:col-span-6 xl:col-span-6 2xl:col-span-5 mt-4 md:mt-0 flex justify-end">
+              <div class="w-full max-w-[620px] xl:max-w-[780px] 2xl:max-w-[860px] xl:scale-[1.24] 2xl:scale-[1.12] origin-right">
+                <liquid-glass effect="occlusionBlur" :radius="16" :frost="0.06" :scale="-100" :tint="true" :tint-from="'var(--color-theme-primary)'" :tint-to="'var(--color-theme-accent)'" :container-class="'relative rounded-2xl w-full aspect-[4/3] sm:aspect-[16/10] max-h-[60vh] xl:max-h-[88vh] overflow-hidden'">
                 <div class="relative w-full h-full">
                   <bending-gallery class="absolute inset-0" :bend="3" :border-radius="0.06" :items="galleryItems" :aspect-ratio="16/9" :dpr="2" :anisotropy="8" :wobble="0.015" />
                 </div>
-              </liquid-glass>
+                </liquid-glass>
+              </div>
             </div>
           </div>
         </section>
@@ -61,12 +66,12 @@
     <!-- Rive 动效展示已从主页移除：保留组件模板以备后续使用 -->
 
     <!-- 对比（Compare） -->
-    <section id="compare" class="mt-14 scroll-mt-24">
-      <div class="space-y-20">
+    <section id="compare" class="mt-12 md:mt-14 scroll-mt-24">
+      <div class="space-y-14 md:space-y-20">
         <!-- 明暗主题对比场景：统一 sticky 行，左右同步 -->
-        <div id="scene-lightdark" class="relative h-[140vh] sm:h-[200vh]">
-          <div class="sticky top-0 grid md:grid-cols-2 items-center gap-8 h-screen">
-            <div class="px-2">
+        <div id="scene-lightdark" class="relative h-auto md:h-[150vh] xl:h-[190vh]">
+          <div class="relative md:sticky md:top-0 grid md:grid-cols-2 items-center gap-6 xl:gap-8 min-h-[70vh] md:h-screen py-6 md:py-0">
+            <div class="px-2 order-2 md:order-1">
               <liquid-glass
                 :radius="18"
                 :frost="0.06"
@@ -86,8 +91,15 @@
                 />
               </liquid-glass>
             </div>
-            <div class="px-2">
+            <div class="px-2 order-1 md:order-2">
+              <h2
+                v-if="isMobileView"
+                class="text-left text-2xl sm:text-3xl font-extrabold leading-relaxed text-[color:var(--color-base-content)]"
+              >
+                {{ t('app.home.compareDesc.lightDark') }}
+              </h2>
               <text-scroll-reveal
+                v-else
                 :text="t('app.home.compareDesc.lightDark') as string"
                 :sticky="false"
                 progress-container-id="scene-lightdark"
@@ -98,9 +110,9 @@
         </div>
 
         <!-- 中英文对比场景：统一 sticky 行，左右同步 -->
-        <div id="scene-zhen" class="relative h-[140vh] sm:h-[200vh]">
-          <div class="sticky top-0 grid md:grid-cols-2 items-center gap-8 h-screen">
-            <div class="px-2">
+        <div id="scene-zhen" class="relative h-auto md:h-[150vh] xl:h-[190vh]">
+          <div class="relative md:sticky md:top-0 grid md:grid-cols-2 items-center gap-6 xl:gap-8 min-h-[70vh] md:h-screen py-6 md:py-0">
+            <div class="px-2 order-2 md:order-1">
               <liquid-glass
                 :radius="18"
                 :frost="0.06"
@@ -120,8 +132,15 @@
                 />
               </liquid-glass>
             </div>
-            <div class="px-2">
+            <div class="px-2 order-1 md:order-2">
+              <h2
+                v-if="isMobileView"
+                class="text-left text-2xl sm:text-3xl font-extrabold leading-relaxed text-[color:var(--color-base-content)]"
+              >
+                {{ t('app.home.compareDesc.zhEn') }}
+              </h2>
               <text-scroll-reveal
+                v-else
                 :text="t('app.home.compareDesc.zhEn') as string"
                 :sticky="false"
                 progress-container-id="scene-zhen"
@@ -136,10 +155,18 @@
     
 
     <!-- 走马灯（Marquee） -->
-    <section id="help" class="mt-20 scroll-mt-24">
-      <div id="scene-help" class="relative h-[180vh] sm:h-[260vh]">
-        <div class="sticky top-[8vh]">
-          <container-scroll>
+    <section id="help" class="mt-16 md:mt-20 scroll-mt-24">
+      <div id="scene-help" class="relative h-auto md:h-[185vh] xl:h-[250vh]">
+        <div class="relative md:sticky md:top-[8vh] py-6 md:py-0">
+          <div v-if="isMobileView" class="space-y-4 px-2">
+            <h2 class="text-left text-2xl sm:text-3xl font-extrabold leading-relaxed text-[color:var(--color-base-content)]">
+              {{ t('app.home.helpDesc') }}
+            </h2>
+            <liquid-glass :radius="16" :frost="0.06" containerClass="relative rounded-2xl w-full overflow-hidden">
+              <img :src="helpImageSrc" alt="Help Overview" class="w-full h-full object-cover rounded-xl" @error="onHelpImgError" />
+            </liquid-glass>
+          </div>
+          <container-scroll v-else>
             <template #title>
               <text-scroll-reveal :text="t('app.home.helpDesc') as string" :sticky="false" progress-container-id="scene-help" :reveal-portion="0.5" />
             </template>
@@ -152,13 +179,16 @@
     </section>
 
     <!-- 学生反馈与系统成效展示（Tracing Beam 区块，占位） -->
-    <section id="feedback" class="mt-20 scroll-mt-24">
-      <div id="scene-feedback" class="relative h-[160vh] sm:h-[200vh]">
-        <div class="sticky top-[8vh]">
+    <section id="feedback" class="mt-16 md:mt-20 scroll-mt-24">
+      <div id="scene-feedback" class="relative h-auto md:h-[165vh] xl:h-[200vh]">
+        <div class="relative md:sticky md:top-[8vh] py-6 md:py-0">
           <div class="mb-4">
-            <text-scroll-reveal :text="t('app.home.feedbackDesc') as string" :sticky="false" progress-container-id="scene-feedback" :reveal-portion="0.35" />
+            <h2 v-if="isMobileView" class="text-left text-2xl sm:text-3xl font-extrabold leading-relaxed text-[color:var(--color-base-content)]">
+              {{ t('app.home.feedbackDesc') }}
+            </h2>
+            <text-scroll-reveal v-else :text="t('app.home.feedbackDesc') as string" :sticky="false" progress-container-id="scene-feedback" :reveal-portion="0.35" />
           </div>
-          <div class="w-full items-center justify-center px-4 md:px-8">
+          <div class="w-full items-center justify-center px-2 sm:px-4 md:px-8">
             <tracing-beam progress-container-id="scene-feedback" class="px-6">
               <div class="relative mx-auto max-w-2xl pt-4 antialiased">
                 <div v-for="(item, index) in feedbackItems" :key="`fb-${index}`" class="mb-6">
@@ -181,21 +211,28 @@
     </section>
 
     <!-- Ready CTA 滚动文本 + 按钮（自动触发彩带） -->
-    <section id="ready" class="mt-28 md:mt-36 scroll-mt-24">
-      <div id="scene-ready" class="relative h-[160vh] sm:h-[180vh]">
-        <div class="sticky top-[16vh]">
+    <section id="ready" class="mt-20 md:mt-28 xl:mt-36 scroll-mt-24">
+      <div id="scene-ready" class="relative h-auto md:h-[160vh] xl:h-[180vh]">
+        <div class="relative md:sticky md:top-[14vh] py-6 md:py-0">
           <div class="flex flex-col items-center gap-6">
+            <h2
+              v-if="isMobileView"
+              class="text-center text-2xl sm:text-3xl font-extrabold leading-relaxed text-[color:var(--color-base-content)]"
+            >
+              {{ t('app.cta.ready') }}
+            </h2>
             <text-scroll-reveal
+              v-else
               :text="t('app.cta.ready') as string"
               :sticky="false"
               progress-container-id="scene-ready"
               :reveal-portion="0.5"
             />
-            <div class="flex items-center gap-4">
+            <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 sm:gap-4 w-full sm:w-auto">
               <Button
                 variant="primary"
                 size="xl"
-                class="px-7 min-w-[170px]"
+                class="px-7 min-w-[170px] w-full sm:w-auto"
                 @click="goLogin"
               >
                 <template #icon>
@@ -206,7 +243,7 @@
               <Button
                 variant="info"
                 size="xl"
-                class="px-7 min-w-[170px]"
+                class="px-7 min-w-[170px] w-full sm:w-auto"
                 @click="goDocs"
               >
                 <template #icon>
@@ -217,7 +254,7 @@
             </div>
 
             <!-- 复用登录页走马灯（两行，评价卡片） -->
-            <div class="mt-8 w-full max-w-5xl mx-auto px-4">
+            <div class="mt-6 md:mt-8 w-full max-w-5xl mx-auto px-2 sm:px-4">
               <marquee pauseOnHover class="[--duration:22s] [--gap:1.25rem]">
                 <review-card v-for="r in homeMarqueeRow1" :key="r.username" :img="r.img" :name="r.name" :username="r.username" :mbti="r.mbti" :body="r.body" :tint="r.tint" />
               </marquee>
@@ -267,13 +304,19 @@ import { DEFAULT_AVATARS } from '@/shared/utils/avatars'
 import HomeFeatureScrollSection from '@/features/home/sections/HomeFeatureScrollSection.vue'
 
 const router = useRouter()
-const { t } = useI18n()
+const { t, locale } = useI18n()
 const uiStore = useUIStore()
 const authStore = useAuthStore()
 const { themeName } = storeToRefs(uiStore)
+const isMobileView = ref(false)
+const isZhLocale = computed(() => String(locale.value || '').toLowerCase().startsWith('zh'))
 const isDarkMode = computed(() => {
   try { return (uiStore as any).isDarkMode || document.documentElement.classList.contains('dark') } catch { return document.documentElement.classList.contains('dark') }
 })
+
+function updateViewportFlags() {
+  isMobileView.value = window.innerWidth < 768
+}
 
 // Home-only smooth scroll: enabled on this view lifecycle.
 useLenisHomeScroll({ enabled: true, smoothWheel: true, smoothTouch: false })
@@ -339,6 +382,9 @@ const marqueeItems = [
 ]
 
 onMounted(() => {
+  updateViewportFlags()
+  window.addEventListener('resize', updateViewportFlags)
+
   // 观察滚动触发彩带
   try {
     if (confettiObserver) confettiObserver.disconnect()
@@ -361,6 +407,7 @@ onMounted(() => {
 })
 
 onUnmounted(() => {
+  window.removeEventListener('resize', updateViewportFlags)
   try { if (confettiObserver) confettiObserver.disconnect() } catch {}
 })
 

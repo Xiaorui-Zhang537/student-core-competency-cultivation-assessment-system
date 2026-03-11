@@ -1,6 +1,6 @@
 <template>
   <div class="fixed left-4 bottom-4 z-30">
-    <liquid-glass :radius="28" :frost="0.04" class="px-4 py-2" containerClass="rounded-full shadow-lg">
+    <liquid-glass effect="occlusionBlur" :tint="false" :radius="28" :frost="0.04" class="px-4 py-2" containerClass="rounded-full shadow-lg">
       <a
         href="https://beian.mps.gov.cn/#/query/webSearch?code=21021702000814"
         target="_blank"
@@ -25,6 +25,5 @@ import LiquidGlass from '@/components/ui/LiquidGlass.vue'
 
 <style scoped>
 </style>
-
 
 

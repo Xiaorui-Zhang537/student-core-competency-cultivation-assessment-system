@@ -1,55 +1,85 @@
 <template>
   <!-- 强制刷新标记: v2025-07-29-11:15 -->
-  <div class="min-h-screen relative overflow-hidden text-base-content" :style="baseBgStyle">
-    <background-layer />
+  <div class="authPage min-h-screen relative overflow-hidden text-base-content" :style="baseBgStyle">
 
-    <!-- 主容器：分屏布局 -->
-    <div class="relative z-10 min-h-screen py-8 md:py-10 pl-8 pr-8 md:pl-16 md:pr-16 xl:pl-24 xl:pr-24 2xl:pl-32 2xl:pr-32 max-w-8xl mx-auto">
-      <!-- 顶部导航：右上 Dock，与主页一致 -->
-      <nav class="flex items-center justify-end mb-6">
-        <liquid-glass :radius="30" class="flex items-center justify-center h-full" containerClass="rounded-full h-[56px] px-2">
-          <!-- Match student/teacher/public layouts: no magnify-on-hover -->
-          <dock :magnification="0" :distance="0" :animate="false" variant="transparent" paddingClass="pl-1.5 pr-5" heightClass="h-[56px]" roundedClass="rounded-full" gapClass="gap-3" class="!mt-0 min-w-0">
-            <dock-icon :animate="false">
-              <ripple-button pill :title="t('layout.common.toggleTheme') as string" @click="uiStore.toggleDarkMode()">
-                <sun-icon v-if="uiStore.isDarkMode" class="w-5 h-5" />
-                <moon-icon v-else class="w-5 h-5" />
-              </ripple-button>
-            </dock-icon>
-            <dock-icon :animate="false">
-              <span ref="bgBtnRef" class="inline-flex">
-                <ripple-button pill :title="t('layout.common.bgPickerTitle') as string" @click="onToggleBgPicker">
-                  <photo-icon class="w-5 h-5" />
-                </ripple-button>
-              </span>
-            </dock-icon>
-            <dock-icon :animate="false">
-              <span ref="cursorBtnRef" class="inline-flex">
-                <ripple-button pill :title="t('layout.common.cursorTrail') as string" @click="onToggleCursorMenu">
-                  <cursor-arrow-rays-icon class="w-5 h-5" />
-                </ripple-button>
-              </span>
-            </dock-icon>
-            <dock-icon class="-ml-2" :animate="false">
-              <language-switcher buttonClass="px-4 h-10 flex items-center rounded-full min-w-[64px]" />
-            </dock-icon>
-            <dock-icon :animate="false">
-              <ripple-button pill class="px-3 h-10" :title="('返回首页')" @click="goHome()">
-                <home-icon class="w-5 h-5" />
-              </ripple-button>
-            </dock-icon>
-          </dock>
-        </liquid-glass>
+    <!-- 主容器：顶部药丸导航 + 分屏布局 -->
+    <div class="relative z-10 min-h-screen">
+      <!-- 顶部导航：与主页药丸尺寸/位置对齐 -->
+      <nav class="sticky top-0 z-40 px-3 sm:px-6 pt-3 sm:pt-6 pb-3 sm:pb-6">
+        <div class="flex flex-wrap items-center gap-2 sm:gap-3">
+          <liquid-glass
+            effect="occlusionBlur" :tint="false" :radius="30"
+            class="flex items-center justify-center gap-3 h-full"
+            containerClass="rounded-full h-[52px] sm:h-[60px] px-4 sm:px-5 whitespace-nowrap"
+          >
+            <div class="flex items-center justify-center gap-3">
+              <liquid-logo :size="36" :image-url="'/brand/logo.png'" :liquid="12" :speed="1.0" />
+              <sparkles-text :text="t('app.title') as string" :sparklesCount="18" class="text-lg sm:text-2xl md:text-3xl" />
+            </div>
+          </liquid-glass>
+          <div class="hidden sm:block flex-1"></div>
+
+          <!-- 右上 Dock：恢复外层玻璃容器，保持原始包裹感 -->
+          <liquid-glass effect="occlusionBlur" :tint="false" :radius="30" class="flex items-center justify-center h-full max-w-full w-full sm:w-auto" containerClass="rounded-full h-[52px] sm:h-[60px] px-1 sm:px-1.5 max-w-full">
+            <dock :magnification="0" :distance="0" :animate="false" variant="transparent" paddingClass="pl-0.5 pr-2 sm:pl-1 sm:pr-4" heightClass="h-[48px] sm:h-[56px]" roundedClass="rounded-full" gapClass="gap-2 sm:gap-3" class="!mt-0 min-w-0 overflow-x-auto">
+              <dock-icon :animate="false" class="mr-[-6px] sm:relative sm:left-[8px] sm:mr-[-10px]">
+                <glass-tooltip :content="(t('layout.common.toggleTheme') as string) || '主题'">
+                  <ripple-button pill :duration="0" :class="topbarBtnClass" :title="t('layout.common.toggleTheme') as string" @click="uiStore.toggleDarkMode()">
+                    <sun-icon v-if="uiStore.isDarkMode" class="w-4 h-4 sm:w-5 sm:h-5" />
+                    <moon-icon v-else class="w-4 h-4 sm:w-5 sm:h-5 relative top-[1px]" />
+                  </ripple-button>
+                </glass-tooltip>
+              </dock-icon>
+              <dock-icon :animate="false" class="hidden sm:block">
+                <span ref="cursorBtnRef" class="inline-flex">
+                  <glass-tooltip :content="(t('layout.common.cursorTrail') as string) || '鼠标轨迹'">
+                    <ripple-button pill :duration="0" :class="topbarBtnClass" :title="t('layout.common.cursorTrail') as string" @click="onToggleCursorMenu">
+                      <cursor-arrow-rays-icon class="w-4 h-4 sm:w-5 sm:h-5 relative -left-[1px]" />
+                    </ripple-button>
+                  </glass-tooltip>
+                </span>
+              </dock-icon>
+              <dock-icon class="-ml-2" :animate="false">
+                <glass-tooltip :content="(t('layout.common.language') as string) || '语言'">
+                  <language-switcher buttonClass="px-3 h-10 flex items-center rounded-full min-w-[56px] whitespace-nowrap" />
+                </glass-tooltip>
+              </dock-icon>
+              <dock-icon :animate="false">
+                <glass-tooltip content="返回首页">
+                  <ripple-button pill :duration="0" :class="topbarBtnClass" :title="('返回首页')" @click="goHome()">
+                    <home-icon class="w-4 h-4 sm:w-5 sm:h-5" />
+                  </ripple-button>
+                </glass-tooltip>
+              </dock-icon>
+            </dock>
+          </liquid-glass>
+        </div>
       </nav>
       <!-- 光标菜单弹层 -->
       <teleport to="body">
         <div v-if="showCursorMenu" class="fixed inset-0 z-[999]" @click="showCursorMenu = false"></div>
-        <liquid-glass v-if="showCursorMenu" effect="occlusionBlur" :style="cursorMenuStyle" containerClass="fixed z-[1000] rounded-2xl" class="p-1" :radius="16" :frost="0.05" @click.stop>
+        <liquid-glass
+          v-if="showCursorMenu"
+          effect="occlusionBlur"
+          :style="cursorMenuStyle"
+          containerClass="fixed z-[1000] rounded-2xl border border-white/20 dark:border-white/12 overflow-hidden shadow-lg"
+          class="p-1"
+          :radius="16"
+          :frost="0.14"
+          :alpha="0.96"
+          :blur="14"
+          :tint="false"
+          @click.stop
+        >
           <div class="px-3 py-2 text-xs text-subtle">
             <div class="font-medium mb-1">{{ t('layout.common.cursorTrailTitle') }}</div>
             <div class="opacity-90">{{ t('layout.common.cursorTrailDesc') }}</div>
           </div>
           <div class="border-t border-white/10 my-1"></div>
+          <button class="w-full text-left px-3 py-2 rounded-2xl hover:bg-white/10 text-sm flex items-center justify-between" @click="setCursor('off')">
+            <span>{{ t('layout.common.cursorTrailOff') }}</span>
+            <span v-if="uiStore.cursorTrailMode==='off'" class="text-theme-primary">✓</span>
+          </button>
           <button class="w-full text-left px-3 py-2 rounded-2xl hover:bg-white/10 text-sm flex items-center justify-between" @click="setCursor('fluid')">
             <span>{{ t('layout.common.cursorTrailFluid') }}</span>
             <span v-if="uiStore.cursorTrailMode==='fluid'" class="text-theme-primary">✓</span>
@@ -62,135 +92,39 @@
             <span>{{ t('layout.common.cursorTrailTailed') }}</span>
             <span v-if="uiStore.cursorTrailMode==='tailed'" class="text-theme-primary">✓</span>
           </button>
-          <button class="w-full text-left px-3 py-2 rounded-2xl hover:bg-white/10 text-sm flex items-center justify-between" @click="setCursor('off')">
-            <span>{{ t('layout.common.cursorTrailOff') }}</span>
-            <span v-if="uiStore.cursorTrailMode==='off'" class="text-theme-primary">✓</span>
-          </button>
-        </liquid-glass>
-        <!-- 背景选择悬浮菜单（与主题菜单一致样式） -->
-        <div v-if="showBgPicker" class="fixed inset-0 z-[999]" @click="showBgPicker = false"></div>
-        <liquid-glass v-if="showBgPicker" effect="occlusionBlur" :style="bgMenuStyle" containerClass="fixed z-[1000] rounded-2xl" class="p-1" :radius="16" :frost="0.05" @click.stop>
-          <div class="px-3 py-2 text-xs text-subtle">
-            <div class="font-medium mb-1">{{ t('layout.common.bgPickerTitle') }}</div>
-            <div class="opacity-90">{{ t('layout.common.bgPickerDesc') }}</div>
-          </div>
-          <div class="border-t border-white/10 my-1"></div>
-          <div class="px-2 py-2">
-          <div class="text-xs text-subtle mb-2">{{ t('layout.common.lightMode') }}</div>
-          <div class="flex flex-col gap-2">
-              <button class="w-full text-left px-3 py-2 rounded-xl hover:bg-white/10 text-sm flex items-center justify-between" @click="setLight('none')">
-                <span>{{ t('layout.common.bg.none') }}</span>
-                <span v-if="uiStore.backgroundLight==='none'" class="text-theme-primary">✓</span>
-              </button>
-              <button class="w-full text-left px-3 py-2 rounded-xl hover:bg-white/10 text-sm flex items-center justify-between" @click="setLight('aurora')">
-                <span>{{ t('layout.common.bg.aurora') }}</span>
-                <span v-if="uiStore.backgroundLight==='aurora'" class="text-theme-primary">✓</span>
-              </button>
-              <button class="w-full text-left px-3 py-2 rounded-xl hover:bg-white/10 text-sm flex items-center justify-between" @click="setLight('tetris')">
-                <span>{{ t('layout.common.bg.tetris') }}</span>
-                <span v-if="uiStore.backgroundLight==='tetris'" class="text-theme-primary">✓</span>
-              </button>
-            </div>
-          </div>
-          <div class="px-2 py-2 pt-0">
-          <div class="text-xs text-subtle mb-2">{{ t('layout.common.darkMode') }}</div>
-          <div class="flex flex-col gap-2">
-              <button class="w-full text-left px-3 py-2 rounded-xl hover:bg-white/10 text-sm flex items-center justify-between" @click="setDark('none')">
-                <span>{{ t('layout.common.bg.none') }}</span>
-                <span v-if="uiStore.backgroundDark==='none'" class="text-theme-primary">✓</span>
-              </button>
-              <button class="w-full text-left px-3 py-2 rounded-xl hover:bg-white/10 text-sm flex items-center justify-between" @click="setDark('neural')">
-                <span>{{ t('layout.common.bg.neural') }}</span>
-                <span v-if="uiStore.backgroundDark==='neural'" class="text-theme-primary">✓</span>
-              </button>
-              <button class="w-full text-left px-3 py-2 rounded-xl hover:bg-white/10 text-sm flex items-center justify-between" @click="setDark('meteors')">
-                <span>{{ t('layout.common.bg.meteors') }}</span>
-                <span v-if="uiStore.backgroundDark==='meteors'" class="text-theme-primary">✓</span>
-              </button>
-            </div>
-          </div>
         </liquid-glass>
       </teleport>
       <!-- 分屏栅格 -->
-      <div class="grid grid-cols-1 md:grid-cols-12 gap-10 items-start mt-6 md:mt-16 lg:mt-24 lg:translate-y-2">
+      <div class="pb-6 sm:pb-8 md:pb-10 pl-4 pr-4 sm:pl-8 sm:pr-8 md:pl-12 md:pr-12 xl:pl-16 xl:pr-16 2xl:pl-20 2xl:pr-20 max-w-8xl mx-auto">
+      <div class="grid grid-cols-1 md:grid-cols-12 gap-6 xl:gap-8 2xl:gap-10 items-start xl:items-center mt-2 sm:mt-4 md:mt-8 lg:mt-12">
         <!-- 左侧品牌与卖点 -->
-        <div class="md:col-span-6 md:col-start-2 order-2 md:order-1 md:pr-6 lg:pr-10">
-          <div class="animate-fade-in">
-            <!-- Logo 与标题 -->
-            <div class="flex items-center gap-4 mb-12">
-              <img src="/brand/logo.png" alt="Logo" class="shrink-0 h-20 md:h-24 w-auto select-none" />
-              <div>
-                <letter-pullup :words="t('app.title') as string" class="bg-gradient-to-r from-gray-900 to-gray-700 dark:from-white dark:to-gray-300 bg-clip-text text-transparent text-3xl md:text-5xl lg:text-6xl font-extrabold leading-tight" />
-                <radiant-text :duration="5" :radiantWidth="90" class="mt-1 text-lg md:text-xl text-left">
-                  {{ t('layout.auth.subtitle') }}
-                </radiant-text>
-              </div>
+        <div class="hidden xl:block xl:col-span-5 xl:col-start-1 order-2 xl:order-1 xl:w-full xl:max-w-[620px] xl:justify-self-end">
+          <liquid-glass
+            :radius="24"
+            :frost="0.08"
+            :alpha="0.9"
+            :blur="14"
+            :border="0.09"
+            :tint="true"
+            :tint-from="'var(--color-theme-primary)'"
+            :tint-to="'var(--color-theme-accent)'"
+            class="animate-fade-in"
+            containerClass="authReplicaPanel rounded-3xl"
+          >
+            <div class="relative z-20 flex items-end justify-center h-[400px] xl:h-[450px] 2xl:h-[500px]">
+              <animated-characters
+                :is-typing="authAnimState.isTyping"
+                :is-password-focused="authAnimState.isPasswordFocused"
+                :show-password="authAnimState.showPassword"
+                :password-length="authAnimState.passwordLength"
+              />
             </div>
-
-            <!-- 卖点列表：2x2 玻璃卡片，带主题底色 -->
-            <div class="grid grid-cols-2 gap-x-4 gap-y-8 mb-8">
-              <!-- primary -->
-              <div class="theme-surface theme-surface--primary rounded-xl border border-white/15 dark:border-white/10"
-                   style="--spotlight-color: color-mix(in oklab, var(--color-primary) 60%, transparent);">
-                <liquid-glass :radius="16" :frost="0.05" :border="0.07" :alpha="0.93" :blur="11"
-                              :container-class="'glass-regular glass-interactive glass-tint-primary rounded-xl'">
-                  <card-spotlight slotClass="p-4" :gradientColor="'var(--spotlight-color)'" :gradientOpacity="0.7" :gradientSize="220">
-                    <div class="text-base font-medium text-base-content mb-1">{{ t('layout.auth.points.radar.title') }}</div>
-                    <div class="text-sm text-gray-600 dark:text-gray-400">{{ t('layout.auth.points.radar.descLong') }}</div>
-                  </card-spotlight>
-                </liquid-glass>
-              </div>
-              <!-- info -->
-              <div class="theme-surface theme-surface--info rounded-xl border border-white/15 dark:border-white/10"
-                   style="--spotlight-color: color-mix(in oklab, var(--color-info) 60%, transparent);">
-                <liquid-glass :radius="16" :frost="0.05" :border="0.07" :alpha="0.93" :blur="11"
-                              :container-class="'glass-regular glass-interactive glass-tint-info rounded-xl'">
-                  <card-spotlight slotClass="p-4" :gradientColor="'var(--spotlight-color)'" :gradientOpacity="0.7" :gradientSize="220">
-                    <div class="text-base font-medium text-base-content mb-1">{{ t('layout.auth.points.ai.title') }}</div>
-                    <div class="text-sm text-gray-600 dark:text-gray-400">{{ t('layout.auth.points.ai.descLong') }}</div>
-                  </card-spotlight>
-                </liquid-glass>
-              </div>
-              <!-- success -->
-              <div class="theme-surface theme-surface--success rounded-xl border border-white/15 dark:border-white/10"
-                   style="--spotlight-color: color-mix(in oklab, var(--color-success) 60%, transparent);">
-                <liquid-glass :radius="16" :frost="0.05" :border="0.07" :alpha="0.93" :blur="11"
-                              :container-class="'glass-regular glass-interactive glass-tint-success rounded-xl'">
-                  <card-spotlight slotClass="p-4" :gradientColor="'var(--spotlight-color)'" :gradientOpacity="0.7" :gradientSize="220">
-                    <div class="text-base font-medium text-base-content mb-1">{{ t('layout.auth.points.growth.title') }}</div>
-                    <div class="text-sm text-gray-600 dark:text-gray-400">{{ t('layout.auth.points.growth.descLong') }}</div>
-                  </card-spotlight>
-                </liquid-glass>
-              </div>
-              <!-- neutral (新增第4张) -->
-              <div class="theme-surface theme-surface--neutral rounded-xl border border-white/15 dark:border-white/10"
-                   style="--spotlight-color: color-mix(in oklab, var(--color-secondary, var(--color-accent)) 55%, transparent);">
-                <liquid-glass :radius="16" :frost="0.05" :border="0.07" :alpha="0.93" :blur="11"
-                              :container-class="'glass-regular glass-interactive glass-tint-secondary rounded-xl'">
-                  <card-spotlight slotClass="p-4" :gradientColor="'var(--spotlight-color)'" :gradientOpacity="0.7" :gradientSize="220">
-                    <div class="text-base font-medium text-base-content mb-1">{{ t('layout.auth.points.community.title') }}</div>
-                    <div class="text-sm text-gray-600 dark:text-gray-400">{{ t('layout.auth.points.community.descLong') }}</div>
-                  </card-spotlight>
-                </liquid-glass>
-              </div>
-            </div>
-
-            <!-- 走马灯评价区 -->
-            <div class="mt-10">
-              <marquee pauseOnHover class="[--duration:22s] [--gap:1.25rem]">
-                <review-card v-for="r in marqueeRow1" :key="r.username" :img="r.img" :name="r.name" :username="r.username" :mbti="r.mbti" :body="r.body" :tint="r.tint" />
-              </marquee>
-              <marquee reverse pauseOnHover class="[--duration:24s] [--gap:1.25rem] mt-4">
-                <review-card v-for="r in marqueeRow2" :key="r.username" :img="r.img" :name="r.name" :username="r.username" :mbti="r.mbti" :body="r.body" :tint="r.tint" />
-              </marquee>
-            </div>
-
-          </div>
+          </liquid-glass>
         </div>
 
         <!-- 右侧表单卡片 -->
-        <div class="md:col-span-5 md:col-start-8 order-1 md:order-2 w-full md:pl-6 lg:pl-10 max-w-xl md:ml-12 lg:ml-20 xl:ml-28 mt-12 md:mt-16 lg:mt-20">
-          <card :hoverable="false" padding="lg" tint="primary" class="relative border border-white/15 dark:border-white/10">
+        <div class="md:col-span-8 md:col-start-3 xl:col-span-5 xl:col-start-8 order-1 xl:order-2 w-full max-w-xl md:mx-auto xl:w-full xl:max-w-[620px] xl:mx-0 xl:justify-self-start mt-8 md:mt-10 xl:mt-0">
+          <card :hoverable="false" padding="lg" tint="primary" class="relative border border-white/20 dark:border-white/15 bg-base-100/60 dark:bg-base-200/30 backdrop-blur-xl">
             <!-- 加载状态覆盖 -->
             <div v-if="isLoading" class="absolute inset-0 bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm rounded-2xl flex items-center justify-center z-20">
               <div class="text-center">
@@ -232,6 +166,7 @@
           </card>
         </div>
       </div>
+      </div>
     </div>
 
     <cursor-trail-layer />
@@ -259,12 +194,9 @@ import {
   
   QuestionMarkCircleIcon
 } from '@heroicons/vue/24/outline'
-import { PaintBrushIcon, PhotoIcon } from '@heroicons/vue/24/outline'
 import LanguageSwitcher from '@/components/ui/LanguageSwitcher.vue'
-import { LetterPullup, RadiantText } from '@/components/ui/inspira'
-import { DEFAULT_AVATARS } from '@/shared/utils/avatars'
-import Marquee from '@/components/ui/inspira/Marquee.vue'
-import ReviewCard from '@/components/ui/inspira/ReviewCard.vue'
+import SparklesText from '@/components/ui/SparklesText.vue'
+import LiquidLogo from '@/components/ui/LiquidLogo.vue'
 import LiquidGlass from '@/components/ui/LiquidGlass.vue'
 import RippleButton from '@/components/ui/RippleButton.vue'
 import Dock from '@/components/ui/inspira/Dock.vue'
@@ -272,9 +204,9 @@ import DockIcon from '@/components/ui/inspira/DockIcon.vue'
 import { HomeIcon, CursorArrowRaysIcon } from '@heroicons/vue/24/outline'
 // FuturisticBackground 已移除
 import Card from '@/components/ui/Card.vue'
-import CardSpotlight from '@/components/ui/inspira/CardSpotlight.vue'
-import BackgroundLayer from '@/components/ui/BackgroundLayer.vue'
 import CursorTrailLayer from '@/components/ui/CursorTrailLayer.vue'
+import AnimatedCharacters from '@/features/auth/components/AnimatedCharacters.vue'
+import GlassTooltip from '@/components/ui/GlassTooltip.vue'
 
 // 组合式API
 const route = useRoute()
@@ -292,7 +224,22 @@ let timer: number | null = null
 const { locale, setLocale } = useLocale()
 const { t, d } = useI18n()
 const formattedTime = computed(() => d(currentTime.value, 'medium'))
-const baseBgStyle = computed(() => ({ backgroundColor: 'color-mix(in oklab, var(--color-base-100) 86%, transparent)' }))
+const baseBgStyle = computed(() => ({
+  backgroundColor: 'color-mix(in oklab, var(--color-base-100) 90%, var(--color-primary) 10%)'
+}))
+const topbarBtnClass = [
+  'hover:bg-black/5 active:bg-black/10',
+  'dark:hover:bg-white/10 dark:active:bg-white/15',
+  'focus-visible:shadow-[0_0_0_2px_rgba(59,130,246,0.35)]',
+].join(' ')
+const authAnimState = ref({
+  isTyping: false,
+  isPasswordFocused: false,
+  showPassword: false,
+  passwordLength: 0,
+})
+let authMutationObserver: MutationObserver | null = null
+let authSyncFrame: number | null = null
 
 // 主题相关
 const isDark = computed(() => uiStore.isDarkMode)
@@ -300,7 +247,7 @@ const isNewTheme = computed(() => {
   const theme = document.documentElement.getAttribute('data-theme') || ''
   return theme === 'retro' || theme === 'dracula'
 })
-// 主页背景改由 BackgroundLayer 控制
+// 认证页背景保持纯色主题底
 
 // 动画偏好与设备能力（背景组件内部已做处理，此处无需额外逻辑）
 
@@ -364,29 +311,6 @@ const features = [
   { icon: CpuChipIcon, titleKey: 'layout.auth.features.performance.title', descKey: 'layout.auth.features.performance.desc' }
 ]
 
-// 走马灯数据：使用注册页默认头像，按索引循环分配；评论正文随语言切换实时更新
-const avatars = (DEFAULT_AVATARS || []) as string[]
-const marqueeBaseKeys = [
-  { name: '王同学', username: '@wang', mbti: 'INTJ', tint: 'primary', bodyKey: 'layout.auth.reviews.r1' },
-  { name: 'Li', username: '@li', mbti: 'ENFP', tint: 'info', bodyKey: 'layout.auth.reviews.r2' },
-  { name: 'Zhang', username: '@zhang', mbti: 'ISTP', tint: 'success', bodyKey: 'layout.auth.reviews.r3' },
-  { name: 'Chen', username: '@chen', mbti: 'ENTJ', tint: 'warning', bodyKey: 'layout.auth.reviews.r4' },
-  { name: 'Liu', username: '@liu', mbti: 'INFJ', tint: 'secondary', bodyKey: 'layout.auth.reviews.r5' },
-  { name: 'Zhao', username: '@zhao', mbti: 'ISTJ', tint: 'accent', bodyKey: 'layout.auth.reviews.r6' },
-]
-const marqueeAll = computed(() =>
-  marqueeBaseKeys.map((r, idx) => ({
-    name: r.name,
-    username: r.username,
-    mbti: r.mbti,
-    tint: r.tint as any,
-    img: avatars.length ? avatars[idx % avatars.length] : '/brand/logo.png',
-    body: t(r.bodyKey as any) as string,
-  }))
-)
-const marqueeRow1 = computed(() => marqueeAll.value.slice(0, Math.ceil(marqueeAll.value.length / 2)))
-const marqueeRow2 = computed(() => marqueeAll.value.slice(Math.ceil(marqueeAll.value.length / 2)))
-
 // 社交链接
 const socialLinks = [
   {
@@ -423,9 +347,6 @@ function goLogin() {
 const cursorBtnRef = ref<HTMLElement | null>(null)
 const showCursorMenu = ref(false)
 const cursorMenuStyle = ref<Record<string, string>>({})
-const showBgPicker = ref(false)
-const bgBtnRef = ref<HTMLElement | null>(null)
-const bgMenuStyle = ref<Record<string, string>>({})
 
 function onToggleCursorMenu() {
   showCursorMenu.value = !showCursorMenu.value
@@ -445,29 +366,14 @@ function onToggleCursorMenu() {
   })
 }
 
-function onToggleBgPicker() {
-  showBgPicker.value = !showBgPicker.value
-}
-
-function setLight(v: 'none' | 'aurora' | 'tetris') { uiStore.setBackgroundLight(v) }
-function setDark(v: 'none' | 'neural' | 'meteors') { uiStore.setBackgroundDark(v) }
-
-watch(showBgPicker, async (v: boolean) => {
-  if (!v) return
-  nextTick(() => {
-    try {
-      const el = bgBtnRef.value as HTMLElement
-      const rect = el.getBoundingClientRect()
-      bgMenuStyle.value = {
-        position: 'fixed',
-        top: `${rect.bottom + 10}px`,
-        left: `${Math.max(8, rect.right - 220)}px`,
-        width: '14rem',
-        zIndex: '1000'
-      }
-    } catch {}
-  })
-})
+watch(
+  () => route.path,
+  () => {
+    nextTick(() => {
+      syncAuthAnimationState()
+    })
+  }
+)
 
 function setCursor(v: 'off' | 'fluid' | 'smooth' | 'tailed') {
   uiStore.setCursorTrailMode(v)
@@ -538,12 +444,65 @@ const handleKeydown = (event: KeyboardEvent) => {
   }
 }
 
+function pickAuthInput(selector: string): HTMLInputElement | null {
+  const scoped = document.querySelector(`.max-w-md ${selector}`) as HTMLInputElement | null
+  if (scoped) return scoped
+  return document.querySelector(selector) as HTMLInputElement | null
+}
+
+function syncAuthAnimationState() {
+  if (route.path !== '/auth/login') {
+    authAnimState.value = { isTyping: false, isPasswordFocused: false, showPassword: false, passwordLength: 0 }
+    return
+  }
+
+  const usernameInput = pickAuthInput('#username')
+  const passwordInput = pickAuthInput('#password')
+
+  const activeEl = document.activeElement
+  const isTyping = !!usernameInput && activeEl === usernameInput
+  const isPasswordFocused = !!passwordInput && activeEl === passwordInput
+  const passwordLength = Number(passwordInput?.value?.length || 0)
+  const showPassword = !!passwordInput && passwordInput.type === 'text'
+
+  authAnimState.value = { isTyping, isPasswordFocused, showPassword, passwordLength }
+}
+
+function scheduleAuthAnimationStateSync() {
+  if (authSyncFrame) window.cancelAnimationFrame(authSyncFrame)
+  authSyncFrame = window.requestAnimationFrame(() => {
+    authSyncFrame = null
+    syncAuthAnimationState()
+  })
+}
+
+const handleAuthInteraction = () => {
+  scheduleAuthAnimationStateSync()
+}
+
 // 视差已在 FuturisticBackground 内部处理，这里不再重复实现
 
 // 生命周期
 onMounted(() => {
   // 监听键盘事件
   document.addEventListener('keydown', handleKeydown)
+  document.addEventListener('input', handleAuthInteraction, true)
+  document.addEventListener('focusin', handleAuthInteraction, true)
+  document.addEventListener('focusout', handleAuthInteraction, true)
+  document.addEventListener('click', handleAuthInteraction, true)
+
+  authMutationObserver = new MutationObserver(() => {
+    scheduleAuthAnimationStateSync()
+  })
+  try {
+    authMutationObserver.observe(document.body, {
+      subtree: true,
+      childList: true,
+      attributes: true,
+      attributeFilter: ['type']
+    })
+  } catch {}
+  syncAuthAnimationState()
 
   // 实时时间更新
   timer = window.setInterval(() => {
@@ -562,6 +521,16 @@ onMounted(() => {
 
 onUnmounted(() => {
   document.removeEventListener('keydown', handleKeydown)
+  document.removeEventListener('input', handleAuthInteraction, true)
+  document.removeEventListener('focusin', handleAuthInteraction, true)
+  document.removeEventListener('focusout', handleAuthInteraction, true)
+  document.removeEventListener('click', handleAuthInteraction, true)
+  try {
+    authMutationObserver?.disconnect()
+  } catch {}
+  authMutationObserver = null
+  if (authSyncFrame) window.cancelAnimationFrame(authSyncFrame)
+  authSyncFrame = null
   if (timer) window.clearInterval(timer)
 })
 
@@ -602,6 +571,35 @@ onUnmounted(() => {
   to {
     opacity: 1;
     transform: translateY(0);
+  }
+}
+
+.authReplicaPanel {
+  position: relative;
+  overflow: hidden;
+  min-height: 500px;
+  max-height: 560px;
+  padding: 1rem 1.1rem 1.2rem;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  isolation: isolate;
+}
+
+.authReplicaPanel::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  background: radial-gradient(120% 90% at 50% 100%, rgba(0, 0, 0, 0.18) 0%, rgba(0, 0, 0, 0) 72%);
+  opacity: 0.9;
+}
+
+@media (max-height: 920px) and (min-width: 1280px) {
+  .authReplicaPanel {
+    min-height: 460px;
+    max-height: 500px;
   }
 }
 

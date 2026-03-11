@@ -1,25 +1,6 @@
 <template>
   <section id="features" class="mt-16 md:mt-24 scroll-mt-24">
     <div class="relative">
-      <!-- Ambient background (kept subtle for readability) -->
-      <div class="pointer-events-none absolute inset-0 -z-10 overflow-hidden">
-        <div
-          class="absolute -top-24 left-1/2 h-[420px] w-[900px] -translate-x-1/2 rounded-full blur-3xl opacity-20"
-          :style="{
-            background:
-              'radial-gradient(circle at 20% 30%, color-mix(in oklch, var(--color-primary) 65%, transparent), transparent 55%), radial-gradient(circle at 70% 20%, color-mix(in oklch, var(--color-accent) 55%, transparent), transparent 58%), radial-gradient(circle at 50% 80%, color-mix(in oklch, var(--color-info) 50%, transparent), transparent 60%)'
-          }"
-        />
-        <div class="absolute inset-0 opacity-18 motion-reduce:hidden">
-          <star-field class="h-full w-full" />
-        </div>
-        <!-- scrim to keep titles readable -->
-        <div
-          class="absolute inset-0"
-          style="background: linear-gradient(180deg, color-mix(in oklch, var(--color-base-100) 82%, transparent), transparent 40%, transparent 100%);"
-        ></div>
-      </div>
-
       <div class="mx-auto max-w-6xl px-4">
         <div class="mb-8 md:mb-10">
           <h2 class="text-3xl sm:text-4xl md:text-5xl font-extrabold leading-tight text-[color:var(--color-base-content)]">
@@ -184,7 +165,6 @@ import { storeToRefs } from 'pinia'
 
 import LiquidGlass from '@/components/ui/LiquidGlass.vue'
 import Meteors from '@/components/ui/inspira/Meteors.vue'
-import StarField from '@/components/ui/inspira/StarField.vue'
 import BorderBeam from '@/components/ui/inspira/BorderBeam.vue'
 import CardSpotlight from '@/components/ui/inspira/CardSpotlight.vue'
 
