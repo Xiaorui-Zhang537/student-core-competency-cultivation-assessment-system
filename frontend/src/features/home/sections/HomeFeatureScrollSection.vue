@@ -114,6 +114,7 @@
                             :src="steps[activeIndex]?.imageSrc"
                             :alt="t(steps[activeIndex]?.imageAltKey || '') as string"
                             class="w-full h-full object-contain select-none pointer-events-none"
+                            :fetchpriority="activeIndex === 0 ? 'high' : 'auto'"
                             loading="lazy"
                             decoding="async"
                             @load="onImgLoad"
@@ -201,7 +202,7 @@ const steps = computed<FeatureStep[]>(() => {
       titleKey: 'app.home.featureScroll.steps.assessment.title',
       descKey: 'app.home.featureScroll.steps.assessment.desc',
       badgeKey: 'app.home.featureScroll.steps.assessment.badge',
-      imageSrc: dark ? '/home/apps/assessment-1.png' : '/home/apps/assessment-1.png',
+      imageSrc: dark ? '/home/apps/1_dark.jpg' : '/home/apps/1.jpg',
       imageAltKey: 'app.home.cards.assessment.img1Alt',
     },
     {
@@ -209,7 +210,7 @@ const steps = computed<FeatureStep[]>(() => {
       titleKey: 'app.home.featureScroll.steps.courses.title',
       descKey: 'app.home.featureScroll.steps.courses.desc',
       badgeKey: 'app.home.featureScroll.steps.courses.badge',
-      imageSrc: dark ? '/home/apps/courses-overview.png' : '/home/apps/courses-overview.png',
+      imageSrc: dark ? '/home/apps/2_dark.jpg' : '/home/apps/2.jpg',
       imageAltKey: 'app.home.featureScroll.steps.courses.alt',
     },
     {
@@ -217,7 +218,7 @@ const steps = computed<FeatureStep[]>(() => {
       titleKey: 'app.home.featureScroll.steps.ai.title',
       descKey: 'app.home.featureScroll.steps.ai.desc',
       badgeKey: 'app.home.featureScroll.steps.ai.badge',
-      imageSrc: dark ? '/home/apps/ai-overview.png' : '/home/apps/ai-overview.png',
+      imageSrc: dark ? '/home/apps/3_dark.jpg' : '/home/apps/3.jpg',
       imageAltKey: 'app.home.featureScroll.steps.ai.alt',
     },
     {
@@ -225,7 +226,7 @@ const steps = computed<FeatureStep[]>(() => {
       titleKey: 'app.home.featureScroll.steps.community.title',
       descKey: 'app.home.featureScroll.steps.community.desc',
       badgeKey: 'app.home.featureScroll.steps.community.badge',
-      imageSrc: dark ? '/home/apps/community-overview.png' : '/home/apps/community-overview.png',
+      imageSrc: dark ? '/home/apps/4_dark.jpg' : '/home/apps/4.jpg',
       imageAltKey: 'app.home.featureScroll.steps.community.alt',
     },
     {
@@ -233,7 +234,7 @@ const steps = computed<FeatureStep[]>(() => {
       titleKey: 'app.home.featureScroll.steps.chat.title',
       descKey: 'app.home.featureScroll.steps.chat.desc',
       badgeKey: 'app.home.featureScroll.steps.chat.badge',
-      imageSrc: dark ? '/home/apps/chat-overview.png' : '/home/apps/chat-overview.png',
+      imageSrc: dark ? '/home/apps/5_dark.jpg' : '/home/apps/5.jpg',
       imageAltKey: 'app.home.featureScroll.steps.chat.alt',
     },
   ]
@@ -249,6 +250,43 @@ let refreshScroll: (() => void) | null = null
 let activeScrollTrigger: any = null
 
 const aspectByKey = ref<Record<string, number>>({})
+const prefetchedImages = new Set<string>()
+
+function prefetchImage(src?: string) {
+  if (!src || prefetchedImages.has(src)) return
+  try {
+    const img = new Image()
+    img.decoding = 'async'
+    img.src = src
+    prefetchedImages.add(src)
+  } catch {}
+}
+
+function prefetchNearby(index: number) {
+  const list = steps.value
+  if (!list.length) return
+
+  const safe = (i: number) => Math.max(0, Math.min(list.length - 1, i))
+  const targets = [safe(index), safe(index + 1), safe(index - 1)]
+  for (const i of targets) prefetchImage(list[i]?.imageSrc)
+}
+
+function prefetchAllWhenIdle() {
+  const run = () => {
+    for (const step of steps.value) prefetchImage(step.imageSrc)
+  }
+
+  try {
+    const anyWin = window as any
+    if (typeof anyWin.requestIdleCallback === 'function') {
+      anyWin.requestIdleCallback(run, { timeout: 1200 })
+      return
+    }
+  } catch {}
+
+  window.setTimeout(run, 220)
+}
+
 const activeKey = computed(() => steps.value[activeIndex.value]?.key || '')
 const activeAspectRatio = computed(() => {
   const r = aspectByKey.value[activeKey.value]
@@ -277,6 +315,7 @@ function onStepClick(idx: number) {
   if (!total) return
   const targetIndex = Math.min(total - 1, Math.max(0, Math.trunc(idx)))
   activeIndex.value = targetIndex
+  prefetchNearby(targetIndex)
 
   const st = activeScrollTrigger
   const start = Number(st?.start)
@@ -362,21 +401,7 @@ async function setupScrollOrchestration() {
     })
     activeScrollTrigger = st
 
-    // Subtle camera-like drift on the visual container to avoid static feeling when pinned.
-    if (visualRef.value) {
-      gsap.to(visualRef.value, {
-        yPercent: -4,
-        rotate: -0.3,
-        transformOrigin: '50% 50%',
-        ease: 'none',
-        scrollTrigger: {
-          trigger: root,
-          start: 'top top+=96',
-          end: st.end,
-          scrub: true,
-        },
-      })
-    }
+    // Keep the visual stage vertically stable across steps.
 
     // Step cards get a gentle staggered "breathing" when active index changes.
     stopWatch = watch(
@@ -429,6 +454,8 @@ async function setupScrollOrchestration() {
 
 onMounted(() => {
   setupScrollOrchestration()
+  prefetchNearby(activeIndex.value)
+  prefetchAllWhenIdle()
 })
 
 onUnmounted(() => {
@@ -437,6 +464,15 @@ onUnmounted(() => {
   } finally {
     cleanup = null
   }
+})
+
+watch(activeIndex, (idx) => {
+  prefetchNearby(idx)
+})
+
+watch(steps, () => {
+  prefetchNearby(activeIndex.value)
+  prefetchAllWhenIdle()
 })
 </script>
 

@@ -8,7 +8,6 @@
     <div v-else-if="course" class="space-y-8">
       <page-scaffold
         :title="String(course.title || t('student.courses.detailTitle'))"
-        :subtitle="String(course.description || t('student.courses.detail.subtitleAi') || t('student.courses.subtitle'))"
         :breadcrumb-items="[
           { label: String(t('student.courses.title')), to: '/student/courses' },
           { label: String(course.title || '') }
@@ -21,8 +20,11 @@
         <div class="lg:col-span-7">
           <card tint="primary">
             <div class="p-5">
+              <div class="text-sm font-semibold text-strong">
+                {{ t('student.courses.detail.detailTitle') || '课程详情' }}
+              </div>
               <!-- 1) 先显示开课/结课时间（玻璃Badge） -->
-              <div class="mt-3 flex flex-wrap items-center gap-2 text-sm text-muted">
+              <div class="mt-2 flex flex-wrap items-center gap-2 text-sm text-muted">
                 <badge v-if="course.startDate" size="sm" variant="accent">
                   <span class="inline-flex items-center gap-1">
                     <span>📅</span>{{ t('student.courses.detail.startDate') }}: {{ formatDateOnly(course.startDate) }}
@@ -41,6 +43,14 @@
                 <template v-if="tagsArray.length">
                   <badge v-for="tag in tagsArray" :key="tag" size="sm" :variant="getTagVariant(tag)">#{{ tag }}</badge>
                 </template>
+              </div>
+              <div v-if="String(course.description || '').trim()" class="mt-3 rounded-2xl border border-white/30 dark:border-white/10 bg-[color-mix(in_oklab,var(--color-base-100)_85%,transparent)] px-4 py-3">
+                <div class="text-xs font-semibold text-subtle mb-1">
+                  {{ t('student.courses.detail.sectionIntro') || '课程简介' }}
+                </div>
+                <p class="text-sm leading-6 text-strong whitespace-pre-line break-words">
+                  {{ course.description }}
+                </p>
               </div>
               <!-- 3) 进度条（/ui/Progress） -->
               <div class="mt-3">

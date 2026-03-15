@@ -14,9 +14,9 @@
             <router-link :to="`/teacher/courses/${route.query.courseId}/students`" class="cursor-pointer pointer-events-auto hover:text-gray-700 dark:hover:text-gray-200">{{ t('teacher.students.breadcrumb.self') }}</router-link>
             <chevron-right-icon class="w-4 h-4 pointer-events-none" />
           </template>
-          <span class="font-medium text-gray-900 dark:text-white">{{ studentName }}</span>
+          <span class="font-medium text-gray-900 dark:text-white">{{ displayStudentName }}</span>
         </nav>
-        <page-header :title="isAdminView ? (t('admin.student360.profile') || '学生详情') : t('teacher.studentDetail.title', { name: studentName })" :subtitle="''" />
+        <page-header :title="isAdminView ? (t('admin.student360.profile') || '学生详情') : t('teacher.studentDetail.title', { name: displayStudentName })" :subtitle="''" />
       </div>
 
       <div class="space-y-8">
@@ -27,7 +27,7 @@
                 <user-avatar v-if="profile.avatar" :avatar="profile.avatar" :size="56" :rounded="true" :fit="'cover'" />
                 <div class="min-w-0">
                   <div class="flex items-center gap-3">
-                    <span class="text-xl font-semibold truncate">{{ studentName }}</span>
+                    <span class="text-xl font-semibold truncate">{{ displayStudentName }}</span>
                     <badge v-if="profile.mbti" size="sm" :variant="mbtiVariant">MBTI · {{ profile.mbti }}</badge>
                   </div>
                  </div>
@@ -107,16 +107,16 @@
           </card>
           
           <!-- Course Filter (glass, keep original position) -->
-          <card padding="sm" tint="accent" class="flex items-center gap-4 whitespace-nowrap">
-            <label class="text-sm text-gray-600 whitespace-nowrap pr-2">{{ t('teacher.studentDetail.filter.label') }}</label>
-            <glass-popover-select
-              v-model="selectedCourseId"
-              :options="[{ label: t('teacher.studentDetail.filter.all') as string, value: '' }, ...studentCourses.map((c:any)=>({ label: String(c.title||c.id), value: String(c.id) }))]"
-              size="sm"
-              width="18rem"
-              @change="onCourseChange"
-            />
-            <div class="pl-2">
+          <card padding="sm" tint="accent">
+            <div class="flex items-center gap-4 flex-nowrap whitespace-nowrap overflow-x-auto no-scrollbar">
+              <label class="text-sm text-gray-600 whitespace-nowrap pr-2">{{ t('teacher.studentDetail.filter.label') }}</label>
+              <glass-popover-select
+                v-model="selectedCourseId"
+                :options="[{ label: t('teacher.studentDetail.filter.all') as string, value: '' }, ...studentCourses.map((c:any)=>({ label: String(c.title||c.id), value: String(c.id) }))]"
+                size="sm"
+                width="18rem"
+                @change="onCourseChange"
+              />
               <behavior-range-select
                 v-model="behaviorRange"
                 mode="full"
@@ -362,6 +362,7 @@ import Card from '@/components/ui/Card.vue'
 import Badge from '@/components/ui/Badge.vue'
 import { getMbtiVariant } from '@/shared/utils/badgeColor'
 import { userApi } from '@/api/user.api'
+import { resolveUserDisplayName } from '@/shared/utils/user'
 import UserAvatar from '@/components/ui/UserAvatar.vue'
 import PaginationBar from '@/components/ui/PaginationBar.vue'
 import { gradeApi } from '@/api/grade.api'
@@ -381,7 +382,7 @@ const uiStore = useUIStore()
 const studentId = ref<string | null>(null);
 const chat = useChatStore()
 // keep single t from useI18n to avoid redeclare
-const studentName = ref(route.query.name as string || (t('teacher.students.table.student') as string));
+const studentName = ref(String(route.query.name || '').trim());
 const isAdminView = computed(() => String(route.path || '').startsWith('/admin/'))
 
 const profile = ref<any>({})
@@ -461,6 +462,44 @@ const behaviorRange = ref<'7d' | '30d' | '180d' | '365d'>('7d')
 const studentCourses = ref<any[]>([])
 const initialDataReady = ref(false)
 
+function isPlaceholderStudentName(value: any): boolean {
+  const raw = String(value || '').trim()
+  if (!raw) return true
+  const placeholders = [
+    String(t('teacher.students.table.student') || '').trim(),
+    String(t('admin.sidebar.students') || '').trim(),
+    '学生',
+    'Student',
+  ].filter(Boolean)
+  return placeholders.includes(raw)
+}
+
+function pickStudentDisplayName(...sources: any[]): string {
+  for (const source of sources) {
+    if (!source) continue
+    if (typeof source === 'string') {
+      const text = source.trim()
+      if (text && !isPlaceholderStudentName(text)) return text
+      continue
+    }
+    const fromUser = String(resolveUserDisplayName(source) || '').trim()
+    if (fromUser && !isPlaceholderStudentName(fromUser)) return fromUser
+    const fromName = String(source?.name || '').trim()
+    if (fromName && !isPlaceholderStudentName(fromName)) return fromName
+  }
+  return ''
+}
+
+const displayStudentName = computed(() => {
+  const picked = pickStudentDisplayName(
+    studentName.value,
+    profile.value,
+    route.query.name,
+    { id: studentId.value }
+  )
+  return picked || String(t('teacher.students.table.student') || '学生')
+})
+
 // 确保 studentId 在首帧渲染前尽量就绪，避免子组件首帧以 undefined 发请求（导致“studentId 必填”）
 const resolvedStudentId = computed(() => {
   const sid = (route.params as any).studentId as string || (route.params as any).id as string
@@ -510,7 +549,7 @@ function onBehaviorRangeChange() {
 
 function contactStudent() {
   if (!studentId.value) return
-  chat.openChat(String(studentId.value), String(studentName.value || ''), String(route.query.courseId || ''))
+  chat.openChat(String(studentId.value), String(displayStudentName.value || ''), String(route.query.courseId || ''))
 }
 
 function exportGrades() {
@@ -947,7 +986,7 @@ async function exportReportPdf() {
         </head>
         <body>
           <div class="header export-section" id="export-header">
-            <h1>${escapeHtml(safeFilename(studentName.value || `Student ${sid}`))} · ${escapeHtml(t('teacher.studentDetail.actions.exportReport') as any || '导出报告')}</h1>
+            <h1>${escapeHtml(safeFilename(displayStudentName.value || `Student ${sid}`))} · ${escapeHtml(t('teacher.studentDetail.actions.exportReport') as any || '导出报告')}</h1>
             <div class="meta">${escapeHtml(new Date().toLocaleString())}${courseId ? ` · courseId: ${escapeHtml(courseId)}` : ''}</div>
           </div>
           <div class="divider" style="height: 10px;"></div>
@@ -1014,7 +1053,7 @@ async function exportReportPdf() {
       cursorY += imgH + gap
     }
 
-    const name = safeFilename(studentName.value || `student_${sid}`)
+    const name = safeFilename(displayStudentName.value || `student_${sid}`)
     pdf.save(`${name}_report.pdf`)
     try { document.body.removeChild(iframe) } catch {}
   } catch (e: any) {
@@ -1237,12 +1276,14 @@ onMounted(async () => {
     }
     if (sid) {
         try {
+          let detailData: any = null
           if (isAdminView.value) {
             const res: any = await adminApi.getStudentDetail(sid, {
               courseId: courseContextId.value,
               eventLimit: 8
             })
             const data: any = (res as any)?.data?.data ?? (res as any)?.data ?? (res as any)
+            detailData = data
             const student = data?.student || {}
             profile.value = {
               ...student,
@@ -1302,9 +1343,12 @@ onMounted(async () => {
               }
             } catch {}
           }
-          if (profile.value && (profile.value as any).name) {
-            studentName.value = (profile.value as any).name
-          }
+          const resolvedName = pickStudentDisplayName(
+            profile.value,
+            detailData?.student,
+            route.query.name
+          )
+          if (resolvedName) studentName.value = resolvedName
         } catch {}
         // 并行拉取，减少首帧阻塞；失败不阻断其他任务
         const tasks: Array<Promise<any>> = [

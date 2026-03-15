@@ -95,8 +95,8 @@
         </liquid-glass>
       </teleport>
       <!-- 分屏栅格 -->
-      <div class="pb-6 sm:pb-8 md:pb-10 pl-4 pr-4 sm:pl-8 sm:pr-8 md:pl-12 md:pr-12 xl:pl-16 xl:pr-16 2xl:pl-20 2xl:pr-20 max-w-8xl mx-auto">
-      <div class="grid grid-cols-1 md:grid-cols-12 gap-6 xl:gap-8 2xl:gap-10 items-start xl:items-center mt-2 sm:mt-4 md:mt-8 lg:mt-12">
+      <div class="pb-6 sm:pb-8 md:pb-10 xl:pb-0 pl-4 pr-4 sm:pl-8 sm:pr-8 md:pl-12 md:pr-12 xl:pl-16 xl:pr-16 2xl:pl-20 2xl:pr-20 max-w-8xl mx-auto xl:min-h-[calc(100vh-118px)] xl:flex xl:items-center">
+      <div class="grid w-full grid-cols-1 md:grid-cols-12 gap-6 xl:gap-8 2xl:gap-10 items-start xl:items-center mt-2 sm:mt-4 md:mt-8 lg:mt-12 xl:mt-0">
         <!-- 左侧品牌与卖点 -->
         <div class="hidden xl:block xl:col-span-5 xl:col-start-1 order-2 xl:order-1 xl:w-full xl:max-w-[620px] xl:justify-self-end">
           <liquid-glass

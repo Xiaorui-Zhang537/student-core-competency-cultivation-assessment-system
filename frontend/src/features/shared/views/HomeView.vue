@@ -78,8 +78,8 @@
                 containerClass="relative rounded-2xl w-full aspect-[16/10] max-h-[70vh] overflow-hidden"
               >
                 <compare-slider
-                  first-image="/home/compare/theme-light.png"
-                  second-image="/home/compare/theme-dark.png"
+                  :first-image="compareThemeLight"
+                  :second-image="compareThemeDark"
                   :first-image-alt="t('app.home.compare.light')"
                   :second-image-alt="t('app.home.compare.dark')"
                   first-content-class="object-contain object-center"
@@ -163,7 +163,7 @@
               {{ t('app.home.helpDesc') }}
             </h2>
             <liquid-glass :radius="16" :frost="0.06" containerClass="relative rounded-2xl w-full overflow-hidden">
-              <img :src="helpImageSrc" alt="Help Overview" class="w-full h-full object-cover rounded-xl" @error="onHelpImgError" />
+              <img :src="helpImageSrc" alt="Help Overview" class="w-full h-full object-cover rounded-xl" loading="lazy" decoding="async" fetchpriority="low" @error="onHelpImgError" />
             </liquid-glass>
           </div>
           <container-scroll v-else>
@@ -171,7 +171,7 @@
               <text-scroll-reveal :text="t('app.home.helpDesc') as string" :sticky="false" progress-container-id="scene-help" :reveal-portion="0.5" />
             </template>
             <template #card>
-              <img :src="helpImageSrc" alt="Help Overview" class="w-full h-full object-cover rounded-xl" @error="onHelpImgError" />
+              <img :src="helpImageSrc" alt="Help Overview" class="w-full h-full object-cover rounded-xl" loading="lazy" decoding="async" fetchpriority="low" @error="onHelpImgError" />
             </template>
           </container-scroll>
         </div>
@@ -278,7 +278,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted, computed } from 'vue'
+import { ref, onMounted, onUnmounted, computed, watch } from 'vue'
 import { useUIStore } from '@/stores/ui'
 import { storeToRefs } from 'pinia'
 import { useRouter } from 'vue-router'
@@ -314,6 +314,13 @@ const isDarkMode = computed(() => {
   try { return (uiStore as any).isDarkMode || document.documentElement.classList.contains('dark') } catch { return document.documentElement.classList.contains('dark') }
 })
 
+const compareThemeLight = '/home/compare/theme-light.jpg'
+const compareThemeDark = '/home/compare/theme-dark.jpg'
+const compareLangZh = '/home/compare/lang-zh.jpg'
+const compareLangZhDark = '/home/compare/lang-zh-dark.jpg'
+const compareLangEn = '/home/compare/lang-en.jpg'
+const compareLangEnDark = '/home/compare/lang-en-dark.jpg'
+
 function updateViewportFlags() {
   isMobileView.value = window.innerWidth < 768
 }
@@ -322,13 +329,59 @@ function updateViewportFlags() {
 useLenisHomeScroll({ enabled: true, smoothWheel: true, smoothTouch: false })
 
 // 语言对比图片（根据暗黑模式切换到同目录 -dark 资源）
-const langZhImg = computed(() => isDarkMode.value ? '/home/compare/lang-zh-dark.png' : '/home/compare/lang-zh.png')
-const langEnImg = computed(() => isDarkMode.value ? '/home/compare/lang-en-dark.png' : '/home/compare/lang-en.png')
+const langZhImg = computed(() => isDarkMode.value ? compareLangZhDark : compareLangZh)
+const langEnImg = computed(() => isDarkMode.value ? compareLangEnDark : compareLangEn)
 
-// 帮助区图片资源路径（请将图片放置于 frontend/public/home/help/overview.png）
-const helpImage = '/home/help/overview.png'
-const helpImageDark = '/home/help/overview-dark.png'
+// 帮助区图片资源路径
+const helpImage = '/home/help/overview.jpg'
+const helpImageDark = '/home/help/overview-dark.jpg'
 const helpImageSrc = computed(() => (isDarkMode.value ? helpImageDark : helpImage))
+
+const prefetchedHomeMedia = new Set<string>()
+
+function prefetchHomeMedia(src?: string) {
+  if (!src || prefetchedHomeMedia.has(src)) return
+  try {
+    const img = new Image()
+    img.decoding = 'async'
+    img.src = src
+    prefetchedHomeMedia.add(src)
+  } catch {}
+}
+
+function prefetchCurrentThemeMedia() {
+  prefetchHomeMedia(compareThemeLight)
+  prefetchHomeMedia(compareThemeDark)
+  prefetchHomeMedia(langZhImg.value)
+  prefetchHomeMedia(langEnImg.value)
+  prefetchHomeMedia(helpImageSrc.value)
+}
+
+function prefetchAllThemeMediaWhenIdle() {
+  const run = () => {
+    ;[
+      compareThemeLight,
+      compareThemeDark,
+      compareLangZh,
+      compareLangZhDark,
+      compareLangEn,
+      compareLangEnDark,
+      helpImage,
+      helpImageDark,
+    ].forEach(prefetchHomeMedia)
+  }
+
+  try {
+    const anyWin = window as any
+    if (typeof anyWin.requestIdleCallback === 'function') {
+      anyWin.requestIdleCallback(run, { timeout: 1200 })
+      return
+    }
+  } catch {}
+
+  window.setTimeout(run, 220)
+}
+
 function onHelpImgError(e: Event) {
   const target = e.target as HTMLImageElement
   // 回退到占位图
@@ -369,7 +422,7 @@ const galleryItems = computed(() => {
     t('app.home.gallery.assistant'),
     t('app.home.gallery.community')
   ]
-  return numbers.map((n, idx) => ({ image: `/home/gallery/${n}.png`, text: labels[idx] }))
+  return numbers.map((n, idx) => ({ image: `/home/gallery/${n}.jpg`, text: labels[idx] }))
 })
 
 const marqueeItems = [
@@ -384,6 +437,8 @@ const marqueeItems = [
 onMounted(() => {
   updateViewportFlags()
   window.addEventListener('resize', updateViewportFlags)
+  prefetchCurrentThemeMedia()
+  prefetchAllThemeMediaWhenIdle()
 
   // 观察滚动触发彩带
   try {
@@ -409,6 +464,10 @@ onMounted(() => {
 onUnmounted(() => {
   window.removeEventListener('resize', updateViewportFlags)
   try { if (confettiObserver) confettiObserver.disconnect() } catch {}
+})
+
+watch(() => isDarkMode.value, () => {
+  prefetchCurrentThemeMedia()
 })
 
 // 彩带：左右两侧喷射的烟花效果

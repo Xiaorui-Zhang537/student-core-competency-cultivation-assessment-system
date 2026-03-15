@@ -488,12 +488,12 @@ class App {
   createGeometry() { this.planeGeometry = new Plane(this.gl, { heightSegments: 50, widthSegments: 100 }) }
   createMedias(items: BendingGalleryItem[] | undefined, bend: number = 1, textColor: string, borderRadius: number, font: string) {
     const defaultItems: BendingGalleryItem[] = [
-      { image: '/home/gallery/1.png', text: 'Image 1' },
-      { image: '/home/gallery/2.png', text: 'Image 2' },
-      { image: '/home/gallery/3.png', text: 'Image 3' },
-      { image: '/home/gallery/4.png', text: 'Image 4' },
-      { image: '/home/gallery/5.png', text: 'Image 5' },
-      { image: '/home/gallery/6.png', text: 'Image 6' },
+      { image: '/home/gallery/1.jpg', text: 'Image 1' },
+      { image: '/home/gallery/2.jpg', text: 'Image 2' },
+      { image: '/home/gallery/3.jpg', text: 'Image 3' },
+      { image: '/home/gallery/4.jpg', text: 'Image 4' },
+      { image: '/home/gallery/5.jpg', text: 'Image 5' },
+      { image: '/home/gallery/6.jpg', text: 'Image 6' },
     ]
     const galleryItems = items && items.length ? items : defaultItems
     this.mediasImages = galleryItems.concat(galleryItems)
@@ -600,5 +600,4 @@ onBeforeUnmount(() => { if (app) { app.destroy(); app = null } })
 
 <style scoped>
 </style>
-
 

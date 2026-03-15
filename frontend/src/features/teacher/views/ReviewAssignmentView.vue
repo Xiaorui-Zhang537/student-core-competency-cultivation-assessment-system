@@ -81,12 +81,12 @@
     </div>
       <div v-else class="space-y-4 mt-4">
       <card v-for="assignment in assignmentStore.assignments" :key="assignment.id" padding="md" tint="secondary" class="relative">
-        <div class="min-w-0 pr-48">
+        <div class="min-w-0 pr-[22rem]">
           <div class="flex items-center gap-2">
-            <h3 class="font-bold text-base truncate max-w-[52vw]">{{ assignment.title }}</h3>
+            <h3 class="font-bold text-base truncate max-w-full">{{ assignment.title }}</h3>
             <badge class="ml-1" size="sm" :variant="statusVariantByDisplay(displayStatusKey(assignment))">{{ renderStatus(assignment) }}</badge>
           </div>
-          <div class="text-sm text-gray-600 mt-1 truncate max-w-[60vw]">{{ assignment.description }}</div>
+          <div class="text-sm text-gray-600 mt-1 truncate max-w-full" :title="assignment.description">{{ assignment.description }}</div>
           <div class="text-xs text-gray-500 mt-1">
             {{ t('teacher.assignments.list.dueDate') }}:
             <span v-if="String((assignment as any)?.assignmentType || '').toLowerCase()==='course_bound'">

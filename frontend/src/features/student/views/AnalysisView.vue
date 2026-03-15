@@ -294,7 +294,7 @@
                   </div>
                   <div class="ml-auto shrink-0 flex items-center gap-2">
                     <div class="h-2 w-24 bg-gray-200 dark:bg-gray-700 rounded overflow-hidden">
-                      <div class="h-2" :style="{ width: ((typeof a.score === 'number' ? Number(a.score) : 0)) + '%', backgroundColor: getThemeCoreColors().primary }"></div>
+                      <div class="h-2" :style="{ width: ((typeof a.score === 'number' ? Number(a.score) : 0)) + '%', backgroundColor: assignmentProgressColor }"></div>
                     </div>
                     <span class="text-xs font-medium text-gray-700 dark:text-gray-200">
                       {{ typeof a.score === 'number' ? Math.round(Number(a.score)) : (t('student.grades.ungraded') as string) }}
@@ -886,14 +886,31 @@ const toSeriesPoints = (name: string, arr: Point[]) => {
 }
 const toXAxis = (arr: Point[]) => (Array.isArray(arr) ? arr.map(p => String(p?.x ?? '')) : [])
 
+const assignmentProgressColor = computed(() => {
+  // 依赖 themeVersion，确保主题切换后列表条颜色同步更新
+  // eslint-disable-next-line @typescript-eslint/no-unused-expressions
+  themeVersion.value
+  return getThemeCoreColors().primary
+})
+
 const scoreSeriesPoints = computed(() => {
   // 依赖 themeVersion 以在主题切换时重算颜色
+  // eslint-disable-next-line @typescript-eslint/no-unused-expressions
+  themeVersion.value
   return toSeriesPoints(t('student.analysis.series.score') as string, trends.value.score)
 })
 const scoreXAxis = computed(() => toXAxis(trends.value.score))
-const completionSeriesPoints = computed(() => toSeriesPoints(t('student.analysis.series.completion') as string, trends.value.completion))
+const completionSeriesPoints = computed(() => {
+  // eslint-disable-next-line @typescript-eslint/no-unused-expressions
+  themeVersion.value
+  return toSeriesPoints(t('student.analysis.series.completion') as string, trends.value.completion)
+})
 const completionXAxis = computed(() => toXAxis(trends.value.completion))
-const hoursSeriesPoints = computed(() => toSeriesPoints(t('student.analysis.series.hours') as string, trends.value.hours))
+const hoursSeriesPoints = computed(() => {
+  // eslint-disable-next-line @typescript-eslint/no-unused-expressions
+  themeVersion.value
+  return toSeriesPoints(t('student.analysis.series.hours') as string, trends.value.hours)
+})
 const hoursXAxis = computed(() => toXAxis(trends.value.hours))
 
 const load = async () => {
@@ -1039,12 +1056,8 @@ async function loadRadar() {
   if (!selectedCourseId.value) { radarIndicators.value = []; radarSeries.value = []; return }
   try {
     if (!compareEnabled.value) {
-      // 默认最近30天
-      const end = new Date()
-      const start = new Date(end)
-      start.setDate(end.getDate() - 29)
-      const fmt = (d: Date) => `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`
-      const r: any = await abilityApi.getStudentRadar({ courseId: selectedCourseId.value, startDate: fmt(start), endDate: fmt(end) })
+      // 与教师端口径保持一致：默认不带日期过滤，避免把历史 assessed_at 为空/较早的数据过滤掉
+      const r: any = await abilityApi.getStudentRadar({ courseId: selectedCourseId.value })
       const data: any = r?.data ?? r
       const dims: string[] = data?.dimensions || []
       const nextDims = [...dims]

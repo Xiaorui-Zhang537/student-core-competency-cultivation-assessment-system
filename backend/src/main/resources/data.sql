@@ -56,7 +56,7 @@ SET FOREIGN_KEY_CHECKS = 1;
 -- 默认密码（开发/演示数据）：12345678
 INSERT INTO users (id, username, email, password, role, status, avatar, nickname, first_name, last_name, bio, grade, subject, school, phone, created_at, updated_at, deleted, email_verified)
 VALUES
-    (1, 'admin', 'admin+seed-20260303@local.test', '$2y$10$w/WC3WahuiIUzyg/uJEEU.JvfEIGdWqy7BZvQwsDTSvoL4yssEJ.y', 'admin', 'active', '', '系统管理员', '系统', '管理员', '负责系统治理与数据审计', NULL, NULL, '信息中心', '13800000000', NOW(), NOW(), 0, 1),
+    (1, 'admin', 'admin+seed-20260303@local.test', '$2a$10$fKoNHkjprIIZ4HNJFTkrBOqq1DXbw/j2.HX53waOvNjmP1X4NVcoK', 'admin', 'active', '', '系统管理员', '系统', '管理员', '负责系统治理与数据审计', NULL, NULL, '信息中心', '13800000000', NOW(), NOW(), 0, 1),
     (2, 'teacher_java', 'teacher.java@example.com', '$2y$10$w/WC3WahuiIUzyg/uJEEU.JvfEIGdWqy7BZvQwsDTSvoL4yssEJ.y', 'teacher', 'active', '', '罗老师', '罗', '老师', '负责工程实践与数据库课程', NULL, '计算机', '软件学院', '13800000001', NOW(), NOW(), 0, 1),
     (3, 'teacher_soft', 'teacher.soft@example.com', '$2y$10$w/WC3WahuiIUzyg/uJEEU.JvfEIGdWqy7BZvQwsDTSvoL4yssEJ.y', 'teacher', 'active', '', '周老师', '周', '老师', '负责表达训练与协作课程', NULL, '通识教育', '人文学院', '13800000002', NOW(), NOW(), 0, 1),
     (11, 'student_lin', 'student.lin@example.com', '$2y$10$w/WC3WahuiIUzyg/uJEEU.JvfEIGdWqy7BZvQwsDTSvoL4yssEJ.y', 'student', 'active', '', '林一', '林', '一', '偏向工程实现，提交稳定', '2024级', '软件工程', '软件学院', '13800000011', NOW(), NOW(), 0, 1),

@@ -34,6 +34,10 @@ export interface AdminAbilityRadarOverviewResponse {
 export interface AdminAiUsageUserItem {
   userId: number
   username: string
+  nickname?: string
+  firstName?: string
+  lastName?: string
+  fullName?: string
   role: string
   conversationCount: number
   messageCount: number

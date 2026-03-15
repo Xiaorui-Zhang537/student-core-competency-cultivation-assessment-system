@@ -76,7 +76,7 @@
             <div class="mt-1 space-y-3">
               <div v-for="(item, idx) in aiUsageTopList" :key="item.userId" class="text-xs">
                 <div class="flex items-center justify-between gap-3 mb-1">
-                  <span class="truncate pr-3">#{{ idx + 1 }} {{ item.username }} ({{ item.role }})</span>
+                  <span class="truncate pr-3">#{{ idx + 1 }} {{ aiUsageDisplayName(item) }} ({{ item.role }})</span>
                   <span class="font-semibold">{{ aiUsageDisplayCount(item) }}</span>
                 </div>
                 <div class="h-2 rounded-full bg-white/10 overflow-hidden">
@@ -293,6 +293,30 @@ const radarSeries = computed(() => {
 const radarHasData = computed(() => (abilityRadar.value?.dimensions || []).some((item) => Number(item.sampleSize || 0) > 0))
 
 const aiUsageTopList = computed(() => (aiUsage.value?.users || []).slice(0, 10))
+function aiUsageDisplayName(item: {
+  userId?: number
+  username?: string
+  nickname?: string
+  firstName?: string
+  lastName?: string
+  fullName?: string
+}): string {
+  const fullName = String(item?.fullName || '').trim()
+  if (fullName) return fullName
+
+  const lastName = String(item?.lastName || '').trim()
+  const firstName = String(item?.firstName || '').trim()
+  const zhName = `${lastName}${firstName}`.trim()
+  if (zhName) return zhName
+
+  const nickname = String(item?.nickname || '').trim()
+  if (nickname) return nickname
+
+  const username = String(item?.username || '').trim()
+  if (username) return username
+
+  return `#${String(item?.userId || '-')}`
+}
 function aiUsageDisplayCount(item: { messageCount?: number; conversationCount?: number }): number {
   const messages = Number(item?.messageCount || 0)
   const conversations = Number(item?.conversationCount || 0)
@@ -344,4 +368,3 @@ async function reload() {
 
 onMounted(reload)
 </script>
-

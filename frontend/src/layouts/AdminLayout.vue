@@ -275,6 +275,46 @@
       </liquid-glass>
     </teleport>
 
+    <!-- 鼠标轨迹菜单 -->
+    <teleport to="body">
+      <div v-if="showCursorMenu" class="fixed inset-0 z-[999]" @click="showCursorMenu = false"></div>
+      <liquid-glass
+        v-if="showCursorMenu"
+        effect="occlusionBlur"
+        :style="cursorMenuStyle"
+        containerClass="fixed z-[1000] rounded-2xl border border-white/20 dark:border-white/12 overflow-hidden shadow-lg"
+        class="p-1"
+        :radius="16"
+        :frost="0.14"
+        :alpha="0.96"
+        :blur="14"
+        :tint="false"
+        @click.stop
+      >
+        <div class="px-3 py-2 text-xs text-subtle">
+          <div class="font-medium mb-1">{{ t('layout.common.cursorTrailTitle') || '鼠标轨迹' }}</div>
+          <div class="opacity-90">{{ t('layout.common.cursorTrailDesc') }}</div>
+        </div>
+        <div class="border-t border-white/10 my-1"></div>
+        <button class="w-full text-left px-3 py-2 rounded-2xl hover:bg-white/10 text-sm flex items-center justify-between" @click="setCursor('off')">
+          <span>{{ t('layout.common.cursorTrailOff') || '关闭' }}</span>
+          <span v-if="uiStore.cursorTrailMode==='off'" class="text-theme-primary">✓</span>
+        </button>
+        <button class="w-full text-left px-3 py-2 rounded-2xl hover:bg-white/10 text-sm flex items-center justify-between" @click="setCursor('fluid')">
+          <span>{{ t('layout.common.cursorTrailFluid') || '流体光标' }}</span>
+          <span v-if="uiStore.cursorTrailMode==='fluid'" class="text-theme-primary">✓</span>
+        </button>
+        <button class="w-full text-left px-3 py-2 rounded-2xl hover:bg-white/10 text-sm flex items-center justify-between" @click="setCursor('smooth')">
+          <span>{{ t('layout.common.cursorTrailSmooth') || '顺滑光标' }}</span>
+          <span v-if="uiStore.cursorTrailMode==='smooth'" class="text-theme-primary">✓</span>
+        </button>
+        <button class="w-full text-left px-3 py-2 rounded-2xl hover:bg-white/10 text-sm flex items-center justify-between" @click="setCursor('tailed')">
+          <span>{{ t('layout.common.cursorTrailTailed') || '带尾迹光标' }}</span>
+          <span v-if="uiStore.cursorTrailMode==='tailed'" class="text-theme-primary">✓</span>
+        </button>
+      </liquid-glass>
+    </teleport>
+
     <cursor-trail-layer />
   </div>
 </template>

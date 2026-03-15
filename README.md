@@ -1,6 +1,6 @@
 <div align="center">
   <img src="frontend/public/brand/logo.png" width="96" alt="logo" />
-  <h1>基于大语言模型的学生核心能力培养评估系统</h1>
+  <h1>基于大语言模型的学生核心能力培养评估智能体</h1>
   <p>
     核心卖点：LLM 稳定性控制 · 结构化输出治理 · 可部署全栈系统
   </p>

@@ -70,6 +70,9 @@
               v-if="props.firstImage"
               :alt="props.firstImageAlt"
               :src="props.firstImage"
+              loading="lazy"
+              decoding="async"
+              fetchpriority="low"
               :class="
                 cn(
                   'absolute inset-0 z-20 rounded-2xl flex-shrink-0 w-full h-full select-none object-cover',
@@ -95,6 +98,9 @@
             v-if="props.secondImage"
             :alt="props.secondImageAlt"
             :src="props.secondImage"
+            loading="lazy"
+            decoding="async"
+            fetchpriority="low"
             :class="cn('w-full h-full object-cover', secondContentClass)"
             :draggable="false"
           />
@@ -245,5 +251,4 @@ watch(() => props.autoplay, (v) => { if (v && !isMouseOver.value && !isDragging.
 
 <style scoped>
 </style>
-
 

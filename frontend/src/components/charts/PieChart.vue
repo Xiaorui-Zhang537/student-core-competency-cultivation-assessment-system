@@ -103,11 +103,15 @@ const waitForContainer = async (maxTries = 10): Promise<boolean> => {
 }
 
 const ensurePalette = () => {
-  const palette = getEChartsThemedTokens()?.palette
+  const palette = resolveThemePalette()
   if (Array.isArray(palette) && palette.length) {
     return palette.map(color => ensureOpaque(color))
   }
-  return resolveThemePalette().map(color => ensureOpaque(color))
+  const tokenPalette = getEChartsThemedTokens()?.palette
+  if (Array.isArray(tokenPalette) && tokenPalette.length) {
+    return tokenPalette.map(color => ensureOpaque(color))
+  }
+  return ['#3b82f6', '#06b6d4', '#f59e0b', '#10b981', '#ef4444'].map(color => ensureOpaque(color))
 }
 
 const hasData = () => Array.isArray(props.data) && props.data.length > 0

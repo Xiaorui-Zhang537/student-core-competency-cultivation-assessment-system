@@ -58,6 +58,46 @@ let reRenderScheduled = false
 
 const isEmpty = computed(() => !props.series || props.series.length === 0 || props.series.every(s => !s || !Array.isArray(s.data) || s.data.length === 0))
 
+const FALLBACK_SERIES_COLORS = ['#60a5fa', '#34d399', '#f59e0b', '#f472b6', '#a78bfa', '#22d3ee']
+
+type RgbTuple = { r: number; g: number; b: number }
+
+const parseRgbTuple = (color: string): RgbTuple | null => {
+  const normalized = normalizeCssColor(String(color || ''))
+  const m = normalized.match(/rgba?\(\s*(\d+)\s*(?:,|\s)\s*(\d+)\s*(?:,|\s)\s*(\d+)/i)
+  if (!m) return null
+  return { r: Number(m[1]), g: Number(m[2]), b: Number(m[3]) }
+}
+
+const isNearWhiteOrGray = (color: string) => {
+  const rgb = parseRgbTuple(color)
+  if (!rgb) return false
+  const diff = Math.max(rgb.r, rgb.g, rgb.b) - Math.min(rgb.r, rgb.g, rgb.b)
+  return (rgb.r >= 245 && rgb.g >= 245 && rgb.b >= 245) || diff <= 8
+}
+
+const ensurePalette = () => {
+  const fromTokens = getEChartsThemedTokens()?.palette
+  const fromResolver = resolveThemePalette()
+  const raw = (Array.isArray(fromTokens) && fromTokens.length ? fromTokens : fromResolver)
+    .map(c => normalizeCssColor(String(c || '')).trim())
+    .filter(c => /^#|^rgb/i.test(c))
+  if (!raw.length) return FALLBACK_SERIES_COLORS.slice()
+  const head = raw.slice(0, 4)
+  const nearNeutralCount = head.filter(isNearWhiteOrGray).length
+  if (nearNeutralCount >= 3) return FALLBACK_SERIES_COLORS.slice()
+  return raw
+}
+
+const ensureSeriesColor = (color: string, idx: number, isDark: boolean) => {
+  const normalized = normalizeCssColor(String(color || '')).trim()
+  const fallback = FALLBACK_SERIES_COLORS[idx % FALLBACK_SERIES_COLORS.length]
+  if (!/^#|^rgb/i.test(normalized)) return fallback
+  // 暗色主题下避免出现近白/近灰线条（视觉上会像“没颜色”）
+  if (isDark && isNearWhiteOrGray(normalized)) return fallback
+  return normalized
+}
+
 const waitForContainer = async (maxTries = 10): Promise<boolean> => {
   for (let i = 0; i < maxTries; i++) {
     await nextTick()
@@ -72,7 +112,7 @@ const buildOption = (): any => {
   const tokens = getEChartsThemedTokens()
 
   // 统一调色盘（来自 CSS 变量或默认色盘），与其他图保持一致
-  const palette = resolveThemePalette()
+  const palette = ensurePalette()
 
   const categories = Array.isArray(props.xAxisData) && props.xAxisData.length
     ? props.xAxisData
@@ -80,7 +120,7 @@ const buildOption = (): any => {
 
   const normalized = (props.series || []).filter(s => s && Array.isArray(s.data)).map((s, idx) => {
     const baseRaw = s.color || palette[idx % palette.length]
-    const base = normalizeCssColor(String(baseRaw))
+    const base = ensureSeriesColor(String(baseRaw), idx, theme === 'dark')
     return {
       name: s.name,
       type: 'line',
@@ -245,4 +285,3 @@ defineExpose({ getChartInstance: () => chart })
 .trend-area-chart-container { position: relative; display: flex; flex-direction: column; }
 .trend-area-chart { flex: 1; min-height: 200px; }
 </style>
-

@@ -178,6 +178,10 @@
     <select id="aiUsageByUser" resultType="map">
         SELECT u.id AS userId,
                u.username AS username,
+               u.nickname AS nickname,
+               u.first_name AS firstName,
+               u.last_name AS lastName,
+               TRIM(CONCAT(COALESCE(u.last_name, ''), COALESCE(u.first_name, ''))) AS fullName,
                u.role AS role,
                COUNT(DISTINCT c.id) AS conversationCount,
                COUNT(m.id) AS messageCount,
@@ -191,7 +195,7 @@
                ON m.conversation_id = c.id
               AND m.created_at &gt;= #{since}
         WHERE u.deleted = 0
-        GROUP BY u.id, u.username, u.role
+        GROUP BY u.id, u.username, u.nickname, u.first_name, u.last_name, u.role
         HAVING COUNT(DISTINCT c.id) &gt; 0 OR COUNT(m.id) &gt; 0
         ORDER BY messageCount DESC, conversationCount DESC, userId ASC
         LIMIT #{limit}

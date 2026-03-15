@@ -57,16 +57,16 @@
               <th class="px-6 py-3 text-left text-xs font-semibold text-gray-700 dark:text-gray-200 tracking-wide">
                 {{ t('admin.sidebar.courses') }}
               </th>
-              <th class="px-6 py-3 text-center text-xs font-semibold text-gray-700 dark:text-gray-200 tracking-wide whitespace-nowrap">
+              <th class="px-6 py-3 text-center text-xs font-semibold text-gray-700 dark:text-gray-200 tracking-wide whitespace-nowrap min-w-[100px]">
                 {{ t('common.columns.teacher') || 'Teacher' }}
               </th>
-              <th class="px-6 py-3 text-center text-xs font-semibold text-gray-700 dark:text-gray-200 tracking-wide whitespace-nowrap">
+              <th class="px-6 py-3 text-center text-xs font-semibold text-gray-700 dark:text-gray-200 tracking-wide whitespace-nowrap min-w-[110px]">
                 {{ t('common.columns.status') || 'Status' }}
               </th>
-              <th class="px-6 py-3 text-center text-xs font-semibold text-gray-700 dark:text-gray-200 tracking-wide whitespace-nowrap hidden xl:table-cell">
+              <th class="px-6 py-3 text-center text-xs font-semibold text-gray-700 dark:text-gray-200 tracking-wide whitespace-nowrap hidden xl:table-cell min-w-[120px]">
                 {{ t('shared.course.fields.category') || '类别' }}
               </th>
-              <th class="px-6 py-3 text-center text-xs font-semibold text-gray-700 dark:text-gray-200 tracking-wide whitespace-nowrap hidden xl:table-cell">
+              <th class="px-6 py-3 text-center text-xs font-semibold text-gray-700 dark:text-gray-200 tracking-wide whitespace-nowrap hidden xl:table-cell min-w-[110px]">
                 {{ t('shared.course.fields.difficulty') || '难度' }}
               </th>
               <th class="px-6 py-3 text-center text-xs font-semibold text-gray-700 dark:text-gray-200 tracking-wide whitespace-nowrap hidden xl:table-cell">
@@ -75,7 +75,7 @@
               <th class="px-6 py-3 text-center text-xs font-semibold text-gray-700 dark:text-gray-200 tracking-wide whitespace-nowrap">
                 {{ t('common.columns.student') || 'Students' }}
               </th>
-              <th class="px-6 py-3 text-center text-xs font-semibold text-gray-700 dark:text-gray-200 tracking-wide whitespace-nowrap">
+              <th class="px-6 py-3 text-center text-xs font-semibold text-gray-700 dark:text-gray-200 tracking-wide whitespace-nowrap min-w-[120px]">
                 {{ t('common.columns.actions') || '操作' }}
               </th>
             </tr>
@@ -88,20 +88,22 @@
                 <div class="font-medium">{{ c.title }}</div>
                 <div class="text-xs text-subtle line-clamp-1">{{ c.description }}</div>
               </td>
-              <td class="px-6 py-3 text-sm text-center align-middle">
-                {{ (c as any).teacherName || (c as any).teacher?.nickname || (c as any).teacher?.username || '-' }}
+              <td class="px-6 py-3 text-sm text-center align-middle whitespace-nowrap">
+                <span class="inline-block max-w-[9rem] truncate align-middle">
+                  {{ (c as any).teacherName || (c as any).teacher?.nickname || (c as any).teacher?.username || '-' }}
+                </span>
               </td>
-              <td class="px-6 py-3 text-sm text-center align-middle">
-                <badge size="sm" :variant="statusVariant(c.status)">{{ statusLabel(c.status) }}</badge>
+              <td class="px-6 py-3 text-sm text-center align-middle whitespace-nowrap">
+                <badge size="sm" class="whitespace-nowrap" :variant="statusVariant(c.status)">{{ statusLabel(c.status) }}</badge>
               </td>
-              <td class="px-6 py-3 text-sm text-center hidden xl:table-cell align-middle">
-                <badge v-if="(c as any).category" size="sm" :variant="getCategoryVariant(String((c as any).category))">
+              <td class="px-6 py-3 text-sm text-center hidden xl:table-cell align-middle whitespace-nowrap">
+                <badge v-if="(c as any).category" size="sm" class="whitespace-nowrap" :variant="getCategoryVariant(String((c as any).category))">
                   {{ localizeCategory((c as any).category, t) }}
                 </badge>
                 <span v-else class="text-subtle">-</span>
               </td>
-              <td class="px-6 py-3 text-sm text-center hidden xl:table-cell align-middle">
-                <badge v-if="(c as any).difficulty" size="sm" :variant="getDifficultyVariant(String((c as any).difficulty))">
+              <td class="px-6 py-3 text-sm text-center hidden xl:table-cell align-middle whitespace-nowrap">
+                <badge v-if="(c as any).difficulty" size="sm" class="whitespace-nowrap" :variant="getDifficultyVariant(String((c as any).difficulty))">
                   {{ localizeDifficulty((c as any).difficulty, t) }}
                 </badge>
                 <span v-else class="text-subtle">-</span>
@@ -112,8 +114,8 @@
               <td class="px-6 py-3 text-sm text-center align-middle">
                 {{ (c as any).enrollmentCount ?? (c as any).studentCount ?? '-' }}
               </td>
-              <td class="px-6 py-3 text-center align-middle">
-                <Button size="sm" variant="primary" @click="router.push(`/admin/courses/${c.id}`)">
+              <td class="px-6 py-3 text-center align-middle whitespace-nowrap">
+                <Button size="sm" variant="primary" class="whitespace-nowrap" @click="router.push(`/admin/courses/${c.id}`)">
                   <EyeIcon class="w-4 h-4 mr-2" />
                   {{ t('common.view') || '查看' }}
                 </Button>
@@ -158,7 +160,7 @@ import { adminApi } from '@/api/admin.api'
 import type { Course } from '@/types/course'
 import AdminKpiRow from '@/features/admin/components/AdminKpiRow.vue'
 import { useAdminCounts } from '@/features/admin/composables/useAdminCounts'
-import { AcademicCapIcon, EyeIcon } from '@heroicons/vue/24/outline'
+import { AcademicCapIcon, EyeIcon, PencilSquareIcon, CheckBadgeIcon, ArchiveBoxIcon } from '@heroicons/vue/24/outline'
 import FilterBar from '@/components/ui/filters/FilterBar.vue'
 import { useRouter } from 'vue-router'
 import { getCategoryVariant, getDifficultyVariant } from '@/shared/utils/badgeColor'
@@ -213,9 +215,9 @@ async function reloadStats() {
     stats.value = { total, draft, published, archived }
     statsKpis.value = [
       { label: t('admin.kpi.totalCourses') || '课程总数', value: total, tint: 'info', icon: AcademicCapIcon },
-      { label: t('admin.courseStatus.draft') || 'draft', value: draft, tint: 'secondary', icon: AcademicCapIcon },
-      { label: t('admin.courseStatus.published') || 'published', value: published, tint: 'success', icon: AcademicCapIcon },
-      { label: t('admin.courseStatus.archived') || 'archived', value: archived, tint: 'warning', icon: AcademicCapIcon },
+      { label: t('admin.courseStatus.draft') || 'draft', value: draft, tint: 'secondary', icon: PencilSquareIcon },
+      { label: t('admin.courseStatus.published') || 'published', value: published, tint: 'success', icon: CheckBadgeIcon },
+      { label: t('admin.courseStatus.archived') || 'archived', value: archived, tint: 'warning', icon: ArchiveBoxIcon },
     ]
   } catch {
     // KPI 失败不阻塞列表
@@ -289,4 +291,3 @@ onMounted(() => {
   reload()
 })
 </script>
-

@@ -29,6 +29,7 @@ let resizeObserver: ResizeObserver | null = null
 let visibilityObserver: IntersectionObserver | null = null
 let isMounted = false
 let fallbackTimer: ReturnType<typeof setTimeout> | null = null
+let themeRefreshScheduled = false
 
 function isInstAlive() {
   if (!inst) return false
@@ -106,9 +107,27 @@ const update = () => {
   try { inst.setOption(buildOption(props.value), true) } catch {}
 }
 
+function scheduleThemeRefresh() {
+  if (themeRefreshScheduled) return
+  themeRefreshScheduled = true
+  requestAnimationFrame(async () => {
+    themeRefreshScheduled = false
+    if (!isMounted) return
+    try {
+      // 主题切换时重建实例，确保 echarts 主题与局部配色同时刷新
+      if (isInstAlive()) {
+        try { inst?.dispose() } catch {}
+        inst = null
+      }
+      await init()
+    } catch {}
+  })
+}
+
 onMounted(() => {
   isMounted = true
   init()
+  try { window.addEventListener('theme:changed', scheduleThemeRefresh) } catch {}
   resizeObserver = new ResizeObserver(() => {
     requestAnimationFrame(() => {
       if (!isMounted || !isInstAlive()) return
@@ -146,6 +165,7 @@ watch(() => props.value, () => { update() })
 
 onUnmounted(() => {
   isMounted = false
+  try { window.removeEventListener('theme:changed', scheduleThemeRefresh) } catch {}
   if (fallbackTimer) {
     clearTimeout(fallbackTimer)
     fallbackTimer = null

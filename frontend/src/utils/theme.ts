@@ -107,6 +107,53 @@ export function getThemeCoreColors() {
   return { primary, secondary, accent, info, success, warning, error, neutral, base100, base200, base300, baseContent }
 }
 
+const DEFAULT_ECHARTS_PALETTE = [
+  '#3b82f6',
+  '#06b6d4',
+  '#f59e0b',
+  '#10b981',
+  '#ef4444',
+  '#8b5cf6',
+  '#84cc16',
+  '#f97316',
+  '#ec4899',
+  '#6366f1',
+].map(normalizeCssColor)
+
+type RgbTuple = { r: number; g: number; b: number }
+
+const parseRgbTuple = (color: string): RgbTuple | null => {
+  const normalized = normalizeCssColor(color)
+  const m = normalized.match(/rgba?\(\s*(\d+)\s*(?:,|\s)\s*(\d+)\s*(?:,|\s)\s*(\d+)/i)
+  if (!m) return null
+  return { r: Number(m[1]), g: Number(m[2]), b: Number(m[3]) }
+}
+
+const isNearWhite = (c: RgbTuple) => c.r >= 245 && c.g >= 245 && c.b >= 245
+const isNearGray = (c: RgbTuple) => (Math.max(c.r, c.g, c.b) - Math.min(c.r, c.g, c.b)) <= 8
+
+const shouldFallbackPalette = (palette: string[]) => {
+  const head = palette
+    .slice(0, 4)
+    .map(parseRgbTuple)
+    .filter((item): item is RgbTuple => !!item)
+  if (head.length < 3) return false
+
+  const uniqueCount = new Set(head.map(c => `${Math.round(c.r / 8)}-${Math.round(c.g / 8)}-${Math.round(c.b / 8)}`)).size
+  const nearNeutralCount = head.filter(c => isNearWhite(c) || isNearGray(c)).length
+  return uniqueCount <= 1 || nearNeutralCount >= 3
+}
+
+const ensureChartPalette = (palette: string[]): string[] => {
+  const normalized = (Array.isArray(palette) ? palette : [])
+    .map((color) => normalizeCssColor(String(color || '')).trim())
+    .filter(Boolean)
+
+  if (!normalized.length) return DEFAULT_ECHARTS_PALETTE
+  if (shouldFallbackPalette(normalized)) return DEFAULT_ECHARTS_PALETTE
+  return normalized
+}
+
 export function buildEChartsPalette(): string[] {
   const c = getThemeCoreColors()
   const basePalette = [c.primary, c.accent, c.info, c.warning, c.success, c.secondary, c.error, c.neutral]
@@ -116,7 +163,7 @@ export function buildEChartsPalette(): string[] {
     'oklch(72% 0.188 135)',
     'oklch(66% 0.162 250)'
   ]
-  return basePalette.concat(extended).map(normalizeCssColor)
+  return ensureChartPalette(basePalette.concat(extended))
 }
 
 export function getEChartsThemedTokens() {
@@ -140,5 +187,4 @@ export function makeAreaGradient(echarts: any, baseColor: string, stronger = fal
     { offset: 1, color: rgba(baseColor, stronger ? 0.10 : 0.06) }
   ])
 }
-
 
