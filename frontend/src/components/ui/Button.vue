@@ -160,8 +160,8 @@ const variantClasses = computed(() => {
     success: 'btn-variant-success',
     warning: 'btn-variant-warning',
     info: 'btn-variant-info',
-    indigo: 'btn-variant-info',
-    purple: 'btn-variant-info',
+    indigo: 'btn-variant-primary',
+    purple: 'btn-variant-primary',
     teal: 'btn-variant-info',
     menu: 'relative overflow-hidden text-base-content hover:bg-white/10 justify-start items-center text-left !px-0 outline-none ring-0 focus:outline-none focus-visible:outline-none focus:ring-0 focus:ring-offset-0 focus-visible:ring-0 focus-visible:ring-offset-0 active:ring-0'
   }

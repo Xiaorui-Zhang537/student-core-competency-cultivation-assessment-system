@@ -4,14 +4,24 @@
 
   /* 输入/选择触发器的统一药丸样式 */
   .ui-pill--input {
-    @apply input input--glass glass-regular glass-interactive rounded-full border placeholder-muted;
+    @apply input input--glass glass-regular rounded-full border placeholder-muted;
     @apply w-full;
-    /* 边框在暗黑模式下对齐 */
-    border-color: theme('colors.white / 0.3');
+    border-color: var(--ui-control-border);
+    background-color: var(--ui-control-surface);
+    box-shadow: var(--ui-control-shadow);
   }
 
   .dark .ui-pill--input {
-    border-color: color-mix(in oklab, white 10%, transparent);
+    border-color: var(--ui-control-border);
+    background-color: var(--ui-control-surface);
+    box-shadow: var(--ui-control-shadow);
+  }
+
+  .ui-pill--input:focus,
+  .ui-pill--input:focus-visible,
+  .ui-pill--input:focus-within {
+    border-color: var(--ui-control-focus-border);
+    box-shadow: 0 0 0 2px var(--ui-control-focus-ring), var(--ui-control-shadow);
   }
 
   .ui-pill--select { @apply ui-pill--input text-left; }
@@ -26,12 +36,14 @@
   .ui-filter-bar { @apply filter-container rounded-full; }
 
   /* 下拉弹层统一（玻璃+圆角） */
-  .ui-popover-menu { @apply popover-glass glass-thin glass-interactive border shadow-md no-scrollbar rounded-2xl; }
+  .ui-popover-menu { @apply popover-glass glass-thin border no-scrollbar rounded-2xl; }
 
   /* 选中值 tag 样式（多选展示用） */
   .ui-chip {
     @apply px-2 py-0.5 rounded-full text-xs border cursor-pointer transition-colors;
-    @apply bg-white/30 dark:bg-white/10 border-white/40 dark:border-white/10 hover:bg-white/40 dark:hover:bg-white/20;
+    @apply hover:bg-white/40 dark:hover:bg-white/20;
+    background-color: color-mix(in oklab, var(--ui-control-surface) 88%, transparent);
+    border-color: color-mix(in oklab, var(--color-base-content) 18%, transparent);
   }
 
   /* 分段药丸按钮（Segmented）——主题化变体与状态 */
@@ -91,4 +103,3 @@
   .ui-pill-size-sm { @apply h-9 px-3 text-sm; }
   .ui-pill-size-md { @apply h-10 px-4 text-sm; }
 }
-

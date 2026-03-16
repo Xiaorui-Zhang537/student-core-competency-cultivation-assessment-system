@@ -8,6 +8,7 @@
       :style="resolvedMaxWidthStyle"
       :radius="16"
       :frost="resolvedFrost"
+      :tint="false"
       :border="0.07"
       :lightness="50"
       :alpha="resolvedAlpha"
@@ -16,9 +17,9 @@
       :rOffset="0"
       :gOffset="10"
       :bOffset="20"
-      containerClass="ring-1 ring-white/20 dark:ring-white/10 shadow-2xl"
+      containerClass="modal-shell overflow-hidden"
     >
-      <div class="p-4" style="box-shadow: inset 0 -1px 0 rgba(255,255,255,0.18);">
+      <div class="p-4 modal-header modal-section-glass" style="box-shadow: inset 0 -1px 0 var(--ui-popup-border);">
         <div class="flex items-center justify-between">
           <template v-if="!reverseHeader">
             <h3 class="text-lg font-semibold" style="color: var(--color-base-content)">{{ title }}</h3>
@@ -38,10 +39,10 @@
           </template>
         </div>
       </div>
-      <div class="p-4 overflow-auto min-h-0 no-scrollbar" :class="[fillHeight ? 'flex-1' : '', contentMaxHClass]">
+      <div class="p-4 overflow-auto min-h-0 no-scrollbar modal-section-glass" :class="[fillHeight ? 'flex-1' : '', contentMaxHClass]">
         <slot />
       </div>
-      <div v-if="$slots.footer" class="p-4 flex justify-end gap-2 modal-footer-glass">
+      <div v-if="$slots.footer" class="p-4 flex justify-end gap-2 modal-footer-glass modal-section-glass">
         <slot name="footer" />
       </div>
     </liquid-glass>
@@ -181,5 +182,3 @@ const contentMaxHClass = computed(() => {
 
 <style scoped>
 </style>
-
-

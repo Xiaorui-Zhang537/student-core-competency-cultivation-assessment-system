@@ -1,6 +1,6 @@
 <template>
   <div class="w-full">
-    <div class="relative w-full rounded-full px-2 py-1.5 glass-regular glass-interactive border border-white/30 dark:border-white/12 tags-input-box" v-glass="{ strength: 'regular', interactive: true }">
+    <div class="relative w-full rounded-full px-2 py-1.5 glass-regular border ui-control-shell tags-input-box" v-glass="{ strength: 'regular', interactive: false }">
       <div class="flex flex-wrap gap-1.5 items-center">
         <span v-for="(tag, idx) in internal" :key="idx" class="ui-chip">
           <span>{{ tag }}</span>
@@ -80,8 +80,8 @@ onMounted(() => { /* no-op */ })
 
 /* 自定义聚焦高亮：使用主题主色，而非系统蓝色 */
 .tags-input-box:focus-within {
-  border-color: color-mix(in oklab, var(--color-primary) 45%, transparent) !important;
-  box-shadow: 0 0 0 2px color-mix(in oklab, var(--color-primary) 35%, transparent) !important;
+  border-color: var(--ui-control-focus-border) !important;
+  box-shadow: 0 0 0 2px var(--ui-control-focus-ring), var(--ui-control-shadow) !important;
 }
 
 /* 强制覆盖全局 input:focus 的 ring 与浏览器默认蓝色描边 */
@@ -93,5 +93,4 @@ onMounted(() => { /* no-op */ })
   -webkit-tap-highlight-color: transparent;
 }
 </style>
-
 

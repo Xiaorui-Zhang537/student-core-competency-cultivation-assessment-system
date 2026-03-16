@@ -4,6 +4,7 @@
     <div ref="rootRef" :class="['relative', width ? '' : 'w-full']" :style="{ width: width || undefined }">
       <Button
         type="button"
+        variant="ghost"
         class="ui-pill--select ui-pill--pr-select !justify-start text-left"
         :class="[size==='sm' ? 'ui-pill--sm ui-pill--pl' : 'ui-pill--md ui-pill--pl', tintClass]"
         :disabled="disabled"
@@ -282,5 +283,3 @@ function detachScrollParents() {
 .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
 .no-scrollbar::-webkit-scrollbar { display: none; width: 0; height: 0; }
 </style>
-
-

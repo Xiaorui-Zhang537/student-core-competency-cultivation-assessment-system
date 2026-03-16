@@ -41,8 +41,8 @@
       <animated-list :items="notifications" :delay="120" :reverse="true">
         <template #item="{ item }">
           <div
-            class="relative rounded-2xl pointer-events-auto overflow-hidden glass-thin glass-interactive border border-white/20 dark:border-white/12 shadow-md"
-            :class="tintClass(item.type)"
+            class="relative rounded-2xl pointer-events-auto overflow-hidden glass-thin border toast-card"
+            :class="toastClass(item.type)"
             v-glass="{ strength: 'thin', interactive: true }"
           >
             <!-- 关闭叉：每条通知独立关闭 -->
@@ -218,13 +218,13 @@ const accentBarStyle = computed(() => {
   return { background: `linear-gradient(180deg, ${from}, ${to})` }
 })
 
-// 根据通知类型返回对应的玻璃 tint 类
-function tintClass(type?: string): string {
+// 通知容器统一中性底，仅保留语义边线
+function toastClass(type?: string): string {
   const t = String(type || 'info').toLowerCase()
-  if (t === 'success') return 'glass-tint-success'
-  if (t === 'warning') return 'glass-tint-warning'
-  if (t === 'error') return 'glass-tint-error'
-  return 'glass-tint-info'
+  if (t === 'success') return 'toast-card--success'
+  if (t === 'warning') return 'toast-card--warning'
+  if (t === 'error') return 'toast-card--error'
+  return 'toast-card--info'
 }
 
 // 图标颜色随主题语义色
@@ -376,6 +376,36 @@ onUnmounted(() => {
 
 .notification-move {
   transition: transform 0.3s ease;
+}
+
+.toast-card {
+  border: 1px solid var(--ui-popup-border);
+  background-color: var(--ui-popup-surface);
+  box-shadow: var(--ui-popup-shadow);
+}
+
+.toast-card--success {
+  box-shadow:
+    inset 3px 0 0 color-mix(in oklab, var(--color-success) 64%, transparent),
+    var(--ui-popup-shadow);
+}
+
+.toast-card--warning {
+  box-shadow:
+    inset 3px 0 0 color-mix(in oklab, var(--color-warning) 66%, transparent),
+    var(--ui-popup-shadow);
+}
+
+.toast-card--error {
+  box-shadow:
+    inset 3px 0 0 color-mix(in oklab, var(--color-error) 68%, transparent),
+    var(--ui-popup-shadow);
+}
+
+.toast-card--info {
+  box-shadow:
+    inset 3px 0 0 color-mix(in oklab, var(--color-primary) 62%, transparent),
+    var(--ui-popup-shadow);
 }
 
 /* 自定义边框宽度 */

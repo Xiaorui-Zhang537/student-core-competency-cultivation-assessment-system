@@ -1,6 +1,6 @@
 <template>
   <div class="relative">
-    <liquid-glass :radius="16" :frost="0.05" class="rounded-2xl" :container-class="containerClass">
+    <liquid-glass :radius="16" :frost="0.05" :tint="false" class="rounded-2xl" :container-class="containerClass">
       <input
         :id="id"
         :type="type"
@@ -43,8 +43,7 @@ const props = withDefaults(defineProps<Props>(), {
 
 const emit = defineEmits<{ (e: 'update:modelValue', v: string | number | null): void }>()
 
-const tintClass = computed(() => props.tint ? `glass-tint-${props.tint}` : '')
-const containerClass = computed(() => ['glass-regular','glass-interactive', tintClass.value].filter(Boolean).join(' '))
+const containerClass = computed(() => ['glass-regular', 'ui-control-shell'].join(' '))
 
 function onInput(e: Event) {
   const target = e.target as HTMLInputElement
@@ -59,5 +58,4 @@ function onInput(e: Event) {
 
 <style scoped>
 </style>
-
 

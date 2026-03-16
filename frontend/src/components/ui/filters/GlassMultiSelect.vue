@@ -5,7 +5,7 @@
       <button v-if="clearable && modelValue.length" type="button" class="text-xs text-primary-600 dark:text-primary-300" @click="$emit('update:modelValue', [])">{{ clearText }}</button>
     </div>
     <div ref="rootRef" class="relative w-full">
-      <Button type="button" :class="['ui-pill--select','ui-pill--pl','ui-pill--pr-select', size==='sm' ? 'ui-pill--sm' : 'ui-pill--md']" @click="toggle">
+      <Button type="button" variant="ghost" :class="['ui-pill--select','ui-pill--pl','ui-pill--pr-select', size==='sm' ? 'ui-pill--sm' : 'ui-pill--md', tintClass]" @click="toggle">
         <div class="flex flex-wrap items-center gap-1">
           <span v-if="!modelValue.length" class="text-gray-400">{{ placeholder }}</span>
           <span
@@ -169,5 +169,3 @@ onBeforeUnmount(() => {
   document.removeEventListener('keydown', onKeydown)
 })
 </script>
-
-

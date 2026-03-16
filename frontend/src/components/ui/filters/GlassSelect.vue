@@ -48,7 +48,6 @@ const props = withDefaults(defineProps<Props>(), {
 const emit = defineEmits<{ (e:'update:modelValue', v:string|number|null):void; (e:'change', v:string|number|null):void }>()
 
 const tintClass = computed(() => props.tint ? `glass-tint-${props.tint}` : '')
-
 const containerClass = computed(() => ['glass-regular','glass-interactive', tintClass.value].filter(Boolean).join(' '))
 
 function onChange(e: Event) {
@@ -60,5 +59,3 @@ function onChange(e: Event) {
  
 
 </script>
-
-

@@ -1,6 +1,6 @@
 <template>
   <div class="relative">
-    <liquid-glass :radius="16" :frost="0.05" class="rounded-2xl" :container-class="containerClass">
+    <liquid-glass :radius="16" :frost="0.05" :tint="false" class="rounded-2xl" :container-class="containerClass">
       <input
         :id="id"
         :type="isVisible ? 'text' : 'password'"
@@ -64,8 +64,7 @@ const { t } = useI18n()
 
 const emit = defineEmits<{ (e: 'update:modelValue', v: string | number | null): void }>()
 
-const tintClass = computed(() => props.tint ? `glass-tint-${props.tint}` : '')
-const containerClass = computed(() => ['glass-regular','glass-interactive', tintClass.value].filter(Boolean).join(' '))
+const containerClass = computed(() => ['glass-regular', 'ui-control-shell'].join(' '))
 
 const isVisible = ref(false)
 const capsOn = ref(false)
@@ -91,5 +90,4 @@ function onKeyState(e: KeyboardEvent) {
 
 <style scoped>
 </style>
-
 

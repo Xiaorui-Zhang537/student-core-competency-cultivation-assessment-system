@@ -861,17 +861,11 @@
 
   .glass-interactive { position: relative; overflow: hidden; }
   .glass-interactive::after {
-    content: '';
-    position: absolute;
-    inset: 0;
-    background: linear-gradient(120deg, transparent 25%, rgba(255,255,255,0.08) 50%, transparent 75%);
-    opacity: 0;
-    transition: opacity 200ms ease, transform 400ms ease;
-    transform: translateX(-15%);
-    pointer-events: none;
+    /* 统一去掉折射扫光，避免“玻璃高光”造成视觉噪声 */
+    display: none;
   }
-  .glass-interactive:hover::after { opacity: 1; transform: translateX(0%); }
-  .glass-interactive:active { box-shadow: var(--glass-inner-shadow), 0 4px 14px rgba(0,0,0,0.10); }
+  .glass-interactive:hover::after { opacity: 0; transform: none; }
+  .glass-interactive:active { box-shadow: var(--glass-inner-shadow), 0 2px 10px rgba(0,0,0,0.08); }
 
   @media (prefers-reduced-motion: reduce) {
     .glass-interactive::after { display: none; }
@@ -880,8 +874,7 @@
     .glass-interactive::after { display: none; }
   }
   /* 主题变量映射到 daisyUI CSS 变量，确保两套主题即时生效 */
-  :root,
-  .dark {
+  :root {
     --color-surface: var(--color-base-100);
     --color-surface-2: var(--color-base-200);
     --color-border: color-mix(in oklab, var(--color-base-content) 12%, transparent);
@@ -889,8 +882,50 @@
     --color-text-secondary: color-mix(in oklab, var(--color-base-content) 60%, transparent);
     --color-placeholder: color-mix(in oklab, var(--color-base-content) 45%, transparent);
     --color-backdrop: var(--color-base-300);
-    /* ring 使用固定 RGB 数值，后续逐步迁移到语义类 */
     --ring-primary: 59 130 246;
+
+    /* Controls: 统一输入/按钮/弹层表面 */
+    --ui-control-surface: color-mix(in oklab, var(--color-theme-primary, var(--color-primary)) 12%, var(--color-base-100) 88%);
+    --ui-control-border: color-mix(in oklab, var(--color-theme-primary, var(--color-primary)) 24%, rgba(255, 255, 255, 0.36));
+    --ui-control-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.58), 0 6px 14px rgba(15, 23, 42, 0.06);
+    --ui-control-focus-border: color-mix(in oklab, var(--color-primary) 46%, transparent);
+    --ui-control-focus-ring: color-mix(in oklab, var(--color-primary) 34%, transparent);
+
+    --ui-popup-surface: color-mix(in oklab, var(--color-theme-primary, var(--color-primary)) 16%, var(--color-base-100) 84%);
+    --ui-popup-border: color-mix(in oklab, var(--color-theme-primary, var(--color-primary)) 24%, rgba(255, 255, 255, 0.38));
+    --ui-popup-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.56), 0 16px 32px color-mix(in oklab, var(--color-theme-primary, var(--color-primary)) 18%, transparent);
+  }
+
+  .dark {
+    --color-surface: var(--color-base-100);
+    --color-surface-2: var(--color-base-200);
+    --color-border: color-mix(in oklab, var(--color-base-content) 16%, transparent);
+    --color-text-primary: var(--color-base-content);
+    --color-text-secondary: color-mix(in oklab, var(--color-base-content) 66%, transparent);
+    --color-placeholder: color-mix(in oklab, var(--color-base-content) 52%, transparent);
+    --color-backdrop: var(--color-base-300);
+    --ring-primary: 59 130 246;
+
+    --ui-control-surface: color-mix(in oklab, var(--color-theme-primary, var(--color-primary)) 22%, var(--color-base-200) 78%);
+    --ui-control-border: color-mix(in oklab, var(--color-theme-primary, var(--color-primary)) 30%, rgba(148, 163, 184, 0.3));
+    --ui-control-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12), 0 10px 20px rgba(2, 6, 23, 0.28);
+    --ui-control-focus-border: color-mix(in oklab, var(--color-primary) 54%, transparent);
+    --ui-control-focus-ring: color-mix(in oklab, var(--color-primary) 40%, transparent);
+
+    --ui-popup-surface: color-mix(in oklab, var(--color-theme-primary, var(--color-primary)) 25%, var(--color-base-200) 75%);
+    --ui-popup-border: color-mix(in oklab, var(--color-theme-primary, var(--color-primary)) 34%, rgba(148, 163, 184, 0.32));
+    --ui-popup-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.14), 0 18px 36px rgba(2, 6, 23, 0.42);
+  }
+
+  .ui-control-shell {
+    border-color: var(--ui-control-border) !important;
+    background-color: var(--ui-control-surface) !important;
+    box-shadow: var(--ui-control-shadow) !important;
+  }
+
+  .ui-control-shell:focus-within {
+    border-color: var(--ui-control-focus-border) !important;
+    box-shadow: 0 0 0 2px var(--ui-control-focus-ring), var(--ui-control-shadow) !important;
   }
 
   .btn {
@@ -957,23 +992,15 @@
   .panel-v2.panel-v2-interactive::after,
   .panel-v2-auto.panel-v2-interactive::after,
   .panel-v2-auto.glass-interactive::after {
-    content: '';
-    position: absolute;
-    inset: 0;
-    pointer-events: none;
-    border-radius: inherit;
-    background: linear-gradient(118deg, transparent 18%, rgba(255, 255, 255, 0.08) 50%, transparent 82%);
-    opacity: 0;
-    transform: translateX(-12%);
-    transition: opacity 180ms ease, transform 320ms ease;
-    z-index: 0;
+    /* 容器统一无折射 */
+    display: none;
   }
 
   .panel-v2.panel-v2-interactive:hover::after,
   .panel-v2-auto.panel-v2-interactive:hover::after,
   .panel-v2-auto.glass-interactive:hover::after {
-    opacity: 1;
-    transform: translateX(0);
+    opacity: 0;
+    transform: none;
   }
 
   .panel-v2-neutral { --panel-v2-tone: var(--color-theme-primary, var(--color-primary)); --panel-v2-mix-light: 18%; --panel-v2-mix-dark: 26%; }
@@ -1031,45 +1058,52 @@
 
   .input {
     @apply w-full px-3 py-2 border rounded-2xl focus:outline-none focus:ring-2;
-    background-color: var(--color-base-100);
-    border-color: color-mix(in oklab, var(--color-base-content) 14%, transparent);
+    background-color: var(--ui-control-surface);
+    border-color: var(--ui-control-border);
+    box-shadow: var(--ui-control-shadow);
     color: var(--color-base-content);
   }
 
-  .dark .input { background-color: var(--color-base-200); }
+  .dark .input {
+    background-color: var(--ui-control-surface);
+    border-color: var(--ui-control-border);
+    box-shadow: var(--ui-control-shadow);
+  }
 
   .input::placeholder {
     color: var(--color-placeholder);
   }
 
-  .input:focus {
+  .input:focus,
+  .input:focus-visible {
     outline: none;
-    border-color: color-mix(in oklab, var(--color-primary) 45%, transparent);
-    box-shadow: 0 0 0 2px color-mix(in oklab, var(--color-primary) 35%, transparent);
+    border-color: var(--ui-control-focus-border);
+    box-shadow: 0 0 0 2px var(--ui-control-focus-ring), var(--ui-control-shadow);
   }
 
   /* Glassy input variant for chat panes */
   .input--glass {
-    background-color: rgb(var(--glass-bg-rgb) / var(--glass-alpha-thin));
-    border-color: var(--glass-border-color);
-    backdrop-filter: blur(var(--glass-blur-thin)) saturate(var(--glass-saturate-thin));
-    -webkit-backdrop-filter: blur(var(--glass-blur-thin)) saturate(var(--glass-saturate-thin));
+    background-color: var(--ui-control-surface);
+    border-color: var(--ui-control-border);
+    box-shadow: var(--ui-control-shadow);
+    backdrop-filter: blur(var(--glass-blur-thin)) saturate(var(--glass-saturate-thin)) contrast(var(--glass-contrast-thin));
+    -webkit-backdrop-filter: blur(var(--glass-blur-thin)) saturate(var(--glass-saturate-thin)) contrast(var(--glass-contrast-thin));
   }
 
   .dark .input--glass {
-    background-color: rgb(var(--glass-bg-rgb) / var(--glass-alpha-thin));
-    border-color: var(--glass-border-color);
+    background-color: var(--ui-control-surface);
+    border-color: var(--ui-control-border);
+    box-shadow: var(--ui-control-shadow);
   }
 
   /* 统一弹窗容器（给所有弹窗根节点添加 .modal 类） */
   .modal {
-    @apply rounded-xl shadow-md; /* 减弱阴影 */
-    /* Use thick glass by default */
-    border: 1px solid var(--glass-border-color);
-    background-color: rgb(var(--glass-bg-rgb) / var(--glass-alpha-thick));
-    backdrop-filter: blur(var(--glass-blur-thick)) saturate(var(--glass-saturate-thick)) contrast(var(--glass-contrast-thick));
-    -webkit-backdrop-filter: blur(var(--glass-blur-thick)) saturate(var(--glass-saturate-thick)) contrast(var(--glass-contrast-thick));
-    box-shadow: var(--glass-inner-shadow), var(--glass-outer-shadow);
+    @apply rounded-[24px] shadow-none;
+    border: 1px solid var(--ui-popup-border);
+    background-color: var(--ui-popup-surface);
+    backdrop-filter: blur(var(--glass-blur-regular)) saturate(var(--glass-saturate-regular)) contrast(var(--glass-contrast-regular));
+    -webkit-backdrop-filter: blur(var(--glass-blur-regular)) saturate(var(--glass-saturate-regular)) contrast(var(--glass-contrast-regular));
+    box-shadow: var(--ui-popup-shadow);
     /* Hide scrollbars but keep scroll */
     scrollbar-width: none; /* Firefox */
     -ms-overflow-style: none; /* IE 10+ */
@@ -1080,20 +1114,41 @@
   .modal::-webkit-scrollbar { width: 0px; height: 0px; }
 
   /* Generic popover/dropdown glass */
-  .popover-glass { @apply rounded-xl glass-regular; }
+  .popover-glass {
+    @apply rounded-2xl;
+    border: 1px solid var(--ui-popup-border);
+    background-color: var(--ui-popup-surface);
+    box-shadow: var(--ui-popup-shadow);
+    backdrop-filter: blur(var(--glass-blur-thin)) saturate(var(--glass-saturate-thin)) contrast(var(--glass-contrast-thin));
+    -webkit-backdrop-filter: blur(var(--glass-blur-thin)) saturate(var(--glass-saturate-thin)) contrast(var(--glass-contrast-thin));
+  }
+
+  .modal-shell {
+    border: 1px solid var(--ui-popup-border);
+    background-color: var(--ui-popup-surface);
+    box-shadow: var(--ui-popup-shadow);
+  }
+
+  .drawer-surface {
+    border: 1px solid var(--ui-popup-border);
+    background-color: var(--ui-popup-surface);
+    box-shadow: var(--ui-popup-shadow);
+    backdrop-filter: blur(var(--glass-blur-regular)) saturate(var(--glass-saturate-regular)) contrast(var(--glass-contrast-regular));
+    -webkit-backdrop-filter: blur(var(--glass-blur-regular)) saturate(var(--glass-saturate-regular)) contrast(var(--glass-contrast-regular));
+  }
 
   /* 通用过滤容器（为各页面过滤/工具栏区域统一玻璃化） */
   .filter-container { @apply glass-thin; }
 
   /* 过滤容器内的输入统一玻璃化（覆盖基础 input 白底） */
   .filter-container .input {
-    background-color: transparent;
-    border-color: var(--glass-border-color);
+    background-color: var(--ui-control-surface);
+    border-color: var(--ui-control-border);
     color: var(--color-text-primary);
   }
   .dark .filter-container .input {
-    background-color: transparent;
-    border-color: var(--glass-border-color);
+    background-color: var(--ui-control-surface);
+    border-color: var(--ui-control-border);
     color: var(--color-text-primary);
   }
 
@@ -1104,6 +1159,13 @@
 
   .modal .modal-subtitle, .modal .muted {
     color: var(--color-text-secondary);
+  }
+
+  /* GlassModal 三段统一玻璃分段：不使用实体底色 */
+  .modal-section-glass {
+    background-color: transparent;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
   }
 
   /* 对话框内表单的文本与占位符对比度提升 */
@@ -1119,20 +1181,20 @@
     border-radius: 1rem;
   }
 
-  /* 重新添加：弹窗正文玻璃底（矩形）与 footer 玻璃条 */
+  /* 弹窗正文/底部：统一玻璃分段，不做实体填色 */
   .modal-body-surface {
-    background-color: rgb(var(--glass-bg-rgb) / 0.22);
-    border-top: 1px solid var(--glass-border-color);
-    border-bottom: 1px solid var(--glass-border-color);
-    backdrop-filter: blur(8px) saturate(1.5);
-    -webkit-backdrop-filter: blur(8px) saturate(1.5);
+    background-color: transparent;
+    border-top: 1px solid var(--ui-popup-border);
+    border-bottom: 1px solid var(--ui-popup-border);
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
     border-radius: 0 !important; /* 长方形，无圆角 */
   }
   .modal-footer-glass {
-    background-color: rgb(var(--glass-bg-rgb) / 0.18);
-    border-top: 1px solid var(--glass-border-color);
-    backdrop-filter: blur(8px) saturate(1.4);
-    -webkit-backdrop-filter: blur(8px) saturate(1.4);
+    background-color: transparent;
+    border-top: 1px solid var(--ui-popup-border);
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
   }
 
   /* ECharts 玻璃风格 Tooltip（统一类名） */
@@ -1240,19 +1302,33 @@
   .btn-glass-ghost-light { @apply text-base-content; }
   .btn-glass-menu { @apply justify-start; }
 
-  /* Theme-driven button variants using daisyUI variables */
+  /* 统一按钮语义：primary / secondary / danger / ghost（其余作为别名） */
   .btn-variant-primary {
     color: var(--color-primary-content);
-    background-color: color-mix(in oklab, var(--color-primary) 30%, transparent);
+    border: 1px solid color-mix(in oklab, var(--color-primary) 46%, transparent);
+    background-color: color-mix(in oklab, var(--color-primary) 30%, var(--ui-control-surface));
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.28), 0 8px 16px color-mix(in oklab, var(--color-primary) 20%, transparent);
   }
-  .btn-variant-primary:hover { background-color: color-mix(in oklab, var(--color-primary) 40%, transparent); }
-  .btn-variant-primary:focus { outline: none; box-shadow: 0 0 0 2px color-mix(in oklab, var(--color-primary) 45%, transparent); }
+  .btn-variant-primary:hover { background-color: color-mix(in oklab, var(--color-primary) 36%, var(--ui-control-surface)); }
+  .btn-variant-primary:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 2px var(--ui-control-focus-ring), inset 0 1px 0 rgba(255, 255, 255, 0.28), 0 8px 16px color-mix(in oklab, var(--color-primary) 20%, transparent);
+  }
 
   .btn-variant-secondary {
-    color: var(--color-secondary-content);
-    background-color: color-mix(in oklab, var(--color-secondary) 24%, transparent);
+    color: var(--color-base-content);
+    border: 1px solid var(--ui-control-border);
+    background-color: var(--ui-control-surface);
+    box-shadow: var(--ui-control-shadow);
   }
-  .btn-variant-secondary:hover { background-color: color-mix(in oklab, var(--color-secondary) 32%, transparent); }
+  .btn-variant-secondary:hover {
+    background-color: color-mix(in oklab, var(--ui-control-surface) 88%, var(--color-base-content) 12%);
+  }
+  .btn-variant-secondary:focus-visible {
+    outline: none;
+    border-color: var(--ui-control-focus-border);
+    box-shadow: 0 0 0 2px var(--ui-control-focus-ring), var(--ui-control-shadow);
+  }
 
   /* Reaction/Like: neutral by default, stronger when liked */
   .btn-variant-reaction {
@@ -1261,7 +1337,10 @@
     border: 1px solid color-mix(in oklab, var(--color-base-content) 14%, transparent);
   }
   .btn-variant-reaction:hover { background-color: color-mix(in oklab, var(--color-base-content) 12%, transparent); }
-  .btn-variant-reaction:focus { outline: none; box-shadow: 0 0 0 2px color-mix(in oklab, var(--color-primary) 35%, transparent); }
+  .btn-variant-reaction:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 2px var(--ui-control-focus-ring);
+  }
   .btn-variant-reaction.reaction-liked {
     color: color-mix(in oklab, var(--color-error) 88%, var(--color-base-content));
     background-color: color-mix(in oklab, var(--color-error) 18%, transparent);
@@ -1269,39 +1348,72 @@
   }
   .btn-variant-reaction.reaction-liked:hover { background-color: color-mix(in oklab, var(--color-error) 24%, transparent); }
 
+  .btn-variant-success,
+  .btn-variant-warning,
+  .btn-variant-info {
+    border: 1px solid var(--ui-control-border);
+    box-shadow: var(--ui-control-shadow);
+  }
   .btn-variant-success {
     color: var(--color-success-content);
-    background-color: color-mix(in oklab, var(--color-success) 26%, transparent);
+    border-color: color-mix(in oklab, var(--color-success) 42%, transparent);
+    background-color: color-mix(in oklab, var(--color-success) 24%, var(--ui-control-surface));
   }
-  .btn-variant-success:hover { background-color: color-mix(in oklab, var(--color-success) 36%, transparent); }
-
+  .btn-variant-success:hover {
+    background-color: color-mix(in oklab, var(--color-success) 31%, var(--ui-control-surface));
+  }
   .btn-variant-warning {
     color: var(--color-warning-content);
-    background-color: color-mix(in oklab, var(--color-warning) 26%, transparent);
+    border-color: color-mix(in oklab, var(--color-warning) 42%, transparent);
+    background-color: color-mix(in oklab, var(--color-warning) 24%, var(--ui-control-surface));
   }
-  .btn-variant-warning:hover { background-color: color-mix(in oklab, var(--color-warning) 36%, transparent); }
+  .btn-variant-warning:hover {
+    background-color: color-mix(in oklab, var(--color-warning) 31%, var(--ui-control-surface));
+  }
+  .btn-variant-info {
+    color: var(--color-info-content);
+    border-color: color-mix(in oklab, var(--color-info) 42%, transparent);
+    background-color: color-mix(in oklab, var(--color-info) 24%, var(--ui-control-surface));
+  }
+  .btn-variant-info:hover {
+    background-color: color-mix(in oklab, var(--color-info) 31%, var(--ui-control-surface));
+  }
 
   .btn-variant-danger {
     color: var(--color-error-content);
-    background-color: color-mix(in oklab, var(--color-error) 26%, transparent);
+    border: 1px solid color-mix(in oklab, var(--color-error) 44%, transparent);
+    background-color: color-mix(in oklab, var(--color-error) 26%, var(--ui-control-surface));
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.24), 0 8px 16px color-mix(in oklab, var(--color-error) 18%, transparent);
   }
-  .btn-variant-danger:hover { background-color: color-mix(in oklab, var(--color-error) 36%, transparent); }
-
-  .btn-variant-info {
-    color: var(--color-info-content);
-    background-color: color-mix(in oklab, var(--color-info) 26%, transparent);
+  .btn-variant-danger:hover { background-color: color-mix(in oklab, var(--color-error) 33%, var(--ui-control-surface)); }
+  .btn-variant-danger:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 2px color-mix(in oklab, var(--color-error) 34%, transparent), inset 0 1px 0 rgba(255, 255, 255, 0.24), 0 8px 16px color-mix(in oklab, var(--color-error) 18%, transparent);
   }
-  .btn-variant-info:hover { background-color: color-mix(in oklab, var(--color-info) 36%, transparent); }
 
   .btn-variant-outline {
     color: var(--color-base-content);
-    border: 1px solid color-mix(in oklab, var(--color-base-content) 24%, transparent);
-    background-color: transparent;
+    border: 1px solid var(--ui-control-border);
+    background-color: color-mix(in oklab, var(--ui-control-surface) 76%, transparent);
   }
-  .btn-variant-outline:hover { background-color: color-mix(in oklab, var(--color-base-content) 8%, transparent); }
+  .btn-variant-outline:hover { background-color: color-mix(in oklab, var(--ui-control-surface) 86%, var(--color-base-content) 14%); }
 
-  .btn-variant-ghost { color: var(--color-base-content); background-color: transparent; }
-  .btn-variant-ghost:hover { background-color: color-mix(in oklab, var(--color-base-content) 6%, transparent); }
+  .btn-variant-ghost {
+    color: var(--color-base-content);
+    background-color: transparent;
+    border: 1px solid transparent;
+  }
+  .btn-variant-ghost:hover { background-color: color-mix(in oklab, var(--color-base-content) 8%, transparent); }
+
+  /* 控件类元素上，忽略 glass-tint 的大面积上色，只保留统一控件底 */
+  .ui-pill--input:not(.ui-pill--select)[class*="glass-tint-"],
+  .input[class*="glass-tint-"],
+  .input--glass[class*="glass-tint-"] {
+    color: var(--color-base-content) !important;
+    border-color: var(--ui-control-border) !important;
+    background-color: var(--ui-control-surface) !important;
+    box-shadow: var(--ui-control-shadow) !important;
+  }
 }
 
 /* 主题化进度条（展示端，遵循 retro/dracula 变量；导出端仍由 exporters 注入样式） */

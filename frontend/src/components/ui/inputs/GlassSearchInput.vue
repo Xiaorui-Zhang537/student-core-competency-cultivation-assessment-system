@@ -54,7 +54,7 @@ const props = withDefaults(defineProps<Props>(), {
 
 const emit = defineEmits<{ (e: 'update:modelValue', v: string | null): void }>()
 
-const tintClass = computed(() => props.tint ? `glass-tint-${props.tint}` : '')
+const tintClass = computed(() => '')
 const showClear = computed(() => Boolean(props.clearable) && !props.disabled && String(props.modelValue || '').length > 0)
 
 function onInput(e: Event) {
@@ -74,7 +74,7 @@ function clear() {
   border-radius: 9999px;
 }
 .search-wrap:focus-within {
-  box-shadow: 0 0 0 1.5px rgba(59, 130, 246, 0.4);
+  box-shadow: 0 0 0 2px var(--ui-control-focus-ring);
 }
 
 /* 输入框左侧留出图标空间 */

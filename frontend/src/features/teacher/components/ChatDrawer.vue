@@ -6,18 +6,11 @@
     <!-- 侧边抽屉：右侧定位包裹，内部仅负责玻璃与内容 -->
     <div class="absolute inset-y-0 right-0 w-[92vw] sm:w-[820px] z-[10]">
       <div
-        class="w-full h-full rounded-l-2xl flex flex-col ring-1 shadow-2xl"
+        class="w-full h-full rounded-l-2xl flex flex-col drawer-surface"
         :key="`shell-${activeTab}`"
-        :style="{
-          background: 'rgb(var(--glass-bg-rgb) / var(--glass-alpha-regular))',
-          borderColor: 'var(--glass-border-color)',
-          backdropFilter: 'blur(var(--glass-blur-regular)) saturate(var(--glass-saturate-regular)) contrast(var(--glass-contrast-regular))',
-          WebkitBackdropFilter: 'blur(var(--glass-blur-regular)) saturate(var(--glass-saturate-regular)) contrast(var(--glass-contrast-regular))',
-          boxShadow: 'var(--glass-inner-shadow), var(--glass-outer-shadow)'
-        }"
       >
         <!-- 顶部标题栏（液态玻璃容器内的普通标题条） -->
-        <div class="p-4 flex items-center justify-between" style="box-shadow: inset 0 -1px 0 rgba(255,255,255,0.18)">
+        <div class="p-4 flex items-center justify-between" style="box-shadow: inset 0 -1px 0 var(--ui-popup-border)">
           <div id="chatDrawerTitle" class="font-semibold text-gray-900 dark:text-white">{{ headerTitle }}</div>
           <Button variant="ghost" size="sm" @click="emit('close')">✕</Button>
         </div>
@@ -25,7 +18,7 @@
         <!-- 主体：左侧列表 + 右侧会话（整块由 LiquidGlass 提供半透明底，禁用折射） -->
         <div class="flex flex-1 min-h-0">
         <!-- 左侧：最近/联系人 列表 -->
-        <div class="hidden sm:flex sm:flex-col w-64 shrink-0" :key="`left-${activeTab}`" :style="{ backgroundColor: 'var(--color-base-100)', boxShadow: 'inset -1px 0 rgba(255,255,255,0.18)' }">
+        <div class="hidden sm:flex sm:flex-col w-64 shrink-0" :key="`left-${activeTab}`" :style="{ backgroundColor: 'var(--color-base-100)', boxShadow: 'inset -1px 0 var(--ui-popup-border)' }">
           <div class="pt-3 pb-2 px-2">
             <div class="grid grid-cols-2 gap-2">
               <Button size="sm" :variant="activeTab==='recent' ? 'primary' : 'menu'" class="w-full justify-center" @click="activeTab='recent'">{{ t('shared.chat.recent') || '最近' }}</Button>
@@ -188,7 +181,7 @@
           </div>
 
           <!-- 输入区（含未发送附件预览） -->
-        <div class="p-3 flex flex-col gap-2 relative shrink-0" style="box-shadow: inset 0 1px 0 rgba(255,255,255,0.18)">
+        <div class="p-3 flex flex-col gap-2 relative shrink-0" style="box-shadow: inset 0 1px 0 var(--ui-popup-border)">
             <!-- 未发送附件预览：图片缩略图网格 + 文件卡片 -->
             <div v-if="attachmentFileIds.length>0" class="flex flex-col gap-2">
               <div class="grid grid-cols-3 sm:grid-cols-4 gap-2" v-if="pendingImageIds.length>0">
@@ -1182,5 +1175,3 @@ button:focus-visible, .btn:focus-visible, [role="button"]:focus-visible {
   box-shadow: var(--glass-inner-shadow), var(--glass-outer-shadow);
 }
 </style>
-
-
