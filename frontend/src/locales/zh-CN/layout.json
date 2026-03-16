@@ -6,14 +6,46 @@
 				"switchToDark": "切换到深色模式"
 			},
 			"subtitle": "基于AI的核心能力培养与评估平台",
+			"brandSubtitle": "评估、洞察、练习与追踪一体化学习支持平台",
+			"modules": {
+				"ai": "AI辅助评估",
+				"insight": "行为洞察",
+				"speaking": "口语练习",
+				"tracking": "目标追踪"
+			},
 			"features": {
-            "secure": { "title": "安全可靠", "desc": "企业级安全保障", "descLong": "端到端加密与细粒度权限，保障账号、评估与学习数据在传输与存储中的安全。" },
-            "analytics": { "title": "智能分析", "desc": "AI驱动的数据洞察", "descLong": "结合作业、课程与行为数据建模，输出可解释的学习画像与改进建议。" },
-            "collab": { "title": "成长导向", "desc": "社区互动学习", "descLong": "以能力为导向的循证反馈，助力学生在真实任务中持续进步。" },
-				"mobile": { "title": "移动优先", "desc": "跨平台响应式" },
-				"cloud": { "title": "云端同步", "desc": "数据实时同步" },
-				"performance": { "title": "高性能", "desc": "极速响应体验" },
-				"community": { "title": "学习社区", "desc": "与同伴共同成长", "descLong": "沉浸式学习社区，分享作品与反思，跨班级/课程互评，促进同伴互助与知识共建。" }
+				"secure": {
+					"title": "安全可靠",
+					"desc": "企业级安全保障",
+					"descLong": "端到端加密与细粒度权限，保障账号、评估与学习数据在传输与存储中的安全。"
+				},
+				"analytics": {
+					"title": "智能分析",
+					"desc": "AI驱动的数据洞察",
+					"descLong": "结合作业、课程与行为数据建模，输出可解释的学习画像与改进建议。"
+				},
+				"collab": {
+					"title": "成长导向",
+					"desc": "社区互动学习",
+					"descLong": "以能力为导向的循证反馈，助力学生在真实任务中持续进步。"
+				},
+				"mobile": {
+					"title": "移动优先",
+					"desc": "跨平台响应式"
+				},
+				"cloud": {
+					"title": "云端同步",
+					"desc": "数据实时同步"
+				},
+				"performance": {
+					"title": "高性能",
+					"desc": "极速响应体验"
+				},
+				"community": {
+					"title": "学习社区",
+					"desc": "与同伴共同成长",
+					"descLong": "沉浸式学习社区，分享作品与反思，跨班级/课程互评，促进同伴互助与知识共建。"
+				}
 			},
 			"points": {
 				"radar": {
@@ -43,8 +75,8 @@
 				"r3": "任务后给到的证据链很有说服力，知道为什么丢分、下一次怎么做。",
 				"r4": "学习社区的互评很活跃，结合 AI 点评更高效，练习质量明显提高。",
 				"r5": "成长档案可视化很直观，连续几周的趋势变化一眼就能看出来。",
-                "r6": "不同课程的数据能合并分析，这一点对我规划学习节奏很有用。"
-        },
+				"r6": "不同课程的数据能合并分析，这一点对我规划学习节奏很有用。"
+			},
 			"served": {
 				"line": "已服务于以下单位：大连理工大学"
 			},
@@ -53,7 +85,8 @@
 				"privacy": "隐私政策",
 				"terms": "服务条款",
 				"help": "帮助中心"
-			}
+			},
+			"brandTag": "核心能力智能体"
 		},
 		"common": {
 			"help": "帮助",
@@ -75,13 +108,19 @@
 			"cursorTrailDesc": "选择是否开启鼠标轨迹特效。关闭更省电，流体光标性能要求更高。",
 			"cursorTrailOff": "关闭",
 			"cursorTrailFluid": "流体光标",
-            "cursorTrailSmooth": "顺滑光标",
+			"cursorTrailSmooth": "顺滑光标",
 			"cursorTrailTailed": "带尾迹光标",
 			"bgPickerTitle": "背景与主题",
 			"bgPickerDesc": "为明亮和暗黑模式分别选择背景效果。背景为装饰层，不影响内容交互。",
 			"lightMode": "明亮模式",
 			"darkMode": "暗黑模式",
-			"bg": { "none": "无", "meteors": "流星", "aurora": "极光", "tetris": "俄罗斯方块", "neural": "神经网络" }
+			"bg": {
+				"none": "无",
+				"meteors": "流星",
+				"aurora": "极光",
+				"tetris": "俄罗斯方块",
+				"neural": "神经网络"
+			}
 		},
 		"teacher": {
 			"title": "学生核心能力培养评估智能体",
@@ -132,4 +171,3 @@
 		}
 	}
 }
-

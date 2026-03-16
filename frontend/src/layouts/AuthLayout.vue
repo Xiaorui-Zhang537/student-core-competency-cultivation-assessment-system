@@ -97,21 +97,32 @@
       <!-- 分屏栅格 -->
       <div class="pb-6 sm:pb-8 md:pb-10 xl:pb-0 pl-4 pr-4 sm:pl-8 sm:pr-8 md:pl-12 md:pr-12 xl:pl-16 xl:pr-16 2xl:pl-20 2xl:pr-20 max-w-8xl mx-auto xl:min-h-[calc(100vh-118px)] xl:flex xl:items-center">
       <div class="grid w-full grid-cols-1 md:grid-cols-12 gap-6 xl:gap-8 2xl:gap-10 items-start xl:items-center mt-2 sm:mt-4 md:mt-8 lg:mt-12 xl:mt-0">
-        <!-- 左侧品牌与卖点 -->
-        <div class="hidden xl:block xl:col-span-5 xl:col-start-1 order-2 xl:order-1 xl:w-full xl:max-w-[620px] xl:justify-self-end">
+        <!-- 左侧品牌主卡 -->
+        <div class="hidden xl:flex xl:col-span-5 xl:col-start-1 order-2 xl:order-1 xl:w-full xl:max-w-[620px] xl:justify-self-end flex-col gap-4">
+          <div class="authBrandLead px-1">
+            <div class="authBrandMark">
+              <img src="/brand/logo.png" alt="logo" class="authBrandMarkIcon" />
+              <span class="authBrandMarkText">{{ t('layout.auth.brandTag') }}</span>
+            </div>
+            <p class="mt-2 text-[0.98rem] 2xl:text-[1.08rem] leading-relaxed text-gray-700 dark:text-gray-200 max-w-[36rem]">
+              {{ t('layout.auth.brandSubtitle') }}
+            </p>
+          </div>
+
           <liquid-glass
-            :radius="24"
+            :radius="28"
             :frost="0.08"
-            :alpha="0.9"
-            :blur="14"
-            :border="0.09"
+            :alpha="0.96"
+            :blur="12"
+            :border="0"
             :tint="true"
             :tint-from="'var(--color-theme-primary)'"
-            :tint-to="'var(--color-theme-accent)'"
+            :tint-to="'var(--color-theme-primary)'"
+            effect="occlusionBlur"
             class="animate-fade-in"
-            containerClass="authReplicaPanel rounded-3xl"
+            containerClass="authReplicaPanel rounded-[30px]"
           >
-            <div class="relative z-20 flex items-end justify-center h-[400px] xl:h-[450px] 2xl:h-[500px]">
+            <div class="relative z-20 flex items-end justify-center h-[392px] xl:h-[430px] 2xl:h-[468px] overflow-hidden">
               <animated-characters
                 :is-typing="authAnimState.isTyping"
                 :is-password-focused="authAnimState.isPasswordFocused"
@@ -120,6 +131,25 @@
               />
             </div>
           </liquid-glass>
+
+          <div class="authFeatureGrid px-1">
+            <span class="authFeaturePill authFeaturePill--orange">
+              <span class="authFeatureToken authFeatureToken--orange"></span>
+              {{ t('layout.auth.modules.ai') }}
+            </span>
+            <span class="authFeaturePill authFeaturePill--purple">
+              <span class="authFeatureToken authFeatureToken--purple"></span>
+              {{ t('layout.auth.modules.insight') }}
+            </span>
+            <span class="authFeaturePill authFeaturePill--slate">
+              <span class="authFeatureToken authFeatureToken--slate"></span>
+              {{ t('layout.auth.modules.speaking') }}
+            </span>
+            <span class="authFeaturePill authFeaturePill--yellow">
+              <span class="authFeatureToken authFeatureToken--yellow"></span>
+              {{ t('layout.auth.modules.tracking') }}
+            </span>
+          </div>
         </div>
 
         <!-- 右侧表单卡片 -->
@@ -577,13 +607,24 @@ onUnmounted(() => {
 .authReplicaPanel {
   position: relative;
   overflow: hidden;
-  min-height: 500px;
-  max-height: 560px;
-  padding: 1rem 1.1rem 1.2rem;
+  min-height: 450px;
+  max-height: 520px;
+  padding: 0;
   display: flex;
   align-items: flex-end;
   justify-content: center;
   isolation: isolate;
+  background-color: color-mix(in oklab, var(--color-theme-primary, var(--color-primary)) 17%, var(--color-base-100) 83%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.62),
+    0 16px 34px color-mix(in oklab, var(--color-theme-primary, var(--color-primary)) 20%, transparent);
+}
+
+.dark .authReplicaPanel {
+  background-color: color-mix(in oklab, var(--color-theme-primary, var(--color-primary)) 23%, var(--color-base-200) 77%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.14),
+    0 18px 38px rgba(2, 6, 23, 0.44);
 }
 
 .authReplicaPanel::before {
@@ -592,14 +633,114 @@ onUnmounted(() => {
   inset: 0;
   z-index: 1;
   pointer-events: none;
-  background: radial-gradient(120% 90% at 50% 100%, rgba(0, 0, 0, 0.18) 0%, rgba(0, 0, 0, 0) 72%);
-  opacity: 0.9;
+  border-radius: inherit;
+  background: transparent;
+  box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--color-theme-primary, var(--color-primary)) 26%, rgba(255, 255, 255, 0.46));
+}
+
+.dark .authReplicaPanel::before {
+  box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--color-theme-primary, var(--color-primary)) 34%, rgba(148, 163, 184, 0.32));
+}
+
+.authBrandLead {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.authBrandMark {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.72rem;
+}
+
+.authBrandMarkIcon {
+  width: 3rem;
+  height: 3rem;
+  border-radius: 0;
+  object-fit: cover;
+  box-shadow: none;
+}
+
+.authBrandMarkText {
+  display: inline-block;
+  padding: 0;
+  font-size: 1.18rem;
+  line-height: 1.12;
+  font-weight: 800;
+  color: var(--color-base-content);
+  letter-spacing: 0.01em;
+  text-shadow: 0 1px 1px color-mix(in oklab, var(--color-theme-primary, var(--color-primary)) 16%, transparent);
+}
+
+.dark .authBrandMarkText {
+  text-shadow: none;
+}
+
+.authFeatureGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.64rem;
+}
+
+.authFeaturePill {
+  --pill-tone: var(--color-theme-primary, var(--color-primary));
+  display: inline-flex;
+  align-items: center;
+  gap: 0.62rem;
+  border-radius: 14px;
+  padding: 0.82rem 0.98rem;
+  font-size: 0.95rem;
+  line-height: 1.2;
+  font-weight: 600;
+  color: var(--color-base-content);
+  white-space: nowrap;
+  border: 1px solid color-mix(in oklab, var(--pill-tone) 24%, rgba(255, 255, 255, 0.35));
+  background-color: color-mix(in oklab, var(--pill-tone) 15%, var(--color-base-100) 85%);
+  backdrop-filter: blur(10px) saturate(135%);
+  -webkit-backdrop-filter: blur(10px) saturate(135%);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.62), 0 7px 18px rgba(15, 23, 42, 0.08);
+}
+
+.dark .authFeaturePill {
+  border-color: color-mix(in oklab, var(--pill-tone) 30%, rgba(148, 163, 184, 0.3));
+  background-color: color-mix(in oklab, var(--pill-tone) 22%, var(--color-base-200) 78%);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.14), 0 10px 22px rgba(2, 6, 23, 0.4);
+}
+
+.authFeatureToken {
+  width: 0.74rem;
+  height: 0.74rem;
+  border-radius: 9999px;
+  flex: 0 0 auto;
+  background: var(--pill-tone);
+  box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.38);
+}
+
+.dark .authFeatureToken {
+  box-shadow: 0 0 0 3px rgba(15, 23, 42, 0.46);
+}
+
+.authFeaturePill--orange {
+  --pill-tone: color-mix(in oklab, #f97316 68%, var(--color-theme-primary, var(--color-primary)) 32%);
+}
+
+.authFeaturePill--purple {
+  --pill-tone: color-mix(in oklab, #8b5cf6 72%, var(--color-theme-primary, var(--color-primary)) 28%);
+}
+
+.authFeaturePill--slate {
+  --pill-tone: color-mix(in oklab, #111827 60%, var(--color-theme-primary, var(--color-primary)) 40%);
+}
+
+.authFeaturePill--yellow {
+  --pill-tone: color-mix(in oklab, #eab308 82%, var(--color-theme-primary, var(--color-primary)) 18%);
 }
 
 @media (max-height: 920px) and (min-width: 1280px) {
   .authReplicaPanel {
-    min-height: 460px;
-    max-height: 500px;
+    min-height: 410px;
+    max-height: 470px;
   }
 }
 
