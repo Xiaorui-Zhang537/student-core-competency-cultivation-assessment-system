@@ -57,7 +57,7 @@
           @retry="loadList"
         />
 
-        <card v-for="a in list" :key="a.id" padding="md" tint="info" class="relative">
+        <card v-for="a in list" :key="a.id" padding="md" tint="primary" class="relative">
           <div class="min-w-0 pr-44">
             <div class="flex items-center gap-2">
               <span class="text-base font-semibold text-base-content truncate">{{ a.title }}</span>
@@ -76,7 +76,7 @@
           </div>
           <div class="absolute right-4 top-1/2 -translate-y-1/2 flex items-center gap-2">
             <Button v-if="displayStatus(a)==='PENDING' && !isPastDue(a.dueDate || a.dueAt)" variant="success" size="sm" @click="submit(a.id)">{{ t('student.assignments.actions.submit') }}</Button>
-            <Button v-else-if="displayStatus(a)==='SUBMITTED' || isPastDue(a.dueDate || a.dueAt)" variant="info" size="sm" class="gap-3" @click="view(a.id)">
+            <Button v-else-if="displayStatus(a)==='SUBMITTED' || isPastDue(a.dueDate || a.dueAt)" variant="secondary" size="sm" class="gap-3" @click="view(a.id)">
               <template #icon>
                 <eye-icon class="h-4 w-4" />
               </template>
@@ -156,7 +156,7 @@ const courseOptions = ref<Array<{ label: string, value: string }>>([{ label: t('
 
 function statusVariant(s: string) {
   if (s === 'PENDING') return 'warning'
-  if (s === 'SUBMITTED') return 'info'
+  if (s === 'SUBMITTED') return 'secondary'
   if (s === 'LATE') return 'danger'
   if (s === 'GRADED') return 'success'
   return 'secondary'
@@ -334,5 +334,4 @@ function handlePageSizeChange(size: number) {
 }
 /* 使用全局 input 主题化样式（见 styles/main.postcss），移除本地硬编码颜色 */
 </style>
-
 

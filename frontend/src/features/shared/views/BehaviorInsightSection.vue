@@ -53,7 +53,7 @@
       </div>
 
       <template v-else>
-        <div class="rounded-2xl p-4 glass-ultraThin border border-white/20 dark:border-white/10">
+        <div class="panel-v2 panel-v2-neutral rounded-2xl p-4 glass-ultraThin border border-white/20 dark:border-white/10">
           <div class="text-sm font-semibold mb-2">{{ t('shared.behaviorInsight.reportInfo.title') || '报告信息' }}</div>
           <div class="text-xs text-gray-500 mb-2">
             {{ t('shared.behaviorInsight.reportInfo.generatedAt') || '生成时间' }}：{{ formatDateTime(insight?.meta?.generatedAt) }}
@@ -91,7 +91,7 @@
             <span>{{ t('shared.behaviorInsight.sections.explain') }}</span>
           </div>
           <div
-            class="rounded-2xl p-4 glass-ultraThin glass-tint-info border border-white/20 dark:border-white/10"
+            class="panel-v2 panel-v2-neutral rounded-2xl p-4 glass-ultraThin glass-tint-info border border-white/20 dark:border-white/10"
             v-glass="{ strength: 'ultraThin', interactive: false }"
           >
             <div class="text-sm text-gray-700 dark:text-gray-200 whitespace-pre-wrap">
@@ -113,7 +113,7 @@
             <div
               v-for="it in insight.stageJudgements"
               :key="String(it.dimensionCode || '')"
-              class="rounded-2xl p-4 glass-ultraThin border border-white/20 dark:border-white/10 border-l-4"
+              class="panel-v2 panel-v2-neutral rounded-2xl p-4 glass-ultraThin border border-white/20 dark:border-white/10 border-l-4"
               :class="dimensionTintClass(it.dimensionCode)"
               v-glass="{ strength: 'ultraThin', interactive: false }"
             >
@@ -142,7 +142,7 @@
             <div
               v-for="(a, idx) in insight.riskAlerts"
               :key="String(a.title || idx)"
-              class="rounded-2xl p-4 glass-ultraThin border border-white/20 dark:border-white/10"
+              class="panel-v2 panel-v2-neutral rounded-2xl p-4 glass-ultraThin border border-white/20 dark:border-white/10"
               :class="riskTintClass(a.severity)"
               v-glass="{ strength: 'ultraThin', interactive: false }"
             >
@@ -170,7 +170,7 @@
             <div
               v-for="(s, idx) in insight.formativeSuggestions"
               :key="String(s.title || idx)"
-              class="rounded-2xl p-4 glass-ultraThin glass-tint-secondary border border-white/20 dark:border-white/10"
+              class="panel-v2 panel-v2-neutral rounded-2xl p-4 glass-ultraThin glass-tint-secondary border border-white/20 dark:border-white/10"
               v-glass="{ strength: 'ultraThin', interactive: false }"
             >
               <div class="font-medium">{{ s.title || '-' }}</div>
@@ -195,7 +195,7 @@
             <div
               v-for="(s, idx) in insight.actionRecommendations"
               :key="String(s.title || idx)"
-              class="rounded-2xl p-4 glass-ultraThin glass-tint-primary border border-white/20 dark:border-white/10"
+              class="panel-v2 panel-v2-neutral rounded-2xl p-4 glass-ultraThin glass-tint-primary border border-white/20 dark:border-white/10"
               v-glass="{ strength: 'ultraThin', interactive: false }"
             >
               <div class="font-medium">{{ s.title || '-' }}</div>
@@ -228,7 +228,7 @@
         <div
           v-for="row in historyItems"
           :key="String(row.id)"
-          class="rounded-xl border border-white/20 dark:border-white/10 p-3 glass-ultraThin"
+          class="panel-v2 panel-v2-neutral rounded-xl border border-white/20 dark:border-white/10 p-3 glass-ultraThin"
           v-glass="{ strength: 'ultraThin', interactive: false }"
         >
           <div class="flex items-center justify-between gap-2">
@@ -257,7 +257,7 @@
     <div v-else-if="historyDetailError" class="text-sm text-red-600">{{ historyDetailError }}</div>
     <div v-else-if="!historyDetail" class="text-sm text-gray-500">{{ t('shared.behaviorInsight.empty') }}</div>
     <div v-else class="space-y-4">
-      <div class="rounded-2xl p-4 glass-ultraThin border border-white/20 dark:border-white/10">
+      <div class="panel-v2 panel-v2-neutral rounded-2xl p-4 glass-ultraThin border border-white/20 dark:border-white/10">
         <div class="text-sm font-semibold mb-2">{{ t('shared.behaviorInsight.reportInfo.title') || '报告信息' }}</div>
         <div class="text-xs text-gray-500 mb-2">
           {{ t('shared.behaviorInsight.reportInfo.generatedAt') || '生成时间' }}：{{ formatDateTime(historyDetail?.meta?.generatedAt) }}
@@ -280,7 +280,7 @@
           <document-text-icon class="w-4 h-4 text-sky-600 dark:text-sky-400" />
           <span>{{ t('shared.behaviorInsight.sections.explain') }}</span>
         </div>
-        <div class="rounded-2xl p-4 glass-ultraThin glass-tint-info border border-white/20 dark:border-white/10">
+        <div class="panel-v2 panel-v2-neutral rounded-2xl p-4 glass-ultraThin glass-tint-info border border-white/20 dark:border-white/10">
           <div class="text-sm text-gray-700 dark:text-gray-200 whitespace-pre-wrap">
             {{ historyDetail.explainScore?.text || '-' }}
           </div>
@@ -299,7 +299,7 @@
           <div
             v-for="it in historyDetail.stageJudgements"
             :key="String(it.dimensionCode || '') + '-history'"
-            class="rounded-2xl p-4 glass-ultraThin border border-white/20 dark:border-white/10 border-l-4"
+            class="panel-v2 panel-v2-neutral rounded-2xl p-4 glass-ultraThin border border-white/20 dark:border-white/10 border-l-4"
             :class="dimensionTintClass(it.dimensionCode)"
           >
             <div class="flex items-center justify-between gap-2">
@@ -326,7 +326,7 @@
           <div
             v-for="(a, idx) in historyDetail.riskAlerts"
             :key="String(a.title || idx) + '-history'"
-            class="rounded-2xl p-4 glass-ultraThin border border-white/20 dark:border-white/10"
+            class="panel-v2 panel-v2-neutral rounded-2xl p-4 glass-ultraThin border border-white/20 dark:border-white/10"
             :class="riskTintClass(a.severity)"
           >
             <div class="flex items-center justify-between gap-2">
@@ -352,7 +352,7 @@
           <div
             v-for="(s, idx) in historyDetail.formativeSuggestions"
             :key="String(s.title || idx) + '-history'"
-            class="rounded-2xl p-4 glass-ultraThin glass-tint-secondary border border-white/20 dark:border-white/10"
+            class="panel-v2 panel-v2-neutral rounded-2xl p-4 glass-ultraThin glass-tint-secondary border border-white/20 dark:border-white/10"
           >
             <div class="font-medium">{{ s.title || '-' }}</div>
             <div class="text-sm text-gray-500 mt-1 whitespace-pre-wrap">{{ s.description || '-' }}</div>
@@ -375,7 +375,7 @@
           <div
             v-for="(s, idx) in historyDetail.actionRecommendations"
             :key="String(s.title || idx) + '-history'"
-            class="rounded-2xl p-4 glass-ultraThin glass-tint-primary border border-white/20 dark:border-white/10"
+            class="panel-v2 panel-v2-neutral rounded-2xl p-4 glass-ultraThin glass-tint-primary border border-white/20 dark:border-white/10"
           >
             <div class="font-medium">{{ s.title || '-' }}</div>
             <div class="text-sm text-gray-500 mt-1 whitespace-pre-wrap">{{ s.description || '-' }}</div>

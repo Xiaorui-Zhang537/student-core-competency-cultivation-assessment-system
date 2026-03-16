@@ -28,7 +28,7 @@
         <!-- Left Sidebar -->
         <div class="lg:col-span-1 space-y-6">
           <!-- Categories -->
-          <div class="p-4 filter-container rounded-2xl glass-tint-secondary" v-glass="{ strength: 'thin', interactive: false }">
+          <div class="p-4 filter-container panel-v2 panel-v2-primary rounded-2xl glass-tint-primary" v-glass="{ strength: 'thin', interactive: false }">
             <h2 class="text-lg font-semibold text-base-content mb-4">{{ t('shared.community.categories.title') }}</h2>
             <div class="space-y-2">
               <Button
@@ -48,7 +48,7 @@
           </div>
 
           <!-- Hot Topics -->
-          <div v-if="hotTopics.length" class="p-4 filter-container rounded-2xl glass-tint-secondary" v-glass="{ strength: 'thin', interactive: false }">
+          <div v-if="hotTopics.length" class="p-4 filter-container panel-v2 panel-v2-info rounded-2xl glass-tint-info" v-glass="{ strength: 'thin', interactive: false }">
             <h3 class="text-lg font-semibold text-base-content mb-4">{{ t('shared.community.hotTopics') }}</h3>
             <div class="space-y-3">
               <div
@@ -73,7 +73,7 @@
           </div>
 
           <!-- Active Users -->
-          <div v-if="activeUsers.length" class="p-4 filter-container rounded-2xl glass-tint-secondary" v-glass="{ strength: 'thin', interactive: false }">
+          <div v-if="activeUsers.length" class="p-4 filter-container panel-v2 panel-v2-accent rounded-2xl glass-tint-accent" v-glass="{ strength: 'thin', interactive: false }">
             <h3 class="text-lg font-semibold text-base-content mb-4">{{ t('shared.community.activeUsers') }}</h3>
             <div class="space-y-3">
               <div v-for="user in activeUsers" :key="user.userId" class="flex items-center space-x-3">
@@ -94,7 +94,7 @@
 
         <!-- Main Content: Posts List -->
         <div class="lg:col-span-3">
-          <div class="p-4 glass-regular glass-tint-primary rounded-2xl" v-glass="{ strength: 'regular', interactive: true }">
+          <div class="p-4 panel-v2 panel-v2-primary glass-regular glass-tint-primary rounded-2xl" v-glass="{ strength: 'regular', interactive: true }">
             <filter-bar dense tint="primary" align="center" class="mb-4">
               <template #left>
                 <div class="flex items-center gap-2 min-w-0">
@@ -141,7 +141,7 @@
               <div
                 v-for="post in posts"
                 :key="post.id"
-                class="glass-ultraThin glass-interactive rounded-2xl p-4"
+                class="panel-v2 panel-v2-secondary glass-ultraThin glass-interactive rounded-2xl p-4"
                 v-glass="{ strength: 'ultraThin', interactive: true }"
               >
                   <div class="flex items-start space-x-4">

@@ -904,7 +904,130 @@
 
   .btn-secondary { @apply glass-regular glass-interactive text-base-content; }
 
-  .card { @apply rounded-xl border glass-regular; /* 去除默认阴影，改由容器层级决定 */ }
+  /* Unified panel surface (no refraction, rounded, theme-aware tint) */
+  .panel-v2,
+  .panel-v2-auto {
+    --panel-v2-tone: var(--color-theme-primary, var(--color-primary));
+    --panel-v2-mix-light: 18%;
+    --panel-v2-mix-dark: 26%;
+    border-radius: 28px !important;
+    border: 1px solid color-mix(in oklab, var(--panel-v2-tone) 14%, rgba(255, 255, 255, 0.42)) !important;
+    background-color: color-mix(in oklab, var(--panel-v2-tone) var(--panel-v2-mix-light), var(--color-base-100)) !important;
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.6),
+      0 14px 30px color-mix(in oklab, var(--panel-v2-tone) 18%, transparent) !important;
+    backdrop-filter: blur(var(--glass-blur-regular)) saturate(var(--glass-saturate-regular)) contrast(var(--glass-contrast-regular));
+    -webkit-backdrop-filter: blur(var(--glass-blur-regular)) saturate(var(--glass-saturate-regular)) contrast(var(--glass-contrast-regular));
+    position: relative;
+    overflow: hidden;
+    isolation: isolate;
+  }
+
+  .panel-v2 > *,
+  .panel-v2-auto > * {
+    position: relative;
+    z-index: 1;
+  }
+
+  .dark .panel-v2,
+  .dark .panel-v2-auto {
+    border-color: color-mix(in oklab, var(--panel-v2-tone) 18%, rgba(148, 163, 184, 0.34)) !important;
+    background-color: color-mix(in oklab, var(--panel-v2-tone) var(--panel-v2-mix-dark), var(--color-base-200)) !important;
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.14),
+      0 16px 32px rgba(2, 6, 23, 0.4) !important;
+  }
+
+  .panel-v2::before,
+  .panel-v2-auto::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    border-radius: inherit;
+    box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--panel-v2-tone) 16%, rgba(255, 255, 255, 0.42));
+    z-index: 0;
+  }
+
+  .dark .panel-v2::before,
+  .dark .panel-v2-auto::before {
+    box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--panel-v2-tone) 22%, rgba(148, 163, 184, 0.32));
+  }
+
+  .panel-v2.panel-v2-interactive::after,
+  .panel-v2-auto.panel-v2-interactive::after,
+  .panel-v2-auto.glass-interactive::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    border-radius: inherit;
+    background: linear-gradient(118deg, transparent 18%, rgba(255, 255, 255, 0.08) 50%, transparent 82%);
+    opacity: 0;
+    transform: translateX(-12%);
+    transition: opacity 180ms ease, transform 320ms ease;
+    z-index: 0;
+  }
+
+  .panel-v2.panel-v2-interactive:hover::after,
+  .panel-v2-auto.panel-v2-interactive:hover::after,
+  .panel-v2-auto.glass-interactive:hover::after {
+    opacity: 1;
+    transform: translateX(0);
+  }
+
+  .panel-v2-neutral { --panel-v2-tone: var(--color-theme-primary, var(--color-primary)); --panel-v2-mix-light: 18%; --panel-v2-mix-dark: 26%; }
+  .panel-v2-primary { --panel-v2-tone: var(--color-primary); --panel-v2-mix-light: 22%; --panel-v2-mix-dark: 30%; }
+  .panel-v2-secondary { --panel-v2-tone: var(--color-secondary); --panel-v2-mix-light: 21%; --panel-v2-mix-dark: 29%; }
+  .panel-v2-accent { --panel-v2-tone: var(--color-accent); --panel-v2-mix-light: 20%; --panel-v2-mix-dark: 28%; }
+  .panel-v2-success { --panel-v2-tone: var(--color-success); --panel-v2-mix-light: 20%; --panel-v2-mix-dark: 28%; }
+  .panel-v2-warning { --panel-v2-tone: var(--color-warning); --panel-v2-mix-light: 19%; --panel-v2-mix-dark: 27%; }
+  .panel-v2-danger { --panel-v2-tone: var(--color-error); --panel-v2-mix-light: 19%; --panel-v2-mix-dark: 27%; }
+  .panel-v2-info { --panel-v2-tone: var(--color-info); --panel-v2-mix-light: 21%; --panel-v2-mix-dark: 29%; }
+
+  .panel-v2.glass-tint-primary,
+  .panel-v2-auto.glass-tint-primary { --panel-v2-tone: var(--color-primary); --panel-v2-mix-light: 22%; --panel-v2-mix-dark: 30%; }
+  .panel-v2.glass-tint-secondary,
+  .panel-v2-auto.glass-tint-secondary { --panel-v2-tone: var(--color-secondary); --panel-v2-mix-light: 21%; --panel-v2-mix-dark: 29%; }
+  .panel-v2.glass-tint-accent,
+  .panel-v2-auto.glass-tint-accent { --panel-v2-tone: var(--color-accent); --panel-v2-mix-light: 20%; --panel-v2-mix-dark: 28%; }
+  .panel-v2.glass-tint-success,
+  .panel-v2-auto.glass-tint-success { --panel-v2-tone: var(--color-success); --panel-v2-mix-light: 20%; --panel-v2-mix-dark: 28%; }
+  .panel-v2.glass-tint-warning,
+  .panel-v2-auto.glass-tint-warning { --panel-v2-tone: var(--color-warning); --panel-v2-mix-light: 19%; --panel-v2-mix-dark: 27%; }
+  .panel-v2.glass-tint-error,
+  .panel-v2-auto.glass-tint-error { --panel-v2-tone: var(--color-error); --panel-v2-mix-light: 19%; --panel-v2-mix-dark: 27%; }
+  .panel-v2.glass-tint-info,
+  .panel-v2-auto.glass-tint-info { --panel-v2-tone: var(--color-info); --panel-v2-mix-light: 21%; --panel-v2-mix-dark: 29%; }
+
+  /* Keep legacy .card class aligned with the unified panel shell for non-Card Vue usages */
+  .card {
+    @apply border;
+    border-radius: 28px !important;
+    border-color: color-mix(in oklab, var(--color-theme-primary, var(--color-primary)) 24%, rgba(255, 255, 255, 0.35));
+    background-color: color-mix(in oklab, var(--color-theme-primary, var(--color-primary)) 15%, var(--color-base-100));
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.6),
+      0 14px 30px color-mix(in oklab, var(--color-theme-primary, var(--color-primary)) 18%, transparent);
+    backdrop-filter: blur(var(--glass-blur-regular)) saturate(var(--glass-saturate-regular)) contrast(var(--glass-contrast-regular));
+    -webkit-backdrop-filter: blur(var(--glass-blur-regular)) saturate(var(--glass-saturate-regular)) contrast(var(--glass-contrast-regular));
+    position: relative;
+    overflow: hidden;
+    isolation: isolate;
+  }
+
+  .card > * {
+    position: relative;
+    z-index: 1;
+  }
+
+  .dark .card {
+    border-color: color-mix(in oklab, var(--color-theme-primary, var(--color-primary)) 30%, rgba(148, 163, 184, 0.3));
+    background-color: color-mix(in oklab, var(--color-theme-primary, var(--color-primary)) 22%, var(--color-base-200));
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.14),
+      0 16px 32px rgba(2, 6, 23, 0.4);
+  }
 
   .input {
     @apply w-full px-3 py-2 border rounded-2xl focus:outline-none focus:ring-2;
@@ -1098,19 +1221,19 @@
 @layer components {
   /* 彩色玻璃（新主题家族：retro/light/cupcake + dracula/dark/coffee）。利用 data-theme 选择器隔离 */
   html[data-theme="retro"], html[data-theme="light"], html[data-theme="cupcake"], html[data-theme="dracula"], html[data-theme="dark"], html[data-theme="coffee"] {
-    .glass-tint-primary { background-color: var(--glass-tint-primary); border-color: color-mix(in oklab, var(--color-primary) 22%, transparent); color: var(--color-primary-content); }
-    .glass-tint-secondary { background-color: var(--glass-tint-secondary); border-color: color-mix(in oklab, var(--color-secondary) 20%, transparent); color: var(--color-secondary-content); }
-    .glass-tint-accent { background-color: var(--glass-tint-accent); border-color: color-mix(in oklab, var(--color-accent) 20%, transparent); color: var(--color-accent-content); }
-    .glass-tint-success { background-color: var(--glass-tint-success); border-color: color-mix(in oklab, var(--color-success) 20%, transparent); color: var(--color-success-content); }
-    .glass-tint-warning { background-color: var(--glass-tint-warning); border-color: color-mix(in oklab, var(--color-warning) 20%, transparent); color: var(--color-warning-content); }
-    .glass-tint-error { background-color: var(--glass-tint-error); border-color: color-mix(in oklab, var(--color-error) 20%, transparent); color: var(--color-error-content); }
-    .glass-tint-info { background-color: var(--glass-tint-info); border-color: color-mix(in oklab, var(--color-info) 20%, transparent); color: var(--color-info-content); }
+    .glass-tint-primary:not(.panel-v2):not(.panel-v2-auto) { background-color: var(--glass-tint-primary); border-color: color-mix(in oklab, var(--color-primary) 22%, transparent); color: var(--color-primary-content); }
+    .glass-tint-secondary:not(.panel-v2):not(.panel-v2-auto) { background-color: var(--glass-tint-secondary); border-color: color-mix(in oklab, var(--color-secondary) 20%, transparent); color: var(--color-secondary-content); }
+    .glass-tint-accent:not(.panel-v2):not(.panel-v2-auto) { background-color: var(--glass-tint-accent); border-color: color-mix(in oklab, var(--color-accent) 20%, transparent); color: var(--color-accent-content); }
+    .glass-tint-success:not(.panel-v2):not(.panel-v2-auto) { background-color: var(--glass-tint-success); border-color: color-mix(in oklab, var(--color-success) 20%, transparent); color: var(--color-success-content); }
+    .glass-tint-warning:not(.panel-v2):not(.panel-v2-auto) { background-color: var(--glass-tint-warning); border-color: color-mix(in oklab, var(--color-warning) 20%, transparent); color: var(--color-warning-content); }
+    .glass-tint-error:not(.panel-v2):not(.panel-v2-auto) { background-color: var(--glass-tint-error); border-color: color-mix(in oklab, var(--color-error) 20%, transparent); color: var(--color-error-content); }
+    .glass-tint-info:not(.panel-v2):not(.panel-v2-auto) { background-color: var(--glass-tint-info); border-color: color-mix(in oklab, var(--color-info) 20%, transparent); color: var(--color-info-content); }
 
     /* 强度分层结合色彩：在不同 glass-* 强度上叠加色彩，保持可读性 */
-    .glass-ultraThin.glass-tint-primary { background-color: color-mix(in oklab, var(--color-primary) 14%, transparent); }
-    .glass-thin.glass-tint-primary { background-color: color-mix(in oklab, var(--color-primary) 18%, transparent); }
-    .glass-regular.glass-tint-primary { background-color: color-mix(in oklab, var(--color-primary) 22%, transparent); }
-    .glass-thick.glass-tint-primary { background-color: color-mix(in oklab, var(--color-primary) 26%, transparent); }
+    .glass-ultraThin.glass-tint-primary:not(.panel-v2):not(.panel-v2-auto) { background-color: color-mix(in oklab, var(--color-primary) 14%, transparent); }
+    .glass-thin.glass-tint-primary:not(.panel-v2):not(.panel-v2-auto) { background-color: color-mix(in oklab, var(--color-primary) 18%, transparent); }
+    .glass-regular.glass-tint-primary:not(.panel-v2):not(.panel-v2-auto) { background-color: color-mix(in oklab, var(--color-primary) 22%, transparent); }
+    .glass-thick.glass-tint-primary:not(.panel-v2):not(.panel-v2-auto) { background-color: color-mix(in oklab, var(--color-primary) 26%, transparent); }
   }
   /* Button-only readability tweaks (light mode defaults) */
   .btn-glass-outline-light { @apply border border-white/40 text-base-content; }

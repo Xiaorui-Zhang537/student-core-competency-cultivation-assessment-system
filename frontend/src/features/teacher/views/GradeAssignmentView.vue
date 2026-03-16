@@ -710,7 +710,7 @@
           </card>
 
           <!-- 快速操作 -->
-          <card padding="lg" tint="success">
+          <card padding="lg" tint="warning">
             <template #header>
               <h3 class="text-lg font-semibold text-gray-900 dark:text-white">{{ t('teacher.grading.quick.title') }}</h3>
             </template>

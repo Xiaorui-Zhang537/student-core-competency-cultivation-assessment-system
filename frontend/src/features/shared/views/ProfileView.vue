@@ -20,7 +20,7 @@
 
       <div v-else-if="userProfile" class="space-y-8">
         <!-- Profile Info -->
-        <div class="rounded-xl p-6 glass-tint-primary" v-glass="{ strength: 'regular', interactive: true }">
+        <div class="panel-v2 panel-v2-primary rounded-xl p-6 glass-tint-primary" v-glass="{ strength: 'regular', interactive: true }">
           <h2 class="text-lg font-semibold mb-4">{{ t('shared.profile.section.profileInfo') }}</h2>
           <div class="flex items-start space-x-6">
             <!-- 头像展示 -->
@@ -111,7 +111,7 @@
         </div>
 
         <!-- Edit Profile Form -->
-        <div v-if="showEditProfile" class="rounded-xl p-6 glass-tint-secondary" v-glass="{ strength: 'regular', interactive: true }">
+        <div v-if="showEditProfile" class="panel-v2 panel-v2-secondary rounded-xl p-6 glass-tint-secondary" v-glass="{ strength: 'regular', interactive: true }">
           <h2 class="text-lg font-semibold mb-4">{{ t('shared.profile.section.editProfile') }}</h2>
           <form @submit.prevent="handleUpdateProfile" class="space-y-6">
               <!-- 头像上传 -->
@@ -232,10 +232,10 @@
         </div>
 
         <!-- Account Security -->
-        <div class="rounded-xl p-6 glass-tint-accent" v-glass="{ strength: 'regular', interactive: true }">
+        <div class="panel-v2 panel-v2-accent rounded-xl p-6 glass-tint-accent" v-glass="{ strength: 'regular', interactive: true }">
           <h2 class="text-lg font-semibold mb-4">{{ t('shared.profile.section.accountSecurity') }}</h2>
           <div class="space-y-4">
-            <div class="flex items-center justify-between p-4 rounded-lg" v-glass="{ strength: 'thin', interactive: true }">
+            <div class="panel-v2 panel-v2-neutral flex items-center justify-between p-4 rounded-lg" v-glass="{ strength: 'thin', interactive: true }">
               <div>
                 <h3 class="text-sm font-medium">{{ t('shared.profile.section.changePassword') }}</h3>
                 <p class="text-sm text-gray-500"></p>
@@ -245,7 +245,7 @@
                  {{ t('shared.profile.actions.changePassword') }}
                </Button>
             </div>
-            <div class="flex items-center justify-between p-4 rounded-lg" v-glass="{ strength: 'thin', interactive: true }">
+            <div class="panel-v2 panel-v2-neutral flex items-center justify-between p-4 rounded-lg" v-glass="{ strength: 'thin', interactive: true }">
               <div>
                 <h3 class="text-sm font-medium">{{ t('shared.profile.fields.email') }}</h3>
                 <p class="text-sm text_gray-500">{{ userProfile.emailVerified ? t('shared.profile.status.verified') : t('shared.profile.status.notVerified') }}</p>
@@ -259,7 +259,7 @@
         </div>
 
         <!-- Change Password Form -->
-        <div v-if="showChangePassword" class="rounded-xl p-6 glass-tint-info" v-glass="{ strength: 'regular', interactive: true }">
+        <div v-if="showChangePassword" class="panel-v2 panel-v2-info rounded-xl p-6 glass-tint-info" v-glass="{ strength: 'regular', interactive: true }">
           <h2 class="text-lg font-semibold mb-4">{{ t('shared.profile.section.changePassword') }}</h2>
           <form @submit.prevent="handleChangePassword" class="space-y-6">
             <div>

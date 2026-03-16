@@ -41,7 +41,7 @@
     <div class="grid grid-cols-12 gap-6 mb-2 items-start w-full">
       <!-- 左列包裹：成绩分布 + 学生表现排行（同一列内堆叠，避免被右列拉高后产生空白） -->
       <div class="col-span-12 lg:col-span-6 min-w-0 flex flex-col gap-4 self-start w-full">
-        <card padding="lg" class="self-start w-full" tint="info">
+        <card padding="lg" class="self-start w-full" tint="primary">
         <template #header>
             <div class="flex items-center justify-between h-11 overflow-hidden">
             <h3 class="text-lg font-semibold text-gray-900 dark:text-white">{{ t('teacher.analytics.charts.scoreDistribution') }}</h3>
@@ -209,7 +209,7 @@
         </card>
 
         <!-- 维度图例说明（中英） -->
-        <card padding="lg" v-if="rawRadarDimensions.length">
+        <card padding="lg" v-if="rawRadarDimensions.length" tint="info">
           <ability-radar-legend :dimensions="rawRadarDimensions" />
         </card>
 

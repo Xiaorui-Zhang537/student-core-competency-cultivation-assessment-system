@@ -12,8 +12,8 @@
       </div>
 
       <div class="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-12 gap-4">
-        <aside class="md:col-span-4 lg:col-span-4 xl:col-span-3 filter-container p-4 space-y-4 rounded-xl glass-tint-secondary" v-glass="{ strength: 'thin', interactive: false }">
-          <div class="rounded-2xl p-4 glass-ultraThin glass-tint-secondary border border-white/20 dark:border-white/10" v-glass="{ strength: 'ultraThin', interactive: false }">
+        <aside class="md:col-span-4 lg:col-span-4 xl:col-span-3 filter-container panel-v2 panel-v2-secondary p-4 space-y-4 rounded-xl glass-tint-secondary" v-glass="{ strength: 'thin', interactive: false }">
+          <div class="panel-v2 panel-v2-secondary rounded-2xl p-4 glass-ultraThin glass-tint-secondary border border-white/20 dark:border-white/10" v-glass="{ strength: 'ultraThin', interactive: false }">
             <div class="flex items-center justify-between gap-3 mb-2">
               <div class="flex items-center gap-2 min-w-0">
                 <h3 class="text-sm font-semibold text-gray-700 dark:text-gray-200 truncate">{{ t('shared.voicePractice.mySessions') }}</h3>
@@ -88,7 +88,7 @@
             </div>
           </div>
 
-          <div class="rounded-2xl p-4 glass-ultraThin glass-tint-primary border border-white/20 dark:border-white/10 space-y-3" v-glass="{ strength: 'ultraThin', interactive: false }">
+          <div class="panel-v2 panel-v2-primary rounded-2xl p-4 glass-ultraThin glass-tint-primary border border-white/20 dark:border-white/10 space-y-3" v-glass="{ strength: 'ultraThin', interactive: false }">
             <h3 class="text-sm font-semibold text-gray-700 dark:text-gray-200">{{ t('shared.voicePractice.settings') }}</h3>
             <div>
               <label class="block text-xs text-gray-500 mb-1">{{ t('shared.voicePractice.mode') }}</label>
@@ -116,7 +116,7 @@
           </div>
         </aside>
 
-        <section class="md:col-span-8 lg:col-span-8 xl:col-span-9 glass-thick glass-interactive glass-tint-primary rounded-2xl border border-gray-200/40 dark:border-gray-700/40 overflow-hidden" v-glass="{ strength: 'thick', interactive: true }">
+        <section class="md:col-span-8 lg:col-span-8 xl:col-span-9 panel-v2 panel-v2-primary glass-thick glass-interactive glass-tint-primary rounded-2xl border border-gray-200/40 dark:border-gray-700/40 overflow-hidden" v-glass="{ strength: 'thick', interactive: true }">
           <div class="px-4 py-3 border-b border-white/25 dark:border-white/10 bg-transparent flex items-center justify-between">
             <div class="font-semibold text-gray-800 dark:text-gray-100">
               {{ t('shared.voicePractice.session') }}
@@ -1164,4 +1164,3 @@ onBeforeUnmount(() => {
   try { void closeSession() } catch {}
 })
 </script>
-

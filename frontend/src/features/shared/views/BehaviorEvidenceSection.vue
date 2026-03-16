@@ -1,5 +1,5 @@
 <template>
-  <card padding="md" tint="info">
+  <card padding="md" tint="secondary">
     <div class="flex items-center justify-between gap-3 mb-3">
       <div class="min-w-0">
         <h3 class="text-lg font-semibold truncate">{{ tf('shared.behaviorEvidence.title', '行为证据') }}</h3>
@@ -27,7 +27,7 @@
     <div v-else class="space-y-4">
       <!-- 事实统计 -->
       <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-3">
-        <div class="rounded-2xl p-4 glass-ultraThin glass-tint-primary border border-white/20 dark:border-white/10" v-glass="{ strength: 'ultraThin', interactive: false }">
+        <div class="panel-v2 panel-v2-neutral rounded-2xl p-4 glass-ultraThin glass-tint-primary border border-white/20 dark:border-white/10" v-glass="{ strength: 'ultraThin', interactive: false }">
           <div class="flex items-center gap-2 text-xs text-gray-600 dark:text-gray-300">
             <sparkles-icon class="w-4 h-4 text-fuchsia-600 dark:text-fuchsia-400" />
             <span>{{ tf('shared.behaviorEvidence.stats.ai', 'AI 提问') }}</span>
@@ -42,9 +42,9 @@
             </span>
           </div>
         </div>
-        <div class="rounded-2xl p-4 glass-ultraThin glass-tint-info border border-white/20 dark:border-white/10" v-glass="{ strength: 'ultraThin', interactive: false }">
+        <div class="panel-v2 panel-v2-neutral rounded-2xl p-4 glass-ultraThin glass-tint-secondary border border-white/20 dark:border-white/10" v-glass="{ strength: 'ultraThin', interactive: false }">
           <div class="flex items-center gap-2 text-xs text-gray-600 dark:text-gray-300">
-            <academic-cap-icon class="w-4 h-4 text-sky-600 dark:text-sky-400" />
+            <academic-cap-icon class="w-4 h-4 text-orange-600 dark:text-orange-400" />
             <span>{{ tf('shared.behaviorEvidence.stats.assignment', '作业行为') }}</span>
           </div>
           <div class="mt-1 text-sm">
@@ -57,7 +57,7 @@
             </span>
           </div>
         </div>
-        <div class="rounded-2xl p-4 glass-ultraThin glass-tint-success border border-white/20 dark:border-white/10" v-glass="{ strength: 'ultraThin', interactive: false }">
+        <div class="panel-v2 panel-v2-neutral rounded-2xl p-4 glass-ultraThin glass-tint-success border border-white/20 dark:border-white/10" v-glass="{ strength: 'ultraThin', interactive: false }">
           <div class="flex items-center gap-2 text-xs text-gray-600 dark:text-gray-300">
             <chat-bubble-left-right-icon class="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
             <span>{{ tf('shared.behaviorEvidence.stats.community', '社区互动') }}</span>
@@ -72,7 +72,7 @@
             </span>
           </div>
         </div>
-        <div class="rounded-2xl p-4 glass-ultraThin glass-tint-warning border border-white/20 dark:border-white/10" v-glass="{ strength: 'ultraThin', interactive: false }">
+        <div class="panel-v2 panel-v2-neutral rounded-2xl p-4 glass-ultraThin glass-tint-warning border border-white/20 dark:border-white/10" v-glass="{ strength: 'ultraThin', interactive: false }">
           <div class="flex items-center gap-2 text-xs text-gray-600 dark:text-gray-300">
             <document-text-icon class="w-4 h-4 text-amber-600 dark:text-amber-400" />
             <span>{{ tf('shared.behaviorEvidence.stats.feedback', '查看反馈') }}</span>
@@ -83,7 +83,7 @@
             </span>
           </div>
         </div>
-        <div class="rounded-2xl p-4 glass-ultraThin glass-tint-accent border border-white/20 dark:border-white/10" v-glass="{ strength: 'ultraThin', interactive: false }">
+        <div class="panel-v2 panel-v2-neutral rounded-2xl p-4 glass-ultraThin glass-tint-accent border border-white/20 dark:border-white/10" v-glass="{ strength: 'ultraThin', interactive: false }">
           <div class="flex items-center gap-2 text-xs text-gray-600 dark:text-gray-300">
             <microphone-icon class="w-4 h-4 text-violet-600 dark:text-violet-400" />
             <span>{{ tf('shared.behaviorEvidence.stats.voice', '口语练习') }}</span>
@@ -103,11 +103,11 @@
             <sparkles-icon class="w-4 h-4 text-rose-600 dark:text-rose-400" />
             <span>{{ tf('shared.behaviorEvidence.goal.title', '能力目标') }}</span>
           </div>
-          <badge v-if="Number(goalSignals.totalGoalCount) > 0" size="sm" variant="info">
+          <badge v-if="Number(goalSignals.totalGoalCount) > 0" size="sm" variant="secondary">
             {{ n(goalSignals.totalGoalCount) }}
           </badge>
         </div>
-        <div class="rounded-2xl p-4 glass-ultraThin border border-white/20 dark:border-white/10 bg-gradient-to-r from-rose-500/10 via-orange-500/6 to-transparent">
+        <div class="panel-v2 panel-v2-neutral rounded-2xl p-4 glass-ultraThin border border-white/20 dark:border-white/10 bg-gradient-to-r from-rose-500/10 via-orange-500/6 to-transparent">
           <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 text-sm">
             <div>
               <div class="text-xs text-gray-500">{{ tf('shared.behaviorEvidence.goal.active', '进行中') }}</div>
@@ -182,7 +182,7 @@
           <div
             v-for="(it, idx) in goalEvidenceItems"
             :key="it.evidenceId || `goal-${idx}`"
-            class="rounded-2xl p-4 glass-ultraThin border border-white/20 dark:border-white/10 border-l-4"
+            class="panel-v2 panel-v2-neutral rounded-2xl p-4 glass-ultraThin border border-white/20 dark:border-white/10 border-l-4"
             :class="goalEvidenceTintClass(it.evidenceType)"
             v-glass="{ strength: 'ultraThin', interactive: false }"
           >
@@ -208,7 +208,7 @@
             <clipboard-document-list-icon class="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
             <span>{{ tf('shared.behaviorEvidence.evidence.title', '证据条目') }}</span>
           </div>
-          <badge v-if="generalEvidenceItems.length" size="sm" variant="info">
+          <badge v-if="generalEvidenceItems.length" size="sm" variant="secondary">
             {{ generalEvidenceItems.length }}
           </badge>
         </div>
@@ -219,7 +219,7 @@
           <div
             v-for="(it, idx) in generalEvidenceItems"
             :key="it.evidenceId || it.title"
-            class="rounded-2xl p-4 glass-ultraThin border border-white/20 dark:border-white/10 border-l-4"
+            class="panel-v2 panel-v2-neutral rounded-2xl p-4 glass-ultraThin border border-white/20 dark:border-white/10 border-l-4"
             :class="evidenceTintClass(idx)"
             v-glass="{ strength: 'ultraThin', interactive: false }"
           >
@@ -248,7 +248,7 @@
           <div
             v-for="it in summary.nonEvaluative.items"
             :key="it.eventType"
-            class="rounded-2xl p-4 glass-ultraThin glass-tint-secondary border border-white/20 dark:border-white/10"
+            class="panel-v2 panel-v2-neutral rounded-2xl p-4 glass-ultraThin glass-tint-secondary border border-white/20 dark:border-white/10"
             v-glass="{ strength: 'ultraThin', interactive: false }"
           >
             <div class="flex items-center justify-between">
@@ -514,7 +514,7 @@ function evidenceTintClass(idx: number): string {
   switch (i) {
     // 用“亮色渐变底 + 亮色左侧色条”，避免 glass-tint 叠加导致发灰/脏
     case 0: return 'border-l-fuchsia-500 bg-gradient-to-r from-fuchsia-500/18 via-fuchsia-500/8 to-transparent dark:from-fuchsia-400/22 dark:via-fuchsia-400/10'
-    case 1: return 'border-l-sky-500 bg-gradient-to-r from-sky-500/18 via-sky-500/8 to-transparent dark:from-sky-400/22 dark:via-sky-400/10'
+    case 1: return 'border-l-orange-500 bg-gradient-to-r from-orange-500/18 via-orange-500/8 to-transparent dark:from-orange-400/22 dark:via-orange-400/10'
     case 2: return 'border-l-emerald-500 bg-gradient-to-r from-emerald-500/18 via-emerald-500/8 to-transparent dark:from-emerald-400/22 dark:via-emerald-400/10'
     case 3: return 'border-l-amber-500 bg-gradient-to-r from-amber-500/18 via-amber-500/8 to-transparent dark:from-amber-400/22 dark:via-amber-400/10'
     default: return 'glass-tint-secondary border-l-gray-400/70'

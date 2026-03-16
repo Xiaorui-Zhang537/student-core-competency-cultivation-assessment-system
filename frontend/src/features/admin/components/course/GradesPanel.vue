@@ -179,7 +179,7 @@
             <div v-else class="text-sm text-gray-500 text-center">{{ t('teacher.analytics.charts.noRadar') || '暂无雷达数据' }}</div>
           </card>
 
-          <card padding="lg" v-if="rawRadarDimensions.length">
+          <card padding="lg" v-if="rawRadarDimensions.length" tint="info">
             <ability-radar-legend :dimensions="rawRadarDimensions" />
           </card>
 

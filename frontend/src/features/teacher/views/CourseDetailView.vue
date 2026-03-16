@@ -50,7 +50,7 @@
           </Button>
         </div>
         <!-- Chapters Toolbar -->
-        <card padding="md" tint="info" class="mb-6">
+        <card padding="md" tint="secondary" class="mb-6">
           <!-- 新章节：输入分组容器（更聚合、更好看） -->
           <div class="rounded-2xl p-3" v-glass="{ strength: 'ultraThin', interactive: false }">
             <div class="grid grid-cols-1 md:grid-cols-3 gap-3 items-end">
@@ -73,7 +73,10 @@
           <div class="mt-4">
             <div class="text-sm mb-2">{{ t('teacher.courseDetail.sections.chapterList') }}</div>
             <!-- 外层容器圆角更大；内层章节项圆角略小，避免“内层像药丸、外层像矩形”的不协调 -->
-            <ul class="rounded-2xl border p-2 space-y-2" style="background-color: color-mix(in oklab, var(--color-info) 12%, transparent);">
+            <ul
+              class="rounded-2xl border p-2 space-y-2"
+              style="background-color: color-mix(in oklab, var(--color-secondary) 14%, transparent); border-color: color-mix(in oklab, var(--color-secondary) 24%, transparent);"
+            >
               <li v-for="c in chapters" :key="c.id"
                   class="p-3 flex items-center justify-between cursor-move relative rounded-xl"
                   v-glass
@@ -97,7 +100,7 @@
         <div class="h-6"></div>
         <div class="space-y-4">
           <!-- New lesson inline form -->
-          <!-- 与“新增章节(info)”区分：新节次使用 accent 色系 -->
+          <!-- 与“新增章节(secondary)”区分：新节次使用 accent 色系 -->
           <card padding="md" tint="accent">
             <!-- 新节次：输入分组容器（更聚合、更好看） -->
             <div class="rounded-2xl p-3" v-glass="{ strength: 'ultraThin', interactive: false }">

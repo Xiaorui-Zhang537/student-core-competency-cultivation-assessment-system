@@ -13,9 +13,9 @@
 
       <div class="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-12 gap-4">
         <!-- 左侧面板 -->
-        <aside class="md:col-span-4 lg:col-span-4 xl:col-span-3 filter-container p-4 space-y-4 rounded-xl glass-tint-secondary" v-glass="{ strength: 'thin', interactive: false }">
+        <aside class="md:col-span-4 lg:col-span-4 xl:col-span-3 filter-container panel-v2 panel-v2-secondary p-4 space-y-4 rounded-xl glass-tint-secondary" v-glass="{ strength: 'thin', interactive: false }">
           <!-- 会话列表 -->
-          <div class="rounded-2xl p-4 glass-ultraThin glass-tint-secondary border border-white/20 dark:border-white/10" v-glass="{ strength: 'ultraThin', interactive: false }">
+          <div class="panel-v2 panel-v2-secondary rounded-2xl p-4 glass-ultraThin glass-tint-secondary border border-white/20 dark:border-white/10" v-glass="{ strength: 'ultraThin', interactive: false }">
             <div class="flex items-center justify-between gap-3 mb-2">
               <div class="flex items-center gap-2 min-w-0">
                 <h3 class="text-sm font-semibold text-gray-700 dark:text-gray-200 truncate">{{ t('teacher.ai.conversations') || '会话' }}</h3>
@@ -77,7 +77,7 @@
           </div>
 
           <!-- 长期记忆 -->
-          <div class="space-y-2 rounded-2xl p-4 glass-ultraThin glass-tint-accent border border-white/20 dark:border-white/10" v-glass="{ strength: 'ultraThin', interactive: false }">
+          <div class="panel-v2 panel-v2-accent space-y-2 rounded-2xl p-4 glass-ultraThin glass-tint-accent border border-white/20 dark:border-white/10" v-glass="{ strength: 'ultraThin', interactive: false }">
             <div class="flex items-center justify-between gap-3">
               <h3 class="text-sm font-semibold text-gray-700 dark:text-gray-200">{{ t('teacher.ai.memory') || '长期记忆' }}</h3>
               <glass-switch v-model="memory.enabled" size="sm" class="shrink-0" @update:modelValue="saveMemory" />
@@ -94,7 +94,7 @@
           </div>
 
           <!-- 模型说明 -->
-          <div class="space-y-3 text-xs text-gray-600 dark:text-gray-300 rounded-2xl p-4 glass-ultraThin glass-tint-success border border-white/20 dark:border-white/10" v-glass="{ strength: 'ultraThin', interactive: false }">
+          <div class="panel-v2 panel-v2-success space-y-3 text-xs text-gray-600 dark:text-gray-300 rounded-2xl p-4 glass-ultraThin glass-tint-success border border-white/20 dark:border-white/10" v-glass="{ strength: 'ultraThin', interactive: false }">
             <div class="font-semibold mb-1">{{ t('teacher.ai.modelsInfo.title') || '模型说明' }}</div>
             <ul class="list-disc pl-4 space-y-1">
               <li>{{ t('teacher.ai.modelsInfo.gemini') }}</li>
@@ -105,7 +105,7 @@
         </aside>
 
         <!-- 右侧聊天区 -->
-        <section class="md:col-span-8 lg:col-span-8 xl:col-span-9 glass-thick glass-interactive glass-tint-primary rounded-2xl border border-gray-200/40 dark:border-gray-700/40 overflow-hidden flex flex-col" v-glass="{ strength: 'thick', interactive: true }">
+        <section class="md:col-span-8 lg:col-span-8 xl:col-span-9 panel-v2 panel-v2-primary glass-thick glass-interactive glass-tint-primary rounded-2xl border border-gray-200/40 dark:border-gray-700/40 overflow-hidden flex flex-col" v-glass="{ strength: 'thick', interactive: true }">
           <!-- 顶栏 -->
           <div class="px-4 py-3 border-b border-white/25 dark:border-white/10 bg-transparent shrink-0">
             <div class="flex items-center justify-between">

@@ -260,7 +260,7 @@
           :course-id="selectedCourseId || undefined"
           :range="behaviorRange"
         />
-        <card v-else padding="md" tint="info" class="min-h-[160px] flex items-center justify-center">
+        <card v-else padding="md" tint="secondary" class="min-h-[160px] flex items-center justify-center">
           <span class="text-sm text-gray-500 dark:text-gray-400">{{ t('student.analysis.loading') }}</span>
         </card>
       </div>

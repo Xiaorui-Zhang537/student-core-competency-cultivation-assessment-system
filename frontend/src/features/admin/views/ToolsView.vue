@@ -37,11 +37,11 @@
     </div>
 
     <div class="grid grid-cols-1 gap-6 items-start">
-      <card padding="lg" tint="accent" class="overflow-hidden">
+      <card padding="lg" tint="info" class="overflow-hidden">
         <template #header>
           <div class="flex items-center justify-between gap-3 flex-wrap">
             <div class="flex items-center gap-3">
-              <div class="w-11 h-11 rounded-2xl bg-amber-500/15 text-amber-600 dark:text-amber-300 flex items-center justify-center">
+              <div class="w-11 h-11 rounded-2xl bg-sky-500/15 text-sky-600 dark:text-sky-300 flex items-center justify-center">
                 <BellAlertIcon class="w-5 h-5" />
               </div>
               <div>
@@ -49,7 +49,7 @@
                 <p class="text-xs text-subtle mt-1">{{ copy.broadcast.panelDesc }}</p>
               </div>
             </div>
-            <Button size="sm" variant="warning" @click="resetBroadcastForm">
+            <Button size="sm" variant="info" @click="resetBroadcastForm">
               <ArrowPathIcon class="w-4 h-4 mr-2" />
               {{ copy.broadcast.reset }}
             </Button>
@@ -57,7 +57,7 @@
         </template>
 
         <div class="space-y-4">
-          <div class="rounded-2xl p-4 glass-ultraThin glass-tint-warning border border-white/20 dark:border-white/10 shadow-sm">
+          <div class="rounded-2xl p-4 glass-ultraThin glass-tint-info border border-white/20 dark:border-white/10 shadow-sm">
             <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
               <div class="rounded-xl px-4 py-3 bg-white/10 border border-white/10">
                 <div class="text-xs text-subtle">{{ copy.broadcast.overviewAudience }}</div>
@@ -74,7 +74,7 @@
             </div>
           </div>
 
-          <div class="rounded-2xl p-5 space-y-4 glass-ultraThin glass-tint-accent border border-white/20 dark:border-white/10 shadow-sm">
+          <div class="rounded-2xl p-5 space-y-4 glass-ultraThin glass-tint-secondary border border-white/20 dark:border-white/10 shadow-sm">
             <div class="grid grid-cols-1 xl:grid-cols-5 gap-4 items-start">
               <div class="xl:col-span-2">
                 <div class="text-xs text-subtle mb-1">{{ copy.broadcast.titleLabel }}</div>
@@ -90,7 +90,7 @@
                   <emoji-picker
                     size="sm"
                     variant="primary"
-                    tint="warning"
+                    tint="info"
                     :hideLabelOnSmall="true"
                     :buttonClass="'!text-white whitespace-nowrap shrink-0'"
                     @select="appendBroadcastEmoji"
@@ -102,15 +102,15 @@
             <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-3">
               <div>
                 <div class="text-xs text-subtle mb-1">{{ copy.broadcast.typeLabel }}</div>
-                <glass-popover-select v-model="broadcastType" :options="broadcastTypeOptions" size="sm" tint="warning" />
+                <glass-popover-select v-model="broadcastType" :options="broadcastTypeOptions" size="sm" tint="info" />
               </div>
               <div>
                 <div class="text-xs text-subtle mb-1">{{ copy.broadcast.priorityLabel }}</div>
-                <glass-popover-select v-model="broadcastPriority" :options="broadcastPriorityOptions" size="sm" tint="accent" />
+                <glass-popover-select v-model="broadcastPriority" :options="broadcastPriorityOptions" size="sm" tint="secondary" />
               </div>
               <div>
                 <div class="text-xs text-subtle mb-1">{{ copy.broadcast.targetLabel }}</div>
-                <glass-popover-select v-model="broadcastTargetType" :options="broadcastTargetOptions" size="sm" tint="info" />
+                <glass-popover-select v-model="broadcastTargetType" :options="broadcastTargetOptions" size="sm" tint="secondary" />
               </div>
               <div v-if="broadcastTargetType === 'role'">
                 <div class="text-xs text-subtle mb-1">{{ copy.broadcast.roleLabel }}</div>
@@ -118,7 +118,7 @@
               </div>
               <div v-else-if="broadcastTargetType === 'specific'">
                 <div class="text-xs text-subtle mb-1">{{ copy.broadcast.specificLabel }}</div>
-                <glass-search-input v-model="recipientKeyword" :placeholder="copy.broadcast.searchPlaceholder" size="sm" tint="info" />
+                <glass-search-input v-model="recipientKeyword" :placeholder="copy.broadcast.searchPlaceholder" size="sm" tint="secondary" />
               </div>
             </div>
 
@@ -168,7 +168,7 @@
                     v-for="user in selectedRecipients"
                     :key="user.id"
                     type="button"
-                    class="px-3 py-1 rounded-full text-xs bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300"
+                    class="px-3 py-1 rounded-full text-xs bg-white/55 dark:bg-white/10 text-base-content border border-white/35 dark:border-white/12"
                     @click="toggleRecipient(user)"
                   >
                     {{ formatRecipientName(user) }} ×
@@ -179,7 +179,7 @@
 
             <div class="flex flex-wrap gap-3 pt-2">
               <Button
-                variant="warning"
+                variant="info"
                 size="sm"
                 :disabled="sending || !canSendBroadcast"
                 :loading="sending"
@@ -202,11 +202,11 @@
         </div>
       </card>
 
-      <card padding="lg" tint="info" class="overflow-hidden">
+      <card padding="lg" tint="secondary" class="overflow-hidden">
         <template #header>
           <div class="flex items-center justify-between gap-3 flex-wrap">
             <div class="flex items-center gap-3">
-              <div class="w-11 h-11 rounded-2xl bg-cyan-500/15 text-cyan-600 dark:text-cyan-300 flex items-center justify-center">
+              <div class="w-11 h-11 rounded-2xl bg-emerald-500/15 text-emerald-600 dark:text-emerald-300 flex items-center justify-center">
                 <ChatBubbleLeftRightIcon class="w-5 h-5" />
               </div>
               <div>
@@ -214,7 +214,7 @@
                 <p class="text-xs text-subtle mt-1">{{ copy.support.panelDesc }}</p>
               </div>
             </div>
-            <Button size="sm" variant="info" :loading="ticketLoading" @click="fetchTickets(true)">
+            <Button size="sm" variant="secondary" :loading="ticketLoading" @click="fetchTickets(true)">
               <ArrowPathIcon class="w-4 h-4 mr-2" />
               {{ copy.support.refresh }}
             </Button>
@@ -222,7 +222,7 @@
         </template>
 
         <div class="space-y-4">
-          <div class="rounded-2xl p-4 glass-ultraThin glass-tint-info border border-white/20 dark:border-white/10 shadow-sm">
+          <div class="rounded-2xl p-4 glass-ultraThin glass-tint-secondary border border-white/20 dark:border-white/10 shadow-sm">
             <filter-bar tint="secondary" align="center" :dense="false" class="rounded-3xl">
               <template #left>
                 <div class="flex items-start gap-3 flex-wrap w-full">
@@ -265,7 +265,7 @@
                       v-model="ticketFilters.q"
                       :placeholder="copy.support.filters.searchPlaceholder"
                       size="sm"
-                      tint="info"
+                      tint="secondary"
                     />
                   </div>
                 </div>
@@ -285,7 +285,7 @@
                   type="button"
                   class="w-full text-left rounded-3xl px-4 py-4 border transition"
                   :class="selectedTicketId === ticket.id
-                    ? 'border-cyan-300 bg-cyan-500/10 shadow-sm'
+                    ? 'border-emerald-300 bg-emerald-500/10 shadow-sm'
                     : 'border-white/20 dark:border-white/10 bg-white/5 hover:bg-white/10'"
                   @click="openTicket(ticket.id)"
                 >
@@ -363,7 +363,7 @@
                         v-model="detailStatus"
                         :options="ticketStatusActionOptions"
                         size="sm"
-                        tint="info"
+                        tint="secondary"
                         @update:modelValue="changeTicketStatus"
                       />
                     </div>
@@ -421,7 +421,7 @@
                       <emoji-picker
                         size="sm"
                         variant="primary"
-                        tint="info"
+                        tint="secondary"
                         :hideLabelOnSmall="true"
                         :buttonClass="'!text-white whitespace-nowrap shrink-0'"
                         @select="appendTicketReplyEmoji"
@@ -436,7 +436,7 @@
                       <Button
                         type="submit"
                         size="sm"
-                        variant="success"
+                        variant="secondary"
                         :disabled="!ticketReply.trim() || replyingTicket"
                         :loading="replyingTicket"
                       >
@@ -452,11 +452,11 @@
         </div>
       </card>
 
-      <card padding="lg" tint="success" class="overflow-hidden">
+      <card padding="lg" tint="danger" class="overflow-hidden">
         <template #header>
           <div class="flex items-center justify-between gap-3 flex-wrap">
             <div class="flex items-center gap-3">
-              <div class="w-11 h-11 rounded-2xl bg-emerald-500/15 text-emerald-600 dark:text-emerald-300 flex items-center justify-center">
+              <div class="w-11 h-11 rounded-2xl bg-rose-500/15 text-rose-600 dark:text-rose-300 flex items-center justify-center">
                 <BookOpenIcon class="w-5 h-5" />
               </div>
               <div>
@@ -464,7 +464,7 @@
                 <p class="text-xs text-subtle mt-1">{{ copy.helpDocs.panelDesc }}</p>
               </div>
             </div>
-            <Button size="sm" variant="success" :loading="helpArticleLoading" @click="fetchAdminHelpArticles">
+            <Button size="sm" variant="danger" :loading="helpArticleLoading" @click="fetchAdminHelpArticles">
               <ArrowPathIcon class="w-4 h-4 mr-2" />
               {{ copy.helpDocs.refresh }}
             </Button>
@@ -472,10 +472,10 @@
         </template>
 
         <div class="space-y-4">
-          <div class="rounded-2xl p-5 glass-ultraThin glass-tint-success border border-white/20 dark:border-white/10 shadow-sm space-y-4">
+          <div class="rounded-2xl p-5 glass-ultraThin glass-tint-danger border border-white/20 dark:border-white/10 shadow-sm space-y-4">
             <div class="flex items-center justify-between gap-3 flex-wrap">
               <div class="flex items-center gap-3">
-                <div class="w-10 h-10 rounded-2xl bg-emerald-500/15 text-emerald-700 dark:text-emerald-200 flex items-center justify-center">
+                <div class="w-10 h-10 rounded-2xl bg-rose-500/15 text-rose-700 dark:text-rose-200 flex items-center justify-center">
                   <DocumentTextIcon class="w-5 h-5" />
                 </div>
                 <div>
@@ -488,7 +488,7 @@
                 </div>
               </div>
 
-              <Button size="sm" variant="secondary" @click="resetHelpArticleForm">
+              <Button size="sm" variant="outline" @click="resetHelpArticleForm">
                 <ArrowPathIcon class="w-4 h-4 mr-2" />
                 {{ copy.helpDocs.reset }}
               </Button>
@@ -497,7 +497,7 @@
             <div class="rounded-2xl border border-white/15 bg-white/5 p-4 space-y-3">
               <div class="flex items-center justify-between gap-3 flex-wrap">
                 <div class="text-xs font-medium text-subtle">{{ copy.helpDocs.categoryCreateLabel }}</div>
-                <div v-if="helpCategories.length === 0" class="text-xs text-amber-700 dark:text-amber-300">
+                <div v-if="helpCategories.length === 0" class="text-xs text-rose-700 dark:text-rose-300">
                   {{ copy.helpDocs.noCategoriesHint }}
                 </div>
               </div>
@@ -510,7 +510,7 @@
                 </div>
                 <Button
                   size="sm"
-                  variant="success"
+                  variant="danger"
                   class="sm:self-end"
                   :loading="creatingHelpCategory"
                   :disabled="creatingHelpCategory"
@@ -529,7 +529,7 @@
                   v-model="helpArticleForm.categoryId"
                   :options="helpCategoryFormOptions"
                   size="sm"
-                  tint="success"
+                  tint="danger"
                 />
               </div>
               <div class="xl:col-span-2">
@@ -545,7 +545,7 @@
                   v-model="helpArticleForm.publishState"
                   :options="helpArticlePublishOptions"
                   size="sm"
-                  tint="success"
+                  tint="danger"
                 />
               </div>
             </div>
@@ -579,7 +579,7 @@
             <div class="flex flex-wrap gap-3 pt-2">
               <Button
                 size="sm"
-                variant="success"
+                variant="danger"
                 :loading="savingHelpArticle"
                 :disabled="savingHelpArticle"
                 @click="saveHelpArticle"
@@ -589,7 +589,7 @@
               </Button>
               <Button
                 size="sm"
-                variant="secondary"
+                variant="outline"
                 :disabled="savingHelpArticle"
                 @click="resetHelpArticleForm"
               >
@@ -599,7 +599,7 @@
             </div>
           </div>
 
-          <div class="rounded-2xl p-4 glass-ultraThin glass-tint-primary border border-white/20 dark:border-white/10 shadow-sm">
+          <div class="rounded-2xl p-4 glass-ultraThin glass-tint-danger border border-white/20 dark:border-white/10 shadow-sm">
             <filter-bar tint="secondary" align="center" :dense="false" class="rounded-3xl">
               <template #left>
                 <div class="flex items-start gap-3 flex-wrap w-full">
@@ -631,7 +631,7 @@
                       v-model="helpArticleFilters.q"
                       :placeholder="copy.helpDocs.searchPlaceholder"
                       size="sm"
-                      tint="success"
+                      tint="secondary"
                     />
                   </div>
                 </div>
@@ -639,7 +639,7 @@
             </filter-bar>
           </div>
 
-          <div class="rounded-2xl p-5 glass-ultraThin glass-tint-accent border border-white/20 dark:border-white/10 shadow-sm space-y-3">
+          <div class="rounded-2xl p-5 glass-ultraThin glass-tint-danger border border-white/20 dark:border-white/10 shadow-sm space-y-3">
             <div class="flex items-center justify-between gap-3 flex-wrap">
               <div class="text-sm font-semibold text-base-content">{{ copy.helpDocs.listTitle }}</div>
               <div class="text-xs text-subtle">{{ helpArticleListSummary }}</div>
@@ -689,7 +689,7 @@
                   <div class="flex items-center gap-2 shrink-0">
                     <Button
                       size="sm"
-                      variant="secondary"
+                      variant="outline"
                       @click="editHelpArticle(article)"
                     >
                       <PencilSquareIcon class="w-4 h-4 mr-2" />

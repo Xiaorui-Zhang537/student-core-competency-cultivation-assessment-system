@@ -24,7 +24,7 @@
       />
 
       <!-- Post Header -->
-      <div class="glass-regular glass-tint-secondary rounded-2xl p-6 mb-6" v-glass="{ strength: 'regular', interactive: true }">
+      <div class="panel-v2 panel-v2-secondary glass-regular glass-tint-secondary rounded-2xl p-6 mb-6" v-glass="{ strength: 'regular', interactive: true }">
         <div class="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
           <div class="min-w-0">
             <div class="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-subtle">
@@ -77,7 +77,7 @@
       </div>
 
       <!-- Post Content -->
-      <div class="glass-regular rounded-2xl p-6 mb-6" v-glass="{ strength: 'regular', interactive: true }">
+      <div class="panel-v2 panel-v2-neutral glass-regular rounded-2xl p-6 mb-6" v-glass="{ strength: 'regular', interactive: true }">
         <div class="prose prose-readable dark:prose-invert max-w-none whitespace-pre-line" v-html="currentPost.content"></div>
 
         <!-- Attachments: resources-style -->
@@ -89,7 +89,7 @@
             <div
               v-for="f in attachments"
               :key="f.id"
-              class="rounded-xl overflow-hidden glass-ultraThin"
+              class="panel-v2 panel-v2-secondary rounded-xl overflow-hidden glass-ultraThin"
               v-glass="{ strength: 'ultraThin', interactive: true }"
             >
               <img
@@ -115,7 +115,7 @@
       </div>
 
       <!-- Comments Section -->
-      <div class="glass-regular glass-tint-primary rounded-2xl p-6" v-glass="{ strength: 'regular', interactive: true }">
+      <div class="panel-v2 panel-v2-primary glass-regular glass-tint-primary rounded-2xl p-6" v-glass="{ strength: 'regular', interactive: true }">
         <h2 class="text-xl font-bold text-base-content mb-4">{{ t('shared.community.detail.comments', { count: totalComments }) }}</h2>
         
         <!-- Post Comment Form -->

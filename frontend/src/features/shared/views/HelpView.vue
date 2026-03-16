@@ -1,9 +1,9 @@
 <template>
   <div class="min-h-screen relative overflow-hidden">
     <div class="absolute inset-x-0 top-0 -z-0 h-[24rem] overflow-hidden pointer-events-none">
-      <div class="absolute left-[-6rem] top-[-5rem] h-56 w-56 rounded-full bg-emerald-400/18 blur-3xl"></div>
-      <div class="absolute right-[-4rem] top-12 h-64 w-64 rounded-full bg-cyan-400/16 blur-3xl"></div>
-      <div class="absolute left-1/3 top-20 h-40 w-40 rounded-full bg-amber-300/14 blur-3xl"></div>
+      <div class="absolute left-[-6rem] top-[-5rem] h-56 w-56 rounded-full bg-amber-300/14 blur-3xl"></div>
+      <div class="absolute right-[-4rem] top-12 h-64 w-64 rounded-full bg-stone-300/14 blur-3xl"></div>
+      <div class="absolute left-1/3 top-20 h-40 w-40 rounded-full bg-amber-200/12 blur-3xl"></div>
     </div>
 
     <div class="relative z-10 max-w-6xl mx-auto p-6">
@@ -42,7 +42,7 @@
 
       <!-- 顶部入口区 -->
       <div class="mb-12 relative overflow-hidden rounded-[2rem] p-6 glass-thin glass-tint-primary border border-white/20 dark:border-white/10 shadow-md">
-        <div class="absolute inset-y-0 right-0 w-2/5 bg-gradient-to-l from-cyan-400/16 via-transparent to-transparent pointer-events-none"></div>
+        <div class="absolute inset-y-0 right-0 w-2/5 bg-gradient-to-l from-amber-300/16 via-transparent to-transparent pointer-events-none"></div>
 
         <div class="relative grid grid-cols-1 xl:grid-cols-[minmax(0,1.25fr)_minmax(280px,0.75fr)] gap-6">
           <div>
@@ -62,7 +62,7 @@
                 v-model="searchQuery"
                 :placeholder="t('shared.help.searchPlaceholder') || '搜索帮助内容...'"
                 size="md"
-                tint="info"
+                tint="secondary"
               />
 
               <div class="mt-4 flex flex-wrap gap-2">
@@ -70,7 +70,7 @@
                   v-for="keyword in searchSuggestions"
                   :key="keyword"
                   type="button"
-                  class="rounded-full border border-white/20 dark:border-white/10 glass-ultraThin glass-tint-secondary px-3 py-1.5 text-xs font-medium text-base-content transition hover:border-cyan-300/45 hover:text-cyan-900 dark:hover:text-cyan-100"
+                  class="rounded-full border border-white/20 dark:border-white/10 glass-ultraThin glass-tint-secondary px-3 py-1.5 text-xs font-medium text-base-content transition hover:border-amber-300/45"
                   @click="applySearchSuggestion(keyword)"
                 >
                   {{ keyword }}
@@ -97,7 +97,7 @@
                   </span>
                 </div>
                 <div class="mt-4">
-                  <div class="font-semibold text-base-content group-hover:text-emerald-700 dark:group-hover:text-emerald-200">
+                  <div class="font-semibold text-base-content">
                     {{ entry.title }}
                   </div>
                   <p class="mt-1 text-sm text-subtle leading-6">
@@ -132,7 +132,7 @@
           </div>
 
           <div class="space-y-5">
-            <div class="rounded-2xl p-4 glass-ultraThin glass-tint-info border border-white/20 dark:border-white/10 shadow-sm">
+            <div class="rounded-2xl p-4 glass-ultraThin glass-tint-secondary border border-white/20 dark:border-white/10 shadow-sm">
               <div class="flex items-center justify-between gap-3">
                 <div>
                   <div class="text-xs font-semibold uppercase tracking-[0.18em] text-subtle">
@@ -154,7 +154,7 @@
                   :key="item"
                   class="flex items-start gap-2 text-sm text-base-content"
                 >
-                  <span class="mt-1.5 h-1.5 w-1.5 rounded-full bg-cyan-400 shrink-0"></span>
+                  <span class="mt-1.5 h-1.5 w-1.5 rounded-full bg-emerald-400 shrink-0"></span>
                   <span>{{ item }}</span>
                 </div>
               </div>
@@ -169,7 +169,7 @@
                   {{ isZh ? '主流帮助中心普遍先做内容自助，其次给明确下一步，最后再进入人工支持。' : 'Most help centers guide users through self-service first, then a clear next step, then human support when needed.' }}
                 </p>
               </div>
-              <div class="h-12 w-12 rounded-2xl bg-cyan-500/12 text-cyan-600 dark:text-cyan-300 flex items-center justify-center">
+              <div class="h-12 w-12 rounded-2xl bg-emerald-500/12 text-emerald-600 dark:text-emerald-300 flex items-center justify-center">
                 <QuestionMarkCircleIcon class="w-6 h-6" />
               </div>
             </div>
@@ -203,7 +203,7 @@
       <div class="grid grid-cols-1 lg:grid-cols-4 gap-8">
         <!-- 左侧导航 -->
         <div class="lg:col-span-1">
-          <card padding="lg" tint="info" class="sticky top-6 pt-2 shadow-sm">
+          <card padding="lg" tint="secondary" class="sticky top-6 pt-2 shadow-sm">
             <template #header>
               <h2 class="text-lg font-semibold text-base-content">{{ t('shared.help.nav') || '导航' }}</h2>
             </template>
@@ -214,7 +214,7 @@
                 @click="activeSection = section.id"
                 class="w-full text-left px-3 py-3 rounded-2xl text-sm transition-all duration-200"
                 :class="activeSection === section.id
-                  ? 'bg-emerald-500/15 dark:bg-emerald-500/20 text-emerald-600 dark:text-emerald-200 ring-1 ring-emerald-500/20 shadow-sm'
+                  ? 'bg-amber-500/12 dark:bg-amber-400/18 text-base-content ring-1 ring-amber-400/18 shadow-sm'
                   : 'text-gray-600 dark:text-gray-400 hover:bg-white/10 dark:hover:bg-white/5'"
               >
                 {{ section.title }}
@@ -255,13 +255,13 @@
                   v-model="searchQuery"
                   :placeholder="t('shared.help.searchPlaceholder') || '搜索帮助内容...'"
                   size="md"
-                  tint="info"
+                  tint="secondary"
                 />
               </div>
 
               <div
                 class="mb-5 rounded-2xl p-4 border border-white/20 dark:border-white/10 shadow-sm glass-ultraThin"
-                :class="hasSearchQuery ? 'glass-tint-info' : 'glass-tint-secondary'"
+                :class="hasSearchQuery ? 'glass-tint-primary' : 'glass-tint-secondary'"
               >
                 <div class="text-sm font-medium text-base-content">{{ searchResultSummary }}</div>
                 <p class="mt-1 text-xs text-subtle">
@@ -305,7 +305,7 @@
                     </Badge>
                     <span class="text-xs text-subtle">{{ articleUpdatedAt(a) }}</span>
                   </div>
-                  <h3 class="font-medium text-base-content mb-2 transition-colors group-hover:text-cyan-900 dark:group-hover:text-cyan-100" v-html="highlightedArticleTitle(a)"></h3>
+                  <h3 class="font-medium text-base-content mb-2 transition-colors" v-html="highlightedArticleTitle(a)"></h3>
                   <p class="text-sm text-subtle line-clamp-3 min-h-[4.5rem]" v-html="highlightedArticleExcerpt(a)"></p>
                   <div class="mt-4 pt-4 border-t border-white/15 dark:border-white/10 text-xs text-subtle flex items-center justify-between">
                     <span>{{ (a.views || 0) }} {{ t('shared.common.views') || '浏览' }}</span>
@@ -316,7 +316,7 @@
 
               <div
                 v-if="!helpStore.loading && helpStore.articles.length===0"
-                class="rounded-3xl glass-ultraThin glass-tint-warning border border-dashed border-white/20 dark:border-white/10 px-6 py-8 text-center shadow-sm"
+                class="rounded-3xl glass-ultraThin glass-tint-primary border border-dashed border-white/20 dark:border-white/10 px-6 py-8 text-center shadow-sm"
               >
                 <div class="text-sm font-medium text-base-content">
                   {{ isZh ? '暂时没有匹配的帮助内容' : 'No matching help content yet' }}
@@ -365,7 +365,7 @@
 
               <div class="prose prose-sm md:prose-base dark:prose-invert max-w-none help-md" v-html="renderedArticleContent"></div>
 
-              <div class="mt-6 rounded-3xl px-5 py-4 glass-ultraThin glass-tint-info border border-white/20 dark:border-white/10 shadow-sm">
+              <div class="mt-6 rounded-3xl px-5 py-4 glass-ultraThin glass-tint-secondary border border-white/20 dark:border-white/10 shadow-sm">
                 <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                   <div>
                     <div class="font-medium text-base-content">
@@ -384,7 +384,7 @@
           </section>
           <!-- 常见问题（daisyUI Accordion with plus/minus） -->
           <section v-if="activeSection === 'faq'" id="faq">
-            <card padding="lg" tint="accent" class="shadow-sm">
+            <card padding="lg" tint="primary" class="shadow-sm">
               <template #header>
                 <div>
                   <h2 class="text-xl font-semibold text-base-content">{{ t('shared.help.sections.faq') || '常见问题' }}</h2>
@@ -398,14 +398,14 @@
                 <div
                   v-for="category in faqCategories"
                   :key="category.id"
-                  class="last:pb-0 rounded-3xl p-5 glass-ultraThin glass-tint-secondary border border-white/20 dark:border-white/10 shadow-sm"
+                  class="last:pb-0 rounded-3xl p-5 glass-ultraThin glass-tint-primary border border-white/20 dark:border-white/10 shadow-sm"
                 >
                   <h3 class="text-lg font-medium text-base-content mb-4">{{ category.name }}</h3>
                   <div class="join join-vertical w-full rounded-2xl overflow-hidden border border-white/15 dark:border-white/10">
                     <div
                       v-for="(faq, idx) in category.faqs"
                       :key="faq.id"
-                      class="collapse collapse-plus join-item glass-ultraThin glass-tint-info border-white/20 dark:border-white/10 border"
+                      class="collapse collapse-plus join-item glass-ultraThin glass-tint-secondary border-white/20 dark:border-white/10 border"
                     >
                       <input type="radio" :name="`faq-accordion-${category.id}`" :checked="idx === 0" />
                       <div class="collapse-title font-medium text-base-content">{{ faq.question }}</div>
@@ -421,7 +421,7 @@
 
           <!-- 使用指南 -->
           <section v-if="activeSection === 'guide'" id="guide">
-            <card padding="lg" tint="success" class="shadow-sm">
+            <card padding="lg" tint="secondary" class="shadow-sm">
               <template #header>
                 <div>
                   <h2 class="text-xl font-semibold text-base-content">{{ t('shared.help.sections.guide') || '使用指南' }}</h2>
@@ -435,7 +435,7 @@
                 <div v-for="guide in userGuidesFiltered" :key="guide.id">
                   <div class="mb-4 flex items-center justify-between gap-3 flex-wrap">
                     <h3 class="text-lg font-medium text-base-content flex items-center">
-                      <component :is="guide.icon" class="w-5 h-5 mr-2 text-emerald-600 dark:text-emerald-400" />
+                      <component :is="guide.icon" class="w-5 h-5 mr-2 text-amber-700 dark:text-amber-300" />
                       {{ guide.title }}
                     </h3>
                     <span class="rounded-full border border-white/15 dark:border-white/10 px-3 py-1 text-xs font-medium text-subtle">
@@ -446,10 +446,10 @@
                     <div
                       v-for="step in guide.steps"
                       :key="step.id"
-                      class="rounded-3xl p-5 transition-all duration-200 hover:-translate-y-0.5 hover:border-emerald-400/25 glass-ultraThin glass-tint-success border border-white/20 dark:border-white/10 shadow-sm"
+                      class="rounded-3xl p-5 transition-all duration-200 hover:-translate-y-0.5 hover:border-amber-300/25 glass-ultraThin glass-tint-secondary border border-white/20 dark:border-white/10 shadow-sm"
                     >
                       <div class="flex items-center mb-4">
-                        <span class="w-8 h-8 bg-emerald-600 dark:bg-emerald-500 text-white rounded-2xl flex items-center justify-center text-sm font-medium mr-3">
+                        <span class="w-8 h-8 bg-amber-600 dark:bg-amber-500 text-white rounded-2xl flex items-center justify-center text-sm font-medium mr-3">
                           {{ step.step }}
                         </span>
                         <h4 class="font-medium text-base-content">{{ step.title }}</h4>
@@ -477,7 +477,7 @@
           <section v-if="activeSection === 'support'" id="support">
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
               <!-- 联系方式 -->
-              <card padding="lg" tint="info" class="shadow-sm">
+              <card padding="lg" tint="secondary" class="shadow-sm">
                 <template #header>
                   <div>
                     <h2 class="text-xl font-semibold text-base-content">{{ t('shared.help.sections.support') || '联系技术支持' }}</h2>
@@ -508,7 +508,7 @@
                   </div>
                 </div>
 
-                <div class="mt-5 rounded-3xl p-4 glass-thin glass-tint-accent border border-white/20 dark:border-white/10 shadow-sm">
+                <div class="mt-5 rounded-3xl p-4 glass-thin glass-tint-primary border border-white/20 dark:border-white/10 shadow-sm">
                   <div class="text-sm font-medium text-base-content">
                     {{ isZh ? '填写建议' : 'Tips for faster handling' }}
                   </div>
@@ -518,7 +518,7 @@
                       :key="tip"
                       class="flex items-start gap-2 text-sm text-subtle"
                     >
-                      <span class="mt-1 h-1.5 w-1.5 rounded-full bg-emerald-500 shrink-0"></span>
+                      <span class="mt-1 h-1.5 w-1.5 rounded-full bg-amber-500 shrink-0"></span>
                       <span>{{ tip }}</span>
                     </div>
                   </div>
@@ -534,7 +534,7 @@
               </card>
 
               <!-- 提交工单 -->
-              <card padding="lg" tint="accent" class="shadow-sm">
+              <card padding="lg" tint="primary" class="shadow-sm">
                 <template #header>
                   <div>
                     <h2 class="text-xl font-semibold text-base-content">{{ t('shared.help.sections.ticket') || '提交支持单' }}</h2>
@@ -549,7 +549,7 @@
                     <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">诉求分类</label>
                     <glass-popover-select
                       v-model="ticketForm.channel as any"
-                      tint="info"
+                      tint="secondary"
                       :options="[
                         { label: '技术支持', value: 'support' },
                         { label: '意见反馈', value: 'feedback' }
@@ -562,7 +562,7 @@
                     <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{{ t('shared.help.form.type') || '问题类型' }}</label>
                     <glass-popover-select
                       v-model="ticketForm.type as any"
-                      tint="accent"
+                      tint="secondary"
                       :options="[
                         { label: t('shared.help.form.selectType') || '选择问题类型', value: '', disabled: true },
                         { label: t('shared.help.form.typeTechnical') || '技术问题', value: 'technical' },
@@ -594,7 +594,7 @@
                       <emoji-picker
                         size="sm"
                         variant="primary"
-                        tint="accent"
+                        tint="secondary"
                         :hideLabelOnSmall="true"
                         :buttonClass="'!text-white whitespace-nowrap shrink-0'"
                         @select="onTicketDescriptionEmojiSelect"
@@ -655,7 +655,7 @@
                   <template #header>
                     <div class="flex items-center justify-between gap-3 flex-wrap">
                       <div class="flex items-center gap-3">
-                        <div class="w-10 h-10 rounded-2xl bg-indigo-500/15 text-indigo-600 dark:text-indigo-300 flex items-center justify-center">
+                        <div class="w-10 h-10 rounded-2xl bg-amber-500/15 text-amber-600 dark:text-amber-300 flex items-center justify-center">
                           <TicketIcon class="w-5 h-5" />
                         </div>
                         <div>
@@ -665,7 +665,7 @@
                           </p>
                         </div>
                       </div>
-                      <Button size="sm" variant="info" @click="helpStore.fetchMyTickets()">
+                      <Button size="sm" variant="outline" @click="helpStore.fetchMyTickets()">
                         <ArrowPathIcon class="w-4 h-4 mr-2" />
                         {{ t('shared.common.latest') || '最新' }}
                       </Button>
@@ -682,7 +682,7 @@
                       :key="ticket.id"
                       class="rounded-2xl p-4 transition glass-ultraThin border border-white/20 dark:border-white/10 shadow-sm"
                       :class="isCurrentTicket(ticket.id)
-                        ? 'glass-tint-info border-cyan-300/50'
+                        ? 'glass-tint-primary border-amber-300/45'
                         : 'glass-tint-secondary hover:bg-white/10'"
                     >
                       <div class="flex items-start justify-between gap-3 flex-wrap">
@@ -729,7 +729,7 @@
                   </div>
 
                   <div v-if="helpStore.ticketDetail?.ticket" class="mt-6 pt-6 border-t border-white/15 dark:border-white/10">
-                    <div class="rounded-3xl p-5 glass-thin glass-tint-accent border border-white/20 dark:border-white/10 shadow-sm">
+                    <div class="rounded-3xl p-5 glass-thin glass-tint-primary border border-white/20 dark:border-white/10 shadow-sm">
                       <div class="flex items-start justify-between gap-3 flex-wrap">
                         <div class="min-w-0">
                           <div class="flex items-center gap-2 flex-wrap">
@@ -757,7 +757,7 @@
                             </div>
                           </div>
                         </div>
-                        <Button size="sm" variant="info" @click="openTicketDetail(helpStore.ticketDetail.ticket.id)">
+                        <Button size="sm" variant="outline" @click="openTicketDetail(helpStore.ticketDetail.ticket.id)">
                           <ArrowPathIcon class="w-4 h-4 mr-1.5" />
                           {{ isZh ? '刷新详情' : 'Refresh' }}
                         </Button>
@@ -769,8 +769,8 @@
                           :key="message.id"
                           class="rounded-2xl px-4 py-3 border glass-ultraThin"
                           :class="message.senderSide === 'admin'
-                            ? 'glass-tint-success border-emerald-300/30'
-                            : 'glass-tint-info border-white/15 dark:border-white/10'"
+                            ? 'glass-tint-secondary border-amber-300/30'
+                            : 'glass-tint-primary border-white/15 dark:border-white/10'"
                         >
                           <div class="flex items-center gap-2 flex-wrap text-xs mb-2">
                             <span class="inline-flex items-center gap-1 text-subtle">
@@ -797,7 +797,7 @@
                           <emoji-picker
                             size="sm"
                             variant="primary"
-                            tint="accent"
+                            tint="secondary"
                             :hideLabelOnSmall="true"
                             :buttonClass="'!text-white whitespace-nowrap shrink-0'"
                             @select="onTicketReplyEmojiSelect"
@@ -805,7 +805,7 @@
                         </div>
                         <glass-textarea
                           v-model="ticketReply"
-                          tint="accent"
+                          tint="secondary"
                           :rows="3"
                           :placeholder="isZh ? '继续补充问题，或回复管理员' : 'Add more details or reply to the admin'"
                         />
@@ -827,7 +827,7 @@
 
           <!-- 反馈 -->
           <section v-if="activeSection === 'feedback'" id="feedback">
-            <card padding="lg" tint="warning" class="shadow-sm">
+            <card padding="lg" tint="primary" class="shadow-sm">
               <template #header>
                 <div>
                   <h2 class="text-xl font-semibold text-gray-900 dark:text-white">{{ t('shared.help.sections.feedback') || '意见反馈' }}</h2>
@@ -849,10 +849,10 @@
                     v-for="type in feedbackTypeOptions"
                     :key="type.value"
                     type="button"
-                    class="rounded-3xl p-4 text-left cursor-pointer transition-all duration-200 hover:-translate-y-0.5 hover:border-emerald-400/25 glass-ultraThin glass-tint-warning border border-white/20 dark:border-white/10 shadow-sm"
+                    class="rounded-3xl p-4 text-left cursor-pointer transition-all duration-200 hover:-translate-y-0.5 hover:border-amber-300/25 glass-ultraThin glass-tint-primary border border-white/20 dark:border-white/10 shadow-sm"
                     @click="startFeedbackTicket(type.value)"
                   >
-                    <div class="h-10 w-10 rounded-2xl bg-white/70 dark:bg-white/10 text-emerald-600 dark:text-emerald-300 flex items-center justify-center">
+                    <div class="h-10 w-10 rounded-2xl bg-white/70 dark:bg-white/10 text-amber-700 dark:text-amber-300 flex items-center justify-center">
                       <component :is="type.icon" class="w-5 h-5" />
                     </div>
                     <div class="mt-3">
@@ -1015,14 +1015,14 @@ const roleLanding = computed(() => (
         title: isZh.value ? '按教学任务快速进入排查与处理流程' : 'Jump straight into teaching-side troubleshooting and support flows',
         description: isZh.value ? '优先处理课程管理、学生管理、AI 批改和教学分析相关问题。' : 'Prioritize course operations, student management, AI grading, and teaching analytics issues.',
         icon: UserGroupIcon,
-        iconWrapClass: 'glass-tint-info text-cyan-900 dark:text-cyan-100'
+        iconWrapClass: 'glass-tint-secondary text-base-content'
       }
     : {
         badge: isZh.value ? '学生支持台' : 'Student desk',
         title: isZh.value ? '围绕学习过程快速定位答案与下一步动作' : 'Find learning-side answers and the next best action quickly',
         description: isZh.value ? '优先覆盖课程学习、作业提交、成绩查看和学习助手相关问题。' : 'Focus on course learning, assignment submission, grade review, and learning-assistant issues.',
         icon: AcademicCapIcon,
-        iconWrapClass: 'glass-tint-success text-emerald-900 dark:text-emerald-100'
+        iconWrapClass: 'glass-tint-secondary text-base-content'
       }
 ))
 
@@ -1045,8 +1045,8 @@ const quickEntryCards = computed(() => ([
     title: isZh.value ? '先看帮助文章' : 'Start with articles',
     description: isZh.value ? '适合快速查找流程说明、常见报错和操作路径。' : 'Use this for quick guidance, common errors, and operational steps.',
     icon: BookOpenIcon,
-    surfaceClass: 'glass-ultraThin glass-tint-info',
-    iconWrapClass: 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-300',
+    surfaceClass: 'glass-ultraThin glass-tint-primary',
+    iconWrapClass: 'glass-tint-primary text-base-content',
     action: () => {
       activeSection.value = 'articles'
     }
@@ -1059,8 +1059,8 @@ const quickEntryCards = computed(() => ([
       : (isZh.value ? '查看学生流程' : 'Open student flow'),
     description: isZh.value ? '按照当前身份给出常见任务的最短路径，减少摸索成本。' : 'See the fastest path for common tasks based on your current role.',
     icon: ChartBarIcon,
-    surfaceClass: 'glass-ultraThin glass-tint-success',
-    iconWrapClass: 'bg-cyan-500/15 text-cyan-600 dark:text-cyan-300',
+    surfaceClass: 'glass-ultraThin glass-tint-primary',
+    iconWrapClass: 'glass-tint-primary text-base-content',
     action: () => {
       activeSection.value = 'guide'
     }
@@ -1071,8 +1071,8 @@ const quickEntryCards = computed(() => ([
     title: isZh.value ? '统一支持单' : 'Unified support ticket',
     description: isZh.value ? '无法自助解决时，集中提交、补充和跟踪管理员回复。' : 'Submit, follow up, and track admin replies in one thread.',
     icon: TicketIcon,
-    surfaceClass: 'glass-ultraThin glass-tint-accent',
-    iconWrapClass: 'bg-amber-400/15 text-amber-600 dark:text-amber-200',
+    surfaceClass: 'glass-ultraThin glass-tint-primary',
+    iconWrapClass: 'glass-tint-primary text-base-content',
     action: () => {
       activeSection.value = 'support'
     }
@@ -1084,22 +1084,22 @@ const serviceJourney = computed(() => ([
     step: '01',
     title: isZh.value ? '先搜索答案' : 'Search first',
     description: isZh.value ? '优先通过文章、FAQ 找到现成答案，缩短处理时间。' : 'Check articles and FAQs first to resolve the issue immediately when possible.',
-    surfaceClass: 'glass-tint-info',
-    badgeClass: 'glass-tint-info text-cyan-900 dark:text-cyan-100'
+    surfaceClass: 'glass-tint-secondary',
+    badgeClass: 'glass-tint-secondary text-base-content'
   },
   {
     step: '02',
     title: isZh.value ? '按角色走指南' : 'Follow role-based guides',
     description: isZh.value ? '学生和教师看到不同的快捷路径，直接进入对应功能。' : 'Students and teachers get different shortcuts so they can jump straight into the right flow.',
-    surfaceClass: 'glass-tint-success',
-    badgeClass: 'glass-tint-success text-emerald-900 dark:text-emerald-100'
+    surfaceClass: 'glass-tint-secondary',
+    badgeClass: 'glass-tint-secondary text-base-content'
   },
   {
     step: '03',
     title: isZh.value ? '统一支持单继续处理' : 'Continue in one ticket',
     description: isZh.value ? '仍未解决时，用同一条支持单补充信息、查看回复和追踪状态。' : 'If the issue remains, keep the context, replies, and status updates in one shared ticket thread.',
-    surfaceClass: 'glass-tint-accent',
-    badgeClass: 'glass-tint-accent text-violet-900 dark:text-violet-100'
+    surfaceClass: 'glass-tint-secondary',
+    badgeClass: 'glass-tint-secondary text-base-content'
   }
 ]))
 
@@ -1109,21 +1109,21 @@ const servicePromises = computed(() => ([
     description: isZh.value ? '帮助、反馈和技术支持不再分散，降低重复沟通。' : 'Help, feedback, and support are routed through one consistent intake flow.',
     surfaceClass: 'glass-tint-primary',
     icon: BookOpenIcon,
-    iconWrapClass: 'glass-tint-info text-cyan-900 dark:text-cyan-100'
+    iconWrapClass: 'glass-tint-primary text-base-content'
   },
   {
     title: isZh.value ? '对话留痕' : 'Threaded follow-up',
     description: isZh.value ? '支持单保留历史上下文，方便持续补充。' : 'Each ticket keeps the full conversation so you can continue without restarting.',
-    surfaceClass: 'glass-tint-info',
+    surfaceClass: 'glass-tint-primary',
     icon: ChatBubbleLeftIcon,
-    iconWrapClass: 'glass-tint-accent text-violet-900 dark:text-violet-100'
+    iconWrapClass: 'glass-tint-primary text-base-content'
   },
   {
     title: isZh.value ? '角色化指引' : 'Role-aware guidance',
     description: isZh.value ? '学生与教师展示不同内容，减少无关信息。' : 'Students and teachers see different guidance to keep the page focused.',
-    surfaceClass: 'glass-tint-success',
+    surfaceClass: 'glass-tint-primary',
     icon: UserGroupIcon,
-    iconWrapClass: 'glass-tint-success text-emerald-900 dark:text-emerald-100'
+    iconWrapClass: 'glass-tint-primary text-base-content'
   }
 ]))
 
@@ -1362,7 +1362,7 @@ const supportContacts = computed(() => ([
     value: 'xiaorui537537@gmail.com',
     time: t('shared.help.support.email.time') || '24小时内回复',
     icon: EnvelopeIcon,
-    iconBg: 'bg-blue-500'
+    iconBg: 'bg-amber-500'
   },
   {
     type: 'wechat',
@@ -1371,7 +1371,7 @@ const supportContacts = computed(() => ([
     value: 'Xiao_Rui537',
     time: t('shared.help.support.wechat.time') || '工作日 9:00-18:00',
     icon: ChatBubbleLeftIcon,
-    iconBg: 'bg-emerald-500'
+    iconBg: 'bg-stone-500'
   }
 ]))
 
@@ -1394,7 +1394,7 @@ const ticketRoutingHint = computed(() => {
       description: isZh.value
         ? '适合产品建议、体验问题和错误反馈。提交后建议在同一工单里持续补充上下文。'
         : 'Use this for product ideas, UX issues, and bug feedback. Keep follow-up details in the same ticket thread.',
-      surfaceClass: 'glass-tint-warning'
+      surfaceClass: 'glass-tint-primary'
     }
   }
 
@@ -1404,7 +1404,7 @@ const ticketRoutingHint = computed(() => {
       description: isZh.value
         ? '建议在描述中写明影响范围、受影响角色和复现频率，便于优先判断。'
         : 'Include impact scope, affected roles, and how often it occurs so triage can happen faster.',
-      surfaceClass: 'glass-tint-warning'
+      surfaceClass: 'glass-tint-secondary'
     }
   }
 
@@ -1413,7 +1413,7 @@ const ticketRoutingHint = computed(() => {
     description: isZh.value
       ? '提交后可在“我的工单”持续补充信息，管理员回复也会集中在同一条记录。'
       : 'After submission, continue adding details in My Tickets and review admin replies in the same thread.',
-    surfaceClass: 'glass-tint-info'
+    surfaceClass: 'glass-tint-secondary'
   }
 })
 
@@ -1463,7 +1463,7 @@ const highlightText = (value?: string | null) => {
     const escapedTerm = escapeRegExp(escapeHtml(term))
     output = output.replace(
       new RegExp(`(${escapedTerm})`, 'ig'),
-      '<mark class="rounded-md px-1 py-0.5 bg-amber-300/75 text-slate-900">$1</mark>'
+      '<mark class="rounded-md px-1 py-0.5 bg-white/80 text-slate-800 ring-1 ring-white/45">$1</mark>'
     )
   }
 

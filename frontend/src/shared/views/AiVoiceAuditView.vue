@@ -23,8 +23,8 @@
       <!-- 固定主区域高度：页面不滚动，内部区域滚动 -->
       <div v-else class="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-12 gap-4 items-stretch h-[calc(100vh-320px)] overflow-hidden">
         <!-- 左侧面板：tab + 搜索 + 列表 -->
-        <aside class="md:col-span-4 lg:col-span-4 xl:col-span-3 filter-container p-4 space-y-4 rounded-xl glass-tint-secondary flex flex-col h-full overflow-hidden" v-glass="{ strength: 'thin', interactive: false }">
-          <div class="rounded-2xl p-4 glass-ultraThin glass-tint-secondary border border-white/20 dark:border-white/10 flex flex-col h-full min-h-0 overflow-hidden" v-glass="{ strength: 'ultraThin', interactive: false }">
+        <aside class="md:col-span-4 lg:col-span-4 xl:col-span-3 filter-container panel-v2 panel-v2-secondary p-4 space-y-4 rounded-xl glass-tint-secondary flex flex-col h-full overflow-hidden" v-glass="{ strength: 'thin', interactive: false }">
+          <div class="panel-v2 panel-v2-secondary rounded-2xl p-4 glass-ultraThin glass-tint-secondary border border-white/20 dark:border-white/10 flex flex-col h-full min-h-0 overflow-hidden" v-glass="{ strength: 'ultraThin', interactive: false }">
             <div class="flex items-center justify-between gap-2 mb-3 flex-wrap">
               <segmented-pills :model-value="tab" :options="tabOptions" size="sm" variant="info" @update:modelValue="(v:any)=> tab = String(v) as any" />
             </div>
@@ -68,7 +68,7 @@
         </aside>
 
         <!-- 右侧：聊天区（对齐 AI 助理/口语训练模板） -->
-        <section class="md:col-span-8 lg:col-span-8 xl:col-span-9 glass-thick glass-interactive glass-tint-primary rounded-2xl border border-gray-200/40 dark:border-gray-700/40 overflow-hidden flex flex-col h-full min-h-0" v-glass="{ strength: 'thick', interactive: true }">
+        <section class="md:col-span-8 lg:col-span-8 xl:col-span-9 panel-v2 panel-v2-primary glass-thick glass-interactive glass-tint-primary rounded-2xl border border-gray-200/40 dark:border-gray-700/40 overflow-hidden flex flex-col h-full min-h-0" v-glass="{ strength: 'thick', interactive: true }">
           <!-- 顶栏 -->
           <div class="px-4 py-3 border-b border-white/25 dark:border-white/10 bg-transparent shrink-0">
             <div class="flex items-center justify-between gap-3 flex-wrap">
@@ -709,4 +709,3 @@ onMounted(() => {
 .ai-md :deep(h1), .ai-md :deep(h2), .ai-md :deep(h3), .ai-md :deep(h4) { margin: 0.75rem 0 0.25rem; font-weight: 600; }
 .ai-md :deep(hr) { border-color: var(--glass-border-color, rgba(128,128,128,0.2)); margin: 0.75rem 0; }
 </style>
-

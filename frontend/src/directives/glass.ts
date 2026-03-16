@@ -16,6 +16,21 @@ interface GlassOptions {
   interactive?: boolean
 }
 
+const PANEL_AUTO_EXCLUDES = new Set([
+  'modal',
+  'popover-glass',
+  'collapse',
+  'join-item',
+  'btn',
+  'badge',
+  'pill',
+  'tags-input-box',
+  'input--glass'
+])
+
+const hasTintToken = (classes: string[]): boolean =>
+  classes.some((token) => token.startsWith('glass-tint-'))
+
 const supportsBackdrop = (): boolean => {
   if (typeof CSS === 'undefined' || !CSS.supports) return false
   return CSS.supports('backdrop-filter: blur(1px)') || CSS.supports('-webkit-backdrop-filter: blur(1px)')
@@ -30,6 +45,46 @@ const strengthClass = (s: GlassStrength): string => {
     case 'ultraThick': return 'glass-ultraThick'
     default: return 'glass-regular'
   }
+}
+
+const hasLargePaddingToken = (token: string): boolean => {
+  if (!(token.startsWith('p-') || token.startsWith('px-') || token.startsWith('py-'))) return false
+  if (token.includes('[')) return true
+  const size = Number(token.split('-')[1])
+  return Number.isFinite(size) && size >= 3
+}
+
+const shouldUsePanelAuto = (el: HTMLElement): boolean => {
+  const tag = el.tagName
+  if (tag === 'BUTTON' || tag === 'A' || tag === 'SPAN' || tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return false
+
+  const classes = Array.from(el.classList)
+  if (!classes.some((token) => token.startsWith('glass-'))) return false
+  if (classes.some((token) => PANEL_AUTO_EXCLUDES.has(token))) return false
+  // Only upgrade containers that already have explicit tint semantics.
+  // This keeps "one layer" behavior and avoids neutral overlays on every block.
+  if (!hasTintToken(classes)) return false
+  if (classes.some((token) => token.includes('bubble'))) return false
+  if (classes.some((token) => token === 'rounded-full' || token === 'rounded-lg')) return false
+
+  const hasRound = classes.some((token) =>
+    token === 'rounded-xl' || token === 'rounded-2xl' || token === 'rounded-3xl' || token.startsWith('rounded-[')
+  )
+  if (!hasRound) return false
+
+  return classes.some((token) => hasLargePaddingToken(token))
+}
+
+const syncPanelAutoClass = (el: HTMLElement, enabled: boolean) => {
+  if (!enabled) {
+    el.classList.remove('panel-v2-auto')
+    return
+  }
+  if (shouldUsePanelAuto(el)) {
+    el.classList.add('panel-v2-auto')
+    return
+  }
+  el.classList.remove('panel-v2-auto')
 }
 
 const apply = (el: HTMLElement, binding: DirectiveBinding<GlassOptions | GlassStrength | undefined>) => {
@@ -47,7 +102,9 @@ const apply = (el: HTMLElement, binding: DirectiveBinding<GlassOptions | GlassSt
   if (supportsBackdrop()) {
     el.classList.add(strengthClass(strength))
     if (interactive) el.classList.add('glass-interactive')
+    syncPanelAutoClass(el, true)
   } else {
+    syncPanelAutoClass(el, false)
     // Fallback: mount a GlassBackdrop child to emulate translucency
     let host = el.querySelector('[data-glass-fallback]') as HTMLElement | null
     if (!host) {
@@ -80,5 +137,3 @@ export default {
     apply(el, binding)
   }
 }
-
-

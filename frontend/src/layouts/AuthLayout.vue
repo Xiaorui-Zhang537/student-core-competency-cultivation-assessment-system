@@ -685,6 +685,7 @@ onUnmounted(() => {
 
 .authFeaturePill {
   --pill-tone: var(--color-theme-primary, var(--color-primary));
+  --pill-surface-tone: var(--color-theme-primary, var(--color-primary));
   display: inline-flex;
   align-items: center;
   gap: 0.62rem;
@@ -695,16 +696,16 @@ onUnmounted(() => {
   font-weight: 600;
   color: var(--color-base-content);
   white-space: nowrap;
-  border: 1px solid color-mix(in oklab, var(--pill-tone) 24%, rgba(255, 255, 255, 0.35));
-  background-color: color-mix(in oklab, var(--pill-tone) 15%, var(--color-base-100) 85%);
+  border: 1px solid color-mix(in oklab, var(--pill-surface-tone) 24%, rgba(255, 255, 255, 0.35));
+  background-color: color-mix(in oklab, var(--pill-surface-tone) 14%, var(--color-base-100) 86%);
   backdrop-filter: blur(10px) saturate(135%);
   -webkit-backdrop-filter: blur(10px) saturate(135%);
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.62), 0 7px 18px rgba(15, 23, 42, 0.08);
 }
 
 .dark .authFeaturePill {
-  border-color: color-mix(in oklab, var(--pill-tone) 30%, rgba(148, 163, 184, 0.3));
-  background-color: color-mix(in oklab, var(--pill-tone) 22%, var(--color-base-200) 78%);
+  border-color: color-mix(in oklab, var(--pill-surface-tone) 30%, rgba(148, 163, 184, 0.3));
+  background-color: color-mix(in oklab, var(--pill-surface-tone) 22%, var(--color-base-200) 78%);
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.14), 0 10px 22px rgba(2, 6, 23, 0.4);
 }
 

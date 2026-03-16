@@ -2,7 +2,7 @@
   <liquid-glass
     :container-class="containerClass"
     :class="[
-      'rounded-2xl transition-all duration-200',
+      'transition-all duration-200',
       hoverable ? 'hover:shadow-md' : '',
       (hoverable && hoverScale) ? 'hover:scale-[1.005]' : '',
       {
@@ -13,19 +13,17 @@
       },
       $attrs.class
     ]"
-    :radius="16"
-    :frost="0.05"
-    :border="0.07"
+    effect="occlusionBlur"
+    :radius="28"
+    :frost="0.08"
+    :border="0"
     :lightness="50"
-    :alpha="0.93"
-    :blur="11"
-    :scale="-180"
-    :rOffset="0"
-    :gOffset="10"
-    :bOffset="20"
+    :alpha="0.96"
+    :blur="12"
+    :tint="false"
     v-bind="$attrs"
   >
-    <header v-if="$slots.header" class="pb-4 mb-4" style="box-shadow: inset 0 -1px 0 rgba(255,255,255,0.18);">
+    <header v-if="$slots.header" class="pb-4 mb-4" style="box-shadow: inset 0 -1px 0 color-mix(in oklab, var(--panel-v2-tone, var(--color-primary)) 16%, transparent);">
       <slot name="header" />
     </header>
     
@@ -33,7 +31,7 @@
       <slot />
     </main>
     
-    <footer v-if="$slots.footer" class="pt-4 mt-4" style="box-shadow: inset 0 1px 0 rgba(255,255,255,0.18);">
+    <footer v-if="$slots.footer" class="pt-4 mt-4" style="box-shadow: inset 0 1px 0 color-mix(in oklab, var(--panel-v2-tone, var(--color-primary)) 16%, transparent);">
       <slot name="footer" />
     </footer>
   </liquid-glass>
@@ -56,11 +54,11 @@ const props = withDefaults(defineProps<Props>(), {
   tint: null
 })
 
-const tintClass = computed(() => props.tint ? `glass-tint-${props.tint}` : '')
+const tintClass = computed(() => props.tint ? `panel-v2-${props.tint}` : 'panel-v2-neutral')
 
 const containerClass = computed(() => [
-  'glass-regular',
-  'glass-interactive',
+  'panel-v2',
+  props.hoverable ? 'panel-v2-interactive' : '',
   tintClass.value
 ].filter(Boolean).join(' '))
-</script> 
+</script>

@@ -1,7 +1,15 @@
 <template>
   <div class="shrink-0 w-80">
-    <liquid-glass :radius="16" :frost="0.05" :border="0.07" :alpha="0.93" :blur="11"
-                 :container-class="['glass-regular','glass-interactive', tintClass, 'rounded-2xl'].join(' ')">
+    <liquid-glass
+      effect="occlusionBlur"
+      :radius="28"
+      :frost="0.08"
+      :border="0"
+      :alpha="0.96"
+      :blur="12"
+      :tint="false"
+      :container-class="['panel-v2', 'panel-v2-interactive', tintClass, 'rounded-[28px]'].join(' ')"
+    >
       <div class="p-4">
         <div class="flex items-center gap-3 mb-3">
           <user-avatar :avatar="img" :size="36" :rounded="true" />
@@ -39,7 +47,7 @@ const props = withDefaults(defineProps<Props>(), {
   tint: 'info',
 })
 
-const tintClass = computed(() => props.tint ? `glass-tint-${props.tint}` : '')
+const tintClass = computed(() => props.tint ? `panel-v2-${props.tint}` : 'panel-v2-info')
 
 // MBTI 徽章颜色映射（Analysts=紫, Sentinels=蓝, Diplomats=绿, Explorers=黄）
 const mbtiBadgeClass = computed(() => {
@@ -63,5 +71,4 @@ const mbtiBadgeClass = computed(() => {
 
 <style scoped>
 </style>
-
 

@@ -48,7 +48,16 @@
             </div>
             <div class="md:col-span-6 xl:col-span-6 2xl:col-span-5 mt-4 md:mt-0 flex justify-end">
               <div class="w-full max-w-[620px] xl:max-w-[780px] 2xl:max-w-[860px] xl:scale-[1.24] 2xl:scale-[1.12] origin-right">
-                <liquid-glass effect="occlusionBlur" :radius="16" :frost="0.06" :scale="-100" :tint="true" :tint-from="'var(--color-theme-primary)'" :tint-to="'var(--color-theme-accent)'" :container-class="'relative rounded-2xl w-full aspect-[4/3] sm:aspect-[16/10] max-h-[60vh] xl:max-h-[88vh] overflow-hidden'">
+                <liquid-glass
+                  effect="occlusionBlur"
+                  :radius="28"
+                  :frost="0.08"
+                  :border="0"
+                  :alpha="0.96"
+                  :blur="12"
+                  :tint="false"
+                  :container-class="'panel-v2 panel-v2-primary relative rounded-[30px] w-full aspect-[4/3] sm:aspect-[16/10] max-h-[60vh] xl:max-h-[88vh] overflow-hidden'"
+                >
                 <div class="relative w-full h-full">
                   <bending-gallery class="absolute inset-0" :bend="3" :border-radius="0.06" :items="galleryItems" :aspect-ratio="16/9" :dpr="2" :anisotropy="8" :wobble="0.015" />
                 </div>
@@ -73,9 +82,14 @@
           <div class="relative md:sticky md:top-0 grid md:grid-cols-2 items-center gap-6 xl:gap-8 min-h-[70vh] md:h-screen py-6 md:py-0">
             <div class="px-2 order-2 md:order-1">
               <liquid-glass
-                :radius="18"
-                :frost="0.06"
-                containerClass="relative rounded-2xl w-full aspect-[16/10] max-h-[70vh] overflow-hidden"
+                effect="occlusionBlur"
+                :radius="28"
+                :frost="0.08"
+                :border="0"
+                :alpha="0.96"
+                :blur="12"
+                :tint="false"
+                containerClass="panel-v2 panel-v2-secondary relative rounded-[30px] w-full aspect-[16/10] max-h-[70vh] overflow-hidden"
               >
                 <compare-slider
                   :first-image="compareThemeLight"
@@ -114,9 +128,14 @@
           <div class="relative md:sticky md:top-0 grid md:grid-cols-2 items-center gap-6 xl:gap-8 min-h-[70vh] md:h-screen py-6 md:py-0">
             <div class="px-2 order-2 md:order-1">
               <liquid-glass
-                :radius="18"
-                :frost="0.06"
-                containerClass="relative rounded-2xl w-full aspect-[16/10] max-h-[70vh] overflow-hidden"
+                effect="occlusionBlur"
+                :radius="28"
+                :frost="0.08"
+                :border="0"
+                :alpha="0.96"
+                :blur="12"
+                :tint="false"
+                containerClass="panel-v2 panel-v2-info relative rounded-[30px] w-full aspect-[16/10] max-h-[70vh] overflow-hidden"
               >
                 <compare-slider
                   :first-image="langZhImg"
@@ -162,7 +181,16 @@
             <h2 class="text-left text-2xl sm:text-3xl font-extrabold leading-relaxed text-[color:var(--color-base-content)]">
               {{ t('app.home.helpDesc') }}
             </h2>
-            <liquid-glass :radius="16" :frost="0.06" containerClass="relative rounded-2xl w-full overflow-hidden">
+            <liquid-glass
+              effect="occlusionBlur"
+              :radius="28"
+              :frost="0.08"
+              :border="0"
+              :alpha="0.96"
+              :blur="12"
+              :tint="false"
+              containerClass="panel-v2 panel-v2-accent relative rounded-[30px] w-full overflow-hidden"
+            >
               <img :src="helpImageSrc" alt="Help Overview" class="w-full h-full object-cover rounded-xl" loading="lazy" decoding="async" fetchpriority="low" @error="onHelpImgError" />
             </liquid-glass>
           </div>

@@ -23,8 +23,8 @@
                   :gradient-color="isDarkMode ? 'rgba(255,255,255,0.10)' : 'rgba(0,0,0,0.08)'"
                   :gradient-opacity="0.95"
                   :class="[
-                    'rounded-2xl border border-white/12 dark:border-white/10 bg-white/30 dark:bg-white/5 backdrop-blur-md',
-                    idx === activeIndex ? 'ring-1 ring-white/25 dark:ring-white/15' : 'opacity-70 hover:opacity-95'
+                    'panel-v2 rounded-2xl',
+                    idx === activeIndex ? 'panel-v2-primary ring-1 ring-white/20 dark:ring-white/14' : 'panel-v2-secondary opacity-78 hover:opacity-95'
                   ]"
                 >
                   <button
@@ -79,12 +79,14 @@
             <!-- Visual -->
             <div class="md:col-span-7 min-w-0">
               <liquid-glass
-                :radius="18"
-                :frost="0.06"
-                :tint="true"
-                :tint-from="'var(--color-primary)'"
-                :tint-to="'var(--color-accent)'"
-                :container-class="'relative rounded-3xl overflow-hidden'"
+                effect="occlusionBlur"
+                :radius="28"
+                :frost="0.08"
+                :border="0"
+                :alpha="0.96"
+                :blur="12"
+                :tint="false"
+                :container-class="'panel-v2 panel-v2-accent relative rounded-[32px] overflow-hidden'"
               >
                 <border-beam :size="260" :duration="14" :border-width="1.5" />
 
