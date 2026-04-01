@@ -326,6 +326,7 @@
         "edit": "编辑目标",
         "empty": "还没有目标，先为一个维度设定具体提升目标。",
         "dimension": "目标维度",
+        "dimensionEmpty": "暂无可用维度，请稍后重试。",
         "name": "目标标题",
         "targetScore": "目标分数（0-5）",
         "targetDate": "截止日期",

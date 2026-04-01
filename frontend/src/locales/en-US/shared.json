@@ -146,12 +146,14 @@
       "changePwd": {
         "current": "Current Password",
         "new": "New Password",
-        "confirm": "Confirm New Password"
+        "confirm": "Confirm New Password",
+        "hintMin": "Password must be at least {min} characters"
       },
       "messages": {
         "loadUser": "Loading user info...",
         "updateSuccess": "Profile updated",
         "updateFail": "Update failed",
+        "passwordTooShort": "New password must be at least {min} characters.",
         "passwordMismatch": "New password and confirmation do not match.",
         "passwordChanged": "Password changed successfully",
         "emailSent": "Verification email sent. Please check your inbox.",

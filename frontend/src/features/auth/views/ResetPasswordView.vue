@@ -9,8 +9,9 @@
       <div>
         <label for="password" class="block text-sm font-medium mb-2">新密码</label>
         <div class="rounded-lg">
-          <glass-input id="password" v-model="password" type="password" :disabled="uiStore.loading" placeholder="请输入新密码（至少6位）" tint="primary" />
+          <glass-input id="password" v-model="password" type="password" :disabled="uiStore.loading" :placeholder="`请输入新密码（至少${PASSWORD_MIN}位）`" tint="primary" />
         </div>
+        <p class="mt-1 text-xs text-gray-500">密码至少 {{ PASSWORD_MIN }} 位</p>
       </div>
       <div>
         <label for="confirm" class="block text-sm font-medium mb-2">确认新密码</label>
@@ -43,6 +44,7 @@ const uiStore = useUIStore()
 const token = ref<string>('')
 const password = ref<string>('')
 const confirm = ref<string>('')
+const PASSWORD_MIN = 8
 
 onMounted(() => {
   const q = route.query?.token
@@ -54,8 +56,8 @@ const handleReset = async () => {
     uiStore.showNotification({ type: 'error', title: '错误', message: '重置链接无效或已过期，请重新申请。' })
     return
   }
-  if (!password.value || password.value.length < 6) {
-    uiStore.showNotification({ type: 'error', title: '错误', message: '新密码至少6位。' })
+  if (!password.value || password.value.length < PASSWORD_MIN) {
+    uiStore.showNotification({ type: 'error', title: '错误', message: `新密码至少${PASSWORD_MIN}位。` })
     return
   }
   if (password.value !== confirm.value) {
@@ -75,5 +77,4 @@ const handleReset = async () => {
   }
 }
 </script>
-
 

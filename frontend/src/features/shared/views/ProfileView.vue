@@ -269,6 +269,7 @@
             <div>
               <label for="newPassword" class="block text-sm font-medium mb-2">{{ t('shared.profile.changePwd.new') || 'New Password' }}</label>
               <input id="newPassword" v-model="passwordForm.newPassword" type="password" required class="input" />
+              <p class="mt-1 text-xs text-gray-500">{{ t('shared.profile.changePwd.hintMin', { min: PASSWORD_MIN }) || `至少 ${PASSWORD_MIN} 位` }}</p>
             </div>
             <div>
               <label for="confirmNewPassword" class="block text-sm font-medium mb-2">{{ t('shared.profile.changePwd.confirm') || 'Confirm New Password' }}</label>
@@ -352,6 +353,7 @@ const passwordForm = reactive<ChangePasswordRequest>({
   newPassword: '',
 });
 const confirmNewPassword = ref('');
+const PASSWORD_MIN = 8;
 
 const fetchUserProfile = async () => {
     const response = await handleApiCall(() => userApi.getProfile(), uiStore, '获取用户信息失败');
@@ -416,6 +418,14 @@ const handleUpdateProfile = async () => {
 };
 
 const handleChangePassword = async () => {
+  if (!passwordForm.newPassword || passwordForm.newPassword.length < PASSWORD_MIN) {
+    uiStore.showNotification({
+      type: 'error',
+      title: t('app.notifications.error.title'),
+      message: t('shared.profile.messages.passwordTooShort', { min: PASSWORD_MIN })
+    });
+    return;
+  }
   if (passwordForm.newPassword !== confirmNewPassword.value) {
     uiStore.showNotification({ type: 'error', title: t('app.notifications.error.title'), message: t('shared.profile.messages.passwordMismatch') });
     return;

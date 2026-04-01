@@ -218,6 +218,25 @@ alter table student_assessment_system.ai_memories
     add constraint uniq_user_id
         unique (user_id);
 
+create table if not exists student_assessment_system.ai_quota_adjustments
+(
+    id                      bigint auto_increment comment '主键'
+        primary key,
+    user_id                 bigint                               not null comment '学生用户ID',
+    ai_chat_bonus_weekly    int        default 0                 not null comment 'AI问答每周加额',
+    insight_bonus_window    int        default 0                 not null comment '洞见窗口加额',
+    voice_chat_bonus_weekly int        default 0                 not null comment '语音聊天每周加额',
+    updated_at              timestamp  default CURRENT_TIMESTAMP null on update CURRENT_TIMESTAMP comment '更新时间'
+)
+    comment '学生AI额度加额表' charset = utf8mb4;
+
+create index idx_ai_quota_user
+    on student_assessment_system.ai_quota_adjustments (user_id);
+
+alter table student_assessment_system.ai_quota_adjustments
+    add constraint uk_ai_quota_user
+        unique (user_id);
+
 create table if not exists student_assessment_system.ai_messages
 (
     id              bigint auto_increment comment '消息ID'

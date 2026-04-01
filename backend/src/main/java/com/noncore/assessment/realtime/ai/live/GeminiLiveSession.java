@@ -116,7 +116,6 @@ public class GeminiLiveSession {
         }
 
         AiConfigProperties.ProxyConfig pc = aiConfig.getProxy();
-        boolean allowRetryWithProxy = pc != null && pc.isEnabled() && pc.isAutoRetryWithProxy() && !pc.isAlwaysUseProxy();
 
         // setupComplete 等待时间：国内网络/代理握手往往 > 12s，这里适当放宽，避免误判超时
         int t1 = 25;
@@ -128,45 +127,56 @@ public class GeminiLiveSession {
                 t1 = Math.max(t1, ct + 10);
                 t2 = Math.max(t2, ct + 25);
             }
-        } catch (Exception ignore) { }
+        } catch (Exception ignore) {
+        }
         final int setupTimeout1 = t1;
         final int setupTimeout2 = t2;
 
-        // 尝试 1：按配置直连/强制代理（alwaysUseProxy=true 则内部会直接走代理）
-        CompletableFuture<Void> first = connectOnce(apiKey, model, mode, locale, scenario, /*forceProxy*/ false, /*setupTimeoutSec*/ setupTimeout1);
+        List<ConnectAttempt> attempts = buildConnectAttempts(pc);
+        return tryConnectAttempts(attempts, 0, apiKey, model, mode, locale, scenario, setupTimeout1, setupTimeout2, null);
+    }
 
-        if (!allowRetryWithProxy) {
-            return first;
+    private CompletableFuture<Void> tryConnectAttempts(List<ConnectAttempt> attempts,
+                                                       int index,
+                                                       String apiKey,
+                                                       String model,
+                                                       String mode,
+                                                       String locale,
+                                                       String scenario,
+                                                       int setupTimeout1,
+                                                       int setupTimeout2,
+                                                       Throwable lastError) {
+        if (index >= attempts.size()) {
+            Throwable err = lastError != null ? lastError : new IllegalStateException("Gemini Live 连接失败");
+            return CompletableFuture.failedFuture(err);
         }
 
-        // 尝试 2：若直连失败（含 setupComplete 超时），自动切代理重试一次
-        return first.handle((ok, ex) -> {
-            if (ex == null) return CompletableFuture.<Void>completedFuture(null);
+        ConnectAttempt attempt = attempts.get(index);
+        int timeoutSec = index == 0 ? setupTimeout1 : setupTimeout2;
+        if (index > 0) {
+            notifyClientWarn("RETRY_WITH_PROXY", "连接 Gemini Live 失败，正在尝试 " + attempt.label() + " ...");
+        }
 
-            Throwable root = unwrapCompletionException(ex);
-            boolean shouldRetry = root instanceof java.util.concurrent.TimeoutException
-                    || root instanceof java.net.ConnectException
-                    || root instanceof java.net.UnknownHostException
-                    || root instanceof java.net.SocketTimeoutException
-                    || (root != null && String.valueOf(root.getMessage()).toLowerCase().contains("handshake"))
-                    || (root != null && String.valueOf(root.getMessage()).toLowerCase().contains("connect"));
-
-            if (!shouldRetry) {
-                return CompletableFuture.<Void>failedFuture(root);
-            }
-
-            notifyClientWarn("RETRY_WITH_PROXY", "直连 Gemini Live 失败，正在尝试使用代理重试...");
-            return connectOnce(apiKey, model, mode, locale, scenario, /*forceProxy*/ true, /*setupTimeoutSec*/ setupTimeout2);
-        }).thenCompose(f -> f);
+        return connectOnce(apiKey, model, mode, locale, scenario, attempt, timeoutSec)
+                .handle((ok, ex) -> {
+                    if (ex == null) return CompletableFuture.<Void>completedFuture(null);
+                    Throwable root = unwrapCompletionException(ex);
+                    if (index < attempts.size() - 1 && shouldRetryNextAttempt(root)) {
+                        return tryConnectAttempts(attempts, index + 1, apiKey, model, mode, locale, scenario,
+                                setupTimeout1, setupTimeout2, root);
+                    }
+                    return CompletableFuture.<Void>failedFuture(root != null ? root : ex);
+                })
+                .thenCompose(f -> f);
     }
 
     private CompletableFuture<Void> connectOnce(String apiKey,
-                                               String model,
-                                               String mode,
-                                               String locale,
-                                               String scenario,
-                                               boolean forceProxy,
-                                               int setupTimeoutSec) {
+                                                String model,
+                                                String mode,
+                                                String locale,
+                                                String scenario,
+                                                ConnectAttempt attempt,
+                                                int setupTimeoutSec) {
         if (closed.get()) {
             return CompletableFuture.failedFuture(new IllegalStateException("session closed"));
         }
@@ -178,11 +188,9 @@ public class GeminiLiveSession {
             return CompletableFuture.failedFuture(e);
         }
 
-        AiConfigProperties.ProxyConfig pc = aiConfig.getProxy();
-        boolean usingProxy = pc != null && pc.isEnabled() && (pc.isAlwaysUseProxy() || forceProxy);
+        boolean usingProxy = attempt.proxyTarget() != null;
         if (usingProxy) {
-            log.info("Gemini Live connecting with proxy {}:{} (type={}, model={}, mode={})",
-                    pc.getHost(), pc.getPort(), pc.getType(), model, mode);
+            log.info("Gemini Live connecting with {} (model={}, mode={})", attempt.label(), model, mode);
         } else {
             log.info("Gemini Live connecting directly (model={}, mode={})", model, mode);
         }
@@ -190,7 +198,7 @@ public class GeminiLiveSession {
         // 本次连接对应的 setupComplete future（注意：每次尝试都要新的 future）
         this.setupCompleteFuture = new CompletableFuture<>();
 
-        OkHttpClient client = buildOkHttpClientWithProxyIfNeeded(forceProxy);
+        OkHttpClient client = buildOkHttpClient(attempt);
         // 兼容鉴权：Live WebSocket 在部分环境下更倾向使用 ?key= 方式（同时保留 x-goog-api-key 头）
         String wsUrl = appendApiKeyToWsUrl(uri.toString(), apiKey);
         Request req = new Request.Builder()
@@ -216,15 +224,104 @@ public class GeminiLiveSession {
                     throw new java.util.concurrent.CompletionException(root != null ? root : ex);
                 })
                 .whenComplete((ok, ex) -> {
-            if (ex != null) {
-                // 失败：仅关闭本次尝试的 Gemini WS，不能把整个 session 标记为 closed；
-                // 否则会导致“自动切代理重试”直接失败（session closed）。
-                closeGeminiSocketSilently();
-                Throwable root = unwrapCompletionException(ex);
-                String why = root != null ? (root.getClass().getSimpleName() + ": " + String.valueOf(root.getMessage())) : "unknown";
-                log.warn("Gemini Live connect attempt failed (usingProxy={}, model={}, mode={}): {}", usingProxy, model, mode, why);
+                    if (ex != null) {
+                        // 失败：仅关闭本次尝试的 Gemini WS，不能把整个 session 标记为 closed；
+                        // 否则会导致后续重试直接失败（session closed）。
+                        closeGeminiSocketSilently();
+                        Throwable root = unwrapCompletionException(ex);
+                        String why = root != null ? (root.getClass().getSimpleName() + ": " + String.valueOf(root.getMessage())) : "unknown";
+                        log.warn("Gemini Live connect attempt failed ({} , model={}, mode={}): {}",
+                                attempt.label(), model, mode, why);
+                    }
+                });
+    }
+
+    private boolean shouldRetryNextAttempt(Throwable root) {
+        if (root == null) return false;
+        if (root instanceof java.util.concurrent.TimeoutException
+                || root instanceof java.net.ConnectException
+                || root instanceof java.net.UnknownHostException
+                || root instanceof java.net.SocketTimeoutException
+                || root instanceof java.net.SocketException
+                || root instanceof java.io.IOException
+                || root instanceof javax.net.ssl.SSLException) {
+            return true;
+        }
+        String msg = String.valueOf(root.getMessage()).toLowerCase();
+        return msg.contains("handshake")
+                || msg.contains("remote host terminated")
+                || msg.contains("connect")
+                || msg.contains("connection reset")
+                || msg.contains("proxy")
+                || msg.contains("unexpected end of stream");
+    }
+
+    private List<ConnectAttempt> buildConnectAttempts(AiConfigProperties.ProxyConfig pc) {
+        boolean proxyEnabled = pc != null && pc.isEnabled();
+        boolean alwaysProxy = proxyEnabled && pc.isAlwaysUseProxy();
+        boolean allowRetryWithProxy = proxyEnabled && pc.isAutoRetryWithProxy() && !alwaysProxy;
+
+        List<ConnectAttempt> out = new ArrayList<>();
+        if (alwaysProxy) {
+            List<ProxyTarget> targets = buildProxyTargets(pc);
+            if (targets.isEmpty()) {
+                out.add(new ConnectAttempt("direct", null));
+            } else {
+                for (ProxyTarget p : targets) {
+                    out.add(new ConnectAttempt("proxy " + p.host() + ":" + p.port() + " (" + p.type() + ")", p));
+                }
             }
-        });
+            return out;
+        }
+
+        out.add(new ConnectAttempt("direct", null));
+        if (allowRetryWithProxy) {
+            for (ProxyTarget p : buildProxyTargets(pc)) {
+                out.add(new ConnectAttempt("proxy " + p.host() + ":" + p.port() + " (" + p.type() + ")", p));
+            }
+        }
+        return out;
+    }
+
+    private List<ProxyTarget> buildProxyTargets(AiConfigProperties.ProxyConfig pc) {
+        if (pc == null || !pc.isEnabled()) return List.of();
+        LinkedHashMap<String, ProxyTarget> dedup = new LinkedHashMap<>();
+        String host = pc.getHost();
+        int port = pc.getPort();
+        String type = normalizeProxyType(pc.getType());
+
+        addProxyTarget(dedup, host, port, type);
+        addProxyTarget(dedup, host, port, flipProxyType(type));
+        if (isLikelyLocalHost(host)) {
+            for (String h : List.of("127.0.0.1", "localhost")) {
+                for (int p : new int[]{7890, 7897}) {
+                    addProxyTarget(dedup, h, p, type);
+                    addProxyTarget(dedup, h, p, flipProxyType(type));
+                }
+            }
+        }
+        return new ArrayList<>(dedup.values());
+    }
+
+    private void addProxyTarget(LinkedHashMap<String, ProxyTarget> dedup, String host, int port, String type) {
+        if (!StringUtils.hasText(host) || port <= 0) return;
+        String normalizedType = normalizeProxyType(type);
+        String key = host.trim().toLowerCase() + ":" + port + ":" + normalizedType;
+        dedup.putIfAbsent(key, new ProxyTarget(host.trim(), port, normalizedType));
+    }
+
+    private String normalizeProxyType(String type) {
+        return "SOCKS".equalsIgnoreCase(type) ? "SOCKS" : "HTTP";
+    }
+
+    private String flipProxyType(String type) {
+        return "SOCKS".equalsIgnoreCase(type) ? "HTTP" : "SOCKS";
+    }
+
+    private boolean isLikelyLocalHost(String host) {
+        if (!StringUtils.hasText(host)) return false;
+        String h = host.trim().toLowerCase();
+        return "127.0.0.1".equals(h) || "localhost".equals(h) || "::1".equals(h);
     }
 
     private void closeGeminiSocketSilently() {
@@ -246,6 +343,9 @@ public class GeminiLiveSession {
         }
         return ex;
     }
+
+    private record ProxyTarget(String host, int port, String type) {}
+    private record ConnectAttempt(String label, ProxyTarget proxyTarget) {}
 
     /**
      * 发送一段实时音频（PCM16 base64）。
@@ -370,9 +470,8 @@ public class GeminiLiveSession {
         }
     }
 
-    private OkHttpClient buildOkHttpClientWithProxyIfNeeded(boolean forceProxy) {
+    private OkHttpClient buildOkHttpClient(ConnectAttempt attempt) {
         AiConfigProperties.ProxyConfig pc = aiConfig.getProxy();
-        boolean useProxy = pc != null && pc.isEnabled() && (pc.isAlwaysUseProxy() || forceProxy);
         long ct = Math.max(1000, pc != null ? pc.getConnectTimeoutMs() : 10000);
 
         OkHttpClient.Builder b = new OkHttpClient.Builder()
@@ -381,9 +480,10 @@ public class GeminiLiveSession {
                 .writeTimeout(Duration.ofSeconds(30))
                 .pingInterval(Duration.ofSeconds(20));
 
-        if (useProxy && pc != null && StringUtils.hasText(pc.getHost()) && pc.getPort() > 0) {
-            Proxy.Type type = "SOCKS".equalsIgnoreCase(pc.getType()) ? Proxy.Type.SOCKS : Proxy.Type.HTTP;
-            b.proxy(new Proxy(type, new InetSocketAddress(pc.getHost(), pc.getPort())));
+        ProxyTarget target = attempt.proxyTarget();
+        if (target != null) {
+            Proxy.Type type = "SOCKS".equalsIgnoreCase(target.type()) ? Proxy.Type.SOCKS : Proxy.Type.HTTP;
+            b.proxy(new Proxy(type, new InetSocketAddress(target.host(), target.port())));
         } else {
             // 强制直连：避免系统默认代理影响
             b.proxy(Proxy.NO_PROXY);
@@ -760,6 +860,9 @@ public class GeminiLiveSession {
             if (response != null) {
                 msg = msg + " (http=" + response.code() + ")";
             }
+            if (shouldRetryNextAttempt(t)) {
+                msg = msg + "；请检查本机代理是否已启动，并优先使用 SOCKS 端口（如 7890）";
+            }
             log.warn("Gemini Live WS error: {}", msg);
             notifyClientError("GEMINI_WS_ERROR", msg);
             CompletableFuture<Void> f = setupCompleteFuture;
@@ -814,4 +917,3 @@ public class GeminiLiveSession {
         }
     }
 }
-

@@ -1,0 +1,35 @@
+{
+  "generatedAt": "2026-03-17T03:34:41Z",
+  "systemManagement": {
+    "unauthProfileHttp": "401",
+    "unauthProfileCode": "401",
+    "loginCodes": {
+      "teacher": "1100",
+      "admin": "200",
+      "student": "1100"
+    }
+  },
+  "rbac": {
+    "adminUsersAsTeacherHttp": "401",
+    "adminUsersAsTeacherCode": "401",
+    "teacherAnalyticsAsStudentHttp": "401",
+    "teacherAnalyticsAsStudentCode": "401"
+  },
+  "behaviorInsight": {
+    "schemaVersion": "",
+    "snapshotId": ""
+  },
+  "grading": {
+    "code": "401",
+    "historyId": "",
+    "finalScore": "",
+    "ensembleConfidence": ""
+  },
+  "speaking": {
+    "sessionsTotal": ""
+  },
+  "supporting": {
+    "replayInvalidHttp": "401",
+    "replayInvalidCode": "401"
+  }
+}

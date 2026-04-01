@@ -53,6 +53,16 @@ public class BehaviorInsightServiceImpl implements BehaviorInsightService {
     }
 
     @Override
+    public BehaviorInsight getLatestByStudentAnyCourseRange(Long studentId, String rangeKey, String schemaVersion) {
+        return mapper.getLatestByStudentAnyCourseRange(studentId, rangeKey, schemaVersion);
+    }
+
+    @Override
+    public BehaviorInsight getLatestByStudentAnyCourse(Long studentId, String schemaVersion) {
+        return mapper.getLatestByStudentAnyCourse(studentId, schemaVersion);
+    }
+
+    @Override
     public long countByStudentSince(Long studentId, String schemaVersion, LocalDateTime since) {
         if (studentId == null) return 0L;
         return mapper.countByStudentSince(studentId, schemaVersion, since);

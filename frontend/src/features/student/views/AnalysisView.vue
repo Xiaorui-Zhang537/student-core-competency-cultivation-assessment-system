@@ -364,6 +364,9 @@
               size="sm"
               tint="primary"
             />
+            <div v-if="goalDimensionOptions.length === 0" class="mt-2 text-xs text-amber-600 dark:text-amber-300">
+              {{ t('student.ability.goals.dimensionEmpty') || '暂无可用维度，请稍后重试。' }}
+            </div>
           </div>
           <div>
             <div class="mb-2 text-xs font-medium text-gray-500 dark:text-gray-400">{{ t('student.ability.goals.priority') }}</div>
@@ -704,13 +707,22 @@ function formatGoalDate(value: string | null | undefined): string {
 async function loadGoalDimensions() {
   try {
     const list = await abilityApi.getAbilityDimensions()
-    abilityDimensions.value = Array.isArray(list) ? list : []
+    const rows = normalizeDimensionList(list)
+    abilityDimensions.value = rows
     if (!goalForm.value.dimensionId && abilityDimensions.value.length) {
       goalForm.value.dimensionId = abilityDimensions.value[0].id
     }
   } catch {
     abilityDimensions.value = []
   }
+}
+
+function normalizeDimensionList(raw: any): AbilityDimension[] {
+  if (Array.isArray(raw)) return raw as AbilityDimension[]
+  if (Array.isArray(raw?.items)) return raw.items as AbilityDimension[]
+  if (Array.isArray(raw?.data)) return raw.data as AbilityDimension[]
+  if (Array.isArray(raw?.data?.items)) return raw.data.items as AbilityDimension[]
+  return []
 }
 
 async function loadGoals() {
@@ -750,16 +762,28 @@ function closeGoalModal() {
   goalForm.value = createGoalFormState()
 }
 
-function openCreateGoalModal() {
+async function openCreateGoalModal() {
   goalFormError.value = ''
   editingGoalId.value = null
+  if (!abilityDimensions.value.length) {
+    await loadGoalDimensions()
+  }
+  if (!abilityDimensions.value.length) {
+    goalFormError.value = String(t('student.ability.goals.dimensionEmpty'))
+  }
   goalForm.value = createGoalFormState()
   goalModalOpen.value = true
 }
 
-function openEditGoalModal(goal: AbilityGoal) {
+async function openEditGoalModal(goal: AbilityGoal) {
   goalFormError.value = ''
   editingGoalId.value = Number(goal.id)
+  if (!abilityDimensions.value.length) {
+    await loadGoalDimensions()
+  }
+  if (!abilityDimensions.value.length) {
+    goalFormError.value = String(t('student.ability.goals.dimensionEmpty'))
+  }
   goalForm.value = {
     dimensionId: Number(goal.dimensionId),
     title: String(goal.title || ''),
@@ -788,6 +812,10 @@ async function submitGoal() {
   const payloadTitle = String(goalForm.value.title || '').trim()
   const payloadDescription = String(goalForm.value.description || '').trim()
   const targetScore = Number(goalForm.value.targetScore)
+  if (!goalForm.value.dimensionId && goalDimensionOptions.value.length === 0) {
+    goalFormError.value = String(t('student.ability.goals.dimensionEmpty'))
+    return
+  }
   if (!goalForm.value.dimensionId || !payloadTitle || !goalForm.value.targetDate || !Number.isFinite(targetScore) || targetScore <= 0) {
     goalFormError.value = String(t('student.ability.goals.saveFailed'))
     return

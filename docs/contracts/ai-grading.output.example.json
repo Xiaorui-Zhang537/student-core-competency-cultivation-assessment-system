@@ -1,0 +1,117 @@
+{
+  "code": 200,
+  "message": "Success",
+  "data": {
+    "moral_reasoning": {
+      "stage_level": {
+        "score": 4.2,
+        "evidence": [
+          {
+            "quote": "I reflected on my mistakes and corrected them.",
+            "reasoning": "The learner identifies moral implications and self-corrects.",
+            "conclusion": "Shows solid moral reasoning with actionable reflection."
+          }
+        ],
+        "suggestions": [
+          "Add one counter-example to strengthen ethical depth."
+        ]
+      },
+      "foundations_balance": {
+        "score": 4.0,
+        "evidence": [],
+        "suggestions": []
+      },
+      "argument_chain": {
+        "score": 3.9,
+        "evidence": [],
+        "suggestions": []
+      }
+    },
+    "attitude_development": {
+      "emotional_engagement": {
+        "score": 3.8,
+        "evidence": [],
+        "suggestions": []
+      },
+      "resilience": {
+        "score": 4.1,
+        "evidence": [],
+        "suggestions": []
+      },
+      "focus_flow": {
+        "score": 3.7,
+        "evidence": [],
+        "suggestions": []
+      }
+    },
+    "ability_growth": {
+      "blooms_level": {
+        "score": 4.1,
+        "evidence": [],
+        "suggestions": []
+      },
+      "metacognition": {
+        "score": 4.0,
+        "evidence": [],
+        "suggestions": []
+      },
+      "transfer": {
+        "score": 3.9,
+        "evidence": [],
+        "suggestions": []
+      }
+    },
+    "strategy_optimization": {
+      "diversity": {
+        "score": 3.8,
+        "evidence": [],
+        "suggestions": []
+      },
+      "depth": {
+        "score": 4.0,
+        "evidence": [],
+        "suggestions": []
+      },
+      "self_regulation": {
+        "score": 3.9,
+        "evidence": [],
+        "suggestions": []
+      }
+    },
+    "overall": {
+      "dimension_averages": {
+        "moral_reasoning": 4.0,
+        "attitude": 3.9,
+        "ability": 4.0,
+        "strategy": 3.9
+      },
+      "final_score": 4.0,
+      "holistic_feedback": "Averages are balanced. Keep improving argument depth and strategy consistency."
+    },
+    "meta": {
+      "ensemble": {
+        "samplesRequested": 2,
+        "diffThreshold": 0.8,
+        "triggeredThird": false,
+        "method": "mean2",
+        "chosenPair": [
+          1,
+          2
+        ],
+        "pairDiff": 0.2,
+        "runs": [
+          {
+            "index": 1,
+            "finalScore": 4.1
+          },
+          {
+            "index": 2,
+            "finalScore": 3.9
+          }
+        ],
+        "confidence": 0.96
+      }
+    },
+    "historyId": 102
+  }
+}

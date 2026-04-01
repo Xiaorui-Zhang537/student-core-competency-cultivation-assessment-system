@@ -17,6 +17,9 @@
         <result column="improvement_areas" property="improvementAreas"/>
         <result column="recommendations" property="recommendations"/>
         <result column="ai_history_id" property="aiHistoryId"/>
+        <result column="course_id" property="courseId"/>
+        <result column="assignment_id" property="assignmentId"/>
+        <result column="submission_id" property="submissionId"/>
         <result column="generated_by" property="generatedBy"/>
         <result column="is_published" property="isPublished"/>
         <result column="created_at" property="createdAt"/>
@@ -115,9 +118,73 @@
         SELECT <include refid="abilityReportColumns"/>
         FROM ability_reports r
         WHERE r.student_id = #{studentId}
-        <if test="submissionId != null">AND r.submission_id = #{submissionId}</if>
-        <if test="submissionId == null and assignmentId != null">AND r.assignment_id = #{assignmentId}</if>
-        <if test="submissionId == null and assignmentId == null and courseId != null">AND r.course_id = #{courseId}</if>
+        <if test="submissionId != null">
+            AND (
+                r.submission_id = #{submissionId}
+                OR (
+                    r.submission_id IS NULL
+                    AND r.assignment_id IN (
+                        SELECT s.assignment_id
+                        FROM submissions s
+                        WHERE s.id = #{submissionId}
+                    )
+                )
+                OR (
+                    r.submission_id IS NULL
+                    AND r.assignment_id IS NULL
+                    AND r.course_id IN (
+                        SELECT a.course_id
+                        FROM submissions s
+                        JOIN assignments a ON a.id = s.assignment_id
+                        WHERE s.id = #{submissionId}
+                    )
+                )
+            )
+        </if>
+        <if test="submissionId == null and assignmentId != null">
+            AND (
+                r.assignment_id = #{assignmentId}
+                OR (
+                    r.assignment_id IS NULL
+                    AND r.submission_id IN (
+                        SELECT s.id
+                        FROM submissions s
+                        WHERE s.assignment_id = #{assignmentId}
+                    )
+                )
+                OR (
+                    r.assignment_id IS NULL
+                    AND r.course_id IN (
+                        SELECT a.course_id
+                        FROM assignments a
+                        WHERE a.id = #{assignmentId}
+                    )
+                )
+            )
+        </if>
+        <if test="submissionId == null and assignmentId == null and courseId != null">
+            AND (
+                r.course_id = #{courseId}
+                OR (
+                    r.course_id IS NULL
+                    AND r.assignment_id IN (
+                        SELECT a.id
+                        FROM assignments a
+                        WHERE a.course_id = #{courseId}
+                    )
+                )
+                OR (
+                    r.course_id IS NULL
+                    AND r.assignment_id IS NULL
+                    AND r.submission_id IN (
+                        SELECT s.id
+                        FROM submissions s
+                        JOIN assignments a ON a.id = s.assignment_id
+                        WHERE a.course_id = #{courseId}
+                    )
+                )
+            )
+        </if>
         AND r.report_type = 'ai'
         ORDER BY r.created_at DESC
         LIMIT 1

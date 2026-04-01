@@ -1,0 +1,1 @@
+{"code":500,"message":"系统发生未知错误（dev 诊断模式）","data":{"path":"/api/ability/student/radar","detail":"org.springframework.web.bind.MissingServletRequestParameterException: Required request parameter 'courseId' for method parameter type Long is not present"}}

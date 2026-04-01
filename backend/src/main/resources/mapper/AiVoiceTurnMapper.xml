@@ -31,5 +31,13 @@
         LIMIT #{offset}, #{size}
     </select>
 
-</mapper>
+    <select id="countByUserSince" resultType="long">
+        SELECT COUNT(*)
+        FROM ai_voice_turns
+        WHERE user_id = #{userId}
+        <if test="since != null">
+          AND created_at &gt;= #{since}
+        </if>
+    </select>
 
+</mapper>

@@ -64,12 +64,34 @@
         LIMIT 1
     </select>
 
+    <select id="getLatestByStudentAnyCourseRange" resultMap="BaseMap">
+        SELECT bi.*
+        FROM behavior_insights bi
+                 JOIN behavior_summary_snapshots bs ON bs.id = bi.snapshot_id
+        WHERE bi.student_id = #{studentId}
+          AND bi.schema_version = #{schemaVersion}
+        <if test="rangeKey != null and rangeKey != ''">
+          AND bs.range_key = #{rangeKey}
+        </if>
+        ORDER BY bi.generated_at DESC, bi.id DESC
+        LIMIT 1
+    </select>
+
+    <select id="getLatestByStudentAnyCourse" resultMap="BaseMap">
+        SELECT *
+        FROM behavior_insights
+        WHERE student_id = #{studentId}
+          AND schema_version = #{schemaVersion}
+        ORDER BY generated_at DESC, id DESC
+        LIMIT 1
+    </select>
+
     <select id="countByStudentSince" resultType="long">
         SELECT COUNT(*)
         FROM behavior_insights
         WHERE student_id = #{studentId}
           AND schema_version = #{schemaVersion}
-          AND status &lt;&gt; 'partial'
+          AND status = 'success'
         <if test="since != null">
           AND generated_at &gt;= #{since}
         </if>
@@ -79,7 +101,7 @@
         SELECT generated_at
         FROM behavior_insights
         WHERE student_id = #{studentId}
-          AND status &lt;&gt; 'partial'
+          AND status = 'success'
         <if test="since != null">
           AND generated_at &gt;= #{since}
         </if>

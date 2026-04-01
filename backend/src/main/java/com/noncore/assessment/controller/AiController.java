@@ -13,6 +13,7 @@ import com.noncore.assessment.entity.AiMemory;
 import com.noncore.assessment.entity.AiVoiceTurn;
 import com.noncore.assessment.service.AiConversationService;
 import com.noncore.assessment.service.AiMemoryService;
+import com.noncore.assessment.service.AiQuotaService;
 import com.noncore.assessment.service.AiVoicePracticeService;
 import com.noncore.assessment.util.PageResult;
 import com.noncore.assessment.util.ApiResponse;
@@ -48,6 +49,7 @@ public class AiController extends BaseController {
     private final AiService aiService;
     private final AiConversationService conversationService;
     private final AiMemoryService memoryService;
+    private final AiQuotaService quotaService;
     private final AiVoicePracticeService voicePracticeService;
     private final FileStorageService fileStorageService;
     private final DocumentTextExtractor documentTextExtractor;
@@ -57,6 +59,7 @@ public class AiController extends BaseController {
     public AiController(AiService aiService, UserService userService,
                         AiConversationService conversationService,
                         AiMemoryService memoryService,
+                        AiQuotaService quotaService,
                         AiVoicePracticeService voicePracticeService,
                         FileStorageService fileStorageService,
                         DocumentTextExtractor documentTextExtractor,
@@ -67,6 +70,7 @@ public class AiController extends BaseController {
         this.aiService = aiService;
         this.conversationService = conversationService;
         this.memoryService = memoryService;
+        this.quotaService = quotaService;
         this.voicePracticeService = voicePracticeService;
         this.fileStorageService = fileStorageService;
         this.documentTextExtractor = documentTextExtractor;
@@ -99,24 +103,7 @@ public class AiController extends BaseController {
         Long userId = getCurrentUserId();
         String targetModel = resolveModel(request, userId);
 
-        if (hasRole("STUDENT") && targetModel != null && targetModel.startsWith("google/")) {
-            java.time.LocalDate today = java.time.LocalDate.now();
-            java.time.LocalDate monday = today.with(java.time.temporal.TemporalAdjusters.previousOrSame(java.time.DayOfWeek.MONDAY));
-            java.time.LocalDateTime startOfWeek = monday.atStartOfDay();
-            long used = conversationService.countAssistantMessagesByModelSince(userId, "google/gemini", startOfWeek);
-            if (used >= 10) {
-                throw new BusinessException(ErrorCode.PERMISSION_DENIED, "本周 Gemini 使用次数已达上限（10次），请切换其它模型或下周再试");
-            }
-        }
-        if (hasRole("STUDENT") && targetModel != null && targetModel.startsWith("glm-")) {
-            java.time.LocalDate today = java.time.LocalDate.now();
-            java.time.LocalDate monday = today.with(java.time.temporal.TemporalAdjusters.previousOrSame(java.time.DayOfWeek.MONDAY));
-            java.time.LocalDateTime startOfWeek = monday.atStartOfDay();
-            long used = conversationService.countAssistantMessagesByModelSince(userId, "glm-", startOfWeek);
-            if (used >= 20) {
-                throw new BusinessException(ErrorCode.PERMISSION_DENIED, "本周 GLM 使用次数已达上限（20次），请下周再试");
-            }
-        }
+        enforceStudentAiChatQuota(userId, targetModel, false);
         // 确定会话
         Long convId = request.getConversationId();
         if (convId == null) {
@@ -198,21 +185,7 @@ public class AiController extends BaseController {
         Long userId = getCurrentUserId();
         String targetModel = resolveModel(request, userId);
 
-        // 配额检查
-        if (hasRole("STUDENT") && targetModel != null && targetModel.startsWith("google/")) {
-            java.time.LocalDate today = java.time.LocalDate.now();
-            java.time.LocalDate monday = today.with(java.time.temporal.TemporalAdjusters.previousOrSame(java.time.DayOfWeek.MONDAY));
-            java.time.LocalDateTime startOfWeek = monday.atStartOfDay();
-            long used = conversationService.countAssistantMessagesByModelSince(userId, "google/gemini", startOfWeek);
-            if (used >= 10) throw new BusinessException(ErrorCode.PERMISSION_DENIED, "本周 Gemini 使用次数已达上限（10次）");
-        }
-        if (hasRole("STUDENT") && targetModel != null && targetModel.startsWith("glm-")) {
-            java.time.LocalDate today = java.time.LocalDate.now();
-            java.time.LocalDate monday = today.with(java.time.temporal.TemporalAdjusters.previousOrSame(java.time.DayOfWeek.MONDAY));
-            java.time.LocalDateTime startOfWeek = monday.atStartOfDay();
-            long used = conversationService.countAssistantMessagesByModelSince(userId, "glm-", startOfWeek);
-            if (used >= 20) throw new BusinessException(ErrorCode.PERMISSION_DENIED, "本周 GLM 使用次数已达上限（20次）");
-        }
+        enforceStudentAiChatQuota(userId, targetModel, true);
 
         Long convId = request.getConversationId();
         if (convId == null) {
@@ -316,6 +289,16 @@ public class AiController extends BaseController {
         if (sessionId == null) {
             throw new BusinessException(ErrorCode.INVALID_PARAMETER, "sessionId 不能为空");
         }
+        if (hasRole("STUDENT")) {
+            java.time.LocalDateTime startOfWeek = startOfCurrentWeek();
+            long used = voicePracticeService.countTurnsByUserSince(userId, startOfWeek);
+            int bonus = 0;
+            try { bonus = Math.max(0, quotaService.getVoiceChatBonusWeekly(userId)); } catch (Exception ignored) {}
+            int limit = AiQuotaService.BASE_VOICE_WEEKLY_LIMIT + bonus;
+            if (used >= limit) {
+                throw new BusinessException(ErrorCode.PERMISSION_DENIED, "本周口语训练调用次数已达上限（" + limit + "次），请下周再试");
+            }
+        }
         AiVoiceTurn turn = voicePracticeService.appendTurn(
                 userId,
                 sessionId,
@@ -371,6 +354,41 @@ public class AiController extends BaseController {
         String requested = request.getModel();
         if (requested == null || requested.isBlank()) return defaultModel;
         return conversationService.normalizeModel(requested);
+    }
+
+    private java.time.LocalDateTime startOfCurrentWeek() {
+        java.time.LocalDate today = java.time.LocalDate.now();
+        java.time.LocalDate monday = today.with(java.time.temporal.TemporalAdjusters.previousOrSame(java.time.DayOfWeek.MONDAY));
+        return monday.atStartOfDay();
+    }
+
+    private void enforceStudentAiChatQuota(Long userId, String targetModel, boolean streamMode) {
+        if (!hasRole("STUDENT")) return;
+        String model = targetModel == null ? "" : targetModel;
+        java.time.LocalDateTime startOfWeek = startOfCurrentWeek();
+        int bonus = 0;
+        try { bonus = Math.max(0, quotaService.getAiChatBonusWeekly(userId)); } catch (Exception ignored) {}
+        if (model.startsWith("google/")) {
+            long used = conversationService.countAssistantMessagesByModelSince(userId, "google/gemini", startOfWeek);
+            int limit = AiQuotaService.BASE_GEMINI_WEEKLY_LIMIT + bonus;
+            if (used >= limit) {
+                String msg = streamMode
+                        ? ("本周 Gemini 使用次数已达上限（" + limit + "次）")
+                        : ("本周 Gemini 使用次数已达上限（" + limit + "次），请切换其它模型或下周再试");
+                throw new BusinessException(ErrorCode.PERMISSION_DENIED, msg);
+            }
+            return;
+        }
+        if (model.startsWith("glm-")) {
+            long used = conversationService.countAssistantMessagesByModelSince(userId, "glm-", startOfWeek);
+            int limit = AiQuotaService.BASE_GLM_WEEKLY_LIMIT + bonus;
+            if (used >= limit) {
+                String msg = streamMode
+                        ? ("本周 GLM 使用次数已达上限（" + limit + "次）")
+                        : ("本周 GLM 使用次数已达上限（" + limit + "次），请下周再试");
+                throw new BusinessException(ErrorCode.PERMISSION_DENIED, msg);
+            }
+        }
     }
 
     @PostMapping("/grade/files")
@@ -962,4 +980,3 @@ public class AiController extends BaseController {
         return ResponseEntity.ok(ApiResponse.success(m));
     }
 }
-

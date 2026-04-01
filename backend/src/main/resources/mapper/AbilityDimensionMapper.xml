@@ -41,6 +41,24 @@
         WHERE id = #{dimensionId}
     </select>
 
+    <!-- 根据编码查询维度 -->
+    <select id="selectDimensionByCode" resultMap="AbilityDimensionResultMap">
+        SELECT
+        <include refid="Base_Column_List"/>
+        FROM ability_dimensions
+        WHERE code = #{code}
+        LIMIT 1
+    </select>
+
+    <!-- 根据名称查询维度 -->
+    <select id="selectDimensionByName" resultMap="AbilityDimensionResultMap">
+        SELECT
+        <include refid="Base_Column_List"/>
+        FROM ability_dimensions
+        WHERE name = #{name}
+        LIMIT 1
+    </select>
+
     <!-- 查询全部维度 -->
     <select id="selectAllDimensions" resultMap="AbilityDimensionResultMap">
         SELECT
@@ -89,6 +107,51 @@
         ORDER BY sort_order
     </select>
 
+    <!-- 分页查询 -->
+    <select id="selectDimensionsWithPagination" resultMap="AbilityDimensionResultMap">
+        SELECT
+        <include refid="Base_Column_List"/>
+        FROM ability_dimensions
+        <where>
+            <if test="category != null and category != ''">category = #{category}</if>
+            <if test="isActive != null">AND is_active = #{isActive}</if>
+        </where>
+        ORDER BY sort_order
+        LIMIT #{offset}, #{size}
+    </select>
+
+    <!-- 统计维度数量 -->
+    <select id="countDimensions" resultType="integer">
+        SELECT COUNT(1)
+        FROM ability_dimensions
+        <where>
+            <if test="category != null and category != ''">category = #{category}</if>
+            <if test="isActive != null">AND is_active = #{isActive}</if>
+        </where>
+    </select>
+
+    <!-- 获取最大排序值 -->
+    <select id="getMaxSortOrder" resultType="integer">
+        SELECT COALESCE(MAX(sort_order), 0)
+        FROM ability_dimensions
+    </select>
+
+    <!-- 批量更新排序 -->
+    <update id="batchUpdateSortOrder">
+        UPDATE ability_dimensions
+        SET sort_order = CASE id
+            <foreach collection="dimensions" item="dim">
+                WHEN #{dim.id} THEN #{dim.sortOrder}
+            </foreach>
+            ELSE sort_order
+        END,
+        updated_at = NOW()
+        WHERE id IN
+        <foreach collection="dimensions" item="dim" open="(" separator="," close=")">
+            #{dim.id}
+        </foreach>
+    </update>
+
     <!-- 按关键字模糊查找 -->
     <select id="searchDimensions" resultMap="AbilityDimensionResultMap">
         SELECT
@@ -107,5 +170,15 @@
             #{id}
         </foreach>
     </update>
+
+    <!-- 校验名称是否存在 -->
+    <select id="existsByName" resultType="boolean">
+        SELECT COUNT(1) > 0
+        FROM ability_dimensions
+        WHERE name = #{name}
+        <if test="excludeId != null">
+            AND id != #{excludeId}
+        </if>
+    </select>
 
 </mapper>

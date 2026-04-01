@@ -3,6 +3,7 @@ package com.noncore.assessment.service;
 import com.noncore.assessment.entity.AiVoiceSession;
 import com.noncore.assessment.entity.AiVoiceTurn;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 public interface AiVoicePracticeService {
@@ -28,5 +29,6 @@ public interface AiVoicePracticeService {
                            String scenario);
 
     List<AiVoiceTurn> listTurns(Long userId, Long sessionId, Integer page, Integer size);
-}
 
+    long countTurnsByUserSince(Long userId, LocalDateTime since);
+}

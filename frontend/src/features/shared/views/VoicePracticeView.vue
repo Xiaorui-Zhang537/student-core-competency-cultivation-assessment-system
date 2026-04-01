@@ -113,6 +113,20 @@
                 <span class="ml-1">{{ t('shared.voicePractice.scenarioHelp') }}</span>
               </div>
             </div>
+
+            <div class="pt-2 border-t border-white/15 dark:border-white/10 space-y-2">
+              <div class="flex items-center justify-between gap-2">
+                <label class="text-xs text-gray-500">{{ t('teacher.ai.memory') || '长期记忆' }}</label>
+                <glass-switch v-model="memory.enabled" size="sm" @update:modelValue="saveMemory" />
+              </div>
+              <glass-textarea
+                v-model="memory.content"
+                :rows="3"
+                :disabled="!memory.enabled"
+                :placeholder="t('teacher.ai.memoryPlaceholder') || '个性化偏好、口吻等...'"
+                @blur="saveMemory"
+              />
+            </div>
           </div>
         </aside>
 
@@ -199,10 +213,13 @@ import PageHeader from '@/components/ui/PageHeader.vue'
 import Button from '@/components/ui/Button.vue'
 import GlassPopoverSelect from '@/components/ui/filters/GlassPopoverSelect.vue'
 import GlassInput from '@/components/ui/inputs/GlassInput.vue'
+import GlassSwitch from '@/components/ui/inputs/GlassSwitch.vue'
+import GlassTextarea from '@/components/ui/inputs/GlassTextarea.vue'
 import GlassSearchInput from '@/components/ui/inputs/GlassSearchInput.vue'
 import GlassModal from '@/components/ui/GlassModal.vue'
 import apiClient, { baseURL } from '@/api/config'
 import { fileApi } from '@/api/file.api'
+import { aiApi } from '@/api/ai.api'
 import { voicePracticeApi, type VoiceSession, type VoiceTurn } from '@/api/voicePractice.api'
 import { arrayBufferFromBase64, base64FromArrayBuffer, downsampleFloat32Buffer, encodeWavFromInt16PCM, float32ToInt16PCM, parsePcmRateFromMimeType } from '@/utils/audio'
 
@@ -218,6 +235,19 @@ const q = ref<string>('')
 const showRename = ref(false)
 const renameTitle = ref('')
 const renameSessionId = ref<number | null>(null)
+const memory = ref<{ enabled: boolean; content: string }>({ enabled: true, content: '' })
+
+const saveMemory = async () => {
+  try { await aiApi.updateMemory({ enabled: !!memory.value.enabled, content: memory.value.content || '' }) } catch {}
+}
+
+let memorySaveTimer: ReturnType<typeof setTimeout> | null = null
+const scheduleSaveMemory = () => {
+  if (memorySaveTimer) clearTimeout(memorySaveTimer)
+  memorySaveTimer = setTimeout(() => { saveMemory() }, 600)
+}
+watch(() => memory.value.content, scheduleSaveMemory)
+watch(() => memory.value.enabled, scheduleSaveMemory)
 
 const requireAccessToken = () => {
   const token = (() => { try { return localStorage.getItem('token') } catch { return null } })()
@@ -482,6 +512,20 @@ const appendMessage = (m: UiMsg) => {
   messages.value.push(m)
 }
 
+const buildLiveScenario = () => {
+  const baseScenario = String(scenario.value || '').trim()
+  if (!memory.value.enabled) return baseScenario
+  const content = String(memory.value.content || '').trim()
+  if (!content) return baseScenario
+  const capped = content.length > 3000 ? content.slice(0, 3000) : content
+  const memInstruction = [
+    '用户长期记忆（偏好/背景/约束）：',
+    capped,
+    '你应在不与当前口语任务冲突时参考这些记忆；若冲突，以当前任务为准；不要逐字复述记忆。'
+  ].join('\n')
+  return baseScenario ? `${baseScenario}\n\n${memInstruction}` : memInstruction
+}
+
 const buildAuthedStreamUrl = (fileId: number) => {
   const token = (() => { try { return localStorage.getItem('token') } catch { return null } })()
   const base = `/files/${encodeURIComponent(String(fileId))}/stream`
@@ -505,9 +549,14 @@ const loadSessions = async () => {
   }
 }
 
-onMounted(() => {
+onMounted(async () => {
   // 首次进入页面：自动加载“我的会话”列表
-  try { loadSessions() } catch {}
+  try { await loadSessions() } catch {}
+  try {
+    const res: any = await aiApi.getMemory()
+    const data = res?.data ?? res
+    if (data) memory.value = { enabled: !!data.enabled, content: String(data.content || '') }
+  } catch {}
 })
 
 // 搜索：简单防抖
@@ -646,14 +695,41 @@ const startSession = async () => {
       // connect WS
       ws = new WebSocket(getApiWsUrl())
       ws.onmessage = (ev) => handleWsMessage(ev.data)
-      ws.onerror = () => { status.value = 'error' }
-      ws.onclose = () => { status.value = 'idle' }
+      ws.onerror = () => {
+        if (status.value !== 'idle') status.value = 'error'
+      }
+      ws.onclose = () => {
+        if (status.value === 'connecting') status.value = 'error'
+        else status.value = 'idle'
+      }
 
       // wait for ws open
       await new Promise<void>((resolve, reject) => {
         if (!ws) return reject(new Error('ws init failed'))
-        ws.onopen = () => resolve()
-        ws.onerror = () => reject(new Error('ws connect failed'))
+        if (ws.readyState === WebSocket.OPEN) return resolve()
+
+        const openHandler = () => {
+          cleanup()
+          resolve()
+        }
+        const errorHandler = () => {
+          cleanup()
+          reject(new Error('ws connect failed'))
+        }
+        const closeHandler = (ev: CloseEvent) => {
+          cleanup()
+          reject(new Error(`ws closed before open (code=${ev?.code ?? 0})`))
+        }
+        const cleanup = () => {
+          if (!ws) return
+          ws.removeEventListener('open', openHandler)
+          ws.removeEventListener('error', errorHandler)
+          ws.removeEventListener('close', closeHandler)
+        }
+
+        ws.addEventListener('open', openHandler, { once: true })
+        ws.addEventListener('error', errorHandler, { once: true })
+        ws.addEventListener('close', closeHandler, { once: true })
       })
 
       // send start
@@ -664,7 +740,7 @@ const startSession = async () => {
         model: model.value,
         mode: mode.value,
         locale: locale.value,
-        scenario: scenario.value
+        scenario: buildLiveScenario()
       }))
 
       // wait session_ready (setupComplete)
@@ -1155,6 +1231,10 @@ const goBack = () => {
 }
 
 onBeforeUnmount(() => {
+  if (memorySaveTimer) {
+    clearTimeout(memorySaveTimer)
+    memorySaveTimer = null
+  }
   // 尽量把复听秒数冲刷上报（不阻塞卸载）
   try {
     for (const m of messages.value) {

@@ -1,0 +1,46 @@
+{
+  "generatedAt": "2026-03-17T03:45:18Z",
+  "systemManagement": {
+    "unauthProfileHttp": "401",
+    "unauthProfileCode": "401",
+    "loginCodes": {
+      "teacher": "200",
+      "admin": "200",
+      "student": "200"
+    }
+  },
+  "rbac": {
+    "adminUsersAsTeacherHttp": "403",
+    "adminUsersAsTeacherCode": "403",
+    "teacherAnalyticsAsStudentHttp": "403",
+    "teacherAnalyticsAsStudentCode": "403"
+  },
+  "visualization": {
+    "radarMissingCourseHttp": "500",
+    "radarMissingCourseCode": "500"
+  },
+  "behaviorInsight": {
+    "latestSchemaVersion": "behavior_insight.v2",
+    "latestSnapshotId": "190",
+    "generatedSnapshotId": "199",
+    "generatedRiskAlertsCount": "1",
+    "generatedActionRecommendationsCount": "0"
+  },
+  "grading": {
+    "httpStatus": "200",
+    "code": "200",
+    "historyId": "13",
+    "finalScore": "2.8",
+    "ensembleConfidence": "1.0"
+  },
+  "speaking": {
+    "sessionsCount": "1",
+    "firstSessionModel": "google/gemini-2.5-flash-native-audio-preview-12-2025",
+    "wsEventChain": "ready -> session_ready -> started -> activity_started -> activity_ended -> generation_complete -> turn_complete",
+    "wsHasTranscript": "false"
+  },
+  "supporting": {
+    "replayInvalidHttp": "400",
+    "replayInvalidCode": "422"
+  }
+}

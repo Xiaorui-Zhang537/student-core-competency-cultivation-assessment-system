@@ -10,6 +10,7 @@ import com.noncore.assessment.entity.BehaviorInsight;
 import com.noncore.assessment.entity.BehaviorSummarySnapshot;
 import com.noncore.assessment.exception.BusinessException;
 import com.noncore.assessment.exception.ErrorCode;
+import com.noncore.assessment.service.AiQuotaService;
 import com.noncore.assessment.service.AiService;
 import com.noncore.assessment.service.BehaviorAggregationService;
 import com.noncore.assessment.service.BehaviorInsightGenerationService;
@@ -32,14 +33,12 @@ public class BehaviorInsightGenerationServiceImpl implements BehaviorInsightGene
     private static final String PROMPT_PATH = "classpath:/prompts/behavior_insight_system_prompt.txt";
     private static final String PROMPT_VERSION = "behavior_insight_prompt.v4";
     private static final String DEFAULT_MODEL = "google/gemini-2.5-pro";
-    // 学生自助触发：7天滚动窗口内最多 2 次（仅限制“真正调用AI”的次数；partial/NO_EVIDENCE 不计入）
-    private static final int STUDENT_WINDOW_DAYS = 7;
-    private static final int STUDENT_WINDOW_LIMIT = 2;
 
     private final BehaviorAggregationService aggregationService;
     private final BehaviorSummarySnapshotService snapshotService;
     private final BehaviorInsightService insightService;
     private final AiService aiService;
+    private final AiQuotaService aiQuotaService;
 
     @Override
     public BehaviorInsightResponse generate(Long operatorId,
@@ -70,7 +69,7 @@ public class BehaviorInsightGenerationServiceImpl implements BehaviorInsightGene
         }
 
         // 治理：限流/复用策略
-        // - 学生自助触发：7天滚动窗口最多 2 次（仅统计 status!=partial 的记录）
+        // - 学生自助触发：7天滚动窗口最多 2 次（仅统计 status=success 的记录）
         // - 教师/管理员：默认复用 7 天内 success；force=true 可重跑
         try {
             // 兼容：优先读取 v2；若未生成过 v2，则回退读取 v1（避免升级后“历史洞察全丢失”）
@@ -89,7 +88,8 @@ public class BehaviorInsightGenerationServiceImpl implements BehaviorInsightGene
             if (studentSelfTrigger) {
                 Map<String, Object> quota = buildStudentQuota(studentId, now);
                 long usedInWindow = readLong(quota.get("usedInWindow"));
-                if (usedInWindow >= STUDENT_WINDOW_LIMIT) {
+                long limitPerWindow = readLong(quota.get("limitPerWindow"));
+                if (usedInWindow >= limitPerWindow) {
                     // 达到滚动窗口上限：返回最近一次结果 + 直到窗口释放
                     BehaviorInsightResponse cached = (existing != null && existing.getInsightJson() != null)
                             ? parseAndValidate(existing.getInsightJson(), snapshot.getId(), null)
@@ -300,6 +300,7 @@ public class BehaviorInsightGenerationServiceImpl implements BehaviorInsightGene
         }
         boolean fallbackUsed = false;
         boolean anyRangeFallbackUsed = false;
+        boolean anyCourseFallbackUsed = false;
         if (latest == null || latest.getInsightJson() == null) {
             latest = firstNonNull(
                     insightService.getLatestByStudentCourseRange(studentId, courseId, rk, BehaviorSchemaVersions.INSIGHT_V2),
@@ -315,6 +316,22 @@ public class BehaviorInsightGenerationServiceImpl implements BehaviorInsightGene
                     insightService.getLatestByStudentCourse(studentId, courseId, BehaviorSchemaVersions.INSIGHT_V1)
             );
             anyRangeFallbackUsed = latest != null && latest.getInsightJson() != null;
+        }
+        // 兼容：若传入了 courseId 仍未命中，回退到“任意课程”的最近结果。
+        // 典型场景：教师在“全部课程”上下文生成（course_id 为空），学生端按课程查看时需要可见。
+        if ((latest == null || latest.getInsightJson() == null) && courseId != null) {
+            latest = firstNonNull(
+                    insightService.getLatestByStudentAnyCourseRange(studentId, rk, BehaviorSchemaVersions.INSIGHT_V2),
+                    insightService.getLatestByStudentAnyCourseRange(studentId, rk, BehaviorSchemaVersions.INSIGHT_V1)
+            );
+            anyCourseFallbackUsed = latest != null && latest.getInsightJson() != null;
+        }
+        if ((latest == null || latest.getInsightJson() == null) && courseId != null) {
+            latest = firstNonNull(
+                    insightService.getLatestByStudentAnyCourse(studentId, BehaviorSchemaVersions.INSIGHT_V2),
+                    insightService.getLatestByStudentAnyCourse(studentId, BehaviorSchemaVersions.INSIGHT_V1)
+            );
+            anyCourseFallbackUsed = latest != null && latest.getInsightJson() != null;
         }
         if (latest == null || latest.getInsightJson() == null) return null;
         try {
@@ -338,13 +355,20 @@ public class BehaviorInsightGenerationServiceImpl implements BehaviorInsightGene
                     extra.put("latestSummarySnapshotId", snapshot.getId());
                     extra.put("notice", "当前展示为最近一次已生成的洞察；最新摘要快照尚未生成洞察。");
                 }
+                if (anyCourseFallbackUsed) {
+                    extra.put("notice", "当前课程暂无可用洞察，已自动展示最近一次历史洞察。");
+                }
                 if (anyRangeFallbackUsed) {
                     extra.put("notice", "当前行为时间窗暂无可用洞察，已自动展示最近一次历史洞察。");
                 }
                 resp.setExtra(extra);
-            } else if (anyRangeFallbackUsed) {
+            } else if (anyRangeFallbackUsed || anyCourseFallbackUsed) {
                 java.util.Map<String, Object> extra = resp.getExtra() == null ? new java.util.HashMap<>() : new java.util.HashMap<>(resp.getExtra());
-                extra.put("notice", "当前行为时间窗暂无可用洞察，已自动展示最近一次历史洞察。");
+                if (anyCourseFallbackUsed) {
+                    extra.put("notice", "当前课程暂无可用洞察，已自动展示最近一次历史洞察。");
+                } else {
+                    extra.put("notice", "当前行为时间窗暂无可用洞察，已自动展示最近一次历史洞察。");
+                }
                 resp.setExtra(extra);
             }
             return resp;
@@ -363,8 +387,15 @@ public class BehaviorInsightGenerationServiceImpl implements BehaviorInsightGene
     }
 
     private Map<String, Object> buildStudentQuota(Long studentId, LocalDateTime now) {
+        int windowDays = AiQuotaService.INSIGHT_WINDOW_DAYS;
+        long baseLimit = AiQuotaService.BASE_INSIGHT_WINDOW_LIMIT;
+        long bonusLimit = 0;
+        try {
+            bonusLimit = Math.max(0, aiQuotaService.getInsightBonusWindow(studentId));
+        } catch (Exception ignored) {}
+        long limitPerWindow = baseLimit + bonusLimit;
         LocalDateTime current = now == null ? LocalDateTime.now() : now;
-        LocalDateTime windowStartedAt = current.minusDays(STUDENT_WINDOW_DAYS);
+        LocalDateTime windowStartedAt = current.minusDays(windowDays);
         long usedInWindow =
                 insightService.countByStudentSince(studentId, BehaviorSchemaVersions.INSIGHT_V2, windowStartedAt)
               + insightService.countByStudentSince(studentId, BehaviorSchemaVersions.INSIGHT_V1, windowStartedAt);
@@ -373,11 +404,13 @@ public class BehaviorInsightGenerationServiceImpl implements BehaviorInsightGene
                 : insightService.getEarliestCountedByStudentSince(studentId, windowStartedAt);
         LocalDateTime nextAvailableAt = earliestCountedAt == null
                 ? null
-                : earliestCountedAt.plusDays(STUDENT_WINDOW_DAYS);
+                : earliestCountedAt.plusDays(windowDays);
 
         Map<String, Object> quota = new java.util.LinkedHashMap<>();
-        quota.put("windowDays", STUDENT_WINDOW_DAYS);
-        quota.put("limitPerWindow", STUDENT_WINDOW_LIMIT);
+        quota.put("windowDays", windowDays);
+        quota.put("baseLimitPerWindow", baseLimit);
+        quota.put("bonusLimitPerWindow", bonusLimit);
+        quota.put("limitPerWindow", limitPerWindow);
         quota.put("usedInWindow", usedInWindow);
         quota.put("windowStartedAt", windowStartedAt);
         quota.put("nextAvailableAt", nextAvailableAt);
@@ -389,7 +422,9 @@ public class BehaviorInsightGenerationServiceImpl implements BehaviorInsightGene
             return;
         }
         extra.put("quota", quota);
-        if (readLong(quota.get("usedInWindow")) >= STUDENT_WINDOW_LIMIT) {
+        long usedInWindow = readLong(quota.get("usedInWindow"));
+        long limitPerWindow = readLong(quota.get("limitPerWindow"));
+        if (usedInWindow >= limitPerWindow) {
             Object nextAvailableAt = quota.get("nextAvailableAt");
             if (nextAvailableAt != null) {
                 extra.put("cooldown", java.util.Map.of(

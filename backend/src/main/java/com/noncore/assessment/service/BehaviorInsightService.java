@@ -37,6 +37,16 @@ public interface BehaviorInsightService {
     BehaviorInsight getLatestByStudentCourseRange(Long studentId, Long courseId, String rangeKey, String schemaVersion);
 
     /**
+     * 获取学生在任意课程（含 course_id 为空）+ 时间窗(rangeKey) 下的最新洞察。
+     */
+    BehaviorInsight getLatestByStudentAnyCourseRange(Long studentId, String rangeKey, String schemaVersion);
+
+    /**
+     * 获取学生在任意课程（含 course_id 为空）下的最新洞察。
+     */
+    BehaviorInsight getLatestByStudentAnyCourse(Long studentId, String schemaVersion);
+
+    /**
      * 统计学生在指定时间点之后生成的洞察次数（用于限流）。
      *
      * @param studentId 学生ID
@@ -49,7 +59,7 @@ public interface BehaviorInsightService {
     /**
      * 获取学生在指定时间点之后、计入额度的最早一条洞察生成时间。
      *
-     * <p>仅统计 status!=partial 的记录，用于推算滚动窗口配额何时释放。</p>
+     * <p>仅统计 status=success 的记录，用于推算滚动窗口配额何时释放。</p>
      */
     java.time.LocalDateTime getEarliestCountedByStudentSince(Long studentId, java.time.LocalDateTime since);
 

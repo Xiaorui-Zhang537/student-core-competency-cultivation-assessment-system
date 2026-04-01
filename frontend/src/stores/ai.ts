@@ -30,6 +30,13 @@ export interface PendingAttachmentMeta {
   mimeType?: string
 }
 
+type ChatRequestMessage = {
+  role: 'user' | 'assistant' | 'system'
+  content: string
+}
+
+const CONTEXT_WINDOW_SIZE = 24
+
 export const useAIStore = defineStore('ai', () => {
   const ui = useUIStore()
   const conversations = ref<AiConversation[]>([])
@@ -207,6 +214,21 @@ export const useAIStore = defineStore('ai', () => {
     draftsByConvId[String(id)] = text
   }
 
+  const buildRequestMessages = (conversationId: number, fallbackUserContent?: string): ChatRequestMessage[] => {
+    const key = String(conversationId)
+    const msgs = messagesByConvId[key] || []
+    const normalized = msgs
+      .filter((m) => (m.role === 'user' || m.role === 'assistant' || m.role === 'system') && !m.streaming)
+      .map((m) => ({ role: m.role, content: String(m.content || '') }))
+      .filter((m) => m.content.trim().length > 0)
+      .slice(-CONTEXT_WINDOW_SIZE)
+
+    if (normalized.length > 0) return normalized
+
+    const text = String(fallbackUserContent || '').trim()
+    return text ? [{ role: 'user', content: text }] : []
+  }
+
   /** 流式生成状态 */
   const streaming = ref(false)
   let _streamAbort: AbortController | null = null
@@ -243,6 +265,7 @@ export const useAIStore = defineStore('ai', () => {
 
     // 添加用户消息
     messagesByConvId[key].push({ id: Date.now(), role: 'user', content: payload.content })
+    const requestMessages = buildRequestMessages(convId, payload.content)
 
     // 锁定模型
     const idxBefore = conversations.value.findIndex(c => c.id === convId)
@@ -308,7 +331,7 @@ export const useAIStore = defineStore('ai', () => {
     return new Promise<void>((resolve) => {
       _streamAbort = aiApi.chatStream(
         {
-          messages: [{ role: 'user', content: payload.content }],
+          messages: requestMessages.length ? requestMessages : [{ role: 'user', content: payload.content }],
           courseId: payload.courseId,
           studentIds: payload.studentIds,
           ...(convId ? { conversationId: convId } : {}),
@@ -375,6 +398,7 @@ export const useAIStore = defineStore('ai', () => {
     const key = String(convId)
     messagesByConvId[key] = messagesByConvId[key] || []
     messagesByConvId[key].push({ id: Date.now(), role: 'user', content: payload.content })
+    const requestMessages = buildRequestMessages(convId, payload.content)
     // 首次用户发言即锁定会话模型（即使请求失败也固定显示）
     const idxBefore = conversations.value.findIndex(c => c.id === convId)
     if (idxBefore >= 0 && !conversations.value[idxBefore].model) {
@@ -384,7 +408,7 @@ export const useAIStore = defineStore('ai', () => {
     const attachments = (pendingAttachmentIds[key] || []).slice()
 
     const resp: any = await handleApiCall(() => aiApi.chat({
-      messages: [{ role: 'user', content: payload.content }],
+      messages: requestMessages.length ? requestMessages : [{ role: 'user', content: payload.content }],
       courseId: payload.courseId,
       studentIds: payload.studentIds,
       // 单会话单模型：后端按会话模型执行
@@ -413,7 +437,7 @@ export const useAIStore = defineStore('ai', () => {
           if (idx >= 0) conversations.value[idx].model = next
           ui.showNotification({ type: 'info', title: '模型已切换', message: '检测到 Gemini 配额受限，已自动降级模型并重试。' })
           finalResp = await handleApiCall(() => aiApi.chat({
-            messages: [{ role: 'user', content: payload.content }],
+            messages: requestMessages.length ? requestMessages : [{ role: 'user', content: payload.content }],
             courseId: payload.courseId,
             studentIds: payload.studentIds,
             conversationId: convId,
@@ -437,7 +461,7 @@ export const useAIStore = defineStore('ai', () => {
           if (idx >= 0) conversations.value[idx].model = nextGlm
           ui.showNotification({ type: 'info', title: '模型已切换', message: '检测到 GLM 调用失败，已自动降级并重试。' })
           finalResp = await handleApiCall(() => aiApi.chat({
-            messages: [{ role: 'user', content: payload.content }],
+            messages: requestMessages.length ? requestMessages : [{ role: 'user', content: payload.content }],
             courseId: payload.courseId,
             studentIds: payload.studentIds,
             conversationId: convId,

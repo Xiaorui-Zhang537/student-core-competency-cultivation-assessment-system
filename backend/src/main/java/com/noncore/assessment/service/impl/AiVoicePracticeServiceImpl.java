@@ -11,6 +11,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Service
@@ -124,5 +125,11 @@ public class AiVoicePracticeServiceImpl implements AiVoicePracticeService {
         int offset = (pg - 1) * sz;
         return turnMapper.listBySession(sessionId, userId, offset, sz);
     }
-}
 
+    @Override
+    @Transactional(readOnly = true)
+    public long countTurnsByUserSince(Long userId, LocalDateTime since) {
+        if (userId == null) return 0L;
+        return turnMapper.countByUserSince(userId, since);
+    }
+}

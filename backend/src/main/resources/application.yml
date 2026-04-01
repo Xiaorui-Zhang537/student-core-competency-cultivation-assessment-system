@@ -131,7 +131,7 @@ ai:
     always-use-proxy: ${AI_ALWAYS_USE_PROXY:false}
     auto-retry-with-proxy: ${AI_AUTO_RETRY_WITH_PROXY:true}
     host: ${AI_PROXY_HOST:127.0.0.1}
-    port: ${AI_PROXY_PORT:7897}
+    port: ${AI_PROXY_PORT:7890}
     type: ${AI_PROXY_TYPE:HTTP}
     connect-timeout-ms: ${AI_PROXY_CONNECT_TIMEOUT_MS:10000}
     read-timeout-ms: ${AI_PROXY_READ_TIMEOUT_MS:120000}

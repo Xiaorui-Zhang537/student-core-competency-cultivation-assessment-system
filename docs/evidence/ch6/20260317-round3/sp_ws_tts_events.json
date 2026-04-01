@@ -1,0 +1,46 @@
+{
+  "reason": "turn_complete",
+  "uniqueTypes": [
+    "ready",
+    "session_ready",
+    "started",
+    "activity_started",
+    "activity_ended",
+    "generation_complete",
+    "turn_complete"
+  ],
+  "hasTranscript": false,
+  "hasAssistantText": false,
+  "hasAssistantTranscript": false,
+  "hasTurnComplete": true,
+  "transcriptText": "",
+  "assistantTextDelta": "",
+  "assistantTranscriptText": "",
+  "events": [
+    {
+      "role": "student",
+      "type": "ready",
+      "userId": 3
+    },
+    {
+      "type": "session_ready"
+    },
+    {
+      "mode": "both",
+      "model": "gemini-2.5-flash-native-audio-preview-12-2025",
+      "type": "started"
+    },
+    {
+      "type": "activity_started"
+    },
+    {
+      "type": "activity_ended"
+    },
+    {
+      "type": "generation_complete"
+    },
+    {
+      "type": "turn_complete"
+    }
+  ]
+}

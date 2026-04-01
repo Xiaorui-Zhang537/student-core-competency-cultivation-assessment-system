@@ -143,12 +143,14 @@
       "changePwd": {
         "current": "当前密码",
         "new": "新密码",
-        "confirm": "确认新密码"
+        "confirm": "确认新密码",
+        "hintMin": "密码至少 {min} 位"
       },
       "messages": {
         "loadUser": "加载用户信息中...",
         "updateSuccess": "个人信息已更新",
         "updateFail": "更新失败",
+        "passwordTooShort": "新密码至少 {min} 位。",
         "passwordMismatch": "新密码和确认密码不匹配。",
         "passwordChanged": "密码已成功修改",
         "emailSent": "验证邮件已发送，请检查您的收件箱。",

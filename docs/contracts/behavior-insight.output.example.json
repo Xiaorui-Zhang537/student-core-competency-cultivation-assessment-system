@@ -1,0 +1,99 @@
+{
+  "code": 200,
+  "message": "Success",
+  "data": {
+    "schemaVersion": "behavior_insight.v2",
+    "snapshotId": 101,
+    "explainScore": {
+      "text": "The student improved through repeated feedback cycles and more focused follow-up behavior.",
+      "evidenceIds": [
+        "ev_20260313_0001",
+        "ev_20260313_0004"
+      ]
+    },
+    "stageJudgements": [
+      {
+        "dimensionCode": "MORAL_COGNITION",
+        "level": "DEVELOPING",
+        "rationale": "Shows clear reflection in peer/community interactions.",
+        "evidenceIds": [
+          "ev_20260313_0001"
+        ]
+      },
+      {
+        "dimensionCode": "LEARNING_ATTITUDE",
+        "level": "PROFICIENT",
+        "rationale": "Consistency improved with more follow-up actions.",
+        "evidenceIds": [
+          "ev_20260313_0002"
+        ]
+      },
+      {
+        "dimensionCode": "LEARNING_ABILITY",
+        "level": "DEVELOPING",
+        "rationale": "Transfer evidence exists but remains limited in breadth.",
+        "evidenceIds": [
+          "ev_20260313_0003"
+        ]
+      },
+      {
+        "dimensionCode": "LEARNING_METHOD",
+        "level": "PROFICIENT",
+        "rationale": "Feedback-driven revision pattern is stable.",
+        "evidenceIds": [
+          "ev_20260313_0004"
+        ]
+      }
+    ],
+    "formativeSuggestions": [
+      {
+        "title": "Build a weekly self-check loop",
+        "description": "Use one checklist before each submission and one after feedback.",
+        "nextActions": [
+          "Create a 5-item checklist",
+          "Run checklist on next 2 assignments"
+        ],
+        "evidenceIds": [
+          "ev_20260313_0004"
+        ]
+      }
+    ],
+    "riskAlerts": [
+      {
+        "severity": "warn",
+        "title": "Inconsistent study rhythm in current window",
+        "message": "Large day-to-day variance in engagement events.",
+        "dimensionCode": "LEARNING_ATTITUDE",
+        "evidenceIds": [
+          "ev_20260313_0002"
+        ]
+      }
+    ],
+    "actionRecommendations": [
+      {
+        "title": "Stabilize revision cadence",
+        "description": "Allocate fixed 20-minute revision blocks after each feedback view.",
+        "nextActions": [
+          "Schedule two revision blocks this week"
+        ],
+        "dimensionCode": "LEARNING_METHOD",
+        "evidenceIds": [
+          "ev_20260313_0004"
+        ]
+      }
+    ],
+    "meta": {
+      "generatedAt": "2026-03-13 10:20:00",
+      "model": "google/gemini-2.5-pro",
+      "promptVersion": "behavior_insight_prompt.v4",
+      "status": "success"
+    },
+    "extra": {
+      "reportContext": {
+        "snapshotId": 101,
+        "range": "7d",
+        "inputEventCount": 42
+      }
+    }
+  }
+}

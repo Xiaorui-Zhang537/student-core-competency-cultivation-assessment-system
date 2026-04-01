@@ -302,20 +302,67 @@ public class AbilityServiceImpl implements AbilityService {
 
     @Override
     public AbilityReport getLatestAbilityReportByContext(Long studentId, Long courseId, Long assignmentId, Long submissionId) {
-        Map<String, Object> params = new java.util.HashMap<>();
-        params.put("studentId", studentId);
-        if (submissionId != null) {
-            params.put("submissionId", submissionId);
-        } else if (assignmentId != null) {
-            params.put("assignmentId", assignmentId);
-        } else if (courseId != null) {
-            params.put("courseId", courseId);
+        if (studentId == null) {
+            throw new BusinessException(ErrorCode.INVALID_PARAMETER, "学生ID不能为空");
         }
+
+        logger.debug("按上下文查询最新AI报告，studentId={}, courseId={}, assignmentId={}, submissionId={}",
+                studentId, courseId, assignmentId, submissionId);
+
         try {
-            AbilityReport r = abilityReportMapper.selectLatestReportByContext(params);
-            if (r != null) return r;
-        } catch (Exception ignored) {}
-        return getLatestAbilityReport(studentId);
+            // 1) 提交级精确命中
+            if (submissionId != null) {
+                Map<String, Object> bySubmission = new java.util.HashMap<>();
+                bySubmission.put("studentId", studentId);
+                bySubmission.put("submissionId", submissionId);
+                AbilityReport r = abilityReportMapper.selectLatestReportByContext(bySubmission);
+                if (r != null) {
+                    logger.debug("命中提交上下文AI报告，reportId={}", r.getId());
+                    return r;
+                }
+            }
+
+            // 2) 作业级回退（兼容教师端仅关联 assignmentId 的历史数据）
+            if (assignmentId != null) {
+                Map<String, Object> byAssignment = new java.util.HashMap<>();
+                byAssignment.put("studentId", studentId);
+                byAssignment.put("assignmentId", assignmentId);
+                AbilityReport r = abilityReportMapper.selectLatestReportByContext(byAssignment);
+                if (r != null) {
+                    logger.debug("命中作业上下文AI报告，reportId={}", r.getId());
+                    return r;
+                }
+            }
+
+            // 3) 课程级回退
+            if (courseId != null) {
+                Map<String, Object> byCourse = new java.util.HashMap<>();
+                byCourse.put("studentId", studentId);
+                byCourse.put("courseId", courseId);
+                AbilityReport r = abilityReportMapper.selectLatestReportByContext(byCourse);
+                if (r != null) {
+                    logger.debug("命中课程上下文AI报告，reportId={}", r.getId());
+                    return r;
+                }
+            }
+
+            // 4) 无上下文参数时，回退学生最新AI报告（避免跨课程错配）
+            if (submissionId == null && assignmentId == null && courseId == null) {
+                Map<String, Object> anyAi = new java.util.HashMap<>();
+                anyAi.put("studentId", studentId);
+                AbilityReport r = abilityReportMapper.selectLatestReportByContext(anyAi);
+                if (r != null) {
+                    logger.debug("命中学生最新AI报告（无上下文），reportId={}", r.getId());
+                    return r;
+                }
+            }
+        } catch (Exception ex) {
+            logger.warn("按上下文查询AI报告异常，studentId={}, courseId={}, assignmentId={}, submissionId={}",
+                    studentId, courseId, assignmentId, submissionId, ex);
+        }
+        logger.debug("未命中上下文AI报告，studentId={}, courseId={}, assignmentId={}, submissionId={}",
+                studentId, courseId, assignmentId, submissionId);
+        return null;
     }
 
     @Override
@@ -491,7 +538,110 @@ public class AbilityServiceImpl implements AbilityService {
     @Override
     public List<AbilityDimension> getAllAbilityDimensions() {
         logger.info("获取所有能力维度");
-        return abilityDimensionMapper.selectActiveDimensions();
+        List<AbilityDimension> dimensions = abilityDimensionMapper.selectActiveDimensions();
+        if (dimensions != null && !dimensions.isEmpty()) {
+            return dimensions;
+        }
+
+        // 自修复：历史环境可能出现维度字典被清空/全部停用，导致学生端“目标维度”下拉为空。
+        // 这里在读取入口兜底补齐（或重新激活）默认四维，避免前端不可用。
+        logger.warn("能力维度字典为空或全部停用，尝试自动修复默认维度");
+        ensureDefaultDimensions();
+        dimensions = abilityDimensionMapper.selectActiveDimensions();
+        if (dimensions == null || dimensions.isEmpty()) {
+            logger.error("能力维度自动修复后仍为空，请检查 ability_dimensions 数据");
+        }
+        return dimensions == null ? new ArrayList<>() : dimensions;
+    }
+
+    private void ensureDefaultDimensions() {
+        List<AbilityDimension> defaults = List.of(
+                defaultDimension("道德认知", "MORAL_COGNITION", "价值判断、责任意识与规则理解", "soft", "scale", "#EF4444", 1),
+                defaultDimension("学习态度", "LEARNING_ATTITUDE", "投入度、自律性与持续性", "soft", "heart", "#F59E0B", 2),
+                defaultDimension("学习能力", "LEARNING_ABILITY", "理解、分析、迁移与解决问题", "academic", "sparkles", "#3B82F6", 3),
+                defaultDimension("学习方法", "LEARNING_METHOD", "计划、反思与资源使用策略", "academic", "book-open", "#10B981", 4)
+        );
+
+        for (AbilityDimension def : defaults) {
+            try {
+                AbilityDimension existing = abilityDimensionMapper.selectDimensionByCode(def.getCode());
+                if (existing == null) {
+                    existing = abilityDimensionMapper.selectDimensionByName(def.getName());
+                }
+                if (existing == null) {
+                    abilityDimensionMapper.insertDimension(def);
+                    continue;
+                }
+
+                boolean changed = false;
+                if (existing.getIsActive() == null || !existing.getIsActive()) {
+                    existing.setIsActive(true);
+                    changed = true;
+                }
+                if (existing.getName() == null || existing.getName().isBlank()) {
+                    existing.setName(def.getName());
+                    changed = true;
+                }
+                if (existing.getCode() == null || existing.getCode().isBlank()) {
+                    existing.setCode(def.getCode());
+                    changed = true;
+                }
+                if (existing.getCategory() == null || existing.getCategory().isBlank()) {
+                    existing.setCategory(def.getCategory());
+                    changed = true;
+                }
+                if (existing.getDescription() == null || existing.getDescription().isBlank()) {
+                    existing.setDescription(def.getDescription());
+                    changed = true;
+                }
+                if (existing.getIcon() == null || existing.getIcon().isBlank()) {
+                    existing.setIcon(def.getIcon());
+                    changed = true;
+                }
+                if (existing.getColor() == null || existing.getColor().isBlank()) {
+                    existing.setColor(def.getColor());
+                    changed = true;
+                }
+                if (existing.getSortOrder() == null) {
+                    existing.setSortOrder(def.getSortOrder());
+                    changed = true;
+                }
+                if (existing.getWeight() == null) {
+                    existing.setWeight(def.getWeight());
+                    changed = true;
+                }
+                if (existing.getMaxScore() == null) {
+                    existing.setMaxScore(def.getMaxScore());
+                    changed = true;
+                }
+                if (changed) {
+                    abilityDimensionMapper.updateDimension(existing);
+                }
+            } catch (Exception e) {
+                logger.warn("修复能力维度失败(code={}): {}", def.getCode(), e.getMessage());
+            }
+        }
+    }
+
+    private AbilityDimension defaultDimension(String name,
+                                              String code,
+                                              String description,
+                                              String category,
+                                              String icon,
+                                              String color,
+                                              int sortOrder) {
+        AbilityDimension dim = new AbilityDimension();
+        dim.setName(name);
+        dim.setCode(code);
+        dim.setDescription(description);
+        dim.setCategory(category);
+        dim.setWeight(new BigDecimal("1.00"));
+        dim.setMaxScore(100);
+        dim.setIcon(icon);
+        dim.setColor(color);
+        dim.setSortOrder(sortOrder);
+        dim.setIsActive(true);
+        return dim;
     }
 
     @Override

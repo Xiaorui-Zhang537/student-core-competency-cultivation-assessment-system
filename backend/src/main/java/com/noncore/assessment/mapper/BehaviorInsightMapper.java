@@ -29,6 +29,19 @@ public interface BehaviorInsightMapper {
                                                   @Param("schemaVersion") String schemaVersion);
 
     /**
+     * 获取学生在任意课程（含 course_id 为空）+ 时间窗(rangeKey) 下的最新洞察。
+     */
+    BehaviorInsight getLatestByStudentAnyCourseRange(@Param("studentId") Long studentId,
+                                                     @Param("rangeKey") String rangeKey,
+                                                     @Param("schemaVersion") String schemaVersion);
+
+    /**
+     * 获取学生在任意课程（含 course_id 为空）下的最新洞察。
+     */
+    BehaviorInsight getLatestByStudentAnyCourse(@Param("studentId") Long studentId,
+                                                @Param("schemaVersion") String schemaVersion);
+
+    /**
      * 按学生+课程（可空）+时间窗分页查询历史洞察（倒序）。
      */
     java.util.List<BehaviorInsight> pageByStudentCourseRange(@Param("studentId") Long studentId,
@@ -54,7 +67,7 @@ public interface BehaviorInsightMapper {
     /**
      * 统计某学生在指定时间点之后生成的洞察次数（用于限流）。
      *
-     * <p>注意：仅统计 status!=partial 的记录（partial 通常为 NO_EVIDENCE，不应计入调用额度）。</p>
+     * <p>注意：仅统计 status=success 的记录（failed/partial 均不应计入调用额度）。</p>
      */
     long countByStudentSince(@Param("studentId") Long studentId,
                              @Param("schemaVersion") String schemaVersion,

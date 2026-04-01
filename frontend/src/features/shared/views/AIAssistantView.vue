@@ -119,7 +119,7 @@
           </div>
 
           <!-- 消息列表 -->
-          <div ref="chatContainer" class="flex-1 overflow-y-auto p-4 space-y-4 bg-transparent">
+          <div ref="chatContainer" class="h-[60vh] overflow-y-auto p-4 space-y-4 bg-transparent">
             <template v-for="(m, idx) in currentMessages" :key="m.id">
               <div class="flex" :class="m.role === 'user' ? 'justify-end' : 'justify-start'">
                 <div class="max-w-[80%] rounded-2xl px-4 py-2 text-sm group relative"
@@ -316,6 +316,13 @@ const memory = ref<{ enabled: boolean; content: string }>({ enabled: true, conte
 const saveMemory = async () => {
   try { await aiApi.updateMemory({ enabled: !!memory.value.enabled, content: memory.value.content || '' }) } catch {}
 }
+let memorySaveTimer: ReturnType<typeof setTimeout> | null = null
+const scheduleSaveMemory = () => {
+  if (memorySaveTimer) clearTimeout(memorySaveTimer)
+  memorySaveTimer = setTimeout(() => { saveMemory() }, 600)
+}
+watch(() => memory.value.content, scheduleSaveMemory)
+watch(() => memory.value.enabled, scheduleSaveMemory)
 
 // ---- 发送相关 ----
 const canSend = computed(() => typeof draft.value === 'string' && draft.value.trim().length > 0)
@@ -477,6 +484,10 @@ onMounted(async () => {
 })
 
 onUnmounted(() => {
+  if (memorySaveTimer) {
+    clearTimeout(memorySaveTimer)
+    memorySaveTimer = null
+  }
   // 组件销毁时中断流式请求
   ai.abortStream()
 })

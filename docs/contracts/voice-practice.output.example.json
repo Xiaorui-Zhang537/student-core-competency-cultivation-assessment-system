@@ -1,0 +1,81 @@
+{
+  "createSessionResponse": {
+    "code": 200,
+    "message": "Success",
+    "data": {
+      "sessionId": 123,
+      "id": 123
+    }
+  },
+  "listTurnsResponse": {
+    "code": 200,
+    "message": "Success",
+    "data": [
+      {
+        "id": 20001,
+        "sessionId": 123,
+        "userTranscript": "I want to introduce my project.",
+        "assistantText": "Great start. Please explain your goal first.",
+        "userAudioFileId": 10001,
+        "assistantAudioFileId": 10002,
+        "createdAt": "2026-03-13 10:32:00"
+      }
+    ]
+  },
+  "saveTurnResponse": {
+    "code": 200,
+    "message": "Success",
+    "data": {
+      "sessionId": 123,
+      "conversationId": 123,
+      "turnId": 20001
+    }
+  },
+  "reportReplayResponse": {
+    "code": 200,
+    "message": "Success",
+    "data": {
+      "recorded": true
+    }
+  },
+  "liveWebSocketEvents": [
+    {
+      "type": "ready",
+      "userId": 1001,
+      "role": "STUDENT"
+    },
+    {
+      "type": "session_ready"
+    },
+    {
+      "type": "transcript",
+      "isFinal": true,
+      "text": "I want to introduce my project."
+    },
+    {
+      "type": "assistant_text",
+      "delta": "Great start.",
+      "isFinal": false
+    },
+    {
+      "type": "assistant_transcript",
+      "isFinal": true,
+      "text": "Great start. Please explain your goal first."
+    },
+    {
+      "type": "assistant_audio",
+      "pcm16Base64": "BASE64_PCM16LE",
+      "mimeType": "audio/pcm;rate=24000"
+    },
+    {
+      "type": "turn_complete"
+    }
+  ],
+  "finalSummaryLocation": {
+    "fromWebSocket": [
+      "assistant_text",
+      "assistant_transcript"
+    ],
+    "persistedInTurn": "assistantText"
+  }
+}

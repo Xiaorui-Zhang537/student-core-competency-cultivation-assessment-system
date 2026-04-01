@@ -20,9 +20,108 @@
         @action="reload"
       />
 
-      <!-- 固定主区域高度：页面不滚动，内部区域滚动 -->
-      <div v-else class="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-12 gap-4 items-stretch h-[calc(100vh-320px)] overflow-hidden">
-        <!-- 左侧面板：tab + 搜索 + 列表 -->
+      <div v-else class="max-w-6xl mx-auto space-y-4">
+        <!-- 额度管理 -->
+        <section class="panel-v2 panel-v2-primary glass-thin glass-tint-primary rounded-2xl border border-gray-200/40 dark:border-gray-700/40 p-4 md:p-5 space-y-4" v-glass="{ strength: 'thin', interactive: false }">
+          <div class="flex items-start justify-between gap-3 flex-wrap">
+            <div class="min-w-0">
+              <div class="font-semibold text-gray-800 dark:text-gray-100">
+                {{ t('admin.student360.quotaTitle') || 'AI额度管理' }}
+              </div>
+              <div class="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                {{ t('admin.student360.quotaDesc', { days: quotaBase.insightWindowDays, voiceBase: quotaBase.voiceChatWeekly }) || `支持按学生加额；语音训练基础额度为每周 ${quotaBase.voiceChatWeekly} 次。` }}
+              </div>
+            </div>
+            <div class="flex items-center gap-2">
+              <Button size="sm" variant="outline" :disabled="quotaLoading || quotaSaving" @click="reloadQuota">
+                {{ t('admin.student360.quotaRefresh') || '刷新' }}
+              </Button>
+              <Button size="sm" variant="primary" :disabled="quotaLoading || quotaSaving || !quotaDirty" @click="saveQuota">
+                {{ quotaSaving ? (t('admin.student360.quotaSaving') || '保存中...') : (t('admin.student360.quotaSave') || '保存额度') }}
+              </Button>
+            </div>
+          </div>
+
+          <div v-if="quotaError" class="text-xs text-red-500 dark:text-red-300 rounded-lg border border-red-200/60 dark:border-red-700/50 bg-red-50/70 dark:bg-red-950/20 px-3 py-2">
+            {{ quotaError }}
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-3">
+            <div
+              v-for="item in quotaMetricCards"
+              :key="item.key"
+              class="rounded-xl border border-gray-200/60 dark:border-gray-700/60 bg-white/40 dark:bg-white/5 px-3 py-2 space-y-1"
+            >
+              <div class="text-xs text-gray-500 dark:text-gray-400">{{ item.title }}</div>
+              <div class="text-sm font-semibold text-gray-800 dark:text-gray-100">
+                {{ t('admin.student360.quotaUsedLimit', { used: item.used, limit: item.limit }) || `已用 ${item.used} / 限额 ${item.limit}` }}
+              </div>
+              <div class="text-[11px] text-gray-500 dark:text-gray-400">
+                {{ t('admin.student360.quotaBasePlusBonus', { base: item.base, bonus: item.bonus, limit: item.limit }) || `基础 ${item.base} + 加额 ${item.bonus} = ${item.limit}` }}
+              </div>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+            <div class="rounded-xl border border-gray-200/60 dark:border-gray-700/60 bg-white/40 dark:bg-white/5 p-3 space-y-2">
+              <div class="text-xs font-medium text-gray-700 dark:text-gray-200">{{ t('admin.student360.quotaAiChatBonus') || 'AI问答每周加额' }}</div>
+              <glass-input
+                v-model="quotaDraft.aiChatBonusWeekly"
+                type="number"
+                min="0"
+                max="10000"
+                step="1"
+                :disabled="quotaLoading || quotaSaving"
+              />
+              <div class="text-[11px] text-gray-500 dark:text-gray-400">
+                Gemini: {{ t('admin.student360.quotaBasePlusBonus', { base: quotaBase.geminiWeekly, bonus: quotaDraftNormalized.aiChatBonusWeekly, limit: quotaPreviewLimits.geminiWeekly }) || `基础 ${quotaBase.geminiWeekly} + 加额 ${quotaDraftNormalized.aiChatBonusWeekly} = ${quotaPreviewLimits.geminiWeekly}` }}
+              </div>
+              <div class="text-[11px] text-gray-500 dark:text-gray-400">
+                GLM: {{ t('admin.student360.quotaBasePlusBonus', { base: quotaBase.glmWeekly, bonus: quotaDraftNormalized.aiChatBonusWeekly, limit: quotaPreviewLimits.glmWeekly }) || `基础 ${quotaBase.glmWeekly} + 加额 ${quotaDraftNormalized.aiChatBonusWeekly} = ${quotaPreviewLimits.glmWeekly}` }}
+              </div>
+            </div>
+
+            <div class="rounded-xl border border-gray-200/60 dark:border-gray-700/60 bg-white/40 dark:bg-white/5 p-3 space-y-2">
+              <div class="text-xs font-medium text-gray-700 dark:text-gray-200">{{ t('admin.student360.quotaInsightBonus') || '洞见窗口加额' }}</div>
+              <glass-input
+                v-model="quotaDraft.insightBonusWindow"
+                type="number"
+                min="0"
+                max="10000"
+                step="1"
+                :disabled="quotaLoading || quotaSaving"
+              />
+              <div class="text-[11px] text-gray-500 dark:text-gray-400">
+                {{ t('admin.student360.quotaWindowLabel', { days: quotaBase.insightWindowDays }) || `近 ${quotaBase.insightWindowDays} 天窗口` }}
+              </div>
+              <div class="text-[11px] text-gray-500 dark:text-gray-400">
+                {{ t('admin.student360.quotaBasePlusBonus', { base: quotaBase.insightWindow, bonus: quotaDraftNormalized.insightBonusWindow, limit: quotaPreviewLimits.insightWindow }) || `基础 ${quotaBase.insightWindow} + 加额 ${quotaDraftNormalized.insightBonusWindow} = ${quotaPreviewLimits.insightWindow}` }}
+              </div>
+            </div>
+
+            <div class="rounded-xl border border-gray-200/60 dark:border-gray-700/60 bg-white/40 dark:bg-white/5 p-3 space-y-2">
+              <div class="text-xs font-medium text-gray-700 dark:text-gray-200">{{ t('admin.student360.quotaVoiceBonus') || '语音聊天每周加额' }}</div>
+              <glass-input
+                v-model="quotaDraft.voiceChatBonusWeekly"
+                type="number"
+                min="0"
+                max="10000"
+                step="1"
+                :disabled="quotaLoading || quotaSaving"
+              />
+              <div class="text-[11px] text-gray-500 dark:text-gray-400">
+                {{ t('admin.student360.quotaBasePlusBonus', { base: quotaBase.voiceChatWeekly, bonus: quotaDraftNormalized.voiceChatBonusWeekly, limit: quotaPreviewLimits.voiceChatWeekly }) || `基础 ${quotaBase.voiceChatWeekly} + 加额 ${quotaDraftNormalized.voiceChatBonusWeekly} = ${quotaPreviewLimits.voiceChatWeekly}` }}
+              </div>
+              <div class="text-[11px] text-gray-500 dark:text-gray-400">
+                {{ t('admin.student360.quotaVoiceWeeklyHint', { base: quotaBase.voiceChatWeekly }) || `每位学生每周基础可调用 ${quotaBase.voiceChatWeekly} 次` }}
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- 固定主区域高度：页面不滚动，内部区域滚动 -->
+        <div class="grid grid-cols-1 md:grid-cols-12 gap-4 items-stretch h-[calc(100vh-320px)] overflow-hidden">
+          <!-- 左侧面板：tab + 搜索 + 列表 -->
         <aside class="md:col-span-4 lg:col-span-4 xl:col-span-3 filter-container panel-v2 panel-v2-secondary p-4 space-y-4 rounded-xl glass-tint-secondary flex flex-col h-full overflow-hidden" v-glass="{ strength: 'thin', interactive: false }">
           <div class="panel-v2 panel-v2-secondary rounded-2xl p-4 glass-ultraThin glass-tint-secondary border border-white/20 dark:border-white/10 flex flex-col h-full min-h-0 overflow-hidden" v-glass="{ strength: 'ultraThin', interactive: false }">
             <div class="flex items-center justify-between gap-2 mb-3 flex-wrap">
@@ -115,7 +214,7 @@
           </div>
 
           <!-- 对话/回合列表 -->
-          <div class="flex-1 min-h-0 overflow-y-auto p-4 space-y-4 bg-transparent">
+          <div class="h-[60vh] overflow-y-auto p-4 space-y-4 bg-transparent">
             <!-- AI messages -->
             <div v-if="tab==='ai'" class="space-y-4">
               <template v-if="chatMessages.length">
@@ -220,6 +319,7 @@
             </div>
           </div>
         </section>
+        </div>
       </div>
     </div>
   </div>
@@ -241,17 +341,20 @@ import ErrorState from '@/components/ui/ErrorState.vue'
 import EmptyState from '@/components/ui/EmptyState.vue'
 import SegmentedPills from '@/components/ui/SegmentedPills.vue'
 import GlassSearchInput from '@/components/ui/inputs/GlassSearchInput.vue'
+import GlassInput from '@/components/ui/inputs/GlassInput.vue'
 import UserAvatar from '@/components/ui/UserAvatar.vue'
 import { ArchiveBoxArrowDownIcon, CodeBracketIcon, DocumentTextIcon } from '@heroicons/vue/24/outline'
-import { adminApi } from '@/api/admin.api'
+import { adminApi, type AdminAiQuotaOverview } from '@/api/admin.api'
 import { buildFileUrl, fileApi } from '@/api/file.api'
 import { downloadBlobAsFile } from '@/utils/download'
 import JSZip from 'jszip'
 import { renderMarkdown, installCodeCopyHandler } from '@/shared/utils/markdownRenderer'
+import { useUIStore } from '@/stores/ui'
 
 const { t } = useI18n()
 const route = useRoute()
 const router = useRouter()
+const ui = useUIStore()
 
 const userId = computed(() => String((route.params as any).userId || ''))
 const userName = computed(() => String((route.query as any)?.name || ''))
@@ -299,6 +402,110 @@ const q = ref(String((route.query as any)?.q || ''))
 
 const loading = ref(false)
 const error = ref<string | null>(null)
+
+const quotaLoading = ref(false)
+const quotaSaving = ref(false)
+const quotaError = ref<string | null>(null)
+const quotaOverview = ref<AdminAiQuotaOverview | null>(null)
+const quotaDraft = ref<{
+  aiChatBonusWeekly: number | null
+  insightBonusWindow: number | null
+  voiceChatBonusWeekly: number | null
+}>({
+  aiChatBonusWeekly: 0,
+  insightBonusWindow: 0,
+  voiceChatBonusWeekly: 0,
+})
+
+function toNonNegativeInt(value: any, fallback = 0): number {
+  const n = Number(value)
+  if (!Number.isFinite(n)) return fallback
+  return Math.max(0, Math.floor(n))
+}
+
+const quotaBase = computed(() => {
+  const base = quotaOverview.value?.base as any
+  return {
+    geminiWeekly: toNonNegativeInt(base?.geminiWeekly, 10),
+    glmWeekly: toNonNegativeInt(base?.glmWeekly, 20),
+    insightWindow: toNonNegativeInt(base?.insightWindow, 2),
+    voiceChatWeekly: toNonNegativeInt(base?.voiceChatWeekly, 15),
+    insightWindowDays: toNonNegativeInt(base?.insightWindowDays, 7),
+  }
+})
+
+const quotaBonus = computed(() => {
+  const bonus = quotaOverview.value?.bonus as any
+  return {
+    aiChatWeekly: toNonNegativeInt(bonus?.aiChatWeekly, 0),
+    insightWindow: toNonNegativeInt(bonus?.insightWindow, 0),
+    voiceChatWeekly: toNonNegativeInt(bonus?.voiceChatWeekly, 0),
+  }
+})
+
+const quotaUsage = computed(() => {
+  const usage = quotaOverview.value?.usage as any
+  return {
+    geminiWeeklyUsed: toNonNegativeInt(usage?.geminiWeeklyUsed, 0),
+    glmWeeklyUsed: toNonNegativeInt(usage?.glmWeeklyUsed, 0),
+    insightWindowUsed: toNonNegativeInt(usage?.insightWindowUsed, 0),
+    voiceChatWeeklyUsed: toNonNegativeInt(usage?.voiceChatWeeklyUsed, 0),
+  }
+})
+
+const quotaDraftNormalized = computed(() => ({
+  aiChatBonusWeekly: toNonNegativeInt(quotaDraft.value.aiChatBonusWeekly, 0),
+  insightBonusWindow: toNonNegativeInt(quotaDraft.value.insightBonusWindow, 0),
+  voiceChatBonusWeekly: toNonNegativeInt(quotaDraft.value.voiceChatBonusWeekly, 0),
+}))
+
+const quotaPreviewLimits = computed(() => ({
+  geminiWeekly: quotaBase.value.geminiWeekly + quotaDraftNormalized.value.aiChatBonusWeekly,
+  glmWeekly: quotaBase.value.glmWeekly + quotaDraftNormalized.value.aiChatBonusWeekly,
+  insightWindow: quotaBase.value.insightWindow + quotaDraftNormalized.value.insightBonusWindow,
+  voiceChatWeekly: quotaBase.value.voiceChatWeekly + quotaDraftNormalized.value.voiceChatBonusWeekly,
+}))
+
+const quotaDirty = computed(() =>
+  quotaDraftNormalized.value.aiChatBonusWeekly !== quotaBonus.value.aiChatWeekly
+    || quotaDraftNormalized.value.insightBonusWindow !== quotaBonus.value.insightWindow
+    || quotaDraftNormalized.value.voiceChatBonusWeekly !== quotaBonus.value.voiceChatWeekly,
+)
+
+const quotaMetricCards = computed(() => ([
+  {
+    key: 'gemini',
+    title: String(t('admin.student360.quotaMetricGemini') || 'Gemini 问答（每周）'),
+    used: quotaUsage.value.geminiWeeklyUsed,
+    limit: quotaBase.value.geminiWeekly + quotaBonus.value.aiChatWeekly,
+    base: quotaBase.value.geminiWeekly,
+    bonus: quotaBonus.value.aiChatWeekly,
+  },
+  {
+    key: 'glm',
+    title: String(t('admin.student360.quotaMetricGlm') || 'GLM 问答（每周）'),
+    used: quotaUsage.value.glmWeeklyUsed,
+    limit: quotaBase.value.glmWeekly + quotaBonus.value.aiChatWeekly,
+    base: quotaBase.value.glmWeekly,
+    bonus: quotaBonus.value.aiChatWeekly,
+  },
+  {
+    key: 'insight',
+    title: String(t('admin.student360.quotaMetricInsight', { days: quotaBase.value.insightWindowDays }) || `洞见生成（近 ${quotaBase.value.insightWindowDays} 天）`),
+    used: quotaUsage.value.insightWindowUsed,
+    limit: quotaBase.value.insightWindow + quotaBonus.value.insightWindow,
+    base: quotaBase.value.insightWindow,
+    bonus: quotaBonus.value.insightWindow,
+  },
+  {
+    key: 'voice',
+    title: String(t('admin.student360.quotaMetricVoice') || '语音聊天（每周）'),
+    used: quotaUsage.value.voiceChatWeeklyUsed,
+    limit: quotaBase.value.voiceChatWeekly + quotaBonus.value.voiceChatWeekly,
+    base: quotaBase.value.voiceChatWeekly,
+    bonus: quotaBonus.value.voiceChatWeekly,
+  },
+]))
 
 const aiConversations = ref<any[]>([])
 const messages = ref<any[]>([])
@@ -422,6 +629,61 @@ async function copyText(text: string) {
   }
 }
 
+function syncQuotaDraftFromOverview(next: AdminAiQuotaOverview | null) {
+  if (!next) return
+  quotaDraft.value = {
+    aiChatBonusWeekly: toNonNegativeInt((next as any)?.bonus?.aiChatWeekly, 0),
+    insightBonusWindow: toNonNegativeInt((next as any)?.bonus?.insightWindow, 0),
+    voiceChatBonusWeekly: toNonNegativeInt((next as any)?.bonus?.voiceChatWeekly, 0),
+  }
+}
+
+async function reloadQuota() {
+  if (!userId.value) return
+  quotaLoading.value = true
+  quotaError.value = null
+  try {
+    const res = await adminApi.getAiQuota({ studentId: userId.value })
+    quotaOverview.value = res || null
+    syncQuotaDraftFromOverview(quotaOverview.value)
+  } catch (e: any) {
+    quotaError.value = e?.message || String(t('admin.student360.quotaLoadFailed') || '加载额度失败')
+  } finally {
+    quotaLoading.value = false
+  }
+}
+
+async function saveQuota() {
+  if (!userId.value || quotaSaving.value || quotaLoading.value) return
+  quotaSaving.value = true
+  quotaError.value = null
+  try {
+    const payload = {
+      aiChatBonusWeekly: quotaDraftNormalized.value.aiChatBonusWeekly,
+      insightBonusWindow: quotaDraftNormalized.value.insightBonusWindow,
+      voiceChatBonusWeekly: quotaDraftNormalized.value.voiceChatBonusWeekly,
+    }
+    const updated = await adminApi.updateAiQuota(userId.value, payload)
+    quotaOverview.value = updated || null
+    syncQuotaDraftFromOverview(quotaOverview.value)
+    ui.showNotification({
+      type: 'success',
+      title: String(t('common.success') || '成功'),
+      message: String(t('admin.student360.quotaSaveSuccess') || '额度已更新'),
+    })
+  } catch (e: any) {
+    const msg = e?.message || String(t('admin.student360.quotaSaveFailed') || '更新额度失败')
+    quotaError.value = msg
+    ui.showNotification({
+      type: 'error',
+      title: String(t('common.error') || '错误'),
+      message: msg,
+    })
+  } finally {
+    quotaSaving.value = false
+  }
+}
+
 function goBack() {
   router.push('/admin/people')
 }
@@ -474,6 +736,7 @@ async function reload() {
   loading.value = true
   error.value = null
   try {
+    await reloadQuota()
     selectedLeftId.value = ''
     messages.value = []
     turns.value = []

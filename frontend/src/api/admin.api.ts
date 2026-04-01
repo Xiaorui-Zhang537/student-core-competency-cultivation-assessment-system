@@ -129,6 +129,35 @@ export interface AbilityReport {
   recommendations?: string
 }
 
+export interface AdminAiQuotaOverview {
+  studentId: number
+  base: {
+    geminiWeekly: number
+    glmWeekly: number
+    insightWindow: number
+    voiceChatWeekly: number
+    insightWindowDays: number
+  }
+  bonus: {
+    aiChatWeekly: number
+    insightWindow: number
+    voiceChatWeekly: number
+  }
+  limits: {
+    geminiWeekly: number
+    glmWeekly: number
+    insightWindow: number
+    voiceChatWeekly: number
+    insightWindowDays: number
+  }
+  usage: {
+    geminiWeeklyUsed: number
+    glmWeeklyUsed: number
+    insightWindowUsed: number
+    voiceChatWeeklyUsed: number
+  }
+}
+
 export interface AdminAbilityReportPageParams {
   page: number
   size: number
@@ -221,6 +250,13 @@ export const adminApi = {
     api.get('/admin/ai/conversations', { params }),
   listAiMessages: (conversationId: string | number, params: { studentId: string | number; page?: number; size?: number }) =>
     api.get(`/admin/ai/conversations/${conversationId}/messages`, { params }),
+  getAiQuota: (params: { studentId: string | number }): Promise<AdminAiQuotaOverview> =>
+    api.get('/admin/ai/quotas', { params }),
+  updateAiQuota: (
+    studentId: string | number,
+    data: { aiChatBonusWeekly?: number; insightBonusWindow?: number; voiceChatBonusWeekly?: number }
+  ): Promise<AdminAiQuotaOverview> =>
+    api.put('/admin/ai/quotas', data, { params: { studentId } }),
 
   // 口语训练审计（管理员版）
   listVoiceSessions: (params: { studentId: string | number; q?: string; page?: number; size?: number }) =>

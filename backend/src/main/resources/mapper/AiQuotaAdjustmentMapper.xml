@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.noncore.assessment.mapper.AiQuotaAdjustmentMapper">
+
+    <resultMap id="BaseResultMap" type="com.noncore.assessment.entity.AiQuotaAdjustment">
+        <id column="id" property="id"/>
+        <result column="user_id" property="userId"/>
+        <result column="ai_chat_bonus_weekly" property="aiChatBonusWeekly"/>
+        <result column="insight_bonus_window" property="insightBonusWindow"/>
+        <result column="voice_chat_bonus_weekly" property="voiceChatBonusWeekly"/>
+        <result column="updated_at" property="updatedAt"/>
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        id, user_id, ai_chat_bonus_weekly, insight_bonus_window, voice_chat_bonus_weekly, updated_at
+    </sql>
+
+    <select id="selectByUserId" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM ai_quota_adjustments
+        WHERE user_id = #{userId}
+    </select>
+
+    <insert id="upsertByUserId" parameterType="com.noncore.assessment.entity.AiQuotaAdjustment">
+        INSERT INTO ai_quota_adjustments (user_id, ai_chat_bonus_weekly, insight_bonus_window, voice_chat_bonus_weekly, updated_at)
+        VALUES (#{userId}, #{aiChatBonusWeekly}, #{insightBonusWindow}, #{voiceChatBonusWeekly}, NOW())
+        ON DUPLICATE KEY UPDATE
+            ai_chat_bonus_weekly = VALUES(ai_chat_bonus_weekly),
+            insight_bonus_window = VALUES(insight_bonus_window),
+            voice_chat_bonus_weekly = VALUES(voice_chat_bonus_weekly),
+            updated_at = NOW()
+    </insert>
+
+</mapper>
+

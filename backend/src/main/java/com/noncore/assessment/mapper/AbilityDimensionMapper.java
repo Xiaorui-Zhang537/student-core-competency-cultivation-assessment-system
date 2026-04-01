@@ -76,6 +76,11 @@ public interface AbilityDimensionMapper {
     AbilityDimension selectDimensionByName(@Param("name") String name);
 
     /**
+     * 根据编码查询能力维度
+     */
+    AbilityDimension selectDimensionByCode(@Param("code") String code);
+
+    /**
      * 检查维度名称是否存在
      */
     boolean existsByName(@Param("name") String name, @Param("excludeId") Long excludeId);

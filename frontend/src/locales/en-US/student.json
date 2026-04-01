@@ -322,6 +322,7 @@
         "edit": "Edit Goal",
         "empty": "No goals yet. Start by setting one clear improvement target.",
         "dimension": "Dimension",
+        "dimensionEmpty": "No dimensions available right now. Please try again shortly.",
         "name": "Title",
         "targetScore": "Target Score (0-5)",
         "targetDate": "Due Date",

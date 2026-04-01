@@ -30,19 +30,27 @@ public class AiStartupDiagnostics {
             AiConfigProperties.Provider google = aiConfigProperties.getProviders() != null
                     ? aiConfigProperties.getProviders().getGoogle()
                     : null;
+            AiConfigProperties.Provider glm = aiConfigProperties.getProviders() != null
+                    ? aiConfigProperties.getProviders().getGlm()
+                    : null;
             String googleBaseUrl = google != null ? google.getBaseUrl() : null;
             String googleKey = google != null ? google.getApiKey() : null;
             boolean googleKeyPresent = StringUtils.hasText(googleKey);
+            String glmBaseUrl = glm != null ? glm.getBaseUrl() : null;
+            String glmKey = glm != null ? glm.getApiKey() : null;
+            boolean glmKeyPresent = StringUtils.hasText(glmKey);
 
             AiConfigProperties.ProxyConfig proxy = aiConfigProperties.getProxy();
             boolean proxyEnabled = proxy != null && proxy.isEnabled();
             boolean alwaysProxy = proxyEnabled && proxy.isAlwaysUseProxy();
             boolean retryWithProxy = proxyEnabled && proxy.isAutoRetryWithProxy();
 
-            log.info("[AI_DIAG] profiles={}, google.baseUrl={}, google.apiKeyPresent={}, proxy.enabled={}, proxy.type={}, proxy.host={}, proxy.port={}, proxy.alwaysUseProxy={}, proxy.autoRetryWithProxy={}",
+            log.info("[AI_DIAG] profiles={}, google.baseUrl={}, google.apiKeyPresent={}, glm.baseUrl={}, glm.apiKeyPresent={}, proxy.enabled={}, proxy.type={}, proxy.host={}, proxy.port={}, proxy.alwaysUseProxy={}, proxy.autoRetryWithProxy={}",
                     Arrays.toString(profiles),
                     googleBaseUrl,
                     googleKeyPresent,
+                    glmBaseUrl,
+                    glmKeyPresent,
                     proxyEnabled,
                     proxy != null ? proxy.getType() : null,
                     proxy != null ? proxy.getHost() : null,
@@ -55,4 +63,3 @@ public class AiStartupDiagnostics {
         }
     }
 }
-
