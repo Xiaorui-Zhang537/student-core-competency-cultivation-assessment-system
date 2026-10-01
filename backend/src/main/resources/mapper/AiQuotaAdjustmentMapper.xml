@@ -6,13 +6,14 @@
         <id column="id" property="id"/>
         <result column="user_id" property="userId"/>
         <result column="ai_chat_bonus_weekly" property="aiChatBonusWeekly"/>
+        <result column="doubao_chat_bonus_weekly" property="doubaoChatBonusWeekly"/>
         <result column="insight_bonus_window" property="insightBonusWindow"/>
         <result column="voice_chat_bonus_weekly" property="voiceChatBonusWeekly"/>
         <result column="updated_at" property="updatedAt"/>
     </resultMap>
 
     <sql id="Base_Column_List">
-        id, user_id, ai_chat_bonus_weekly, insight_bonus_window, voice_chat_bonus_weekly, updated_at
+        id, user_id, ai_chat_bonus_weekly, doubao_chat_bonus_weekly, insight_bonus_window, voice_chat_bonus_weekly, updated_at
     </sql>
 
     <select id="selectByUserId" resultMap="BaseResultMap">
@@ -22,14 +23,14 @@
     </select>
 
     <insert id="upsertByUserId" parameterType="com.noncore.assessment.entity.AiQuotaAdjustment">
-        INSERT INTO ai_quota_adjustments (user_id, ai_chat_bonus_weekly, insight_bonus_window, voice_chat_bonus_weekly, updated_at)
-        VALUES (#{userId}, #{aiChatBonusWeekly}, #{insightBonusWindow}, #{voiceChatBonusWeekly}, NOW())
+        INSERT INTO ai_quota_adjustments (user_id, ai_chat_bonus_weekly, doubao_chat_bonus_weekly, insight_bonus_window, voice_chat_bonus_weekly, updated_at)
+        VALUES (#{userId}, #{aiChatBonusWeekly}, #{doubaoChatBonusWeekly}, #{insightBonusWindow}, #{voiceChatBonusWeekly}, NOW())
         ON DUPLICATE KEY UPDATE
             ai_chat_bonus_weekly = VALUES(ai_chat_bonus_weekly),
+            doubao_chat_bonus_weekly = VALUES(doubao_chat_bonus_weekly),
             insight_bonus_window = VALUES(insight_bonus_window),
             voice_chat_bonus_weekly = VALUES(voice_chat_bonus_weekly),
             updated_at = NOW()
     </insert>
 
 </mapper>
-

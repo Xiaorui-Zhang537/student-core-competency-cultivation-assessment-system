@@ -13,6 +13,7 @@ import com.noncore.assessment.entity.AiConversation;
 import com.noncore.assessment.service.CourseService;
 import com.noncore.assessment.service.EnrollmentService;
 import com.noncore.assessment.service.FileStorageService;
+import com.noncore.assessment.service.AiModelRegistryService;
 import com.noncore.assessment.service.file.DocumentTextExtractor;
 import com.noncore.assessment.service.llm.LlmClient;
 import com.noncore.assessment.service.llm.PromptBuilder;
@@ -46,6 +47,7 @@ public class AiServiceImpl implements AiService {
     private final AiConversationService conversationService;
     private final AiMemoryService memoryService;
     private final DocumentTextExtractor documentTextExtractor;
+    private final AiModelRegistryService modelRegistry;
 
     // 保护：避免用户写过长记忆/附件导致上下文溢出
     private static final int MEMORY_MAX_CHARS = 3000;
@@ -124,8 +126,9 @@ public class AiServiceImpl implements AiService {
             model = conversationService.normalizeModel(request.getModel());
         }
 
-        boolean useGoogle = model != null && model.startsWith("google/");
-        boolean useGlm = model != null && model.startsWith("glm-");
+        boolean useGoogle = modelRegistry.isGoogleModel(model);
+        boolean useGlm = modelRegistry.isGlmModel(model);
+        boolean useVolc = modelRegistry.isVolcModel(model);
 
         // 将附件（如有）注入多模态消息结构：将最近一条 user 消息的 content 替换为 content[]，附加 image_url
         List<Map<String, Object>> payloadMessages = new java.util.ArrayList<>();
@@ -136,7 +139,7 @@ public class AiServiceImpl implements AiService {
             ));
         }
         List<Long> attachments = request.getAttachmentFileIds();
-        // 附件仅对 Gemini（google/*）开放；GLM 不展示上传入口，这里也直接忽略，避免意外大上下文。
+        // 图片仅对 Gemini 开放；豆包/GLM 只注入可抽取文档文本，避免误把图片发给不支持的通道。
         if (useGoogle && attachments != null && !attachments.isEmpty()) {
             // 找到最后一条 user 消息
             for (int i = payloadMessages.size() - 1; i >= 0; i--) {
@@ -196,6 +199,8 @@ public class AiServiceImpl implements AiService {
                     break;
                 }
             }
+        } else if ((useVolc || useGlm) && attachments != null && !attachments.isEmpty()) {
+            injectTextAttachmentsIntoLastUser(payloadMessages, attachments, teacherId);
         }
 
         String baseUrl;
@@ -212,8 +217,14 @@ public class AiServiceImpl implements AiService {
             if (apiKey == null || apiKey.isBlank()) {
                 throw new BusinessException(ErrorCode.INVALID_PARAMETER, "GLM API Key 未配置，请先在后台配置");
             }
+        } else if (useVolc) {
+            baseUrl = aiConfigProperties.getProviders().getVolc().getBaseUrl();
+            apiKey = aiConfigProperties.getProviders().getVolc().getApiKey();
+            if (apiKey == null || apiKey.isBlank()) {
+                throw new BusinessException(ErrorCode.INVALID_PARAMETER, "火山方舟 API Key 未配置，请通过 VOLCENGINE_ARK_API_KEY 配置");
+            }
         } else {
-            throw new BusinessException(ErrorCode.INVALID_PARAMETER, "仅支持 Google Gemini 或 GLM 模型");
+            throw new BusinessException(ErrorCode.INVALID_PARAMETER, "仅支持火山方舟、Google Gemini 或 GLM 模型");
         }
 
         if (baseUrl == null || baseUrl.isBlank()) {
@@ -222,10 +233,11 @@ public class AiServiceImpl implements AiService {
         if (useGoogle) {
             return geminiClient.generate(payloadMessages, model.replaceFirst("^google/", ""), Boolean.TRUE.equals(request.getJsonOnly()), baseUrl, apiKey);
         }
+        String upstreamModel = useVolc ? modelRegistry.resolveUpstreamModel(model) : model;
         if (Boolean.TRUE.equals(request.getJsonOnly())) {
-            return deepseekClient.createChatCompletionJsonOnly(payloadMessages, model, false, baseUrl, apiKey);
+            return deepseekClient.createChatCompletionJsonOnly(payloadMessages, upstreamModel, false, baseUrl, apiKey, !useVolc);
         }
-        return deepseekClient.createChatCompletionRaw(payloadMessages, model, false, baseUrl, apiKey);
+        return deepseekClient.createChatCompletionRaw(payloadMessages, upstreamModel, false, baseUrl, apiKey);
     }
 
     @Override
@@ -251,9 +263,14 @@ public class AiServiceImpl implements AiService {
             ));
         }
 
+        String model = conversationService.normalizeModel(request.getModel());
+        boolean useGoogle2 = modelRegistry.isGoogleModel(model);
+        boolean useGlm = modelRegistry.isGlmModel(model);
+        boolean useVolc = modelRegistry.isVolcModel(model);
+
         // 多模态附件处理（若有）
         List<Long> attachments = request.getAttachmentFileIds();
-        if (attachments != null && !attachments.isEmpty()) {
+        if (useGoogle2 && attachments != null && !attachments.isEmpty()) {
             for (int i = payloadMessages.size() - 1; i >= 0; i--) {
                 Object role = payloadMessages.get(i).get("role");
                 if ("user".equals(String.valueOf(role))) {
@@ -284,22 +301,23 @@ public class AiServiceImpl implements AiService {
                     break;
                 }
             }
+        } else if ((useVolc || useGlm) && attachments != null && !attachments.isEmpty()) {
+            injectTextAttachmentsIntoLastUser(payloadMessages, attachments, teacherId);
         }
-
-        String model = conversationService.normalizeModel(request.getModel());
 
         String baseUrl;
         String apiKey;
-        boolean useGoogle2 = model != null && model.startsWith("google/");
-        boolean useGlm = model != null && model.startsWith("glm-");
         if (useGoogle2) {
             baseUrl = aiConfigProperties.getProviders().getGoogle().getBaseUrl();
             apiKey = aiConfigProperties.getProviders().getGoogle().getApiKey();
         } else if (useGlm) {
             baseUrl = aiConfigProperties.getProviders().getGlm().getBaseUrl();
             apiKey = aiConfigProperties.getProviders().getGlm().getApiKey();
+        } else if (useVolc) {
+            baseUrl = aiConfigProperties.getProviders().getVolc().getBaseUrl();
+            apiKey = aiConfigProperties.getProviders().getVolc().getApiKey();
         } else {
-            throw new BusinessException(ErrorCode.INVALID_PARAMETER, "仅支持 Google Gemini 或 GLM 模型");
+            throw new BusinessException(ErrorCode.INVALID_PARAMETER, "仅支持火山方舟、Google Gemini 或 GLM 模型");
         }
         if (baseUrl == null || baseUrl.isBlank()) {
             throw new BusinessException(ErrorCode.INVALID_PARAMETER, "LLM base-url 未配置");
@@ -307,7 +325,12 @@ public class AiServiceImpl implements AiService {
         if (useGoogle2) {
             return geminiClient.generate(payloadMessages, model.replaceFirst("^google/", ""), true, baseUrl, apiKey);
         }
-        return deepseekClient.createChatCompletionJsonOnly(payloadMessages, model, false, baseUrl, apiKey);
+        if (apiKey == null || apiKey.isBlank()) {
+            String provider = useVolc ? "火山方舟" : "GLM";
+            throw new BusinessException(ErrorCode.INVALID_PARAMETER, provider + " API Key 未配置");
+        }
+        String upstreamModel = useVolc ? modelRegistry.resolveUpstreamModel(model) : model;
+        return deepseekClient.createChatCompletionJsonOnly(payloadMessages, upstreamModel, false, baseUrl, apiKey, !useVolc);
     }
 
     private String buildMemorySystemPrompt(String memoryContent) {
@@ -319,6 +342,49 @@ public class AiServiceImpl implements AiService {
 
 【长期记忆】
 """ + memoryContent;
+    }
+
+    private void injectTextAttachmentsIntoLastUser(List<Map<String, Object>> payloadMessages,
+                                                   List<Long> attachments,
+                                                   Long userId) {
+        if (payloadMessages == null || payloadMessages.isEmpty() || attachments == null || attachments.isEmpty()) {
+            return;
+        }
+        StringBuilder appended = new StringBuilder();
+        int remaining = ATTACHMENT_TEXT_MAX_CHARS;
+        for (Long fid : attachments) {
+            if (remaining <= 0) break;
+            try {
+                var info = fileStorageService.getFileInfo(fid);
+                if (info == null) continue;
+                String mime = info.getMimeType();
+                String name = (info.getOriginalName() != null && !info.getOriginalName().isBlank())
+                        ? info.getOriginalName()
+                        : (info.getStoredName() != null ? info.getStoredName() : ("#" + fid));
+                if (!isSupportedDocMime(mime, name)) continue;
+                byte[] bytes = fileStorageService.downloadFile(fid, userId);
+                String extracted = documentTextExtractor.extractText(new java.io.ByteArrayInputStream(bytes), name, mime);
+                extracted = normalizeExtractedText(extracted);
+                if (extracted == null || extracted.isBlank()) continue;
+                String chunk = "\n\n【附件文本：" + name + "】\n" + extracted;
+                if (chunk.length() > remaining) {
+                    chunk = chunk.substring(0, Math.max(0, remaining));
+                }
+                remaining -= chunk.length();
+                appended.append(chunk);
+            } catch (Exception ignored) {
+            }
+        }
+        if (appended.isEmpty()) return;
+        for (int i = payloadMessages.size() - 1; i >= 0; i--) {
+            Object role = payloadMessages.get(i).get("role");
+            if (!"user".equals(String.valueOf(role))) continue;
+            Object content = payloadMessages.get(i).get("content");
+            Map<String, Object> next = new java.util.HashMap<>(payloadMessages.get(i));
+            next.put("content", String.valueOf(content == null ? "" : content) + appended);
+            payloadMessages.set(i, next);
+            return;
+        }
     }
 
     private String safeTrimToMax(String s, int maxChars) {
@@ -357,4 +423,3 @@ public class AiServiceImpl implements AiService {
         return v;
     }
 }
-

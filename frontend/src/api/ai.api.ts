@@ -11,7 +11,30 @@ export interface AiStreamCallbacks {
   onError?: (message: string) => void
 }
 
+export interface AiModelOption {
+  id: string
+  label: string
+  provider?: string
+  surface?: string
+  capabilities?: string[]
+  quotaGroup?: string
+  visible?: boolean
+  defaultModel?: boolean
+}
+
+export interface AiModelsPayload {
+  surface: string
+  audience: string
+  defaultModel: string
+  models: AiModelOption[]
+  showSelector?: boolean
+}
+
 export const aiApi = {
+  getModels: (params?: { surface?: 'assistant' | 'voice' | 'grading' }): Promise<AiModelsPayload> => {
+    return api.get('/ai/models', { params })
+  },
+
   chat: (data: { messages: { role: ChatRole; content: string }[]; courseId?: number; studentIds?: number[]; model?: string; conversationId?: number; attachmentFileIds?: number[]; jsonOnly?: boolean; useGradingPrompt?: boolean }): Promise<{ answer: string }> => {
     return api.post('/ai/chat', data, { timeout: AI_CHAT_TIMEOUT })
   },
@@ -51,6 +74,8 @@ export const aiApi = {
 
       const decoder = new TextDecoder()
       let buffer = ''
+      let terminalEventReceived = false
+      let stopReading = false
 
       /** 解析并分派缓冲区中的所有完整 SSE 事件 */
       function flushEvents() {
@@ -72,8 +97,16 @@ export const aiApi = {
             switch (evName) {
               case 'meta': callbacks.onMeta?.(parsed); break
               case 'token': callbacks.onToken?.(parsed.text || ''); break
-              case 'done': callbacks.onDone?.(parsed); break
-              case 'error': callbacks.onError?.(parsed.message || 'AI 请求失败'); break
+              case 'done':
+                terminalEventReceived = true
+                stopReading = true
+                callbacks.onDone?.(parsed)
+                break
+              case 'error':
+                terminalEventReceived = true
+                stopReading = true
+                callbacks.onError?.(parsed.message || 'AI 请求失败')
+                break
               // ping 事件忽略
             }
           } catch { /* 非 JSON 数据忽略 */ }
@@ -86,14 +119,23 @@ export const aiApi = {
           if (done) break
           buffer += decoder.decode(value, { stream: true })
           flushEvents()
+          // 收到 done/error 后主动停止读取，避免服务端/代理关闭 SSE chunk 时浏览器报
+          // ERR_INCOMPLETE_CHUNKED_ENCODING；终态数据已经处理完毕。
+          if (stopReading) break
         }
         // 流结束后刷新剩余缓冲
-        if (buffer.trim()) { buffer += '\n\n'; flushEvents() }
+        if (!terminalEventReceived && buffer.trim()) { buffer += '\n\n'; flushEvents() }
+        if (terminalEventReceived) {
+          try { await reader.cancel() } catch { /* ignore */ }
+        }
       } catch (readErr: any) {
-        // ERR_INCOMPLETE_CHUNKED_ENCODING 等网络错误：如果已经收到了 done 事件则忽略
+        // ERR_INCOMPLETE_CHUNKED_ENCODING 等网络错误：如果已经收到了 done/error 事件则忽略。
         if (readErr?.name !== 'AbortError') {
           // 尝试刷新缓冲区中可能残留的最终事件
           if (buffer.trim()) { buffer += '\n\n'; flushEvents() }
+          if (!terminalEventReceived) {
+            callbacks.onError?.(readErr?.message || '流式连接中断，请重试')
+          }
         }
       }
     }).catch((err) => {

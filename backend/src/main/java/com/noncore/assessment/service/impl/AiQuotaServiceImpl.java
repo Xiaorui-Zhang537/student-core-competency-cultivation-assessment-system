@@ -27,6 +27,7 @@ public class AiQuotaServiceImpl implements AiQuotaService {
         return AiQuotaAdjustment.builder()
                 .userId(userId)
                 .aiChatBonusWeekly(0)
+                .doubaoChatBonusWeekly(0)
                 .insightBonusWindow(0)
                 .voiceChatBonusWeekly(0)
                 .build();
@@ -35,15 +36,18 @@ public class AiQuotaServiceImpl implements AiQuotaService {
     @Override
     public AiQuotaAdjustment updateQuota(Long userId,
                                          Integer aiChatBonusWeekly,
+                                         Integer doubaoChatBonusWeekly,
                                          Integer insightBonusWindow,
                                          Integer voiceChatBonusWeekly) {
         AiQuotaAdjustment current = getQuota(userId);
         int nextAi = clampNonNegative(aiChatBonusWeekly != null ? aiChatBonusWeekly : current.getAiChatBonusWeekly());
+        int nextDoubao = clampNonNegative(doubaoChatBonusWeekly != null ? doubaoChatBonusWeekly : current.getDoubaoChatBonusWeekly());
         int nextInsight = clampNonNegative(insightBonusWindow != null ? insightBonusWindow : current.getInsightBonusWindow());
         int nextVoice = clampNonNegative(voiceChatBonusWeekly != null ? voiceChatBonusWeekly : current.getVoiceChatBonusWeekly());
         AiQuotaAdjustment in = AiQuotaAdjustment.builder()
                 .userId(userId)
                 .aiChatBonusWeekly(nextAi)
+                .doubaoChatBonusWeekly(nextDoubao)
                 .insightBonusWindow(nextInsight)
                 .voiceChatBonusWeekly(nextVoice)
                 .build();
@@ -55,6 +59,12 @@ public class AiQuotaServiceImpl implements AiQuotaService {
     public int getAiChatBonusWeekly(Long userId) {
         AiQuotaAdjustment q = getQuota(userId);
         return clampNonNegative(q == null ? 0 : q.getAiChatBonusWeekly());
+    }
+
+    @Override
+    public int getDoubaoChatBonusWeekly(Long userId) {
+        AiQuotaAdjustment q = getQuota(userId);
+        return clampNonNegative(q == null ? 0 : q.getDoubaoChatBonusWeekly());
     }
 
     @Override

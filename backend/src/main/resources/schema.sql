@@ -224,6 +224,7 @@ create table if not exists student_assessment_system.ai_quota_adjustments
         primary key,
     user_id                 bigint                               not null comment '学生用户ID',
     ai_chat_bonus_weekly    int        default 0                 not null comment 'AI问答每周加额',
+    doubao_chat_bonus_weekly int       default 0                 not null comment '豆包问答每周加额',
     insight_bonus_window    int        default 0                 not null comment '洞见窗口加额',
     voice_chat_bonus_weekly int        default 0                 not null comment '语音聊天每周加额',
     updated_at              timestamp  default CURRENT_TIMESTAMP null on update CURRENT_TIMESTAMP comment '更新时间'
@@ -236,6 +237,22 @@ create index idx_ai_quota_user
 alter table student_assessment_system.ai_quota_adjustments
     add constraint uk_ai_quota_user
         unique (user_id);
+
+create table if not exists student_assessment_system.ai_model_visibility
+(
+    id            bigint auto_increment comment '主键'
+        primary key,
+    surface       varchar(32)                          not null comment '使用场景：assistant/grading/voice',
+    audience      varchar(32)                          not null comment '端侧：teacher/student',
+    model_id      varchar(128)                         not null comment '内部模型ID',
+    visible       tinyint(1) default 0                 not null comment '是否展示给该端侧',
+    default_model tinyint(1) default 0                 not null comment '是否为该端侧默认模型',
+    updated_at    timestamp  default CURRENT_TIMESTAMP null on update CURRENT_TIMESTAMP comment '更新时间'
+)
+    comment 'AI模型可见性配置表' charset = utf8mb4;
+
+create unique index uk_ai_model_visibility
+    on student_assessment_system.ai_model_visibility (surface, audience, model_id);
 
 create table if not exists student_assessment_system.ai_messages
 (

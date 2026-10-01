@@ -10,6 +10,7 @@ import com.noncore.assessment.exception.ErrorCode;
 import com.noncore.assessment.mapper.AiConversationMapper;
 import com.noncore.assessment.mapper.AiMessageMapper;
 import com.noncore.assessment.service.AiConversationService;
+import com.noncore.assessment.service.AiModelRegistryService;
 import com.noncore.assessment.service.FileStorageService;
 import com.noncore.assessment.util.PageResult;
 import lombok.RequiredArgsConstructor;
@@ -30,11 +31,12 @@ public class AiConversationServiceImpl implements AiConversationService {
     private final AiMessageMapper messageMapper;
     private final FileStorageService fileStorageService;
     private final com.noncore.assessment.config.AiConfigProperties aiConfigProperties;
+    private final AiModelRegistryService modelRegistry;
 
     @Override
     public AiConversation createConversation(Long userId, String title, String model, String provider) {
         String normalizedModel = normalizeModel(model);
-        String normalizedProvider = (provider == null || provider.isBlank()) ? aiConfigProperties.getDefaultProvider() : provider.trim();
+        String normalizedProvider = (provider == null || provider.isBlank()) ? providerFor(normalizedModel) : provider.trim();
         AiConversation c = AiConversation.builder()
                 .userId(userId)
                 .title(title == null || title.isBlank() ? "新对话" : title.trim())
@@ -76,9 +78,7 @@ public class AiConversationServiceImpl implements AiConversationService {
         AiConversation c = getConversation(userId, conversationId);
         String normalizedModel = normalizeModel(model);
         c.setModel(normalizedModel);
-        if (normalizedModel != null && normalizedModel.startsWith("google/")) {
-            c.setProvider(aiConfigProperties.getDefaultProvider());
-        }
+        c.setProvider(providerFor(normalizedModel));
         conversationMapper.update(c);
     }
 
@@ -150,35 +150,15 @@ public class AiConversationServiceImpl implements AiConversationService {
 
     @Override
     public String normalizeModel(String model) {
-        String defaultModel = aiConfigProperties.getDeepseek().getModel();
-        if (defaultModel == null || defaultModel.isBlank()) {
-            defaultModel = "google/gemini-2.5-pro";
-        }
-        if (model == null || model.isBlank()) return defaultModel;
+        return modelRegistry.normalizeModel(model);
+    }
 
-        String trimmed = model.trim();
-        Map<String, String> aliases = new java.util.HashMap<>();
-        aliases.put("z-ai/glm-4.5-air", "glm-4.5-air");
-        aliases.put("z-ai/glm-4.5-air:free", "glm-4.5-air");
-        aliases.put("gemini-3-pro", "google/gemini-2.5-pro");
-        aliases.put("google/gemini-3-pro", "google/gemini-2.5-pro");
-        aliases.put("gemini-2.5-pro", "google/gemini-2.5-pro");
-        aliases.put("gemini-2.5-flash", "google/gemini-2.5-flash");
-        aliases.put("gemini-2.5-flash-lite", "google/gemini-2.5-flash-lite");
-        if (aliases.containsKey(trimmed)) {
-            trimmed = aliases.get(trimmed);
-        }
-        if (trimmed.startsWith("gemini-")) {
-            trimmed = "google/" + trimmed;
-        }
-        boolean allowedGoogle = trimmed.startsWith("google/");
-        Set<String> allowed = Set.of(
-                "glm-4.6",
-                "glm-4.5-air",
-                "glm-4.6v"
-        );
-        return allowedGoogle || allowed.contains(trimmed) ? trimmed : defaultModel;
+    private String providerFor(String model) {
+        if (modelRegistry.isVolcModel(model)) return "volc";
+        if (modelRegistry.isGoogleModel(model)) return "google";
+        if (modelRegistry.isGlmModel(model)) return "glm";
+        String configured = aiConfigProperties.getDefaultProvider();
+        return configured == null || configured.isBlank() ? "volc" : configured.trim();
     }
 }
-
 

@@ -271,33 +271,27 @@ async function gradeFiles(items: GradingItem[]) {
     const fileItems = items.filter(i => i.id && !i.text)
     const textItems = items.filter(i => i.text && (!i.result))
 
-    // 批量：文件ID走 /ai/grade/files
+    // 文件逐个批改：每个文件完成后立即更新状态，避免批量等待时页面看起来没有推进。
     if (fileItems.length) {
-      const ids = fileItems.map(i => i.id)
-      const resp: any = await aiGradingApi.gradeFiles({ fileIds: ids as number[], model: gradingModel.value, jsonOnly: true, useGradingPrompt: true })
-      const results = (resp?.data?.results || resp?.results || []) as any[]
-      for (const r of results) {
-        const target = files.value.find(f => f.id === Number(r.fileId))
-        if (!target) continue
-        if (r.error) { target.status = 'error'; target.error = r.error } else { target.status = 'done'; target.result = normalizeAssessment(r.result) }
-      }
-
-      // 对于批量中失败的项，回退：单个调用 /ai/grade/files jsonOnly=false，再尽力解析
-      const failed = fileItems.filter(i => i.status === 'error')
-      for (const it of failed) {
+      for (const it of fileItems) {
         try {
-          const one: any = await aiGradingApi.gradeFiles({ fileIds: [Number(it.id)], model: gradingModel.value, jsonOnly: false, useGradingPrompt: true })
-          const arr = one?.data?.results || one?.results || []
-          const first = Array.isArray(arr) ? arr[0] : null
-          const text = first?.result?.text || ''
-          if (text) {
-            let parsed: any = null
-            try { parsed = JSON.parse(String(text)) } catch { parsed = { error: 'INVALID_JSON', raw: String(text) } }
-            it.result = normalizeAssessment(parsed)
+          it.status = 'grading'
+          it.error = undefined
+          const resp: any = await aiGradingApi.gradeFiles({ fileIds: [Number(it.id)], model: gradingModel.value, jsonOnly: true, useGradingPrompt: true })
+          const results = (resp?.data?.results || resp?.results || []) as any[]
+          const first = Array.isArray(results) ? results[0] : null
+          const err = extractGradingError(first)
+          if (err) {
+            it.status = 'error'
+            it.error = err
+          } else {
+            it.result = normalizeAssessment(first?.result ?? first)
             it.status = 'done'
-            it.error = undefined
           }
-        } catch {}
+        } catch (e: any) {
+          it.status = 'error'
+          it.error = e?.message || 'Failed'
+        }
       }
     }
 
@@ -307,29 +301,20 @@ async function gradeFiles(items: GradingItem[]) {
         const payload = { messages: [{ role: 'user', content: String(tItem.text || '') }], model: gradingModel.value, jsonOnly: true, useGradingPrompt: true }
         const resp: any = await aiGradingApi.gradeEssay(payload as any)
         const result = resp?.data ?? resp
+        const err = extractGradingError(result)
+        if (err) throw new Error(err)
         tItem.result = normalizeAssessment(result)
         tItem.status = 'done'
       } catch (e: any) {
-        // Fallback：使用 /ai/chat（也支持 jsonOnly/useGradingPrompt）
+        // Fallback：仅当非 JSON 接口仍能返回可解析报告时使用；否则显示明确错误。
         try {
           const chat: any = await aiApi.chat({ messages: [{ role: 'user', content: String(tItem.text || '') }], model: gradingModel.value, jsonOnly: false, useGradingPrompt: true })
           const answer = chat?.answer || chat?.data?.answer || ''
-          tItem.result = { text: String(answer) }
+          tItem.result = normalizeAssessment(safeJsonParse(String(answer)))
           tItem.status = 'done'
         } catch (ee: any) {
-          // 二次回退：直接请求非 JSON-only
-          try {
-            const payload2 = { messages: [{ role: 'user', content: String(tItem.text || '') }], model: gradingModel.value, jsonOnly: false, useGradingPrompt: true }
-            const resp2: any = await aiGradingApi.gradeEssay(payload2 as any)
-            const text = resp2?.text || resp2?.data?.text || ''
-            if (text) {
-              tItem.result = { text: String(text) }
-              tItem.status = 'done'
-              return
-            }
-          } catch {}
           tItem.status = 'error'
-          tItem.error = ee?.message || 'Failed'
+          tItem.error = e?.message || ee?.message || 'Failed'
         }
       }
     }
@@ -516,6 +501,14 @@ function isJson(v: any) { return v && typeof v === 'object' && !Array.isArray(v)
 function pretty(v: any) { try { return JSON.stringify(v, null, 2) } catch { return String(v) } }
 function truncate(s: string, max = 800) { const str = String(s || ''); return str.length > max ? str.slice(0, max) + '…' : str }
 function formatBrief(v: any) { if (!v || typeof v !== 'object') return ''; const parts = [] as string[]; for (const [k, val] of Object.entries(v)) parts.push(`${k}: ${val}`); return parts.join(', ') }
+function extractGradingError(v: any): string {
+  const data = v?.data ?? v
+  const err = data?.error || data?.result?.error
+  if (err) return String(data?.message || data?.result?.message || err)
+  const code = Number(data?.code)
+  if (Number.isFinite(code) && code !== 200) return String(data?.message || 'AI 批改失败')
+  return ''
+}
 
 // 兼容不同 JSON 结构的 overall 提取
 function getOverall(obj: any): any {
@@ -602,10 +595,11 @@ function escapeHtml(s: string) {
 // Load courses and assignments options
 const courseOptions = ref<{label: string; value: string}[]>([])
 const assignmentOptions = ref<{label: string; value: string}[]>([])
-const gradingModel = ref('google/gemini-2.5-pro')
+const gradingModel = ref('volc/doubao-seed-2.0-pro')
 const gradingModelOptions = [
+  { label: 'Doubao Seed 2.0 Pro', value: 'volc/doubao-seed-2.0-pro' },
   { label: 'Gemini 2.5 Pro', value: 'google/gemini-2.5-pro' },
-  { label: 'Gemini 3 Pro Preview', value: 'google/gemini-3-pro-preview' }
+  { label: 'GLM-4.6', value: 'glm-4.6' }
 ]
 onMounted(async () => {
   try {
@@ -1420,5 +1414,3 @@ function safeJsonParse(raw: string): any {
 
 
  
-
-

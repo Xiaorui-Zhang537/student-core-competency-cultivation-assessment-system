@@ -212,7 +212,9 @@
         "insights": "行为洞察",
         "aiChat": "AI问答",
         "voice": "口语训练"
-      }
+      },
+      "quotaMetricDoubao": "豆包问答（每周）",
+      "quotaDoubaoBonus": "豆包问答每周加额"
     },
     "common": {
       "comingSoon": "功能开发中",

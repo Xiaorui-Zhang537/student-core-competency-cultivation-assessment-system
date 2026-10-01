@@ -2,7 +2,13 @@ package com.noncore.assessment.realtime.ai;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.noncore.assessment.config.AiConfigProperties;
+import com.noncore.assessment.realtime.ai.live.LiveVoiceSession;
 import com.noncore.assessment.realtime.ai.live.GeminiLiveSession;
+import com.noncore.assessment.realtime.ai.live.VolcRealtimeVoiceSession;
+import com.noncore.assessment.service.AiMemoryService;
+import com.noncore.assessment.service.AiModelRegistryService;
+import com.noncore.assessment.service.AiQuotaService;
+import com.noncore.assessment.service.AiVoicePracticeService;
 import com.noncore.assessment.service.llm.PromptLoader;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
@@ -32,15 +38,28 @@ public class AiLiveWebSocketHandler extends TextWebSocketHandler {
 
     private final AiConfigProperties aiConfigProperties;
     private final PromptLoader promptLoader;
+    private final AiModelRegistryService modelRegistry;
+    private final AiMemoryService memoryService;
+    private final AiVoicePracticeService voicePracticeService;
+    private final AiQuotaService quotaService;
 
     /**
-     * 每个前端 WS session 对应一个 Gemini Live 会话。
+     * 每个前端 WS session 对应一个实时语音会话。
      */
-    private final ConcurrentHashMap<String, GeminiLiveSession> liveSessions = new ConcurrentHashMap<>();
+    private final ConcurrentHashMap<String, LiveVoiceSession> liveSessions = new ConcurrentHashMap<>();
 
-    public AiLiveWebSocketHandler(AiConfigProperties aiConfigProperties, PromptLoader promptLoader) {
+    public AiLiveWebSocketHandler(AiConfigProperties aiConfigProperties,
+                                  PromptLoader promptLoader,
+                                  AiModelRegistryService modelRegistry,
+                                  AiMemoryService memoryService,
+                                  AiVoicePracticeService voicePracticeService,
+                                  AiQuotaService quotaService) {
         this.aiConfigProperties = aiConfigProperties;
         this.promptLoader = promptLoader;
+        this.modelRegistry = modelRegistry;
+        this.memoryService = memoryService;
+        this.voicePracticeService = voicePracticeService;
+        this.quotaService = quotaService;
     }
 
     /**
@@ -110,7 +129,7 @@ public class AiLiveWebSocketHandler extends TextWebSocketHandler {
     @Override
     public void afterConnectionClosed(WebSocketSession session, CloseStatus status) throws Exception {
         // 释放对应的 Gemini Live 会话
-        GeminiLiveSession live = liveSessions.remove(session.getId());
+        LiveVoiceSession live = liveSessions.remove(session.getId());
         if (live != null) {
             live.close();
         }
@@ -130,30 +149,27 @@ public class AiLiveWebSocketHandler extends TextWebSocketHandler {
         String locale = localeObj == null ? "" : String.valueOf(localeObj);
         String scenario = scenarioObj == null ? "" : String.valueOf(scenarioObj);
 
-        // Live API 可用模型与普通对话模型不同。若前端未指定模型，则根据输出模式选择 Live 推荐默认值：
-        // - 文本：gemini-live-2.5-flash-preview
-        // - 音频（含 both）：gemini-2.5-flash-native-audio-preview-12-2025
-        //
-        // 参考（官方文档示例）：https://ai.google.dev/gemini-api/docs/live-guide
-        String model = (modelObj == null || String.valueOf(modelObj).isBlank())
-                ? (("audio".equalsIgnoreCase(mode) || "both".equalsIgnoreCase(mode))
-                    ? "gemini-2.5-flash-native-audio-preview-12-2025"
-                    : "gemini-live-2.5-flash-preview")
-                : String.valueOf(modelObj);
-
-        // 仅允许 google 模型（Live 走 Gemini）
-        if (!model.startsWith("google/") && !model.startsWith("gemini-") && !model.startsWith("models/")) {
-            sendError(session, "INVALID_MODEL", "Live 仅支持 Gemini 模型（google/* 或 gemini-*）");
+        String model = modelRegistry.normalizeVoiceModel(modelObj == null ? null : String.valueOf(modelObj), mode);
+        if (!isVoiceModelVisibleForSession(session, model)) {
+            sendError(session, "MODEL_NOT_VISIBLE", "当前端侧未开放该语音模型");
             return;
         }
+        String quotaError = validateVoiceQuota(session);
+        if (quotaError != null) {
+            sendError(session, "VOICE_QUOTA_EXCEEDED", quotaError);
+            return;
+        }
+        scenario = appendMemoryContext(session, scenario);
 
         // 若已有旧会话，先关闭
-        GeminiLiveSession old = liveSessions.remove(session.getId());
+        LiveVoiceSession old = liveSessions.remove(session.getId());
         if (old != null) {
             old.close();
         }
 
-        GeminiLiveSession live = new GeminiLiveSession(aiConfigProperties, promptLoader, session);
+        LiveVoiceSession live = modelRegistry.isVolcModel(model)
+                ? new VolcRealtimeVoiceSession(aiConfigProperties, promptLoader, session)
+                : new GeminiLiveSession(aiConfigProperties, promptLoader, session);
         liveSessions.put(session.getId(), live);
 
         live.connect(model, mode, locale, scenario)
@@ -172,7 +188,7 @@ public class AiLiveWebSocketHandler extends TextWebSocketHandler {
      * 转发音频分片到 Gemini Live。
      */
     private void handleAudioChunk(WebSocketSession session, Map<?, ?> payload) {
-        GeminiLiveSession live = liveSessions.get(session.getId());
+        LiveVoiceSession live = liveSessions.get(session.getId());
         if (live == null) {
             sendError(session, "NOT_STARTED", "请先发送 start");
             return;
@@ -197,7 +213,7 @@ public class AiLiveWebSocketHandler extends TextWebSocketHandler {
      * 注意：仅当 setup 中禁用了 automaticActivityDetection 时可用。
      */
     private void handleActivityStart(WebSocketSession session) {
-        GeminiLiveSession live = liveSessions.get(session.getId());
+        LiveVoiceSession live = liveSessions.get(session.getId());
         if (live == null) {
             sendError(session, "NOT_STARTED", "请先发送 start");
             return;
@@ -211,7 +227,7 @@ public class AiLiveWebSocketHandler extends TextWebSocketHandler {
      * 注意：仅当 setup 中禁用了 automaticActivityDetection 时可用。
      */
     private void handleActivityEnd(WebSocketSession session) {
-        GeminiLiveSession live = liveSessions.get(session.getId());
+        LiveVoiceSession live = liveSessions.get(session.getId());
         if (live == null) {
             sendError(session, "NOT_STARTED", "请先发送 start");
             return;
@@ -224,7 +240,7 @@ public class AiLiveWebSocketHandler extends TextWebSocketHandler {
      * 停止会话（关闭 Gemini Live WS）。
      */
     private void handleStop(WebSocketSession session) {
-        GeminiLiveSession live = liveSessions.remove(session.getId());
+        LiveVoiceSession live = liveSessions.remove(session.getId());
         if (live != null) {
             live.close();
         }
@@ -255,5 +271,58 @@ public class AiLiveWebSocketHandler extends TextWebSocketHandler {
             // ignore
         }
     }
-}
 
+    private String appendMemoryContext(WebSocketSession session, String scenario) {
+        Long userId = null;
+        try {
+            userId = (Long) session.getAttributes().get(AiLiveHandshakeInterceptor.ATTR_USER_ID);
+        } catch (Exception ignored) {
+        }
+        String base = scenario == null ? "" : scenario.trim();
+        if (userId == null) return base;
+        try {
+            var mem = memoryService.getMemory(userId);
+            if (mem == null || !Boolean.TRUE.equals(mem.getEnabled())) return base;
+            String content = mem.getContent() == null ? "" : mem.getContent().trim();
+            if (content.isBlank()) return base;
+            if (content.length() > 3000) content = content.substring(0, 3000);
+            String memInstruction = "用户长期记忆（偏好/背景/约束）：\n"
+                    + content
+                    + "\n你应在不与当前口语任务冲突时参考这些记忆；若冲突，以当前任务为准；不要逐字复述记忆。";
+            return base.isBlank() ? memInstruction : (base + "\n\n" + memInstruction);
+        } catch (Exception ignored) {
+            return base;
+        }
+    }
+
+    private boolean isVoiceModelVisibleForSession(WebSocketSession session, String model) {
+        try {
+            String role = String.valueOf(session.getAttributes().get(AiLiveHandshakeInterceptor.ATTR_ROLE));
+            if ("ADMIN".equalsIgnoreCase(role)) return true;
+            String audience = "TEACHER".equalsIgnoreCase(role)
+                    ? AiModelRegistryService.AUDIENCE_TEACHER
+                    : AiModelRegistryService.AUDIENCE_STUDENT;
+            return modelRegistry.isVisibleFor(model, AiModelRegistryService.SURFACE_VOICE, audience);
+        } catch (Exception ignored) {
+            return false;
+        }
+    }
+
+    private String validateVoiceQuota(WebSocketSession session) {
+        try {
+            String role = String.valueOf(session.getAttributes().get(AiLiveHandshakeInterceptor.ATTR_ROLE));
+            if (!"STUDENT".equalsIgnoreCase(role)) return null;
+            Long userId = (Long) session.getAttributes().get(AiLiveHandshakeInterceptor.ATTR_USER_ID);
+            if (userId == null) return "未登录或登录状态已失效";
+            java.time.LocalDate today = java.time.LocalDate.now();
+            java.time.LocalDate monday = today.with(java.time.temporal.TemporalAdjusters.previousOrSame(java.time.DayOfWeek.MONDAY));
+            long used = voicePracticeService.countTurnsByUserSince(userId, monday.atStartOfDay());
+            int bonus = 0;
+            try { bonus = Math.max(0, quotaService.getVoiceChatBonusWeekly(userId)); } catch (Exception ignored) {}
+            int limit = AiQuotaService.BASE_VOICE_WEEKLY_LIMIT + bonus;
+            return used >= limit ? "本周口语训练调用次数已达上限（" + limit + "次），请下周再试" : null;
+        } catch (Exception ignored) {
+            return "无法校验口语训练配额";
+        }
+    }
+}

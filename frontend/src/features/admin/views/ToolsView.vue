@@ -36,6 +36,71 @@
       />
     </div>
 
+    <card padding="lg" tint="primary" class="overflow-hidden">
+      <template #header>
+        <div class="flex items-center justify-between gap-3 flex-wrap">
+          <div class="flex items-center gap-3">
+            <div class="w-11 h-11 rounded-2xl bg-blue-500/15 text-blue-600 dark:text-blue-300 flex items-center justify-center">
+              <ChatBubbleLeftRightIcon class="w-5 h-5" />
+            </div>
+            <div>
+              <h2 class="text-lg font-semibold text-base-content">{{ isZh ? 'AI 模型展示控制' : 'AI Model Visibility' }}</h2>
+              <p class="text-xs text-subtle mt-1">{{ isZh ? '控制教师端、学生端可见模型与默认模型；只有一个可见模型时端上会隐藏选择器。' : 'Control visible/default models for teacher and student clients.' }}</p>
+            </div>
+          </div>
+          <div class="flex items-center gap-2">
+            <Button size="sm" variant="outline" :loading="modelVisibilityLoading" @click="fetchAiModelVisibility">
+              <ArrowPathIcon class="w-4 h-4 mr-2" />
+              {{ isZh ? '刷新' : 'Refresh' }}
+            </Button>
+            <Button size="sm" variant="primary" :disabled="modelVisibilityLoading || modelVisibilitySaving" :loading="modelVisibilitySaving" @click="saveAiModelVisibility">
+              {{ isZh ? '保存模型配置' : 'Save Models' }}
+            </Button>
+          </div>
+        </div>
+      </template>
+
+      <div v-if="modelVisibilityError" class="text-xs text-red-500 rounded-xl border border-red-200/60 dark:border-red-700/50 bg-red-50/70 dark:bg-red-950/20 px-3 py-2 mb-3">
+        {{ modelVisibilityError }}
+      </div>
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+        <div
+          v-for="group in modelVisibilityGroups"
+          :key="group.surface"
+          class="rounded-2xl border border-white/20 dark:border-white/10 bg-white/10 p-4 space-y-3"
+        >
+          <div class="font-semibold text-sm text-base-content">{{ group.label }}</div>
+          <div class="space-y-2">
+            <div
+              v-for="item in group.items"
+              :key="`${item.surface}-${item.audience}-${item.modelId}`"
+              class="rounded-xl border border-white/15 bg-white/10 px-3 py-2"
+            >
+              <div class="flex items-start justify-between gap-3">
+                <div class="min-w-0">
+                  <div class="text-sm font-medium truncate">{{ item.label || item.modelId }}</div>
+                  <div class="text-[11px] text-subtle truncate">{{ audienceLabel(item.audience) }} · {{ item.provider || '-' }} · {{ item.modelId }}</div>
+                </div>
+                <label class="text-xs flex items-center gap-1 shrink-0">
+                  <input type="checkbox" v-model="item.visible" />
+                  <span>{{ isZh ? '可见' : 'Visible' }}</span>
+                </label>
+              </div>
+              <label class="mt-2 text-xs flex items-center gap-1">
+                <input
+                  type="radio"
+                  :name="`default-${item.surface}-${item.audience}`"
+                  :checked="item.defaultModel"
+                  @change="setDefaultAiModel(item)"
+                />
+                <span>{{ isZh ? '设为默认' : 'Default' }}</span>
+              </label>
+            </div>
+          </div>
+        </div>
+      </div>
+    </card>
+
     <div class="grid grid-cols-1 gap-6 items-start">
       <card padding="lg" tint="info" class="overflow-hidden">
         <template #header>
@@ -732,7 +797,7 @@ import GlassTextarea from '@/components/ui/inputs/GlassTextarea.vue'
 import EmojiPicker from '@/components/ui/EmojiPicker.vue'
 import GlassPopoverSelect from '@/components/ui/filters/GlassPopoverSelect.vue'
 import { notificationAPI } from '@/api/notification.api'
-import { adminApi, type AdminUserListItem } from '@/api/admin.api'
+import { adminApi, type AdminAiModelVisibilityItem, type AdminUserListItem } from '@/api/admin.api'
 import { helpApi } from '@/api/help.api'
 import { useUIStore } from '@/stores/ui'
 import type { HelpArticle, HelpArticleUpsertRequest, HelpCategory, HelpCategoryCreateRequest, HelpTicket, HelpTicketDetail } from '@/types/help'
@@ -755,6 +820,73 @@ const route = useRoute()
 const ui = useUIStore()
 
 const isZh = computed(() => String(locale.value || '').toLowerCase().startsWith('zh'))
+const modelVisibilityLoading = ref(false)
+const modelVisibilitySaving = ref(false)
+const modelVisibilityError = ref('')
+const aiModelVisibilityItems = ref<AdminAiModelVisibilityItem[]>([])
+
+const surfaceLabel = (surface: string) => {
+  if (surface === 'assistant') return isZh.value ? 'AI 助理' : 'Assistant'
+  if (surface === 'voice') return isZh.value ? '口语训练' : 'Voice Practice'
+  if (surface === 'grading') return isZh.value ? '作业批改' : 'Grading'
+  return surface
+}
+
+function audienceLabel(audience: string) {
+  return audience === 'teacher'
+    ? (isZh.value ? '教师端' : 'Teacher')
+    : (isZh.value ? '学生端' : 'Student')
+}
+
+const modelVisibilityGroups = computed(() => {
+  const order = ['assistant', 'voice', 'grading']
+  return order.map((surface) => ({
+    surface,
+    label: surfaceLabel(surface),
+    items: aiModelVisibilityItems.value.filter((item) => item.surface === surface)
+  })).filter((group) => group.items.length > 0)
+})
+
+function setDefaultAiModel(item: AdminAiModelVisibilityItem) {
+  aiModelVisibilityItems.value.forEach((candidate) => {
+    if (candidate.surface === item.surface && candidate.audience === item.audience) {
+      candidate.defaultModel = candidate.modelId === item.modelId
+      if (candidate.defaultModel) candidate.visible = true
+    }
+  })
+}
+
+async function fetchAiModelVisibility() {
+  modelVisibilityLoading.value = true
+  modelVisibilityError.value = ''
+  try {
+    const res = await adminApi.getAiModelVisibility()
+    aiModelVisibilityItems.value = Array.isArray(res?.items) ? res.items : []
+  } catch (error: any) {
+    modelVisibilityError.value = error?.message || (isZh.value ? '加载模型配置失败' : 'Failed to load model settings')
+  } finally {
+    modelVisibilityLoading.value = false
+  }
+}
+
+async function saveAiModelVisibility() {
+  modelVisibilitySaving.value = true
+  modelVisibilityError.value = ''
+  try {
+    const res = await adminApi.updateAiModelVisibility(aiModelVisibilityItems.value)
+    aiModelVisibilityItems.value = Array.isArray(res?.items) ? res.items : []
+    ui.showNotification({
+      type: 'success',
+      title: isZh.value ? '已保存' : 'Saved',
+      message: isZh.value ? 'AI 模型展示配置已更新' : 'AI model visibility updated'
+    })
+  } catch (error: any) {
+    modelVisibilityError.value = error?.message || (isZh.value ? '保存模型配置失败' : 'Failed to save model settings')
+  } finally {
+    modelVisibilitySaving.value = false
+  }
+}
+
 const copy = computed(() => (isZh.value
   ? {
       subtitle: '管理员通知发送与支持单处理工作台',
@@ -1807,7 +1939,8 @@ const changeTicketStatus = async () => {
 onMounted(async () => {
   await Promise.all([
     fetchTickets(true),
-    fetchHelpCategories()
+    fetchHelpCategories(),
+    fetchAiModelVisibility()
   ])
   await fetchAdminHelpArticles()
 })

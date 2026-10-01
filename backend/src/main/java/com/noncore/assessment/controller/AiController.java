@@ -13,6 +13,7 @@ import com.noncore.assessment.entity.AiMemory;
 import com.noncore.assessment.entity.AiVoiceTurn;
 import com.noncore.assessment.service.AiConversationService;
 import com.noncore.assessment.service.AiMemoryService;
+import com.noncore.assessment.service.AiModelRegistryService;
 import com.noncore.assessment.service.AiQuotaService;
 import com.noncore.assessment.service.AiVoicePracticeService;
 import com.noncore.assessment.util.PageResult;
@@ -51,6 +52,7 @@ public class AiController extends BaseController {
     private final AiMemoryService memoryService;
     private final AiQuotaService quotaService;
     private final AiVoicePracticeService voicePracticeService;
+    private final AiModelRegistryService modelRegistry;
     private final FileStorageService fileStorageService;
     private final DocumentTextExtractor documentTextExtractor;
     private final com.noncore.assessment.config.AiConfigProperties aiConfigProperties;
@@ -61,6 +63,7 @@ public class AiController extends BaseController {
                         AiMemoryService memoryService,
                         AiQuotaService quotaService,
                         AiVoicePracticeService voicePracticeService,
+                        AiModelRegistryService modelRegistry,
                         FileStorageService fileStorageService,
                         DocumentTextExtractor documentTextExtractor,
                         com.noncore.assessment.service.AiGradingHistoryService historyService,
@@ -72,6 +75,7 @@ public class AiController extends BaseController {
         this.memoryService = memoryService;
         this.quotaService = quotaService;
         this.voicePracticeService = voicePracticeService;
+        this.modelRegistry = modelRegistry;
         this.fileStorageService = fileStorageService;
         this.documentTextExtractor = documentTextExtractor;
         this.historyService = historyService;
@@ -92,6 +96,7 @@ public class AiController extends BaseController {
      * SSE 心跳线程池：用于在模型耗时较长时保持连接活跃（降低部分代理 idle timeout 风险）。
      */
     private static final ScheduledExecutorService SSE_HEARTBEAT = Executors.newScheduledThreadPool(1);
+    private static final int GRADING_FILE_TEXT_MAX_CHARS = 12000;
 
     @PostMapping("/chat")
     @PreAuthorize("isAuthenticated()")
@@ -102,6 +107,7 @@ public class AiController extends BaseController {
         }
         Long userId = getCurrentUserId();
         String targetModel = resolveModel(request, userId);
+        enforceAssistantModelVisibility(request, targetModel);
 
         enforceStudentAiChatQuota(userId, targetModel, false);
         // 确定会话
@@ -184,6 +190,7 @@ public class AiController extends BaseController {
         }
         Long userId = getCurrentUserId();
         String targetModel = resolveModel(request, userId);
+        enforceAssistantModelVisibility(request, targetModel);
 
         enforceStudentAiChatQuota(userId, targetModel, true);
 
@@ -269,7 +276,7 @@ public class AiController extends BaseController {
                 emitter.complete();
             } catch (Exception e) {
                 try { emitter.send(SseEmitter.event().name("error").data(java.util.Map.of("message", e.getMessage() != null ? e.getMessage() : "AI request failed"))); } catch (Exception ignored) {}
-                try { emitter.completeWithError(e); } catch (Exception ignored) { try { emitter.complete(); } catch (Exception i2) {} }
+                try { emitter.complete(); } catch (Exception ignored) {}
             } finally { stop.run(); }
         });
         return emitter;
@@ -302,7 +309,7 @@ public class AiController extends BaseController {
         AiVoiceTurn turn = voicePracticeService.appendTurn(
                 userId,
                 sessionId,
-                req.getModel(),
+                modelRegistry.normalizeVoiceModel(req.getModel(), null),
                 req.getUserTranscript(),
                 req.getAssistantText(),
                 req.getUserAudioFileId(),
@@ -342,7 +349,7 @@ public class AiController extends BaseController {
     }
 
     private String resolveModel(AiChatRequest request, Long userId) {
-        String defaultModel = aiConfigProperties.getDeepseek().getModel();
+        String defaultModel = modelRegistry.defaultAssistantModel();
         if (request.getConversationId() != null) {
             try {
                 AiConversation conv = conversationService.getConversation(userId, request.getConversationId());
@@ -354,6 +361,16 @@ public class AiController extends BaseController {
         String requested = request.getModel();
         if (requested == null || requested.isBlank()) return defaultModel;
         return conversationService.normalizeModel(requested);
+    }
+
+    private void enforceAssistantModelVisibility(AiChatRequest request, String targetModel) {
+        if (hasRole("ADMIN")) return;
+        // 已有会话保留原模型，避免管理员后续隐藏模型导致历史对话中断。
+        if (request != null && request.getConversationId() != null) return;
+        String audience = hasRole("TEACHER") ? AiModelRegistryService.AUDIENCE_TEACHER : AiModelRegistryService.AUDIENCE_STUDENT;
+        if (!modelRegistry.isVisibleFor(targetModel, AiModelRegistryService.SURFACE_ASSISTANT, audience)) {
+            throw new BusinessException(ErrorCode.PERMISSION_DENIED, "当前端侧未开放该 AI 模型");
+        }
     }
 
     private java.time.LocalDateTime startOfCurrentWeek() {
@@ -388,6 +405,19 @@ public class AiController extends BaseController {
                         : ("本周 GLM 使用次数已达上限（" + limit + "次），请下周再试");
                 throw new BusinessException(ErrorCode.PERMISSION_DENIED, msg);
             }
+            return;
+        }
+        if (model.startsWith("volc/doubao-")) {
+            int doubaoBonus = 0;
+            try { doubaoBonus = Math.max(0, quotaService.getDoubaoChatBonusWeekly(userId)); } catch (Exception ignored) {}
+            long used = conversationService.countAssistantMessagesByModelSince(userId, "volc/doubao-", startOfWeek);
+            int limit = AiQuotaService.BASE_DOUBAO_WEEKLY_LIMIT + doubaoBonus;
+            if (used >= limit) {
+                String msg = streamMode
+                        ? ("本周豆包使用次数已达上限（" + limit + "次）")
+                        : ("本周豆包使用次数已达上限（" + limit + "次），请下周再试");
+                throw new BusinessException(ErrorCode.PERMISSION_DENIED, msg);
+            }
         }
     }
 
@@ -398,13 +428,7 @@ public class AiController extends BaseController {
         Long userId = getCurrentUserId();
         java.util.List<Integer> ids = (java.util.List<Integer>) body.getOrDefault("fileIds", java.util.List.of());
         java.util.List<Long> fileIds = ids.stream().map(Integer::longValue).toList();
-        String model = (String) body.get("model");
-        // 允许 google/* 与 glm-*，其余回退默认（避免前端选了 GLM 但后端被强制改为 Gemini）
-        if (model == null || model.isBlank()) {
-            model = "google/gemini-2.5-pro";
-        } else if (!(model.startsWith("google/") || model.startsWith("glm-"))) {
-            model = "google/gemini-2.5-pro";
-        }
+        String model = modelRegistry.normalizeGradingModel((String) body.get("model"));
         // 批改场景：默认强制 JSON-only
         Boolean jsonOnly = (Boolean) body.get("jsonOnly");
         if (jsonOnly == null) jsonOnly = Boolean.TRUE;
@@ -425,6 +449,10 @@ public class AiController extends BaseController {
                 String fileName = info != null ? (info.getOriginalName() != null ? info.getOriginalName() : info.getStoredName()) : ("#" + fid);
                 byte[] bytes = fileStorageService.downloadFile(fid, userId);
                 String text = documentTextExtractor.extractText(new java.io.ByteArrayInputStream(bytes), fileName, info != null ? info.getMimeType() : null);
+                if (text == null || text.trim().isEmpty()) {
+                    throw new IllegalArgumentException("无法从文件中提取可批改文本，请上传可复制文本的 PDF/DOCX/TXT，或改用文本内容批改");
+                }
+                text = trimGradingInputText(text, fileName);
                 // 组装请求（使用 setter 而非全参构造）
                 var req = new com.noncore.assessment.dto.request.AiChatRequest();
                 req.setMessages(java.util.List.of(new com.noncore.assessment.dto.request.AiChatRequest.Message("user", text)));
@@ -438,6 +466,9 @@ public class AiController extends BaseController {
                     var stable = generateStableJsonOnly(req, userId, samplesRequested, diffThreshold);
                     parsed = stable.get("result") instanceof java.util.Map<?,?> m ? (java.util.Map<String, Object>) m : java.util.Map.of();
                     respText = String.valueOf(stable.getOrDefault("rawJson", ""));
+                    if (!AiGradingNormalizer.isRenderable(parsed)) {
+                        throw new IllegalArgumentException("Invalid grading JSON shape returned by model");
+                    }
                 } else {
                     respText = Boolean.TRUE.equals(jsonOnly)
                             ? aiService.generateAnswerJsonOnly(req, userId)
@@ -447,7 +478,7 @@ public class AiController extends BaseController {
                             : java.util.Map.of("text", respText);
                     // 单次也补齐 overall，保持输出一致（并同步 rawJson）
                     if (Boolean.TRUE.equals(jsonOnly)) {
-                        p = AiGradingNormalizer.normalize(p);
+                        p = normalizeRenderableGrading(p);
                         respText = com.noncore.assessment.util.Jsons.toJson(p);
                     }
                     parsed = p;
@@ -511,19 +542,23 @@ public class AiController extends BaseController {
 
         // 强制 JSON-only（与接口语义一致）
         request.setJsonOnly(Boolean.TRUE);
+        request.setModel(modelRegistry.normalizeGradingModel(request.getModel()));
 
-        String json;
+        String json = "";
         java.util.Map<String, Object> parsed;
-        if (samplesRequested > 1) {
-            var stable = generateStableJsonOnly(request, userId, samplesRequested, diffThreshold);
-            parsed = stable.get("result") instanceof java.util.Map<?,?> m ? (java.util.Map<String, Object>) m : java.util.Map.of();
-            json = String.valueOf(stable.getOrDefault("rawJson", ""));
-        } else {
-            json = aiService.generateAnswerJsonOnly(request, userId);
-            parsed = AiGradingNormalizer.normalize(com.noncore.assessment.util.Jsons.parseObject(json));
-            json = com.noncore.assessment.util.Jsons.toJson(parsed);
-        }
         try {
+            if (samplesRequested > 1) {
+                var stable = generateStableJsonOnly(request, userId, samplesRequested, diffThreshold);
+                parsed = stable.get("result") instanceof java.util.Map<?,?> m ? (java.util.Map<String, Object>) m : java.util.Map.of();
+                json = String.valueOf(stable.getOrDefault("rawJson", ""));
+                if (!AiGradingNormalizer.isRenderable(parsed)) {
+                    throw new IllegalArgumentException("Invalid grading JSON shape returned by model");
+                }
+            } else {
+                json = aiService.generateAnswerJsonOnly(request, userId);
+                parsed = normalizeRenderableGrading(com.noncore.assessment.util.Jsons.parseObject(json));
+                json = com.noncore.assessment.util.Jsons.toJson(parsed);
+            }
             // 写入 AI 批改历史（essay 无文件ID）
             try {
                 Double finalScore = null;
@@ -544,11 +579,11 @@ public class AiController extends BaseController {
                 return ResponseEntity.ok(ApiResponse.success(parsed));
             }
         } catch (IllegalArgumentException ex) {
-            return ResponseEntity.ok(ApiResponse.success(java.util.Map.of(
-                    "error", "INVALID_JSON",
-                    "message", ex.getMessage(),
-                    "raw", json
-            )));
+            return ResponseEntity.badRequest().body(ApiResponse.error(
+                    400,
+                    "AI 批改返回的 JSON 不符合前端报告结构：" + ex.getMessage(),
+                    java.util.Map.of("raw", json)
+            ));
         }
     }
 
@@ -587,6 +622,7 @@ public class AiController extends BaseController {
 
         // 强制 JSON-only（与批改接口语义一致）
         request.setJsonOnly(Boolean.TRUE);
+        request.setModel(modelRegistry.normalizeGradingModel(request.getModel()));
 
         // 0 表示不由 Spring 触发超时；由心跳与前端 Abort 控制生命周期
         SseEmitter emitter = new SseEmitter(0L);
@@ -633,7 +669,7 @@ public class AiController extends BaseController {
                     rawRuns.add(json);
                     try {
                         java.util.Map<String, Object> parsed = com.noncore.assessment.util.Jsons.parseObject(json);
-                        java.util.Map<String, Object> normalized = AiGradingNormalizer.normalize(parsed);
+                        java.util.Map<String, Object> normalized = normalizeRenderableGrading(parsed);
                         runs.add(normalized);
                         double score05 = AiGradingNormalizer.extractFinalScore05(normalized);
                         emitter.send(SseEmitter.event().name("run").data(java.util.Map.of(
@@ -645,7 +681,9 @@ public class AiController extends BaseController {
                         emitter.send(SseEmitter.event().name("run").data(java.util.Map.of(
                                 "index", attemptIndex,
                                 "ok", false,
-                                "error", "INVALID_JSON"
+                                "error", "INVALID_JSON",
+                                "message", ex.getMessage() == null ? "Invalid grading JSON shape" : ex.getMessage(),
+                                "raw", briefRaw(json)
                         )));
                     }
                 }
@@ -669,7 +707,7 @@ public class AiController extends BaseController {
                             String json3 = aiService.generateAnswerJsonOnly(request, userId);
                             rawRuns.add(json3);
                             java.util.Map<String, Object> parsed3 = com.noncore.assessment.util.Jsons.parseObject(json3);
-                            java.util.Map<String, Object> normalized3 = AiGradingNormalizer.normalize(parsed3);
+                            java.util.Map<String, Object> normalized3 = normalizeRenderableGrading(parsed3);
                             runs.add(normalized3);
                             double s3 = AiGradingNormalizer.extractFinalScore05(normalized3);
                             emitter.send(SseEmitter.event().name("run").data(java.util.Map.of(
@@ -681,7 +719,9 @@ public class AiController extends BaseController {
                             emitter.send(SseEmitter.event().name("run").data(java.util.Map.of(
                                     "index", 3,
                                     "ok", false,
-                                    "error", "INVALID_JSON"
+                                    "error", "INVALID_JSON",
+                                    "message", ex.getMessage() == null ? "Invalid grading JSON shape" : ex.getMessage(),
+                                    "raw", briefRaw(rawRuns.isEmpty() ? "" : rawRuns.get(rawRuns.size() - 1))
                             )));
                         }
                     }
@@ -691,8 +731,8 @@ public class AiController extends BaseController {
                 if (runs.isEmpty()) {
                     String raw = rawRuns.isEmpty() ? "" : rawRuns.get(rawRuns.size() - 1);
                     emitter.send(SseEmitter.event().name("error").data(java.util.Map.of(
-                            "message", "Invalid JSON returned by model",
-                            "raw", raw
+                            "message", "模型返回了 JSON，但无法转换成前端报告结构。请查看本次取样错误或 raw 摘要。",
+                            "raw", briefRaw(raw)
                     )));
                     emitter.complete();
                     stop.run();
@@ -733,11 +773,7 @@ public class AiController extends BaseController {
                             "message", e.getMessage() == null ? "Failed" : e.getMessage()
                     )));
                 } catch (Exception ignored) {}
-                try {
-                    emitter.completeWithError(e);
-                } catch (Exception ignored) {
-                    try { emitter.complete(); } catch (Exception ignore2) {}
-                }
+                try { emitter.complete(); } catch (Exception ignored) {}
             } finally {
                 stop.run();
             }
@@ -769,7 +805,7 @@ public class AiController extends BaseController {
             rawRuns.add(json);
             try {
                 java.util.Map<String, Object> parsed = com.noncore.assessment.util.Jsons.parseObject(json);
-                runs.add(AiGradingNormalizer.normalize(parsed));
+                runs.add(normalizeRenderableGrading(parsed));
             } catch (Exception ignored) {
                 // 忽略无效 JSON（后续若无可用结果则整体返回 INVALID_JSON）
             }
@@ -784,7 +820,7 @@ public class AiController extends BaseController {
                     String json3 = aiService.generateAnswerJsonOnly(baseRequest, userId);
                     rawRuns.add(json3);
                     java.util.Map<String, Object> parsed3 = com.noncore.assessment.util.Jsons.parseObject(json3);
-                    runs.add(AiGradingNormalizer.normalize(parsed3));
+                    runs.add(normalizeRenderableGrading(parsed3));
                 } catch (Exception ignored) {}
             }
         }
@@ -824,6 +860,35 @@ public class AiController extends BaseController {
         }
     }
 
+    private java.util.Map<String, Object> normalizeRenderableGrading(java.util.Map<String, Object> raw) {
+        java.util.Map<String, Object> normalized = AiGradingNormalizer.normalize(raw);
+        if (!AiGradingNormalizer.isRenderable(normalized)) {
+            throw new IllegalArgumentException("Invalid grading JSON shape returned by model");
+        }
+        return normalized;
+    }
+
+    private String briefRaw(String raw) {
+        if (raw == null) return "";
+        String s = raw.replaceAll("\\s+", " ").trim();
+        return s.length() > 800 ? s.substring(0, 800) + "...(truncated)" : s;
+    }
+
+    private String trimGradingInputText(String text, String fileName) {
+        if (text == null) return "";
+        String normalized = text.replace("\u0000", " ")
+                .replaceAll("\\r\\n?", "\n")
+                .replaceAll("\\n{4,}", "\n\n\n")
+                .trim();
+        if (normalized.length() <= GRADING_FILE_TEXT_MAX_CHARS) {
+            return normalized;
+        }
+        String head = normalized.substring(0, Math.min(normalized.length(), GRADING_FILE_TEXT_MAX_CHARS));
+        return head + "\n\n[系统提示：文件 " + (fileName == null ? "" : fileName)
+                + " 的可提取文本较长，本次已截取前 " + GRADING_FILE_TEXT_MAX_CHARS
+                + " 个字符用于 AI 批改。请基于以上内容完成报告，不要因为截断而等待更多文本。]";
+    }
+
     @PostMapping("/grade/essay/batch")
     @PreAuthorize("hasRole('TEACHER')")
     @Operation(summary = "AI 批量批改作文（强制 JSON 输出）")
@@ -840,19 +905,23 @@ public class AiController extends BaseController {
             if (diffThreshold > 5) diffThreshold = 5;
 
             req.setJsonOnly(Boolean.TRUE);
+            req.setModel(modelRegistry.normalizeGradingModel(req.getModel()));
 
-            String json;
+            String json = "";
             java.util.Map<String, Object> parsed;
-            if (samplesRequested > 1) {
-                var stable = generateStableJsonOnly(req, userId, samplesRequested, diffThreshold);
-                parsed = stable.get("result") instanceof java.util.Map<?,?> m ? (java.util.Map<String, Object>) m : java.util.Map.of();
-                json = String.valueOf(stable.getOrDefault("rawJson", ""));
-            } else {
-                json = aiService.generateAnswerJsonOnly(req, userId);
-                parsed = AiGradingNormalizer.normalize(com.noncore.assessment.util.Jsons.parseObject(json));
-                json = com.noncore.assessment.util.Jsons.toJson(parsed);
-            }
             try {
+                if (samplesRequested > 1) {
+                    var stable = generateStableJsonOnly(req, userId, samplesRequested, diffThreshold);
+                    parsed = stable.get("result") instanceof java.util.Map<?,?> m ? (java.util.Map<String, Object>) m : java.util.Map.of();
+                    json = String.valueOf(stable.getOrDefault("rawJson", ""));
+                    if (!AiGradingNormalizer.isRenderable(parsed)) {
+                        throw new IllegalArgumentException("Invalid grading JSON shape returned by model");
+                    }
+                } else {
+                    json = aiService.generateAnswerJsonOnly(req, userId);
+                    parsed = normalizeRenderableGrading(com.noncore.assessment.util.Jsons.parseObject(json));
+                    json = com.noncore.assessment.util.Jsons.toJson(parsed);
+                }
                 results.add(parsed);
                 // history
                 Double finalScore = null;
@@ -920,8 +989,15 @@ public class AiController extends BaseController {
     @PreAuthorize("isAuthenticated()")
     @Operation(summary = "新建会话")
     public ResponseEntity<ApiResponse<AiConversation>> createConversation(@RequestBody CreateConversationRequest req) {
+        String model = conversationService.normalizeModel(req.getModel());
+        if (!hasRole("ADMIN")) {
+            String audience = hasRole("TEACHER") ? AiModelRegistryService.AUDIENCE_TEACHER : AiModelRegistryService.AUDIENCE_STUDENT;
+            if (!modelRegistry.isVisibleFor(model, AiModelRegistryService.SURFACE_ASSISTANT, audience)) {
+                throw new BusinessException(ErrorCode.PERMISSION_DENIED, "当前端侧未开放该 AI 模型");
+            }
+        }
         AiConversation c = conversationService.createConversation(getCurrentUserId(),
-                req.getTitle(), req.getModel(), req.getProvider());
+                req.getTitle(), model, req.getProvider());
         return ResponseEntity.ok(ApiResponse.success(c));
     }
 
@@ -942,6 +1018,16 @@ public class AiController extends BaseController {
     @PreAuthorize("isAuthenticated()")
     @Operation(summary = "更新会话")
     public ResponseEntity<ApiResponse<Void>> updateConversation(@PathVariable Long id, @RequestBody UpdateConversationRequest req) {
+        if (req.getModel() != null && !req.getModel().isBlank()) {
+            String model = conversationService.normalizeModel(req.getModel());
+            if (!hasRole("ADMIN")) {
+                String audience = hasRole("TEACHER") ? AiModelRegistryService.AUDIENCE_TEACHER : AiModelRegistryService.AUDIENCE_STUDENT;
+                if (!modelRegistry.isVisibleFor(model, AiModelRegistryService.SURFACE_ASSISTANT, audience)) {
+                    throw new BusinessException(ErrorCode.PERMISSION_DENIED, "当前端侧未开放该 AI 模型");
+                }
+            }
+            conversationService.updateConversationModel(getCurrentUserId(), id, model);
+        }
         conversationService.updateConversation(getCurrentUserId(), id, req.getTitle(), req.getPinned(), req.getArchived());
         return ResponseEntity.ok(ApiResponse.success());
     }

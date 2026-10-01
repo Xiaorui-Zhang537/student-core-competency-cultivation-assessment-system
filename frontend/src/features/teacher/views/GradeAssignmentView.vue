@@ -415,7 +415,9 @@
                       </svg>
                       <span class="truncate max-w-[60%]" :title="it.name">{{ it.name }}</span>
                     </div>
-                    <span class="ml-2" :class="it.status==='error' ? 'text-red-600' : (it.status==='done' ? 'text-green-600' : 'text-gray-600')">{{ t('teacher.aiGrading.status.' + it.status) }}</span>
+                      <span class="ml-2 truncate max-w-[45%]" :title="it.error || ''" :class="it.status==='error' ? 'text-red-600' : (it.status==='done' ? 'text-green-600' : 'text-gray-600')">
+                        {{ it.status==='error' ? (it.error || t('teacher.aiGrading.status.error')) : t('teacher.aiGrading.status.' + it.status) }}
+                      </span>
                   </li>
                 </ul>
               </card>
@@ -1053,6 +1055,14 @@ watch(aiRawJson, () => {
   try { refreshAiDetailParsed() } catch {}
 })
 const pretty = (v: any) => { try { return JSON.stringify(typeof v === 'string' ? JSON.parse(v) : v, null, 2) } catch { return String(v || '') } }
+function extractGradingError(v: any): string {
+  const data = v?.data ?? v
+  const err = data?.error || data?.result?.error
+  if (err) return String(data?.message || data?.result?.message || err)
+  const code = Number(data?.code)
+  if (Number.isFinite(code) && code !== 200) return String(data?.message || 'AI 批改失败')
+  return ''
+}
 
 // （移除重复定义，统一使用 aiDetailParsed）
 function getOverall(obj: any): any { if (!obj || typeof obj !== 'object') return null; if ((obj as any).overall) return (obj as any).overall; if ((obj as any).final_score || (obj as any).holistic_feedback || (obj as any).dimension_averages) return obj; return null }
@@ -1363,7 +1373,7 @@ async function loadLatestAiReportForStudent() {
       for (const l of lines) {
         const ln = String(l || '').trim()
         if (!ln) continue
-        if (!inKeys) { if (ln.toLowerCase().includes('key suggestions')) { inKeys = true } continue }
+        if (!inKeys) { if (ln.toLowerCase().includes('key suggestions') || ln.includes('关键建议')) { inKeys = true } continue }
         let item = ln
         if (item.startsWith('- ')) item = item.substring(2).trim()
         if (item.startsWith('• ')) item = item.substring(2).trim()
@@ -1668,10 +1678,11 @@ const previewSingleFile = async () => {
 }
 
 // ---- AI 弹窗逻辑 ----
-const gradingModel = ref('google/gemini-2.5-pro')
+const gradingModel = ref('volc/doubao-seed-2.0-pro')
 const gradingModelOptions = [
+  { label: 'Doubao Seed 2.0 Pro', value: 'volc/doubao-seed-2.0-pro' },
   { label: 'Gemini 2.5 Pro', value: 'google/gemini-2.5-pro' },
-  { label: 'Gemini 3 Pro Preview', value: 'google/gemini-3-pro-preview' }
+  { label: 'GLM-4.6', value: 'glm-4.6' }
 ]
 const aiSource = ref<'text'|'files'>('text')
 const aiPicker = reactive({ previewText: '', files: [] as any[], selectedFileIds: [] as number[] })
@@ -1768,6 +1779,7 @@ async function startAiGradingFromModal() {
         const decoder = new TextDecoder('utf-8')
         const reader = res.body.getReader()
         let buffer = ''
+        let terminalEventReceived = false
 
         const upsertRun = (run: any) => {
           const idx = Number(run?.index || 0)
@@ -1776,7 +1788,7 @@ async function startAiGradingFromModal() {
           const s05 = run?.finalScore05
           const item: AiStableRun = ok && s05 != null
             ? { index: idx, ok: true, finalScore05: Number(s05), finalScore: score05ToFull(Number(s05)) }
-            : { index: idx, ok: false, error: String(run?.error || 'INVALID_JSON') }
+            : { index: idx, ok: false, error: String(run?.message || run?.error || 'INVALID_JSON') + (run?.raw ? `：${String(run.raw).slice(0, 220)}` : '') }
           const at = aiStable.runs.findIndex(r => Number(r.index) === idx)
           if (at >= 0) aiStable.runs.splice(at, 1, item)
           else aiStable.runs.push(item)
@@ -1812,6 +1824,7 @@ async function startAiGradingFromModal() {
             return
           }
           if (eventName === 'final' && data && typeof data === 'object') {
+            terminalEventReceived = true
             const result = data?.result
             const historyId = data?.historyId
             aiStable.final = result
@@ -1835,7 +1848,7 @@ async function startAiGradingFromModal() {
                 for (const l of lines) {
                   const ln = String(l || '').trim()
                   if (!ln) continue
-                  if (!inKeys) { if (ln.toLowerCase().includes('key suggestions')) { inKeys = true } continue }
+                  if (!inKeys) { if (ln.toLowerCase().includes('key suggestions') || ln.includes('关键建议')) { inKeys = true } continue }
                   let item = ln
                   if (item.startsWith('- ')) item = item.substring(2).trim()
                   if (item.startsWith('• ')) item = item.substring(2).trim()
@@ -1870,8 +1883,11 @@ async function startAiGradingFromModal() {
             return
           }
           if (eventName === 'error') {
+            terminalEventReceived = true
             aiStable.status = 'error'
-            aiStable.error = (data && typeof data === 'object' && (data.message || data.error)) ? String(data.message || data.error) : String(data || 'Failed')
+            aiStable.error = (data && typeof data === 'object' && (data.message || data.error))
+              ? String(data.message || data.error) + (data.raw ? `：${String(data.raw).slice(0, 220)}` : '')
+              : String(data || 'Failed')
             const target = aiProgress.items.find(it => it.id === tempId)
             if (target && target.status !== 'done') { target.status = 'error'; target.error = aiStable.error || 'Failed' }
             return
@@ -1879,31 +1895,55 @@ async function startAiGradingFromModal() {
           // ignore ping/unknown
         }
 
+        const processSseChunk = (chunk: string) => {
+          const lines = chunk.split('\n').map(s => s.replace(/\r/g, ''))
+          let eventName = 'message'
+          const dataLines: string[] = []
+          for (const line of lines) {
+            if (line.startsWith('event:')) eventName = line.slice('event:'.length).trim()
+            else if (line.startsWith('data:')) dataLines.push(line.slice('data:'.length).trimStart())
+          }
+          const dataText = dataLines.join('\n')
+          handleEvent(eventName, dataText)
+        }
+
+        const drainSseBuffer = (flush = false) => {
+          buffer = buffer.replace(/\r\n/g, '\n')
+          while (buffer.includes('\n\n')) {
+            const idx = buffer.indexOf('\n\n')
+            const chunk = buffer.slice(0, idx)
+            buffer = buffer.slice(idx + 2)
+            if (chunk.trim()) processSseChunk(chunk)
+            if (terminalEventReceived) return
+          }
+          if (flush && buffer.trim()) {
+            const chunk = buffer
+            buffer = ''
+            processSseChunk(chunk)
+          }
+        }
+
         try {
           while (true) {
             const { value, done } = await reader.read()
-            if (done) break
-            buffer += decoder.decode(value, { stream: true })
-            // SSE 事件以空行分隔
-            while (buffer.includes('\n\n')) {
-              const idx = buffer.indexOf('\n\n')
-              const chunk = buffer.slice(0, idx)
-              buffer = buffer.slice(idx + 2)
-              const lines = chunk.split('\n').map(s => s.replace(/\r/g, ''))
-              let eventName = 'message'
-              const dataLines: string[] = []
-              for (const line of lines) {
-                if (line.startsWith('event:')) eventName = line.slice('event:'.length).trim()
-                else if (line.startsWith('data:')) dataLines.push(line.slice('data:'.length).trimStart())
-              }
-              const dataText = dataLines.join('\n')
-              handleEvent(eventName, dataText)
+            if (done) {
+              drainSseBuffer(true)
+              break
             }
+            buffer += decoder.decode(value, { stream: true })
+            drainSseBuffer(false)
+            if (terminalEventReceived) break
           }
         } finally {
+          if (terminalEventReceived) {
+            try { await reader.cancel() } catch {}
+          }
           try { reader.releaseLock() } catch {}
           aiStreamAbort.value = null
-          if (aiStable.status === 'running') aiStable.status = 'done'
+          if (aiStable.status === 'running') {
+            aiStable.status = 'error'
+            aiStable.error = String(t('teacher.aiGrading.stable.noResult') || 'AI 未返回有效结果')
+          }
         }
       })()
     } else if (aiSource.value === 'files') {
@@ -1917,16 +1957,29 @@ async function startAiGradingFromModal() {
         return { id, name, status: 'grading' as const }
       }))
       try {
-        const resp: any = await aiGradingApi.gradeFiles({ fileIds: ids as number[], model: gradingModel.value, jsonOnly: true, useGradingPrompt: true })
-        const results = (resp?.data?.results || resp?.results || []) as any[]
-        for (const r of results) {
-          const target = aiProgress.items.find(it => Number(it.id) === Number(r.fileId))
+        for (const id of ids) {
+          const target = aiProgress.items.find(it => Number(it.id) === Number(id))
           if (!target) continue
-          if (r.error) { target.status = 'error'; target.error = r.error || (resp?.message) || (resp?.data?.message) || t('common.unknownError') }
-          else {
-            // 接口可能包裹 { result: { evaluation: {...} } }
-            const result = (r?.result?.evaluation ? r.result : (r?.result ?? r))
-            target.status = 'done'; target.result = result; (target as any).historyId = (r?.historyId ?? resp?.data?.historyId)
+          target.status = 'grading'
+          target.error = undefined
+          try {
+            const resp: any = await aiGradingApi.gradeFiles({ fileIds: [Number(id)] as number[], model: gradingModel.value, jsonOnly: true, useGradingPrompt: true, samples: 2, diffThreshold: 0.8 })
+            const results = (resp?.data?.results || resp?.results || []) as any[]
+            const r = Array.isArray(results) ? results[0] : null
+            const rowError = extractGradingError(r)
+            if (rowError) {
+              target.status = 'error'
+              target.error = rowError || (resp?.message) || (resp?.data?.message) || t('common.unknownError')
+            } else {
+              // 接口可能包裹 { result: { evaluation: {...} } }
+              const result = (r?.result?.evaluation ? r.result : (r?.result ?? r))
+              target.status = 'done'
+              target.result = result
+              ;(target as any).historyId = (r?.historyId ?? resp?.data?.historyId)
+            }
+          } catch (oneErr: any) {
+            target.status = 'error'
+            target.error = oneErr?.response?.data?.message || oneErr?.message || t('common.unknownError')
           }
         }
       } catch (err: any) {
@@ -1940,7 +1993,8 @@ async function startAiGradingFromModal() {
     const firstOk = aiProgress.items.find(it => it.status === 'done' && it.result)
     if (!firstOk?.result) {
       // SSE/批量/回退都应至少产生一个可用结果；否则视为失败（避免误报成功）
-      throw new Error(String(t('teacher.aiGrading.stable.noResult') || 'AI 未返回有效结果'))
+      const detail = aiStable.error || aiProgress.items.find(it => it.error)?.error || String(t('teacher.aiGrading.stable.noResult') || 'AI 未返回有效结果')
+      throw new Error(detail)
     }
     // 若后端已在最终结果中返回 meta.ensemble，则将 run1/run2(/run3)+分差+聚合信息灌入弹窗展示（附件模式也能看）
     try {
@@ -1968,7 +2022,7 @@ async function startAiGradingFromModal() {
           for (const l of lines) {
             const ln = String(l || '').trim()
             if (!ln) continue
-            if (!inKeys) { if (ln.toLowerCase().includes('key suggestions')) { inKeys = true } continue }
+            if (!inKeys) { if (ln.toLowerCase().includes('key suggestions') || ln.includes('关键建议')) { inKeys = true } continue }
             let item = ln
             if (item.startsWith('- ')) item = item.substring(2).trim()
             if (item.startsWith('• ')) item = item.substring(2).trim()
@@ -2490,15 +2544,27 @@ async function generateAiSuggestion() {
     // 2) 调用 AI 批改
     let normalized: any = null
     if (fileIds.length > 0) {
-      const resp: any = await aiGradingApi.gradeFiles({ fileIds, jsonOnly: true, useGradingPrompt: true })
-      const results = (resp?.data?.results || resp?.results || []) as any[]
-      const ok = results.find(r => !r?.error) || results[0]
-      const raw = ok?.result
-      normalized = normalizeAssessment(raw)
+      let lastErr = ''
+      for (const fid of fileIds) {
+        const resp: any = await aiGradingApi.gradeFiles({ fileIds: [fid], model: gradingModel.value, jsonOnly: true, useGradingPrompt: true })
+        const results = (resp?.data?.results || resp?.results || []) as any[]
+        const ok = results.find(r => !r?.error) || results[0]
+        const err = extractGradingError(ok)
+        if (err) {
+          lastErr = err
+          continue
+        }
+        const raw = ok?.result
+        normalized = normalizeAssessment(raw)
+        if (normalized) break
+      }
+      if (!normalized && lastErr) throw new Error(lastErr)
     } else if (String(submission.content || '').trim()) {
-      const payload = { messages: [{ role: 'user', content: String(submission.content) }], jsonOnly: true, useGradingPrompt: true }
+      const payload = { messages: [{ role: 'user', content: String(submission.content) }], model: gradingModel.value, jsonOnly: true, useGradingPrompt: true }
       const resp: any = await aiGradingApi.gradeEssay(payload as any)
       const raw = resp?.data ?? resp
+      const err = extractGradingError(raw)
+      if (err) throw new Error(err)
       normalized = normalizeAssessment(raw)
     } else {
       throw new Error('无可用于AI评估的文本或附件')

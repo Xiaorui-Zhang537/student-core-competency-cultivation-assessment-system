@@ -122,9 +122,11 @@ springdoc:
     encoding: UTF-8
     cache: false
 
-# AI 集成配置（DeepSeek/OpenAI 兼容）
+# AI 集成配置（Gemini/GLM/火山方舟）
 ai:
-  default-provider: ${AI_DEFAULT_PROVIDER:google}
+  default-provider: ${AI_DEFAULT_PROVIDER:volc}
+  default-model: ${AI_DEFAULT_MODEL:volc/doubao-seed-2.0-lite}
+  grading-model: ${AI_GRADING_MODEL:volc/doubao-seed-2.0-pro}
   system-prompt-path: ${AI_SYSTEM_PROMPT_PATH:classpath:/prompts/essay_evaluation_system_prompt.txt}
   proxy:
     enabled: ${AI_PROXY_ENABLED:true}
@@ -134,7 +136,7 @@ ai:
     port: ${AI_PROXY_PORT:7890}
     type: ${AI_PROXY_TYPE:HTTP}
     connect-timeout-ms: ${AI_PROXY_CONNECT_TIMEOUT_MS:10000}
-    read-timeout-ms: ${AI_PROXY_READ_TIMEOUT_MS:120000}
+    read-timeout-ms: ${AI_PROXY_READ_TIMEOUT_MS:300000}
   retry:
     max-attempts: ${AI_RETRY_MAX_ATTEMPTS:3}
     backoff-ms: ${AI_RETRY_BACKOFF_MS:800}
@@ -146,8 +148,26 @@ ai:
     google:
       base-url: ${GOOGLE_API_BASE_URL:https://generativelanguage.googleapis.com}
       api-key: ${GOOGLE_API_KEY:}
+    volc:
+      base-url: ${VOLCENGINE_ARK_BASE_URL:https://ark.cn-beijing.volces.com/api/v3}
+      api-key: ${VOLCENGINE_ARK_API_KEY:}
+  models:
+    doubao-seed-2-0-lite: ${VOLC_MODEL_DOUBAO_SEED_2_0_LITE:doubao-seed-2-0-lite-260215}
+    doubao-seed-2-0-mini: ${VOLC_MODEL_DOUBAO_SEED_2_0_MINI:doubao-seed-2-0-mini-260215}
+    doubao-seed-2-0-pro: ${VOLC_MODEL_DOUBAO_SEED_2_0_PRO:doubao-seed-2-0-pro-260215}
+  voice:
+    default-model: ${VOLC_VOICE_DEFAULT_MODEL:volc/voice-realtime}
+    app-id: ${VOLC_VOICE_APP_ID:}
+    app-key: ${VOLC_VOICE_APP_KEY:}
+    api-key: ${VOLC_VOICE_GATEWAY_API_KEY:${VOLC_VOICE_API_KEY:}}
+    resource-id: ${VOLC_VOICE_RESOURCE_ID:volc.speech.dialog}
+    ws-base-url: ${VOLC_VOICE_WS_BASE_URL:wss://ai-gateway.vei.volces.com/v1/realtime}
+    voice-type: ${VOLC_VOICE_TYPE:zh_female_tianmeiyueyue_moon_bigtts}
+    max-tokens: ${VOLC_VOICE_MAX_TOKENS:1024}
+    temperature: ${VOLC_VOICE_TEMPERATURE:0.15}
+    top-p: ${VOLC_VOICE_TOP_P:0.3}
   deepseek:
-    model: ${DEEPSEEK_MODEL:google/gemini-2.5-pro}
+    model: ${DEEPSEEK_MODEL:volc/doubao-seed-2.0-lite}
 
 # 安全配置
 security:

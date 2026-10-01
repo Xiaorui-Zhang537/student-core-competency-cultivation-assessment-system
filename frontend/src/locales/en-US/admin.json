@@ -395,6 +395,8 @@
       "quotaVoiceWeeklyHint": "Base allowance is {base} calls per student per week",
       "quotaMetricGemini": "Gemini chats (weekly)",
       "quotaMetricGlm": "GLM chats (weekly)",
+      "quotaMetricDoubao": "Doubao chats (weekly)",
+      "quotaDoubaoBonus": "Doubao chat weekly bonus",
       "quotaMetricInsight": "Insight generation ({days}-day)",
       "quotaMetricVoice": "Voice chat (weekly)",
       "quotaLoadFailed": "Failed to load quotas",

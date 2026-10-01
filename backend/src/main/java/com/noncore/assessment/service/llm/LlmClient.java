@@ -92,6 +92,19 @@ public class LlmClient {
      * JSON-only 变体：强制上游以 JSON 对象返回（OpenAI 兼容 response_format）。
      */
     public String createChatCompletionJsonOnly(List<Map<String, Object>> payloadMessages, String model, boolean stream, String baseUrl, String apiKey) {
+        return createChatCompletionJsonOnly(payloadMessages, model, stream, baseUrl, apiKey, true);
+    }
+
+    /**
+     * JSON-only 变体。部分 OpenAI-compatible 模型（如某些火山方舟模型）不支持 response_format，
+     * 此时使用 prompt-only JSON 约束，并保留一次自动降级重试。
+     */
+    public String createChatCompletionJsonOnly(List<Map<String, Object>> payloadMessages,
+                                               String model,
+                                               boolean stream,
+                                               String baseUrl,
+                                               String apiKey,
+                                               boolean preferResponseFormat) {
         String url = buildChatUrl(baseUrl);
 
         HttpHeaders headers = new HttpHeaders();
@@ -100,8 +113,18 @@ public class LlmClient {
             headers.set("Authorization", "Bearer " + apiKey);
         }
 
-        RequestBody body = buildBody(payloadMessages, model, false, true);
-        return doRequest(url, headers, body);
+        List<Map<String, Object>> messages = preferResponseFormat ? payloadMessages : withJsonOnlyInstruction(payloadMessages);
+        RequestBody body = buildBody(messages, model, false, preferResponseFormat);
+        try {
+            return doRequest(url, headers, body);
+        } catch (BusinessException ex) {
+            if (preferResponseFormat && isUnsupportedResponseFormatError(ex.getMessage())) {
+                log.warn("LLM model {} does not support response_format, retrying with prompt-only JSON mode", model);
+                RequestBody fallbackBody = buildBody(withJsonOnlyInstruction(payloadMessages), model, false, false);
+                return doRequest(url, headers, fallbackBody);
+            }
+            throw ex;
+        }
     }
 
     private RequestBody buildBody(List<Map<String, Object>> payloadMessages, String model, boolean includeReasoning, boolean jsonOnly) {
@@ -116,6 +139,37 @@ public class LlmClient {
             body.setResponseFormat(java.util.Map.of("type", "json_object"));
         }
         return body;
+    }
+
+    private List<Map<String, Object>> withJsonOnlyInstruction(List<Map<String, Object>> payloadMessages) {
+        String instruction = "You must respond with exactly one valid JSON object. Do not include markdown fences, explanations, or any text outside the JSON object.";
+        List<Map<String, Object>> out = new ArrayList<>();
+        if (payloadMessages != null && !payloadMessages.isEmpty()
+                && "system".equals(String.valueOf(payloadMessages.get(0).get("role")))) {
+            Map<String, Object> first = new LinkedHashMap<>(payloadMessages.get(0));
+            Object content = first.get("content");
+            first.put("content", instruction + "\n\n" + String.valueOf(content == null ? "" : content));
+            out.add(first);
+            out.addAll(payloadMessages.subList(1, payloadMessages.size()));
+            return out;
+        }
+        out.add(Map.of("role", "system", "content", instruction));
+        if (payloadMessages != null) {
+            out.addAll(payloadMessages);
+        }
+        return out;
+    }
+
+    private boolean isUnsupportedResponseFormatError(String message) {
+        if (!StringUtils.hasText(message)) return false;
+        String lower = message.toLowerCase();
+        return lower.contains("response_format")
+                && (lower.contains("not support")
+                || lower.contains("not supported")
+                || lower.contains("not valid")
+                || lower.contains("invalid")
+                || lower.contains("unsupported")
+                || lower.contains("不支持"));
     }
 
     private String doRequest(String url, HttpHeaders headers, RequestBody body) {
@@ -133,7 +187,7 @@ public class LlmClient {
             } catch (RestClientException e) {
                 last = e;
                 lastPlan = plan.label();
-                if (looksLikeNetworkIssue(e) && i < plans.size() - 1) {
+                if (shouldRetryWithNextTransport(e) && i < plans.size() - 1) {
                     log.warn("LLM {} failed, switching to {} ... err={}",
                             plan.label(), plans.get(i + 1).label(), safeErr(e));
                     continue;
@@ -159,7 +213,7 @@ public class LlmClient {
             return parseSuccessfulResponse(resp);
         } catch (RestClientException e) {
             if (e instanceof HttpStatusCodeException statusEx) {
-                String message = buildFriendlyError(statusEx, url);
+                String message = buildFriendlyError(statusEx, url, body == null ? null : body.getModel());
                 throw new BusinessException(ErrorCode.SYSTEM_ERROR, message);
             }
             throw e;
@@ -310,6 +364,19 @@ public class LlmClient {
         return false;
     }
 
+    private boolean shouldRetryWithNextTransport(Throwable e) {
+        if (!looksLikeNetworkIssue(e)) return false;
+        Throwable t = e;
+        for (int i = 0; i < 10 && t != null; i++) {
+            String m = String.valueOf(t.getMessage()).toLowerCase();
+            if (t instanceof java.net.SocketTimeoutException && m.contains("read timed out")) {
+                return false;
+            }
+            t = t.getCause();
+        }
+        return true;
+    }
+
     private String safeErr(Throwable e) {
         try {
             return e.getClass().getSimpleName() + ": " + (e.getMessage() == null ? "" : e.getMessage());
@@ -328,8 +395,10 @@ public class LlmClient {
         return (m == null || m.isBlank()) ? t.getClass().getSimpleName() : m;
     }
 
-    private String buildFriendlyError(HttpStatusCodeException ex, String url) {
-        String provider = url != null && url.contains("open.bigmodel.cn") ? "GLM" : "LLM";
+    private String buildFriendlyError(HttpStatusCodeException ex, String url, String model) {
+        String provider = url != null && url.contains("open.bigmodel.cn")
+                ? "GLM"
+                : (url != null && url.contains("volces.com") ? "火山方舟" : "LLM");
         String upstreamMessage = extractErrorMessage(ex.getResponseBodyAsString());
     
         HttpStatusCode status = ex.getStatusCode();
@@ -344,25 +413,58 @@ public class LlmClient {
     
         // 余额不足（402）
         if (status == HttpStatus.PAYMENT_REQUIRED) {
-            return provider + " 请求失败：余额不足或密钥无效（" 
-                + (upstreamMessage != null ? upstreamMessage : reason) + ")";
+            return appendVolcModelHint(provider,
+                    provider + " 请求失败：余额不足或密钥无效（"
+                            + (upstreamMessage != null ? upstreamMessage : reason) + ")",
+                    upstreamMessage,
+                    model);
         }
     
         // 未通过认证（401）
         if (status == HttpStatus.UNAUTHORIZED) {
-            return provider + " 请求失败：未通过认证，请检查 API Key（" 
-                + (upstreamMessage != null ? upstreamMessage : reason) + ")";
+            return appendVolcModelHint(provider,
+                    provider + " 请求失败：未通过认证，请检查 API Key（"
+                            + (upstreamMessage != null ? upstreamMessage : reason) + ")",
+                    upstreamMessage,
+                    model);
         }
     
         // 禁止访问（403）
         if (status == HttpStatus.FORBIDDEN) {
-            return provider + " 请求失败：访问被拒绝（" 
-                + (upstreamMessage != null ? upstreamMessage : reason) + ")";
+            return appendVolcModelHint(provider,
+                    provider + " 请求失败：访问被拒绝（"
+                            + (upstreamMessage != null ? upstreamMessage : reason) + ")",
+                    upstreamMessage,
+                    model);
         }
     
         // 其他错误
-        return provider + " 请求失败：" + (upstreamMessage != null ? upstreamMessage : reason);
-    } 
+        String message = provider + " 请求失败：" + (upstreamMessage != null ? upstreamMessage : reason);
+        return appendVolcModelHint(provider, message, upstreamMessage, model);
+    }
+
+    private String appendVolcModelHint(String provider, String message, String upstreamMessage, String model) {
+        if ("火山方舟".equals(provider) && looksLikeVolcModelMappingError(upstreamMessage)) {
+            message += "。当前上游 model/endpoint 为 `" + (model == null ? "" : model) + "`；"
+                    + "请先在方舟控制台开通该模型服务，或在环境变量 "
+                    + "VOLC_MODEL_DOUBAO_SEED_2_0_LITE / VOLC_MODEL_DOUBAO_SEED_2_0_MINI / VOLC_MODEL_DOUBAO_SEED_2_0_PRO "
+                    + "中填你已经创建并可调用的模型 ID 或接入点 ID。";
+        }
+        return message;
+    }
+
+    private boolean looksLikeVolcModelMappingError(String message) {
+        if (!StringUtils.hasText(message)) return false;
+        String lower = message.toLowerCase();
+        return (lower.contains("model") || lower.contains("endpoint"))
+                && (lower.contains("does not exist")
+                || lower.contains("do not have access")
+                || lower.contains("not found")
+                || lower.contains("no access")
+                || lower.contains("not activated")
+                || lower.contains("activate the model")
+                || lower.contains("activated the model"));
+    }
 
     @SuppressWarnings("unchecked")
     private String extractErrorMessage(String body) {

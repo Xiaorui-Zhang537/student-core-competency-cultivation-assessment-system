@@ -177,7 +177,9 @@
         "insights": "Behavior insights",
         "aiChat": "AI chats",
         "voice": "Voice practice"
-      }
+      },
+      "quotaMetricDoubao": "Doubao chats (weekly)",
+      "quotaDoubaoBonus": "Doubao chat weekly bonus"
     },
     "common": {
       "comingSoon": "Coming soon",

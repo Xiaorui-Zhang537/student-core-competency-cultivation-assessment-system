@@ -62,7 +62,7 @@
             </div>
           </div>
 
-          <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+          <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-3">
             <div class="rounded-xl border border-gray-200/60 dark:border-gray-700/60 bg-white/40 dark:bg-white/5 p-3 space-y-2">
               <div class="text-xs font-medium text-gray-700 dark:text-gray-200">{{ t('admin.student360.quotaAiChatBonus') || 'AI问答每周加额' }}</div>
               <glass-input
@@ -78,6 +78,21 @@
               </div>
               <div class="text-[11px] text-gray-500 dark:text-gray-400">
                 GLM: {{ t('admin.student360.quotaBasePlusBonus', { base: quotaBase.glmWeekly, bonus: quotaDraftNormalized.aiChatBonusWeekly, limit: quotaPreviewLimits.glmWeekly }) || `基础 ${quotaBase.glmWeekly} + 加额 ${quotaDraftNormalized.aiChatBonusWeekly} = ${quotaPreviewLimits.glmWeekly}` }}
+              </div>
+            </div>
+
+            <div class="rounded-xl border border-gray-200/60 dark:border-gray-700/60 bg-white/40 dark:bg-white/5 p-3 space-y-2">
+              <div class="text-xs font-medium text-gray-700 dark:text-gray-200">{{ t('admin.student360.quotaDoubaoBonus') || '豆包问答每周加额' }}</div>
+              <glass-input
+                v-model="quotaDraft.doubaoChatBonusWeekly"
+                type="number"
+                min="0"
+                max="10000"
+                step="1"
+                :disabled="quotaLoading || quotaSaving"
+              />
+              <div class="text-[11px] text-gray-500 dark:text-gray-400">
+                Doubao: {{ t('admin.student360.quotaBasePlusBonus', { base: quotaBase.doubaoWeekly, bonus: quotaDraftNormalized.doubaoChatBonusWeekly, limit: quotaPreviewLimits.doubaoWeekly }) || `基础 ${quotaBase.doubaoWeekly} + 加额 ${quotaDraftNormalized.doubaoChatBonusWeekly} = ${quotaPreviewLimits.doubaoWeekly}` }}
               </div>
             </div>
 
@@ -409,10 +424,12 @@ const quotaError = ref<string | null>(null)
 const quotaOverview = ref<AdminAiQuotaOverview | null>(null)
 const quotaDraft = ref<{
   aiChatBonusWeekly: number | null
+  doubaoChatBonusWeekly: number | null
   insightBonusWindow: number | null
   voiceChatBonusWeekly: number | null
 }>({
   aiChatBonusWeekly: 0,
+  doubaoChatBonusWeekly: 0,
   insightBonusWindow: 0,
   voiceChatBonusWeekly: 0,
 })
@@ -428,6 +445,7 @@ const quotaBase = computed(() => {
   return {
     geminiWeekly: toNonNegativeInt(base?.geminiWeekly, 10),
     glmWeekly: toNonNegativeInt(base?.glmWeekly, 20),
+    doubaoWeekly: toNonNegativeInt(base?.doubaoWeekly, 20),
     insightWindow: toNonNegativeInt(base?.insightWindow, 2),
     voiceChatWeekly: toNonNegativeInt(base?.voiceChatWeekly, 15),
     insightWindowDays: toNonNegativeInt(base?.insightWindowDays, 7),
@@ -438,6 +456,7 @@ const quotaBonus = computed(() => {
   const bonus = quotaOverview.value?.bonus as any
   return {
     aiChatWeekly: toNonNegativeInt(bonus?.aiChatWeekly, 0),
+    doubaoChatWeekly: toNonNegativeInt(bonus?.doubaoChatWeekly, 0),
     insightWindow: toNonNegativeInt(bonus?.insightWindow, 0),
     voiceChatWeekly: toNonNegativeInt(bonus?.voiceChatWeekly, 0),
   }
@@ -448,6 +467,7 @@ const quotaUsage = computed(() => {
   return {
     geminiWeeklyUsed: toNonNegativeInt(usage?.geminiWeeklyUsed, 0),
     glmWeeklyUsed: toNonNegativeInt(usage?.glmWeeklyUsed, 0),
+    doubaoWeeklyUsed: toNonNegativeInt(usage?.doubaoWeeklyUsed, 0),
     insightWindowUsed: toNonNegativeInt(usage?.insightWindowUsed, 0),
     voiceChatWeeklyUsed: toNonNegativeInt(usage?.voiceChatWeeklyUsed, 0),
   }
@@ -455,6 +475,7 @@ const quotaUsage = computed(() => {
 
 const quotaDraftNormalized = computed(() => ({
   aiChatBonusWeekly: toNonNegativeInt(quotaDraft.value.aiChatBonusWeekly, 0),
+  doubaoChatBonusWeekly: toNonNegativeInt(quotaDraft.value.doubaoChatBonusWeekly, 0),
   insightBonusWindow: toNonNegativeInt(quotaDraft.value.insightBonusWindow, 0),
   voiceChatBonusWeekly: toNonNegativeInt(quotaDraft.value.voiceChatBonusWeekly, 0),
 }))
@@ -462,12 +483,14 @@ const quotaDraftNormalized = computed(() => ({
 const quotaPreviewLimits = computed(() => ({
   geminiWeekly: quotaBase.value.geminiWeekly + quotaDraftNormalized.value.aiChatBonusWeekly,
   glmWeekly: quotaBase.value.glmWeekly + quotaDraftNormalized.value.aiChatBonusWeekly,
+  doubaoWeekly: quotaBase.value.doubaoWeekly + quotaDraftNormalized.value.doubaoChatBonusWeekly,
   insightWindow: quotaBase.value.insightWindow + quotaDraftNormalized.value.insightBonusWindow,
   voiceChatWeekly: quotaBase.value.voiceChatWeekly + quotaDraftNormalized.value.voiceChatBonusWeekly,
 }))
 
 const quotaDirty = computed(() =>
   quotaDraftNormalized.value.aiChatBonusWeekly !== quotaBonus.value.aiChatWeekly
+    || quotaDraftNormalized.value.doubaoChatBonusWeekly !== quotaBonus.value.doubaoChatWeekly
     || quotaDraftNormalized.value.insightBonusWindow !== quotaBonus.value.insightWindow
     || quotaDraftNormalized.value.voiceChatBonusWeekly !== quotaBonus.value.voiceChatWeekly,
 )
@@ -488,6 +511,14 @@ const quotaMetricCards = computed(() => ([
     limit: quotaBase.value.glmWeekly + quotaBonus.value.aiChatWeekly,
     base: quotaBase.value.glmWeekly,
     bonus: quotaBonus.value.aiChatWeekly,
+  },
+  {
+    key: 'doubao',
+    title: String(t('admin.student360.quotaMetricDoubao') || '豆包问答（每周）'),
+    used: quotaUsage.value.doubaoWeeklyUsed,
+    limit: quotaBase.value.doubaoWeekly + quotaBonus.value.doubaoChatWeekly,
+    base: quotaBase.value.doubaoWeekly,
+    bonus: quotaBonus.value.doubaoChatWeekly,
   },
   {
     key: 'insight',
@@ -633,6 +664,7 @@ function syncQuotaDraftFromOverview(next: AdminAiQuotaOverview | null) {
   if (!next) return
   quotaDraft.value = {
     aiChatBonusWeekly: toNonNegativeInt((next as any)?.bonus?.aiChatWeekly, 0),
+    doubaoChatBonusWeekly: toNonNegativeInt((next as any)?.bonus?.doubaoChatWeekly, 0),
     insightBonusWindow: toNonNegativeInt((next as any)?.bonus?.insightWindow, 0),
     voiceChatBonusWeekly: toNonNegativeInt((next as any)?.bonus?.voiceChatWeekly, 0),
   }
@@ -660,6 +692,7 @@ async function saveQuota() {
   try {
     const payload = {
       aiChatBonusWeekly: quotaDraftNormalized.value.aiChatBonusWeekly,
+      doubaoChatBonusWeekly: quotaDraftNormalized.value.doubaoChatBonusWeekly,
       insightBonusWindow: quotaDraftNormalized.value.insightBonusWindow,
       voiceChatBonusWeekly: quotaDraftNormalized.value.voiceChatBonusWeekly,
     }

@@ -134,18 +134,21 @@ export interface AdminAiQuotaOverview {
   base: {
     geminiWeekly: number
     glmWeekly: number
+    doubaoWeekly: number
     insightWindow: number
     voiceChatWeekly: number
     insightWindowDays: number
   }
   bonus: {
     aiChatWeekly: number
+    doubaoChatWeekly: number
     insightWindow: number
     voiceChatWeekly: number
   }
   limits: {
     geminiWeekly: number
     glmWeekly: number
+    doubaoWeekly: number
     insightWindow: number
     voiceChatWeekly: number
     insightWindowDays: number
@@ -153,9 +156,22 @@ export interface AdminAiQuotaOverview {
   usage: {
     geminiWeeklyUsed: number
     glmWeeklyUsed: number
+    doubaoWeeklyUsed: number
     insightWindowUsed: number
     voiceChatWeeklyUsed: number
   }
+}
+
+export interface AdminAiModelVisibilityItem {
+  surface: 'assistant' | 'voice' | 'grading'
+  audience: 'teacher' | 'student'
+  modelId: string
+  label?: string
+  provider?: string
+  capabilities?: string[]
+  quotaGroup?: string
+  visible: boolean
+  defaultModel: boolean
 }
 
 export interface AdminAbilityReportPageParams {
@@ -254,9 +270,14 @@ export const adminApi = {
     api.get('/admin/ai/quotas', { params }),
   updateAiQuota: (
     studentId: string | number,
-    data: { aiChatBonusWeekly?: number; insightBonusWindow?: number; voiceChatBonusWeekly?: number }
+    data: { aiChatBonusWeekly?: number; doubaoChatBonusWeekly?: number; insightBonusWindow?: number; voiceChatBonusWeekly?: number }
   ): Promise<AdminAiQuotaOverview> =>
     api.put('/admin/ai/quotas', data, { params: { studentId } }),
+
+  getAiModelVisibility: (): Promise<{ items: AdminAiModelVisibilityItem[] }> =>
+    api.get('/admin/ai/models/visibility'),
+  updateAiModelVisibility: (items: AdminAiModelVisibilityItem[]): Promise<{ items: AdminAiModelVisibilityItem[] }> =>
+    api.put('/admin/ai/models/visibility', { items }),
 
   // 口语训练审计（管理员版）
   listVoiceSessions: (params: { studentId: string | number; q?: string; page?: number; size?: number }) =>

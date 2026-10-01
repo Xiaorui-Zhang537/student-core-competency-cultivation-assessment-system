@@ -100,7 +100,7 @@
               <glass-popover-select v-model="locale" :options="localeOptions" size="sm" />
             </div>
 
-            <div>
+            <div v-if="showVoiceModelSelector">
               <label class="block text-xs text-gray-500 mb-1">{{ t('shared.voicePractice.model') }}</label>
               <glass-popover-select v-model="model" :options="modelOptions" size="sm" />
             </div>
@@ -219,7 +219,7 @@ import GlassSearchInput from '@/components/ui/inputs/GlassSearchInput.vue'
 import GlassModal from '@/components/ui/GlassModal.vue'
 import apiClient, { baseURL } from '@/api/config'
 import { fileApi } from '@/api/file.api'
-import { aiApi } from '@/api/ai.api'
+import { aiApi, type AiModelOption } from '@/api/ai.api'
 import { voicePracticeApi, type VoiceSession, type VoiceTurn } from '@/api/voicePractice.api'
 import { arrayBufferFromBase64, base64FromArrayBuffer, downsampleFloat32Buffer, encodeWavFromInt16PCM, float32ToInt16PCM, parsePcmRateFromMimeType } from '@/utils/audio'
 
@@ -269,8 +269,7 @@ const requireAccessToken = () => {
 const mode = ref<'text' | 'audio' | 'both'>('both')
 const locale = ref<string>('en-US')
 const scenario = ref<string>('')
-// 默认：音频相关模式优先 native audio；纯文本默认 2.5 Pro（见 watch(mode)）
-const model = ref<string>('google/gemini-2.5-flash-native-audio-preview-12-2025')
+const model = ref<string>('volc/voice-realtime')
 
 const modeOptions = computed(() => [
   { label: t('shared.voicePractice.modeBoth') as string, value: 'both' },
@@ -290,26 +289,35 @@ watch(locale, (v) => {
   }
 }, { immediate: true })
 
-const modelOptions = computed(() => {
-  if (mode.value === 'text') {
-    return [
-      { label: 'Gemini 2.5 Pro', value: 'google/gemini-2.5-pro' },
-      { label: 'Gemini 2.5 Flash', value: 'google/gemini-2.5-flash' }
-    ]
-  }
-  return [
-    { label: 'Gemini 2.5 Flash Native Audio (preview)', value: 'google/gemini-2.5-flash-native-audio-preview-12-2025' },
-    { label: 'Gemini Live 2.5 Flash (preview)', value: 'google/gemini-live-2.5-flash-preview' }
-  ]
-})
+const modelOptions = ref<{ label: string; value: string; capabilities?: string[] }[]>([
+  { label: 'Volc Realtime Voice', value: 'volc/voice-realtime', capabilities: ['voice', 'realtime'] }
+])
+const showVoiceModelSelector = ref(false)
 
-watch(mode, (m) => {
-  if (m === 'text') {
-    model.value = 'google/gemini-2.5-pro'
-  } else {
-    model.value = 'google/gemini-2.5-flash-native-audio-preview-12-2025'
+const loadVoiceModels = async () => {
+  try {
+    const payload = await aiApi.getModels({ surface: 'voice' })
+    const models = Array.isArray(payload?.models) ? payload.models : []
+    if (models.length) {
+      modelOptions.value = models.map((m: AiModelOption) => ({
+        label: m.label || m.id,
+        value: m.id,
+        capabilities: m.capabilities || []
+      }))
+      showVoiceModelSelector.value = !!payload?.showSelector && modelOptions.value.length > 1
+      model.value = payload?.defaultModel || modelOptions.value[0]?.value || 'volc/voice-realtime'
+    }
+  } catch {
+    showVoiceModelSelector.value = false
   }
-}, { immediate: true })
+}
+
+watch(modelOptions, (opts) => {
+  const allowed = opts.map(o => o.value)
+  if (allowed.length && !allowed.includes(model.value)) {
+    model.value = allowed[0]
+  }
+}, { deep: true })
 
 type Status = 'idle' | 'connecting' | 'ready' | 'recording' | 'waiting' | 'saving' | 'error'
 const status = ref<Status>('idle')
@@ -512,20 +520,6 @@ const appendMessage = (m: UiMsg) => {
   messages.value.push(m)
 }
 
-const buildLiveScenario = () => {
-  const baseScenario = String(scenario.value || '').trim()
-  if (!memory.value.enabled) return baseScenario
-  const content = String(memory.value.content || '').trim()
-  if (!content) return baseScenario
-  const capped = content.length > 3000 ? content.slice(0, 3000) : content
-  const memInstruction = [
-    '用户长期记忆（偏好/背景/约束）：',
-    capped,
-    '你应在不与当前口语任务冲突时参考这些记忆；若冲突，以当前任务为准；不要逐字复述记忆。'
-  ].join('\n')
-  return baseScenario ? `${baseScenario}\n\n${memInstruction}` : memInstruction
-}
-
 const buildAuthedStreamUrl = (fileId: number) => {
   const token = (() => { try { return localStorage.getItem('token') } catch { return null } })()
   const base = `/files/${encodeURIComponent(String(fileId))}/stream`
@@ -550,6 +544,7 @@ const loadSessions = async () => {
 }
 
 onMounted(async () => {
+  try { await loadVoiceModels() } catch {}
   // 首次进入页面：自动加载“我的会话”列表
   try { await loadSessions() } catch {}
   try {
@@ -675,6 +670,8 @@ const selectSession = async (sid: number) => {
 }
 
 const startSession = async () => {
+  // Gemini Live 与新版火山豆包实时语音都走后端 /ai/live/ws 代理。
+  // 火山 API Key 只保存在后端环境变量中，不再由前端 RTC SDK 直连。
   // 语音训练改为“按回合”：开始=开始本轮；停止=结束本轮触发 AI 回复（不中断会话）
   if (starting.value) return
   if (status.value === 'recording' || status.value === 'waiting' || status.value === 'saving') return
@@ -740,7 +737,7 @@ const startSession = async () => {
         model: model.value,
         mode: mode.value,
         locale: locale.value,
-        scenario: buildLiveScenario()
+        scenario: scenario.value
       }))
 
       // wait session_ready (setupComplete)
@@ -758,7 +755,7 @@ const startSession = async () => {
           done = true
           sessionReadyResolver = null
           sessionReadyRejecter = null
-          reject(new Error('Live session setup 超时（请检查：是否已登录、后端是否配置 Gemini API Key、网络/代理是否可访问 Google）'))
+          reject(new Error('Live session setup 超时（请检查：是否已登录、后端是否配置实时语音 API Key、网络是否可访问上游服务）'))
         }, 60000)
         sessionReadyResolver = () => {
           if (done) return

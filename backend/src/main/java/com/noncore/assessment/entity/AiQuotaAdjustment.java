@@ -16,10 +16,10 @@ public class AiQuotaAdjustment {
     private Long id;
     private Long userId;
     private Integer aiChatBonusWeekly;
+    private Integer doubaoChatBonusWeekly;
     private Integer insightBonusWindow;
     private Integer voiceChatBonusWeekly;
 
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private LocalDateTime updatedAt;
 }
-

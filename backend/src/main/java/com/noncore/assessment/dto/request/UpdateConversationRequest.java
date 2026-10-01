@@ -7,6 +7,7 @@ public class UpdateConversationRequest {
     private String title;
     private Boolean pinned;
     private Boolean archived;
+    private String model;
+    private String provider;
 }
-
 

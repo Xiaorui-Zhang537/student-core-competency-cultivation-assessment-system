@@ -29,7 +29,7 @@
               </div>
             </div>
 
-            <div class="pt-3 mb-3 border-t border-white/15 dark:border-white/10">
+            <div v-if="showModelSelector" class="pt-3 mb-3 border-t border-white/15 dark:border-white/10">
               <div class="space-y-2">
                 <div class="text-sm font-semibold text-gray-700 dark:text-gray-200">{{ t('teacher.ai.model.title') || '模型' }}</div>
                 <glass-popover-select
@@ -94,12 +94,10 @@
           </div>
 
           <!-- 模型说明 -->
-          <div class="panel-v2 panel-v2-success space-y-3 text-xs text-gray-600 dark:text-gray-300 rounded-2xl p-4 glass-ultraThin glass-tint-success border border-white/20 dark:border-white/10" v-glass="{ strength: 'ultraThin', interactive: false }">
+          <div v-if="modelInfoItems.length > 0" class="panel-v2 panel-v2-success space-y-3 text-xs text-gray-600 dark:text-gray-300 rounded-2xl p-4 glass-ultraThin glass-tint-success border border-white/20 dark:border-white/10" v-glass="{ strength: 'ultraThin', interactive: false }">
             <div class="font-semibold mb-1">{{ t('teacher.ai.modelsInfo.title') || '模型说明' }}</div>
             <ul class="list-disc pl-4 space-y-1">
-              <li>{{ t('teacher.ai.modelsInfo.gemini') }}</li>
-              <li>{{ t('teacher.ai.modelsInfo.glm46') }}</li>
-              <li>{{ t('teacher.ai.modelsInfo.glm45') }}</li>
+              <li v-for="item in modelInfoItems" :key="item.value">{{ item.label }}</li>
             </ul>
           </div>
         </aside>
@@ -248,7 +246,7 @@ import { useRouter } from 'vue-router'
 import { useAIStore } from '@/stores/ai'
 import { useI18n } from 'vue-i18n'
 import { fileApi } from '@/api/file.api'
-import { aiApi } from '@/api/ai.api'
+import { aiApi, type AiModelOption } from '@/api/ai.api'
 import Button from '@/components/ui/Button.vue'
 import GlassPopoverSelect from '@/components/ui/filters/GlassPopoverSelect.vue'
 import PageHeader from '@/components/ui/PageHeader.vue'
@@ -284,13 +282,33 @@ const conversations = computed(() => {
 const activeConversationId = computed({ get: () => ai.activeConversationId, set: v => (ai.activeConversationId = v as any) })
 const model = computed({ get: () => ai.model, set: v => (ai.model = v as any) })
 const userRole = computed(() => auth.userRole)
-const modelOptions = computed(() => {
-  return [
-    { label: 'Gemini 2.5 Pro', value: 'google/gemini-2.5-pro' },
-    { label: 'GLM-4.6', value: 'glm-4.6' },
-    { label: 'GLM-4.5 Air', value: 'glm-4.5-air' },
-  ]
-})
+const modelOptions = ref<{ label: string; value: string; capabilities?: string[] }[]>([
+  { label: 'Doubao Seed 2.0 Lite', value: 'volc/doubao-seed-2.0-lite', capabilities: ['chat', 'json'] },
+])
+const showModelSelector = ref(false)
+const modelInfoItems = computed(() => modelOptions.value.map((m) => ({
+  label: `${m.label}${Array.isArray(m.capabilities) && m.capabilities.includes('attachments') ? '：支持图片/文档附件' : ''}`,
+  value: m.value,
+})))
+
+const loadAssistantModels = async () => {
+  try {
+    const payload = await aiApi.getModels({ surface: 'assistant' })
+    const models = Array.isArray(payload?.models) ? payload.models : []
+    if (models.length) {
+      modelOptions.value = models.map((m: AiModelOption) => ({
+        label: m.label || m.id,
+        value: m.id,
+        capabilities: m.capabilities || [],
+      }))
+      showModelSelector.value = !!payload?.showSelector && modelOptions.value.length > 1
+      const defaultModel = payload?.defaultModel || modelOptions.value[0]?.value
+      if (defaultModel) model.value = defaultModel as any
+    }
+  } catch {
+    showModelSelector.value = false
+  }
+}
 
 watchEffect(() => {
   const allowed = modelOptions.value.map(o => o.value)
@@ -475,6 +493,7 @@ const handlePickFiles = async (e: Event) => {
 
 // ---- 初始化 ----
 onMounted(async () => {
+  await loadAssistantModels()
   await ai.fetchConversations({ page: 1, size: 50 })
   try {
     const res: any = await aiApi.getMemory()

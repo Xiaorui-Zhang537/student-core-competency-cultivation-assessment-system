@@ -6,6 +6,7 @@ import com.noncore.assessment.exception.BusinessException;
 import com.noncore.assessment.exception.ErrorCode;
 import com.noncore.assessment.mapper.AiVoiceSessionMapper;
 import com.noncore.assessment.mapper.AiVoiceTurnMapper;
+import com.noncore.assessment.service.AiModelRegistryService;
 import com.noncore.assessment.service.AiVoicePracticeService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -21,6 +22,7 @@ public class AiVoicePracticeServiceImpl implements AiVoicePracticeService {
 
     private final AiVoiceSessionMapper sessionMapper;
     private final AiVoiceTurnMapper turnMapper;
+    private final AiModelRegistryService modelRegistry;
 
     @Override
     public AiVoiceSession createSession(Long userId, String title, String model, String mode, String locale, String scenario) {
@@ -28,7 +30,7 @@ public class AiVoicePracticeServiceImpl implements AiVoicePracticeService {
         AiVoiceSession s = AiVoiceSession.builder()
                 .userId(userId)
                 .title(title == null ? null : title.trim())
-                .model(model == null ? null : model.trim())
+                .model(modelRegistry.normalizeVoiceModel(model, mode))
                 .mode(mode == null ? null : mode.trim())
                 .locale(locale == null ? null : locale.trim())
                 .scenario(scenario == null ? null : scenario.trim())

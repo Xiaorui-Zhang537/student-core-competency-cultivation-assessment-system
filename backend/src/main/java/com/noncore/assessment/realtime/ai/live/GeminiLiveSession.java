@@ -44,7 +44,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  * @author System
  * @since 2026-02-02
  */
-public class GeminiLiveSession {
+public class GeminiLiveSession implements LiveVoiceSession {
 
     private static final Logger log = LoggerFactory.getLogger(GeminiLiveSession.class);
 
@@ -105,6 +105,7 @@ public class GeminiLiveSession {
      * @param locale BCP-47 或简写（用于 prompt/输出语言偏好）
      * @param scenario 口语训练场景（用于 prompt）
      */
+    @Override
     public CompletableFuture<Void> connect(String model, String mode, String locale, String scenario) {
         if (closed.get()) {
             return CompletableFuture.failedFuture(new IllegalStateException("session closed"));
@@ -350,6 +351,7 @@ public class GeminiLiveSession {
     /**
      * 发送一段实时音频（PCM16 base64）。
      */
+    @Override
     public void sendAudioChunk(String pcm16Base64, Integer sampleRate) {
         if (!connected.get() || closed.get()) return;
         if (!StringUtils.hasText(pcm16Base64)) return;
@@ -376,6 +378,7 @@ public class GeminiLiveSession {
     /**
      * 手动标记活动开始（禁用自动 VAD 时需要）。
      */
+    @Override
     public void sendActivityStart() {
         if (!connected.get() || closed.get()) return;
         // 新回合开始：清空上一回合的累计状态，避免“上一段转写在下一段重复出现”
@@ -395,6 +398,7 @@ public class GeminiLiveSession {
     /**
      * 手动标记活动结束（禁用自动 VAD 时需要，用于触发模型开始生成）。
      */
+    @Override
     public void sendActivityEnd() {
         if (!connected.get() || closed.get()) return;
         Map<String, Object> realtimeInput = new HashMap<>();
@@ -410,6 +414,7 @@ public class GeminiLiveSession {
     /**
      * 主动结束会话。
      */
+    @Override
     public void close() {
         if (!closed.compareAndSet(false, true)) return;
         try {

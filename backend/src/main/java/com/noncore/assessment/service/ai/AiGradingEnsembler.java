@@ -235,11 +235,12 @@ public final class AiGradingEnsembler {
 
     @SuppressWarnings("unchecked")
     private static String buildHolisticFeedback(Map<String, Object> out, Map<String, Object> dimAvg, double finalScore) {
-        String avgLine = "Averages — Moral: " + dimAvg.getOrDefault("moral_reasoning", 0)
-                + ", Attitude: " + dimAvg.getOrDefault("attitude", 0)
-                + ", Ability: " + dimAvg.getOrDefault("ability", 0)
-                + ", Strategy: " + dimAvg.getOrDefault("strategy", 0)
-                + ". Final: " + round1(finalScore) + "/5.";
+        String avgLine = "总体评分：" + round1(finalScore) + "/5。维度均分：道德推理 "
+                + dimAvg.getOrDefault("moral_reasoning", 0)
+                + "，学习态度 " + dimAvg.getOrDefault("attitude", 0)
+                + "，能力成长 " + dimAvg.getOrDefault("ability", 0)
+                + "，策略优化 " + dimAvg.getOrDefault("strategy", 0)
+                + "。";
 
         List<String> all = new ArrayList<>();
         collectSuggestions(all, asMap(out.get("moral_reasoning")));
@@ -250,7 +251,7 @@ public final class AiGradingEnsembler {
 
         StringBuilder sb = new StringBuilder();
         sb.append(avgLine).append('\n');
-        sb.append("Key suggestions:").append('\n');
+        sb.append("关键建议:").append('\n');
         int count = 0;
         for (String s : all) {
             if (count >= 6) break;
@@ -370,4 +371,3 @@ public final class AiGradingEnsembler {
         }
     }
 }
-

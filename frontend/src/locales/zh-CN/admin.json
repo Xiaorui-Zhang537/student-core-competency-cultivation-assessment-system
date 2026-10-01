@@ -428,6 +428,8 @@
       "quotaVoiceWeeklyHint": "每位学生每周基础可调用 {base} 次",
       "quotaMetricGemini": "Gemini 问答（每周）",
       "quotaMetricGlm": "GLM 问答（每周）",
+      "quotaMetricDoubao": "豆包问答（每周）",
+      "quotaDoubaoBonus": "豆包问答每周加额",
       "quotaMetricInsight": "洞见生成（近 {days} 天）",
       "quotaMetricVoice": "语音聊天（每周）",
       "quotaLoadFailed": "加载额度失败",

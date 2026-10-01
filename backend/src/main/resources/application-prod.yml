@@ -122,7 +122,7 @@ ai:
     port: ${AI_PROXY_PORT:7890}
     type: ${AI_PROXY_TYPE:HTTP}
     connect-timeout-ms: ${AI_PROXY_CONNECT_TIMEOUT_MS:10000}
-    read-timeout-ms: ${AI_PROXY_READ_TIMEOUT_MS:120000}
+    read-timeout-ms: ${AI_PROXY_READ_TIMEOUT_MS:300000}
 
 # 生产环境日志配置  
 logging:

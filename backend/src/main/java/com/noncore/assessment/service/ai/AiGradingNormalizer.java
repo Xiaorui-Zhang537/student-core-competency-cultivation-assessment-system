@@ -5,6 +5,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * AI 批改结果归一化工具类。
@@ -27,11 +29,14 @@ public final class AiGradingNormalizer {
     public static Map<String, Object> normalize(Map<String, Object> raw) {
         if (raw == null || raw.isEmpty()) return emptyStandard();
 
+        Map<String, Object> unwrapped = unwrapCommonContainer(raw);
+        if (unwrapped != raw) {
+            return normalize(unwrapped);
+        }
+
         // 1) 已是标准结构：包含 overall 或四个维度任意一个
         if (looksLikeStandard(raw)) {
-            Map<String, Object> out = deepCopy(raw);
-            ensureOverall(out);
-            return out;
+            return normalizeStandardLike(raw);
         }
 
         // 2) evaluation_result 数组结构（新标准）
@@ -44,6 +49,11 @@ public final class AiGradingNormalizer {
         Object eval = raw.get("evaluation");
         if (eval instanceof Map<?, ?> m) {
             return normalizeFromEvaluationObject((Map<String, Object>) m);
+        }
+
+        Map<String, Object> loose = normalizeFromLooseDimensionMap(raw);
+        if (isRenderable(loose)) {
+            return loose;
         }
 
         // 兜底：返回空标准结构，避免 NPE
@@ -76,6 +86,20 @@ public final class AiGradingNormalizer {
         return 0.0;
     }
 
+    /**
+     * 判断归一化结果是否足以被前端报告正常展示。
+     * <p>当前评分 Prompt 要求 1~5 分；归一化为空壳时 final_score 会是 0，不能当作有效报告。</p>
+     */
+    public static boolean isRenderable(Map<String, Object> normalized) {
+        if (normalized == null || normalized.isEmpty()) return false;
+        double finalScore = extractFinalScore05(normalized);
+        if (!(finalScore > 0.0)) return false;
+        return hasAnySection(normalized, "moral_reasoning")
+                || hasAnySection(normalized, "attitude_development")
+                || hasAnySection(normalized, "ability_growth")
+                || hasAnySection(normalized, "strategy_optimization");
+    }
+
     // -------------------- normalization implementations --------------------
 
     private static Map<String, Object> normalizeFromEvaluationArray(List<Object> arr) {
@@ -94,13 +118,16 @@ public final class AiGradingNormalizer {
             Object dimObj = gm.get("dimension");
             String dim = dimObj == null ? "" : String.valueOf(dimObj);
             String dimKey = mapDimension(dim);
+            if (dimKey.isEmpty() && gm.get("id") != null) {
+                dimKey = mapDimension(String.valueOf(gm.get("id")));
+            }
             if (dimKey.isEmpty()) continue;
-            Object subs = gm.get("sub_criteria");
+            Object subs = firstValue(gm, "sub_criteria", "subCriteria", "criteria", "items", "children", "details");
             if (!(subs instanceof List<?> subList)) continue;
             for (Object it : subList) {
                 if (!(it instanceof Map<?, ?> im)) continue;
                 Object idObj = im.get("id");
-                String id = idObj == null ? "" : String.valueOf(idObj);
+                String id = idObj == null ? String.valueOf(firstValue(im, "criterion", "name", "title", "label")) : String.valueOf(idObj);
                 String secKey = mapSubCriterion(dimKey, id);
                 if (secKey.isEmpty()) continue;
                 Map<String, Object> sec = toSection(im);
@@ -121,32 +148,116 @@ public final class AiGradingNormalizer {
     @SuppressWarnings("unchecked")
     private static Map<String, Object> normalizeFromEvaluationObject(Map<String, Object> evaluation) {
         Map<String, Object> out = emptyStandard();
-        Map<String, Object> moral = pickGroup(evaluation, "moral");
-        Map<String, Object> attitude = pickGroup(evaluation, "attitude");
-        Map<String, Object> ability = pickGroup(evaluation, "ability");
-        Map<String, Object> strategy = pickGroup(evaluation, "strategy");
+        Map<String, Object> moral = pickGroup(evaluation, "1", "moral", "道德", "推理");
+        Map<String, Object> attitude = pickGroup(evaluation, "2", "attitude", "态度");
+        Map<String, Object> ability = pickGroup(evaluation, "3", "ability", "能力");
+        Map<String, Object> strategy = pickGroup(evaluation, "4", "strategy", "策略");
 
-        putSec(out, "moral_reasoning", "stage_level", pickSub(moral, "1a", "stage"));
-        putSec(out, "moral_reasoning", "foundations_balance", pickSub(moral, "1b", "foundation"));
-        putSec(out, "moral_reasoning", "argument_chain", pickSub(moral, "1c", "argument"));
+        putSec(out, "moral_reasoning", "stage_level", pickSub(moral, "1a", "stage", "level", "阶段", "水平"));
+        putSec(out, "moral_reasoning", "foundations_balance", pickSub(moral, "1b", "foundation", "基础", "广度"));
+        putSec(out, "moral_reasoning", "argument_chain", pickSub(moral, "1c", "argument", "counter", "论证", "反驳"));
 
-        putSec(out, "attitude_development", "emotional_engagement", pickSub(attitude, "2a", "emotional"));
-        putSec(out, "attitude_development", "resilience", pickSub(attitude, "2b", "resilience"));
-        putSec(out, "attitude_development", "focus_flow", pickSub(attitude, "2c", "focus"));
+        putSec(out, "attitude_development", "emotional_engagement", pickSub(attitude, "2a", "emotional", "engagement", "情感", "投入"));
+        putSec(out, "attitude_development", "resilience", pickSub(attitude, "2b", "resilience", "persistence", "坚持", "韧性"));
+        putSec(out, "attitude_development", "focus_flow", pickSub(attitude, "2c", "focus", "flow", "专注", "流畅"));
 
-        putSec(out, "ability_growth", "blooms_level", pickSub(ability, "3a", "bloom"));
-        putSec(out, "ability_growth", "metacognition", pickSub(ability, "3b", "metacognition"));
-        putSec(out, "ability_growth", "transfer", pickSub(ability, "3c", "transfer"));
+        putSec(out, "ability_growth", "blooms_level", pickSub(ability, "3a", "bloom", "taxonomy", "布鲁姆", "层级"));
+        putSec(out, "ability_growth", "metacognition", pickSub(ability, "3b", "metacognition", "元认知", "反思"));
+        putSec(out, "ability_growth", "transfer", pickSub(ability, "3c", "transfer", "迁移", "应用"));
 
-        putSec(out, "strategy_optimization", "diversity", pickSub(strategy, "4a", "diversity"));
-        putSec(out, "strategy_optimization", "depth", pickSub(strategy, "4b", "depth"));
-        putSec(out, "strategy_optimization", "self_regulation", pickSub(strategy, "4c", "regulation"));
+        putSec(out, "strategy_optimization", "diversity", pickSub(strategy, "4a", "diversity", "多样"));
+        putSec(out, "strategy_optimization", "depth", pickSub(strategy, "4b", "depth", "深度"));
+        putSec(out, "strategy_optimization", "self_regulation", pickSub(strategy, "4c", "regulation", "self", "自我调节"));
+
+        fillDirectGroupFallback(out, "moral_reasoning", moral, List.of("stage_level", "foundations_balance", "argument_chain"));
+        fillDirectGroupFallback(out, "attitude_development", attitude, List.of("emotional_engagement", "resilience", "focus_flow"));
+        fillDirectGroupFallback(out, "ability_growth", ability, List.of("blooms_level", "metacognition", "transfer"));
+        fillDirectGroupFallback(out, "strategy_optimization", strategy, List.of("diversity", "depth", "self_regulation"));
 
         ensureOverall(out);
         return out;
     }
 
     // -------------------- helpers --------------------
+
+    @SuppressWarnings("unchecked")
+    private static Map<String, Object> unwrapCommonContainer(Map<String, Object> raw) {
+        for (String key : List.of("result", "data", "report", "assessment", "grading", "output")) {
+            Object v = raw.get(key);
+            if (v instanceof Map<?, ?> m) {
+                return (Map<String, Object>) m;
+            }
+        }
+        return raw;
+    }
+
+    @SuppressWarnings("unchecked")
+    private static Map<String, Object> normalizeStandardLike(Map<String, Object> raw) {
+        Map<String, Object> out = emptyStandard();
+        copyStandardGroup(out, raw, "moral_reasoning", List.of("moral_reasoning", "moral", "道德推理", "道德"));
+        copyStandardGroup(out, raw, "attitude_development", List.of("attitude_development", "attitude", "learning_attitude", "学习态度", "态度"));
+        copyStandardGroup(out, raw, "ability_growth", List.of("ability_growth", "ability", "learning_ability", "能力成长", "能力"));
+        copyStandardGroup(out, raw, "strategy_optimization", List.of("strategy_optimization", "strategy", "learning_strategy", "策略优化", "策略"));
+        Object overall = raw.get("overall");
+        if (overall instanceof Map<?, ?> m) {
+            out.put("overall", deepCopy((Map<String, Object>) m));
+        }
+        ensureOverall(out);
+        return out;
+    }
+
+    @SuppressWarnings("unchecked")
+    private static void copyStandardGroup(Map<String, Object> out, Map<String, Object> raw, String targetKey, List<String> aliases) {
+        Object groupObj = null;
+        for (String alias : aliases) {
+            if (raw.containsKey(alias)) {
+                groupObj = raw.get(alias);
+                break;
+            }
+        }
+        if (!(groupObj instanceof Map<?, ?> gm)) return;
+        Map<String, Object> group = (Map<String, Object>) gm;
+        Object outGroupObj = out.get(targetKey);
+        if (!(outGroupObj instanceof Map<?, ?> ogm)) return;
+        Map<String, Object> outGroup = (Map<String, Object>) ogm;
+        List<String> subKeys = subKeysFor(targetKey);
+        boolean direct = isSectionLike(group);
+        if (direct) {
+            Map<String, Object> sec = toSection(group);
+            for (String subKey : subKeys) outGroup.put(subKey, new HashMap<>(sec));
+            return;
+        }
+        for (Map.Entry<String, Object> e : group.entrySet()) {
+            String subKey = subKeys.contains(e.getKey()) ? e.getKey() : mapSubCriterion(targetKey, e.getKey());
+            if (subKey.isEmpty() || !(e.getValue() instanceof Map<?, ?> sm)) continue;
+            outGroup.put(subKey, toSection(sm));
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    private static Map<String, Object> normalizeFromLooseDimensionMap(Map<String, Object> raw) {
+        Map<String, Object> out = emptyStandard();
+        for (Map.Entry<String, Object> e : raw.entrySet()) {
+            String dimKey = mapDimension(e.getKey());
+            if (dimKey.isEmpty() || !(e.getValue() instanceof Map<?, ?> gm)) continue;
+            Map<String, Object> group = (Map<String, Object>) gm;
+            Object outGroupObj = out.get(dimKey);
+            if (!(outGroupObj instanceof Map<?, ?> ogm)) continue;
+            Map<String, Object> outGroup = (Map<String, Object>) ogm;
+            if (isSectionLike(group)) {
+                Map<String, Object> sec = toSection(group);
+                for (String subKey : subKeysFor(dimKey)) outGroup.put(subKey, new HashMap<>(sec));
+                continue;
+            }
+            for (Map.Entry<String, Object> child : group.entrySet()) {
+                String subKey = mapSubCriterion(dimKey, child.getKey());
+                if (subKey.isEmpty() || !(child.getValue() instanceof Map<?, ?> sm)) continue;
+                outGroup.put(subKey, toSection(sm));
+            }
+        }
+        ensureOverall(out);
+        return out;
+    }
 
     @SuppressWarnings("unchecked")
     private static void putSec(Map<String, Object> out, String dimKey, String secKey, Map<String, Object> raw) {
@@ -157,12 +268,11 @@ public final class AiGradingNormalizer {
         }
     }
 
-    private static Map<String, Object> pickGroup(Map<String, Object> evaluation, String hint) {
+    private static Map<String, Object> pickGroup(Map<String, Object> evaluation, String... hints) {
         if (evaluation == null) return null;
         for (Map.Entry<String, Object> e : evaluation.entrySet()) {
             if (e.getKey() == null) continue;
-            String k = e.getKey().toLowerCase(Locale.ROOT);
-            if (k.contains(hint)) {
+            if (containsAny(e.getKey(), hints) || startsWithLoose(e.getKey(), hints)) {
                 if (e.getValue() instanceof Map<?, ?> m) {
                     @SuppressWarnings("unchecked")
                     Map<String, Object> mm = (Map<String, Object>) m;
@@ -173,13 +283,12 @@ public final class AiGradingNormalizer {
         return null;
     }
 
-    private static Map<String, Object> pickSub(Map<String, Object> group, String idPrefix, String keyword) {
+    private static Map<String, Object> pickSub(Map<String, Object> group, String idPrefix, String... keywords) {
         if (group == null) return null;
         String idp = normalizeKey(idPrefix);
-        String kw = normalizeKey(keyword);
         for (Map.Entry<String, Object> e : group.entrySet()) {
             String nk = normalizeKey(e.getKey());
-            if (!nk.isEmpty() && (nk.startsWith(idp) || nk.contains(kw))) {
+            if (!nk.isEmpty() && (nk.startsWith(idp) || containsAny(e.getKey(), keywords))) {
                 if (e.getValue() instanceof Map<?, ?> m) {
                     @SuppressWarnings("unchecked")
                     Map<String, Object> mm = (Map<String, Object>) m;
@@ -188,11 +297,71 @@ public final class AiGradingNormalizer {
             }
         }
         return null;
+    }
+
+    @SuppressWarnings("unchecked")
+    private static void fillDirectGroupFallback(Map<String, Object> out, String dimKey, Map<String, Object> group, List<String> subKeys) {
+        if (group == null || !isSectionLike(group)) return;
+        Object outGroupObj = out.get(dimKey);
+        if (!(outGroupObj instanceof Map<?, ?> ogm)) return;
+        Map<String, Object> outGroup = (Map<String, Object>) ogm;
+        Map<String, Object> sec = toSection(group);
+        for (String subKey : subKeys) {
+            Object existing = outGroup.get(subKey);
+            if (!(existing instanceof Map<?, ?> em) || !hasPositiveScore((Map<?, ?>) em)) {
+                outGroup.put(subKey, new HashMap<>(sec));
+            }
+        }
     }
 
     private static String normalizeKey(String s) {
         if (s == null) return "";
         return s.toLowerCase(Locale.ROOT).replaceAll("[^a-z0-9]", "");
+    }
+
+    private static boolean containsAny(String value, String... hints) {
+        if (value == null || hints == null) return false;
+        String lower = value.toLowerCase(Locale.ROOT);
+        String norm = normalizeKey(value);
+        for (String hint : hints) {
+            if (hint == null || hint.isBlank()) continue;
+            String h = hint.toLowerCase(Locale.ROOT);
+            String hn = normalizeKey(hint);
+            if (lower.contains(h) || (!hn.isEmpty() && norm.contains(hn))) return true;
+        }
+        return false;
+    }
+
+    private static boolean startsWithLoose(String value, String... hints) {
+        if (value == null || hints == null) return false;
+        String norm = normalizeKey(value);
+        for (String hint : hints) {
+            String hn = normalizeKey(hint);
+            if (!hn.isEmpty() && norm.startsWith(hn)) return true;
+        }
+        return false;
+    }
+
+    private static boolean isSectionLike(Map<?, ?> map) {
+        if (map == null) return false;
+        return firstValue(map, "score", "score_value", "scoreValue", "rating", "level", "points") != null
+                || firstValue(map, "evidence", "reasoning", "analysis", "feedback", "comment") != null
+                || firstValue(map, "suggestions", "suggestion", "recommendations", "improvements") != null;
+    }
+
+    private static boolean hasPositiveScore(Map<?, ?> map) {
+        Double d = toDouble(firstValue(map, "score", "score_value", "scoreValue", "rating", "level", "points"));
+        return d != null && d > 0;
+    }
+
+    private static List<String> subKeysFor(String dimKey) {
+        return switch (dimKey) {
+            case "moral_reasoning" -> List.of("stage_level", "foundations_balance", "argument_chain");
+            case "attitude_development" -> List.of("emotional_engagement", "resilience", "focus_flow");
+            case "ability_growth" -> List.of("blooms_level", "metacognition", "transfer");
+            case "strategy_optimization" -> List.of("diversity", "depth", "self_regulation");
+            default -> List.of();
+        };
     }
 
     private static boolean looksLikeStandard(Map<String, Object> obj) {
@@ -201,6 +370,17 @@ public final class AiGradingNormalizer {
                 || obj.containsKey("attitude_development")
                 || obj.containsKey("ability_growth")
                 || obj.containsKey("strategy_optimization");
+    }
+
+    private static boolean hasAnySection(Map<String, Object> obj, String groupKey) {
+        Object group = obj.get(groupKey);
+        if (!(group instanceof Map<?, ?> gm) || gm.isEmpty()) return false;
+        for (Object value : gm.values()) {
+            if (value instanceof Map<?, ?> section && !section.isEmpty()) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private static Map<String, Object> emptyStandard() {
@@ -244,9 +424,92 @@ public final class AiGradingNormalizer {
         dimAvg.put("attitude", round1(adAvg));
         dimAvg.put("ability", round1(agAvg));
         dimAvg.put("strategy", round1(soAvg));
-        overall.put("final_score", round1(avg(List.of(mrAvg, adAvg, agAvg, soAvg))));
-        if (!overall.containsKey("holistic_feedback")) {
-            overall.put("holistic_feedback", "");
+        double finalScore = round1(avg(List.of(mrAvg, adAvg, agAvg, soAvg)));
+        overall.put("final_score", finalScore);
+        Object feedback = overall.get("holistic_feedback");
+        if (feedback == null || String.valueOf(feedback).trim().isEmpty()) {
+            overall.put("holistic_feedback", buildHolisticFeedback(out, dimAvg, finalScore));
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    private static String buildHolisticFeedback(Map<String, Object> out, Map<String, Object> dimAvg, double finalScore) {
+        StringBuilder sb = new StringBuilder();
+        sb.append("总体评分：").append(round1(finalScore)).append("/5。");
+        sb.append("维度均分：道德推理 ").append(dimAvg.getOrDefault("moral_reasoning", 0));
+        sb.append("，学习态度 ").append(dimAvg.getOrDefault("attitude", 0));
+        sb.append("，能力成长 ").append(dimAvg.getOrDefault("ability", 0));
+        sb.append("，策略优化 ").append(dimAvg.getOrDefault("strategy", 0)).append("。");
+
+        List<String> suggestions = new ArrayList<>();
+        collectSuggestions(suggestions, out.get("moral_reasoning"));
+        collectSuggestions(suggestions, out.get("attitude_development"));
+        collectSuggestions(suggestions, out.get("ability_growth"));
+        collectSuggestions(suggestions, out.get("strategy_optimization"));
+        if (!suggestions.isEmpty()) {
+            sb.append("\n关键建议:");
+            int count = 0;
+            for (String s : suggestions) {
+                if (count >= 6) break;
+                sb.append("\n- ").append(s);
+                count++;
+            }
+            return sb.toString();
+        }
+
+        List<String> observations = new ArrayList<>();
+        collectEvidenceSummaries(observations, out.get("moral_reasoning"));
+        collectEvidenceSummaries(observations, out.get("attitude_development"));
+        collectEvidenceSummaries(observations, out.get("ability_growth"));
+        collectEvidenceSummaries(observations, out.get("strategy_optimization"));
+        if (!observations.isEmpty()) {
+            sb.append("\n观察要点:");
+            int count = 0;
+            for (String s : observations) {
+                if (count >= 4) break;
+                sb.append("\n- ").append(s);
+                count++;
+            }
+        }
+        return sb.toString();
+    }
+
+    @SuppressWarnings("unchecked")
+    private static void collectSuggestions(List<String> out, Object groupObj) {
+        if (!(groupObj instanceof Map<?, ?> group)) return;
+        for (Object sectionObj : group.values()) {
+            if (!(sectionObj instanceof Map<?, ?> section)) continue;
+            Object raw = section.get("suggestions");
+            if (raw instanceof List<?> list) {
+                for (Object item : list) {
+                    String s = String.valueOf(item == null ? "" : item).trim();
+                    if (!s.isEmpty()) out.add(s);
+                    if (out.size() >= 12) return;
+                }
+            } else if (raw != null) {
+                String s = String.valueOf(raw).trim();
+                if (!s.isEmpty()) out.add(s);
+            }
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    private static void collectEvidenceSummaries(List<String> out, Object groupObj) {
+        if (!(groupObj instanceof Map<?, ?> group)) return;
+        for (Object sectionObj : group.values()) {
+            if (!(sectionObj instanceof Map<?, ?> section)) continue;
+            Object raw = section.get("evidence");
+            if (!(raw instanceof List<?> list)) continue;
+            for (Object item : list) {
+                if (!(item instanceof Map<?, ?> ev)) continue;
+                Object reasoningObj = ev.get("reasoning");
+                Object conclusionObj = ev.get("conclusion");
+                String reasoning = String.valueOf(reasoningObj == null ? "" : reasoningObj).trim();
+                String conclusion = String.valueOf(conclusionObj == null ? "" : conclusionObj).trim();
+                String text = !reasoning.isEmpty() ? reasoning : conclusion;
+                if (!text.isEmpty()) out.add(text);
+                if (out.size() >= 8) return;
+            }
         }
     }
 
@@ -281,9 +544,10 @@ public final class AiGradingNormalizer {
 
     private static Map<String, Object> toSection(Map<?, ?> raw) {
         Map<String, Object> sec = new HashMap<>();
-        sec.put("score", round1(clamp05(toDouble(raw.get("score")) == null ? 0.0 : toDouble(raw.get("score")))));
-        sec.put("evidence", toEvidence(raw.get("evidence")));
-        sec.put("suggestions", toSuggestions(raw.get("suggestions")));
+        Double score = toDouble(firstValue(raw, "score", "score_value", "scoreValue", "rating", "level", "points"));
+        sec.put("score", round1(clamp05(score == null ? 0.0 : score)));
+        sec.put("evidence", toEvidence(firstValue(raw, "evidence", "reasoning", "analysis", "feedback", "comment", "comments")));
+        sec.put("suggestions", toSuggestions(firstValue(raw, "suggestions", "suggestion", "recommendations", "recommendation", "improvements", "improvement")));
         return sec;
     }
 
@@ -320,6 +584,8 @@ public final class AiGradingNormalizer {
                     @SuppressWarnings("unchecked")
                     Map<String, Object> mm = (Map<String, Object>) m;
                     out.add(new HashMap<>(mm));
+                } else if (o != null) {
+                    out.add(Map.of("quote", "", "reasoning", String.valueOf(o), "conclusion", ""));
                 }
             }
             return out;
@@ -350,42 +616,64 @@ public final class AiGradingNormalizer {
 
     private static String mapDimension(String dim) {
         String s = String.valueOf(dim == null ? "" : dim).toLowerCase(Locale.ROOT);
-        if (s.contains("moral")) return "moral_reasoning";
-        if (s.contains("attitude")) return "attitude_development";
-        if (s.contains("ability")) return "ability_growth";
-        if (s.contains("strategy")) return "strategy_optimization";
+        String n = normalizeKey(s);
+        if (n.startsWith("1") || s.contains("moral") || s.contains("道德") || s.contains("推理")) return "moral_reasoning";
+        if (n.startsWith("2") || s.contains("attitude") || s.contains("态度")) return "attitude_development";
+        if (n.startsWith("3") || s.contains("ability") || s.contains("能力")) return "ability_growth";
+        if (n.startsWith("4") || s.contains("strategy") || s.contains("策略")) return "strategy_optimization";
         return "";
     }
 
     private static String mapSubCriterion(String dimKey, String id) {
-        String i = String.valueOf(id == null ? "" : id).toUpperCase(Locale.ROOT);
+        String raw = String.valueOf(id == null ? "" : id);
+        String i = normalizeKey(raw).toUpperCase(Locale.ROOT);
         return switch (dimKey) {
             case "moral_reasoning" -> switch (i) {
-                case "1A" -> "stage_level";
-                case "1B" -> "foundations_balance";
-                case "1C" -> "argument_chain";
-                default -> "";
+                default -> i.startsWith("1A") || containsAny(raw, "stage", "level", "阶段", "水平") ? "stage_level"
+                        : i.startsWith("1B") || containsAny(raw, "foundation", "基础", "广度") ? "foundations_balance"
+                        : i.startsWith("1C") || containsAny(raw, "argument", "counter", "论证", "反驳") ? "argument_chain"
+                        : "";
             };
             case "attitude_development" -> switch (i) {
-                case "2A" -> "emotional_engagement";
-                case "2B" -> "resilience";
-                case "2C" -> "focus_flow";
-                default -> "";
+                default -> i.startsWith("2A") || containsAny(raw, "emotional", "engagement", "情感", "投入") ? "emotional_engagement"
+                        : i.startsWith("2B") || containsAny(raw, "resilience", "persistence", "坚持", "韧性") ? "resilience"
+                        : i.startsWith("2C") || containsAny(raw, "focus", "flow", "专注", "流畅") ? "focus_flow"
+                        : "";
             };
             case "ability_growth" -> switch (i) {
-                case "3A" -> "blooms_level";
-                case "3B" -> "metacognition";
-                case "3C" -> "transfer";
-                default -> "";
+                default -> i.startsWith("3A") || containsAny(raw, "bloom", "taxonomy", "布鲁姆", "层级") ? "blooms_level"
+                        : i.startsWith("3B") || containsAny(raw, "metacognition", "元认知", "反思") ? "metacognition"
+                        : i.startsWith("3C") || containsAny(raw, "transfer", "迁移", "应用") ? "transfer"
+                        : "";
             };
             case "strategy_optimization" -> switch (i) {
-                case "4A" -> "diversity";
-                case "4B" -> "depth";
-                case "4C" -> "self_regulation";
-                default -> "";
+                default -> i.startsWith("4A") || containsAny(raw, "diversity", "多样") ? "diversity"
+                        : i.startsWith("4B") || containsAny(raw, "depth", "深度") ? "depth"
+                        : i.startsWith("4C") || containsAny(raw, "regulation", "self", "自我调节") ? "self_regulation"
+                        : "";
             };
             default -> "";
         };
+    }
+
+    private static Object firstValue(Map<?, ?> map, String... keys) {
+        if (map == null || keys == null) return null;
+        for (String key : keys) {
+            if (map.containsKey(key)) {
+                Object v = map.get(key);
+                if (v != null) return v;
+            }
+        }
+        for (Map.Entry<?, ?> e : map.entrySet()) {
+            String k = String.valueOf(e.getKey());
+            for (String key : keys) {
+                if (k.equalsIgnoreCase(key)) {
+                    Object v = e.getValue();
+                    if (v != null) return v;
+                }
+            }
+        }
+        return null;
     }
 
     private static Map<String, Object> defaultSection() {
@@ -399,7 +687,15 @@ public final class AiGradingNormalizer {
     private static Double toDouble(Object v) {
         if (v == null) return null;
         try {
-            return Double.parseDouble(String.valueOf(v));
+            if (v instanceof Number n) return n.doubleValue();
+            String s = String.valueOf(v).trim();
+            if (s.isEmpty()) return null;
+            try {
+                return Double.parseDouble(s);
+            } catch (NumberFormatException ignored) {
+                Matcher m = Pattern.compile("-?\\d+(?:\\.\\d+)?").matcher(s);
+                return m.find() ? Double.parseDouble(m.group()) : null;
+            }
         } catch (Exception ignored) {
             return null;
         }
@@ -437,4 +733,3 @@ public final class AiGradingNormalizer {
         return v;
     }
 }
-

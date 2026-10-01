@@ -46,7 +46,7 @@ export const useAIStore = defineStore('ai', () => {
   const pendingAttachmentIds = reactive<Record<string, number[]>>({})
   const pendingAttachmentsMeta = reactive<Record<string, PendingAttachmentMeta[]>>({})
   const searchQuery = ref('')
-  const model = ref('google/gemini-2.5-pro')
+  const model = ref('volc/doubao-seed-2.0-lite')
 
   const fetchConversations = async (params?: { q?: string; pinned?: boolean; archived?: boolean; page?: number; size?: number }) => {
     const res: any = await handleApiCall(() => aiApi.listConversations(params), ui, '加载会话失败')
@@ -328,15 +328,64 @@ export const useAIStore = defineStore('ai', () => {
       clearPendingAttachments(convId!)
     }
 
+    const streamPayload = {
+      messages: requestMessages.length ? requestMessages : [{ role: 'user' as const, content: payload.content }],
+      courseId: payload.courseId,
+      studentIds: payload.studentIds,
+      ...(convId ? { conversationId: convId } : {}),
+      ...(attachments.length ? { attachmentFileIds: attachments } : {}),
+    }
+
     return new Promise<void>((resolve) => {
+      let settled = false
+
+      const finishWithFallback = async (message: string) => {
+        if (settled) return
+        settled = true
+        tokenQueue.length = 0
+        const msgs = messagesByConvId[key]
+        const last = msgs?.[msgs.length - 1]
+        const placeholderIsEmpty = !!last && last.id === placeholderId && !String(last.content || '').trim()
+        const canRetryAsNonStream = /流式连接中断|incomplete|chunked|network|failed to fetch|load failed|terminated/i.test(message || '')
+
+        if (!canRetryAsNonStream) {
+          if (placeholderIsEmpty) {
+            msgs?.pop()
+          } else if (last && last.id === placeholderId) {
+            last.streaming = false
+          }
+          ui.showNotification({ type: 'warning', title: 'AI 回复失败', message })
+          return
+        }
+
+        if (placeholderIsEmpty) {
+          try {
+            const resp: any = await handleApiCall(() => aiApi.chat(streamPayload), ui, '发送失败')
+            const rawAnswer = resp?.answer ?? resp?.data?.answer
+            const answerText = typeof rawAnswer === 'string' ? rawAnswer : (rawAnswer == null ? '' : String(rawAnswer))
+            if (answerText.trim()) {
+              last.content = answerText
+              last.id = Number(resp?.messageId || resp?.data?.messageId || last.id)
+              last.streaming = false
+              draftsByConvId[key] = ''
+              clearPendingAttachments(convId!)
+              return
+            }
+          } catch {
+            // handleApiCall 已经给出错误提示
+          }
+          msgs?.pop()
+          ui.showNotification({ type: 'warning', title: 'AI 回复失败', message })
+        } else if (last && last.id === placeholderId) {
+          last.streaming = false
+          ui.showNotification({ type: 'warning', title: 'AI 流式连接中断', message })
+        } else {
+          ui.showNotification({ type: 'warning', title: 'AI 回复失败', message })
+        }
+      }
+
       _streamAbort = aiApi.chatStream(
-        {
-          messages: requestMessages.length ? requestMessages : [{ role: 'user', content: payload.content }],
-          courseId: payload.courseId,
-          studentIds: payload.studentIds,
-          ...(convId ? { conversationId: convId } : {}),
-          ...(attachments.length ? { attachmentFileIds: attachments } : {}),
-        },
+        streamPayload,
         {
           onMeta: (meta) => {
             if (meta.conversationId && meta.conversationId !== convId) {
@@ -352,6 +401,7 @@ export const useAIStore = defineStore('ai', () => {
             runTypewriter()
           },
           onDone: (data) => {
+            settled = true
             streamDoneData = data
             // 如果打字机队列已空，立即完成；否则等队列消耗完
             if (tokenQueue.length === 0 && !typewriterRunning) {
@@ -360,19 +410,12 @@ export const useAIStore = defineStore('ai', () => {
             resolve()
           },
           onError: (message) => {
-            const msgs = messagesByConvId[key]
-            if (msgs) {
-              const last = msgs[msgs.length - 1]
-              if (last && last.id === placeholderId && !last.content) {
-                msgs.pop()
-              } else if (last && last.id === placeholderId) {
-                last.streaming = false
-              }
-            }
-            streaming.value = false
-            _streamAbort = null
-            ui.showNotification({ type: 'warning', title: 'AI 回复失败', message })
-            resolve()
+            void (async () => {
+              await finishWithFallback(message)
+              streaming.value = false
+              _streamAbort = null
+              resolve()
+            })()
           },
         }
       )
@@ -422,12 +465,18 @@ export const useAIStore = defineStore('ai', () => {
     const currentModelValue = (currentConv?.model || model.value || '').toLowerCase()
     // 若失败（null）且疑似配额/频率问题，尝试自动切换更稳模型并重试一次
     if (!finalResp) {
-      const order = ['gemini-2.5-pro', 'gemini-2.5-flash', 'gemini-2.5-flash-lite']
-      const normalized = currentModelValue.replace(/^google\//, '')
+      const doubaoOrder = ['volc/doubao-seed-2.0-lite', 'volc/doubao-seed-2.0-mini', 'volc/doubao-seed-2.0-pro']
+      const geminiOrder = ['gemini-2.5-pro', 'gemini-2.5-flash', 'gemini-2.5-flash-lite']
       const next = (() => {
-        const idx = order.findIndex(m => normalized.startsWith(m))
-        if (idx === -1) return `google/${order[0]}`
-        if (idx < order.length - 1) return `google/${order[idx + 1]}`
+        if (currentModelValue.startsWith('volc/doubao-')) {
+          const idx = doubaoOrder.findIndex(m => currentModelValue.startsWith(m))
+          if (idx >= 0 && idx < doubaoOrder.length - 1) return doubaoOrder[idx + 1]
+          return null
+        }
+        const normalized = currentModelValue.replace(/^google\//, '')
+        const idx = geminiOrder.findIndex(m => normalized.startsWith(m))
+        if (idx === -1) return `google/${geminiOrder[0]}`
+        if (idx < geminiOrder.length - 1) return `google/${geminiOrder[idx + 1]}`
         return null
       })()
       if (next) {
@@ -435,7 +484,7 @@ export const useAIStore = defineStore('ai', () => {
           await handleApiCall(() => aiApi.updateConversation(Number(convId), { model: next }), ui, '切换模型失败')
           const idx = conversations.value.findIndex(c => c.id === convId)
           if (idx >= 0) conversations.value[idx].model = next
-          ui.showNotification({ type: 'info', title: '模型已切换', message: '检测到 Gemini 配额受限，已自动降级模型并重试。' })
+          ui.showNotification({ type: 'info', title: '模型已切换', message: '检测到当前模型调用受限，已自动切换候选模型并重试。' })
           finalResp = await handleApiCall(() => aiApi.chat({
             messages: requestMessages.length ? requestMessages : [{ role: 'user', content: payload.content }],
             courseId: payload.courseId,

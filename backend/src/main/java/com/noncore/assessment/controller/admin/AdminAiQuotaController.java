@@ -95,6 +95,7 @@ public class AdminAiQuotaController extends BaseController {
         AiQuotaAdjustment updated = quotaService.updateQuota(
                 studentId,
                 body.getAiChatBonusWeekly(),
+                body.getDoubaoChatBonusWeekly(),
                 body.getInsightBonusWindow(),
                 body.getVoiceChatBonusWeekly()
         );
@@ -103,6 +104,7 @@ public class AdminAiQuotaController extends BaseController {
             Map<String, Object> detail = new LinkedHashMap<>();
             detail.put("studentId", studentId);
             detail.put("aiChatBonusWeekly", updated.getAiChatBonusWeekly());
+            detail.put("doubaoChatBonusWeekly", updated.getDoubaoChatBonusWeekly());
             detail.put("insightBonusWindow", updated.getInsightBonusWindow());
             detail.put("voiceChatBonusWeekly", updated.getVoiceChatBonusWeekly());
             adminAuditLogService.record(getCurrentUserId(), "admin.ai.quotas.update", "edit", studentId, detail, httpRequest);
@@ -113,6 +115,7 @@ public class AdminAiQuotaController extends BaseController {
     private Map<String, Object> buildQuotaPayload(Long studentId) {
         AiQuotaAdjustment quota = quotaService.getQuota(studentId);
         int aiChatBonus = Math.max(0, quota.getAiChatBonusWeekly() == null ? 0 : quota.getAiChatBonusWeekly());
+        int doubaoChatBonus = Math.max(0, quota.getDoubaoChatBonusWeekly() == null ? 0 : quota.getDoubaoChatBonusWeekly());
         int insightBonus = Math.max(0, quota.getInsightBonusWindow() == null ? 0 : quota.getInsightBonusWindow());
         int voiceBonus = Math.max(0, quota.getVoiceChatBonusWeekly() == null ? 0 : quota.getVoiceChatBonusWeekly());
 
@@ -123,6 +126,7 @@ public class AdminAiQuotaController extends BaseController {
 
         long geminiUsed = conversationService.countAssistantMessagesByModelSince(studentId, "google/gemini", startOfWeek);
         long glmUsed = conversationService.countAssistantMessagesByModelSince(studentId, "glm-", startOfWeek);
+        long doubaoUsed = conversationService.countAssistantMessagesByModelSince(studentId, "volc/doubao-", startOfWeek);
         long insightUsed =
                 insightService.countByStudentSince(studentId, BehaviorSchemaVersions.INSIGHT_V2, insightWindowStart)
                         + insightService.countByStudentSince(studentId, BehaviorSchemaVersions.INSIGHT_V1, insightWindowStart);
@@ -130,24 +134,28 @@ public class AdminAiQuotaController extends BaseController {
 
         int geminiLimit = AiQuotaService.BASE_GEMINI_WEEKLY_LIMIT + aiChatBonus;
         int glmLimit = AiQuotaService.BASE_GLM_WEEKLY_LIMIT + aiChatBonus;
+        int doubaoLimit = AiQuotaService.BASE_DOUBAO_WEEKLY_LIMIT + doubaoChatBonus;
         int insightLimit = AiQuotaService.BASE_INSIGHT_WINDOW_LIMIT + insightBonus;
         int voiceLimit = AiQuotaService.BASE_VOICE_WEEKLY_LIMIT + voiceBonus;
 
         Map<String, Object> base = new LinkedHashMap<>();
         base.put("geminiWeekly", AiQuotaService.BASE_GEMINI_WEEKLY_LIMIT);
         base.put("glmWeekly", AiQuotaService.BASE_GLM_WEEKLY_LIMIT);
+        base.put("doubaoWeekly", AiQuotaService.BASE_DOUBAO_WEEKLY_LIMIT);
         base.put("insightWindow", AiQuotaService.BASE_INSIGHT_WINDOW_LIMIT);
         base.put("voiceChatWeekly", AiQuotaService.BASE_VOICE_WEEKLY_LIMIT);
         base.put("insightWindowDays", AiQuotaService.INSIGHT_WINDOW_DAYS);
 
         Map<String, Object> bonus = new LinkedHashMap<>();
         bonus.put("aiChatWeekly", aiChatBonus);
+        bonus.put("doubaoChatWeekly", doubaoChatBonus);
         bonus.put("insightWindow", insightBonus);
         bonus.put("voiceChatWeekly", voiceBonus);
 
         Map<String, Object> limits = new LinkedHashMap<>();
         limits.put("geminiWeekly", geminiLimit);
         limits.put("glmWeekly", glmLimit);
+        limits.put("doubaoWeekly", doubaoLimit);
         limits.put("insightWindow", insightLimit);
         limits.put("voiceChatWeekly", voiceLimit);
         limits.put("insightWindowDays", AiQuotaService.INSIGHT_WINDOW_DAYS);
@@ -155,6 +163,7 @@ public class AdminAiQuotaController extends BaseController {
         Map<String, Object> usage = new LinkedHashMap<>();
         usage.put("geminiWeeklyUsed", geminiUsed);
         usage.put("glmWeeklyUsed", glmUsed);
+        usage.put("doubaoWeeklyUsed", doubaoUsed);
         usage.put("insightWindowUsed", insightUsed);
         usage.put("voiceChatWeeklyUsed", voiceUsed);
 
@@ -170,8 +179,8 @@ public class AdminAiQuotaController extends BaseController {
     @Data
     public static class UpdateQuotaRequest {
         private Integer aiChatBonusWeekly;
+        private Integer doubaoChatBonusWeekly;
         private Integer insightBonusWindow;
         private Integer voiceChatBonusWeekly;
     }
 }
-
